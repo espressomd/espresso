@@ -73,7 +73,7 @@ inline void add_buck_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate Buckingham energy */
 inline double buck_pair_energy(IA_parameters const *const ia_params,
-                               Utils::Vector3d const &d, double dist) {
+                               double dist) {
   if (dist < ia_params->buckingham.cut) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */

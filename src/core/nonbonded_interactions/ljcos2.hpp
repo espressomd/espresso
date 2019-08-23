@@ -65,7 +65,7 @@ inline void add_ljcos2_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate Lennard-Jones cosine squared energy */
 inline double ljcos2_pair_energy(IA_parameters const *const ia_params,
-                                 Utils::Vector3d const &d, double dist) {
+                                 double dist) {
   if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
     auto const r_off = dist - ia_params->ljcos2.offset;
     if (r_off < ia_params->ljcos2.rchange) {

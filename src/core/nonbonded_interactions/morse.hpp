@@ -52,7 +52,7 @@ inline void add_morse_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate Morse energy */
 inline double morse_pair_energy(IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist) {
+                                double dist) {
   if (dist < ia_params->morse.cut) {
     auto const add =
         exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));

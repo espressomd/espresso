@@ -54,7 +54,7 @@ inline void add_BMHTF_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate BMHTF energy */
 inline double BMHTF_pair_energy(IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist) {
+                                double dist) {
   if (dist < ia_params->bmhtf.cut) {
     auto const dist6 = Utils::int_pow<6>(dist);
     auto const dist8 = Utils::int_pow<8>(dist);

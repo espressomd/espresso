@@ -65,7 +65,7 @@ inline void add_ljcos_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate Lennard-Jones cosine energy */
 inline double ljcos_pair_energy(IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist) {
+                                double dist) {
   if (dist < (ia_params->ljcos.cut + ia_params->ljcos.offset)) {
     auto const r_off = dist - ia_params->ljcos.offset;
     /* Lennard-Jones part of the potential. */

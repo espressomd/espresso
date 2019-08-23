@@ -70,7 +70,7 @@ inline void add_soft_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate soft-sphere energy */
 inline double soft_pair_energy(IA_parameters const *const ia_params,
-                               Utils::Vector3d const &d, double dist) {
+                               double dist) {
   if (dist < (ia_params->soft_sphere.cut + ia_params->soft_sphere.offset)) {
     auto const r_off = dist - ia_params->soft_sphere.offset;
     /* normal case: resulting force/energy smaller than zero. */

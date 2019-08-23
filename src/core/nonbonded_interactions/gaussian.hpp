@@ -48,7 +48,7 @@ inline void add_gaussian_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate Gaussian energy */
 inline double gaussian_pair_energy(IA_parameters const *const ia_params,
-                                   Utils::Vector3d const &d, double dist) {
+                                   double dist) {
   if (dist < ia_params->gaussian.cut) {
     return ia_params->gaussian.eps *
            exp(-0.5 * Utils::sqr(dist / ia_params->gaussian.sig));

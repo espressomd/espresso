@@ -64,7 +64,7 @@ inline void add_tabulated_pair_force(IA_parameters const *const ia_params,
 
 /** Add a non-bonded pair energy by linear interpolation from a table. */
 inline double tabulated_pair_energy(IA_parameters const *const ia_params,
-                                    Utils::Vector3d const &d, double dist) {
+                                    double dist) {
   if (dist < ia_params->tab.cutoff()) {
     return ia_params->tab.energy(dist);
   }

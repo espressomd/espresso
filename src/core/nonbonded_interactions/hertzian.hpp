@@ -49,7 +49,7 @@ inline void add_hertzian_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate Hertzian energy */
 inline double hertzian_pair_energy(IA_parameters const *const ia_params,
-                                   Utils::Vector3d const &d, double dist) {
+                                   double dist) {
   if (dist < ia_params->hertzian.sig) {
     return ia_params->hertzian.eps *
            pow(1 - dist / ia_params->hertzian.sig, 5. / 2.);

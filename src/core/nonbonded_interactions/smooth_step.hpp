@@ -57,7 +57,7 @@ inline void add_SmSt_pair_force(IA_parameters const *const ia_params,
 
 /** Calculate smooth step energy */
 inline double SmSt_pair_energy(IA_parameters const *const ia_params,
-                               Utils::Vector3d const &d, double dist) {
+                               double dist) {
   if (dist >= ia_params->smooth_step.cut) {
     return 0.0;
   }
