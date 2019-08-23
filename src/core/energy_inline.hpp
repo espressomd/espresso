@@ -339,7 +339,7 @@ inline void add_bonded_energy(Particle const *const p1) {
             dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams, &ret);
         break;
       case BONDED_IA_TABULATED_DIHEDRAL:
-        bond_broken = tab_dihedral_energy(p1->r.p, p2->r.p, p3->r.p, p4->r.p,
+        bond_broken = tab_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p,
                                           iaparams, &ret);
         break;
       default:

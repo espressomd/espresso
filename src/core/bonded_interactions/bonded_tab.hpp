@@ -196,7 +196,7 @@ inline bool tab_angle_energy(Utils::Vector3d const &r_mid,
  *  @return false
  */
 inline bool
-calc_tab_dihedral_force(Utils::Vector3d const &r2, Utils::Vector3d const &r1,
+calc_tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                         Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                         Bonded_ia_parameters const *const iaparams,
                         Utils::Vector3d &force2, Utils::Vector3d &force1,
@@ -251,8 +251,8 @@ calc_tab_dihedral_force(Utils::Vector3d const &r2, Utils::Vector3d const &r1,
  *  @param[out] _energy   Energy.
  *  @return false
  */
-inline bool tab_dihedral_energy(Utils::Vector3d const &r2,
-                                Utils::Vector3d const &r1,
+inline bool tab_dihedral_energy(Utils::Vector3d const &r1,
+                                Utils::Vector3d const &r2,
                                 Utils::Vector3d const &r3,
                                 Utils::Vector3d const &r4,
                                 Bonded_ia_parameters const *const iaparams,

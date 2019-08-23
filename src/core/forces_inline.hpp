@@ -514,12 +514,12 @@ inline void add_bonded_force(Particle *const p1) {
         break;
       }
       case BONDED_IA_DIHEDRAL:
-        bond_broken = calc_dihedral_force(p1->r.p, p2->r.p, p3->r.p, p4->r.p,
+        bond_broken = calc_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p,
                                           iaparams, force1, force2, force3);
         break;
       case BONDED_IA_TABULATED_DIHEDRAL:
         bond_broken =
-            calc_tab_dihedral_force(p1->r.p, p2->r.p, p3->r.p, p4->r.p,
+            calc_tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p,
                                     iaparams, force1, force2, force3);
         break;
       default:

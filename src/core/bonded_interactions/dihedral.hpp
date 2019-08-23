@@ -115,7 +115,7 @@ calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
  *  @return false
  */
 inline bool
-calc_dihedral_force(Utils::Vector3d const &r2, Utils::Vector3d const &r1,
+calc_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                     Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                     Bonded_ia_parameters const *const iaparams,
                     Utils::Vector3d &force2, Utils::Vector3d &force1,
