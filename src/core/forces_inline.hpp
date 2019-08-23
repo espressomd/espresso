@@ -336,9 +336,13 @@ inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
     bond_broken = calc_fene_pair_force(iaparams, dx, force);
     break;
 #ifdef ROTATION
-  case BONDED_IA_HARMONIC_DUMBBELL:
-    bond_broken = calc_harmonic_dumbbell_pair_force(p1, iaparams, dx, force);
+  case BONDED_IA_HARMONIC_DUMBBELL: {
+    Utils::Vector3d torque;
+    bond_broken = calc_harmonic_dumbbell_pair_force(
+        p1->r.calc_director(), iaparams, dx, force, torque);
+    p1->f.torque += torque;
     break;
+  }
 #endif
   case BONDED_IA_HARMONIC:
     bond_broken = calc_harmonic_pair_force(iaparams, dx, force);
@@ -348,7 +352,8 @@ inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
     break;
 #ifdef ELECTROSTATICS
   case BONDED_IA_BONDED_COULOMB:
-    bond_broken = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken =
+        calc_bonded_coulomb_pair_force(p1->p.q * p2->p.q, iaparams, dx, force);
     break;
   case BONDED_IA_BONDED_COULOMB_SR:
     bond_broken = calc_bonded_coulomb_sr_pair_force(iaparams, dx, force);
@@ -356,7 +361,8 @@ inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
 #endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
-    bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_subt_lj_pair_force(get_ia_param(p1->p.type, p2->p.type),
+                                          dx, force);
     break;
 #endif
   case BONDED_IA_TABULATED_DISTANCE:
@@ -364,7 +370,7 @@ inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
     break;
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
-    bond_broken = calc_umbrella_pair_force(p1, p2, iaparams, dx, force);
+    bond_broken = calc_umbrella_pair_force(iaparams, dx, force);
     break;
 #endif
   default:
@@ -457,16 +463,16 @@ inline void add_bonded_force(Particle *const p1) {
     else if (n_partners == 2) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
-        bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force1,
-                                                force2, force3);
+        bond_broken = calc_angle_harmonic_force(
+            p1->r.p, p2->r.p, p3->r.p, iaparams, force1, force2, force3);
         break;
       case BONDED_IA_ANGLE_COSINE:
-        bond_broken = calc_angle_cosine_force(p1, p2, p3, iaparams, force1,
-                                              force2, force3);
+        bond_broken = calc_angle_cosine_force(p1->r.p, p2->r.p, p3->r.p,
+                                              iaparams, force1, force2, force3);
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
-        bond_broken = calc_angle_cossquare_force(p1, p2, p3, iaparams, force1,
-                                                 force2, force3);
+        bond_broken = calc_angle_cossquare_force(
+            p1->r.p, p2->r.p, p3->r.p, iaparams, force1, force2, force3);
         break;
 #ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
@@ -474,8 +480,8 @@ inline void add_bonded_force(Particle *const p1) {
         break;
 #endif
       case BONDED_IA_TABULATED_ANGLE:
-        bond_broken =
-            calc_tab_angle_force(p1, p2, p3, iaparams, force1, force2, force3);
+        bond_broken = calc_tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams,
+                                           force1, force2, force3);
         break;
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
@@ -508,12 +514,13 @@ inline void add_bonded_force(Particle *const p1) {
         break;
       }
       case BONDED_IA_DIHEDRAL:
-        bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force1,
-                                          force2, force3);
+        bond_broken = calc_dihedral_force(p1->r.p, p2->r.p, p3->r.p, p4->r.p,
+                                          iaparams, force1, force2, force3);
         break;
       case BONDED_IA_TABULATED_DIHEDRAL:
-        bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force1,
-                                              force2, force3);
+        bond_broken =
+            calc_tab_dihedral_force(p1->r.p, p2->r.p, p3->r.p, p4->r.p,
+                                    iaparams, force1, force2, force3);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "

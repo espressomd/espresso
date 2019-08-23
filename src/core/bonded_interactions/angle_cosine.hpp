@@ -39,16 +39,16 @@
 int angle_cosine_set_params(int bond_type, double bend, double phi0);
 
 /** Compute the three-body angle interaction force.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_cosine_3body_forces(Particle const *const p_mid,
-                               Particle const *const p_left,
-                               Particle const *const p_right,
+calc_angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
+                               Utils::Vector3d const &r_left,
+                               Utils::Vector3d const &r_right,
                                Bonded_ia_parameters const *const iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
@@ -61,14 +61,13 @@ calc_angle_cosine_3body_forces(Particle const *const p_mid,
     return -k * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
   };
 
-  return calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p,
-                                  forceFactor, false);
+  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
 }
 
 /** Compute the three-body angle interaction force.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @param[out] f_mid     Force on @p p_mid.
  *  @param[out] f_left    Force on @p p_left.
@@ -76,29 +75,28 @@ calc_angle_cosine_3body_forces(Particle const *const p_mid,
  *  @retval false
  */
 inline bool calc_angle_cosine_force(
-    Particle const *const p_mid, Particle const *const p_left,
-    Particle const *const p_right, Bonded_ia_parameters const *const iaparams,
+    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+    Utils::Vector3d const &r_right, Bonded_ia_parameters const *const iaparams,
     Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
   std::tie(f_mid, f_left, f_right) =
-      calc_angle_cosine_3body_forces(p_mid, p_left, p_right, iaparams);
+      calc_angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
   return false;
 }
 
 /** Computes the three-body angle interaction energy.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @param[out] _energy   Energy.
  *  @retval false
  */
-inline bool angle_cosine_energy(Particle const *const p_mid,
-                                Particle const *const p_left,
-                                Particle const *const p_right,
+inline bool angle_cosine_energy(Utils::Vector3d const &r_mid,
+                                Utils::Vector3d const &r_left,
+                                Utils::Vector3d const &r_right,
                                 Bonded_ia_parameters const *const iaparams,
                                 double *_energy) {
-  auto const vectors =
-      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
+  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
   auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;

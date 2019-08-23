@@ -259,7 +259,8 @@ inline void add_bonded_energy(Particle const *const p1) {
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
-        bond_broken = harmonic_dumbbell_pair_energy(p1, iaparams, dx, &ret);
+        bond_broken = harmonic_dumbbell_pair_energy(p1->r.calc_director(),
+                                                    iaparams, dx, &ret);
         break;
 #endif
       case BONDED_IA_HARMONIC:
@@ -270,7 +271,8 @@ inline void add_bonded_energy(Particle const *const p1) {
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
-        bond_broken = bonded_coulomb_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken =
+            bonded_coulomb_pair_energy(p1->p.q * p2->p.q, iaparams, dx, &ret);
         break;
       case BONDED_IA_BONDED_COULOMB_SR:
         bond_broken = bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx, &ret);
@@ -278,7 +280,8 @@ inline void add_bonded_energy(Particle const *const p1) {
 #endif
 #ifdef LENNARD_JONES
       case BONDED_IA_SUBT_LJ:
-        bond_broken = subt_lj_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken =
+            subt_lj_pair_energy(get_ia_param(p1->p.type, p2->p.type), dx, &ret);
         break;
 #endif
 #ifdef BOND_CONSTRAINT
@@ -292,7 +295,7 @@ inline void add_bonded_energy(Particle const *const p1) {
         break;
 #ifdef UMBRELLA
       case BONDED_IA_UMBRELLA:
-        bond_broken = umbrella_pair_energy(p1, p2, iaparams, dx, &ret);
+        bond_broken = umbrella_pair_energy(iaparams, dx, &ret);
         break;
 #endif
       case BONDED_IA_VIRTUAL_BOND:
@@ -308,16 +311,20 @@ inline void add_bonded_energy(Particle const *const p1) {
     else if (n_partners == 2) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
-        bond_broken = angle_harmonic_energy(p1, p2, p3, iaparams, &ret);
+        bond_broken =
+            angle_harmonic_energy(p1->r.p, p2->r.p, p3->r.p, iaparams, &ret);
         break;
       case BONDED_IA_ANGLE_COSINE:
-        bond_broken = angle_cosine_energy(p1, p2, p3, iaparams, &ret);
+        bond_broken =
+            angle_cosine_energy(p1->r.p, p2->r.p, p3->r.p, iaparams, &ret);
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
-        bond_broken = angle_cossquare_energy(p1, p2, p3, iaparams, &ret);
+        bond_broken =
+            angle_cossquare_energy(p1->r.p, p2->r.p, p3->r.p, iaparams, &ret);
         break;
       case BONDED_IA_TABULATED_ANGLE:
-        bond_broken = tab_angle_energy(p1, p2, p3, iaparams, &ret);
+        bond_broken =
+            tab_angle_energy(p1->r.p, p2->r.p, p3->r.p, iaparams, &ret);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
@@ -328,10 +335,12 @@ inline void add_bonded_energy(Particle const *const p1) {
     else if (n_partners == 3) {
       switch (type) {
       case BONDED_IA_DIHEDRAL:
-        bond_broken = dihedral_energy(p2, p1, p3, p4, iaparams, &ret);
+        bond_broken =
+            dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams, &ret);
         break;
       case BONDED_IA_TABULATED_DIHEDRAL:
-        bond_broken = tab_dihedral_energy(p1, p2, p3, p4, iaparams, &ret);
+        bond_broken = tab_dihedral_energy(p1->r.p, p2->r.p, p3->r.p, p4->r.p,
+                                          iaparams, &ret);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type

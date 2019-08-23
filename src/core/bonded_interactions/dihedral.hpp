@@ -52,7 +52,7 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase);
  * If the a,b or b,c are parallel the dihedral angle is not defined in which
  * case the routine returns phi=-1. Calling functions should check for that
  *
- * @param[in]  p1 , p2 , p3 , p4 Particles forming the dihedral
+ * @param[in]  r1 , r2 , r3 , r4 Positions of the particles forming the dihedral
  * @param[out] a Vector from @p p1 to @p p2
  * @param[out] b Vector from @p p2 to @p p3
  * @param[out] c Vector from @p p3 to @p p4
@@ -64,14 +64,14 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase);
  * @param[out] phi Dihedral angle
  */
 inline void
-calc_dihedral_angle(Particle const *const p1, Particle const *const p2,
-                    Particle const *const p3, Particle const *const p4,
+calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                    Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                     Utils::Vector3d &a, Utils::Vector3d &b, Utils::Vector3d &c,
                     Utils::Vector3d &aXb, double *l_aXb, Utils::Vector3d &bXc,
                     double *l_bXc, double *cosphi, double *phi) {
-  a = get_mi_vector(p2->r.p, p1->r.p, box_geo);
-  b = get_mi_vector(p3->r.p, p2->r.p, box_geo);
-  c = get_mi_vector(p4->r.p, p3->r.p, box_geo);
+  a = get_mi_vector(r2, r1, box_geo);
+  b = get_mi_vector(r3, r2, box_geo);
+  c = get_mi_vector(r4, r3, box_geo);
 
   /* calculate vector product a X b and b X c */
   aXb = vector_product(a, b);
@@ -104,10 +104,10 @@ calc_dihedral_angle(Particle const *const p1, Particle const *const p2,
 
 /** Compute the four-body dihedral interaction force.
  *
- *  @param[in]  p2        Second particle.
- *  @param[in]  p1        First particle.
- *  @param[in]  p3        Third particle.
- *  @param[in]  p4        Fourth particle.
+ *  @param[in]  r1        Position of the first particle.
+ *  @param[in]  r2        Position of the second particle.
+ *  @param[in]  r3        Position of the third particle.
+ *  @param[in]  r4        Position of the fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
  *  @param[out] force2    Force on particle 2.
  *  @param[out] force1    Force on particle 1.
@@ -115,8 +115,8 @@ calc_dihedral_angle(Particle const *const p1, Particle const *const p2,
  *  @return false
  */
 inline bool
-calc_dihedral_force(Particle const *const p2, Particle const *const p1,
-                    Particle const *const p3, Particle const *const p4,
+calc_dihedral_force(Utils::Vector3d const &r2, Utils::Vector3d const &r1,
+                    Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                     Bonded_ia_parameters const *const iaparams,
                     Utils::Vector3d &force2, Utils::Vector3d &force1,
                     Utils::Vector3d &force3) {
@@ -129,7 +129,7 @@ calc_dihedral_force(Particle const *const p2, Particle const *const p1,
   double fac;
 
   /* dihedral angle */
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
@@ -177,25 +177,25 @@ calc_dihedral_force(Particle const *const p2, Particle const *const p1,
 
 /** Compute the four-body dihedral interaction energy.
  *
- *  @param[in]  p2        Second particle.
- *  @param[in]  p1        First particle.
- *  @param[in]  p3        Third particle.
- *  @param[in]  p4        Fourth particle.
+ *  @param[in]  r1        Position of the first particle.
+ *  @param[in]  r2        Position of the second particle.
+ *  @param[in]  r3        Position of the third particle.
+ *  @param[in]  r4        Position of the fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
  *  @param[out] _energy   Energy.
  *  @return false
  */
-inline bool dihedral_energy(Particle const *const p1, Particle const *const p2,
-                            Particle const *const p3, Particle const *const p4,
-                            Bonded_ia_parameters const *const iaparams,
-                            double *_energy) {
+inline bool
+dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                Utils::Vector3d const &r3, Utils::Vector3d const &r4,
+                Bonded_ia_parameters const *const iaparams, double *_energy) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cosphi;
 
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
 
   *_energy =
