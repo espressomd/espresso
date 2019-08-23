@@ -36,10 +36,7 @@ static void cuda_mpi_send_v_cs_slave(ParticleRange particles);
 #endif
 
 void cuda_bcast_global_part_params() {
-  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
   mpi_bcast_cuda_global_part_vars();
-  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n",
-                     this_node));
 }
 
 /* TODO: We should only transfer data for enabled methods,
@@ -100,8 +97,6 @@ void cuda_mpi_get_particles(ParticleRange particles,
   auto const n_part = particles.size();
 
   if (this_node > 0) {
-    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %ld particles\n",
-                       this_node, n_part));
     static std::vector<CUDA_particle_data> buffer;
     buffer.resize(n_part);
     /* pack local parts into buffer */
@@ -114,8 +109,6 @@ void cuda_mpi_get_particles(ParticleRange particles,
 
     Utils::Mpi::gather_buffer(particle_data_host, n_part, comm_cart);
   }
-
-  COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
 /**
@@ -170,8 +163,6 @@ void cuda_mpi_send_forces(ParticleRange particles,
 
     add_forces_and_torques(particles, host_forces, host_torques);
   }
-
-  COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
 #if defined(ENGINE) && defined(CUDA)
@@ -203,7 +194,6 @@ void cuda_mpi_send_v_cs(ParticleRange particles,
     Utils::Mpi::scatter_buffer(host_v_cs.data(), n_part, comm_cart);
     set_v_cs(particles, host_v_cs);
   }
-  COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
 }
 #endif // ifdef ENGINE
 

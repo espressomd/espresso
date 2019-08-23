@@ -576,8 +576,6 @@ looking directly at the code.
 
 -  ``MOLFORCES_DEBUG``
 
--  ``LB_DEBUG`` Output from the lattice Boltzmann code.
-
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps

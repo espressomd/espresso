@@ -53,29 +53,12 @@ extern int this_node;
  */
 extern int regular_exit;
 
-#ifdef COMM_DEBUG
-#define COMM_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-/** Equals { cmd } iff COMM_DEBUG is set. */
-#define COMM_TRACE(cmd)
-#define COMM_DBG_MSG(msg)
-#endif
-
 #ifdef EVENT_DEBUG
 #define EVENT_TRACE(cmd)                                                       \
   { cmd; }
 #else
 /** Equals { cmd } iff EVENT_DEBUG is set. */
 #define EVENT_TRACE(cmd)
-#endif
-
-#ifdef INTEG_DEBUG
-#define INTEG_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-/** Equals { cmd } iff INTEG_DEBUG is set. */
-#define INTEG_TRACE(cmd)
 #endif
 
 #ifdef CELL_DEBUG
@@ -115,20 +98,4 @@ extern int regular_exit;
   { cmd; }
 #else
 #define THERMO_TRACE(cmd)
-#endif
-
-#ifdef POLY_DEBUG
-#define POLY_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-/** Equals { cmd } iff POLY_DEBUG is set. */
-#define POLY_TRACE(cmd)
-#endif
-
-#ifdef LB_DEBUG
-#define LB_TRACE(cmd)                                                          \
-  { cmd; }
-#else
-/** Equals { cmd } iff LB_DEBUG is set. */
-#define LB_TRACE(cmd)
 #endif

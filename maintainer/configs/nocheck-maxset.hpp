@@ -76,7 +76,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define P3M_DEBUG
 #define THERMO_DEBUG
 #define POLY_DEBUG
-#define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #ifdef CUDA
 #define CUDA_DEBUG
