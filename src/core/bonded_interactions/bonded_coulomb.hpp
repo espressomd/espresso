@@ -27,15 +27,11 @@
  *  Implementation in \ref bonded_coulomb.cpp
  */
 
-/************************************************************/
-
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
-#include "particle_data.hpp"
 
 /** Set the parameters for the bonded Coulomb potential
  *

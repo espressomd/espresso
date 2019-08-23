@@ -31,7 +31,6 @@
 #ifdef LENNARD_JONES
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
 #include "nonbonded_interactions/lj.hpp"
 
 /** Set the parameters for the subtracted LJ potential

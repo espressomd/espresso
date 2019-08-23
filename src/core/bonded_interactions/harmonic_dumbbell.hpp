@@ -27,13 +27,10 @@
  *  Implementation in \ref harmonic_dumbbell.cpp.
  */
 
-/************************************************************/
-
 #include "config.hpp"
 
 #ifdef ROTATION
 #include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/sqr.hpp>
 

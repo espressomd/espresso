@@ -35,7 +35,6 @@
 #ifdef LJCOS2
 
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <cmath>
 #include <utils/math/int_pow.hpp>

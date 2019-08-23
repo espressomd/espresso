@@ -42,8 +42,6 @@
 
 #include "nonbonded_interaction_data.hpp"
 
-#include "particle_data.hpp"
-
 int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double shift, double offset, double a1,
                      double a2, double b1, double b2

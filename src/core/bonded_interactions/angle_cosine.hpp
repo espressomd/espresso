@@ -29,7 +29,6 @@
 #include "angle_common.hpp"
 #include "bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/sqr.hpp>
 

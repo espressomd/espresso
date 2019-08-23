@@ -26,10 +26,8 @@
  *  @ref bondedIA_angle_harmonic.
  */
 
-#include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
-
 #include "angle_common.hpp"
+#include "bonded_interaction_data.hpp"
 #include "grid.hpp"
 
 #include <utils/math/sqr.hpp>
