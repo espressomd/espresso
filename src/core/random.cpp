@@ -77,7 +77,6 @@ void mpi_random_seed_slave(int, int) {
 
   MPI_Scatter(nullptr, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
   init_random_seed(this_seed);
 }
 
@@ -87,8 +86,6 @@ void mpi_random_seed(int cnt, vector<int> &seeds) {
   mpi_call(mpi_random_seed_slave, -1, cnt);
 
   MPI_Scatter(&seeds[0], 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
-
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
 
   init_random_seed(this_seed);
 }

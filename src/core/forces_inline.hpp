@@ -76,8 +76,6 @@
 #include "dpd.hpp"
 #endif
 
-#include "debug.hpp"
-
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(const Particle *) { return {}; }
 
@@ -251,9 +249,6 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
     add_affinity_pair_force(p1, p2, ia_params, d, dist, force);
   }
 #endif
-
-  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
 
   /***********************************************/
   /* non-bonded pair potentials                  */

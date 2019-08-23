@@ -571,9 +571,6 @@ int realloc_particlelist(ParticleList *l, int size) {
   int old_max = l->max;
   Particle *old_start = l->part;
 
-  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, (void *)l, l->n, l->max, size));
-
   if (size < l->max) {
     if (size == 0)
       /* to be able to free an array again */
@@ -1361,8 +1358,6 @@ void try_delete_exclusion(Particle *part, int part2) {
 #endif
 
 void send_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
-                     particles->n, node));
 
   comm_cart.send(node, REQ_SNDRCV_PART, *particles);
 
@@ -1376,7 +1371,6 @@ void send_particles(ParticleList *particles, int node) {
 }
 
 void recv_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
   comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);

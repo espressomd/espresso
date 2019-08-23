@@ -36,10 +36,6 @@
 #include "config-features.hpp"
 #include "version.hpp"
 
-#ifndef ONEPART_DEBUG_ID
-#define ONEPART_DEBUG_ID 13
-#endif
-
 /** P3M: Default for number of interpolation points of the charge
     assignment function. */
 #ifndef P3M_N_INTERPOL
