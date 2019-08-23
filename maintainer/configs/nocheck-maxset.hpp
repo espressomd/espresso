@@ -73,9 +73,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define CELL_DEBUG
 #define GHOST_DEBUG
 #define HALO_DEBUG
-#define PARTICLE_DEBUG
 #define P3M_DEBUG
-#define RANDOM_DEBUG
 #define THERMO_DEBUG
 #define POLY_DEBUG
 #define LB_DEBUG

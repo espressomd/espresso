@@ -70,14 +70,6 @@ extern int regular_exit;
 #define EVENT_TRACE(cmd)
 #endif
 
-#ifdef PARTICLE_DEBUG
-#define PART_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-/** Equals { cmd } iff PARTICLE_DEBUG is set. */
-#define PART_TRACE(cmd)
-#endif
-
 #ifdef INTEG_DEBUG
 #define INTEG_TRACE(cmd)                                                       \
   { cmd; }
@@ -116,13 +108,6 @@ extern int regular_exit;
 #else
 /** Equals { cmd } iff P3M_DEBUG is set. */
 #define P3M_TRACE(cmd)
-#endif
-
-#ifdef RANDOM_DEBUG
-#define RANDOM_TRACE(cmd)                                                      \
-  { cmd; }
-#else
-#define RANDOM_TRACE(cmd)
 #endif
 
 #ifdef THERMO_DEBUG

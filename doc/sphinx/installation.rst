@@ -568,11 +568,7 @@ looking directly at the code.
 
 -  ``HALO_DEBUG``
 
--  ``PARTICLE_DEBUG`` Output from the particle handling code.
-
 -  ``P3M_DEBUG``
-
--  ``RANDOM_DEBUG``
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
 
