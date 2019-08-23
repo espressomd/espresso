@@ -601,15 +601,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             Parameters
             ----------
             func: :obj:`function`
-                function from which the derivative is calculated
+                function for which the gradient is calculated
             x0: (3,) array_like of :obj:`float`
                 Point in N-dimensional space where the derivatives are calculated
             dx: :obj:`float`, optional
                 Spacing
             Returns
             -------
-            array_like of obj:`float` or :obj:`float` (if x0 is unidimensional)
-                the partial derivatives
+            (3,) array_like of obj:`float`
+                the approximated gradient of func at x0
 
             """
             partial_x = lambda x: (func(x0 + x) - func(x0 - x)) / (
