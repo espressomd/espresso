@@ -593,11 +593,11 @@ class InteractionsNonBondedTest(ut.TestCase):
     def test_gb(self):
 
         # helper function definitions
-        def calc_partial_derivatives(func, x0, dx=1.0e-7):    
+        def calc_gradient(func, x0, dx=1.0e-7):
             """
-            Approximate all the partial derivatives of a function at a point x0 
+            Approximate all the partial derivatives of a function at a point x0
             using the two-point central difference formula with spacing 2dx.
-        
+
             Parameters
             ----------
             func: :obj:`function`
@@ -609,30 +609,30 @@ class InteractionsNonBondedTest(ut.TestCase):
             Returns
             -------
             array_like of obj:`float` or :obj:`float` (if x0 is unidimensional)
-                the partial derivatives    
-            """       
-            
+                the gradient
+            """
+
             unidimensional = not numpy.array(x0).shape
             if unidimensional:
-                x0 = [x0]        
-                
+                x0 = [x0]
+
             derivs = []
-            
+
             for i, _ in enumerate(x0):
                 x_plus = numpy.array(x0, dtype=float)
-                x_minus = numpy.array(x0, dtype=float)        
+                x_minus = numpy.array(x0, dtype=float)
                 x_plus[i] += dx
                 x_minus[i] -= dx
-                
-                derivs.append((func(x_plus) - func(x_minus)) / (2.0 * dx))    
-                
+
+                derivs.append((func(x_plus) - func(x_minus)) / (2.0 * dx))
+
             if unidimensional:
                 derivs = derivs[0]
             else:
                 derivs = numpy.array(derivs)
 
             return derivs
-        
+
         def setup_system(gb_params):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params
 
@@ -666,15 +666,15 @@ class InteractionsNonBondedTest(ut.TestCase):
                 k_1, k_2)
             return E_ref
 
-        def get_reference_force(gb_params, r, dir1, dir2):          
-            force_ref = calc_partial_derivatives(
+        def get_reference_force(gb_params, r, dir1, dir2):
+            force_ref = calc_gradient(
                 lambda x: get_reference_energy(gb_params, x, dir1, dir2),
                     x0=r, dx=1.0e-7)
 
             return -force_ref
 
         def get_reference_torque(gb_params, r, dir1, dir2):
-            force_in_dir1 = calc_partial_derivatives(
+            force_in_dir1 = calc_gradient(
                 lambda x: get_reference_energy(gb_params, r, x, dir2),
                     x0=dir1, dx=1.0e-7)
 
