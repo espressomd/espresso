@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import espressomd
-import numpy
+import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
@@ -27,11 +27,11 @@ class InteractionsNonBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     box_l = 10.
 
-    start_pos = numpy.random.rand(3) * box_l
-    axis = numpy.random.rand(3)
-    axis /= numpy.linalg.norm(axis)
+    start_pos = np.random.rand(3) * box_l
+    axis = np.random.rand(3)
+    axis /= np.linalg.norm(axis)
     step = axis * 0.01
-    step_width = numpy.linalg.norm(step)
+    step_width = np.linalg.norm(step)
 
     def setUp(self):
 
@@ -80,7 +80,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             b1=lj_b1, b2=lj_b2, e1=lj_e1, e2=lj_e2, shift=lj_shift)
 
         E_ref = tests_common.lj_generic_potential(
-            r=numpy.arange(1, 232) * self.step_width, eps=lj_eps, sig=lj_sig,
+            r=np.arange(1, 232) * self.step_width, eps=lj_eps, sig=lj_sig,
             cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
             e2=lj_e2, shift=lj_shift)
 
@@ -122,7 +122,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                                                           sigma=wca_sig)
 
         E_ref = tests_common.lj_generic_potential(
-            r=numpy.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
+            r=np.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
                 cutoff=wca_cutoff, shift=4. * wca_shift)
 
         for i in range(231):
@@ -613,9 +613,9 @@ class InteractionsNonBondedTest(ut.TestCase):
 
             """
             partial_x = lambda x: (func(x0 + x) - func(x0 - x)) / (
-                2.0 * numpy.linalg.norm(x))
-            delta = numpy.array([dx, 0.0, 0.0])
-            return numpy.array([partial_x(numpy.roll(delta, i)) for i in range(3)])
+                2.0 * np.linalg.norm(x))
+            delta = np.array([dx, 0.0, 0.0])
+            return np.array([partial_x(np.roll(delta, i)) for i in range(3)])
 
         def setup_system(gb_params):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params
@@ -640,7 +640,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         def get_reference_energy(gb_params, r, director1, director2):
             k_1, k_2, mu, nu, sigma_0, epsilon_0, cut = gb_params
-            r_cut = r * cut / numpy.linalg.norm(r)
+            r_cut = r * cut / np.linalg.norm(r)
 
             E_ref = tests_common.gay_berne_potential(
                 r, director1, director2, epsilon_0, sigma_0, mu, nu, k_1, k_2)
@@ -660,7 +660,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 lambda x: get_reference_energy(gb_params, r, x, dir2),
                     x0=dir1, dx=1.0e-7)
 
-            return numpy.cross(-dir1, force_in_dir1)
+            return np.cross(-dir1, force_in_dir1)
 
         # actual tests of the gb potential
 
