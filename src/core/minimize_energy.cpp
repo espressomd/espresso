@@ -35,12 +35,6 @@
 #include <algorithm>
 #include <limits>
 
-#ifdef MINIMIZE_ENERGY_DEBUG
-#define MINIMIZE_ENERGY_TRACE(A) A
-#else
-#define MINIMIZE_ENERGY_TRACE(A)
-#endif
-
 /** Currently active steepest descent instance */
 static MinimizeEnergyParameters *params = nullptr;
 
@@ -73,8 +67,6 @@ bool steepest_descent_step(const ParticleRange &particles) {
 
           // Move particle
           p.r.p[j] += dp;
-          MINIMIZE_ENERGY_TRACE(printf("part %d dim %d dp %e gamma*f %e\n", i,
-                                       j, dp, params->gamma * p.f.f[j]));
         }
     }
 #ifdef ROTATION

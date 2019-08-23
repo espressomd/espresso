@@ -559,8 +559,6 @@ looking directly at the code.
    ``initialize.c``. Useful if some module does not correctly respond to
    changes of e.g. global variables.
 
--  ``INTEG_DEBUG`` Integrator output.
-
 -  ``CELL_DEBUG`` Cellsystem output.
 
 -  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
@@ -572,10 +570,6 @@ looking directly at the code.
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
 
--  ``POLY_DEBUG``
-
--  ``MOLFORCES_DEBUG``
-
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
@@ -584,9 +578,6 @@ looking directly at the code.
 -  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
 
 -  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
-
-
--  ``SD_DEBUG``
 
 -  ``CUDA_DEBUG``
 

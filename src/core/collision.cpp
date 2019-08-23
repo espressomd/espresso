@@ -37,12 +37,6 @@
 
 #include <vector>
 
-#ifdef COLLISION_DETECTION_DEBUG
-#define TRACE(a) a
-#else
-#define TRACE(a)
-#endif
-
 #ifdef COLLISION_DETECTION
 
 /// Data type holding the info about a single collision
