@@ -29,6 +29,7 @@
 #include "integrate.hpp"
 #include "accumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -401,6 +402,8 @@ void philox_counter_increment() {
     dpd_rng_counter_increment();
 #endif
   }
+  if (n_thermalized_bonds)
+    thermalized_bond_rng_counter_increment();
 }
 
 void propagate_vel_finalize_p_inst(const ParticleRange &particles) {

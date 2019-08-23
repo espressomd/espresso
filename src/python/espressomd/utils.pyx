@@ -284,7 +284,8 @@ def is_valid_type(value, t):
     Extended checks for numpy int and float types.
 
     """
-
+    if value is None:
+        return False
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:

@@ -87,7 +87,8 @@ class Analysis:
         ----------
         p1, p2 : lists of :obj:`int`
             Particle :attr:`~espressomd.particle_data.ParticleHandle.type` in
-            both sets.
+            both sets. If both are set to ``'default'``, the minimum distance
+            of all pairs is returned.
 
         """
 
@@ -869,11 +870,8 @@ class Analysis:
 
         p_types = create_int_list_from_python_object(sf_types)
 
-        sf = analyze.calc_structurefactor(
-    analyze.partCfg(),
-     p_types.e,
-     p_types.n,
-     sf_order)
+        sf = analyze.calc_structurefactor(analyze.partCfg(), p_types.e,
+                                          p_types.n, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
@@ -968,11 +966,11 @@ class Analysis:
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
         """
         Calculates the distance distribution of particles (probability of
-        finding a particle of type at a certain distance around a particle of
-        type , disregarding the fact that a spherical shell of a larger radius
-        covers a larger volume) The distance is defined as the minimal distance
-        between a particle of group `type_list_a` to any of the group
-        `type_list_b`.  Returns two arrays, the bins and the (normalized)
+        finding a particle of type A at a certain distance around a particle of
+        type B, disregarding the fact that a spherical shell of a larger radius
+        covers a larger volume). The distance is defined as the minimal distance
+        between a particle of group ``type_list_a`` to any of the group
+        ``type_list_b``. Returns two arrays, the bins and the (normalized)
         distribution.
 
         Parameters
@@ -1026,9 +1024,8 @@ class Analysis:
         p2_types = create_int_list_from_python_object(type_list_b)
 
         analyze.calc_part_distribution(
-            analyze.partCfg(
-                ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-                                         r_min, r_max, r_bins, log_flag, & low, distribution.data())
+            analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+            r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
             distribution.data(), r_bins)

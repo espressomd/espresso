@@ -324,9 +324,6 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
 #endif
   }
 
-  ONEPART_TRACE(if (p->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: LANG f = (%.3e,%.3e,%.3e)\n",
-                            this_node, p->f.f[0], p->f.f[1], p->f.f[2]));
   THERMO_TRACE(fprintf(stderr, "%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",
                        this_node, p->p.identity, p->f.f[0], p->f.f[1],
                        p->f.f[2]));

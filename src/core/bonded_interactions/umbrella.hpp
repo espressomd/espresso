@@ -30,7 +30,6 @@
  */
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #ifdef UMBRELLA
 
@@ -47,14 +46,11 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
 }
 
 /** Compute the umbrella bond length force.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  ia_params Bonded parameters for the pair interaction.
  *  @param[in]  d         %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-calc_umbrella_pair_force(Particle const *const p1, Particle const *const p2,
-                         Bonded_ia_parameters const *const ia_params,
+calc_umbrella_pair_force(Bonded_ia_parameters const *const ia_params,
                          Utils::Vector3d const &d) {
   auto const distn = d[ia_params->p.umbrella.dir];
   auto const fac = -ia_params->p.umbrella.k * (distn - ia_params->p.umbrella.r);
@@ -65,14 +61,11 @@ calc_umbrella_pair_force(Particle const *const p1, Particle const *const p2,
 }
 
 /** Compute the umbrella bond length energy.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
  *  @param[in]  ia_params Bonded parameters for the pair interaction.
  *  @param[in]  d         %Distance between the particles.
  */
 inline boost::optional<double>
-umbrella_pair_energy(Particle const *const p1, Particle const *const p2,
-                     Bonded_ia_parameters const *const ia_params,
+umbrella_pair_energy(Bonded_ia_parameters const *const ia_params,
                      Utils::Vector3d const &d, double *_energy) {
   auto const distn = d[ia_params->p.umbrella.dir];
   auto const energy = 0.5 * ia_params->p.umbrella.k *

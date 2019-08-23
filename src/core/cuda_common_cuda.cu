@@ -301,10 +301,6 @@ CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
 float *gpu_get_particle_torque_pointer() { return particle_torques_device; }
 
 void copy_part_data_to_gpu(ParticleRange particles) {
-  COMM_TRACE(printf("global_part_vars_host.communication_enabled = %d && "
-                    "global_part_vars_host.number_of_particles = %d\n",
-                    global_part_vars_host.communication_enabled,
-                    global_part_vars_host.number_of_particles));
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
     cuda_mpi_get_particles(particles, particle_data_host);

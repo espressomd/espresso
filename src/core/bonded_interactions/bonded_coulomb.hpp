@@ -27,15 +27,11 @@
  *  Implementation in \ref bonded_coulomb.cpp
  */
 
-/************************************************************/
-
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
-#include "particle_data.hpp"
 
 /** Set the parameters for the bonded Coulomb potential
  *
@@ -45,35 +41,31 @@
 int bonded_coulomb_set_params(int bond_type, double prefactor);
 
 /** Compute the bonded Coulomb pair force.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+ *  @param[in]  q1q2      Product of the particle charges.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d> calc_bonded_coulomb_pair_force(
-    Particle const *const p1, Particle const *const p2,
-    Bonded_ia_parameters const *const iaparams, Utils::Vector3d const &dx) {
+    double const q1q2, Bonded_ia_parameters const *const iaparams,
+    Utils::Vector3d const &dx) {
   auto const dist2 = dx.norm2();
-  auto const dist = std::sqrt(dist2);
-  auto const fac =
-      iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / (dist * dist2);
+  auto const dist3 = dist2 * std::sqrt(dist2);
+  auto const fac = iaparams->p.bonded_coulomb.prefactor * q1q2 / dist3;
   auto const force = fac * dx;
   return force;
 }
 
 /** Compute the bonded Coulomb pair energy.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+ *  @param[in]  q1q2      Product of the particle charges.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-bonded_coulomb_pair_energy(Particle const *const p1, Particle const *const p2,
+bonded_coulomb_pair_energy(double const q1q2,
                            Bonded_ia_parameters const *const iaparams,
                            Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
-  auto const energy =
-      iaparams->p.bonded_coulomb.prefactor * p1->p.q * p2->p.q / dist;
+  auto const energy = iaparams->p.bonded_coulomb.prefactor * q1q2 / dist;
   return energy;
 }
 

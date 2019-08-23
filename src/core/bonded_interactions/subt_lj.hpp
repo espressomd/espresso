@@ -31,7 +31,6 @@
 #ifdef LENNARD_JONES
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
 #include "nonbonded_interactions/lj.hpp"
 
 /** Set the parameters for the subtracted LJ potential
@@ -41,33 +40,26 @@
  */
 int subt_lj_set_params(int bond_type);
 
-/** Compute the negative of the Lennard-Jones pair forces
- *  and adds this force to the particle forces.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+/** Compute the negative of the Lennard-Jones pair forces.
+ *  @param[in]  iaparams  Non-bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-calc_subt_lj_pair_force(Particle const *const p1, Particle const *const p2,
-                        Bonded_ia_parameters const *,
+calc_subt_lj_pair_force(IA_parameters const *const iaparams,
                         Utils::Vector3d const &dx) {
-  auto ia_params = get_ia_param(p1->p.type, p2->p.type);
   auto const neg_dir = -dx;
-  auto const force = add_lj_pair_force(ia_params, neg_dir, neg_dir.norm());
+  auto const force = add_lj_pair_force(iaparams, neg_dir, neg_dir.norm());
   return force;
 }
 
 /** Computes the negative of the Lennard-Jones pair energy.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+ *  @param[in]  iaparams  Non-bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  */
-inline boost::optional<double> subt_lj_pair_energy(Particle const *const p1,
-                                                   Particle const *const p2,
-                                                   Bonded_ia_parameters const *,
-                                                   Utils::Vector3d const &dx) {
-  auto ia_params = get_ia_param(p1->p.type, p2->p.type);
-  auto const energy = -lj_pair_energy(ia_params, dx.norm());
+inline boost::optional<double>
+subt_lj_pair_energy(IA_parameters const *const iaparams,
+                    Utils::Vector3d const &dx) {
+  auto const energy = -lj_pair_energy(iaparams, dx.norm());
   return energy;
 }
 

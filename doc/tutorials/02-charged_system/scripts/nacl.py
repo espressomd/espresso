@@ -54,10 +54,9 @@ lj_cuts = {"Anion": WCA_cut * lj_sigmas["Anion"],
 box_l = (n_part / density)**(1. / 3.)
 system = espressomd.System(box_l=[box_l] * 3)
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 # Place particles
 for i in range(int(n_ionpairs)):
@@ -97,21 +96,15 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
 print("\n--->Lennard-Jones Equilibration")
 max_sigma = max(lj_sigmas.values())
 min_dist = 0.0
-cap = 10.0
-# Warmup Helper: Cold, highly damped system
-system.thermostat.set_langevin(kT=temp * 0.1, gamma=gamma * 50.0)
+system.minimize_energy.init(f_max=0, gamma=10, max_steps=10,
+                            max_displacement=max_sigma * 0.01)
 
 while min_dist < max_sigma:
-    # Warmup Helper: Cap max. force, increase slowly for overlapping particles
-    min_dist = system.analysis.min_dist([types["Anion"], types["Cation"]], [
-        types["Anion"], types["Cation"]])
-    cap += min_dist
-    system.force_cap = cap
-    system.integrator.run(10)
+    system.minimize_energy.minimize()
+    min_dist = system.analysis.min_dist()
 
-# Don't forget to reset thermostat, timestep and force cap
-system.thermostat.set_langevin(kT=temp, gamma=gamma)
-system.force_cap = 0
+# Set thermostat
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-3)

@@ -6,6 +6,7 @@ double coulomb_cutoff;
 
 #ifdef ELECTROSTATICS
 #include "communication.hpp"
+#include "debug.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
@@ -311,7 +312,6 @@ void calc_long_range_force(const ParticleRange &particles) {
 #ifdef CUDA
   case COULOMB_P3M_GPU:
     if (this_node == 0) {
-      FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
       p3m_gpu_add_farfield_force();
     }
     /* there is no NPT handling here as long as we cannot compute energies.g

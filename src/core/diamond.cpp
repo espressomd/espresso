@@ -38,7 +38,6 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
-#include "debug.hpp"
 #include "diamond.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
@@ -71,7 +70,6 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
     part_id++;
     max_cnt = std::max(cnt1, max_cnt);
   }
-  POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
 
   return max_cnt;
 }

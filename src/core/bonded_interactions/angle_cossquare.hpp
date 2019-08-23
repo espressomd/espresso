@@ -29,7 +29,6 @@
 #include "angle_common.hpp"
 #include "bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
@@ -62,32 +61,31 @@ calc_angle_cossquare_3body_forces(Utils::Vector3d const &r_mid,
 }
 
 /** Compute the three-body angle interaction force.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @return the forces on the second, first and third particles.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_cossquare_force(Particle const *const p_mid,
-                           Particle const *const p_left,
-                           Particle const *const p_right,
+calc_angle_cossquare_force(Utils::Vector3d const &r_mid,
+                           Utils::Vector3d const &r_left,
+                           Utils::Vector3d const &r_right,
                            Bonded_ia_parameters const *const iaparams) {
-  return calc_angle_cossquare_3body_forces(p_mid->r.p, p_left->r.p,
-                                           p_right->r.p, iaparams);
+  return calc_angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Computes the three-body angle interaction energy.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  */
-inline double angle_cossquare_energy(
-    Particle const *const p_mid, Particle const *const p_left,
-    Particle const *const p_right, Bonded_ia_parameters const *const iaparams) {
-  auto const vectors =
-      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
+inline double angle_cossquare_energy(Utils::Vector3d const &r_mid,
+                                     Utils::Vector3d const &r_left,
+                                     Utils::Vector3d const &r_right,
+                                     Bonded_ia_parameters const *const iaparams) {
+  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
   auto const k = iaparams->p.angle_cossquare.bend;

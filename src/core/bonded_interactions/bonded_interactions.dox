@@ -62,14 +62,10 @@
  *  * The recommended signatures of the force and energy functions are:
  *    @code{.cpp}
  *    inline boost::optional<Utils::Vector3d>
- *    calc_fene_pair_force(Particle const *const p1,
- *                         Particle const *const p2,
- *                         Bonded_ia_parameters const *const iaparams,
+ *    calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
  *                         Utils::Vector3d const &dx);
  *    inline boost::optional<double>
- *    fene_pair_energy(Particle const *const p1,
- *                     Particle const *const p2,
- *                     Bonded_ia_parameters const *const iaparams,
+ *    fene_pair_energy(Bonded_ia_parameters const *const iaparams,
  *                     Utils::Vector3d const &dx);
  *    @endcode
  *  * The setter function gets a \p bond_type which is a numerical id
@@ -136,7 +132,7 @@
  *      @code{.cpp}
  *      case BONDED_IA_ANGLE_HARMONIC:
  *        std::tie(force1, force2, force3) =
- *          calc_angle_harmonic_force(p1, p2, p3, iaparams);
+ *          calc_angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
  *        break;
  *      @endcode
  *  * In energy_inline.hpp:

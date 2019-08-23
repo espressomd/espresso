@@ -54,10 +54,8 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
   data->ljgen.b1 = b1;
   data->ljgen.b2 = b2;
 #ifdef LJGEN_SOFTCORE
-  if (lambda >= 0.0 && lambda <= 1.0)
-    data->ljgen.lambda1 = lambda;
-  if (softrad >= 0.0)
-    data->ljgen.softrad = softrad;
+  data->ljgen.lambda1 = lambda;
+  data->ljgen.softrad = softrad;
 #endif
 
   /* broadcast interaction parameters */

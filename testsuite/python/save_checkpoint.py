@@ -57,7 +57,7 @@ if LB_implementation:
     if 'LBTHERM' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
-        if not 'EK.GPU' in modes:
+        if 'EK.GPU' not in modes:
             system.lbboundaries.add(
                 LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
 
@@ -112,7 +112,7 @@ system.constraints.add(shape=Sphere(center=system.box_l / 2, radius=0.1),
                        particle_type=17)
 system.constraints.add(shape=Wall(normal=[1. / np.sqrt(3)] * 3, dist=0.5))
 
-if not 'LBTHERM' in modes:
+if 'LBTHERM' not in modes:
     system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
@@ -129,6 +129,12 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 system.part[1].add_bond((harmonic_bond, 0))
+if 'LBTHERM' not in modes:
+    thermalized_bond = espressomd.interactions.ThermalizedBond(
+        temp_com=0.0, gamma_com=0.0, temp_distance=0.2, gamma_distance=0.5,
+        r_cut=2, seed=51)
+    system.bonded_inter.add(thermalized_bond)
+    system.part[1].add_bond((thermalized_bond, 0))
 checkpoint.register("system")
 checkpoint.register("acc")
 # calculate forces
@@ -180,7 +186,7 @@ if EK_implementation:
 checkpoint.save(0)
 
 
-class TestLB(ut.TestCase):
+class TestCheckpointLB(ut.TestCase):
 
     def test_checkpointing(self):
         self.assertTrue(os.path.isdir(checkpoint.checkpoint_dir),

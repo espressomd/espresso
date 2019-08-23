@@ -119,7 +119,7 @@ inline ParticleForce init_local_particle_force(const Particle *part) {
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
     Particle const *const p1, Particle const *const p2,
     IA_parameters const *const ia_params, Utils::Vector3d const &d,
-    double const dist, double const dist2, Utils::Vector3d *torque1 = nullptr,
+    double const dist, Utils::Vector3d *torque1 = nullptr,
     Utils::Vector3d *torque2 = nullptr) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
@@ -132,39 +132,39 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #endif
 /* WCA */
 #ifdef WCA
-  force += add_wca_pair_force(p1, p2, ia_params, d, dist);
+  force += add_wca_pair_force(ia_params, d, dist);
 #endif
 /* Lennard-Jones generic */
 #ifdef LENNARD_JONES_GENERIC
-  force += add_ljgen_pair_force(p1, p2, ia_params, d, dist);
+  force += add_ljgen_pair_force(ia_params, d, dist);
 #endif
 /* smooth step */
 #ifdef SMOOTH_STEP
-  force += add_SmSt_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += add_SmSt_pair_force(ia_params, d, dist);
 #endif
 /* Hertzian force */
 #ifdef HERTZIAN
-  force += add_hertzian_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += add_hertzian_pair_force(ia_params, d, dist);
 #endif
 /* Gaussian force */
 #ifdef GAUSSIAN
-  force += add_gaussian_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += add_gaussian_pair_force(ia_params, d, dist);
 #endif
 /* BMHTF NaCl */
 #ifdef BMHTF_NACL
-  force += add_BMHTF_pair_force(p1, p2, ia_params, d, dist, dist2);
+  force += add_BMHTF_pair_force(ia_params, d, dist);
 #endif
 /* Buckingham*/
 #ifdef BUCKINGHAM
-  force += add_buck_pair_force(p1, p2, ia_params, d, dist);
+  force += add_buck_pair_force(ia_params, d, dist);
 #endif
 /* Morse*/
 #ifdef MORSE
-  force += add_morse_pair_force(p1, p2, ia_params, d, dist);
+  force += add_morse_pair_force(ia_params, d, dist);
 #endif
 /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
-  force += add_soft_pair_force(p1, p2, ia_params, d, dist);
+  force += add_soft_pair_force(ia_params, d, dist);
 #endif
 /*repulsive membrane potential*/
 #ifdef MEMBRANE_COLLISION
@@ -172,15 +172,15 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #endif
 /*hat potential*/
 #ifdef HAT
-  force += add_hat_pair_force(p1, p2, ia_params, d, dist);
+  force += add_hat_pair_force(ia_params, d, dist);
 #endif
 /* Lennard-Jones cosine */
 #ifdef LJCOS
-  force += add_ljcos_pair_force(p1, p2, ia_params, d, dist);
+  force += add_ljcos_pair_force(ia_params, d, dist);
 #endif
 /* Lennard-Jones cosine */
 #ifdef LJCOS2
-  force += add_ljcos2_pair_force(p1, p2, ia_params, d, dist);
+  force += add_ljcos2_pair_force(ia_params, d, dist);
 #endif
 /* Thole damping */
 #ifdef THOLE
@@ -188,14 +188,15 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #endif
 /* tabulated */
 #ifdef TABULATED
-  force += add_tabulated_pair_force(p1, p2, ia_params, d, dist);
+  force += add_tabulated_pair_force(ia_params, d, dist);
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
   // The gb force function isn't inlined, probably due to its size
   if (dist < ia_params->gay_berne.cut) {
     auto const forces =
-        add_gb_pair_force(p1, p2, ia_params, d, dist, torque1, torque2);
+        add_gb_pair_force(p1->r.calc_director(), p2->r.calc_director(),
+                          ia_params, d, dist, torque1, torque2);
     force += std::get<0>(forces);
     if (torque1) {
       *torque1 += std::get<1>(forces);
@@ -211,19 +212,19 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 inline Utils::Vector3d
 calc_non_bonded_pair_force(Particle const *const p1, Particle const *const p2,
                            IA_parameters const *const ia_params,
-                           Utils::Vector3d const &d, double dist, double dist2,
+                           Utils::Vector3d const &d, double dist,
                            Utils::Vector3d *torque1 = nullptr,
                            Utils::Vector3d *torque2 = nullptr) {
-  return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, dist2,
-                                          torque1, torque2);
+  return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, torque1,
+                                          torque2);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force(Particle const *const p1,
                                                   Particle const *const p2,
                                                   Utils::Vector3d const &d,
-                                                  double dist, double dist2) {
+                                                  double dist) {
   IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
-  return calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2);
+  return calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
 }
 
 /** Calculate non-bonded forces between a pair of particles and update their
@@ -260,9 +261,6 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   }
 #endif
 
-  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
-
   /***********************************************/
   /* non-bonded pair potentials                  */
   /***********************************************/
@@ -271,8 +269,8 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 #ifdef EXCLUSIONS
     if (do_nonbonded(p1, p2))
 #endif
-      force += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, dist2,
-                                          torque1, torque2);
+      force += calc_non_bonded_pair_force(p1, p2, ia_params, d, dist, torque1,
+                                          torque2);
   }
 
   /***********************************************/
@@ -361,7 +359,8 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
     break;
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL: {
-    auto values = calc_harmonic_dumbbell_pair_force(p1, iaparams, dx);
+    auto values = calc_harmonic_dumbbell_pair_force(
+        p1->r.calc_director(), iaparams, dx);
     if (values) {
       result = boost::optional<Utils::Vector3d>(std::get<0>(values.get()));
       torque = std::get<1>(values.get());
@@ -379,7 +378,7 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
     break;
 #ifdef ELECTROSTATICS
   case BONDED_IA_BONDED_COULOMB:
-    result = calc_bonded_coulomb_pair_force(p1, p2, iaparams, dx);
+    result = calc_bonded_coulomb_pair_force(p1->p.q * p2->p.q, iaparams, dx);
     break;
   case BONDED_IA_BONDED_COULOMB_SR:
     result = calc_bonded_coulomb_sr_pair_force(iaparams, dx);
@@ -387,7 +386,7 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
 #endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
-    result = calc_subt_lj_pair_force(p1, p2, iaparams, dx);
+    result = calc_subt_lj_pair_force(get_ia_param(p1->p.type, p2->p.type), dx);
     break;
 #endif
   case BONDED_IA_TABULATED_DISTANCE:
@@ -395,7 +394,7 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
     break;
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
-    result = calc_umbrella_pair_force(p1, p2, iaparams, dx);
+    result = calc_umbrella_pair_force(iaparams, dx);
     break;
 #endif
   default:
@@ -495,17 +494,17 @@ inline void add_bonded_force(Particle *const p1) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
         std::tie(force1, force2, force3) =
-            calc_angle_harmonic_force(p1, p2, p3, iaparams);
+            calc_angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
       case BONDED_IA_ANGLE_COSINE:
         std::tie(force1, force2, force3) =
-            calc_angle_cosine_force(p1, p2, p3, iaparams);
+            calc_angle_cosine_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
         std::tie(force1, force2, force3) =
-            calc_angle_cossquare_force(p1, p2, p3, iaparams);
+            calc_angle_cossquare_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
 #ifdef OIF_GLOBAL_FORCES
@@ -515,7 +514,7 @@ inline void add_bonded_force(Particle *const p1) {
 #endif
       case BONDED_IA_TABULATED_ANGLE:
         std::tie(force1, force2, force3) =
-            calc_tab_angle_force(p1, p2, p3, iaparams);
+            calc_tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
       case BONDED_IA_IBM_TRIEL: {
@@ -557,7 +556,7 @@ inline void add_bonded_force(Particle *const p1) {
         bond_broken = false;
         break;
       case BONDED_IA_DIHEDRAL: {
-        auto result = calc_dihedral_force(p1, p2, p3, p4, iaparams);
+        auto result = calc_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         if (result) {
           std::tie(force1, force2, force3) = result.get();
           force4 = -(force1 + force2 + force3);
@@ -566,7 +565,7 @@ inline void add_bonded_force(Particle *const p1) {
         break;
       }
       case BONDED_IA_TABULATED_DIHEDRAL: {
-        auto result = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams);
+        auto result = calc_tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         if (result) {
           std::tie(force1, force2, force3) = result.get();
           force4 = -(force1 + force2 + force3);

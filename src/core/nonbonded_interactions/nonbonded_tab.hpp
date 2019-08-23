@@ -33,9 +33,7 @@
 
 #ifdef TABULATED
 
-#include "debug.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 /** Set the parameters of a non-bonded tabulated potential.
  *  ia_params and force/energy tables are communicated to each node
@@ -54,8 +52,7 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
 
 /** Add a non-bonded pair force by linear interpolation from a table. */
 inline Utils::Vector3d
-add_tabulated_pair_force(Particle const *const p1, Particle const *const p2,
-                         IA_parameters const *const ia_params,
+add_tabulated_pair_force(IA_parameters const *const ia_params,
                          Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->tab.cutoff()) {
     auto const fac = ia_params->tab.force(dist) / dist;
@@ -66,9 +63,8 @@ add_tabulated_pair_force(Particle const *const p1, Particle const *const p2,
 }
 
 /** Add a non-bonded pair energy by linear interpolation from a table. */
-inline double tabulated_pair_energy(Particle const *, Particle const *,
-                                    IA_parameters const *const ia_params,
-                                    Utils::Vector3d const &d, double dist) {
+inline double tabulated_pair_energy(IA_parameters const *const ia_params,
+                                    double dist) {
   if (dist < ia_params->tab.cutoff()) {
     return ia_params->tab.energy(dist);
   }

@@ -28,19 +28,16 @@
  */
 
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #ifdef SMOOTH_STEP
 
 int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);
 
-/** Calculate smooth step force between particle p1 and p2 */
-inline Utils::Vector3d add_SmSt_pair_force(Particle const *const p1,
-                                           Particle const *const p2,
-                                           IA_parameters const *const ia_params,
+/** Calculate smooth step force */
+inline Utils::Vector3d add_SmSt_pair_force(IA_parameters const *const ia_params,
                                            Utils::Vector3d const &d,
-                                           double dist, double dist2) {
+                                           double dist) {
   if (dist >= ia_params->smooth_step.cut) {
     return {};
   }
@@ -53,17 +50,14 @@ inline Utils::Vector3d add_SmSt_pair_force(Particle const *const p1,
       (ia_params->smooth_step.n * fracP + 2. * ia_params->smooth_step.eps *
                                               ia_params->smooth_step.k0 * dist *
                                               er / Utils::sqr(1.0 + er)) /
-      dist2;
+      Utils::sqr(dist);
   auto const force = fac * d;
   return force;
 }
 
-/** Calculate smooth step energy between particle p1 and p2. */
-inline double SmSt_pair_energy(Particle const *const p1,
-                               Particle const *const p2,
-                               IA_parameters const *const ia_params,
-                               Utils::Vector3d const &d, double dist,
-                               double dist2) {
+/** Calculate smooth step energy */
+inline double SmSt_pair_energy(IA_parameters const *const ia_params,
+                               double dist) {
   if (dist >= ia_params->smooth_step.cut) {
     return 0.0;
   }

@@ -27,9 +27,6 @@
  */
 
 #include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
-
-/************************************************************/
 
 /** Set the parameters for the FENE potential
  *

@@ -20,6 +20,7 @@
 # Handling of interactions
 
 from libcpp.string cimport string
+from libcpp cimport bool as cbool
 from libc cimport stdint
 
 include "myconfig.pxi"
@@ -561,6 +562,10 @@ cdef extern from "object-in-fluid/out_direction.hpp":
     int oif_out_direction_set_params(int bond_type)
 cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
+    void thermalized_bond_set_rng_state(stdint.uint64_t counter)
+    cbool thermalized_bond_is_seed_required()
+    stdint.uint64_t thermalized_bond_get_rng_state()
+
 cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
 cdef extern from "bonded_interactions/quartic.hpp":

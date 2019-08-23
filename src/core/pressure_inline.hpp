@@ -36,17 +36,15 @@
  *  @param p2        pointer to particle 2.
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
- *  @param dist2     distance squared between p1 and p2.
  */
 inline void add_non_bonded_pair_virials(Particle const *const p1,
                                         Particle const *const p2,
-                                        Utils::Vector3d const &d, double dist,
-                                        double dist2) {
+                                        Utils::Vector3d const &d, double dist) {
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
   {
-    auto const force = calc_non_bonded_pair_force(p1, p2, d, dist, dist2);
+    auto const force = calc_non_bonded_pair_force(p1, p2, d, dist);
     *obsstat_nonbonded(&virials, p1->p.type, p2->p.type) += d * force;
 
     /* stress tensor part */
@@ -102,40 +100,36 @@ inline void add_non_bonded_pair_virials(Particle const *const p1,
 
 /** Calculate bond angle forces.
  *  This routine is only entered for angular potentials.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @return forces on @p p_mid, @p f_left, @p f_right
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_three_body_bonded_forces(Particle const *const p_mid,
-                              Particle const *const p_left,
-                              Particle const *const p_right,
+calc_three_body_bonded_forces(Utils::Vector3d const &r_mid,
+                              Utils::Vector3d const &r_left,
+                              Utils::Vector3d const &r_right,
                               Bonded_ia_parameters const *const iaparams) {
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d> result;
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
-    result = calc_angle_harmonic_3body_forces(p_mid->r.p, p_left->r.p,
-                                              p_right->r.p, iaparams);
+    result = calc_angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSINE:
-    result = calc_angle_cosine_3body_forces(p_mid->r.p, p_left->r.p,
-                                            p_right->r.p, iaparams);
+    result = calc_angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSSQUARE:
-    result = calc_angle_cossquare_3body_forces(p_mid->r.p, p_left->r.p,
-                                               p_right->r.p, iaparams);
+    result = calc_angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
     break;
   case BONDED_IA_TABULATED_ANGLE:
-    result = calc_angle_3body_tabulated_forces(p_mid->r.p, p_left->r.p,
-                                               p_right->r.p, iaparams);
+    result = calc_angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
     break;
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
-            WARNING: Bond type %d, atom %d unhandled, Atom 2: %d\n",
-            iaparams->type, p_mid->p.identity, p_left->p.identity);
+            WARNING: Bond type %d unhandled\n",
+            iaparams->type);
     result = std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
                              Utils::Vector3d{});
     break;
@@ -213,7 +207,7 @@ inline void add_three_body_bonded_stress(Particle const *const p1) {
 
     Utils::Vector3d force1, force2, force3;
     std::tie(force1, force2, force3) =
-        calc_three_body_bonded_forces(p1, p2, p3, iaparams);
+        calc_three_body_bonded_forces(p1->r.p, p2->r.p, p3->r.p, iaparams);
     /* three-body bonded interactions contribute to the stress but not the
      * scalar pressure */
     for (int k = 0; k < 3; k++) {

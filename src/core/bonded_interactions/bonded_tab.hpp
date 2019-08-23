@@ -33,8 +33,6 @@
 #include "angle_common.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/dihedral.hpp"
-#include "debug.hpp"
-#include "particle_data.hpp"
 #include <tuple>
 
 #include <utils/constants.hpp>
@@ -132,36 +130,35 @@ calc_angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
 }
 
 /** Compute the three-body angle interaction force.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @return the forces on the second, first and third particles.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_tab_angle_force(Particle const *const p_mid, Particle const *const p_left,
-                     Particle const *const p_right,
+calc_tab_angle_force(Utils::Vector3d const &r_mid,
+                     Utils::Vector3d const &r_left,
+                     Utils::Vector3d const &r_right,
                      Bonded_ia_parameters const *const iaparams) {
 
-  return calc_angle_3body_tabulated_forces(p_mid->r.p, p_left->r.p,
-                                           p_right->r.p, iaparams);
+  return calc_angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Compute the three-body angle interaction energy.
  *  It is assumed that the potential is tabulated
  *  for all angles between 0 and Pi.
  *
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  */
-inline double tab_angle_energy(Particle const *const p_mid,
-                               Particle const *const p_left,
-                               Particle const *const p_right,
+inline double tab_angle_energy(Utils::Vector3d const &r_mid,
+                               Utils::Vector3d const &r_left,
+                               Utils::Vector3d const &r_right,
                                Bonded_ia_parameters const *const iaparams) {
-  auto const vectors =
-      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
+  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   /* calculate phi */
 #ifdef TABANGLEMINUS
@@ -176,17 +173,17 @@ inline double tab_angle_energy(Particle const *const p_mid,
 /** Compute the four-body dihedral interaction force.
  *  This function is not tested yet.
  *
- *  @param[in]  p2        Second particle.
- *  @param[in]  p1        First particle.
- *  @param[in]  p3        Third particle.
- *  @param[in]  p4        Fourth particle.
+ *  @param[in]  r1        Position of the first particle.
+ *  @param[in]  r2        Position of the second particle.
+ *  @param[in]  r3        Position of the third particle.
+ *  @param[in]  r4        Position of the fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
  *  @return the forces on @p p2, @p p1, @p p3
  */
 inline boost::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-calc_tab_dihedral_force(Particle const *const p2, Particle const *const p1,
-                        Particle const *const p3, Particle const *const p4,
+calc_tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                        Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                         Bonded_ia_parameters const *const iaparams) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
@@ -197,7 +194,7 @@ calc_tab_dihedral_force(Particle const *const p2, Particle const *const p1,
   auto const *tab_pot = iaparams->p.tab.pot;
 
   /* dihedral angle */
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cos_phi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
@@ -227,15 +224,15 @@ calc_tab_dihedral_force(Particle const *const p2, Particle const *const p1,
 /** Compute the four-body dihedral interaction energy.
  *  This function is not tested yet.
  *
- *  @param[in]  p2        Second particle.
- *  @param[in]  p1        First particle.
- *  @param[in]  p3        Third particle.
- *  @param[in]  p4        Fourth particle.
+ *  @param[in]  r1        Position of the first particle.
+ *  @param[in]  r2        Position of the second particle.
+ *  @param[in]  r3        Position of the third particle.
+ *  @param[in]  r4        Position of the fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
  */
 inline boost::optional<double>
-tab_dihedral_energy(Particle const *const p2, Particle const *const p1,
-                    Particle const *const p3, Particle const *const p4,
+tab_dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                    Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                     Bonded_ia_parameters const *const iaparams) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
@@ -243,7 +240,7 @@ tab_dihedral_energy(Particle const *const p2, Particle const *const p1,
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi;
   auto const *tab_pot = iaparams->p.tab.pot;
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cos_phi, &phi);
   auto const energy = tab_pot->energy(phi);
   return energy;

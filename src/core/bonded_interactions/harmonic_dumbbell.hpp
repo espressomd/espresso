@@ -27,13 +27,10 @@
  *  Implementation in \ref harmonic_dumbbell.cpp.
  */
 
-/************************************************************/
-
 #include "config.hpp"
 
 #ifdef ROTATION
 #include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/sqr.hpp>
 
@@ -45,14 +42,14 @@
 int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
                                  double r_cut);
 
-/** Compute the harmonic dumbbell bond force and update torque.
- *  @param[in,out]  p1        First particle, torque gets updated.
- *  @param[in]      iaparams  Bonded parameters for the pair interaction.
- *  @param[in]      dx        %Distance between the particles.
+/** Compute the harmonic dumbbell bond force and torque.
+ *  @param[in]  director  Director of the particle.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
  *  @return the force and torque
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
-calc_harmonic_dumbbell_pair_force(Particle const *const p1,
+calc_harmonic_dumbbell_pair_force(Utils::Vector3d const &director,
                                   Bonded_ia_parameters const *const iaparams,
                                   Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
@@ -68,19 +65,19 @@ calc_harmonic_dumbbell_pair_force(Particle const *const p1,
   auto const force = fac * dx;
 
   auto const dhat = dx * normalizer;
-  auto const da = vector_product(dhat, p1->r.calc_director());
+  auto const da = vector_product(dhat, director);
   auto const torque = iaparams->p.harmonic_dumbbell.k2 * da;
 
   return std::make_tuple(force, torque);
 }
 
 /** Compute the harmonic dumbbell bond energy.
- *  @param[in]  p1        First particle.
+ *  @param[in]  director  Director of the particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-harmonic_dumbbell_pair_energy(Particle const *const p1,
+harmonic_dumbbell_pair_energy(Utils::Vector3d const &director,
                               Bonded_ia_parameters const *const iaparams,
                               Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
@@ -91,7 +88,6 @@ harmonic_dumbbell_pair_energy(Particle const *const p1,
   }
 
   auto const dhat = dx / dist;
-  auto const director = p1->r.calc_director();
   auto const da = vector_product(dhat, director);
   auto const torque = iaparams->p.harmonic_dumbbell.k2 * da;
   auto const diff = dhat - director;

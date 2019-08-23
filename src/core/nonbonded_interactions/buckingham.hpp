@@ -30,7 +30,6 @@
 
 #ifdef BUCKINGHAM
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 
 int buckingham_set_params(int part_type_a, int part_type_b, double A, double B,
@@ -49,10 +48,8 @@ inline double buck_energy_r(double A, double B, double C, double D,
   return (A * exp(-B * r) - C / pow(r, 6) - D / pow(r, 4) + shift);
 }
 
-/** Calculate Buckingham force between particle p1 and p2. */
-inline Utils::Vector3d add_buck_pair_force(Particle const *const p1,
-                                           Particle const *const p2,
-                                           IA_parameters const *const ia_params,
+/** Calculate Buckingham force */
+inline Utils::Vector3d add_buck_pair_force(IA_parameters const *const ia_params,
                                            Utils::Vector3d const &d,
                                            double dist) {
   if (dist < ia_params->buckingham.cut) {
@@ -64,11 +61,6 @@ inline Utils::Vector3d add_buck_pair_force(Particle const *const p1,
           buck_force_r(ia_params->buckingham.A, ia_params->buckingham.B,
                        ia_params->buckingham.C, ia_params->buckingham.D, dist) /
           dist;
-#ifdef LJ_WARN_WHEN_CLOSE
-      if (fac * dist > 1000)
-        fprintf(stderr, "%d: BUCK-Warning: Pair (%d-%d) force=%f dist=%f\n",
-                this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
     } else {
       /* resulting force/energy in the linear region*/
       fac = -ia_params->buckingham.F2 / dist;
@@ -80,11 +72,9 @@ inline Utils::Vector3d add_buck_pair_force(Particle const *const p1,
   return {};
 }
 
-/** calculate Buckingham energy between particle p1 and p2. */
-inline double buck_pair_energy(Particle const *const p1,
-                               Particle const *const p2,
-                               IA_parameters const *const ia_params,
-                               Utils::Vector3d const &d, double dist) {
+/** Calculate Buckingham energy */
+inline double buck_pair_energy(IA_parameters const *const ia_params,
+                               double dist) {
   if (dist < ia_params->buckingham.cut) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */

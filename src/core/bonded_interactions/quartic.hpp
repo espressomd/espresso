@@ -26,11 +26,7 @@
  *  Implementation in \ref quartic.cpp.
  */
 
-/************************************************************/
-
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>

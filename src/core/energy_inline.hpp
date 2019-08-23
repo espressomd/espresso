@@ -75,15 +75,13 @@
  *  @param ia_params  the interaction parameters between the two particles
  *  @param d          vector between p1 and p2.
  *  @param dist       distance between p1 and p2.
- *  @param dist2      distance squared between p1 and p2.
  *  @return the short-range interaction energy between the two particles
  */
 inline double calc_non_bonded_pair_energy(Particle const *const p1,
                                           Particle const *const p2,
                                           IA_parameters const *const ia_params,
                                           Utils::Vector3d const &d,
-                                          double const dist,
-                                          double const dist2) {
+                                          double const dist) {
 #ifdef NO_INTRA_NB
   if (p1->p.mol_id == p2->p.mol_id)
     return 0;
@@ -97,57 +95,57 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
 #endif
 #ifdef WCA
   /* WCA */
-  ret += wca_pair_energy(p1, p2, ia_params, d, dist);
+  ret += wca_pair_energy(ia_params, dist);
 #endif
 
 #ifdef LENNARD_JONES_GENERIC
   /* Generic Lennard-Jones */
-  ret += ljgen_pair_energy(p1, p2, ia_params, d, dist);
+  ret += ljgen_pair_energy(ia_params, dist);
 #endif
 
 #ifdef SMOOTH_STEP
   /* smooth step */
-  ret += SmSt_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += SmSt_pair_energy(ia_params, dist);
 #endif
 
 #ifdef HERTZIAN
   /* Hertzian potential */
-  ret += hertzian_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += hertzian_pair_energy(ia_params, dist);
 #endif
 
 #ifdef GAUSSIAN
   /* Gaussian potential */
-  ret += gaussian_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += gaussian_pair_energy(ia_params, dist);
 #endif
 
 #ifdef BMHTF_NACL
   /* BMHTF NaCl */
-  ret += BMHTF_pair_energy(p1, p2, ia_params, d, dist, dist2);
+  ret += BMHTF_pair_energy(ia_params, dist);
 #endif
 
 #ifdef MORSE
   /* Morse */
-  ret += morse_pair_energy(p1, p2, ia_params, d, dist);
+  ret += morse_pair_energy(ia_params, dist);
 #endif
 
 #ifdef BUCKINGHAM
   /* Buckingham */
-  ret += buck_pair_energy(p1, p2, ia_params, d, dist);
+  ret += buck_pair_energy(ia_params, dist);
 #endif
 
 #ifdef SOFT_SPHERE
   /* soft-sphere */
-  ret += soft_pair_energy(p1, p2, ia_params, d, dist);
+  ret += soft_pair_energy(ia_params, dist);
 #endif
 
 #ifdef HAT
   /* hat */
-  ret += hat_pair_energy(p1, p2, ia_params, d, dist);
+  ret += hat_pair_energy(ia_params, dist);
 #endif
 
 #ifdef LJCOS2
   /* Lennard-Jones */
-  ret += ljcos2_pair_energy(p1, p2, ia_params, d, dist);
+  ret += ljcos2_pair_energy(ia_params, dist);
 #endif
 
 #ifdef THOLE
@@ -157,17 +155,18 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
 
 #ifdef TABULATED
   /* tabulated */
-  ret += tabulated_pair_energy(p1, p2, ia_params, d, dist);
+  ret += tabulated_pair_energy(ia_params, dist);
 #endif
 
 #ifdef LJCOS
   /* Lennard-Jones cosine */
-  ret += ljcos_pair_energy(p1, p2, ia_params, d, dist);
+  ret += ljcos_pair_energy(ia_params, dist);
 #endif
 
 #ifdef GAY_BERNE
   /* Gay-Berne */
-  ret += gb_pair_energy(p1, p2, ia_params, d, dist);
+  ret += gb_pair_energy(p1->r.calc_director(), p2->r.calc_director(), ia_params,
+                        d, dist);
 #endif
 
   return ret;
@@ -191,7 +190,7 @@ inline void add_non_bonded_pair_energy(Particle const *const p1,
   if (do_nonbonded(p1, p2))
 #endif
     *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
-        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist, dist2);
+        calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist);
 
 #ifdef ELECTROSTATICS
   energy.coulomb[0] +=
@@ -259,7 +258,8 @@ inline void add_bonded_energy(Particle const *const p1) {
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
-        retval = harmonic_dumbbell_pair_energy(p1, iaparams, dx);
+        retval = harmonic_dumbbell_pair_energy(
+            p1->r.calc_director(), iaparams, dx);
         break;
 #endif
       case BONDED_IA_HARMONIC:
@@ -270,7 +270,7 @@ inline void add_bonded_energy(Particle const *const p1) {
         break;
 #ifdef ELECTROSTATICS
       case BONDED_IA_BONDED_COULOMB:
-        retval = bonded_coulomb_pair_energy(p1, p2, iaparams, dx);
+        retval = bonded_coulomb_pair_energy(p1->p.q * p2->p.q, iaparams, dx);
         break;
       case BONDED_IA_BONDED_COULOMB_SR:
         retval = bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx);
@@ -278,7 +278,7 @@ inline void add_bonded_energy(Particle const *const p1) {
 #endif
 #ifdef LENNARD_JONES
       case BONDED_IA_SUBT_LJ:
-        retval = subt_lj_pair_energy(p1, p2, iaparams, dx);
+        retval = subt_lj_pair_energy(get_ia_param(p1->p.type, p2->p.type), dx);
         break;
 #endif
 #ifdef BOND_CONSTRAINT
@@ -291,7 +291,7 @@ inline void add_bonded_energy(Particle const *const p1) {
         break;
 #ifdef UMBRELLA
       case BONDED_IA_UMBRELLA:
-        retval = umbrella_pair_energy(p1, p2, iaparams, dx);
+        retval = umbrella_pair_energy(iaparams, dx);
         break;
 #endif
       case BONDED_IA_VIRTUAL_BOND:
@@ -307,19 +307,19 @@ inline void add_bonded_energy(Particle const *const p1) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
         retval = boost::optional<double>(
-            angle_harmonic_energy(p1, p2, p3, iaparams));
+            angle_harmonic_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
         break;
       case BONDED_IA_ANGLE_COSINE:
-        retval =
-            boost::optional<double>(angle_cosine_energy(p1, p2, p3, iaparams));
+        retval = boost::optional<double>(
+            angle_cosine_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
         retval = boost::optional<double>(
-            angle_cossquare_energy(p1, p2, p3, iaparams));
+            angle_cossquare_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
         break;
       case BONDED_IA_TABULATED_ANGLE:
-        retval =
-            boost::optional<double>(tab_angle_energy(p1, p2, p3, iaparams));
+        retval = boost::optional<double>(
+            tab_angle_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
@@ -330,10 +330,10 @@ inline void add_bonded_energy(Particle const *const p1) {
     else if (n_partners == 3) {
       switch (type) {
       case BONDED_IA_DIHEDRAL:
-        retval = dihedral_energy(p2, p1, p3, p4, iaparams);
+        retval = dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         break;
       case BONDED_IA_TABULATED_DIHEDRAL:
-        retval = tab_dihedral_energy(p1, p2, p3, p4, iaparams);
+        retval = tab_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type

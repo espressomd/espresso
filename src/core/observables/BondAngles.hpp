@@ -16,8 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef OBSERVABLES_PARTICLEANGLES_HPP
-#define OBSERVABLES_PARTICLEANGLES_HPP
+#ifndef OBSERVABLES_BONDANGLES_HPP
+#define OBSERVABLES_BONDANGLES_HPP
 
 #include "PidObservable.hpp"
 #include <utils/Vector.hpp>
@@ -31,7 +31,7 @@ namespace Observables {
  *  For @f$ n @f$ bonded particles, return the @f$ n-2 @f$ angles along the
  *  chain, in radians.
  */
-class ParticleAngles : public PidObservable {
+class BondAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
