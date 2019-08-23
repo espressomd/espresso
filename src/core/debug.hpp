@@ -57,13 +57,6 @@ extern int regular_exit;
  */
 extern int check_id;
 
-#ifdef ESIF_DEBUG
-#define ESIF_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-#define ESIF_TRACE(cmd)
-#endif
-
 #ifdef COMM_DEBUG
 #define COMM_TRACE(cmd)                                                        \
   { cmd; }
@@ -127,13 +120,6 @@ extern int check_id;
 #else
 /** Equals { cmd } iff P3M_DEBUG is set. */
 #define P3M_TRACE(cmd)
-#endif
-
-#ifdef MDLC_DEBUG
-#define MDLC_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-#define MDLC_TRACE(cmd)
 #endif
 
 #ifdef RANDOM_DEBUG

@@ -83,6 +83,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef CUDA
 #define CUDA_DEBUG
 #endif
-#define ESIF_DEBUG
 
 #define ONEPART_DEBUG

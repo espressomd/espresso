@@ -485,8 +485,6 @@ int mdlc_tune(double error) {
   double de, n, gc, lz, lx, a, fa1, fa2, fa0, h;
   int kc, limitkc = 200, flag;
 
-  MDLC_TRACE(fprintf(stderr, "%d: mdlc_tune().\n", this_node));
-
   n = (double)n_part;
   lz = box_geo.length()[2];
 
@@ -539,8 +537,6 @@ int mdlc_tune(double error) {
 
   dlc_params.far_cut = kc;
 
-  MDLC_TRACE(fprintf(stderr, "%d: done mdlc_tune().\n", this_node));
-
   return ES_OK;
 }
 
@@ -559,7 +555,6 @@ int mdlc_sanity_checks() {
 }
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
-  MDLC_TRACE(fprintf(stderr, "%d: mdlc_set_params().\n", this_node));
 
   dlc_params.maxPWerror = maxPWerror;
   dlc_params.gap_size = gap_size;
