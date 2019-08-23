@@ -33,6 +33,7 @@ extern int n_thermalized_bonds;
 
 #include "bonded_interaction_data.hpp"
 #include "integrate.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
 
 #include <Random123/philox.h>

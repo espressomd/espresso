@@ -64,9 +64,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define VIRTUAL_SITES_RELATIVE
 
 #define EXPERIMENTAL_FEATURES
-// DEBUG Switches
-#define LJ_WARN_WHEN_CLOSE
 
+// DEBUG Switches
 #define COMM_DEBUG
 #define EVENT_DEBUG
 #define CELL_DEBUG

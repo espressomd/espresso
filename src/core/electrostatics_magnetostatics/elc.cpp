@@ -1418,8 +1418,8 @@ void ELC_p3m_charge_assign_image(const ParticleRange &particles) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
-                                                  const Particle *p2,
+void ELC_P3M_dielectric_layers_force_contribution(Particle const *const p1,
+                                                  Particle const *const p2,
                                                   Utils::Vector3d &force1,
                                                   Utils::Vector3d &force2) {
   Utils::Vector3d pos;
@@ -1468,8 +1468,8 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
 
 /////////////////////////////////////////////////////////////////////////////////////
 
-double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
-                                                     const Particle *p2) {
+double ELC_P3M_dielectric_layers_energy_contribution(Particle const *const p1,
+                                                     Particle const *const p2) {
   Utils::Vector3d pos;
   double q;
   double tp2;
