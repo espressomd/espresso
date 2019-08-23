@@ -31,7 +31,6 @@
 
 #ifdef LJCOS
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
@@ -61,12 +60,6 @@ inline void add_ljcos_pair_force(Particle const *const p1,
       auto const fac =
           48.0 * ia_params->ljcos.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
       force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-      if (fac * dist > 1000)
-        fprintf(stderr, "%d: LJCOS-Warning: Pair (%d-%d) force=%f dist=%f\n",
-                this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
     }
   }
 }
@@ -90,8 +83,6 @@ inline double ljcos_pair_energy(Particle const *const p1,
                         1.);
       return fac;
     }
-    /* this should not happen! */
-    fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
   }
   return 0.0;
 }

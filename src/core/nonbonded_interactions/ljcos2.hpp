@@ -34,7 +34,6 @@
 
 #ifdef LJCOS2
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
@@ -63,12 +62,6 @@ inline void add_ljcos2_pair_force(Particle const *const p1,
           sin(M_PI * (r_off - ia_params->ljcos2.rchange) / ia_params->ljcos2.w);
     }
     force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-    if (fac * dist > 1000)
-      fprintf(stderr, "%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
-              this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
   }
 }
 

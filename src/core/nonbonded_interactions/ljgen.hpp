@@ -40,7 +40,6 @@
  *  Implementation in \ref ljgen.cpp.
  */
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 
 #include "particle_data.hpp"
@@ -83,12 +82,6 @@ inline void add_ljgen_pair_force(Particle const *const p1,
                             pow(frac, ia_params->ljgen.a2)) /
                      (r_off * dist);
     force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-    if (fac * dist > 1000)
-      fprintf(stderr, "%d: LJ-Gen-Warning: Pair (%d-%d) force=%f dist=%f\n",
-              this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
   }
 }
 

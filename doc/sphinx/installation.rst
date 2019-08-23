@@ -529,10 +529,6 @@ section :ref:`Isotropic non-bonded interactions`):
 
 Some of the short-range interactions have additional features:
 
--  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones
-   potentials that prints a warning if particles come so close to each other
-   that the simulation becomes unphysical.
-
 -  ``LJGEN_SOFTCORE`` This modifies the generic Lennard-Jones potential
    (``LENNARD_JONES_GENERIC``) with tunable parameters.
 

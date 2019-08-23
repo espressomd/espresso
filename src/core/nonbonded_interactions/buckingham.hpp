@@ -66,11 +66,6 @@ inline void add_buck_pair_force(Particle const *const p1,
                        ia_params->buckingham.C, ia_params->buckingham.D, dist) /
           dist;
       force += fac * d;
-#ifdef LJ_WARN_WHEN_CLOSE
-      if (fac * dist > 1000)
-        fprintf(stderr, "%d: BUCK-Warning: Pair (%d-%d) force=%f dist=%f\n",
-                this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
     } else {
       /* resulting force/energy in the linear region*/
       fac = -ia_params->buckingham.F2 / dist;

@@ -31,7 +31,6 @@
 
 #ifdef MORSE
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
@@ -50,12 +49,6 @@ inline void add_morse_pair_force(Particle const *const p1,
     double fac = -ia_params->morse.eps * 2.0 * ia_params->morse.alpha *
                  (add - Utils::sqr(add)) / dist;
     force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-    if (fac * dist > 1000)
-      fprintf(stderr, "%d: Morse-Warning: Pair (%d-%d) force=%f dist=%f\n",
-              this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
   }
 }
 
