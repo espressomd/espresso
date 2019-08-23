@@ -53,10 +53,6 @@ extern int this_node;
  */
 extern int regular_exit;
 
-/** Identity of the particle to check extensively if ONEPART_DEBUG is defined.
- */
-extern int check_id;
-
 #ifdef COMM_DEBUG
 #define COMM_TRACE(cmd)                                                        \
   { cmd; }
@@ -134,13 +130,6 @@ extern int check_id;
   { cmd; }
 #else
 #define THERMO_TRACE(cmd)
-#endif
-
-#ifdef ONEPART_DEBUG
-#define ONEPART_TRACE(cmd)                                                     \
-  { cmd; }
-#else
-#define ONEPART_TRACE(cmd)
 #endif
 
 #ifdef POLY_DEBUG

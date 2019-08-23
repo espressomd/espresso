@@ -128,11 +128,6 @@ CUDA_DEBUG
 H5MD_DEBUG
 
 
-/* Single particle debugging */
-ONEPART_DEBUG
-// which particle id to debug
-//#define ONEPART_DEBUG_ID 13
-
 # External switches
 # Switches that are set by configure or gcc, not to be set manually
 CUDA external

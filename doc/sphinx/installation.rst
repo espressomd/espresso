@@ -576,9 +576,6 @@ looking directly at the code.
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
 
--  ``ONEPART_DEBUG`` Define to a number of a particle to obtain output on the forces
-   calculated for this particle.
-
 -  ``POLY_DEBUG``
 
 -  ``MOLFORCES_DEBUG``
@@ -600,8 +597,6 @@ looking directly at the code.
 -  ``CUDA_DEBUG``
 
 -  ``H5MD_DEBUG``
-
--  ``ONEPART_DEBUG_ID`` Use this define to supply a particle ID for which to output debug messages. For example: ``#define ONEPART_DEBUG_ID 13``
 
 
 

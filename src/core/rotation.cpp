@@ -212,9 +212,6 @@ void propagate_omega_quat_particle(Particle *p) {
   for (int j = 0; j < 3; j++) {
     p->m.omega[j] += time_step_half * Wd[j];
   }
-  ONEPART_TRACE(if (p->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",
-                            this_node, p->m.v[0], p->m.v[1], p->m.v[2]));
 
   p->r.quat[0] +=
       time_step * (Qd[0] + time_step_half * Qdd[0]) - lambda * p->r.quat[0];
@@ -304,10 +301,6 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
     }
 #endif
 
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
-
     // Propagation of angular velocities
     p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
     p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
@@ -333,9 +326,6 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
 
       p.m.omega = omega_0 + time_step_half * Wd;
     }
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
-        p.m.v[1], p.m.v[2]));
   }
 }
 
