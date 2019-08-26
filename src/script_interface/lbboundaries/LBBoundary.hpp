@@ -71,7 +71,8 @@ public:
         const auto agrid = lb_lbfluid_get_agrid();
         const auto tau = lb_lbfluid_get_tau();
         const double unit_conversion =
-            agrid * agrid * agrid * agrid / rho / tau / tau;
+            agrid / tau / tau * agrid * agrid * agrid;
+        // agrid * agrid * agrid * agrid / rho / tau / tau;
         return m_lbboundary->get_force() * unit_conversion;
       }
       return none;

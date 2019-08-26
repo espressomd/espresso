@@ -91,6 +91,7 @@ set(EspressoCore_SRC
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lb_boundaries.cpp
+  grid_based_algorithms/lbboundaries/LBBoundary.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/LbWalberla.cpp
   grid_based_algorithms/lb_walberla_instance.cpp

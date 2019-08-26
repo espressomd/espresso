@@ -123,5 +123,12 @@ class LBCPUStokes(ut.TestCase, Stokes):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
+class LBWalberlaStokes(ut.TestCase, Stokes):
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+
+
 if __name__ == "__main__":
     ut.main()
