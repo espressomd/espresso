@@ -229,16 +229,42 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(type(system.lbboundaries[0].shape), Wall)
 
     def test_constraints(self):
-        self.assertEqual(len(system.constraints), 2)
-        c0 = system.constraints[0]
-        c1 = system.constraints[1]
-        self.assertEqual(type(c0.shape), Sphere)
-        self.assertAlmostEqual(c0.shape.radius, 0.1, delta=1E-10)
-        self.assertEqual(c0.particle_type, 17)
+        from espressomd import constraints
+        self.assertEqual(len(system.constraints), 7)
+        c = system.constraints
+
+        self.assertEqual(type(c[0].shape), Sphere)
+        self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
+        self.assertEqual(c[0].particle_type, 17)
         
-        self.assertEqual(type(c1.shape), Wall)
-        np.testing.assert_allclose(np.copy(c1.shape.normal),
+        self.assertEqual(type(c[1].shape), Wall)
+        np.testing.assert_allclose(np.copy(c[1].shape.normal),
                                    [1. / np.sqrt(3)] * 3)
+
+        self.assertEqual(type(c[2]), constraints.Gravity)
+        np.testing.assert_allclose(np.copy(c[2].g), [1., 2., 3.])
+
+        self.assertEqual(type(c[3]), constraints.HomogeneousMagneticField)
+        np.testing.assert_allclose(np.copy(c[3].H), [1., 2., 3.])
+
+        self.assertEqual(type(c[4]), constraints.HomogeneousFlowField)
+        np.testing.assert_allclose(np.copy(c[4].u), [1., 2., 3.])
+        self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
+
+        self.assertEqual(type(c[5]), constraints.ElectricPlaneWave)
+        np.testing.assert_allclose(np.copy(c[5].E0), [1., -2., 3.])
+        np.testing.assert_allclose(np.copy(c[5].k), [-.1, .2, .3])
+        self.assertAlmostEqual(c[5].omega, 5., delta=1E-10)
+        self.assertAlmostEqual(c[5].phi, 1.4, delta=1E-10)
+
+        self.assertEqual(type(c[6]), constraints.ElectricPotential)
+        self.assertEqual(c[6].field.shape, (14, 16, 18, 1))
+        np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
+        np.testing.assert_allclose(np.copy(c[6].grid_spacing), np.ones(3))
+        ref_pot = constraints.ElectricPotential(
+            field=field_data, grid_spacing=np.ones(3))
+        np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_pot.field),
+                                   atol=1e-10)
 
 if __name__ == '__main__':
     ut.main()
