@@ -51,13 +51,20 @@ void deep_copy(boost::multi_array<T, 3> &dst,
 } // namespace detail
 
 /**
- * @brief A vector field interpolated from a regular grid.
+ *  @brief A vector or scalar field interpolated from a regular grid.
  *
- * This is an interpolation wrapper around a boost::multi_array,
- * which can be evaluated on any point in space by spline interpolation.
+ *  This is an interpolation wrapper around a boost::multi_array,
+ *  which can be evaluated on any point in space by spline interpolation.
+ *
+ *  @tparam T      Underlying type of the field values, see @ref value_type
+ *  @tparam codim  Dimension of the field: 3 for a vector field,
+ *                 1 for a scalar field.
  */
 template <typename T, size_t codim> class Interpolated {
 public:
+  /** Type of the values, usually @ref Utils::Vector<T, 3> for vector fields
+   *  and @p T for scalar fields
+   */
   using value_type =
       typename Utils::decay_to_scalar<Utils::Vector<T, codim>>::type;
   using jacobian_type = detail::jacobian_type<T, codim>;
@@ -95,6 +102,28 @@ public:
   Utils::Vector3d origin() const { return m_origin; }
   Utils::Vector3i shape() const {
     return {m_global_field.shape(), m_global_field.shape() + 3};
+  }
+
+  /** Serialize scalar field */
+  template <class Q = T>
+  typename std::enable_if<codim == 1, std::vector<Q>>::type
+  field_data_flat() const {
+    T const *data = reinterpret_cast<const T *>(m_global_field.data());
+    return std::vector<T>(data, data + m_global_field.num_elements());
+  }
+
+  /** Serialize vector field */
+  template <class Q = T>
+  typename std::enable_if<codim != 1, std::vector<Q>>::type
+  field_data_flat() const {
+    auto const &data = m_global_field.data();
+    std::vector<T> data_flat(codim * m_global_field.num_elements());
+    for (size_t i = 0; i < m_global_field.num_elements(); ++i) {
+      for (size_t j = 0; j < codim; ++j) {
+        data_flat[i * codim + j] = data[i][j];
+      }
+    }
+    return data_flat;
   }
 
   /*
