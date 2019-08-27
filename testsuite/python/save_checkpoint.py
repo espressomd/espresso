@@ -117,11 +117,16 @@ system.constraints.add(constraints.Gravity(g=[1., 2., 3.]))
 system.constraints.add(constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
 system.constraints.add(
     constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
-field_data = constraints.ElectricPotential.field_from_fn(
+pot_field_data = constraints.ElectricPotential.field_from_fn(
     system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
-checkpoint.register("field_data")
+checkpoint.register("pot_field_data")
 system.constraints.add(constraints.PotentialField(
-    field=field_data, grid_spacing=np.ones(3), default_scale=1.6))
+    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6))
+vec_field_data = constraints.ForceField.field_from_fn(
+    system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
+checkpoint.register("vec_field_data")
+system.constraints.add(constraints.ForceField(
+    field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
 if espressomd.has_features("ELECTROSTATICS"):
     system.constraints.add(constraints.ElectricPlaneWave(
         E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
