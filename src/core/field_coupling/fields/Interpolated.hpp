@@ -108,7 +108,7 @@ public:
   template <class Q = T>
   typename std::enable_if<codim == 1, std::vector<Q>>::type
   field_data_flat() const {
-    T const *data = reinterpret_cast<const T *>(m_global_field.data());
+    auto const *data = reinterpret_cast<T const *>(m_global_field.data());
     return std::vector<T>(data, data + m_global_field.num_elements());
   }
 
