@@ -54,8 +54,10 @@ int dh_set_params(double kappa, double r_cut);
     @param dist      Distance between p1 and p2.
     @param force     returns the force on particle 1.
 */
-inline void add_dh_coulomb_pair_force(double const q1q2, double const d[3],
-                                      double const dist, double force[3]) {
+inline void add_dh_coulomb_pair_force(double const q1q2,
+                                      Utils::Vector3d const &d,
+                                      double const dist,
+                                      Utils::Vector3d &force) {
   if (dist < dh_params.r_cut) {
     double fac;
     if (dh_params.kappa > 0.0) {
@@ -67,8 +69,7 @@ inline void add_dh_coulomb_pair_force(double const q1q2, double const d[3],
       /* pure Coulomb case: */
       fac = q1q2 / (dist * dist * dist);
     }
-    for (int j = 0; j < 3; j++)
-      force[j] += fac * d[j];
+    force += fac * d;
   }
 }
 

@@ -22,7 +22,7 @@ import espressomd.code_info
 from espressomd.utils cimport *
 cimport globals
 
-cdef class Integrator(object):
+cdef class Integrator:
     """
     Integrator class.
 
@@ -139,8 +139,8 @@ cdef class Integrator(object):
             The external pressure.
         piston : :obj:`float`
             The mass of the applied piston.
-        direction : :obj:`list`, optional
-            Three integers to set the box geometry for non-cubic boxes
+        direction : (3,) array_like of :obj:`int`, optional
+            Set the box geometry for non-cubic boxes.
         cubic_box : :obj:`bool`, optional
             If this optional parameter is true, a cubic box is assumed.
 

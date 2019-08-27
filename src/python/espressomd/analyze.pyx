@@ -40,7 +40,7 @@ from .system import System
 from espressomd.utils import is_valid_type
 
 
-class Analysis(object):
+class Analysis:
 
     def __init__(self, system):
         if not isinstance(system, System):
@@ -87,7 +87,8 @@ class Analysis(object):
         ----------
         p1, p2 : lists of :obj:`int`
             Particle :attr:`~espressomd.particle_data.ParticleHandle.type` in
-            both sets.
+            both sets. If both are set to ``'default'``, the minimum distance
+            of all pairs is returned.
 
         """
 
@@ -125,7 +126,8 @@ class Analysis(object):
         Parameters
         ----------
         id : :obj:`int`, optional
-            Calculate distance to particle with :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
+            Calculate distance to particle with
+            :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
         pos : array of :obj:`float`, optional
             Calculate distance to position `pos`.
 
@@ -284,9 +286,9 @@ class Analysis(object):
 
         Parameters
         ----------
-        center : array_like :obj:`float`
+        center : (3,) array_like of :obj:`float`
             Coordinates of the centre of the cylinder.
-        axis : array_like :obj:`float`
+        axis : (3,) array_like of :obj:`float`
             Axis vectory of the cylinder, does not need to be normalized.
         length : :obj:`float`
             Length of the cylinder.
@@ -722,8 +724,8 @@ class Analysis(object):
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the Mean end-to-end distance of chains and its
-        standard deviation, as well as Mean Square end-to-end distance of
+        Calculates the mean end-to-end distance of chains and its
+        standard deviation, as well as mean square end-to-end distance of
         chains and its standard deviation.
 
         This requires that a set of chains of equal length which start with the
@@ -742,9 +744,9 @@ class Analysis(object):
 
         Returns
         -------
-        array_like :obj:`float`
-            Where [0] is the Mean end-to-end distance of chains and [1] its
-            standard deviation, [2] the Mean Square end-to-end distance and
+        (4,) array_like of :obj:`float`
+            Where [0] is the mean end-to-end distance of chains and [1] its
+            standard deviation, [2] the mean square end-to-end distance and
             [3] its standard deviation.
 
         """
@@ -774,9 +776,9 @@ class Analysis(object):
 
         Returns
         -------
-        array_like :obj:`float`
-            Where [0] is the Mean radius of gyration of the chains and [1] its
-            standard deviation, [2] the Mean Square radius of gyration and [3]
+        (4,) array_like of :obj:`float`
+            Where [0] is the mean radius of gyration of the chains and [1] its
+            standard deviation, [2] the mean square radius of gyration and [3]
             its standard deviation.
 
         """
@@ -805,7 +807,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like :obj:`float`:
+        (2,) array_like of :obj:`float`:
             Where [0] is the mean hydrodynamic radius of the chains
             and [1] its standard deviation.
 
@@ -855,7 +857,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             Where [0] contains q
             and [1] contains the structure factor s(q)
 
@@ -868,11 +870,8 @@ class Analysis(object):
 
         p_types = create_int_list_from_python_object(sf_types)
 
-        sf = analyze.calc_structurefactor(
-    analyze.partCfg(),
-     p_types.e,
-     p_types.n,
-     sf_order)
+        sf = analyze.calc_structurefactor(analyze.partCfg(), p_types.e,
+                                          p_types.n, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
@@ -908,7 +907,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             Where [0] contains the midpoints of the bins,
             and [1] contains the values of the rdf.
 
@@ -967,11 +966,11 @@ class Analysis(object):
                      r_min=0.0, r_max=None, r_bins=100, log_flag=0, int_flag=0):
         """
         Calculates the distance distribution of particles (probability of
-        finding a particle of type at a certain distance around a particle of
-        type , disregarding the fact that a spherical shell of a larger radius
-        covers a larger volume) The distance is defined as the minimal distance
-        between a particle of group `type_list_a` to any of the group
-        `type_list_b`.  Returns two arrays, the bins and the (normalized)
+        finding a particle of type A at a certain distance around a particle of
+        type B, disregarding the fact that a spherical shell of a larger radius
+        covers a larger volume). The distance is defined as the minimal distance
+        between a particle of group ``type_list_a`` to any of the group
+        ``type_list_b``. Returns two arrays, the bins and the (normalized)
         distribution.
 
         Parameters
@@ -996,7 +995,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             Where [0] contains the midpoints of the bins,
             and [1] contains the values of the rdf.
 
@@ -1025,9 +1024,8 @@ class Analysis(object):
         p2_types = create_int_list_from_python_object(type_list_b)
 
         analyze.calc_part_distribution(
-            analyze.partCfg(
-                ), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-                                         r_min, r_max, r_bins, log_flag, & low, distribution.data())
+            analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+            r_min, r_max, r_bins, log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
             distribution.data(), r_bins)
@@ -1143,7 +1141,7 @@ class Analysis(object):
 
         Returns
         -------
-        array_like
+        :obj:`ndarray`
             3x3 moment of inertia matrix.
 
         """
@@ -1184,8 +1182,8 @@ class Analysis(object):
 
         Parameters
         ----------
-        mode : :obj:`str`
-            One of ```read```, ```set``` or ```reset```.
+        mode : :obj:`str`, \{'read', 'set' or 'reset'\}
+            Mode.
         Vk1 : :obj:`float`
             Volume.
         Vk2 : :obj:`float`

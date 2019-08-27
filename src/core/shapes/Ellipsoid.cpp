@@ -26,8 +26,8 @@
 #include <cmath>
 
 namespace Shapes {
-void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                               double *vec) const {
+void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                               Utils::Vector3d &vec) const {
 
   /* get particle position in reference frame of ellipsoid */
   Utils::Vector3d const ppos_e = pos - m_center;
@@ -55,10 +55,9 @@ void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double *dist,
   for (int i = 0; i < 3; i++) {
     vec[i] = (ppos_e[i] - Utils::sqr(m_semiaxes[i]) * ppos_e[i] /
                               (l + Utils::sqr(m_semiaxes[i])));
-    distance += Utils::sqr(vec[i]);
   }
 
-  *dist = distance_prefactor * m_direction * std::sqrt(distance);
+  dist = distance_prefactor * m_direction * vec.norm();
 }
 
 bool Ellipsoid::inside_ellipsoid(const Utils::Vector3d &ppos) const {

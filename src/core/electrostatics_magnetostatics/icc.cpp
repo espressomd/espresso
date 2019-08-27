@@ -55,7 +55,8 @@ iccp3m_struct iccp3m_cfg;
 
 /* functions that are used in icc* to compute the electric field acting on the
  * induced charges, excluding forces other than the electrostatic ones */
-void init_forces_iccp3m();
+void init_forces_iccp3m(const ParticleRange &particles,
+                        const ParticleRange &ghosts_particles);
 
 /** Calculation of the electrostatic forces between source charges (= real
  * charges) and wall charges. For each electrostatic method the proper functions
@@ -63,13 +64,14 @@ void init_forces_iccp3m();
  * directly, short range parts need helper functions according to the particle
  * data organisation. A modified version of \ref force_calc in \ref forces.hpp.
  */
-void force_calc_iccp3m();
+void force_calc_iccp3m(const ParticleRange &particles,
+                       const ParticleRange &ghost_particles);
 
 /** Variant of add_non_bonded_pair_force where only Coulomb
  *  contributions are calculated   */
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
-                                             double d[3], double dist,
-                                             double dist2) {
+                                             Utils::Vector3d const &d,
+                                             double dist, double dist2) {
   Utils::Vector3d force{};
   Coulomb::calc_pair_force(p1, p2, d, dist, force);
 
@@ -86,7 +88,8 @@ void iccp3m_alloc_lists() {
   iccp3m_cfg.sigma.resize(n_ic);
 }
 
-int iccp3m_iteration(const ParticleRange &particles) {
+int iccp3m_iteration(const ParticleRange &particles,
+                     const ParticleRange &ghost_particles) {
   if (iccp3m_cfg.n_ic == 0)
     return 0;
 
@@ -105,8 +108,8 @@ int iccp3m_iteration(const ParticleRange &particles) {
   for (int j = 0; j < iccp3m_cfg.num_iteration; j++) {
     double hmax = 0.;
 
-    force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
-                            source source interaction*/
+    force_calc_iccp3m(particles, ghost_particles); /* Calculate electrostatic
+                            forces (SR+LR) excluding source source interaction*/
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     double diff = 0;
@@ -188,24 +191,26 @@ int iccp3m_iteration(const ParticleRange &particles) {
   return iccp3m_cfg.citeration;
 }
 
-void force_calc_iccp3m() {
-  init_forces_iccp3m();
+void force_calc_iccp3m(const ParticleRange &particles,
+                       const ParticleRange &ghost_particles) {
+  init_forces_iccp3m(particles, ghost_particles);
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
     /* calc non bonded interactions */
-    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21.data(),
-                                     sqrt(d.dist2), d.dist2);
+    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                     d.dist2);
   });
 
-  Coulomb::calc_long_range_force();
+  Coulomb::calc_long_range_force(particles);
 }
 
-void init_forces_iccp3m() {
-  for (auto &p : local_cells.particles()) {
+void init_forces_iccp3m(const ParticleRange &particles,
+                        const ParticleRange &ghosts_particles) {
+  for (auto &p : particles) {
     p.f = ParticleForce{};
   }
 
-  for (auto &p : ghost_cells.particles()) {
+  for (auto &p : ghosts_particles) {
     p.f = ParticleForce{};
   }
 }

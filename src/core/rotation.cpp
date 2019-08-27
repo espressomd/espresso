@@ -53,6 +53,7 @@
 #include "thermostat.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
 #include <cstdio>
@@ -112,37 +113,6 @@ int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
   quat[3] = cos(theta2) * sin(phi2);
 
   return 0;
-}
-
-/** Here we use quaternions to calculate the rotation matrix which
-    will be used then to transform torques from the laboratory to
-    the body-fixed frames.
-    Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 Eq. 4.47).
-*/
-void define_rotation_matrix(Particle const &p, double A[9]) {
-  double q0q0 = p.r.quat[0];
-  q0q0 *= q0q0;
-
-  double q1q1 = p.r.quat[1];
-  q1q1 *= q1q1;
-
-  double q2q2 = p.r.quat[2];
-  q2q2 *= q2q2;
-
-  double q3q3 = p.r.quat[3];
-  q3q3 *= q3q3;
-
-  A[0 + 3 * 0] = q0q0 + q1q1 - q2q2 - q3q3;
-  A[1 + 3 * 1] = q0q0 - q1q1 + q2q2 - q3q3;
-  A[2 + 3 * 2] = q0q0 - q1q1 - q2q2 + q3q3;
-
-  A[0 + 3 * 1] = 2 * (p.r.quat[1] * p.r.quat[2] + p.r.quat[0] * p.r.quat[3]);
-  A[0 + 3 * 2] = 2 * (p.r.quat[1] * p.r.quat[3] - p.r.quat[0] * p.r.quat[2]);
-  A[1 + 3 * 0] = 2 * (p.r.quat[1] * p.r.quat[2] - p.r.quat[0] * p.r.quat[3]);
-
-  A[1 + 3 * 2] = 2 * (p.r.quat[2] * p.r.quat[3] + p.r.quat[0] * p.r.quat[1]);
-  A[2 + 3 * 0] = 2 * (p.r.quat[1] * p.r.quat[3] + p.r.quat[0] * p.r.quat[2]);
-  A[2 + 3 * 1] = 2 * (p.r.quat[2] * p.r.quat[3] - p.r.quat[0] * p.r.quat[1]);
 }
 
 /** calculate the second derivative of the quaternion of a given particle
@@ -242,9 +212,6 @@ void propagate_omega_quat_particle(Particle *p) {
   for (int j = 0; j < 3; j++) {
     p->m.omega[j] += time_step_half * Wd[j];
   }
-  ONEPART_TRACE(if (p->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",
-                            this_node, p->m.v[0], p->m.v[1], p->m.v[2]));
 
   p->r.quat[0] +=
       time_step * (Qd[0] + time_step_half * Qdd[0]) - lambda * p->r.quat[0];
@@ -254,11 +221,14 @@ void propagate_omega_quat_particle(Particle *p) {
       time_step * (Qd[2] + time_step_half * Qdd[2]) - lambda * p->r.quat[2];
   p->r.quat[3] +=
       time_step * (Qd[3] + time_step_half * Qdd[3]) - lambda * p->r.quat[3];
-  // Update the director
 
-  ONEPART_TRACE(if (p->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",
-                            this_node, p->r.p[0], p->r.p[1], p->r.p[2]));
+  /* and rescale quaternion, so it is exactly of unit length */
+  auto const scale = p->r.quat.norm();
+  if (scale == 0) {
+    p->r.quat[0] = 1;
+  } else {
+    p->r.quat /= scale;
+  }
 }
 
 inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
@@ -291,8 +261,6 @@ inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
 void convert_torques_propagate_omega(const ParticleRange &particles) {
-  INTEG_TRACE(
-      fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
 
 #if defined(CUDA) && defined(ENGINE)
   if ((lb_lbfluid_get_lattice_switch() == ActiveLB::GPU) &&
@@ -331,10 +299,6 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
     }
 #endif
 
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
-
     // Propagation of angular velocities
     p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
     p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
@@ -360,16 +324,11 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
 
       p.m.omega = omega_0 + time_step_half * Wd;
     }
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
-        p.m.v[1], p.m.v[2]));
   }
 }
 
 /** convert the torques to the body-fixed frames before the integration loop */
 void convert_initial_torques(const ParticleRange &particles) {
-
-  INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
   for (auto &p : particles) {
     if (!p.p.rotation)
       continue;
@@ -380,29 +339,13 @@ void convert_initial_torques(const ParticleRange &particles) {
 
 Utils::Vector3d convert_vector_body_to_space(const Particle &p,
                                              const Utils::Vector3d &vec) {
-  Utils::Vector3d res = {0, 0, 0};
-  double A[9];
-  define_rotation_matrix(p, A);
-
-  res[0] =
-      A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] + A[2 + 3 * 0] * vec[2];
-  res[1] =
-      A[0 + 3 * 1] * vec[0] + A[1 + 3 * 1] * vec[1] + A[2 + 3 * 1] * vec[2];
-  res[2] =
-      A[0 + 3 * 2] * vec[0] + A[1 + 3 * 2] * vec[1] + A[2 + 3 * 2] * vec[2];
-
-  return res;
+  auto const A = rotation_matrix(p.r.quat);
+  return transpose(A) * vec;
 }
 
 Utils::Vector3d convert_vector_space_to_body(const Particle &p,
                                              const Utils::Vector3d &v) {
-  Utils::Vector3d res = {0, 0, 0};
-  double A[9];
-  define_rotation_matrix(p, A);
-  res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
-  res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] + A[1 + 3 * 2] * v[2];
-  res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
-  return res;
+  return rotation_matrix(p.r.quat) * v;
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi

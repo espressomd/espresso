@@ -27,7 +27,7 @@ class ParticleSliceTest(ut.TestCase):
     system = espressomd.System(box_l=[10, 10, 10])
 
     def __init__(self, *args, **kwargs):
-        super(ParticleSliceTest, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.system.part.clear()
         for i in range(4):
             self.system.part.add(pos=[0, 0, i])

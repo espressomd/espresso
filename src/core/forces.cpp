@@ -27,6 +27,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "collision.hpp"
 #include "comfixed_global.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
@@ -63,34 +64,20 @@ void init_forces(const ParticleRange &particles) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    init_local_particle_force(&p);
+    p.f = init_local_particle_force(&p);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : ghost_cells.particles()) {
-    init_ghost_force(&p);
+    p.f = init_ghost_force(&p);
   }
 }
 
 void init_forces_ghosts(const ParticleRange &particles) {
   for (auto &p : particles) {
-    init_ghost_force(&p);
-  }
-}
-
-// This function is no longer called from force_calc().
-// The check was moved to rescale_fores() to avoid an additional iteration over
-// all particles
-void check_forces(const ParticleRange &particles,
-                  const ParticleRange &ghost_particles) {
-  for (auto &p : particles) {
-    check_particle_force(&p);
-  }
-
-  for (auto &p : ghost_particles) {
-    check_particle_force(&p);
+    p.f = init_ghost_force(&p);
   }
 }
 
@@ -105,7 +92,7 @@ void force_calc(CellStructure &cell_structure) {
 
   auto particles = cell_structure.local_cells().particles();
 #ifdef ELECTROSTATICS
-  iccp3m_iteration(particles);
+  iccp3m_iteration(particles, cell_structure.ghost_cells().particles());
 #endif
   init_forces(particles);
 
@@ -116,21 +103,33 @@ void force_calc(CellStructure &cell_structure) {
 #endif
   }
 
-  calc_long_range_forces();
+  calc_long_range_forces(particles);
 
-  // Only calculate pair forces if the maximum cutoff is >0
-  if (max_cut > 0) {
-    short_range_loop([](Particle &p) { add_single_particle_force(&p); },
-                     [](Particle &p1, Particle &p2, Distance &d) {
-                       add_non_bonded_pair_force(&(p1), &(p2), d.vec21.data(),
-                                                 sqrt(d.dist2), d.dist2);
-                     });
-  } else {
-    // Otherwise only do single-particle contributions
-    for (auto &p : particles) {
-      add_single_particle_force(&p);
-    }
-  }
+#ifdef ELECTROSTATICS
+  auto const coulomb_cutoff = Coulomb::cutoff(box_geo.length());
+#else
+  auto const coulomb_cutoff = INACTIVE_CUTOFF;
+#endif
+
+#ifdef DIPOLES
+  auto const dipole_cutoff = Dipole::cutoff(box_geo.length());
+#else
+  auto const dipole_cutoff = INACTIVE_CUTOFF;
+#endif
+
+  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
+                   [](Particle &p1, Particle &p2, Distance &d) {
+                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
+                                               sqrt(d.dist2), d.dist2);
+#ifdef COLLISION_DETECTION
+                     if (collision_params.mode != COLLISION_MODE_OFF)
+                       detect_collision(&p1, &p2, d.dist2);
+#endif
+                   },
+                   VerletCriterion{skin, cell_structure.min_range,
+                                   coulomb_cutoff, dipole_cutoff,
+                                   collision_detection_cutoff()});
+
   Constraints::constraints.add_forces(particles, sim_time);
 
 #ifdef OIF_GLOBAL_FORCES
@@ -152,7 +151,7 @@ void force_calc(CellStructure &cell_structure) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation();
 
-  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
+  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles);
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
@@ -186,21 +185,16 @@ void force_calc(CellStructure &cell_structure) {
   recalc_forces = 0;
 }
 
-void calc_long_range_forces() {
+void calc_long_range_forces(const ParticleRange &particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_force();
-/* If enabled, calculate electrostatics contribution from electrokinetics
- * species. */
-#ifdef EK_ELECTROSTATIC_COUPLING
-  ek_calculate_electrostatic_coupling();
-#endif
+  Coulomb::calc_long_range_force(particles);
 
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipole::calc_long_range_force();
+  Dipole::calc_long_range_force(particles);
 #endif /*ifdef DIPOLES */
 }

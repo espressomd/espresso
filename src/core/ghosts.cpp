@@ -25,7 +25,6 @@
  *  see \ref ghosts.hpp "ghosts.hpp"
  */
 #include "ghosts.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "errorhandling.hpp"
@@ -104,9 +103,6 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
       // sending size of bond/exclusion lists
       if (ghosts_have_bonds) {
         n_buffer_new += sizeof(int);
-#ifdef EXCLUSIONS
-        n_buffer_new += sizeof(int);
-#endif
       }
     }
     if (data_parts & GHOSTTRANS_POSITION)
@@ -165,23 +161,13 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
               s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e,
                                   pt->bl.e + pt->bl.n);
             }
-#ifdef EXCLUSIONS
-            *(int *)insert = pt->el.n;
-            insert += sizeof(int);
-            if (pt->el.n) {
-              s_bondbuffer.insert(s_bondbuffer.end(), pt->el.e,
-                                  pt->el.e + pt->el.n);
-            }
-#endif
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          auto *pp = reinterpret_cast<ParticlePosition *>(insert);
-          int i;
-          *pp = pt->r;
-          for (i = 0; i < 3; i++)
-            pp->p[i] += gc->shift[i];
+          auto pp = pt->r;
+          pp.p += gc->shift;
+          memcpy(insert, &pp, sizeof(pp));
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
           memcpy(insert, &pt->r, sizeof(ParticlePosition));
@@ -222,26 +208,26 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-  if (ghosts_have_bonds) {
-    // free all allocated information, will be resent
-    {
-      int np = cell->n;
-      Particle *part = cell->part;
-      for (int p = 0; p < np; p++) {
-        free_particle(part + p);
-      }
+  using Utils::make_span;
+  auto const old_cap = cell->max;
+
+  /* reset excess particles */
+  if (size < cell->max) {
+    for (auto &p : make_span<Particle>(cell->part + size, cell->max - size)) {
+      p = Particle{};
+      p.l.ghost = true;
     }
   }
-  cell->resize(size);
-  // invalidate pointers etc
-  {
-    int np = cell->n;
-    Particle *part = cell->part;
-    for (int p = 0; p < np; p++) {
-      auto *pt = new (&part[p]) Particle();
 
-      // init ghost variable
-      pt->l.ghost = 1;
+  /* Adapt size */
+  cell->resize(size);
+
+  /* initialize new particles */
+  if (old_cap < cell->max) {
+    auto new_parts = make_span(cell->part + old_cap, cell->max - old_cap);
+    std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
+    for (auto &p : new_parts) {
+      p.l.ghost = true;
     }
   }
 }
@@ -284,21 +270,9 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
             int n_bonds;
             memcpy(&n_bonds, retrieve, sizeof(int));
             retrieve += sizeof(int);
-            if (n_bonds) {
-              pt->bl.resize(n_bonds);
-              std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
-              bond_retrieve += n_bonds;
-            }
-#ifdef EXCLUSIONS
-            int n_exclusions;
-            memcpy(&n_exclusions, retrieve, sizeof(int));
-            retrieve += sizeof(int);
-            if (n_exclusions) {
-              pt->el.resize(n_exclusions);
-              std::copy_n(bond_retrieve, n_exclusions, pt->el.begin());
-              bond_retrieve += n_exclusions;
-            }
-#endif
+            pt->bl.resize(n_bonds);
+            std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
+            bond_retrieve += n_bonds;
           }
           if (local_particles[pt->p.identity] == nullptr) {
             local_particles[pt->p.identity] = pt;
@@ -360,7 +334,9 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
     part = gc->part_lists[pl]->part;
     for (p = 0; p < np; p++) {
       pt = &part[p];
-      pt->f += *(reinterpret_cast<ParticleForce *>(retrieve));
+      ParticleForce pf;
+      memcpy(&pf, retrieve, sizeof(pf));
+      pt->f += pf;
       retrieve += sizeof(ParticleForce);
     }
   }
@@ -399,9 +375,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
           pt2->p = pt1->p;
           if (ghosts_have_bonds) {
             pt2->bl = pt1->bl;
-#ifdef EXCLUSIONS
-            pt2->el = pt1->el;
-#endif
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
@@ -666,25 +639,5 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         }
       }
     }
-  }
-}
-
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
-    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
-void invalidate_ghosts() {
-  int c, p;
-  /* remove ghosts, but keep Real Particles */
-  for (c = 0; c < ghost_cells.n; c++) {
-    Particle *part = ghost_cells.cell[c]->part;
-    int np = ghost_cells.cell[c]->n;
-    for (p = 0; p < np; p++) {
-      /* Particle is stored as ghost in the local_particles array,
-         if the pointer stored there belongs to a ghost cell
-         particle array. */
-      if (&(part[p]) == local_particles[part[p].p.identity])
-        local_particles[part[p].p.identity] = nullptr;
-      free_particle(part + p);
-    }
-    ghost_cells.cell[c]->n = 0;
   }
 }

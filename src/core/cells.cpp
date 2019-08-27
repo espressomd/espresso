@@ -61,8 +61,6 @@ CellPList ghost_cells = {nullptr, 0, 0};
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
-double max_range = 0.0;
-
 /** On of Cells::Resort, announces the level of resort needed.
  */
 unsigned resort_particles = Cells::RESORT_NONE;
@@ -186,24 +184,26 @@ static void topology_release(int cs) {
 }
 
 /** Choose the topology init function of a certain cell system. */
-void topology_init(int cs, CellPList *local) {
+void topology_init(int cs, double range, CellPList *local) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
   switch (cs) {
+  /* Default to DD */
   case CELL_STRUCTURE_NONEYET:
+    topology_init(CELL_STRUCTURE_DOMDEC, range, local);
     break;
   case CELL_STRUCTURE_CURRENT:
-    topology_init(cell_structure.type, local);
+    topology_init(cell_structure.type, range, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(local, node_grid);
+    dd_topology_init(local, node_grid, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init(local);
     break;
   case CELL_STRUCTURE_LAYERED:
-    layered_topology_init(local, node_grid);
+    layered_topology_init(local, node_grid, range);
     break;
   default:
     fprintf(stderr,
@@ -226,6 +226,20 @@ bool topology_check_resort(int cs, bool local_resort) {
   }
 }
 
+/** Go through \ref ghost_cells and remove the ghost entries from \ref
+    local_particles. */
+static void invalidate_ghosts() {
+  for (auto const &p : ghost_cells.particles()) {
+    if (local_particles[p.identity()] == &p) {
+      local_particles[p.identity()] = {};
+    }
+  }
+
+  for (auto &c : ghost_cells) {
+    c->n = 0;
+  }
+}
+
 /*@}*/
 
 /************************************************************
@@ -234,7 +248,7 @@ bool topology_check_resort(int cs, bool local_resort) {
 
 /************************************************************/
 
-void cells_re_init(int new_cs) {
+void cells_re_init(int new_cs, double range) {
   CellPList tmp_local;
 
   CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
@@ -250,7 +264,8 @@ void cells_re_init(int new_cs) {
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(new_cs, &tmp_local);
+  topology_init(new_cs, range, &tmp_local);
+  cell_structure.min_range = range;
 
   clear_particle_node();
 
@@ -260,8 +275,6 @@ void cells_re_init(int new_cs) {
   for (auto &cell : tmp_cells) {
     cell.resize(0);
   }
-
-  CELL_TRACE(fprintf(stderr, "%d: old cells deallocated\n", this_node));
 
   /* to enforce initialization of the ghost cells */
   resort_particles = Cells::RESORT_GLOBAL;
@@ -402,7 +415,9 @@ void cells_resort_particles(int global_flag) {
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = 1;
 
-  on_resort_particles();
+  realloc_particlelist(&displaced_parts, 0);
+
+  on_resort_particles(local_cells.particles());
 
   CELL_TRACE(
       fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
@@ -411,22 +426,17 @@ void cells_resort_particles(int global_flag) {
 /*************************************************/
 
 void cells_on_geometry_change(int flags) {
-  if (max_cut > 0.0) {
-    max_range = max_cut + skin;
-  } else
-    /* if no interactions yet, we also don't need a skin */
-    max_range = 0.0;
-
-  CELL_TRACE(fprintf(stderr, "%d: on_geometry_change with max range %f\n",
-                     this_node, max_range));
+  /* Consider skin only if there are actually interactions */
+  auto const range = (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
+  cell_structure.min_range = range;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    dd_on_geometry_change(flags, node_grid);
+    dd_on_geometry_change(flags, node_grid, range);
     break;
   case CELL_STRUCTURE_LAYERED:
     /* there is no fast version, always redo everything. */
-    cells_re_init(CELL_STRUCTURE_LAYERED);
+    cells_re_init(CELL_STRUCTURE_LAYERED, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
     break;

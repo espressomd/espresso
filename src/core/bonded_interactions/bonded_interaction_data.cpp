@@ -1,47 +1,39 @@
 #include "bonded_interaction_data.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 
 #include <utils/constants.hpp>
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-void recalc_maximal_cutoff_bonded() {
-  int i;
-  double max_cut_tmp;
+double recalc_maximal_cutoff_bonded() {
+  auto max_cut_bonded = -1.;
 
-  max_cut_bonded = 0.0;
-
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
+  for (auto const &bonded_ia_param : bonded_ia_params) {
+    switch (bonded_ia_param.type) {
     case BONDED_IA_FENE:
-      max_cut_tmp =
-          bonded_ia_params[i].p.fene.r0 + bonded_ia_params[i].p.fene.drmax;
-      if (max_cut_bonded < max_cut_tmp)
-        max_cut_bonded = max_cut_tmp;
+      max_cut_bonded =
+          std::max(max_cut_bonded,
+                   bonded_ia_param.p.fene.r0 + bonded_ia_param.p.fene.drmax);
       break;
     case BONDED_IA_HARMONIC:
-      if ((bonded_ia_params[i].p.harmonic.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.harmonic.r_cut);
       break;
     case BONDED_IA_THERMALIZED_DIST:
-      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.thermalized_bond.r_cut);
       break;
     case BONDED_IA_RIGID_BOND:
-      if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
-        max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
+      max_cut_bonded =
+          std::max(max_cut_bonded, std::sqrt(bonded_ia_param.p.rigid_bond.d2));
       break;
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
-        max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
+    case BONDED_IA_TABULATED_DISTANCE:
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.tab.pot->cutoff());
       break;
     case BONDED_IA_IBM_TRIEL:
-      if (max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxDist)
-        max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxDist;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.ibm_triel.maxDist);
       break;
     default:
       break;
@@ -50,20 +42,18 @@ void recalc_maximal_cutoff_bonded() {
 
   /* dihedrals: the central particle is indirectly connected to the fourth
    * particle via the third particle, so we have to double the cutoff */
-  max_cut_tmp = 2.0 * max_cut_bonded;
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
+  for (auto const &bonded_ia_param : bonded_ia_params) {
+    switch (bonded_ia_param.type) {
     case BONDED_IA_DIHEDRAL:
-      max_cut_bonded = max_cut_tmp;
-      break;
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
+    case BONDED_IA_TABULATED_DIHEDRAL:
+      max_cut_bonded *= 2;
       break;
     default:
       break;
     }
   }
+
+  return max_cut_bonded;
 }
 
 void make_bond_type_exist(int type) {

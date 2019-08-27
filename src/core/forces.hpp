@@ -63,12 +63,8 @@ void init_forces_ghosts(const ParticleRange &particles);
  */
 void force_calc(CellStructure &cell_structure);
 
-/** Check if forces are NAN */
-void check_forces(const ParticleRange &particles,
-                  const ParticleRange &ghost_particles);
-
 /** Calculate long range forces (P3M, MMM2d...). */
-void calc_long_range_forces();
+void calc_long_range_forces(const ParticleRange &particles);
 /*@}*/
 
 #endif

@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
 import subprocess
 import unittest as ut
 import unittest_decorators as utx
@@ -55,9 +54,7 @@ class CheckpointTest(ut.TestCase):
         cpt_path = self.checkpoint.checkpoint_dir + "/lb{}.cpt"
         with self.assertRaises(RuntimeError):
             lbf.load_checkpoint(cpt_path.format("-corrupted"), cpt_mode)
-        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
-            3, 2) else self.assertRaisesRegex
-        with assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+        with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
             lbf.load_checkpoint(cpt_path.format("-wrong-boxdim"), cpt_mode)
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
@@ -177,8 +174,14 @@ class CheckpointTest(ut.TestCase):
     def test_bonded_inter(self):
         state = system.part[1].bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0}
-        self.assertEqual(
-            len(set(state.items()) & set(reference.items())), len(reference))
+        for key in reference.keys():
+            self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
+        if 'LBTHERM' not in modes:
+            state = system.part[1].bonds[1][0].params
+            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
+                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
+            for key in reference.keys():
+                self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
@@ -224,7 +227,7 @@ class CheckpointTest(ut.TestCase):
     def test_lb_boundaries(self):
         self.assertEqual(len(system.lbboundaries), 1)
         np.testing.assert_allclose(
-            np.copy(system.lbboundaries[0].velocity), [1, 1, 0])
+            np.copy(system.lbboundaries[0].velocity), [1e-4, 1e-4, 0])
         self.assertEqual(type(system.lbboundaries[0].shape), Wall)
 
     def test_constraints(self):

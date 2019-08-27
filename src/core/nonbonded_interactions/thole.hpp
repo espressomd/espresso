@@ -21,9 +21,9 @@
 #ifndef _THOLE_H
 #define _THOLE_H
 /** \file
- *  Routines to calculate the Thole damping energy and/or force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the Thole damping potential between particle pairs.
+ *
+ *  Implementation in \ref thole.cpp.
  */
 
 #include "config.hpp"
@@ -38,12 +38,13 @@
 int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2);
 
-inline void add_thole_pair_force(const Particle *const p1,
-                                 const Particle *const p2,
-                                 const IA_parameters *ia_params,
-                                 const double *d, double dist, double *force) {
-  auto const thole_q1q2 = ia_params->THOLE_q1q2;
-  auto const thole_s = ia_params->THOLE_scaling_coeff;
+inline void add_thole_pair_force(Particle const *const p1,
+                                 Particle const *const p2,
+                                 IA_parameters const *const ia_params,
+                                 Utils::Vector3d const &d, double dist,
+                                 Utils::Vector3d &force) {
+  auto const thole_q1q2 = ia_params->thole.q1q2;
+  auto const thole_s = ia_params->thole.scaling_coeff;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
@@ -55,25 +56,23 @@ inline void add_thole_pair_force(const Particle *const p1,
     double sr = thole_s * dist;
     double dS_r = 0.5 * (2.0 - (exp(-sr) * (sr * (sr + 2.0) + 2.0)));
     auto const f = Coulomb::central_force(thole_q1q2 * (-1. + dS_r), d, dist);
-
-    force[0] += f[0];
-    force[1] += f[1];
-    force[2] += f[2];
+    force += f;
   }
 }
 
-inline double thole_pair_energy(const Particle *p1, const Particle *p2,
-                                const IA_parameters *ia_params,
-                                const double d[3], double dist) {
+inline double thole_pair_energy(Particle const *const p1,
+                                Particle const *const p2,
+                                IA_parameters const *const ia_params,
+                                Utils::Vector3d const &d, double dist) {
 
-  double thole_s = ia_params->THOLE_scaling_coeff;
-  double thole_q1q2 = ia_params->THOLE_q1q2;
+  auto const thole_s = ia_params->thole.scaling_coeff;
+  auto const thole_q1q2 = ia_params->thole.q1q2;
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       dist < Coulomb::cutoff(box_geo.length()) &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
-    double sd = thole_s * dist;
-    double S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
+    auto const sd = thole_s * dist;
+    auto const S_r = 1.0 - (1.0 + sd / 2.0) * exp(-sd);
     // Subtract p3m shortrange energy and add thole energy
     return Coulomb::pair_energy(p1, p2, thole_q1q2 * (-1.0 + S_r), d, dist,
                                 dist * dist);

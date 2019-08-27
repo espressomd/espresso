@@ -20,7 +20,7 @@
 from . cimport galilei
 from .utils cimport make_array_locked
 
-cdef class GalileiTransform(object):
+cdef class GalileiTransform:
 
     def kill_particle_motion(self, rotation=False):
         """
@@ -52,8 +52,8 @@ cdef class GalileiTransform(object):
 
         Returns
         -------
-        cms : :obj:`list`
-              The of the center of mass position vector as a list of floats.
+        cms : (3,) array_like of :obj:`float`
+              The of the center of mass position vector.
 
         """
         return make_array_locked(mpi_system_CMS())
@@ -65,8 +65,8 @@ cdef class GalileiTransform(object):
 
         Returns
         -------
-        cms_vel : :obj:`list` of :obj:`float`
-                  The of the center of mass velocity vector as a list of floats
+        cms_vel : (3,) array_like of :obj:`float`
+                  The of the center of mass velocity vector.
 
         """
 

@@ -3,7 +3,7 @@ import numpy as np
 from espressomd.utils import is_valid_type, array_locked
 from espressomd.utils cimport Vector3d, make_array_locked
 
-cdef class PObjectId(object):
+cdef class PObjectId:
     """Python interface to a core ObjectId object."""
 
     cdef ObjectId id
@@ -14,7 +14,7 @@ cdef class PObjectId(object):
         else:
             raise NotImplementedError
 
-cdef class PScriptInterface(object):
+cdef class PScriptInterface:
 
     """
     Python interface to a core ScriptInterface object. The core ScriptInterface
@@ -278,8 +278,8 @@ class ScriptInterfaceHelper(PScriptInterface):
     _so_creation_policy = "GLOBAL"
 
     def __init__(self, **kwargs):
-        super(ScriptInterfaceHelper, self).__init__(
-            self._so_name, policy=self._so_creation_policy, **kwargs)
+        super().__init__(self._so_name, policy=self._so_creation_policy,
+                         **kwargs)
         self.define_bound_methods()
 
     def __reduce__(self):

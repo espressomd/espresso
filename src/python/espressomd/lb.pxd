@@ -63,6 +63,7 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     const Vector3d lb_lbfluid_get_ext_force_density() except +
     void lb_lbfluid_set_bulk_viscosity(double c_bulk_visc) except +
     double lb_lbfluid_get_bulk_viscosity() except +
+    void lb_lbfluid_sanity_checks() except +
     void lb_lbfluid_print_vtk_velocity(string filename) except +
     void lb_lbfluid_print_vtk_velocity(string filename, vector[int] bb1, vector[int] bb2) except +
     void lb_lbfluid_print_vtk_boundary(string filename) except +
@@ -258,21 +259,14 @@ cdef inline python_lbfluid_get_gamma(p_gamma):
         p_gamma = c_gamma
 
 
-cdef inline python_lbfluid_get_ext_force_density(p_ext_force_density, p_agrid, p_tau):
-
+cdef inline Vector3d python_lbfluid_get_ext_force_density(p_agrid, p_tau):
     cdef Vector3d c_ext_force_density
     # call c-function
     c_ext_force_density = lb_lbfluid_get_ext_force_density()
     # unit conversion LB -> MD
-    p_ext_force_density[
-        0] = c_ext_force_density[
-            0] / p_agrid / p_agrid / p_tau / p_tau
-    p_ext_force_density[
-        1] = c_ext_force_density[
-            1] / p_agrid / p_agrid / p_tau / p_tau
-    p_ext_force_density[
-        2] = c_ext_force_density[
-            2] / p_agrid / p_agrid / p_tau / p_tau
+    for i in range(3):
+        c_ext_force_density[i] /= p_agrid * p_agrid * p_tau * p_tau
+    return c_ext_force_density
 
 cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
     cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()

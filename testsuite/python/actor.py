@@ -34,7 +34,7 @@ class TestActor(actors.Actor):
         self._deactivated = False
         self._validated = False
 
-        super(TestActor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _get_params_from_es_core(self):
         return self._core_args

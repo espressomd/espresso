@@ -50,7 +50,7 @@ c_s = np.sqrt(1. / 3. * AGRID**2 / TIME_STEP**2)
 v = [0, 0, 0.2 * c_s]  # The boundary slip
 
 
-class Stokes(object):
+class Stokes:
     lbf = None
     system = espressomd.System(box_l=[real_width, real_width, box_length])
     system.box_l = [real_width, real_width, box_length]

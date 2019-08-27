@@ -43,3 +43,9 @@ cdef extern from "thermostat.hpp":
     cbool langevin_is_seed_required()
 
     stdint.uint64_t langevin_get_rng_state()
+
+cdef extern from "dpd.hpp":
+    IF DPD:
+        void dpd_set_rng_state(stdint.uint64_t counter)
+        cbool dpd_is_seed_required()
+        stdint.uint64_t dpd_get_rng_state()

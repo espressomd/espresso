@@ -22,14 +22,17 @@
     Implementation of tuning.hpp .
 */
 #include "communication.hpp"
+#include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
 #include <limits>
 #include <sys/resource.h>
 #include <sys/time.h>
 #include <utils/statistics/RunningAverage.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
 int timing_samples = 10;
 
 /**
@@ -94,21 +97,28 @@ static double time_calc(int rds) {
   return 1000. * (tock - tick) / rds;
 }
 
-void tune_skin(double min, double max, double tol, int steps) {
+void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
+               bool adjust_max_skin) {
   skin_set = true;
 
-  double a = min;
-  double b = max;
+  double a = min_skin;
+  double b = max_skin;
   double time_a, time_b;
+  double min_cell_size =
+      std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
+  double const max_permissible_skin = min_cell_size - max_cut;
+
+  if (adjust_max_skin and max_skin > max_permissible_skin)
+    b = max_permissible_skin;
 
   while (fabs(a - b) > tol) {
     skin = a;
     mpi_bcast_parameter(FIELD_SKIN);
-    time_a = time_calc(steps);
+    time_a = time_calc(int_steps);
 
     skin = b;
     mpi_bcast_parameter(FIELD_SKIN);
-    time_b = time_calc(steps);
+    time_b = time_calc(int_steps);
 
     if (time_a > time_b) {
       a = 0.5 * (a + b);
