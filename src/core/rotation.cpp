@@ -61,7 +61,8 @@
  *  @param[in]  p    %Particle
  *  @param[out] Qd   First derivative of the particle quaternion
  *  @param[out] Qdd  Second derivative of the particle quaternion
- *  @param[out] S
+ *  @param[out] S    Function of @p Qd and @p Qdd, used to evaluate the
+ *                   Lagrange parameter lambda
  *  @param[out] Wd   Angular acceleration of the particle
  */
 static void define_Qdd(Particle const *p, double Qd[4], double Qdd[4],
@@ -112,8 +113,8 @@ int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
   return 0;
 }
 
-void define_Qdd(Particle const *const p, double Qd[4], double Qdd[4], double S[3],
-                double Wd[3]) {
+void define_Qdd(Particle const *const p, double Qd[4], double Qdd[4],
+                double S[3], double Wd[3]) {
   /* calculate the first derivative of the quaternion */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
@@ -201,10 +202,11 @@ void propagate_omega_quat_particle(Particle *p) {
 
   /* Taken from "On the numerical integration of motion for rigid polyatomics:
    * The modified quaternion approach", Omeylan, Igor (1998), Eq. 12.*/
-  auto const lambda = 1 - S[0] * time_step_squared_half -
-           sqrt(1 - time_step_squared *
-                        (S[0] + time_step * (S[1] + time_step_half / 2. *
-                                                        (S[2] - S[0] * S[0]))));
+  auto const lambda =
+      1 - S[0] * time_step_squared_half -
+      sqrt(1 - time_step_squared *
+                   (S[0] + time_step * (S[1] + time_step_half / 2. *
+                                                   (S[2] - S[0] * S[0]))));
 
   for (int j = 0; j < 3; j++) {
     p->m.omega[j] += time_step_half * Wd[j];

@@ -258,8 +258,8 @@ inline void add_bonded_energy(Particle const *const p1) {
         break;
 #ifdef ROTATION
       case BONDED_IA_HARMONIC_DUMBBELL:
-        retval = harmonic_dumbbell_pair_energy(
-            p1->r.calc_director(), iaparams, dx);
+        retval =
+            harmonic_dumbbell_pair_energy(p1->r.calc_director(), iaparams, dx);
         break;
 #endif
       case BONDED_IA_HARMONIC:
@@ -333,7 +333,8 @@ inline void add_bonded_energy(Particle const *const p1) {
         retval = dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         break;
       case BONDED_IA_TABULATED_DIHEDRAL:
-        retval = tab_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
+        retval =
+            tab_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type

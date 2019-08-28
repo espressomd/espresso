@@ -81,10 +81,11 @@ calc_angle_cossquare_force(Utils::Vector3d const &r_mid,
  *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  */
-inline double angle_cossquare_energy(Utils::Vector3d const &r_mid,
-                                     Utils::Vector3d const &r_left,
-                                     Utils::Vector3d const &r_right,
-                                     Bonded_ia_parameters const *const iaparams) {
+inline double
+angle_cossquare_energy(Utils::Vector3d const &r_mid,
+                       Utils::Vector3d const &r_left,
+                       Utils::Vector3d const &r_right,
+                       Bonded_ia_parameters const *const iaparams) {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;

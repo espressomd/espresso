@@ -209,12 +209,10 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
   return force;
 }
 
-inline Utils::Vector3d
-calc_non_bonded_pair_force(Particle const *const p1, Particle const *const p2,
-                           IA_parameters const *const ia_params,
-                           Utils::Vector3d const &d, double dist,
-                           Utils::Vector3d *torque1 = nullptr,
-                           Utils::Vector3d *torque2 = nullptr) {
+inline Utils::Vector3d calc_non_bonded_pair_force(
+    Particle const *const p1, Particle const *const p2,
+    IA_parameters const *const ia_params, Utils::Vector3d const &d, double dist,
+    Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
   return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, torque1,
                                           torque2);
 }
@@ -359,8 +357,8 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
     break;
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL: {
-    auto values = calc_harmonic_dumbbell_pair_force(
-        p1->r.calc_director(), iaparams, dx);
+    auto values =
+        calc_harmonic_dumbbell_pair_force(p1->r.calc_director(), iaparams, dx);
     if (values) {
       result = boost::optional<Utils::Vector3d>(std::get<0>(values.get()));
       torque = std::get<1>(values.get());
@@ -556,7 +554,8 @@ inline void add_bonded_force(Particle *const p1) {
         bond_broken = false;
         break;
       case BONDED_IA_DIHEDRAL: {
-        auto result = calc_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
+        auto result =
+            calc_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         if (result) {
           std::tie(force1, force2, force3) = result.get();
           force4 = -(force1 + force2 + force3);
@@ -565,7 +564,8 @@ inline void add_bonded_force(Particle *const p1) {
         break;
       }
       case BONDED_IA_TABULATED_DIHEDRAL: {
-        auto result = calc_tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
+        auto result = calc_tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p,
+                                              p4->r.p, iaparams);
         if (result) {
           std::tie(force1, force2, force3) = result.get();
           force4 = -(force1 + force2 + force3);
