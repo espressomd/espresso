@@ -131,4 +131,7 @@ for i in range(n_iterations):
               system.number_of_particles(type=1), "H+",
               system.number_of_particles(type=2))
 
-print("excess chemical potential for an ion pair ",RE.measure_excess_chemical_potential(0))  # 0 for insertion reaction
+print(
+    "excess chemical potential for an ion pair ",
+     RE.measure_excess_chemical_potential(
+         0))  # 0 for insertion reaction
