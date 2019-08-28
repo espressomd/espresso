@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample simulates the Wang-Landau Reaction Ensemble for a harmonic bond.
+This example script simulates two reacting monomers which are bonded via a harmonic potential.
+The script aborts as soon as the abortion criterion in the Wang-Landau algorithm is met.
+The Wang-Landau potential which is updated during the simulation is written to the file WL_potential_out.dat.
 """
 import numpy as np
 

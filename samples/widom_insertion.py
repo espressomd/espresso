@@ -17,8 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample measures the excess chemical potential for Widom insertion of
-charged particles using the reaction ensemble method.
+This example script measures the excess chemical potential via Widom's insertion method.
+As input this script requires you to provide particle number density in units of 1/sigma^3.
 """
 import numpy as np
 import sys
@@ -131,4 +131,4 @@ for i in range(n_iterations):
               system.number_of_particles(type=1), "H+",
               system.number_of_particles(type=2))
 
-print(RE.measure_excess_chemical_potential(0))  # 0 for insertion reaction
+print("excess chemical potential for an ion pair ",RE.measure_excess_chemical_potential(0))  # 0 for insertion reaction
