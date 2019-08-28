@@ -20,7 +20,7 @@ import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/grand_canonical.py", n_int_cycles=51, n_int_steps=5,
-    warm_n_times=10, warm_steps=50, cmd_arguments=[0.01, 0.01])
+    warm_n_times=10, warm_steps=50, cmd_arguments=[8.523659461370000200e-04, -3.365753246398797693e-01])
 
 
 @skipIfMissingFeatures
