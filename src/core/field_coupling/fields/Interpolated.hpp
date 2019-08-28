@@ -104,26 +104,10 @@ public:
     return {m_global_field.shape(), m_global_field.shape() + 3};
   }
 
-  /** Serialize scalar field */
-  template <class Q = T>
-  typename std::enable_if<codim == 1, std::vector<Q>>::type
-  field_data_flat() const {
+  /** Serialize field */
+  std::vector<T> field_data_flat() const {
     auto const *data = reinterpret_cast<T const *>(m_global_field.data());
-    return std::vector<T>(data, data + m_global_field.num_elements());
-  }
-
-  /** Serialize vector field */
-  template <class Q = T>
-  typename std::enable_if<codim != 1, std::vector<Q>>::type
-  field_data_flat() const {
-    auto const &data = m_global_field.data();
-    std::vector<T> data_flat(codim * m_global_field.num_elements());
-    for (size_t i = 0; i < m_global_field.num_elements(); ++i) {
-      for (size_t j = 0; j < codim; ++j) {
-        data_flat[i * codim + j] = data[i][j];
-      }
-    }
-    return data_flat;
+    return std::vector<T>(data, data + codim * m_global_field.num_elements());
   }
 
   /*
