@@ -279,20 +279,6 @@ tutorials-samples-no-gpu:
   only:
     - schedules
 
-# Test that non-gpu methods work when building with Cuda and no gpu is present
-# In case a GPU is present on the runner, it is hidden by setting
-# CUDA_VISIBLE_DEVICES=""
-cuda-no-gpu:
-  <<: *global_job_definition
-  stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
-  script:
-    - export myconfig=maxset hide_gpu=true test_timeout=900
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
 empty:
   <<: *global_job_definition
   stage: build
@@ -418,7 +404,7 @@ check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
-  dependencies:
+  needs:
     - cuda-maxset
   when: on_success
   script:
@@ -439,7 +425,7 @@ run_tutorials:
   <<: *global_job_definition
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
-  dependencies:
+  needs:
     - cuda10-maxset
   when: on_success
   script:
@@ -463,7 +449,7 @@ check_doxygen:
   <<: *global_job_definition
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
-  dependencies:
+  needs:
     - cuda-maxset
   when: on_success
   script:
@@ -478,14 +464,34 @@ check_doxygen:
     - linux
     - cuda
 
-check_with_odd_no_of_processors:
+check_cuda_maxset_no_gpu:
   <<: *global_job_definition
-  stage: build
+  stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
+  needs: 
+    - cuda-maxset
   script:
-    - export myconfig=maxset with_coverage=true build_procs=3 check_procs=3 check_odd_only=true
-    - bash maintainer/CI/build_cmake.sh
+    - export CUDA_VISIBLE_DEVICES=""
+    - cd ${CI_PROJECT_DIR}/build
+    - make -t && make check
+  tags:
+    - docker
+    - linux
+    - cuda
+
+
+check_with_odd_no_of_processors:
+  <<: *global_job_definition
+  stage: additional_checks 
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  when: on_success
+  needs: 
+    - cuda-maxset
+  script:
+    - cd ${CI_PROJECT_DIR}/build
+    - cmake -DTEST_NP=3 .
+    - make -t && make check_python_parallel_odd
   tags:
     - docker
     - linux
