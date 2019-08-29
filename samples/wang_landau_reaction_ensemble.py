@@ -19,13 +19,13 @@
 """
 This example script simulates two reacting monomers which are bonded via a harmonic potential.
 The script aborts as soon as the abortion criterion in the Wang-Landau algorithm is met.
-With the setup of the Wang-Landau algorithm in this script you sample the density of states of a three dimensional reacting harmonic oscillator 
-as a function of the two collective variables which are introduced are the degree of association and the potential energy.
 The Wang-Landau simulation runs until the Wang-Landau potential is converged and then raises a Warning that it has converged, effectively aborting the simulation.
-The recorded Wang-Landau potential (which is updated during the simulation is written to the file WL_potential_out.dat) 
-contains the density of states. You can view the converged Wang-Landau potential e.g. via plotting with gnuplot: sp "WL_potential_out.dat". 
+With the setup of the Wang-Landau algorithm in this script you sample the density of states of a three dimensional reacting harmonic oscillator 
+as a function of the two collective variables 1) degree of association and 2) potential energy.
+The recorded Wang-Landau potential (which is updated during the simulation) is written to the file WL_potential_out.dat 
+In this simulation setup the Wang-Landau potential is the density of states. You can view the converged Wang-Landau potential e.g. via plotting with gnuplot: splot "WL_potential_out.dat". 
 As expected the three dimensional harmonic oscilltor has a density of states which goes like sqrt(E_pot).
-For a scientific description of the algorithm please consult https://pubs.acs.org/doi/full/10.1021/acs.jctc.6b00791 
+For a scientific description and different ways to use the algorithm please consult https://pubs.acs.org/doi/full/10.1021/acs.jctc.6b00791 
 """
 import numpy as np
 
