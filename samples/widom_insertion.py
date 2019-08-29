@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This example script measures the excess chemical potential via Widom's insertion method.
+This example script measures the excess chemical potential of a charged WCA fluid via Widom's insertion method.
 As input this script requires you to provide particle number density in units of 1/sigma^3.
 """
 import numpy as np
@@ -37,9 +37,8 @@ espressomd.assert_features(required_features)
 #############################################################
 assert len(sys.argv) == 2, "please provide a value for cs_bulk"
 cs_bulk = float(sys.argv[1])
-box_l = 50.0
-N0 = int(cs_bulk * box_l**3)
-print("actual cs_bulk", float(N0) / box_l**3)
+N0 = 70
+box_l = (float(N0)/cs_bulk)**(1.0/3.0)
 
 # Integration parameters
 #############################################################
@@ -79,7 +78,7 @@ for type_1 in types:
             epsilon=lj_eps, sigma=lj_sig,
             cutoff=lj_cut, shift="auto")
 
-p3m = electrostatics.P3M(prefactor=0.9, accuracy=1e-3)
+p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
@@ -119,9 +118,8 @@ system.setup_type_map([0, 1, 2])
 
 n_iterations = 100
 for i in range(n_iterations):
-    for j in range(30):
+    for j in range(50):
         RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
-        system.integrator.run(steps=2)
     system.integrator.run(steps=500)
     if i % 20 == 0:
         print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
