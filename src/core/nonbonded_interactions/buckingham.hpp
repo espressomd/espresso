@@ -49,9 +49,8 @@ inline double buck_energy_r(double A, double B, double C, double D,
 }
 
 /** Calculate Buckingham force */
-inline Utils::Vector3d add_buck_pair_force(IA_parameters const *const ia_params,
-                                           Utils::Vector3d const &d,
-                                           double dist) {
+inline Utils::Vector3d buck_pair_force(IA_parameters const *const ia_params,
+                                       Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->buckingham.cut) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true Buckingham region) */

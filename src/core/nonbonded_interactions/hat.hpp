@@ -50,9 +50,8 @@ inline double hat_energy_r(double Fmax, double r, double dist) {
 }
 
 /** Calculate hat force */
-inline Utils::Vector3d add_hat_pair_force(IA_parameters const *const ia_params,
-                                          Utils::Vector3d const &d,
-                                          double dist) {
+inline Utils::Vector3d hat_pair_force(IA_parameters const *const ia_params,
+                                      Utils::Vector3d const &d, double dist) {
   if (dist > 0. && dist < ia_params->hat.r) {
     auto const fac =
         hat_force_r(ia_params->hat.Fmax, ia_params->hat.r, dist) / dist;

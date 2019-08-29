@@ -35,9 +35,8 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);
 
 /** Calculate smooth step force */
-inline Utils::Vector3d add_SmSt_pair_force(IA_parameters const *const ia_params,
-                                           Utils::Vector3d const &d,
-                                           double dist) {
+inline Utils::Vector3d SmSt_pair_force(IA_parameters const *const ia_params,
+                                       Utils::Vector3d const &d, double dist) {
   if (dist >= ia_params->smooth_step.cut) {
     return {};
   }

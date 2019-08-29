@@ -37,9 +37,8 @@ int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
                      double C, double D, double sig, double cut);
 
 /** Calculate BMHTF force */
-inline Utils::Vector3d
-add_BMHTF_pair_force(IA_parameters const *const ia_params,
-                     Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d BMHTF_pair_force(IA_parameters const *const ia_params,
+                                        Utils::Vector3d const &d, double dist) {
   if (dist < ia_params->bmhtf.cut) {
     auto const dist8 = Utils::int_pow<8>(dist);
     auto const dist10 = Utils::int_pow<10>(dist);

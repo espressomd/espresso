@@ -47,8 +47,7 @@ int subt_lj_set_params(int bond_type);
 inline boost::optional<Utils::Vector3d>
 calc_subt_lj_pair_force(IA_parameters const *const iaparams,
                         Utils::Vector3d const &dx) {
-  auto const neg_dir = -dx;
-  auto const force = add_lj_pair_force(iaparams, neg_dir, neg_dir.norm());
+  auto const force = -lj_pair_force(iaparams, dx, dx.norm());
   return force;
 }
 

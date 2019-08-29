@@ -35,9 +35,9 @@ int hertzian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig);
 
 /** Calculate Hertzian force */
-inline Utils::Vector3d
-add_hertzian_pair_force(IA_parameters const *const ia_params,
-                        Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d hertzian_pair_force(IA_parameters const *const ia_params,
+                                           Utils::Vector3d const &d,
+                                           double dist) {
   if (dist < ia_params->hertzian.sig) {
     auto const fac = 5. / 2. * ia_params->hertzian.eps /
                      ia_params->hertzian.sig *

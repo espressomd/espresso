@@ -41,9 +41,8 @@ int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
                              double offset, double min);
 
 /** Calculate Lennard-Jones force */
-inline Utils::Vector3d add_lj_pair_force(IA_parameters const *ia_params,
-                                         Utils::Vector3d const &d,
-                                         double dist) {
+inline Utils::Vector3d lj_pair_force(IA_parameters const *ia_params,
+                                     Utils::Vector3d const &d, double dist) {
   if ((dist < ia_params->lj.cut + ia_params->lj.offset) &&
       (dist > ia_params->lj.min + ia_params->lj.offset)) {
     auto const r_off = dist - ia_params->lj.offset;

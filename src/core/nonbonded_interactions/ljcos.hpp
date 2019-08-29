@@ -39,9 +39,8 @@ int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
 /** Calculate Lennard-Jones cosine force */
-inline Utils::Vector3d
-add_ljcos_pair_force(IA_parameters const *const ia_params,
-                     Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d ljcos_pair_force(IA_parameters const *const ia_params,
+                                        Utils::Vector3d const &d, double dist) {
   Utils::Vector3d force{};
   if (dist < (ia_params->ljcos.cut + ia_params->ljcos.offset)) {
     auto const r_off = dist - ia_params->ljcos.offset;

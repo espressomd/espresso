@@ -35,9 +35,9 @@ int gaussian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig, double cut);
 
 /** Calculate Gaussian force */
-inline Utils::Vector3d
-add_gaussian_pair_force(IA_parameters const *const ia_params,
-                        Utils::Vector3d const &d, double dist) {
+inline Utils::Vector3d gaussian_pair_force(IA_parameters const *const ia_params,
+                                           Utils::Vector3d const &d,
+                                           double dist) {
   if (dist < ia_params->gaussian.cut) {
     auto const fac = ia_params->gaussian.eps / pow(ia_params->gaussian.sig, 2) *
                      exp(-0.5 * Utils::sqr(dist / ia_params->gaussian.sig));

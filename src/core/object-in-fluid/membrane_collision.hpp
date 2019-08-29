@@ -41,17 +41,18 @@ int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
                                   double n, double cut, double offset);
 
 /** Resultant force due to a sigmoid potential between two
-// particles at interatomic separation r */
+ *  particles at interatomic separation r
+ */
 inline double sigmoid_force_r(double a, double n, double r) {
   return (a / (1 + exp(n * r)));
 }
 
 /** Calculate membrane-collision force between particle p1 and p2 */
 inline Utils::Vector3d
-add_membrane_collision_pair_force(Particle const *const p1,
-                                  Particle const *const p2,
-                                  IA_parameters const *const ia_params,
-                                  Utils::Vector3d const &d, double dist) {
+membrane_collision_pair_force(Particle const *const p1,
+                              Particle const *const p2,
+                              IA_parameters const *const ia_params,
+                              Utils::Vector3d const &d, double dist) {
   /************************
    *
    * Description of implementation:

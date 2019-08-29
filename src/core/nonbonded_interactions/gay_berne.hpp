@@ -39,10 +39,9 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
 
 /** Calculate Gay-Berne force and torques */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-add_gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
-                  IA_parameters const *const ia_params,
-                  Utils::Vector3d const &d, double dist, bool calc_torque1,
-                  bool calc_torque2) {
+gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
+              IA_parameters const *const ia_params, Utils::Vector3d const &d,
+              double dist, bool calc_torque1, bool calc_torque2) {
   using Utils::int_pow;
   using Utils::sqr;
 
