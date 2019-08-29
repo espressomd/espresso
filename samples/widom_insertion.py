@@ -38,7 +38,7 @@ espressomd.assert_features(required_features)
 assert len(sys.argv) == 2, "please provide a value for cs_bulk"
 cs_bulk = float(sys.argv[1])
 N0 = 70
-box_l = (float(N0)/cs_bulk)**(1.0/3.0)
+box_l = (N0 / cs_bulk)**(1.0 / 3.0)
 
 # Integration parameters
 #############################################################
