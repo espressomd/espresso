@@ -126,45 +126,46 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
     return {};
 #endif
   Utils::Vector3d force{};
+  double force_factor = 0;
 /* Lennard-Jones */
 #ifdef LENNARD_JONES
-  force += lj_pair_force(ia_params, d, dist);
+  force_factor += lj_pair_force_factor(ia_params, dist);
 #endif
 /* WCA */
 #ifdef WCA
-  force += wca_pair_force(ia_params, d, dist);
+  force_factor += wca_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones generic */
 #ifdef LENNARD_JONES_GENERIC
-  force += ljgen_pair_force(ia_params, d, dist);
+  force_factor += ljgen_pair_force_factor(ia_params, dist);
 #endif
 /* smooth step */
 #ifdef SMOOTH_STEP
-  force += SmSt_pair_force(ia_params, d, dist);
+  force_factor += SmSt_pair_force_factor(ia_params, dist);
 #endif
 /* Hertzian force */
 #ifdef HERTZIAN
-  force += hertzian_pair_force(ia_params, d, dist);
+  force_factor += hertzian_pair_force_factor(ia_params, dist);
 #endif
 /* Gaussian force */
 #ifdef GAUSSIAN
-  force += gaussian_pair_force(ia_params, d, dist);
+  force_factor += gaussian_pair_force_factor(ia_params, dist);
 #endif
 /* BMHTF NaCl */
 #ifdef BMHTF_NACL
-  force += BMHTF_pair_force(ia_params, d, dist);
+  force_factor += BMHTF_pair_force_factor(ia_params, dist);
 #endif
 /* Buckingham*/
 #ifdef BUCKINGHAM
-  force += buck_pair_force(ia_params, d, dist);
+  force_factor += buck_pair_force_factor(ia_params, dist);
 #endif
 /* Morse*/
 #ifdef MORSE
-  force += morse_pair_force(ia_params, d, dist);
+  force_factor += morse_pair_force_factor(ia_params, dist);
 #endif
 /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
-  force += soft_pair_force(ia_params, d, dist);
+  force_factor += soft_pair_force_factor(ia_params, dist);
 #endif
 /*repulsive membrane potential*/
 #ifdef MEMBRANE_COLLISION
@@ -172,15 +173,15 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #endif
 /*hat potential*/
 #ifdef HAT
-  force += hat_pair_force(ia_params, d, dist);
+  force_factor += hat_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones cosine */
 #ifdef LJCOS
-  force += ljcos_pair_force(ia_params, d, dist);
+  force_factor += ljcos_pair_force_factor(ia_params, dist);
 #endif
 /* Lennard-Jones cosine */
 #ifdef LJCOS2
-  force += ljcos2_pair_force(ia_params, d, dist);
+  force_factor += ljcos2_pair_force_factor(ia_params, dist);
 #endif
 /* Thole damping */
 #ifdef THOLE
@@ -188,7 +189,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 #endif
 /* tabulated */
 #ifdef TABULATED
-  force += tabulated_pair_force(ia_params, d, dist);
+  force_factor += tabulated_pair_force_factor(ia_params, dist);
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
@@ -206,6 +207,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
     }
   }
 #endif
+  force += force_factor * d;
   return force;
 }
 

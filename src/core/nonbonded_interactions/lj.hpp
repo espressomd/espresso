@@ -40,19 +40,24 @@ int lennard_jones_set_params(int part_type_a, int part_type_b, double eps,
                              double sig, double cut, double shift,
                              double offset, double min);
 
-/** Calculate Lennard-Jones force */
-inline Utils::Vector3d lj_pair_force(IA_parameters const *ia_params,
-                                     Utils::Vector3d const &d, double dist) {
+/** Calculate Lennard-Jones force factor */
+inline double lj_pair_force_factor(IA_parameters const *ia_params,
+                                   double dist) {
   if ((dist < ia_params->lj.cut + ia_params->lj.offset) &&
       (dist > ia_params->lj.min + ia_params->lj.offset)) {
     auto const r_off = dist - ia_params->lj.offset;
     auto const frac6 = Utils::int_pow<6>(ia_params->lj.sig / r_off);
     auto const fac =
         48.0 * ia_params->lj.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
-    auto const force = fac * d;
-    return force;
+    return fac;
   }
-  return {};
+  return 0.0;
+}
+
+/** Calculate Lennard-Jones force */
+inline Utils::Vector3d lj_pair_force(IA_parameters const *ia_params,
+                                     Utils::Vector3d const &d, double dist) {
+  return d * lj_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate Lennard-Jones energy */

@@ -36,9 +36,9 @@
 int BMHTF_set_params(int part_type_a, int part_type_b, double A, double B,
                      double C, double D, double sig, double cut);
 
-/** Calculate BMHTF force */
-inline Utils::Vector3d BMHTF_pair_force(IA_parameters const *const ia_params,
-                                        Utils::Vector3d const &d, double dist) {
+/** Calculate BMHTF force factor */
+inline double BMHTF_pair_force_factor(IA_parameters const *const ia_params,
+                                      double dist) {
   if (dist < ia_params->bmhtf.cut) {
     auto const dist8 = Utils::int_pow<8>(dist);
     auto const dist10 = Utils::int_pow<10>(dist);
@@ -46,10 +46,15 @@ inline Utils::Vector3d BMHTF_pair_force(IA_parameters const *const ia_params,
         ia_params->bmhtf.A * ia_params->bmhtf.B *
             exp(ia_params->bmhtf.B * (ia_params->bmhtf.sig - dist)) / dist -
         6 * ia_params->bmhtf.C / dist8 - 8 * ia_params->bmhtf.D / dist10;
-    auto const force = fac * d;
-    return force;
+    return fac;
   }
-  return {};
+  return 0.0;
+}
+
+/** Calculate BMHTF force */
+inline Utils::Vector3d BMHTF_pair_force(IA_parameters const *const ia_params,
+                                        Utils::Vector3d const &d, double dist) {
+  return d * BMHTF_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate BMHTF potential energy */

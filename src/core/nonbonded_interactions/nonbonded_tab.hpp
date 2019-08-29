@@ -50,16 +50,22 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
                          double max, std::vector<double> const &energy,
                          std::vector<double> const &force);
 
+/** Calculate a non-bonded pair force factor by linear interpolation from a
+ *  table.
+ */
+inline double tabulated_pair_force_factor(IA_parameters const *const ia_params,
+                                          double dist) {
+  if (dist < ia_params->tab.cutoff()) {
+    return ia_params->tab.force(dist) / dist;
+  }
+  return 0.0;
+}
+
 /** Calculate a non-bonded pair force by linear interpolation from a table. */
 inline Utils::Vector3d
 tabulated_pair_force(IA_parameters const *const ia_params,
                      Utils::Vector3d const &d, double dist) {
-  if (dist < ia_params->tab.cutoff()) {
-    auto const fac = ia_params->tab.force(dist) / dist;
-    auto const force = fac * d;
-    return force;
-  }
-  return {};
+  return d * tabulated_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate a non-bonded pair energy by linear interpolation from a table. */

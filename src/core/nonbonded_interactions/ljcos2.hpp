@@ -42,10 +42,9 @@
 int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);
 
-/** Calculate Lennard-Jones cosine squared force */
-inline Utils::Vector3d ljcos2_pair_force(IA_parameters const *const ia_params,
-                                         Utils::Vector3d const &d,
-                                         double dist) {
+/** Calculate Lennard-Jones cosine squared force factor */
+inline double ljcos2_pair_force_factor(IA_parameters const *const ia_params,
+                                       double dist) {
   if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
     auto const r_off = dist - ia_params->ljcos2.offset;
     auto fac = 0.0;
@@ -58,10 +57,16 @@ inline Utils::Vector3d ljcos2_pair_force(IA_parameters const *const ia_params,
           -ia_params->ljcos2.eps * M_PI / 2 / ia_params->ljcos2.w / dist *
           sin(M_PI * (r_off - ia_params->ljcos2.rchange) / ia_params->ljcos2.w);
     }
-    auto const force = fac * d;
-    return force;
+    return fac;
   }
-  return {};
+  return 0.0;
+}
+
+/** Calculate Lennard-Jones cosine squared force */
+inline Utils::Vector3d ljcos2_pair_force(IA_parameters const *const ia_params,
+                                         Utils::Vector3d const &d,
+                                         double dist) {
+  return d * ljcos2_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate Lennard-Jones cosine squared energy */

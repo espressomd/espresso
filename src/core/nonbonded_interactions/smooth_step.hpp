@@ -34,11 +34,11 @@
 int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);
 
-/** Calculate smooth step force */
-inline Utils::Vector3d SmSt_pair_force(IA_parameters const *const ia_params,
-                                       Utils::Vector3d const &d, double dist) {
+/** Calculate smooth step force factor */
+inline double SmSt_pair_force_factor(IA_parameters const *const ia_params,
+                                     double dist) {
   if (dist >= ia_params->smooth_step.cut) {
-    return {};
+    return 0.0;
   }
 
   auto const frac = ia_params->smooth_step.d / dist;
@@ -50,8 +50,13 @@ inline Utils::Vector3d SmSt_pair_force(IA_parameters const *const ia_params,
                                               ia_params->smooth_step.k0 * dist *
                                               er / Utils::sqr(1.0 + er)) /
       Utils::sqr(dist);
-  auto const force = fac * d;
-  return force;
+  return fac;
+}
+
+/** Calculate smooth step force */
+inline Utils::Vector3d SmSt_pair_force(IA_parameters const *const ia_params,
+                                       Utils::Vector3d const &d, double dist) {
+  return d * SmSt_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate smooth step energy */

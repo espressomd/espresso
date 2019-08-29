@@ -34,17 +34,22 @@
 
 int wca_set_params(int part_type_a, int part_type_b, double eps, double sig);
 
-/** Calculate WCA force */
-inline Utils::Vector3d wca_pair_force(IA_parameters const *const ia_params,
-                                      Utils::Vector3d const &d, double dist) {
+/** Calculate WCA force factor */
+inline double wca_pair_force_factor(IA_parameters const *const ia_params,
+                                    double dist) {
   if (dist < ia_params->wca.cut) {
     auto const frac6 = Utils::int_pow<6>(ia_params->wca.sig / dist);
     auto const fac =
         48.0 * ia_params->wca.eps * frac6 * (frac6 - 0.5) / (dist * dist);
-    auto const force = fac * d;
-    return force;
+    return fac;
   }
-  return {};
+  return 0.0;
+}
+
+/** Calculate WCA force */
+inline Utils::Vector3d wca_pair_force(IA_parameters const *const ia_params,
+                                      Utils::Vector3d const &d, double dist) {
+  return d * wca_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate WCA energy */
