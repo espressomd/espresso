@@ -41,25 +41,23 @@ int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
 /** Calculate Lennard-Jones cosine force factor */
 inline double ljcos_pair_force_factor(IA_parameters const *const ia_params,
                                       double dist) {
+  auto fac = 0.0;
   if (dist < (ia_params->ljcos.cut + ia_params->ljcos.offset)) {
     auto const r_off = dist - ia_params->ljcos.offset;
     /* cos part of ljcos potential. */
     if (dist > ia_params->ljcos.rmin + ia_params->ljcos.offset) {
-      auto const fac = (r_off / dist) * ia_params->ljcos.alfa *
-                       ia_params->ljcos.eps *
-                       (sin(ia_params->ljcos.alfa * Utils::sqr(r_off) +
-                            ia_params->ljcos.beta));
-      return fac;
+      fac = (r_off / dist) * ia_params->ljcos.alfa * ia_params->ljcos.eps *
+            (sin(ia_params->ljcos.alfa * Utils::sqr(r_off) +
+                 ia_params->ljcos.beta));
     }
     /* Lennard-Jones part of the potential. */
     else if (dist > 0) {
       auto const frac6 = Utils::int_pow<6>(ia_params->ljcos.sig / r_off);
-      auto const fac =
+      fac =
           48.0 * ia_params->ljcos.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
-      return fac;
     }
   }
-  return 0.0;
+  return fac;
 }
 
 /** Calculate Lennard-Jones cosine force */
