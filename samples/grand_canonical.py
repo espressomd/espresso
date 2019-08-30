@@ -20,7 +20,6 @@
 This example script performs a grand canonical simulation of a system in contact with a salt reservoir and ensures constant chemical potential.
 It takes two command line arguments as input: 1) the reservoir salt concentration in units of 1/sigma^3 and 2) the excess chemical potential of the reservoir in units of kT.
 The excess chemical potential of the reservoir needs to be determined prior to running the grand canonical simulation using the script called widom_insertion.py which simulates a part of the reservoir at the prescribed salt concentration. Be aware that the reservoir excess chemical potential depends on all interactions in the reservoir system.
-From the Widom insertion script you obtain the excess chemical potential you need to provide for this script.
 """
 import numpy as np
 import argparse

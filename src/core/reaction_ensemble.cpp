@@ -164,7 +164,6 @@ void ReactionAlgorithm::add_reaction(
  * set.
  */
 void ReactionAlgorithm::check_reaction_ensemble() {
-  /**checks the reaction_ensemble struct for valid parameters */
   if (reactions.empty()) {
     throw std::runtime_error("Reaction system not initialized");
   }
@@ -369,7 +368,6 @@ double ReactionEnsemble::calculate_acceptance_probability(
     std::map<int, int> &old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
-  /**calculate the acceptance probability in the reaction ensemble */
   const double factorial_expr =
       calculate_factorial_expression(current_reaction, old_particle_numbers);
 
@@ -607,7 +605,6 @@ int ReactionAlgorithm::delete_particle(int p_id) {
    * range becoming excessively huge.
    */
 
-  /**deletes the particle with the provided id  */
   int old_max_seen_id = max_seen_particle;
   if (p_id == old_max_seen_id) {
     // last particle, just delete
@@ -1197,16 +1194,13 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
 }
 
 /**
- * Calculates the expression which occurs in the Wang-Landau acceptance
- * probability.
+ * Calculates the expression in the acceptance probability of the Wang-Landau
+ * reaction ensemble
  */
 double WangLandauReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::map<int, int> &old_particle_numbers, int old_state_index,
     int new_state_index, bool only_make_configuration_changing_move) {
-  /**determine the acceptance probabilities of the reaction move
-   * in Wang-Landau reaction ensemble
-   */
   double beta = 1.0 / temperature;
   double bf;
   if (do_not_sample_reaction_partition_function ||
@@ -1756,15 +1750,15 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
   return 0;
 }
 
+/**
+ * Calculates the expression in the acceptance probability of the constant pH
+ * method.
+ */
 double ConstantpHEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
     std::map<int, int> &dummy_old_particle_numbers, int dummy_old_state_index,
     int dummy_new_state_index,
     bool dummy_only_make_configuration_changing_move) {
-  /**
-   *Calculates the expression in the acceptance probability of the constant pH
-   *method.
-   */
   double ln_bf;
   double pKa;
   const double beta = 1.0 / temperature;
