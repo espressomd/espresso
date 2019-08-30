@@ -151,8 +151,6 @@ cdef class Integrator:
             self._isotropic_npt_params['piston'] = piston
             self._isotropic_npt_params['direction'] = direction
             self._isotropic_npt_params['cubic_box'] = cubic_box
-            if "NPT" not in espressomd.code_info.features():
-                raise Exception("NPT is not compiled in")
             check_type_or_throw_except(
                 ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")
             check_type_or_throw_except(
