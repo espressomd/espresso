@@ -175,8 +175,6 @@ void correct_pos_shake(ParticleRange const &particles) {
   int repeat_, cnt = 0;
   int repeat = 1;
 
-  // Note: The particle range has to be re-obtained from the cell_structure
-  // after ghost updates
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(cell_structure.local_cells().particles());
     repeat_ = 0;
