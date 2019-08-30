@@ -233,7 +233,8 @@ cdef class Thermostat:
             ``False``.
         seed : :obj:`int`
             Initial counter value (or seed) of the philox RNG.
-            Required on first activation of the langevin thermostat.
+            Required on first activation of the Langevin thermostat.
+            Must be positive.
 
         """
 
@@ -287,14 +288,16 @@ cdef class Thermostat:
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 
-        #Seed is required if the rng is not initialized
-        if not seed and langevin_is_seed_required():
+        # Seed is required if the RNG is not initialized
+        if seed is None and langevin_is_seed_required():
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermostat")
 
-        if seed:
+        if seed is not None:
             utils.check_type_or_throw_except(
                 seed, 1, int, "seed must be a positive integer")
+            if seed < 0:
+                raise ValueError("seed must be a positive integer")
             langevin_set_rng_state(seed)
 
         global temperature
@@ -373,7 +376,8 @@ cdef class Thermostat:
         ----------
         LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
         seed : :obj:`int`
-             Seed for the random number generator, required if kT > 0.
+            Seed for the random number generator, required if kT > 0.
+            Must be positive.
         act_on_virtual : :obj:`bool`, optional
             If ``True`` the thermostat will act on virtual sites (default).
         gamma : :obj:`float`
@@ -386,10 +390,14 @@ cdef class Thermostat:
 
         self._LB_fluid = LB_fluid
         if lb_lbfluid_get_kT() > 0.:
-            if not seed and lb_lbcoupling_is_seed_required():
+            if seed is None and lb_lbcoupling_is_seed_required():
                 raise ValueError(
                     "seed has to be given as keyword arg")
-            elif seed:
+            if seed is not None:
+                utils.check_type_or_throw_except(
+                    seed, 1, int, "seed must be a positive integer")
+                if seed < 0:
+                    raise ValueError("seed must be a positive integer")
                 lb_lbcoupling_set_rng_state(seed)
         else:
             lb_lbcoupling_set_rng_state(0)
@@ -450,6 +458,10 @@ cdef class Thermostat:
             ----------
             kT : :obj:`float`
                 Thermal energy of the heat bath.
+            seed : :obj:`int`
+                Initial counter value (or seed) of the philox RNG.
+                Required on first activation of the DPD thermostat.
+                Must be positive.
 
             """
 
@@ -458,14 +470,16 @@ cdef class Thermostat:
             if not isinstance(kT, float):
                 raise ValueError("temperature must be a positive number")
 
-            #Seed is required if the rng is not initialized
-            if not seed and dpd_is_seed_required():
+            # Seed is required if the RNG is not initialized
+            if seed is None and dpd_is_seed_required():
                 raise ValueError(
                     "A seed has to be given as keyword argument on first activation of the thermostat")
 
-            if seed:
+            if seed is not None:
                 utils.check_type_or_throw_except(
                     seed, 1, int, "seed must be a positive integer")
+                if seed < 0:
+                    raise ValueError("seed must be a positive integer")
                 dpd_set_rng_state(seed)
 
             global temperature

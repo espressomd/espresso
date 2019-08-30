@@ -26,10 +26,7 @@
  *  Implementation in \ref harmonic.cpp.
  */
 
-/************************************************************/
-
 #include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/sqr.hpp>
 

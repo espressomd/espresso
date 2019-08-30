@@ -586,10 +586,6 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     permute_ifield(fft.plan[i].start, 3, -(fft.plan[i].n_permute));
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0] * fft.plan[i].new_mesh[1];
 
-    /* FFT_TRACE( printf("%d: comm_group( ",comm.rank() )); */
-    /* FFT_TRACE( for(j=0; j< fft.plan[i].g_size; j++) printf("%d ")); */
-    /* FFT_TRACE( printf(")\n")); */
-
     /* === send/recv block specifications === */
     for (j = 0; j < fft.plan[i].group.size(); j++) {
       /* send block: comm.rank() to comm-group-node i (identity: node) */

@@ -193,7 +193,7 @@ void add_oif_global_forces(
         auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
 
         // unfolded positions correct
-        /// starting code from volume force
+        // starting code from volume force
         auto const VOL_norm = get_n_triangle(p11, p22, p33).normalize();
         auto const VOL_A = area_triangle(p11, p22, p33);
         auto const VOL_vv = (VOL_volume - iaparams->p.oif_global_forces.V0) /
@@ -204,7 +204,7 @@ void add_oif_global_forces(
         p1->f.f += VOL_force;
         p2->f.f += VOL_force;
         p3->f.f += VOL_force;
-        ///  ending code from volume force
+        // ending code from volume force
 
         auto const h = (1. / 3.) * (p11 + p22 + p33);
 

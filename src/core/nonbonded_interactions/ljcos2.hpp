@@ -34,9 +34,7 @@
 
 #ifdef LJCOS2
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <cmath>
 #include <utils/math/int_pow.hpp>
@@ -44,10 +42,8 @@
 int ljcos2_set_params(int part_type_a, int part_type_b, double eps, double sig,
                       double offset, double w);
 
-/** Calculate lj-cos2 force between particle p1 and p2. */
-inline void add_ljcos2_pair_force(Particle const *const p1,
-                                  Particle const *const p2,
-                                  IA_parameters const *const ia_params,
+/** Calculate Lennard-Jones cosine squared force */
+inline void add_ljcos2_pair_force(IA_parameters const *const ia_params,
                                   Utils::Vector3d const &d, double dist,
                                   Utils::Vector3d &force) {
   if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
@@ -63,38 +59,12 @@ inline void add_ljcos2_pair_force(Particle const *const p1,
           sin(M_PI * (r_off - ia_params->ljcos2.rchange) / ia_params->ljcos2.w);
     }
     force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-    if (fac * dist > 1000)
-      fprintf(stderr, "%d: LJ-Warning: Pair (%d-%d) force=%f dist=%f\n",
-              this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
-
-    ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                              p2->p.identity, dist, fac));
-    ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: LJ   f = (%.3e,%.3e,%.3e) with "
-                              "part id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                              p1->p.identity, dist, fac));
-
-    LJ_TRACE(fprintf(
-        stderr, "%d: LJ: Pair (%d-%d) dist=%.3f: force+-: (%.3e,%.3e,%.3e)\n",
-        this_node, p1->p.identity, p2->p.identity, dist, force[0], force[1],
-        force[2]));
   }
 }
 
-/** Calculate lj-cos2 energy between particle p1 and p2. */
-inline double ljcos2_pair_energy(Particle const *const p1,
-                                 Particle const *const p2,
-                                 IA_parameters const *const ia_params,
-                                 Utils::Vector3d const &d, double dist) {
+/** Calculate Lennard-Jones cosine squared energy */
+inline double ljcos2_pair_energy(IA_parameters const *const ia_params,
+                                 double dist) {
   if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
     auto const r_off = dist - ia_params->ljcos2.offset;
     if (r_off < ia_params->ljcos2.rchange) {
