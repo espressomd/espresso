@@ -139,8 +139,9 @@ void on_integration_start() {
     recalc_forces = 1;
   }
 
-  /* Ensemble preparation: NVT or NPT */
-  integrate_ensemble_init();
+#ifdef NPT
+  npt_ensemble_init(box_geo);
+#endif
 
   /* Update particle and observable information for routines in statistics.cpp
    */

@@ -25,6 +25,7 @@
 #ifndef NPT_H
 #define NPT_H
 
+#include "BoxGeometry.hpp"
 /************************************************
  * data types
  ************************************************/
@@ -92,5 +93,7 @@ extern nptiso_struct nptiso;
  *   @param n_steps Number of interation steps since the last sync
  */
 void synchronize_npt_state(int n_steps);
-
+void npt_ensemble_init(const BoxGeometry &box);
+void integrator_npt_sanity_checks();
+void npt_update_instantaneous_pressure();
 #endif

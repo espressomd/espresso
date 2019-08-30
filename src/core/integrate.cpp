@@ -117,43 +117,7 @@ void integrator_sanity_checks() {
   }
 }
 
-#ifdef NPT
-
-void integrator_npt_sanity_checks() {
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    if (nptiso.piston <= 0.0) {
-      runtimeErrorMsg() << "npt on, but piston mass not set";
-    }
-  }
-}
-#endif /*NPT*/
-
 /************************************************************/
-void integrate_ensemble_init() {
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    /* prepare NpT-integration */
-    nptiso.inv_piston = 1 / (1.0 * nptiso.piston);
-    nptiso.p_inst_av = 0.0;
-    if (nptiso.dimension == 0) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: npt integrator was called but "
-              "dimension not yet set. this should not happen. ",
-              this_node);
-      errexit();
-    }
-
-    nptiso.volume =
-        pow(box_geo.length()[nptiso.non_const_dim], nptiso.dimension);
-
-    if (recalc_forces) {
-      nptiso.p_inst = 0.0;
-      nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
-      nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
-    }
-  }
-#endif
-}
 
 bool integrator_step_1(ParticleRange &particles) {
   switch (integ_switch) {
@@ -278,10 +242,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-    /* Integration Step: Step 3 of Velocity Verlet scheme:
-       Calculate f(t+dt) as function of positions p(t+dt) ( and velocities
-       v(t+0.5*dt) ) */
-
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
     virtual_sites()->update();
@@ -320,10 +280,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     }
 
-// NPT: Update instantaneous average pressure
 #ifdef NPT
-    if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
-      nptiso.p_inst_av += nptiso.p_inst;
+    npt_update_instantaneous_pressure();
 #endif
 
     if (check_runtime_errors(comm_cart))
