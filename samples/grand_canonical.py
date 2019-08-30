@@ -17,9 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This example script performs a grand canonical simulation of a system in contact with a salt reservoir and ensures constant chemical potential.
-It takes two command line arguments as input: 1) the reservoir salt concentration in units of 1/sigma^3 and 2) the excess chemical potential of the reservoir in units of kT.
-The excess chemical potential of the reservoir needs to be determined prior to running the grand canonical simulation using the script called widom_insertion.py which simulates a part of the reservoir at the prescribed salt concentration. Be aware that the reservoir excess chemical potential depends on all interactions in the reservoir system.
+This example script performs a grand canonical simulation of a system in contact
+with a salt reservoir and ensures constant chemical potential.
+It takes two command line arguments as input: 1) the reservoir salt concentration
+in units of 1/sigma^3 and 2) the excess chemical potential of the reservoir in
+units of kT.
+The excess chemical potential of the reservoir needs to be determined prior to
+running the grand canonical simulation using the script called widom_insertion.py
+which simulates a part of the reservoir at the prescribed salt concentration.
+Be aware that the reservoir excess chemical potential depends on all interactions
+in the reservoir system.
 """
 import numpy as np
 import argparse
@@ -81,8 +88,7 @@ types = [0, 1, 2]
 for type_1 in types:
     for type_2 in types:
         system.non_bonded_inter[type_1, type_2].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig,
-            cutoff=lj_cut, shift="auto")
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 RE = reaction_ensemble.ReactionEnsemble(
     temperature=temperature, exclusion_radius=2.0, seed=3)

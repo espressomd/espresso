@@ -17,8 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This example script measures the excess chemical potential of a charged WCA fluid via Widom's insertion method.
-As input this script requires you to provide particle number density in units of 1/sigma^3.
+This example script measures the excess chemical potential of a charged WCA
+fluid via Widom's insertion method.
+As input this script requires you to provide particle number density in units
+of 1/sigma^3.
 """
 import numpy as np
 import argparse
@@ -79,8 +81,7 @@ types = [0, 1, 2]
 for type_1 in types:
     for type_2 in types:
         system.non_bonded_inter[type_1, type_2].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig,
-            cutoff=lj_cut, shift="auto")
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
