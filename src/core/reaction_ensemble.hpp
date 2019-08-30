@@ -106,6 +106,7 @@ private:
   }
 };
 
+/** Base class for reaction ensemble methods */
 class ReactionAlgorithm {
 
 public:
@@ -226,13 +227,14 @@ private:
 ////////////////////////////////////////////////////////////////actual
 /// declaration of specific reaction algorithms
 
-/** reaction ensemble method according to smith94x for the reaction ensemble at
- *constant volume and temperature, for the reaction ensemble at constant
- *pressure additionally employ a barostat! NOTE: a chemical reaction consists of
- *a forward and backward reaction. Here both reactions have to be defined
- *separately. The extent of the reaction is here chosen to be +1. If the
- *reaction trial move for a dissociation of HA is accepted then there is one
- *more dissociated ion pair H+ and A-
+/** Reaction ensemble method according to smith94x.
+ *  Works for the reaction ensemble at constant volume and temperature. For the
+ *  reaction ensemble at constant pressure additionally employ a barostat!
+ *  NOTE: a chemical reaction consists of a forward and backward reaction.
+ *  Here both reactions have to be defined separately. The extent of the
+ *  reaction is here chosen to be +1. If the reaction trial move for a
+ *  dissociation of HA is accepted then there is one more dissociated ion
+ *  pair H+ and A-
  */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
@@ -246,6 +248,7 @@ private:
       bool dummy_only_make_configuration_changing_move) override;
 };
 
+/** Wang-Landau reaction ensemble method */
 class WangLandauReactionEnsemble : public ReactionAlgorithm {
 public:
   WangLandauReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
@@ -350,7 +353,7 @@ private:
 };
 
 /**
- * Constant-pH Ensemble, for derivation see Reed and Reed 1992
+ * Constant-pH Ensemble, for derivation see Reed and Reed 1992.
  * For the constant pH reactions you need to provide the deprotonation and
  * afterwards the corresponding protonation reaction (in this order). If you
  * want to deal with multiple reactions do it multiple times. Note that there is
@@ -377,6 +380,7 @@ private:
   int get_random_valid_p_id();
 };
 
+/** Widom insertion method */
 class WidomInsertion : public ReactionAlgorithm {
 public:
   WidomInsertion(int seed) : ReactionAlgorithm(seed) {}

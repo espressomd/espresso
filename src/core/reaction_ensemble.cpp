@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 /** @file */
 
 #include "reaction_ensemble.hpp"
@@ -67,8 +68,9 @@ template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
   return false;
 }
 
-  /**save minimum and maximum energies as a function of the other collective
-   * variables under min_boundaries_energies, max_boundaries_energies **/
+/** Save minimum and maximum energies as a function of the other collective
+ *  variables under min_boundaries_energies, max_boundaries_energies
+ */
 void EnergyCollectiveVariable::load_CV_boundaries(
     WangLandauReactionEnsemble &m_current_wang_landau_system) {
 
@@ -407,19 +409,18 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
   update_wang_landau_potential_and_histogram(accepted_state);
 }
 
-  /**
-   *generic one way reaction
-   *A+B+...+G +... --> K+...X + Z +...
-   *you need to use 2A --> B instead of A+A --> B since in the last case you
-   *assume
-   *distinctness of the particles, however both ways to describe the reaction
-   *are equivalent in the thermodynamic limit (large particle numbers) further
-   *it is crucial for the function in which order you provide the reactant and
-   *product types since particles will be replaced correspondingly! If there are
-   *less reactants than products, new product particles are created randomly in
-   *the box. Matching particles simply change the types. If there are more
-   *reactants than products, old reactant particles are deleted.
-   */
+/**
+ * Generic one way reaction
+ * A+B+...+G +... --> K+...X + Z +...
+ * You need to use 2A --> B instead of A+A --> B since in the last case you
+ * assume distinctness of the particles, however both ways to describe the
+ * reaction are equivalent in the thermodynamic limit (large particle numbers).
+ * Furthermore, it is crucial for the function in which order you provide the
+ * reactant and product types since particles will be replaced correspondingly!
+ * If there are less reactants than products, new product particles are created
+ * randomly in the box. Matching particles simply change the types. If there
+ * are more reactants than products, old reactant particles are deleted.
+ */
 bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
   SingleReaction &current_reaction = reactions[reaction_id];
@@ -516,9 +517,9 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
     for (int p_ids_created_particle : p_ids_created_particles) {
       delete_particle(p_ids_created_particle);
     }
-    // 2)restore previously hidden reactant particles
+    // 2) restore previously hidden reactant particles
     restore_properties(hidden_particles_properties, number_of_saved_properties);
-    // 2)restore previously changed reactant particles
+    // 3) restore previously changed reactant particles
     restore_properties(changed_particles_properties,
                        number_of_saved_properties);
     reaction_is_accepted = false;
@@ -560,16 +561,17 @@ void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
  * interaction. Additional hiding from interactions would need to be implemented
  * here.
  *
-   *remove_charge and put type to a non existing one --> no interactions anymore
-   *it is as if the particle was non existing (currently only type-based
-   *interactions are switched off, as well as the electrostatic interaction)
-   *hide_particle() does not break bonds for simple reactions. as long as there
-   *are no reactions like 2A -->B where one of the reacting A particles occurs
-   *in the polymer (think of bond breakages if the monomer in the polymer gets
-   *deleted in the reaction). This constraint is not of fundamental reason, but
-   *there would be a need for a rule for such "collision" reactions (a reaction
-   *like the one above).
-   */
+ * Removing the particle charge and changing its type to a non existing one
+ * deactivates all interactions with other particles, as if the particle was
+ * inexistent (currently only type-based interactions are switched off, as well
+ * as the electrostatic interaction).
+ * This function does not break bonds for simple reactions, as long as there
+ * are no reactions like 2A -->B where one of the reacting A particles occurs
+ * in the polymer (think of bond breakages if the monomer in the polymer gets
+ * deleted in the reaction). This constraint is not of fundamental reason, but
+ * there would be a need for a rule for such "collision" reactions (a reaction
+ * like the one above).
+ */
 void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 
   auto part = get_particle_data(p_id);
@@ -585,14 +587,12 @@ void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
   set_particle_type(p_id, non_interacting_type);
 }
 
-  /**
-   * Deletes the particle with the given p_id and stores if it created a hole
-   * at that position in the particle id range. This method is intended to
-   * only
-   * delete unbonded particles since bonds are coupled to ids. This is used to
-   * avoid the id
-   * range becoming excessively huge.
-   */
+/**
+ * Deletes the particle with the given p_id and stores the id if the deletion
+ * created a hole in the particle id range. This method is intended to only
+ * delete unbonded particles since bonds are coupled to ids. This is used to
+ * avoid the id range becoming excessively huge.
+ */
 int ReactionAlgorithm::delete_particle(int p_id) {
   int old_max_seen_id = max_seen_particle;
   if (p_id == old_max_seen_id) {
@@ -728,19 +728,13 @@ int ReactionAlgorithm::create_particle(int desired_type) {
   // set velocities
   set_particle_v(p_id, vel);
   double d_min = distto(partCfg(), pos_vec, p_id);
-  if (d_min < exclusion_radius)
-    particle_inside_exclusion_radius_touched =
-        true; // setting of a minimal
-              // distance is allowed to
-              // avoid overlapping
-              // configurations if there is
-              // a repulsive potential.
-              // States with very high
-              // energies have a probability
-              // of almost zero and
-              // therefore do not contribute
-              // to ensemble averages.
-
+  if (d_min < exclusion_radius) {
+    // setting of a minimal distance is allowed to avoid overlapping
+    // configurations if there is a repulsive potential. States with
+    // very high energies have a probability of almost zero and
+    // therefore do not contribute to ensemble averages.
+    particle_inside_exclusion_radius_touched = true;
+  }
   return p_id;
 }
 
@@ -862,16 +856,17 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
                                                                    // symmetric
   }
 
-  //	//correct for enhanced proposal of small radii by using the Metropolis
-  // hastings algorithm for asymmetric proposal densities.
-  //	double
-  // old_radius=std::sqrt(std::pow(particle_positions[0]-cyl_x,2)+std::pow(particle_positions[1]-cyl_y,2));
-  //	double
-  // new_radius=std::sqrt(std::pow(new_pos[0]-cyl_x,2)+std::pow(new_pos[1]-cyl_y,2));
-  //	bf=std::min(1.0,
-  // bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
-  ////Metropolis-Hastings Algorithm for asymmetric proposal density
+  // // correct for enhanced proposal of small radii by using the
+  // // Metropolis-Hastings algorithm for asymmetric proposal densities
+  // double old_radius =
+  //     std::sqrt(std::pow(particle_positions[0]-cyl_x,2) +
+  //               std::pow(particle_positions[1]-cyl_y,2));
+  // double new_radius =
+  //     std::sqrt(std::pow(new_pos[0]-cyl_x,2)+std::pow(new_pos[1]-cyl_y,2));
+  // bf = std::min(1.0,
+  //     bf*exp(-beta*(E_pot_new-E_pot_old))*new_radius/old_radius);
 
+  // Metropolis-Hastings Algorithm for asymmetric proposal density
   if (m_uniform_real_distribution(m_generator) < bf) {
     // accept
     m_accepted_configurational_MC_moves += 1;
@@ -943,7 +938,7 @@ int WangLandauReactionEnsemble::get_flattened_index_wang_landau(
   int index = -10; // negative number is not allowed as index and therefore
                    // indicates error
   std::vector<int> individual_indices(nr_collective_variables); // pre result
-  //	individual_indices.resize(nr_collective_variables,-1); //initialize
+  // individual_indices.resize(nr_collective_variables,-1); //initialize
   // individual_indices to -1
 
   // check for the current state to be an allowed state in the [range
@@ -1308,7 +1303,7 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
 
 // boring helper functions
 
-  /**increase the Wang-Landau potential and histogram at the current nbar */
+/** Increase the Wang-Landau potential and histogram at the current nbar */
 void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
     int index_of_state_after_acceptance_or_rejection) {
   if (index_of_state_after_acceptance_or_rejection >= 0) {
@@ -1705,10 +1700,10 @@ int ConstantpHEnsemble::do_reaction(int reaction_steps) {
       for (int reaction_i = 0; reaction_i < reactions.size(); reaction_i++) {
         SingleReaction &current_reaction = reactions[reaction_i];
         for (int reactant_i = 0; reactant_i < 1;
-             reactant_i++) { // reactant_i<1 since it is assumed in this place
-          // that the types A, and HA occur in the first place
-          // only. These are the types that should be switched,
-          // H+ should not be switched
+             reactant_i++) { // reactant_i < 1 since it is assumed in this place
+                             // that the types A and HA occur in the first place
+                             // only. These are the types that should be
+                             // switched, H+ should not be switched
           if (current_reaction.reactant_types[reactant_i] ==
               type_of_random_p_id) {
             list_of_reaction_ids_with_given_reactant_type.push_back(reaction_i);
@@ -1765,9 +1760,9 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   for (int p_ids_created_particle : p_ids_created_particles) {
     delete_particle(p_ids_created_particle);
   }
-  // 2)restore previously hidden reactant particles
+  // 2) restore previously hidden reactant particles
   restore_properties(hidden_particles_properties, number_of_saved_properties);
-  // 2)restore previously changed reactant particles
+  // 3) restore previously changed reactant particles
   restore_properties(changed_particles_properties, number_of_saved_properties);
   std::vector<double> exponential = {
       exp(-1.0 / temperature * (E_pot_new - E_pot_old))};
