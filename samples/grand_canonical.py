@@ -23,7 +23,7 @@ The excess chemical potential of the reservoir needs to be determined prior to r
 From the Widom insertion script you obtain the excess chemical potential you need to provide for this script.
 """
 import numpy as np
-import sys
+import argparse
 
 import espressomd
 from espressomd import reaction_ensemble
@@ -32,18 +32,19 @@ from espressomd import electrostatics
 required_features = ["P3M", "EXTERNAL_FORCES", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-# print help message if proper command-line arguments are not provided
-if len(sys.argv) != 3:
-    print("\nGot ", str(len(sys.argv) - 1), " arguments, need 2\n\nusage:" +
-          sys.argv[0] + " [cs_bulk [1/sigma^3]] [excess_chemical_potential [kT]]\n"
-          "The excess chemical potential needs to be determined using Widom's insertion method\n")
-    sys.exit()
+parser = argparse.ArgumentParser(epilog=__doc__)
+parser.add_argument('cs_bulk', type=float,
+                    help="bulk salt concentration [1/sigma^3]")
+parser.add_argument('excess_chemical_potential', type=float,
+                    help="excess chemical potential [kT] "
+                         "(obtained from Widom's insertion method)")
+args = parser.parse_args()
 
 # System parameters
 #############################################################
 
-cs_bulk = float(sys.argv[1])
-excess_chemical_potential_pair = float(sys.argv[2])
+cs_bulk = args.cs_bulk
+excess_chemical_potential_pair = args.excess_chemical_potential
 box_l = 50.0
 
 # Integration parameters

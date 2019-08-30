@@ -21,7 +21,7 @@ This example script measures the excess chemical potential of a charged WCA flui
 As input this script requires you to provide particle number density in units of 1/sigma^3.
 """
 import numpy as np
-import sys
+import argparse
 
 import espressomd
 from espressomd import code_info
@@ -33,10 +33,14 @@ from espressomd import electrostatics
 required_features = ["LENNARD_JONES", "P3M"]
 espressomd.assert_features(required_features)
 
+parser = argparse.ArgumentParser(epilog=__doc__)
+parser.add_argument('cs_bulk', type=float,
+                    help="bulk salt concentration [1/sigma^3]")
+args = parser.parse_args()
+
 # System parameters
 #############################################################
-assert len(sys.argv) == 2, "please provide a value for cs_bulk"
-cs_bulk = float(sys.argv[1])
+cs_bulk = args.cs_bulk
 N0 = 70
 box_l = (N0 / cs_bulk)**(1.0 / 3.0)
 
