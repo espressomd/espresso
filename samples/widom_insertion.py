@@ -89,21 +89,17 @@ for key in list(p3m_params.keys()):
 # warmup integration (with capped LJ potential)
 warm_steps = 1000
 warm_n_times = 20
-# do the warmup until the particles have at least the distance min_dist
 # set LJ cap
-lj_cap = 20
-system.force_cap = lj_cap
+system.force_cap = 20
 
 # Warmup Integration Loop
-act_min_dist = system.analysis.min_dist()
 i = 0
-while (i < warm_n_times):
+while i < warm_n_times:
     print(i, "warmup")
     system.integrator.run(steps=warm_steps)
     i += 1
-    # Increase LJ cap
-    lj_cap = lj_cap + 10
-    system.force_cap = lj_cap
+    # increase LJ cap
+    system.force_cap += 10
 
 # remove force capping
 system.force_cap = 0
