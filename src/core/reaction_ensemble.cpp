@@ -58,7 +58,7 @@ double average_list_of_allowed_entries(const std::vector<T> &vector) {
 }
 
 /**
- * Checks whether a number is in a std:vector of numbers.
+ * Checks whether a number is in a std::vector of numbers.
  */
 template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
   for (int i = 0; i < list.size(); i++) {

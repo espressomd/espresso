@@ -224,8 +224,7 @@ private:
   get_random_position_in_box_enhanced_proposal_of_small_radii();
 };
 
-////////////////////////////////////////////////////////////////actual
-/// declaration of specific reaction algorithms
+///////////////////////////// actual declaration of specific reaction algorithms
 
 /** Reaction ensemble method according to smith94x.
  *  Works for the reaction ensemble at constant volume and temperature. For the

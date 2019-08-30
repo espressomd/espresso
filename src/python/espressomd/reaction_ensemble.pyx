@@ -32,7 +32,7 @@ cdef class ReactionAlgorithm:
         be inserted. This is useful to avoid integrator failures if particles
         are too close and there is a diverging repulsive interaction, or to
         prevent two oppositely charged particles from being placed on top of
-        each other. The Boltzmann factor :math:`\exp(-\\beta E)` gives these
+        each other. The Boltzmann factor :math:`\\exp(-\\beta E)` gives these
         configurations a small contribution to the partition function,
         therefore they can be neglected.
     """
@@ -157,21 +157,21 @@ cdef class ReactionAlgorithm:
         Parameters
         ----------
         gamma : :obj:`float`
-            Equilibrium constant of the reaction, :math:`\gamma` (see the User
+            Equilibrium constant of the reaction, :math:`\\gamma` (see the User
             guide, section 6.6 for the definition and further details).
         reactant_types : list of :obj:`int`
             List of particle types of reactants in the reaction.
-        reactant_coefficients : list
+        reactant_coefficients : list of :obj:`int`
             List of stoichiometric coefficients of the reactants in the same
             order as the list of their types.
-        product_types : list
+        product_types : list of :obj:`int`
             List of particle types of products in the reaction.
-        product_coefficients : list
+        product_coefficients : list of :obj:`int`
             List of stoichiometric coefficients of products of the reaction in
             the same order as the list of their types
         default_charges : dictionary
             A dictionary of default charges for types that occur in the provided reaction.
-        check_for_electroneutrality : Boolean
+        check_for_electroneutrality : :obj:`bool`
             Check for electroneutrality of the given reaction if True.
 
         """
@@ -356,7 +356,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a vaild key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
         self._set_params_in_es_core()
 
@@ -379,7 +379,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a vaild key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
         self._set_params_in_es_core()
 
@@ -425,7 +425,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a vaild key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
         self.WLRptr.reset(new CWangLandauReactionEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.WLRptr.get()
@@ -435,8 +435,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
     def reaction(self, reaction_steps=1):
         """
         Performs reaction_steps reactions. Sets the number of reaction steps
-        which are performed at once. Do not use too many reaction steps steps
-        consecutively without having conformation changing steps in between
+        which are performed at once. Do not use too many reaction steps
+        consecutively without having conformation-changing steps in-between
         (especially important for the Wang-Landau reaction ensemble). Providing
         a number for the parameter reaction steps reduces the need for the
         interpreter to be called between consecutive reactions.
@@ -461,7 +461,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             Minimum value of the collective variable.
         max : :obj:`float`
             Maximum value of the collective variable.
-        corresponding_acid_types : list
+        corresponding_acid_types : list of :obj:`int`
             List of the types of the version of the species.
 
         """
@@ -547,7 +547,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         ----------
         final_wang_landau_parameter : :obj:`float`
             Sets the final Wang-Landau parameter, which is the Wang-Landau
-            parameter after which the simulation should stop.).
+            parameter after which the simulation should stop.
         full_path_to_output_filename : :obj:`str`
             Sets the path to the output file of the Wang-Landau algorithm which
             contains the Wang-Landau potential
@@ -598,9 +598,9 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         Records the minimum and maximum potential energy as a function of the
         degree of association in a preliminary Wang-Landau reaction ensemble
         simulation where the acceptance probability includes the factor
-        :math:`\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal
+        :math:`\\exp(-\\beta \\Delta E_{pot})`. The minimal and maximal
         potential energies which occur in the system are needed for the energy
-        reweighting simulations where the factor :math:`\exp(-\\beta \\Delta E_{pot})`
+        reweighting simulations where the factor :math:`\\exp(-\\beta \\Delta E_{pot})`
         is not included in the acceptance probability in
         order to avoid choosing the wrong potential energy boundaries.
 
@@ -689,7 +689,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a vaild key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
         self._set_params_in_es_core()
 
