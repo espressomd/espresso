@@ -30,8 +30,8 @@ class Sample(ut.TestCase):
     system = sample.system
 
     def test_deviation_to_target_concentration(self):
-        # deviation < 10%
-        self.assertLess(abs(sample.deviation), 10.0)
+        # deviation < 15%
+        self.assertLess(abs(sample.deviation), 15.0)
 
 
 if __name__ == "__main__":
