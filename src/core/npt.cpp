@@ -66,4 +66,19 @@ void npt_update_instantaneous_pressure() {
   if ((this_node == 0) && (integ_switch == INTEG_METHOD_NPT_ISO))
     nptiso.p_inst_av += nptiso.p_inst;
 }
+
+/** reset virial part of instantaneous pressure */
+void npt_reset_instantaneous_virials() {
+  if (integ_switch == INTEG_METHOD_NPT_ISO)
+    nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+}
+
+void npt_add_virial_contribution(const Utils::Vector3d &force,
+                                 const Utils::Vector3d &d) {
+  if (integ_switch == INTEG_METHOD_NPT_ISO) {
+    for (int j = 0; j < 3; j++) {
+      nptiso.p_vir[j] += force[j] * d[j];
+    }
+  }
+}
 #endif // NPT

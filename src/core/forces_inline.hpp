@@ -277,11 +277,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   /* but nothing afterwards                                            */
   /*********************************************************************/
 #ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    for (int j = 0; j < 3; j++) {
-      nptiso.p_vir[j] += force[j] * d[j];
-    }
-  }
+  npt_add_virial_contribution(force, d);
 #endif
 
   /***********************************************/
@@ -444,10 +440,7 @@ inline void add_bonded_force(Particle *const p1) {
       bond_broken = calc_bond_pair_force(p1, p2, iaparams, dx, force1);
 
 #ifdef NPT
-      if (integ_switch == INTEG_METHOD_NPT_ISO) {
-        for (int j = 0; j < 3; j++)
-          nptiso.p_vir[j] += force1[j] * dx[j];
-      }
+      npt_add_virial_contribution(force1, dx);
 #endif
 
       switch (type) {
