@@ -16,15 +16,6 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** reaction ensemble method according to smith94x for the reaction ensemble at
- *constant volume and temperature, for the reaction ensemble at constant
- *pressure additionally employ a barostat! NOTE: a chemical reaction consists of
- *a forward and backward reaction. Here both reactions have to be defined
- *separately. The extent of the reaction is here chosen to be +1. If the
- *reaction trial move for a dissociation of HA is accepted then there is one
- *more dissociated ion pair H+ and A-
- */
-
 /** @file */
 
 #include "reaction_ensemble.hpp"
@@ -76,10 +67,10 @@ template <typename T> bool is_in_list(T value, const std::vector<T> &list) {
   return false;
 }
 
-void EnergyCollectiveVariable::load_CV_boundaries(
-    WangLandauReactionEnsemble &m_current_wang_landau_system) {
   /**save minimum and maximum energies as a function of the other collective
    * variables under min_boundaries_energies, max_boundaries_energies **/
+void EnergyCollectiveVariable::load_CV_boundaries(
+    WangLandauReactionEnsemble &m_current_wang_landau_system) {
 
   m_current_wang_landau_system.do_energy_reweighting = true;
   // load energy boundaries from file
@@ -416,7 +407,6 @@ void WangLandauReactionEnsemble::on_end_reaction(int &accepted_state) {
   update_wang_landau_potential_and_histogram(accepted_state);
 }
 
-bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
   /**
    *generic one way reaction
    *A+B+...+G +... --> K+...X + Z +...
@@ -430,6 +420,7 @@ bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
    *the box. Matching particles simply change the types. If there are more
    *reactants than products, old reactant particles are deleted.
    */
+bool ReactionAlgorithm::generic_oneway_reaction(int reaction_id) {
 
   SingleReaction &current_reaction = reactions[reaction_id];
   current_reaction.tried_moves += 1;
@@ -568,9 +559,7 @@ void ReactionAlgorithm::replace_particle(int p_id, int desired_type) {
  * Hides a particle from short ranged interactions and from the electrostatic
  * interaction. Additional hiding from interactions would need to be implemented
  * here.
- */
-void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
-  /**
+ *
    *remove_charge and put type to a non existing one --> no interactions anymore
    *it is as if the particle was non existing (currently only type-based
    *interactions are switched off, as well as the electrostatic interaction)
@@ -581,6 +570,7 @@ void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
    *there would be a need for a rule for such "collision" reactions (a reaction
    *like the one above).
    */
+void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
 
   auto part = get_particle_data(p_id);
   double d_min = distto(partCfg(), part.r.p, p_id);
@@ -595,7 +585,6 @@ void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
   set_particle_type(p_id, non_interacting_type);
 }
 
-int ReactionAlgorithm::delete_particle(int p_id) {
   /**
    * Deletes the particle with the given p_id and stores if it created a hole
    * at that position in the particle id range. This method is intended to
@@ -604,7 +593,7 @@ int ReactionAlgorithm::delete_particle(int p_id) {
    * avoid the id
    * range becoming excessively huge.
    */
-
+int ReactionAlgorithm::delete_particle(int p_id) {
   int old_max_seen_id = max_seen_particle;
   if (p_id == old_max_seen_id) {
     // last particle, just delete
@@ -1319,9 +1308,9 @@ int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
 
 // boring helper functions
 
+  /**increase the Wang-Landau potential and histogram at the current nbar */
 void WangLandauReactionEnsemble::update_wang_landau_potential_and_histogram(
     int index_of_state_after_acceptance_or_rejection) {
-  /**increase the Wang-Landau potential and histogram at the current nbar */
   if (index_of_state_after_acceptance_or_rejection >= 0) {
     if (histogram[index_of_state_after_acceptance_or_rejection] >= 0) {
       histogram[index_of_state_after_acceptance_or_rejection] += 1;
@@ -1688,20 +1677,6 @@ int ConstantpHEnsemble::get_random_valid_p_id() {
     random_p_id = i_random(max_seen_particle + 1);
   return random_p_id;
 }
-
-/**
- * Constant-pH Ensemble, for derivation see Reed and Reed 1992
- * For the constant pH reactions you need to provide the deprotonation and
- * afterwards the corresponding protonation reaction (in this order). If you
- * want to deal with multiple reactions do it multiple times. Note that there is
- * a difference in the usecase of the constant pH reactions and the above
- * reaction ensemble. For the constant pH simulation directily the
- * **apparent equilibrium constant which carries a unit** needs to be provided
- * -- this is equivalent to the gamma of the reaction ensemble above, where the
- * dimensionless reaction constant needs to be provided. Again: For the
- * constant-pH algorithm not the dimensionless reaction constant needs to be
- * provided here, but the apparent reaction constant.
- */
 
 /**
  *Performs a reaction in the constant pH ensemble

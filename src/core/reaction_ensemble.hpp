@@ -226,6 +226,14 @@ private:
 ////////////////////////////////////////////////////////////////actual
 /// declaration of specific reaction algorithms
 
+/** reaction ensemble method according to smith94x for the reaction ensemble at
+ *constant volume and temperature, for the reaction ensemble at constant
+ *pressure additionally employ a barostat! NOTE: a chemical reaction consists of
+ *a forward and backward reaction. Here both reactions have to be defined
+ *separately. The extent of the reaction is here chosen to be +1. If the
+ *reaction trial move for a dissociation of HA is accepted then there is one
+ *more dissociated ion pair H+ and A-
+ */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
   ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
@@ -341,6 +349,19 @@ private:
                                                       double delta_CV);
 };
 
+/**
+ * Constant-pH Ensemble, for derivation see Reed and Reed 1992
+ * For the constant pH reactions you need to provide the deprotonation and
+ * afterwards the corresponding protonation reaction (in this order). If you
+ * want to deal with multiple reactions do it multiple times. Note that there is
+ * a difference in the usecase of the constant pH reactions and the above
+ * reaction ensemble. For the constant pH simulation directily the
+ * **apparent equilibrium constant which carries a unit** needs to be provided
+ * -- this is equivalent to the gamma of the reaction ensemble above, where the
+ * dimensionless reaction constant needs to be provided. Again: For the
+ * constant-pH algorithm not the dimensionless reaction constant needs to be
+ * provided here, but the apparent reaction constant.
+ */
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
   ConstantpHEnsemble(int seed) : ReactionAlgorithm(seed) {}
