@@ -35,15 +35,15 @@ espressomd.assert_features(required_features)
 # print help message if proper command-line arguments are not provided
 if len(sys.argv) != 3:
     print("\nGot ", str(len(sys.argv) - 1), " arguments, need 2\n\nusage:" +
-          sys.argv[0] + " [cs_bulk [1/sigma^3]] [excess_chemical_potential [kT]]\n")
+          sys.argv[0] + " [cs_bulk [1/sigma^3]] [excess_chemical_potential [kT]]\n"
+          "The excess chemical potential needs to be determined using Widom's insertion method\n")
     sys.exit()
 
 # System parameters
 #############################################################
 
 cs_bulk = float(sys.argv[1])
-excess_chemical_potential_pair = float(
-    sys.argv[2])  # from widom insertion simulation of pair insertion
+excess_chemical_potential_pair = float(sys.argv[2])
 box_l = 50.0
 
 # Integration parameters
@@ -57,7 +57,7 @@ system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature = 1.0
 system.thermostat.set_langevin(kT=temperature, gamma=.5, seed=42)
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 
 #############################################################
@@ -99,8 +99,8 @@ RE.reaction(10000)
 p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print("{} = {}".format(key, p3m_params[key]))
+for key, value in p3m_params.items():
+    print("{} = {}".format(key, value))
 
 
 # Warmup

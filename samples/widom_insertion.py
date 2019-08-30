@@ -50,7 +50,7 @@ system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature = 1.0
 system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 
 #############################################################
@@ -81,8 +81,8 @@ for type_1 in types:
 p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print("{} = {}".format(key, p3m_params[key]))
+for key, value in p3m_params.items():
+    print("{} = {}".format(key, value))
 
 # Warmup
 #############################################################
@@ -106,6 +106,9 @@ system.force_cap = 0
 
 RE = reaction_ensemble.WidomInsertion(
     temperature=temperature, seed=77)
+
+# add insertion reaction
+insertion_reaction_id = 0
 RE.add_reaction(reactant_types=[],
                 reactant_coefficients=[], product_types=[1, 2],
                 product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
@@ -115,17 +118,14 @@ system.setup_type_map([0, 1, 2])
 n_iterations = 100
 for i in range(n_iterations):
     for j in range(50):
-        RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
+        RE.measure_excess_chemical_potential(insertion_reaction_id)
     system.integrator.run(steps=500)
     if i % 20 == 0:
         print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
-            *RE.measure_excess_chemical_potential(0)  # 0 for insertion reaction
-        ))
+            *RE.measure_excess_chemical_potential(insertion_reaction_id)))
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+",
               system.number_of_particles(type=2))
 
-print(
-    "excess chemical potential for an ion pair ",
-     RE.measure_excess_chemical_potential(
-         0))  # 0 for insertion reaction
+print("excess chemical potential for an ion pair ",
+      RE.measure_excess_chemical_potential(insertion_reaction_id))
