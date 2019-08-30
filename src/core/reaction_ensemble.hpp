@@ -106,6 +106,7 @@ private:
   }
 };
 
+/** Base class for reaction ensemble methods */
 class ReactionAlgorithm {
 
 public:
@@ -223,9 +224,17 @@ private:
   get_random_position_in_box_enhanced_proposal_of_small_radii();
 };
 
-////////////////////////////////////////////////////////////////actual
-/// declaration of specific reaction algorithms
+///////////////////////////// actual declaration of specific reaction algorithms
 
+/** Reaction ensemble method according to smith94x.
+ *  Works for the reaction ensemble at constant volume and temperature. For the
+ *  reaction ensemble at constant pressure additionally employ a barostat!
+ *  NOTE: a chemical reaction consists of a forward and backward reaction.
+ *  Here both reactions have to be defined separately. The extent of the
+ *  reaction is here chosen to be +1. If the reaction trial move for a
+ *  dissociation of HA is accepted then there is one more dissociated ion
+ *  pair H+ and A-
+ */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
   ReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
@@ -238,6 +247,7 @@ private:
       bool dummy_only_make_configuration_changing_move) override;
 };
 
+/** Wang-Landau reaction ensemble method */
 class WangLandauReactionEnsemble : public ReactionAlgorithm {
 public:
   WangLandauReactionEnsemble(int seed) : ReactionAlgorithm(seed) {}
@@ -341,6 +351,19 @@ private:
                                                       double delta_CV);
 };
 
+/**
+ * Constant-pH Ensemble, for derivation see Reed and Reed 1992.
+ * For the constant pH reactions you need to provide the deprotonation and
+ * afterwards the corresponding protonation reaction (in this order). If you
+ * want to deal with multiple reactions do it multiple times. Note that there is
+ * a difference in the usecase of the constant pH reactions and the above
+ * reaction ensemble. For the constant pH simulation directily the
+ * **apparent equilibrium constant which carries a unit** needs to be provided
+ * -- this is equivalent to the gamma of the reaction ensemble above, where the
+ * dimensionless reaction constant needs to be provided. Again: For the
+ * constant-pH algorithm not the dimensionless reaction constant needs to be
+ * provided here, but the apparent reaction constant.
+ */
 class ConstantpHEnsemble : public ReactionAlgorithm {
 public:
   ConstantpHEnsemble(int seed) : ReactionAlgorithm(seed) {}
@@ -356,6 +379,7 @@ private:
   int get_random_valid_p_id();
 };
 
+/** Widom insertion method */
 class WidomInsertion : public ReactionAlgorithm {
 public:
   WidomInsertion(int seed) : ReactionAlgorithm(seed) {}
