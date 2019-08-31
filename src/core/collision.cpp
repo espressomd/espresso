@@ -371,7 +371,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 
   local_vs_relate_to(p_vs, &get_part(relate_to));
 
-  p_vs->p.is_virtual = 1;
+  p_vs->p.is_virtual = true;
   p_vs->p.type = collision_params.vs_particle_type;
 }
 

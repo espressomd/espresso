@@ -646,11 +646,12 @@ cdef class ParticleHandle:
 
     IF VIRTUAL_SITES:
         property virtual:
-            """ Virtual flag.
+            """Virtual flag.
 
-            Declares the particles as virtual (1) or non-virtual (0, default).
+            Declares the particles as virtual (``True``) or non-virtual
+            (``False``, default).
 
-            virtual : :obj:`int`
+            virtual : :obj:`bool`
 
             .. note::
                This needs the feature ``VIRTUAL_SITES``
@@ -659,13 +660,13 @@ cdef class ParticleHandle:
 
             def __set__(self, _v):
                 if is_valid_type(_v, int):
-                    set_particle_virtual(self._id, _v) 
+                    set_particle_virtual(self._id, < bint > _v)
                 else:
-                    raise ValueError("virtual must be an integer >= 0.")
+                    raise ValueError("virtual must be a boolean.")
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const int * x = NULL
+                cdef const bool * x = NULL
                 pointer_to_virtual(self.particle_data, x)
                 return x[0]
 
