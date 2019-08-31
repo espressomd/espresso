@@ -183,7 +183,7 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertEqual(system.part[1].virtual, 1)
+        self.assertEqual(system.part[1].virtual, True)
         self.assertTrue(
             isinstance(
                 system.virtual_sites,
