@@ -78,7 +78,7 @@ extern MMM2D_struct mmm2d_params;
  *  might have problems with overflows.
  *  @param maxPWerror    @copydoc MMM2D_struct::maxPWerror
  *  @param far_cut       sets the @copybrief MMM2D_struct::far_cut cutoff.
- *                       If -1, the far cutoff is determined by maxPWerror.
+ *                       If -1, the far cutoff is determined by @p maxPWerror.
  *                       Manual setting is probably only good for testing.
  *  @param delta_top     @copybrief MMM2D_struct::delta_mid_top
  *  @param delta_bot     @copybrief MMM2D_struct::delta_mid_bot
