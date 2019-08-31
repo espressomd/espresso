@@ -30,7 +30,6 @@
 #include "PartCfg.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <map>
 #include <string>
@@ -42,7 +41,7 @@
  */
 /************************************************************/
 /*@{*/
-extern double **configs;
+extern std::vector<std::vector<double>> configs;
 extern int n_configs;
 extern int n_part_conf;
 /*@}*/
@@ -67,8 +66,8 @@ double mindist(PartCfg &, IntList const &set1, IntList const &set2);
  *
  *  @return List of ids close to @p pos.
  */
-IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
-               int const planedims[3]);
+IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
+               const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
  *  @param pos  point
@@ -77,7 +76,7 @@ IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
  *              position of a particle).
  *  @return the minimal distance of a particle to coordinates @p pos
  */
-double distto(PartCfg &, double pos[3], int pid);
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid);
 
 /** Append particles' positions in %p partCfg to #configs
  *  @param partCfg  @copybrief PartCfg
@@ -179,17 +178,12 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  @param p_types   list with types of particles to be analyzed
  *  @param n_types   length of @p p_types
  *  @param order     the maximum wave vector length in 2PI/L
- *  @param sf        array containing the result (size: 2*order^2).
  */
-void calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order,
-                          double **sf);
+std::vector<double> calc_structurefactor(PartCfg &, int const *p_types,
+                                         int n_types, int order);
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);
-
-/** Calculates the density profile in dir direction */
-void density_profile_av(int n_conf, int n_bin, double density, int dir,
-                        double *rho_ave, int type);
 
 int calc_cylindrical_average(
     PartCfg &, std::vector<double> const &center,
@@ -198,32 +192,16 @@ int calc_cylindrical_average(
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
-template <typename T1, typename T2>
-double min_distance2(T1 const pos1, T2 const pos2) {
-  double diff[3];
-  get_mi_vector(diff, pos1, pos2);
-  return sqrlen(diff);
-}
-
-/** Calculate the minimal distance between two positions in the perhaps
- *  periodic simulation box.
- *  \param pos1  Position one.
- *  \param pos2  Position two.
- */
-template <typename T1, typename T2>
-double min_distance(T1 const pos1, T2 const pos2) {
-  return sqrt(min_distance2(pos1, pos2));
+template <typename T>
+double min_distance2(Utils::Vector<T, 3> const &pos1,
+                     Utils::Vector<T, 3> const &pos2) {
+  return get_mi_vector(pos1, pos2, box_geo).norm2();
 }
 
 /** Calculate the center of mass of a special type of the current configuration.
  *  \param part_type  type of the particle
  */
-Vector3d centerofmass(PartCfg &, int part_type);
-
-/** Docs missing
- *  \todo Docs missing
- */
-Vector3d centerofmass_vel(PartCfg &, int type);
+Utils::Vector3d centerofmass(PartCfg &, int part_type);
 
 /** Calculate the angular momentum of a special type of the current
  *  configuration.
@@ -242,14 +220,15 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
 /** Calculate momentum of all particles in the simulation box.
  *  \param result Momentum of particles.
  */
-void predict_momentum_particles(double *result);
+void predict_momentum_particles(double *result, const ParticleRange &particles);
 
 /** Calculate total momentum of the system (particles & LB fluid).
  *  Inputs are bools to include particles and fluid in the linear momentum
  *  calculation
  *  @return Result for this processor
  */
-Vector3d calc_linear_momentum(int include_particles, int include_lbfluid);
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid);
 
 inline double *obsstat_bonded(Observable_stat *stat, int j) {
   return stat->bonded + stat->chunk_size * j;

@@ -54,18 +54,17 @@ lj_cuts = {"Anion": WCA_cut * lj_sigmas["Anion"],
 box_l = (n_part / density)**(1. / 3.)
 system = espressomd.System(box_l=[box_l] * 3)
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
-system.thermostat.set_langevin(kT=temp, gamma=gamma)
 
 # Place particles
 for i in range(int(n_ionpairs)):
-    system.part.add(id=len(system.part), type=types["Anion"], pos=numpy.random.random(
-        3) * box_l, q=charges["Anion"])
+    system.part.add(id=len(system.part), type=types["Anion"],
+                    pos=numpy.random.random(3) * box_l, q=charges["Anion"])
 for i in range(int(n_ionpairs)):
-    system.part.add(id=len(system.part), type=types["Cation"], pos=numpy.random.random(
-        3) * box_l, q=charges["Cation"])
+    system.part.add(id=len(system.part), type=types["Cation"],
+                    pos=numpy.random.random(3) * box_l, q=charges["Cation"])
 
 
 def combination_rule_epsilon(rule, eps1, eps2):
@@ -94,25 +93,18 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 
-print("\n--->Lennard Jones Equilibration")
+print("\n--->Lennard-Jones Equilibration")
 max_sigma = max(lj_sigmas.values())
 min_dist = 0.0
-cap = 10.0
-# Warmup Helper: Cold, highly damped system
-system.thermostat.set_langevin(kT=temp * 0.1, gamma=gamma * 50.0)
+system.minimize_energy.init(f_max=0, gamma=10, max_steps=10,
+                            max_displacement=max_sigma * 0.01)
 
 while min_dist < max_sigma:
-    # Warmup Helper: Cap max. force, increase slowly for overlapping particles
-    min_dist = system.analysis.min_dist([types["Anion"], types["Cation"]], [
-        types["Anion"], types["Cation"]])
-    cap += min_dist
-# print min_dist, cap
-    system.force_cap = cap
-    system.integrator.run(10)
+    system.minimize_energy.minimize()
+    min_dist = system.analysis.min_dist()
 
-# Don't forget to reset thermostat, timestep and force cap
-system.thermostat.set_langevin(kT=temp, gamma=gamma)
-system.force_cap = 0
+# Set thermostat
+system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-3)
@@ -121,30 +113,21 @@ system.actors.add(p3m)
 print("\n--->Temperature Equilibration")
 system.time = 0.0
 for i in range(int(num_steps_equilibration / 100)):
-    temp_measured = system.analysis.energy(
-    )['kinetic'] / ((3.0 / 2.0) * n_part)
-    print(
-        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                              system.analysis.energy()[
-                                                                                  'total'],
-                                                                              system.analysis.energy()[
-                                                                                  'coulomb'],
-                                                                              temp_measured))
+    temp_measured = system.analysis.energy()['kinetic'] / ((3. / 2.) * n_part)
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}"
+          .format(system.time, system.analysis.energy()['total'],
+                  system.analysis.energy()['coulomb'], temp_measured))
     system.integrator.run(100)
 
 print("\n--->Integration")
 system.time = 0.0
 temp_measured = []
 for i in range(num_configs):
-    temp_measured.append(system.analysis.energy()[
-                         'kinetic'] / ((3.0 / 2.0) * n_part))
-    print(
-        "t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}".format(system.time,
-                                                                              system.analysis.energy()[
-                                                                                  'total'],
-                                                                              system.analysis.energy()[
-                                                                                  'coulomb'],
-                                                                              temp_measured[-1]))
+    temp_measured.append(system.analysis.energy()['kinetic']
+                         / ((3.0 / 2.0) * n_part))
+    print("t={0:.1f}, E_total={1:.2f}, E_coulomb={2:.2f}, T_cur={3:.4f}"
+          .format(system.time, system.analysis.energy()['total'],
+                  system.analysis.energy()['coulomb'], temp_measured[-1]))
     system.integrator.run(integ_steps_per_config)
 
     # Internally append particle configuration

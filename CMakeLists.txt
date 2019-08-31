@@ -22,6 +22,9 @@ cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
+  cmake_policy(SET CMP0074 NEW)
+endif()
 
 enable_language(CXX)
 
@@ -53,8 +56,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-set(WITH_PYTHON yes)
-
+option(WITH_PYTHON "Build with Python bindings"  ON)
 option(WITH_GSL    "Build with GSL support"  ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
@@ -198,7 +200,7 @@ if(WITH_CUDA)
         target_link_libraries(${ARGV0} PRIVATE "${ROCFFT_LIB}")
       endfunction()
     else()
-      find_package(CUDA 7.0)
+      find_package(CUDA 9.0)
       if(CUDA_FOUND)
         if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
           get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
@@ -209,15 +211,12 @@ if(WITH_CUDA)
 
         set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
-        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
+        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
         set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
         set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
-        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
+        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -O2")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
         list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
-        if (CUDA_VERSION VERSION_LESS "8.0" AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "5.0")
-          list(APPEND CUDA_NVCC_FLAGS "-D_MWAITXINTRIN_H_INCLUDED -D_FORCE_INLINES")
-        endif()
         SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
         if (CMAKE_OSX_SYSROOT)
@@ -235,7 +234,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp REQUIRED)
+find_package(PythonInterp 3.3 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
@@ -253,30 +252,24 @@ if(WITH_PYTHON)
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    set(
-      CYTHON_FLAGS "-2"
+
+  set(CYTHON_FLAGS "-3"
       CACHE STRING "Flags used by the Cython compiler during all build types.")
-  else()
-    set(
-      CYTHON_FLAGS "-3"
-      CACHE STRING "Flags used by the Cython compiler during all build types.")
-  endif()
 
   if(WARNINGS_ARE_ERRORS)
     set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
   endif()
+
+  find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
 
 
 find_package(FFTW3)
 if(FFTW3_FOUND)
-  include_directories(SYSTEM ${FFTW3_INCLUDE_DIR})
-  list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
-# If we build either interface turn on script interface
+# If we build Python bindings, turn on script interface
 if(WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
@@ -387,7 +380,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     set(BOOST_MINIMUM_VERSION "1.66.0")
   endif()
 else()
-  set(BOOST_MINIMUM_VERSION "1.53.0")
+  set(BOOST_MINIMUM_VERSION "1.55.0")
 endif()
 
 # old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
@@ -524,9 +517,7 @@ if(WITH_CLANG_TIDY)
     set(
       CMAKE_CXX_CLANG_TIDY
       "${CLANG_TIDY_EXE}"
-      "-checks=*,clang-analyzer-alpha.*,-misc-unused-*,-android-*,-fuchsia-*,-google-*,-llvm-*,-modernize-*,-readability-*,-cppcoreguidelines-*,-clang-analyzer-deadcode*,-cert-*,-clang-analyzer-core.NullDereference,-clang-analyzer-core.DivideZero,-misc-misplaced-widening-cast,-misc-macro-parentheses, -clang-analyzer-security.FloatLoopCounter, -clang-analyzer-optin.mpi.MPI-Checker,-boost-use-to-string,-hicpp-*, modernize-use-nullptr, modernize-use-auto, modernize-pass-by-value, modernize-avoid-c-arrays, modernize-use-equals-default, modernize-deprecated-headers, readability-non-const-parameter"
-      "-header-filter=.*"
-      "-warnings-as-errors=*")
+    )
   endif()
 endif()
 
@@ -536,7 +527,9 @@ if(WITH_TESTS)
     set(WITH_UNIT_TESTS ON)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
-  add_subdirectory(testsuite)
+  if(WITH_PYTHON)
+    add_subdirectory(testsuite)
+  endif(WITH_PYTHON)
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)

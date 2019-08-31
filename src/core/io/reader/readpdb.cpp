@@ -40,22 +40,21 @@ static void add_lj_interaction(
     std::vector<PdbLJInteraction> interactions, const double rel_cutoff) {
   for (std::vector<PdbLJInteraction>::const_iterator it = interactions.begin();
        it != interactions.end(); ++it) {
-    for (auto jt = types.begin(); jt != types.end(); ++jt) {
-      const double epsilon_ij = sqrt(it->epsilon * jt->epsilon);
-      const double sigma_ij = 0.5 * (it->sigma + 10. * jt->sigma);
+    for (auto type : types) {
+      const double epsilon_ij = sqrt(it->epsilon * type.epsilon);
+      const double sigma_ij = 0.5 * (it->sigma + 10. * type.sigma);
       const double cutoff_ij = rel_cutoff * sigma_ij;
       const double shift_ij =
           -(pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6));
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;
-      } else {
-        READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e "
-                             "cut %e shift %e\n",
-                             it->other_type, jt->espresso_id, epsilon_ij,
-                             sigma_ij, cutoff_ij, shift_ij););
-        lennard_jones_set_params(it->other_type, jt->espresso_id, epsilon_ij,
-                                 sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
       }
+      READPDB_TRACE(printf("adding lj interaction types %d %d eps %e sig %e "
+                           "cut %e shift %e\n",
+                           it->other_type, jt->espresso_id, epsilon_ij,
+                           sigma_ij, cutoff_ij, shift_ij););
+      lennard_jones_set_params(it->other_type, type.espresso_id, epsilon_ij,
+                               sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }
@@ -65,26 +64,25 @@ static void add_lj_internal(
     std::set<PdbParser::itp_atomtype, PdbParser::itp_atomtype_compare> &types,
     const double rel_cutoff, bool only_diagonal) {
   for (auto it = types.begin(); it != types.end(); ++it) {
-    for (auto jt = types.begin(); jt != types.end(); ++jt) {
-      if (it->espresso_id > jt->espresso_id)
+    for (auto type : types) {
+      if (it->espresso_id > type.espresso_id)
         continue;
-      if (only_diagonal && (it->espresso_id != jt->espresso_id))
+      if (only_diagonal && (it->espresso_id != type.espresso_id))
         continue;
-      const double epsilon_ij = sqrtf(it->epsilon * jt->epsilon);
-      const double sigma_ij = 0.5 * (10. * it->sigma + 10. * jt->sigma);
+      const double epsilon_ij = sqrtf(it->epsilon * type.epsilon);
+      const double sigma_ij = 0.5 * (10. * it->sigma + 10. * type.sigma);
       const double cutoff_ij = rel_cutoff * sigma_ij;
       const double shift_ij =
           -pow(sigma_ij / cutoff_ij, 12) - pow(sigma_ij / cutoff_ij, 6);
       if ((epsilon_ij <= 0) || (sigma_ij <= 0)) {
         continue;
-      } else {
-        READPDB_TRACE(printf("adding internal lj interaction types %d %d eps "
-                             "%e sig %e cut %e shift %e epsilon_i %e\n",
-                             it->espresso_id, jt->espresso_id, epsilon_ij,
-                             sigma_ij, cutoff_ij, shift_ij, it->epsilon););
-        lennard_jones_set_params(it->espresso_id, jt->espresso_id, epsilon_ij,
-                                 sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
       }
+      READPDB_TRACE(printf("adding internal lj interaction types %d %d eps "
+                           "%e sig %e cut %e shift %e epsilon_i %e\n",
+                           it->espresso_id, jt->espresso_id, epsilon_ij,
+                           sigma_ij, cutoff_ij, shift_ij, it->epsilon););
+      lennard_jones_set_params(it->espresso_id, type.espresso_id, epsilon_ij,
+                               sigma_ij, cutoff_ij, shift_ij, 0.0, 0.0);
     }
   }
 }
@@ -104,7 +102,8 @@ add_particles(PdbParser::PdbParser &parser, int first_id, int default_type,
 #endif
   PdbParser::BoundingBox bb;
   bb.llx = bb.lly = bb.llz = 0.0;
-  double bb_l[3] = {box_l[0], box_l[1], box_l[2]};
+  double bb_l[3] = {box_geo.length()[0], box_geo.length()[1],
+                    box_geo.length()[2]};
 
   bb = parser.calc_bounding_box();
 
@@ -119,7 +118,7 @@ add_particles(PdbParser::PdbParser &parser, int first_id, int default_type,
     READPDB_TRACE(printf("bb ur (%f %f %f)\n", bb.urx, bb.ury, bb.urz));
 
     for (int i = 0; i < 3; i++) {
-      if (bb_l[i] > box_l[i]) {
+      if (bb_l[i] > box_geo.length()[i]) {
         rescale_boxl(i, bb_l[i]);
       }
     }

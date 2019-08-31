@@ -28,24 +28,14 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"
 
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
-
-/// MPI tag for cuda particle gathering
-#define REQ_CUDAGETPARTS 0xcc01
-/// MPI tag for cuda force gathering
-#define REQ_CUDAGETFORCES 0xcc02
+#include <utils/mpi/gather_buffer.hpp>
+#include <utils/mpi/scatter_buffer.hpp>
 
 #ifdef ENGINE
 static void cuda_mpi_send_v_cs_slave(ParticleRange particles);
 #endif
 
-void cuda_bcast_global_part_params() {
-  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
-  mpi_bcast_cuda_global_part_vars();
-  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n",
-                     this_node));
-}
+void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }
 
 /* TODO: We should only transfer data for enabled methods,
          not for those that are barely compiled in. (fw)
@@ -53,36 +43,26 @@ void cuda_bcast_global_part_params() {
 
 static void pack_particles(ParticleRange particles,
                            CUDA_particle_data *buffer) {
+  using Utils::Vector3f;
+
   int i = 0;
   for (auto const &part : particles) {
+    buffer[i].p = static_cast<Vector3f>(folded_position(part.r.p, box_geo));
+
+#ifdef CUDA
     buffer[i].identity = part.p.identity;
-    auto const pos = folded_position(part);
-
-    buffer[i].p[0] = static_cast<float>(pos[0]);
-    buffer[i].p[1] = static_cast<float>(pos[1]);
-    buffer[i].p[2] = static_cast<float>(pos[2]);
-
-#ifdef LB_GPU
-    buffer[i].v[0] = static_cast<float>(part.m.v[0]);
-    buffer[i].v[1] = static_cast<float>(part.m.v[1]);
-    buffer[i].v[2] = static_cast<float>(part.m.v[2]);
+    buffer[i].v = static_cast<Vector3f>(part.m.v);
 #ifdef VIRTUAL_SITES
     buffer[i].is_virtual = part.p.is_virtual;
-
 #endif
 #endif
 
 #ifdef DIPOLES
-    const Vector3d dip = part.calc_dip();
-    buffer[i].dip[0] = static_cast<float>(dip[0]);
-    buffer[i].dip[1] = static_cast<float>(dip[1]);
-    buffer[i].dip[2] = static_cast<float>(dip[2]);
+    buffer[i].dip = static_cast<Vector3f>(part.calc_dip());
 #endif
 
-#if defined(LB_ELECTROHYDRODYNAMICS) && defined(LB_GPU)
-    buffer[i].mu_E[0] = static_cast<float>(part.p.mu_E[0]);
-    buffer[i].mu_E[1] = static_cast<float>(part.p.mu_E[1]);
-    buffer[i].mu_E[2] = static_cast<float>(part.p.mu_E[2]);
+#if defined(LB_ELECTROHYDRODYNAMICS) && defined(CUDA)
+    buffer[i].mu_E = static_cast<Vector3f>(part.p.mu_E);
 #endif
 
 #ifdef ELECTROSTATICS
@@ -94,22 +74,16 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ROTATION
-    const Vector3d director = part.r.calc_director();
-    buffer[i].director[0] = static_cast<float>(director[0]);
-    buffer[i].director[1] = static_cast<float>(director[1]);
-    buffer[i].director[2] = static_cast<float>(director[2]);
+    buffer[i].director = static_cast<Vector3f>(part.r.calc_director());
 #endif
 
 #ifdef ENGINE
     buffer[i].swim.v_swim = static_cast<float>(part.swim.v_swim);
     buffer[i].swim.f_swim = static_cast<float>(part.swim.f_swim);
-    buffer[i].swim.director[0] = static_cast<float>(director[0]);
-    buffer[i].swim.director[1] = static_cast<float>(director[1]);
-    buffer[i].swim.director[2] = static_cast<float>(director[2]);
-#if defined(LB) || defined(LB_GPU)
+    buffer[i].swim.director = buffer[i].director;
+
     buffer[i].swim.push_pull = part.swim.push_pull;
     buffer[i].swim.dipole_length = static_cast<float>(part.swim.dipole_length);
-#endif
     buffer[i].swim.swimming = part.swim.swimming;
 #endif
     i++;
@@ -121,8 +95,6 @@ void cuda_mpi_get_particles(ParticleRange particles,
   auto const n_part = particles.size();
 
   if (this_node > 0) {
-    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %ld particles\n",
-                       this_node, n_part));
     static std::vector<CUDA_particle_data> buffer;
     buffer.resize(n_part);
     /* pack local parts into buffer */
@@ -135,8 +107,6 @@ void cuda_mpi_get_particles(ParticleRange particles,
 
     Utils::Mpi::gather_buffer(particle_data_host, n_part, comm_cart);
   }
-
-  COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
 /**
@@ -191,11 +161,9 @@ void cuda_mpi_send_forces(ParticleRange particles,
 
     add_forces_and_torques(particles, host_forces, host_torques);
   }
-
-  COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
-#if defined(ENGINE) && defined(LB_GPU)
+#if defined(ENGINE) && defined(CUDA)
 namespace {
 void set_v_cs(ParticleRange particles, const std::vector<CUDA_v_cs> &v_cs) {
   int ind = 0;
@@ -224,7 +192,6 @@ void cuda_mpi_send_v_cs(ParticleRange particles,
     Utils::Mpi::scatter_buffer(host_v_cs.data(), n_part, comm_cart);
     set_v_cs(particles, host_v_cs);
   }
-  COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
 }
 #endif // ifdef ENGINE
 

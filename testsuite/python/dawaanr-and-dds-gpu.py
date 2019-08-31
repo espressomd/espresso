@@ -14,25 +14,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
-from numpy import linalg as la
+import unittest_decorators as utx
 from numpy.random import random
-import math
 import numpy as np
 
 import espressomd
 import espressomd.interactions
 import espressomd.magnetostatics
 import espressomd.analyze
-import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLES",
-                                        "CUDA",
-                                        "PARTIAL_PERIODIC",
-                                        "ROTATION"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["DIPOLES", "ROTATION"])
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -43,7 +37,9 @@ class DDSGPUTest(ut.TestCase):
             self.es.part[i].v = np.array([0.0, 0.0, 0.0])
             self.es.part[i].omega_body = np.array([0.0, 0.0, 0.0])
 
-    def run_test_case(self):
+    @ut.skipIf(es.cell_system.get_state()["n_nodes"] > 1,
+               "Skipping test: only runs for n_nodes == 1")
+    def test(self):
         pf_dds_gpu = 2.34
         pf_dawaanr = 3.524
         ratio_dawaanr_dds_gpu = pf_dawaanr / pf_dds_gpu
@@ -65,13 +61,12 @@ class DDSGPUTest(ut.TestCase):
                 part_dip[0] = sintheta * np.cos(phi) * dipole_modulus
                 part_dip[1] = sintheta * np.sin(phi) * dipole_modulus
                 part_dip[2] = costheta * dipole_modulus
-                self.es.part.add(id=i, type=0, pos=part_pos, dip=part_dip, v=np.array(
-                    [0, 0, 0]), omega_body=np.array([0, 0, 0]))
+                self.es.part.add(id=i, type=0, pos=part_pos, dip=part_dip,
+                                 v=np.array([0, 0, 0]), omega_body=np.array([0, 0, 0]))
 
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=10.0, sigma=0.5,
-                cutoff=0.55, shift="auto")
-            self.es.thermostat.set_langevin(kT=0.0, gamma=10.0)
+                epsilon=10.0, sigma=0.5, cutoff=0.55, shift="auto")
+            self.es.thermostat.set_langevin(kT=0.0, gamma=10.0, seed=42)
 
             self.es.integrator.set_steepest_descent(
                 f_max=0.0, gamma=0.1, max_displacement=0.1)
@@ -80,15 +75,14 @@ class DDSGPUTest(ut.TestCase):
             self.es.integrator.set_vv()
 
             self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
-                epsilon=0.0, sigma=0.0,
-                cutoff=0.0, shift=0.0)
+                epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0.0)
 
             self.es.cell_system.skin = 0.0
             self.es.time_step = 0.01
             self.es.thermostat.turn_off()
             # gamma should be zero in order to avoid the noise term in force
             # and torque
-            self.es.thermostat.set_langevin(kT=1.297, gamma=0.0)
+            self.es.thermostat.set_langevin(kT=1.297, gamma=0.0, seed=42)
 
             dds_cpu = espressomd.magnetostatics.DipolarDirectSumCpu(
                 prefactor=pf_dawaanr)
@@ -123,35 +117,28 @@ class DDSGPUTest(ut.TestCase):
 
             # compare
             for i in range(n):
-                np.testing.assert_allclose(np.array(dawaanr_t[i]),
-                                           ratio_dawaanr_dds_gpu *
-                                           np.array(ddsgpu_t[i]),
-                                           err_msg='Torques on particle do not match for particle {}'.format(i), atol=3e-3)
-                np.testing.assert_allclose(np.array(dawaanr_f[i]),
-                                           ratio_dawaanr_dds_gpu *
-                                           np.array(ddsgpu_f[i]),
-                                           err_msg='Forces on particle do not match for particle i={}'.format(i), atol=3e-3)
+                np.testing.assert_allclose(
+                    np.array(dawaanr_t[i]),
+                    ratio_dawaanr_dds_gpu * np.array(ddsgpu_t[i]),
+                    err_msg='Torques on particle do not match for particle {}'
+                    .format(i), atol=3e-3)
+                np.testing.assert_allclose(
+                    np.array(dawaanr_f[i]),
+                    ratio_dawaanr_dds_gpu * np.array(ddsgpu_f[i]),
+                    err_msg='Forces on particle do not match for particle i={}'
+                    .format(i), atol=3e-3)
             self.assertAlmostEqual(
                 dawaanr_e,
-                ddsgpu_e *
-                ratio_dawaanr_dds_gpu,
+                ddsgpu_e * ratio_dawaanr_dds_gpu,
                 places=2,
-                msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'.format(
-                    dawaanr_e,
-                    ratio_dawaanr_dds_gpu *
-                    ddsgpu_e))
+                msg='Energies for dawaanr {0} and dds_gpu {1} do not match.'
+                .format(dawaanr_e, ratio_dawaanr_dds_gpu * ddsgpu_e))
 
             self.es.integrator.run(steps=0, recalc_forces=True)
 
             del dds_gpu
             self.es.actors.clear()
             self.es.part.clear()
-
-    def test(self):
-        if (self.es.cell_system.get_state()["n_nodes"] > 1):
-            print("NOTE: Ignoring testcase for n_nodes > 1")
-        else:
-            self.run_test_case()
 
 if __name__ == '__main__':
     ut.main()

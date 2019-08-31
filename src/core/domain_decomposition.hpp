@@ -74,7 +74,7 @@ struct DomainDecomposition {
    *  Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range);
    * \endverbatim
    */
-  double cell_size[3];
+  Utils::Vector3d cell_size;
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
   bool fully_connected[3];
@@ -88,19 +88,11 @@ struct DomainDecomposition {
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
-/** Maximal skin size. This is a global variable which can be read
- *  out by the user via the TCL command setmd in order to optimize the
- *  cell grid
- */
-extern double max_skin;
-
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
  *  number of \ref cells::cells. If the number of cells is larger
  *  than max_num_cells the cell grid is reduced.
  *  max_num_cells has to be larger than 27, e.g. one inner cell.
- *  max_num_cells is initialized with the default value
- *  specified in \ref config.hpp as \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
 
@@ -124,8 +116,10 @@ extern int min_num_cells;
  *                CELL_FLAG_GRIDCHANGED, see documentation of \ref
  *                cells_on_geometry_change.
  *  @param grid   Number of nodes in each spatial dimension.
+ *  @param range Desired interaction range
  */
-void dd_on_geometry_change(int flags, const Vector3i &grid);
+void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
+                           double range);
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
@@ -133,11 +127,13 @@ void dd_on_geometry_change(int flags, const Vector3i &grid);
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.
- *  @param cl    List of cell pointers with particles to be stored in the
+ *  @param old    List of cell pointers with particles to be stored in the
  *               new cell system.
  *  @param grid  Number of nodes in each spatial dimension.
+ *  @param range Desired interaction range
  */
-void dd_topology_init(CellPList *cl, const Vector3i &grid);
+void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
+                      double range);
 
 /** Called when the current cell structure is invalidated because for
  *  example the box length has changed. This procedure may NOT destroy
@@ -160,10 +156,10 @@ void dd_topology_release();
  *  @param grid   Number of nodes in each spatial dimension
  */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Vector3i &grid);
+                                    const Utils::Vector3i &grid);
 
 /** calculate physical (processor) minimal number of cells */
-int calc_processor_min_num_cells(const Vector3i &grid);
+int calc_processor_min_num_cells(const Utils::Vector3i &grid);
 
 /** Fill a communication cell pointer list. Fill the cell pointers of
  *  all cells which are inside a rectangular subgrid of the 3D cell

@@ -34,34 +34,29 @@
 #include <cstdlib>
 #include <cstring>
 
-#include "electrostatics_magnetostatics/elc.hpp"
-#include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
-#include "debug.hpp"
+#include "errorhandling.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include "global.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 #include "short_range_loop.hpp"
-#include "utils/NoOp.hpp"
+#include <utils/NoOp.hpp>
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/coulomb_inline.hpp"
 
 iccp3m_struct iccp3m_cfg;
 
 /* functions that are used in icc* to compute the electric field acting on the
  * induced charges, excluding forces other than the electrostatic ones */
-void init_forces_iccp3m();
-void calc_long_range_forces_iccp3m();
-
-inline void init_local_particle_force_iccp3m(Particle *part);
-inline void init_ghost_force_iccp3m(Particle *part);
+void init_forces_iccp3m(const ParticleRange &particles,
+                        const ParticleRange &ghosts_particles);
 
 /** Calculation of the electrostatic forces between source charges (= real
  * charges) and wall charges. For each electrostatic method the proper functions
@@ -69,57 +64,19 @@ inline void init_ghost_force_iccp3m(Particle *part);
  * directly, short range parts need helper functions according to the particle
  * data organisation. A modified version of \ref force_calc in \ref forces.hpp.
  */
-void force_calc_iccp3m();
+void force_calc_iccp3m(const ParticleRange &particles,
+                       const ParticleRange &ghost_particles);
 
 /** Variant of add_non_bonded_pair_force where only Coulomb
  *  contributions are calculated   */
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
-                                             double d[3], double dist,
-                                             double dist2) {
-  /* IA_parameters *ia_params = get_ia_param(p1->p.type,p2->p.type);*/
-  double force[3] = {0, 0, 0};
+                                             Utils::Vector3d const &d,
+                                             double dist, double dist2) {
+  Utils::Vector3d force{};
+  Coulomb::calc_pair_force(p1, p2, d, dist, force);
 
-  FORCE_TRACE(fprintf(stderr, "%d: interaction %d<->%d dist %f\n", this_node,
-                      p1->p.identity, p2->p.identity, dist));
-
-  /***********************************************/
-  /* long range electrostatics                   */
-  /***********************************************/
-
-  /* real space Coulomb */
-  auto const q1q2 = p1->p.q * p2->p.q;
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (q1q2)
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    if (q1q2)
-      p3m_add_pair_force(q1q2, d, dist2, dist, force);
-    break;
-#endif /* P3M */
-  case COULOMB_MMM1D:
-    if (q1q2)
-      add_mmm1d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  case COULOMB_MMM2D:
-    if (q1q2)
-      add_mmm2d_coulomb_pair_force(q1q2, d, dist2, dist, force);
-    break;
-  default:
-    break;
-  }
-
-  /***********************************************/
-  /* add total nonbonded forces to particle      */
-  /***********************************************/
-  for (int j = 0; j < 3; j++) {
-    p1->f.f[j] += force[j];
-    p2->f.f[j] -= force[j];
-  }
-  /***********************************************/
+  p1->f.f += force;
+  p2->f.f -= force;
 }
 
 void iccp3m_alloc_lists() {
@@ -131,11 +88,12 @@ void iccp3m_alloc_lists() {
   iccp3m_cfg.sigma.resize(n_ic);
 }
 
-int iccp3m_iteration() {
+int iccp3m_iteration(const ParticleRange &particles,
+                     const ParticleRange &ghost_particles) {
   if (iccp3m_cfg.n_ic == 0)
     return 0;
 
-  iccp3m_sanity_check();
+  Coulomb::iccp3m_sanity_check();
 
   if ((iccp3m_cfg.eout <= 0)) {
     runtimeErrorMsg()
@@ -150,13 +108,13 @@ int iccp3m_iteration() {
   for (int j = 0; j < iccp3m_cfg.num_iteration; j++) {
     double hmax = 0.;
 
-    force_calc_iccp3m(); /* Calculate electrostatic forces (SR+LR) excluding
-                            source source interaction*/
+    force_calc_iccp3m(particles, ghost_particles); /* Calculate electrostatic
+                            forces (SR+LR) excluding source source interaction*/
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
     double diff = 0;
 
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : particles) {
       if (p.p.identity < iccp3m_cfg.n_ic + iccp3m_cfg.first_id &&
           p.p.identity >= iccp3m_cfg.first_id) {
         auto const id = p.p.identity - iccp3m_cfg.first_id;
@@ -221,9 +179,6 @@ int iccp3m_iteration() {
 
     if (globalmax < iccp3m_cfg.convergence)
       break;
-    if (diff > 1e89) {
-      return iccp3m_cfg.citeration++;
-    }
   } /* iteration */
 
   if (globalmax > iccp3m_cfg.convergence) {
@@ -236,108 +191,28 @@ int iccp3m_iteration() {
   return iccp3m_cfg.citeration;
 }
 
-void force_calc_iccp3m() {
-  init_forces_iccp3m();
+void force_calc_iccp3m(const ParticleRange &particles,
+                       const ParticleRange &ghost_particles) {
+  init_forces_iccp3m(particles, ghost_particles);
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
     /* calc non bonded interactions */
-    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21.data(),
-                                     sqrt(d.dist2), d.dist2);
+    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+                                     d.dist2);
   });
 
-  calc_long_range_forces_iccp3m();
+  Coulomb::calc_long_range_force(particles);
 }
 
-void init_forces_iccp3m() {
-  for (auto &p : local_cells.particles()) {
+void init_forces_iccp3m(const ParticleRange &particles,
+                        const ParticleRange &ghosts_particles) {
+  for (auto &p : particles) {
     p.f = ParticleForce{};
   }
 
-  for (auto &p : ghost_cells.particles()) {
+  for (auto &p : ghosts_particles) {
     p.f = ParticleForce{};
   }
 }
-
-void calc_long_range_forces_iccp3m() {
-#ifdef ELECTROSTATICS
-  /* calculate k-space part of electrostatic interaction. */
-  if (!(coulomb.method == COULOMB_ELC_P3M ||
-        coulomb.method == COULOMB_P3M_GPU || coulomb.method == COULOMB_P3M ||
-        coulomb.method == COULOMB_MMM2D || coulomb.method == COULOMB_MMM1D)) {
-    runtimeErrorMsg() << "ICCP3M implemented only for MMM1D,MMM2D,ELC or P3M ";
-  }
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
-    }
-    p3m_charge_assign();
-    p3m_calc_kspace_forces(1, 0);
-    ELC_add_force();
-    break;
-
-#ifdef CUDA
-  case COULOMB_P3M_GPU:
-    if (this_node == 0) {
-      FORCE_TRACE(printf("Computing GPU P3M forces.\n"));
-      p3m_gpu_add_farfield_force();
-    }
-    break;
-#endif
-  case COULOMB_P3M:
-    p3m_charge_assign();
-    p3m_calc_kspace_forces(1, 0);
-    break;
-#endif
-  case COULOMB_MMM2D:
-    MMM2D_add_far_force();
-    MMM2D_dielectric_layers_force_contribution();
-    break;
-  default:
-    break;
-  }
-
-#endif
-}
-
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
-
-int iccp3m_sanity_check() {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M: {
-    if (elc_params.dielectric_contrast_on) {
-      runtimeErrorMsg() << "ICCP3M conflicts with ELC dielectric contrast";
-      return 1;
-    }
-    break;
-  }
-#endif
-  case COULOMB_DH: {
-    runtimeErrorMsg() << "ICCP3M does not work with Debye-Hueckel.";
-    return 1;
-  }
-  case COULOMB_RF: {
-    runtimeErrorMsg() << "ICCP3M does not work with COULOMB_RF.";
-    return 1;
-  }
-  default:
-    break;
-  }
-
-#ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    runtimeErrorMsg() << "ICCP3M does not work in the NPT ensemble";
-    return 1;
-  }
-#endif
-
-  return 0;
-}
-
-/*@}*/
 
 #endif

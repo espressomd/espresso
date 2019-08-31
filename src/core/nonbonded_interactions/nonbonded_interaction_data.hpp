@@ -21,362 +21,279 @@
 #ifndef _INTERACTION_DATA_H
 #define _INTERACTION_DATA_H
 /** \file
-    Various procedures concerning interactions between particles.
-*/
-
-#include "particle_data.hpp"
-#include "utils.hpp"
+ *  Various procedures concerning interactions between particles.
+ */
 
 #include "TabulatedPotential.hpp"
+#include "dpd.hpp"
+#include "particle_data.hpp"
 
-/** cutoff for deactivated interactions. Below 0, so that even particles on
-    top of each other don't interact by chance. */
+#include <utils/index.hpp>
+#include <utils/math/sqr.hpp>
+
+/** Cutoff for deactivated interactions. Must be negative, so that even
+ *  particles on top of each other don't interact by chance.
+ */
 constexpr double INACTIVE_CUTOFF = -1.;
-
-/** \name Type codes for the type of Coulomb interaction
-    Enumeration of implemented methods for the electrostatic
-    interaction.
-*/
-/************************************************************/
-/*@{*/
-
-#ifdef ELECTROSTATICS
-enum CoulombMethod {
-  COULOMB_NONE,      ///< Coulomb interaction switched off
-  COULOMB_DH,        ///< Coulomb method is Debye-Hueckel
-  COULOMB_P3M,       ///< Coulomb method is P3M
-  COULOMB_MMM1D,     ///< Coulomb method is one-dimensional MMM
-  COULOMB_MMM2D,     ///< Coulomb method is two-dimensional MMM
-  COULOMB_ELC_P3M,   ///< Coulomb method is P3M plus ELC
-  COULOMB_RF,        ///< Coulomb method is Reaction-Field
-  COULOMB_INTER_RF,  ///< Coulomb method is Reaction-Field BUT as interaction
-  COULOMB_P3M_GPU,   ///< Coulomb method is P3M with GPU-based long-range part
-                     ///  calculation
-  COULOMB_MMM1D_GPU, ///< Coulomb method is one-dimensional MMM running on GPU
-  COULOMB_EK,        ///< Coulomb method is electrokinetics
-  COULOMB_SCAFACOS,  ///< Coulomb method is scafacos
-};
-
-#endif
-/*@}*/
-
-#ifdef DIPOLES
-/** @brief Implemented methods for the magnetostatic interaction. */
-enum DipolarInteraction {
-  /** dipolar interaction switched off (NONE). */
-  DIPOLAR_NONE = 0,
-  /** dipolar method is P3M. */
-  DIPOLAR_P3M,
-  /** Dipolar method is P3M plus DLC. */
-  DIPOLAR_MDLC_P3M,
-  /** Dipolar method is all with all and no replicas */
-  DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA,
-  /** Dipolar method is magnetic dipolar direct sum */
-  DIPOLAR_DS,
-  /** Dipolar method is direct sum plus DLC. */
-  DIPOLAR_MDLC_DS,
-  /** Direct summation on gpu */
-  DIPOLAR_DS_GPU,
-#ifdef DIPOLAR_BARNES_HUT
-  /** Direct summation on gpu by Barnes-Hut algorithm */
-  DIPOLAR_BH_GPU,
-#endif
-  /** Scafacos library */
-  DIPOLAR_SCAFACOS
-};
-#endif
 
 /* Data Types */
 /************************************************************/
 
-/** field containing the interaction parameters for
- *  nonbonded interactions. Access via
- * get_ia_param(i, j), i,j < max_seen_particle_type */
+/** Lennard-Jones with shift */
+struct LJ_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = 0.0;
+  double shift = 0.0;
+  double offset = 0.0;
+  double min = 0.0;
+};
+
+/** WCA potential */
+struct WCA_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+};
+
+/** Generic Lennard-Jones with shift */
+struct LJGen_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double shift = 0.0;
+  double offset = 0.0;
+  double a1 = 0.0;
+  double a2 = 0.0;
+  double b1 = 0.0;
+  double b2 = 0.0;
+  double lambda1 = 1.0;
+  double softrad = 0.0;
+};
+
+/** smooth step potential */
+struct SmoothStep_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double d = 0.0;
+  int n = 0;
+  double k0 = 0.0;
+};
+
+/** Hertzian potential */
+struct Hertzian_Parameters {
+  double eps = 0.0;
+  double sig = INACTIVE_CUTOFF;
+};
+
+/** Gaussian potential */
+struct Gaussian_Parameters {
+  double eps = 0.0;
+  double sig = 1.0;
+  double cut = INACTIVE_CUTOFF;
+};
+
+/** BMHTF NaCl potential */
+struct BMHTF_Parameters {
+  double A = 0.0;
+  double B = 0.0;
+  double C = 0.0;
+  double D = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double computed_shift = 0.0;
+};
+
+/** Morse potential */
+struct Morse_Parameters {
+  double eps = INACTIVE_CUTOFF;
+  double alpha = INACTIVE_CUTOFF;
+  double rmin = INACTIVE_CUTOFF;
+  double cut = INACTIVE_CUTOFF;
+  double rest = INACTIVE_CUTOFF;
+};
+
+/** Buckingham potential */
+struct Buckingham_Parameters {
+  double A = 0.0;
+  double B = 0.0;
+  double C = 0.0;
+  double D = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double discont = 0.0;
+  double shift = 0.0;
+  double F1 = 0.0;
+  double F2 = 0.0;
+};
+
+/** soft-sphere potential */
+struct SoftSphere_Parameters {
+  double a = 0.0;
+  double n = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
+};
+
+/** affinity potential */
+struct Affinity_Parameters {
+  int type = -1;
+  double kappa = INACTIVE_CUTOFF;
+  double r0 = INACTIVE_CUTOFF;
+  double Kon = INACTIVE_CUTOFF;
+  double Koff = INACTIVE_CUTOFF;
+  double maxBond = INACTIVE_CUTOFF;
+  double cut = INACTIVE_CUTOFF;
+};
+
+/** membrane collision potential */
+struct Membrane_Parameters {
+  double a = 0.0;
+  double n = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
+};
+
+/** hat potential */
+struct Hat_Parameters {
+  double Fmax = 0.0;
+  double r = INACTIVE_CUTOFF;
+};
+
+/** Lennard-Jones+Cos potential */
+struct LJcos_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
+  double alfa = 0.0;
+  double beta = 0.0;
+  double rmin = 0.0;
+};
+
+/** Lennard-Jones with a different Cos potential */
+struct LJcos2_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double offset = 0.0;
+  double w = 0.0;
+  double rchange = 0.0;
+};
+
+/** Gay-Berne potential */
+struct GayBerne_Parameters {
+  double eps = 0.0;
+  double sig = 0.0;
+  double cut = INACTIVE_CUTOFF;
+  double k1 = 0.0;
+  double k2 = 0.0;
+  double mu = 0.0;
+  double nu = 0.0;
+  double chi1 = 0.0;
+  double chi2 = 0.0;
+};
+
+/** Thole potential */
+struct Thole_Parameters {
+  double scaling_coeff;
+  double q1q2;
+};
+
+/** Data structure containing the interaction parameters for non-bonded
+ *  interactions.
+ *  Access via <tt>get_ia_param(i, j)</tt> with
+ *  <tt>i</tt>, <tt>j</tt> \< \ref max_seen_particle_type
+ */
 struct IA_parameters {
   /** maximal cutoff for this pair of particle types. This contains
-      contributions from the short-ranged interactions, plus any
-      cutoffs from global interactions like electrostatics.
-  */
+   *  contributions from the short-ranged interactions, plus any
+   *  cutoffs from global interactions like electrostatics.
+   */
   double max_cut = INACTIVE_CUTOFF;
 
 #ifdef LENNARD_JONES
-  /** \name Lennard-Jones with shift */
-  /*@{*/
-  double LJ_eps = 0.0;
-  double LJ_sig = 0.0;
-  double LJ_cut = 0.0;
-  double LJ_shift = 0.0;
-  double LJ_offset = 0.0;
-  double LJ_min = 0.0;
-  /*@}*/
-
+  LJ_Parameters lj;
 #endif
 
 #ifdef WCA
-  /** \name WCA potential */
-  /*@{*/
-  double WCA_eps = 0.0;
-  double WCA_sig = 0.0;
-  double WCA_cut = INACTIVE_CUTOFF;
-  /*@}*/
+  WCA_Parameters wca;
 #endif
 
-  /** flag that tells whether there is any short-ranged interaction,
-      i.e. one that contributes to the "nonbonded" section of the
-      energy/pressure. Note that even if there is no short-ranged
-      interaction present, the \ref max_cut can be non-zero due to
-      e.g. electrostatics. */
-  int particlesInteract;
-
 #ifdef LENNARD_JONES_GENERIC
-  /** \name Generic Lennard-Jones with shift */
-  /*@{*/
-  double LJGEN_eps = 0.0;
-  double LJGEN_sig = 0.0;
-  double LJGEN_cut = INACTIVE_CUTOFF;
-  double LJGEN_shift = 0.0;
-  double LJGEN_offset = 0.0;
-  double LJGEN_a1 = 0.0;
-  double LJGEN_a2 = 0.0;
-  double LJGEN_b1 = 0.0;
-  double LJGEN_b2 = 0.0;
-  double LJGEN_lambda = 1.0;
-  double LJGEN_softrad = 0.0;
-/*@}*/
+  LJGen_Parameters ljgen;
 #endif
 
 #ifdef SMOOTH_STEP
-  /** \name smooth step potential */
-  /*@{*/
-  double SmSt_eps = 0.0;
-  double SmSt_sig = 0.0;
-  double SmSt_cut = INACTIVE_CUTOFF;
-  double SmSt_d = 0.0;
-  int SmSt_n = 0;
-  double SmSt_k0 = 0.0;
-/*@}*/
+  SmoothStep_Parameters smooth_step;
 #endif
 
 #ifdef HERTZIAN
-  /** \name Hertzian potential */
-  /*@{*/
-  double Hertzian_eps = 0.0;
-  double Hertzian_sig = INACTIVE_CUTOFF;
-/*@}*/
+  Hertzian_Parameters hertzian;
 #endif
 
 #ifdef GAUSSIAN
-  /** \name Gaussian potential */
-  /*@{*/
-  double Gaussian_eps = 0.0;
-  double Gaussian_sig = 1.0;
-  double Gaussian_cut = INACTIVE_CUTOFF;
-/*@}*/
+  Gaussian_Parameters gaussian;
 #endif
 
 #ifdef BMHTF_NACL
-  /** \name BMHTF NaCl potential */
-  /*@{*/
-  double BMHTF_A = 0.0;
-  double BMHTF_B = 0.0;
-  double BMHTF_C = 0.0;
-  double BMHTF_D = 0.0;
-  double BMHTF_sig = 0.0;
-  double BMHTF_cut = INACTIVE_CUTOFF;
-  double BMHTF_computed_shift = 0.0;
-/*@}*/
+  BMHTF_Parameters bmhtf;
 #endif
 
 #ifdef MORSE
-  /** \name Morse potential */
-  /*@{*/
-  double MORSE_eps = INACTIVE_CUTOFF;
-  double MORSE_alpha = INACTIVE_CUTOFF;
-  double MORSE_rmin = INACTIVE_CUTOFF;
-  double MORSE_cut = INACTIVE_CUTOFF;
-  double MORSE_rest = INACTIVE_CUTOFF;
-/*@}*/
+  Morse_Parameters morse;
 #endif
 
 #ifdef BUCKINGHAM
-  /** \name Buckingham potential */
-  /*@{*/
-  double BUCK_A = 0.0;
-  double BUCK_B = 0.0;
-  double BUCK_C = 0.0;
-  double BUCK_D = 0.0;
-  double BUCK_cut = INACTIVE_CUTOFF;
-  double BUCK_discont = 0.0;
-  double BUCK_shift = 0.0;
-  double BUCK_F1 = 0.0;
-  double BUCK_F2 = 0.0;
-/*@}*/
+  Buckingham_Parameters buckingham;
 #endif
 
 #ifdef SOFT_SPHERE
-  /** \name soft-sphere potential */
-  /*@{*/
-  double soft_a = 0.0;
-  double soft_n = 0.0;
-  double soft_cut = INACTIVE_CUTOFF;
-  double soft_offset = 0.0;
-/*@}*/
+  SoftSphere_Parameters soft_sphere;
 #endif
 
 #ifdef AFFINITY
-  /** \name affinity potential */
-  /*@{*/
-  int affinity_type = -1;
-  double affinity_kappa = INACTIVE_CUTOFF;
-  double affinity_r0 = INACTIVE_CUTOFF;
-  double affinity_Kon = INACTIVE_CUTOFF;
-  double affinity_Koff = INACTIVE_CUTOFF;
-  double affinity_maxBond = INACTIVE_CUTOFF;
-  double affinity_cut = INACTIVE_CUTOFF;
-/*@}*/
+  Affinity_Parameters affinity;
 #endif
 
 #ifdef MEMBRANE_COLLISION
-  /** \name membrane collision potential */
-  /*@{*/
-  double membrane_a = 0.0;
-  double membrane_n = 0.0;
-  double membrane_cut = INACTIVE_CUTOFF;
-  double membrane_offset = 0.0;
-/*@}*/
+  Membrane_Parameters membrane;
 #endif
 
 #ifdef HAT
-  /** \name hat potential */
-  /*@{*/
-  double HAT_Fmax = 0.0;
-  double HAT_r = INACTIVE_CUTOFF;
-/*@}*/
+  Hat_Parameters hat;
 #endif
 
 #ifdef LJCOS
-  /** \name Lennard-Jones+Cos potential */
-  /*@{*/
-  double LJCOS_eps = 0.0;
-  double LJCOS_sig = 0.0;
-  double LJCOS_cut = INACTIVE_CUTOFF;
-  double LJCOS_offset = 0.0;
-  double LJCOS_alfa = 0.0;
-  double LJCOS_beta = 0.0;
-  double LJCOS_rmin = 0.0;
-/*@}*/
+  LJcos_Parameters ljcos;
 #endif
 
 #ifdef LJCOS2
-  /** \name Lennard-Jones with a different Cos potential */
-  /*@{*/
-  double LJCOS2_eps = 0.0;
-  double LJCOS2_sig = 0.0;
-  double LJCOS2_cut = INACTIVE_CUTOFF;
-  double LJCOS2_offset = 0.0;
-  double LJCOS2_w = 0.0;
-  double LJCOS2_rchange = 0.0;
-/*@}*/
-#endif
-
-#ifdef COS2
-  /** \name Cos2 potential */
-  /*@{*/
-  double COS2_eps = INACTIVE_CUTOFF;
-  double COS2_cut = INACTIVE_CUTOFF;
-  double COS2_offset = INACTIVE_CUTOFF;
-  double COS2_w = INACTIVE_CUTOFF;
-/*@}*/
+  LJcos2_Parameters ljcos2;
 #endif
 
 #ifdef GAY_BERNE
-  /** \name Gay-Berne potential */
-  /*@{*/
-  double GB_eps = 0.0;
-  double GB_sig = 0.0;
-  double GB_cut = INACTIVE_CUTOFF;
-  double GB_k1 = 0.0;
-  double GB_k2 = 0.0;
-  double GB_mu = 0.0;
-  double GB_nu = 0.0;
-  double GB_chi1 = 0.0;
-  double GB_chi2 = 0.0;
-/*@}*/
+  GayBerne_Parameters gay_berne;
 #endif
 
 #ifdef TABULATED
-  /** \name Tabulated potential */
-  /*@{*/
-  TabulatedPotential TAB;
-/*@}*/
+  TabulatedPotential tab;
 #endif
 
 #ifdef DPD
   /** \name DPD as interaction */
   /*@{*/
-  int dpd_wf = 0;
-  int dpd_twf = 0;
-  double dpd_gamma = 0.0;
-  double dpd_r_cut = INACTIVE_CUTOFF;
-  double dpd_pref1 = 0.0;
-  double dpd_pref2 = 0.0;
-  double dpd_tgamma = 0.0;
-  double dpd_tr_cut = INACTIVE_CUTOFF;
-  double dpd_pref3 = 0.0;
-  double dpd_pref4 = 0.0;
-/*@}*/
-#endif
-
-#ifdef INTER_RF
-  int rf_on = 0;
-#endif
-
-#ifdef THOLE
-  /** \name Thole potential */
-  /*@{*/
-  double THOLE_scaling_coeff;
-  double THOLE_q1q2;
+  DPDParameters dpd_radial;
+  DPDParameters dpd_trans;
   /*@}*/
 #endif
 
-#ifdef SWIMMER_REACTIONS
-  double REACTION_range = INACTIVE_CUTOFF;
+#ifdef THOLE
+  Thole_Parameters thole;
 #endif
 };
 
 extern std::vector<IA_parameters> ia_params;
-
-/** thermodynamic force parameters */
-
-/** \name Compounds for Coulomb interactions */
-/*@{*/
-
-/** @brief Parameters for the Coulomb interaction. */
-struct Coulomb_parameters {
-
-#ifdef ELECTROSTATICS
-  /** Bjerrum length times temperature. */
-  double prefactor;
-
-  /** Method to treat Coulomb interaction. */
-  CoulombMethod method;
-#endif
-
-#ifdef DIPOLES
-  double Dprefactor;
-  DipolarInteraction Dmethod;
-#endif
-};
-
-#ifdef ELECTROSTATICS
-
-/** Induced field (for const. potential feature). **/
-extern double field_induced;
-/** Applied field (for const. potential feature) **/
-extern double field_applied;
-
-#endif
-/*@}*/
 
 /************************************************
  * exported variables
@@ -385,53 +302,50 @@ extern double field_applied;
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
 
-/** Structure containing the Coulomb parameters. */
-extern Coulomb_parameters coulomb;
-
 /** Maximal interaction cutoff (real space/short range interactions). */
 extern double max_cut;
-/** Maximal interaction cutoff (real space/short range non-bonded interactions).
+/** Maximal interaction cutoff (real space/short range non-bonded
+ *  interactions).
  */
-extern double max_cut_nonbonded;
-/** Cutoff of Coulomb real space part */
-extern double coulomb_cutoff;
-/** Cutoff of dipolar real space part */
-extern double dipolar_cutoff;
+double recalc_maximal_cutoff_nonbonded();
+/** Maximal interaction cutoff (bonded interactions).
+ */
+double recalc_maximal_cutoff_bonded();
 
 /** Minimal global interaction cutoff. Particles with a distance
-    smaller than this are guaranteed to be available on the same node
-    (through ghosts).  */
+ *  smaller than this are guaranteed to be available on the same node
+ *  (through ghosts).
+ */
 extern double min_global_cut;
 
-/************************************************
- * exported functions
- ************************************************/
+/*****************
+*******************************
+* exported functions
+************************************************/
 
-#ifdef ELECTROSTATICS
-/** @brief Set the electrostatics prefactor */
-int coulomb_set_prefactor(double prefactor);
-
-/** @brief Deactivates the current Coulomb method
-    This was part of coulomb_set_bjerrum()
-*/
-void deactivate_coulomb_method();
-#endif
-
-#ifdef DIPOLES
-/** @brief Set the dipolar prefactor */
-int dipolar_set_Dprefactor(double prefactor);
-#endif
-
-/** get interaction parameters between particle sorts i and j */
+/**
+ * @brief Get interaction parameters between particle types i and j
+ *
+ * This is symmetric, e.g. it holds that get_ia_param(i, j) and
+ * get_ia_param(j, i) point to the same data.
+ *
+ * @param i First type, has to be be smaller than @ref max_seen_particle_type.
+ * @param j Second type, has to be be smaller than @ref max_seen_particle_type.
+ *
+ * @return Pointer to interaction parameters for the type pair.
+ * */
 inline IA_parameters *get_ia_param(int i, int j) {
-  extern std::vector<IA_parameters> ia_params;
-  extern int max_seen_particle_type;
-  return &ia_params[i * max_seen_particle_type + j];
+  assert(i >= 0 && i < max_seen_particle_type);
+  assert(j >= 0 && j < max_seen_particle_type);
+
+  return &ia_params[Utils::upper_triangular(std::min(i, j), std::max(i, j),
+                                            max_seen_particle_type)];
 }
 
-/** get interaction parameters between particle sorts i and j.
-    Slower than @ref get_ia_param, but can also be used on not
-    yet present particle types*/
+/** Get interaction parameters between particle sorts i and j.
+ *  Slower than @ref get_ia_param, but can also be used on not
+ *  yet present particle types
+ */
 IA_parameters *get_ia_param_safe(int i, int j);
 
 /** @brief Get the state of all non bonded interactions.
@@ -443,25 +357,24 @@ std::string ia_params_get_state();
 void ia_params_set_state(std::string const &);
 
 bool is_new_particle_type(int type);
-/** Makes sure that ia_params is large enough to cover interactions
-    for this particle type. The interactions are initialized with values
-    such that no physical interaction occurs. */
+/** Make sure that ia_params is large enough to cover interactions
+ *  for this particle type. The interactions are initialized with values
+ *  such that no physical interaction occurs.
+ */
 void make_particle_type_exist(int type);
 
 void make_particle_type_exist_local(int type);
 
-/** This function increases the LOCAL ia_params field
-    to the given size. Better use
-    \ref make_particle_type_exist since it takes care of
-    the other nodes.  */
+/** This function increases the LOCAL ia_params field to the given size.
+ *  Better use \ref make_particle_type_exist since it takes care of
+ *  the other nodes.
+ */
 void realloc_ia_params(int nsize);
 
-/** calculates the maximal cutoff of all real space
-    interactions. these are: bonded, non bonded + real space
-    electrostatics. The result is stored in the global variable
-    max_cut. The maximal cutoff of the non-bonded + real space
-    electrostatic interactions is stored in max_cut_non_bonded. This
-    value is used in the Verlet pair list algorithm. */
+/** Calculate the maximal cutoff of all real space interactions.
+ *  These are: bonded, non bonded + real space electrostatics.
+ *  The result is stored in the global variable \ref max_cut.
+ */
 void recalc_maximal_cutoff();
 
 /**
@@ -469,30 +382,17 @@ void recalc_maximal_cutoff();
  */
 void reset_ia_params();
 
-/** check whether all force calculation routines are properly initialized. */
+/** Check whether all force calculation routines are properly initialized. */
 int interactions_sanity_checks();
 
 /**  check if a non bonded interaction is defined */
-inline int checkIfInteraction(IA_parameters *data) {
-  return data->particlesInteract;
+inline int checkIfInteraction(const IA_parameters *data) {
+  return data->max_cut != INACTIVE_CUTOFF;
 }
-
-/** check if the types of particles i and j have any non bonded
-    interaction defined. */
-inline int checkIfParticlesInteract(int i, int j) {
-  return checkIfInteraction(get_ia_param(i, j));
-}
-
-int virtual_set_params(int bond_type);
-
-#ifdef DIPOLES
-void set_dipolar_method_local(DipolarInteraction method);
-#endif
-
-#include "utils/math/sqr.hpp"
 
 /** Returns true if the particles are to be considered for short range
-    interactions */
+ *  interactions.
+ */
 class VerletCriterion {
   const double m_skin;
   const double m_eff_max_cut2;
@@ -536,10 +436,8 @@ public:
 
     // Within short-range distance (incl dpd and the like)
     auto const max_cut = get_ia_param(p1.p.type, p2.p.type)->max_cut;
-    if ((max_cut != INACTIVE_CUTOFF) && (dist2 <= Utils::sqr(max_cut + m_skin)))
-      return true;
-
-    return false;
+    return static_cast<bool>((max_cut != INACTIVE_CUTOFF) &&
+                             (dist2 <= Utils::sqr(max_cut + m_skin)));
   }
 };
 #endif

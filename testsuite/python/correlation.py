@@ -16,16 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
-
 import unittest as ut
 import numpy as np
-from numpy.random import random
 import pickle
 
 import espressomd
-from espressomd.interactions import FeneBond
 import espressomd.observables
 import espressomd.accumulators
 
@@ -36,7 +31,7 @@ class CorrelatorTest(ut.TestCase):
 
     def test(self):
         s = self.system
-        s.box_l = 10, 10, 10
+        s.box_l = [10, 10, 10]
         s.cell_system.skin = 0.4
         # s.periodicity=0,0,0
         s.time_step = 0.01
@@ -46,7 +41,7 @@ class CorrelatorTest(ut.TestCase):
         O = espressomd.observables.ParticlePositions(ids=(0,))
         C2 = espressomd.accumulators.Correlator(
             obs1=O, tau_lin=10, tau_max=10.0, delta_N=1,
-                                               corr_operation="square_distance_componentwise")
+            corr_operation="square_distance_componentwise")
 
         s.integrator.run(1000)
         s.auto_update_accumulators.add(C2)

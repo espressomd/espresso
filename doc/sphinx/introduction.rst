@@ -64,7 +64,7 @@ avoided, providing the user with the possibility of choice. |es| cannot be
 aware whether your particles are representing atoms or billiard balls, so it
 cannot check if the chosen parameters make sense and it is the user's
 responsibility to make sure they do. In fact, |es| can be used to play billiard
-(see the sample script in :file:`samples/billard.py`)!
+(see the sample script in :file:`samples/billiard.py`)!
 
 On the other hand, flexibility of |es| stems from the employment of a scripting
 language at the steering level. Apart from the ability to modify the simulation
@@ -113,7 +113,7 @@ The focus of the user guide is documenting the scripting interface, its
 behavior and use in the simulation. It only describes certain technical details
 of implementation which are necessary for understanding how the script
 interface works. Technical documentation of the code and program structure is
-contained in the :ref:`Developers guide`.
+contained in the `online wiki <https://github.com/espressomd/espresso/wiki>`_.
 
 .. _Basic python simulation script:
 
@@ -297,8 +297,8 @@ Currently, the following tutorials are available:
 * :file:`06-active_matter`: Modelling of self-propelling particles.
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`08-visualization`: Using the online visualizers of |es|.
-* :file:`09-swimmer_reactions`: Further modelling of self-propelling particles.
 * :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble.
+* :file:`11-ferrofluid`: Modelling a colloidal suspension of magnetic particles.
 
 .. _Sample scripts:
 
@@ -308,7 +308,7 @@ Sample scripts
 Several scripts that can serve as usage examples can be found in the directory :file:`/samples`,
 or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
 
-* :file:`billard.py`
+* :file:`billiard.py`
     A simple billiard game, needs the Python ``pypopengl`` module
 
 * :file:`bonds-tst.py`
@@ -319,16 +319,21 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
    * delete bonds by index or name
    * save/load a bond to/from a variable
 
-
 * :file:`cellsystem_test.py`
     Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.
-    .. todo:: implement the older [tune_cells] call
-    .. todo:: add save/load optimal cell parameters from tune_skin()
 
+    ..
+        .. todo:: implement the older [tune_cells] call
+        .. todo:: add save/load optimal cell parameters from tune_skin()
+
+* :file:`chamber_game.py`
+    Lennard-Jones gas used for demonstration purposes to showcase |es|. The
+    game is based on the Maxwell's demon thought experiment. The snake is
+    controlled by a gamepad or the keyboard to move particles between chambers
+    against a pressure gradient.
 
 * :file:`debye_hueckel.py`
-    Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`
-
+    Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`.
 
 * :file:`ekboundaries.py`
 
@@ -345,7 +350,8 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     plotted live.
 
 * :file:`lj_liquid_distribution.py`
-    Uses ``analysis.distribution`` (See :ref:`Particle distribution`) to analyze a simple Lennard-Jones liquid.
+    Uses :meth:`~espressomd.analyze.Analysis.distribution` to analyze a simple
+    Lennard-Jones liquid. See :ref:`Particle distribution`.
 
 * :file:`lj_liquid.py`
     Simple Lennard-Jones particle liquid. Shows the basic features of how to:
@@ -355,8 +361,8 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     * write parameters, configurations and observables to files
 
 * :file:`lj_liquid_structurefactor.py`
-    Uses ``analysis.structure_factor`` (See :ref:`Structure factor`) to analyze a simple Lennard-Jones liquid.
-
+    Uses :meth:`~espressomd.analyze.Analysis.structure_factor()` to analyze a
+    simple Lennard-Jones liquid. See :ref:`Structure factor`.
 
 * :file:`load_bonds.py`, :file:`store_bonds.py`
     Uses the Python ``pickle`` module to store and load bond information.
@@ -370,11 +376,12 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
    * P3M parameters
    * thermostat
 
-* :file:`load_properties.py`,  :file:`store_properties.py`
+* :file:`load_properties.py`, :file:`store_properties.py`
     Uses the Python ``pickle`` module to store and load system information.
 
 * :file:`MDAnalysisIntegration.py`
-    Shows how to expose configuration to ``MDAnalysis`` at run time. The functions of ``MDAnalysis`` can be used to perform some analysis or
+    Shows how to expose configuration to ``MDAnalysis`` at run time. The
+    functions of ``MDAnalysis`` can be used to perform some analysis or
     convert the frame to other formats (CHARMM, GROMACS, ...)
 
 * :file:`minimal-charged-particles.py`
@@ -383,7 +390,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`minimal-diamond.py`
 
 * :file:`minimal-polymer.py`
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.create_polymer`.
+   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.positions`.
 
 * :file:`minimal_random_number_generator.py`
 
@@ -411,13 +418,13 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Visualization for Poiseuille flow with lattice Boltzmann.
 
 * :file:`visualization_constraints.py`
-    Constraint visualization with OpenGL with all available constraints (commented out).
+    Constraint visualization with OpenGL (shape selection via the command line). See :ref:`Shaped-based constraints`.
 
 * :file:`visualization_mmm2d.py`
-    A visual sample for a constant potential plate capacitor simulated with mmm2d.
+    A visual sample for a constant potential plate capacitor simulated with MMM2D.
 
 * :file:`visualization_charged.py`
-    Molten NaCl and larger, charged particles simulated with p3m.
+    Molten NaCl and larger, charged particles simulated with P3M.
 
 * :file:`visualization_cellsystem.py`
     Node grid and cell grid visualization. Run in parallel for particle coloring by node.
@@ -459,7 +466,7 @@ everything in multiples of the van-der-Waals binding energy of the
 respective particles.
 
 The final choice is the time (or mass) scale. By default, |es| uses a reduced
-mass of 1, so that the mass unit is simply the mass of all particles.
+mass of 1 for all particles, so that the mass unit is simply the mass of one particle.
 Combined with the energy and length scale, this is sufficient to derive
 the resulting time scale:
 
@@ -541,7 +548,7 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 | Langevin Thermostat            | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Isotropic NPT                  | None                   | Single           | Yes        |
+| Isotropic NPT                  | Experimental           | None             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Quaternion Integrator          | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
@@ -586,6 +593,8 @@ report so to the developers.
 | VTF output                     | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | VTK output                     | Group                  | Group            | No         |
++--------------------------------+------------------------+------------------+------------+
+| Checkpointing                  | Experimental           | Experimental     | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                              **Visualization**                                          |
 +--------------------------------+------------------------+------------------+------------+

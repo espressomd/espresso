@@ -18,12 +18,11 @@
 #
 # Handling of electrostatics
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
 from espressomd.utils cimport *
-from espressomd.utils import is_valid_type
+from espressomd.utils import is_valid_type, to_str
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -41,24 +40,21 @@ IF ELECTROSTATICS:
         void mpi_bcast_coulomb_params()
 
     IF P3M:
-        from p3m_common cimport p3m_parameter_struct
-    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-        cdef enum CoulombMethod:
-            COULOMB_NONE, \
-                COULOMB_DH, \
-                COULOMB_P3M, \
-                COULOMB_MMM1D, \
-                COULOMB_MMM2D, \
-                COULOMB_ELC_P3M, \
-                COULOMB_RF, \
-                COULOMB_INTER_RF, \
-                COULOMB_P3M_GPU, \
-                COULOMB_MMM1D_GPU, \
-                COULOMB_EK, \
-                COULOMB_SCAFACOS
+        from p3m_common cimport P3MParameters
 
-        int coulomb_set_prefactor(double prefactor)
-        void deactivate_coulomb_method()
+    cdef extern from "electrostatics_magnetostatics/coulomb.hpp":
+
+        cdef enum CoulombMethod:
+                    COULOMB_NONE, \
+                    COULOMB_DH, \
+                    COULOMB_P3M, \
+                    COULOMB_MMM1D, \
+                    COULOMB_MMM2D, \
+                    COULOMB_ELC_P3M, \
+                    COULOMB_RF, \
+                    COULOMB_P3M_GPU, \
+                    COULOMB_MMM1D_GPU, \
+                    COULOMB_SCAFACOS
 
         ctypedef struct Coulomb_parameters:
             double prefactor
@@ -66,9 +62,14 @@ IF ELECTROSTATICS:
 
         cdef extern Coulomb_parameters coulomb
 
+    cdef extern from "electrostatics_magnetostatics/coulomb.hpp" namespace "Coulomb":
+
+        int set_prefactor(double prefactor)
+        void deactivate_method()
+
     IF P3M:
         cdef extern from "electrostatics_magnetostatics/p3m-common.hpp":
-            ctypedef struct p3m_parameter_struct:
+            ctypedef struct P3MParameters:
                 double alpha_L
                 double r_cut_iL
                 int    mesh[3]
@@ -95,7 +96,7 @@ IF ELECTROSTATICS:
             int p3m_adaptive_tune(char ** log)
 
             ctypedef struct p3m_data_struct:
-                p3m_parameter_struct params
+                P3MParameters params
 
             # links intern C-struct with python object
             cdef extern p3m_data_struct p3m
@@ -130,10 +131,10 @@ IF ELECTROSTATICS:
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune(& log)
+            response = p3m_adaptive_tune( & log)
             handle_errors("Error in p3m_adaptive_tune")
             if log.strip():
-                print(log)
+                print(to_str(log))
             return response
 
         cdef inline python_p3m_set_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
@@ -186,6 +187,18 @@ IF ELECTROSTATICS:
 
         int dh_set_params(double kappa, double r_cut)
 
+    cdef extern from "electrostatics_magnetostatics/reaction_field.hpp":
+        ctypedef struct Reaction_field_params:
+            double kappa
+            double epsilon1
+            double epsilon2
+            double r_cut
+
+        cdef extern Reaction_field_params rf_params
+
+        int rf_set_params(double kappa, double epsilon1, double epsilon2,
+                          double r_cut)
+
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":
         ctypedef struct MMM1D_struct:
@@ -210,9 +223,9 @@ IF ELECTROSTATICS:
         if MMM1D_sanity_checks() == 1:
             handle_errors(
                 "MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
-        resp = mmm1d_tune( & log)
+        resp = mmm1d_tune(& log)
         if resp:
-            print(log)
+            print(to_str(log))
         return resp
 
 IF ELECTROSTATICS:
@@ -222,8 +235,8 @@ IF ELECTROSTATICS:
             double far_cut;
             double far_cut2;
             int far_calculated;
-            int dielectric_contrast_on;
-            int const_pot_on;
+            bool dielectric_contrast_on;
+            bool const_pot_on;
             double pot_diff;
             double delta_mid_top;
             double delta_mid_bot;
@@ -231,7 +244,7 @@ IF ELECTROSTATICS:
 
         cdef extern MMM2D_struct mmm2d_params;
 
-        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, int const_pot_on, double pot_diff);
+        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, bool const_pot_on, double pot_diff);
 
         void MMM2D_init();
 
@@ -267,3 +280,5 @@ IF ELECTROSTATICS and MMM1D_GPU:
             float force_benchmark(SystemInterface & s);
 
             void check_periodicity();
+            void activate();
+            void deactivate();

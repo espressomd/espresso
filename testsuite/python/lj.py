@@ -16,15 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import espressomd
 import numpy
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features(["LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class LennardJonesTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     data = numpy.loadtxt(abspath('data/lj_system.dat'))
@@ -38,15 +37,14 @@ class LennardJonesTest(ut.TestCase):
         lj_cut = 1.12246
 
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig,
-            cutoff=lj_cut, shift="auto")
+            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
         self.system.cell_system.skin = 0.4
         self.system.time_step = .1
 
         for i in range(self.data.shape[0]):
-            self.system.part.add(id=int(self.data[i][0]), pos=[
-                                 self.data[i][1], self.data[i][2], self.data[i][3]])
+            self.system.part.add(
+                id=int(self.data[i][0]), pos=self.data[i][1:4])
 
     def check(self):
         rms = 0.0
@@ -83,5 +81,4 @@ class LennardJonesTest(ut.TestCase):
         self.check()
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

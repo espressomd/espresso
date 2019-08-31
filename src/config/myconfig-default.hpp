@@ -30,7 +30,6 @@
 #define ROTATION
 #define ROTATIONAL_INERTIA
 #define MASS
-#define PARTIAL_PERIODIC
 #define PARTICLE_ANISOTROPY
 #define EXTERNAL_FORCES
 #define LANGEVIN_PER_PARTICLE
@@ -51,10 +50,8 @@
 #define ENGINE
 
 // Hydrodynamics
-#define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #endif
 
@@ -78,7 +75,6 @@
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE
-#define INTER_RF
 #define WCA
 
 #ifdef P3M
@@ -88,5 +84,4 @@
 // Further featuers
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
 #define COLLISION_DETECTION

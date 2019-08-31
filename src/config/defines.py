@@ -14,13 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import tempfile
 import subprocess
 from sys import argv
 
 
-class Defines(object):
+class Defines:
 
     def __init__(self, compiler, flags=[]):
         self._compiler = compiler

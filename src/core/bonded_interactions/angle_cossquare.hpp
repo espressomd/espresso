@@ -22,87 +22,82 @@
 #define ANGLE_COSSQUARE_H
 /** \file
  *  Routines to calculate the angle energy or/and and force
- *  for a particle triple.
- *  \ref forces.cpp
+ *  for a particle triple using the potential described in
+ *  @ref bondedIA_angle_cossquare.
  */
-
-#include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include "angle_common.hpp"
+#include "bonded_interaction_data.hpp"
 #include "grid.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
+
 #include <tuple>
 
-/** set parameters for the angle potential. */
+/** Set parameters for the angle potential. */
 int angle_cossquare_set_params(int bond_type, double bend, double phi0);
 
-/************************************************************/
-
 /** Compute the three-body angle interaction force.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] force1    Force on particle 1.
- *  @param[out] force2    Force on particle 2.
- *  @retval 0
+ *  @return Forces on the second, first and third particles, in that order.
  */
-inline int calc_angle_cossquare_force(Particle const *p_mid,
-                                      Particle const *p_left,
-                                      Particle const *p_right,
-                                      Bonded_ia_parameters const *iaparams,
-                                      double force1[3], double force2[3]) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+calc_angle_cossquare_3body_forces(Utils::Vector3d const &r_mid,
+                                  Utils::Vector3d const &r_left,
+                                  Utils::Vector3d const &r_right,
+                                  Bonded_ia_parameters const *const iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
-    auto const K = iaparams->p.angle_cossquare.bend;
     auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-    return K * (cos_phi0 + cos_phi);
+    auto const k = iaparams->p.angle_cossquare.bend;
+    return k * (cos_phi - cos_phi0);
   };
 
-  calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
-                           force1, force2, false);
-
-  return 0;
+  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
 }
 
-/* The force on each particle due to a three-body bonded potential
-   is computed. */
-inline void calc_angle_cossquare_3body_forces(
-    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
-    Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
-    Vector3d &force3) {
-
-  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
-    auto const K = iaparams->p.angle_cossquare.bend;
-    auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-    // potential dependent term [dU/dphi = K * (sin_phi * cos_phi0 - cos_phi *
-    // sin_phi)]
-    return K * (sin_phi * cos_phi0 - cos_phi * sin_phi) / sin_phi;
-  };
-
-  std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
-      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor, false);
+/** Compute the three-body angle interaction force.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
+ *  @param[in]  iaparams  Bonded parameters for the angle interaction.
+ *  @param[out] f_mid     Force on @p p_mid.
+ *  @param[out] f_left    Force on @p p_left.
+ *  @param[out] f_right   Force on @p p_right.
+ *  @retval false
+ */
+inline bool calc_angle_cossquare_force(
+    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+    Utils::Vector3d const &r_right, Bonded_ia_parameters const *const iaparams,
+    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
+  std::tie(f_mid, f_left, f_right) =
+      calc_angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
+  return false;
 }
 
 /** Computes the three-body angle interaction energy.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @retval false
  */
-inline int angle_cossquare_energy(Particle const *p_mid, Particle const *p_left,
-                                  Particle const *p_right,
-                                  Bonded_ia_parameters const *iaparams,
-                                  double *_energy) {
-  auto const vectors =
-      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
+inline bool angle_cossquare_energy(Utils::Vector3d const &r_mid,
+                                   Utils::Vector3d const &r_left,
+                                   Utils::Vector3d const &r_right,
+                                   Bonded_ia_parameters const *const iaparams,
+                                   double *_energy) {
+  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-  auto const K = iaparams->p.angle_cossquare.bend;
-  *_energy = 0.5 * K * Utils::sqr(cos_phi + cos_phi0);
-  return 0;
+  auto const k = iaparams->p.angle_cossquare.bend;
+  *_energy = 0.5 * k * Utils::sqr(cos_phi - cos_phi0);
+  return false;
 }
 
 #endif /* ANGLE_COSSQUARE_H */

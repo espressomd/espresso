@@ -29,7 +29,6 @@
 #define _ELC_H
 
 #include "particle_data.hpp"
-#include "utils.hpp"
 
 #ifdef P3M
 
@@ -58,7 +57,7 @@ typedef struct {
   int neutralize;
 
   /// @copybrief MMM2D_struct::dielectric_contrast_on
-  int dielectric_contrast_on;
+  bool dielectric_contrast_on;
 
   /// @copybrief MMM2D_struct::delta_mid_top
   double delta_mid_top;
@@ -66,7 +65,7 @@ typedef struct {
   double delta_mid_bot;
 
   /// @copybrief MMM2D_struct::const_pot_on
-  int const_pot;
+  bool const_pot;
   /// @copybrief MMM2D_struct::pot_diff
   double pot_diff;
 
@@ -105,13 +104,13 @@ extern ELC_struct elc_params;
  */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
                    int neutralize, double delta_mid_top, double delta_mid_bot,
-                   int const_pot, double pot_diff);
+                   bool const_pot, double pot_diff);
 
 /// the force calculation
-void ELC_add_force();
+void ELC_add_force(const ParticleRange &particles);
 
 /// the energy calculation
-double ELC_energy();
+double ELC_energy(const ParticleRange &particles);
 
 /// check the ELC parameters
 /// @retval ES_OK
@@ -125,29 +124,30 @@ void ELC_init();
 void ELC_on_resort_particles();
 
 /// pairwise contributions from the lowest and top layers to the energy
-double ELC_P3M_dielectric_layers_energy_contribution(Particle *p1,
-                                                     Particle *p2);
+double ELC_P3M_dielectric_layers_energy_contribution(const Particle *p1,
+                                                     const Particle *p2);
 /// pairwise contributions from the lowest and top layers to the force
-void ELC_P3M_dielectric_layers_force_contribution(Particle *p1, Particle *p2,
-                                                  double force1[3],
-                                                  double force2[3]);
+void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
+                                                  const Particle *p2,
+                                                  Utils::Vector3d &force1,
+                                                  Utils::Vector3d &force2);
 /// self energies of top and bottom layers with their virtual images
-double ELC_P3M_dielectric_layers_energy_self();
+double ELC_P3M_dielectric_layers_energy_self(const ParticleRange &particles);
 /// forces of particles in border layers with themselves
-void ELC_P3M_self_forces();
+void ELC_P3M_self_forces(const ParticleRange &particles);
 
 /// assign the additional, virtual charges, used only in energy.cpp
-void ELC_p3m_charge_assign_both();
+void ELC_p3m_charge_assign_both(const ParticleRange &particles);
 /// assign the additional, virtual charges, used only in energy.cpp
-void ELC_p3m_charge_assign_image();
+void ELC_p3m_charge_assign_image(const ParticleRange &particles);
 
 /// take into account the virtual charges in the charge sums, used in energy.cpp
-void ELC_P3M_modify_p3m_sums_both();
+void ELC_P3M_modify_p3m_sums_both(const ParticleRange &particles);
 /// take into account the virtual charges in the charge sums, used in energy.cpp
-void ELC_P3M_modify_p3m_sums_image();
+void ELC_P3M_modify_p3m_sums_image(const ParticleRange &particles);
 
 /// assign the additional, virtual charges, used only in energy.cpp
-void ELC_P3M_restore_p3m_sums();
+void ELC_P3M_restore_p3m_sums(const ParticleRange &particles);
 
 #endif
 

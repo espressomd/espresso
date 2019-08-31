@@ -23,8 +23,7 @@
  */
 
 #include "cells.hpp"
-#include "electrostatics_magnetostatics/p3m-dipolar.hpp"
-#include "electrostatics_magnetostatics/p3m.hpp"
+#include "communication.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
@@ -32,6 +31,9 @@
 #include "virtual_sites.hpp"
 
 #include "short_range_loop.hpp"
+
+#include "electrostatics_magnetostatics/coulomb.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 
 Observable_stat virials{};
 Observable_stat total_pressure{};
@@ -70,7 +72,7 @@ nptiso_struct nptiso = {0.0,
 /************************************************************/
 
 /** Calculate long range virials (P3M, MMM2d...). */
-void calc_long_range_virials();
+void calc_long_range_virials(const ParticleRange &particles);
 
 /** Initializes a virials Observable stat. */
 void init_virials(Observable_stat *stat);
@@ -104,7 +106,8 @@ inline void add_single_particle_virials(int v_comp, Particle &p) {
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp) {
   int n, i;
-  double volume = box_l[0] * box_l[1] * box_l[2];
+  double volume =
+      box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 
   if (!interactions_sanity_checks())
     return;
@@ -118,24 +121,17 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   init_p_tensor_non_bonded(&p_tensor_non_bonded);
 
   on_observable_calc();
-  // Run short-range loop if max cut >0
-  if (max_cut > 0) {
-    short_range_loop(
-        [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
-        [](Particle &p1, Particle &p2, Distance &d) {
-          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(),
-                                      sqrt(d.dist2), d.dist2);
-        });
-  } else {
-    // Only add single particle virials
-    for (auto &p : local_cells.particles()) {
-      add_single_particle_virials(v_comp, p);
-    }
-  }
+
+  short_range_loop(
+      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+      [](Particle &p1, Particle &p2, Distance &d) {
+        add_non_bonded_pair_virials(&(p1), &(p2), d.vec21, sqrt(d.dist2));
+      });
+
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials();
+  calc_long_range_virials(local_cells.particles());
 
 #ifdef VIRTUAL_SITES
   virtual_sites()->pressure_and_stress_tensor_contribution(
@@ -172,84 +168,15 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
 /************************************************************/
 
-void calc_long_range_virials() {
+void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but ELC pressure not implemented\n");
-    break;
-  case COULOMB_P3M_GPU:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but GPU P3M pressure not implemented\n");
-    break;
-  case COULOMB_P3M: {
-    p3m_charge_assign();
-    virials.coulomb[1] = p3m_calc_kspace_forces(0, 1);
-    p3m_charge_assign();
-    p3m_calc_kspace_stress(p_tensor.coulomb + 9);
-    break;
-  }
-#endif
-  case COULOMB_MMM2D:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
-    break;
-  case COULOMB_MMM1D:
-  case COULOMB_MMM1D_GPU:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but MMM1D pressure not implemented\n");
-    break;
-  default:
-    break;
-  }
+  Coulomb::calc_pressure_long_range(virials, p_tensor, particles);
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but DAWAANR pressure not implemented\n");
-    break;
-  case DIPOLAR_MDLC_DS:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_DS:
-    fprintf(stderr, "WARNING: pressure calculated, but  MAGNETIC DIRECT SUM "
-                    "pressure not implemented\n");
-    break;
-
-#ifdef DP3M
-  case DIPOLAR_MDLC_P3M:
-    fprintf(stderr,
-            "WARNING: pressure calculated, but DLC pressure not implemented\n");
-    break;
-  case DIPOLAR_P3M: {
-    int k;
-    dp3m_dipole_assign();
-    virials.dipolar[1] = dp3m_calc_kspace_forces(0, 1);
-
-    for (k = 0; k < 3; k++)
-      p_tensor.coulomb[9 + k * 3 + k] = virials.dipolar[1] / 3.;
-    fprintf(stderr, "WARNING: stress tensor calculated, but dipolar P3M stress "
-                    "tensor not implemented\n");
-    fprintf(stderr, "WARNING: things have been added to the coulomb virial and "
-                    "p_tensor arrays !!!!!!!\n");
-
-    break;
-  }
-#endif
-  default:
-    break;
-  }
+  Dipole::calc_pressure_long_range();
 #endif /*ifdef DIPOLES */
 }
 
@@ -264,36 +191,10 @@ void init_virials(Observable_stat *stat) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    n_coulomb = 0;
-    break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    n_coulomb = 2;
-    break;
-  default:
-    n_coulomb = 1;
-  }
+  Coulomb::pressure_n(n_coulomb);
 #endif
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_DS:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_P3M:
-    n_dipolar = 2;
-    break;
-  default:
-    n_dipolar = 0;
-    break;
-  }
+  Dipole::pressure_n();
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();
@@ -320,41 +221,18 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
 void init_p_tensor(Observable_stat *stat) {
   // Determine number of contribution for different interaction types
   // bonded, nonbonded, Coulomb, dipolar, rigid bodies
-  int n_pre, n_non_bonded, n_coulomb(0), n_dipolar(0), n_vs(0);
+  int n_pre, n_non_bonded, n_coulomb(0), n_vs(0);
 
   n_pre = 1;
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
 #ifdef ELECTROSTATICS
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    n_coulomb = 0;
-    break;
-  case COULOMB_P3M_GPU:
-  case COULOMB_P3M:
-    n_coulomb = 2;
-    break;
-  default:
-    n_coulomb = 1;
-  }
+  Coulomb::pressure_n(n_coulomb);
 #endif
 #ifdef DIPOLES
-  switch (coulomb.Dmethod) {
-  case DIPOLAR_NONE:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_DS:
-    n_dipolar = 0;
-    break;
-  case DIPOLAR_P3M:
-    n_dipolar = 2;
-    break;
-  default:
-    n_dipolar = 0;
-  }
+  auto const n_dipolar = Dipole::pressure_n();
+#else
+  auto const n_dipolar = 0;
 #endif
 #ifdef VIRTUAL_SITES
   n_vs = virtual_sites()->n_pressure_contribs();

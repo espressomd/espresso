@@ -37,7 +37,7 @@
 #include "rattle.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils/mpi/all_compare.hpp"
+#include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -69,7 +69,7 @@ typedef struct {
 
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
-     {box_l.data(), Datafield::Type::DOUBLE, 3,
+     {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
       "box_l"}}, /* 0  from grid.cpp */
     {FIELD_CELLGRID,
      {dd.cell_grid, Datafield::Type::INT, 3,
@@ -126,7 +126,7 @@ const std::unordered_map<int, Datafield> fields{
      {&nptiso.piston, Datafield::Type::DOUBLE, 1,
       "npt_piston"}}, /* 27 from pressure.cpp */
     {FIELD_PERIODIC,
-     {&periodic, Datafield::Type::INT, 1,
+     {&box_geo.m_periodic, Datafield::Type::INT, 1,
       "periodicity"}}, /* 28 from grid.cpp */
     {FIELD_SKIN,
      {&skin, Datafield::Type::DOUBLE, 1, "skin"}}, /* 29 from integrate.cpp */
@@ -189,7 +189,7 @@ std::size_t hash_value(Datafield const &field) {
   }
   default:
     throw std::runtime_error("Unknown type.");
-  };
+  }
 }
 
 void common_bcast_parameter(int i) {
@@ -209,7 +209,6 @@ void common_bcast_parameter(int i) {
     break;
   default:
     throw std::runtime_error("Unknown type.");
-    break;
   }
 
   on_parameter_change(i);
@@ -241,7 +240,7 @@ void check_global_consistency() {
 
 void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);
-  check_runtime_errors();
+  check_runtime_errors(comm_cart);
 }
 
 REGISTER_CALLBACK(mpi_bcast_parameter_slave)
@@ -251,5 +250,5 @@ int mpi_bcast_parameter(int i) {
 
   common_bcast_parameter(i);
 
-  return check_runtime_errors();
+  return check_runtime_errors(comm_cart);
 }

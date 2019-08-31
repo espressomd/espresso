@@ -14,14 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features(["ENGINE"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ENGINE"])
 class SwimmerTest(ut.TestCase):
 
     def test(self):
@@ -56,7 +55,7 @@ class SwimmerTest(ut.TestCase):
         S.part.add(id=1, pos=pos_1, swimming={"f_swim": f_swim})
         S.part[:].rotation = 1, 1, 1
 
-        S.thermostat.set_langevin(kT=temp, gamma=gamma)
+        S.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 
         S.integrator.run(sampsteps)
 
@@ -73,5 +72,4 @@ class SwimmerTest(ut.TestCase):
 
 
 if __name__ == '__main__':
-    print("Features: ", espressomd.features())
     ut.main()

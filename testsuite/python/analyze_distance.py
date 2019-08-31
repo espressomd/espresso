@@ -14,26 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
-import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 
+BOX_L = 50.
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeDistance(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=3 * [BOX_L])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
 
-    @classmethod
-    def setUpClass(self):
-        self.box_l = 50.0
-        self.system.box_l = [self.box_l, self.box_l, self.box_l]
-        for i in range(100):
-            self.system.part.add(id=i, pos=np.random.random(3) * self.box_l)
-    
+    def setUp(self):
+        self.system.part.add(pos=np.random.random((100, 3)) * BOX_L)
+
+    def tearDown(self):
+        self.system.part.clear()
+
     # python version of the espresso core function
     def min_dist(self):
         r = np.array(self.system.part[:].pos)
@@ -78,16 +78,20 @@ class AnalyzeDistance(ut.TestCase):
         # try five times
         for i in range(5):
             self.system.part[:].pos = np.random.random(
-                (len(self.system.part), 3)) * self.box_l
+                (len(self.system.part), 3)) * BOX_L
             self.assertAlmostEqual(self.system.analysis.min_dist(),
                                    self.min_dist(),
                                    delta=1e-7)
+
+    def test_min_dist_empty(self):
+        self.system.part.clear()
+        self.assertEqual(self.system.analysis.min_dist(), float("inf"))
 
     def test_nbhood(self):
         # try five times
         for i in range(1, 10, 2):
             self.system.part[:].pos = np.random.random(
-                (len(self.system.part), 3)) * self.box_l
+                (len(self.system.part), 3)) * BOX_L
             self.assertTrue(
                 np.allclose(self.system.analysis.nbhood([i, i, i], i * 2),
                             self.nbhood([i, i, i], i * 2)))
@@ -96,7 +100,7 @@ class AnalyzeDistance(ut.TestCase):
         # try five times
         for i in range(5):
             self.system.part[:].pos = np.random.random(
-                (len(self.system.part), 3)) * self.box_l
+                (len(self.system.part), 3)) * BOX_L
             self.assertTrue(
                 np.allclose(self.system.analysis.dist_to(pos=[i, i, i]),
                             self.dist_to_pos([i, i, i])))
@@ -105,11 +109,9 @@ class AnalyzeDistance(ut.TestCase):
         # try five times
         for i in range(5):
             self.system.part[:].pos = np.random.random(
-                (len(self.system.part), 3)) * self.box_l
+                (len(self.system.part), 3)) * BOX_L
             self.assertAlmostEqual(self.system.analysis.dist_to(id=i),
                                    self.dist_to_id(i))
 
-
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

@@ -22,90 +22,84 @@
 #define ANGLE_HARMONIC_H
 /** \file
  *  Routines to calculate the angle energy or/and and force
- *  for a particle triple.
- *  \ref forces.cpp
+ *  for a particle triple using the potential described in
+ *  @ref bondedIA_angle_harmonic.
  */
-
-#include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include "angle_common.hpp"
+#include "bonded_interaction_data.hpp"
 #include "grid.hpp"
+
+#include <utils/math/sqr.hpp>
+
 #include <tuple>
 
-/** set parameters for the angle potential. */
+/** Set parameters for the angle potential. */
 int angle_harmonic_set_params(int bond_type, double bend, double phi0);
 
-/************************************************************/
-
-/** Computes the three-body angle interaction force.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+/** Compute the three-body angle interaction force.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] force1    Force on particle 1.
- *  @param[out] force2    Force on particle 2.
- *  @retval 0
+ *  @return Forces on the second, first and third particles, in that order.
  */
-inline int calc_angle_harmonic_force(Particle const *p_mid,
-                                     Particle const *p_left,
-                                     Particle const *p_right,
-                                     Bonded_ia_parameters const *iaparams,
-                                     double force1[3], double force2[3]) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+calc_angle_harmonic_3body_forces(Utils::Vector3d const &r_mid,
+                                 Utils::Vector3d const &r_left,
+                                 Utils::Vector3d const &r_right,
+                                 Bonded_ia_parameters const *const iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
-    auto const phi = acos(-cos_phi);
-    auto const phi0 = iaparams->p.angle_harmonic.phi0;
-    auto const K = iaparams->p.angle_harmonic.bend;
-    return K * (phi - phi0) / sin_phi;
-  };
-
-  calc_angle_generic_force(p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor,
-                           force1, force2, true);
-
-  return 0;
-}
-
-/* The force on each particle due to a three-body bonded potential
-   is computed. */
-inline void calc_angle_harmonic_3body_forces(
-    Particle const *p_mid, Particle const *p_left, Particle const *p_right,
-    Bonded_ia_parameters const *iaparams, Vector3d &force1, Vector3d &force2,
-    Vector3d &force3) {
-
-  auto forceFactor = [&iaparams](double const cos_phi, double const sin_phi) {
     auto const phi = acos(cos_phi);
     auto const phi0 = iaparams->p.angle_harmonic.phi0;
-    auto const K = iaparams->p.angle_harmonic.bend;
-    // potential dependent term [dU/dphi = K * (phi - phi0)]
-    return K * (phi - phi0) / sin_phi;
+    auto const k = iaparams->p.angle_harmonic.bend;
+    return -k * (phi - phi0) / sin_phi;
   };
 
-  std::tie(force1, force2, force3) = calc_angle_generic_3body_forces(
-      p_mid->r.p, p_left->r.p, p_right->r.p, forceFactor, true);
+  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
 }
 
-/** Computes the three-body angle interaction energy.
- *  @param[in]  p_mid     Second/middle particle.
- *  @param[in]  p_left    First/left particle.
- *  @param[in]  p_right   Third/right particle.
+/** Compute the three-body angle interaction force.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
+ *  @param[in]  iaparams  Bonded parameters for the angle interaction.
+ *  @param[out] f_mid     Force on @p p_mid.
+ *  @param[out] f_left    Force on @p p_left.
+ *  @param[out] f_right   Force on @p p_right.
+ *  @retval false
+ */
+inline bool calc_angle_harmonic_force(
+    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+    Utils::Vector3d const &r_right, Bonded_ia_parameters const *const iaparams,
+    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
+  std::tie(f_mid, f_left, f_right) =
+      calc_angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
+  return false;
+}
+
+/** Compute the three-body angle interaction energy.
+ *  @param[in]  r_mid     Position of second/middle particle.
+ *  @param[in]  r_left    Position of first/left particle.
+ *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @retval false
  */
-inline int angle_harmonic_energy(Particle const *p_mid, Particle const *p_left,
-                                 Particle const *p_right,
-                                 Bonded_ia_parameters const *iaparams,
-                                 double *_energy) {
-  auto const vectors =
-      calc_vectors_and_cosine(p_mid->r.p, p_left->r.p, p_right->r.p, true);
+inline bool angle_harmonic_energy(Utils::Vector3d const &r_mid,
+                                  Utils::Vector3d const &r_left,
+                                  Utils::Vector3d const &r_right,
+                                  Bonded_ia_parameters const *const iaparams,
+                                  double *_energy) {
+  auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
-  auto const phi = acos(-cos_phi);
+  auto const phi = acos(cos_phi);
   auto const phi0 = iaparams->p.angle_harmonic.phi0;
-  auto const K = iaparams->p.angle_harmonic.bend;
-  *_energy = 0.5 * K * Utils::sqr(phi - phi0);
-  return 0;
+  auto const k = iaparams->p.angle_harmonic.bend;
+  *_energy = 0.5 * k * Utils::sqr(phi - phi0);
+  return false;
 }
 
 #endif /* ANGLE_HARMONIC_H */

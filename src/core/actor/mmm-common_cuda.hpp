@@ -28,8 +28,9 @@ const int modpsi_order = 30;
 const int modpsi_constant_size = modpsi_order * modpsi_order * 2;
 
 // linearized array on host
-int *linModPsi_offsets = nullptr, *linModPsi_lengths = nullptr;
-mmm1dgpu_real *linModPsi = nullptr;
+std::vector<int> linModPsi_offsets;
+std::vector<int> linModPsi_lengths;
+std::vector<mmm1dgpu_real> linModPsi;
 
 // linearized array on device
 __constant__ int device_n_modPsi[1] = {0};
@@ -43,10 +44,8 @@ int modpsi_init() {
   }
 
   // linearize the coefficients array
-  linModPsi_offsets =
-      (int *)Utils::realloc(linModPsi_offsets, sizeof(int) * 2 * n_modPsi);
-  linModPsi_lengths =
-      (int *)Utils::realloc(linModPsi_lengths, sizeof(int) * 2 * n_modPsi);
+  linModPsi_offsets.resize(2 * n_modPsi);
+  linModPsi_lengths.resize(2 * n_modPsi);
   for (int i = 0; i < 2 * n_modPsi; i++) {
     if (i == 0)
       linModPsi_offsets[i] = 0;
@@ -55,9 +54,8 @@ int modpsi_init() {
           linModPsi_offsets[i - 1] + linModPsi_lengths[i - 1];
     linModPsi_lengths[i] = modPsi[i].n;
   }
-  linModPsi = (mmm1dgpu_real *)Utils::realloc(
-      linModPsi, sizeof(mmm1dgpu_real) * (linModPsi_offsets[2 * n_modPsi - 1] +
-                                          linModPsi_lengths[2 * n_modPsi - 1]));
+  linModPsi.resize(linModPsi_offsets[2 * n_modPsi - 1] +
+                   linModPsi_lengths[2 * n_modPsi - 1]);
   for (int i = 0; i < 2 * n_modPsi; i++) {
     for (int j = 0; j < modPsi[i].n; j++) {
       linModPsi[linModPsi_offsets[i] + j] =
@@ -77,29 +75,18 @@ int modpsi_init() {
       std::abort();
     }
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_offsets),
-                                     linModPsi_offsets,
+                                     linModPsi_offsets.data(),
                                      2 * n_modPsi * sizeof(int)));
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi_lengths),
-                                     linModPsi_lengths,
+                                     linModPsi_lengths.data(),
                                      2 * n_modPsi * sizeof(int)));
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi), linModPsi,
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_linModPsi),
+                                     linModPsi.data(),
                                      linModPsiSize * sizeof(mmm1dgpu_real)));
     cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(device_n_modPsi), &n_modPsi,
                                      sizeof(int)));
   }
 
-  return 0;
-}
-
-int modpsi_destroy() {
-  // no need to delete the arrays off the device, they're in constant memory
-  // free arrays on host
-  free(linModPsi_offsets);
-  free(linModPsi_lengths);
-  free(linModPsi);
-  linModPsi_offsets = nullptr;
-  linModPsi_lengths = nullptr;
-  linModPsi = nullptr;
   return 0;
 }
 

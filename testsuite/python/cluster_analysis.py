@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import espressomd
 from espressomd.utils import handle_errors
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.pair_criteria import *
+from espressomd.pair_criteria import DistanceCriterion, BondCriterion
 from espressomd.cluster_analysis import ClusterStructure
 
 
@@ -35,7 +34,7 @@ class ClusterAnalysis(ut.TestCase):
     f = FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f)
 
-    # Firt cluster
+    # 1st cluster
     es.part.add(id=0, pos=(0, 0, 0))
     es.part.add(id=1, pos=(0.91, 0, 0), bonds=((0, 0),))
     es.part.add(id=2, pos=(0, 0.2, 0))
@@ -128,14 +127,14 @@ class ClusterAnalysis(ut.TestCase):
             c = c[1]
 
             # Center of mass should be at origin
-            self.assertTrue(
-                np.sqrt(np.sum(np.array(c.center_of_mass())**2)) <= 1E-8)
+            self.assertLess(np.linalg.norm(c.center_of_mass()), 1E-8)
 
             # Longest distance
-            self.assertTrue(
+            self.assertLess(
                 abs(c.longest_distance()
-                    - self.es.distance(self.es.part[0], self.es.part[len(self.es.part) - 1]))
-                <= 1E-8)
+                    - self.es.distance(self.es.part[0],
+                                       self.es.part[len(self.es.part) - 1])),
+                1E-8)
 
             # Radius of gyration
             rg = 0.
@@ -188,5 +187,4 @@ class ClusterAnalysis(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

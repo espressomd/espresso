@@ -23,10 +23,12 @@
  *  Implementation of \ref membrane_collision.hpp
  */
 #include "membrane_collision.hpp"
+
+#ifdef MEMBRANE_COLLISION
 #include "communication.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-#ifdef MEMBRANE_COLLISION
+#include <utils/constants.hpp>
 
 int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
                                   double n, double cut, double offset) {
@@ -35,10 +37,10 @@ int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
   if (!data)
     return ES_ERROR;
 
-  data->membrane_a = a;
-  data->membrane_n = n;
-  data->membrane_cut = cut;
-  data->membrane_offset = offset;
+  data->membrane.a = a;
+  data->membrane.n = n;
+  data->membrane.cut = cut;
+  data->membrane.offset = offset;
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);

@@ -29,10 +29,7 @@
 #define _HALO_HPP
 
 #include "grid_based_algorithms/lattice.hpp"
-#include "utils.hpp"
 #include <mpi.h>
-
-#ifdef LATTICE
 
 /** \name Types of halo communications */
 /*@{*/
@@ -53,7 +50,7 @@
 
 /** Layout of the lattice data.
  *  The description is similar to MPI datatypes but a bit more compact.
- *  See \ref halo_create_fieldtype, \ref halo_create_field_vector and \ref
+ *  See \ref halo_create_field_vector and \ref
  *  halo_dtcopy to understand how it works.
  */
 typedef struct _Fieldtype *Fieldtype;
@@ -94,24 +91,14 @@ typedef struct {
 
 /** Structure holding a set of \ref HaloInfo which comprise a certain
  *  parallelization scheme */
-typedef struct {
+class HaloCommunicator {
+public:
+  HaloCommunicator(int num) : num(num){};
 
   int num; /**< number of halo communications in the scheme */
 
-  HaloInfo *halo_info; /**< set of halo communications */
-
-} HaloCommunicator;
-
-/** Creates a fieldtype describing the data layout
- *  @param      count   number of subtypes
- *  @param[in]  lengths array of lengths of the subtypes
- *  @param[in]  disps   array of displacements the subtypes
- *  @param      extent  extent of the whole new fieldtype
- *  @param[out] newtype newly created fieldtype
- */
-void halo_create_fieldtype(int count, int const *const lengths,
-                           int const *const disps, int extent,
-                           Fieldtype *const newtype);
+  std::vector<HaloInfo> halo_info; /**< set of halo communications */
+};
 
 /** Creates a field vector layout
  *  @param vblocks       number of vector blocks
@@ -121,14 +108,14 @@ void halo_create_fieldtype(int count, int const *const lengths,
  *  @param[out] newtype  newly created fieldtype
  */
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
-                              Fieldtype oldtype, Fieldtype *const newtype);
+                              Fieldtype oldtype, Fieldtype *newtype);
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
-                               Fieldtype oldtype, Fieldtype *const newtype);
+                               Fieldtype oldtype, Fieldtype *newtype);
 
 /** Frees a fieldtype
  *  @param ftype pointer to the type to be freed
  */
-void halo_free_fieldtype(Fieldtype *const ftype);
+void halo_free_fieldtype(Fieldtype *ftype);
 
 /** Preparation of the halo parallelization scheme. Sets up the
  *  necessary datastructures for \ref halo_communication
@@ -138,23 +125,20 @@ void halo_free_fieldtype(Fieldtype *const ftype);
  *  @param datatype         MPI datatype for the lattice data
  *  @param local_node_grid  Number of nodes in each spatial dimension
  */
-void prepare_halo_communication(HaloCommunicator *const hc,
-                                Lattice const *const lattice,
+void prepare_halo_communication(HaloCommunicator *hc, Lattice const *lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
-                                const Vector3i &local_node_grid);
+                                const Utils::Vector3i &local_node_grid);
 
 /** Frees datastructures associated with a halo communicator
  *  @param[in,out] hc  halo communicator to be released
  */
-void release_halo_communication(HaloCommunicator *const hc);
+void release_halo_communication(HaloCommunicator *hc);
 
 /** Perform communication according to the parallelization scheme
  *  described by the halo communicator
  *  @param[in]  hc    halo communicator describing the parallelization scheme
  *  @param[in]  base  base plane of local node
  */
-void halo_communication(HaloCommunicator const *const hc, char *const base);
-
-#endif /* LATTICE */
+void halo_communication(HaloCommunicator const *hc, char *base);
 
 #endif /* HALO_H */

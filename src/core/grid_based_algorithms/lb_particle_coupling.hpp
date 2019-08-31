@@ -1,19 +1,24 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
-#include "utils/Counter.hpp"
+#include <boost/serialization/optional.hpp>
+
+#include "ParticleRange.hpp"
+#include <utils/Counter.hpp>
 
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.
  *  Include all particle-lattice forces in this function.
  *  The function is called from \ref force_calc.
  */
-void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual);
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
+                                            const ParticleRange &particles);
 void lb_lbcoupling_propagate();
 uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);
 void lb_lbcoupling_set_gamma(double friction);
 double lb_lbcoupling_get_gamma();
+bool lb_lbcoupling_is_seed_required();
 
 /*
  * @brief Activate the coupling between LB and MD particles.
@@ -30,7 +35,7 @@ void lb_lbcoupling_activate();
 void lb_lbcoupling_deactivate();
 
 struct LB_Particle_Coupling {
-  Utils::Counter<uint64_t> rng_counter_coupling{};
+  boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling;
   /*
    * @brief Friction constant for the particle coupling.
    */

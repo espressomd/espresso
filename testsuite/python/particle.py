@@ -16,9 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 from espressomd.interactions import FeneBond
@@ -64,8 +63,10 @@ class ParticleProperties(ut.TestCase):
             # It will use the state of the variables in the outer function,
             # which was there, when the outer function was called
             setattr(self.system.part[self.pid], propName, value)
-            np.testing.assert_allclose(np.array(getattr(self.system.part[
-                self.pid], propName)), value, err_msg=propName + ": value set and value gotten back differ.", atol=self.tol)
+            np.testing.assert_allclose(
+                np.array(getattr(self.system.part[self.pid], propName)), value,
+                err_msg=propName + ": value set and value gotten back differ.",
+                atol=self.tol)
 
         return func
 
@@ -128,8 +129,8 @@ class ParticleProperties(ut.TestCase):
                     self.system.part[self.pid].gamma = 17.4
                     np.testing.assert_array_equal(
                         np.copy(self.system.part[self.pid].gamma),
-                                                  np.array([17.4, 17.4, 17.4]),
-                                                  "gamma: value set and value gotten back differ.")
+                        np.array([17.4, 17.4, 17.4]),
+                        "gamma: value set and value gotten back differ.")
             else:
                 test_gamma = generateTestForScalarProperty("gamma", 17.3)
 
@@ -141,12 +142,13 @@ class ParticleProperties(ut.TestCase):
                     self.system.part[self.pid].gamma_rot = 15.4
                     np.testing.assert_array_equal(
                         np.copy(self.system.part[self.pid].gamma_rot),
-                                                  np.array([15.4, 15.4, 15.4]),
-                                                  "gamma_rot: value set and value gotten back differ.")
+                        np.array([15.4, 15.4, 15.4]),
+                        "gamma_rot: value set and value gotten back differ.")
             else:
                 test_gamma_rot = generateTestForScalarProperty(
                     "gamma_rot", 14.23)
-#    test_director=generateTestForVectorProperty("director",np.array([0.5,0.4,0.3]))
+    # test_director=generateTestForVectorProperty("director",
+    # np.array([0.5,0.4,0.3]))
 
     if espressomd.has_features(["ELECTROSTATICS"]):
         test_charge = generateTestForScalarProperty("q", -19.7)
@@ -179,28 +181,26 @@ class ParticleProperties(ut.TestCase):
             self.assertEqual(res[0], 0, "vs_relative: " + res.__str__())
             self.assertEqual(res[1], 5.0, "vs_relative: " + res.__str__())
             np.testing.assert_allclose(
-                res[2], np.array(
-                    (0.5, -0.5, -0.5, -0.5)), err_msg="vs_relative: " + res.__str__(), atol=self.tol)
+                res[2], np.array((0.5, -0.5, -0.5, -0.5)),
+                err_msg="vs_relative: " + res.__str__(), atol=self.tol)
 
-    @ut.skipIf(not espressomd.has_features("DIPOLES"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures("DIPOLES")
     def test_contradicting_properties_dip_dipm(self):
         with self.assertRaises(ValueError):
             self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1], dipm=1.0)
 
-    @ut.skipIf(not espressomd.has_features("DIPOLES", "ROTATION"),
-               "Features not available, skipping test!")
+    @utx.skipIfMissingFeatures(["DIPOLES", "ROTATION"])
     def test_contradicting_properties_dip_quat(self):
         with self.assertRaises(ValueError):
-            self.system.part.add(pos=[0, 0, 0], dip=[
-                                 1, 1, 1], quat=[1.0, 1.0, 1.0, 1.0])
+            self.system.part.add(pos=[0, 0, 0], dip=[1, 1, 1],
+                                 quat=[1.0, 1.0, 1.0, 1.0])
 
-    @ut.skipIf(not espressomd.has_features("ELECTROSTATICS"), "Test needs ELECTROSTATICS")
+    @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_particle_selection(self):
         s = self.system
         s.part.clear()
         positions = ((0.2, 0.3, 0.4), (0.4, 0.2, 0.3), (0.7, 0.7, 0.7))
-        charges = 0, 1E-6, -1, 1
+        charges = [0, 1E-6, -1, 1]
 
         # Place particles
         i = 0
@@ -268,14 +268,15 @@ class ParticleProperties(ut.TestCase):
                 setattr(s.part[:], p, getattr(s.part[0], p))
             except AttributeError:
                 print("Skipping read-only", p)
-            # Cause a differtn mpi callback to uncover deadlock immediately
+            # Cause a different mpi callback to uncover deadlock immediately
             x = getattr(s.part[:], p)
 
     def test_zz_remove_all(self):
         for id in self.system.part[:].id:
             self.system.part[id].remove()
-        self.system.part.add(pos=np.random.random(
-            (100, 3)) * self.system.box_l, id=np.arange(100, dtype=int))
+        self.system.part.add(
+            pos=np.random.random((100, 3)) * self.system.box_l,
+            id=np.arange(100, dtype=int))
         ids = self.system.part[:].id
         np.random.shuffle(ids)
         for id in ids:
@@ -318,5 +319,4 @@ class ParticleProperties(ut.TestCase):
 
 
 if __name__ == "__main__":
-    # print("Features: ", espressomd.features())
     ut.main()

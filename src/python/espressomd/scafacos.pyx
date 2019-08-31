@@ -1,7 +1,6 @@
 """Code shared by charge and dipole methods based on the SCAFACOS library."""
 
 
-from __future__ import print_function, absolute_import
 from espressomd.actors cimport Actor
 from libcpp.string cimport string  # import std::string
 cimport electrostatics
@@ -85,7 +84,7 @@ IF SCAFACOS == 1:
             # Re-add the prefactor to the parameter set
             if self.dipolar:
                 IF DIPOLES == 1:
-                    res["prefactor"] = magnetostatics.coulomb.Dprefactor
+                    res["prefactor"] = magnetostatics.dipole.prefactor
                 pass
             else:
                 IF ELECTROSTATICS == 1:
@@ -102,7 +101,7 @@ IF SCAFACOS == 1:
                         "Scafacos cannot be used for dipoles and charges at the same time")
 
             IF DIPOLES == 1:
-                if not self.dipolar and < int > magnetostatics.coulomb.Dmethod == <int > magnetostatics.DIPOLAR_SCAFACOS:
+                if not self.dipolar and < int > magnetostatics.dipole.method == <int > magnetostatics.DIPOLAR_SCAFACOS:
                     raise Exception(
                         "Scafacos cannot be used for dipoles and charges at the same time")
 

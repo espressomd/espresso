@@ -22,13 +22,19 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
 
+#include "config.hpp"
+
 #include "ScriptInterface.hpp"
 
-#include <memory>
-
 #include "Observable.hpp"
+#ifdef DPD
+#include "core/observables/DPDStress.hpp"
+#endif
+#include "core/observables/LBFluidStress.hpp"
 #include "core/observables/Observable.hpp"
 #include "core/observables/StressTensor.hpp"
+
+#include <memory>
 
 namespace ScriptInterface {
 namespace Observables {
@@ -53,6 +59,10 @@ private:
 #define NEW_PARAMLESS_OBSERVABLE(name)                                         \
   using name = ParamlessObservableInterface<::Observables::name>;
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
+NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
+#ifdef DPD
+NEW_PARAMLESS_OBSERVABLE(DPDStress)
+#endif
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */

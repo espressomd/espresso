@@ -16,14 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests hat potential
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
-import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features("HAT"), "Skipped because feature is disabled")
+@utx.skipIfMissingFeatures("HAT")
 class HatTest(ut.TestCase):
 
     def force(self, F_max, r_cut, r):

@@ -21,8 +21,10 @@
 
 #include "h5md_core.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+
 #include <vector>
 
 namespace Writer {
@@ -57,9 +59,9 @@ static std::vector<hsize_t> create_dims(hsize_t dim, hsize_t size) {
     return std::vector<hsize_t>{size, size};
   if (dim == 1)
     return std::vector<hsize_t>{size};
-  else
-    throw std::runtime_error(
-        "H5MD Error: datastets with this dimension are not implemented\n");
+
+  throw std::runtime_error(
+      "H5MD Error: datastets with this dimension are not implemented\n");
 }
 
 // Correct Chunking is important for the IO performance!
@@ -74,9 +76,9 @@ std::vector<hsize_t> File::create_chunk_dims(hsize_t dim, hsize_t size,
     return std::vector<hsize_t>{chunk_size, size};
   if (dim == 1)
     return std::vector<hsize_t>{size};
-  else
-    throw std::runtime_error(
-        "H5MD Error: datastets with this dimension are not implemented\n");
+
+  throw std::runtime_error(
+      "H5MD Error: datastets with this dimension are not implemented\n");
 }
 static std::vector<hsize_t> create_maxdims(hsize_t dim) {
 #ifdef H5MD_DEBUG
@@ -88,9 +90,9 @@ static std::vector<hsize_t> create_maxdims(hsize_t dim) {
     return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED};
   if (dim == 1)
     return std::vector<hsize_t>{H5S_UNLIMITED};
-  else
-    throw std::runtime_error(
-        "H5MD Error: datastets with this dimension are not implemented\n");
+
+  throw std::runtime_error(
+      "H5MD Error: datastets with this dimension are not implemented\n");
 }
 
 /* Initialize the file related variables after parameters have been set. */
@@ -106,7 +108,7 @@ void File::InitFile() {
     MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
   else
     m_hdf5_comm = MPI_COMM_WORLD;
-  if (m_write_ordered == true && this_node != 0)
+  if (m_write_ordered && this_node != 0)
     return;
 
   if (n_part <= 0) {
@@ -124,7 +126,7 @@ void File::InitFile() {
   bool backup_file_exists = boost::filesystem::exists(m_backup_filename);
   /* Perform a barrier synchronization. Otherwise one process might already
    * create the file while another still checks for its existence. */
-  if (m_write_ordered == false)
+  if (!m_write_ordered)
     MPI_Barrier(m_hdf5_comm);
   if (file_exists) {
     if (check_for_H5MD_structure(m_filename)) {
@@ -300,7 +302,8 @@ void File::create_new_file(const std::string &filename) {
 
   // write time independent datasets
   // write box information
-  std::vector<double> boxvec = {box_l[0], box_l[1], box_l[2]};
+  std::vector<double> boxvec = {box_geo.length()[0], box_geo.length()[1],
+                                box_geo.length()[2]};
   auto group = h5xx::group(m_h5md_file, "particles/atoms/box");
   h5xx::write_attribute(group, "dimension", 3);
   h5xx::write_attribute(group, "boundary", "periodic");
@@ -342,9 +345,9 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     mass[0][particle_index][0] = current_particle.p.mass;
   /* store folded particle positions. */
   if (write_pos) {
-    Vector3d p = current_particle.r.p;
-    Vector3i i = current_particle.l.i;
-    fold_position(p, i);
+    Utils::Vector3d p = current_particle.r.p;
+    Utils::Vector3i i = current_particle.l.i;
+    fold_position(p, i, box_geo);
 
     pos[0][particle_index][0] = p[0];
     pos[0][particle_index][1] = p[1];
@@ -389,16 +392,17 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 }
 
-void File::Write(int write_dat, PartCfg &partCfg) {
+void File::Write(int write_dat, PartCfg &partCfg,
+                 const ParticleRange &particles) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
   int num_particles_to_be_written = 0;
-  if (m_write_ordered == true && this_node == 0)
+  if (m_write_ordered && this_node == 0)
     num_particles_to_be_written = n_part;
-  else if (m_write_ordered == true && this_node != 0)
+  else if (m_write_ordered && this_node != 0)
     return;
-  else if (m_write_ordered == false)
+  else if (!m_write_ordered)
     num_particles_to_be_written = cells_get_n_particles();
 
   bool write_species = write_dat & W_TYPE;
@@ -438,7 +442,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
     /* loop over all local cells. */
     int particle_index = 0;
 
-    for (auto &current_particle : local_cells.particles()) {
+    for (auto &current_particle : particles) {
       fill_arrays_for_h5md_write_with_particle_property(
           particle_index, id, typ, mass, pos, image, vel, f, charge,
           current_particle, write_dat, bond);

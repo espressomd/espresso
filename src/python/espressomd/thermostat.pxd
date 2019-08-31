@@ -16,9 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-
 from libcpp cimport bool as cbool
+from libc cimport stdint
 
 include "myconfig.pxi"
 from .utils cimport Vector3d
@@ -39,3 +38,14 @@ cdef extern from "thermostat.hpp":
     ELSE:
         double langevin_gamma_rotation
         double langevin_gamma
+
+    void langevin_set_rng_state(stdint.uint64_t counter)
+    cbool langevin_is_seed_required()
+
+    stdint.uint64_t langevin_get_rng_state()
+
+cdef extern from "dpd.hpp":
+    IF DPD:
+        void dpd_set_rng_state(stdint.uint64_t counter)
+        cbool dpd_is_seed_required()
+        stdint.uint64_t dpd_get_rng_state()

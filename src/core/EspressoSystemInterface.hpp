@@ -149,7 +149,7 @@ public:
 
 #endif
 
-  Vector3d box() const override;
+  Utils::Vector3d box() const override;
 
   unsigned int npart_gpu() override {
 #ifdef CUDA
@@ -175,8 +175,6 @@ protected:
 #ifdef CUDA
   void enableParticleCommunication() {
     if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      ESIF_TRACE(puts("gpu communication not enabled;"));
-      ESIF_TRACE(puts("enableParticleCommunication"));
       gpu_init_particle_comm();
       cuda_bcast_global_part_params();
       reallocDeviceMemory(

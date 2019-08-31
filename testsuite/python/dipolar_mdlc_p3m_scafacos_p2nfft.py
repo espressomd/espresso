@@ -21,28 +21,27 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-from __future__ import print_function
 import espressomd
 import espressomd.magnetostatics as magnetostatics
 import espressomd.magnetostatic_extensions as magnetostatic_extensions
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features(["DIPOLES", "FFTW"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["DIPOLES", "FFTW"])
 class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
-    """Tests mdlc (2d)  as well as dipolar p3m and dipolar p2nfft (3d) against stored data.
-       Validity of the stored data:
-       2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are save.
-       3d: As long as the independently written p3m and p2nfft agree, we are save.
+    """Tests mdlc (2d)  as well as dipolar p3m and dipolar p2nfft (3d) against
+       stored data. Validity of the stored data:
+       2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are safe.
+       3d: as long as the independently written p3m and p2nfft agree, we are safe.
     """
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
     s.time_step = 0.01
     s.cell_system.skin = .4
-    s.periodicity = 1, 1, 1
+    s.periodicity = [1, 1, 1]
     s.thermostat.turn_off()
 
     def test_mdlc(self):
@@ -50,14 +49,14 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         rho = 0.3
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 100
 
         particle_radius = 0.5
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
         f = open(abspath("data/mdlc_reference_data_energy.dat"))
         ref_E = float(f.readline())
         f.close()
@@ -74,10 +73,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.actors.add(dlc)
         s.thermostat.turn_off()
         s.integrator.run(0)
-        err_f = np.sum(np.sqrt(
-            np.sum((s.part[:].f - data[:, 7:10])**2, 1)), 0) / np.sqrt(data.shape[0])
-        err_t = np.sum(np.sqrt(np.sum(
-            (s.part[:].torque_lab - data[:, 10:13])**2, 1)), 0) / np.sqrt(data.shape[0])
+        err_f = np.sum(np.linalg.norm(s.part[:].f - data[:, 7:10], axis=1)) / np.sqrt(data.shape[0])
+        err_t = np.sum(np.linalg.norm(s.part[:].torque_lab - data[:, 10:13], axis=1)) / np.sqrt(data.shape[0])
         err_e = s.analysis.energy()["dipolar"] - ref_E
         print("Energy difference", err_e)
         print("Force difference", err_f)
@@ -100,14 +97,14 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         rho = 0.09
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 1000
 
         particle_radius = 1
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
@@ -120,10 +117,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.actors.add(p3m)
         s.integrator.run(0)
         expected = np.genfromtxt(abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
-        err_f = np.sum(np.sqrt(
-            np.sum((s.part[:].f - expected[:, 0:3])**2, 1)), 0) / np.sqrt(data.shape[0])
-        err_t = np.sum(np.sqrt(np.sum(
-            (s.part[:].torque_lab - expected[:, 3:6])**2, 1)), 0) / np.sqrt(data.shape[0])
+        err_f = np.sum(np.linalg.norm(s.part[:].f - expected[:, 0:3], axis=1)) / np.sqrt(data.shape[0])
+        err_t = np.sum(np.linalg.norm(s.part[:].torque_lab - expected[:, 3:6], axis=1)) / np.sqrt(data.shape[0])
         ref_E = 5.570
         err_e = s.analysis.energy()["dipolar"] - ref_E
         print("Energy difference", err_e)
@@ -141,21 +136,20 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.part.clear()
         del s.actors[0]
 
-    @ut.skipIf(not espressomd.has_features("SCAFACOS_DIPOLES"),
-               "Skipped, because test requires SCAFACOS_DIPOLES")
+    @utx.skipIfMissingFeatures("SCAFACOS_DIPOLES")
     def test_scafacos_dipoles(self):
         s = self.s
         s.part.clear()
         rho = 0.09
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 1000
 
         particle_radius = 1
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
@@ -178,10 +172,8 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.actors.add(scafacos)
         s.integrator.run(0)
         expected = np.genfromtxt(abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
-        err_f = np.sum(np.sqrt(
-            np.sum((s.part[:].f - expected[:, 0:3])**2, 1)), 0) / np.sqrt(data.shape[0])
-        err_t = np.sum(np.sqrt(np.sum(
-            (s.part[:].torque_lab - expected[:, 3:6])**2, 1)), 0) / np.sqrt(data.shape[0])
+        err_f = np.sum(np.linalg.norm(s.part[:].f - expected[:, 0:3], axis=1)) / np.sqrt(data.shape[0])
+        err_t = np.sum(np.linalg.norm(s.part[:].torque_lab - expected[:, 3:6], axis=1)) / np.sqrt(data.shape[0])
         ref_E = 5.570
         err_e = s.analysis.energy()["dipolar"] - ref_E
         print("Energy difference", err_e)
@@ -201,5 +193,4 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

@@ -16,18 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
-import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.pair_criteria import *
+from espressomd import pair_criteria
 
 
 class PairCriteria(ut.TestCase):
 
-    """Tests interface and implmentation of pair criteria"""
+    """Tests interface and implementation of pair criteria"""
 
     es = espressomd.System(box_l=[1., 1., 1.])
 
@@ -42,7 +40,7 @@ class PairCriteria(ut.TestCase):
     epsilon = 1E-8
 
     def test_distance_crit_periodic(self):
-        dc = DistanceCriterion(cut_off=0.1)
+        dc = pair_criteria.DistanceCriterion(cut_off=0.1)
         # Interface
         self.assertEqual(list(dc.get_params().keys()), ["cut_off", ])
         self.assertTrue(abs(dc.get_params()["cut_off"] - 0.1) < self.epsilon)
@@ -53,21 +51,20 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(dc.decide(self.p1, self.p2))
         self.assertTrue(dc.decide(self.p1.id, self.p2.id))
 
-    @ut.skipIf(not espressomd.has_features("PARTIAL_PERIODIC"), "skiped for lack of PARTIAL_PERIODIC")
     def test_distance_crit_non_periodic(self):
-        dc = DistanceCriterion(cut_off=0.1)
+        dc = pair_criteria.DistanceCriterion(cut_off=0.1)
 
         # Non-periodic system. Particles out of range
         self.es.periodicity = (0, 0, 0)
         self.assertTrue(not dc.decide(self.p1, self.p2))
         self.assertTrue(not dc.decide(self.p1.id, self.p2.id))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "skipped due to missing lj potential")
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_energy_crit(self):
         # Setup purely repulsive lj
         self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
             sigma=0.11, epsilon=1, cutoff=2**(1. / 6.) * 0.11, shift="auto")
-        ec = EnergyCriterion(cut_off=0.001)
+        ec = pair_criteria.EnergyCriterion(cut_off=0.001)
         # Interface
         self.assertEqual(list(ec.get_params().keys()), ["cut_off", ])
         self.assertTrue(abs(ec.get_params()["cut_off"] - 0.001) < self.epsilon)
@@ -78,14 +75,12 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(ec.decide(self.p1, self.p2))
         self.assertTrue(ec.decide(self.p1.id, self.p2.id))
 
-    @ut.skipIf(not espressomd.has_features("LENNARD_JONES") or
-               not espressomd.has_features("PARTIAL_PERIODIC"),
-               "skipped due to missing lj potential")
+    @utx.skipIfMissingFeatures(["LENNARD_JONES"])
     def test_energy_crit_non_periodic(self):
         # Setup purely repulsive lj
         self.es.non_bonded_inter[0, 0].lennard_jones.set_params(
             sigma=0.11, epsilon=1, cutoff=2**(1. / 6.) * 0.11, shift="auto")
-        ec = EnergyCriterion(cut_off=0.001)
+        ec = pair_criteria.EnergyCriterion(cut_off=0.001)
         # Interface
         self.assertEqual(list(ec.get_params().keys()), ["cut_off", ])
         self.assertTrue(abs(ec.get_params()["cut_off"] - 0.001) < self.epsilon)
@@ -96,7 +91,7 @@ class PairCriteria(ut.TestCase):
         self.assertTrue(not ec.decide(self.p1.id, self.p2.id))
 
     def test_bond_crit(self):
-        bc = BondCriterion(bond_type=0)
+        bc = pair_criteria.BondCriterion(bond_type=0)
         # Interface
         self.assertEqual(list(bc.get_params().keys()), ["bond_type", ])
         self.assertEqual(bc.get_params()["bond_type"], 0)
@@ -119,5 +114,4 @@ class PairCriteria(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

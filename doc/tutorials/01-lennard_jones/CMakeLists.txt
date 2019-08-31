@@ -3,5 +3,4 @@ configure_file(01-lennard_jones.ipynb ${CMAKE_CURRENT_BINARY_DIR}/01-lennard_jon
 
 add_custom_target(tutorials_01)
 
-html_export(TUTORIAL tutorials_01 FILE "01-lennard_jones.ipynb")
-python_export(TUTORIAL tutorials_01 FILE "01-lennard_jones.ipynb")
+nb_export(TUTORIAL tutorials_01 FILE "01-lennard_jones.ipynb" HTML_RUN VAR_SUBST "sampling_iterations=4000")

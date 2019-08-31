@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import division, print_function
-
 import unittest as ut
 
 import espressomd
@@ -43,7 +41,7 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         self.assertEqual(c.shape.__class__, Sphere)
         # Test parameter retrieval
         self.assertAlmostEqual(c.shape.radius, 1, places=8)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(RuntimeError):
             c.shape = Wall(thisparameterdoesnotexist=0)
 
 if __name__ == "__main__":

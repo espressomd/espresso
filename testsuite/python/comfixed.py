@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import espressomd
 import espressomd.analyze
@@ -39,7 +38,7 @@ class ComFixed(ut.TestCase):
         s.time_step = dt
         s.cell_system.skin = skin
 
-        s.thermostat.set_langevin(kT=1., gamma=0.001)
+        s.thermostat.set_langevin(kT=1., gamma=0.001, seed=41)
 
         for i in range(100):
             r = [0.5, 1., 1.] * s.box_l * np.random.random(3)

@@ -33,6 +33,13 @@
  */
 
 #include "rotation.hpp"
+
+/****************************************************
+ *                     DEFINES
+ ***************************************************/
+/**************** local variables  *******************/
+
+#ifdef ROTATION
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -44,20 +51,15 @@
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
+#include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
-
-/****************************************************
- *                     DEFINES
- ***************************************************/
-/**************** local variables  *******************/
-
-#ifdef ROTATION
 
 /** \name Private Functions */
 /************************************************************/
@@ -72,7 +74,7 @@ static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
 
 /** convert quaternions to the director */
 /** Convert director to quaternions */
-int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
+int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
   double d_xy, dm;
   double theta2, phi2;
 
@@ -82,66 +84,35 @@ int convert_director_to_quat(const Vector3d &d, Vector4d &quat) {
   // The vector needs to be != 0 to be converted into a quaternion
   if (dm < ROUND_ERROR_PREC) {
     return 1;
-  } else {
-    // Calculate angles
-    d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
-    // If dipole points along z axis:
-    if (d_xy == 0) {
-      // We need to distinguish between (0,0,d_z) and (0,0,d_z)
-      if (d[2] > 0)
-        theta2 = 0;
-      else
-        theta2 = PI / 2.;
-      phi2 = 0;
-    } else {
-      // Here, we take care of all other directions
-      // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi - PI/2),
-      // where theta and phi - angles are in spherical coordinates
-      theta2 = 0.5 * acos(d[2] / dm);
-      if (d[1] < 0)
-        phi2 = -0.5 * acos(d[0] / d_xy) - PI * 0.25;
-      else
-        phi2 = 0.5 * acos(d[0] / d_xy) - PI * 0.25;
-    }
-
-    // Calculate the quaternion from the angles
-    quat[0] = cos(theta2) * cos(phi2);
-    quat[1] = -sin(theta2) * cos(phi2);
-    quat[2] = -sin(theta2) * sin(phi2);
-    quat[3] = cos(theta2) * sin(phi2);
   }
+  // Calculate angles
+  d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
+  // If dipole points along z axis:
+  if (d_xy == 0) {
+    // We need to distinguish between (0,0,d_z) and (0,0,d_z)
+    if (d[2] > 0)
+      theta2 = 0;
+    else
+      theta2 = Utils::pi() / 2.;
+    phi2 = 0;
+  } else {
+    // Here, we take care of all other directions
+    // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi -
+    // Utils::pi()/2), where theta and phi - angles are in spherical coordinates
+    theta2 = 0.5 * acos(d[2] / dm);
+    if (d[1] < 0)
+      phi2 = -0.5 * acos(d[0] / d_xy) - Utils::pi() * 0.25;
+    else
+      phi2 = 0.5 * acos(d[0] / d_xy) - Utils::pi() * 0.25;
+  }
+
+  // Calculate the quaternion from the angles
+  quat[0] = cos(theta2) * cos(phi2);
+  quat[1] = -sin(theta2) * cos(phi2);
+  quat[2] = -sin(theta2) * sin(phi2);
+  quat[3] = cos(theta2) * sin(phi2);
+
   return 0;
-}
-
-/** Here we use quaternions to calculate the rotation matrix which
-    will be used then to transform torques from the laboratory to
-    the body-fixed frames.
-    Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 Eq. 4.47).
-*/
-void define_rotation_matrix(Particle const &p, double A[9]) {
-  double q0q0 = p.r.quat[0];
-  q0q0 *= q0q0;
-
-  double q1q1 = p.r.quat[1];
-  q1q1 *= q1q1;
-
-  double q2q2 = p.r.quat[2];
-  q2q2 *= q2q2;
-
-  double q3q3 = p.r.quat[3];
-  q3q3 *= q3q3;
-
-  A[0 + 3 * 0] = q0q0 + q1q1 - q2q2 - q3q3;
-  A[1 + 3 * 1] = q0q0 - q1q1 + q2q2 - q3q3;
-  A[2 + 3 * 2] = q0q0 - q1q1 - q2q2 + q3q3;
-
-  A[0 + 3 * 1] = 2 * (p.r.quat[1] * p.r.quat[2] + p.r.quat[0] * p.r.quat[3]);
-  A[0 + 3 * 2] = 2 * (p.r.quat[1] * p.r.quat[3] - p.r.quat[0] * p.r.quat[2]);
-  A[1 + 3 * 0] = 2 * (p.r.quat[1] * p.r.quat[2] - p.r.quat[0] * p.r.quat[3]);
-
-  A[1 + 3 * 2] = 2 * (p.r.quat[2] * p.r.quat[3] + p.r.quat[0] * p.r.quat[1]);
-  A[2 + 3 * 0] = 2 * (p.r.quat[1] * p.r.quat[3] + p.r.quat[0] * p.r.quat[2]);
-  A[2 + 3 * 1] = 2 * (p.r.quat[2] * p.r.quat[3] - p.r.quat[0] * p.r.quat[1]);
 }
 
 /** calculate the second derivative of the quaternion of a given particle
@@ -241,9 +212,6 @@ void propagate_omega_quat_particle(Particle *p) {
   for (int j = 0; j < 3; j++) {
     p->m.omega[j] += time_step_half * Wd[j];
   }
-  ONEPART_TRACE(if (p->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n",
-                            this_node, p->m.v[0], p->m.v[1], p->m.v[2]));
 
   p->r.quat[0] +=
       time_step * (Qd[0] + time_step_half * Qdd[0]) - lambda * p->r.quat[0];
@@ -253,16 +221,19 @@ void propagate_omega_quat_particle(Particle *p) {
       time_step * (Qd[2] + time_step_half * Qdd[2]) - lambda * p->r.quat[2];
   p->r.quat[3] +=
       time_step * (Qd[3] + time_step_half * Qdd[3]) - lambda * p->r.quat[3];
-  // Update the director
 
-  ONEPART_TRACE(if (p->p.identity == check_id)
-                    fprintf(stderr, "%d: OPT: PPOS p = (%.3f,%.3f,%.3f)\n",
-                            this_node, p->r.p[0], p->r.p[1], p->r.p[2]));
+  /* and rescale quaternion, so it is exactly of unit length */
+  auto const scale = p->r.quat.norm();
+  if (scale == 0) {
+    p->r.quat[0] = 1;
+  } else {
+    p->r.quat /= scale;
+  }
 }
 
 inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
   auto const t = convert_vector_space_to_body(p, p.f.torque);
-  p.f.torque = Vector3d{{0, 0, 0}};
+  p.f.torque = Utils::Vector3d{{0, 0, 0}};
 
   if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
@@ -289,32 +260,30 @@ inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
 
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
-void convert_torques_propagate_omega() {
-  INTEG_TRACE(
-      fprintf(stderr, "%d: convert_torques_propagate_omega:\n", this_node));
+void convert_torques_propagate_omega(const ParticleRange &particles) {
 
-#if defined(LB_GPU) && defined(ENGINE)
+#if defined(CUDA) && defined(ENGINE)
   if ((lb_lbfluid_get_lattice_switch() == ActiveLB::GPU) &&
       swimming_particles_exist) {
-    copy_v_cs_from_GPU(local_cells.particles());
+    copy_v_cs_from_GPU(particles);
   }
 #endif
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
 
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
 
-#if defined(ENGINE) && (defined(LB) || defined(LB_GPU))
+#if defined(ENGINE)
     if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
 
       auto const dip = p.swim.dipole_length * p.r.calc_director();
 
       auto const diff = p.swim.v_center - p.swim.v_source;
 
-      const Vector3d cross = vector_product(diff, dip);
+      const Utils::Vector3d cross = vector_product(diff, dip);
       const double l_diff = diff.norm();
       const double l_cross = cross.norm();
 
@@ -330,17 +299,13 @@ void convert_torques_propagate_omega() {
     }
 #endif
 
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: SCAL f = (%.3e,%.3e,%.3e) v_old = (%.3e,%.3e,%.3e)\n",
-        this_node, p.f.f[0], p.f.f[1], p.f.f[2], p.m.v[0], p.m.v[1], p.m.v[2]));
-
     // Propagation of angular velocities
     p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
     p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
     p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
 
     // zeroth estimate of omega
-    Vector3d omega_0 = p.m.omega;
+    Utils::Vector3d omega_0 = p.m.omega;
 
     /* if the tensor of inertia is isotropic, the following refinement is not
        needed.
@@ -351,7 +316,7 @@ void convert_torques_propagate_omega() {
     const double rinertia_diff_12 = p.p.rinertia[1] - p.p.rinertia[2];
     const double rinertia_diff_20 = p.p.rinertia[2] - p.p.rinertia[0];
     for (int times = 0; times <= 5; times++) {
-      Vector3d Wd;
+      Utils::Vector3d Wd;
 
       Wd[0] = p.m.omega[1] * p.m.omega[2] * rinertia_diff_12 / p.p.rinertia[0];
       Wd[1] = p.m.omega[2] * p.m.omega[0] * rinertia_diff_20 / p.p.rinertia[1];
@@ -359,17 +324,12 @@ void convert_torques_propagate_omega() {
 
       p.m.omega = omega_0 + time_step_half * Wd;
     }
-    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-        stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
-        p.m.v[1], p.m.v[2]));
   }
 }
 
 /** convert the torques to the body-fixed frames before the integration loop */
-void convert_initial_torques() {
-
-  INTEG_TRACE(fprintf(stderr, "%d: convert_initial_torques:\n", this_node));
-  for (auto &p : local_cells.particles()) {
+void convert_initial_torques(const ParticleRange &particles) {
+  for (auto &p : particles) {
     if (!p.p.rotation)
       continue;
     convert_torque_to_body_frame_apply_fix_and_thermostat(p);
@@ -377,37 +337,23 @@ void convert_initial_torques() {
 }
 // Frame conversion routines
 
-Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &vec) {
-  Vector3d res = {0, 0, 0};
-  double A[9];
-  define_rotation_matrix(p, A);
-
-  res[0] =
-      A[0 + 3 * 0] * vec[0] + A[1 + 3 * 0] * vec[1] + A[2 + 3 * 0] * vec[2];
-  res[1] =
-      A[0 + 3 * 1] * vec[0] + A[1 + 3 * 1] * vec[1] + A[2 + 3 * 1] * vec[2];
-  res[2] =
-      A[0 + 3 * 2] * vec[0] + A[1 + 3 * 2] * vec[1] + A[2 + 3 * 2] * vec[2];
-
-  return res;
+Utils::Vector3d convert_vector_body_to_space(const Particle &p,
+                                             const Utils::Vector3d &vec) {
+  auto const A = rotation_matrix(p.r.quat);
+  return transpose(A) * vec;
 }
 
-Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v) {
-  Vector3d res = {0, 0, 0};
-  double A[9];
-  define_rotation_matrix(p, A);
-  res[0] = A[0 + 3 * 0] * v[0] + A[0 + 3 * 1] * v[1] + A[0 + 3 * 2] * v[2];
-  res[1] = A[1 + 3 * 0] * v[0] + A[1 + 3 * 1] * v[1] + A[1 + 3 * 2] * v[2];
-  res[2] = A[2 + 3 * 0] * v[0] + A[2 + 3 * 1] * v[1] + A[2 + 3 * 2] * v[2];
-  return res;
+Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                             const Utils::Vector3d &v) {
+  return rotation_matrix(p.r.quat) * v;
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
-void local_rotate_particle(Particle &p, const Vector3d &axis_space_frame,
+void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
                            const double phi) {
   // Convert rotation axis to body-fixed frame
-  Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
+  Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
 
   // Rotation turned off entirely?
   if (!p.p.rotation)

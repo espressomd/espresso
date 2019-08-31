@@ -1,5 +1,4 @@
 # Copyright (C) 2010-2018 The ESPResSo project
-
 #
 # This file is part of ESPResSo.
 #
@@ -21,23 +20,22 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-from __future__ import print_function
 import os
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import espressomd.magnetostatics as magnetostatics
-import tests_common
+from tests_common import abspath
 
 
-@ut.skipIf(not espressomd.has_features(["SCAFACOS_DIPOLES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["SCAFACOS_DIPOLES"])
 class Scafacos1d2d(ut.TestCase):
 
     def test_scafacos(self):
         rho = 0.3
 
-        # This is only for box size calculation. The actual particle numbwe is
+        # This is only for box size calculation. The actual particle number is
         # lower, because particles are removed from the mdlc gap region
         n_particle = 100
 
@@ -46,7 +44,7 @@ class Scafacos1d2d(ut.TestCase):
 
         #################################################
 
-        box_l = pow(((4 * n_particle * 3.141592654) / (3 * rho)),
+        box_l = pow(((4 * n_particle * np.pi) / (3 * rho)),
                     1.0 / 3.0) * particle_radius
         skin = 0.5
 
@@ -55,25 +53,23 @@ class Scafacos1d2d(ut.TestCase):
         # give Espresso some parameters
         s.time_step = 0.01
         s.cell_system.skin = skin
-        s.box_l = box_l, box_l, box_l
+        s.box_l = 3 * [box_l]
         for dim in 2, 1:
             print("Dimension", dim)
 
             # Read reference data
             if dim == 2:
                 file_prefix = "data/mdlc"
-                s.periodicity = 1, 1, 0
+                s.periodicity = [1, 1, 0]
             else:
-                s.periodicity = 1, 0, 0
+                s.periodicity = [1, 0, 0]
                 file_prefix = "data/scafacos_dipoles_1d"
 
-            f = open(tests_common.abspath(
-                file_prefix + "_reference_data_energy.dat"))
-            ref_E = float(f.readline())
-            f.close()
+            with open(abspath(file_prefix + "_reference_data_energy.dat")) as f:
+                ref_E = float(f.readline())
 
             # Particles
-            data = np.genfromtxt(tests_common.abspath(
+            data = np.genfromtxt(abspath(
                 file_prefix + "_reference_data_forces_torques.dat"))
             for p in data[:, :]:
                 s.part.add(
@@ -152,5 +148,4 @@ class Scafacos1d2d(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

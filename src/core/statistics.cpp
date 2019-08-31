@@ -25,22 +25,24 @@
  */
 
 #include "statistics.hpp"
+
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
-#include "event.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
-#include "statistics_chain.hpp"
-#include "utils.hpp"
-#include "utils/NoOp.hpp"
-#include "utils/list_contains.hpp"
-#include "virtual_sites.hpp"
+
+#include <utils/NoOp.hpp>
+#include <utils/constants.hpp>
+#include <utils/contains.hpp>
 
 #include <cstdlib>
 #include <cstring>
@@ -48,7 +50,7 @@
 
 /** Previous particle configurations (needed for offline analysis and
     correlation analysis) */
-double **configs = nullptr;
+std::vector<std::vector<double>> configs;
 int n_configs = 0;
 int n_part_conf = 0;
 
@@ -60,22 +62,16 @@ int n_part_conf = 0;
  ****************************************************************************************/
 
 double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
-  double pt[3];
-  int in_set;
-
   auto mindist2 = std::numeric_limits<double>::infinity();
 
-  for (auto jt = partCfg.begin(); jt != (--partCfg.end()); ++jt) {
-    pt[0] = jt->r.p[0];
-    pt[1] = jt->r.p[1];
-    pt[2] = jt->r.p[2];
+  for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to
        bit 0: set1, bit1: set2
     */
-    in_set = 0;
-    if (set1.empty() || list_contains(set1, jt->p.type))
+    auto in_set = 0;
+    if (set1.empty() || contains(set1, jt->p.type))
       in_set = 1;
-    if (set2.empty() || list_contains(set2, jt->p.type))
+    if (set2.empty() || contains(set2, jt->p.type))
       in_set |= 2;
     if (in_set == 0)
       continue;
@@ -83,18 +79,19 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (set2.empty() || list_contains(set2, it->p.type))) ||
-          ((in_set & 2) && (set1.empty() || list_contains(set1, it->p.type))))
-        mindist2 = std::min(mindist2, min_distance2(pt, it->r.p));
+      if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
+          ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
+        mindist2 = std::min(mindist2, min_distance2(jt->r.p, it->r.p));
   }
 
   return std::sqrt(mindist2);
 }
 
-void predict_momentum_particles(double *result) {
+void predict_momentum_particles(double *result,
+                                const ParticleRange &particles) {
   double momentum[3] = {0.0, 0.0, 0.0};
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : particles) {
     auto const mass = p.p.mass;
 
     momentum[0] += mass * (p.m.v[0] + p.f.f[0] * 0.5 * time_step / p.p.mass);
@@ -105,23 +102,22 @@ void predict_momentum_particles(double *result) {
   MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
 
-Vector3d calc_linear_momentum(int include_particles, int include_lbfluid) {
-  Vector3d linear_momentum{};
+Utils::Vector3d calc_linear_momentum(int include_particles,
+                                     int include_lbfluid) {
+  Utils::Vector3d linear_momentum{};
   if (include_particles) {
-    Vector3d momentum_particles{};
+    Utils::Vector3d momentum_particles{};
     mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
     linear_momentum += momentum_particles;
   }
   if (include_lbfluid) {
-#if defined(LB) or defined(LB_GPU)
     linear_momentum += lb_lbfluid_calc_fluid_momentum();
-#endif
   }
   return linear_momentum;
 }
 
-Vector3d centerofmass(PartCfg &partCfg, int type) {
-  Vector3d com{};
+Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
+  Utils::Vector3d com{};
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
@@ -137,39 +133,17 @@ Vector3d centerofmass(PartCfg &partCfg, int type) {
   return com;
 }
 
-Vector3d centerofmass_vel(PartCfg &partCfg, int type) {
-  /*center of mass velocity scaled with time_step*/
-  Vector3d com_vel{};
-  int count = 0;
-
-  for (auto const &p : partCfg) {
-    if (type == p.p.type) {
-      for (int i = 0; i < 3; i++) {
-        com_vel[i] += p.m.v[i];
-      }
-      count++;
-    }
-  }
-
-  for (int i = 0; i < 3; i++) {
-    com_vel[i] /= count;
-  }
-  return com_vel;
-}
-
 void angularmomentum(PartCfg &partCfg, int type, double *com) {
-  double tmp[3];
   com[0] = com[1] = com[2] = 0.;
 
   for (auto const &p : partCfg) {
     if (type == p.p.type) {
-      vector_product(p.r.p, p.m.v, tmp);
+      auto const tmp = vector_product(p.r.p, p.m.v);
       for (int i = 0; i < 3; i++) {
         com[i] += tmp[i] * p.p.mass;
       }
     }
   }
-  return;
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
@@ -202,16 +176,18 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, double pt[3], double r,
-               int const planedims[3]) {
+IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
+               const Utils::Vector3i &planedims) {
   IntList ids;
-  Vector3d d;
 
-  auto const r2 = r * r;
+  auto const r2 = r_catch * r_catch;
+  auto const pt = Utils::Vector3d{pos[0], pos[1], pos[2]};
+
+  Utils::Vector3d d;
 
   for (auto const &p : partCfg) {
     if ((planedims[0] + planedims[1] + planedims[2]) == 3) {
-      d = get_mi_vector(pt, p.r.p);
+      d = get_mi_vector(pt, p.r.p, box_geo);
     } else {
       /* Calculate the in plane distance */
       for (int j = 0; j < 3; j++) {
@@ -227,12 +203,12 @@ IntList nbhood(PartCfg &partCfg, double pt[3], double r,
   return ids;
 }
 
-double distto(PartCfg &partCfg, double p[3], int pid) {
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
   auto mindist = std::numeric_limits<double>::infinity();
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector(p, part.r.p);
+      auto const d = get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p, box_geo);
       mindist = std::min(mindist, d.norm2());
     }
   }
@@ -245,9 +221,10 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
                             double *dist) {
   int t1, t2, ind, cnt = 0;
   double inv_bin_width = 0.0;
-  double min_dist, min_dist2 = 0.0, start_dist2, act_dist2;
+  double min_dist, min_dist2 = 0.0, start_dist2;
 
-  start_dist2 = Utils::sqr(box_l[0] + box_l[1] + box_l[2]);
+  start_dist2 = Utils::sqr(box_geo.length()[0] + box_geo.length()[1] +
+                           box_geo.length()[2]);
   /* bin preparation */
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)
@@ -267,7 +244,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
           if (p1 != p2) {
             for (t2 = 0; t2 < n_p2; t2++) {
               if (p2.p.type == p2_types[t2]) {
-                act_dist2 = min_distance2(p1.r.p, p2.r.p);
+                auto const act_dist2 =
+                    get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
                 if (act_dist2 < min_dist2) {
                   min_dist2 = act_dist2;
                 }
@@ -314,7 +292,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   long int cnt = 0;
   int i, t1, t2, ind;
   int mixed_flag = 0;
-  double inv_bin_width = 0.0, bin_width = 0.0, dist;
+  double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
 
   if (n_p1 == n_p2) {
@@ -339,7 +317,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
         for (; jt != partCfg.end(); ++jt) {
           for (t2 = 0; t2 < n_p2; t2++) {
             if (jt->p.type == p2_types[t2]) {
-              dist = min_distance(it->r.p, jt->r.p);
+              auto const dist = get_mi_vector(it->r.p, jt->r.p, box_geo).norm();
               if (dist > r_min && dist < r_max) {
                 ind = (int)((dist - r_min) * inv_bin_width);
                 rdf[ind]++;
@@ -353,12 +331,12 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   }
 
   /* normalization */
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
   for (i = 0; i < r_bins; i++) {
     r_in = i * bin_width + r_min;
     r_out = r_in + bin_width;
-    bin_volume =
-        (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+    bin_volume = (4.0 / 3.0) * Utils::pi() *
+                 ((r_out * r_out * r_out) - (r_in * r_in * r_in));
     rdf[i] *= volume / (bin_volume * cnt);
   }
 }
@@ -378,7 +356,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   int mixed_flag = 0;
   double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
-  double *rdf_tmp, p1[3], p2[3];
+  double *rdf_tmp;
 
   rdf_tmp = (double *)Utils::malloc(r_bins * sizeof(double));
 
@@ -391,7 +369,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
 
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
-  volume = box_l[0] * box_l[1] * box_l[2];
+  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
   for (int l = 0; l < r_bins; l++)
     rdf_tmp[l] = rdf[l] = 0.0;
 
@@ -412,13 +390,15 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
           for (; jt != partCfg.end(); ++jt) {
             for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
-                p1[0] = configs[k][3 * i + 0];
-                p1[1] = configs[k][3 * i + 1];
-                p1[2] = configs[k][3 * i + 2];
-                p2[0] = configs[k][3 * j + 0];
-                p2[1] = configs[k][3 * j + 1];
-                p2[2] = configs[k][3 * j + 2];
-                auto const dist = min_distance(p1, p2);
+                using Utils::make_const_span;
+                using Utils::Vector3d;
+
+                auto const dist =
+                    get_mi_vector(
+                        Vector3d{make_const_span(configs[k].data() + 3 * i, 3)},
+                        Vector3d{make_const_span(configs[k].data() + 3 * j, 3)},
+                        box_geo)
+                        .norm();
                 if (dist > r_min && dist < r_max) {
                   auto const ind =
                       static_cast<int>((dist - r_min) * inv_bin_width);
@@ -438,8 +418,8 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
     for (int i = 0; i < r_bins; i++) {
       r_in = i * bin_width + r_min;
       r_out = r_in + bin_width;
-      bin_volume =
-          (4.0 / 3.0) * PI * ((r_out * r_out * r_out) - (r_in * r_in * r_in));
+      bin_volume = (4.0 / 3.0) * Utils::pi() *
+                   ((r_out * r_out * r_out) - (r_in * r_in * r_in));
       rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
     }
 
@@ -451,15 +431,16 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   free(rdf_tmp);
 }
 
-void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
-                          int order, double **_ff) {
+std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
+                                         int n_types, int order) {
   int i, j, k, n, qi, t, order2;
-  double qr, twoPI_L, C_sum, S_sum, *ff = nullptr;
+  double qr, twoPI_L, C_sum, S_sum;
 
   order2 = order * order;
-  *_ff = ff = Utils::realloc(ff, 2 * order2 * sizeof(double));
+  std::vector<double> ff;
+  ff.resize(2 * order2);
   ff[2 * order2] = 0;
-  twoPI_L = 2 * PI / box_l[0];
+  twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
   if ((n_types < 0) || (n_types > max_seen_particle_type)) {
     fprintf(stderr, "WARNING: Wrong number of particle types!");
@@ -506,6 +487,7 @@ void calc_structurefactor(PartCfg &partCfg, int const *p_types, int n_types,
       if (ff[2 * qi + 1] != 0)
         ff[2 * qi] /= n * ff[2 * qi + 1];
   }
+  return ff;
 }
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
@@ -518,7 +500,7 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
     }
   }
 
-  double qfak = 2.0 * PI / box_l[0];
+  double qfak = 2.0 * Utils::pi() / box_geo.length()[0];
   std::vector<double> intern;
   intern.assign(2, 0.0);
   std::vector<std::vector<double>> structure_factor;
@@ -536,52 +518,6 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
   return structure_factor;
 }
 
-// calculates average density profile in dir direction over last n_conf
-// configurations
-void density_profile_av(PartCfg &partCfg, int n_conf, int n_bin, double density,
-                        int dir, double *rho_ave, int type) {
-  int i, j, k, m, n;
-  double r;
-  double r_bin;
-
-  // calculation over last n_conf configurations
-
-  // bin width
-  r_bin = box_l[dir] / (double)(n_bin);
-
-  for (i = 0; i < n_bin; i++)
-    rho_ave[i] = 0;
-
-  k = n_configs - n_conf;
-
-  while (k < n_configs) {
-    r = 0;
-    j = 0;
-    while (r < box_l[dir]) {
-      n = 0;
-      for (auto const &p : partCfg) {
-        // com particles
-        if (p.p.type == type) {
-          auto const pos =
-              folded_position({&configs[k][3 * i], &configs[k][3 * i] + 3});
-
-          if (pos[dir] <= r + r_bin && pos[dir] > r)
-            n++;
-        }
-      }
-
-      rho_ave[j] += (double)(n) / (box_l[1] * box_l[2] * r_bin) / density;
-      j++;
-      r += r_bin;
-    }
-    k++;
-  } // k loop
-
-  // normalization
-  for (i = 0; i < n_bin; i++)
-    rho_ave[i] /= n_conf;
-}
-
 int calc_cylindrical_average(
     PartCfg &partCfg, std::vector<double> const &center_,
     std::vector<double> const &direction_, double length, double radius,
@@ -593,8 +529,8 @@ int calc_cylindrical_average(
   double binwd_axial = length / bins_axial;
   double binwd_radial = radius / bins_radial;
 
-  auto center = Vector3d{center_};
-  auto direction = Vector3d{direction_};
+  auto center = Utils::Vector3d{center_};
+  auto direction = Utils::Vector3d{direction_};
 
   // Select all particle types if the only entry in types is -1
   bool all_types = false;
@@ -628,9 +564,9 @@ int calc_cylindrical_average(
   for (auto const &p : partCfg) {
     for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
       if (types[type_id] == p.p.type || all_types) {
-        auto const pos = folded_position(p);
+        auto const pos = folded_position(p.r.p, box_geo);
 
-        Vector3d vel{p.m.v};
+        Utils::Vector3d vel{p.m.v};
 
         auto const diff = pos - center;
 
@@ -699,9 +635,8 @@ int calc_cylindrical_average(
 
 void analyze_append(PartCfg &partCfg) {
   n_part_conf = partCfg.size();
-  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
-  configs[n_configs] =
-      (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
+  configs.resize(n_configs + 1);
+  configs[n_configs].resize(3 * n_part_conf);
   int i = 0;
   for (auto const &p : partCfg) {
     configs[n_configs][3 * i + 0] = p.r.p[0];
@@ -715,9 +650,8 @@ void analyze_append(PartCfg &partCfg) {
 void analyze_configs(double const *tmp_config, int count) {
   int i;
   n_part_conf = count;
-  configs = Utils::realloc(configs, (n_configs + 1) * sizeof(double *));
-  configs[n_configs] =
-      (double *)Utils::malloc(3 * n_part_conf * sizeof(double));
+  configs.resize(n_configs + 1);
+  configs[n_configs].resize(3 * n_part_conf);
   for (i = 0; i < n_part_conf; i++) {
     configs[n_configs][3 * i] = tmp_config[3 * i];
     configs[n_configs][3 * i + 1] = tmp_config[3 * i + 1];

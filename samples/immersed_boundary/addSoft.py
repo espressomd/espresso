@@ -23,7 +23,7 @@ def AddSoft(system, comX, comY, comZ, k1, k2):
     # open file and add nodes
     with open("tables/softPositions", "r") as fp:
         numPoints = int(fp.readline())
-        print "Found " + str(numPoints) + " nodes"
+        print("Found {} nodes".format(numPoints))
 
         # actual add
         for i in range(0, numPoints):
@@ -38,7 +38,7 @@ def AddSoft(system, comX, comY, comZ, k1, k2):
     from espressomd.interactions import IBM_Triel
     with open("tables/softTriangles", "r") as fp:
         numTri = int(fp.readline())
-        print "Found " + str(numTri) + " triangles"
+        print("Found {} triangles".format(numTri))
         # actual add
         for i in range(0, numTri):
             line = str.split(fp.readline())

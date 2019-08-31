@@ -24,8 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "DipolarDirectSum_cuda.hpp"
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <memory>
 
@@ -46,7 +46,7 @@ class DipolarDirectSum : public Actor {
 public:
   DipolarDirectSum(SystemInterface &s) {
 
-    k = coulomb.Dprefactor;
+    k = dipole.prefactor;
 
     if (!s.requestFGpu())
       std::cerr << "DipolarDirectSum needs access to forces on GPU!"
@@ -65,7 +65,7 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = s.box()[i];
-      per[i] = (PERIODIC(i));
+      per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_force(k, s.npart_gpu(), s.rGpuBegin(),
                                           s.dipGpuBegin(), s.fGpuBegin(),
@@ -76,7 +76,7 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = s.box()[i];
-      per[i] = (PERIODIC(i));
+      per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_energy(
         k, s.npart_gpu(), s.rGpuBegin(), s.dipGpuBegin(), box, per,

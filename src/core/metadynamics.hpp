@@ -22,8 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifndef METADYNAMICS_H
 #define METADYNAMICS_H
 
+#include "ParticleRange.hpp"
 #include "particle_data.hpp"
-#include "utils.hpp"
 #include <cmath>
 #include <cstring>
 
@@ -93,11 +93,11 @@ extern double *meta_acc_force;
 extern double *meta_acc_fprofile;
 
 /* Current vector of the reaction coordinate */
-extern Vector3d meta_cur_xi;
+extern Utils::Vector3d meta_cur_xi;
 /* Current value of the reaction coordinate (scalar) */
 extern double meta_val_xi;
 /* Direction of the force that is applied (normalized) */
-extern Vector3d meta_apply_direction;
+extern Utils::Vector3d meta_apply_direction;
 
 /*********************************
  * functions
@@ -111,7 +111,7 @@ void meta_init();
  * - Update profile and biased force
  * - apply external force
  */
-void meta_perform();
+void meta_perform(const ParticleRange &particles);
 
 /** Calculate Lucy function */
 double calculate_lucy(double xi, double xi_0);

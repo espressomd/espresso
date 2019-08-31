@@ -1,4 +1,3 @@
-
 #
 # Copyright (C) 2017-2018 The ESPResSo project
 #
@@ -17,22 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
-import os
-import pickle
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
-from espressomd import scafacos
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class CoulombCloudWallTune(ut.TestCase):
 
     """This compares p3m, p3m_gpu electrostatic forces against stored data."""
@@ -63,7 +57,7 @@ class CoulombCloudWallTune(ut.TestCase):
         # Compare forces now in the system to stored ones
         force_abs_diff = 0.
         for p in self.system.part:
-            force_abs_diff += abs(np.sqrt(sum((p.f - self.forces[p.id])**2)))
+            force_abs_diff += np.linalg.norm(p.f - self.forces[p.id])
         force_abs_diff /= len(self.system.part)
         self.assertLessEqual(
             force_abs_diff,
@@ -74,26 +68,25 @@ class CoulombCloudWallTune(ut.TestCase):
             method_name)
 
     # Tests for individual methods
-    if espressomd.has_features(["P3M"]):
-        def test_p3m(self):
-            # We have to add some tolerance here, because the reference
-            # system is not homogeneous
-            self.system.actors.add(
-                espressomd.electrostatics.P3M(prefactor=1., accuracy=5e-4,
-                                              tune=True))
-            self.system.integrator.run(0)
-            self.compare("p3m")
+    @utx.skipIfMissingFeatures(["P3M"])
+    def test_p3m(self):
+        # We have to add some tolerance here, because the reference
+        # system is not homogeneous
+        self.system.actors.add(
+            espressomd.electrostatics.P3M(prefactor=1., accuracy=5e-4,
+                                          tune=True))
+        self.system.integrator.run(0)
+        self.compare("p3m")
 
-    if espressomd.has_features(["ELECTROSTATICS", "CUDA"]) and not \
-       str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
-        def test_p3m_gpu(self):
-            # We have to add some tolerance here, because the reference
-            # system is not homogeneous
-            self.system.actors.add(
-                espressomd.electrostatics.P3MGPU(prefactor=1., accuracy=5e-4,
-                                                 tune=True))
-            self.system.integrator.run(0)
-            self.compare("p3m_gpu")
+    @utx.skipIfMissingGPU(skip_ci_amd=True)
+    def test_p3m_gpu(self):
+        # We have to add some tolerance here, because the reference
+        # system is not homogeneous
+        self.system.actors.add(
+            espressomd.electrostatics.P3MGPU(prefactor=1., accuracy=5e-4,
+                                             tune=True))
+        self.system.integrator.run(0)
+        self.compare("p3m_gpu")
 
 if __name__ == "__main__":
     ut.main()

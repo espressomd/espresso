@@ -23,8 +23,6 @@
 #                                                                              #
 ##########################################################################
 
-from __future__ import print_function
-
 import numpy as np
 import os
 import sys
@@ -93,7 +91,7 @@ for ...:
 
     # Use the Langevin thermostat (no hydrodynamics)
 
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
     # Place a single active particle (that can rotate freely! rotation=[1,1,1])
 

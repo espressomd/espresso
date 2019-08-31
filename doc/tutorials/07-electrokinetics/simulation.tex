@@ -2,7 +2,7 @@
 
 \subsection{Setting up \ES{}}
 
-Electrokinetics is a relatively new feature of \ES{} and new functionality is still being added. This is why it is advisable to get a copy of the current \ES{} master to work with. If you don't already have a working copy of the \ES{} master, follow tutorial \texttt{00-building\_espresso}. Enable the features \texttt{ELETROKINETICS} and \texttt{EK\_BOUNDARIES} during the build process.
+Electrokinetics is a relatively new feature of \ES{} and new functionality is still being added. This is why it is advisable to get a copy of the current \ES{} master to work with. Enable the features \texttt{ELETROKINETICS} and \texttt{EK\_BOUNDARIES} during the build process.
 
 \subsection{\label{sec:units}Mapping SI and Simulation Units}
 
@@ -48,7 +48,7 @@ We now have all the units necessary to convert out simulation parameters.
 
 \begin{tabular}[h]{|l|c|c|}
 \hline
-parameter & value (SI units) & value (simuation units)\\
+parameter & value (SI units) & value (simulation units)\\
 \hline\hline
 channel width $d$ & $50\U{nm}$ & $50\U{[x]}$\\
 \hline
@@ -78,7 +78,7 @@ k_B T=\frac{e^2}{4\pi\varepsilon_0\varepsilon_r}\cdot\frac 1 {l_B}.
 This yields for water at $300\U{K}$, with $\varepsilon_r = 78.54$, a Bjerrum length of $l_B\approx0.7095\U{nm}$.
 
 
-\subsection{Setting up the slip pore system}
+\subsection{Setting up the slit pore system}
 
 The script for this simulation comes with this tutorial and is called \texttt{eof\_electrokinetics.py}. All used commands are documented in the User's Guide in the section called ``Electrokinetics''.
 
@@ -164,7 +164,7 @@ system.ekboundaries.add(ek_wall_right)
 system.actors.add(ek)
 \end{lstlisting}
 
-After setting up the system, we integrate a sufficient number of time steps to relax the system into the stationary state and output the counterion density profile, the velocity profile, and the shear stress. Since this system has translational symmetry in the x- and y-direction, we iterate over a line in the z direction and use the \texttt{species\[node\].quantity} command, to output local quantities. You can instead also use the \texttt{electrokinetics.print\_vtk\_quantity} command to output the whole field at once in a Paraview compatible format.
+After setting up the system, we integrate a sufficient number of time steps to relax the system into the stationary state and output the counterion density profile, the velocity profile, and the shear stress. Since this system has translational symmetry in the x- and y-direction, we iterate over a line in the z direction and use the \texttt{species[node].quantity} command, to output local quantities. You can instead also use the \texttt{electrokinetics.print\_vtk\_quantity} command to output the whole field at once in a ParaView compatible format.
 
 Density and velocity are not the only fields available for output. Please refer to the User's Guide for all available options.
 

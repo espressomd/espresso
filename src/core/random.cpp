@@ -64,9 +64,9 @@ void set_state(const string &s) {
  * @brief Get the state size of the PRNG
  */
 int get_state_size_of_generator() {
-  return generator.state_size; // this only works for the Mersenne twister
-                               // generator, other generators do not provide
-                               // this member variable
+  return std::mt19937::state_size; // this only works for the Mersenne twister
+                                   // generator, other generators do not provide
+                                   // this member variable
 }
 
 /** Communication */
@@ -77,7 +77,6 @@ void mpi_random_seed_slave(int, int) {
 
   MPI_Scatter(nullptr, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
   init_random_seed(this_seed);
 }
 
@@ -87,8 +86,6 @@ void mpi_random_seed(int cnt, vector<int> &seeds) {
   mpi_call(mpi_random_seed_slave, -1, cnt);
 
   MPI_Scatter(&seeds[0], 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
-
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
 
   init_random_seed(this_seed);
 }
@@ -133,7 +130,7 @@ string mpi_random_get_stat() {
   return res;
 }
 
-void init_random(void) {
+void init_random() {
   /** Set the initial seed */
   init_random_seed(1 + this_node);
 }

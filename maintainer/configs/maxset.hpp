@@ -17,9 +17,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /* maximal set of features usable at the same time */
-#define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
+#ifdef SCAFACOS
+#define SCAFACOS_DIPOLES
+#endif
 #define ROTATION
 #define ROTATIONAL_INERTIA
 #define PARTICLE_ANISOTROPY
@@ -38,14 +40,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define DPD
 #define METADYNAMICS
 
-#define LB
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
 
 #define ENGINE
 
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
@@ -67,20 +67,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define MORSE
 #define BUCKINGHAM
 #define SOFT_SPHERE
-#define INTER_RF
-#define OVERLAPPED
 #define WCA
-
-#ifdef P3M
 #define THOLE
-#endif
 
 #define EXPERIMENTAL_FEATURES
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
-#define FLATNOISE
 #define OIF_GLOBAL_FORCES
 #define OIF_LOCAL_FORCES
 #define MEMBRANE_COLLISION

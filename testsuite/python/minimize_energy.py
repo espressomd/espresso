@@ -14,29 +14,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
-import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class test_minimize_energy(ut.TestCase):
+
+    np.random.seed(42)
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 
     test_rotation = espressomd.has_features(("ROTATION", "DIPOLES"))
     if test_rotation:
         from espressomd.constraints import HomogeneousMagneticField
 
-    @classmethod
-    def setUpClass(cls):
-        np.random.seed(42)
-
     box_l = 10.0
     density = 0.6
-    vol = box_l * box_l * box_l
+    vol = box_l**3
     n_part = int(vol * density)
 
     lj_eps = 1.0
@@ -44,7 +41,7 @@ class test_minimize_energy(ut.TestCase):
     lj_cut = 1.12246
 
     def setUp(self):
-        self.system.box_l = [self.box_l, self.box_l, self.box_l]
+        self.system.box_l = 3 * [self.box_l]
         self.system.cell_system.skin = 0.4
         self.system.time_step = 0.01
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -66,8 +63,7 @@ class test_minimize_energy(ut.TestCase):
                 p.dip = np.random.random(3)
                 p.dipm = 1
                 p.rotation = (1, 1, 1)
-        # Remove external magnetic field
-        
+
         self.assertNotAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
 

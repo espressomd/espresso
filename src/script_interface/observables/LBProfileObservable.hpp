@@ -39,7 +39,7 @@ public:
   static_assert(
       std::is_base_of<::Observables::LBProfileObservable, CoreLBObs>::value,
       "");
-  LBProfileObservable() : m_observable(std::make_shared<CoreLBObs>()) {
+  LBProfileObservable() {
     this->add_parameters(
         {{"n_x_bins",
           [this](const Variant &v) {
@@ -89,37 +89,31 @@ public:
          {"sampling_delta_x",
           [this](const Variant &v) {
             profile_observable()->sampling_delta_x = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_delta_x; }},
          {"sampling_delta_y",
           [this](const Variant &v) {
             profile_observable()->sampling_delta_y = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_delta_y; }},
          {"sampling_delta_z",
           [this](const Variant &v) {
             profile_observable()->sampling_delta_z = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_delta_z; }},
          {"sampling_offset_x",
           [this](const Variant &v) {
             profile_observable()->sampling_offset_x = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_offset_x; }},
          {"sampling_offset_y",
           [this](const Variant &v) {
             profile_observable()->sampling_offset_y = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_offset_y; }},
          {"sampling_offset_z",
           [this](const Variant &v) {
             profile_observable()->sampling_offset_z = get_value<double>(v);
-            profile_observable()->calculate_sample_positions();
           },
           [this]() { return profile_observable()->sampling_offset_z; }},
          {"allow_empty_bins",
@@ -129,10 +123,21 @@ public:
           [this]() { return profile_observable()->allow_empty_bins; }}});
   }
 
+  void construct(VariantMap const &params) override {
+    m_observable =
+        make_shared_from_args<CoreLBObs, double, double, double, double, double,
+                              double, int, int, int, double, double, double,
+                              double, double, double, bool>(
+            params, "sampling_delta_x", "sampling_delta_y", "sampling_delta_z",
+            "sampling_offset_x", "sampling_offset_y", "sampling_offset_z",
+            "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "min_y", "min_z",
+            "max_x", "max_y", "max_z", "allow_empty_bins");
+  }
+
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {
-      return profile_observable()->operator()(partCfg());
+      return profile_observable()->operator()();
     }
     if (method == "n_values") {
       return profile_observable()->n_values();

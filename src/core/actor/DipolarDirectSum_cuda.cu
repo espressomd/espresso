@@ -25,9 +25,7 @@ __device__ inline void get_mi_vector_dds(dds_float res[3], dds_float a[3],
 
   for (i = 0; i < 3; i++) {
     res[i] = a[i] - b[i];
-#ifdef PARTIAL_PERIODIC
     if (periodic[i])
-#endif
       res[i] -= floor(res[i] / box_l[i] + 0.5) * box_l[i];
   }
 }

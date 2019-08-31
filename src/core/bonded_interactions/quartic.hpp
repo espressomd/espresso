@@ -21,19 +21,17 @@
 #ifndef _QUARTIC_HPP
 #define _QUARTIC_HPP
 /** \file
- *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the quartic potential between particle pairs.
+ *
+ *  Implementation in \ref quartic.cpp.
  */
 
-/************************************************************/
-
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
-#include "particle_data.hpp"
-#include "utils.hpp"
 
-/** set the parameters for the quartic potential
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
+
+/** Set the parameters for the quartic potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
@@ -41,78 +39,49 @@
 int quartic_set_params(int bond_type, double k0, double k1, double r,
                        double r_cut);
 
-/** Computes the quartic bond length force.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+/** Compute the quartic bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] force     Force.
- *  @retval 0
+ *  @return whether the bond is broken
  */
-inline int calc_quartic_pair_force(Particle const *p1, Particle const *p2,
-                                   Bonded_ia_parameters const *iaparams,
-                                   double const dx[3], double force[3]) {
-  int i;
-  double fac;
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
-  double dr;
+inline bool calc_quartic_pair_force(Bonded_ia_parameters const *const iaparams,
+                                    Utils::Vector3d const &dx,
+                                    Utils::Vector3d &force) {
+  auto const dist = dx.norm();
 
-  // printf("Quartic dist2 %e, dist %e\n", dist2, dist);
+  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
+    return true;
+  }
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
-    return 1;
+  auto const dr = dist - iaparams->p.quartic.r;
+  auto const fac =
+      (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
+      dist;
+  force = -fac * dx;
 
-  dr = dist - iaparams->p.quartic.r;
-
-  fac = (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
-        dist;
-
-  for (i = 0; i < 3; i++)
-    force[i] = -fac * dx[i];
-
-  //  printf("Quartic (%d-%d), dist %e, dx %e %e %e, dr %e, f %e %e %e\n",
-  //  p1->p.identity, p2->p.identity, dist, dx[0], dx[1], dx[2], dr, force[0],
-  //  force[1], force[2]);
-
-  ONEPART_TRACE(if (p1->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                            p2->p.identity, dist2, fac));
-  ONEPART_TRACE(if (p2->p.identity == check_id)
-                    fprintf(stderr,
-                            "%d: OPT: QUARTIC f = (%.3e,%.3e,%.3e) with part "
-                            "id=%d at dist %f fac %.3e\n",
-                            this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                            p1->p.identity, dist2, fac));
-
-  return 0;
+  return false;
 }
 
-/** Computes the quartic bond length energy.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+/** Compute the quartic bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
  *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @return whether the bond is broken
  */
-inline int quartic_pair_energy(Particle const *p1, Particle const *p2,
-                               Bonded_ia_parameters const *iaparams,
-                               double const dx[3], double *_energy) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+inline bool quartic_pair_energy(Bonded_ia_parameters const *const iaparams,
+                                Utils::Vector3d const &dx, double *_energy) {
+  auto const dist = dx.norm();
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut))
-    return 1;
+  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
+    return true;
+  }
 
   double dr2 = Utils::sqr(dist - iaparams->p.quartic.r);
 
   *_energy = 0.5 * iaparams->p.quartic.k0 * dr2 +
              0.25 * iaparams->p.quartic.k1 * Utils::sqr(dr2);
-  return 0;
+  return false;
 }
 
 #endif

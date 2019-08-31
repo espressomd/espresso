@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import numpy as np
 import espressomd
 
@@ -24,7 +23,6 @@ required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
-from espressomd import analyze
 
 print("""
 =======================================================
@@ -34,7 +32,6 @@ print("""
 Program Information:""")
 print(espressomd.features())
 
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -61,7 +58,7 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 #es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -184,7 +181,7 @@ energies = system.analysis.energy()
 print(energies)
 
 j = 0
-for i in range(0, int_n_times):
+for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 
     system.integrator.run(int_steps)
@@ -195,7 +192,7 @@ for i in range(0, int_n_times):
     energies = system.analysis.energy()
     print(energies)
     obs_file.write('{ time %s } %s\n' % (system.time, energies))
-    linear_momentum = system.analysis.analyze_linear_momentum()
+    linear_momentum = system.analysis.linear_momentum()
     print(linear_momentum)
 
 

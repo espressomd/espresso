@@ -1,7 +1,3 @@
-"""
-This sample illustrates how particles of interest can be accessed via slicing.
-"""
-
 #
 # Copyright (C) 2013-2018 The ESPResSo project
 #
@@ -20,7 +16,9 @@ This sample illustrates how particles of interest can be accessed via slicing.
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
+"""
+This sample illustrates how particles of interest can be accessed via slicing.
+"""
 import espressomd
 from espressomd import thermostat
 import numpy as np
@@ -32,8 +30,6 @@ print("""
 
 Program Information:""")
 print(espressomd.features())
-
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -94,6 +90,6 @@ if espressomd.has_features(["MASS"]):
 
 if espressomd.has_features(["ELECTROSTATICS"]):
     print("Q\n%s" % system.part[:].q)
-    system.part[::2].q = np.ones(n_part / 2)
-    system.part[1::2].q = -np.ones(n_part / 2)
+    system.part[::2].q = np.ones(n_part // 2)
+    system.part[1::2].q = -np.ones(n_part // 2)
     print("Q_NEW\n%s" % system.part[:].q)

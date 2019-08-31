@@ -28,7 +28,6 @@
 
 // Geometry, equation of motion, thermostat/barostat
 #define MASS
-#define PARTIAL_PERIODIC
 #define EXTERNAL_FORCES
 #define LANGEVIN_PER_PARTICLE
 #define BOND_CONSTRAINT
@@ -42,10 +41,8 @@
 #endif
 
 // Hydrodynamics
-#define LB
 #define LB_BOUNDARIES
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #endif
 
@@ -53,7 +50,6 @@
 #ifdef CUDA
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
-#define EK_ELECTROSTATIC_COUPLING
 #endif
 
 // Force/energy calculation
@@ -70,14 +66,9 @@
 #define SMOOTH_STEP
 #define HERTZIAN
 #define SOFT_SPHERE
-#define INTER_RF
 #define WCA
-
-#ifdef P3M
 #define THOLE
-#endif
 
-// Further featuers
+// Further features
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
 #define COLLISION_DETECTION

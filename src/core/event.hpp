@@ -35,8 +35,9 @@
  *  depend on particle properties or the box size, should react to
  *  such changes in the corresponding hook procedure.
  *
- *  Implementation in initialize.cpp.
+ *  Implementation in event.cpp.
  */
+#include "ParticleRange.hpp"
 
 /** \name Hook procedures
  *  These procedures are called if several significant changes to
@@ -69,7 +70,7 @@ void on_particle_change();
 void on_particle_charge_change();
 
 /** called every time the particles are resorted from node to node. */
-void on_resort_particles();
+void on_resort_particles(const ParticleRange &particles);
 
 /** called every time the Coulomb parameters are changed. */
 void on_coulomb_change();

@@ -1,81 +1,59 @@
 #include "bonded_interaction_data.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
+#include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-/** calculate the maximal cutoff of bonded interactions, required to
-    determine the cell size for communication. */
-void recalc_maximal_cutoff_bonded() {
-  int i;
-  double max_cut_tmp;
+double recalc_maximal_cutoff_bonded() {
+  auto max_cut_bonded = -1.;
 
-  max_cut_bonded = 0.0;
-
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
+  for (auto const &bonded_ia_param : bonded_ia_params) {
+    switch (bonded_ia_param.type) {
     case BONDED_IA_FENE:
-      max_cut_tmp =
-          bonded_ia_params[i].p.fene.r0 + bonded_ia_params[i].p.fene.drmax;
-      if (max_cut_bonded < max_cut_tmp)
-        max_cut_bonded = max_cut_tmp;
+      max_cut_bonded =
+          std::max(max_cut_bonded,
+                   bonded_ia_param.p.fene.r0 + bonded_ia_param.p.fene.drmax);
       break;
     case BONDED_IA_HARMONIC:
-      if ((bonded_ia_params[i].p.harmonic.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.harmonic.r_cut);
       break;
     case BONDED_IA_THERMALIZED_DIST:
-      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.thermalized_bond.r_cut);
       break;
     case BONDED_IA_RIGID_BOND:
-      if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
-        max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
+      max_cut_bonded =
+          std::max(max_cut_bonded, std::sqrt(bonded_ia_param.p.rigid_bond.d2));
       break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
-        max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
+    case BONDED_IA_TABULATED_DISTANCE:
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.tab.pot->cutoff());
       break;
-#endif
-#ifdef IMMERSED_BOUNDARY
     case BONDED_IA_IBM_TRIEL:
-      if (max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxDist)
-        max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxDist;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.ibm_triel.maxDist);
       break;
-#endif
     default:
       break;
     }
   }
 
-  /* Bond angle and dihedral potentials do not contain a cutoff
-     intrinsically. The cutoff for these potentials depends on the
-     bond length potentials. For bond angle potentials nothing has to
-     be done (it is assumed, that particles participating in a bond
-     angle or dihedral potential are bound to each other by some bond
-     length potential (FENE, Harmonic or tabulated)). For dihedral
-     potentials (both normal and tabulated ones) it follows, that the
-     cutoff is TWO TIMES the maximal cutoff! That's what the following
-     lines assure. */
-  max_cut_tmp = 2.0 * max_cut_bonded;
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
+  /* dihedrals: the central particle is indirectly connected to the fourth
+   * particle via the third particle, so we have to double the cutoff */
+  for (auto const &bonded_ia_param : bonded_ia_params) {
+    switch (bonded_ia_param.type) {
     case BONDED_IA_DIHEDRAL:
-      max_cut_bonded = max_cut_tmp;
+    case BONDED_IA_TABULATED_DIHEDRAL:
+      max_cut_bonded *= 2;
       break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
     default:
       break;
     }
   }
+
+  return max_cut_bonded;
 }
 
 void make_bond_type_exist(int type) {
@@ -89,4 +67,19 @@ void make_bond_type_exist(int type) {
   /* set bond types not used as undefined */
   for (i = old_size; i < ns; i++)
     bonded_ia_params[i].type = BONDED_IA_NONE;
+}
+
+int virtual_set_params(int bond_type) {
+  if (bond_type < 0)
+    return ES_ERROR;
+
+  make_bond_type_exist(bond_type);
+
+  bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
+  bonded_ia_params[bond_type].num = 1;
+
+  /* broadcast interaction parameters */
+  mpi_bcast_ia_params(bond_type, -1);
+
+  return ES_OK;
 }

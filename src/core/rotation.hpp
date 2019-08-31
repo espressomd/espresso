@@ -29,8 +29,9 @@
 
 #ifdef ROTATION
 
+#include "ParticleRange.hpp"
 #include "particle_data.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 constexpr const int ROTATION_X = 2;
 constexpr const int ROTATION_Y = 4;
@@ -46,21 +47,31 @@ void propagate_omega_quat_particle(Particle *p);
 
 /** Convert torques to the body-fixed frame and propagate
     angular velocities */
-void convert_torques_propagate_omega();
+void convert_torques_propagate_omega(const ParticleRange &particles);
 
 /** Convert torques to the body-fixed frame to start
     the integration loop */
-void convert_initial_torques();
+void convert_initial_torques(const ParticleRange &particles);
 
-Vector3d convert_vector_body_to_space(const Particle &p, const Vector3d &v);
-Vector3d convert_vector_space_to_body(const Particle &p, const Vector3d &v);
+Utils::Vector3d convert_vector_body_to_space(const Particle &p,
+                                             const Utils::Vector3d &v);
+Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                             const Utils::Vector3d &v);
 
-inline void convert_quat_to_director(const Vector4d &quat, Vector3d &director) {
+inline void convert_quat_to_director(const Utils::Vector4d &quat,
+                                     Utils::Vector3d &director) {
   /* director */
   director[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
   director[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
   director[2] = (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
                  quat[3] * quat[3]);
+}
+
+inline Utils::Vector3d convert_quat_to_director(const Utils::Vector4d &q) {
+  Utils::Vector3d res;
+  convert_quat_to_director(q, res);
+
+  return res;
 }
 
 /** Multiply two quaternions */
@@ -73,14 +84,23 @@ void multiply_quaternions(const T1 &a, const T2 &b, T3 &result) {
   result[3] = a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1];
 }
 
+inline Utils::Vector4d multiply_quaternions(const Utils::Vector4d &q,
+                                            const Utils::Vector4d &p) {
+  Utils::Vector4d res;
+  multiply_quaternions(q, p, res);
+
+  return res;
+}
+
 /** Convert director to quaternions */
-int convert_director_to_quat(const Vector3d &d, Vector4d &quat);
+int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat);
 
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline std::pair<Vector4d, double> convert_dip_to_quat(const Vector3d &dip) {
-  Vector4d quat;
+inline std::pair<Utils::Vector4d, double>
+convert_dip_to_quat(const Utils::Vector3d &dip) {
+  Utils::Vector4d quat;
   convert_director_to_quat(dip, quat);
 
   return {quat, dip.norm()};
@@ -89,7 +109,7 @@ inline std::pair<Vector4d, double> convert_dip_to_quat(const Vector3d &dip) {
 #endif
 
 /** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void local_rotate_particle(Particle &p, const Vector3d &a, const double phi);
+void local_rotate_particle(Particle &p, const Utils::Vector3d &a, double phi);
 
 inline void normalize_quaternion(double *q) {
   double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);

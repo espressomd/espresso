@@ -14,13 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features(["P3M", "EXTERNAL_FORCES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["P3M", "EXTERNAL_FORCES"])
 class test_icc(ut.TestCase):
 
     def runTest(self):
@@ -77,10 +76,7 @@ class test_icc(ut.TestCase):
             n_icc=nicc_tot,
             convergence=1e-6,
             relaxation=0.75,
-            ext_field=[
-                0,
-                0,
-                0],
+            ext_field=[0, 0, 0],
             max_iterations=100,
             first_id=0,
             eps_out=1,
@@ -107,5 +103,4 @@ class test_icc(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

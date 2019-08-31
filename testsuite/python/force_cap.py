@@ -16,15 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"),
-           "Skipped because of LENNARD_JONES ")
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class ForceCap(ut.TestCase):
 
     """Tests the force capping mechanism.
@@ -35,9 +33,7 @@ class ForceCap(ut.TestCase):
     s.cell_system.skin = 0.0
     s.seed = range(s.cell_system.get_state()["n_nodes"])
 
-    @classmethod
-    def setUpClass(cls):
-        np.random.seed(42)
+    np.random.seed(42)
 
     def calc_f_max(self):
         f = np.power(self.s.part[:].f, 2)
@@ -55,8 +51,7 @@ class ForceCap(ut.TestCase):
         s.part.add(pos=10. * np.random.random((N, 3)))
 
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1000., sigma=2.,
-            cutoff=1.5, shift=0.0)
+            epsilon=1000., sigma=2., cutoff=1.5, shift=0.0)
 
         self.s.integrator.run(0)
         # Check that there is sth to cap
@@ -73,5 +68,4 @@ class ForceCap(ut.TestCase):
         self.assertAlmostEqual(self.calc_f_max(), f_cap, places=7)
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

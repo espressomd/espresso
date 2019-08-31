@@ -34,9 +34,9 @@ float multigpu_factors[] = {1.0};
 #define cudaSetDevice(d)
 
 #include "EspressoSystemInterface.hpp"
+#include "electrostatics_magnetostatics/coulomb.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "mmm-common_cuda.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -137,10 +137,7 @@ unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s) {
   return b;
 }
 
-Mmm1dgpuForce::~Mmm1dgpuForce() {
-  modpsi_destroy();
-  cudaFree(dev_forcePairs);
-}
+Mmm1dgpuForce::~Mmm1dgpuForce() { cudaFree(dev_forcePairs); }
 
 __forceinline__ __device__ mmm1dgpu_real sqpow(mmm1dgpu_real x) {
   return x * x;

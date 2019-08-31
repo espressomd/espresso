@@ -21,16 +21,16 @@
 
 #include "Ellipsoid.hpp"
 
-#include "utils/math/sqr.hpp"
+#include <utils/math/sqr.hpp>
 
 #include <cmath>
 
 namespace Shapes {
-void Ellipsoid::calculate_dist(const Vector3d &pos, double *dist,
-                               double *vec) const {
+void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                               Utils::Vector3d &vec) const {
 
   /* get particle position in reference frame of ellipsoid */
-  Vector3d const ppos_e = pos - m_center;
+  Utils::Vector3d const ppos_e = pos - m_center;
 
   /* set appropriate initial point for Newton's method */
   double l0, l = 0.;
@@ -55,13 +55,12 @@ void Ellipsoid::calculate_dist(const Vector3d &pos, double *dist,
   for (int i = 0; i < 3; i++) {
     vec[i] = (ppos_e[i] - Utils::sqr(m_semiaxes[i]) * ppos_e[i] /
                               (l + Utils::sqr(m_semiaxes[i])));
-    distance += Utils::sqr(vec[i]);
   }
 
-  *dist = distance_prefactor * m_direction * std::sqrt(distance);
+  dist = distance_prefactor * m_direction * vec.norm();
 }
 
-bool Ellipsoid::inside_ellipsoid(const Vector3d &ppos) const {
+bool Ellipsoid::inside_ellipsoid(const Utils::Vector3d &ppos) const {
   bool is_inside = false;
   if (Utils::sqr(ppos[0] / m_semiaxes[0]) +
           Utils::sqr(ppos[1] / m_semiaxes[1]) +
@@ -72,8 +71,9 @@ bool Ellipsoid::inside_ellipsoid(const Vector3d &ppos) const {
   return is_inside;
 }
 
-double Ellipsoid::newton_term(const Vector3d &ppos, const double &l) const {
-  Vector3d axpos, lax, lax2;
+double Ellipsoid::newton_term(const Utils::Vector3d &ppos,
+                              const double &l) const {
+  Utils::Vector3d axpos, lax, lax2;
   for (int i = 0; i < 3; i++) {
     axpos[i] = Utils::sqr(m_semiaxes[i]) * Utils::sqr(ppos[i]);
     lax[i] = l + Utils::sqr(m_semiaxes[i]);

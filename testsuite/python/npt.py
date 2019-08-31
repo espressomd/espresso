@@ -16,20 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 from espressomd import thermostat
 import tests_common
 
 
-@ut.skipIf(not espressomd.has_features(["NPT", "LENNARD_JONES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["NPT", "LENNARD_JONES"])
 class NPTintegrator(ut.TestCase):
 
-    """This compares pressure and compressibility of a LJ system against expected values."""
+    """This compares pressure and compressibility of a LJ system against
+       expected values."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
     S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
     p_ext = 2.0
@@ -51,8 +50,7 @@ class NPTintegrator(ut.TestCase):
             self.S.part.add(pos=pos, v=v)
 
         self.S.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1, sigma=1,
-            cutoff=1.12246, shift=0.25)
+            epsilon=1, sigma=1, cutoff=1.12246, shift=0.25)
 
         self.S.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004)
         self.S.integrator.set_isotropic_npt(

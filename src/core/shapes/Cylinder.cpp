@@ -33,31 +33,29 @@ std::pair<double, double> Cylinder::dist_half_pore(double r, double z) const {
     if (!m_open && z >= m_half_length && r < m_rad) {
       /* Closest feature: cap */
       return {0, -(z - m_half_length)};
-    } else if (z >= m_half_length && (m_open || r >= m_rad)) {
+    }
+    if (z >= m_half_length && (m_open || r >= m_rad)) {
       /* Closest feature: ring */
       return {-(r - m_rad), -(z - m_half_length)};
-    } else {
-      /* Closest feature: cylinder */
-      return {-(r - m_rad), 0};
     }
-  } else {
-    /* Inside */
-    if (!m_open && z >= m_half_length - m_rad &&
-        r < (z - (m_half_length - m_rad))) {
-      /* Closest feature: cap */
-      return {0, m_half_length - z};
-    } else {
-      /* Closest feature: cylinder */
-      return {m_rad - r, 0};
-    }
+    /* Closest feature: cylinder */
+    return {-(r - m_rad), 0};
   }
+  /* Inside */
+  if (!m_open && z >= m_half_length - m_rad &&
+      r < (z - (m_half_length - m_rad))) {
+    /* Closest feature: cap */
+    return {0, m_half_length - z};
+  }
+  /* Closest feature: cylinder */
+  return {m_rad - r, 0};
 }
 
-void Cylinder::calculate_dist(const Vector3d &pos, double *dist,
-                              double *vec) const {
+void Cylinder::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                              Utils::Vector3d &vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
-  Vector3d const c_dist = pos - m_center;
+  Utils::Vector3d const c_dist = pos - m_center;
   auto const z = e_z * c_dist;
   auto const r_vec = c_dist - z * e_z;
   auto const r = r_vec.norm();
@@ -80,9 +78,7 @@ void Cylinder::calculate_dist(const Vector3d &pos, double *dist,
     dz *= -1;
   }
 
-  *dist = std::sqrt(dr * dr + dz * dz) * m_direction * side;
-  for (int i = 0; i < 3; i++) {
-    vec[i] = (-dr * e_r[i] + -dz * e_z[i]);
-  }
+  dist = std::sqrt(dr * dr + dz * dz) * m_direction * side;
+  vec = -dr * e_r - dz * e_z;
 }
 } // namespace Shapes

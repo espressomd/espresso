@@ -24,7 +24,7 @@ def AddBending(system, kb):
     from espressomd.interactions import IBM_Tribend
     with open("tables/softAngles", "r") as fp:
         numAngles = int(fp.readline())
-        print "Found " + str(numAngles) + " angles"
+        print("Found {}".format(numAngles))
         # actual add
         for i in range(0, numAngles):
             line = str.split(fp.readline())

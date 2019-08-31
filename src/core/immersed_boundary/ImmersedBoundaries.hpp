@@ -22,7 +22,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "config.hpp"
 #include <vector>
 
-#ifdef IMMERSED_BOUNDARY
 class ImmersedBoundaries {
 public:
   ImmersedBoundaries() : MaxNumIBM(1000), VolumeInitDone(false) {
@@ -30,10 +29,7 @@ public:
   }
   void init_volume_conservation();
   void volume_conservation();
-  int volume_conservation_reset_params(const int bond_type,
-                                       const double volRef);
-  int volume_conservation_set_params(const int bond_type, const int softID,
-                                     const double kappaV);
+  int volume_conservation_set_params(int bond_type, int softID, double kappaV);
   void calc_volumes();
   void calc_volume_force();
 
@@ -44,5 +40,4 @@ private:
   bool BoundariesFound = false;
 };
 
-#endif
 #endif

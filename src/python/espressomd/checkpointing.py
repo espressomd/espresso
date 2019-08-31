@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-
 from collections import OrderedDict
 import sys
 import inspect
@@ -33,7 +31,7 @@ except ImportError:
 
 
 # Convenient Checkpointing for ESPResSo
-class Checkpoint(object):
+class Checkpoint:
 
     """Checkpoint handling (reading and writing).
 
@@ -56,7 +54,7 @@ class Checkpoint(object):
             raise ValueError("Invalid checkpoint path.")
 
         self.checkpoint_objects = []
-        self. checkpoint_signals = []
+        self.checkpoint_signals = []
         frm = inspect.stack()[1]
         self.calling_module = inspect.getmodule(frm[0])
 

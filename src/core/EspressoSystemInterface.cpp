@@ -32,7 +32,6 @@ void EspressoSystemInterface::gatherParticles() {
 #ifdef CUDA
   if (m_gpu) {
     if (gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      ESIF_TRACE(puts("Calling copy_part_data_to_gpu()"));
       copy_part_data_to_gpu(local_cells.particles());
       reallocDeviceMemory(
           gpu_get_global_particle_vars_pointer_host()->number_of_particles);
@@ -47,6 +46,6 @@ void EspressoSystemInterface::init() { gatherParticles(); }
 
 void EspressoSystemInterface::update() { gatherParticles(); }
 
-Vector3d EspressoSystemInterface::box() const {
-  return Vector3d{box_l[0], box_l[1], box_l[2]};
+Utils::Vector3d EspressoSystemInterface::box() const {
+  return box_geo.length();
 }

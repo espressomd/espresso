@@ -1,4 +1,4 @@
-/*
+/*#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
   Copyright (C) 2010-2018 The ESPResSo project
   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
     Max-Planck-Institute for Polymer Research, Theory Group
@@ -33,6 +33,9 @@
 
 #include "config.hpp"
 
+#include <ParticleRange.hpp>
+#include <utils/Vector.hpp>
+
 #ifdef ELECTROSTATICS
 
 /** MMM2D error messages */
@@ -55,9 +58,9 @@ typedef struct {
    */
   int far_calculated;
   /// flag whether there is any dielectric contrast in the system.
-  int dielectric_contrast_on;
+  bool dielectric_contrast_on;
   /// @brief Flag whether a const. potential is applied.
-  int const_pot_on;
+  bool const_pot_on;
   /// @brief Const. potential.
   double pot_diff;
   /// dielectric contrast in the upper part of the simulation cell.
@@ -83,24 +86,28 @@ extern MMM2D_struct mmm2d_params;
  *  @param pot_diff      @copybrief MMM2D_struct::pot_diff
  */
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, int const_pot_on, double pot_diff);
+                     double delta_bot, bool const_pot_on, double pot_diff);
 
 /** the general long range force/energy calculation */
-double MMM2D_add_far(int f, int e);
+double MMM2D_add_far(int f, int e, const ParticleRange &particles);
 
 /** the actual long range force calculation */
-inline void MMM2D_add_far_force() { MMM2D_add_far(1, 0); }
+inline void MMM2D_add_far_force(const ParticleRange &particles) {
+  MMM2D_add_far(1, 0, particles);
+}
 
 /** the actual long range energy calculation */
-inline double MMM2D_far_energy() { return MMM2D_add_far(0, 1); }
+inline double MMM2D_far_energy(const ParticleRange &particles) {
+  return MMM2D_add_far(0, 1, particles);
+}
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-void add_mmm2d_coulomb_pair_force(double charge_factor, double const dv[3],
-                                  double d2, double d, double f[3]);
+void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
+                                  double dl, Utils::Vector3d &force);
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
-double mmm2d_coulomb_pair_energy(double charge_factor, double dv[3], double d2,
-                                 double d);
+double mmm2d_coulomb_pair_energy(double charge_factor,
+                                 Utils::Vector3d const &dv, double d);
 
 /// check that MMM2D can run with the current parameters
 int MMM2D_sanity_checks();
@@ -110,7 +117,7 @@ void MMM2D_init();
 
 /** if the number of particles has changed (even per node),
     the particle buffers for the coefficients have to be resized. */
-void MMM2D_on_resort_particles();
+void MMM2D_on_resort_particles(const ParticleRange &particles);
 
 /** energy contribution from dielectric layers */
 double MMM2D_dielectric_layers_energy_contribution();

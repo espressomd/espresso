@@ -27,8 +27,8 @@
 using namespace std;
 
 namespace Shapes {
-void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
-                                double *vec) const {
+void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                Utils::Vector3d &vec) const {
   int number = -1;
   double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
       time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z, xp,
@@ -44,7 +44,7 @@ void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
 
   // Set the point for which we want to know the distance
 
-  Vector3d point_3D = pos;
+  Utils::Vector3d point_3D = pos;
 
   /***** Convert 3D coordinates to 2D planar coordinates *****/
 
@@ -56,7 +56,7 @@ void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
 
   // Then the closest point to the line is
 
-  Vector3d closest_point_3D = m_position + mu * m_orientation;
+  Utils::Vector3d closest_point_3D = m_position + mu * m_orientation;
 
   // So the shortest distance to the line is
 
@@ -316,14 +316,14 @@ void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
   // Next we determine the 3D vector between the center
   // of the hollow cylinder and the point of interest
 
-  Vector3d p(point_3D - m_position);
+  Utils::Vector3d p(point_3D - m_position);
 
   // Now we use the inverse matrix to find the
   // position of the point with respect to the origin
   // of the z-axis oriented hollow cone located
   // in the origin
 
-  Vector2d pp;
+  Utils::Vector2d pp;
   pp[0] = matrix[0] * p[0] + matrix[3] * p[1] + matrix[6] * p[2];
   pp[1] = matrix[1] * p[0] + matrix[4] * p[1] + matrix[7] * p[2];
 
@@ -352,7 +352,7 @@ void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
   // Now we need to transform the normal back to
   // the real coordinate system
 
-  Vector3d normal_3D;
+  Utils::Vector3d normal_3D;
 
   normal_3D[0] = matrix[0] * normal_x_3D + matrix[1] * normal_y_3D +
                  matrix[2] * normal_z_3D;
@@ -363,11 +363,9 @@ void HollowCone::calculate_dist(const Vector3d &pos, double *dist,
 
   // Pass the values we obtained to ESPResSo
 
-  for (int i = 0; i < 3; i++) {
-    vec[i] = normal_3D[i] * distance;
-  }
+  vec = normal_3D * distance;
 
-  *dist = distance * std::copysign(1.0, m_direction);
+  dist = distance * std::copysign(1.0, m_direction);
 
   // And we are done with the hollow cone
 }

@@ -24,7 +24,10 @@
  */
 
 #include "oif_local_forces.hpp"
+
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 /** set parameters for the OIF_LOCAL_FORCES potential.*/
 

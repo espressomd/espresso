@@ -17,13 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Integration test for exclusions
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
-import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features(['EXCLUSIONS']), "Skipping test")
+@utx.skipIfMissingFeatures(['EXCLUSIONS'])
 class Exclusions(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -59,11 +58,10 @@ class Exclusions(ut.TestCase):
             self.s.integrator.run(100)
             self.assertTrue((self.s.part[0].exclusions == [1, 2, 3]).all())
 
-    @ut.skipIf(not espressomd.has_features(['LENNARD_JONES']), "Skipping test")
+    @utx.skipIfMissingFeatures(['LENNARD_JONES'])
     def test_particle_property(self):
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
-            epsilon=1., sigma=2.,
-            cutoff=1.5, shift=0.0)
+            epsilon=1., sigma=2., cutoff=1.5, shift=0.0)
 
         self.s.part.add(id=0, pos=[0, 0, 0], type=0)
         self.s.part.add(id=1, pos=[1, 0, 0], type=0)
@@ -81,10 +79,10 @@ class Exclusions(ut.TestCase):
 
         self.s.part.add(id=2, pos=[2, 0, 0], type=0)
         self.s.integrator.run(0)
-        self.assertAlmostEqual(self.s.analysis.energy()[
-                               'total'], 2 * pair_energy)
-        self.assertAlmostEqual(self.s.analysis.pressure()[
-                               'total'], 2 * pair_pressure)
+        self.assertAlmostEqual(self.s.analysis.energy()['total'],
+                               2 * pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'],
+                               2 * pair_pressure)
         self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
 
         self.s.part[1].exclusions = [0, 2]
@@ -97,18 +95,18 @@ class Exclusions(ut.TestCase):
 
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
-        self.assertAlmostEqual(
-            self.s.analysis.pressure()['total'], pair_pressure)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'],
+                               pair_pressure)
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], pair_force, places=7)
         self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
 
         self.s.part[1].exclusions = []
-        self.assertAlmostEqual(self.s.analysis.energy()[
-                               'total'], 2 * pair_energy)
-        self.assertAlmostEqual(self.s.analysis.pressure()[
-                               'total'], 2 * pair_pressure)
+        self.assertAlmostEqual(self.s.analysis.energy()['total'],
+                               2 * pair_energy)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'],
+                               2 * pair_pressure)
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], pair_force, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], 0, places=7)
@@ -116,14 +114,14 @@ class Exclusions(ut.TestCase):
 
         self.s.part[1].exclusions = [0]
         self.assertAlmostEqual(self.s.analysis.energy()['total'], pair_energy)
-        self.assertAlmostEqual(
-            self.s.analysis.pressure()['total'], pair_pressure)
+        self.assertAlmostEqual(self.s.analysis.pressure()['total'],
+                               pair_pressure)
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], 0, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], pair_force, places=7)
         self.assertAlmostEqual(self.s.part[2].f[0], -pair_force, places=7)
 
-    @ut.skipIf(not espressomd.has_features(['P3M']), "Skipping test")
+    @utx.skipIfMissingFeatures(['P3M'])
     def test_electrostatics_not_excluded(self):
         from espressomd.electrostatics import P3M
         self.s.part.add(id=0, pos=[0, 0, 0], type=0, q=+1.)
@@ -150,11 +148,10 @@ class Exclusions(ut.TestCase):
         self.s.integrator.run(0)
         self.assertAlmostEqual(self.s.part[0].f[0], pair_force, places=7)
         self.assertAlmostEqual(self.s.part[1].f[0], -pair_force, places=7)
-        self.assertAlmostEqual(
-            self.s.analysis.energy()[('coulomb', 0)], pair_energy, places=7)
-        self.assertAlmostEqual(
-            self.s.analysis.pressure()[('coulomb', 0)], pair_pressure, places=7)
+        self.assertAlmostEqual(self.s.analysis.energy()[('coulomb', 0)],
+                               pair_energy, places=7)
+        self.assertAlmostEqual(self.s.analysis.pressure()[('coulomb', 0)],
+                               pair_pressure, places=7)
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

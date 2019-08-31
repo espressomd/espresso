@@ -20,18 +20,17 @@
 */
 
 #include "SpheroCylinder.hpp"
-#include "utils.hpp"
 #include <cmath>
 
 namespace Shapes {
 
-void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
-                                    double *vec) const {
+void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                    Utils::Vector3d &vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
 
   /* Vector cylinder center<->particle */
-  Vector3d const c_dist = pos - m_center;
+  Utils::Vector3d const c_dist = pos - m_center;
 
   auto const z = e_z * c_dist;
   auto const r_vec = c_dist - z * e_z;
@@ -57,19 +56,16 @@ void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
       double dir = 1;
       if (z < 0)
         dir = -1;
-      Vector3d c_dist_cap = pos - (m_center + dir * e_z * m_half_length);
-      *dist = c_dist_cap.norm() - m_rad;
+      Utils::Vector3d c_dist_cap = pos - (m_center + dir * e_z * m_half_length);
+      dist = c_dist_cap.norm() - m_rad;
       c_dist_cap.normalize();
-      Vector3d v = *dist * c_dist_cap;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = v[i];
-      }
-      *dist *= m_direction;
+      vec = dist * c_dist_cap;
+      dist *= m_direction;
       return;
-    } else {
-      /* Closest feature: cylinder */
-      dr = -(r - m_rad);
     }
+    /* Closest feature: cylinder */
+    dr = -(r - m_rad);
+
   } else {
     side = -1;
     /* Inside */
@@ -81,23 +77,17 @@ void SpheroCylinder::calculate_dist(const Vector3d &pos, double *dist,
       double dir = 1;
       if (z < 0)
         dir = -1;
-      Vector3d c_dist_cap = -(pos - (m_center + dir * e_z * m_half_length));
-      *dist = m_rad - c_dist_cap.norm();
+      Utils::Vector3d c_dist_cap =
+          -(pos - (m_center + dir * e_z * m_half_length));
+      dist = m_rad - c_dist_cap.norm();
       c_dist_cap.normalize();
-      Vector3d v = *dist * c_dist_cap;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = v[i];
-      }
-      *dist *= -m_direction;
+      vec = dist * c_dist_cap;
+      dist *= -m_direction;
       return;
     }
   }
 
-  *dist = std::sqrt(dr * dr) * m_direction * side;
-  for (int i = 0; i < 3; i++) {
-    vec[i] = -dr * e_r[i];
-  }
-
-  return;
+  dist = std::abs(dr) * m_direction * side;
+  vec = -dr * e_r;
 }
 } // namespace Shapes

@@ -1,11 +1,15 @@
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-IF LB_GPU:
+IF CUDA:
     from .lb cimport HydrodynamicInteraction
     from .lb cimport lb_lbfluid_print_vtk_boundary
-    from .lb cimport python_lbnode_get_pi
+    from .lb cimport python_lbnode_get_stress
     from .lb cimport lb_lbnode_is_index_valid
+    from .lb cimport lb_lbfluid_set_lattice_switch
+    from .lb cimport GPU
 from . import utils
+import os
+import tempfile
+import shutil
 from .utils cimport Vector6d
 import numpy as np
 from espressomd.utils import is_valid_type
@@ -16,7 +20,6 @@ IF ELECTROKINETICS:
         Creates the electrokinetic method using the GPU unit.
 
         """
-        species_list = []
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -46,7 +49,7 @@ IF ELECTROKINETICS:
             Returns the valid options used for the electrokinetic method.
             """
 
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling"
+            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling", "species"
 
         def required_keys(self):
             """
@@ -74,7 +77,8 @@ IF ELECTROKINETICS:
                     "fluid_coupling": "friction",
                     "fluctuations": False,
                     "fluctuation_amplitude": 0.0,
-                    "es_coupling": False}
+                    "es_coupling": False,
+                    "species": []}
 
         def _get_params_from_es_core(self):
             if ek_parameters.stencil == 0:
@@ -138,12 +142,12 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
-                      species for which the density will apply.
+            species : :obj:`int`
+                species for which the density will apply.
             density : :obj:`float`
-                      The value to which the density will be set to.
-            node : numpy-array of type :obj:`integer` of length (3)
-                   If set the density will be only applied on this specific node.
+                The value to which the density will be set to.
+            node : numpy-array of type :obj:`int` of length (3)
+                If set the density will be only applied on this specific node.
 
             """
 
@@ -163,8 +167,9 @@ IF ELECTROKINETICS:
 
         def _activate_method(self):
             self._set_params_in_es_core()
-            for species in self.species_list:
+            for species in self._params["species"]:
                 species._activate_method()
+            lb_lbfluid_set_lattice_switch(GPU)
             self.ek_init()
 
         def neutralize_system(self, species):
@@ -172,16 +177,16 @@ IF ELECTROKINETICS:
             Sets the global density of a species to a specific value
             for which the whole system will have no net charge.
 
+            .. note :: The previous density of the species will be ignored and
+                       it will be homogeneous distributed over the whole system
+                       The species must be charged to begin with. If the
+                       neutralization would lead to a negative species density
+                       an exception will be raised.
+
             Parameters
             ----------
-            species : :obj:`integer`
-                      The species which will be changed to neutralize the system.
-
-            note : The previous density of the species will be ignored and
-                   it will be homogeneous distributed over the whole system
-                   The species must be charged to begin with.
-                   If the neutralization would lead to a negative species density
-                   an exception will be raised.
+            species : :obj:`int`
+                The species which will be changed to neutralize the system.
 
             """
             err = ek_neutralize_system(species.id)
@@ -219,11 +224,11 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            species : :obj:`integer`
-                      Species to be initialized.
+            species : :obj:`int`
+                Species to be initialized.
 
             """
-            self.species_list.append(species)
+            self._params["species"].append(species)
 
         def get_params(self):
             """
@@ -239,8 +244,8 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the boundary is written to.
+            path : :obj:`str`
+                The path and vtk-file name the boundary is written to.
 
             """
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
@@ -251,8 +256,8 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the velocity is written to.
+            path : :obj:`str`
+                The path and vtk-file name the velocity is written to.
 
             """
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
@@ -263,8 +268,8 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the LB density is written to.
+            path : :obj:`str`
+                The path and vtk-file name the LB density is written to.
 
             """
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
@@ -275,8 +280,8 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the electrostatic potential is written to.
+            path : :obj:`str`
+                The path and vtk-file name the electrostatic potential is written to.
 
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
@@ -287,8 +292,8 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the LB force is written to.
+            path : :obj:`str`
+                The path and vtk-file name the LB force is written to.
 
             """
             ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
@@ -297,12 +302,12 @@ IF ELECTROKINETICS:
             """
             Writes the electrostatic particle potential into a vtk-file.
 
+            .. note :: This only works if 'es_coupling' is active.
+
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the electrostatic potential is written to.
-
-            note : This only works if 'es_coupling' is active.
+            path : :obj:`str`
+                The path and vtk-file name the electrostatic potential is written to.
 
             """
 
@@ -311,10 +316,20 @@ IF ELECTROKINETICS:
             else:
                 raise Exception("'es_coupling' is not active.")
 
-        # TODO:
-        def checkpoint(self):
-            raise Exception(
-                "Please implement this method in the pickle routine.")
+        def save_checkpoint(self, path):
+            tmp_path = path + ".__tmp__"
+            tmpfile_ek = tempfile.NamedTemporaryFile(mode='w+b')
+            tmpfile_lb = tempfile.NamedTemporaryFile(mode='w+b')
+            ek_save_checkpoint(utils.to_char_pointer(tmpfile_ek.name),
+                               utils.to_char_pointer(tmpfile_lb.name))
+            ek_path = tmp_path + ".ek"
+            lb_path = tmp_path + ".lb"
+            shutil.copy(tmpfile_ek.name, path + ".ek")
+            shutil.copy(tmpfile_lb.name, path + ".lb")
+
+        def load_checkpoint(self, path):
+            self._activate_method()
+            ek_load_checkpoint(utils.to_char_pointer(path))
 
         def add_reaction(self, shape):
             raise Exception("This method is not implemented yet.")
@@ -322,7 +337,7 @@ IF ELECTROKINETICS:
         def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
 
-    cdef class ElectrokineticsRoutines(object):
+    cdef class ElectrokineticsRoutines:
         cdef Vector3i node
 
         def __init__(self, key):
@@ -353,16 +368,16 @@ IF ELECTROKINETICS:
 
         property pressure:
             def __get__(self):
-                cdef Vector6d pi
-                pi = python_lbnode_get_pi(self.node)
-                return np.array([[pi[0], pi[1], pi[3]],
-                                 [pi[1], pi[2], pi[4]],
-                                 [pi[3], pi[4], pi[5]]])
+                cdef Vector6d stress
+                stress = python_lbnode_get_stress(self.node)
+                return np.array([[stress[0], stress[1], stress[3]],
+                                 [stress[1], stress[2], stress[4]],
+                                 [stress[3], stress[4], stress[5]]])
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
 
-    class Species(object):
+    class Species:
 
         """
         Creates a species object that is passed to the ek instance.
@@ -372,6 +387,22 @@ IF ELECTROKINETICS:
         py_number_of_species = 0
         id = -1
         _params = {}
+
+        # __getstate__ and __setstate__ define the pickle interaction
+        def __getstate__(self):
+            odict = {}
+            odict["id"] = self.id
+            odict.update(self._params.copy())
+            return odict
+
+        def __setstate__(self, params):
+            self.id = params["id"]
+            params.pop("id")
+            self._params = params
+            self._set_params_in_es_core()
+
+        def __str__(self):
+            return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
         def __getitem__(self, key):
             if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
@@ -457,8 +488,8 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the species density is written to.
+            path : :obj:`str`
+                The path and vtk-file name the species density is written to.
 
             """
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
@@ -469,8 +500,8 @@ IF ELECTROKINETICS:
 
             Parameters
             ----------
-            path : :obj:`string`
-                   The path and vtk-file name the species flux is written to.
+            path : :obj:`str`
+                The path and vtk-file name the species flux is written to.
 
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
@@ -481,7 +512,7 @@ IF ELECTROKINETICS:
         def print_vtk_flux_link(self, path):
             ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
 
-    cdef class SpecieRoutines(object):
+    cdef class SpecieRoutines:
         cdef Vector3i node
         cdef int id
 

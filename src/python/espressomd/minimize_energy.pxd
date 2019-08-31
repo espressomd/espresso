@@ -16,9 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Minimize Energy
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np

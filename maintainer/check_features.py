@@ -18,7 +18,6 @@
 #
 # Check whether all features used in the code are defined
 #
-from __future__ import print_function
 import sys
 import os
 sys.path.append(os.path.join(sys.path[0], '..', 'config'))
