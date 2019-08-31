@@ -21,7 +21,7 @@
 /** \file
  *  Hook procedures.
  *
- *  Implemetation of event.hpp.
+ *  Implementation of event.hpp.
  */
 #include "event.hpp"
 
@@ -436,10 +436,10 @@ void on_ghost_flags_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern int ghosts_have_v;
-  extern int ghosts_have_bonds;
+  extern bool ghosts_have_bonds;
 
   ghosts_have_v = 0;
-  ghosts_have_bonds = 0;
+  ghosts_have_bonds = false;
 
   /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
@@ -459,11 +459,11 @@ void on_ghost_flags_change() {
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds) {
     ghosts_have_v = 1;
-    ghosts_have_bonds = 1;
+    ghosts_have_bonds = true;
   }
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
-    ghosts_have_bonds = 1;
+    ghosts_have_bonds = true;
   }
 #endif
 }

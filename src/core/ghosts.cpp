@@ -60,7 +60,7 @@ std::vector<int> r_bondbuffer;
    !!!!
 */
 int ghosts_have_v = 0;
-int ghosts_have_bonds = 0;
+bool ghosts_have_bonds = false;
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   assert(comm);
