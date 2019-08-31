@@ -402,7 +402,7 @@ void on_parameter_change(int field) {
 #ifdef NPT
   case FIELD_INTEG_SWITCH:
     if (integ_switch != INTEG_METHOD_NPT_ISO)
-      nptiso.invalidate_p_vel = 1;
+      nptiso.invalidate_p_vel = true;
     break;
 #endif
   case FIELD_THERMO_SWITCH:

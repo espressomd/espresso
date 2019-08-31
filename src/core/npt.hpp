@@ -54,10 +54,10 @@ typedef struct {
   double p_vir[3];
   /** ideal gas components of \ref p_inst, derived from the velocities */
   double p_vel[3];
-  /** flag which indicates if \ref p_vel may (0) or may not (1) be used
+  /** flag which indicates if \ref p_vel may (false) or may not (true) be used
    *  in offline pressure calculations such as 'analyze p_inst'
    */
-  int invalidate_p_vel;
+  bool invalidate_p_vel;
   /** geometry information for the npt integrator. Holds the vector
    *  <dir, dir ,dir> where a positive value for dir indicates that
    *  box movement is allowed in that direction. To check whether a
