@@ -19,7 +19,7 @@
 /* * @File Header file for the correlation class
  *
  * This module allow to compute correlations (and other two time averages) on
- * the fly an from files.
+ * the fly and from files.
  *
  * The basic idea is that the user can write arbitrary function A and B that
  * can depend on e.g. particle coordinates or whatever state of the MD box.

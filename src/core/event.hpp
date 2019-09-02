@@ -103,7 +103,7 @@ void on_temperature_change();
 void on_parameter_change(int parameter);
 
 /** call this if you want to change ghost flags, e.g. whether ghosts
- *  have velocities or not. This is a opt-in process, i.e. all
+ *  have velocities or not. This is an opt-in process, i.e. all
  *  features are turned off and have to be reactivated if necessary
  *  inside this procedure.
  */

@@ -73,7 +73,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(self.s.collision_detection.mode, "off")
 
     def test_bind_centers(self):
-        # Check that it leaves particles alone, wehn off
+        # Check that it leaves particles alone, when off
         self.s.collision_detection.set_params(mode="off")
 
         self.s.part.clear()
@@ -187,7 +187,7 @@ class CollisionDetection(ut.TestCase):
         self.assertTrue(p1.bonds == bond_p1 or p2.bonds == bond_p2)
 
         # Check for presence of vs
-        # Check for bond betwen vs
+        # Check for bond between vs
         bond_vs1 = ((self.s.bonded_inter[1], vs2.id),)
         bond_vs2 = ((self.s.bonded_inter[1], vs1.id),)
         self.assertTrue(vs1.bonds == bond_vs1 or vs2.bonds == bond_vs2)
@@ -375,7 +375,7 @@ class CollisionDetection(ut.TestCase):
         parts_not_accounted_for = list(range(expected_np))
 
         # We traverse particles. We look for a vs, get base particle from there
-        # and prtner particle via bonds
+        # and partner particle via bonds
         for p in self.s.part:
             # Skip non-virtual
             if p.virtual == 0:
@@ -492,7 +492,7 @@ class CollisionDetection(ut.TestCase):
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
 
-        # Remove overalp between particles
+        # Remove overlap between particles
         self.s.integrator.set_steepest_descent(
             f_max=0,
             gamma=1,

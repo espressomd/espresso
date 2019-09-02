@@ -1253,7 +1253,7 @@ and input parameters
     the mobility of species :math:`k`,
 
 :math:`\vec{\mathcal{W}}_k`
-    the white-noise term for the flucatuations of species :math:`k`,
+    the white-noise term for the fluctuations of species :math:`k`,
 
 :math:`q_k`
     the charge of a single particle of species :math:`k`,
@@ -1404,7 +1404,7 @@ The fluctuation of the EK species can be turned on by the flag ``fluctuations``.
 This adds a white-noise term to the fluxes. The amplitude of this noise term
 can be controlled by ``fluctuation_amplitude``. To circumvent that these fluctuations
 lead to negative densities, they are modified by a smoothed Heaviside function,
-which decreases the magnitude of the flactuation for densities close to 0.
+which decreases the magnitude of the fluctuation for densities close to 0.
 By default the fluctuations are turned off.
 
 .. _Diffusive Species:
@@ -1927,7 +1927,7 @@ reaction ensemble transition probabilities.
 .. add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
 .. nihilo). Ex nihilo means that the reaction has no reactants or products.
 .. Therefore, if :math:`\emptyset` is a product, particles vanish and if
-.. :math:`\emptyset` is an reactant, then particles are created ex nihilo:
+.. :math:`\emptyset` is a reactant, then particles are created ex nihilo:
 ..
 .. .. math::
 ..

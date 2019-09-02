@@ -906,7 +906,7 @@ cdef class ParticleHandle:
         IF PARTICLE_ANISOTROPY:
             property gamma:
                 """
-                The body-fixed frictional coefficient used in the the Langevin thermostat.
+                The body-fixed frictional coefficient used in the Langevin thermostat.
 
                 gamma : `float` or (3,) array_like of :obj:`float`
 
@@ -943,7 +943,7 @@ cdef class ParticleHandle:
         ELSE:
             property gamma:
                 """
-                The translational frictional coefficient used in the the Langevin thermostat.
+                The translational frictional coefficient used in the Langevin thermostat.
 
                 gamma : :obj:`float`
 

@@ -78,7 +78,7 @@ calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
  *  @param[in]  r_right          Position of third/right particle.
  *  @param[in]  forceFactor      Angle force term.
  *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
- *  tparam      ForceFactor      Function evaluating the angle force term
+ *  @tparam      ForceFactor     Function evaluating the angle force term
  *                               for a given angle.
  *  @return Forces on the second, first and third particles, in that order.
  */

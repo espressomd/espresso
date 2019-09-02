@@ -31,7 +31,7 @@ namespace Interpolation {
  *
  * @tparam order The number of interpolation points in each direction.
  * @tparam Kernel Callable that can be called at every point with the
- *         index of the point and it's weight as arguments.
+ *         index of the point and its weight as arguments.
  *
  * @param pos The point at which the interpolation should be run.
  * @param kernel Function to run for every point.

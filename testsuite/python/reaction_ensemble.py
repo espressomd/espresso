@@ -31,7 +31,7 @@ class ReactionEnsembleTest(ut.TestCase):
 
     # The reaction ensemble follows the ideal titration curve only if N>>1,
     # Ideal curve is derived in the grandcanonical ensemble and for low N
-    # there are systematic devations caused by differences between the
+    # there are systematic deviations caused by differences between the
     # ensembles. This is not an error but a fundamental difference (various
     # ensembles are equivalent only in the thermodynamic limit N \to \infty)
     N0 = 40

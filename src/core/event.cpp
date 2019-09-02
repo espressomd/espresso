@@ -21,7 +21,7 @@
 /** \file
  *  Hook procedures.
  *
- *  Implemetation of event.hpp.
+ *  Implementation of event.hpp.
  */
 #include "event.hpp"
 

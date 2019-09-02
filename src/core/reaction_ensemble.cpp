@@ -1255,7 +1255,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
  *  no-energy-reweighting case, or with the functions
  *  do_global_mc_move_for_particles_of_type
  *
- *  perform additional Monte Carlo moves to to sample configurational
+ *  perform additional Monte Carlo moves to sample configurational
  *  partition function according to "Density-of-states Monte Carlo method
  *  for simulation of fluids"
  *

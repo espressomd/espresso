@@ -279,7 +279,7 @@ class VirtualSites(ut.TestCase):
             # Constant energy to get rid of thermostat forces in the
             # verification
             system.integrator.run(2)
-            # Theck the virtual sites config,pos and vel of the lj spheres
+            # Check the virtual sites config,pos and vel of the lj spheres
             for j in range(int(n / 2)):
                 self.verify_vs(system.part[3 * j + 1])
                 self.verify_vs(system.part[3 * j + 2])

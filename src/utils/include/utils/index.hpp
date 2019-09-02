@@ -97,7 +97,7 @@ get_linear_index(const Vector3i &ind, const Vector3i &adim,
 }
 
 /**
- * @brief Linear index into a upper triangular matrix.
+ * @brief Linear index into an upper triangular matrix.
  *
  * This is row-major.
  *

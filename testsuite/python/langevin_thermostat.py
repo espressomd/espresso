@@ -75,21 +75,21 @@ class LangevinThermostat(ut.TestCase):
 
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         
-        #'integrate 0' does not increase the philoc counter and should give the same force
+        #'integrate 0' does not increase the philox counter and should give the same force
         system.integrator.run(0)
         force0 = np.copy(system.part[0].f)
         system.integrator.run(0)
         force1 = np.copy(system.part[0].f)
         np.testing.assert_almost_equal(force0, force1)
         
-        #'integrate 1' shoud give a different force
+        #'integrate 1' should give a different force
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.integrator.run(1)
         force2 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.any(np.not_equal(force1, force2)), True)
         
-        #Different seed shoud give a different force
+        #Different seed should give a different force
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
@@ -97,7 +97,7 @@ class LangevinThermostat(ut.TestCase):
         force3 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.any(np.not_equal(force2, force3)), True)
         
-        #Same seed shoud give the same force
+        #Same seed should give the same force
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
@@ -243,7 +243,7 @@ class LangevinThermostat(ut.TestCase):
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         # Set different kT on 2nd half of particles
         system.part[int(N / 2):].temp = kT2
-        # Set different gamma on half of the partiles (overlap over both kTs)
+        # Set different gamma on half of the particles (overlap over both kTs)
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             system.part[int(N / 4):int(3 * N / 4)].gamma = 3 * [gamma2]
         else:
@@ -449,7 +449,7 @@ class LangevinThermostat(ut.TestCase):
         acf = c.result()[:, [0, 2 + 3 * i, 2 + 3 * i + 1, 2 + 3 * i + 2]]
         np.savetxt("acf.dat", acf)
 
-        # Integrate w. trapez rule
+        # Integrate with trapezoidal rule
         for coord in [1, 2, 3]:
             I = np.trapz(acf[:, coord], acf[:, 0])
             ratio = I / (kT / gamma[coord - 1])

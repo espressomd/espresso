@@ -114,7 +114,7 @@ class ElectrostaticInteractionsTests(ut.TestCase):
         r = np.arange(.5, 1.01 * dh_params['r_cut'], dr)
         u_dh = self.calc_dh_potential(r, dh_params)
         f_dh = -np.gradient(u_dh, dr)
-        # zero the discontinuity, and re-evaluate the derivitive as a backwards
+        # zero the discontinuity, and re-evaluate the derivative as a backwards
         # difference
         i_cut = np.argmin((dh_params['r_cut'] - r)**2)
         f_dh[i_cut] = 0
