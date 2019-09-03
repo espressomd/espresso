@@ -330,14 +330,14 @@ To preserve momentum, an equal and opposite friction force and random force act 
 Numerically the fluid velocity is determined from the Lattice Boltzmann node velocities 
 by interpolating as described in :ref:`Interpolating velocities`.
 The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes. 
-Detailes for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
+Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
 
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid. 
 
 Furthermore a ``seed`` has to be given for the
-thermalization of the particle coupling. The magnitude of the fricitional coupling can be adjusted by
+thermalization of the particle coupling. The magnitude of the frictional coupling can be adjusted by
 the parameter ``gamma``.
 To enable the LB thermostat, use::
 

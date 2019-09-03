@@ -52,7 +52,7 @@ template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_pi_i() {
     Analog to Tcl
 */
 #define ES_INTEGER_SPACE 24
-/** space necessary for an double with sprintf. Precision
+/** space necessary for a double with sprintf. Precision
     is 17 digits, plus sign, dot, e, sign of exponent and
     3 digits exponent etc. Analog to Tcl
 */

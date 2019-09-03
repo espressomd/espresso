@@ -81,7 +81,7 @@
 #define THOLE
 #endif
 
-// Further featuers
+// Further features
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
 #define COLLISION_DETECTION

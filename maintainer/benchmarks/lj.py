@@ -202,7 +202,7 @@ else:
         while True:
             system.integrator.run(1)
             visualizer.update()
-            sleep(1 / 60.)  # limit framerate to at most 60 FPS
+            sleep(1 / 60.)  # limit frame rate to at most 60 FPS
 
     t = Thread(target=main_thread)
     t.daemon = True

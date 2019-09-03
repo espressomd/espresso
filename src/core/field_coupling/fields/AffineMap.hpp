@@ -49,7 +49,7 @@ template <typename T> struct matrix_vector_impl<T, 1> {
 } // namespace detail
 
 /**
- * @brief Affine transform of an vector field.
+ * @brief Affine transform of a vector field.
  *
  * Returns A * x + b, where * is matrix multiplication.
  */

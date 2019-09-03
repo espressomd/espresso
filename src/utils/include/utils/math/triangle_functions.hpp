@@ -23,7 +23,7 @@ inline double area_triangle(const Vector3d &P1, const Vector3d &P2,
 }
 
 /** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.  Be
- * careful, the angle depends on the orientation of the trianlges!  You need to
+ * careful, the angle depends on the orientation of the triangles!  You need to
  * be sure that the orientation (direction of normal vector) of p1p2p3 is given
  * by the cross product p2p1 x p2p3.  The orientation of p2p3p4 must be given
  * by p2p3 x p2p4.
@@ -69,7 +69,7 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
 
   // Now we need to determine, if the angle btw two triangles is less than Pi or
   // more than Pi. To do this we check,
-  // if the point P4 lies in the halfspace given by trianlge P1P2P3 and the
+  // if the point P4 lies in the halfspace given by triangle P1P2P3 and the
   // normal to this triangle. If yes, we have
   // angle less than Pi, if not, we have angle more than Pi.
   // General equation of the plane is n_x*x + n_y*y + n_z*z + d = 0 where

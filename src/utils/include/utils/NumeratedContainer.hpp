@@ -20,7 +20,8 @@
 #ifndef UTILS_ENUMERATED_CONTAINER_HPP
 #define UTILS_ENUMERATED_CONTAINER_HPP
 
-/** Keep a enumerated list of T objects, managed by the class.
+/** @file
+ *  Keep an enumerated list of T objects, managed by the class.
  */
 
 #include <cassert>
@@ -97,7 +98,7 @@ public:
    * @param i The object to remove.
    */
   void remove(index_type i) {
-    /** Check that the object actually exists */
+    /* Check that the object actually exists */
     assert(m_container.find(i) != m_container.end());
 
     m_container.erase(i);
@@ -177,14 +178,14 @@ private:
    * @return Free index.
    */
   index_type get_index() {
-    /** Get lowest free index */
-    /** If we don't have an free index, sth went wrong. */
+    /* Get lowest free index */
+    /* If we don't have a free index, sth went wrong. */
     assert(!m_free_indices.empty());
     const index_type index = *m_free_indices.begin();
-    /** and remove it from the list */
+    /* and remove it from the list */
     m_free_indices.erase(index);
 
-    /** If there is only on left, it is the highest ever seen, so we can safely
+    /* If there is only on left, it is the highest ever seen, so we can safely
      * add +1 */
     if (m_free_indices.size() == 1) {
       m_free_indices.insert(*(--m_free_indices.end()) + 1);

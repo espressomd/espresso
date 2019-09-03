@@ -195,7 +195,7 @@ Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to have polymers in your system, you can use the function
-`espressomd.polymer.positions()` to determine suitable postitions.
+`espressomd.polymer.positions()` to determine suitable positions.
 See :attr:`espressomd.polymer.positions()` for a detailed list of
 arguments.
 
@@ -204,7 +204,7 @@ number of monomers per polymer chain ``beads_per_chain``, and the parameter
 ``bond_length``, which determines the distance between adjacent monomers
 within the polymer chains.
 Determining suitable particle positions pseudo-randomly requires the use of
-a pseudo-random number genererator, which has to be seeded. This ``seed``
+a pseudo-random number generator, which has to be seeded. This ``seed``
 is therefore also a mandatory parameter.
 
 The function :attr:`espressomd.polymer.positions()` returns a
@@ -230,14 +230,14 @@ into account when creating the polymer positions, you can set the optional
 boolean parameter ``respect_constraint=True``.
 To simulate excluded volume while drawing the polymer positions, a minimum
 distance between all particles can be set via ``min_distance``. This will
-also resprect already existing particles in the system.
+also respect already existing particles in the system.
 Both when setting ``respect_constraints`` and choosing a ``min_distance``
 trial positions are pseudo-randomly chosen and only accepted if the
-requested requirement is fulfilled. Otherwise, a new attepmt will be made,
+requested requirement is fulfilled. Otherwise, a new attempt will be made,
 up to ``max_tries`` times per monomer and if this fails ``max_tries`` per
 polymer. The default value is ``max_tries=1000``. Depending on the total
 number of beads and constraints, this value may need to be adapted. If
-detemining suitable polymer positions whithin this limit fails, a runtime
+determining suitable polymer positions within this limit fails, a runtime
 error is thrown.
 
 Note that the distance between adjacent monomers

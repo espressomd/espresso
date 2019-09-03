@@ -3,7 +3,7 @@
 
 /**
  * @file
- * Algorithms for tuple-like inhomogenous containers.
+ * Algorithms for tuple-like inhomogeneous containers.
  */
 
 namespace Utils {

@@ -533,7 +533,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        nonperiodic boundary. We also accept the particle if we are at
        the box boundary, and the particle is within the box. In this case
        the particle belongs here and could otherwise potentially be dismissed
-       due to rouding errors. */
+       due to rounding errors. */
     if (cpos[i] < 1) {
       if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
           local_geo.boundary()[2 * i])

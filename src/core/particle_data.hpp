@@ -850,7 +850,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 void added_particle(int part);
 
 /** Used for example by \ref mpi_send_exclusion.
- *  Locally add a exclusion to a particle.
+ *  Locally add an exclusion to a particle.
  *  @param part1 the identity of the first exclusion partner
  *  @param part2 the identity of the second exclusion partner
  *  @param _delete if true, delete the exclusion instead of add

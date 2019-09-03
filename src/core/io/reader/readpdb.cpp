@@ -139,7 +139,7 @@ add_particles(PdbParser::PdbParser &parser, int first_id, int default_type,
     switch (stat) {
     case ES_PART_OK:
       std::cerr << "Warning: position and type of particle " << id
-                << " was overwriten by value from pdb file." << std::endl;
+                << " was overwritten by value from pdb file." << std::endl;
       /* Fall through */
     case ES_PART_CREATED:
       /* See if we have a type from itp file, otherwise set default type */

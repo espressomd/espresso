@@ -42,7 +42,7 @@ class NSquare(ut.TestCase):
         # Check that we did not lose particles
         self.assertEqual(sum(part_dist), n_part)
 
-        # Check that the particules are evenly distributed
+        # Check that the particles are evenly distributed
         for node_parts in part_dist:
             self.assertLess(abs(node_parts - n_part_avg), 2)
 

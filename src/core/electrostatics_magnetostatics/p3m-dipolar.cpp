@@ -2325,7 +2325,7 @@ void dp3m_calc_local_ca_mesh() {
     dp3m.local_mesh.in_ur[i] = (int)floor(
         local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
 
-  /* correct roundof errors at boundary */
+  /* correct roundoff errors at boundary */
   for (i = 0; i < 3; i++) {
     if ((local_geo.my_right()[i] * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -
@@ -2359,7 +2359,7 @@ void dp3m_calc_local_ca_mesh() {
     ind[i] = (int)floor((local_geo.my_right()[i] + full_skin[i]) *
                             dp3m.params.ai[i] -
                         dp3m.params.mesh_off[i]);
-  /* correct roundof errors at up right boundary */
+  /* correct roundoff errors at up right boundary */
   for (i = 0; i < 3; i++)
     if (((local_geo.my_right()[i] + full_skin[i]) * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -

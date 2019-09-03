@@ -75,7 +75,7 @@ com = system.analysis.center_of_mass(p_type=type_A)
 print("center of mass is:", com)
 
 # if using multiple nodes, we need to change min_global_cut to the largest
-# deparation
+# separation
 if system.cell_system.get_state()['n_nodes'] > 1:
     max_dist = 0
     for p in system.part:

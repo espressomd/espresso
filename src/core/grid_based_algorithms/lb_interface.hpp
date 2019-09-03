@@ -77,12 +77,12 @@ void check_tau_time_step_consistency(double tau, double time_s);
 void lb_lbfluid_set_density(double p_dens);
 
 /**
- * @brief Set the global LB vicosity.
+ * @brief Set the global LB viscosity.
  */
 void lb_lbfluid_set_viscosity(double p_visc);
 
 /**
- * @brief Set the global LB bulk vicosity.
+ * @brief Set the global LB bulk viscosity.
  */
 void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc);
 
@@ -195,7 +195,7 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
 const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind);
 
 /** calculates the average stress of all nodes by iterating
- * over all nodes and deviding by the number_of_nodes.
+ * over all nodes and dividing by the number_of_nodes.
  */
 const Utils::Vector6d lb_lbfluid_get_stress();
 

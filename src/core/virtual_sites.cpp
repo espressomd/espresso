@@ -72,7 +72,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
   // (paritlce_we_relate_to - this_particle)
   // The vs_relative implementation later obtains the director by multiplying
   // the quaternions representing the orientation of the real particle
-  // with those in the virtual particle. The re quulting quaternion is then
+  // with those in the virtual particle. The resulting quaternion is then
   // converted to a director.
   // We have quat_(real particle) *quat_(virtual particle)
   // = quat_(obtained from desired director)

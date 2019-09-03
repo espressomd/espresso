@@ -67,7 +67,7 @@ MPC = 15
 # length for Kremer-Grest chain
 bond_length = 0.966
 
-# The physical distance beween nodes such that a line of monomers "fit" needs to be worked out.
+# The physical distance between nodes such that a line of monomers "fit" needs to be worked out.
 # This is done via the unit diamond lattice size parameter "a".
 a = (MPC + 1) * bond_length / (0.25 * np.sqrt(3))
 
@@ -89,7 +89,7 @@ lj_cap = 1
 system.force_cap = lj_cap
 act_min_dist = system.analysis.min_dist()
 
-# warmp with zero temperature to remove overlaps
+# warmup with zero temperature to remove overlaps
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # slowly ramp up the cap
