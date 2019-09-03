@@ -208,7 +208,7 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
 
   for (auto const &part : partCfg) {
     if (pid != part.p.identity) {
-      auto const d = get_mi_vector({pos[0], pos[1], pos[2]}, part.r.p, box_geo);
+      auto const d = get_mi_vector(pos, part.r.p, box_geo);
       mindist = std::min(mindist, d.norm2());
     }
   }

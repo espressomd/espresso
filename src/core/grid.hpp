@@ -38,6 +38,10 @@
 
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
+#include <utils/math/sgn.hpp>
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 
 #include <boost/mpi/communicator.hpp>
 #include <cassert>
@@ -102,13 +106,48 @@ template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
   return dx;
 }
 
-template <typename T>
-Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
-                                  const Utils::Vector<T, 3> &b,
-                                  const BoxGeometry &box) {
-  return {get_mi_coord(a[0], b[0], box.length()[0], box.periodic(0)),
-          get_mi_coord(a[1], b[1], box.length()[1], box.periodic(1)),
-          get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
+/** get the minimal distance vector of two vectors in the current bc.
+ *  @param a the vector to subtract from
+ *  @param b the vector to subtract
+ *  @param res where to store the result
+ */
+
+template <typename T, typename U, typename V>
+inline void get_mi_vector(T &res, U const &a, V const &b,
+                          const BoxGeometry &box) {
+#ifdef LEES_EDWARDS
+  const double &offset = box.lees_edwards_state.pos_offset;
+  const unsigned int shear_plane_normal =
+      LeesEdwards::get_shear_plane_normal_coord(box.lees_edwards_protocol);
+  const unsigned int shear_dir =
+      LeesEdwards::get_shear_dir_coord(box.lees_edwards_protocol);
+
+  const double dist = a[shear_plane_normal] - b[shear_plane_normal];
+#endif
+  for (int i = 0; i < 3; i++) {
+#ifdef LEES_EDWARDS
+    double shift;
+    if (i == shear_dir &&
+        std::fabs(dist) > .5 * box.length()[shear_plane_normal]) {
+      shift =
+          Utils::sgn(dist) * (offset - round(offset / box.length()[shear_dir]) *
+                                           box.length()[shear_dir]);
+    } else {
+      shift = 0.0;
+    }
+#else
+    constexpr const double shift = 0.;
+#endif
+    res[i] = get_mi_coord(a[i] - shift, b[i], box.length()[i], box.periodic(i));
+  }
+}
+
+template <typename T, typename U>
+Utils::Vector3d get_mi_vector(T const &a, U const &b, const BoxGeometry &box) {
+  Utils::Vector3d res;
+  get_mi_vector(res, a, b, box);
+
+  return res;
 }
 
 /** fold a coordinate to primary simulation box.
@@ -176,6 +215,37 @@ inline Utils::Vector3d unfolded_position(const Utils::Vector3d &pos,
                                          const Utils::Vector3d &box) {
   return pos + image_shift(image_box, box);
 }
+
+/** Calculate the velocity difference including the Lees Edwards velocity*/
+inline Utils::Vector3d vel_diff(Utils::Vector3d const &x,
+                                Utils::Vector3d const &y,
+                                Utils::Vector3d const &u,
+                                Utils::Vector3d const &v,
+                                const BoxGeometry &box) {
+
+  auto ret = u - v;
+
+#ifdef LEES_EDWARDS
+  auto const shear_velocity = box.lees_edwards_state.shear_velocity;
+  auto const shear_plane_normal =
+      LeesEdwards::get_shear_plane_normal_coord(box.lees_edwards_protocol);
+  auto const shear_dir =
+      LeesEdwards::get_shear_dir_coord(box.lees_edwards_protocol);
+  auto const dy = std::abs(x[shear_plane_normal] - y[shear_plane_normal]);
+  if (dy > 0.5 * box.length()[shear_plane_normal]) {
+    ret[shear_dir] += Utils::sgn(dy) * shear_velocity;
+  }
+#endif
+
+  return ret;
+}
+
+class PositionFolder {
+public:
+  template <typename Particle> void operator()(Particle &p) const {
+    fold_position(p.r.p, p.l.i);
+  }
+};
 
 /**
  * @brief Composition of the simulation box into equal parts for each node.

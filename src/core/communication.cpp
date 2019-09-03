@@ -49,6 +49,9 @@
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
 #include "io/mpiio/mpiio.hpp"
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 #include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
@@ -123,7 +126,8 @@ int n_nodes = -1;
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
   CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)
+  CB(mpi_set_interpolation_order_slave)                                        \
+  CB(mpi_lees_edwards_image_reset_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -693,6 +697,23 @@ struct pair_sum {
     return std::pair<T, U>{l.first + r.first, l.second + r.second};
   }
 };
+
+/****************** LEES_EDWARDS_IMAGE_RESET *******************/
+
+void mpi_lees_edwards_image_reset() {
+#ifdef LEES_EDWARDS
+  mpi_call(mpi_lees_edwards_image_reset_slave, -1, 0);
+  LeesEdwards::local_image_reset(cell_structure.local_cells().particles());
+  on_particle_change();
+#endif
+}
+
+void mpi_lees_edwards_image_reset_slave(int, int) {
+#ifdef LEES_EDWARDS
+  LeesEdwards::local_image_reset(cell_structure.local_cells().particles());
+  on_particle_change();
+#endif
+}
 
 Utils::Vector3d mpi_system_CMS() {
   auto const data =

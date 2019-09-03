@@ -131,6 +131,11 @@ struct ParticleProperties {
   constexpr static double q{0.0};
 #endif
 
+#ifdef LEES_EDWARDS
+  short int lees_edwards_flag = 0;
+  double lees_edwards_offset = 0;
+#endif
+
 #ifdef LB_ELECTROHYDRODYNAMICS
   /** electrophoretic mobility times E-field: mu_0 * E */
   Utils::Vector3d mu_E = {0., 0., 0.};

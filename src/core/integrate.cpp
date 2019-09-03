@@ -28,6 +28,7 @@
 
 #include "integrate.hpp"
 #include "accumulators.hpp"
+#include "algorithm/periodic_fold.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
@@ -60,6 +61,10 @@
 
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>
+
+#ifdef LEES_EDWARDS
+#include "lees_edwards.hpp"
+#endif
 
 #include <boost/range/algorithm/min_element.hpp>
 #include <cmath>
@@ -113,7 +118,7 @@ void propagate_pos(const ParticleRange &particles);
     \f[ p(t+\Delta t) = p(t) + \Delta t  v(t+0.5 \Delta t) \f] */
 void propagate_vel_pos(const ParticleRange &particles);
 /** Integration step 4 of the Velocity Verletintegrator and finalize
-    instantaneous pressure calculation:<br>
+    instantanious pressure calculation:<br>
     \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
 void propagate_vel_finalize_p_inst(const ParticleRange &particles);
 
@@ -175,6 +180,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
   /* Prepare the Integrator */
   on_integration_start();
+#ifdef LEES_EDWARDS
+  box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol, sim_time,
+                                    sim_time);
+#endif
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
@@ -298,6 +307,13 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
     particles = cell_structure.local_cells().particles();
 
+#ifdef LEES_EDWARDS
+    // Note that sim_time has already been propagated, here
+    box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol,
+                                      sim_time,
+                                      sim_time - time_step / 2);
+#endif
+
     force_calc(cell_structure);
 
 #ifdef VIRTUAL_SITES
@@ -387,6 +403,11 @@ void integrate_vv(int n_steps, int reuse_forces) {
     MPI_Bcast(&nptiso.p_inst_av, 1, MPI_DOUBLE, 0, comm_cart);
   }
 #endif
+
+#ifdef LEES_EDWARDS
+  box_geo.lees_edwards_state.update(box_geo.lees_edwards_protocol, sim_time,
+                                    sim_time);
+#endif
 }
 
 /************************************************************/
@@ -407,6 +428,17 @@ void philox_counter_increment() {
 }
 
 void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
+
+#ifdef LEES_EDWARDS
+  double le_vel =
+      LeesEdwards::get_shear_velocity(sim_time, box_geo.lees_edwards_protocol) /
+      2.0;
+  auto const shear_dir =
+      LeesEdwards::get_shear_dir_coord(box_geo.lees_edwards_protocol);
+  auto const shear_plane_normal =
+      LeesEdwards::get_shear_plane_normal_coord(box_geo.lees_edwards_protocol);
+#endif
+
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
     nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -433,10 +465,24 @@ void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
 #endif
           /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+#ifdef LEES_EDWARDS
+        if (j == shear_dir && p.p.lees_edwards_flag != 0) {
+          p.m.v[shear_dir] += p.p.lees_edwards_flag * le_vel;
+        }
+#endif
+
 #ifdef EXTERNAL_FORCES
       }
 #endif
     }
+#ifdef LEES_EDWARDS
+    p.p.lees_edwards_offset -=
+        (0.5 * time_step * p.l.i[shear_plane_normal] * le_vel);
+#endif
+
+    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+        stderr, "%d: OPT: PV_2 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
+        p.m.v[1], p.m.v[2]));
   }
 
 #ifdef NPT
@@ -621,6 +667,20 @@ void propagate_pos(const ParticleRange &particles) {
 }
 
 void propagate_vel_pos(const ParticleRange &particles) {
+  INTEG_TRACE(fprintf(stderr, "%d: propagate_vel_pos:\n", this_node));
+#ifdef LEES_EDWARDS
+  double shear_velocity =
+      LeesEdwards::get_shear_velocity(sim_time, box_geo.lees_edwards_protocol) /
+      2.0;
+  /* For the offset, we set the value at half the time step as a "midpoint
+     rule". The particles that will cross a Lees-Edwards boundary are not known
+     beforehand, so we had to make this choice, the alternative being to compute
+     the crossing time for all particles.
+  */
+  double pos_offset = LeesEdwards::get_pos_offset(
+      sim_time + time_step / 2.0, box_geo.lees_edwards_protocol);
+#endif
+
   for (auto &p : particles) {
 #ifdef ROTATION
     propagate_omega_quat_particle(&p);
@@ -644,6 +704,17 @@ void propagate_vel_pos(const ParticleRange &particles) {
         p.r.p[j] += time_step * p.m.v[j];
       }
     }
+
+    ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
+        stderr, "%d: OPT: PV_1 v_new = (%.3e,%.3e,%.3e)\n", this_node, p.m.v[0],
+        p.m.v[1], p.m.v[2]));
+    ONEPART_TRACE(if (p.p.identity == check_id)
+                      fprintf(stderr, "%d: OPT: PPOS p = (%.3e,%.3e,%.3e)\n",
+                              this_node, p.r.p[0], p.r.p[1], p.r.p[2]));
+
+#ifdef LEES_EDWARDS
+    LeesEdwards::push(p, pos_offset, shear_velocity, box_geo);
+#endif
 
     /* Verlet criterion check*/
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +

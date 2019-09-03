@@ -22,6 +22,7 @@ set(EspressoCore_SRC
   event.cpp
   integrate.cpp
   layered.cpp
+  lees_edwards.cpp
   metadynamics.cpp
   minimize_energy.cpp
   npt.cpp

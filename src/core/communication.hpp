@@ -298,3 +298,6 @@ std::vector<int> mpi_resort_particles(int global_flag);
 /*@}*/
 
 #endif
+
+/** Part of Lees Edwards image reset */
+void mpi_lees_edwards_image_reset();

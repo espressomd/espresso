@@ -125,7 +125,49 @@ The following limitations currently apply for the collision detection:
 Lees-Edwards boundary conditions
 --------------------------------
 
-Lees-Edwards boundary conditions are not available in the current version of ESPResSo.
+Lees-Edwards boundary conditions allow the introduction of shear flow in MD simulations while retaining the periodic boundaries (see :cite:`lees72`). This is done by manipulating the particle's velocity and position when it crosses the boundary indicated by an axis normal to the shearplane. A shear flow will develop over time in the specified direction. Lees-Edwards boundary conditions can be called via :attr:`espressomd.system.System.lees_edwards` in |es|. Several types for a flow are supported. These include: ``off`` when Lees Edwards is called without arguments, ``step`` to perform a step strain experiment, ``steady_shear`` for a constant shear velocity at the boundaries and ``oscillatory_shear`` for an oscillatory shear flow. Together with the possibility to compute the stress in a sample, these protocols can be utilized to measure a wide range of material properties: shear viscosity, relaxation behaviour, dynamical moduli etc.
+
+Lees-Edwards boundary conditions can be used with the n-squared or the domain decomposition cell system. Be careful: If you use the domain decomposition cell system, you have to use the fully connected property to ensure a proper communication of neighbours across the cell. The cells in the shearing direction have to fully connected. By default Lees-Edwards assumes that the shear direction is `x` and the shearplanenormal is `y`.
+
+See the following sample script to use Lees-Edwards, assuming you use 8 threads (e.g.: ``mpirun -np 8 ./pypresse script.py``):
+
+::
+
+    # System setup
+    system = espressomd.System(box_l=[box_l, box_l, box_l])
+    system.set_random_state_PRNG()
+
+    # Time step
+    system.time_step = 0.01
+
+    # Cell system
+    system.cell_system.skin = 0.4
+    # using domain decomposition
+    nodes = n_nodes = system.cell_system.get_state()['n_nodes']
+    print(nodes)
+    system.cell_system.node_grid = [1, 2, 4]
+    system.cell_system.set_domain_decomposition(fully_connected=[True, False, False])
+    # using the n-squared system
+    system.cell_system.set_n_square(use_verlet_lists=False)
+
+    # Put particles in the box and set up the other parts of your simulation: warm up, interactions etc.
+
+    # Set up the Lees-Edwards shear flow
+    system.lees_edwards.set_params(type = 'oscillatory_shear', frequency = 0.01, amplitude = 2.0)
+
+    # or for constant shear in the z direction and y as normal to the shear plane
+    system.cell_system.node_grid = [4, 2, 1]
+    system.cell_system.set_domain_decomposition(fully_connected=[False, False, True])
+    system.lees_edwards.set_params(type = 'steady_shear', velocity = 0.01, sheardir = 2, shearplanenormal = 1)
+
+    # Stopping the shear flow
+    current_offset = system.lees_edwards.offset
+    system.lees_edwards.set_params(type = 'step', offset = current_offset)
+
+In case the Lees-Edwards boundary conditions should stop, call the ``step`` protocol with the current ``offset``. This will ensure that interactions across a box boundary are still computed correctly.
+The development of the shear flow is a transient process and will result in a shear flow that has a velocity of :math:`v = +0.5 v_x` at the upper boundary and :math:`v = -0.5 v_x` at the lower boundary when a stationary state is reached. During integration you can always obtain the current values for the ``offset`` or the ``velocity`` regardless of the used protocol.
+
+For the usage of Lees Edwards boundary conditions a DPD thermostat is required (:ref:`Dissipative Particle Dynamics (DPD)`). An implementation for the Langevian thermostat is intentionally not provided in |es|.
 
 .. _Immersed Boundary Method for soft elastic objects:
 

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "algorithm/for_each_pair.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 #include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>
@@ -48,58 +49,6 @@ struct MinimalImageDistance {
   }
 };
 
-struct LayeredMinimalImageDistance {
-  const BoxGeometry box;
-
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p, box);
-    mi_dist[2] = p1.r.p[2] - p2.r.p[2];
-
-    return Distance(mi_dist);
-  }
-};
-
-struct EuclidianDistance {
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    return Distance(p1.r.p - p2.r.p);
-  }
-};
-
-/**
- * @brief Decided which distance function to use depending on the
-          cell system, and call the pair code.
-*/
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename VerletCriterion>
-void decide_distance(CellIterator first, CellIterator last,
-                     ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
-                     VerletCriterion &&verlet_criterion) {
-  switch (cell_structure.type) {
-  case CELL_STRUCTURE_DOMDEC:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{box_geo},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
-  case CELL_STRUCTURE_LAYERED:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel),
-        LayeredMinimalImageDistance{box_geo},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
-  }
-}
-
 /**
  * @brief Functor that returns true for
  *        any arguments.
@@ -121,10 +70,11 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   if (cell_structure.min_range != INACTIVE_CUTOFF) {
     auto first = boost::make_indirect_iterator(local_cells.begin());
     auto last = boost::make_indirect_iterator(local_cells.end());
-
-    detail::decide_distance(
+    Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), verlet_criterion);
+        std::forward<PairKernel>(pair_kernel),
+        detail::MinimalImageDistance{box_geo}, verlet_criterion,
+        cell_structure.use_verlet_list, rebuild_verletlist);
 
     rebuild_verletlist = 0;
   } else {
