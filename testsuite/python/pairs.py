@@ -74,6 +74,16 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
+    def test_generic_dd(self):
+        for g in espressomd.generic_dd.supported_grid_types():
+            self.s.periodicity = [1, 1, 1]
+            self.s.cell_system.set_generic_dd(g)
+
+            self.s.integrator.run(0)
+            self.check()
+            self.s.integrator.run(100)
+            self.check()
+
     def test_nsquare_partial_z(self):
         self.s.cell_system.set_n_square()
         self.s.periodicity = [1, 1, 0]

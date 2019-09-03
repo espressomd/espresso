@@ -34,6 +34,7 @@
 
 #include <mpi.h>
 #include <utils/Span.hpp>
+#include <utils/mpi/waitany.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <boost/range/algorithm/copy.hpp>
@@ -79,6 +80,7 @@ private:
 void prepare_comm(GhostCommunicator *gcr, int num) {
   assert(gcr);
   gcr->comm.resize(num);
+  gcr->async = false;
   for (auto &ghost_comm : gcr->comm)
     ghost_comm.shift.fill(0.0);
 }
@@ -299,10 +301,87 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
   return is_recv_op(comm_type, node) && poststore;
 }
 
-void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
-  if (GHOSTTRANS_NONE == data_parts)
-    return;
+/** Returns true if both GhostCommunications have the same communication partner
+ * node and are of the same type.
+ */
+static bool represent_same_channel(const GhostCommunication &ghost_comm1,
+                                   const GhostCommunication &ghost_comm2) {
+  return ghost_comm1.node == ghost_comm2.node &&
+         (ghost_comm1.type & GHOST_JOBMASK) ==
+             (ghost_comm2.type & GHOST_JOBMASK);
+}
 
+/** Asynchronous communication.
+ * Only supports sends and receives. No optimizations for local communications
+ * and no broadcasts or reductions.
+ * Aborts if "gcr" includes oprations other than GHOST_RECV and GHOST_SEND.
+ *
+ * Note, that only one pair of send/receive operations is allowed between
+ * the same pair of processes.
+ */
+static void ghost_communicator_async(GhostCommunicator *gcr,
+                                     unsigned int data_parts) {
+  std::vector<CommBuf> commbufs(gcr->comm.size());
+  // Need the full "gc->num" elements here (although we might omit transfers
+  // below) as the wait_any code below needs to be able to associate an index to
+  // "reqs" with a element in "commbufs".
+  std::vector<Utils::Mpi::RequestPair> reqs(gcr->comm.size());
+
+  for (int i = 0; i < gcr->comm.size(); i++) {
+    GhostCommunication &ghost_comm = gcr->comm[i];
+
+    // Check pre-condition (see comment above)
+    assert(std::count_if(gcr->comm.begin(), gcr->comm.end(),
+                         [&ghost_comm](const GhostCommunication &ghost_comm2) {
+                           return represent_same_channel(ghost_comm,
+                                                         ghost_comm2);
+                         }) == 1);
+
+    switch (ghost_comm.type & GHOST_JOBMASK) {
+    case GHOST_RECV:
+      prepare_recv_buffer(commbufs[i], ghost_comm, data_parts);
+      reqs[i] = {comm_cart.irecv(ghost_comm.node, 0x37, commbufs[i].data(),
+                                 commbufs[i].size()),
+                 comm_cart.irecv(ghost_comm.node, 0x38, commbufs[i].bonds())};
+      break;
+    case GHOST_SEND:
+      prepare_send_buffer(commbufs[i], ghost_comm, data_parts);
+      reqs[i] = {comm_cart.isend(ghost_comm.node, 0x37, commbufs[i].data(),
+                                 commbufs[i].size()),
+                 comm_cart.isend(ghost_comm.node, 0x38, commbufs[i].bonds())};
+      break;
+    default:
+      fprintf(
+          stderr,
+          "Asynchronous ghost communication only support SEND and RECEIVE\n");
+      MPI_Abort(MPI_COMM_WORLD, 37);
+    }
+  }
+
+  for (int i = 0; i < gcr->comm.size(); i++) {
+    auto it = Utils::Mpi::wait_any<Utils::Mpi::Status::Ignore>(std::begin(reqs),
+                                                               std::end(reqs))
+                  .iterator;
+    // Some transmissions might have been omitted. Could also be counted in the
+    // above send/recv loop but here it is less code.
+    if (it == std::end(reqs))
+      break;
+
+    auto rno = std::distance(std::begin(reqs), it);
+    GhostCommunication &ghost_comm = gcr->comm[rno];
+    if ((ghost_comm.type & GHOST_JOBMASK) != GHOST_RECV)
+      continue;
+
+    if (data_parts == GHOSTTRANS_FORCE)
+      add_forces_from_recv_buffer(commbufs[rno], ghost_comm);
+    else
+      put_recv_buffer(commbufs[rno], ghost_comm, data_parts);
+  }
+
+  comm_cart.barrier();
+}
+
+void ghost_communicator_sync(GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
@@ -406,4 +485,14 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       }
     }
   }
+}
+
+void ghost_communicator(GhostCommunicator *gc, unsigned int data_parts) {
+  if (GHOSTTRANS_NONE == data_parts)
+    return;
+
+  if (gc->async)
+    ghost_communicator_async(gc, data_parts);
+  else
+    ghost_communicator_sync(gc, data_parts);
 }

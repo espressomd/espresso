@@ -89,6 +89,7 @@ target_link_libraries(
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           "$<$<BOOL:${SCAFACOS}>:Scafacos>"
+          GenericDD
   PUBLIC
     utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
     "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
@@ -119,6 +120,7 @@ add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
 add_subdirectory(virtual_sites)
+add_subdirectory(generic-dd)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)

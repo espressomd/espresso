@@ -30,6 +30,7 @@
 #include "collision_detection/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
+#include "generic_dd/initialize.hpp"
 #include "observables/initialize.hpp"
 
 #include "ComFixed.hpp"
@@ -57,6 +58,7 @@ void initialize() {
   VirtualSites::initialize();
   MPIIO::initialize();
   CollisionDetection::initialize();
+  GenericDD::initialize();
 
   ScriptInterface::register_new<ComFixed>("ComFixed");
 }

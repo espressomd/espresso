@@ -71,6 +71,7 @@ void decide_distance(CellIterator first, CellIterator last,
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
     break;
+  case CELL_STRUCTURE_GENERIC_DD:
   case CELL_STRUCTURE_NSQUARE:
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),

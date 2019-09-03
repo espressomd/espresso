@@ -26,6 +26,8 @@ from .cellsystem cimport calc_processor_min_num_cells
 import numpy as np
 from .utils cimport handle_errors
 from .utils import is_valid_type
+from .generic_dd import GenericDD
+
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True,
@@ -48,6 +50,25 @@ cdef class CellSystem:
 
         handle_errors("Error while initializing the cell system.")
         return True
+
+    def set_generic_dd(self, grid, use_verlet_lists=True):
+        """
+        Activates generic domain decomposition cell system.
+        Supports repartitioning, however, might be slower than the
+        normal "domain decomposition" cell system on homogeneous particle
+        distributions.
+
+        Parameters
+        ----------
+        'grid' : :obj:`str`: Grid type descriptor.
+        'use_verlet_lists' : :obj:`bool`, optional
+                             Activates or deactivates the usage of Verlet lists
+                             in the algorithm.
+
+        """
+
+        cell_structure.use_verlet_list = use_verlet_lists
+        return GenericDD(grid)
 
     def set_n_square(self, use_verlet_lists=True):
         """
