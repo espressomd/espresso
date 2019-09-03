@@ -226,7 +226,7 @@ bool validate_collision_parameters() {
 
     if (collision_params.part_type_after_glueing < 0) {
       runtimeErrorMsg()
-          << "Collision detection particle type after glueing needs to be >=0";
+          << "Collision detection particle type after gluing needs to be >=0";
       return false;
     }
     if (this_node == 0)

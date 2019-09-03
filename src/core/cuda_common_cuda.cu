@@ -280,7 +280,7 @@ void gpu_init_particle_comm() {
                "by default. Espresso has detected a CUDA capable card but it "
                "is not the one used by ESPResSo by default. Please set the "
                "GPU to use by setting System.cuda_init_handle.device. A list "
-               "of avalable GPUs is available through "
+               "of available GPUs is available through "
                "System.cuda_init_handle.device_list.";
       }
     }

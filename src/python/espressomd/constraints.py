@@ -590,7 +590,7 @@ class ElectricPotential(_Interpolated):
     Arguments
     ----------
     field : (M, N, O, 1) array_like of :obj:`float`
-        Field velocity on a grid of size (M, N, O)
+        Potential on a grid of size (M, N, O)
     grid_spacing : (3,) array_like of :obj:`float`
         Spacing of the grid points.
 

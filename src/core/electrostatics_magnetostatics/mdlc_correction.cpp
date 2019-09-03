@@ -530,7 +530,7 @@ int mdlc_tune(double error) {
   if (flag == 0) {
     fprintf(stderr, "tune DLC dipolar: Sorry, unable to find a proper cut-off "
                     "for such system and accuracy.\n");
-    fprintf(stderr, "Try modifiying the variable limitkc in the c-code: "
+    fprintf(stderr, "Try modifying the variable limitkc in the c-code: "
                     "dlc_correction.cpp  ... \n");
     return ES_ERROR;
   }
