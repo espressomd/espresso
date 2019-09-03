@@ -50,7 +50,7 @@ class VirtualSites(ut.TestCase):
 
     def verify_vs(self, vs, verify_velocity=True):
         """Verify vs position and (if compiled in) velocity."""
-        self.assertEqual(vs.virtual, 1)
+        self.assertEqual(vs.virtual, True)
 
         vs_r = vs.vs_relative
 
@@ -154,7 +154,7 @@ class VirtualSites(ut.TestCase):
             system.part.add(rotation=(1, 1, 1), pos=pos, id=cur_id)
             system.part[cur_id].vs_auto_relate_to(1)
             # Was the particle made virtual
-            self.assertEqual(system.part[cur_id].virtual, 1)
+            self.assertEqual(system.part[cur_id].virtual, True)
             # Are vs relative to id and
             vs_r = system.part[cur_id].vs_relative
             # id

@@ -156,7 +156,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::dipm>
 #endif
 #ifdef VIRTUAL_SITES
-        , UpdateProperty<int, &Prop::is_virtual>
+        , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
         , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
                          &Prop::vs_relative>
@@ -919,8 +919,8 @@ void set_particle_dip(int part, double const *const dip) {
 #endif
 
 #ifdef VIRTUAL_SITES
-void set_particle_virtual(int part, int is_virtual) {
-  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(
+void set_particle_virtual(int part, bool is_virtual) {
+  mpi_update_particle_property<bool, &ParticleProperties::is_virtual>(
       part, is_virtual);
 }
 #endif
@@ -1526,7 +1526,7 @@ void pointer_to_quat(Particle const *p, double const *&res) {
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res) {
+void pointer_to_virtual(Particle const *p, bool const *&res) {
   res = &(p->p.is_virtual);
 }
 #endif

@@ -139,7 +139,7 @@ cdef extern from "particle_data.hpp":
 
     IF VIRTUAL_SITES:
         void set_particle_virtual(int part, int isVirtual)
-        void pointer_to_virtual(const particle * P, const int * & res)
+        void pointer_to_virtual(const particle * P, const bint * & res)
 
     IF LANGEVIN_PER_PARTICLE:
         void set_particle_temperature(int part, double T)
