@@ -147,6 +147,16 @@ struct CellStructure {
 
   bool use_verlet_list = true;
 
+  /** Maximal pair range supported by current
+   * cell system.
+   */
+  Utils::Vector3d max_range = {};
+
+  /**
+   * Minimum range that has to be supported.
+   */
+  double min_range;
+
   /** returns the global local_cells */
   CellPList local_cells() const;
   /** returns the global ghost_cells */
@@ -189,12 +199,6 @@ extern CellPList ghost_cells;
 /** Type of cell structure in use ( \ref Cell Structure ). */
 extern CellStructure cell_structure;
 
-/** Maximal interaction range - also the minimum cell size. Any
- *  cellsystem makes sure that the particle pair loop visits all pairs
- *  of particles that are closer than this.
- */
-extern double max_range;
-
 /** If non-zero, cell systems should reset the position for checking
  *  the Verlet criterion. Moreover, the Verlet list has to be
  *  rebuilt.
@@ -208,14 +212,12 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** Switch for choosing the topology init function of a certain cell system. */
-void topology_init(int cs, CellPList *local);
-
 /** Reinitialize the cell structures.
  *  @param new_cs gives the new topology to use afterwards. May be set to
  *  \ref CELL_STRUCTURE_CURRENT for not changing it.
+ *  @param range Desired interaction range
  */
-void cells_re_init(int new_cs);
+void cells_re_init(int new_cs, double range);
 
 /** Reallocate the list of all cells (\ref cells::cells). */
 void realloc_cells(int size);

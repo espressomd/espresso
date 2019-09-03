@@ -10,6 +10,7 @@ extern double dipolar_cutoff;
 
 #include <utils/Vector.hpp>
 
+#include <ParticleRange.hpp>
 #include <boost/mpi/communicator.hpp>
 
 /** \name Compounds for Dipole interactions */
@@ -69,9 +70,10 @@ void on_coulomb_change();
 void on_boxl_change();
 void init();
 
-void calc_long_range_force();
+void calc_long_range_force(const ParticleRange &particles);
 
-void calc_energy_long_range(Observable_stat &energy);
+void calc_energy_long_range(Observable_stat &energy,
+                            const ParticleRange &particles);
 void energy_n(int &n_dipolar);
 
 int set_mesh();

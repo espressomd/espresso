@@ -21,7 +21,7 @@
 /** \file
  *  Hook procedures.
  *
- *  Implemetation of event.hpp.
+ *  Implementation of event.hpp.
  */
 #include "event.hpp"
 
@@ -88,13 +88,7 @@ void on_program_start() {
   init_node_grid();
 
   /* initially go for domain decomposition */
-  topology_init(CELL_STRUCTURE_DOMDEC, &local_cells);
-
-#ifdef CUDA
-  if (this_node == 0) {
-    //   lb_pre_init_gpu();
-  }
-#endif
+  cells_re_init(CELL_STRUCTURE_DOMDEC, INACTIVE_CUTOFF);
 
   /*
     call all initializations to do only on the master node here.
@@ -106,12 +100,6 @@ void on_program_start() {
 }
 
 void on_integration_start() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_integration_start\n", this_node));
-  INTEG_TRACE(fprintf(
-      stderr,
-      "%d: on_integration_start: reinit_thermo = %d, resort_particles=%d\n",
-      this_node, reinit_thermo, get_resort_particles()));
-
   /********************************************/
   /* sanity checks                            */
   /********************************************/
@@ -298,10 +286,10 @@ void on_lbboundary_change() {
 #endif
 }
 
-void on_resort_particles() {
+void on_resort_particles(const ParticleRange &particles) {
   EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
-  Coulomb::on_resort_particles();
+  Coulomb::on_resort_particles(particles);
 #endif /* ifdef ELECTROSTATICS */
 
   /* DIPOLAR interactions so far don't need this */
@@ -396,7 +384,7 @@ void on_parameter_change(int field) {
     break;
   case FIELD_MINNUMCELLS:
   case FIELD_MAXNUMCELLS:
-    cells_re_init(CELL_STRUCTURE_CURRENT);
+    cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
     break;
   case FIELD_TEMPERATURE:
     on_temperature_change();
@@ -414,7 +402,7 @@ void on_parameter_change(int field) {
 #ifdef NPT
   case FIELD_INTEG_SWITCH:
     if (integ_switch != INTEG_METHOD_NPT_ISO)
-      nptiso.invalidate_p_vel = 1;
+      nptiso.invalidate_p_vel = true;
     break;
 #endif
   case FIELD_THERMO_SWITCH:
@@ -447,35 +435,35 @@ void on_parameter_change(int field) {
 void on_ghost_flags_change() {
   EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
-  extern int ghosts_have_v;
-  extern int ghosts_have_bonds;
+  extern bool ghosts_have_v;
+  extern bool ghosts_have_bonds;
 
-  ghosts_have_v = 0;
-  ghosts_have_bonds = 0;
+  ghosts_have_v = false;
+  ghosts_have_bonds = false;
 
   /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
-    ghosts_have_v = 1;
+    ghosts_have_v = true;
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)
-    ghosts_have_v = 1;
+    ghosts_have_v = true;
 #endif
   if (thermo_switch & THERMO_DPD)
-    ghosts_have_v = 1;
+    ghosts_have_v = true;
 #ifdef VIRTUAL_SITES
-  // If they have velocities, VIRUTAL_SITES need v to update v of virtual sites
+  // If they have velocities, VIRTUAL_SITES need v to update v of virtual sites
   if (virtual_sites()->get_have_velocity()) {
-    ghosts_have_v = 1;
+    ghosts_have_v = true;
   };
 #endif
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds) {
-    ghosts_have_v = 1;
-    ghosts_have_bonds = 1;
+    ghosts_have_v = true;
+    ghosts_have_bonds = true;
   }
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
-    ghosts_have_bonds = 1;
+    ghosts_have_bonds = true;
   }
 #endif
 }

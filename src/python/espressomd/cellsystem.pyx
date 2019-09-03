@@ -125,8 +125,6 @@ cdef class CellSystem:
 
         s["skin"] = skin
         s["max_cut"] = max_cut
-        s["max_range"] = max_range
-        s["max_skin"] = max_skin
         s["n_layers"] = n_layers_
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes

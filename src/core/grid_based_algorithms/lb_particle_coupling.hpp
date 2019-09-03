@@ -3,6 +3,7 @@
 
 #include <boost/serialization/optional.hpp>
 
+#include "ParticleRange.hpp"
 #include <utils/Counter.hpp>
 
 /** Calculate particle lattice interactions.
@@ -10,7 +11,8 @@
  *  Include all particle-lattice forces in this function.
  *  The function is called from \ref force_calc.
  */
-void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual);
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
+                                            const ParticleRange &particles);
 void lb_lbcoupling_propagate();
 uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);

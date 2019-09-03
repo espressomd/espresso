@@ -20,6 +20,7 @@
 # Handling of interactions
 
 from libcpp.string cimport string
+from libcpp cimport bool as cbool
 from libc cimport stdint
 
 include "myconfig.pxi"
@@ -46,109 +47,165 @@ cdef extern from "dpd.hpp":
         double pref
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
+    cdef struct LJ_Parameters:
+        double eps
+        double sig
+        double cut
+        double shift
+        double offset
+        double min
+
+    cdef struct WCA_Parameters:
+        double eps
+        double sig
+        double cut
+
+    cdef struct LJGen_Parameters:
+        double eps
+        double sig
+        double cut
+        double shift
+        double offset
+        double a1
+        double a2
+        double b1
+        double b2
+        double lambda1
+        double softrad
+
+    cdef struct SmoothStep_Parameters:
+        double eps
+        double sig
+        double cut
+        double d
+        int n
+        double k0
+
+    cdef struct Hertzian_Parameters:
+        double eps
+        double sig
+
+    cdef struct Gaussian_Parameters:
+        double eps
+        double sig
+        double cut
+
+    cdef struct BMHTF_Parameters:
+        double A
+        double B
+        double C
+        double D
+        double sig
+        double cut
+        double computed_shift
+
+    cdef struct Morse_Parameters:
+        double eps
+        double alpha
+        double rmin
+        double cut
+        double rest
+
+    cdef struct Buckingham_Parameters:
+        double A
+        double B
+        double C
+        double D
+        double cut
+        double discont
+        double shift
+        double F1
+        double F2
+
+    cdef struct SoftSphere_Parameters:
+        double a
+        double n
+        double cut
+        double offset
+
+    cdef struct Affinity_Parameters:
+        int type
+        double kappa
+        double r0
+        double Kon
+        double Koff
+        double maxBond
+        double cut
+
+    cdef struct Membrane_Parameters:
+        double a
+        double n
+        double cut
+        double offset
+
+    cdef struct Hat_Parameters:
+        double Fmax
+        double r
+
+    cdef struct LJcos_Parameters:
+        double eps
+        double sig
+        double cut
+        double offset
+
+    cdef struct LJcos2_Parameters:
+        double eps
+        double sig
+        double offset
+        double w
+
+    cdef struct GayBerne_Parameters:
+        double eps
+        double sig
+        double cut
+        double k1
+        double k2
+        double mu
+        double nu
+
+    cdef struct Thole_Parameters:
+        double scaling_coeff
+        double q1q2
+
     cdef struct IA_parameters:
-        double LJ_eps
-        double LJ_sig
-        double LJ_cut
-        double LJ_shift
-        double LJ_offset
-        double LJ_min
+        LJ_Parameters lj
 
-        double WCA_eps
-        double WCA_sig
-        double WCA_cut
+        WCA_Parameters wca
 
-        double LJCOS_eps
-        double LJCOS_sig
-        double LJCOS_cut
-        double LJCOS_offset
+        LJcos_Parameters ljcos
 
-        double LJCOS2_eps
-        double LJCOS2_sig
-        double LJCOS2_offset
-        double LJCOS2_w
+        LJcos2_Parameters ljcos2
 
-        double LJGEN_eps
-        double LJGEN_sig
-        double LJGEN_cut
-        double LJGEN_shift
-        double LJGEN_offset
-        double LJGEN_a1
-        double LJGEN_a2
-        double LJGEN_b1
-        double LJGEN_b2
-        double LJGEN_lambda
-        double LJGEN_softrad
+        LJGen_Parameters ljgen
 
-        int affinity_type
-        double affinity_kappa
-        double affinity_r0
-        double affinity_Kon
-        double affinity_Koff
-        double affinity_maxBond
-        double affinity_cut
-        double membrane_a
-        double membrane_n
-        double membrane_cut
-        double membrane_offset
-        double soft_a
-        double soft_n
-        double soft_cut
-        double soft_offset
+        Affinity_Parameters affinity
 
-        TabulatedPotential TAB
+        Membrane_Parameters membrane
 
-        double GB_eps
-        double GB_sig
-        double GB_cut
-        double GB_k1
-        double GB_k2
-        double GB_mu
-        double GB_nu
+        SoftSphere_Parameters soft_sphere
 
-        double SmSt_eps
-        double SmSt_sig
-        double SmSt_cut
-        double SmSt_d
-        int SmSt_n
-        double SmSt_k0
+        TabulatedPotential tab
 
-        double BMHTF_A
-        double BMHTF_B
-        double BMHTF_C
-        double BMHTF_D
-        double BMHTF_sig
-        double BMHTF_cut
+        GayBerne_Parameters gay_berne
 
-        double MORSE_eps
-        double MORSE_alpha
-        double MORSE_rmin
-        double MORSE_cut
-        double MORSE_rest
+        SmoothStep_Parameters smooth_step
 
-        double BUCK_A
-        double BUCK_B
-        double BUCK_C
-        double BUCK_D
-        double BUCK_cut
-        double BUCK_discont
-        double BUCK_shift
+        BMHTF_Parameters bmhtf
 
-        double Hertzian_eps
-        double Hertzian_sig
+        Morse_Parameters morse
 
-        double Gaussian_eps
-        double Gaussian_sig
-        double Gaussian_cut
+        Buckingham_Parameters buckingham
+
+        Hertzian_Parameters hertzian
+
+        Gaussian_Parameters gaussian
 
         DPDParameters dpd_radial
         DPDParameters dpd_trans
 
-        double HAT_Fmax
-        double HAT_r
+        Hat_Parameters hat
 
-        double THOLE_scaling_coeff
-        double THOLE_q1q2
+        Thole_Parameters thole
 
     cdef IA_parameters * get_ia_param(int i, int j)
     cdef IA_parameters * get_ia_param_safe(int i, int j)
@@ -181,7 +238,7 @@ IF LJCOS2:
                                    double w)
 
 IF GAY_BERNE:
-    cdef extern from "nonbonded_interactions/gb.hpp":
+    cdef extern from "nonbonded_interactions/gay_berne.hpp":
         int gay_berne_set_params(int part_type_a, int part_type_b,
                                  double eps, double sig, double cut,
                                  double k1, double k2,
@@ -205,7 +262,7 @@ cdef extern from "nonbonded_interactions/ljgen.hpp":
                                   double a1, double a2, double b1, double b2)
 
 IF SMOOTH_STEP:
-    cdef extern from "nonbonded_interactions/steppot.hpp":
+    cdef extern from "nonbonded_interactions/smooth_step.hpp":
         int smooth_step_set_params(int part_type_a, int part_type_b,
                                    double d, int n, double eps,
                                    double k0, double sig,
@@ -353,13 +410,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef struct Bonded_coulomb_bond_parameters:
         double prefactor
 
-    #* Parameters for three body angular potential (bond-angle potentials).
-    cdef struct Angle_bond_parameters:
-        double bend
-        double phi0
-        double cos_phi0
-        double sin_phi0
-
     #* Parameters for three body angular potential (bond_angle_harmonic).
     cdef struct Angle_harmonic_bond_parameters:
         double bend
@@ -463,7 +513,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr
         Harmonic_bond_parameters harmonic
         Harmonic_dumbbell_bond_parameters harmonic_dumbbell
-        Angle_bond_parameters angle
         Angle_harmonic_bond_parameters angle_harmonic
         Angle_cosine_bond_parameters angle_cosine
         Angle_cossquare_bond_parameters angle_cossquare
@@ -513,6 +562,10 @@ cdef extern from "object-in-fluid/out_direction.hpp":
     int oif_out_direction_set_params(int bond_type)
 cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
+    void thermalized_bond_set_rng_state(stdint.uint64_t counter)
+    cbool thermalized_bond_is_seed_required()
+    stdint.uint64_t thermalized_bond_get_rng_state()
+
 cdef extern from "bonded_interactions/bonded_coulomb.hpp":
     int bonded_coulomb_set_params(int bond_type, double prefactor)
 cdef extern from "bonded_interactions/quartic.hpp":
@@ -557,7 +610,9 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_BONDED_COULOMB,
         BONDED_IA_BONDED_COULOMB_SR,
         BONDED_IA_DIHEDRAL,
-        BONDED_IA_TABULATED,
+        BONDED_IA_TABULATED_DISTANCE,
+        BONDED_IA_TABULATED_ANGLE,
+        BONDED_IA_TABULATED_DIHEDRAL,
         BONDED_IA_SUBT_LJ,
         BONDED_IA_RIGID_BOND,
         BONDED_IA_VIRTUAL_BOND,

@@ -20,8 +20,23 @@ import espressomd
 import numpy as np
 import espressomd.observables
 
+def cos_persistence_angles(positions):
+    """ Python implementation for PersistenceAngles observable.
 
-class Observables(ut.TestCase):
+    """
+    no_of_bonds = positions.shape[0] - 1
+    no_of_angles = no_of_bonds - 1
+    bond_vecs = positions[1:] - positions[:-1]
+    bond_vecs = np.divide(bond_vecs, np.linalg.norm(bond_vecs, axis=1)[:, np.newaxis])
+    angles = np.zeros(no_of_angles)
+    for i in range(no_of_angles):
+        average = 0.0
+        for j in range(no_of_angles-i):
+            average += np.dot(bond_vecs[j], bond_vecs[j+i+1])
+        angles[i] = average / (no_of_angles - i)
+    return angles
+
+class ObservableTests(ut.TestCase):
     n_tries = 50
     n_parts = 5
     box_l = 5.
@@ -31,10 +46,12 @@ class Observables(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.2 * box_l
 
-    @classmethod
-    def setUpClass(cls):
-        for i in range(cls.n_parts):
-            cls.system.part.add(pos=[1 + i, 1 + i, 1 + i], id=i)
+    def setUp(self):
+        for i in range(self.n_parts):
+            self.system.part.add(pos=[1 + i, 1 + i, 1 + i], id=i)
+    
+    def tearDown(self):
+        self.system.part.clear()
 
     def test_ParticleDistances(self):
         """
@@ -70,13 +87,13 @@ class Observables(ut.TestCase):
                 res_obs_chain, distances, decimal=9,
                 err_msg="Data did not agree for observable ParticleDistances")
 
-    def test_ParticleAngles(self):
+    def test_BondAngles(self):
         """
-        Check ParticleAngles, for a particle triple and for a chain.
+        Check BondAngles, for a particle triple and for a chain.
         """
         pids = list(range(self.n_parts))
-        obs_single = espressomd.observables.ParticleAngles(ids=[0, 1, 2])
-        obs_chain = espressomd.observables.ParticleAngles(ids=pids)
+        obs_single = espressomd.observables.BondAngles(ids=[0, 1, 2])
+        obs_chain = espressomd.observables.BondAngles(ids=pids)
         # take periodic boundaries into account: bond length cannot exceed
         # half the box size along the smallest axis
         min_dim = np.min(self.system.box_l)
@@ -106,11 +123,11 @@ class Observables(ut.TestCase):
             self.assertAlmostEqual(res_obs_single[0], angles[0], places=9)
             np.testing.assert_array_almost_equal(
                 res_obs_chain, angles, decimal=9,
-                err_msg="Data did not agree for observable ParticleAngles")
+                err_msg="Data did not agree for observable BondAngles")
 
-    def test_ParticleDihedrals(self):
+    def test_BondDihedrals(self):
         """
-        Check ParticleDihedrals, for a particle quadruple and for a chain.
+        Check BondDihedrals, for a particle quadruple and for a chain.
         """
         def rotate_vector(v, k, phi):
             """Rotates vector v around unit vector k by angle phi.
@@ -151,8 +168,8 @@ class Observables(ut.TestCase):
             return pos
 
         pids = list(range(self.n_parts))
-        obs_single = espressomd.observables.ParticleDihedrals(ids=pids[:4])
-        obs_chain = espressomd.observables.ParticleDihedrals(ids=pids)
+        obs_single = espressomd.observables.BondDihedrals(ids=pids[:4])
+        obs_chain = espressomd.observables.BondDihedrals(ids=pids)
 
         # test multiple angles, take periodic boundaries into account
         p = self.system.part
@@ -179,7 +196,23 @@ class Observables(ut.TestCase):
                     self.assertAlmostEqual(res_obs_single[0], dih1, places=9)
                     np.testing.assert_array_almost_equal(
                         res_obs_chain, [dih1, dih2], decimal=9,
-                        err_msg="Data did not agree for observable ParticleDihedrals")
+                        err_msg="Data did not agree for observable BondDihedrals")
+
+    def test_CosPersistenceAngles(self):
+        # First test: compare with python implementation
+        self.system.part.clear()
+        self.system.part.add(pos= np.array([np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
+        obs = espressomd.observables.CosPersistenceAngles(ids=range(len(self.system.part)))
+        np.testing.assert_allclose(obs.calculate(), cos_persistence_angles(self.system.part[:].pos))
+        self.system.part.clear()
+        # Second test: place particles with fixed angles and check that the result of PersistenceAngle.calculate()[i] is i*phi
+        delta_phi = np.radians(4)
+        for i in range(10):
+            pos = [np.cos(i*delta_phi), np.sin(i*delta_phi), 0.0]
+            self.system.part.add(pos=pos)
+        obs = espressomd.observables.CosPersistenceAngles(ids=range(len(self.system.part)))
+        expected = np.arange(1, 9) * delta_phi
+        np.testing.assert_allclose(obs.calculate(), np.cos(expected))
 
 if __name__ == "__main__":
     ut.main()

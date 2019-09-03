@@ -156,7 +156,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::dipm>
 #endif
 #ifdef VIRTUAL_SITES
-        , UpdateProperty<int, &Prop::is_virtual>
+        , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
         , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
                          &Prop::vs_relative>
@@ -571,9 +571,6 @@ int realloc_particlelist(ParticleList *l, int size) {
   int old_max = l->max;
   Particle *old_start = l->part;
 
-  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, (void *)l, l->n, l->max, size));
-
   if (size < l->max) {
     if (size == 0)
       /* to be able to free an array again */
@@ -922,8 +919,8 @@ void set_particle_dip(int part, double const *const dip) {
 #endif
 
 #ifdef VIRTUAL_SITES
-void set_particle_virtual(int part, int is_virtual) {
-  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(
+void set_particle_virtual(int part, bool is_virtual) {
+  mpi_update_particle_property<bool, &ParticleProperties::is_virtual>(
       part, is_virtual);
 }
 #endif
@@ -1361,8 +1358,6 @@ void try_delete_exclusion(Particle *part, int part2) {
 #endif
 
 void send_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
-                     particles->n, node));
 
   comm_cart.send(node, REQ_SNDRCV_PART, *particles);
 
@@ -1376,7 +1371,6 @@ void send_particles(ParticleList *particles, int node) {
 }
 
 void recv_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
   comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);
@@ -1532,7 +1526,7 @@ void pointer_to_quat(Particle const *p, double const *&res) {
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res) {
+void pointer_to_virtual(Particle const *p, bool const *&res) {
   res = &(p->p.is_virtual);
 }
 #endif

@@ -31,67 +31,55 @@
 
 #ifdef LJCOS
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/int_pow.hpp>
 
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
-inline void add_ljcos_pair_force(Particle const *const p1,
-                                 Particle const *const p2,
-                                 IA_parameters const *const ia_params,
+/** Calculate Lennard-Jones cosine force */
+inline void add_ljcos_pair_force(IA_parameters const *const ia_params,
                                  Utils::Vector3d const &d, double dist,
                                  Utils::Vector3d &force) {
-  if ((dist < ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
-    auto const r_off = dist - ia_params->LJCOS_offset;
+  if ((dist < ia_params->ljcos.cut + ia_params->ljcos.offset)) {
+    auto const r_off = dist - ia_params->ljcos.offset;
     /* cos part of ljcos potential. */
-    if (dist > ia_params->LJCOS_rmin + ia_params->LJCOS_offset) {
-      auto const fac = (r_off / dist) * ia_params->LJCOS_alfa *
-                       ia_params->LJCOS_eps *
-                       (sin(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
-                            ia_params->LJCOS_beta));
+    if (dist > ia_params->ljcos.rmin + ia_params->ljcos.offset) {
+      auto const fac = (r_off / dist) * ia_params->ljcos.alfa *
+                       ia_params->ljcos.eps *
+                       (sin(ia_params->ljcos.alfa * Utils::sqr(r_off) +
+                            ia_params->ljcos.beta));
       force += fac * d;
     }
     /* Lennard-Jones part of the potential. */
     else if (dist > 0) {
-      auto const frac6 = Utils::int_pow<6>(ia_params->LJCOS_sig / r_off);
+      auto const frac6 = Utils::int_pow<6>(ia_params->ljcos.sig / r_off);
       auto const fac =
-          48.0 * ia_params->LJCOS_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
+          48.0 * ia_params->ljcos.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
       force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-      if (fac * dist > 1000)
-        fprintf(stderr, "%d: LJCOS-Warning: Pair (%d-%d) force=%f dist=%f\n",
-                this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
     }
   }
 }
 
-inline double ljcos_pair_energy(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist) {
-  if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
-    auto const r_off = dist - ia_params->LJCOS_offset;
+/** Calculate Lennard-Jones cosine energy */
+inline double ljcos_pair_energy(IA_parameters const *const ia_params,
+                                double dist) {
+  if (dist < (ia_params->ljcos.cut + ia_params->ljcos.offset)) {
+    auto const r_off = dist - ia_params->ljcos.offset;
     /* Lennard-Jones part of the potential. */
-    if (dist < (ia_params->LJCOS_rmin + ia_params->LJCOS_offset)) {
-      auto const frac6 = Utils::int_pow<6>(ia_params->LJCOS_sig / r_off);
-      return 4.0 * ia_params->LJCOS_eps * (Utils::sqr(frac6) - frac6);
+    if (dist < (ia_params->ljcos.rmin + ia_params->ljcos.offset)) {
+      auto const frac6 = Utils::int_pow<6>(ia_params->ljcos.sig / r_off);
+      return 4.0 * ia_params->ljcos.eps * (Utils::sqr(frac6) - frac6);
     }
     /* cosine part of the potential. */
-    if (dist < (ia_params->LJCOS_cut + ia_params->LJCOS_offset)) {
-      auto const fac = .5 * ia_params->LJCOS_eps *
-                       (cos(ia_params->LJCOS_alfa * Utils::sqr(r_off) +
-                            ia_params->LJCOS_beta) -
+    if (dist < (ia_params->ljcos.cut + ia_params->ljcos.offset)) {
+      auto const fac = .5 * ia_params->ljcos.eps *
+                       (cos(ia_params->ljcos.alfa * Utils::sqr(r_off) +
+                            ia_params->ljcos.beta) -
                         1.);
       return fac;
     }
-    /* this should not happen! */
-    fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
   }
   return 0.0;
 }

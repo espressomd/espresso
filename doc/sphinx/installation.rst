@@ -529,10 +529,6 @@ section :ref:`Isotropic non-bonded interactions`):
 
 Some of the short-range interactions have additional features:
 
--  ``LJ_WARN_WHEN_CLOSE`` This adds an additional check to the Lennard-Jones
-   potentials that prints a warning if particles come so close to each other
-   that the simulation becomes unphysical.
-
 -  ``LJGEN_SOFTCORE`` This modifies the generic Lennard-Jones potential
    (``LENNARD_JONES_GENERIC``) with tunable parameters.
 
@@ -559,56 +555,16 @@ looking directly at the code.
    ``initialize.c``. Useful if some module does not correctly respond to
    changes of e.g. global variables.
 
--  ``INTEG_DEBUG`` Integrator output.
-
 -  ``CELL_DEBUG`` Cellsystem output.
 
 -  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
    ghost cell communication.
 
--  ``GHOST_FORCE_DEBUG``
-
--  ``VERLET_DEBUG`` Debugging of the Verlet list code of the domain decomposition cell
-   system.
-
--  ``LATTICE_DEBUG`` Universal lattice structure debugging.
-
 -  ``HALO_DEBUG``
-
--  ``GRID_DEBUG``
-
--  ``PARTICLE_DEBUG`` Output from the particle handling code.
 
 -  ``P3M_DEBUG``
 
--  ``ESR_DEBUG`` debugging of P\ :math:`^3`\ Ms real space part.
-
--  ``ESK_DEBUG`` debugging of P\ :math:`^3`\ Ms :math:`k` -space part.
-
--  ``RANDOM_DEBUG``
-
--  ``FORCE_DEBUG`` Output from the force calculation loops.
-
--  ``PTENSOR_DEBUG`` Output from the pressure tensor calculation loops.
-
 -  ``THERMO_DEBUG`` Output from the thermostats.
-
--  ``LJ_DEBUG`` Output from the Lennard-Jones code.
-
--  ``MORSE_DEBUG`` Output from the Morse code.
-
--  ``FENE_DEBUG``
-
--  ``ONEPART_DEBUG`` Define to a number of a particle to obtain output on the forces
-   calculated for this particle.
-
--  ``STAT_DEBUG``
-
--  ``POLY_DEBUG``
-
--  ``MOLFORCES_DEBUG``
-
--  ``LB_DEBUG`` Output from the lattice Boltzmann code.
 
 -  ``VIRTUAL_SITES_DEBUG``
 
@@ -619,17 +575,9 @@ looking directly at the code.
 
 -  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
 
--  ``ESIF_DEBUG``
-
--  ``LE_DEBUG``
-
--  ``SD_DEBUG``
-
 -  ``CUDA_DEBUG``
 
 -  ``H5MD_DEBUG``
-
--  ``ONEPART_DEBUG_ID`` Use this define to supply a particle ID for which to output debug messages. For example: ``#define ONEPART_DEBUG_ID 13``
 
 
 

@@ -182,7 +182,8 @@ void add_swimmer_force(Particle &p) {
 #endif
 } // namespace
 
-void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
+void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
+                                            const ParticleRange &particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
@@ -244,7 +245,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual) {
         };
 
         /* local cells */
-        for (auto &p : local_cells.particles()) {
+        for (auto &p : particles) {
           if (!p.p.is_virtual or couple_virtual) {
             auto const force = lb_viscous_coupling(
                 &p, noise_amplitude * f_random(p.identity()));

@@ -30,34 +30,28 @@
 #ifdef WCA
 
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
-
 #include <utils/math/int_pow.hpp>
 
 int wca_set_params(int part_type_a, int part_type_b, double eps, double sig);
 
-/** Calculate WCA force between particle p1 and p2 */
-inline void add_wca_pair_force(Particle const *const p1,
-                               Particle const *const p2,
-                               IA_parameters const *const ia_params,
+/** Calculate WCA force */
+inline void add_wca_pair_force(IA_parameters const *const ia_params,
                                Utils::Vector3d const &d, double dist,
                                Utils::Vector3d &force) {
-  if (dist < ia_params->WCA_cut) {
-    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
+  if (dist < ia_params->wca.cut) {
+    auto const frac6 = Utils::int_pow<6>(ia_params->wca.sig / dist);
     auto const fac =
-        48.0 * ia_params->WCA_eps * frac6 * (frac6 - 0.5) / (dist * dist);
+        48.0 * ia_params->wca.eps * frac6 * (frac6 - 0.5) / (dist * dist);
     force += fac * d;
   }
 }
 
-/** Calculate WCA energy between particle p1 and p2. */
-inline double wca_pair_energy(Particle const *const p1,
-                              Particle const *const p2,
-                              IA_parameters const *const ia_params,
-                              Utils::Vector3d const &d, double dist) {
-  if (dist < ia_params->WCA_cut) {
-    auto const frac6 = Utils::int_pow<6>(ia_params->WCA_sig / dist);
-    return 4.0 * ia_params->WCA_eps * (Utils::sqr(frac6) - frac6 + .25);
+/** Calculate WCA energy */
+inline double wca_pair_energy(IA_parameters const *const ia_params,
+                              double dist) {
+  if (dist < ia_params->wca.cut) {
+    auto const frac6 = Utils::int_pow<6>(ia_params->wca.sig / dist);
+    return 4.0 * ia_params->wca.eps * (Utils::sqr(frac6) - frac6 + .25);
   }
   return 0.0;
 }

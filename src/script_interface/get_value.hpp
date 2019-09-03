@@ -98,6 +98,14 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
     return ret;
   }
 
+  Utils::Vector<T, N>
+  operator()(std::vector<T, std::allocator<T>> const &v) const {
+    if (N != v.size()) {
+      throw boost::bad_get{};
+    }
+    return Utils::Vector<T, N>(v);
+  }
+
   template <typename U> Utils::Vector<T, N> operator()(U const &) const {
     throw boost::bad_get{};
   }

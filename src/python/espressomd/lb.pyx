@@ -171,7 +171,9 @@ cdef class HydrodynamicInteraction(Actor):
         if python_lbfluid_get_agrid(self._params["agrid"]):
             raise Exception("lb_lbfluid_set_agrid error")
 
-        if not self._params["ext_force_density"] == default_params["ext_force_density"]:
+        if not np.allclose(self._params["ext_force_density"],
+                           default_params["ext_force_density"],
+                           atol=1e-4):
             self._params["ext_force_density"] = self.ext_force_density
 
         return self._params
@@ -197,12 +199,12 @@ cdef class HydrodynamicInteraction(Actor):
 
         Parameters
         ----------
-        pos : array_like :obj:`float`
+        pos : (3,) array_like of :obj:`float`
               The position at which velocity is requested.
 
         Returns
         -------
-        v : array_like :obj:`float`
+        v : (3,) array_like :obj:`float`
             The LB fluid velocity at ``pos``.
 
         """

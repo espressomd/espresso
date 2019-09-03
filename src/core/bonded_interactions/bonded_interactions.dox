@@ -61,14 +61,10 @@
  *
  *  * The recommended signatures of the force and energy functions are:
  *    @code{.cpp}
- *    inline bool calc_fene_pair_force(Particle const *const p1,
- *                                     Particle const *const p2,
- *                                     Bonded_ia_parameters const *const iaparams,
+ *    inline bool calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
  *                                     Vector3d const &dx, Vector3d &force);
- *    inline bool fene_pair_energy(Particle const *const p1,
- *                                 Particle const *const p2,
- *                                 Bonded_ia_parameters const *const iaparams,
- *                                 Vector3d const &dx, double *energy);
+ *    inline bool fene_pair_energy(Bonded_ia_parameters const *const iaparams,
+ *                                 Vector3d const &dx, double *_energy);
  *    @endcode
  *  * The setter function gets a \p bond_type which is a numerical id
  *    identifying the number of the bond type in the simulation.
@@ -113,7 +109,7 @@
  *
  *  * In bonded_interaction_data.cpp:
  *    - in function @ref recalc_maximal_cutoff_bonded(): add a case for the new
- *      interaction which makes sure that @ref max_cut_bonded is as large as
+ *      interaction which makes sure that @ref max_cut is as large as
  *      the interaction range of the new interaction. This is only relevant to
  *      pairwise bonds and dihedral bonds. The range can be calculated by a
  *      formula, so it is not strictly necessary that the maximal interaction
@@ -125,7 +121,7 @@
  *      code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_FENE:
- *        bond_broken = calc_fene_pair_force(p1, p2, iaparams, dx, force);
+ *        bond_broken = calc_fene_pair_force(iaparams, dx, force);
  *        break;
  *      @endcode
  *    - in function @ref calc_bond_pair_force(): add the new interaction to the
@@ -133,8 +129,8 @@
  *      the code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_ANGLE_HARMONIC:
- *        bond_broken = calc_angle_harmonic_force(p1, p2, p3, iaparams, force,
- *                                                force2, force3);
+ *        bond_broken = calc_angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p,
+ *                                                iaparams, force, force2, force3);
  *        break;
  *      @endcode
  *  * In energy_inline.hpp:
@@ -143,7 +139,7 @@
  *      switch statement. For the FENE bond, e.g., the code looks like this:
  *      @code{.cpp}
  *      case BONDED_IA_FENE:
- *        bond_broken = fene_pair_energy(p1, p2, iaparams, dx, &ret);
+ *        bond_broken = fene_pair_energy(iaparams, dx, &ret);
  *        break;
  *      @endcode
  *  * Pressure, stress tensor and virial calculation: if your bonded

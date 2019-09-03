@@ -44,20 +44,18 @@ int ljgen_set_params(int part_type_a, int part_type_b, double eps, double sig,
   if (!data)
     return ES_ERROR;
 
-  data->LJGEN_eps = eps;
-  data->LJGEN_sig = sig;
-  data->LJGEN_cut = cut;
-  data->LJGEN_shift = shift;
-  data->LJGEN_offset = offset;
-  data->LJGEN_a1 = a1;
-  data->LJGEN_a2 = a2;
-  data->LJGEN_b1 = b1;
-  data->LJGEN_b2 = b2;
+  data->ljgen.eps = eps;
+  data->ljgen.sig = sig;
+  data->ljgen.cut = cut;
+  data->ljgen.shift = shift;
+  data->ljgen.offset = offset;
+  data->ljgen.a1 = a1;
+  data->ljgen.a2 = a2;
+  data->ljgen.b1 = b1;
+  data->ljgen.b2 = b2;
 #ifdef LJGEN_SOFTCORE
-  if (lambda >= 0.0 && lambda <= 1.0)
-    data->LJGEN_lambda = lambda;
-  if (softrad >= 0.0)
-    data->LJGEN_softrad = softrad;
+  data->ljgen.lambda1 = lambda;
+  data->ljgen.softrad = softrad;
 #endif
 
   /* broadcast interaction parameters */

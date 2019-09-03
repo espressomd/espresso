@@ -37,12 +37,6 @@
 
 #include <vector>
 
-#ifdef COLLISION_DETECTION_DEBUG
-#define TRACE(a) a
-#else
-#define TRACE(a)
-#endif
-
 #ifdef COLLISION_DETECTION
 
 /// Data type holding the info about a single collision
@@ -97,6 +91,10 @@ bool validate_collision_parameters() {
       runtimeErrorMsg() << "collision_detection distance must be >0";
       return false;
     }
+
+    // Cache square of cutoff
+    collision_params.distance2 = Utils::sqr(collision_params.distance);
+
     if (collision_params.distance > min_global_cut) {
       runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
                            "must be larger or equal the collision detection "
@@ -373,7 +371,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 
   local_vs_relate_to(p_vs, &get_part(relate_to));
 
-  p_vs->p.is_virtual = 1;
+  p_vs->p.is_virtual = true;
   p_vs->p.type = collision_params.vs_particle_type;
 }
 

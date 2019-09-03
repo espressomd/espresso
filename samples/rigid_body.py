@@ -63,9 +63,9 @@ z = box_l * 0.5
 for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     for n in range(branch_len):
         system.part.add(pos=[x, y, z] + (n + 1) * direction,
-                        type=type_A, virtual=1)
+                        type=type_A, virtual=True)
         system.part.add(pos=[x, y, z] - (n + 1) * direction,
-                        type=type_A, virtual=1)
+                        type=type_A, virtual=True)
 
 system.virtual_sites = VirtualSitesRelative(have_velocity=True)
 
