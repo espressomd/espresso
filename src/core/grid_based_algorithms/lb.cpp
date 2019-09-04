@@ -981,7 +981,6 @@ inline void lb_collide_stream() {
 
           auto const populations = lb_calc_n_from_m(modes_with_forces);
 
-          /* transform back to populations and streaming */
           lb_stream(lbfluid_post, index, populations, lblattice);
         }
 
