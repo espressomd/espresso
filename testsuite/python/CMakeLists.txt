@@ -195,7 +195,7 @@ python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE time_series.py MAX_NUM_PROC 1)
 python_test(FILE linear_momentum.py)
-python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE lb_linear_momentum.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
 
 if(PY_H5PY)
