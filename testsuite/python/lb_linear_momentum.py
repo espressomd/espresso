@@ -28,7 +28,7 @@ Check linear momentum calculation for lattice-Boltzmann.
 
 
 AGRID = .5
-EXT_FORCE_DENSITY = [.1, .2, .3]
+EXT_FORCE_DENSITY = [.1, .15, .2]
 VISC = 2.7
 DENS = 1.7
 TIME_STEP = 0.01
@@ -59,7 +59,9 @@ class LinearMomentumTest:
         self.system.actors.add(self.lbf)
         for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             self.lbf[index].velocity = [0.3, 0.2, 0.1]
-        self.system.integrator.run(10)
+        self.system.part.add(pos=np.random.random((10,3)) * BOX_L, v = np.ones((10,3)) * [0.1, 0.2, 0.3])
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=20.0)
+        self.system.integrator.run(100)
 
     def test(self):
         """
@@ -70,6 +72,8 @@ class LinearMomentumTest:
         linear_momentum = np.zeros(3)
         for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             linear_momentum += DENS * AGRID**3.0 * self.lbf[index].velocity
+        for p in self.system.part:
+            linear_momentum += p.mass * p.v
         analyze_linear_momentum = self.system.analysis.linear_momentum(True,  # particles
                                                                        True)  # LB fluid
         np.testing.assert_allclose(
