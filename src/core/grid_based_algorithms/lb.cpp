@@ -875,8 +875,10 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
 
   auto const density = modes[0] + lb_parameters.density;
 
-  /* hydrodynamic momentum density is redefined when external forces are present */
-  auto const u = (Utils::Vector3d{modes[1], modes[2], modes[3]} + 0.5 * lbfields[index].force_density) /
+  /* hydrodynamic momentum density is redefined when external forces are present
+   */
+  auto const u = (Utils::Vector3d{modes[1], modes[2], modes[3]} +
+                  0.5 * lbfields[index].force_density) /
                  density;
 
   double C[6];
@@ -1411,7 +1413,8 @@ void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
       for (int z = 1; z <= lb_lattice.grid[2]; z++) {
         auto const index = get_linear_index(x, y, z, lb_lattice.halo_grid);
         auto const modes = lb_calc_modes(index, lbfluid);
-        momentum += lb_calc_momentum_density(modes, lbfields[index].force_density_buf);
+        momentum +=
+            lb_calc_momentum_density(modes, lbfields[index].force_density_buf);
       }
     }
   }
