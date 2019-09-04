@@ -976,9 +976,6 @@ inline void lb_collide_stream() {
           auto const modes_with_forces =
               lb_apply_forces(index, thermalized_modes, lbpar, lbfields);
 
-          /* reset the force density */
-          lbfields[index].force_density = lbpar.ext_force_density;
-
           auto const populations = lb_calc_n_from_m(modes_with_forces);
 
           lb_stream(lbfluid_post, index, populations, lblattice);
@@ -1437,4 +1434,9 @@ void lb_collect_boundary_forces(double *result) {
 #endif
 }
 
+void lb_reset_force_densities() {
+  for (auto &lbfield : lbfields) {
+    lbfield.force_density = lbpar.ext_force_density;
+  }
+}
 /*@}*/

@@ -331,7 +331,7 @@ class TestLB:
         # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
         # (force is applied only to the second half of the first integration step)
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
-            n_time_steps - 0.5) / self.params['dens']
+            n_time_steps + 0.5) / self.params['dens']
         for n in self.lbf.nodes():
             np.testing.assert_allclose(
                 np.copy(n.velocity), fluid_velocity, atol=1E-6)

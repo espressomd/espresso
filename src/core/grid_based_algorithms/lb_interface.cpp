@@ -112,6 +112,27 @@ void mpi_bcast_lb_params_slave(LBParam field, LB_Parameters const &params) {
 
 REGISTER_CALLBACK(mpi_bcast_lb_params_slave)
 
+auto mpi_lb_get_force_density(Utils::Vector3i const &index) {
+  return lb_calc(index, [&](auto index) {
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
+    return lbfields[linear_index].force_density_buf;
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_force_density)
+
+void mpi_lb_set_force_density(Utils::Vector3i const &index,
+                              Utils::Vector3d const &force_density) {
+  lb_set(index, [&](auto index) {
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
+    lbfields[linear_index].force_density_buf = force_density;
+  });
+}
+
+REGISTER_CALLBACK(mpi_lb_set_force_density)
+
 /** @brief Broadcast a parameter for lattice Boltzmann.
  *  @param[in] field  References the parameter field to be broadcasted.
  *                    The references are defined in lb.hpp
@@ -1063,6 +1084,21 @@ bool lb_lbnode_is_index_valid(Utils::Vector3i const &ind) {
   return ind < limit && ind >= Utils::Vector3i{};
 }
 
+Utils::Vector3d lb_lbnode_get_force_density(Utils::Vector3i const &ind) {
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    return lb_get_force_density_gpu(single_nodeindex);
+#endif
+  }
+  if (lattice_switch == ActiveLB::CPU) {
+    return mpi_call(::Communication::Result::one_rank, mpi_lb_get_force_density,
+                    ind);
+  }
+  throw std::runtime_error("LB not activated.");
+}
+
 double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
@@ -1265,6 +1301,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
         lb_get_population_from_density_momentum_density_stress(
             density, momentum_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
+    mpi_call_all(mpi_lb_set_force_density, ind, Utils::Vector3d{});
   }
 }
 
@@ -1328,4 +1365,14 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
     mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
   }
   return fluid_momentum;
+}
+
+void lb_lbfluid_reset_force_densities_local() {
+  if (lattice_switch == ActiveLB::GPU and this_node == 0) {
+#ifdef CUDA
+    reset_LB_force_densities_GPU();
+#endif
+  } else if (lattice_switch == ActiveLB::CPU) {
+    lb_reset_force_densities();
+  }
 }

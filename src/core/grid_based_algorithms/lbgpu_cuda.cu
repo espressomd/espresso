@@ -3080,4 +3080,13 @@ uint64_t lb_fluid_get_rng_state_gpu() {
   return rng_counter_fluid_gpu->value();
 }
 
+Utils::Vector3d lb_get_force_density_gpu(int index) {
+  auto const force_density_x =
+      node_f.force_density[0 * lbpar_gpu.number_of_nodes + index];
+  auto const force_density_y =
+      node_f.force_density[1 * lbpar_gpu.number_of_nodes + index];
+  auto const force_density_z =
+      node_f.force_density[2 * lbpar_gpu.number_of_nodes + index];
+  return {force_density_x, force_density_y, force_density_z};
+}
 #endif /* CUDA */

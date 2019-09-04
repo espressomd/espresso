@@ -235,4 +235,6 @@ void lb_lbfluid_on_lb_params_change(LBParam field);
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 
+void lb_lbfluid_reset_force_densities_local();
+
 #endif
