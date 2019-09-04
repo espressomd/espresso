@@ -416,8 +416,4 @@ class TestLBGPU(TestLB, ut.TestCase):
 
 
 if __name__ == "__main__":
-    suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBCPU))
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGPU))
-    result = ut.TextTestRunner(verbosity=4).run(suite)
-    sys.exit(not result.wasSuccessful())
+    ut.main()
