@@ -48,6 +48,7 @@
 #include <utils/index.hpp>
 #include <utils/math/matrix_vector_product.hpp>
 #include <utils/uniform.hpp>
+
 using Utils::get_linear_index;
 #include <utils/constants.hpp>
 
@@ -874,9 +875,8 @@ std::array<T, 19> lb_apply_forces(Lattice::index_t index,
 
   auto const density = modes[0] + lb_parameters.density;
 
-  /* hydrodynamic momentum density is redefined when external forces present */
-  auto const u = Utils::Vector3d{modes[1] + 0.5 * f[0], modes[2] + 0.5 * f[1],
-                                 modes[3] + 0.5 * f[2]} /
+  /* hydrodynamic momentum density is redefined when external forces are present */
+  auto const u = (Utils::Vector3d{modes[1], modes[2], modes[3]} + 0.5 * lbfields[index].force_density) /
                  density;
 
   double C[6];
@@ -1400,28 +1400,6 @@ void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
 }
 #endif
 
-/** Calculate the local fluid momentum.
- *  The calculation is implemented explicitly for the special case of D3Q19.
- *  @param[in]  index  Local lattice site
- *  @retval The local fluid momentum.
- */
-inline Utils::Vector3d
-lb_calc_local_momentum_density(Lattice::index_t index,
-                               const LB_Fluid &lb_fluid) {
-  return {{lb_fluid[1][index] - lb_fluid[2][index] + lb_fluid[7][index] -
-               lb_fluid[8][index] + lb_fluid[9][index] - lb_fluid[10][index] +
-               lb_fluid[11][index] - lb_fluid[12][index] + lb_fluid[13][index] -
-               lb_fluid[14][index],
-           lb_fluid[3][index] - lb_fluid[4][index] + lb_fluid[7][index] -
-               lb_fluid[8][index] - lb_fluid[9][index] + lb_fluid[10][index] +
-               lb_fluid[15][index] - lb_fluid[16][index] + lb_fluid[17][index] -
-               lb_fluid[18][index],
-           lb_fluid[5][index] - lb_fluid[6][index] + lb_fluid[11][index] -
-               lb_fluid[12][index] - lb_fluid[13][index] + lb_fluid[14][index] +
-               lb_fluid[15][index] - lb_fluid[16][index] - lb_fluid[17][index] +
-               lb_fluid[18][index]}};
-}
-
 // Statistics in MD units.
 /** Calculate momentum of the LB fluid.
  * \param result Fluid momentum
@@ -1429,19 +1407,17 @@ lb_calc_local_momentum_density(Lattice::index_t index,
 void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
                             const std::vector<LB_FluidNode> &lb_fields,
                             const Lattice &lb_lattice) {
-  Utils::Vector3d momentum_density{}, momentum{};
+  Utils::Vector3d momentum{};
 
   for (int x = 1; x <= lb_lattice.grid[0]; x++) {
     for (int y = 1; y <= lb_lattice.grid[1]; y++) {
       for (int z = 1; z <= lb_lattice.grid[2]; z++) {
         auto const index = get_linear_index(x, y, z, lb_lattice.halo_grid);
-
-        momentum_density = lb_calc_local_momentum_density(index, lbfluid);
-        momentum += momentum_density + .5 * lb_fields[index].force_density;
+        auto const modes = lb_calc_modes(index, lbfluid);
+        momentum += lb_calc_momentum_density(modes, lbfields[index].force_density_buf);
       }
     }
   }
-
   momentum *= lb_parameters.agrid / lb_parameters.tau;
   MPI_Reduce(momentum.data(), result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 }
