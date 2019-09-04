@@ -23,7 +23,7 @@ import sys
 
 # Define the LB Parameters
 TIME_STEP = 0.01
-AGRID = 1.0 
+AGRID = 0.5
 KVISC = 7 
 DENS = 1 
 BOX_SIZE = 6 * AGRID
