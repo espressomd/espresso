@@ -948,17 +948,9 @@ inline void lb_collide_stream() {
   }
 #endif // LB_BOUNDARIES
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  // Safeguard the node forces so that we can later use them for the IBM
-  // particle update
-  // In the following loop the lbfields[XX].force are reset to zero
-  // Safeguard the node forces so that we can later use them for the IBM
-  // particle update In the following loop the lbfields[XX].force are reset to
-  // zero
   for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
     lbfields[i].force_density_buf = lbfields[i].force_density;
   }
-#endif
 
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
