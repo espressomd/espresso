@@ -40,7 +40,7 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
   return lb_calc(index, [&](auto index) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    auto const force_density = lbfields[linear_index].force_density;
+    auto const force_density = lbfields[linear_index].force_density_buf;
     auto const modes = lb_calc_modes(linear_index, lbfluid);
     return kernel(modes, force_density);
   });
