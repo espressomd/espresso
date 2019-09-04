@@ -28,17 +28,17 @@ Check linear momentum calculation for lattice-Boltzmann.
 
 
 AGRID = .5
-EXT_FORCE = .1
+EXT_FORCE_DENSITY = [.1, .2, .3]
 VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.1
+TIME_STEP = 0.01
 BOX_L = 3.0
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
              'tau': TIME_STEP,
-             'ext_force_density': [0.1, 0.2, 0.3]}
+             'ext_force_density': EXT_FORCE_DENSITY}
 
 
 class LinearMomentumTest:
@@ -51,14 +51,15 @@ class LinearMomentumTest:
 
     def prepare(self):
         """
-        Setup random node velocities.
+        Setup node velocities.
 
         """
         self.system.actors.clear()
         self.lbf = self.lbf(**LB_PARAMS)
         self.system.actors.add(self.lbf)
         for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
-            self.lbf[index].velocity = np.random.random(3) - 0.5
+            self.lbf[index].velocity = [0.3, 0.2, 0.1]
+        self.system.integrator.run(10)
 
     def test(self):
         """
