@@ -20,6 +20,8 @@ cimport numpy as np
 cimport cython
 import numpy as np
 from libcpp.vector cimport vector
+include "myconfig.pxi"
+
 
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
     """
@@ -294,3 +296,23 @@ def is_valid_type(value, t):
         return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)
+
+
+def requires_experimental_features(reason):
+    """Class decorator which makes instanceing conditional on EXPERIMENTAL_FEAUTRES being defined in myconfig.hpp."""
+
+    def exception_raiser(self, *args, **kwargs):
+        raise Exception(
+    "Class " +
+    self.__class__.__name__ +
+    " is experimental. Define EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\nReason: " +
+    reason)
+
+    def modifier(cls):
+        cls.__init__ = exception_raiser
+        return cls
+
+    IF not EXPERIMENTAL_FEATURES:
+        return modifier
+    # Return original class
+    return lambda x: x
