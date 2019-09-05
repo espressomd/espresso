@@ -19,7 +19,7 @@
 import numpy as np
 import espressomd
 
-required_features = ["P3M", "LENNARD_JONES"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
@@ -44,10 +44,9 @@ density = 0.3
 # Interaction parameters (repulsive Lennard Jones)
 #############################################################
 
-lj_eps = 10.0
-lj_sig = 1.0
-lj_cut = 1.12246
-lj_cap = 20
+wca_eps = 10.0
+wca_sig = 1.0
+wca_cap = 20
 
 # Integration parameters
 #############################################################
@@ -79,14 +78,13 @@ int_n_times = 10
 #############################################################
 
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig,
-    cutoff=lj_cut, shift="auto")
-system.force_cap = lj_cap
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=wca_eps, sigma=wca_sig)
+system.force_cap = wca_cap
 
 
 print("LJ-parameters:")
-print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
+print(system.non_bonded_inter[0, 0].wca.get_params())
 
 # Particle setup
 #############################################################
@@ -155,9 +153,9 @@ Stop if minimal distance is larger than {}
 """.strip().format(warm_n_times, warm_steps, min_dist))
 
 # set LJ cap
-lj_cap = 20
-system.force_cap = lj_cap
-print(system.non_bonded_inter[0, 0].lennard_jones)
+wca_cap = 20
+system.force_cap = wca_cap
+print(system.non_bonded_inter[0, 0].wca)
 
 # Warmup Integration Loop
 i = 0
@@ -167,10 +165,10 @@ while (i < warm_n_times or act_min_dist < min_dist):
     act_min_dist = system.analysis.min_dist()
     i += 1
     print("i =", i, "system.analysis.min_dist() = ",
-          system.analysis.min_dist(), "lj_cap = ", lj_cap)
+          system.analysis.min_dist(), "wca_cap = ", wca_cap)
     # Increase LJ cap
-    lj_cap += 20
-    system.force_cap = lj_cap
+    wca_cap += 20
+    system.force_cap = wca_cap
 
 # Just to see what else we may get from the c code
 import pprint
@@ -190,9 +188,9 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
 print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
-lj_cap = 0
-system.force_cap = lj_cap
-print(system.non_bonded_inter[0, 0].lennard_jones)
+wca_cap = 0
+system.force_cap = wca_cap
+print(system.non_bonded_inter[0, 0].wca)
 
 # print(initial energies)
 energies = system.analysis.energy()

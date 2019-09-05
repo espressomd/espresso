@@ -23,7 +23,7 @@ temperature using a Langevin thermostat.
 """
 import espressomd
 
-required_features = ["P3M", "LENNARD_JONES"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
@@ -35,13 +35,12 @@ import numpy as np
 box_l = 10.7437
 density = 0.7
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive WCA)
 #############################################################
 
-lj_eps = 1.0
-lj_sig = 1.0
-lj_cut = 1.12246
-lj_cap = 20
+wca_eps = 1.0
+wca_sig = 1.0
+wca_cap = 20
 
 # Integration parameters
 #############################################################
@@ -54,7 +53,7 @@ system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-# warmup integration (with capped LJ potential)
+# warmup integration (with capped WCA potential)
 warm_steps = 100
 warm_n_times = 30
 # do the warmup until the particles have at least the distance min__dist
@@ -67,10 +66,9 @@ int_n_times = 10
 # Non-Bonded Interaction setup
 #############################################################
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig,
-    cutoff=lj_cut, shift="auto")
-system.force_cap = lj_cap
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=wca_eps, sigma=wca_sig)
+system.force_cap = wca_cap
 
 # Particle setup
 #############################################################
@@ -90,8 +88,8 @@ for i in range(n_part // 2 - 1):
 # Warmup
 #############################################################
 
-lj_cap = 20
-system.force_cap = lj_cap
+wca_cap = 20
+system.force_cap = wca_cap
 i = 0
 act_min_dist = system.analysis.min_dist()
 while (i < warm_n_times and act_min_dist < min_dist):
@@ -99,11 +97,11 @@ while (i < warm_n_times and act_min_dist < min_dist):
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
     i += 1
-    lj_cap = lj_cap + 10
-    system.force_cap = lj_cap
+    wca_cap = wca_cap + 10
+    system.force_cap = wca_cap
 
-lj_cap = 0
-system.force_cap = lj_cap
+wca_cap = 0
+system.force_cap = wca_cap
 
 # P3M setup after charge assigned
 #############################################################
