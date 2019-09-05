@@ -126,7 +126,6 @@ Utils::Vector3d lb_viscous_coupling(Particle *p,
 #ifdef ENGINE
   if (p->swim.swimming) {
     v_drift += p->swim.v_swim * p->r.calc_director();
-    p->swim.v_center = interpolated_u;
   }
 #endif
 
@@ -202,6 +201,13 @@ bool in_local_halo(Vector3d const &pos) {
 #ifdef ENGINE
 void add_swimmer_force(Particle &p) {
   if (p.swim.swimming) {
+    if (in_local_domain(p.r.p, local_geo)) {
+      p.swim.v_center = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
+                        lb_lbfluid_get_lattice_speed();
+    } else {
+      p.swim.v_center = {};
+    }
+
     // calculate source position
     const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
     auto const director = p.r.calc_director();
@@ -211,9 +217,13 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    p.swim.v_source =
-        lb_lbinterpolation_get_interpolated_velocity(source_position) *
-        lb_lbfluid_get_lattice_speed();
+    if (in_local_domain(source_position, local_geo)) {
+      p.swim.v_source =
+          lb_lbinterpolation_get_interpolated_velocity(source_position) *
+          lb_lbfluid_get_lattice_speed();
+    } else {
+      p.swim.v_source = {};
+    }
 
     add_md_force(source_position, p.swim.f_swim * director);
   }
@@ -223,7 +233,7 @@ void add_swimmer_force(Particle &p) {
 } // namespace
 
 void lb_lbcoupling_calc_particle_lattice_ia(
-    bool couple_virtual, const ParticleRange &local_particles,
+    bool couple_virtual, const ParticleRange &particles,
     const ParticleRange &more_particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::GPU) {
@@ -252,6 +262,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         ghost_communicator(&cell_structure.exchange_ghosts_comm,
                            GHOSTTRANS_SWIMMING);
 #endif
+
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
@@ -314,13 +325,14 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         };
 
         /* Couple particles ranges */
-        for (auto &p : local_particles) {
+        for (auto &p : particles) {
           couple_particle(p);
         }
 
         for (auto &p : more_particles) {
           couple_particle(p);
         }
+
         break;
       }
       }
