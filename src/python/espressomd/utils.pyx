@@ -314,5 +314,6 @@ def requires_experimental_features(reason):
 
     IF not EXPERIMENTAL_FEATURES:
         return modifier
-    # Return original class
-    return lambda x: x
+    ELSE: 
+        # Return original class
+        return lambda x: x
