@@ -9,6 +9,7 @@ double coulomb_cutoff;
 #include "debug.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
+#include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
@@ -181,6 +182,7 @@ void integrate_sanity_check() {
 }
 
 void on_observable_calc() {
+  iccp3m_iteration(local_cells.particles(),cell_structure.ghost_cells().particles());
   switch (coulomb.method) {
 #ifdef P3M
   case COULOMB_ELC_P3M:
