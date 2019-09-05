@@ -64,7 +64,7 @@ typedef struct {
   /// @copybrief MMM2D_struct::delta_mid_bot
   double delta_mid_bot;
 
-  /// @copybrief MMM2D_struct::const_pot_on
+  /// @copybrief MMM2D_struct::const_pot
   bool const_pot;
   /// @copybrief MMM2D_struct::pot_diff
   double pot_diff;

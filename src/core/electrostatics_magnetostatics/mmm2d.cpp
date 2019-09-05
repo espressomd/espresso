@@ -589,7 +589,7 @@ static void add_z_force(const ParticleRange &particles) {
   double field_tot = 0;
 
   /* Const. potential: subtract global dipole moment */
-  if (mmm2d_params.const_pot_on) {
+  if (mmm2d_params.const_pot) {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
     for (auto const &p : particles) {
@@ -667,7 +667,7 @@ static double z_energy(const ParticleRange &particles) {
   }
 
   /* total dipole moment term, for capacitor feature */
-  if (mmm2d_params.const_pot_on) {
+  if (mmm2d_params.const_pot) {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
 
@@ -1721,7 +1721,7 @@ void MMM2D_self_energy(const ParticleRange &particles) {
  ****************************************/
 
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, bool const_pot_on, double pot_diff) {
+                     double delta_bot, bool const_pot, double pot_diff) {
   int err;
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
@@ -1731,25 +1731,25 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
   mmm2d_params.maxPWerror = maxPWerror;
 
-  if (const_pot_on) {
+  if (const_pot) {
     mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = -1;
     mmm2d_params.delta_mid_bot = -1;
     mmm2d_params.delta_mult = 1;
-    mmm2d_params.const_pot_on = true;
+    mmm2d_params.const_pot = true;
     mmm2d_params.pot_diff = pot_diff;
   } else if (delta_top != 0.0 || delta_bot != 0.0) {
     mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = delta_top;
     mmm2d_params.delta_mid_bot = delta_bot;
     mmm2d_params.delta_mult = delta_top * delta_bot;
-    mmm2d_params.const_pot_on = false;
+    mmm2d_params.const_pot = false;
   } else {
     mmm2d_params.dielectric_contrast_on = false;
     mmm2d_params.delta_mid_top = 0;
     mmm2d_params.delta_mid_bot = 0;
     mmm2d_params.delta_mult = 0;
-    mmm2d_params.const_pot_on = false;
+    mmm2d_params.const_pot = false;
   }
 
   MMM2D_setup_constants();
