@@ -222,20 +222,6 @@ public:
 
   int get_correlation_time(double *correlation_time);
 
-  /** The function to process a new datapoint of A and B
-   *
-   * First the function finds out if it necessary to make some space for the new
-   * entries of A and B.
-   * Then, if necessary, it compresses old Values of A and B to make for the new
-   * value. Finally
-   * The new values of A and B are stored in A[newest[0]] and B[newest[0]],
-   * where the newest indices
-   * have been increased before. Finally the correlation estimate is updated.
-   * TODO: Not all
-   * the correlation estimates have to be updated.
-   *
-   */
-
   /** Return correlation result */
   std::vector<double> get_correlation();
 
