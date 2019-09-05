@@ -71,7 +71,7 @@ system.force_cap = lj_cap
 i = 0
 act_min_dist = system.analysis.min_dist()
 
-# warmp with zero temperature to remove overlaps
+# warmup with zero temperature to remove overlaps
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # slowly ramp un up the cap

@@ -3,6 +3,7 @@
 
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
+#include <utils/Counter.hpp>
 
 /** @file
  *  Data structures for bonded interactions.
@@ -357,7 +358,8 @@ void make_bond_type_exist(int type);
  *
  * @param p          particle on which the bond may be stored
  * @param partner    bond partner
- * @param bond_type  numerical bond type */
+ * @param bond_type  numerical bond type
+ */
 inline bool pair_bond_exists_on(Particle const *const p,
                                 Particle const *const partner, int bond_type) {
   // First check the bonds of p1
@@ -376,8 +378,7 @@ inline bool pair_bond_exists_on(Particle const *const p,
   return false;
 }
 
-/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
- *  particles are ghosts.
+/** @brief Checks both particles for a specific bond, even on ghost particles.
  *
  *  @param p_bond      particle on which the bond may be stored
  *  @param p_partner   bond partner
@@ -387,7 +388,7 @@ inline bool pair_bond_enum_exists_on(Particle const *const p_bond,
                                      Particle const *const p_partner,
                                      BondedInteraction bond) {
 #ifdef ADDITIONAL_CHECKS
-  extern int ghosts_have_bonds;
+  extern bool ghosts_have_bonds;
   assert(ghosts_have_bonds);
 #endif
 
@@ -404,8 +405,7 @@ inline bool pair_bond_enum_exists_on(Particle const *const p_bond,
   return false;
 }
 
-/** @brief Checks both particle for a specific bond. Needs GHOSTS_HAVE_BONDS if
- *  particles are ghosts.
+/** @brief Checks both particles for a specific bond, even on ghost particles.
  *
  *  @param p1     particle on which the bond may be stored
  *  @param p2     particle on which the bond may be stored

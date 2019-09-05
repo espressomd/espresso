@@ -36,7 +36,7 @@ bool contains(InputIt first, InputIt last, T const &value) {
   return std::any_of(first, last, [value](T const &e) { return e == value; });
 }
 
-/** @brief Check whether an range contains a value.
+/** @brief Check whether a range contains a value.
  *
  * @param rng The range to search in.
  * @param value The value to search for.

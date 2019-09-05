@@ -38,7 +38,7 @@ namespace Observables {
  *  doi:[10.1351/pac199668122193](https://doi.org/10.1351%2Fpac199668122193)
  *
  */
-class ParticleDihedrals : public PidObservable {
+class BondDihedrals : public PidObservable {
 public:
   using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {

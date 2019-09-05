@@ -74,7 +74,7 @@ c2 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=ceil)
 
 
-# polymer.positions will avoid violating the contraints
+# polymer.positions will avoid violating the constraints
 
 fene = interactions.FeneBond(k=30, d_r_max=2)
 system.bonded_inter.add(fene)

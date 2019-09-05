@@ -174,8 +174,6 @@ void EspressoSystemInterface::split_particle_struct() {
   if (n == 0)
     return;
 
-  ESIF_TRACE(printf("n = %d, m_gpu_npart = %d\n", n, m_gpu_npart));
-
   dim3 grid(n / 512 + 1, 1, 1);
   dim3 block(512, 1, 1);
 

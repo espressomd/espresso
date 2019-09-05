@@ -28,6 +28,7 @@
 #include "dpd.hpp"
 #include "particle_data.hpp"
 
+#include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
 
 /** Cutoff for deactivated interactions. Must be negative, so that even
@@ -322,11 +323,23 @@ extern double min_global_cut;
 * exported functions
 ************************************************/
 
-/** Get interaction parameters between particle sorts i and j */
+/**
+ * @brief Get interaction parameters between particle types i and j
+ *
+ * This is symmetric, e.g. it holds that get_ia_param(i, j) and
+ * get_ia_param(j, i) point to the same data.
+ *
+ * @param i First type, has to be smaller than @ref max_seen_particle_type.
+ * @param j Second type, has to be smaller than @ref max_seen_particle_type.
+ *
+ * @return Pointer to interaction parameters for the type pair.
+ * */
 inline IA_parameters *get_ia_param(int i, int j) {
-  extern std::vector<IA_parameters> ia_params;
-  extern int max_seen_particle_type;
-  return &ia_params[i * max_seen_particle_type + j];
+  assert(i >= 0 && i < max_seen_particle_type);
+  assert(j >= 0 && j < max_seen_particle_type);
+
+  return &ia_params[Utils::upper_triangular(std::min(i, j), std::max(i, j),
+                                            max_seen_particle_type)];
 }
 
 /** Get interaction parameters between particle sorts i and j.

@@ -61,7 +61,7 @@ class AnalyzeITensor(ut.TestCase):
         return I
 
     def test(self):
-        # Partilces of type 0
+        # Particles of type 0
         I0 = self.i_tensor(range(0, 10, 1))
 
         np.testing.assert_allclose(

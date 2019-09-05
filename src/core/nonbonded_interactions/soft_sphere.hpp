@@ -31,9 +31,7 @@
 
 #ifdef SOFT_SPHERE
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 int soft_sphere_set_params(int part_type_a, int part_type_b, double a, double n,
                            double cut, double offset);
@@ -52,10 +50,8 @@ inline double soft_energy_r(double a, double n, double r) {
   return (a / pow(r, n));
 }
 
-/** Calculate soft-sphere potential force between particle p1 and p2 */
-inline void add_soft_pair_force(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
+/** Calculate soft-sphere force */
+inline void add_soft_pair_force(IA_parameters const *const ia_params,
                                 Utils::Vector3d const &d, double dist,
                                 Utils::Vector3d &force) {
   double fac = 0.0;
@@ -67,35 +63,13 @@ inline void add_soft_pair_force(Particle const *const p1,
                          r_off) /
             dist;
       force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-      if (fac * dist > 1000)
-        fprintf(stderr,
-                "%d: Soft_Sphere-Warning: Pair (%d-%d) force=%f dist=%f\n",
-                this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
     }
-
-    ONEPART_TRACE(if (p1->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: soft   f = (%.3e,%.3e,%.3e) "
-                              "with part id=%d at dist %f fac %.3e\n",
-                              this_node, p1->f.f[0], p1->f.f[1], p1->f.f[2],
-                              p2->p.identity, dist, fac));
-    ONEPART_TRACE(if (p2->p.identity == check_id)
-                      fprintf(stderr,
-                              "%d: OPT: soft   f = (%.3e,%.3e,%.3e) "
-                              "with part id=%d at dist %f fac %.3e\n",
-                              this_node, p2->f.f[0], p2->f.f[1], p2->f.f[2],
-                              p1->p.identity, dist, fac));
   }
 }
 
-/** Calculate soft-sphere energy between particle p1 and p2. */
-inline double soft_pair_energy(Particle const *const p1,
-                               Particle const *const p2,
-                               IA_parameters const *const ia_params,
-                               Utils::Vector3d const &d, double dist) {
+/** Calculate soft-sphere energy */
+inline double soft_pair_energy(IA_parameters const *const ia_params,
+                               double dist) {
   if (dist < (ia_params->soft_sphere.cut + ia_params->soft_sphere.offset)) {
     auto const r_off = dist - ia_params->soft_sphere.offset;
     /* normal case: resulting force/energy smaller than zero. */

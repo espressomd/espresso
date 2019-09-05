@@ -817,10 +817,6 @@ static void P3M_assign_torques(double prefac, int d_rs,
         q_ind += q_s_off;
       }
       cp_cnt++;
-
-      ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
-          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -859,10 +855,6 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs,
         q_ind += q_s_off;
       }
       cp_cnt++;
-
-      ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
-          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -2333,7 +2325,7 @@ void dp3m_calc_local_ca_mesh() {
     dp3m.local_mesh.in_ur[i] = (int)floor(
         local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
 
-  /* correct roundof errors at boundary */
+  /* correct roundoff errors at boundary */
   for (i = 0; i < 3; i++) {
     if ((local_geo.my_right()[i] * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -
@@ -2367,7 +2359,7 @@ void dp3m_calc_local_ca_mesh() {
     ind[i] = (int)floor((local_geo.my_right()[i] + full_skin[i]) *
                             dp3m.params.ai[i] -
                         dp3m.params.mesh_off[i]);
-  /* correct roundof errors at up right boundary */
+  /* correct roundoff errors at up right boundary */
   for (i = 0; i < 3; i++)
     if (((local_geo.my_right()[i] + full_skin[i]) * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -

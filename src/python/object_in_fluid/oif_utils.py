@@ -36,7 +36,7 @@ def get_triangle_normal(a, b, c):
     ----------
     a : (3,) array_like of :obj:`float`
           Point a
-    b : (3,) array_like of of :obj:`float`
+    b : (3,) array_like of :obj:`float`
           Point b
     c : (3,) array_like of :obj:`float`
           Point c

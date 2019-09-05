@@ -762,10 +762,6 @@ static void P3M_assign_forces(double force_prefac, int d_rs,
         }
       }
 #endif
-
-      ONEPART_TRACE(if (p.p.identity == check_id) fprintf(
-          stderr, "%d: OPT: P3M  f = (%.3e,%.3e,%.3e) in dir %d\n", this_node,
-          p.f.f[0], p.f.f[1], p.f.f[2], d_rs));
     }
   }
 }
@@ -1965,7 +1961,7 @@ int p3m_adaptive_tune(char **log) {
   /* broadcast tuned p3m parameters */
   P3M_TRACE(fprintf(stderr,
                     "%d: Broadcasting P3M parameters: mesh: (%d %d %d), "
-                    "cao: %d, alpha_L: %lf, acccuracy: %lf\n",
+                    "cao: %d, alpha_L: %lf, accuracy: %lf\n",
                     this_node, p3m.params.mesh[0], p3m.params.mesh[1],
                     p3m.params.mesh[2], p3m.params.cao, p3m.params.alpha_L,
                     p3m.params.accuracy));
@@ -2103,7 +2099,7 @@ void p3m_calc_local_ca_mesh() {
     p3m.local_mesh.in_ur[i] = (int)floor(
         local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
 
-  /* correct roundof errors at boundary */
+  /* correct roundoff errors at boundary */
   for (i = 0; i < 3; i++) {
     if ((local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
             p3m.local_mesh.in_ur[i] <
@@ -2134,7 +2130,7 @@ void p3m_calc_local_ca_mesh() {
     ind[i] =
         (int)floor((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
                    p3m.params.mesh_off[i]);
-  /* correct roundof errors at up right boundary */
+  /* correct roundoff errors at up right boundary */
   for (i = 0; i < 3; i++)
     if (((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
          p3m.params.mesh_off[i]) -

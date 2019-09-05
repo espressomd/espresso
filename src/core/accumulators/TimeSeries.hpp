@@ -10,7 +10,7 @@ namespace Accumulators {
  * @brief Record values of an observable.
  *
  * This is a very simple accumulator that stores
- * the current value of an observable everytime
+ * the current value of an observable every time
  * it is updated.
  *
  */

@@ -49,7 +49,7 @@ typedef struct {
   double gap_size;
   /** @copybrief MMM2D_struct::far_calculated */
   int far_calculated;
-  /** Flag whether the box is neutralized by an homogeneous background.
+  /** Flag whether the box is neutralized by a homogeneous background.
    *  If true, use a homogeneous neutralizing background for nonneutral
    *  systems. Unlike the 3D case, this background adds an additional
    *  force pointing towards the system center, so be careful with this.

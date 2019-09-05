@@ -31,18 +31,15 @@
 
 #ifdef LJCOS
 
-#include "debug.hpp"
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/int_pow.hpp>
 
 int ljcos_set_params(int part_type_a, int part_type_b, double eps, double sig,
                      double cut, double offset);
 
-inline void add_ljcos_pair_force(Particle const *const p1,
-                                 Particle const *const p2,
-                                 IA_parameters const *const ia_params,
+/** Calculate Lennard-Jones cosine force */
+inline void add_ljcos_pair_force(IA_parameters const *const ia_params,
                                  Utils::Vector3d const &d, double dist,
                                  Utils::Vector3d &force) {
   if ((dist < ia_params->ljcos.cut + ia_params->ljcos.offset)) {
@@ -61,20 +58,13 @@ inline void add_ljcos_pair_force(Particle const *const p1,
       auto const fac =
           48.0 * ia_params->ljcos.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
       force += fac * d;
-
-#ifdef LJ_WARN_WHEN_CLOSE
-      if (fac * dist > 1000)
-        fprintf(stderr, "%d: LJCOS-Warning: Pair (%d-%d) force=%f dist=%f\n",
-                this_node, p1->p.identity, p2->p.identity, fac * dist, dist);
-#endif
     }
   }
 }
 
-inline double ljcos_pair_energy(Particle const *const p1,
-                                Particle const *const p2,
-                                IA_parameters const *const ia_params,
-                                Utils::Vector3d const &d, double dist) {
+/** Calculate Lennard-Jones cosine energy */
+inline double ljcos_pair_energy(IA_parameters const *const ia_params,
+                                double dist) {
   if (dist < (ia_params->ljcos.cut + ia_params->ljcos.offset)) {
     auto const r_off = dist - ia_params->ljcos.offset;
     /* Lennard-Jones part of the potential. */
@@ -90,8 +80,6 @@ inline double ljcos_pair_energy(Particle const *const p1,
                         1.);
       return fac;
     }
-    /* this should not happen! */
-    fprintf(stderr, "this is the distance, which is negative %.3e\n", r_off);
   }
   return 0.0;
 }

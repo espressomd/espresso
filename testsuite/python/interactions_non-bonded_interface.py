@@ -28,7 +28,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
     def intersMatch(self, inType, outType, inParams, outParams):
         """Check, if the interaction type set and gotten back as well as the
         bond parameters set and gotten back match. Only check keys present in
-        inParams.
+        ``inParams``.
         """
         if inType != outType:
             print("Type mismatch:", inType, outType)
@@ -44,14 +44,57 @@ class Non_bonded_interactionsTests(ut.TestCase):
 
         return True
 
+    def parameterKeys(self, interObject):
+        """
+        Check :meth:`~espressomd.interactions.NonBondedInteraction.valid_keys`
+        and :meth:`~espressomd.interactions.NonBondedInteraction.required_keys`
+        return sets, and that
+        :meth:`~espressomd.interactions.NonBondedInteraction.default_params`
+        returns a dictionary with the correct keys.
+
+        Parameters
+        ----------
+        interObject: instance of a class derived from :class:`espressomd.interactions.NonBondedInteraction`
+            Object of the interaction to test, e.g.
+            :class:`~espressomd.interactions.LennardJonesInteraction`
+        """
+        classname = interObject.__class__.__name__
+        valid_keys = interObject.valid_keys()
+        required_keys = interObject.required_keys()
+        default_keys = set(interObject.default_params().keys())
+        self.assertIsInstance(valid_keys, set,
+                              "{}.valid_keys() must return a set".format(
+                                  classname))
+        self.assertIsInstance(required_keys, set,
+                              "{}.required_keys() must return a set".format(
+                                  classname))
+        self.assertTrue(default_keys.issubset(valid_keys),
+                        "{}.default_params() has unknown parameters: {}".format(
+            classname, default_keys.difference(valid_keys)))
+        self.assertTrue(default_keys.isdisjoint(required_keys),
+                        "{}.default_params() has extra parameters: {}".format(
+            classname, default_keys.intersection(required_keys)))
+        self.assertSetEqual(default_keys, valid_keys - required_keys,
+                            "{}.default_params() should have keys: {}, got: {}".format(
+                                classname, valid_keys - required_keys, default_keys))
+
     def generateTestForNon_bonded_interaction(
             _partType1, _partType2, _interClass, _params, _interName):
-        """Generates test cases for checking interaction parameters set and gotten back
-        from Es actually match. Only keys which are present in _params are checked
-        1st and 2nd arg: Particle type ids to check on
-        3rd: Class of the interaction to test, ie.e, FeneBond, HarmonicBond
-        4th: Interaction parameters as dictionary, i.e., {"k"=1.,"r_0"=0}
-        5th: Name of the interaction property to set (i.e. "lennardJones")
+        """Generates test cases for checking interaction parameters set and
+        gotten back from the espresso core actually match those in the Python
+        classes. Only keys which are present in ``_params`` are checked.
+
+        Parameters
+        ----------
+        _partType1, _partType2: :obj:`int`
+            Particle type ids to check on
+        _interClass: class derived from :class:`espressomd.interactions.NonBondedInteraction`
+            Class of the interaction to test, e.g.
+            :class:`~espressomd.interactions.LennardJonesInteraction`
+        _params: :obj:`dict`
+            Interaction parameters, e.g. ``{"k": 1., "r_0": 0}``
+        _interName: :obj:`str`
+            Name of the interaction property to set (e.g. ``"lennard_jones"``)
         """
         partType1 = _partType1
         partType2 = _partType2
@@ -88,6 +131,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
                 params.__str__() +
                 " vs. " +
                 outParams.__str__())
+            self.parameterKeys(outInter)
 
         return func
 

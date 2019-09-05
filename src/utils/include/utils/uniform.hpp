@@ -23,7 +23,7 @@
 
 namespace Utils {
 /**
- * @brief Unifomly map unsigned integer to double.
+ * @brief Uniformly map unsigned integer to double.
  */
 constexpr inline double uniform(uint64_t in) {
   auto constexpr const max = std::numeric_limits<uint64_t>::max();

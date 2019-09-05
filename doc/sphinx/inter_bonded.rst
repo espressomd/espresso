@@ -221,25 +221,18 @@ is named ``vtol``.
 Thermalized distance bond
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This bond can be used to apply Langevin thermalization on the centre of mass
-and the distance of a particle pair.  Each thermostat can have its own
-temperature and friction coefficient.
-
-The bond is configured with::
+A thermalized bond can be instantiated via
+:class:`espressomd.interactions.ThermalizedBond`::
 
     from espressomd.interactions import ThermalizedBond
     thermalized_bond = ThermalizedBond(temp_com=<float>, gamma_com=<float>,
                                        temp_distance=<float>, gamma_distance=<float>,
-                                       r_cut=<float>)
+                                       r_cut=<float>, seed=<int>)
     system.bonded_inter.add(thermalized_bond)
 
-The parameters are:
-
-    * ``temp_com``: Temperature of the Langevin thermostat for the COM of the particle pair.
-    * ``gamma_com``: Friction coefficient of the Langevin thermostat for the COM of the particle pair.
-    * ``temp_distance``: Temperature of the Langevin thermostat for the distance vector of the particle pair.
-    * ``gamma_distance``: Friction coefficient of the Langevin thermostat for the distance vector of the particle pair.
-    * ``r_cut``:  Specifies maximum distance beyond which the bond is considered broken.
+This bond can be used to apply Langevin thermalization on the centre of mass
+and the distance of a particle pair.  Each thermostat can have its own
+temperature and friction coefficient.
 
 The bond is closely related to simulating :ref:`Particle polarizability with
 thermalized cold Drude oscillators`.

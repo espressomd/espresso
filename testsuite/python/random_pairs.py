@@ -57,7 +57,7 @@ class RandomPairTest(ut.TestCase):
         self.system.part.clear()
 
     def pairs_n2(self, dist):
-        # Go through list of all possible pairs for full periodicy
+        # Go through list of all possible pairs for full periodicity
         # and skip those that ar not within the desired distance
         # for the current periodicity
 
