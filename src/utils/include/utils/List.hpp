@@ -66,7 +66,7 @@ private:
     std::copy(rhs.begin(), rhs.end(), begin());
   }
 
-  void move(List &&rhs) {
+  void move(List &&rhs) noexcept {
     using std::swap;
     swap(n, rhs.n);
     swap(max, rhs.max);
@@ -108,7 +108,7 @@ private:
    * @brief Realloc memory in an exception safe way.
    *
    * If Utils::realloc fails, the original memory block
-   * is unchanged an still valid, but Utils::realloc will
+   * is unchanged and still valid, but Utils::realloc will
    * throw. Because this->e is then not updated the List
    * actually stays unchanged, so that
    * we can give the strong exception safety guarantee here.
@@ -140,8 +140,9 @@ public:
     assert(size <= max_size());
     if (size != capacity()) {
       realloc(size);
-      this->n = size;
     }
+
+    this->n = size;
   }
 
   void push_back(T const &v) {

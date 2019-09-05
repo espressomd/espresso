@@ -32,7 +32,7 @@ void load(Archive &ar, IA_parameters &p,
   TabulatedPotential tab;
   ar >> tab;
 
-  new (&(p.TAB)) TabulatedPotential(std::move(tab));
+  new (&(p.tab)) TabulatedPotential(std::move(tab));
 #endif
 }
 
@@ -42,7 +42,7 @@ void save(Archive &ar, IA_parameters const &p,
   ar << make_array(reinterpret_cast<char const *>(&p), sizeof(IA_parameters));
 
 #ifdef TABULATED
-  ar << p.TAB;
+  ar << p.tab;
 #endif
 }
 

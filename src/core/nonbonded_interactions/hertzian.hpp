@@ -28,36 +28,30 @@
  */
 
 #include "nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #ifdef HERTZIAN
 
 int hertzian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig);
 
-/** Calculate Hertzian force between particle p1 and p2 */
-inline void add_hertzian_pair_force(Particle const *const p1,
-                                    Particle const *const p2,
-                                    IA_parameters const *const ia_params,
+/** Calculate Hertzian force */
+inline void add_hertzian_pair_force(IA_parameters const *const ia_params,
                                     Utils::Vector3d const &d, double dist,
-                                    double dist2, Utils::Vector3d &force) {
-  if (dist < ia_params->Hertzian_sig) {
-    auto const fac = 5. / 2. * ia_params->Hertzian_eps /
-                     ia_params->Hertzian_sig *
-                     pow(1 - dist / ia_params->Hertzian_sig, 3. / 2.) / dist;
+                                    Utils::Vector3d &force) {
+  if (dist < ia_params->hertzian.sig) {
+    auto const fac = 5. / 2. * ia_params->hertzian.eps /
+                     ia_params->hertzian.sig *
+                     pow(1 - dist / ia_params->hertzian.sig, 3. / 2.) / dist;
     force += fac * d;
   }
 }
 
-/** Calculate Hertzian energy between particle p1 and p2. */
-inline double hertzian_pair_energy(Particle const *const p1,
-                                   Particle const *const p2,
-                                   IA_parameters const *const ia_params,
-                                   Utils::Vector3d const &d, double dist,
-                                   double dist2) {
-  if (dist < ia_params->Hertzian_sig) {
-    return ia_params->Hertzian_eps *
-           pow(1 - dist / ia_params->Hertzian_sig, 5. / 2.);
+/** Calculate Hertzian energy */
+inline double hertzian_pair_energy(IA_parameters const *const ia_params,
+                                   double dist) {
+  if (dist < ia_params->hertzian.sig) {
+    return ia_params->hertzian.eps *
+           pow(1 - dist / ia_params->hertzian.sig, 5. / 2.);
   }
   return 0.0;
 }

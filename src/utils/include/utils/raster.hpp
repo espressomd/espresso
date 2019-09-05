@@ -14,7 +14,7 @@ namespace Utils {
  * This evaluates a function over a regular grid and
  * returns the function values at the grid points.
  *
- * @param offset Positon of the lowest grid point
+ * @param offset Position of the lowest grid point
  * @param grid_spacing Grid constant
  * @param size Grid size
  * @param f Function to evaluate

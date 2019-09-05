@@ -73,6 +73,7 @@
 #include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
@@ -339,14 +340,14 @@ void mpi_bcast_ia_params(int i, int j) {
   if (j >= 0) {
     /* non-bonded interaction parameters */
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-
-    *get_ia_param(j, i) = *get_ia_param(i, j);
   } else {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
   }
@@ -358,15 +359,14 @@ void mpi_bcast_ia_params_slave(int i, int j) {
   if (j >= 0) { /* non-bonded interaction parameters */
 
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-
-    *get_ia_param(j, i) = *get_ia_param(i, j);
-
   } else {                   /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       auto *tab_pot = new TabulatedPotential();
       boost::mpi::broadcast(comm_cart, *tab_pot, 0);
 
@@ -390,7 +390,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
   switch (job) {
   case 1:
     mpi_call(mpi_gather_stats_slave, -1, 1);
-    energy_calc((double *)result);
+    energy_calc((double *)result, sim_time);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or
@@ -411,7 +411,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
-    lb_calc_fluid_momentum((double *)result);
+    lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
     break;
   case 7:
     break;
@@ -434,7 +434,7 @@ void mpi_gather_stats_slave(int, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
-    energy_calc(nullptr);
+    energy_calc(nullptr, sim_time);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
@@ -451,7 +451,7 @@ void mpi_gather_stats_slave(int, int job) {
                                cell_structure.local_cells().particles());
     break;
   case 6:
-    lb_calc_fluid_momentum(nullptr);
+    lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
     break;
   case 7:
     break;
@@ -545,10 +545,12 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 void mpi_bcast_cell_structure(int cs) {
   mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs);
+  cells_re_init(cs, cell_structure.min_range);
 }
 
-void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
+void mpi_bcast_cell_structure_slave(int, int cs) {
+  cells_re_init(cs, cell_structure.min_range);
+}
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/
 

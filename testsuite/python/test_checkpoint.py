@@ -172,12 +172,18 @@ class CheckpointTest(ut.TestCase):
     def test_bonded_inter(self):
         state = system.part[1].bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0}
-        self.assertEqual(
-            len(set(state.items()) & set(reference.items())), len(reference))
+        for key in reference.keys():
+            self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
+        if 'LBTHERM' not in modes:
+            state = system.part[1].bonds[1][0].params
+            reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
+                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
+            for key in reference.keys():
+                self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertEqual(system.part[1].virtual, 1)
+        self.assertEqual(system.part[1].virtual, True)
         self.assertTrue(
             isinstance(
                 system.virtual_sites,
@@ -223,16 +229,55 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(type(system.lbboundaries[0].shape), Wall)
 
     def test_constraints(self):
-        self.assertEqual(len(system.constraints), 2)
-        c0 = system.constraints[0]
-        c1 = system.constraints[1]
-        self.assertEqual(type(c0.shape), Sphere)
-        self.assertAlmostEqual(c0.shape.radius, 0.1, delta=1E-10)
-        self.assertEqual(c0.particle_type, 17)
+        from espressomd import constraints
+        self.assertEqual(len(system.constraints),
+                         8 - int(not espressomd.has_features("ELECTROSTATICS")))
+        c = system.constraints
+
+        self.assertEqual(type(c[0].shape), Sphere)
+        self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
+        self.assertEqual(c[0].particle_type, 17)
         
-        self.assertEqual(type(c1.shape), Wall)
-        np.testing.assert_allclose(np.copy(c1.shape.normal),
+        self.assertEqual(type(c[1].shape), Wall)
+        np.testing.assert_allclose(np.copy(c[1].shape.normal),
                                    [1. / np.sqrt(3)] * 3)
+
+        self.assertEqual(type(c[2]), constraints.Gravity)
+        np.testing.assert_allclose(np.copy(c[2].g), [1., 2., 3.])
+
+        self.assertEqual(type(c[3]), constraints.HomogeneousMagneticField)
+        np.testing.assert_allclose(np.copy(c[3].H), [1., 2., 3.])
+
+        self.assertEqual(type(c[4]), constraints.HomogeneousFlowField)
+        np.testing.assert_allclose(np.copy(c[4].u), [1., 2., 3.])
+        self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
+
+        self.assertEqual(type(c[5]), constraints.PotentialField)
+        self.assertEqual(c[5].field.shape, (14, 16, 18, 1))
+        self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
+        np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
+        np.testing.assert_allclose(np.copy(c[5].grid_spacing), np.ones(3))
+        ref_pot = constraints.PotentialField(
+            field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6)
+        np.testing.assert_allclose(np.copy(c[5].field), np.copy(ref_pot.field),
+                                   atol=1e-10)
+
+        self.assertEqual(type(c[6]), constraints.ForceField)
+        self.assertEqual(c[6].field.shape, (14, 16, 18, 3))
+        self.assertAlmostEqual(c[6].default_scale, 1.4, delta=1E-10)
+        np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
+        np.testing.assert_allclose(np.copy(c[6].grid_spacing), np.ones(3))
+        ref_vec = constraints.ForceField(
+            field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4)
+        np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
+                                   atol=1e-10)
+
+        if espressomd.has_features("ELECTROSTATICS"):
+            self.assertEqual(type(c[7]), constraints.ElectricPlaneWave)
+            np.testing.assert_allclose(np.copy(c[7].E0), [1., -2., 3.])
+            np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
+            self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)
+            self.assertAlmostEqual(c[7].phi, 1.4, delta=1E-10)
 
 if __name__ == '__main__':
     ut.main()

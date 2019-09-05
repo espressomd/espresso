@@ -75,12 +75,33 @@ if OIF_GLOBAL_FORCES:
 cdef bool _system_created = False
 
 cdef class System:
-    """ The base class for espressomd.system.System().
+    """The espresso system class.
 
     .. note:: every attribute has to be declared at the class level.
               This means that methods cannot define an attribute by using
               ``self.new_attr = somevalue`` without declaring it inside this
               indentation level, either as method, property or reference.
+
+    Attributes
+    ----------
+    globals : :class:`espressomd.globals.Globals`
+    actors : :class:`espressomd.actors.Actors`
+    analysis : :class:`espressomd.analyze.Analysis`
+    auto_update_accumulators : :class:`espressomd.accumulators.AutoUpdateAccumulators`
+    bonded_inter : :class:`espressomd.interactions.BondedInteractions`
+    cell_system : :class:`espressomd.cellsystem.CellSystem`
+    collision_detection : :class:`espressomd.collision_detection.CollisionDetection`
+    comfixed : :class:`espressomd.comfixed.ComFixed`
+    constraints : :class:`espressomd.constraints.Constraints`
+    cuda_init_handle : :class:`espressomd.cuda_init.CudaInitHandle`
+    galilei : :class:`espressomd.galilei.GalileiTransform`
+    integrator : :class:`espressomd.integrate.Integrator`
+    lbboundaries : :class:`espressomd.lbboundaries.LBBoundaries`
+    ekboundaries : :class:`espressomd.ekboundaries.EKBoundaries`
+    minimize_energy : :class:`espressomd.minimize_energy.MinimizeEnergy`
+    non_bonded_inter : :class:`espressomd.interactions.NonBondedInteractions`
+    part : :class:`espressomd.particle_data.ParticleList`
+    thermostat : :class:`espressomd.thermostat.Thermostat`
 
     """
     cdef public:
@@ -184,7 +205,7 @@ cdef class System:
 
     property box_l:
         """
-        array_like of :obj:`float`:
+        (3,) array_like of :obj:`float`:
             Dimensions of the simulation box
 
         """
@@ -215,7 +236,7 @@ cdef class System:
 
     property periodicity:
         """
-        array_like of :obj:`bool`:
+        (3,) array_like of :obj:`bool`:
             System periodicity in ``[x, y, z]``, ``False`` for no periodicity
             in this direction, ``True`` for periodicity
 
@@ -267,11 +288,11 @@ cdef class System:
 
     property max_cut_nonbonded:
         def __get__(self):
-            return max_cut_nonbonded
+            return recalc_maximal_cutoff_nonbonded()
 
     property max_cut_bonded:
         def __get__(self):
-            return max_cut_bonded
+            return recalc_maximal_cutoff_bonded()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):

@@ -6,6 +6,7 @@
 #ifdef ELECTROSTATICS
 #include "Observable_stat.hpp"
 
+#include <ParticleRange.hpp>
 #include <utils/Vector.hpp>
 
 /** \name Type codes for the type of Coulomb interaction
@@ -51,7 +52,8 @@ extern Coulomb_parameters coulomb;
 namespace Coulomb {
 void pressure_n(int &n_coulomb);
 void calc_pressure_long_range(Observable_stat &virials,
-                              Observable_stat &p_tensor);
+                              Observable_stat &p_tensor,
+                              const ParticleRange &particles);
 
 void sanity_checks(int &state);
 double cutoff(const Utils::Vector3d &box_l);
@@ -60,13 +62,14 @@ void deactivate();
 void integrate_sanity_check();
 void on_observable_calc();
 void on_coulomb_change();
-void on_resort_particles();
+void on_resort_particles(const ParticleRange &particles);
 void on_boxl_change();
 void init();
 
-void calc_long_range_force();
+void calc_long_range_force(const ParticleRange &particles);
 
-void calc_energy_long_range(Observable_stat &energy);
+void calc_energy_long_range(Observable_stat &energy,
+                            const ParticleRange &particles);
 int energy_n();
 
 int iccp3m_sanity_check();

@@ -49,7 +49,7 @@ typedef struct {
   double gap_size;
   /** @copybrief MMM2D_struct::far_calculated */
   int far_calculated;
-  /** Flag whether the box is neutralized by an homogeneous background.
+  /** Flag whether the box is neutralized by a homogeneous background.
    *  If true, use a homogeneous neutralizing background for nonneutral
    *  systems. Unlike the 3D case, this background adds an additional
    *  force pointing towards the system center, so be careful with this.
@@ -107,10 +107,10 @@ int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
                    bool const_pot, double pot_diff);
 
 /// the force calculation
-void ELC_add_force();
+void ELC_add_force(const ParticleRange &particles);
 
 /// the energy calculation
-double ELC_energy();
+double ELC_energy(const ParticleRange &particles);
 
 /// check the ELC parameters
 /// @retval ES_OK
@@ -132,22 +132,22 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
                                                   Utils::Vector3d &force1,
                                                   Utils::Vector3d &force2);
 /// self energies of top and bottom layers with their virtual images
-double ELC_P3M_dielectric_layers_energy_self();
+double ELC_P3M_dielectric_layers_energy_self(const ParticleRange &particles);
 /// forces of particles in border layers with themselves
-void ELC_P3M_self_forces();
+void ELC_P3M_self_forces(const ParticleRange &particles);
 
 /// assign the additional, virtual charges, used only in energy.cpp
-void ELC_p3m_charge_assign_both();
+void ELC_p3m_charge_assign_both(const ParticleRange &particles);
 /// assign the additional, virtual charges, used only in energy.cpp
-void ELC_p3m_charge_assign_image();
+void ELC_p3m_charge_assign_image(const ParticleRange &particles);
 
 /// take into account the virtual charges in the charge sums, used in energy.cpp
-void ELC_P3M_modify_p3m_sums_both();
+void ELC_P3M_modify_p3m_sums_both(const ParticleRange &particles);
 /// take into account the virtual charges in the charge sums, used in energy.cpp
-void ELC_P3M_modify_p3m_sums_image();
+void ELC_P3M_modify_p3m_sums_image(const ParticleRange &particles);
 
 /// assign the additional, virtual charges, used only in energy.cpp
-void ELC_P3M_restore_p3m_sums();
+void ELC_P3M_restore_p3m_sums(const ParticleRange &particles);
 
 #endif
 

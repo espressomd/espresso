@@ -142,10 +142,8 @@ struct ParticleProperties {
 #endif
 
 #ifdef VIRTUAL_SITES
-  /** is particle virtual
-      0 = real particle
-      else = virtual particle */
-  int is_virtual = 0;
+  /** is particle virtual */
+  bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** In case, the "relative" implementation of virtual sites is enabled, the
   following properties define, with respect to which real particle a virtual
@@ -171,7 +169,7 @@ struct ParticleProperties {
 
 #endif
 #else  /* VIRTUAL_SITES */
-  static constexpr const int is_virtual = 0;
+  static constexpr const bool is_virtual = false;
 #endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -282,13 +280,12 @@ struct ParticleMomentum {
  *  node the particle belongs to
  */
 struct ParticleLocal {
+  /** check whether a particle is a ghost or not */
+  bool ghost = false;
   /** position in the last time step before last Verlet list update. */
   Utils::Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
-
-  /** check whether a particle is a ghost or not */
-  int ghost = 0;
 };
 
 struct ParticleParametersSwimming {
@@ -724,11 +721,11 @@ void set_particle_dipm(int part, double dipm);
 #endif
 
 #ifdef VIRTUAL_SITES
-/** Call only on the master node: set particle dipole moment (absolute value).
+/** Call only on the master node: set particle virtual flag.
  *  @param part the particle.
- *  @param is_virtual its new is_virtual.
+ *  @param is_virtual new @ref ParticleProperties::is_virtual "is_virtual" flag.
  */
-void set_particle_virtual(int part, int is_virtual);
+void set_particle_virtual(int part, bool is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat);
@@ -853,7 +850,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 void added_particle(int part);
 
 /** Used for example by \ref mpi_send_exclusion.
- *  Locally add a exclusion to a particle.
+ *  Locally add an exclusion to a particle.
  *  @param part1 the identity of the first exclusion partner
  *  @param part2 the identity of the second exclusion partner
  *  @param _delete if true, delete the exclusion instead of add
@@ -951,7 +948,7 @@ void pointer_to_quat(Particle const *p, double const *&res);
 void pointer_to_q(Particle const *p, double const *&res);
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res);
+void pointer_to_virtual(Particle const *p, bool const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE

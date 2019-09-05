@@ -28,14 +28,11 @@
  *  Implementation in \ref bonded_coulomb_sr.cpp.
  */
 
-/************************************************************/
-
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
 
 #include "bonded_interaction_data.hpp"
-#include "debug.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "particle_data.hpp"
 

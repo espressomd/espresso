@@ -26,20 +26,19 @@
 
 #include "statistics.hpp"
 
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
 #include "errorhandling.hpp"
-#include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
-#include "statistics_chain.hpp"
-#include "virtual_sites.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
@@ -292,16 +291,16 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
               int r_bins, double *rdf) {
   long int cnt = 0;
   int i, t1, t2, ind;
-  int mixed_flag = 0;
+  bool mixed_flag = false;
   double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
 
   if (n_p1 == n_p2) {
     for (i = 0; i < n_p1; i++)
       if (p1_types[i] != p2_types[i])
-        mixed_flag = 1;
+        mixed_flag = true;
   } else
-    mixed_flag = 1;
+    mixed_flag = true;
 
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
@@ -312,7 +311,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
     for (t1 = 0; t1 < n_p1; t1++) {
       if (it->p.type == p1_types[t1]) {
         /* distinguish mixed and identical rdf's */
-        auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
+        auto jt = mixed_flag ? partCfg.begin() : std::next(it);
 
         /* particle loop: p2_types*/
         for (; jt != partCfg.end(); ++jt) {
@@ -354,7 +353,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
                  int r_bins, double *rdf, int n_conf) {
   long int cnt = 0;
   int cnt_conf = 1;
-  int mixed_flag = 0;
+  bool mixed_flag = false;
   double inv_bin_width = 0.0, bin_width = 0.0;
   double volume, bin_volume, r_in, r_out;
   double *rdf_tmp;
@@ -364,9 +363,9 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   if (n_p1 == n_p2) {
     for (int i = 0; i < n_p1; i++)
       if (p1_types[i] != p2_types[i])
-        mixed_flag = 1;
+        mixed_flag = true;
   } else
-    mixed_flag = 1;
+    mixed_flag = true;
 
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
@@ -384,8 +383,8 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
       for (int t1 = 0; t1 < n_p1; t1++) {
         if (it->p.type == p1_types[t1]) {
           /* distinguish mixed and identical rdf's */
-          auto jt = (mixed_flag == 1) ? partCfg.begin() : std::next(it);
-          int j = (mixed_flag == 1) ? 0 : i + 1;
+          auto jt = mixed_flag ? partCfg.begin() : std::next(it);
+          int j = mixed_flag ? 0 : i + 1;
 
           // particle loop: p2_types
           for (; jt != partCfg.end(); ++jt) {

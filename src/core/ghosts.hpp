@@ -167,9 +167,9 @@ typedef struct {
   Cell **part_lists;
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
-     this is the shift vector. Normally this a integer multiple of the box
+     this is the shift vector. Normally this is an integer multiple of the box
      length. The shift is done on the sender side */
-  double shift[3];
+  Utils::Vector3d shift;
 } GhostCommunication;
 
 /** Properties for a ghost communication. A ghost communication is defined */
@@ -208,10 +208,6 @@ void ghost_communicator(GhostCommunicator *gc);
  * @brief Do a ghost communication with caller specified data parts.
  */
 void ghost_communicator(GhostCommunicator *gc, int data_parts);
-
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
-    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
-void invalidate_ghosts();
 
 /*@}*/
 

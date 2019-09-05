@@ -40,7 +40,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
 #endif
   if (std::any_of(local_cells.particles().begin(),
                   local_cells.particles().end(),
-                  [](Particle &p) { return p.p.is_virtual != 0; })) {
+                  [](Particle &p) { return p.p.is_virtual; })) {
     runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
                          "virtual sites present.";
     return;

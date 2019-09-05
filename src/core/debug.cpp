@@ -39,10 +39,6 @@
 
 int regular_exit = 1;
 
-#ifdef ONEPART_DEBUG
-int check_id = ONEPART_DEBUG_ID;
-#endif
-
 void check_particle_consistency() {
   Particle *part;
   Cell *cell;

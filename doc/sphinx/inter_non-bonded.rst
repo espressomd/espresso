@@ -118,11 +118,11 @@ The minimum of the potential is at
 -\epsilon + 4 \epsilon c_\mathrm{shift}`. Beyond this value the interaction is attractive.
 Beyond the distance :math:`r_\mathrm{cut}` the potential is cut off and the interaction force is zero.
 
-If :math:`c_\mathrm{shift}` is not set or it is set to the string *auto*, the shift will be
+If :math:`c_\mathrm{shift}` is set to the string ``'auto'``, the shift will be
 automatically computed such that the potential is continuous at the
-cutoff radius. If is not set, it is set to :math:`0`.
+cutoff radius.
 
-The net force on a particle can be capped by using force capping , see
+The net force on a particle can be capped by using force capping, see
 section :ref:`Capping the force during warmup`
 
 An optional additional parameter can be used to restrict the interaction

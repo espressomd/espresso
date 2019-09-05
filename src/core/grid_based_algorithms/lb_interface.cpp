@@ -41,14 +41,14 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
     auto const force_density = lbfields[linear_index].force_density;
-    auto const modes = lb_calc_modes(linear_index);
+    auto const modes = lb_calc_modes(linear_index, lbfluid);
     return kernel(modes, force_density);
   });
 }
 
 auto mpi_lb_get_density(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_density(modes);
+    return lb_calc_density(modes, lbpar);
   });
 }
 
@@ -99,7 +99,7 @@ REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_momentum_density)
 
 auto mpi_lb_get_stress(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_stress(modes, force_density);
+    return lb_calc_stress(modes, force_density, lbpar);
   });
 }
 
@@ -184,7 +184,7 @@ void lb_lbfluid_sanity_checks() {
 #endif
   }
   if (lattice_switch == ActiveLB::CPU) {
-    lb_sanity_checks();
+    lb_sanity_checks(lbpar);
     lb_boundary_mach_check();
     if (time_step > 0.)
       check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
@@ -220,7 +220,7 @@ void lb_lbfluid_reinit_parameters() {
       lb_reinit_parameters_gpu();
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    lb_reinit_parameters();
+    lb_reinit_parameters(lbpar);
   }
 }
 
@@ -232,7 +232,7 @@ void lb_lbfluid_reinit_fluid() {
     lb_reinit_fluid_gpu();
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    lb_reinit_fluid();
+    lb_reinit_fluid(lbfields, lblattice, lbpar);
   } else {
     throw std::runtime_error("LB not activated.");
   }
@@ -247,7 +247,7 @@ void lb_lbfluid_init() {
     lb_init_gpu();
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
-    lb_init();
+    lb_init(lbpar);
   }
 }
 
@@ -1136,7 +1136,7 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
 }
 
 /** calculates the average stress of all nodes by iterating
- * over all nodes and deviding by the number_of_nodes.
+ * over all nodes and dividing by the number_of_nodes.
  */
 const Utils::Vector6d lb_lbfluid_get_stress() {
   Utils::Vector6d stress{};
@@ -1294,7 +1294,7 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
   switch (field) {
   case LBParam::AGRID:
     if (lattice_switch == ActiveLB::CPU)
-      lb_init();
+      lb_init(lbpar);
 #ifdef CUDA
     if (lattice_switch == ActiveLB::GPU && this_node == 0)
       lb_init_gpu();

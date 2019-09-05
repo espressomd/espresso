@@ -392,7 +392,8 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
   }
 }
 
-void File::Write(int write_dat, PartCfg &partCfg) {
+void File::Write(int write_dat, PartCfg &partCfg,
+                 const ParticleRange &particles) {
 #ifdef H5MD_DEBUG
   std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
 #endif
@@ -441,7 +442,7 @@ void File::Write(int write_dat, PartCfg &partCfg) {
     /* loop over all local cells. */
     int particle_index = 0;
 
-    for (auto &current_particle : local_cells.particles()) {
+    for (auto &current_particle : particles) {
       fill_arrays_for_h5md_write_with_particle_property(
           particle_index, id, typ, mass, pos, image, vel, f, charge,
           current_particle, write_dat, bond);

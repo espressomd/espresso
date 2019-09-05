@@ -226,7 +226,7 @@ class ParticleProperties(ut.TestCase):
         res = s.part.select(pos=(0.2, 0.3, 0.4), q=0)
         self.assertEqual(tuple(res.id), (0,))
 
-        # Emtpy result
+        # Empty result
         res = s.part.select(q=17)
         self.assertEqual(tuple(res.id), ())
         # User-specified criterion

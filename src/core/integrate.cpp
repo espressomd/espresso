@@ -29,6 +29,7 @@
 #include "integrate.hpp"
 #include "accumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
 #include "communication.hpp"
@@ -60,6 +61,7 @@
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>
 
+#include <boost/range/algorithm/min_element.hpp>
 #include <cmath>
 #include <cstdio>
 #include <mpi.h>
@@ -215,12 +217,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 
     thermo_cool_down();
-
-#ifdef COLLISION_DETECTION
-    if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-      handle_collisions();
-    }
-#endif
 
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
@@ -382,7 +378,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef NPT
   if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    nptiso.invalidate_p_vel = 0;
+    nptiso.invalidate_p_vel = false;
     MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
     MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
@@ -406,6 +402,8 @@ void philox_counter_increment() {
     dpd_rng_counter_increment();
 #endif
   }
+  if (n_thermalized_bonds)
+    thermalized_bond_rng_counter_increment();
 }
 
 void propagate_vel_finalize_p_inst(const ParticleRange &particles) {
@@ -677,12 +675,15 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
-    if (max_cut == 0.0) {
+    if (max_cut <= 0.0) {
       runtimeErrorMsg()
           << "cannot automatically determine skin, please set it manually";
       return ES_ERROR;
     }
-    skin = std::min(0.4 * max_cut, max_skin);
+    /* maximal skin that can be used without resorting is the maximal
+     * range of the cell system minus what is needed for interactions. */
+    skin = std::min(0.4 * max_cut,
+                    *boost::min_element(cell_structure.max_range) - max_cut);
     mpi_bcast_parameter(FIELD_SKIN);
   }
 
@@ -769,7 +770,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #ifdef ELECTROSTATICS
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If electrostatics is being used you must "
-                         "use the the cubic box npt.";
+                         "use the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
@@ -779,7 +780,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #ifdef DIPOLES
   if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
-                         "use the the cubic box npt.";
+                         "use the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;

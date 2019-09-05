@@ -64,38 +64,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define VIRTUAL_SITES_RELATIVE
 
 #define EXPERIMENTAL_FEATURES
-// DEBUG Switches
-#define LJ_WARN_WHEN_CLOSE
 
+// DEBUG Switches
 #define COMM_DEBUG
 #define EVENT_DEBUG
-#define INTEG_DEBUG
 #define CELL_DEBUG
 #define GHOST_DEBUG
-#define LATTICE_DEBUG
 #define HALO_DEBUG
-#define GRID_DEBUG
-#define VERLET_DEBUG
-#define PARTICLE_DEBUG
 #define P3M_DEBUG
-#define RANDOM_DEBUG
-#define FORCE_DEBUG
 #define THERMO_DEBUG
-#define LJ_DEBUG
-#define MORSE_DEBUG
-#define ESR_DEBUG
-#define ESK_DEBUG
-#define FENE_DEBUG
-#define GHOST_FORCE_DEBUG
-#define STAT_DEBUG
-#define POLY_DEBUG
-#define PTENSOR_DEBUG
-#define LB_DEBUG
 #define VIRTUAL_SITES_DEBUG
-#define LE_DEBUG
 #ifdef CUDA
 #define CUDA_DEBUG
 #endif
-#define ESIF_DEBUG
-
-#define ONEPART_DEBUG

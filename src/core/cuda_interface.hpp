@@ -139,7 +139,7 @@ void cuda_mpi_get_particles(ParticleRange particles,
 void copy_part_data_to_gpu(ParticleRange particles);
 
 /**
- * @brief Distribute forces to the slaves, and and them to the particles.
+ * @brief Distribute forces to the slaves, and add them to the particles.
  *
  * @param particles The particles the forces (and torques should be added to)
  * @param host_forces The forces as flat array of size 3 * particles.size(),

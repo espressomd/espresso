@@ -37,12 +37,6 @@
 
 #include <vector>
 
-#ifdef COLLISION_DETECTION_DEBUG
-#define TRACE(a) a
-#else
-#define TRACE(a)
-#endif
-
 #ifdef COLLISION_DETECTION
 
 /// Data type holding the info about a single collision
@@ -97,6 +91,10 @@ bool validate_collision_parameters() {
       runtimeErrorMsg() << "collision_detection distance must be >0";
       return false;
     }
+
+    // Cache square of cutoff
+    collision_params.distance2 = Utils::sqr(collision_params.distance);
+
     if (collision_params.distance > min_global_cut) {
       runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
                            "must be larger or equal the collision detection "
@@ -110,7 +108,7 @@ bool validate_collision_parameters() {
   // If we don't have virtual sites, virtual site binding isn't possible.
   if ((collision_params.mode & COLLISION_MODE_VS) ||
       (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-    runtimeErrorMsg() << "Virtual sites based collisoin modes modes require "
+    runtimeErrorMsg() << "Virtual sites based collision modes require "
                          "the VIRTUAL_SITES feature";
     return false;
   }
@@ -228,7 +226,7 @@ bool validate_collision_parameters() {
 
     if (collision_params.part_type_after_glueing < 0) {
       runtimeErrorMsg()
-          << "Collision detection particle type after glueing needs to be >=0";
+          << "Collision detection particle type after gluing needs to be >=0";
       return false;
     }
     if (this_node == 0)
@@ -373,7 +371,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 
   local_vs_relate_to(p_vs, &get_part(relate_to));
 
-  p_vs->p.is_virtual = 1;
+  p_vs->p.is_virtual = true;
   p_vs->p.type = collision_params.vs_particle_type;
 }
 
