@@ -1157,12 +1157,12 @@ int ELC_tune(double error) {
       const auto prefactor = 2 * Utils::pi() * elc_params.far_cut;
 
       const auto sum = prefactor + 2 * (ux + uy);
-      const auto den = expm1(-prefactor * lz);
+      const auto den = -expm1(-prefactor * lz);
       const auto num1 = exp(prefactor * (h - lz));
       const auto num2 = exp(-prefactor * (h + lz));
 
-      err = 0.5 * (num1 / (-den) / (lz - h) * (sum + 1 / (lz - h)) +
-                   num2 / den / (lz + h) * (sum + 1 / (lz + h)));
+      err = 0.5 / den * (num1 * (sum + 1 / (lz - h)) / (lz - h) +
+                         num2 * (sum + 1 / (lz + h)) / (lz + h));
 
       elc_params.far_cut += min_inv_boxl;
   } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
@@ -1266,7 +1266,7 @@ void ELC_on_resort_particles() {
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
-                   int neutralize, double delta_top, double delta_bot,
+                   bool neutralize, double delta_top, double delta_bot,
                    bool const_pot, double pot_diff) {
   elc_params.maxPWerror = maxPWerror;
   elc_params.gap_size = gap_size;
@@ -1279,7 +1279,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     elc_params.delta_mid_bot = delta_bot;
 
     // neutralize is automatic with dielectric contrast
-    elc_params.neutralize = 0;
+    elc_params.neutralize = false;
     // initial setup of parameters, may change later when P3M is finally tuned
     // set the space_layer to be 1/3 of the gap size, so that box = layer
     elc_params.space_layer = (1. / 3.) * gap_size;
