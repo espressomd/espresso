@@ -24,8 +24,8 @@ import sys
 # Define the LB Parameters
 TIME_STEP = 0.01
 AGRID = 0.5
-KVISC = 7 
-DENS = 1 
+KVISC = 7
+DENS = 1
 BOX_SIZE = 6 * AGRID
 F = 1. / BOX_SIZE**3
 
@@ -64,7 +64,7 @@ class Momentum:
             np.testing.assert_allclose(
                 self.system.analysis.linear_momentum(),
               momentum, atol=4E-4)
-            
+
             # Check that particle velocity is stationary
             # up to the acceleration of 1/2 time step
             np.testing.assert_allclose(np.copy(p.v), v_final, atol=3E-3)
