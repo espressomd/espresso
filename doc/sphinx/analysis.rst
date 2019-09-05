@@ -760,7 +760,6 @@ used in the Green-Kubo relations. In general, time correlation functions
 are of the form
 
 .. math::
-   :label: eq_correlation_def
 
    C(\tau) = \left<A\left(t\right) \otimes B\left(t+\tau\right)\right>
 
@@ -851,9 +850,9 @@ special case of the velocity autocorrelation function.
    Schematic representation of buffers in the correlator.
 
 Let us consider a set of :math:`N` observable values as schematically
-shown in figure :ref:`fig_correlator_scheme`, where a value of index :math:`i` was
+shown in the figure above, where a value of index :math:`i` was
 measured at times :math:`i\delta t`. We are interested in computing the
-correlation function according to :ref:`eq_correlation_def` for a range 
+correlation function for a range 
 of lag times :math:`\tau = (i-j)\delta t` between the measurements 
 :math:`i` and :math:`j`. To simplify the notation, we drop
 :math:`\delta t` when referring to observables and lag times.
