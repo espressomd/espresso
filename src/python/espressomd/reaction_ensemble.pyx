@@ -35,6 +35,8 @@ cdef class ReactionAlgorithm:
         each other. The Boltzmann factor :math:`\\exp(-\\beta E)` gives these
         configurations a small contribution to the partition function,
         therefore they can be neglected.
+    seed : :obj:`int`
+        Initial counter value (or seed) of the Mersenne Twister RNG.
     """
     cdef object _params
     cdef CReactionAlgorithm * RE

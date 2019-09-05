@@ -18,7 +18,7 @@ import math
 import numpy as np
 
 import espressomd
-espressomd.assert_features(["MASS"])
+espressomd.assert_features(["WCA", "MASS"])
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive
 
@@ -157,22 +157,19 @@ system.time_step = 0.00022
 system.cell_system.skin = 0.4
 
 system.thermostat.set_langevin(kT=0.0, gamma=0.02, seed=42)
-WCA_cut = 2.**(1. / 6.)
 
-lj_eps = 1.0
-lj_sig = 0.7
-lj_cut = WCA_cut * lj_sig
+wca_eps = 1.0
+wca_sig = 0.7
 for i in range(2):
     for j in range(i, 2):
-        system.non_bonded_inter[i, j].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+        system.non_bonded_inter[i, j].wca.set_params(
+            epsilon=wca_eps, sigma=wca_sig)
 
-lj_eps = 1.0
-lj_sig = 1.0
-lj_cut = WCA_cut * lj_sig
+wca_eps = 1.0
+wca_sig = 1.0
 for i in range(3):
-    system.non_bonded_inter[i, 2].lennard_jones.set_params(
-        epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+    system.non_bonded_inter[i, 2].wca.set_params(
+        epsilon=wca_eps, sigma=wca_sig)
 
 visualizer = openGLLive(
     system,
