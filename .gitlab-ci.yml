@@ -478,7 +478,6 @@ check_cuda_maxset_no_gpu:
   tags:
     - docker
     - linux
-    - cuda
 
 
 check_with_odd_no_of_processors:
