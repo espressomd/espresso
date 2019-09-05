@@ -767,6 +767,54 @@ modifying the  ``$PYTHONPATH``.
 Please see the following chapters describing how to actually write
 a simulation script for |es|.
 
+Running the Jupyter interpreter requires using the ipypresso script, which is
+also located in the build directory (its name comes from the IPython
+interpreter, today known as Jupyter). To run the tutorials, you will need
+to start the Jupyter interpreter in notebook mode:
+
+.. code-block:: bash
+
+    cd doc/tutorials
+    ../../ipypresso notebook
+
+You may then browse through the different tutorial folders. Files whose name
+ends with extension .ipynb can be opened in the browser. Click on the Run
+button to execute the current block, or use the keyboard shortcut Shift+Enter.
+If the current block is a code block, the ``In [ ]`` label to the left will
+change to ``In [*]`` while the code is being executed, and become ``In [1]``
+once the execution has completed. The number increments itself every time a
+code cell is executed. This bookeeping is extremely useful when modifying
+previous code cells, as it shows which cells are out-of-date. It's also
+possible to run all cells by clicking on the "Run" drop-down menu, then on
+"Run All Below". This will change all labels to ``In [*]`` to show that the
+first one is running, while the subsequent ones are awaiting execution.
+You'll also see that many cells generate an output. When the output becomes
+very long, Jupyter will automatically put it in a box with a vertical scrollbar.
+The output may also contain static plots, dynamic plots and videos. It is also
+possible to start a 3D visualizer in a new window, however closing the window
+will exit the Python interpreter and Jupyter will notify you that the current
+Python kernel stopped. If a cell takes too long to execute, you may interrupt
+it with the stop button.
+
+To close the Jupyter notebook, go to the terminal where it was started and use
+the keyboard shortcut Ctrl+C twice.
+
+When starting the Jupyter interpreter in notebook mode, you may see the
+following warning in the terminal:
+
+.. code-block:: none
+
+    [TerminalIPythonApp] WARNING | Subcommand `ipython notebook` is deprecated and will be removed in future versions.
+    [TerminalIPythonApp] WARNING | You likely want to use `jupyter notebook` in the future
+
+This only means |es| was compiled with IPython instead of Jupyter. If Jupyter
+is installed on your system, the notebook will automatically close IPython and
+start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
+``-DIPYTHON_EXECUTABLE=$(which jupyter)``.
+
+You can find the official Jupyter documentation at
+https://jupyter.readthedocs.io/en/latest/running.html
+
 .. _Debugging es:
 
 Debugging |es|
