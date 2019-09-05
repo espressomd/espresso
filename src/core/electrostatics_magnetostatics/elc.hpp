@@ -54,7 +54,7 @@ typedef struct {
    *  systems. Unlike the 3D case, this background adds an additional
    *  force pointing towards the system center, so be careful with this.
    */
-  int neutralize;
+  bool neutralize;
 
   /// @copybrief MMM2D_struct::dielectric_contrast_on
   bool dielectric_contrast_on;
@@ -103,7 +103,7 @@ extern ELC_struct elc_params;
  *  @retval ES_OK
  */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                   int neutralize, double delta_mid_top, double delta_mid_bot,
+                   bool neutralize, double delta_mid_top, double delta_mid_bot,
                    bool const_pot, double pot_diff);
 
 /// the force calculation

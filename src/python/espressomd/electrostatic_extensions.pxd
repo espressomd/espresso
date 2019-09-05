@@ -32,7 +32,7 @@ IF ELECTROSTATICS and P3M:
             double maxPWerror
             double gap_size
             double far_cut
-            int neutralize
+            bool neutralize
             double delta_mid_top,
             double delta_mid_bot,
             bool const_pot,
