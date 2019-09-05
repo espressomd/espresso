@@ -54,7 +54,7 @@ class Momentum:
             pos=(0, 0, 0), ext_force=-applied_force, v=[.1, .2, .3])
 
         # Reach steady state
-        self.system.integrator.run(1500)
+        self.system.integrator.run(1900)
         v_final = np.copy(p.v)
         momentum = self.system.analysis.linear_momentum()
 
