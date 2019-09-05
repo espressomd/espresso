@@ -17,6 +17,7 @@ physical systems. Currently, the following tutorials are available:
 * :file:`08-visualization`: Using the online visualizers of ESPResSo
 * :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble
 * :file:`11-ferrofluid`: Modelling a monolayer ferrofluid system
+* :file:`12-constant_pH`: Modelling an acid dissociation curve using the constant pH method
 
 Using the tutorials
 -------------------
