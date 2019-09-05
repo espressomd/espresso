@@ -97,26 +97,26 @@ warm_steps = 200
 warm_n_times = 100
 min_dist = 0.9
 
-lj_cap = 5
-system.force_cap = lj_cap
+wca_cap = 5
+system.force_cap = wca_cap
 i = 0
 act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # warmup with zero temperature to remove overlaps
 while (act_min_dist < min_dist or c1.min_dist() < min_dist or c2.min_dist() < min_dist):
-    for j in range(warm_steps + lj_cap):
+    for j in range(warm_steps + wca_cap):
         print(j)
         system.integrator.run(1)
-#    system.integrator.run(warm_steps + lj_cap)
+#    system.integrator.run(warm_steps + wca_cap)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
     i += 1
-    lj_cap = lj_cap + 1
-    system.force_cap = lj_cap
+    wca_cap = wca_cap + 1
+    system.force_cap = wca_cap
 
-lj_cap = 0
-system.force_cap = lj_cap
+wca_cap = 0
+system.force_cap = wca_cap
 system.integrator.run(warm_steps)
 
 # ramp up to simulation temperature

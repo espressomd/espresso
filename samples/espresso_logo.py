@@ -158,18 +158,18 @@ system.cell_system.skin = 0.4
 
 system.thermostat.set_langevin(kT=0.0, gamma=0.02, seed=42)
 
-lj_eps = 1.0
-lj_sig = 0.7
+wca_eps = 1.0
+wca_sig = 0.7
 for i in range(2):
     for j in range(i, 2):
         system.non_bonded_inter[i, j].wca.set_params(
-            epsilon=lj_eps, sigma=lj_sig)
+            epsilon=wca_eps, sigma=wca_sig)
 
-lj_eps = 1.0
-lj_sig = 1.0
+wca_eps = 1.0
+wca_sig = 1.0
 for i in range(3):
     system.non_bonded_inter[i, 2].wca.set_params(
-        epsilon=lj_eps, sigma=lj_sig)
+        epsilon=wca_eps, sigma=wca_sig)
 
 visualizer = openGLLive(
     system,
