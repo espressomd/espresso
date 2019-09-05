@@ -24,7 +24,9 @@ Using the tutorials
 For using the tutorials, you need ESPResSo running. For installation
 instructions, please see: http://espressomd.org/html/doc/installation.html
 
-Tutorials 1, 2, 4, 5, and 8 are available as IPython notebooks. I.e., they consist of a `.ipynb` file which contains both, the source code and the corresponding explanations.
+Tutorials 1, 2, 4, 5, 8 and 12 are available as IPython notebooks, i.e.
+they consist of a `.ipynb` file which contains both the source code
+and the corresponding explanations.
 They can be viewed, changed and run interactively.
 
 
