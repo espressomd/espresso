@@ -24,7 +24,7 @@ import espressomd
 # Check if necessary features have been compiled
 #############################################################
 
-required_features = ["LENNARD_JONES"]
+required_features = ["WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
@@ -49,9 +49,8 @@ system.cell_system.skin = 10.0
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=1, sigma=1)
 
 num_part = 30
 wall_offset = 0.1
