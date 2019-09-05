@@ -59,7 +59,8 @@ class LinearMomentumTest:
         self.system.actors.add(self.lbf)
         for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             self.lbf[index].velocity = [0.3, 0.2, 0.1]
-        self.system.part.add(pos=np.random.random((10,3)) * BOX_L, v = np.ones((10,3)) * [0.1, 0.2, 0.3])
+        self.system.part.add(pos=np.random.random(
+            (10, 3)) * BOX_L, v=np.ones((10, 3)) * [0.1, 0.2, 0.3])
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=20.0)
         self.system.integrator.run(100)
 
