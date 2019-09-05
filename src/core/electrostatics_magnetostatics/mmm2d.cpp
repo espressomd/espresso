@@ -135,7 +135,7 @@ static double max_near, min_far;
 ///
 static double self_energy;
 
-MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
+MMM2D_struct mmm2d_params = {1e100, 10, 1, false, false, false, 0, 1, 1, 1};
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
 /*@{*/
@@ -1769,11 +1769,11 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
     mmm2d_params.far_cut = far_cut;
     mmm2d_params.far_cut2 = Utils::sqr(far_cut);
     if (mmm2d_params.far_cut > 0)
-      mmm2d_params.far_calculated = 0;
+      mmm2d_params.far_calculated = false;
     else {
       if ((err = MMM2D_tune_far(maxPWerror)))
         return err;
-      mmm2d_params.far_calculated = 1;
+      mmm2d_params.far_calculated = true;
     }
   }
 

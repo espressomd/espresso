@@ -58,8 +58,8 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10,    1, 0, 1, true, false, 1,
-                         1,     false, 0, 0, 0, 0, 0.0};
+ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
+                         1,     false, 0, 0, 0, 0,    0.0};
 
 /****************************************
  * LOCAL ARRAYS
@@ -1313,9 +1313,9 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
     elc_params.far_cut2 = Utils::sqr(far_cut);
-    elc_params.far_calculated = 0;
+    elc_params.far_calculated = false;
   } else {
-    elc_params.far_calculated = 1;
+    elc_params.far_calculated = true;
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC tuning failed, gap size too small";
     }

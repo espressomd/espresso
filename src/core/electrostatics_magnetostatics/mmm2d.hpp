@@ -56,7 +56,7 @@ typedef struct {
    *  In the latter case, the cutoff will be adapted if important parameters,
    *  such as the box dimensions, change.
    */
-  int far_calculated;
+  bool far_calculated;
   /// flag whether there is any dielectric contrast in the system.
   bool dielectric_contrast_on;
   /// @brief Flag whether a const. potential is applied.
