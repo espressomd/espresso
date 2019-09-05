@@ -106,7 +106,8 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
   double time_a, time_b;
   double min_cell_size =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
-  double const max_permissible_skin = min_cell_size - max_cut;
+  double const max_permissible_skin =
+      std::nextafter(min_cell_size - max_cut, 0.);
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;
