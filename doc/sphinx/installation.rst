@@ -177,7 +177,7 @@ Installing python dependencies
 
 There are a few python packages needed to e.g. build the documentation.
 To install the required packages as a non-root user execute the following
-command in |es| 's source directory:
+command in |es|'s source directory:
 
 .. code-block:: bash
 
@@ -190,18 +190,19 @@ Please note that on some systems, ``pip3`` has to be replaced by ``pip`` or ``pi
 Quick installation
 ------------------
 
-If you have installed the requirements (see section :ref:`Requirements
-<requirements>` ) in standard locations, to compile, it is usually enough to
-create a build directory and call ``cmake`` and ``make`` (optional steps
-which modify the build process are commented out).
-To chose the correct Python version, run
+If you have installed the requirements (see section :ref:`Requirements`) in
+standard locations, compiling |es| is usually only a matter of
+creating a build directory and calling ``cmake`` and ``make`` in it.
+To choose the correct Python version, run
 
 .. code-block:: bash
 
     python -V
     python3 -V
 
-This shows which Python version the binaries are for. Then pass the one you'd like to use in the cmake command line, below.
+This shows which Python versions are available on your system. Then pass the
+one you'd like to use (we recommend Python 3) in the ``cmake`` command line,
+shown below (optional steps which modify the build process are commented out).
 
 
 .. code-block:: bash
@@ -215,7 +216,7 @@ This shows which Python version the binaries are for. Then pass the one you'd li
     make
 
 This will build |es| with a default feature set, namely
-:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file,
+:file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
 which defines the features that should be compiled in.
 You may want to adjust the feature set to your needs. This can be easily done
 by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
@@ -269,19 +270,17 @@ Configuring
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
-features, as this will slow down significantly. Instead, compile in only
+features, as this will slow down |es| significantly. Instead, compile in only
 the features that are actually required. A strong gain in speed can be
-achieved, by disabling all non-bonded interactions except for a single
-one, e.g. . For the developers, it is also possible to turn on or off a
+achieved by disabling all non-bonded interactions except for a single
+one, e.g. ``LENNARD_JONES``. For developers, it is also possible to turn on or off a
 number of debugging messages. The features and debug messages can be
 controlled via a configuration header file that contains C-preprocessor
-declarations. Appendix lists and describes all available features. The
-file :file:`myconfig-sample.hpp` that configure will generate in the build
-directory contains a list of all possible features that can be copied
-into your own configuration file. When no configuration header is
-provided by the user, a default header, found in
-:file:`src/core/myconfig-default.hpp`, will be used that turns on the
-default features.
+declarations. Subsection :ref:`Features` describes all available features. If a
+file named :file:`myconfig.hpp` is present in the build directory when ``cmake``
+is run, all features defined in it will be compiled in. If no such file exists,
+the configuration file :file:`src/config/myconfig-default.hpp` will be used
+instead, which turns on the default features.
 
 When you distinguish between the build and the source directory, the
 configuration header can be put in either of these. Note, however, that
@@ -340,7 +339,7 @@ Features
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
-will negatively effect |es| 's performance.
+will negatively effect |es|'s performance.
 
 Features can be activated in the configuration header :file:`myconfig.hpp` (see
 section :ref:`myconfig.hpp\: Activating and deactivating features`). To
@@ -748,10 +747,10 @@ Running |es|
 ------------
 
 |es| is implemented as a Python module. This means that you need to write a
-python script for any task you want to perform with . In this chapter,
+python script for any task you want to perform with |es|. In this chapter,
 the basic structure of the interface will be explained. For a practical
 introduction, see the tutorials, which are also part of the
-distribution. To use , you need to import the espressomd module in your
+distribution. To use |es|, you need to import the espressomd module in your
 Python script. To this end, the folder containing the python module
 needs to be in the Python search path. The module is located in the
 src/python folder under the build directory. A convenient way to run
