@@ -1152,16 +1152,19 @@ int ELC_tune(double error) {
     return ES_ERROR;
 
   elc_params.far_cut = min_inv_boxl;
-  do {
-    err =
-        0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
-                   (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz - h)) /
-                   (expm1(2 * M_PI * elc_params.far_cut * lz)) +
-               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
-                   (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz + h)) /
-                   (expm1(2 * M_PI * elc_params.far_cut * lz)));
 
-    elc_params.far_cut += min_inv_boxl;
+  do {
+      const auto prefactor = 2 * Utils::pi() * elc_params.far_cut;
+
+      const auto sum = prefactor + 2 * (ux + uy);
+      const auto den = expm1(-prefactor * lz);
+      const auto num1 = exp(prefactor * (h - lz));
+      const auto num2 = exp(-prefactor * (h + lz));
+
+      err = 0.5 * (num1 / (-den) / (lz - h) * (sum + 1 / (lz - h)) +
+                   num2 / den / (lz + h) * (sum + 1 / (lz + h)));
+
+      elc_params.far_cut += min_inv_boxl;
   } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
   if (elc_params.far_cut >= MAXIMAL_FAR_CUT)
     return ES_ERROR;
