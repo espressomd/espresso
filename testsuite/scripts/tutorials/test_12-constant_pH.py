@@ -33,10 +33,10 @@ class Tutorial(ut.TestCase):
             tutorial.pHs, tutorial.pK)
         simulated_values = tutorial.degrees_of_dissociation
         simulated_values_error = tutorial.std_dev_degree_of_dissociation
-        # test alpha +/- 0.05 and standard error of alpha less than 0.05
+        # test alpha +/- 0.05 and standard error of alpha less than 0.10
         np.testing.assert_allclose(expected_values, simulated_values, rtol=0,
                                    atol=0.05)
-        self.assertLess(np.max(simulated_values_error), 0.05)
+        self.assertLess(np.max(simulated_values_error), 0.10)
 
 
 if __name__ == "__main__":
