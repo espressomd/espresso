@@ -105,8 +105,6 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.actors.add(mmm2d)
         mmm2d_res = {}
         mmm2d_res["inert"] = self.scan()
-        
-        print(mmm2d)
 
         mmm2d.set_params(**mmm2d_param_sets["dielectric"])
         mmm2d_res["dielectric"] = self.scan()
@@ -136,18 +134,12 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.actors.add(elc)
         elc_res = {}
         elc_res["inert"] = self.scan()
-        
-        print(elc)
 
         elc.set_params(**elc_param_sets["dielectric"])
         elc_res["dielectric"] = self.scan()
-        
-        print(elc)
 
         elc.set_params(**elc_param_sets["const_pot_0"])
         elc_res["const_pot_0"] = self.scan()
-        
-        print(elc)
 
         elc.set_params(**elc_param_sets["const_pot_1"])
         elc_res["const_pot_1"] = self.scan()
