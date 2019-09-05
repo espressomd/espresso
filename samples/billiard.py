@@ -197,7 +197,7 @@ def main():
     for t1 in range(4):
         for t2 in range(6):
             system.non_bonded_inter[t1, t2].wca.set_params(
-              epsilon=mix_eps(wca_eps[0], wca_eps[0]),
+                epsilon=mix_eps(wca_eps[0], wca_eps[0]),
               sigma=mix_sig(wca_sig[0], wca_sig[0]))
 
     ball_y = table_h + ball_diam * 1.5
