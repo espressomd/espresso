@@ -155,7 +155,7 @@ class LangevinThermostat(ut.TestCase):
         gamma_r_a = np.array((1.5, 0.7, 1.2))
         o0 = np.array((5., 5., 5.))
 
-        system.time_step = 0.0005
+        system.time_step = 0.0001
         system.part.clear()
         system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
