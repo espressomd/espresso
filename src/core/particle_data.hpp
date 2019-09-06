@@ -282,13 +282,12 @@ struct ParticleMomentum {
  *  node the particle belongs to
  */
 struct ParticleLocal {
+  /** check whether a particle is a ghost or not */
+  bool ghost = false;
   /** position in the last time step before last Verlet list update. */
   Utils::Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
-
-  /** check whether a particle is a ghost or not */
-  int ghost = 0;
 };
 
 struct ParticleParametersSwimming {

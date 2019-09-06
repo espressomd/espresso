@@ -40,6 +40,7 @@
 #define _DLC_DIPOLAR_H
 
 #include "config.hpp"
+#include <ParticleRange.hpp>
 
 #if defined(DIPOLES) && defined(DP3M)
 
@@ -76,8 +77,8 @@ extern DLC_struct dlc_params;
 
 int mdlc_set_params(double maxPWerror, double gap_size, double far_cut);
 int mdlc_sanity_checks();
-void add_mdlc_force_corrections();
-double add_mdlc_energy_corrections();
+void add_mdlc_force_corrections(const ParticleRange &particles);
+double add_mdlc_energy_corrections(const ParticleRange &particles);
 void calc_mu_max();
 #endif
 

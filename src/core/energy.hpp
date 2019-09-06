@@ -56,7 +56,7 @@ void master_energy_calc();
 void energy_calc(double *result);
 
 /** Calculate long range energies (P3M, MMM2d...). */
-void calc_long_range_energies();
+void calc_long_range_energies(const ParticleRange &particles);
 
 /** Calculate the total energy */
 double calculate_current_potential_energy_of_system();

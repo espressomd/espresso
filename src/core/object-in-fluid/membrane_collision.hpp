@@ -68,9 +68,9 @@ inline void add_membrane_collision_pair_force(
    *
    *********************/
 
-  if (dist < (ia_params->membrane_cut + ia_params->membrane_offset)) {
+  if (dist < (ia_params->membrane.cut + ia_params->membrane.offset)) {
 
-    auto const r_off = dist - ia_params->membrane_offset;
+    auto const r_off = dist - ia_params->membrane.offset;
     // offset needs to be checked for the unphysical case when r_off should be
     // negative
 
@@ -96,8 +96,8 @@ inline void add_membrane_collision_pair_force(
       auto const angle = acos(product);
 
       if (fabs(angle) > SMALL_OIF_MEMBRANE_CUTOFF) {
-        auto const fac = sigmoid_force_r(ia_params->membrane_a,
-                                         ia_params->membrane_n, r_off) /
+        auto const fac = sigmoid_force_r(ia_params->membrane.a,
+                                         ia_params->membrane.n, r_off) /
                          dist;
         force -= (fac / ndir) * dir;
       }

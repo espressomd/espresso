@@ -58,8 +58,6 @@ int tabulated_bonded_set_params(int bond_type,
                                 double max, std::vector<double> const &energy,
                                 std::vector<double> const &force);
 
-/* BONDED INTERACTIONS */
-
 /** Compute a tabulated bond length force.
  *
  *  The force acts in the direction of the connecting vector between the

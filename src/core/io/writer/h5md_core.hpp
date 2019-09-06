@@ -73,7 +73,7 @@ public:
    * write methods.
    * Boolean values for position, velocity, force and mass.
    */
-  void Write(int write_dat, PartCfg &partCfg);
+  void Write(int write_dat, PartCfg &partCfg, const ParticleRange &particles);
 
   std::string &filename() { return m_filename; };
   std::string &scriptname() { return m_scriptname; };

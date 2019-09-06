@@ -37,15 +37,15 @@ int tabulated_set_params(int part_type_a, int part_type_b, double min,
   assert((max == min) || force.size() > 1);
   assert(force.size() == energy.size());
 
-  data->TAB.maxval = max;
-  data->TAB.minval = min;
+  data->tab.maxval = max;
+  data->tab.minval = min;
   if (max == min)
-    data->TAB.invstepsize = 0;
+    data->tab.invstepsize = 0;
   else
-    data->TAB.invstepsize = static_cast<double>(force.size() - 1) / (max - min);
+    data->tab.invstepsize = static_cast<double>(force.size() - 1) / (max - min);
 
-  data->TAB.force_tab = force;
-  data->TAB.energy_tab = energy;
+  data->tab.force_tab = force;
+  data->tab.energy_tab = energy;
 
   mpi_bcast_ia_params(part_type_a, part_type_b);
 

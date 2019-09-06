@@ -27,6 +27,7 @@
 
 #include "EspressoSystemInterface.hpp"
 
+#include "collision.hpp"
 #include "comfixed_global.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
@@ -91,7 +92,7 @@ void force_calc(CellStructure &cell_structure) {
 
   auto particles = cell_structure.local_cells().particles();
 #ifdef ELECTROSTATICS
-  iccp3m_iteration(particles);
+  iccp3m_iteration(particles, cell_structure.ghost_cells().particles());
 #endif
   init_forces(particles);
 
@@ -102,12 +103,16 @@ void force_calc(CellStructure &cell_structure) {
 #endif
   }
 
-  calc_long_range_forces();
+  calc_long_range_forces(particles);
 
   // Only calculate pair forces if the maximum cutoff is >0
   if (max_cut > 0) {
     short_range_loop([](Particle &p) { add_single_particle_force(&p); },
                      [](Particle &p1, Particle &p2, Distance &d) {
+#ifdef COLLISION_DETECTION
+                       if (collision_params.mode != COLLISION_MODE_OFF)
+                         detect_collision(&p1, &p2, d.dist2);
+#endif
                        add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
                                                  sqrt(d.dist2), d.dist2);
                      });
@@ -138,7 +143,7 @@ void force_calc(CellStructure &cell_structure) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation();
 
-  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual);
+  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles);
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
@@ -172,16 +177,16 @@ void force_calc(CellStructure &cell_structure) {
   recalc_forces = 0;
 }
 
-void calc_long_range_forces() {
+void calc_long_range_forces(const ParticleRange &particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_long_range_force();
+  Coulomb::calc_long_range_force(particles);
 
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   /* calculate k-space part of the magnetostatic interaction. */
-  Dipole::calc_long_range_force();
+  Dipole::calc_long_range_force(particles);
 #endif /*ifdef DIPOLES */
 }

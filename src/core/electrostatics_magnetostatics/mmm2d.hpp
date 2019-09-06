@@ -33,6 +33,7 @@
 
 #include "config.hpp"
 
+#include <ParticleRange.hpp>
 #include <utils/Vector.hpp>
 
 #ifdef ELECTROSTATICS
@@ -88,13 +89,17 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
                      double delta_bot, bool const_pot_on, double pot_diff);
 
 /** the general long range force/energy calculation */
-double MMM2D_add_far(int f, int e);
+double MMM2D_add_far(int f, int e, const ParticleRange &particles);
 
 /** the actual long range force calculation */
-inline void MMM2D_add_far_force() { MMM2D_add_far(1, 0); }
+inline void MMM2D_add_far_force(const ParticleRange &particles) {
+  MMM2D_add_far(1, 0, particles);
+}
 
 /** the actual long range energy calculation */
-inline double MMM2D_far_energy() { return MMM2D_add_far(0, 1); }
+inline double MMM2D_far_energy(const ParticleRange &particles) {
+  return MMM2D_add_far(0, 1, particles);
+}
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
 void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,

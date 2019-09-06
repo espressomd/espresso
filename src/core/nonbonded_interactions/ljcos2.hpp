@@ -50,17 +50,17 @@ inline void add_ljcos2_pair_force(Particle const *const p1,
                                   IA_parameters const *const ia_params,
                                   Utils::Vector3d const &d, double dist,
                                   Utils::Vector3d &force) {
-  if (dist < (ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
-    auto const r_off = dist - ia_params->LJCOS2_offset;
+  if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
+    auto const r_off = dist - ia_params->ljcos2.offset;
     auto fac = 0.0;
-    if (r_off < ia_params->LJCOS2_rchange) {
-      auto const frac6 = Utils::int_pow<6>(ia_params->LJCOS2_sig / r_off);
+    if (r_off < ia_params->ljcos2.rchange) {
+      auto const frac6 = Utils::int_pow<6>(ia_params->ljcos2.sig / r_off);
       fac =
-          48.0 * ia_params->LJCOS2_eps * frac6 * (frac6 - 0.5) / (r_off * dist);
-    } else if (r_off < ia_params->LJCOS2_rchange + ia_params->LJCOS2_w) {
+          48.0 * ia_params->ljcos2.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
+    } else if (r_off < ia_params->ljcos2.rchange + ia_params->ljcos2.w) {
       fac =
-          -ia_params->LJCOS2_eps * M_PI / 2 / ia_params->LJCOS2_w / dist *
-          sin(M_PI * (r_off - ia_params->LJCOS2_rchange) / ia_params->LJCOS2_w);
+          -ia_params->ljcos2.eps * M_PI / 2 / ia_params->ljcos2.w / dist *
+          sin(M_PI * (r_off - ia_params->ljcos2.rchange) / ia_params->ljcos2.w);
     }
     force += fac * d;
 
@@ -95,16 +95,16 @@ inline double ljcos2_pair_energy(Particle const *const p1,
                                  Particle const *const p2,
                                  IA_parameters const *const ia_params,
                                  Utils::Vector3d const &d, double dist) {
-  if (dist < (ia_params->LJCOS2_cut + ia_params->LJCOS2_offset)) {
-    auto const r_off = dist - ia_params->LJCOS2_offset;
-    if (r_off < ia_params->LJCOS2_rchange) {
-      auto const frac6 = Utils::int_pow<6>(ia_params->LJCOS2_sig / r_off);
-      return 4.0 * ia_params->LJCOS2_eps * (Utils::sqr(frac6) - frac6);
+  if (dist < (ia_params->ljcos2.cut + ia_params->ljcos2.offset)) {
+    auto const r_off = dist - ia_params->ljcos2.offset;
+    if (r_off < ia_params->ljcos2.rchange) {
+      auto const frac6 = Utils::int_pow<6>(ia_params->ljcos2.sig / r_off);
+      return 4.0 * ia_params->ljcos2.eps * (Utils::sqr(frac6) - frac6);
     }
-    if (r_off < (ia_params->LJCOS2_rchange + ia_params->LJCOS2_w)) {
-      auto const fac = -ia_params->LJCOS2_eps / 2 *
-                       (cos(M_PI * (r_off - ia_params->LJCOS2_rchange) /
-                            ia_params->LJCOS2_w) +
+    if (r_off < (ia_params->ljcos2.rchange + ia_params->ljcos2.w)) {
+      auto const fac = -ia_params->ljcos2.eps / 2 *
+                       (cos(M_PI * (r_off - ia_params->ljcos2.rchange) /
+                            ia_params->ljcos2.w) +
                         1);
       return fac;
     }

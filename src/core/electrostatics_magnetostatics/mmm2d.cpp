@@ -564,14 +564,14 @@ static void setup_z_force() {
   }
 }
 
-static void add_z_force() {
+static void add_z_force(const ParticleRange &particles) {
   auto constexpr size = 2;
   double field_tot = 0;
 
   /* Const. potential: subtract global dipole moment */
   if (mmm2d_params.const_pot_on) {
     double lcl_dm_z = 0;
-    for (auto const &p : local_cells.particles()) {
+    for (auto const &p : particles) {
       lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
@@ -626,7 +626,7 @@ static void setup_z_energy() {
   }
 }
 
-static double z_energy() {
+static double z_energy(const ParticleRange &particles) {
   constexpr int size = 4;
   double eng = 0;
   for (int c = 1; c <= local_cells.n; c++) {
@@ -644,7 +644,7 @@ static double z_energy() {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
 
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : particles) {
       lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
@@ -1070,7 +1070,8 @@ static double PQ_energy(double omega) {
 /* main loops */
 /*****************************************************************/
 
-static void add_force_contribution(int p, int q) {
+static void add_force_contribution(int p, int q,
+                                   const ParticleRange &particles) {
   double omega, fac;
 
   if (q == 0) {
@@ -1082,7 +1083,7 @@ static void add_force_contribution(int p, int q) {
 
       distribute(1, 1.);
 
-      add_z_force();
+      add_z_force(particles);
 
     } else {
       omega = C_2PI * ux * p;
@@ -1118,7 +1119,8 @@ static void add_force_contribution(int p, int q) {
   }
 }
 
-static double energy_contribution(int p, int q) {
+static double energy_contribution(int p, int q,
+                                  const ParticleRange &particles) {
   double eng;
   double omega, fac;
 
@@ -1127,7 +1129,7 @@ static double energy_contribution(int p, int q) {
       setup_z_energy();
       clear_image_contributions(2);
       distribute(2, 1.);
-      eng = z_energy();
+      eng = z_energy(particles);
     } else {
       omega = C_2PI * ux * p;
       fac = exp(-omega * layer_h);
@@ -1163,7 +1165,7 @@ static double energy_contribution(int p, int q) {
   return eng;
 }
 
-double MMM2D_add_far(int f, int e) {
+double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
   int p, q;
   double R, dR, q2;
 
@@ -1214,9 +1216,9 @@ double MMM2D_add_far(int f, int e) {
         if (ux2 * Utils::sqr(p) + uy2 * Utils::sqr(q) < Utils::sqr(R))
           break;
         if (f)
-          add_force_contribution(p, q);
+          add_force_contribution(p, q, particles);
         if (e)
-          eng += energy_contribution(p, q);
+          eng += energy_contribution(p, q, particles);
       }
       undone[p] = q;
     }
@@ -1229,9 +1231,9 @@ double MMM2D_add_far(int f, int e) {
     for (; q >= 0; q--) {
       // printf("xxxxx %d %d\n", p, q);
       if (f)
-        add_force_contribution(p, q);
+        add_force_contribution(p, q, particles);
       if (e)
-        eng += energy_contribution(p, q);
+        eng += energy_contribution(p, q, particles);
     }
   }
 

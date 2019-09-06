@@ -35,7 +35,6 @@
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
-#include "collision.hpp"
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
@@ -43,7 +42,7 @@
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
-#include "nonbonded_interactions/gb.hpp"
+#include "nonbonded_interactions/gay_berne.hpp"
 #include "nonbonded_interactions/hat.hpp"
 #include "nonbonded_interactions/hertzian.hpp"
 #include "nonbonded_interactions/lj.hpp"
@@ -52,8 +51,8 @@
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
+#include "nonbonded_interactions/smooth_step.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
-#include "nonbonded_interactions/steppot.hpp"
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
@@ -193,7 +192,7 @@ inline void calc_non_bonded_pair_force_parts(
 /* Gay-Berne */
 #ifdef GAY_BERNE
   // The gb force function isn't inlined, probably due to its size
-  if (dist < ia_params->GB_cut) {
+  if (dist < ia_params->gay_berne.cut) {
     add_gb_pair_force(p1, p2, ia_params, d, dist, force, torque1, torque2);
   }
 #endif
@@ -255,15 +254,10 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   /* bond creation and breaking                  */
   /***********************************************/
 
-#ifdef COLLISION_DETECTION
-  if (collision_params.mode != COLLISION_MODE_OFF)
-    detect_collision(p1, p2, dist);
-#endif
-
 #ifdef AFFINITY
   /* affinity potential */
   // Prevent jump to non-inlined function
-  if (dist < ia_params->affinity_cut) {
+  if (dist < ia_params->affinity.cut) {
     add_affinity_pair_force(p1, p2, ia_params, d, dist, force);
   }
 #endif
@@ -378,9 +372,8 @@ inline bool calc_bond_pair_force(Particle *const p1, Particle const *const p2,
     bond_broken = calc_subt_lj_pair_force(p1, p2, iaparams, dx, force);
     break;
 #endif
-  case BONDED_IA_TABULATED:
-    if (iaparams->num == 1)
-      bond_broken = calc_tab_bond_force(iaparams, dx, force);
+  case BONDED_IA_TABULATED_DISTANCE:
+    bond_broken = calc_tab_bond_force(iaparams, dx, force);
     break;
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
@@ -493,10 +486,9 @@ inline void add_bonded_force(Particle *const p1) {
         bond_broken = false;
         break;
 #endif
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 2)
-          bond_broken = calc_tab_angle_force(p1, p2, p3, iaparams, force1,
-                                             force2, force3);
+      case BONDED_IA_TABULATED_ANGLE:
+        bond_broken =
+            calc_tab_angle_force(p1, p2, p3, iaparams, force1, force2, force3);
         break;
       case BONDED_IA_IBM_TRIEL:
         bond_broken = IBM_Triel_CalcForce(p1, p2, p3, iaparams);
@@ -532,10 +524,9 @@ inline void add_bonded_force(Particle *const p1) {
         bond_broken = calc_dihedral_force(p1, p2, p3, p4, iaparams, force1,
                                           force2, force3);
         break;
-      case BONDED_IA_TABULATED:
-        if (iaparams->num == 3)
-          bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams,
-                                                force1, force2, force3);
+      case BONDED_IA_TABULATED_DIHEDRAL:
+        bond_broken = calc_tab_dihedral_force(p1, p2, p3, p4, iaparams, force1,
+                                              force2, force3);
         break;
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
