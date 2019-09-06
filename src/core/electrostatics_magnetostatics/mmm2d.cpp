@@ -1188,13 +1188,10 @@ double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
       undone[p] = q;
     }
   }
-  // printf("yyyy\n");
   /* clean up left overs */
   for (p = n_scxcache; p >= 0; p--) {
     q = undone[p];
-    // fprintf(stderr, "left over %d\n", q);
     for (; q >= 0; q--) {
-      // printf("xxxxx %d %d\n", p, q);
       if (f)
         add_force_contribution(p, q, particles);
       if (e)
@@ -1212,14 +1209,10 @@ static int MMM2D_tune_far(double error) {
   do {
     err = exp(-2 * M_PI * mmm2d_params.far_cut * min_far) / min_far *
           (C_2PI * mmm2d_params.far_cut + 2 * (ux + uy) + 1 / min_far);
-    // fprintf(stderr, "far tuning: %f -> %f, %f\n", mmm2d_params.far_cut, err,
-    // min_far);
     mmm2d_params.far_cut += min_inv_boxl;
   } while (err > error && mmm2d_params.far_cut * layer_h < MAXIMAL_FAR_CUT);
   if (mmm2d_params.far_cut * layer_h >= MAXIMAL_FAR_CUT)
     return ERROR_FARC;
-  // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err,
-  // min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
   mmm2d_params.far_cut2 = Utils::sqr(mmm2d_params.far_cut);
   return 0;
@@ -1267,8 +1260,6 @@ static int MMM2D_tune_near(double error) {
   if (P == MAXIMAL_B_CUT)
     return ERROR_BESSEL;
 
-  // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
-
   besselCutoff.resize(P);
   for (p = 1; p < P; p++)
     besselCutoff[p - 1] = (int)floor(((double)P) / (2 * p)) + 1;
@@ -1295,7 +1286,6 @@ static int MMM2D_tune_near(double error) {
   } while (err > 0.1 * part_error && n < MAXIMAL_POLYGAMMA);
   if (n == MAXIMAL_POLYGAMMA)
     return ERROR_POLY;
-  // fprintf(stderr, "polygamma cutoff %d %g\n", n, err);
 
   return 0;
 }
@@ -1400,7 +1390,6 @@ void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
       F[1] += c * k1ySum;
       F[2] += d[2] * c * k1Sum;
     }
-    // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
   }
 
   /* complex sum */
@@ -1437,7 +1426,6 @@ void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
       ztn_i = ztn_r * zet2_i + ztn_i * zet2_r;
       ztn_r = tmp_r;
     }
-    // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
   }
 
   /* psi sum */
@@ -1468,7 +1456,6 @@ void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
 
       uxrho_2nm2 = uxrho_2n;
     }
-    // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
   }
 
   F *= ux;
@@ -1534,7 +1521,6 @@ inline double calc_mmm2d_copy_pair_energy(Utils::Vector3d const &d) {
       c = 4 * cos(freq * d[0]);
       eng += c * k0Sum;
     }
-    // fprintf(stderr, " bessel energy %f\n", eng);
   }
 
   /* complex sum */
@@ -1568,7 +1554,6 @@ inline double calc_mmm2d_copy_pair_energy(Utils::Vector3d const &d) {
       ztn_i = ztn_r * zet2_i + ztn_i * zet2_r;
       ztn_r = tmp_r;
     }
-    // fprintf(stderr, "complex energy %f %d\n", eng, end);
   }
 
   /* psi sum */
@@ -1591,7 +1576,6 @@ inline double calc_mmm2d_copy_pair_energy(Utils::Vector3d const &d) {
         break;
       uxrho_2n *= uxrho2;
     }
-    // fprintf(stderr, "    psi energy %f %d\n", eng, n);
   }
 
   eng *= ux;
@@ -1791,7 +1775,6 @@ void MMM2D_dielectric_layers_force_contribution() {
     npl = celll->n;
 
     for (i = 0; i < npl; i++) {
-      // printf("enter mmm2d_dielectric %f \n",my_left[2]);
       force = {};
       p1 = &pl[i];
       for (j = 0; j < npl; j++) {

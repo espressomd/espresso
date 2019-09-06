@@ -39,9 +39,6 @@
 
 #ifdef P3M
 
-// #define CHECKPOINTS
-// #define LOG_FORCES
-
 /****************************************
  * LOCAL DEFINES
  ****************************************/
@@ -238,37 +235,6 @@ void distribute(int size) {
   copy_vec(send_buf, gblcblk, size);
   MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
-
-#ifdef CHECKPOINTS
-static void checkpoint(char *text, int p, int q, int e_size) {
-  int c, i;
-  fprintf(stderr, "%d: %s %d %d\n", this_node, text, p, q);
-
-  fprintf(stderr, "partblk\n");
-  for (c = 0; c < n_localpart; c++) {
-    fprintf(stderr, "%d", c);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk.data(), c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g",
-              block(partblk.data(), c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n");
-
-  fprintf(stderr, "gblcblk\n");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", gblcblk[i]);
-  fprintf(stderr, " m");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", gblcblk[i + e_size]);
-  fprintf(stderr, "\n");
-}
-
-#else
-#define checkpoint(text, p, q, size)
-#endif
 
 #ifdef LOG_FORCES
 static void clear_log_forces(char *where, const ParticleRange &particles) {
