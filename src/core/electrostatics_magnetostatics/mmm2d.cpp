@@ -809,8 +809,6 @@ template <size_t dir> static void add_force() {
                   partblk[size * ic + POQESM] * othcblk[POQESP] -
                   partblk[size * ic + POQECP] * othcblk[POQECM] -
                   partblk[size * ic + POQESP] * othcblk[POQESM];
-
-      ;
       ic++;
     }
   }
@@ -1043,8 +1041,6 @@ static void add_PQ_force(int p, int q, double omega) {
                    partblk[size * ic + PQECSP] * othcblk[PQECSM] -
                    partblk[size * ic + PQESCP] * othcblk[PQESCM] -
                    partblk[size * ic + PQESSP] * othcblk[PQESSM]);
-
-      ;
       ic++;
     }
   }
@@ -1092,7 +1088,6 @@ static void add_force_contribution(int p, int q) {
       distribute(1, 1.);
 
       add_z_force();
-      ;
 
     } else {
       omega = C_2PI * ux * p;
@@ -1104,7 +1099,6 @@ static void add_force_contribution(int p, int q) {
         clear_image_contributions(2);
       distribute(2, fac);
       add_P_force();
-      ;
     }
   } else if (p == 0) {
     omega = C_2PI * uy * q;
@@ -1116,7 +1110,6 @@ static void add_force_contribution(int p, int q) {
       clear_image_contributions(2);
     distribute(2, fac);
     add_Q_force();
-    ;
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
@@ -1127,7 +1120,6 @@ static void add_force_contribution(int p, int q) {
       clear_image_contributions(4);
     distribute(4, fac);
     add_PQ_force(p, q, omega);
-    ;
   }
 }
 
@@ -1141,7 +1133,6 @@ static double energy_contribution(int p, int q) {
       clear_image_contributions(2);
       distribute(2, 1.);
       eng = z_energy();
-      ;
     } else {
       omega = C_2PI * ux * p;
       fac = exp(-omega * layer_h);
@@ -1152,7 +1143,6 @@ static double energy_contribution(int p, int q) {
         clear_image_contributions(2);
       distribute(2, fac);
       eng = P_energy(omega);
-      ;
     }
   } else if (p == 0) {
     omega = C_2PI * uy * q;
@@ -1164,7 +1154,6 @@ static double energy_contribution(int p, int q) {
       clear_image_contributions(2);
     distribute(2, fac);
     eng = Q_energy(omega);
-    ;
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
@@ -1175,7 +1164,6 @@ static double energy_contribution(int p, int q) {
       clear_image_contributions(4);
     distribute(4, fac);
     eng = PQ_energy(omega);
-    ;
   }
   return eng;
 }

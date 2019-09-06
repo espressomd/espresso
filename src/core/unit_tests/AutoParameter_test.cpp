@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(read_only) {
   const int i = 12;
 
   auto p = AutoParameter("i", i);
-  ;
+
   /* Getting should work as usual */
   BOOST_CHECK(boost::get<int>(p.get()) == i);
 
