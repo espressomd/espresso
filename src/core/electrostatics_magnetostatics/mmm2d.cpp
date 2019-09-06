@@ -314,10 +314,10 @@ static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
     auto const o = sccache.begin() + (freq - 1) * particles.size();
 
     boost::transform(particles, o,
-        [pref = C_2PI * u * freq](const Particle &p) {
-          auto const arg = pref * p.r.p[dir];
-          return sc(arg);
-    });
+                     [pref = C_2PI * u * freq](const Particle &p) {
+                       auto const arg = pref * p.r.p[dir];
+                       return sc(arg);
+                     });
   }
 }
 
@@ -1133,9 +1133,8 @@ static double energy_contribution(int p, int q,
   return eng;
 }
 
-double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
-  int p, q;
-  double R, dR, q2;
+double MMM2D_add_far(bool calc_forces, bool calc_energies,
+                     const ParticleRange &particles) {
 
   n_localpart = cells_get_n_particles();
   n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
@@ -1146,7 +1145,7 @@ double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
   gblcblk.resize(n_layers * 8);
 
   // It's not really far...
-  auto eng = e ? MMM2D_self_energy(local_cells.particles()) : 0;
+  auto eng = calc_energies ? MMM2D_self_energy(local_cells.particles()) : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5 * eng;
@@ -1160,15 +1159,13 @@ double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
      from outside to inside to avoid problems with cancellation */
 
   /* up to which q vector we have to work */
-  for (p = 0; p <= n_scxcache; p++) {
-    if (p == 0)
+  for (int p = 0; p <= n_scxcache; p++) {
+    int q;
+    if (p == 0) {
       q = n_scycache;
-    else {
-      q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
-      if (q2 > 0)
-        q = 1 + (int)ceil(box_geo.length()[1] * sqrt(q2));
-      else
-        q = 1;
+    } else {
+      int const q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
+      q = 1 + (q2 > 0) ? (int)ceil(box_geo.length()[1] * sqrt(q2)) : 0;
       /* just to be on the safe side... */
       if (q > n_scycache)
         q = n_scycache;
@@ -1176,28 +1173,29 @@ double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
     undone[p] = q;
   }
 
-  dR = -log(FARRELPREC) / C_2PI * uz;
+  auto const dR = -log(FARRELPREC) / C_2PI * uz;
 
-  for (R = mmm2d_params.far_cut; R > 0; R -= dR) {
-    for (p = n_scxcache; p >= 0; p--) {
+  for (double R = mmm2d_params.far_cut; R > 0; R -= dR) {
+    for (int p = n_scxcache; p >= 0; p--) {
+      int q;
       for (q = undone[p]; q >= 0; q--) {
         if (ux2 * Utils::sqr(p) + uy2 * Utils::sqr(q) < Utils::sqr(R))
           break;
-        if (f)
+        if (calc_forces)
           add_force_contribution(p, q, particles);
-        if (e)
+        if (calc_energies)
           eng += energy_contribution(p, q, particles);
       }
       undone[p] = q;
     }
   }
   /* clean up left overs */
-  for (p = n_scxcache; p >= 0; p--) {
-    q = undone[p];
+  for (int p = n_scxcache; p >= 0; p--) {
+    int q = undone[p];
     for (; q >= 0; q--) {
-      if (f)
+      if (calc_forces)
         add_force_contribution(p, q, particles);
-      if (e)
+      if (calc_energies)
         eng += energy_contribution(p, q, particles);
     }
   }
