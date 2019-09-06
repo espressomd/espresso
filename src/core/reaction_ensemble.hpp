@@ -187,7 +187,7 @@ protected:
    * [0,maxint-1]
    *
    * @param maxint range.
-  */
+   */
   int i_random(int maxint) {
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
