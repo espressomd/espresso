@@ -58,8 +58,8 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10,    1, 0, 1, 1, false, 1,
-                         1,     false, 0, 0, 0, 0, 0.0};
+ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
+                         1,     false, 0, 0, 0,    0,    0.0};
 
 /****************************************
  * LOCAL ARRAYS
@@ -1152,14 +1152,18 @@ int ELC_tune(double error) {
     return ES_ERROR;
 
   elc_params.far_cut = min_inv_boxl;
+
   do {
-    err =
-        0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
-                   (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz - h)) /
-                   (expm1(2 * M_PI * elc_params.far_cut * lz)) +
-               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
-                   (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz + h)) /
-                   (expm1(2 * M_PI * elc_params.far_cut * lz)));
+    const auto prefactor = 2 * Utils::pi() * elc_params.far_cut;
+
+    const auto sum = prefactor + 2 * (ux + uy);
+    const auto den = -expm1(-prefactor * lz);
+    const auto num1 = exp(prefactor * (h - lz));
+    const auto num2 = exp(-prefactor * (h + lz));
+
+    err = 0.5 / den *
+          (num1 * (sum + 1 / (lz - h)) / (lz - h) +
+           num2 * (sum + 1 / (lz + h)) / (lz + h));
 
     elc_params.far_cut += min_inv_boxl;
   } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
@@ -1263,7 +1267,7 @@ void ELC_on_resort_particles() {
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
-                   int neutralize, double delta_top, double delta_bot,
+                   bool neutralize, double delta_top, double delta_bot,
                    bool const_pot, double pot_diff) {
   elc_params.maxPWerror = maxPWerror;
   elc_params.gap_size = gap_size;
@@ -1276,7 +1280,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     elc_params.delta_mid_bot = delta_bot;
 
     // neutralize is automatic with dielectric contrast
-    elc_params.neutralize = 0;
+    elc_params.neutralize = false;
     // initial setup of parameters, may change later when P3M is finally tuned
     // set the space_layer to be 1/3 of the gap size, so that box = layer
     elc_params.space_layer = (1. / 3.) * gap_size;
@@ -1309,9 +1313,9 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
     elc_params.far_cut2 = Utils::sqr(far_cut);
-    elc_params.far_calculated = 0;
+    elc_params.far_calculated = false;
   } else {
-    elc_params.far_calculated = 1;
+    elc_params.far_calculated = true;
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC tuning failed, gap size too small";
     }
