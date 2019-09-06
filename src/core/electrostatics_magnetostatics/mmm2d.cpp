@@ -384,9 +384,9 @@ inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
 template <class OutRange, class T, class InRange1, class InRange2>
 void addscale_vec(OutRange out, T scale, InRange1 in1, InRange2 in2) {
   assert(in2.size() == out.size());
-  boost::transform(in1, in2, out.begin(), [scale](auto const&a, auto const&b) {
-      return scale * a + b;
-  } );
+  boost::transform(
+      in1, in2, out.begin(),
+      [scale](auto const &a, auto const &b) { return scale * a + b; });
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
@@ -396,14 +396,12 @@ inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
   using Utils::make_span;
 
   addscale_vec(make_span(pdc_d, size), scale, make_const_span(pdc_s1, size),
-          make_const_span(pdc_s2, size));
+               make_const_span(pdc_s2, size));
 }
 
-template<class OutRange, class T>
-void scale_vec(T scale, OutRange out) {
-  boost::transform(out, out.begin(), [scale](auto const&e) {
-    return scale * e;
-  });
+template <class OutRange, class T> void scale_vec(T scale, OutRange out) {
+  boost::transform(out, out.begin(),
+                   [scale](auto const &e) { return scale * e; });
 }
 
 /** pdc_d = scale*pdc */
@@ -416,8 +414,7 @@ inline void scale_vec(double scale, double *pdc, int size) {
    e_size is the size of only the top or bottom half, i.e. half of size.
 */
 
-template<class Span>
-auto block(Span in, int index, int size) {
+template <class Span> auto block(Span in, int index, int size) {
   using Utils::make_span;
 
   assert(in.size() >= ((index + 1) * size));
@@ -436,11 +433,11 @@ inline double *blwentry(double *p, int index, int e_size) {
 */
 
 auto blwentry(double *p, int index, int e_size) {
-  return block(p, 2*index, e_size);
+  return block(p, 2 * index, e_size);
 }
 
 auto abventry(double *p, int index, int e_size) {
-  return block(p, 2* index + 1, e_size);
+  return block(p, 2 * index + 1, e_size);
 }
 
 /* dealing with the image contributions from far outside the simulation box */
