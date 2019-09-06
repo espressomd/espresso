@@ -23,15 +23,14 @@
 #error Do not include CUDA headers in normal C++-code!!!
 #endif
 
-/**cuda streams for parallel computing on cpu and gpu */
+/** cuda streams for parallel computing on cpu and gpu */
 extern cudaStream_t stream[1];
 
-/**erroroutput for memory allocation and memory copy
- * @param err cuda error code
- * @param *file .cu file were the error took place
- * @param line line of the file were the error took place
+/** Error output for memory allocation and memory copy
+ *  @param err   cuda error code
+ *  @param file  .cu file were the error took place
+ *  @param line  line of the file were the error took place
  */
-
 void _cuda_safe_mem(cudaError_t err, const char *file, unsigned int line);
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,

@@ -31,7 +31,7 @@ except ImportError:
 
 
 # Convenient Checkpointing for ESPResSo
-class Checkpoint(object):
+class Checkpoint:
 
     """Checkpoint handling (reading and writing).
 

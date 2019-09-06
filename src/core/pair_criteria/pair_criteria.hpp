@@ -68,7 +68,7 @@ public:
     IA_parameters *ia_params = get_ia_param(p1.p.type, p2.p.type);
 
     return (calc_non_bonded_pair_energy(
-               &p1, &p2, ia_params, vec21.data(), dist_betw_part,
+               &p1, &p2, ia_params, vec21, dist_betw_part,
                dist_betw_part * dist_betw_part)) >= m_cut_off;
   };
   double get_cut_off() { return m_cut_off; }

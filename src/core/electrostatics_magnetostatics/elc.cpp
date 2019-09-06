@@ -1323,7 +1323,7 @@ void ELC_P3M_self_forces() {
       pos[2] = -p.r.p[2];
       auto const d = get_mi_vector(p.r.p, pos, box_geo);
 
-      p3m_add_pair_force(q, d.data(), d.norm(), p.f.f.data());
+      p3m_add_pair_force(q, d, d.norm(), p.f.f);
     }
     if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
       q = elc_params.delta_mid_top * p.p.q * p.p.q;
@@ -1332,7 +1332,7 @@ void ELC_P3M_self_forces() {
       pos[2] = 2 * elc_params.h - p.r.p[2];
       auto const d = get_mi_vector(p.r.p, pos, box_geo);
 
-      p3m_add_pair_force(q, d.data(), d.norm(), p.f.f.data());
+      p3m_add_pair_force(q, d, d.norm(), p.f.f);
     }
   }
 }
@@ -1407,8 +1407,8 @@ void ELC_p3m_charge_assign_image() {
 
 void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
                                                   const Particle *p2,
-                                                  double *force1,
-                                                  double *force2) {
+                                                  Utils::Vector3d &force1,
+                                                  Utils::Vector3d &force2) {
   Utils::Vector3d pos;
   double q;
 
@@ -1419,7 +1419,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[2] = -p1->r.p[2];
     auto const d = get_mi_vector(p2->r.p, pos, box_geo);
 
-    p3m_add_pair_force(q, d.data(), d.norm(), force2);
+    p3m_add_pair_force(q, d, d.norm(), force2);
   }
 
   if (p1->r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1429,7 +1429,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[2] = 2 * elc_params.h - p1->r.p[2];
     auto const d = get_mi_vector(p2->r.p, pos, box_geo);
 
-    p3m_add_pair_force(q, d.data(), d.norm(), force2);
+    p3m_add_pair_force(q, d, d.norm(), force2);
   }
 
   if (p2->r.p[2] < elc_params.space_layer) {
@@ -1439,7 +1439,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[2] = -p2->r.p[2];
     auto const d = get_mi_vector(p1->r.p, pos, box_geo);
 
-    p3m_add_pair_force(q, d.data(), d.norm(), force1);
+    p3m_add_pair_force(q, d, d.norm(), force1);
   }
 
   if (p2->r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1449,7 +1449,7 @@ void ELC_P3M_dielectric_layers_force_contribution(const Particle *p1,
     pos[2] = 2 * elc_params.h - p2->r.p[2];
     auto const d = get_mi_vector(p1->r.p, pos, box_geo);
 
-    p3m_add_pair_force(q, d.data(), d.norm(), force1);
+    p3m_add_pair_force(q, d, d.norm(), force1);
   }
 }
 

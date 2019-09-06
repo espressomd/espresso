@@ -19,7 +19,7 @@ import subprocess
 from sys import argv
 
 
-class Defines(object):
+class Defines:
 
     def __init__(self, compiler, flags=[]):
         self._compiler = compiler

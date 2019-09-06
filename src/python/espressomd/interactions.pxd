@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 # Handling of interactions
 
 from libcpp.string cimport string
+from libc cimport stdint
 
 include "myconfig.pxi"
 from espressomd.system cimport *
@@ -314,15 +316,14 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double drmax2
         double drmax2i
 
-
-#* Parameters for oif_global_forces */
+    #* Parameters for oif_global_forces */
     cdef struct Oif_global_forces_bond_parameters:
         double A0_g
         double ka_g
         double V0
         double kv
 
-#* Parameters for oif_local_forces */
+    #* Parameters for oif_local_forces */
     cdef struct Oif_local_forces_bond_parameters:
         double r0
         double ks
@@ -334,14 +335,13 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double kal
         double kvisc
 
-#* Parameters for harmonic bond Potential */
+    #* Parameters for harmonic bond Potential */
     cdef struct Harmonic_bond_parameters:
         double k
         double r
         double r_cut
 
-
-#* Parameters for thermalized  bond */
+    #* Parameters for thermalized  bond */
     cdef struct Thermalized_bond_parameters:
         double temp_com
         double gamma_com
@@ -349,46 +349,42 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double gamma_distance
         double r_cut
 
-#* Parameters for Bonded Coulomb */
+    #* Parameters for Bonded Coulomb */
     cdef struct Bonded_coulomb_bond_parameters:
         double prefactor
 
-
-#* Parameters for three body angular potential (bond-angle potentials).
+    #* Parameters for three body angular potential (bond-angle potentials).
     cdef struct Angle_bond_parameters:
         double bend
         double phi0
         double cos_phi0
         double sin_phi0
 
-#* Parameters for three body angular potential (bond_angle_harmonic).
+    #* Parameters for three body angular potential (bond_angle_harmonic).
     cdef struct Angle_harmonic_bond_parameters:
         double bend
         double phi0
 
-
-#* Parameters for three body angular potential (bond_angle_cosine).
+    #* Parameters for three body angular potential (bond_angle_cosine).
     cdef struct Angle_cosine_bond_parameters:
         double bend
         double phi0
         double cos_phi0
         double sin_phi0
 
-
-#* Parameters for three body angular potential (bond_angle_cossquare).
+    #* Parameters for three body angular potential (bond_angle_cossquare).
     cdef struct Angle_cossquare_bond_parameters:
         double bend
         double phi0
         double cos_phi0
 
-#* Parameters for four body angular potential (dihedral-angle potentials). */
+    #* Parameters for four body angular potential (dihedral-angle potentials). */
     cdef struct Dihedral_bond_parameters:
         double mult
         double bend
         double phase
 
-
-#* Parameters for n-body overlapped potential (n=2,3,4). */
+    #* Parameters for n-body overlapped potential (n=2,3,4). */
     cdef struct Overlap_bond_parameters:
         char * filename
         int    type
@@ -398,19 +394,19 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double * para_b
         double * para_c
 
-#* Parameters for one-directional harmonic potential */
+    #* Parameters for one-directional harmonic potential */
     cdef struct Umbrella_bond_parameters:
         double k
         int    dir
         double r
 
-#* Dummy parameters for -LJ Potential */
+    #* Parameters for subt-LJ potential */
     cdef struct Subt_lj_bond_parameters:
         double k
         double r
         double r2
 
-#*Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM*/
+    #* Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
     cdef struct Rigid_bond_parameters:
         #*Length of rigid bond/Constrained Bond*/
         # double d
@@ -421,7 +417,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #*Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations during velocity corrections */
         double v_tol
 
-#* Parameters for IBM Triel  */
+    #* Parameters for IBM Triel */
     cdef cppclass tElasticLaw:
         pass
 
@@ -440,24 +436,24 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         double k1
         double k2
 
-#* Parameters for IBM Tribend  */
+    #* Parameters for IBM Tribend */
     cdef struct IBM_Tribend_Parameters:
         double kb
         double theta0
 
-#* Parameters for IBM VolCons  */
+    #* Parameters for IBM VolCons */
     cdef struct IBM_VolCons_Parameters:
         int softID
         double kappaV
         double volRef
 
-#* Parameters for Quartic   */
+    #* Parameters for Quartic */
     cdef struct Quartic_bond_parameters:
         double k0, k1
         double r
         double r_cut
 
-#* Union in which to store the parameters of an individual bonded interaction */
+    #* Union in which to store the parameters of an individual bonded interaction */
     cdef union Bond_parameters:
         Fene_bond_parameters fene
         Oif_global_forces_bond_parameters oif_global_forces

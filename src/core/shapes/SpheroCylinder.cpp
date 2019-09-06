@@ -24,8 +24,8 @@
 
 namespace Shapes {
 
-void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                                    double *vec) const {
+void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                    Utils::Vector3d &vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
 
@@ -57,13 +57,10 @@ void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double *dist,
       if (z < 0)
         dir = -1;
       Utils::Vector3d c_dist_cap = pos - (m_center + dir * e_z * m_half_length);
-      *dist = c_dist_cap.norm() - m_rad;
+      dist = c_dist_cap.norm() - m_rad;
       c_dist_cap.normalize();
-      Utils::Vector3d v = *dist * c_dist_cap;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = v[i];
-      }
-      *dist *= m_direction;
+      vec = dist * c_dist_cap;
+      dist *= m_direction;
       return;
     }
     /* Closest feature: cylinder */
@@ -82,20 +79,15 @@ void SpheroCylinder::calculate_dist(const Utils::Vector3d &pos, double *dist,
         dir = -1;
       Utils::Vector3d c_dist_cap =
           -(pos - (m_center + dir * e_z * m_half_length));
-      *dist = m_rad - c_dist_cap.norm();
+      dist = m_rad - c_dist_cap.norm();
       c_dist_cap.normalize();
-      Utils::Vector3d v = *dist * c_dist_cap;
-      for (int i = 0; i < 3; i++) {
-        vec[i] = v[i];
-      }
-      *dist *= -m_direction;
+      vec = dist * c_dist_cap;
+      dist *= -m_direction;
       return;
     }
   }
 
-  *dist = std::sqrt(dr * dr) * m_direction * side;
-  for (int i = 0; i < 3; i++) {
-    vec[i] = -dr * e_r[i];
-  }
+  dist = std::abs(dr) * m_direction * side;
+  vec = -dr * e_r;
 }
 } // namespace Shapes

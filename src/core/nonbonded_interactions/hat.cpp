@@ -22,7 +22,6 @@
  *
  *  Implementation of \ref hat.hpp
  */
-
 #include "hat.hpp"
 
 #ifdef HAT

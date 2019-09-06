@@ -556,7 +556,6 @@ static void halo_push_communication(LB_Fluid &lbfluid) {
 
 /** Performs basic sanity checks. */
 void lb_sanity_checks() {
-
   if (lbpar.agrid <= 0.0) {
     runtimeErrorMsg() << "Lattice Boltzmann agrid not set";
   }
