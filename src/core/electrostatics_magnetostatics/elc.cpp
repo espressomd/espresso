@@ -236,20 +236,6 @@ void distribute(int size) {
   MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
-#ifdef LOG_FORCES
-static void clear_log_forces(char *where, const ParticleRange &particles) {
-  fprintf(stderr, "%s\n", where);
-  for (auto &p : particles) {
-    fprintf(stderr, "%d %g %g %g\n", p.p.identity, p.f.f[0], p.f.f[1],
-            p.f.f[2]);
-    for (int j = 0; j < 3; j++)
-      p.f.f[j] = 0;
-  }
-}
-#else
-#define clear_log_forces(w, particles)
-#endif
-
 /*****************************************************************/
 /* dipole terms */
 /*****************************************************************/
@@ -1019,16 +1005,8 @@ void ELC_add_force(const ParticleRange &particles) {
 
   prepare_scx_cache(particles);
   prepare_scy_cache(particles);
-
-  clear_log_forces("start", particles);
-
   add_dipole_force(particles);
-
-  clear_log_forces("dipole", particles);
-
   add_z_force(particles);
-
-  clear_log_forces("z_force", particles);
 
   /* the second condition is just for the case of numerical accident */
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
@@ -1056,8 +1034,6 @@ void ELC_add_force(const ParticleRange &particles) {
       add_PQ_force(p, q, omega, particles);
     }
   }
-
-  clear_log_forces("end", particles);
 }
 
 double ELC_energy(const ParticleRange &particles) {
