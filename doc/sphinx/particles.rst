@@ -553,7 +553,7 @@ particles which have the given type. For counting the number of particles of a g
     ...
     number_of_particles = len(system.part.select(type=type))
 
-However calling ``select(type=type)`` results in looping over all particles. Therefore calling ``select()`` is slow because it loops over all particles and checks their type. In contrast, :meth:`espressomd.system.System.number_of_particles` directly can return the number of particles with that type.
+However calling ``select(type=type)`` results in looping over all particles which is slow. In contrast, :meth:`espressomd.system.System.number_of_particles` directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 
