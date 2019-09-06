@@ -1185,7 +1185,7 @@ double MMM2D_add_far(bool calc_forces, bool calc_energies,
       q = n_scycache;
     } else {
       int const q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
-      q = 1 + (q2 > 0) ? (int)ceil(box_geo.length()[1] * sqrt(q2)) : 0;
+      q = 1 + ((q2 > 0) ? (int)ceil(box_geo.length()[1] * sqrt(q2)) : 0);
       /* just to be on the safe side... */
       if (q > n_scycache)
         q = n_scycache;
