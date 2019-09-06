@@ -384,9 +384,9 @@ inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
 template <class OutRange, class T, class InRange1, class InRange2>
 void addscale_vec(OutRange out, T scale, InRange1 in1, InRange2 in2) {
   assert(in2.size() == out.size());
-  boost::transform(in1, in2, out.begin(), [scale](auto const&a, auto const&b) {
-      return scale * a + b;
-  } );
+  boost::transform(
+      in1, in2, out.begin(),
+      [scale](auto const &a, auto const &b) { return scale * a + b; });
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
@@ -396,14 +396,12 @@ inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
   using Utils::make_span;
 
   addscale_vec(make_span(pdc_d, size), scale, make_const_span(pdc_s1, size),
-          make_const_span(pdc_s2, size));
+               make_const_span(pdc_s2, size));
 }
 
-template<class OutRange, class T>
-void scale_vec(T scale, OutRange out) {
-  boost::transform(out, out.begin(), [scale](auto const&e) {
-    return scale * e;
-  });
+template <class OutRange, class T> void scale_vec(T scale, OutRange out) {
+  boost::transform(out, out.begin(),
+                   [scale](auto const &e) { return scale * e; });
 }
 
 /** pdc_d = scale*pdc */
@@ -447,8 +445,8 @@ void gather_image_contributions(int e_size) {
   Utils::VectorXd<8> recvbuf;
 
   /* collect the image charge contributions with at least a layer distance */
-  boost::mpi::all_reduce(comm_cart, lclimge.data(), 2 * e_size,
-                         recvbuf.data(), std::plus<>{});
+  boost::mpi::all_reduce(comm_cart, lclimge.data(), 2 * e_size, recvbuf.data(),
+                         std::plus<>{});
 
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer
@@ -459,7 +457,8 @@ void gather_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf.data() + e_size, e_size);
+    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size),
+             recvbuf.data() + e_size, e_size);
 }
 
 /* the data transfer routine for the lclcblks itself */
