@@ -1831,10 +1831,10 @@ double MMM2D_dielectric_layers_energy_contribution() {
         Utils::Vector3d d;
         layered_get_mi_vector(d.data(), p1.r.p.data(), a);
         auto const dist2 = d.norm2();
-        auto const charge_factor = mmm2d_params.delta_mid_bot * p1.p.q * p2.p.q;
+        auto const charge_factor = mmm2d_params.delta_mid_top * p1.p.q * p2.p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
-        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) +
+        eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) -
                pref * charge_factor * d[2];
       }
     }
