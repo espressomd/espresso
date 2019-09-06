@@ -463,7 +463,6 @@ check_doxygen:
   tags:
     - docker
     - linux
-    - cuda
 
 check_cuda_maxset_no_gpu:
   <<: *global_job_definition
