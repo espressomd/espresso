@@ -217,6 +217,7 @@ cuda-maxset:
     paths:
     - build/
     expire_in: 1 week
+  when: on_success
   tags:
     - docker
     - linux
