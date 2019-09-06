@@ -251,7 +251,8 @@ bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
  */
 void ReactionAlgorithm::append_particle_property_of_random_particle(
     int type, std::vector<StoredParticleProperty> &list_of_particles) {
-  int p_id = get_random_p_id(type);
+  int random_index_in_type_map=i_random(number_of_particles_with_type(type));
+  int p_id = get_random_p_id(type, random_index_in_type_map);
   StoredParticleProperty property_of_part = {p_id, charges_of_types[type],
                                              type};
   list_of_particles.push_back(property_of_part);
@@ -791,12 +792,14 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   std::vector<int> p_id_s_changed_particles;
 
   // save old_position
-  int p_id = get_random_p_id(type);
+  int random_index_in_type_map=i_random(number_of_particles_with_type(type));
+  int p_id = get_random_p_id(type, random_index_in_type_map);
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     // determine a p_id you have not touched yet
     while (is_in_list(p_id, p_id_s_changed_particles)) {
+      random_index_in_type_map=i_random(number_of_particles_with_type(type));
       p_id = get_random_p_id(
-          type); // check whether you already touched this p_id, then reassign
+          type, random_index_in_type_map); // check whether you already touched this p_id, then reassign
     }
 
     auto part = get_particle_data(p_id);
