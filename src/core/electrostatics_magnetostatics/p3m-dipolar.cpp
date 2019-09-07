@@ -38,7 +38,6 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"

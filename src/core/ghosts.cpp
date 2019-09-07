@@ -26,7 +26,6 @@
  */
 #include "ghosts.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "particle_data.hpp"
 

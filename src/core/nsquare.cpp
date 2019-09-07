@@ -26,7 +26,6 @@
 #include "nsquare.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
-#include "debug.hpp"
 #include "ghosts.hpp"
 
 #include <cstring>

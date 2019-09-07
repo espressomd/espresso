@@ -26,7 +26,6 @@
 
 #include "config.hpp"
 
-#include "debug.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"

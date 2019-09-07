@@ -55,7 +55,6 @@
 
 #ifdef P3M
 
-#include "debug.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
 

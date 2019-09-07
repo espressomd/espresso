@@ -29,7 +29,6 @@
 #include <cstring>
 
 #include "communication.hpp"
-#include "debug.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "halo.hpp"

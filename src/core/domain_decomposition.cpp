@@ -26,7 +26,6 @@
 #include "domain_decomposition.hpp"
 
 #include "communication.hpp"
-#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 

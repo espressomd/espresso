@@ -27,7 +27,6 @@
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "global.hpp"
 
 #include <boost/algorithm/clamp.hpp>
