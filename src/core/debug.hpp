@@ -61,14 +61,6 @@ extern int regular_exit;
 #define EVENT_TRACE(cmd)
 #endif
 
-#ifdef HALO_DEBUG
-#define HALO_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-/** Equals { cmd  } iff HALO_DEBUG is set. */
-#define HALO_TRACE(cmd)
-#endif
-
 #ifdef P3M_DEBUG
 #define P3M_TRACE(cmd)                                                         \
   { cmd; }

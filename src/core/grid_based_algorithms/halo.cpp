@@ -131,13 +131,6 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
   int vskip = type->vskip;
   int extent = type->extent;
 
-  HALO_TRACE(fprintf(stderr,
-                     "%d: halo_copy_vector %p %p vblocks=%d vstride=%d "
-                     "vskip=%d extent=%d subtype_extent=%d\n",
-                     this_node, static_cast<void *>(r_buffer),
-                     static_cast<void *>(s_buffer), vblocks, vstride, vskip,
-                     extent, type->subtype->extent));
-
   if (vflag) {
     vskip *= type->subtype->extent;
   }
@@ -157,12 +150,6 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
  * @param type     field layout type
  */
 void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
-
-  HALO_TRACE(fprintf(
-      stderr,
-      "%d: halo_dtcopy r_buffer=%p s_buffer=%p blocks=%d stride=%d skip=%d\n",
-      this_node, static_cast<void *>(r_buffer), static_cast<void *>(s_buffer),
-      type->vblocks, type->vstride, type->vskip));
 
   if (type->subtype) {
     halo_copy_vector(r_buffer, s_buffer, count, type, type->vflag);
@@ -267,14 +254,6 @@ void prepare_halo_communication(HaloCommunicator *const hc,
           hc->halo_info[cnt].type = HALO_SENDRECV;
         }
       }
-
-      HALO_TRACE(
-          fprintf(stderr,
-                  "%d: prepare_halo_communication dir=%d lr=%d s_offset=%ld "
-                  "r_offset=%ld s_node=%d d_node=%d type=%d\n",
-                  this_node, dir, lr, hinfo->s_offset, hinfo->r_offset,
-                  hinfo->source_node, hinfo->dest_node, hinfo->type));
-
       cnt++;
     }
   }
@@ -296,13 +275,7 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
   MPI_Request request;
   MPI_Status status;
 
-  HALO_TRACE(fprintf(stderr, "%d: halo_comm base=%p num=%d\n", this_node,
-                     static_cast<void *>(base), hc->num));
-
   for (int n = 0; n < hc->num; n++) {
-
-    HALO_TRACE(fprintf(stderr, "%d: halo_comm round %d\n", this_node, n));
-
     int comm_type = hc->halo_info[n].type;
     char *s_buffer = (char *)base + hc->halo_info[n].s_offset;
     char *r_buffer = (char *)base + hc->halo_info[n].r_offset;
@@ -318,11 +291,6 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
       datatype = hc->halo_info[n].datatype;
       s_node = hc->halo_info[n].source_node;
       r_node = hc->halo_info[n].dest_node;
-
-      HALO_TRACE(fprintf(stderr, "%d: halo_comm sendrecv %d to %d (%d) (%p)\n",
-                         this_node, s_node, r_node, REQ_HALO_SPREAD,
-                         (void *)&datatype));
-
       MPI_Sendrecv(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, r_buffer, 1,
                    datatype, s_node, REQ_HALO_SPREAD, comm_cart, &status);
       break;
@@ -331,10 +299,6 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
       datatype = hc->halo_info[n].datatype;
       fieldtype = hc->halo_info[n].fieldtype;
       r_node = hc->halo_info[n].dest_node;
-
-      HALO_TRACE(
-          fprintf(stderr, "%d: halo_comm send to %d.\n", this_node, r_node));
-
       MPI_Isend(s_buffer, 1, datatype, r_node, REQ_HALO_SPREAD, comm_cart,
                 &request);
       halo_dtset(r_buffer, 0, fieldtype);
@@ -344,10 +308,6 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
     case HALO_RECV:
       datatype = hc->halo_info[n].datatype;
       s_node = hc->halo_info[n].source_node;
-
-      HALO_TRACE(
-          fprintf(stderr, "%d: halo_comm recv from %d.\n", this_node, s_node));
-
       MPI_Irecv(r_buffer, 1, datatype, s_node, REQ_HALO_SPREAD, comm_cart,
                 &request);
       MPI_Wait(&request, &status);
@@ -355,10 +315,7 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
 
     case HALO_OPEN:
       fieldtype = hc->halo_info[n].fieldtype;
-
-      HALO_TRACE(fprintf(stderr, "%d: halo_comm open boundaries\n", this_node));
-
-      /* \todo this does not work for the n_i - <n_i> */
+      /** \todo this does not work for the n_i - \<n_i\> */
       halo_dtset(r_buffer, 0, fieldtype);
       break;
     }

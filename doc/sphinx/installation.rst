@@ -554,8 +554,6 @@ looking directly at the code.
    ``initialize.c``. Useful if some module does not correctly respond to
    changes of e.g. global variables.
 
--  ``HALO_DEBUG``
-
 -  ``P3M_DEBUG``
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
