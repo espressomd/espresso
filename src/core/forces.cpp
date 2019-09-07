@@ -182,7 +182,7 @@ void force_calc(CellStructure &cell_structure) {
   forcecap_cap(particles);
 
   // mark that forces are now up-to-date
-  recalc_forces = 0;
+  recalc_forces = false;
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {

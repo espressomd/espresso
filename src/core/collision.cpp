@@ -233,8 +233,8 @@ bool validate_collision_parameters() {
       make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
-  recalc_forces = 1;
-  rebuild_verletlist = 1;
+  recalc_forces = true;
+  rebuild_verletlist = true;
   on_ghost_flags_change();
 
   return true;

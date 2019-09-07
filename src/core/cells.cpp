@@ -64,7 +64,7 @@ CellStructure cell_structure;
 /** On of Cells::Resort, announces the level of resort needed.
  */
 unsigned resort_particles = Cells::RESORT_NONE;
-int rebuild_verletlist = 1;
+bool rebuild_verletlist = true;
 
 CellPList CellStructure::local_cells() const { return ::local_cells; }
 
@@ -407,7 +407,7 @@ void cells_resort_particles(int global_flag) {
   /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */
   resort_particles = Cells::RESORT_NONE;
-  rebuild_verletlist = 1;
+  rebuild_verletlist = true;
 
   realloc_particlelist(&displaced_parts, 0);
 

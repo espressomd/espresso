@@ -35,7 +35,7 @@
 
 /** Primitive fieldtypes and their initializers */
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
-                                      0, 0,       0,       nullptr};
+                                      0, 0,       false,   nullptr};
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
@@ -43,7 +43,7 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = oldtype;
-  ntype->vflag = 1;
+  ntype->vflag = true;
 
   ntype->vblocks = vblocks;
   ntype->vstride = vstride;
@@ -67,7 +67,7 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
   ntype->subtype = oldtype;
-  ntype->vflag = 0;
+  ntype->vflag = false;
 
   ntype->vblocks = vblocks;
   ntype->vstride = vstride;
@@ -119,7 +119,7 @@ void halo_dtset(char *dest, int value, Fieldtype type) {
 void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type);
 
 void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
-                      int vflag) {
+                      bool vflag) {
 
   int vblocks = type->vblocks;
   int vstride = type->vstride;

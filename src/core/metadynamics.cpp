@@ -107,27 +107,28 @@ void meta_perform(const ParticleRange &particles) {
   if (meta_switch == META_OFF)
     return;
 
-  int img1[3], img2[3], flag1 = 0, flag2 = 0;
+  int img1[3], img2[3];
+  bool flag1 = false, flag2 = false;
   Particle *p1 = nullptr, *p2 = nullptr;
 
   for (auto &p : particles) {
     if (p.p.identity == meta_pid1) {
-      flag1 = 1;
+      flag1 = true;
       p1 = &p;
       ppos1 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
-      if (flag1 && flag2) {
+      if (flag1 & flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
         meta_cur_xi = ppos2 - ppos1;
         break;
       }
     }
     if (p.p.identity == meta_pid2) {
-      flag2 = 1;
+      flag2 = true;
       p2 = &p;
       ppos2 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
-      if (flag1 && flag2) {
+      if (flag1 & flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
         meta_cur_xi = ppos2 - ppos1;
         break;
@@ -135,7 +136,7 @@ void meta_perform(const ParticleRange &particles) {
     }
   }
 
-  if (flag1 == 0 || flag2 == 0) {
+  if (!flag1 | !flag2) {
     runtimeErrorMsg() << "Metadynamics: can't find pid1 or pid2.\n";
     return;
   }
