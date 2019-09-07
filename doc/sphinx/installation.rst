@@ -559,8 +559,6 @@ looking directly at the code.
 
 -  ``CUDA_DEBUG``
 
--  ``H5MD_DEBUG``
-
 
 
 
