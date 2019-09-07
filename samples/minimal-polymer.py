@@ -20,7 +20,7 @@
 This sample sets up a polymer.
 """
 import espressomd
-espressomd.assert_features(["LENNARD_JONES"])
+espressomd.assert_features(["WCA"])
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
@@ -41,9 +41,8 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 outfile = open('polymer.vtf', 'w')
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=1, sigma=1)
 
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
@@ -66,28 +65,28 @@ vtf.writevsf(system, outfile)
 #############################################################
 
 warm_steps = 10
-lj_cap = 1
-system.force_cap = lj_cap
+wca_cap = 1
+system.force_cap = wca_cap
 i = 0
 act_min_dist = system.analysis.min_dist()
 
-# warmp with zero temperature to remove overlaps
+# warmup with zero temperature to remove overlaps
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # slowly ramp un up the cap
 while (act_min_dist < 0.95):
     vtf.writevcf(system, outfile)
-    print("min_dist: {} \t force cap: {}".format(act_min_dist, lj_cap))
+    print("min_dist: {} \t force cap: {}".format(act_min_dist, wca_cap))
     system.integrator.run(warm_steps)
     system.part[:].v = [0, 0, 0]
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-    lj_cap = lj_cap * 1.01
-    system.force_cap = lj_cap
+    wca_cap = wca_cap * 1.01
+    system.force_cap = wca_cap
 
 #remove force cap
-lj_cap = 0
-system.force_cap = lj_cap
+wca_cap = 0
+system.force_cap = wca_cap
 system.integrator.run(warm_steps * 10)
 
 # restore simulation temperature

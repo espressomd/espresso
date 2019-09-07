@@ -21,7 +21,7 @@ This sample simulates electrophoresis using P3M solver.
 """
 import espressomd
 
-required_features = ["P3M", "EXTERNAL_FORCES", "LENNARD_JONES"]
+required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
@@ -58,24 +58,20 @@ system.cell_system.max_num_cells = 2744
 # Non-bonded interactions
 ###############################################################
 # WCA between monomers
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=1, sigma=1)
 
 # WCA counterions - polymer
-system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 1].wca.set_params(
+    epsilon=1, sigma=1)
 
 # WCA ions - polymer
-system.non_bonded_inter[0, 2].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 2].wca.set_params(
+    epsilon=1, sigma=1)
 
 # WCA between ions
-system.non_bonded_inter[1, 2].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[1, 2].wca.set_params(
+    epsilon=1, sigma=1)
 
 
 # Bonded interactions

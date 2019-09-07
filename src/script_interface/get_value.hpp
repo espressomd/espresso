@@ -138,7 +138,7 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
 };
 
 /* std::vector cases
- * We implicitly transform an empty vector<Variant> into a empty vector<T>. */
+ * We implicitly transform an empty vector<Variant> into an empty vector<T>. */
 template <> struct get_value_helper<std::vector<int>, void> {
   std::vector<int> operator()(Variant const &v) const {
     return boost::apply_visitor(GetVectorOrEmpty<int>{}, v);

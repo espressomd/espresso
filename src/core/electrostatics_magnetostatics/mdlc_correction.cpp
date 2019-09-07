@@ -347,7 +347,7 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 }
 
 /** Compute and add the terms needed to correct the 3D dipolar
- *  methods when we have an slab geometry
+ *  methods when we have a slab geometry
  */
 void add_mdlc_force_corrections(const ParticleRange &particles) {
   int dip_DLC_kcut = dlc_params.far_cut;
@@ -368,7 +368,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   // First the DLC correction
   get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f, dip_DLC_t, particles);
 
-  // Now we compute the the correction like Yeh and Klapp to take into account
+  // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
   // summation.
@@ -410,7 +410,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 }
 
 /** Compute and add the terms needed to correct the energy of
- *  3D dipolar methods when we have an slab geometry
+ *  3D dipolar methods when we have a slab geometry
  */
 double add_mdlc_energy_corrections(const ParticleRange &particles) {
   double dip_DLC_energy = 0.0;
@@ -430,7 +430,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   //           printf("Energy DLC                                  = %20.15le
   //           \n",dip_DLC_energy);
 
-  // Now we compute the the correction like Yeh and Klapp to take into account
+  // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
   // summation.
@@ -530,7 +530,7 @@ int mdlc_tune(double error) {
   if (flag == 0) {
     fprintf(stderr, "tune DLC dipolar: Sorry, unable to find a proper cut-off "
                     "for such system and accuracy.\n");
-    fprintf(stderr, "Try modifiying the variable limitkc in the c-code: "
+    fprintf(stderr, "Try modifying the variable limitkc in the c-code: "
                     "dlc_correction.cpp  ... \n");
     return ES_ERROR;
   }

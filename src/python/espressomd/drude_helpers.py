@@ -42,7 +42,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
 
     system : Instance of :attr:`espressomd.system.System`
     harmonic_bond: This method adds this harmonic bond to between Drude particle and core
-    thermalized_bond: This method adds this thermalizerd_bond to between Drude particle and core
+    thermalized_bond: This method adds this thermalized_bond to between Drude particle and core
     p_core: The existing core particle
     id_drude: :obj:`int`
               This method creates the Drude particle and assigns this id.

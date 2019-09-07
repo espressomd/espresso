@@ -35,7 +35,7 @@ import espressomd
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
-required_features = ["P3M", "EXTERNAL_FORCES", "LENNARD_JONES"]
+required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser(epilog=__doc__)
@@ -81,14 +81,13 @@ for i in range(int(cs_bulk * box_l**3)):
     system.part.add(pos=np.random.random(3) * system.box_l, type=1, q=-1)
     system.part.add(pos=np.random.random(3) * system.box_l, type=2, q=1)
 
-lj_eps = 1.0
-lj_sig = 1.0
-lj_cut = 2**(1.0 / 6) * lj_sig
+wca_eps = 1.0
+wca_sig = 1.0
 types = [0, 1, 2]
 for type_1 in types:
     for type_2 in types:
-        system.non_bonded_inter[type_1, type_2].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+        system.non_bonded_inter[type_1, type_2].wca.set_params(
+            epsilon=wca_eps, sigma=wca_sig)
 
 RE = reaction_ensemble.ReactionEnsemble(
     temperature=temperature, exclusion_radius=2.0, seed=3)
@@ -111,10 +110,10 @@ for key, value in p3m_params.items():
 
 # Warmup
 #############################################################
-# warmup integration (with capped LJ potential)
+# warmup integration (with capped WCA potential)
 warm_steps = 1000
 warm_n_times = 20
-# set LJ cap
+# set WCA cap
 system.force_cap = 20
 
 # Warmup Integration Loop
@@ -124,7 +123,7 @@ while i < warm_n_times:
     RE.reaction(100)
     system.integrator.run(steps=warm_steps)
     i += 1
-    # increase LJ cap
+    # increase WCA cap
     system.force_cap += 10
 
 # remove force capping

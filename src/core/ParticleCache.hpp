@@ -287,8 +287,8 @@ public:
    * @brief Iterator pointing to the particle with the lowest
    * id.
    *
-   * Returns an random access iterator that traverses the
-   * particle
+   * Returns a random access iterator that traverses the
+   * particles
    * in order of ascending id. If the cache is not up-to-date,
    * an update is triggered. This iterator stays valid as long
    * as the cache is valid. Since the cache could be invalidated

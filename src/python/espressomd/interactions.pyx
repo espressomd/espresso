@@ -23,6 +23,7 @@ include "myconfig.pxi"
 from . import utils
 from espressomd.utils import is_valid_type
 from globals cimport immersed_boundaries
+from .utils import requires_experimental_features
 
 
 cdef class NonBondedInteraction:
@@ -2288,6 +2289,7 @@ IF THOLE:
 
 IF ROTATION:
 
+    @requires_experimental_features("No test coverage")
     class HarmonicDumbbellBond(BondedInteraction):
 
         """
@@ -3156,6 +3158,7 @@ class IBM_Tribend(BondedInteraction):
                               self._params["ind4"], self._params["kb"], flat)
 
 
+@requires_experimental_features("No test coverage")
 class IBM_VolCons(BondedInteraction):
 
     """

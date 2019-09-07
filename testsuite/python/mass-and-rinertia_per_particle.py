@@ -232,7 +232,7 @@ class ThermoTest(ut.TestCase):
 
     def check_dissipation(self, n):
         """
-        Check the dissipation relations: the simple viscous decelleration test.
+        Check the dissipation relations: the simple viscous deceleration test.
 
         Parameters
         ----------
@@ -274,7 +274,7 @@ class ThermoTest(ut.TestCase):
         # mass and inertia tensor are active
         # Check the factual translational diffusion.
         #
-        # matrices: [2 types of particless] x [3 dimensions X Y Z]
+        # matrices: [2 types of particles] x [3 dimensions X Y Z]
         # velocity^2, omega^2, position^2
         v2 = np.zeros((2, 3))
         o2 = np.zeros((2, 3))

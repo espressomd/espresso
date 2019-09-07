@@ -761,8 +761,8 @@ are of the form
 
 .. math::
 
-   C(\tau) = \left<A\left(t\right) \otimes B\left(t+\tau\right)\right>\,,
-   \label{eq:corr.def}
+   C(\tau) = \left<A\left(t\right) \otimes B\left(t+\tau\right)\right>
+
 
 where :math:`t` is time, :math:`\tau` is the lag time (time difference)
 between the measurements of (vector) observables :math:`A` and
@@ -841,6 +841,8 @@ found its way to the Fluorescence Correlation Spectroscopy
 Smit :cite:`frenkel02b` describes its application for the
 special case of the velocity autocorrelation function.
 
+.. _fig_correlator_scheme:
+
 .. figure:: figures/correlator_scheme.png
    :scale: 50 %
    :alt: Schematic representation of buffers in the correlator.
@@ -848,17 +850,17 @@ special case of the velocity autocorrelation function.
    Schematic representation of buffers in the correlator.
 
 Let us consider a set of :math:`N` observable values as schematically
-shown in figure [fig:dataSet], where a value of index :math:`i` was
-measured in time :math:`i\delta t`. We are interested in computing the
-correlation function according to equation  for a range lag times
-:math:`\tau = (i-j)\delta t` between the measurements :math:`i` and
-:math:`j`. To simplify the notation, we further drop :math:`\delta t`
-when referring to observables and lag times.
+shown in the figure above, where a value of index :math:`i` was
+measured at times :math:`i\delta t`. We are interested in computing the
+correlation function for a range 
+of lag times :math:`\tau = (i-j)\delta t` between the measurements 
+:math:`i` and :math:`j`. To simplify the notation, we drop
+:math:`\delta t` when referring to observables and lag times.
 
 The trivial implementation takes all possible pairs of values
 corresponding to lag times
 :math:`\tau \in [{\tau_{\mathrm{min}}}:{\tau_{\mathrm{max}}}]`. Without
-loss of generality, let us further consider
+loss of generality, we consider
 :math:`{\tau_{\mathrm{min}}}=0`. The computational effort for such an
 algorithm scales as
 :math:`{\cal O} \bigl({\tau_{\mathrm{max}}}^2\bigr)`. As a rule of
@@ -866,8 +868,10 @@ thumb, this is feasible if :math:`{\tau_{\mathrm{max}}}< 10^3`. The
 multiple tau correlator provides a solution to compute the correlation
 functions for arbitrary range of the lag times by coarse-graining the
 high :math:`\tau` values. It applies the naive algorithm to a relatively
-small range of lag times :math:`\tau \in [0:p-1]`. This we refer to as
-compression level 0. To compute the correlations for lag times
+small range of lag times :math:`\tau \in [0:p-1]` 
+(:math:`p` corresponds to parameter ``tau_lin``). 
+This we refer to as compression level 0. 
+To compute the correlations for lag times
 :math:`\tau \in [p:2(p-1)]`, the original data are first coarse-grained,
 so that :math:`m` values of the original data are compressed to produce
 a single data point in the higher compression level. Thus the lag time

@@ -76,10 +76,11 @@
 #define LAYERED_BTM_NEIGHBOR                                                   \
   ((layered_flags & LAYERED_BTM_MASK) != LAYERED_BOTTOM)
 
-int layered_flags = 0;
-int n_layers = -1, determine_n_layers = 1;
-double layer_h = 0, layer_h_i = 0;
+static int layered_flags = 0;
+int n_layers = -1;
+int determine_n_layers = 1;
 
+static double layer_h = 0, layer_h_i = 0;
 static int btm, top;
 
 Cell *layered_position_to_cell(const Utils::Vector3d &pos) {

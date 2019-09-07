@@ -24,7 +24,7 @@ import espressomd
 # Check if necessary features have been compiled
 #############################################################
 
-required_features = ["LENNARD_JONES"]
+required_features = ["WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
@@ -49,9 +49,8 @@ system.cell_system.skin = 10.0
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=1, sigma=1)
 
 num_part = 30
 wall_offset = 0.1
@@ -74,7 +73,7 @@ c2 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=ceil)
 
 
-# polymer.positions will avoid violating the contraints
+# polymer.positions will avoid violating the constraints
 
 fene = interactions.FeneBond(k=30, d_r_max=2)
 system.bonded_inter.add(fene)
@@ -98,26 +97,26 @@ warm_steps = 200
 warm_n_times = 100
 min_dist = 0.9
 
-lj_cap = 5
-system.force_cap = lj_cap
+wca_cap = 5
+system.force_cap = wca_cap
 i = 0
 act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # warmup with zero temperature to remove overlaps
 while (act_min_dist < min_dist or c1.min_dist() < min_dist or c2.min_dist() < min_dist):
-    for j in range(warm_steps + lj_cap):
+    for j in range(warm_steps + wca_cap):
         print(j)
         system.integrator.run(1)
-#    system.integrator.run(warm_steps + lj_cap)
+#    system.integrator.run(warm_steps + wca_cap)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
     i += 1
-    lj_cap = lj_cap + 1
-    system.force_cap = lj_cap
+    wca_cap = wca_cap + 1
+    system.force_cap = wca_cap
 
-lj_cap = 0
-system.force_cap = lj_cap
+wca_cap = 0
+system.force_cap = wca_cap
 system.integrator.run(warm_steps)
 
 # ramp up to simulation temperature

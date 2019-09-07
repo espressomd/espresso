@@ -111,7 +111,7 @@ def positions(**kwargs):
 
     params = default_params
 
-    # use bond_angle if set via kwarg
+    # use bond_angle if set via kwargs
     params["use_bond_angle"] = "bond_angle" in kwargs
 
     valid_keys = [

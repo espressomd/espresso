@@ -70,7 +70,7 @@ namespace {
 /**
  * @brief A generic particle update.
  *
- * Here the sub-struct struture of Particle is
+ * Here the sub-struct structure of Particle is
  * used: the specification of the data member to update
  * consists of two parts, the pointer to the substruct @p s
  * and a pointer to a member of that substruct @p m.
@@ -102,7 +102,7 @@ using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 /**
  * @brief Special updater for the external flags.
  *
- * These need to be treated specialy as they are
+ * These need to be treated specially as they are
  * updated masked and not overwritten.
  */
 struct UpdateExternalFlag {
@@ -156,7 +156,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::dipm>
 #endif
 #ifdef VIRTUAL_SITES
-        , UpdateProperty<int, &Prop::is_virtual>
+        , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
         , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
                          &Prop::vs_relative>
@@ -293,11 +293,11 @@ struct UpdateOrientation {
  * A message is either updates a property,
  * or a position, or ...
  * New messages can be added here, if they
- * fullfill the type requirements, namely:
+ * fulfill the type requirements, namely:
  * They either have an integer member id indicating
  * the particle that should be updated an operator()(const Particle&)
  * that is called with the particle, or a tree of
- * variants with leafs that have such a operator() and member.
+ * variants with leafs that have such an operator() and member.
  */
 using UpdateMessage = boost::variant
         < UpdatePropertyMessage
@@ -343,7 +343,7 @@ using message_type_t = typename message_type<S, s>::type;
  * @brief Visitor for message evaluation.
  *
  * This visitor either recurses into the active type
- * if it is a variant type, or otherwise callse
+ * if it is a variant type, or otherwise calls
  * operator()(Particle&) on the active type with
  * the particle that ought to be updated. This construction
  * allows to nest message variants to allow for sub-
@@ -919,8 +919,8 @@ void set_particle_dip(int part, double const *const dip) {
 #endif
 
 #ifdef VIRTUAL_SITES
-void set_particle_virtual(int part, int is_virtual) {
-  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(
+void set_particle_virtual(int part, bool is_virtual) {
+  mpi_update_particle_property<bool, &ParticleProperties::is_virtual>(
       part, is_virtual);
 }
 #endif
@@ -1409,7 +1409,7 @@ void auto_exclusions(int distance) {
   Bonded_ia_parameters *ia_params;
 
   /* partners is a list containing the currently found excluded particles for
-     each particle, and their distance, as a interleaved list */
+     each particle, and their distance, as an interleaved list */
   std::unordered_map<int, IntList> partners;
 
   /* We need bond information */
@@ -1526,7 +1526,7 @@ void pointer_to_quat(Particle const *p, double const *&res) {
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res) {
+void pointer_to_virtual(Particle const *p, bool const *&res) {
   res = &(p->p.is_virtual);
 }
 #endif

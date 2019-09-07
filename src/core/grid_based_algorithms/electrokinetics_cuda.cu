@@ -2307,7 +2307,7 @@ int ek_init() {
 
     if (lattice_switch != ActiveLB::NONE) {
       fprintf(stderr,
-              "ERROR: Electrokinetics automatically intializes the LB on the "
+              "ERROR: Electrokinetics automatically initializes the LB on the "
               "GPU and can therefore not be used in conjunction with LB.\n");
       fprintf(stderr, "ERROR: Please run either electrokinetics or LB.\n");
 
