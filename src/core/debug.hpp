@@ -53,14 +53,6 @@ extern int this_node;
  */
 extern int regular_exit;
 
-#ifdef EVENT_DEBUG
-#define EVENT_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-/** Equals { cmd } iff EVENT_DEBUG is set. */
-#define EVENT_TRACE(cmd)
-#endif
-
 #ifdef P3M_DEBUG
 #define P3M_TRACE(cmd)                                                         \
   { cmd; }

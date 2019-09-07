@@ -74,7 +74,6 @@ static int reinit_particle_comm_gpu = 1;
 #endif
 
 void on_program_start() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
 #ifdef CUDA
   cuda_init();
@@ -173,7 +172,6 @@ void on_integration_start() {
 }
 
 void on_observable_calc() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_observable_calc\n", this_node));
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
 
@@ -181,20 +179,14 @@ void on_observable_calc() {
 
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
-    EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
-
     Coulomb::on_observable_calc();
-
     reinit_electrostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   if (reinit_magnetostatics) {
-    EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
-
     Dipole::on_observable_calc();
-
     reinit_magnetostatics = 0;
   }
 #endif /*ifdef ELECTROSTATICS */
@@ -215,7 +207,6 @@ void on_particle_charge_change() {
 }
 
 void on_particle_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
 
   set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = 1;
@@ -237,7 +228,6 @@ void on_particle_change() {
 }
 
 void on_coulomb_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
 
 #ifdef ELECTROSTATICS
@@ -260,7 +250,6 @@ void on_coulomb_change() {
 }
 
 void on_short_range_ia_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_short_range_ia_changes\n", this_node));
   invalidate_obs();
 
   recalc_maximal_cutoff();
@@ -270,14 +259,12 @@ void on_short_range_ia_change() {
 }
 
 void on_constraint_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
   recalc_forces = 1;
 }
 
 void on_lbboundary_change() {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
 
   LBBoundaries::lb_init_boundaries();
@@ -287,7 +274,6 @@ void on_lbboundary_change() {
 }
 
 void on_resort_particles(const ParticleRange &particles) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   Coulomb::on_resort_particles(particles);
 #endif /* ifdef ELECTROSTATICS */
@@ -298,7 +284,6 @@ void on_resort_particles(const ParticleRange &particles) {
 }
 
 void on_boxl_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
 
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
@@ -322,7 +307,6 @@ void on_boxl_change() {
 }
 
 void on_cell_structure_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
 
 /* Now give methods a chance to react to the change in cell
    structure.  Most ES methods need to reinitialize, as they depend
@@ -348,8 +332,6 @@ void on_cell_structure_change() {
 void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
 void on_parameter_change(int field) {
-  EVENT_TRACE(
-      fprintf(stderr, "%d: shon_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:
@@ -433,7 +415,6 @@ void on_parameter_change(int field) {
 }
 
 void on_ghost_flags_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern bool ghosts_have_v;
   extern bool ghosts_have_bonds;

@@ -550,10 +550,6 @@ looking directly at the code.
 
 -  ``COMM_DEBUG`` Output from the asynchronous communication code.
 
--  ``EVENT_DEBUG`` Notifications for event calls, i.e. the ``on_...`` functions in
-   ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e.g. global variables.
-
 -  ``P3M_DEBUG``
 
 -  ``THERMO_DEBUG`` Output from the thermostats.
