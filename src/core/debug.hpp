@@ -52,11 +52,3 @@ extern int this_node;
  *  indicated. In that case, no core dump is generated.
  */
 extern int regular_exit;
-
-#ifdef P3M_DEBUG
-#define P3M_TRACE(cmd)                                                         \
-  { cmd; }
-#else
-/** Equals { cmd } iff P3M_DEBUG is set. */
-#define P3M_TRACE(cmd)
-#endif

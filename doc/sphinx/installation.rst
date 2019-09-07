@@ -550,8 +550,6 @@ looking directly at the code.
 
 -  ``COMM_DEBUG`` Output from the asynchronous communication code.
 
--  ``P3M_DEBUG``
-
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
