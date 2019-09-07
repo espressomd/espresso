@@ -19,7 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
-    Implementation of \ref thermostat.hpp "thermostat.hpp"
+ *  Implementation of \ref thermostat.hpp.
  */
 #include "thermostat.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
@@ -35,7 +35,7 @@
 #include <iostream>
 #include <unistd.h>
 
-/* thermostat switch */
+/** thermostat switch */
 int thermo_switch = THERMO_OFF;
 /** Temperature */
 double temperature = 0.0;
@@ -46,18 +46,21 @@ bool thermo_virtual = true;
 using Thermostat::GammaType;
 
 namespace {
-/* These functions return the sentinel value for the
-   Langevin params, indicating that they have not been
-   set yet. */
+/** @name Langevin parameters sentinel
+ *  These functions return the sentinel value for the Langevin
+ *  parameters, indicating that they have not been set yet.
+ */
+/*@{*/
 constexpr double sentinel(double) { return -1.0; }
 Utils::Vector3d sentinel(Utils::Vector3d) { return {-1.0, -1.0, -1.0}; }
+/*@}*/
 } // namespace
 
 /* LANGEVIN THERMOSTAT */
 
-/* Langevin friction coefficient gamma for translation. */
+/** Langevin friction coefficient gamma for translation. */
 GammaType langevin_gamma = sentinel(GammaType{});
-/* Friction coefficient gamma for rotation. */
+/** Friction coefficient gamma for rotation. */
 GammaType langevin_gamma_rotation = sentinel(GammaType{});
 GammaType langevin_pref1;
 GammaType langevin_pref2;
@@ -67,11 +70,14 @@ GammaType langevin_pref2_rotation;
 double nptiso_gamma0 = 0.0;
 double nptiso_gammav = 0.0;
 
-/** buffers for the work around for the correlated random values which cool the
-   system,
-    and require a magical heat up whenever reentering the integrator. */
+/** @name Langevin buffers
+ *  Buffers for the workaround for the correlated random values which cool the
+ *  system, and require a magical heat up whenever reentering the integrator.
+ */
+/*@{*/
 static GammaType langevin_pref2_buffer;
 static GammaType langevin_pref2_rotation_buffer;
+/*@}*/
 
 #ifdef NPT
 double nptiso_pref1;
@@ -113,8 +119,7 @@ void thermo_init_langevin() {
   langevin_pref1 = -langevin_gamma;
   langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
 
-  /* If gamma_rotation is not set explicitly,
-     use the linear one. */
+  /* If gamma_rotation is not set explicitly, use the linear one. */
   if (langevin_gamma_rotation < GammaType{}) {
     langevin_gamma_rotation = langevin_gamma;
   }

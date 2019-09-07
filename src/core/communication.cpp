@@ -127,8 +127,10 @@ int n_nodes = -1;
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
-#ifndef DOXYGEN /* this conditional prevents an interaction in Doxygen between
-                 * CALLBACK_LIST and whatever follows next */
+#ifndef DOXYGEN
+/* this conditional on DOXYGEN prevents an interaction in Doxygen between
+ * CALLBACK_LIST and whatever follows next, e.g. a function "int foo();"
+ * would become "CALLBACK_LIST int foo();" */
 CALLBACK_LIST
 #endif
 
