@@ -39,9 +39,6 @@
 
 #ifdef P3M
 
-// #define CHECKPOINTS
-// #define LOG_FORCES
-
 /****************************************
  * LOCAL DEFINES
  ****************************************/
@@ -238,51 +235,6 @@ void distribute(int size) {
   copy_vec(send_buf, gblcblk, size);
   MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
-
-#ifdef CHECKPOINTS
-static void checkpoint(char *text, int p, int q, int e_size) {
-  int c, i;
-  fprintf(stderr, "%d: %s %d %d\n", this_node, text, p, q);
-
-  fprintf(stderr, "partblk\n");
-  for (c = 0; c < n_localpart; c++) {
-    fprintf(stderr, "%d", c);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk.data(), c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g",
-              block(partblk.data(), c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n");
-
-  fprintf(stderr, "gblcblk\n");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", gblcblk[i]);
-  fprintf(stderr, " m");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", gblcblk[i + e_size]);
-  fprintf(stderr, "\n");
-}
-
-#else
-#define checkpoint(text, p, q, size)
-#endif
-
-#ifdef LOG_FORCES
-static void clear_log_forces(char *where, const ParticleRange &particles) {
-  fprintf(stderr, "%s\n", where);
-  for (auto &p : particles) {
-    fprintf(stderr, "%d %g %g %g\n", p.p.identity, p.f.f[0], p.f.f[1],
-            p.f.f[2]);
-    for (int j = 0; j < 3; j++)
-      p.f.f[j] = 0;
-  }
-}
-#else
-#define clear_log_forces(w, particles)
-#endif
 
 /*****************************************************************/
 /* dipole terms */
@@ -1053,16 +1005,8 @@ void ELC_add_force(const ParticleRange &particles) {
 
   prepare_scx_cache(particles);
   prepare_scy_cache(particles);
-
-  clear_log_forces("start", particles);
-
   add_dipole_force(particles);
-
-  clear_log_forces("dipole", particles);
-
   add_z_force(particles);
-
-  clear_log_forces("z_force", particles);
 
   /* the second condition is just for the case of numerical accident */
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
@@ -1070,7 +1014,6 @@ void ELC_add_force(const ParticleRange &particles) {
     setup_P(p, omega, particles);
     distribute(4);
     add_P_force(particles);
-    checkpoint("************distri p", p, 0, 2);
   }
 
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
@@ -1078,7 +1021,6 @@ void ELC_add_force(const ParticleRange &particles) {
     setup_Q(q, omega, particles);
     distribute(4);
     add_Q_force(particles);
-    checkpoint("************distri q", 0, q, 2);
   }
 
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
@@ -1090,11 +1032,8 @@ void ELC_add_force(const ParticleRange &particles) {
       setup_PQ(p, q, omega, particles);
       distribute(8);
       add_PQ_force(p, q, omega, particles);
-      checkpoint("************distri pq", p, q, 4);
     }
   }
-
-  clear_log_forces("end", particles);
 }
 
 double ELC_energy(const ParticleRange &particles) {
@@ -1113,14 +1052,12 @@ double ELC_energy(const ParticleRange &particles) {
     setup_P(p, omega, particles);
     distribute(4);
     eng += P_energy(omega);
-    checkpoint("E************distri p", p, 0, 2);
   }
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     omega = C_2PI * uy * q;
     setup_Q(q, omega, particles);
     distribute(4);
     eng += Q_energy(omega);
-    checkpoint("E************distri q", 0, q, 2);
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
@@ -1131,7 +1068,6 @@ double ELC_energy(const ParticleRange &particles) {
       setup_PQ(p, q, omega, particles);
       distribute(8);
       eng += PQ_energy(omega);
-      checkpoint("E************distri pq", p, q, 4);
     }
   }
   /* we count both i<->j and j<->i, so return just half of it */

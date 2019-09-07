@@ -89,16 +89,17 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
                      double delta_bot, bool const_pot, double pot_diff);
 
 /** the general long range force/energy calculation */
-double MMM2D_add_far(int f, int e, const ParticleRange &particles);
+double MMM2D_add_far(bool calc_forces, bool calc_energies,
+                     const ParticleRange &particles);
 
 /** the actual long range force calculation */
 inline void MMM2D_add_far_force(const ParticleRange &particles) {
-  MMM2D_add_far(1, 0, particles);
+  MMM2D_add_far(true, false, particles);
 }
 
 /** the actual long range energy calculation */
 inline double MMM2D_far_energy(const ParticleRange &particles) {
-  return MMM2D_add_far(0, 1, particles);
+  return MMM2D_add_far(false, true, particles);
 }
 
 /** pairwise calculated parts of MMM2D force (near neighbors) */
@@ -114,10 +115,6 @@ int MMM2D_sanity_checks();
 
 /// initialize the MMM2D constants
 void MMM2D_init();
-
-/** if the number of particles has changed (even per node),
-    the particle buffers for the coefficients have to be resized. */
-void MMM2D_on_resort_particles(const ParticleRange &particles);
 
 /** energy contribution from dielectric layers */
 double MMM2D_dielectric_layers_energy_contribution();
