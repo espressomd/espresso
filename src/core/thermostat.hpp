@@ -45,7 +45,6 @@
 /** \name Thermostat switches*/
 /************************************************************/
 /*@{*/
-
 #define THERMO_OFF 0
 #define THERMO_LANGEVIN 1
 #define THERMO_DPD 2
@@ -323,10 +322,6 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
     }
 #endif
   }
-
-  THERMO_TRACE(fprintf(stderr, "%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",
-                       this_node, p->p.identity, p->f.f[0], p->f.f[1],
-                       p->f.f[2]));
 }
 
 #endif // ROTATION

@@ -68,7 +68,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // DEBUG Switches
 #define COMM_DEBUG
 #define P3M_DEBUG
-#define THERMO_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #ifdef CUDA
 #define CUDA_DEBUG

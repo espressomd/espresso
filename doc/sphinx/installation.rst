@@ -552,8 +552,6 @@ looking directly at the code.
 
 -  ``P3M_DEBUG``
 
--  ``THERMO_DEBUG`` Output from the thermostats.
-
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps

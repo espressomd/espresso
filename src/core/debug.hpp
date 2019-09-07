@@ -60,10 +60,3 @@ extern int regular_exit;
 /** Equals { cmd } iff P3M_DEBUG is set. */
 #define P3M_TRACE(cmd)
 #endif
-
-#ifdef THERMO_DEBUG
-#define THERMO_TRACE(cmd)                                                      \
-  { cmd; }
-#else
-#define THERMO_TRACE(cmd)
-#endif
