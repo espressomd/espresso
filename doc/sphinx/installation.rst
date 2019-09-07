@@ -548,8 +548,6 @@ The following flags control the debug output of various sections of
 |es|. You will however understand the output very often only by
 looking directly at the code.
 
--  ``COMM_DEBUG`` Output from the asynchronous communication code.
-
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps

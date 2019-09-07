@@ -127,27 +127,12 @@ int n_nodes = -1;
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
+#ifndef DOXYGEN /* this conditional prevents an interaction in Doxygen between
+                 * CALLBACK_LIST and whatever follows next */
 CALLBACK_LIST
-
-#undef CB
-
-#ifdef DOXYGEN
-    (void); /* this line prevents an interaction in Doxygen between
-               CALLBACK_LIST and the anonymous namespace that follows */
 #endif
 
-namespace {
-#ifdef COMM_DEBUG
-// create the list of names
-#define CB(name) #name,
-
-/** List of callback names for debugging. */
-std::vector<std::string> names{CALLBACK_LIST};
 #undef CB
-#endif
-} // namespace
-
-/** Forward declarations */
 
 int mpi_check_runtime_errors();
 
