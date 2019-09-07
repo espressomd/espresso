@@ -251,9 +251,6 @@ static void invalidate_ghosts() {
 void cells_re_init(int new_cs, double range) {
   CellPList tmp_local;
 
-  CELL_TRACE(fprintf(stderr, "%d: cells_re_init: convert type (%d->%d)\n",
-                     this_node, cell_structure.type, new_cs));
-
   invalidate_ghosts();
 
   topology_release(cell_structure.type);
@@ -285,7 +282,6 @@ void cells_re_init(int new_cs, double range) {
 /************************************************************/
 
 void realloc_cells(int size) {
-  CELL_TRACE(fprintf(stderr, "%d: realloc_cells %d\n", this_node, size));
   /* free all memory associated with cells to be deleted. */
   for (auto &c : cells) {
     c.resize(0);
@@ -367,8 +363,6 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
 }
 
 void cells_resort_particles(int global_flag) {
-  CELL_TRACE(fprintf(stderr, "%d: entering cells_resort_particles %d\n",
-                     this_node, global_flag));
 
   invalidate_ghosts();
 
@@ -418,9 +412,6 @@ void cells_resort_particles(int global_flag) {
   realloc_particlelist(&displaced_parts, 0);
 
   on_resort_particles(local_cells.particles());
-
-  CELL_TRACE(
-      fprintf(stderr, "%d: leaving cells_resort_particles\n", this_node));
 }
 
 /*************************************************/

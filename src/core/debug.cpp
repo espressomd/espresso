@@ -94,10 +94,7 @@ void check_particle_consistency() {
               this_node, c, cell->n);
     }
   }
-  CELL_TRACE(fprintf(stderr,
-                     "%d: check_particle_consistency: %d particles in "
-                     "cells, %d particles in ghost_cells.\n",
-                     this_node, cell_part_cnt, ghost_part_cnt));
+
   /* checks: local particle id */
   for (n = 0; n < max_seen_particle + 1; n++) {
     if (local_particles[n] != nullptr) {
@@ -111,10 +108,6 @@ void check_particle_consistency() {
       }
     }
   }
-  CELL_TRACE(fprintf(
-      stderr,
-      "%d: check_particle_consistency: %d particles in local_particles.\n",
-      this_node, local_part_cnt));
 
   /* EXIT on severe errors */
   if (cell_err_cnt > 0) {
@@ -162,8 +155,6 @@ void check_particles() {
   int cell_err_cnt = 0;
   double skin2 = (skin != -1) ? skin / 2 : 0;
 
-  CELL_TRACE(fprintf(stderr, "%d: entering check_particles\n", this_node));
-
   /* checks: part_id, part_pos, local_particles id */
   for (c = 0; c < local_cells.n; c++) {
     cell = local_cells.cell[c];
@@ -200,9 +191,6 @@ void check_particles() {
       }
     }
   }
-  CELL_TRACE(fprintf(stderr,
-                     "%d: check_particles: %d particles in local cells.\n",
-                     this_node, cell_part_cnt));
 
   /* checks: local particle id */
   for (n = 0; n <= max_seen_particle; n++) {
@@ -217,9 +205,6 @@ void check_particles() {
       }
     }
   }
-  CELL_TRACE(fprintf(stderr,
-                     "%d: check_particles: %d particles in local_particles.\n",
-                     this_node, local_part_cnt));
 
   /* EXIT on severe errors */
   if (cell_err_cnt > 0) {
@@ -228,8 +213,6 @@ void check_particles() {
             this_node, cell_err_cnt);
     errexit();
   }
-
-  CELL_TRACE(fprintf(stderr, "%d: leaving check_particles\n", this_node));
 }
 
 /**
