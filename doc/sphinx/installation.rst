@@ -554,9 +554,6 @@ looking directly at the code.
    ``initialize.c``. Useful if some module does not correctly respond to
    changes of e.g. global variables.
 
--  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
-   ghost cell communication.
-
 -  ``HALO_DEBUG``
 
 -  ``P3M_DEBUG``

@@ -61,22 +61,6 @@ extern int regular_exit;
 #define EVENT_TRACE(cmd)
 #endif
 
-#ifdef CELL_DEBUG
-#define CELL_TRACE(cmd)                                                        \
-  { cmd; }
-#else
-/** Equals { cmd } iff CELL_DEBUG is set. */
-#define CELL_TRACE(cmd)
-#endif
-
-#ifdef GHOST_DEBUG
-#define GHOST_TRACE(cmd)                                                       \
-  { cmd; }
-#else
-/** Equals { cmd } iff GHOST_DEBUG is set. */
-#define GHOST_TRACE(cmd)
-#endif
-
 #ifdef HALO_DEBUG
 #define HALO_TRACE(cmd)                                                        \
   { cmd; }

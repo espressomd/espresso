@@ -68,7 +68,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // DEBUG Switches
 #define COMM_DEBUG
 #define EVENT_DEBUG
-#define GHOST_DEBUG
 #define HALO_DEBUG
 #define P3M_DEBUG
 #define THERMO_DEBUG
