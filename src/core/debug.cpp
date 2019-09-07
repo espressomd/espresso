@@ -40,52 +40,49 @@
 int regular_exit = 1;
 
 void check_particle_consistency() {
-  Particle *part;
-  Cell *cell;
-  int n, dir, c;
+  int n, c;
   int cell_part_cnt = 0, ghost_part_cnt = 0, local_part_cnt = 0;
   int cell_err_cnt = 0;
 
   /* checks: part_id, part_pos, local_particles id */
   for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
+    auto const cell = local_cells.cell[c];
     cell_part_cnt += cell->n;
-    part = cell->part;
     for (int n = 0; n < cell->n; n++) {
-      if (part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
+      auto const &p = cell->part[n];
+      if (p.p.identity < 0 || p.p.identity > max_seen_particle) {
         fprintf(stderr,
                 "%d: check_particle_consistency: ERROR: Cell %d Part "
                 "%d has corrupted id=%d\n",
-                this_node, c, n, cell->part[n].p.identity);
+                this_node, c, n, p.p.identity);
         errexit();
       }
-      for (dir = 0; dir < 3; dir++) {
+      for (int dir = 0; dir < 3; dir++) {
         if (box_geo.periodic(dir) &&
-            (part[n].r.p[dir] < -ROUND_ERROR_PREC * box_geo.length()[dir] ||
-             part[n].r.p[dir] - box_geo.length()[dir] >
+            (p.r.p[dir] < -ROUND_ERROR_PREC * box_geo.length()[dir] ||
+             p.r.p[dir] - box_geo.length()[dir] >
                  ROUND_ERROR_PREC * box_geo.length()[dir])) {
           fprintf(stderr,
                   "%d: check_particle_consistency: ERROR: illegal "
                   "pos[%d]=%f of part %d id=%d in cell %d\n",
-                  this_node, dir, part[n].r.p[dir], n, part[n].p.identity, c);
+                  this_node, dir, p.r.p[dir], n, p.p.identity, c);
           errexit();
         }
       }
-      if (local_particles[part[n].p.identity] != &part[n]) {
+      if (local_particles[p.p.identity] != &p) {
         fprintf(stderr,
                 "%d: check_particle_consistency: ERROR: address "
-                "mismatch for part id %d: local: %p cell: %p in cell "
-                "%d\n",
-                this_node, part[n].p.identity,
-                static_cast<void *>(local_particles[part[n].p.identity]),
-                static_cast<void *>(&part[n]), c);
+                "mismatch for part id %d: local: %p cell: %p in cell %d\n",
+                this_node, p.p.identity,
+                static_cast<void *>(local_particles[p.p.identity]),
+                static_cast<void const *>(&p), c);
         errexit();
       }
     }
   }
 
   for (c = 0; c < ghost_cells.n; c++) {
-    cell = ghost_cells.cell[c];
+    auto const cell = ghost_cells.cell[c];
     if (cell->n > 0) {
       ghost_part_cnt += cell->n;
       fprintf(stderr,
@@ -147,46 +144,43 @@ void check_particle_consistency() {
 }
 
 void check_particles() {
-  Particle *part;
-
-  Cell *cell;
-  int n, dir, c;
+  int n, c;
   int cell_part_cnt = 0, local_part_cnt = 0;
   int cell_err_cnt = 0;
-  double skin2 = (skin != -1) ? skin / 2 : 0;
+  double const skin2 = (skin != -1) ? skin / 2 : 0;
 
   /* checks: part_id, part_pos, local_particles id */
   for (c = 0; c < local_cells.n; c++) {
-    cell = local_cells.cell[c];
+    auto const cell = local_cells.cell[c];
     cell_part_cnt += cell->n;
-    part = cell->part;
     for (int n = 0; n < cell->n; n++) {
-      if (part[n].p.identity < 0 || part[n].p.identity > max_seen_particle) {
+      auto const &p = cell->part[n];
+      if (p.p.identity < 0 || p.p.identity > max_seen_particle) {
         fprintf(
             stderr,
             "%d: check_particles: ERROR: Cell %d Part %d has corrupted id=%d\n",
-            this_node, c, n, cell->part[n].p.identity);
+            this_node, c, n, p.p.identity);
         errexit();
       }
 
-      for (dir = 0; dir < 3; dir++) {
+      for (int dir = 0; dir < 3; dir++) {
         if (box_geo.periodic(dir) &&
-            (part[n].r.p[dir] < -skin2 ||
-             part[n].r.p[dir] > box_geo.length()[dir] + skin2)) {
+            (p.r.p[dir] < -skin2 ||
+             p.r.p[dir] > box_geo.length()[dir] + skin2)) {
           fprintf(stderr,
                   "%d: check_particles: ERROR: illegal pos[%d]=%f of "
                   "part %d id=%d in cell %d\n",
-                  this_node, dir, part[n].r.p[dir], n, part[n].p.identity, c);
+                  this_node, dir, p.r.p[dir], n, p.p.identity, c);
           errexit();
         }
       }
-      if (local_particles[part[n].p.identity] != &part[n]) {
+      if (local_particles[p.p.identity] != &p) {
         fprintf(stderr,
                 "%d: check_particles: ERROR: address mismatch for part "
                 "id %d: local: %p cell: %p in cell %d\n",
-                this_node, part[n].p.identity,
-                static_cast<void *>(local_particles[part[n].p.identity]),
-                static_cast<void *>(&part[n]), c);
+                this_node, p.p.identity,
+                static_cast<void *>(local_particles[p.p.identity]),
+                static_cast<void const *>(&p), c);
         errexit();
       }
     }
@@ -223,9 +217,9 @@ void check_particles() {
  */
 void check_particle_sorting() {
   for (int c = 0; c < local_cells.n; c++) {
-    auto cell = local_cells.cell[c];
+    auto const cell = local_cells.cell[c];
     for (int n = 0; n < cell->n; n++) {
-      auto p = cell->part[n];
+      auto const p = cell->part[n];
       if (cell_structure.particle_to_cell(p) != cell) {
         fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
                 p.p.identity, (void *)cell,

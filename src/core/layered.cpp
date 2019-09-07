@@ -272,7 +272,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
 void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
                            const double range) {
-  int c, p;
 
   cell_structure.type = CELL_STRUCTURE_LAYERED;
   cell_structure.particle_to_cell = [](const Particle &p) {
@@ -334,7 +333,7 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);
   realloc_cellplist(&local_cells, local_cells.n = n_layers);
-  for (c = 1; c <= n_layers; c++) {
+  for (int c = 1; c <= n_layers; c++) {
     Cell *red[] = {&cells[c - 1]};
     Cell *black[] = {&cells[c + 1]};
 
@@ -356,10 +355,10 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
                        GHOSTTRANS_FORCE);
 
   /* copy particles */
-  for (c = 0; c < old->n; c++) {
+  for (int c = 0; c < old->n; c++) {
     Particle *part = old->cell[c]->part;
     int np = old->cell[c]->n;
-    for (p = 0; p < np; p++) {
+    for (int p = 0; p < np; p++) {
       Cell *nc = layered_position_to_cell(part[p].r.p);
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
@@ -368,15 +367,13 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
       append_unindexed_particle(nc, std::move(part[p]));
     }
   }
-  for (c = 1; c <= n_layers; c++)
+  for (int c = 1; c <= n_layers; c++)
     update_local_particles(&cells[c]);
 }
 
 static void layered_append_particles(ParticleList *pl, ParticleList *up,
                                      ParticleList *dn) {
-  int p;
-
-  for (p = 0; p < pl->n; p++) {
+  for (int p = 0; p < pl->n; p++) {
     fold_position(pl->part[p].r.p, pl->part[p].l.i, box_geo);
 
     if (LAYERED_BTM_NEIGHBOR &&
@@ -398,15 +395,12 @@ static void layered_append_particles(ParticleList *pl, ParticleList *up,
 
 void layered_exchange_and_sort_particles(int global_flag,
                                          ParticleList *displaced_parts) {
-  Particle *part;
-  Cell *nc, *oc;
-  int c, p, flag, redo;
   ParticleList send_buf_dn, send_buf_up;
   ParticleList recv_buf_up, recv_buf_dn;
 
   /* sort local particles */
-  for (p = 0; p < displaced_parts->n; p++) {
-    part = &displaced_parts->part[p];
+  for (int p = 0; p < displaced_parts->n; p++) {
+    auto const part = &displaced_parts->part[p];
 
     if (n_nodes != 1 && LAYERED_BTM_NEIGHBOR &&
         (get_mi_coord(part->r.p[2], local_geo.my_left()[2], box_geo.length()[2],
@@ -468,9 +462,10 @@ void layered_exchange_and_sort_particles(int global_flag,
     layered_append_particles(&recv_buf_dn, &send_buf_up, &send_buf_dn);
 
     // handshake redo: if true on any node, another exchange round is required
-    flag = (send_buf_up.n != 0 || send_buf_dn.n != 0);
+    int const flag = (send_buf_up.n != 0 || send_buf_dn.n != 0);
 
     if (global_flag == CELL_GLOBAL_EXCHANGE) {
+      int redo;
       MPI_Allreduce(&flag, &redo, 1, MPI_INT, MPI_MAX, comm_cart);
       if (!redo)
         break;

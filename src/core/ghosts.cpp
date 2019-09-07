@@ -53,18 +53,16 @@ static char *r_buffer = nullptr;
 
 std::vector<int> r_bondbuffer;
 
-/** whether the ghosts should also have velocity information, e. g. for DPD or
-   RATTLE. You need this whenever you need the relative velocity of two
-   particles. NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change
-   !!!!
-*/
+/** whether the ghosts should have velocity information, e.g. for DPD or RATTLE.
+ *  You need this whenever you need the relative velocity of two particles.
+ *  NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
+ */
 bool ghosts_have_v = false;
 bool ghosts_have_bonds = false;
 
 void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   assert(comm);
   comm->data_parts = data_parts;
-
   comm->num = num;
   comm->comm.resize(num);
   for (int i = 0; i < num; i++) {
@@ -76,8 +74,7 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
 }
 
 void free_comm(GhostCommunicator *comm) {
-  int n;
-  for (n = 0; n < comm->num; n++)
+  for (int n = 0; n < comm->num; n++)
     free(comm->comm[n].part_lists);
 }
 
@@ -303,17 +300,13 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 }
 
 void add_forces_from_recv_buffer(GhostCommunication *gc) {
-  int pl, p;
-  Particle *part, *pt;
-  char *retrieve;
-
   /* put back data */
-  retrieve = r_buffer;
-  for (pl = 0; pl < gc->n_part_lists; pl++) {
+  char *retrieve = r_buffer;
+  for (int pl = 0; pl < gc->n_part_lists; pl++) {
     int np = gc->part_lists[pl]->n;
-    part = gc->part_lists[pl]->part;
-    for (p = 0; p < np; p++) {
-      pt = &part[p];
+    Particle *part = gc->part_lists[pl]->part;
+    for (int p = 0; p < np; p++) {
+      Particle *pt = &part[p];
       ParticleForce pf;
       memcpy(&pf, retrieve, sizeof(pf));
       pt->f += pf;
@@ -330,12 +323,9 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
 }
 
 void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
-  int pl, p, offset;
-  Particle *part1, *part2, *pt1, *pt2;
-
   /* transfer data */
-  offset = gc->n_part_lists / 2;
-  for (pl = 0; pl < offset; pl++) {
+  int const offset = gc->n_part_lists / 2;
+  for (int pl = 0; pl < offset; pl++) {
     Cell *src_list = gc->part_lists[pl];
     Cell *dst_list = gc->part_lists[pl + offset];
 
@@ -343,11 +333,11 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
       prepare_ghost_cell(dst_list, src_list->n);
     } else {
       int np = src_list->n;
-      part1 = src_list->part;
-      part2 = dst_list->part;
-      for (p = 0; p < np; p++) {
-        pt1 = &part1[p];
-        pt2 = &part2[p];
+      Particle *part1 = src_list->part;
+      Particle *part2 = dst_list->part;
+      for (int p = 0; p < np; p++) {
+        Particle *pt1 = &part1[p];
+        Particle *pt2 = &part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
           pt2->p = pt1->p;
           if (ghosts_have_bonds) {
@@ -356,10 +346,8 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          int i;
           pt2->r = pt1->r;
-          for (i = 0; i < 3; i++)
-            pt2->r.p[i] += gc->shift[i];
+          pt2->r.p += gc->shift;
         } else if (data_parts & GHOSTTRANS_POSITION)
           pt2->r = pt1->r;
         if (data_parts & GHOSTTRANS_MOMENTUM) {
@@ -381,14 +369,14 @@ void reduce_forces_sum(void *add, void *to, int const *const len,
                        MPI_Datatype *type) {
   auto *cadd = static_cast<ParticleForce *>(add),
        *cto = static_cast<ParticleForce *>(to);
-  int i, clen = *len / sizeof(ParticleForce);
+  int const clen = *len / sizeof(ParticleForce);
 
   if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
     fprintf(stderr, "%d: transfer data type wrong\n", this_node);
     errexit();
   }
 
-  for (i = 0; i < clen; i++)
+  for (int i = 0; i < clen; i++)
     cto[i] += cadd[i];
 }
 
@@ -409,18 +397,17 @@ void ghost_communicator(GhostCommunicator *gc) {
 
 void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   MPI_Status status;
-  int n, n2;
   /* if ghosts should have uptodate velocities, they have to be updated like
-     positions (except for shifting...) */
+   * positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
 
-  for (n = 0; n < gc->num; n++) {
+  for (int n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
-    int comm_type = gcn->type & GHOST_JOBMASK;
-    int prefetch = gcn->type & GHOST_PREFETCH;
-    int poststore = gcn->type & GHOST_PSTSTORE;
-    int node = gcn->node;
+    int const comm_type = gcn->type & GHOST_JOBMASK;
+    int const prefetch = gcn->type & GHOST_PREFETCH;
+    int const poststore = gcn->type & GHOST_PSTSTORE;
+    int const node = gcn->node;
 
     if (comm_type == GHOST_LOCL)
       cell_cell_transfer(gcn, data_parts);
@@ -445,11 +432,11 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         /* we do not send this time, let's look for a prefetch */
         if (prefetch) {
           /* find next action where we send and which has PREFETCH set */
-          for (n2 = n + 1; n2 < gc->num; n2++) {
+          for (int n2 = n + 1; n2 < gc->num; n2++) {
             GhostCommunication *gcn2 = &gc->comm[n2];
-            int comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int prefetch2 = gcn2->type & GHOST_PREFETCH;
-            int node2 = gcn2->node;
+            int const comm_type2 = gcn2->type & GHOST_JOBMASK;
+            int const prefetch2 = gcn2->type & GHOST_PREFETCH;
+            int const node2 = gcn2->node;
             if (is_send_op(comm_type2, node2) && prefetch2) {
               prepare_send_buffer(gcn2, data_parts);
               break;
@@ -547,11 +534,11 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
          * prefetch send. */
         if (poststore) {
           /* find previous action where we recv and which has PSTSTORE set */
-          for (n2 = n - 1; n2 >= 0; n2--) {
+          for (int n2 = n - 1; n2 >= 0; n2--) {
             GhostCommunication *gcn2 = &gc->comm[n2];
-            int comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int poststore2 = gcn2->type & GHOST_PSTSTORE;
-            int node2 = gcn2->node;
+            int const comm_type2 = gcn2->type & GHOST_JOBMASK;
+            int const poststore2 = gcn2->type & GHOST_PSTSTORE;
+            int const node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
 #ifdef ADDITIONAL_CHECKS
               if (n_r_buffer != calc_transmit_size(gcn2, data_parts)) {

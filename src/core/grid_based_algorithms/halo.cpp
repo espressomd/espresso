@@ -39,7 +39,6 @@ struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,
 
 void halo_create_field_vector(int vblocks, int vstride, int vskip,
                               Fieldtype oldtype, Fieldtype *const newtype) {
-  int i;
 
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
@@ -56,7 +55,7 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
   ntype->lengths = (int *)Utils::malloc(count * 2 * sizeof(int));
   ntype->disps = (int *)((char *)ntype->lengths + count * sizeof(int));
 
-  for (i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     ntype->disps[i] = oldtype->disps[i];
     ntype->lengths[i] = oldtype->lengths[i];
   }
@@ -64,7 +63,6 @@ void halo_create_field_vector(int vblocks, int vstride, int vskip,
 
 void halo_create_field_hvector(int vblocks, int vstride, int vskip,
                                Fieldtype oldtype, Fieldtype *const newtype) {
-  int i;
 
   Fieldtype ntype = *newtype = (Fieldtype)Utils::malloc(sizeof(*ntype));
 
@@ -77,11 +75,11 @@ void halo_create_field_hvector(int vblocks, int vstride, int vskip,
 
   ntype->extent = oldtype->extent * vstride + (vblocks - 1) * vskip;
 
-  int count = ntype->count = oldtype->count;
+  int const count = ntype->count = oldtype->count;
   ntype->lengths = (int *)Utils::malloc(count * 2 * sizeof(int));
   ntype->disps = (int *)((char *)ntype->lengths + count * sizeof(int));
 
-  for (i = 0; i < count; i++) {
+  for (int i = 0; i < count; i++) {
     ntype->disps[i] = oldtype->disps[i];
     ntype->lengths[i] = oldtype->lengths[i];
   }
@@ -122,8 +120,6 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type);
 
 void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
                       int vflag) {
-  int i, j;
-  char *dest, *src;
 
   int vblocks = type->vblocks;
   int vstride = type->vstride;
@@ -134,9 +130,9 @@ void halo_copy_vector(char *r_buffer, char *s_buffer, int count, Fieldtype type,
     vskip *= type->subtype->extent;
   }
 
-  for (i = 0; i < count; i++, s_buffer += extent, r_buffer += extent) {
-    for (j = 0, dest = r_buffer, src = s_buffer; j < vblocks;
-         j++, dest += vskip, src += vskip) {
+  for (int i = 0; i < count; i++, s_buffer += extent, r_buffer += extent) {
+    char *dest = r_buffer, *src = s_buffer;
+    for (int j = 0; j < vblocks; j++, dest += vskip, src += vskip) {
       halo_dtcopy(dest, src, vstride, type->subtype);
     }
   }
@@ -159,7 +155,6 @@ void halo_dtcopy(char *r_buffer, char *s_buffer, int count, Fieldtype type) {
       if (!type->count) {
         memmove(r_buffer, s_buffer, type->extent);
       } else {
-
         for (int j = 0; j < type->count; j++) {
           memmove(r_buffer + type->disps[j], s_buffer + type->disps[j],
                   type->lengths[j]);
@@ -173,16 +168,15 @@ void prepare_halo_communication(HaloCommunicator *const hc,
                                 Lattice const *const lattice,
                                 Fieldtype fieldtype, MPI_Datatype datatype,
                                 const Utils::Vector3i &local_node_grid) {
-  int k, n, dir, lr, cnt, num = 0;
+
   const auto grid = lattice->grid;
   const auto period = lattice->halo_grid;
 
-  for (n = 0; n < hc->num; n++) {
+  for (int n = 0; n < hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));
   }
 
-  num = 2 * 3; /* two communications in each space direction */
-
+  int const num = 2 * 3; /* two communications in each space direction */
   hc->num = num;
   hc->halo_info.resize(num);
 
@@ -190,22 +184,22 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
 
-  cnt = 0;
-  for (dir = 0; dir < 3; dir++) {
-    for (lr = 0; lr < 2; lr++) {
+  int cnt = 0;
+  for (int dir = 0; dir < 3; dir++) {
+    for (int lr = 0; lr < 2; lr++) {
 
       HaloInfo *hinfo = &(hc->halo_info[cnt]);
 
       int nblocks = 1;
-      for (k = dir + 1; k < 3; k++) {
+      for (int k = dir + 1; k < 3; k++) {
         nblocks *= period[k];
       }
       int stride = 1;
-      for (k = 0; k < dir; k++) {
+      for (int k = 0; k < dir; k++) {
         stride *= period[k];
       }
       int skip = 1;
-      for (k = 0; k < dir + 1 && k < 2; k++) {
+      for (int k = 0; k < dir + 1 && k < 2; k++) {
         skip *= period[k];
       }
 
@@ -259,15 +253,12 @@ void prepare_halo_communication(HaloCommunicator *const hc,
 }
 
 void release_halo_communication(HaloCommunicator *const hc) {
-  int n;
-
-  for (n = 0; n < hc->num; n++) {
+  for (int n = 0; n < hc->num; n++) {
     MPI_Type_free(&(hc->halo_info[n].datatype));
   }
 }
 
 void halo_communication(HaloCommunicator const *const hc, char *const base) {
-  int s_node, r_node;
 
   Fieldtype fieldtype;
   MPI_Datatype datatype;
@@ -275,6 +266,7 @@ void halo_communication(HaloCommunicator const *const hc, char *const base) {
   MPI_Status status;
 
   for (int n = 0; n < hc->num; n++) {
+    int s_node, r_node;
     int comm_type = hc->halo_info[n].type;
     char *s_buffer = (char *)base + hc->halo_info[n].s_offset;
     char *r_buffer = (char *)base + hc->halo_info[n].r_offset;
