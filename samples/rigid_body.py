@@ -20,15 +20,13 @@ VIRTUAL_SITES_RELATIVE feature.
 """
 
 import espressomd
-espressomd.assert_features(["VIRTUAL_SITES_RELATIVE"])
+required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
+espressomd.assert_features(required_features)
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
 
 import numpy as np
-
-required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
-espressomd.assert_features(required_features)
 
 
 box_l = 100

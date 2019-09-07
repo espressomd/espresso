@@ -299,7 +299,7 @@ def is_valid_type(value, t):
 
 
 def requires_experimental_features(reason):
-    """Class decorator which makes instanceing conditional on EXPERIMENTAL_FEAUTRES being defined in myconfig.hpp."""
+    """Class decorator which makes instanceing conditional on EXPERIMENTAL_FEATURES being defined in myconfig.hpp."""
 
     def exception_raiser(self, *args, **kwargs):
         raise Exception(
