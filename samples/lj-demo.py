@@ -19,6 +19,7 @@
 import matplotlib
 matplotlib.use('WXAgg')
 import espressomd
+espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat
 from espressomd import visualization
 import numpy as np
