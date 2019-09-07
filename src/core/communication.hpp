@@ -36,7 +36,7 @@
  *  the action issued. If applicable, the second parameter is the node
  *  number of the slave this request is dedicated to.
  *
- *  To add new actions (e.g. to implement new Tcl commands), do the
+ *  To add new actions (e.g. to implement new Python features), do the
  *  following:
  *  - write the mpi_* function that is executed on the master
  *  - write the mpi_*_slave function
@@ -46,8 +46,7 @@
  *  to be in (MPI) sync with what your new mpi_*_slave does. This
  *  procedure is called immediately after the broadcast with the
  *  arbitrary integer as parameter. To this aim it has also to be added
- *  to \ref CALLBACK_LIST. A debug message will be created automatically
- *  in \ref anonymous_namespace{communication.cpp}::names "names".
+ *  to \ref CALLBACK_LIST.
  */
 
 #include "MpiCallbacks.hpp"

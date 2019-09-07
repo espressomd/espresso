@@ -130,7 +130,7 @@ int n_nodes = -1;
 #ifndef DOXYGEN
 /* this conditional on DOXYGEN prevents an interaction in Doxygen between
  * CALLBACK_LIST and whatever follows next, e.g. a function "int foo();"
- * would become "CALLBACK_LIST int foo();" */
+ * would otherwise become "CALLBACK_LIST int foo();" */
 CALLBACK_LIST
 #endif
 
