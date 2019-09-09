@@ -19,9 +19,12 @@ import numpy as np
 import espressomd
 
 
-class AnalyzeITensor(ut.TestCase):
+class AnalyzeMassRelated(ut.TestCase):
 
-    """Test the inertia tensor analysis"""
+    """Test analysis routines that involve particle mass. E.g., center of mass, intertia tensor, ...
+    Checks that virtual sites (which do not have meaningful mass, are skipped
+
+    """
 
     box_l = 50.0
     system = espressomd.System(box_l=[box_l, box_l, box_l])
@@ -32,14 +35,16 @@ class AnalyzeITensor(ut.TestCase):
         cls.system.cell_system.skin = 0.4
         cls.system.time_step = 0.01
         cls.system.thermostat.turn_off()
-        for i in range(10):
+        cls.system.part.add(
+            pos=np.random.random((10, 3)) * cls.box_l, type=[0] * 10)
+        cls.system.part.add(
+            pos=np.random.random((10, 3)) * cls.box_l, type=[1] * 10)
+        if espressomd.has_features("VIRTUAL_SITES"):
             cls.system.part.add(
-                id=i, pos=np.random.random(3) * cls.box_l, type=0)
-        for i in range(20, 30, 1):
-            cls.system.part.add(
-                id=i, pos=np.random.random(3) * cls.box_l, type=1)
+                pos=np.random.random((10, 3)) * cls.box_l, type=[0] * 10, virtual=[True] * 10)
         if espressomd.has_features("MASS"):
-            cls.system.part[:].mass = 0.5 + np.random.random(20)
+            cls.system.part[:].mass = 0.5 + \
+                np.random.random(len(cls.system.part))
 
     def i_tensor(self, ids):
         pslice = self.system.part[ids]
@@ -60,17 +65,41 @@ class AnalyzeITensor(ut.TestCase):
                  - np.outer(p.pos - com, p.pos - com))
         return I
 
-    def test(self):
+    def test_itensor(self):
         # Particles of type 0
-        I0 = self.i_tensor(range(0, 10, 1))
+        I0 = self.i_tensor(self.system.part.select(
+            lambda p: (not p.virtual) and p.type == 0).id)
 
         np.testing.assert_allclose(
             I0, self.system.analysis.moment_of_inertia_matrix(p_type=0), atol=1E-9)
         # type=1
-        I1 = self.i_tensor(range(20, 30, 1))
+        I1 = self.i_tensor(self.system.part.select(type=1).id)
         self.assertTrue(
             np.allclose(I1, self.system.analysis.moment_of_inertia_matrix(p_type=1), atol=1E-9))
 
+    def test_center_of_mass(self):
+        no_virtual_type_0 = self.system.part.select(
+            lambda p: (not p.virtual) and p.type == 0)
+        com = np.zeros(3)
+        for p in no_virtual_type_0:
+            com += p.pos * p.mass
+        com /= np.sum(no_virtual_type_0.mass)
+
+        np.testing.assert_allclose(
+            com,
+            self.system.analysis.center_of_mass(p_type=0))
+    
+    def test_angularmomentum(self):
+        no_virtual_type_0 = self.system.part.select(
+            lambda p: (not p.virtual) and p.type == 0)
+        am = np.zeros(3)
+        for p in no_virtual_type_0:
+            am += p.mass * np.cross(p.pos, p.v)
+
+        np.testing.assert_allclose(
+            am,
+            self.system.analysis.angular_momentum(p_type=0))
+        
 
 if __name__ == "__main__":
     ut.main()

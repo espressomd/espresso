@@ -121,34 +121,32 @@ Utils::Vector3d centerofmass(PartCfg &partCfg, int type) {
   double mass = 0.0;
 
   for (auto const &p : partCfg) {
-    if ((p.p.type == type) || (type == -1)) {
-      for (int j = 0; j < 3; j++) {
-        com[j] += p.r.p[j] * (p).p.mass;
+    if ((p.p.type == type) || (type == -1))
+      if (not p.p.is_virtual) {
+        com += p.r.p * p.p.mass;
+        mass += p.p.mass;
       }
-      mass += (p).p.mass;
-    }
   }
-  for (int j = 0; j < 3; j++)
-    com[j] /= mass;
+  com /= mass;
   return com;
 }
 
-void angularmomentum(PartCfg &partCfg, int type, double *com) {
-  com[0] = com[1] = com[2] = 0.;
+Utils::Vector3d angularmomentum(PartCfg &partCfg, int type) {
+  Utils::Vector3d am{};
 
   for (auto const &p : partCfg) {
-    if (type == p.p.type) {
-      auto const tmp = vector_product(p.r.p, p.m.v);
-      for (int i = 0; i < 3; i++) {
-        com[i] += tmp[i] * p.p.mass;
+    if ((p.p.type == type) || (type == -1))
+      if (not p.p.is_virtual) {
+        am += p.p.mass * vector_product(p.r.p, p.m.v);
       }
-    }
   }
+  return am;
 }
 
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   int i, count;
-  double p1[3], massi;
+  double massi;
+  Utils::Vector3d p1{};
   count = 0;
 
   for (i = 0; i < 9; i++)
@@ -156,11 +154,9 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
 
   auto const com = centerofmass(partCfg, type);
   for (auto const &p : partCfg) {
-    if (type == p.p.type) {
+    if (type == p.p.type and (not p.p.is_virtual)) {
       count++;
-      for (i = 0; i < 3; i++) {
-        p1[i] = p.r.p[i] - com[i];
-      }
+      p1 = p.r.p - com;
       massi = p.p.mass;
       MofImatrix[0] += massi * (p1[1] * p1[1] + p1[2] * p1[2]);
       MofImatrix[4] += massi * (p1[0] * p1[0] + p1[2] * p1[2]);

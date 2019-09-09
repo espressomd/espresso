@@ -91,7 +91,7 @@ cdef extern from "statistics.hpp":
                      double r_min, double r_max, int r_bins, vector[double] rdf,
                      int n_conf)
 
-    void angularmomentum(PartCfg &, int p_type, double * com)
+    Vector3d angularmomentum(PartCfg &, int p_type)
 
     void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
 
