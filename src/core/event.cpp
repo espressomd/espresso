@@ -185,7 +185,7 @@ void on_observable_calc() {
     }
     virtual_sites()->update();
 #endif
-    force_calc(cell_structure);
+    cells_update_ghosts();
   }
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
