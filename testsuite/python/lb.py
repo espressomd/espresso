@@ -220,8 +220,8 @@ class TestLB:
 
         self.assertEqual(self.lbf[3, 2, 1].index, (3, 2, 1))
         ext_force_density = [0.1, 0.2, 1.2]
-        self.lbf[1, 2, 3].velocity = v_fluid
         self.lbf.ext_force_density = ext_force_density
+        self.lbf[1, 2, 3].velocity = v_fluid
         np.testing.assert_allclose(
             np.copy(self.lbf[1, 2, 3].velocity),
             v_fluid,
@@ -314,7 +314,7 @@ class TestLB:
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-    def test_a_ext_force_density(self):
+    def test_ext_force_density(self):
         self.system.thermostat.turn_off()
         self.system.actors.clear()
         self.system.part.clear()
@@ -331,7 +331,7 @@ class TestLB:
         # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
         # (force is applied only to the second half of the first integration step)
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
-            n_time_steps - 0.5) / self.params['dens']
+            n_time_steps + 0.5) / self.params['dens']
         for n in self.lbf.nodes():
             np.testing.assert_allclose(
                 np.copy(n.velocity), fluid_velocity, atol=1E-6)
@@ -416,8 +416,4 @@ class TestLBGPU(TestLB, ut.TestCase):
 
 
 if __name__ == "__main__":
-    suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBCPU))
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(TestLBGPU))
-    result = ut.TextTestRunner(verbosity=4).run(suite)
-    sys.exit(not result.wasSuccessful())
+    ut.main()
