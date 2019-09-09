@@ -72,7 +72,7 @@ extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
-  bool boundary;
+  int boundary;
   Utils::Vector3d slip_velocity = {};
 #endif // LB_BOUNDARIES
 
