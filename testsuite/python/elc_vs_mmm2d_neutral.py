@@ -26,8 +26,8 @@ from espressomd import electrostatic_extensions
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    acc = 1e-6
-    elc_gap = 5.0
+    acc = 1e-7
+    elc_gap = 10.0
     box_l = 10.0
     bl2 = box_l * 0.5
     system.time_step = 0.01
@@ -127,7 +127,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=self.acc,
-                                            mesh=[16, 16, 24], cao=6)
+                                            mesh=[24, 24, 32], cao=6)
         self.system.actors.add(p3m)
 
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])

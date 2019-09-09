@@ -19,7 +19,7 @@ This sample illustrates how various observables of interest can be checkpointed.
 """
 import espressomd
 
-required_features = ["P3M", "LENNARD_JONES"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import checkpointing
@@ -45,8 +45,8 @@ print("system.box_l = {}".format(system.box_l))
 
 # test "system.non_bonded_inter"
 print("\n### system.non_bonded_inter test ###")
-print("system.non_bonded_inter[0, 0].lennard_jones.get_params() = {}".format(
-    system.non_bonded_inter[0, 0].lennard_jones.get_params()))
+print("system.non_bonded_inter[0, 0].wca.get_params() = {}".format(
+    system.non_bonded_inter[0, 0].wca.get_params()))
 
 # test "system.part"
 print("\n### system.part test ###")

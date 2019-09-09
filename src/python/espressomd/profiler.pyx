@@ -8,7 +8,7 @@ def begin_section(name):
     Parameters
     ----------
 
-    name : obj:`str`
+    name : :obj:`str`
         Name of the section
     """
 
@@ -22,7 +22,7 @@ def end_section(name):
     Parameters
     ----------
 
-    name: obj :`str`
+    name : :obj:`str`
         Name of the section
     """
 

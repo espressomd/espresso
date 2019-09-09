@@ -28,7 +28,7 @@ from espressomd import integrate
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
-required_features = ["LENNARD_JONES", "MASS",
+required_features = ["LENNARD_JONES", "WCA", "MASS",
                      "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
@@ -197,31 +197,31 @@ for i in range(snake_n):
 
 WCA_cut = 2.0**(1. / 6.)
 
-system.non_bonded_inter[snake_head_type, snake_head_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=snake_head_sigma, cutoff=WCA_cut * snake_head_sigma, shift="auto")
+system.non_bonded_inter[snake_head_type, snake_head_type].wca.set_params(
+    epsilon=1.0, sigma=snake_head_sigma)
 
 sm = 0.5 * (snake_head_sigma + snake_bead_sigma)
-system.non_bonded_inter[snake_bead_type, snake_head_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_bead_type, snake_head_type].wca.set_params(
+    epsilon=1.0, sigma=sm)
 
-system.non_bonded_inter[snake_bead_type, snake_bead_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=snake_bead_sigma, cutoff=WCA_cut * snake_bead_sigma, shift="auto")
+system.non_bonded_inter[snake_bead_type, snake_bead_type].wca.set_params(
+    epsilon=1.0, sigma=snake_bead_sigma)
 
 sm = 0.5 * (snake_head_sigma + cylinder_sigma)
-system.non_bonded_inter[snake_head_type, cylinder_type].lennard_jones.set_params(
-    epsilon=10.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_head_type, cylinder_type].wca.set_params(
+    epsilon=10.0, sigma=sm)
 
 sm = 0.5 * (snake_bead_sigma + cylinder_sigma)
-system.non_bonded_inter[snake_bead_type, cylinder_type].lennard_jones.set_params(
-    epsilon=10.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_bead_type, cylinder_type].wca.set_params(
+    epsilon=10.0, sigma=sm)
 
 sm = 0.5 * (bubble_sigma + snake_bead_sigma)
-system.non_bonded_inter[snake_bead_type, bubble_type].lennard_jones.set_params(
-    epsilon=bubble_snake_eps, sigma=sm, cutoff=2.5 * sm, shift="auto")
+system.non_bonded_inter[snake_bead_type, bubble_type].wca.set_params(
+    epsilon=bubble_snake_eps, sigma=sm)
 
 sm = 0.5 * (bubble_sigma + snake_head_sigma)
-system.non_bonded_inter[snake_head_type, bubble_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_head_type, bubble_type].wca.set_params(
+    epsilon=1.0, sigma=sm)
 
 sm = 0.5 * (bubble_sigma + cylinder_sigma)
 system.non_bonded_inter[bubble_type, cylinder_type].lennard_jones.set_params(

@@ -129,6 +129,8 @@ struct CellPList {
   Cell **begin() { return cell; }
   Cell **end() { return cell + n; }
 
+  Cell *operator[](int i) { return assert(i < n), cell[i]; }
+
   Cell **cell;
   int n;
   int max;

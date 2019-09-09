@@ -28,17 +28,17 @@ from threading import Thread
 from time import sleep
 
 import espressomd
-espressomd.assert_features(["P3M"])
-from espressomd.electrostatics import P3M
-from espressomd.interactions import ThermalizedBond, HarmonicBond
-import espressomd.visualization_opengl
-from espressomd import drude_helpers
-from espressomd.virtual_sites import VirtualSitesRelative
-
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
                      "THOLE", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
+
+from espressomd.electrostatics import P3M
+from espressomd.interactions import ThermalizedBond, HarmonicBond
+from espressomd import drude_helpers
+from espressomd.virtual_sites import VirtualSitesRelative
+import espressomd.visualization_opengl
+
 
 print("""This script demonstrates particle polarization with cold Drude
 oscillators. It is a coarse grained simulation of the ionic liquid BMIM PF6.
