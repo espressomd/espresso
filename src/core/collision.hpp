@@ -93,9 +93,6 @@ extern Collision_parameters collision_params;
     COLLISION_MODE_ERROR|COLLISION_MODE_BOND.
 */
 /*@{*/
-/** raise a background error on collision, to allow further processing in Tcl.
-    Can be combined with a bonding mode, if desired
- */
 
 void prepare_local_collision_queue();
 

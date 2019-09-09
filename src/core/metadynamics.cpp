@@ -76,8 +76,7 @@ void meta_init() {
   if (meta_switch == META_OFF)
     return;
 
-  /* Initialize arrays if they're empty. These get freed upon calling the Tcl
-   * parser */
+  /* Initialize arrays if they're empty. */
   if (meta_acc_force == nullptr || meta_acc_fprofile == nullptr) {
     meta_acc_force = (double *)calloc(meta_xi_num_bins * sizeof *meta_acc_force,
                                       sizeof *meta_acc_force);

@@ -25,8 +25,8 @@
     For details on the method see MMM general. The MMM2D method works only with
     the layered or nsquared  "cell system".  The tuning is not automated, since
     the only tunable parameter is the cell size, which can be changed easily in
-    Tcl. Moreover, only a few values make sense to be tested, since in general
-    the number of cells will be between 5 and 20.
+    the script interface. Moreover, only a few values make sense to be tested,
+    since in general the number of cells will be between 5 and 20.
  */
 #ifndef MMM2D_H
 #define MMM2D_H

@@ -240,7 +240,6 @@ bool validate_collision_parameters() {
   return true;
 }
 
-//* Allocate memory for the collision queue /
 void prepare_local_collision_queue() { local_collision_queue.clear(); }
 
 void queue_collision(const int part1, const int part2) {
