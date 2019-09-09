@@ -72,7 +72,7 @@ extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 struct LB_FluidNode {
 #ifdef LB_BOUNDARIES
   /** flag indicating whether this site belongs to a boundary */
-  int boundary;
+  bool boundary;
   Utils::Vector3d slip_velocity = {};
 #endif // LB_BOUNDARIES
 
@@ -142,13 +142,6 @@ extern LB_Parameters lbpar;
 extern Lattice lblattice;
 
 extern HaloCommunicator update_halo_comm;
-
-void lb_realloc_fluid(boost::multi_array<double, 2> &lb_fluid_a,
-                      boost::multi_array<double, 2> &lb_fluid_b,
-                      Lattice::index_t halo_grid_volume,
-                      std::array<Utils::Span<double>, 19> &lb_fluid,
-                      std::array<Utils::Span<double>, 19> &lb_fluid_post,
-                      std::vector<LB_FluidNode> &lb_fields);
 
 void lb_init(const LB_Parameters &lb_parameters);
 
