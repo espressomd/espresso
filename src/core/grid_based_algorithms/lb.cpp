@@ -597,14 +597,6 @@ void lb_sanity_checks(const LB_Parameters &lb_parameters) {
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "LB requires domain-decomposition cellsystem";
   }
-  if (skin == 0.0) {
-    runtimeErrorMsg() << "LB requires a positive skin";
-  }
-  if (cell_structure.use_verlet_list && skin >= lb_parameters.agrid / 2.0) {
-    runtimeErrorMsg() << "LB requires either no Verlet lists or that the skin "
-                         "of the verlet list to be less than half of "
-                         "lattice-Boltzmann grid spacing";
-  }
 }
 
 uint64_t lb_fluid_get_rng_state() {

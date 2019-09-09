@@ -51,7 +51,7 @@ class TestLB:
               'friction': 2.0,
               'temp': 1.5,
               'gamma': 1.5,
-              'skin': 0.2,
+              'skin': 1.0,
               'temp_confidence': 10}
 
     dof = 3.

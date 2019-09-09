@@ -98,7 +98,7 @@ class SwimmerTestCPU(SwimmerTest):
         self.S.actors.add(lbm)
         self.S.thermostat.set_lb(LB_fluid=lbm, gamma=0.5)
         self.run_and_check(
-            lbm, abspath("data/engine_lb.vtk"),
+            lbm, abspath("data/engine_lb_2pt.vtk"),
             "engine_test_cpu_tmp.vtk", 1.5e-6)
         self.S.thermostat.turn_off()
         self.S.actors.remove(lbm)
@@ -117,7 +117,7 @@ class SwimmerTestGPU(SwimmerTest):
         self.S.actors.add(lbm)
         self.S.thermostat.set_lb(LB_fluid=lbm, gamma=0.5)
         self.run_and_check(
-            lbm, abspath("data/engine_lbgpu_2pt.vtk"),
+            lbm, abspath("data/engine_lb_2pt.vtk"),
             "engine_test_gpu_tmp.vtk", 2.0e-7)
         self.S.thermostat.turn_off()
         self.S.actors.remove(lbm)
