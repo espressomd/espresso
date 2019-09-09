@@ -104,8 +104,8 @@ class test_icc(ut.TestCase):
         # Test applying changes
         enegry_pre_change = S.analysis.energy()['total']
         pressure_pre_change = S.analysis.pressure()['total']
-        icc.set_params(sigmas=[2.0]*nicc_tot)
-        icc.set_params(epsilons=[20.0]*nicc_tot)
+        icc.set_params(sigmas=[2.0] * nicc_tot)
+        icc.set_params(epsilons=[20.0] * nicc_tot)
         enegry_post_change = S.analysis.energy()['total']
         pressure_post_change = S.analysis.pressure()['total']
         self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)

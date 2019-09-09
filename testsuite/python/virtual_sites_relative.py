@@ -293,7 +293,7 @@ class VirtualSites(ut.TestCase):
         # Test applying changes
         enegry_pre_change = system.analysis.energy()['total']
         pressure_pre_change = system.analysis.pressure()['total']
-        system.part[0].pos = system.part[0].pos + (2.2,-1.4,4.2)
+        system.part[0].pos = system.part[0].pos + (2.2, -1.4, 4.2)
         enegry_post_change = system.analysis.energy()['total']
         pressure_post_change = system.analysis.pressure()['total']
         self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)
