@@ -1188,10 +1188,9 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
  *  @param[out] j_out         Momentum
  *  @param[out] pi_out        Pressure tensor
  */
-__device__ void
-calc_values_from_m(Utils::Array<float, 19> &mode_single,
-                               LB_rho_v_gpu *d_v_single, float *rho_out,
-                               float *j_out, float *pi_out) {
+__device__ void calc_values_from_m(Utils::Array<float, 19> &mode_single,
+                                   LB_rho_v_gpu *d_v_single, float *rho_out,
+                                   float *j_out, float *pi_out) {
   Utils::Array<float, 6> modes_from_pi_eq{};
   Utils::Array<float, 6> j{};
   float Rho;
@@ -1832,15 +1831,18 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
   }
 }
 
-__global__ void set_force_density(int single_nodeindex,
-                                    float* force_density, LB_node_force_density_gpu node_f) {
+__global__ void set_force_density(int single_nodeindex, float *force_density,
+                                  LB_node_force_density_gpu node_f) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index == 0) {
-   node_f.force_density[0 * para->number_of_nodes + single_nodeindex] = force_density[0];
-   node_f.force_density[1 * para->number_of_nodes + single_nodeindex] = force_density[1];
-   node_f.force_density[2 * para->number_of_nodes + single_nodeindex] = force_density[2];
+    node_f.force_density[0 * para->number_of_nodes + single_nodeindex] =
+        force_density[0];
+    node_f.force_density[1 * para->number_of_nodes + single_nodeindex] =
+        force_density[1];
+    node_f.force_density[2 * para->number_of_nodes + single_nodeindex] =
+        force_density[2];
   }
 }
 
@@ -1887,8 +1889,8 @@ __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, int single_nodeindex,
     // Calculate the density, velocity, and pressure tensor
     // in LB unit for this node
 
-    calc_values_from_m(mode_for_pi, &d_v[single_nodeindex],
-                                   &rho_from_m, j_from_m, pi_from_m);
+    calc_values_from_m(mode_for_pi, &d_v[single_nodeindex], &rho_from_m,
+                       j_from_m, pi_from_m);
 
     // Take LB component density and calculate the equilibrium part
     local_rho = rho_from_m;
@@ -2026,9 +2028,12 @@ __global__ void reinit_node_force(LB_node_force_density_gpu node_f) {
                        blockDim.x * blockIdx.x + threadIdx.x;
 
   if (index < para->number_of_nodes) {
-    node_f.force_density[0 * para->number_of_nodes + index] = para->ext_force_density[0];
-    node_f.force_density[1 * para->number_of_nodes + index] = para->ext_force_density[1];
-    node_f.force_density[2 * para->number_of_nodes + index] = para->ext_force_density[2];
+    node_f.force_density[0 * para->number_of_nodes + index] =
+        para->ext_force_density[0];
+    node_f.force_density[1 * para->number_of_nodes + index] =
+        para->ext_force_density[1];
+    node_f.force_density[2 * para->number_of_nodes + index] =
+        para->ext_force_density[2];
   }
 }
 
@@ -2810,9 +2815,10 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
   float force_density[3] = {0.0f, 0.0f, 0.0f};
   float *device_force_density;
   cuda_safe_mem(cudaMalloc((void **)&device_force_density, 3 * sizeof(float)));
-  cuda_safe_mem(cudaMemcpy(device_force_density, force_density, 3 * sizeof(float),
-                           cudaMemcpyHostToDevice));
-  KERNELCALL(set_force_density, dim_grid_flag, threads_per_block_flag, single_nodeindex, device_force_density, node_f);
+  cuda_safe_mem(cudaMemcpy(device_force_density, force_density,
+                           3 * sizeof(float), cudaMemcpyHostToDevice));
+  KERNELCALL(set_force_density, dim_grid_flag, threads_per_block_flag,
+             single_nodeindex, device_force_density, node_f);
   cudaFree(device_velocity);
   cudaFree(device_force_density);
 }

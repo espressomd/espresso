@@ -90,7 +90,7 @@ void mpi_lb_set_population(Utils::Vector3i const &index,
 REGISTER_CALLBACK(mpi_lb_set_population)
 
 void mpi_lb_set_force_density(Utils::Vector3i const &index,
-                           Utils::Vector3d const &force_density) {
+                              Utils::Vector3d const &force_density) {
   lb_set(index, [&](auto index) {
     auto const linear_index =
         get_linear_index(lblattice.local_index(index), lblattice.halo_grid);

@@ -284,7 +284,6 @@ std::vector<LB_FluidNode>
 lb_get_initialized_fields(LB_Parameters const &lb_parameters,
                           Lattice const &lb_lattice);
 
-
 /*@}*/
 
 #endif /* _LB_H */
