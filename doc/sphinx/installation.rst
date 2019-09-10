@@ -555,8 +555,6 @@ looking directly at the code.
 
 -  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
 
--  ``CUDA_DEBUG``
-
 
 
 

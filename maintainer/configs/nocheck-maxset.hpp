@@ -64,8 +64,3 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define VIRTUAL_SITES_RELATIVE
 
 #define EXPERIMENTAL_FEATURES
-
-// DEBUG Switches
-#ifdef CUDA
-#define CUDA_DEBUG
-#endif
