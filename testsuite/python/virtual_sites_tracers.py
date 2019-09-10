@@ -26,7 +26,7 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 @utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
-    
+
     def setUp(self):
         self.LBClass = lb.LBFluid
 

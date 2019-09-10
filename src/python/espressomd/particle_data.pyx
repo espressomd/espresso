@@ -162,7 +162,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
@@ -1235,7 +1235,7 @@ cdef class ParticleHandle:
                 swim.push_pull = 0
                 swim.dipole_length = 0.0
                 swim.rotational_friction = 0.0
- 
+
                 if type(_params) == type(True):
                     if _params:
                         raise Exception(

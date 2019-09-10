@@ -606,7 +606,7 @@ class CollisionDetection(ut.TestCase):
             mode="bind_three_particles", bond_centers=self.H,
                                               bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
         self.get_state_set_state_consistency()
-        
+
         self.s.time_step = 1E-6
         self.s.integrator.run(1, recalc_forces=True)
         self.verify_triangle_binding(cutoff, self.s.bonded_inter[2], res)

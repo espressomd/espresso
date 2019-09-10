@@ -475,7 +475,6 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
 #endif //  CUDA
   } else {
     lbpar.ext_force_density = force_density;
-    lbfields = lb_get_initialized_fields(lbpar, lblattice);
     mpi_bcast_lb_params(LBParam::EXT_FORCE_DENSITY);
   }
 }
@@ -1321,6 +1320,7 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
     break;
   case LBParam::VISCOSITY:
   case LBParam::EXT_FORCE_DENSITY:
+    lbfields = lb_get_initialized_fields(lbpar, lblattice);
   case LBParam::BULKVISC:
   case LBParam::KT:
   case LBParam::GAMMA_ODD:
