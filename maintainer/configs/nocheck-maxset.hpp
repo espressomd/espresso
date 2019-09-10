@@ -66,7 +66,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EXPERIMENTAL_FEATURES
 
 // DEBUG Switches
-#define VIRTUAL_SITES_DEBUG
 #ifdef CUDA
 #define CUDA_DEBUG
 #endif

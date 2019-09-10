@@ -110,7 +110,6 @@ NO_INTRA_NB                     notest
 /* Debugging */
 ADDITIONAL_CHECKS
 
-VIRTUAL_SITES_DEBUG
 CUDA_DEBUG
 
 
