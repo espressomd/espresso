@@ -176,12 +176,13 @@ static double fluidstep = 0.0;
 /********************** The Main LB Part *************************************/
 
 /**
-  * @brief Initialize fluid nodes.
-  * @param[out] fields         Vector containing the fluid nodes
-  * @param[in]  lb_parameters  Parameters for the LB
-  * @param[in]  lb_lattice     Lattice instance
-  */
-void lb_initialize_fields(std::vector<LB_FluidNode> &fields, LB_Parameters const &lb_parameters,
+ * @brief Initialize fluid nodes.
+ * @param[out] fields         Vector containing the fluid nodes
+ * @param[in]  lb_parameters  Parameters for the LB
+ * @param[in]  lb_lattice     Lattice instance
+ */
+void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
+                          LB_Parameters const &lb_parameters,
                           Lattice const &lb_lattice) {
   fields.resize(lb_lattice.halo_grid_volume);
   for (auto &field : fields) {
