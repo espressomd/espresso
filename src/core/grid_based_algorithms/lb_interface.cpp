@@ -1320,7 +1320,7 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
     break;
   case LBParam::VISCOSITY:
   case LBParam::EXT_FORCE_DENSITY:
-    lbfields = lb_get_initialized_fields(lbpar, lblattice);
+    lb_initialize_fields(lbfields, lbpar, lblattice);
   case LBParam::BULKVISC:
   case LBParam::KT:
   case LBParam::GAMMA_ODD:

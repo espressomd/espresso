@@ -174,17 +174,22 @@ static double fluidstep = 0.0;
 #include "grid.hpp"
 
 /********************** The Main LB Part *************************************/
-std::vector<LB_FluidNode>
-lb_get_initialized_fields(LB_Parameters const &lb_parameters,
+
+/**
+  * @brief Initialize fluid nodes.
+  * @param[out] fields         Vector containing the fluid nodes
+  * @param[in]  lb_parameters  Parameters for the LB
+  * @param[in]  lb_lattice     Lattice instance
+  */
+void lb_initialize_fields(std::vector<LB_FluidNode> &fields, LB_Parameters const &lb_parameters,
                           Lattice const &lb_lattice) {
-  std::vector<LB_FluidNode> fields(lb_lattice.halo_grid_volume);
+  fields.resize(lb_lattice.halo_grid_volume);
   for (auto &field : fields) {
     field.force_density = lb_parameters.ext_force_density;
 #ifdef LB_BOUNDARIES
     field.boundary = false;
 #endif // LB_BOUNDARIES
   }
-  return fields;
 }
 
 /** (Re-)allocate memory for the fluid and initialize pointers. */
@@ -235,7 +240,7 @@ void lb_init(const LB_Parameters &lb_parameters) {
   lb_realloc_fluid(lbfluid_a, lbfluid_b, lblattice.halo_grid_volume, lbfluid,
                    lbfluid_post);
 
-  lbfields = lb_get_initialized_fields(lbpar, lblattice);
+  lb_initialize_fields(lbfields, lbpar, lblattice);
 
   /* prepare the halo communication */
   lb_prepare_communication(update_halo_comm, lblattice);
@@ -254,7 +259,7 @@ void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
                      Lattice const &lb_lattice,
                      LB_Parameters const &lb_parameters) {
   lb_set_equilibrium_populations(lb_lattice, lb_parameters);
-  lb_fields = lb_get_initialized_fields(lb_parameters, lb_lattice);
+  lb_initialize_fields(lbfields, lb_parameters, lb_lattice);
 }
 
 void lb_reinit_parameters(LB_Parameters &lb_parameters) {
