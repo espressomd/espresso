@@ -54,6 +54,9 @@ def skipIfMissingGPU(skip_ci_amd=False):
         return unittest.skip("Skipping test: no GPU available")
     # special case for our CI infrastructure: disable specific GPU tests
     # for AMD GPUs, see https://github.com/espressomd/espresso/pull/2653
-    if skip_ci_amd and str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
+    ci_amd_gpus = {"Device 687f", "Vega 10 XT [Radeon RX Vega 64]"}
+    devices = espressomd.cuda_init.CudaInitHandle().device_list
+    current_device_id = espressomd.cuda_init.CudaInitHandle().device
+    if skip_ci_amd and str(devices[current_device_id]) in ci_amd_gpus:
         return unittest.skip("Skipping test: AMD GPU")
     return _id
