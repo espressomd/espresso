@@ -213,7 +213,7 @@ cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p
 cdef inline double python_lbfluid_get_density(agrid):
     return lb_lbfluid_get_density() / agrid / agrid / agrid
 
-cdef inline python_lbfluid_get_viscosity(p_agrid, p_tau):
+cdef inline double python_lbfluid_get_viscosity(p_agrid, p_tau):
     return lb_lbfluid_get_viscosity() / p_tau * (p_agrid * p_agrid)
 
 cdef inline double python_lbfluid_get_bulk_viscosity(p_agrid, p_tau):

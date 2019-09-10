@@ -71,10 +71,10 @@ cdef class HydrodynamicInteraction(Actor):
         if self._params["dens"] == default_params["dens"]:
             raise Exception("LB_FLUID density not set")
         elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
-            raise ValueError("Density must be one positive double")
+            raise ValueError("Density must be a positive double")
 
-        if (self._params["tau"] <= 0.):
-            raise Exception("LB_FLUID tau has to be > 0")
+        if self._params["tau"] <= 0.:
+            raise ValueError("tau has to be a positive double")
 
     # list of valid keys for parameters
     ####################################################
@@ -116,7 +116,6 @@ cdef class HydrodynamicInteraction(Actor):
 
         python_lbfluid_set_viscosity(
             self._params["visc"], self.agrid, self.tau)
-
         if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
             python_lbfluid_set_bulk_viscosity(
                 self._params["bulk_visc"], self.agrid, self.tau)
@@ -137,16 +136,16 @@ cdef class HydrodynamicInteraction(Actor):
     ####################################################
     def _get_params_from_es_core(self):
         default_params = self.default_params()
+        self._params['agrid'] = self.agrid
+        self._params['dens'] = python_lbfluid_get_density(self.agrid)
+        self._params["tau"] = self.tau
         self._params["kT"] = lb_lbfluid_get_kT()
         if self._params['kT'] > 0.0:
             self._params['seed'] = lb_lbfluid_get_rng_state()
-        self._params['dens'] = python_lbfluid_get_density(self.agrid)
-        self._params["tau"] = lb_lbfluid_get_tau()
         self._params['visc'] = python_lbfluid_get_viscosity(
             self.agrid, self.tau)
         self._params['bulk_visc'] = python_lbfluid_get_bulk_viscosity(
             self.agrid, self.tau)
-        self._params['agrid'] = self.agrid
         self._params['ext_force_density'] = self.ext_force_density
 
         return self._params
