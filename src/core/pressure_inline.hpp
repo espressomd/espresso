@@ -231,6 +231,7 @@ inline void add_three_body_bonded_stress(Particle const *const p1) {
  *                therefore doesn't make sense to use it without NpT.
  */
 inline void add_kinetic_virials(Particle const *const p1, int v_comp) {
+  if (not p1->p.is_virtual) {
   /* kinetic energy */
   if (v_comp) {
     virials.data.e[0] +=
@@ -248,6 +249,7 @@ inline void add_kinetic_virials(Particle const *const p1, int v_comp) {
     for (int l = 0; l < 3; l++)
       p_tensor.data.e[k * 3 + l] +=
           (p1->m.v[k] * time_step) * (p1->m.v[l] * time_step) * p1->p.mass;
+  }
 }
 
 #endif
