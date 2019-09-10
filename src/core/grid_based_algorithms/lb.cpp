@@ -207,7 +207,6 @@ void lb_set_equilibrium_populations(const Lattice &lb_lattice,
                                     const LB_Parameters &lb_parameters) {
   for (Lattice::index_t index = 0; index < lb_lattice.halo_grid_volume;
        ++index) {
-    // sets equilibrium distribution
     lb_set_population_from_density_momentum_density_stress(
         index, lb_parameters.density, Utils::Vector3d{} /*momentum density*/,
         Utils::Vector6d{} /*stress*/);
@@ -223,7 +222,6 @@ void lb_init(const LB_Parameters &lb_parameters) {
     return;
 
   /* initialize the local lattice domain */
-
   try {
     lblattice = Lattice(lb_parameters.agrid, 0.5 /*offset*/, 1 /*halo size*/,
                         local_geo.length(), local_geo.my_right(),
@@ -249,7 +247,7 @@ void lb_init(const LB_Parameters &lb_parameters) {
 
 #ifdef LB_BOUNDARIES
   LBBoundaries::lb_init_boundaries();
-#endif // LB_BOUNDARIES
+#endif
 }
 
 void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
@@ -949,18 +947,6 @@ inline void lb_collide_stream() {
   }
 #endif // LB_BOUNDARIES
 
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  // Safeguard the node forces so that we can later use them for the IBM
-  // particle update
-  // In the following loop the lbfields[XX].force are reset to zero
-  // Safeguard the node forces so that we can later use them for the IBM
-  // particle update In the following loop the lbfields[XX].force are reset to
-  // zero
-  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    lbfields[i].force_density_buf = lbfields[i].force_density;
-  }
-#endif
-
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
@@ -984,6 +970,12 @@ inline void lb_collide_stream() {
           /* apply forces */
           auto const modes_with_forces =
               lb_apply_forces(index, thermalized_modes, lbpar, lbfields);
+
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+          // Safeguard the node forces so that we can later use them for the IBM
+          // particle update
+          lbfields[index].force_density_buf = lbfields[index].force_density;
+#endif
 
           /* reset the force density */
           lbfields[index].force_density = lbpar.ext_force_density;
