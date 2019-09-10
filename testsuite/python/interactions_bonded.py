@@ -89,7 +89,7 @@ class InteractionsBondedTest(ut.TestCase):
             lambda r: tests_common.coulomb_force(r, coulomb_k, q1, q2),
             lambda r: tests_common.coulomb_potential(r, coulomb_k, q1, q2),
             0.01, self.system.box_l[0] / 3)
-        
+
     @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb_sr(self):
         # with negated actual charges and only short range int: cancels out all
@@ -99,13 +99,13 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part[0].q = q1
         self.system.part[1].q = q2
         r_cut = 2
-        
+
         sr_solver = espressomd.electrostatics.DH(
             prefactor=2, kappa=0.8, r_cut=r_cut)
         self.system.actors.add(sr_solver)
         coulomb_sr = espressomd.interactions.BondedCoulombSRBond(
             q1q2=- q1 * q2)
-        
+
         # no break test, bond can't break. it extends as far as the short range
         # part of the electrostatics actor
         self.run_test(
@@ -115,16 +115,16 @@ class InteractionsBondedTest(ut.TestCase):
             0.01,
             r_cut,
             test_breakage=False)
-            
+
     def test_quartic(self):
         """Tests the Quartic bonded interaction by comparing the potential and
            force against the analytic values"""
-        
+
         quartic_k0 = 2.
         quartic_k1 = 5.
         quartic_r = 0.5
         quartic_r_cut = self.system.box_l[0] / 3.
-        
+
         quartic = espressomd.interactions.QuarticBond(k0=quartic_k0,
                                                       k1=quartic_k1,
                                                       r=quartic_r,

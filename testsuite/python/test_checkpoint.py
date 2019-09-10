@@ -237,7 +237,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(type(c[0].shape), Sphere)
         self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
         self.assertEqual(c[0].particle_type, 17)
-        
+
         self.assertEqual(type(c[1].shape), Wall)
         np.testing.assert_allclose(np.copy(c[1].shape.normal),
                                    [1. / np.sqrt(3)] * 3)

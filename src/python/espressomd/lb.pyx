@@ -30,6 +30,7 @@ from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
 from .utils cimport make_array_locked, numeric_limits
+cimport globals
 
 # Actor class
 ####################################################
@@ -71,10 +72,10 @@ cdef class HydrodynamicInteraction(Actor):
             raise Exception("LB_FLUID density not set")
         elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
             raise ValueError("Density must be one positive double")
-        
+
         if (self._params["tau"] <= 0.):
             raise Exception("LB_FLUID tau has to be > 0")
-            
+
     # list of valid keys for parameters
     ####################################################
     def valid_keys(self):
@@ -105,36 +106,23 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _set_params_in_es_core(self):
         default_params = self.default_params()
+        self.agrid = self._params['agrid']
+        self.density = self._params["dens"]
+        self.tau = self._params['tau']
 
-        cdef stdint.uint64_t seed
         if self._params["kT"] > 0.:
-            seed = self._params["seed"]
-            lb_lbfluid_set_rng_state(seed)
+            lb_lbfluid_set_rng_state(self._params['seed'])
         lb_lbfluid_set_kT(self._params["kT"])
 
-        python_lbfluid_set_density(
-    self._params["dens"],
-    self._params["agrid"])
-        
-        lb_lbfluid_set_tau(self._params["tau"])
-
         python_lbfluid_set_viscosity(
-    self._params["visc"],
-    self._params["agrid"],
-    self._params["tau"])
+            self._params["visc"], self.agrid, self.tau)
 
         if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
             python_lbfluid_set_bulk_viscosity(
-    self._params["bulk_visc"],
-    self._params["agrid"],
-    self._params["tau"])
-
-        python_lbfluid_set_agrid(self._params["agrid"])
+                self._params["bulk_visc"], self.agrid, self.tau)
 
         python_lbfluid_set_ext_force_density(
-    self._params["ext_force_density"],
-    self._params["agrid"],
-    self._params["tau"])
+            self._params["ext_force_density"], self.agrid, self.tau)
 
         if "gamma_odd" in self._params:
             python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
@@ -143,38 +131,23 @@ cdef class HydrodynamicInteraction(Actor):
             python_lbfluid_set_gamma_even(self._params["gamma_even"])
 
         lb_lbfluid_sanity_checks()
-
         utils.handle_errors("LB fluid activation")
 
     # function that calls wrapper functions which get the parameters from C-Level
     ####################################################
     def _get_params_from_es_core(self):
         default_params = self.default_params()
-        cdef double kT = lb_lbfluid_get_kT()
-        self._params["kT"] = kT
-        cdef stdint.uint64_t seed
-        if kT > 0.0:
-            seed = lb_lbfluid_get_rng_state()
-            self._params['seed'] = seed
-        if python_lbfluid_get_density(self._params["dens"], self._params["agrid"]):
-            raise Exception("lb_lbfluid_get_density error")
-
+        self._params["kT"] = lb_lbfluid_get_kT()
+        if self._params['kT'] > 0.0:
+            self._params['seed'] = lb_lbfluid_get_rng_state()
+        self._params['dens'] = python_lbfluid_get_density(self.agrid)
         self._params["tau"] = lb_lbfluid_get_tau()
-
-        if python_lbfluid_get_viscosity(self._params["visc"], self._params["agrid"], self._params["tau"]):
-            raise Exception("lb_lbfluid_set_viscosity error")
-
-        if not self._params["bulk_visc"] == default_params["bulk_visc"]:
-            if python_lbfluid_get_bulk_viscosity(self._params["bulk_visc"], self._params["agrid"], self._params["tau"]):
-                raise Exception("lb_lbfluid_set_bulk_viscosity error")
-
-        if python_lbfluid_get_agrid(self._params["agrid"]):
-            raise Exception("lb_lbfluid_set_agrid error")
-
-        if not np.allclose(self._params["ext_force_density"],
-                           default_params["ext_force_density"],
-                           atol=1e-4):
-            self._params["ext_force_density"] = self.ext_force_density
+        self._params['visc'] = python_lbfluid_get_viscosity(
+            self.agrid, self.tau)
+        self._params['bulk_visc'] = python_lbfluid_get_bulk_viscosity(
+            self.agrid, self.tau)
+        self._params['agrid'] = self.agrid
+        self._params['ext_force_density'] = self.ext_force_density
 
         return self._params
 
@@ -245,20 +218,28 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _activate_method(self):
         raise Exception(
-"Subclasses of HydrodynamicInteraction have to implement _activate_method.") 
+"Subclasses of HydrodynamicInteraction have to implement _activate_method.")
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
-    
+
     property shape:
         def __get__(self):
             cdef Vector3i shape = lb_lbfluid_get_shape()
             return (shape[0], shape[1], shape[2])
 
+    property seed:
+        def __get__(self):
+            return lb_lbfluid_get_rng_state();
+
+        def __set__(self, seed):
+            cdef stdint.uint64_t _seed = seed
+            lb_lbfluid_set_rng_state(seed)
+
     property stress:
         def __get__(self):
             cdef Vector6d res
-            res = lb_lbfluid_get_stress() 
+            res = lb_lbfluid_get_stress()
             return array_locked((
                 res[0], res[1], res[2], res[3], res[4], res[5]))
 
@@ -269,18 +250,45 @@ cdef class HydrodynamicInteraction(Actor):
         def __get__(self):
             cdef Vector3d res
             res = python_lbfluid_get_ext_force_density(
-                self._params["agrid"], self._params["tau"])
+                self.agrid, self.tau)
             return make_array_locked(res)
 
         def __set__(self, ext_force_density):
             python_lbfluid_set_ext_force_density(
-    ext_force_density,
-     self._params["agrid"],
-     self._params["tau"])
+                ext_force_density, self.agrid, self.tau)
+
+    property density:
+        def __get__(self):
+            return python_lbfluid_get_density(self.agrid)
+
+        def __set__(self, density):
+            python_lbfluid_set_density(density, self.agrid)
+
+    property viscosity:
+        def __get__(self):
+            return python_lbfluid_get_viscosity(self.agrid, self.tau)
+
+        def __set__(self, viscosity):
+            python_lbfluid_set_viscosity(viscosity, self.agrid, self.tau)
+
+    property tau:
+        def __get__(self):
+            return lb_lbfluid_get_tau()
+
+        def __set__(self, tau):
+            lb_lbfluid_set_tau(tau)
+            check_tau_time_step_consistency(tau, globals.time_step)
+
+    property agrid:
+        def __get__(self):
+            return lb_lbfluid_get_agrid()
+
+        def __set__(self, agrid):
+            lb_lbfluid_set_agrid(agrid)
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
-        
+
         shape = self.shape
         for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
             yield self[i, j, k]
@@ -301,7 +309,7 @@ cdef class LBFluid(HydrodynamicInteraction):
         self.validate_params()
         self._set_lattice_switch()
         self._set_params_in_es_core()
-    
+
 IF CUDA:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
@@ -344,9 +352,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
@@ -360,7 +368,7 @@ cdef class LBFluidRoutines:
         self.node[2] = key[2]
         if not lb_lbnode_is_index_valid(self.node):
             raise ValueError("LB node index out of bounds")
-    
+
     property index:
         def __get__(self):
             return (self.node[0], self.node[1], self.node[2])
