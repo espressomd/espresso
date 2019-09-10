@@ -510,11 +510,6 @@ Please note that the velocity attribute of the virtual particles does not carry 
     The behavior of virtual sites can be fine-tuned with the following
     switches in :file:`myconfig.hpp`.
 
-    - ``VIRTUAL_SITES_NO_VELOCITY`` specifies that the velocity of virtual sites is not computed
-
-    - ``VIRTUAL_SITES_THERMOSTAT`` specifies that the Langevin thermostat should also act on virtual
-       sites
-
     - ``THERMOSTAT_IGNORE_NON_VIRTUAL`` specifies that the thermostat does not act on non-virtual particles
 
 .. _Particle number counting feature:

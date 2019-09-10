@@ -405,8 +405,6 @@ General features
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
--  ``MOLFORCES`` (EXPERIMENTAL)
-
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
