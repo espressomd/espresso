@@ -529,16 +529,13 @@ Particle number counting feature
 
 
 
-Knowing the number of particles of a certain type in simulations in the grand canonical ensemble,
-or other purposes, when particles of certain types are created and
-deleted frequently is often of interest. Particle ids can be stored in a map for each
-individual type and so random ids of particles of a certain type can be
-drawn.  ::
+Knowing the number of particles of a certain type in simulations where particle numbers can fluctuate is of interest.
+Particle ids can be stored in a map for each
+individual type::
 
     import espressomd
     system = espressomd.System()
     system.setup_type_map([_type])
-    system.find_particle(_type)
     system.number_of_particles(_type)
 
 If you want to keep track of particle ids of a certain type you have to
@@ -547,9 +544,7 @@ initialize the method by calling  ::
     system.setup_type_map([_type])
 
 After that will keep track of particle ids of that type. Keeping track of particles of a given type is not enabled by default since it requires memory.
-When using the
-keyword ``find_particle`` and a particle type, the command will return a randomly
-chosen particle id, for a particle of the given type. The keyword
+The keyword
 ``number_of_particles`` as argument will return the number of
 particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
 
@@ -558,7 +553,7 @@ particles which have the given type. For counting the number of particles of a g
     ...
     number_of_particles = len(system.part.select(type=type))
 
-However calling ``select(type=type)`` results in looping over all particles. Therefore calling ``select()`` is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
+However calling ``select(type=type)`` results in looping over all particles which is slow. In contrast, :meth:`espressomd.system.System.number_of_particles` directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 
