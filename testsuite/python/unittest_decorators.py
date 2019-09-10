@@ -17,6 +17,7 @@
 import sys
 import unittest
 import espressomd  # pylint: disable=import-error
+from espressomd.utils import to_str
 
 
 def _id(x):
@@ -57,6 +58,6 @@ def skipIfMissingGPU(skip_ci_amd=False):
     ci_amd_gpus = {"Device 687f", "Vega 10 XT [Radeon RX Vega 64]"}
     devices = espressomd.cuda_init.CudaInitHandle().device_list
     current_device_id = espressomd.cuda_init.CudaInitHandle().device
-    if skip_ci_amd and str(devices[current_device_id]) in ci_amd_gpus:
+    if skip_ci_amd and to_str(devices[current_device_id]) in ci_amd_gpus:
         return unittest.skip("Skipping test: AMD GPU")
     return _id
