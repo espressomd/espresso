@@ -133,6 +133,22 @@ class SwimmerTestCPU(SwimmerTest, ut.TestCase):
         self.lbf = lb.LBFluid(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
+    
+    def test_rotfric_exception(self):
+        """rotational_friction feature is disabled on CPU for more than one core
+        """
+        if self.system.cell_system.get_state()["n_nodes"] > 1:
+            #swimming without rot_fric is fine
+            self.system.part.add(pos=[0, 0, 0], rotation=3 * [True],
+                                 swimming={"f_swim": 0.1, "mode": "pusher"})
+            self.system.integrator.run(3)
+            #with rot_fric it is not
+            with self.assertRaises(Exception):
+                self.system.part.add(pos=[0, 0, 0], rotation=3 * [True],
+                                     swimming={"f_swim": 0.1, 
+                                               "mode": "pusher", 
+                                               "rotational_friction": 0.3})
+                self.system.integrator.run(3)
             
 
 @utx.skipIfMissingGPU()
