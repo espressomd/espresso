@@ -134,12 +134,6 @@ void check_particle_consistency() {
   }
 }
 
-/**
- * @brief Check if particles are in correct cells.
- *
- * Check that particles are in the cells the cellsystem says
- * they should be.
- */
 void check_particle_sorting() {
   for (int c = 0; c < local_cells.n; c++) {
     auto const cell = local_cells.cell[c];
