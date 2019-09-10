@@ -65,16 +65,15 @@
 #endif
 
 /** whether the thermostat has to be reinitialized before integration */
-static int reinit_thermo = 1;
-static int reinit_electrostatics = 0;
-static int reinit_magnetostatics = 0;
+static bool reinit_thermo = true;
+static int reinit_electrostatics = false;
+static int reinit_magnetostatics = false;
 
 #ifdef CUDA
-static int reinit_particle_comm_gpu = 1;
+static int reinit_particle_comm_gpu = true;
 #endif
 
 void on_program_start() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_program_start\n", this_node));
 
 #ifdef CUDA
   cuda_init();
@@ -117,7 +116,7 @@ void on_integration_start() {
 #ifdef CUDA
   if (reinit_particle_comm_gpu) {
     gpu_change_number_of_part_to_comm();
-    reinit_particle_comm_gpu = 0;
+    reinit_particle_comm_gpu = false;
   }
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
@@ -135,8 +134,8 @@ void on_integration_start() {
   /* Prepare the thermostat */
   if (reinit_thermo) {
     thermo_init();
-    reinit_thermo = 0;
-    recalc_forces = 1;
+    reinit_thermo = false;
+    recalc_forces = true;
   }
 
   /* Ensemble preparation: NVT or NPT */
@@ -173,7 +172,6 @@ void on_integration_start() {
 }
 
 void on_observable_calc() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_observable_calc\n", this_node));
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
 
@@ -189,21 +187,15 @@ void on_observable_calc() {
   }
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
-    EVENT_TRACE(fprintf(stderr, "%d: reinit_electrostatics\n", this_node));
-
     Coulomb::on_observable_calc();
-
-    reinit_electrostatics = 0;
+    reinit_electrostatics = false;
   }
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
   if (reinit_magnetostatics) {
-    EVENT_TRACE(fprintf(stderr, "%d: reinit_magnetostatics\n", this_node));
-
     Dipole::on_observable_calc();
-
-    reinit_magnetostatics = 0;
+    reinit_magnetostatics = false;
   }
 #endif /*ifdef ELECTROSTATICS */
 
@@ -215,7 +207,7 @@ void on_observable_calc() {
 }
 
 void on_particle_charge_change() {
-  reinit_electrostatics = 1;
+  reinit_electrostatics = true;
   invalidate_obs();
 
   /* the particle information is no longer valid */
@@ -223,17 +215,16 @@ void on_particle_charge_change() {
 }
 
 void on_particle_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_particle_change\n", this_node));
 
   set_resort_particles(Cells::RESORT_LOCAL);
-  reinit_electrostatics = 1;
-  reinit_magnetostatics = 1;
+  reinit_electrostatics = true;
+  reinit_magnetostatics = true;
 
 #ifdef CUDA
   lb_lbfluid_invalidate_particle_allocation();
 #endif
 #ifdef CUDA
-  reinit_particle_comm_gpu = 1;
+  reinit_particle_comm_gpu = true;
 #endif
   invalidate_obs();
 
@@ -245,7 +236,6 @@ void on_particle_change() {
 }
 
 void on_coulomb_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_coulomb_change\n", this_node));
   invalidate_obs();
 
 #ifdef ELECTROSTATICS
@@ -262,51 +252,46 @@ void on_coulomb_change() {
   on_short_range_ia_change();
 
 #ifdef CUDA
-  reinit_particle_comm_gpu = 1;
+  reinit_particle_comm_gpu = true;
 #endif
-  recalc_forces = 1;
+  recalc_forces = true;
 }
 
 void on_short_range_ia_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_short_range_ia_changes\n", this_node));
   invalidate_obs();
 
   recalc_maximal_cutoff();
   cells_on_geometry_change(0);
 
-  recalc_forces = 1;
+  recalc_forces = true;
 }
 
 void on_constraint_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_constraint_change\n", this_node));
   invalidate_obs();
-  recalc_forces = 1;
+  recalc_forces = true;
 }
 
 void on_lbboundary_change() {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  EVENT_TRACE(fprintf(stderr, "%d: on_lbboundary_change\n", this_node));
   invalidate_obs();
 
   LBBoundaries::lb_init_boundaries();
 
-  recalc_forces = 1;
+  recalc_forces = true;
 #endif
 }
 
 void on_resort_particles(const ParticleRange &particles) {
-  EVENT_TRACE(fprintf(stderr, "%d: on_resort_particles\n", this_node));
 #ifdef ELECTROSTATICS
   Coulomb::on_resort_particles(particles);
 #endif /* ifdef ELECTROSTATICS */
 
   /* DIPOLAR interactions so far don't need this */
 
-  recalc_forces = 1;
+  recalc_forces = true;
 }
 
 void on_boxl_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_boxl_change\n", this_node));
 
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
@@ -330,7 +315,6 @@ void on_boxl_change() {
 }
 
 void on_cell_structure_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_cell_structure_change\n", this_node));
 
 /* Now give methods a chance to react to the change in cell
    structure.  Most ES methods need to reinitialize, as they depend
@@ -356,8 +340,6 @@ void on_cell_structure_change() {
 void on_temperature_change() { lb_lbfluid_reinit_parameters(); }
 
 void on_parameter_change(int field) {
-  EVENT_TRACE(
-      fprintf(stderr, "%d: shon_parameter_change %d\n", this_node, field));
 
   switch (field) {
   case FIELD_BOXL:
@@ -396,7 +378,7 @@ void on_parameter_change(int field) {
     break;
   case FIELD_TEMPERATURE:
     on_temperature_change();
-    reinit_thermo = 1;
+    reinit_thermo = true;
     break;
   case FIELD_TIMESTEP:
     lb_lbfluid_reinit_parameters();
@@ -405,7 +387,7 @@ void on_parameter_change(int field) {
   case FIELD_NPTISO_G0:
   case FIELD_NPTISO_GV:
   case FIELD_NPTISO_PISTON:
-    reinit_thermo = 1;
+    reinit_thermo = true;
     break;
 #ifdef NPT
   case FIELD_INTEG_SWITCH:
@@ -424,7 +406,7 @@ void on_parameter_change(int field) {
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     invalidate_obs();
-    recalc_forces = 1;
+    recalc_forces = true;
     break;
   case FIELD_RIGIDBONDS:
     /* Rattle bonds needs ghost velocities */
@@ -435,13 +417,12 @@ void on_parameter_change(int field) {
     on_ghost_flags_change();
     break;
   case FIELD_SIMTIME:
-    recalc_forces = 1;
+    recalc_forces = true;
     break;
   }
 }
 
 void on_ghost_flags_change() {
-  EVENT_TRACE(fprintf(stderr, "%d: on_ghost_flags_change\n", this_node));
   /* that's all we change here */
   extern bool ghosts_have_v;
   extern bool ghosts_have_bonds;

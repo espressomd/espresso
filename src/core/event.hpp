@@ -53,7 +53,7 @@
 void on_program_start();
 
 /** called every time the simulation is continued/started, i.e.
- *  when switching from Tcl to the simulation core.
+ *  when switching from the script interface to the simulation core.
  */
 void on_integration_start();
 
@@ -63,7 +63,8 @@ void on_integration_start();
  */
 void on_observable_calc();
 
-/** called every time a particle property is changed via Tcl. */
+/** called every time a particle property is changed via the script interface.
+ */
 void on_particle_change();
 
 /** called every time the charge of a particle has changed. */

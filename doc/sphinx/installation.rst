@@ -548,23 +548,6 @@ The following flags control the debug output of various sections of
 |es|. You will however understand the output very often only by
 looking directly at the code.
 
--  ``COMM_DEBUG`` Output from the asynchronous communication code.
-
--  ``EVENT_DEBUG`` Notifications for event calls, i.e. the ``on_...`` functions in
-   ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e.g. global variables.
-
--  ``CELL_DEBUG`` Cellsystem output.
-
--  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
-   ghost cell communication.
-
--  ``HALO_DEBUG``
-
--  ``P3M_DEBUG``
-
--  ``THERMO_DEBUG`` Output from the thermostats.
-
 -  ``VIRTUAL_SITES_DEBUG``
 
 -  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
@@ -575,8 +558,6 @@ looking directly at the code.
 -  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
 
 -  ``CUDA_DEBUG``
-
--  ``H5MD_DEBUG``
 
 
 

@@ -66,13 +66,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define EXPERIMENTAL_FEATURES
 
 // DEBUG Switches
-#define COMM_DEBUG
-#define EVENT_DEBUG
-#define CELL_DEBUG
-#define GHOST_DEBUG
-#define HALO_DEBUG
-#define P3M_DEBUG
-#define THERMO_DEBUG
 #define VIRTUAL_SITES_DEBUG
 #ifdef CUDA
 #define CUDA_DEBUG

@@ -38,7 +38,6 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
-#include "debug.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 #include "polymer.hpp"

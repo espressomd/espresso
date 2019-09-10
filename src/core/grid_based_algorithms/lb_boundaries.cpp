@@ -84,7 +84,7 @@ void lb_init_boundaries() {
     std::vector<ekfloat> host_wallcharge_species_density;
     float node_wallcharge = 0.0f;
     int wallcharge_species = -1, charged_boundaries = 0;
-    int node_charged = 0;
+    bool node_charged = false;
 
     for (auto &lbboundarie : lbboundaries) {
       (*lbboundarie).set_net_charge(0.0);
@@ -127,7 +127,7 @@ void lb_init_boundaries() {
 
 #ifdef EK_BOUNDARIES
           if (ek_initialized) {
-            node_charged = 0;
+            node_charged = false;
             node_wallcharge = 0.0f;
           }
 #endif
@@ -144,7 +144,7 @@ void lb_init_boundaries() {
 #ifdef EK_BOUNDARIES
             if (ek_initialized) {
               if (dist_tmp <= 0 && (**lbb).charge_density() != 0.0f) {
-                node_charged = 1;
+                node_charged = true;
                 node_wallcharge += (**lbb).charge_density() *
                                    ek_parameters.agrid * ek_parameters.agrid *
                                    ek_parameters.agrid;
