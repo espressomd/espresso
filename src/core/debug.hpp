@@ -22,10 +22,6 @@
  *  This file controls debug facilities.
  *
  *  Implementation in debug.cpp.
- *
- *  For every define there exists a macro that can be used to encapsulate
- *  short lines (like printf("...",...);) of code that should be executed
- *  iff the respective *_DEBUG macro is defined.
  */
 
 #include "config.hpp"
@@ -35,15 +31,6 @@
  */
 void check_particle_consistency();
 
-/** check the consistency of the cells and particle_node.
- */
-void check_particles();
-
 void check_particle_sorting();
-
-/** Print all particle positions contained in \ref cells::cells array. */
-void print_particle_positions();
-/** Print all particle forces contained in \ref cells::cells array. */
-void print_particle_forces();
 
 extern int this_node;

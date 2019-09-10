@@ -76,10 +76,6 @@ void apply_vel_corr(const ParticleRange &particles);
 void revert_force(const ParticleRange &particles,
                   const ParticleRange &ghost_particles);
 
-/**For debugging purpose--prints the bond lengths between particles that have
-rigid_bonds*/
-void print_bond_len();
-
 /*@}*/
 
 /*Initialize old positions (particle positions at previous time step)
