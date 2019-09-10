@@ -341,6 +341,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
 }
 
 void lb_lbcoupling_propagate() {
+  if (lattice_switch != ActiveLB::NONE) {
   if (lb_lbfluid_get_kT() > 0.0) {
     if (lattice_switch == ActiveLB::CPU) {
       lb_particle_coupling.rng_counter_coupling->increment();
@@ -349,5 +350,6 @@ void lb_lbcoupling_propagate() {
       rng_counter_coupling_gpu->increment();
 #endif
     }
+  }
   }
 }

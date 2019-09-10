@@ -146,14 +146,16 @@ void lb_lbfluid_update() {
 }
 
 void lb_lbfluid_propagate() {
-  lb_lbfluid_update();
-  if (lb_lbfluid_get_kT() > 0.0) {
-    if (lattice_switch == ActiveLB::GPU) {
+  if (lattice_switch != ActiveLB::NONE) {
+    lb_lbfluid_update();
+    if (lb_lbfluid_get_kT() > 0.0) {
+      if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-      rng_counter_fluid_gpu->increment();
+        rng_counter_fluid_gpu->increment();
 #endif
-    } else if (lattice_switch == ActiveLB::CPU) {
-      rng_counter_fluid->increment();
+      } else if (lattice_switch == ActiveLB::CPU) {
+        rng_counter_fluid->increment();
+      }
     }
   }
 }
