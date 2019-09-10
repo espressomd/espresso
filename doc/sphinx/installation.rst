@@ -537,24 +537,11 @@ Some of the short-range interactions have additional features:
 Debug messages
 ^^^^^^^^^^^^^^
 
-Finally, there are a number of flags for debugging. The most important
-one are
+Finally, there is a flag for debugging:
 
 -  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
    especially in the cell systems. These checks are however too slow to
    be enabled in production runs.
-
-The following flags control the debug output of various sections of
-|es|. You will however understand the output very often only by
-looking directly at the code.
-
--  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
-   in the detection of mismatching communication.
-
--  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
-
--  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
-
 
 
 
