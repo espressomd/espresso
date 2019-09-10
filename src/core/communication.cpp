@@ -612,6 +612,7 @@ void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
 #ifdef ELECTROSTATICS
   iccp3m_cfg = iccp3m_cfg_;
 
+  on_particle_charge_change();
   check_runtime_errors(comm_cart);
 #endif
 }
@@ -622,6 +623,7 @@ int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
 
+  on_particle_charge_change();
   return check_runtime_errors(comm_cart);
 #else
   return 0;
