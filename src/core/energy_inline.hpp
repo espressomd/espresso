@@ -388,10 +388,10 @@ inline void add_kinetic_energy(Particle const *const p1) {
 
   /* kinetic energy */
   if (not p1->p.is_virtual)
-      energy.data.e[0] += 0.5 * p1->p.mass * p1->m.v.norm2();
-  
-  // Note that rotational degrees of virtual sites are integrated
-  // and therefore can contribute to kinetic energy
+    energy.data.e[0] += 0.5 * p1->p.mass * p1->m.v.norm2();
+
+    // Note that rotational degrees of virtual sites are integrated
+    // and therefore can contribute to kinetic energy
 #ifdef ROTATION
   if (p1->p.rotation) {
     /* the rotational part is added to the total kinetic energy;

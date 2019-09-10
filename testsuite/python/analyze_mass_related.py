@@ -42,7 +42,8 @@ class AnalyzeMassRelated(ut.TestCase):
         if espressomd.has_features("VIRTUAL_SITES"):
             cls.system.part.add(
                 pos=np.random.random((10, 3)) * cls.box_l, type=[0] * 10, virtual=[True] * 10)
-        cls.system.part[:].v =np.random.random((len(cls.system.part),3))+0.1
+        cls.system.part[:].v = np.random.random(
+            (len(cls.system.part), 3)) + 0.1
         if espressomd.has_features("MASS"):
             cls.system.part[:].mass = 0.5 + \
                 np.random.random(len(cls.system.part))
@@ -101,20 +102,26 @@ class AnalyzeMassRelated(ut.TestCase):
             am,
             self.system.analysis.angular_momentum(p_type=0))
 
-
     def test_kinetic_energy(self):
         no_virtual = self.system.part.select(virtual=False)
-        E_kin = 0.5 * np.sum(no_virtual.mass*np.sum(no_virtual.v**2,axis=1), axis=0)
+        E_kin = 0.5 * \
+            np.sum(no_virtual.mass * np.sum(no_virtual.v**2, axis=1), axis=0)
         np.testing.assert_allclose(
             E_kin, self.system.analysis.energy()["kinetic"])
     
     def test_kinetic_pressure(self):
         no_virtual = self.system.part.select(virtual=False)
-        P_kin = np.sum(no_virtual.mass*np.sum(no_virtual.v**2,axis=1), axis=0) /(3*self.system.volume())
+        P_kin = np.sum(
+            no_virtual.mass * np.sum(no_virtual.v**2,
+                                     axis=1),
+            axis=0) / (3 * self.system.volume())
         np.testing.assert_allclose(
             P_kin, self.system.analysis.pressure()["kinetic"])
-        analyze_stress= np.diag(self.system.analysis.stress_tensor()["kinetic"])
-        expected_stress=np.matmul((no_virtual.v**2).T,no_virtual.mass)/(self.system.volume())
+        analyze_stress = np.diag(
+            self.system.analysis.stress_tensor()["kinetic"])
+        expected_stress = np.matmul(
+            (no_virtual.v**2).T,
+            no_virtual.mass) / (self.system.volume())
         np.testing.assert_allclose(
             expected_stress, analyze_stress)
 
