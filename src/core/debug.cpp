@@ -37,8 +37,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 
-int regular_exit = 1;
-
 void check_particle_consistency() {
   int n, c;
   int cell_part_cnt = 0, ghost_part_cnt = 0, local_part_cnt = 0;

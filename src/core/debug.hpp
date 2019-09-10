@@ -47,8 +47,3 @@ void print_particle_positions();
 void print_particle_forces();
 
 extern int this_node;
-
-/** by setting this variable to 1, a regular exit is
- *  indicated. In that case, no core dump is generated.
- */
-extern int regular_exit;
