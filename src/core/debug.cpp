@@ -24,18 +24,11 @@
 
 #include "debug.hpp"
 
-#include <csignal>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
-#include <unistd.h>
 
 #include "cells.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 
 void check_particle_consistency() {
   int n, c;

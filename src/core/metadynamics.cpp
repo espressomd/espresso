@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
+#include <cmath>
+
 /** \file
  *
  *  This file contains routines to perform metadynamics.  Right now, the

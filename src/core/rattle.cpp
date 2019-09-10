@@ -39,8 +39,6 @@ int n_rigidbonds = 0;
 
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <mpi.h>
 
 /** \name Private functions */

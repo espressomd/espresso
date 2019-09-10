@@ -30,7 +30,6 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 
-#include <cstring>
 #include <mpi.h>
 
 /* Organization: Layers only in one direction.

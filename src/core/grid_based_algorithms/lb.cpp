@@ -57,7 +57,6 @@ using Utils::get_linear_index;
 
 #include <cassert>
 #include <cinttypes>
-#include <cstdio>
 #include <fstream>
 #include <iostream>
 

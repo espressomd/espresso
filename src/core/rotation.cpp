@@ -37,15 +37,12 @@
 /****************************************************
  *                     DEFINES
  ***************************************************/
-/**************** local variables  *******************/
 
 #ifdef ROTATION
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "event.hpp"
 #include "forces.hpp"
-#include "ghosts.hpp"
 #include "global.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
@@ -56,10 +53,6 @@
 #include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
 
 /** \name Private Functions */
 /************************************************************/
