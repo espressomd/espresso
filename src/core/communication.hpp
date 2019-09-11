@@ -198,7 +198,6 @@ void mpi_bcast_max_seen_particle_type(int s);
  *           using \ref pressure_calc.
  *      \arg \c 3 calculate and reduce (sum up) instantaneous pressure,
  *           using \ref pressure_calc.
- *      \arg \c 4 use \ref predict_momentum_particles
  *      \arg \c 6 use \ref lb_calc_fluid_momentum
  *      \arg \c 8 use \ref lb_collect_boundary_forces
  *  \param result where to store the gathered value(s):
