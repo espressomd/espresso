@@ -128,7 +128,7 @@ cdef class HydrodynamicInteraction(Actor):
         self._params['agrid'] = self.agrid
         self._params["tau"] = self.tau
         self._params['dens'] = self.density
-        self._params["kT"] = lb_lbfluid_get_kT()
+        self._params["kT"] = self.kT
         if self._params['kT'] > 0.0:
             self._params['seed'] = lb_lbfluid_get_rng_state()
         self._params['visc'] = python_lbfluid_get_viscosity(
