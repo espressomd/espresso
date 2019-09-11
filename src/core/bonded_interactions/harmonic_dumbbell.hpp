@@ -50,23 +50,23 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 harmonic_dumbbell_pair_force(Utils::Vector3d const &director,
-                             Bonded_ia_parameters const *const iaparams,
+                             Bonded_ia_parameters const &iaparams,
                              Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
+  if ((iaparams.p.harmonic_dumbbell.r_cut > 0.0) &&
+      (dist > iaparams.p.harmonic_dumbbell.r_cut)) {
     return {};
   }
 
-  auto const dr = dist - iaparams->p.harmonic_dumbbell.r;
+  auto const dr = dist - iaparams.p.harmonic_dumbbell.r;
   auto const normalizer = (dist > ROUND_ERROR_PREC) ? 1. / dist : 0.0;
-  auto const fac = -iaparams->p.harmonic_dumbbell.k1 * dr * normalizer;
+  auto const fac = -iaparams.p.harmonic_dumbbell.k1 * dr * normalizer;
   auto const force = fac * dx;
 
   auto const dhat = dx * normalizer;
   auto const da = vector_product(dhat, director);
-  auto const torque = iaparams->p.harmonic_dumbbell.k2 * da;
+  auto const torque = iaparams.p.harmonic_dumbbell.k2 * da;
 
   return std::make_tuple(force, torque);
 }
@@ -78,23 +78,23 @@ harmonic_dumbbell_pair_force(Utils::Vector3d const &director,
  */
 inline boost::optional<double>
 harmonic_dumbbell_pair_energy(Utils::Vector3d const &director,
-                              Bonded_ia_parameters const *const iaparams,
+                              Bonded_ia_parameters const &iaparams,
                               Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut)) {
+  if ((iaparams.p.harmonic_dumbbell.r_cut > 0.0) &&
+      (dist > iaparams.p.harmonic_dumbbell.r_cut)) {
     return {};
   }
 
   auto const dhat = dx / dist;
   auto const da = vector_product(dhat, director);
-  auto const torque = iaparams->p.harmonic_dumbbell.k2 * da;
+  auto const torque = iaparams.p.harmonic_dumbbell.k2 * da;
   auto const diff = dhat - director;
 
-  auto const energy = 0.5 * iaparams->p.harmonic_dumbbell.k1 *
-                          Utils::sqr(dist - iaparams->p.harmonic.r) +
-                      0.5 * iaparams->p.harmonic_dumbbell.k2 * (torque * diff);
+  auto const energy = 0.5 * iaparams.p.harmonic_dumbbell.k1 *
+                          Utils::sqr(dist - iaparams.p.harmonic.r) +
+                      0.5 * iaparams.p.harmonic_dumbbell.k2 * (torque * diff);
   return energy;
 }
 

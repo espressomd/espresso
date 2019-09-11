@@ -62,7 +62,6 @@ void calc_oif_global(double *area_volume, int molType,
   // z volume
   double VOL_partVol = 0.;
 
-  Bonded_ia_parameters *iaparams;
   int type_num, n_partners, id;
   BondedInteraction type;
 
@@ -74,9 +73,9 @@ void calc_oif_global(double *area_volume, int molType,
     while (j < p1->bl.n) {
       /* bond type */
       type_num = p1->bl.e[j++];
-      iaparams = &bonded_ia_params[type_num];
-      type = iaparams->type;
-      n_partners = iaparams->num;
+      Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+      type = iaparams.type;
+      n_partners = iaparams.num;
       id = p1->p.mol_id;
       if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
@@ -142,9 +141,9 @@ void add_oif_global_forces(double const *area_volume, int molType,
     while (j < p1->bl.n) {
       /* bond type */
       auto const type_num = p1->bl.e[j++];
-      auto iaparams = &bonded_ia_params[type_num];
-      auto const type = iaparams->type;
-      auto const n_partners = iaparams->num;
+      Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+      auto const type = iaparams.type;
+      auto const n_partners = iaparams.num;
       auto const id = p1->p.mol_id;
       if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
@@ -179,10 +178,10 @@ void add_oif_global_forces(double const *area_volume, int molType,
         // starting code from volume force
         auto const VOL_norm = get_n_triangle(p11, p22, p33).normalize();
         auto const VOL_A = area_triangle(p11, p22, p33);
-        auto const VOL_vv = (VOL_volume - iaparams->p.oif_global_forces.V0) /
-                            iaparams->p.oif_global_forces.V0;
+        auto const VOL_vv = (VOL_volume - iaparams.p.oif_global_forces.V0) /
+                            iaparams.p.oif_global_forces.V0;
 
-        auto const VOL_force = (1.0 / 3.0) * iaparams->p.oif_global_forces.kv *
+        auto const VOL_force = (1.0 / 3.0) * iaparams.p.oif_global_forces.kv *
                                VOL_vv * VOL_A * VOL_norm;
         p1->f.f += VOL_force;
         p2->f.f += VOL_force;
@@ -191,8 +190,8 @@ void add_oif_global_forces(double const *area_volume, int molType,
 
         auto const h = (1. / 3.) * (p11 + p22 + p33);
 
-        auto const deltaA = (area - iaparams->p.oif_global_forces.A0_g) /
-                            iaparams->p.oif_global_forces.A0_g;
+        auto const deltaA = (area - iaparams.p.oif_global_forces.A0_g) /
+                            iaparams.p.oif_global_forces.A0_g;
 
         auto const m1 = h - p11;
         auto const m2 = h - p22;
@@ -202,7 +201,7 @@ void add_oif_global_forces(double const *area_volume, int molType,
         auto const m2_length = m2.norm();
         auto const m3_length = m3.norm();
 
-        auto const fac = iaparams->p.oif_global_forces.ka_g * VOL_A * deltaA /
+        auto const fac = iaparams.p.oif_global_forces.ka_g * VOL_A * deltaA /
                          (m1_length * m1_length + m2_length * m2_length +
                           m3_length * m3_length);
 

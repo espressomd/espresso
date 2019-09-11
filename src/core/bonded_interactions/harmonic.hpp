@@ -42,17 +42,17 @@ int harmonic_set_params(int bond_type, double k, double r, double r_cut);
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-harmonic_pair_force(Bonded_ia_parameters const *const iaparams,
+harmonic_pair_force(Bonded_ia_parameters const &iaparams,
                     Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.harmonic.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic.r_cut)) {
+  if ((iaparams.p.harmonic.r_cut > 0.0) &&
+      (dist > iaparams.p.harmonic.r_cut)) {
     return {};
   }
 
-  auto const dr = dist - iaparams->p.harmonic.r;
-  auto fac = -iaparams->p.harmonic.k * dr;
+  auto const dr = dist - iaparams.p.harmonic.r;
+  auto fac = -iaparams.p.harmonic.k * dr;
   if (dist > ROUND_ERROR_PREC) { /* Regular case */
     fac /= dist;
   } else {
@@ -68,17 +68,17 @@ harmonic_pair_force(Bonded_ia_parameters const *const iaparams,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-harmonic_pair_energy(Bonded_ia_parameters const *const iaparams,
+harmonic_pair_energy(Bonded_ia_parameters const &iaparams,
                      Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.harmonic.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic.r_cut)) {
+  if ((iaparams.p.harmonic.r_cut > 0.0) &&
+      (dist > iaparams.p.harmonic.r_cut)) {
     return {};
   }
 
   auto const energy =
-      0.5 * iaparams->p.harmonic.k * Utils::sqr(dist - iaparams->p.harmonic.r);
+      0.5 * iaparams.p.harmonic.k * Utils::sqr(dist - iaparams.p.harmonic.r);
   return energy;
 }
 

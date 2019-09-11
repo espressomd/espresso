@@ -117,8 +117,8 @@ void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
     p1 = &p;
     k = 0;
     while (k < p1->bl.n) {
-      ia_params = &bonded_ia_params[p1->bl.e[k++]];
-      if (ia_params->type == BONDED_IA_RIGID_BOND) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1->bl.e[k++]];
+      if (ia_params.type == BONDED_IA_RIGID_BOND) {
         cnt++;
         p2 = local_particles[p1->bl.e[k++]];
         if (!p2) {
@@ -131,11 +131,11 @@ void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
         auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
         auto const r_ij2 = r_ij.norm2();
 
-        if (fabs(1.0 - r_ij2 / ia_params->p.rigid_bond.d2) >
-            ia_params->p.rigid_bond.p_tol) {
+        if (fabs(1.0 - r_ij2 / ia_params.p.rigid_bond.d2) >
+            ia_params.p.rigid_bond.p_tol) {
           auto const r_ij_t = get_mi_vector(p1->r.p_old, p2->r.p_old, box_geo);
           auto const r_ij_dot = r_ij_t * r_ij;
-          auto const G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) /
+          auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) /
                          r_ij_dot / (p1->p.mass + p2->p.mass);
 
           auto const pos_corr = G * r_ij_t;
@@ -147,7 +147,7 @@ void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
         }
       } else
         /* skip bond partners of nonrigid bond */
-        k += ia_params->num;
+        k += ia_params.num;
     } // while loop
   }   // for i loop
 }
@@ -215,7 +215,6 @@ void transfer_force_init_vel(const ParticleRange &particles,
 
 /** Velocity correction vectors are computed*/
 void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
-  Bonded_ia_parameters *ia_params;
   int j, k;
   Particle *p1, *p2;
 
@@ -223,8 +222,8 @@ void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
     p1 = &p;
     k = 0;
     while (k < p1->bl.n) {
-      ia_params = &bonded_ia_params[p1->bl.e[k++]];
-      if (ia_params->type == BONDED_IA_RIGID_BOND) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1->bl.e[k++]];
+      if (ia_params.type == BONDED_IA_RIGID_BOND) {
         p2 = local_particles[p1->bl.e[k++]];
         if (!p2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
@@ -237,9 +236,9 @@ void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
         auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
 
         auto const v_proj = v_ij * r_ij;
-        if (std::abs(v_proj) > ia_params->p.rigid_bond.v_tol) {
+        if (std::abs(v_proj) > ia_params.p.rigid_bond.v_tol) {
           auto const K =
-              v_proj / ia_params->p.rigid_bond.d2 / (p1->p.mass + p2->p.mass);
+              v_proj / ia_params.p.rigid_bond.d2 / (p1->p.mass + p2->p.mass);
 
           auto const vel_corr = K * r_ij;
 
@@ -249,7 +248,7 @@ void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
           *repeat_ = *repeat_ + 1;
         }
       } else
-        k += ia_params->num;
+        k += ia_params.num;
     } // while loop
   }   // for i loop
 }

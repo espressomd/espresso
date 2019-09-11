@@ -47,11 +47,11 @@ int bonded_coulomb_set_params(int bond_type, double prefactor);
  */
 inline boost::optional<Utils::Vector3d>
 bonded_coulomb_pair_force(double const q1q2,
-                          Bonded_ia_parameters const *const iaparams,
+                          Bonded_ia_parameters const &iaparams,
                           Utils::Vector3d const &dx) {
   auto const dist2 = dx.norm2();
   auto const dist3 = dist2 * std::sqrt(dist2);
-  auto const fac = iaparams->p.bonded_coulomb.prefactor * q1q2 / dist3;
+  auto const fac = iaparams.p.bonded_coulomb.prefactor * q1q2 / dist3;
   auto const force = fac * dx;
   return force;
 }
@@ -63,10 +63,10 @@ bonded_coulomb_pair_force(double const q1q2,
  */
 inline boost::optional<double>
 bonded_coulomb_pair_energy(double const q1q2,
-                           Bonded_ia_parameters const *const iaparams,
+                           Bonded_ia_parameters const &iaparams,
                            Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
-  auto const energy = iaparams->p.bonded_coulomb.prefactor * q1q2 / dist;
+  auto const energy = iaparams.p.bonded_coulomb.prefactor * q1q2 / dist;
   return energy;
 }
 

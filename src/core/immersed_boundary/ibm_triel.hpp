@@ -39,6 +39,6 @@ int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
  */
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 IBM_Triel_CalcForce(Particle const *p1, Particle const *p2, Particle const *p3,
-                    Bonded_ia_parameters const *iaparams);
+                    Bonded_ia_parameters const &iaparams);
 
 #endif

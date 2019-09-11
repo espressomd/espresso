@@ -51,7 +51,7 @@ inline double sigmoid_force_r(double a, double n, double r) {
 inline Utils::Vector3d
 membrane_collision_pair_force(Particle const *const p1,
                               Particle const *const p2,
-                              IA_parameters const *const ia_params,
+                              IA_parameters const &ia_params,
                               Utils::Vector3d const &d, double dist) {
   /************************
    *
@@ -70,9 +70,9 @@ membrane_collision_pair_force(Particle const *const p1,
    *
    *********************/
   Utils::Vector3d force{};
-  if (dist < (ia_params->membrane.cut + ia_params->membrane.offset)) {
+  if (dist < (ia_params.membrane.cut + ia_params.membrane.offset)) {
 
-    auto const r_off = dist - ia_params->membrane.offset;
+    auto const r_off = dist - ia_params.membrane.offset;
     // offset needs to be checked for the unphysical case when r_off should be
     // negative
 
@@ -98,8 +98,8 @@ membrane_collision_pair_force(Particle const *const p1,
       auto const angle = acos(product);
 
       if (fabs(angle) > SMALL_OIF_MEMBRANE_CUTOFF) {
-        auto const fac = sigmoid_force_r(ia_params->membrane.a,
-                                         ia_params->membrane.n, r_off) /
+        auto const fac = sigmoid_force_r(ia_params.membrane.a,
+                                         ia_params.membrane.n, r_off) /
                          dist;
         force = (-fac / ndir) * dir;
       }

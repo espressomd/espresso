@@ -115,7 +115,7 @@ inline boost::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                Utils::Vector3d const &r3, Utils::Vector3d const &r4,
-               Bonded_ia_parameters const *const iaparams) {
+               Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -141,7 +141,7 @@ dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   auto const v12Xf1 = vector_product(v12, f1);
 
   /* calculate force magnitude */
-  fac = -iaparams->p.dihedral.bend * iaparams->p.dihedral.mult;
+  fac = -iaparams.p.dihedral.bend * iaparams.p.dihedral.mult;
 
   if (fabs(sin(phi)) < TINY_SIN_VALUE) {
     /*(comes from taking the first term of the MacLaurin expansion of
@@ -149,12 +149,12 @@ dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
       The original code had a 2PI term in the cosine (cos(2PI - nPhi))
       but I removed it because it wasn't doing anything. AnaVV*/
     sinmphi_sinphi =
-        iaparams->p.dihedral.mult *
-        cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase) /
+        iaparams.p.dihedral.mult *
+        cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase) /
         cosphi;
   } else {
     sinmphi_sinphi =
-        sin(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase) /
+        sin(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase) /
         sin(phi);
   }
 
@@ -179,7 +179,7 @@ dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
 inline boost::optional<double>
 dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                 Utils::Vector3d const &r3, Utils::Vector3d const &r4,
-                Bonded_ia_parameters const *const iaparams) {
+                Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -194,8 +194,8 @@ dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   }
 
   auto const energy =
-      iaparams->p.dihedral.bend *
-      (1. - cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase));
+      iaparams.p.dihedral.bend *
+      (1. - cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase));
 
   return energy;
 }

@@ -49,20 +49,20 @@ inline double buck_energy_r(double A, double B, double C, double D,
 }
 
 /** Calculate Buckingham force factor */
-inline double buck_pair_force_factor(IA_parameters const *const ia_params,
+inline double buck_pair_force_factor(IA_parameters const &ia_params,
                                      double dist) {
-  if (dist < ia_params->buckingham.cut) {
+  if (dist < ia_params.buckingham.cut) {
     /* case: resulting force/energy greater than discontinuity and
              less than cutoff (true Buckingham region) */
     double fac;
-    if (dist > ia_params->buckingham.discont) {
+    if (dist > ia_params.buckingham.discont) {
       fac =
-          buck_force_r(ia_params->buckingham.A, ia_params->buckingham.B,
-                       ia_params->buckingham.C, ia_params->buckingham.D, dist) /
+          buck_force_r(ia_params.buckingham.A, ia_params.buckingham.B,
+                       ia_params.buckingham.C, ia_params.buckingham.D, dist) /
           dist;
     } else {
       /* resulting force/energy in the linear region*/
-      fac = -ia_params->buckingham.F2 / dist;
+      fac = -ia_params.buckingham.F2 / dist;
     }
     return fac;
   }
@@ -70,25 +70,25 @@ inline double buck_pair_force_factor(IA_parameters const *const ia_params,
 }
 
 /** Calculate Buckingham force */
-inline Utils::Vector3d buck_pair_force(IA_parameters const *const ia_params,
+inline Utils::Vector3d buck_pair_force(IA_parameters const &ia_params,
                                        Utils::Vector3d const &d, double dist) {
   return d * buck_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate Buckingham energy */
-inline double buck_pair_energy(IA_parameters const *const ia_params,
+inline double buck_pair_energy(IA_parameters const &ia_params,
                                double dist) {
-  if (dist < ia_params->buckingham.cut) {
+  if (dist < ia_params.buckingham.cut) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */
-    if (dist > ia_params->buckingham.discont) {
-      return buck_energy_r(ia_params->buckingham.A, ia_params->buckingham.B,
-                           ia_params->buckingham.C, ia_params->buckingham.D,
-                           ia_params->buckingham.shift, dist);
+    if (dist > ia_params.buckingham.discont) {
+      return buck_energy_r(ia_params.buckingham.A, ia_params.buckingham.B,
+                           ia_params.buckingham.C, ia_params.buckingham.D,
+                           ia_params.buckingham.shift, dist);
     }
 
     /* resulting force/energy in the linear region*/
-    return ia_params->buckingham.F1 + ia_params->buckingham.F2 * dist;
+    return ia_params.buckingham.F1 + ia_params.buckingham.F2 * dist;
   }
   return 0.0;
 }

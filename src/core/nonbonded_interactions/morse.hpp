@@ -37,12 +37,12 @@ int morse_set_params(int part_type_a, int part_type_b, double eps, double alpha,
                      double rmin, double cut);
 
 /** Calculate Morse force factor */
-inline double morse_pair_force_factor(IA_parameters const *const ia_params,
+inline double morse_pair_force_factor(IA_parameters const &ia_params,
                                       double dist) {
-  if (dist < ia_params->morse.cut) {
+  if (dist < ia_params.morse.cut) {
     auto const add =
-        exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));
-    double fac = -ia_params->morse.eps * 2.0 * ia_params->morse.alpha *
+        exp(-ia_params.morse.alpha * (dist - ia_params.morse.rmin));
+    double fac = -ia_params.morse.eps * 2.0 * ia_params.morse.alpha *
                  (add - Utils::sqr(add)) / dist;
     return fac;
   }
@@ -50,19 +50,19 @@ inline double morse_pair_force_factor(IA_parameters const *const ia_params,
 }
 
 /** Calculate Morse force */
-inline Utils::Vector3d morse_pair_force(IA_parameters const *const ia_params,
+inline Utils::Vector3d morse_pair_force(IA_parameters const &ia_params,
                                         Utils::Vector3d const &d, double dist) {
   return d * morse_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate Morse energy */
-inline double morse_pair_energy(IA_parameters const *const ia_params,
+inline double morse_pair_energy(IA_parameters const &ia_params,
                                 double dist) {
-  if (dist < ia_params->morse.cut) {
+  if (dist < ia_params.morse.cut) {
     auto const add =
-        exp(-ia_params->morse.alpha * (dist - ia_params->morse.rmin));
-    auto const fac = ia_params->morse.eps * (Utils::sqr(add) - 2 * add) -
-                     ia_params->morse.rest;
+        exp(-ia_params.morse.alpha * (dist - ia_params.morse.rmin));
+    auto const fac = ia_params.morse.eps * (Utils::sqr(add) - 2 * add) -
+                     ia_params.morse.rest;
     return fac;
   }
   return 0.0;

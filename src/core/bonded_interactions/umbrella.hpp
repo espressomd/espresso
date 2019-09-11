@@ -50,12 +50,12 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
  *  @param[in]  d         %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-umbrella_pair_force(Bonded_ia_parameters const *const ia_params,
+umbrella_pair_force(Bonded_ia_parameters const &ia_params,
                     Utils::Vector3d const &d) {
-  auto const distn = d[ia_params->p.umbrella.dir];
-  auto const fac = -ia_params->p.umbrella.k * (distn - ia_params->p.umbrella.r);
+  auto const distn = d[ia_params.p.umbrella.dir];
+  auto const fac = -ia_params.p.umbrella.k * (distn - ia_params.p.umbrella.r);
   Utils::Vector3d force{};
-  force[ia_params->p.umbrella.dir] = fac;
+  force[ia_params.p.umbrella.dir] = fac;
 
   return force;
 }
@@ -65,11 +65,11 @@ umbrella_pair_force(Bonded_ia_parameters const *const ia_params,
  *  @param[in]  d         %Distance between the particles.
  */
 inline boost::optional<double>
-umbrella_pair_energy(Bonded_ia_parameters const *const ia_params,
+umbrella_pair_energy(Bonded_ia_parameters const &ia_params,
                      Utils::Vector3d const &d, double *_energy) {
-  auto const distn = d[ia_params->p.umbrella.dir];
-  auto const energy = 0.5 * ia_params->p.umbrella.k *
-                      Utils::sqr(distn - ia_params->p.umbrella.r);
+  auto const distn = d[ia_params.p.umbrella.dir];
+  auto const energy = 0.5 * ia_params.p.umbrella.k *
+                      Utils::sqr(distn - ia_params.p.umbrella.r);
   return energy;
 }
 

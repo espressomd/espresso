@@ -110,11 +110,11 @@ inline Utils::Vector3d v_noise(int particle_id, int partner_id) {
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
-                        Bonded_ia_parameters const *const iaparams,
+                        Bonded_ia_parameters const &iaparams,
                         Utils::Vector3d const &dx) {
   // Bond broke?
-  if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
-      dx.norm() > iaparams->p.thermalized_bond.r_cut) {
+  if (iaparams.p.thermalized_bond.r_cut > 0.0 &&
+      dx.norm() > iaparams.p.thermalized_bond.r_cut) {
     return {};
   }
 
@@ -134,21 +134,21 @@ thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
     double force_lv_com, force_lv_dist;
 
     // Langevin thermostat for center of mass
-    if (iaparams->p.thermalized_bond.pref2_com > 0.0) {
+    if (iaparams.p.thermalized_bond.pref2_com > 0.0) {
       force_lv_com =
-          -iaparams->p.thermalized_bond.pref1_com * com_vel[i] +
-          sqrt_mass_tot * iaparams->p.thermalized_bond.pref2_com * noise[i];
+          -iaparams.p.thermalized_bond.pref1_com * com_vel[i] +
+          sqrt_mass_tot * iaparams.p.thermalized_bond.pref2_com * noise[i];
     } else {
-      force_lv_com = -iaparams->p.thermalized_bond.pref1_com * com_vel[i];
+      force_lv_com = -iaparams.p.thermalized_bond.pref1_com * com_vel[i];
     }
 
     // Langevin thermostat for distance p1->p2
-    if (iaparams->p.thermalized_bond.pref2_dist > 0.0) {
+    if (iaparams.p.thermalized_bond.pref2_dist > 0.0) {
       force_lv_dist =
-          -iaparams->p.thermalized_bond.pref1_dist * dist_vel[i] +
-          sqrt_mass_red * iaparams->p.thermalized_bond.pref2_dist * noise[i];
+          -iaparams.p.thermalized_bond.pref1_dist * dist_vel[i] +
+          sqrt_mass_red * iaparams.p.thermalized_bond.pref2_dist * noise[i];
     } else {
-      force_lv_dist = -iaparams->p.thermalized_bond.pref1_dist * dist_vel[i];
+      force_lv_dist = -iaparams.p.thermalized_bond.pref1_dist * dist_vel[i];
     }
     // Add forces
     force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist;

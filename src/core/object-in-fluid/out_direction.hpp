@@ -46,8 +46,7 @@ int oif_out_direction_set_params(int bond_type);
  */
 inline Utils::Vector3d
 calc_out_direction(Particle const *const p2, Particle const *const p3,
-                   Particle const *const p4,
-                   Bonded_ia_parameters const * /* iaparams */) {
+                   Particle const *const p4) {
 
   // first-fold-then-the-same approach
   auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());

@@ -40,22 +40,22 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
 /** Calculate Gay-Berne force and torques */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
-              IA_parameters const *const ia_params, Utils::Vector3d const &d,
+              IA_parameters const &ia_params, Utils::Vector3d const &d,
               double dist, bool calc_torque1, bool calc_torque2) {
   using Utils::int_pow;
   using Utils::sqr;
 
-  if (dist >= ia_params->gay_berne.cut) {
+  if (dist >= ia_params.gay_berne.cut) {
     return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
                            Utils::Vector3d{});
   }
 
-  auto const e0 = ia_params->gay_berne.eps;
-  auto const s0 = ia_params->gay_berne.sig;
-  auto const chi1 = ia_params->gay_berne.chi1;
-  auto const chi2 = ia_params->gay_berne.chi2;
-  auto const mu = ia_params->gay_berne.mu;
-  auto const nu = ia_params->gay_berne.nu;
+  auto const e0 = ia_params.gay_berne.eps;
+  auto const s0 = ia_params.gay_berne.sig;
+  auto const chi1 = ia_params.gay_berne.chi1;
+  auto const chi2 = ia_params.gay_berne.chi2;
+  auto const mu = ia_params.gay_berne.mu;
+  auto const nu = ia_params.gay_berne.nu;
   auto const r = Utils::Vector3d(d).normalize();
   auto const dui = d * ui;
   auto const duj = d * uj;
@@ -85,7 +85,7 @@ gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
   Utils::Vector3d force, torque1, torque2;
 
   auto const X = s0 / (dist - s + s0);
-  auto const Xcut = s0 / (ia_params->gay_berne.cut - s + s0);
+  auto const Xcut = s0 / (ia_params.gay_berne.cut - s + s0);
 
   auto const X6 = int_pow<6>(X);
   auto const Xcut6 = int_pow<6>(Xcut);
@@ -135,21 +135,21 @@ gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
 /** Calculate Gay-Berne energy */
 inline double gb_pair_energy(Utils::Vector3d const &ui,
                              Utils::Vector3d const &uj,
-                             IA_parameters const *const ia_params,
+                             IA_parameters const &ia_params,
                              Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;
   using Utils::sqr;
 
-  if (dist >= ia_params->gay_berne.cut) {
+  if (dist >= ia_params.gay_berne.cut) {
     return 0.0;
   }
 
-  auto const e0 = ia_params->gay_berne.eps;
-  auto const s0 = ia_params->gay_berne.sig;
-  auto const chi1 = ia_params->gay_berne.chi1;
-  auto const chi2 = ia_params->gay_berne.chi2;
-  auto const mu = ia_params->gay_berne.mu;
-  auto const nu = ia_params->gay_berne.nu;
+  auto const e0 = ia_params.gay_berne.eps;
+  auto const s0 = ia_params.gay_berne.sig;
+  auto const chi1 = ia_params.gay_berne.chi1;
+  auto const chi2 = ia_params.gay_berne.chi2;
+  auto const mu = ia_params.gay_berne.mu;
+  auto const nu = ia_params.gay_berne.nu;
   auto const r = Utils::Vector3d(d).normalize();
 
   auto const uij = ui * uj;
@@ -173,7 +173,7 @@ inline double gb_pair_energy(Utils::Vector3d const &ui,
     return 4. * e * (int_pow<12>(1. / r) - int_pow<6>(1. / r));
   };
 
-  return E(r_eff(dist)) - E(r_eff(ia_params->gay_berne.cut));
+  return E(r_eff(dist)) - E(r_eff(ia_params.gay_berne.cut));
 }
 
 #endif

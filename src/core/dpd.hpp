@@ -52,7 +52,7 @@ void dpd_init();
 void dpd_update_params(double pref2_scale);
 
 Utils::Vector3d dpd_pair_force(Particle const *p1, Particle const *p2,
-                               IA_parameters const *ia_params,
+                               IA_parameters const &ia_params,
                                Utils::Vector3d const &d, double dist,
                                double dist2);
 Utils::Vector9d dpd_stress();

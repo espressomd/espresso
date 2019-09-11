@@ -109,10 +109,10 @@ inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 calc_three_body_bonded_forces(Utils::Vector3d const &r_mid,
                               Utils::Vector3d const &r_left,
                               Utils::Vector3d const &r_right,
-                              Bonded_ia_parameters const *const iaparams) {
+                              Bonded_ia_parameters const &iaparams) {
 
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d> result;
-  switch (iaparams->type) {
+  switch (iaparams.type) {
   case BONDED_IA_ANGLE_HARMONIC:
     result = angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
     break;
@@ -128,7 +128,7 @@ calc_three_body_bonded_forces(Utils::Vector3d const &r_mid,
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
             WARNING: Bond type %d unhandled\n",
-            iaparams->type);
+            iaparams.type);
     result = std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
                              Utils::Vector3d{});
     break;
@@ -144,9 +144,9 @@ inline void add_bonded_virials(Particle const *const p1) {
   int i = 0;
   while (i < p1->bl.n) {
     auto const type_num = p1->bl.e[i++];
-    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
-    if (iaparams->num != 1) {
-      i += iaparams->num;
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+    if (iaparams.num != 1) {
+      i += iaparams.num;
       continue;
     }
 
@@ -156,7 +156,7 @@ inline void add_bonded_virials(Particle const *const p1) {
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the
       // cutoff, see calc_maximal_cutoff()
-      if ((type_num == BONDED_IA_HARMONIC) && (iaparams->p.harmonic.r_cut > 0))
+      if ((type_num == BONDED_IA_HARMONIC) && (iaparams.p.harmonic.r_cut > 0))
         return;
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -190,12 +190,12 @@ inline void add_three_body_bonded_stress(Particle const *const p1) {
   while (i < p1->bl.n) {
     /* scan bond list for angular interactions */
     auto const type_num = p1->bl.e[i];
-    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
 
     // Skip non-three-particle-bonds
-    if (iaparams->num != 2) // number of partners
+    if (iaparams.num != 2) // number of partners
     {
-      i += 1 + iaparams->num;
+      i += 1 + iaparams.num;
       continue;
     }
     Particle const *const p2 = local_particles[p1->bl.e[i + 1]];

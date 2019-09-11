@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 IBM_Tribend_CalcForce(Particle const *const p1, Particle const *const p2,
                       Particle const *const p3, Particle const *const p4,
-                      Bonded_ia_parameters const *const iaparams) {
+                      Bonded_ia_parameters const &iaparams) {
   assert(p1);
   assert(p2);
   assert(p3);
@@ -67,9 +67,9 @@ IBM_Tribend_CalcForce(Particle const *const p1, Particle const *const p2,
   if (desc < 0)
     theta *= -1;
 
-  auto const DTh = theta - iaparams->p.ibm_tribend.theta0;
+  auto const DTh = theta - iaparams.p.ibm_tribend.theta0;
 
-  auto Pre = iaparams->p.ibm_tribend.kb * DTh;
+  auto Pre = iaparams.p.ibm_tribend.kb * DTh;
   // Correct version with linearized sin
   if (theta < 0)
     Pre *= -1;

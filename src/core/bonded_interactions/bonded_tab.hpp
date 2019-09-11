@@ -66,9 +66,9 @@ int tabulated_bonded_set_params(int bond_type,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-tab_bond_force(Bonded_ia_parameters const *const iaparams,
+tab_bond_force(Bonded_ia_parameters const &iaparams,
                Utils::Vector3d const &dx) {
-  auto const *tab_pot = iaparams->p.tab.pot;
+  auto const *tab_pot = iaparams.p.tab.pot;
   auto const dist = dx.norm();
 
   if (dist < tab_pot->cutoff()) {
@@ -89,9 +89,9 @@ tab_bond_force(Bonded_ia_parameters const *const iaparams,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-tab_bond_energy(Bonded_ia_parameters const *const iaparams,
+tab_bond_energy(Bonded_ia_parameters const &iaparams,
                 Utils::Vector3d const &dx) {
-  auto const *tab_pot = iaparams->p.tab.pot;
+  auto const *tab_pot = iaparams.p.tab.pot;
   auto const dist = dx.norm();
 
   if (dist < tab_pot->cutoff()) {
@@ -112,7 +112,7 @@ inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
                              Utils::Vector3d const &r_left,
                              Utils::Vector3d const &r_right,
-                             Bonded_ia_parameters const *const iaparams) {
+                             Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -121,7 +121,7 @@ angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
 #else
     auto const phi = acos(cos_phi);
 #endif
-    auto const *tab_pot = iaparams->p.tab.pot;
+    auto const *tab_pot = iaparams.p.tab.pot;
     auto const gradient = tab_pot->force(phi);
     return -gradient / sin_phi;
   };
@@ -139,7 +139,7 @@ angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 tab_angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
                 Utils::Vector3d const &r_right,
-                Bonded_ia_parameters const *const iaparams) {
+                Bonded_ia_parameters const &iaparams) {
 
   return angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
 }
@@ -156,7 +156,7 @@ tab_angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
 inline double tab_angle_energy(Utils::Vector3d const &r_mid,
                                Utils::Vector3d const &r_left,
                                Utils::Vector3d const &r_right,
-                               Bonded_ia_parameters const *const iaparams) {
+                               Bonded_ia_parameters const &iaparams) {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   /* calculate phi */
@@ -165,7 +165,7 @@ inline double tab_angle_energy(Utils::Vector3d const &r_mid,
 #else
   auto const phi = acos(cos_phi);
 #endif
-  auto const energy = iaparams->p.tab.pot->energy(phi);
+  auto const energy = iaparams.p.tab.pot->energy(phi);
   return energy;
 }
 
@@ -183,14 +183,14 @@ inline boost::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                    Utils::Vector3d const &r3, Utils::Vector3d const &r4,
-                   Bonded_ia_parameters const *const iaparams) {
+                   Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle, cosine of the bond angles */
   double phi, cos_phi;
   /* force factors */
-  auto const *tab_pot = iaparams->p.tab.pot;
+  auto const *tab_pot = iaparams.p.tab.pot;
 
   /* dihedral angle */
   calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
@@ -232,13 +232,13 @@ tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
 inline boost::optional<double>
 tab_dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                     Utils::Vector3d const &r3, Utils::Vector3d const &r4,
-                    Bonded_ia_parameters const *const iaparams) {
+                    Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cos_phi;
-  auto const *tab_pot = iaparams->p.tab.pot;
+  auto const *tab_pot = iaparams.p.tab.pot;
   calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cos_phi, &phi);
   auto const energy = tab_pot->energy(phi);

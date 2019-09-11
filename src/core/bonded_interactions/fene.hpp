@@ -40,17 +40,17 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-fene_pair_force(Bonded_ia_parameters const *const iaparams,
+fene_pair_force(Bonded_ia_parameters const &iaparams,
                 Utils::Vector3d const &dx) {
   auto const len = dx.norm();
-  auto const dr = len - iaparams->p.fene.r0;
+  auto const dr = len - iaparams.p.fene.r0;
 
-  if (dr >= iaparams->p.fene.drmax) {
+  if (dr >= iaparams.p.fene.drmax) {
     return {};
   }
 
   auto fac =
-      -iaparams->p.fene.k * dr / (1.0 - dr * dr * iaparams->p.fene.drmax2i);
+      -iaparams.p.fene.k * dr / (1.0 - dr * dr * iaparams.p.fene.drmax2i);
   if (len > ROUND_ERROR_PREC) {
     fac /= len;
   } else {
@@ -67,18 +67,18 @@ fene_pair_force(Bonded_ia_parameters const *const iaparams,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-fene_pair_energy(Bonded_ia_parameters const *const iaparams,
+fene_pair_energy(Bonded_ia_parameters const &iaparams,
                  Utils::Vector3d const &dx) {
   /* compute bond stretching (r-r0) */
-  double const dr = dx.norm() - iaparams->p.fene.r0;
+  double const dr = dx.norm() - iaparams.p.fene.r0;
 
   /* check bond stretching */
-  if (dr >= iaparams->p.fene.drmax) {
+  if (dr >= iaparams.p.fene.drmax) {
     return {};
   }
 
-  auto const energy = -0.5 * iaparams->p.fene.k * iaparams->p.fene.drmax2 *
-                      log(1.0 - dr * dr * iaparams->p.fene.drmax2i);
+  auto const energy = -0.5 * iaparams.p.fene.k * iaparams.p.fene.drmax2 *
+                      log(1.0 - dr * dr * iaparams.p.fene.drmax2i);
   return energy;
 }
 

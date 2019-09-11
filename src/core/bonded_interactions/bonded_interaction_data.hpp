@@ -397,12 +397,12 @@ inline bool pair_bond_enum_exists_on(Particle const *const p_bond,
   int i = 0;
   while (i < p_bond->bl.n) {
     int type_num = p_bond->bl.e[i];
-    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
-    if (iaparams->type == (int)bond &&
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+    if (iaparams.type == (int)bond &&
         p_bond->bl.e[i + 1] == p_partner->p.identity) {
       return true;
     }
-    i += iaparams->num + 1;
+    i += iaparams.num + 1;
   }
   return false;
 }

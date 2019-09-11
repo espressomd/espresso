@@ -48,13 +48,13 @@ inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
                           Utils::Vector3d const &r_left,
                           Utils::Vector3d const &r_right,
-                          Bonded_ia_parameters const *const iaparams) {
+                          Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
-    auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
-    auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
-    auto const k = iaparams->p.angle_cosine.bend;
+    auto const cos_phi0 = iaparams.p.angle_cosine.cos_phi0;
+    auto const sin_phi0 = iaparams.p.angle_cosine.sin_phi0;
+    auto const k = iaparams.p.angle_cosine.bend;
     // angle force term: K(phi) = -k * sin(phi - phi0) / sin(phi)
     // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b)
     return -k * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
@@ -73,7 +73,7 @@ angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 angle_cosine_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
                    Utils::Vector3d const &r_right,
-                   Bonded_ia_parameters const *const iaparams) {
+                   Bonded_ia_parameters const &iaparams) {
   return angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
@@ -86,13 +86,13 @@ angle_cosine_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
 inline double angle_cosine_energy(Utils::Vector3d const &r_mid,
                                   Utils::Vector3d const &r_left,
                                   Utils::Vector3d const &r_right,
-                                  Bonded_ia_parameters const *const iaparams) {
+                                  Bonded_ia_parameters const &iaparams) {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
-  auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
-  auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
-  auto const k = iaparams->p.angle_cosine.bend;
+  auto const cos_phi0 = iaparams.p.angle_cosine.cos_phi0;
+  auto const sin_phi0 = iaparams.p.angle_cosine.sin_phi0;
+  auto const k = iaparams.p.angle_cosine.bend;
   // potential: U(phi) = k * [1 - cos(phi - phi0)]
   // trig identity: cos(phi - phi0) = cos(phi)cos(phi0) + sin(phi)sin(phi0)
   auto const energy = k * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));

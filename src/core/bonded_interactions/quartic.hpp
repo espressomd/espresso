@@ -44,17 +44,17 @@ int quartic_set_params(int bond_type, double k0, double k1, double r,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-quartic_pair_force(Bonded_ia_parameters const *const iaparams,
+quartic_pair_force(Bonded_ia_parameters const &iaparams,
                    Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
+  if ((iaparams.p.quartic.r_cut > 0.0) && (dist > iaparams.p.quartic.r_cut)) {
     return {};
   }
 
-  auto const dr = dist - iaparams->p.quartic.r;
+  auto const dr = dist - iaparams.p.quartic.r;
   auto const fac =
-      (iaparams->p.quartic.k0 * dr + iaparams->p.quartic.k1 * dr * dr * dr) /
+      (iaparams.p.quartic.k0 * dr + iaparams.p.quartic.k1 * dr * dr * dr) /
       dist;
   auto const force = -fac * dx;
   return force;
@@ -65,18 +65,18 @@ quartic_pair_force(Bonded_ia_parameters const *const iaparams,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-quartic_pair_energy(Bonded_ia_parameters const *const iaparams,
+quartic_pair_energy(Bonded_ia_parameters const &iaparams,
                     Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams->p.quartic.r_cut > 0.0) && (dist > iaparams->p.quartic.r_cut)) {
+  if ((iaparams.p.quartic.r_cut > 0.0) && (dist > iaparams.p.quartic.r_cut)) {
     return {};
   }
 
-  double dr2 = Utils::sqr(dist - iaparams->p.quartic.r);
+  double dr2 = Utils::sqr(dist - iaparams.p.quartic.r);
 
-  auto const energy = 0.5 * iaparams->p.quartic.k0 * dr2 +
-                      0.25 * iaparams->p.quartic.k1 * Utils::sqr(dr2);
+  auto const energy = 0.5 * iaparams.p.quartic.k0 * dr2 +
+                      0.25 * iaparams.p.quartic.k1 * Utils::sqr(dr2);
   return energy;
 }
 

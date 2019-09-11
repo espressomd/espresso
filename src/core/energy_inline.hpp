@@ -79,7 +79,7 @@
  */
 inline double calc_non_bonded_pair_energy(Particle const *const p1,
                                           Particle const *const p2,
-                                          IA_parameters const *const ia_params,
+                                          IA_parameters const &ia_params,
                                           Utils::Vector3d const &d,
                                           double const dist) {
 #ifdef NO_INTRA_NB
@@ -184,7 +184,7 @@ inline void add_non_bonded_pair_energy(Particle const *const p1,
                                        Particle const *const p2,
                                        Utils::Vector3d const &d,
                                        double const dist, double const dist2) {
-  IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
+  IA_parameters const &ia_params = *get_ia_param(p1->p.type, p2->p.type);
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
@@ -211,9 +211,9 @@ inline void add_bonded_energy(Particle const *const p1) {
     Particle const *p3 = nullptr;
     Particle const *p4 = nullptr;
     int type_num = p1->bl.e[i++];
-    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
-    int type = iaparams->type;
-    int n_partners = iaparams->num;
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+    int type = iaparams.type;
+    int n_partners = iaparams.num;
 
     /* fetch particle 2, which is always needed */
     Particle const *const p2 = local_particles[p1->bl.e[i++]];
@@ -278,7 +278,7 @@ inline void add_bonded_energy(Particle const *const p1) {
 #endif
 #ifdef LENNARD_JONES
       case BONDED_IA_SUBT_LJ:
-        retval = subt_lj_pair_energy(get_ia_param(p1->p.type, p2->p.type), dx);
+        retval = subt_lj_pair_energy(*get_ia_param(p1->p.type, p2->p.type), dx);
         break;
 #endif
 #ifdef BOND_CONSTRAINT

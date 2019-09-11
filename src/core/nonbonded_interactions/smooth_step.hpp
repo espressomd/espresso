@@ -35,42 +35,42 @@ int smooth_step_set_params(int part_type_a, int part_type_b, double d, int n,
                            double eps, double k0, double sig, double cut);
 
 /** Calculate smooth step force factor */
-inline double SmSt_pair_force_factor(IA_parameters const *const ia_params,
+inline double SmSt_pair_force_factor(IA_parameters const &ia_params,
                                      double dist) {
-  if (dist >= ia_params->smooth_step.cut) {
+  if (dist >= ia_params.smooth_step.cut) {
     return 0.0;
   }
 
-  auto const frac = ia_params->smooth_step.d / dist;
-  auto const fracP = pow(frac, ia_params->smooth_step.n);
+  auto const frac = ia_params.smooth_step.d / dist;
+  auto const fracP = pow(frac, ia_params.smooth_step.n);
   auto const er =
-      exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
+      exp(2. * ia_params.smooth_step.k0 * (dist - ia_params.smooth_step.sig));
   auto const fac =
-      (ia_params->smooth_step.n * fracP + 2. * ia_params->smooth_step.eps *
-                                              ia_params->smooth_step.k0 * dist *
+      (ia_params.smooth_step.n * fracP + 2. * ia_params.smooth_step.eps *
+                                              ia_params.smooth_step.k0 * dist *
                                               er / Utils::sqr(1.0 + er)) /
       Utils::sqr(dist);
   return fac;
 }
 
 /** Calculate smooth step force */
-inline Utils::Vector3d SmSt_pair_force(IA_parameters const *const ia_params,
+inline Utils::Vector3d SmSt_pair_force(IA_parameters const &ia_params,
                                        Utils::Vector3d const &d, double dist) {
   return d * SmSt_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate smooth step energy */
-inline double SmSt_pair_energy(IA_parameters const *const ia_params,
+inline double SmSt_pair_energy(IA_parameters const &ia_params,
                                double dist) {
-  if (dist >= ia_params->smooth_step.cut) {
+  if (dist >= ia_params.smooth_step.cut) {
     return 0.0;
   }
 
-  auto const frac = ia_params->smooth_step.d / dist;
-  auto const fracP = pow(frac, ia_params->smooth_step.n);
+  auto const frac = ia_params.smooth_step.d / dist;
+  auto const fracP = pow(frac, ia_params.smooth_step.n);
   auto const er =
-      exp(2. * ia_params->smooth_step.k0 * (dist - ia_params->smooth_step.sig));
-  auto const fac = fracP + ia_params->smooth_step.eps / (1.0 + er);
+      exp(2. * ia_params.smooth_step.k0 * (dist - ia_params.smooth_step.sig));
+  auto const fac = fracP + ia_params.smooth_step.eps / (1.0 + er);
 
   return fac;
 }

@@ -118,7 +118,7 @@ inline ParticleForce init_local_particle_force(const Particle *part) {
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
     Particle const *const p1, Particle const *const p2,
-    IA_parameters const *const ia_params, Utils::Vector3d const &d,
+    IA_parameters const &ia_params, Utils::Vector3d const &d,
     double const dist, Utils::Vector3d *torque1 = nullptr,
     Utils::Vector3d *torque2 = nullptr) {
 #ifdef NO_INTRA_NB
@@ -194,7 +194,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 /* Gay-Berne */
 #ifdef GAY_BERNE
   // The gb force function isn't inlined, probably due to its size
-  if (dist < ia_params->gay_berne.cut) {
+  if (dist < ia_params.gay_berne.cut) {
     auto const forces =
         gb_pair_force(p1->r.calc_director(), p2->r.calc_director(), ia_params,
                       d, dist, torque1, torque2);
@@ -213,7 +213,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 
 inline Utils::Vector3d calc_non_bonded_pair_force(
     Particle const *const p1, Particle const *const p2,
-    IA_parameters const *const ia_params, Utils::Vector3d const &d, double dist,
+    IA_parameters const &ia_params, Utils::Vector3d const &d, double dist,
     Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
   return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, torque1,
                                           torque2);
@@ -223,7 +223,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force(Particle const *const p1,
                                                   Particle const *const p2,
                                                   Utils::Vector3d const &d,
                                                   double dist) {
-  IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
+  IA_parameters const &ia_params = *get_ia_param(p1->p.type, p2->p.type);
   return calc_non_bonded_pair_force(p1, p2, ia_params, d, dist);
 }
 
@@ -238,7 +238,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force(Particle const *const p1,
 inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
                                       Utils::Vector3d const &d, double dist,
                                       double dist2) {
-  IA_parameters const *const ia_params = get_ia_param(p1->p.type, p2->p.type);
+  IA_parameters const &ia_params = *get_ia_param(p1->p.type, p2->p.type);
   Utils::Vector3d force{};
   Utils::Vector3d *torque1 = nullptr;
   Utils::Vector3d *torque2 = nullptr;
@@ -256,7 +256,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 #ifdef AFFINITY
   /* affinity potential */
   // Prevent jump to non-inlined function
-  if (dist < ia_params->affinity.cut) {
+  if (dist < ia_params.affinity.cut) {
     force += affinity_pair_force(p1, p2, ia_params, d, dist);
   }
 #endif
@@ -265,7 +265,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
   /* non-bonded pair potentials                  */
   /***********************************************/
 
-  if (dist < ia_params->max_cut) {
+  if (dist < ia_params.max_cut) {
 #ifdef EXCLUSIONS
     if (do_nonbonded(p1, p2))
 #endif
@@ -348,12 +348,12 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
  */
 inline boost::optional<Utils::Vector3d>
 calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
-                     Bonded_ia_parameters const *const iaparams,
+                     Bonded_ia_parameters const &iaparams,
                      Utils::Vector3d const &dx, Utils::Vector3d &torque) {
 
   boost::optional<Utils::Vector3d> result;
 
-  switch (iaparams->type) {
+  switch (iaparams.type) {
   case BONDED_IA_FENE:
     result = fene_pair_force(iaparams, dx);
     break;
@@ -386,7 +386,7 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
 #endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
-    result = subt_lj_pair_force(get_ia_param(p1->p.type, p2->p.type), dx);
+    result = subt_lj_pair_force(*get_ia_param(p1->p.type, p2->p.type), dx);
     break;
 #endif
   case BONDED_IA_TABULATED_DISTANCE:
@@ -421,9 +421,9 @@ inline void add_bonded_force(Particle *const p1) {
     Particle *p3 = nullptr;
     Particle *p4 = nullptr;
     int type_num = p1->bl.e[i++];
-    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
-    int type = iaparams->type;
-    int n_partners = iaparams->num;
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+    int type = iaparams.type;
+    int n_partners = iaparams.num;
     bool bond_broken = true;
 
     if (n_partners) {
@@ -536,7 +536,7 @@ inline void add_bonded_force(Particle *const p1) {
       switch (type) {
 #ifdef MEMBRANE_COLLISION
       case BONDED_IA_OIF_OUT_DIRECTION: {
-        p1->p.out_direction = calc_out_direction(p2, p3, p4, iaparams);
+        p1->p.out_direction = calc_out_direction(p2, p3, p4);
         bond_broken = false;
         break;
       }

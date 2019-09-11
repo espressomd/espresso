@@ -50,27 +50,27 @@ inline double hat_energy_r(double Fmax, double r, double dist) {
 }
 
 /** Calculate hat force factor */
-inline double hat_pair_force_factor(IA_parameters const *const ia_params,
+inline double hat_pair_force_factor(IA_parameters const &ia_params,
                                     double dist) {
-  if (dist > 0. && dist < ia_params->hat.r) {
+  if (dist > 0. && dist < ia_params.hat.r) {
     auto const fac =
-        hat_force_r(ia_params->hat.Fmax, ia_params->hat.r, dist) / dist;
+        hat_force_r(ia_params.hat.Fmax, ia_params.hat.r, dist) / dist;
     return fac;
   }
   return 0.0;
 }
 
 /** Calculate hat force */
-inline Utils::Vector3d hat_pair_force(IA_parameters const *const ia_params,
+inline Utils::Vector3d hat_pair_force(IA_parameters const &ia_params,
                                       Utils::Vector3d const &d, double dist) {
   return d * hat_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate hat energy */
-inline double hat_pair_energy(IA_parameters const *const ia_params,
+inline double hat_pair_energy(IA_parameters const &ia_params,
                               double dist) {
-  if (dist < ia_params->hat.r) {
-    return hat_energy_r(ia_params->hat.Fmax, ia_params->hat.r, dist);
+  if (dist < ia_params.hat.r) {
+    return hat_energy_r(ia_params.hat.Fmax, ia_params.hat.r, dist);
   }
   return 0.0;
 }

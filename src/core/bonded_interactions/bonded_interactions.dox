@@ -62,10 +62,10 @@
  *  * The recommended signatures of the force and energy functions are:
  *    @code{.cpp}
  *    inline boost::optional<Utils::Vector3d>
- *    fene_pair_force(Bonded_ia_parameters const *const iaparams,
+ *    fene_pair_force(Bonded_ia_parameters const &iaparams,
  *                    Utils::Vector3d const &dx);
  *    inline boost::optional<double>
- *    fene_pair_energy(Bonded_ia_parameters const *const iaparams,
+ *    fene_pair_energy(Bonded_ia_parameters const &iaparams,
  *                     Utils::Vector3d const &dx);
  *    @endcode
  *  * The setter function gets a \p bond_type which is a numerical id

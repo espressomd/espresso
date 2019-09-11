@@ -41,8 +41,8 @@ double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
       particles.begin(), particles.end(),
       std::numeric_limits<double>::infinity(),
       [this](double min, Particle const &p) {
-        IA_parameters *ia_params;
-        ia_params = get_ia_param(p.p.type, part_rep.p.type);
+        IA_parameters const &ia_params =
+            *get_ia_param(p.p.type, part_rep.p.type);
         if (checkIfInteraction(ia_params)) {
           double dist;
           Utils::Vector3d vec;
@@ -63,8 +63,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
   double dist = 0.;
   Utils::Vector3d dist_vec, force1{}, torque1{}, torque2{}, outer_normal_vec;
 
-  IA_parameters const *const ia_params =
-      get_ia_param(p.p.type, part_rep.p.type);
+  IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 
   if (checkIfInteraction(ia_params)) {
     m_shape->calculate_dist(folded_pos, dist, dist_vec);
@@ -118,10 +117,9 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                                       const Utils::Vector3d &folded_pos,
                                       double t, Observable_stat &energy) const {
   double dist;
-  IA_parameters *ia_params;
   double nonbonded_en = 0.0;
 
-  ia_params = get_ia_param(p.p.type, part_rep.p.type);
+  IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 
   dist = 0.;
   if (checkIfInteraction(ia_params)) {

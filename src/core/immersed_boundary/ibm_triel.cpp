@@ -71,7 +71,7 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
 IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
                     Particle const *const p3,
-                    Bonded_ia_parameters const *const iaparams) {
+                    Bonded_ia_parameters const &iaparams) {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
@@ -84,8 +84,8 @@ IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
   auto const lp = vec1.norm();
 
   // Check for sanity
-  if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
-      (l - iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist)) {
+  if ((lp - iaparams.p.ibm_triel.lp0 > iaparams.p.ibm_triel.maxDist) ||
+      (l - iaparams.p.ibm_triel.l0 > iaparams.p.ibm_triel.maxDist)) {
     return {};
   }
 
@@ -95,15 +95,15 @@ IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
   auto const sinPhi = vecpro.norm() / (l * lp);
 
   // Variables in the reference state
-  const double l0 = iaparams->p.ibm_triel.l0;
-  const double lp0 = iaparams->p.ibm_triel.lp0;
-  const double cosPhi0 = iaparams->p.ibm_triel.cosPhi0;
-  const double sinPhi0 = iaparams->p.ibm_triel.sinPhi0;
-  const double a1 = iaparams->p.ibm_triel.a1;
-  const double a2 = iaparams->p.ibm_triel.a2;
-  const double b1 = iaparams->p.ibm_triel.b1;
-  const double b2 = iaparams->p.ibm_triel.b2;
-  const double A0 = iaparams->p.ibm_triel.area0;
+  const double l0 = iaparams.p.ibm_triel.l0;
+  const double lp0 = iaparams.p.ibm_triel.lp0;
+  const double cosPhi0 = iaparams.p.ibm_triel.cosPhi0;
+  const double sinPhi0 = iaparams.p.ibm_triel.sinPhi0;
+  const double a1 = iaparams.p.ibm_triel.a1;
+  const double a2 = iaparams.p.ibm_triel.a2;
+  const double b1 = iaparams.p.ibm_triel.b1;
+  const double b2 = iaparams.p.ibm_triel.b2;
+  const double A0 = iaparams.p.ibm_triel.area0;
 
   // Displacement gradient tensor D: Eq. (C.9) Krüger thesis
   const double Dxx = lp / lp0;
@@ -124,15 +124,15 @@ IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
   // Derivatives of energy density E used in chain rule below: Eq. (C.14)
   double dEdI1;
   double dEdI2;
-  if (iaparams->p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean) {
+  if (iaparams.p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean) {
     // Neo-Hookean
-    dEdI1 = iaparams->p.ibm_triel.k1 / 6.0;
-    dEdI2 = (-1) * iaparams->p.ibm_triel.k1 / (6.0 * (i2 + 1.0) * (i2 + 1.0));
+    dEdI1 = iaparams.p.ibm_triel.k1 / 6.0;
+    dEdI2 = (-1) * iaparams.p.ibm_triel.k1 / (6.0 * (i2 + 1.0) * (i2 + 1.0));
   } else {
     // Skalak
-    dEdI1 = iaparams->p.ibm_triel.k1 * (i1 + 1) / 6.0;
-    dEdI2 = (-1) * iaparams->p.ibm_triel.k1 / 6.0 +
-            iaparams->p.ibm_triel.k2 * i2 / 6.0;
+    dEdI1 = iaparams.p.ibm_triel.k1 * (i1 + 1) / 6.0;
+    dEdI2 = (-1) * iaparams.p.ibm_triel.k1 / 6.0 +
+            iaparams.p.ibm_triel.k2 * i2 / 6.0;
   }
 
   // ******** Achim's version *****************
@@ -212,11 +212,11 @@ IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
    const double i24 = Gxx;
 
    //For sake of better readability shorten the call for the triangle's
-   constants: A0 = iaparams->p.stretching_force_ibm.Area0; a1 =
-   iaparams->p.stretching_force_ibm.a1; a2 =
-   iaparams->p.stretching_force_ibm.a2; b1 =
-   iaparams->p.stretching_force_ibm.b1; b2 =
-   iaparams->p.stretching_force_ibm.b2;
+   constants: A0 = iaparams.p.stretching_force_ibm.Area0; a1 =
+   iaparams.p.stretching_force_ibm.a1; a2 =
+   iaparams.p.stretching_force_ibm.a2; b1 =
+   iaparams.p.stretching_force_ibm.b1; b2 =
+   iaparams.p.stretching_force_ibm.b2;
 
    f1_rot[0] = A0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+
    (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));

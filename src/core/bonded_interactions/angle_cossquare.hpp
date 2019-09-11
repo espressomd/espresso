@@ -49,11 +49,11 @@ inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 angle_cossquare_3body_forces(Utils::Vector3d const &r_mid,
                              Utils::Vector3d const &r_left,
                              Utils::Vector3d const &r_right,
-                             Bonded_ia_parameters const *const iaparams) {
+                             Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
-    auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-    auto const k = iaparams->p.angle_cossquare.bend;
+    auto const cos_phi0 = iaparams.p.angle_cossquare.cos_phi0;
+    auto const k = iaparams.p.angle_cossquare.bend;
     return k * (cos_phi - cos_phi0);
   };
 
@@ -71,7 +71,7 @@ inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 angle_cossquare_force(Utils::Vector3d const &r_mid,
                       Utils::Vector3d const &r_left,
                       Utils::Vector3d const &r_right,
-                      Bonded_ia_parameters const *const iaparams) {
+                      Bonded_ia_parameters const &iaparams) {
   return angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
@@ -85,11 +85,11 @@ inline double
 angle_cossquare_energy(Utils::Vector3d const &r_mid,
                        Utils::Vector3d const &r_left,
                        Utils::Vector3d const &r_right,
-                       Bonded_ia_parameters const *const iaparams) {
+                       Bonded_ia_parameters const &iaparams) {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
-  auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-  auto const k = iaparams->p.angle_cossquare.bend;
+  auto const cos_phi0 = iaparams.p.angle_cossquare.cos_phi0;
+  auto const k = iaparams.p.angle_cossquare.bend;
   auto const energy = 0.5 * k * Utils::sqr(cos_phi - cos_phi0);
   return energy;
 }

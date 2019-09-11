@@ -48,13 +48,13 @@ inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 angle_harmonic_3body_forces(Utils::Vector3d const &r_mid,
                             Utils::Vector3d const &r_left,
                             Utils::Vector3d const &r_right,
-                            Bonded_ia_parameters const *const iaparams) {
+                            Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
     auto const phi = acos(cos_phi);
-    auto const phi0 = iaparams->p.angle_harmonic.phi0;
-    auto const k = iaparams->p.angle_harmonic.bend;
+    auto const phi0 = iaparams.p.angle_harmonic.phi0;
+    auto const k = iaparams.p.angle_harmonic.bend;
     return -k * (phi - phi0) / sin_phi;
   };
 
@@ -72,7 +72,7 @@ inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 angle_harmonic_force(Utils::Vector3d const &r_mid,
                      Utils::Vector3d const &r_left,
                      Utils::Vector3d const &r_right,
-                     Bonded_ia_parameters const *const iaparams) {
+                     Bonded_ia_parameters const &iaparams) {
   return angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
@@ -86,12 +86,12 @@ inline double
 angle_harmonic_energy(Utils::Vector3d const &r_mid,
                       Utils::Vector3d const &r_left,
                       Utils::Vector3d const &r_right,
-                      Bonded_ia_parameters const *const iaparams) {
+                      Bonded_ia_parameters const &iaparams) {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const phi = acos(cos_phi);
-  auto const phi0 = iaparams->p.angle_harmonic.phi0;
-  auto const k = iaparams->p.angle_harmonic.bend;
+  auto const phi0 = iaparams.p.angle_harmonic.phi0;
+  auto const k = iaparams.p.angle_harmonic.bend;
   auto const energy = 0.5 * k * Utils::sqr(phi - phi0);
   return energy;
 }
