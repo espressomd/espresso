@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data_anal = np.loadtxt("eof_analytical.dat")
-data_ek = np.loadtxt("eof_electrokinetics.dat")
+data_ek = np.loadtxt("../eof_electrokinetics.dat")
 
 fig1 = plt.figure()
 ax = fig1.add_subplot(221)

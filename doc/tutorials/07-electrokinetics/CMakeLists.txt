@@ -1,5 +1,4 @@
 configure_file(scripts/eof_analytical.py ${CMAKE_CURRENT_BINARY_DIR}/scripts/eof_analytical.py COPYONLY)
-configure_file(scripts/eof_electrokinetics.py ${CMAKE_CURRENT_BINARY_DIR}/scripts/eof_electrokinetics.py COPYONLY)
 configure_file(scripts/plot.py ${CMAKE_CURRENT_BINARY_DIR}/scripts/plot.py COPYONLY)
 configure_file(figures/profiles.png ${CMAKE_CURRENT_BINARY_DIR}/figures/profiles.png  COPYONLY)
 configure_file(figures/schlitzpore_3d.png ${CMAKE_CURRENT_BINARY_DIR}/figures/schlitzpore_3d.png COPYONLY)
