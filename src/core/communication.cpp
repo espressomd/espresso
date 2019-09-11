@@ -391,8 +391,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
                   (double *)result_t_nb, 1);
     break;
-  case 4:
-    break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
     lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
@@ -429,8 +427,6 @@ void mpi_gather_stats_slave(int, int job) {
     /* calculate and reduce (sum up) virials, revert velocities half a timestep
      * for 'analyze p_inst' */
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
-    break;
-  case 4:
     break;
   case 6:
     lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
