@@ -30,10 +30,6 @@ std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
                       Particle const &p3, Particle const &p4,
                       Bonded_ia_parameters const &iaparams) {
-  assert(p1);
-  assert(p2);
-  assert(p3);
-  assert(p4);
 
   // Get vectors making up the two triangles
   auto const dx1 = get_mi_vector(p1.r.p, p3.r.p, box_geo);
