@@ -95,18 +95,16 @@ cdef class HydrodynamicInteraction(Actor):
     def _set_params_in_es_core(self):
         default_params = self.default_params()
         self.agrid = self._params['agrid']
-        self.density = self._params["dens"]
+        self.density = self._params['dens']
         self.tau = self._params['tau']
 
-        if self._params["kT"] > 0.:
-            lb_lbfluid_set_rng_state(self._params['seed'])
-        lb_lbfluid_set_kT(self._params["kT"])
+        if self._params['kT'] > 0.:
+            self.seed = self._params['seed']
+        self.kT = self._params['kT']
 
-        python_lbfluid_set_viscosity(
-            self._params["visc"], self.agrid, self.tau)
-        if self._params["bulk_visc"] != self.default_params()["bulk_visc"]:
-            python_lbfluid_set_bulk_viscosity(
-                self._params["bulk_visc"], self.agrid, self.tau)
+        self.viscosity = self._params['visc']
+        if self._params['bulk_visc'] != default_params['bulk_visc']:
+            self.bulk_viscosity = self._params['bulk_visc']
 
         self.ext_force_density = self._params["ext_force_density"]
 
@@ -130,7 +128,7 @@ cdef class HydrodynamicInteraction(Actor):
         self._params['visc'] = python_lbfluid_get_viscosity(
             self.agrid, self.tau)
         if not self._params["bulk_visc"] == default_params["bulk_visc"]:
-            self._params['bulk_visc'] = python_lbfluid_get_bulk_viscosity(self.agrid, self.tau)
+            self._params['bulk_visc'] = self.bulk_viscosity
         self._params['ext_force_density'] = self.ext_force_density
 
         return self._params
@@ -212,6 +210,14 @@ cdef class HydrodynamicInteraction(Actor):
             cdef Vector3i shape = lb_lbfluid_get_shape()
             return (shape[0], shape[1], shape[2])
 
+    property kT:
+        def __get__(self):
+           return lb_lbfluid_get_kT()
+
+        def __set__(self, kT):
+             cdef double _kT = kT
+             lb_lbfluid_set_kT(_kT)
+
     property seed:
         def __get__(self):
             return lb_lbfluid_get_rng_state();
@@ -254,6 +260,13 @@ cdef class HydrodynamicInteraction(Actor):
 
         def __set__(self, viscosity):
             python_lbfluid_set_viscosity(viscosity, self.agrid, self.tau)
+
+    property bulk_viscosity:
+        def __get__(self):
+            return python_lbfluid_get_bulk_viscosity(self.agrid, self.tau)
+
+        def __set__(self, viscosity):
+            python_lbfluid_set_bulk_viscosity(viscosity, self.agrid, self.tau)
 
     property tau:
         def __get__(self):
