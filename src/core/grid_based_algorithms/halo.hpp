@@ -62,7 +62,7 @@ struct _Fieldtype {
   int vblocks;  /**< number of blocks in field vectors */
   int vstride;  /**< size of strides in field vectors */
   int vskip;    /**< displacement between strides in field vectors */
-  int vflag;
+  bool vflag;
   Fieldtype subtype;
 };
 

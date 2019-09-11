@@ -129,6 +129,8 @@ struct CellPList {
   Cell **begin() { return cell; }
   Cell **end() { return cell + n; }
 
+  Cell *operator[](int i) { return assert(i < n), cell[i]; }
+
   Cell **cell;
   int n;
   int max;
@@ -203,7 +205,7 @@ extern CellStructure cell_structure;
  *  the Verlet criterion. Moreover, the Verlet list has to be
  *  rebuilt.
  */
-extern int rebuild_verletlist;
+extern bool rebuild_verletlist;
 
 /*@}*/
 

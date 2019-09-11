@@ -38,9 +38,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "event.hpp"
 #include "forces.hpp"
-#include "ghosts.hpp"
 #include "global.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
@@ -51,10 +49,6 @@
 #include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
 
 /** Calculate the derivatives of the quaternion and angular acceleration
  *  for a given particle
@@ -270,6 +264,11 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
 
 #if defined(ENGINE)
     if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
+      if (lb_lbfluid_get_lattice_switch() == ActiveLB::CPU && n_nodes > 1 &&
+          p.swim.rotational_friction != 0.) {
+        runtimeErrorMsg() << "ENGINE rotational_friction feature with CPU-LB "
+                             "only implemented for one CPU core";
+      }
 
       auto const dip = p.swim.dipole_length * p.r.calc_director();
 

@@ -67,7 +67,7 @@ public:
     VariantMap ret;
     boost::mpi::broadcast(comm(), ret, 0);
 
-    /* If the parameter is a object we have to translate it first to a
+    /* If the parameter is an object we have to translate it first to a
        local id.
     */
     translate_id(ret);
@@ -100,7 +100,7 @@ private:
       std::pair<std::string, Variant> d;
       boost::mpi::broadcast(comm(), d, 0);
 
-      /* If the parameter is a object we have to translate it first to a
+      /* If the parameter is an object we have to translate it first to a
          local id.
       */
       translate_id(d.second);

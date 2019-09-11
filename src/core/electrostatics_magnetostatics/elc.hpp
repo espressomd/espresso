@@ -49,13 +49,13 @@ typedef struct {
    */
   double gap_size;
   /** @copybrief MMM2D_struct::far_calculated */
-  int far_calculated;
-  /** Flag whether the box is neutralized by an homogeneous background.
+  bool far_calculated;
+  /** Flag whether the box is neutralized by a homogeneous background.
    *  If true, use a homogeneous neutralizing background for nonneutral
    *  systems. Unlike the 3D case, this background adds an additional
    *  force pointing towards the system center, so be careful with this.
    */
-  int neutralize;
+  bool neutralize;
 
   /// @copybrief MMM2D_struct::dielectric_contrast_on
   bool dielectric_contrast_on;
@@ -65,7 +65,7 @@ typedef struct {
   /// @copybrief MMM2D_struct::delta_mid_bot
   double delta_mid_bot;
 
-  /// @copybrief MMM2D_struct::const_pot_on
+  /// @copybrief MMM2D_struct::const_pot
   bool const_pot;
   /// @copybrief MMM2D_struct::pot_diff
   double pot_diff;
@@ -104,7 +104,7 @@ extern ELC_struct elc_params;
  *  @retval ES_OK
  */
 int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
-                   int neutralize, double delta_mid_top, double delta_mid_bot,
+                   bool neutralize, double delta_mid_top, double delta_mid_bot,
                    bool const_pot, double pot_diff);
 
 /// the force calculation

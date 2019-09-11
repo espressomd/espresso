@@ -21,7 +21,7 @@ inline size_t ravel_index(const T &unravelled_indices, const U &dimensions) {
   const auto n_dims = unravelled_indices.size();
   if (n_dims != dimensions.size()) {
     throw std::invalid_argument(
-        "Index vector and dimenions vector must have same dimensions.");
+        "Index vector and dimensions vector must have same dimensions.");
   }
   std::size_t res = unravelled_indices.back();
   std::size_t temp_prod = 1;
@@ -97,7 +97,7 @@ get_linear_index(const Vector3i &ind, const Vector3i &adim,
 }
 
 /**
- * @brief Linear index into a upper triangular matrix.
+ * @brief Linear index into an upper triangular matrix.
  *
  * This is row-major.
  *

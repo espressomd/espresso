@@ -32,44 +32,6 @@
 /* For debug messages */
 extern int this_node;
 
-/* Debug function printing p3m structures */
-void p3m_p3m_print_local_mesh(p3m_local_mesh l) {
-  fprintf(stderr, "%d: p3m_local_mesh: dim=(%d,%d,%d), size=%d\n", this_node,
-          l.dim[0], l.dim[1], l.dim[2], l.size);
-  fprintf(stderr, "%d:    ld_ind=(%d,%d,%d), ld_pos=(%f,%f,%f)\n", this_node,
-          l.ld_ind[0], l.ld_ind[1], l.ld_ind[2], l.ld_pos[0], l.ld_pos[1],
-          l.ld_pos[2]);
-  fprintf(stderr, "%d:    inner=(%d,%d,%d) [(%d,%d,%d)-(%d,%d,%d)]\n",
-          this_node, l.inner[0], l.inner[1], l.inner[2], l.in_ld[0], l.in_ld[1],
-          l.in_ld[2], l.in_ur[0], l.in_ur[1], l.in_ur[2]);
-  fprintf(stderr, "%d:    margin = (%d,%d, %d,%d, %d,%d)\n", this_node,
-          l.margin[0], l.margin[1], l.margin[2], l.margin[3], l.margin[4],
-          l.margin[5]);
-  fprintf(stderr, "%d:    r_margin=(%d,%d, %d,%d, %d,%d)\n", this_node,
-          l.r_margin[0], l.r_margin[1], l.r_margin[2], l.r_margin[3],
-          l.r_margin[4], l.r_margin[5]);
-}
-
-/* Debug function printing p3m structures */
-void p3m_p3m_print_send_mesh(p3m_send_mesh sm) {
-  int i;
-  fprintf(stderr, "%d: p3m_send_mesh: max=%d\n", this_node, sm.max);
-  for (i = 0; i < 6; i++) {
-    fprintf(stderr,
-            "%d:  dir=%d: s_dim (%d,%d,%d)  s_ld (%d,%d,%d) s_ur (%d,%d,%d) "
-            "s_size=%d\n",
-            this_node, i, sm.s_dim[i][0], sm.s_dim[i][1], sm.s_dim[i][2],
-            sm.s_ld[i][0], sm.s_ld[i][1], sm.s_ld[i][2], sm.s_ur[i][0],
-            sm.s_ur[i][1], sm.s_ur[i][2], sm.s_size[i]);
-    fprintf(stderr,
-            "%d:         r_dim (%d,%d,%d)  r_ld (%d,%d,%d) r_ur (%d,%d,%d) "
-            "r_size=%d\n",
-            this_node, sm.r_dim[i][0], sm.r_dim[i][1], sm.r_dim[i][2],
-            sm.r_ld[i][0], sm.r_ld[i][1], sm.r_ld[i][2], sm.r_ur[i][0],
-            sm.r_ur[i][1], sm.r_ur[i][2], sm.r_size[i]);
-  }
-}
-
 void p3m_add_block(double const *in, double *out, int const start[3],
                    int const size[3], int const dim[3]) {
   /* fast,mid and slow changing indices */

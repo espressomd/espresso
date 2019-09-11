@@ -131,10 +131,9 @@ optional parameter, set to :math:`0` by default.
 
 A special case of the Lennard-Jones potential is the
 Weeks-Chandler-Andersen (WCA) potential, which one obtains by putting
-the cutoff into the minimum, choosing
-:math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma`. The WCA
-potential is purely repulsive, and is often used to mimic hard sphere
-repulsion.
+the cutoff into the minimum and shifting the potential to be continuous, choosing
+:math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma` and :math:`c_\mathrm{shift}=` ``'auto'``. The WCA
+potential is purely repulsive, and is often used to mimic hard sphere repulsion.
 
 .. _Generic Lennard-Jones interaction:
 

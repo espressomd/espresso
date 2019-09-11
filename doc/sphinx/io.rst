@@ -104,7 +104,7 @@ Be aware of the following limitations:
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
     and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint
 
-  * References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer afect the other.
+  * References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer affect the other.
       
   * The state of the cell system as well as the MPI node grid are checkpointed. Therefore, checkpoints can only be loaded, when the script runs on the same number of MPI ranks.
 

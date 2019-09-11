@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
+from .utils import requires_experimental_features
 import numpy as np
 from globals cimport temperature
 from .actors cimport Actor
@@ -198,7 +199,7 @@ IF DP3M == 1:
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune(& log)
+            response = dp3m_adaptive_tune( & log)
             handle_errors(
                 "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
@@ -274,7 +275,9 @@ IF DIPOLES == 1:
             handle_errors("Could not activate magnetostatics method "
                           + self.__class__.__name__)
 
-    cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
+    @requires_experimental_features("No test coverage")
+    class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
+
         """Calculate magnetostatic interactions by direct summation over all pairs.
 
         If the system has periodic boundaries, `n_replica` copies of the system are

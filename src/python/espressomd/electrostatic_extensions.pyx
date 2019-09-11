@@ -131,10 +131,10 @@ IF ELECTROSTATICS and P3M:
                 self._params["maxPWerror"],
                 self._params["gap_size"],
                 self._params["far_cut"],
-                int(self._params["neutralize"]),
+                self._params["neutralize"],
                 self._params["delta_mid_top"],
                 self._params["delta_mid_bot"],
-                int(self._params["const_pot"]),
+                self._params["const_pot"],
                     self._params["pot_diff"]):
                 handle_errors(
                     "ELC tuning failed, ELC is not set up to work with the GPU P3M")

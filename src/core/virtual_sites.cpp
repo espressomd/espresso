@@ -40,7 +40,7 @@ const std::shared_ptr<VirtualSites> &virtual_sites() { return m_virtual_sites; }
 
 void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
   m_virtual_sites = v;
-  recalc_forces = 1;
+  recalc_forces = true;
   invalidate_obs();
   on_ghost_flags_change();
 }
@@ -72,7 +72,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
   // (paritlce_we_relate_to - this_particle)
   // The vs_relative implementation later obtains the director by multiplying
   // the quaternions representing the orientation of the real particle
-  // with those in the virtual particle. The re quulting quaternion is then
+  // with those in the virtual particle. The resulting quaternion is then
   // converted to a director.
   // We have quat_(real particle) *quat_(virtual particle)
   // = quat_(obtained from desired director)
@@ -163,7 +163,7 @@ int vs_relate_to(int part_num, int relate_to) {
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
   set_particle_vs_relative(part_num, relate_to, l, quat.data());
-  set_particle_virtual(part_num, 1);
+  set_particle_virtual(part_num, true);
 
   return ES_OK;
 }

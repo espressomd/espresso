@@ -52,7 +52,7 @@ struct Scafacos {
     return 0.0;
   }
 
-  //* Get pair energy for near field contrib */
+  /** Get pair energy for near field contrib */
   inline double pair_energy(double dist) const {
     if (has_near) {
       fcs_float potential;

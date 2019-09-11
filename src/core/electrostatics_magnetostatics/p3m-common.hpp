@@ -189,16 +189,6 @@ typedef struct {
 
 } P3MParameters;
 
-/** Print local mesh content.
- *  \param l local mesh structure.
- */
-void p3m_p3m_print_local_mesh(p3m_local_mesh l);
-
-/** Print send mesh content.
- *  \param sm send mesh structure.
- */
-void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
-
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
  *  output array with dimension dim[3] at start position start[3].
  *

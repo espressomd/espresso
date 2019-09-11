@@ -36,7 +36,7 @@
 Utils::Vector3d random_position(std::function<double()> const &generate_rn);
 Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn);
 
-/** Returns the miminum distance between position @p pos and all existing
+/** Returns the minimum distance between position @p pos and all existing
  *  particles.
  */
 double mindist(PartCfg &partCfg, Utils::Vector3d const &pos);

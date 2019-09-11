@@ -51,7 +51,7 @@ class TestLB:
               'friction': 2.0,
               'temp': 1.5,
               'gamma': 1.5,
-              'skin': 0.2,
+              'skin': 1.0,
               'temp_confidence': 10}
 
     dof = 3.
@@ -339,7 +339,7 @@ class TestLB:
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):
         """
-        Checks that LB tau can only be a integer multiple of the MD time_step
+        Checks that LB tau can only be an integer multiple of the MD time_step
         and that different time steps don't affect the physics of a system
         where particles don't move
         """

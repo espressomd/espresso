@@ -18,7 +18,9 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-
+/** \file
+ *  Implementation of \ref elc.hpp.
+ */
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -33,9 +35,6 @@
 #include "electrostatics_magnetostatics/p3m.hpp"
 
 #ifdef P3M
-
-// #define CHECKPOINTS
-// #define LOG_FORCES
 
 /****************************************
  * LOCAL DEFINES
@@ -53,17 +52,17 @@
 static double ux, ux2, uy, uy2, uz, height_inverse;
 /*@}*/
 
-ELC_struct elc_params = {1e100, 10,    1, 0, 1, 1, false, 1,
-                         1,     false, 0, 0, 0, 0, 0.0};
+ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
+                         1,     false, 0, 0, 0,    0,    0.0};
 
 /****************************************
  * LOCAL ARRAYS
  ****************************************/
 
 /** \name Product decomposition data organization
-    For the cell blocks
-    it is assumed that the lower blocks part is in the lower half.
-    This has to have positive sign, so that has to be first. */
+ *  For the cell blocks it is assumed that the lower blocks part is in the
+ *  lower half. This has to have positive sign, so that has to be first.
+ */
 /*@{*/
 #define POQESP 0
 #define POQECP 1
@@ -88,12 +87,12 @@ static std::vector<double> partblk;
 /** collected data from the other cells */
 static double gblcblk[8];
 
-/** structure for storing of sin and cos values */
+/** structure for caching sin and cos values */
 typedef struct {
   double s, c;
 } SCCache;
 
-/** \name sin/cos caching */
+/** Cached sin/cos values along the x-axis and y-axis */
 /*@{*/
 static std::vector<SCCache> scxcache;
 static int n_scxcache;
@@ -110,10 +109,7 @@ static int n_scycache;
 static void prepare_scx_cache(const ParticleRange &particles);
 static void prepare_scy_cache(const ParticleRange &particles);
 /*@}*/
-/** \name common code */
-/*@{*/
 static void distribute(int size);
-/*@}*/
 /** \name p=0 per frequency code */
 /*@{*/
 static void setup_P(int p, double omega, const ParticleRange &particles);
@@ -133,14 +129,11 @@ static void setup_PQ(int p, int q, double omega,
 static void add_PQ_force(int p, int q, double omega,
                          const ParticleRange &particles);
 static double PQ_energy(double omega);
+/*@}*/
 static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
 static double z_energy(const ParticleRange &particles);
 static void add_z_force(const ParticleRange &particles);
-/*@}*/
-
-/* COMMON */
-/**********/
 
 void ELC_setup_constants() {
   ux = 1 / box_geo.length()[0];
@@ -152,8 +145,6 @@ void ELC_setup_constants() {
   height_inverse = 1 / elc_params.h;
 }
 
-/* SC Cache */
-/************/
 static void prepare_scx_cache(const ParticleRange &particles) {
   int freq;
   double arg;
@@ -233,51 +224,6 @@ void distribute(int size) {
   copy_vec(send_buf, gblcblk, size);
   MPI_Allreduce(send_buf, gblcblk, size, MPI_DOUBLE, MPI_SUM, comm_cart);
 }
-
-#ifdef CHECKPOINTS
-static void checkpoint(char *text, int p, int q, int e_size) {
-  int c, i;
-  fprintf(stderr, "%d: %s %d %d\n", this_node, text, p, q);
-
-  fprintf(stderr, "partblk\n");
-  for (c = 0; c < n_localpart; c++) {
-    fprintf(stderr, "%d", c);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk.data(), c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g",
-              block(partblk.data(), c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n");
-
-  fprintf(stderr, "gblcblk\n");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", gblcblk[i]);
-  fprintf(stderr, " m");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", gblcblk[i + e_size]);
-  fprintf(stderr, "\n");
-}
-
-#else
-#define checkpoint(text, p, q, size)
-#endif
-
-#ifdef LOG_FORCES
-static void clear_log_forces(char *where, const ParticleRange &particles) {
-  fprintf(stderr, "%s\n", where);
-  for (auto &p : particles) {
-    fprintf(stderr, "%d %g %g %g\n", p.p.identity, p.f.f[0], p.f.f[1],
-            p.f.f[2]);
-    for (int j = 0; j < 3; j++)
-      p.f.f[j] = 0;
-  }
-}
-#else
-#define clear_log_forces(w, particles)
-#endif
 
 /*****************************************************************/
 /* dipole terms */
@@ -604,8 +550,7 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
-        // negative sign is okay here as the image is located at
-        // -p.r.p[2]
+        // negative sign is okay here as the image is located at -p.r.p[2]
 
         e = exp(-omega * p.r.p[2]);
 
@@ -711,8 +656,7 @@ static void setup_Q(int q, double omega, const ParticleRange &particles) {
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
         // negative sign before omega is okay here as the image is located
-        // at
-        // -p.r.p[2]
+        // at -p.r.p[2]
 
         e = exp(-omega * p.r.p[2]);
 
@@ -1048,16 +992,8 @@ void ELC_add_force(const ParticleRange &particles) {
 
   prepare_scx_cache(particles);
   prepare_scy_cache(particles);
-
-  clear_log_forces("start", particles);
-
   add_dipole_force(particles);
-
-  clear_log_forces("dipole", particles);
-
   add_z_force(particles);
-
-  clear_log_forces("z_force", particles);
 
   /* the second condition is just for the case of numerical accident */
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
@@ -1065,7 +1001,6 @@ void ELC_add_force(const ParticleRange &particles) {
     setup_P(p, omega, particles);
     distribute(4);
     add_P_force(particles);
-    checkpoint("************distri p", p, 0, 2);
   }
 
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
@@ -1073,7 +1008,6 @@ void ELC_add_force(const ParticleRange &particles) {
     setup_Q(q, omega, particles);
     distribute(4);
     add_Q_force(particles);
-    checkpoint("************distri q", 0, q, 2);
   }
 
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
@@ -1085,11 +1019,8 @@ void ELC_add_force(const ParticleRange &particles) {
       setup_PQ(p, q, omega, particles);
       distribute(8);
       add_PQ_force(p, q, omega, particles);
-      checkpoint("************distri pq", p, q, 4);
     }
   }
-
-  clear_log_forces("end", particles);
 }
 
 double ELC_energy(const ParticleRange &particles) {
@@ -1108,14 +1039,12 @@ double ELC_energy(const ParticleRange &particles) {
     setup_P(p, omega, particles);
     distribute(4);
     eng += P_energy(omega);
-    checkpoint("E************distri p", p, 0, 2);
   }
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     omega = C_2PI * uy * q;
     setup_Q(q, omega, particles);
     distribute(4);
     eng += Q_energy(omega);
-    checkpoint("E************distri q", 0, q, 2);
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
@@ -1126,7 +1055,6 @@ double ELC_energy(const ParticleRange &particles) {
       setup_PQ(p, q, omega, particles);
       distribute(8);
       eng += PQ_energy(omega);
-      checkpoint("E************distri pq", p, q, 4);
     }
   }
   /* we count both i<->j and j<->i, so return just half of it */
@@ -1147,14 +1075,18 @@ int ELC_tune(double error) {
     return ES_ERROR;
 
   elc_params.far_cut = min_inv_boxl;
+
   do {
-    err =
-        0.5 * (exp(2 * M_PI * elc_params.far_cut * h) / (lz - h) *
-                   (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz - h)) /
-                   (expm1(2 * M_PI * elc_params.far_cut * lz)) +
-               exp(-2 * M_PI * elc_params.far_cut * h) / (lz + h) *
-                   (C_2PI * elc_params.far_cut + 2 * (ux + uy) + 1 / (lz + h)) /
-                   (expm1(2 * M_PI * elc_params.far_cut * lz)));
+    const auto prefactor = 2 * Utils::pi() * elc_params.far_cut;
+
+    const auto sum = prefactor + 2 * (ux + uy);
+    const auto den = -expm1(-prefactor * lz);
+    const auto num1 = exp(prefactor * (h - lz));
+    const auto num2 = exp(-prefactor * (h + lz));
+
+    err = 0.5 / den *
+          (num1 * (sum + 1 / (lz - h)) / (lz - h) +
+           num2 * (sum + 1 / (lz + h)) / (lz + h));
 
     elc_params.far_cut += min_inv_boxl;
   } while (err > error && elc_params.far_cut < MAXIMAL_FAR_CUT);
@@ -1258,7 +1190,7 @@ void ELC_on_resort_particles() {
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
-                   int neutralize, double delta_top, double delta_bot,
+                   bool neutralize, double delta_top, double delta_bot,
                    bool const_pot, double pot_diff) {
   elc_params.maxPWerror = maxPWerror;
   elc_params.gap_size = gap_size;
@@ -1271,7 +1203,7 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
     elc_params.delta_mid_bot = delta_bot;
 
     // neutralize is automatic with dielectric contrast
-    elc_params.neutralize = 0;
+    elc_params.neutralize = false;
     // initial setup of parameters, may change later when P3M is finally tuned
     // set the space_layer to be 1/3 of the gap size, so that box = layer
     elc_params.space_layer = (1. / 3.) * gap_size;
@@ -1304,9 +1236,9 @@ int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
   elc_params.far_cut = far_cut;
   if (far_cut != -1) {
     elc_params.far_cut2 = Utils::sqr(far_cut);
-    elc_params.far_calculated = 0;
+    elc_params.far_calculated = false;
   } else {
-    elc_params.far_calculated = 1;
+    elc_params.far_calculated = true;
     if (ELC_tune(elc_params.maxPWerror) == ES_ERROR) {
       runtimeErrorMsg() << "ELC tuning failed, gap size too small";
     }

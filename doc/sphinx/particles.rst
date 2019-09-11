@@ -195,7 +195,7 @@ Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to have polymers in your system, you can use the function
-`espressomd.polymer.positions()` to determine suitable postitions.
+`espressomd.polymer.positions()` to determine suitable positions.
 See :attr:`espressomd.polymer.positions()` for a detailed list of
 arguments.
 
@@ -204,7 +204,7 @@ number of monomers per polymer chain ``beads_per_chain``, and the parameter
 ``bond_length``, which determines the distance between adjacent monomers
 within the polymer chains.
 Determining suitable particle positions pseudo-randomly requires the use of
-a pseudo-random number genererator, which has to be seeded. This ``seed``
+a pseudo-random number generator, which has to be seeded. This ``seed``
 is therefore also a mandatory parameter.
 
 The function :attr:`espressomd.polymer.positions()` returns a
@@ -230,14 +230,14 @@ into account when creating the polymer positions, you can set the optional
 boolean parameter ``respect_constraint=True``.
 To simulate excluded volume while drawing the polymer positions, a minimum
 distance between all particles can be set via ``min_distance``. This will
-also resprect already existing particles in the system.
+also respect already existing particles in the system.
 Both when setting ``respect_constraints`` and choosing a ``min_distance``
 trial positions are pseudo-randomly chosen and only accepted if the
-requested requirement is fulfilled. Otherwise, a new attepmt will be made,
+requested requirement is fulfilled. Otherwise, a new attempt will be made,
 up to ``max_tries`` times per monomer and if this fails ``max_tries`` per
 polymer. The default value is ``max_tries=1000``. Depending on the total
 number of beads and constraints, this value may need to be adapted. If
-detemining suitable polymer positions whithin this limit fails, a runtime
+determining suitable polymer positions within this limit fails, a runtime
 error is thrown.
 
 Note that the distance between adjacent monomers
@@ -510,11 +510,6 @@ Please note that the velocity attribute of the virtual particles does not carry 
     The behavior of virtual sites can be fine-tuned with the following
     switches in :file:`myconfig.hpp`.
 
-    - ``VIRTUAL_SITES_NO_VELOCITY`` specifies that the velocity of virtual sites is not computed
-
-    - ``VIRTUAL_SITES_THERMOSTAT`` specifies that the Langevin thermostat should also act on virtual
-       sites
-
     - ``THERMOSTAT_IGNORE_NON_VIRTUAL`` specifies that the thermostat does not act on non-virtual particles
 
 .. _Particle number counting feature:
@@ -529,16 +524,13 @@ Particle number counting feature
 
 
 
-Knowing the number of particles of a certain type in simulations in the grand canonical ensemble,
-or other purposes, when particles of certain types are created and
-deleted frequently is often of interest. Particle ids can be stored in a map for each
-individual type and so random ids of particles of a certain type can be
-drawn.  ::
+Knowing the number of particles of a certain type in simulations where particle numbers can fluctuate is of interest.
+Particle ids can be stored in a map for each
+individual type::
 
     import espressomd
     system = espressomd.System()
     system.setup_type_map([_type])
-    system.find_particle(_type)
     system.number_of_particles(_type)
 
 If you want to keep track of particle ids of a certain type you have to
@@ -547,9 +539,7 @@ initialize the method by calling  ::
     system.setup_type_map([_type])
 
 After that will keep track of particle ids of that type. Keeping track of particles of a given type is not enabled by default since it requires memory.
-When using the
-keyword ``find_particle`` and a particle type, the command will return a randomly
-chosen particle id, for a particle of the given type. The keyword
+The keyword
 ``number_of_particles`` as argument will return the number of
 particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
 
@@ -558,7 +548,7 @@ particles which have the given type. For counting the number of particles of a g
     ...
     number_of_particles = len(system.part.select(type=type))
 
-However calling ``select(type=type)`` results in looping over all particles. Therefore calling ``select()`` is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
+However calling ``select(type=type)`` results in looping over all particles which is slow. In contrast, :meth:`espressomd.system.System.number_of_particles` directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 

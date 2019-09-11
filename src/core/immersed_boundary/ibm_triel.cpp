@@ -54,7 +54,7 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 
   // yu needs to be orthogonal to xu, and point in the direction of node 3 in
   // Krueger, Fig. 7.1b. Therefore: First get the projection of v13 onto v12:
-  // The direction is definied by xu, the length by the scalar product (scalar
+  // The direction is defined by xu, the length by the scalar product (scalar
   // product can be interpreted as a projection, after all). --> sca * xu Then:
   // v13 - sca * xu gives the component of v13 orthogonal to v12, i.e.
   // perpendicular to the x-axis --> yu Last: Normalize yu.
@@ -79,7 +79,7 @@ IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
   auto const vec2 = get_mi_vector(p3->r.p, p1->r.p, box_geo);
   auto const l = vec2.norm();
 
-  // lp = lenght between 1 and 2
+  // lp = length between 1 and 2
   auto const vec1 = get_mi_vector(p2->r.p, p1->r.p, box_geo);
   auto const lp = vec1.norm();
 

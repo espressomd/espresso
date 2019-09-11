@@ -2398,7 +2398,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   /** Allocate structs in device memory*/
   free_realloc_and_clear(device_rho_v, size_of_rho_v);
 
-  /* TODO: this is a almost a copy of device_rho_v; think about eliminating
+  /* TODO: this is almost a copy of device_rho_v; think about eliminating
    * it, and maybe pi can be added to device_rho_v in this case */
   free_realloc_and_clear(print_rho_v_pi, size_of_rho_v_pi);
   free_realloc_and_clear(nodes_a.vd,

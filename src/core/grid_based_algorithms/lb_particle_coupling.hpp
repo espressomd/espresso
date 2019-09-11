@@ -1,6 +1,8 @@
 #ifndef LB_PARTICLE_COUPLING_HPP
 #define LB_PARTICLE_COUPLING_HPP
 
+#include "ParticleRange.hpp"
+
 #include <boost/serialization/optional.hpp>
 
 #include "ParticleRange.hpp"
@@ -11,8 +13,9 @@
  *  Include all particle-lattice forces in this function.
  *  The function is called from \ref force_calc.
  */
-void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
-                                            const ParticleRange &particles);
+void lb_lbcoupling_calc_particle_lattice_ia(
+    bool couple_virtual, const ParticleRange &particles,
+    const ParticleRange &more_particles);
 void lb_lbcoupling_propagate();
 uint64_t lb_lbcoupling_get_rng_state();
 void lb_lbcoupling_set_rng_state(uint64_t counter);

@@ -104,7 +104,7 @@ class ShapeBasedConstraint(Constraint):
         only useful if penetrable is ``True``.
     particle_type : int
         Interaction type of the constraint.
-    particle_velocity : array of :obj:`float`
+    particle_velocity : array_like of :obj:`float`
         Interaction velocity of the boundary
     penetrable : :obj:`bool`
         Whether particles are allowed to penetrate the constraint.
@@ -190,7 +190,7 @@ class HomogeneousMagneticField(Constraint):
     """
     Attributes
     ----------
-    H : array of :obj:`float`
+    H : (3,) array_like of :obj:`float`
         Magnetic field vector. Describes both field direction and
         strength of the magnetic field (via length of the vector).
 
@@ -214,25 +214,38 @@ class _Interpolated(Constraint):
     box, e.g. the most up right back point has to be at least at
     box + 0.5 * grid_spacing. There are convenience functions on this
     class that can calculate the required grid dimensions and the coordinates.
-    See also the examples on ForceField.
+
+    Arguments
+    ----------
+    field : (M, N, O, P) array_like of :obj:`float`
+        The actual field on a grid of size (M, N, O) with dimension P.
+    grid_spacing : (3,) array_like of :obj:`float`
+        Spacing of the grid points.
 
     Attributes
     ----------
 
-    field_data: array_like :obj:`float`
-        The actual field. Please be aware that depending on the interpolation
+    field : (M, N, O, P) array_like of :obj:`float`
+        The actual field on a grid of size (M, N, O) with dimension P.
+        Please be aware that depending on the interpolation
         order additional points are used on the boundaries.
 
-    grid_spacing: array_like :obj:`float`
-        The spacing of the grid points.
+    grid_spacing : array_like of :obj:`float`
+        Spacing of the grid points.
+
+    origin : (3,) array_like of :obj:`float`
+        Coordinates of the grid origin.
 
     """
 
-    def __init__(self, field, **kwargs):
-        shape, codim = self._unpack_dims(field)
-
-        super().__init__(_field_shape=shape, _field_codim=codim,
-                         _field_data=field.flatten(), **kwargs)
+    def __init__(self, **kwargs):
+        if "oid" not in kwargs:
+            field = kwargs.pop("field")
+            shape, codim = self._unpack_dims(field)
+            super().__init__(_field_shape=shape, _field_codim=codim,
+                             _field_data=field.flatten(), **kwargs)
+        else:
+            super().__init__(**kwargs)
 
     @classmethod
     def required_dims(cls, box_size, grid_spacing):
@@ -321,19 +334,23 @@ class ForceField(_Interpolated):
     """
     A generic tabulated force field that applies a per-particle scaling factor.
 
-    Attributes
+    Arguments
     ----------
+    field : (M, N, O, 3) array_like of :obj:`float`
+        Forcefield amplitude on a grid of size (M, N, O).
+    grid_spacing : (3,) array_like of :obj:`float`
+        Spacing of the grid points.
     default_scale : :obj:`float`
         Scaling factor for particles that have no individual scaling factor.
-    particle_scales: array_like (:obj:`int`, :obj:`float`)
+    particle_scales : array_like of (:obj:`int`, :obj:`float`)
         A list of tuples of ids and scaling factors. For
         particles in the list the interaction is scaled with
         their individual scaling factor before it is applied.
 
     """
 
-    def __init__(self, field, **kwargs):
-        super().__init__(field, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     _codim = 3
     _so_name = "Constraints::ForceField"
@@ -343,25 +360,28 @@ class ForceField(_Interpolated):
 class PotentialField(_Interpolated):
 
     """
-    A generic tabulated force field that applies a per particle
+    A generic tabulated force field that applies a per-particle
     scaling factor. The forces are calculated numerically from
     the data by finite differences. The potential is interpolated
     from the provided data.
 
-    Attributes
+    Arguments
     ----------
+    field : (M, N, O, 1) array_like of :obj:`float`
+        Potential on a grid of size (M, N, O).
+    grid_spacing : (3,) array_like of :obj:`float`
+        Spacing of the grid points.
     default_scale : :obj:`float`
-        Scaling factor for particles that have no
-        individual scaling factor.
-    particle_scales: array_like (:obj:`int`, :obj:`float`)
+        Scaling factor for particles that have no individual scaling factor.
+    particle_scales : array_like (:obj:`int`, :obj:`float`)
         A list of tuples of ids and scaling factors. For
         particles in the list the interaction is scaled with
         their individual scaling factor before it is applied.
 
     """
 
-    def __init__(self, field, **kwargs):
-        super().__init__(field, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     _codim = 1
     _so_name = "Constraints::PotentialField"
@@ -375,15 +395,17 @@ class Gravity(Constraint):
 
     :math:`F = m \\cdot g`
 
-    Attributes
+    Arguments
     ----------
-    g : array of :obj:`float`
+    g : (3,) array_like of :obj:`float`
         The gravitational acceleration.
 
     """
 
-    def __init__(self, g):
-        super().__init__(value=g)
+    def __init__(self, **kwargs):
+        if "oid" not in kwargs:
+            kwargs["value"] = kwargs.pop("g")
+        super().__init__(**kwargs)
 
     @property
     def g(self):
@@ -408,9 +430,9 @@ class LinearElectricPotential(Constraint):
 
     where :math:`q` is the charge of the particle.
 
-    Attributes
+    Arguments
     ----------
-    E : array of :obj:`float`
+    E : array_like of :obj:`float`
         The electric field.
 
     phi0 : :obj:`float`
@@ -418,8 +440,11 @@ class LinearElectricPotential(Constraint):
 
     """
 
-    def __init__(self, E, phi0=0):
-        super().__init__(A=-E, b=phi0)
+    def __init__(self, phi0=0, **kwargs):
+        if "oid" not in kwargs:
+            kwargs["A"] = -np.array(kwargs.pop("E"))
+            kwargs["b"] = phi0
+        super().__init__(**kwargs)
 
     @property
     def E(self):
@@ -448,24 +473,28 @@ class ElectricPlaneWave(Constraint):
     This can be used to generate a homogeneous AC
     field by setting k to zero.
 
-    Attributes
+    Arguments
     ----------
-    E0 : array of :obj:`float`
-        The amplitude of the electric field.
-    k  : array of :obj:`float`
+    E0 : array_like of :obj:`float`
+        Amplitude of the electric field.
+    k  : array_like of :obj:`float`
         Wave vector of the wave
     omega : :obj:`float`
         Frequency of the wave
-    phi : :obj:`float`
-        Optional phase shift, defaults to 0.
+    phi : :obj:`float`, optional
+        Phase shift
 
     """
 
     _so_name = "Constraints::ElectricPlaneWave"
 
-    def __init__(self, E0, k, omega, phi=0):
-        super().__init__(amplitude=E0, wave_vector=k, frequency=omega,
-                         phase=phi)
+    def __init__(self, phi=0, **kwargs):
+        if "oid" not in kwargs:
+            kwargs["amplitude"] = kwargs.pop("E0")
+            kwargs["wave_vector"] = kwargs.pop("k")
+            kwargs["frequency"] = kwargs.pop("omega")
+            kwargs["phase"] = phi
+        super().__init__(**kwargs)
 
     @property
     def E0(self):
@@ -495,10 +524,19 @@ class FlowField(_Interpolated):
 
     where :math:`v` is the velocity of the particle.
 
+    Arguments
+    ----------
+    field : (M, N, O, 3) array_like of :obj:`float`
+        Field velocity on a grid of size (M, N, O)
+    grid_spacing : (3,) array_like of :obj:`float`
+        Spacing of the grid points.
+    gamma : :obj:`float`
+        Coupling constant
+
     """
 
-    def __init__(self, field, **kwargs):
-        super().__init__(field, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     _codim = 3
     _so_name = "Constraints::FlowField"
@@ -517,15 +555,17 @@ class HomogeneousFlowField(Constraint):
 
     Attributes
     ----------
-    gamma : :obj:`float`
-        The coupling constant
     u : (3,) array_like of :obj:`float`
-        The velocity of the field.
+        Field velocity.
+    gamma : :obj:`float`
+        Coupling constant
 
     """
 
-    def __init__(self, u, gamma):
-        super().__init__(value=u, gamma=gamma)
+    def __init__(self, **kwargs):
+        if "oid" not in kwargs:
+            kwargs["value"] = kwargs.pop("u")
+        super().__init__(**kwargs)
 
     @property
     def u(self):
@@ -547,11 +587,17 @@ class ElectricPotential(_Interpolated):
 
     where :math:`q` is the charge of the particle.
 
+    Arguments
+    ----------
+    field : (M, N, O, 1) array_like of :obj:`float`
+        Potential on a grid of size (M, N, O)
+    grid_spacing : (3,) array_like of :obj:`float`
+        Spacing of the grid points.
 
     """
 
-    def __init__(self, field, **kwargs):
-        super().__init__(field, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     _codim = 1
     _so_name = "Constraints::ElectricPotential"

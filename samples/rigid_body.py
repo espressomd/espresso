@@ -20,15 +20,13 @@ VIRTUAL_SITES_RELATIVE feature.
 """
 
 import espressomd
-espressomd.assert_features(["VIRTUAL_SITES_RELATIVE"])
+required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
+espressomd.assert_features(required_features)
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
 
 import numpy as np
-
-required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
-espressomd.assert_features(required_features)
 
 
 box_l = 100
@@ -63,9 +61,9 @@ z = box_l * 0.5
 for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     for n in range(branch_len):
         system.part.add(pos=[x, y, z] + (n + 1) * direction,
-                        type=type_A, virtual=1)
+                        type=type_A, virtual=True)
         system.part.add(pos=[x, y, z] - (n + 1) * direction,
-                        type=type_A, virtual=1)
+                        type=type_A, virtual=True)
 
 system.virtual_sites = VirtualSitesRelative(have_velocity=True)
 
@@ -75,7 +73,7 @@ com = system.analysis.center_of_mass(p_type=type_A)
 print("center of mass is:", com)
 
 # if using multiple nodes, we need to change min_global_cut to the largest
-# deparation
+# separation
 if system.cell_system.get_state()['n_nodes'] > 1:
     max_dist = 0
     for p in system.part:

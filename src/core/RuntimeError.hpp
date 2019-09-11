@@ -28,7 +28,7 @@
 namespace ErrorHandling {
 
 /** \brief A runtime error.
- * This class describes an runtime error,
+ * This class describes a runtime error,
  * including where it occurred and its
  * severity.
  */

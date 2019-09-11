@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(count) {
 }
 
 /**
- * Check the message gathering. Every node generates an runtime error
- * and a warning. Than we gather the messages
+ * Check the message gathering. Every node generates a runtime error
+ * and a warning. Then we gather the messages
  * on the master and check if we got the correct messages. Then we
  * check the post-condition count() == 0.
  */

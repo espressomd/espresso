@@ -329,8 +329,8 @@ extern double min_global_cut;
  * This is symmetric, e.g. it holds that get_ia_param(i, j) and
  * get_ia_param(j, i) point to the same data.
  *
- * @param i First type, has to be be smaller than @ref max_seen_particle_type.
- * @param j Second type, has to be be smaller than @ref max_seen_particle_type.
+ * @param i First type, has to be smaller than @ref max_seen_particle_type.
+ * @param j Second type, has to be smaller than @ref max_seen_particle_type.
  *
  * @return Pointer to interaction parameters for the type pair.
  * */

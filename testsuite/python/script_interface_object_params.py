@@ -30,9 +30,9 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         c = ShapeBasedConstraint()
         w = Wall(normal=[-1, 0, 0])
         c.shape = w
-        # Does the shape parameter return the correct lcass
+        # Does the shape parameter return the correct class
         self.assertEqual(c.shape.__class__, Wall)
-        # Do the sciprt object match
+        # Does the script object match
         self.assertEqual(c.shape, w)
 
         # Different shape

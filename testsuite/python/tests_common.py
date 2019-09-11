@@ -75,7 +75,7 @@ def generate_test_for_class(_system, _interClass, _params):
 
 
 def lj_force_vector(v_d, d, lj_params):
-    """Returns lj force for distance d and distance vecotr v_d based on the given lj_params.
+    """Returns lj force for distance d and distance vector v_d based on the given lj_params.
     Supports epsilon and cutoff."""
 
     if d >= lj_params["cutoff"]:
@@ -86,7 +86,7 @@ def lj_force_vector(v_d, d, lj_params):
 
 def verify_lj_forces(system, tolerance, ids_to_skip=[]):
     """Goes over all pairs of particles in system and compares the forces on them
-       to what would be expected based on the systems LJ parametes.
+       to what would be expected based on the systems LJ parameters.
        Particle ids listed in ids_to_skip are not checked
        Do not run this with a thermostat enabled."""
 
