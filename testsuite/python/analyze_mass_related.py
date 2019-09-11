@@ -125,6 +125,11 @@ class AnalyzeMassRelated(ut.TestCase):
         np.testing.assert_allclose(
             expected_stress, analyze_stress)
 
+    def test_gyration_radius(self):        
+        with self.assertRaisesRegexp(Exception,"not well-defined"):
+            core_rg = self.system.analysis.calc_rg(chain_start=0,
+                                               number_of_chains=1,
+                                               chain_length=len(self.system.part))
 
 if __name__ == "__main__":
     ut.main()
