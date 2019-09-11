@@ -90,8 +90,7 @@ angle_cossquare_energy(Utils::Vector3d const &r_mid,
   auto const cos_phi = std::get<4>(vectors);
   auto const cos_phi0 = iaparams.p.angle_cossquare.cos_phi0;
   auto const k = iaparams.p.angle_cossquare.bend;
-  auto const energy = 0.5 * k * Utils::sqr(cos_phi - cos_phi0);
-  return energy;
+  return 0.5 * k * Utils::sqr(cos_phi - cos_phi0);
 }
 
 #endif /* ANGLE_COSSQUARE_H */

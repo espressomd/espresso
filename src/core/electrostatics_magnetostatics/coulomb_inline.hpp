@@ -62,7 +62,7 @@ pair_force(Particle const &p1, Particle const &p2,
                            Utils::Vector3d{});
   }
 
-  Utils::Vector3d force = central_force(q1q2, d, dist);
+  auto const force = central_force(q1q2, d, dist);
   Utils::Vector3d f1{};
   Utils::Vector3d f2{};
 

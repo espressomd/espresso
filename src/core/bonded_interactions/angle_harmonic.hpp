@@ -92,8 +92,7 @@ angle_harmonic_energy(Utils::Vector3d const &r_mid,
   auto const phi = acos(cos_phi);
   auto const phi0 = iaparams.p.angle_harmonic.phi0;
   auto const k = iaparams.p.angle_harmonic.bend;
-  auto const energy = 0.5 * k * Utils::sqr(phi - phi0);
-  return energy;
+  return 0.5 * k * Utils::sqr(phi - phi0);
 }
 
 #endif /* ANGLE_HARMONIC_H */

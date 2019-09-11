@@ -53,10 +53,9 @@ inline Utils::Vector3d thole_pair_force(Particle const &p1,
     // Calc F = - d/dr ( S(r)*q1q2/r) =
     // -(1/2)*(-2+(r^2*s^2+2*r*s+2)*exp(-s*r))*q1q2/r^2 Everything before
     // q1q2/r^2 can be used as a factor for the Coulomb::central_force method
-    double sr = thole_s * dist;
-    double dS_r = 0.5 * (2.0 - (exp(-sr) * (sr * (sr + 2.0) + 2.0)));
-    auto const f = Coulomb::central_force(thole_q1q2 * (-1. + dS_r), d, dist);
-    return f;
+    auto const sr = thole_s * dist;
+    auto const dS_r = 0.5 * (2.0 - (exp(-sr) * (sr * (sr + 2.0) + 2.0)));
+    return Coulomb::central_force(thole_q1q2 * (-1. + dS_r), d, dist);
   }
   return {};
 }

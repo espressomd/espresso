@@ -56,8 +56,7 @@ quartic_pair_force(Bonded_ia_parameters const &iaparams,
   auto const fac =
       (iaparams.p.quartic.k0 * dr + iaparams.p.quartic.k1 * dr * dr * dr) /
       dist;
-  auto const force = -fac * dx;
-  return force;
+  return -fac * dx;
 }
 
 /** Compute the quartic bond energy.
@@ -75,9 +74,8 @@ quartic_pair_energy(Bonded_ia_parameters const &iaparams,
 
   double dr2 = Utils::sqr(dist - iaparams.p.quartic.r);
 
-  auto const energy = 0.5 * iaparams.p.quartic.k0 * dr2 +
+  return 0.5 * iaparams.p.quartic.k0 * dr2 +
                       0.25 * iaparams.p.quartic.k1 * Utils::sqr(dr2);
-  return energy;
 }
 
 #endif

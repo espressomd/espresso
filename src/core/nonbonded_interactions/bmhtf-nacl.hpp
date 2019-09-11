@@ -42,11 +42,9 @@ inline double BMHTF_pair_force_factor(IA_parameters const &ia_params,
   if (dist < ia_params.bmhtf.cut) {
     auto const dist8 = Utils::int_pow<8>(dist);
     auto const dist10 = Utils::int_pow<10>(dist);
-    auto const fac =
-        ia_params.bmhtf.A * ia_params.bmhtf.B *
+    return ia_params.bmhtf.A * ia_params.bmhtf.B *
             exp(ia_params.bmhtf.B * (ia_params.bmhtf.sig - dist)) / dist -
         6 * ia_params.bmhtf.C / dist8 - 8 * ia_params.bmhtf.D / dist10;
-    return fac;
   }
   return 0.0;
 }

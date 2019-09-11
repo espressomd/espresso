@@ -95,8 +95,7 @@ inline double angle_cosine_energy(Utils::Vector3d const &r_mid,
   auto const k = iaparams.p.angle_cosine.bend;
   // potential: U(phi) = k * [1 - cos(phi - phi0)]
   // trig identity: cos(phi - phi0) = cos(phi)cos(phi0) + sin(phi)sin(phi0)
-  auto const energy = k * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
-  return energy;
+  return k * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
 }
 
 #endif /* ANGLE_COSINE_H */

@@ -79,11 +79,10 @@ inline double ljcos2_pair_energy(IA_parameters const &ia_params,
       return 4.0 * ia_params.ljcos2.eps * (Utils::sqr(frac6) - frac6);
     }
     if (r_off < (ia_params.ljcos2.rchange + ia_params.ljcos2.w)) {
-      auto const fac = -ia_params.ljcos2.eps / 2 *
+      return -ia_params.ljcos2.eps / 2 *
                        (cos(M_PI * (r_off - ia_params.ljcos2.rchange) /
                             ia_params.ljcos2.w) +
                         1);
-      return fac;
     }
   }
   return 0.0;

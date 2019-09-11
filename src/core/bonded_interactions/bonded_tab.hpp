@@ -73,8 +73,7 @@ tab_bond_force(Bonded_ia_parameters const &iaparams,
 
   if (dist < tab_pot->cutoff()) {
     auto const fac = tab_pot->force(dist) / dist;
-    auto const force = fac * dx;
-    return force;
+    return fac * dx;
   }
   return {};
 }
@@ -95,8 +94,7 @@ tab_bond_energy(Bonded_ia_parameters const &iaparams,
   auto const dist = dx.norm();
 
   if (dist < tab_pot->cutoff()) {
-    auto const energy = tab_pot->energy(dist);
-    return energy;
+    return tab_pot->energy(dist);
   }
   return {};
 }
@@ -165,8 +163,7 @@ inline double tab_angle_energy(Utils::Vector3d const &r_mid,
 #else
   auto const phi = acos(cos_phi);
 #endif
-  auto const energy = iaparams.p.tab.pot->energy(phi);
-  return energy;
+  return iaparams.p.tab.pot->energy(phi);
 }
 
 /** Compute the four-body dihedral interaction force.
@@ -241,8 +238,7 @@ tab_dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   auto const *tab_pot = iaparams.p.tab.pot;
   calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cos_phi, &phi);
-  auto const energy = tab_pot->energy(phi);
-  return energy;
+  return tab_pot->energy(phi);
 }
 
 #endif

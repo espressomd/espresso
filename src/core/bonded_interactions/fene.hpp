@@ -57,9 +57,7 @@ fene_pair_force(Bonded_ia_parameters const &iaparams,
     fac = 0.0;
   }
 
-  auto const force = fac * dx;
-
-  return force;
+  return fac * dx;
 }
 
 /** Compute the FENE bond energy.
@@ -77,9 +75,8 @@ fene_pair_energy(Bonded_ia_parameters const &iaparams,
     return {};
   }
 
-  auto const energy = -0.5 * iaparams.p.fene.k * iaparams.p.fene.drmax2 *
+  return -0.5 * iaparams.p.fene.k * iaparams.p.fene.drmax2 *
                       log(1.0 - dr * dr * iaparams.p.fene.drmax2i);
-  return energy;
 }
 
 #endif

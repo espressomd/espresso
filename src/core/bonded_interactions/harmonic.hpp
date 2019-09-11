@@ -58,9 +58,7 @@ harmonic_pair_force(Bonded_ia_parameters const &iaparams,
   } else {
     fac = 0;
   }
-  auto const force = fac * dx;
-
-  return force;
+  return fac * dx;
 }
 
 /** Compute the harmonic bond energy.
@@ -77,9 +75,7 @@ harmonic_pair_energy(Bonded_ia_parameters const &iaparams,
     return {};
   }
 
-  auto const energy =
-      0.5 * iaparams.p.harmonic.k * Utils::sqr(dist - iaparams.p.harmonic.r);
-  return energy;
+  return 0.5 * iaparams.p.harmonic.k * Utils::sqr(dist - iaparams.p.harmonic.r);
 }
 
 #endif

@@ -52,8 +52,7 @@ bonded_coulomb_pair_force(double const q1q2,
   auto const dist2 = dx.norm2();
   auto const dist3 = dist2 * std::sqrt(dist2);
   auto const fac = iaparams.p.bonded_coulomb.prefactor * q1q2 / dist3;
-  auto const force = fac * dx;
-  return force;
+  return fac * dx;
 }
 
 /** Compute the bonded Coulomb pair energy.
@@ -66,8 +65,7 @@ bonded_coulomb_pair_energy(double const q1q2,
                            Bonded_ia_parameters const &iaparams,
                            Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
-  auto const energy = iaparams.p.bonded_coulomb.prefactor * q1q2 / dist;
-  return energy;
+  return iaparams.p.bonded_coulomb.prefactor * q1q2 / dist;
 }
 
 #endif

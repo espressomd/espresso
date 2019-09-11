@@ -47,8 +47,7 @@ int subt_lj_set_params(int bond_type);
 inline boost::optional<Utils::Vector3d>
 subt_lj_pair_force(IA_parameters const &iaparams,
                    Utils::Vector3d const &dx) {
-  auto const force = -lj_pair_force(iaparams, dx, dx.norm());
-  return force;
+  return -lj_pair_force(iaparams, dx, dx.norm());
 }
 
 /** Computes the negative of the Lennard-Jones pair energy.
@@ -58,8 +57,7 @@ subt_lj_pair_force(IA_parameters const &iaparams,
 inline boost::optional<double>
 subt_lj_pair_energy(IA_parameters const &iaparams,
                     Utils::Vector3d const &dx) {
-  auto const energy = -lj_pair_energy(iaparams, dx.norm());
-  return energy;
+  return -lj_pair_energy(iaparams, dx.norm());
 }
 
 #endif

@@ -38,9 +38,8 @@ int gaussian_set_params(int part_type_a, int part_type_b, double eps,
 inline double gaussian_pair_force_factor(IA_parameters const &ia_params,
                                          double dist) {
   if (dist < ia_params.gaussian.cut) {
-    auto const fac = ia_params.gaussian.eps / pow(ia_params.gaussian.sig, 2) *
+    return ia_params.gaussian.eps / pow(ia_params.gaussian.sig, 2) *
                      exp(-0.5 * Utils::sqr(dist / ia_params.gaussian.sig));
-    return fac;
   }
   return 0.0;
 }

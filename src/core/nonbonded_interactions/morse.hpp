@@ -42,9 +42,8 @@ inline double morse_pair_force_factor(IA_parameters const &ia_params,
   if (dist < ia_params.morse.cut) {
     auto const add =
         exp(-ia_params.morse.alpha * (dist - ia_params.morse.rmin));
-    double fac = -ia_params.morse.eps * 2.0 * ia_params.morse.alpha *
+    return -ia_params.morse.eps * 2.0 * ia_params.morse.alpha *
                  (add - Utils::sqr(add)) / dist;
-    return fac;
   }
   return 0.0;
 }
@@ -61,9 +60,8 @@ inline double morse_pair_energy(IA_parameters const &ia_params,
   if (dist < ia_params.morse.cut) {
     auto const add =
         exp(-ia_params.morse.alpha * (dist - ia_params.morse.rmin));
-    auto const fac = ia_params.morse.eps * (Utils::sqr(add) - 2 * add) -
+    return ia_params.morse.eps * (Utils::sqr(add) - 2 * add) -
                      ia_params.morse.rest;
-    return fac;
   }
   return 0.0;
 }

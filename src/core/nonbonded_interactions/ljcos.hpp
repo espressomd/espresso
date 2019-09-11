@@ -78,11 +78,10 @@ inline double ljcos_pair_energy(IA_parameters const &ia_params,
     }
     /* cosine part of the potential. */
     if (dist < (ia_params.ljcos.cut + ia_params.ljcos.offset)) {
-      auto const fac = .5 * ia_params.ljcos.eps *
+      return .5 * ia_params.ljcos.eps *
                        (cos(ia_params.ljcos.alfa * Utils::sqr(r_off) +
                             ia_params.ljcos.beta) -
                         1.);
-      return fac;
     }
   }
   return 0.0;

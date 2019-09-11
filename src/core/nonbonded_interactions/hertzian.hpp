@@ -38,10 +38,9 @@ int hertzian_set_params(int part_type_a, int part_type_b, double eps,
 inline double hertzian_pair_force_factor(IA_parameters const &ia_params,
                                          double dist) {
   if (dist < ia_params.hertzian.sig) {
-    auto const fac = 5. / 2. * ia_params.hertzian.eps /
+    return 5. / 2. * ia_params.hertzian.eps /
                      ia_params.hertzian.sig *
                      pow(1 - dist / ia_params.hertzian.sig, 3. / 2.) / dist;
-    return fac;
   }
   return 0.0;
 }

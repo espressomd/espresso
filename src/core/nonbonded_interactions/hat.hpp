@@ -53,9 +53,7 @@ inline double hat_energy_r(double Fmax, double r, double dist) {
 inline double hat_pair_force_factor(IA_parameters const &ia_params,
                                     double dist) {
   if (dist > 0. && dist < ia_params.hat.r) {
-    auto const fac =
-        hat_force_r(ia_params.hat.Fmax, ia_params.hat.r, dist) / dist;
-    return fac;
+    return hat_force_r(ia_params.hat.Fmax, ia_params.hat.r, dist) / dist;
   }
   return 0.0;
 }

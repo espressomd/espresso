@@ -51,9 +51,7 @@ inline boost::optional<Utils::Vector3d>
 bonded_coulomb_sr_pair_force(Bonded_ia_parameters const &iaparams,
                              Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
-  auto const force =
-      Coulomb::central_force(iaparams.p.bonded_coulomb_sr.q1q2, dx, dist);
-  return force;
+  return Coulomb::central_force(iaparams.p.bonded_coulomb_sr.q1q2, dx, dist);
 }
 
 /** Compute the short-range bonded Coulomb pair energy.
@@ -67,9 +65,8 @@ inline boost::optional<double> bonded_coulomb_sr_pair_energy(
     Bonded_ia_parameters const &iaparams, Utils::Vector3d const &dx) {
   auto const dist2 = dx.norm2();
   auto const dist = sqrt(dist2);
-  auto const energy = Coulomb::pair_energy(
+  return Coulomb::pair_energy(
       p1, p2, iaparams.p.bonded_coulomb_sr.q1q2, dx, dist, dist2);
-  return energy;
 }
 
 #endif

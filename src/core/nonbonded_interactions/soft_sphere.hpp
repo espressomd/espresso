@@ -57,10 +57,9 @@ inline double soft_pair_force_factor(IA_parameters const &ia_params,
     /* normal case: resulting force/energy smaller than zero. */
     auto const r_off = dist - ia_params.soft_sphere.offset;
     if (r_off > 0.0) {
-      auto const fac = soft_force_r(ia_params.soft_sphere.a,
+      return soft_force_r(ia_params.soft_sphere.a,
                                     ia_params.soft_sphere.n, r_off) /
                        dist;
-      return fac;
     }
   }
   return 0.0;

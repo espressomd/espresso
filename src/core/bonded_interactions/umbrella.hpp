@@ -66,11 +66,10 @@ umbrella_pair_force(Bonded_ia_parameters const &ia_params,
  */
 inline boost::optional<double>
 umbrella_pair_energy(Bonded_ia_parameters const &ia_params,
-                     Utils::Vector3d const &d, double *_energy) {
+                     Utils::Vector3d const &d) {
   auto const distn = d[ia_params.p.umbrella.dir];
-  auto const energy = 0.5 * ia_params.p.umbrella.k *
+  return 0.5 * ia_params.p.umbrella.k *
                       Utils::sqr(distn - ia_params.p.umbrella.r);
-  return energy;
 }
 
 #endif /* ifdef UMBRELLA */

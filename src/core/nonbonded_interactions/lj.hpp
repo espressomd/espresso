@@ -47,9 +47,7 @@ inline double lj_pair_force_factor(IA_parameters const &ia_params,
       (dist > ia_params.lj.min + ia_params.lj.offset)) {
     auto const r_off = dist - ia_params.lj.offset;
     auto const frac6 = Utils::int_pow<6>(ia_params.lj.sig / r_off);
-    auto const fac =
-        48.0 * ia_params.lj.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
-    return fac;
+    return 48.0 * ia_params.lj.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
   }
   return 0.0;
 }
@@ -67,9 +65,8 @@ inline double lj_pair_energy(IA_parameters const &ia_params,
       (dist > ia_params.lj.min + ia_params.lj.offset)) {
     auto const r_off = dist - ia_params.lj.offset;
     auto const frac6 = Utils::int_pow<6>(ia_params.lj.sig / r_off);
-    auto const fac = 4.0 * ia_params.lj.eps *
+    return 4.0 * ia_params.lj.eps *
                      (Utils::sqr(frac6) - frac6 + ia_params.lj.shift);
-    return fac;
   }
   return 0.0;
 }
