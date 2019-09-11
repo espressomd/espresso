@@ -511,7 +511,6 @@ int Correlator::finalize() {
       // Lets find out how far we have to go back in the hierarchy to make space
       // for the new value
       while (highest_level_to_compress > -1) {
-        // printf("test level %d for compression, n_vals=%d ... ",i,n_vals[i]);
         if (n_vals[i] % 2) {
           if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
             highest_level_to_compress += 1;

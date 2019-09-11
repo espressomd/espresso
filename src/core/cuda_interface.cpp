@@ -23,7 +23,6 @@
 
 #include "communication.hpp"
 #include "config.hpp"
-#include "debug.hpp"
 #include "energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"

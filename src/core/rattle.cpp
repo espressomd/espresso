@@ -39,8 +39,6 @@ int n_rigidbonds = 0;
 
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <mpi.h>
 
 /** \name Private functions */
@@ -75,10 +73,6 @@ void apply_vel_corr(const ParticleRange &particles);
  * f.f*/
 void revert_force(const ParticleRange &particles,
                   const ParticleRange &ghost_particles);
-
-/**For debugging purpose--prints the bond lengths between particles that have
-rigid_bonds*/
-void print_bond_len();
 
 /*@}*/
 

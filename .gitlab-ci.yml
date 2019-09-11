@@ -123,16 +123,6 @@ no_rotation:
     - docker
     - linux
 
-nocheckmaxset:
-  <<: *global_job_definition
-  stage: build
-  script:
-    - export with_cuda=false myconfig=nocheck-maxset make_check=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
-
 ### Builds with different Distributions
 
 #debian:8 removed: similar to ubuntu:1404
