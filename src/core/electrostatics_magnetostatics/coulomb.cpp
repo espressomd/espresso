@@ -183,7 +183,7 @@ void integrate_sanity_check() {
 void update_dependent_particles() {
   iccp3m_iteration(local_cells.particles(),
                    cell_structure.ghost_cells().particles());
-};
+}
 
 void on_observable_calc() {
   switch (coulomb.method) {
