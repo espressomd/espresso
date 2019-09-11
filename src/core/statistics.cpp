@@ -45,7 +45,6 @@
 #include <utils/contains.hpp>
 
 #include <cstdlib>
-#include <cstring>
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and

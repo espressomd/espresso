@@ -126,7 +126,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
         first, last, std::forward<ParticleKernel>(particle_kernel),
         std::forward<PairKernel>(pair_kernel), verlet_criterion);
 
-    rebuild_verletlist = 0;
+    rebuild_verletlist = false;
   } else {
     for (auto &p : cell_structure.local_cells().particles()) {
       particle_kernel(p);
