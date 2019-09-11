@@ -288,7 +288,8 @@ cdef class HydrodynamicInteraction(Actor):
 
         def __set__(self, tau):
             lb_lbfluid_set_tau(tau)
-            check_tau_time_step_consistency(tau, globals.time_step)
+            if globals.time_step > 0.0:
+                check_tau_time_step_consistency(tau, globals.time_step)
 
     property agrid:
         def __get__(self):

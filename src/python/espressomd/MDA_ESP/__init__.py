@@ -49,7 +49,7 @@ try:
     import cStringIO as StringIO
     StringIO = StringIO.StringIO
 except ImportError:
-    from io import StringIO
+    from .io import StringIO
 
 import numpy as np
 import MDAnalysis
