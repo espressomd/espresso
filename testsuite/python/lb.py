@@ -178,6 +178,19 @@ class TestLB:
         self.lbf.tau = 0.2
         self.assertAlmostEqual(self.lbf.tau, 0.2)
 
+    def test_raise_if_not_active(self):
+        lbf = self.lb_class(visc=1.0, dens=1.0, agrid=1.0, tau=0.1)
+        with self.assertRaises(RuntimeError):
+            lbf.viscosity = 0.2
+        with self.assertRaises(RuntimeError):
+            lbf.bulk_viscosity = 0.2
+        with self.assertRaises(RuntimeError):
+            lbf.density = 0.2
+        with self.assertRaises(RuntimeError):
+            lbf.seed = 2
+        with self.assertRaises(RuntimeError):
+            lbf.agrid = 0.2
+
     def test_stress_tensor_observable(self):
         """
         Checks agreement between the LBFluidStress observable and per-node
