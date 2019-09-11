@@ -32,10 +32,6 @@ from .utils import array_locked, is_valid_type
 from .utils cimport make_array_locked, numeric_limits
 cimport globals
 
-# Actor class
-####################################################
-
-
 def _construct(cls, params):
     obj = cls(**params)
     obj._params = params
@@ -76,18 +72,12 @@ cdef class HydrodynamicInteraction(Actor):
         if self._params["tau"] <= 0.:
             raise ValueError("tau has to be a positive double")
 
-    # list of valid keys for parameters
-    ####################################################
     def valid_keys(self):
         return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
 
-    # list of essential keys required for the fluid
-    ####################################################
     def required_keys(self):
         return ["dens", "agrid", "visc", "tau"]
 
-    # list of default parameters
-    ####################################################
     def default_params(self):
         return {"agrid": -1.0,
                 "dens": -1.0,
@@ -98,8 +88,6 @@ cdef class HydrodynamicInteraction(Actor):
                 "seed": None,
                 "kT": 0.}
 
-    # function that calls wrapper functions which set the parameters at C-Level
-    ####################################################
     def _set_lattice_switch(self):
         raise Exception(
             "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
@@ -120,8 +108,7 @@ cdef class HydrodynamicInteraction(Actor):
             python_lbfluid_set_bulk_viscosity(
                 self._params["bulk_visc"], self.agrid, self.tau)
 
-        python_lbfluid_set_ext_force_density(
-            self._params["ext_force_density"], self.agrid, self.tau)
+        self.ext_force_density = self._params["ext_force_density"]
 
         if "gamma_odd" in self._params:
             python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
@@ -132,20 +119,18 @@ cdef class HydrodynamicInteraction(Actor):
         lb_lbfluid_sanity_checks()
         utils.handle_errors("LB fluid activation")
 
-    # function that calls wrapper functions which get the parameters from C-Level
-    ####################################################
     def _get_params_from_es_core(self):
         default_params = self.default_params()
         self._params['agrid'] = self.agrid
-        self._params['dens'] = python_lbfluid_get_density(self.agrid)
+        self._params['dens'] = self.density
         self._params["tau"] = self.tau
         self._params["kT"] = lb_lbfluid_get_kT()
         if self._params['kT'] > 0.0:
             self._params['seed'] = lb_lbfluid_get_rng_state()
         self._params['visc'] = python_lbfluid_get_viscosity(
             self.agrid, self.tau)
-        self._params['bulk_visc'] = python_lbfluid_get_bulk_viscosity(
-            self.agrid, self.tau)
+        if not self._params["bulk_visc"] == default_params["bulk_visc"]:
+            self._params['bulk_visc'] = python_lbfluid_get_bulk_viscosity(self.agrid, self.tau)
         self._params['ext_force_density'] = self.ext_force_density
 
         return self._params
@@ -293,8 +278,6 @@ cdef class HydrodynamicInteraction(Actor):
             yield self[i, j, k]
 
 
-# LBFluid main class
-####################################################
 cdef class LBFluid(HydrodynamicInteraction):
     """
     Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
@@ -438,17 +421,15 @@ cdef class LBFluidRoutines:
                                           double_return[18]]
                    ))
 
-        def __set__(self, value):
-            cdef Vector19d double_return
+        def __set__(self, population):
+            cdef Vector19d _population 
             for i in range(19):
-                double_return[i] = value[i]
-            lb_lbnode_set_pop(self.node, double_return)
+                _population[i] = population[i]
+            lb_lbnode_set_pop(self.node, _population)
 
     property boundary:
         def __get__(self):
-            cdef int int_return
-            int_return = lb_lbnode_get_boundary(self.node)
-            return int_return
+            return lb_lbnode_get_boundary(self.node)
 
         def __set__(self, value):
             raise NotImplementedError
