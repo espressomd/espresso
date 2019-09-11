@@ -19,10 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- *
- *  For more information about ELC, see \ref
- * electrostatics_magnetostatics/elc.hpp
- * "electrostatics_magnetostatics/elc.hpp".
+ *  Implementation of \ref elc.hpp.
  */
 #include "cells.hpp"
 #include "communication.hpp"
@@ -63,9 +60,9 @@ ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
  ****************************************/
 
 /** \name Product decomposition data organization
-    For the cell blocks
-    it is assumed that the lower blocks part is in the lower half.
-    This has to have positive sign, so that has to be first. */
+ *  For the cell blocks it is assumed that the lower blocks part is in the
+ *  lower half. This has to have positive sign, so that has to be first.
+ */
 /*@{*/
 #define POQESP 0
 #define POQECP 1
@@ -90,12 +87,12 @@ static std::vector<double> partblk;
 /** collected data from the other cells */
 static double gblcblk[8];
 
-/** structure for storing of sin and cos values */
+/** structure for caching sin and cos values */
 typedef struct {
   double s, c;
 } SCCache;
 
-/** \name sin/cos caching */
+/** Cached sin/cos values along the x-axis and y-axis */
 /*@{*/
 static std::vector<SCCache> scxcache;
 static int n_scxcache;
@@ -112,10 +109,7 @@ static int n_scycache;
 static void prepare_scx_cache(const ParticleRange &particles);
 static void prepare_scy_cache(const ParticleRange &particles);
 /*@}*/
-/** \name common code */
-/*@{*/
 static void distribute(int size);
-/*@}*/
 /** \name p=0 per frequency code */
 /*@{*/
 static void setup_P(int p, double omega, const ParticleRange &particles);
@@ -135,14 +129,11 @@ static void setup_PQ(int p, int q, double omega,
 static void add_PQ_force(int p, int q, double omega,
                          const ParticleRange &particles);
 static double PQ_energy(double omega);
+/*@}*/
 static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
 static double z_energy(const ParticleRange &particles);
 static void add_z_force(const ParticleRange &particles);
-/*@}*/
-
-/* COMMON */
-/**********/
 
 void ELC_setup_constants() {
   ux = 1 / box_geo.length()[0];
@@ -154,8 +145,6 @@ void ELC_setup_constants() {
   height_inverse = 1 / elc_params.h;
 }
 
-/* SC Cache */
-/************/
 static void prepare_scx_cache(const ParticleRange &particles) {
   int freq;
   double arg;
@@ -561,8 +550,7 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
-        // negative sign is okay here as the image is located at
-        // -p.r.p[2]
+        // negative sign is okay here as the image is located at -p.r.p[2]
 
         e = exp(-omega * p.r.p[2]);
 
@@ -668,8 +656,7 @@ static void setup_Q(int q, double omega, const ParticleRange &particles) {
     if (elc_params.dielectric_contrast_on) {
       if (p.r.p[2] < elc_params.space_layer) { // handle the lower case first
         // negative sign before omega is okay here as the image is located
-        // at
-        // -p.r.p[2]
+        // at -p.r.p[2]
 
         e = exp(-omega * p.r.p[2]);
 

@@ -522,13 +522,3 @@ cdef class System:
         self.check_valid_type(type)
         number = number_of_particles_with_type(type)
         return int(number)
-
-    def find_particle(self, type=None):
-        """
-        The command will return a randomly chosen particle id, for a particle of
-        the given type.
-
-        """
-        self.check_valid_type(type)
-        pid = get_random_p_id(type)
-        return int(pid)

@@ -27,17 +27,11 @@
 #include "grid.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "global.hpp"
 
 #include <boost/algorithm/clamp.hpp>
 #include <mpi.h>
 #include <utils/mpi/cart_comm.hpp>
-
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 /**********************************************
  * variables

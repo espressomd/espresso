@@ -84,7 +84,7 @@ class ReactionEnsembleTest(ut.TestCase):
     WLRE.add_collective_variable_degree_of_association(
         associated_type=0, min=0, max=1, corresponding_acid_types=[0, 1])
     WLRE.set_wang_landau_parameters(
-        final_wang_landau_parameter=1e-2,
+        final_wang_landau_parameter=0.5 * 1e-2,
         do_not_sample_reaction_partition_function=True,
         full_path_to_output_filename="WL_potential_out.dat")
 

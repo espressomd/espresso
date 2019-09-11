@@ -19,9 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- *  MMM2D algorithm for long range Coulomb interaction.
+ *  MMM2D algorithm for long-range %Coulomb interaction.
  *
- *  For more information about MMM2D, see \ref mmm2d.hpp "mmm2d.hpp".
+ *  Implementation of \ref mmm2d.hpp.
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
@@ -63,9 +63,9 @@ char const *mmm2d_errors[] = {
     "IC requires layered cellsystem with more than 3 layers",
 };
 
-/** if you define this, the Besselfunctions are calculated up
-    to machine precision, otherwise 10^-14, which should be
-    definitely enough for daily life. */
+/** if you define this, the Bessel functions are calculated up
+ *  to machine precision, otherwise 10^-14, which should be
+ *  definitely enough for daily life. */
 #undef BESSEL_MACHINE_PREC
 
 #ifndef BESSEL_MACHINE_PREC
@@ -78,29 +78,29 @@ char const *mmm2d_errors[] = {
  ****************************************/
 
 /** Largest reasonable cutoff for far formula. A double cannot overflow
-    with this value. */
+ *  with this value. */
 #define MAXIMAL_FAR_CUT 100
 
 /** Largest reasonable cutoff for Bessel function. The Bessel functions
-    are quite slow, so do not make too large. */
+ *  are quite slow, so do not make too large. */
 #define MAXIMAL_B_CUT 50
 
 /** Largest reasonable order of polygamma series. These are pretty fast,
-    so use more of them. Also, the real cutoff is determined at run time,
-    so normally we are faster */
+ *  so use more of them. Also, the real cutoff is determined at run time,
+ *  so normally we are faster */
 #define MAXIMAL_POLYGAMMA 100
 
 /** internal relative precision of far formula. This controls how many
-    p,q vectors are done at once. This has nothing to do with the effective
-    precision, but rather controls how different values can be we add up without
-    loosing the smallest values. In principle one could choose smaller values,
-   but that would not make things faster */
+ *  p,q vectors are done at once. This has nothing to do with the effective
+ *  precision, but rather controls how different values can be we add up without
+ *  loosing the smallest values. In principle one could choose smaller values,
+ *  but that would not make things faster */
 #define FARRELPREC 1e-6
 
 /** number of steps in the complex cutoff table */
 #define COMPLEX_STEP 16
 /** map numbers from 0 to 1/2 onto the complex cutoff table
-    (with security margin) */
+ *  (with security margin) */
 #define COMPLEX_FAC (COMPLEX_STEP / (.5 + 0.01))
 
 /****************************************
@@ -126,8 +126,8 @@ static double ux, ux2, uy, uy2, uz;
 static double layer_h;
 
 /** maximal z for near formula, minimal z for far formula.
-    Is identical in the theory, but with the Verlet tricks
-    this is no longer true, the skin has to be added/subtracted */
+ *  Is identical in the theory, but with the Verlet tricks
+ *  this is no longer true, the skin has to be added/subtracted */
 /*@{*/
 static double max_near, min_far;
 /*@}*/
@@ -157,9 +157,9 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, false, false, false, 0, 1, 1, 1};
  ****************************************/
 
 /** \name Product decomposition data organization
-    For the cell blocks
-    it is assumed that the lower blocks part is in the lower half.
-    This has to have positive sign, so that has to be first. */
+ *  For the cell blocks it is assumed that the lower blocks part is in the
+ *  lower half. This has to have positive sign, so that has to be first.
+ */
 /*@{*/
 
 #define POQESP 0
@@ -193,9 +193,9 @@ static int n_localpart = 0;
 static std::vector<double> partblk;
 /** for all local cells including ghosts */
 static std::vector<double> lclcblk;
-/** collected data from the cells above the top neighbor
-    of a cell rsp. below the bottom neighbor
-    (P=below, M=above, as the signs in the exp). */
+/** collected data from the cells above the top neighbor of a cell resp. below
+ *  the bottom neighbor (P=below, M=above, as the signs in the exp).
+ */
 static std::vector<double> gblcblk;
 
 /** contribution from the image charges */
@@ -237,7 +237,7 @@ double MMM2D_self_energy(const ParticleRange &particles);
 static void prepare_scx_cache(const ParticleRange &particles);
 static void prepare_scy_cache(const ParticleRange &particles);
 /** clear the image contributions if there is no dielectric contrast and no
- * image charges */
+ *  image charges */
 static void clear_image_contributions(int size);
 /** gather the informations for the far away image charges */
 static void gather_image_contributions(int size);
@@ -266,7 +266,6 @@ static int MMM2D_tune_far(double error);
 
 /*@}*/
 
-///
 void MMM2D_setup_constants() {
   ux = 1 / box_geo.length()[0];
   ux2 = ux * ux;
@@ -409,11 +408,11 @@ inline void scale_vec(double scale, double *pdc, int size) {
   scale_vec(scale, Utils::make_span(pdc, size));
 }
 
-/* block indexing - has to fit to the PQ block definitions above.
-   size gives the full size of the data block,
-   e_size is the size of only the top or bottom half, i.e. half of size.
-*/
-
+/** block indexing - has to fit to the PQ block definitions above.
+ *  @p size gives the full size of the data block,
+ *  @p e_size is the size of only the top or bottom half, i.e. half of @p size.
+ */
+/*@{*/
 inline double *block(std::vector<double> &p, int index, int size) {
   return &p[index * size];
 }
@@ -425,9 +424,10 @@ inline double *blwentry(std::vector<double> &p, int index, int e_size) {
 inline double *abventry(std::vector<double> &p, int index, int e_size) {
   return &p[(2 * index + 1) * e_size];
 }
+/*@}*/
 
-/* dealing with the image contributions from far outside the simulation box */
-
+/** dealing with the image contributions from far outside the simulation box */
+/*@{*/
 void clear_image_contributions(int e_size) {
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer
@@ -460,6 +460,7 @@ void gather_image_contributions(int e_size) {
     copy_vec(abventry(gblcblk, local_cells.n - 1, e_size),
              recvbuf.data() + e_size, e_size);
 }
+/*@}*/
 
 /* the data transfer routine for the lclcblks itself */
 void distribute(int e_size, double fac) {

@@ -205,7 +205,7 @@ extern CellStructure cell_structure;
  *  the Verlet criterion. Moreover, the Verlet list has to be
  *  rebuilt.
  */
-extern int rebuild_verletlist;
+extern bool rebuild_verletlist;
 
 /*@}*/
 
