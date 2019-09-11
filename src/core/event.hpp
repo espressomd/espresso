@@ -114,8 +114,8 @@ void on_ghost_flags_change();
 void on_lbboundary_change();
 
 /** @brief Update particles with properties depending on other particles
-*   e.g., virtual sites, ICC charges
-*/
+ *   e.g., virtual sites, ICC charges
+ */
 void update_dependent_particles();
 
 /*@}*/

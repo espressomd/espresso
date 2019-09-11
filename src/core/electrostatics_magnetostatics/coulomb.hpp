@@ -86,10 +86,9 @@ int set_prefactor(double prefactor);
 */
 void deactivate_method();
 
-
 /** @brief Update particles with properties depending on other particles
-*   e.g., charges of ICC particles
-*/
+ *   e.g., charges of ICC particles
+ */
 void update_dependent_particles();
 } // namespace Coulomb
 #endif // ELECTROSTATICS

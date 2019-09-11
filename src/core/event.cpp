@@ -463,4 +463,3 @@ void update_dependent_particles() {
   Coulomb::update_dependent_particles();
 #endif
 }
-
