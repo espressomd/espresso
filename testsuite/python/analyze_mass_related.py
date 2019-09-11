@@ -126,8 +126,9 @@ class AnalyzeMassRelated(ut.TestCase):
             expected_stress, analyze_stress)
 
     def test_gyration_radius(self):        
-        with self.assertRaisesRegexp(Exception, "not well-defined"):
-            core_rg = self.system.analysis.calc_rg(chain_start=0,
+        if len(self.system.part.select(virtual=True)) > 0:
+            with self.assertRaisesRegexp(Exception, "not well-defined"):
+                core_rg = self.system.analysis.calc_rg(chain_start=0,
                                                    number_of_chains=1,
                                                    chain_length=len(self.system.part))
 
