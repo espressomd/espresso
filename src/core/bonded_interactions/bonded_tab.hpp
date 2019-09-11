@@ -66,8 +66,8 @@ int tabulated_bonded_set_params(int bond_type,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-calc_tab_bond_force(Bonded_ia_parameters const *const iaparams,
-                    Utils::Vector3d const &dx) {
+tab_bond_force(Bonded_ia_parameters const *const iaparams,
+               Utils::Vector3d const &dx) {
   auto const *tab_pot = iaparams->p.tab.pot;
   auto const dist = dx.norm();
 
@@ -109,10 +109,10 @@ tab_bond_energy(Bonded_ia_parameters const *const iaparams,
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
-                                  Utils::Vector3d const &r_left,
-                                  Utils::Vector3d const &r_right,
-                                  Bonded_ia_parameters const *const iaparams) {
+angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
+                             Utils::Vector3d const &r_left,
+                             Utils::Vector3d const &r_right,
+                             Bonded_ia_parameters const *const iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -126,7 +126,7 @@ calc_angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
     return -gradient / sin_phi;
   };
 
-  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
+  return angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
 }
 
 /** Compute the three-body angle interaction force.
@@ -137,12 +137,11 @@ calc_angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
  *  @return the forces on the second, first and third particles.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_tab_angle_force(Utils::Vector3d const &r_mid,
-                     Utils::Vector3d const &r_left,
-                     Utils::Vector3d const &r_right,
-                     Bonded_ia_parameters const *const iaparams) {
+tab_angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                Utils::Vector3d const &r_right,
+                Bonded_ia_parameters const *const iaparams) {
 
-  return calc_angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
+  return angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Compute the three-body angle interaction energy.
@@ -182,9 +181,9 @@ inline double tab_angle_energy(Utils::Vector3d const &r_mid,
  */
 inline boost::optional<
     std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-calc_tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-                        Utils::Vector3d const &r3, Utils::Vector3d const &r4,
-                        Bonded_ia_parameters const *const iaparams) {
+tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                   Utils::Vector3d const &r3, Utils::Vector3d const &r4,
+                   Bonded_ia_parameters const *const iaparams) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;

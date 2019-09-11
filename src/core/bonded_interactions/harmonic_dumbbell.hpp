@@ -49,9 +49,9 @@ int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
  *  @return the force and torque
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
-calc_harmonic_dumbbell_pair_force(Utils::Vector3d const &director,
-                                  Bonded_ia_parameters const *const iaparams,
-                                  Utils::Vector3d const &dx) {
+harmonic_dumbbell_pair_force(Utils::Vector3d const &director,
+                             Bonded_ia_parameters const *const iaparams,
+                             Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&

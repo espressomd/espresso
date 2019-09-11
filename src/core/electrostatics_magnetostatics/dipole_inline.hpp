@@ -9,8 +9,8 @@
 namespace Dipole {
 // forces_inline
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_pair_force(Particle const *const p1, Particle const *const p2,
-                Utils::Vector3d const &d, double dist, double dist2) {
+pair_force(Particle const *const p1, Particle const *const p2,
+           Utils::Vector3d const &d, double dist, double dist2) {
   Utils::Vector3d force{}, torque1{}, torque2{};
   switch (dipole.method) {
 #ifdef DP3M
@@ -19,7 +19,7 @@ calc_pair_force(Particle const *const p1, Particle const *const p2,
   case DIPOLAR_P3M: {
     double eng;
     std::tie(eng, force, torque1, torque2) =
-        dp3m_add_pair_force(p1, p2, d, dist2, dist);
+        dp3m_pair_force(p1, p2, d, dist2, dist);
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
@@ -34,10 +34,8 @@ calc_pair_force(Particle const *const p1, Particle const *const p2,
 }
 
 // energy_inline
-inline double add_pair_energy(Particle const *const p1,
-                              Particle const *const p2,
-                              Utils::Vector3d const &d, double dist,
-                              double dist2) {
+inline double pair_energy(Particle const *const p1, Particle const *const p2,
+                          Utils::Vector3d const &d, double dist, double dist2) {
   double ret = 0;
   if (dipole.method != DIPOLAR_NONE) {
     // ret=0;

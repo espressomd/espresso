@@ -114,18 +114,16 @@ calc_three_body_bonded_forces(Utils::Vector3d const &r_mid,
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d> result;
   switch (iaparams->type) {
   case BONDED_IA_ANGLE_HARMONIC:
-    result = calc_angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
+    result = angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSINE:
-    result = calc_angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
+    result = angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
     break;
   case BONDED_IA_ANGLE_COSSQUARE:
-    result =
-        calc_angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
+    result = angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
     break;
   case BONDED_IA_TABULATED_ANGLE:
-    result =
-        calc_angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
+    result = angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
     break;
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \

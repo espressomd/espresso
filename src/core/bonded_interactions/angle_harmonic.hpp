@@ -45,10 +45,10 @@ int angle_harmonic_set_params(int bond_type, double bend, double phi0);
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_harmonic_3body_forces(Utils::Vector3d const &r_mid,
-                                 Utils::Vector3d const &r_left,
-                                 Utils::Vector3d const &r_right,
-                                 Bonded_ia_parameters const *const iaparams) {
+angle_harmonic_3body_forces(Utils::Vector3d const &r_mid,
+                            Utils::Vector3d const &r_left,
+                            Utils::Vector3d const &r_right,
+                            Bonded_ia_parameters const *const iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -58,7 +58,7 @@ calc_angle_harmonic_3body_forces(Utils::Vector3d const &r_mid,
     return -k * (phi - phi0) / sin_phi;
   };
 
-  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
+  return angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
 }
 
 /** Compute the three-body angle interaction force.
@@ -69,11 +69,11 @@ calc_angle_harmonic_3body_forces(Utils::Vector3d const &r_mid,
  *  @return the forces on the second, first and third particles.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_harmonic_force(Utils::Vector3d const &r_mid,
-                          Utils::Vector3d const &r_left,
-                          Utils::Vector3d const &r_right,
-                          Bonded_ia_parameters const *const iaparams) {
-  return calc_angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
+angle_harmonic_force(Utils::Vector3d const &r_mid,
+                     Utils::Vector3d const &r_left,
+                     Utils::Vector3d const &r_right,
+                     Bonded_ia_parameters const *const iaparams) {
+  return angle_harmonic_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Compute the three-body angle interaction energy.

@@ -40,8 +40,8 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
-                     Utils::Vector3d const &dx) {
+fene_pair_force(Bonded_ia_parameters const *const iaparams,
+                Utils::Vector3d const &dx) {
   auto const len = dx.norm();
   auto const dr = len - iaparams->p.fene.r0;
 

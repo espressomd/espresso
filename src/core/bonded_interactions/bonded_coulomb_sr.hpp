@@ -48,8 +48,8 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *const iaparams,
-                                  Utils::Vector3d const &dx) {
+bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *const iaparams,
+                             Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
   auto const force =
       Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist);

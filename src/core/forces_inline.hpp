@@ -279,7 +279,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 
 #ifdef ELECTROSTATICS
   {
-    auto const forces = Coulomb::calc_pair_force(p1, p2, d, dist);
+    auto const forces = Coulomb::pair_force(p1, p2, d, dist);
     force += std::get<0>(forces);
 #ifdef P3M
     // forces from the virtual charges
@@ -319,7 +319,7 @@ inline void add_non_bonded_pair_force(Particle *const p1, Particle *const p2,
 #ifdef DIPOLES
   /* real space magnetic dipole-dipole */
   {
-    auto const forces = Dipole::calc_pair_force(p1, p2, d, dist, dist2);
+    auto const forces = Dipole::pair_force(p1, p2, d, dist, dist2);
     force += std::get<0>(forces);
     *torque1 += std::get<1>(forces);
     *torque2 += std::get<2>(forces);
@@ -355,12 +355,12 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
 
   switch (iaparams->type) {
   case BONDED_IA_FENE:
-    result = calc_fene_pair_force(iaparams, dx);
+    result = fene_pair_force(iaparams, dx);
     break;
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL: {
     auto values =
-        calc_harmonic_dumbbell_pair_force(p1->r.calc_director(), iaparams, dx);
+        harmonic_dumbbell_pair_force(p1->r.calc_director(), iaparams, dx);
     if (values) {
       result = boost::optional<Utils::Vector3d>(std::get<0>(values.get()));
       torque = std::get<1>(values.get());
@@ -371,30 +371,30 @@ calc_bond_pair_force(Particle const *const p1, Particle const *const p2,
   }
 #endif
   case BONDED_IA_HARMONIC:
-    result = calc_harmonic_pair_force(iaparams, dx);
+    result = harmonic_pair_force(iaparams, dx);
     break;
   case BONDED_IA_QUARTIC:
-    result = calc_quartic_pair_force(iaparams, dx);
+    result = quartic_pair_force(iaparams, dx);
     break;
 #ifdef ELECTROSTATICS
   case BONDED_IA_BONDED_COULOMB:
-    result = calc_bonded_coulomb_pair_force(p1->p.q * p2->p.q, iaparams, dx);
+    result = bonded_coulomb_pair_force(p1->p.q * p2->p.q, iaparams, dx);
     break;
   case BONDED_IA_BONDED_COULOMB_SR:
-    result = calc_bonded_coulomb_sr_pair_force(iaparams, dx);
+    result = bonded_coulomb_sr_pair_force(iaparams, dx);
     break;
 #endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
-    result = calc_subt_lj_pair_force(get_ia_param(p1->p.type, p2->p.type), dx);
+    result = subt_lj_pair_force(get_ia_param(p1->p.type, p2->p.type), dx);
     break;
 #endif
   case BONDED_IA_TABULATED_DISTANCE:
-    result = calc_tab_bond_force(iaparams, dx);
+    result = tab_bond_force(iaparams, dx);
     break;
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
-    result = calc_umbrella_pair_force(iaparams, dx);
+    result = umbrella_pair_force(iaparams, dx);
     break;
 #endif
   default:
@@ -479,7 +479,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       switch (type) {
       case BONDED_IA_THERMALIZED_DIST: {
-        auto result = calc_thermalized_bond_forces(p1, p2, iaparams, dx);
+        auto result = thermalized_bond_forces(p1, p2, iaparams, dx);
         if (result) {
           std::tie(force1, force2) = result.get();
           bond_broken = false;
@@ -494,17 +494,17 @@ inline void add_bonded_force(Particle *const p1) {
       switch (type) {
       case BONDED_IA_ANGLE_HARMONIC:
         std::tie(force1, force2, force3) =
-            calc_angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
+            angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
       case BONDED_IA_ANGLE_COSINE:
         std::tie(force1, force2, force3) =
-            calc_angle_cosine_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
+            angle_cosine_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
       case BONDED_IA_ANGLE_COSSQUARE:
         std::tie(force1, force2, force3) =
-            calc_angle_cossquare_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
+            angle_cossquare_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
 #ifdef OIF_GLOBAL_FORCES
@@ -514,7 +514,7 @@ inline void add_bonded_force(Particle *const p1) {
 #endif
       case BONDED_IA_TABULATED_ANGLE:
         std::tie(force1, force2, force3) =
-            calc_tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
+            tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
       case BONDED_IA_IBM_TRIEL: {
@@ -557,7 +557,7 @@ inline void add_bonded_force(Particle *const p1) {
         break;
       case BONDED_IA_DIHEDRAL: {
         auto result =
-            calc_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
+            dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         if (result) {
           std::tie(force1, force2, force3) = result.get();
           force4 = -(force1 + force2 + force3);
@@ -566,8 +566,8 @@ inline void add_bonded_force(Particle *const p1) {
         break;
       }
       case BONDED_IA_TABULATED_DIHEDRAL: {
-        auto result = calc_tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p,
-                                              p4->r.p, iaparams);
+        auto result =
+            tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         if (result) {
           std::tie(force1, force2, force3) = result.get();
           force4 = -(force1 + force2 + force3);

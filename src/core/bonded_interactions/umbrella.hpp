@@ -50,8 +50,8 @@ inline double umbrella_force_r(double k, int dir, double r, double distn) {
  *  @param[in]  d         %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-calc_umbrella_pair_force(Bonded_ia_parameters const *const ia_params,
-                         Utils::Vector3d const &d) {
+umbrella_pair_force(Bonded_ia_parameters const *const ia_params,
+                    Utils::Vector3d const &d) {
   auto const distn = d[ia_params->p.umbrella.dir];
   auto const fac = -ia_params->p.umbrella.k * (distn - ia_params->p.umbrella.r);
   Utils::Vector3d force{};

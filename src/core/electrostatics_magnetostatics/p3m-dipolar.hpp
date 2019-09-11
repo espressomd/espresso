@@ -222,8 +222,8 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
 inline std::tuple<double, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-dp3m_add_pair_force(Particle const *const p1, Particle const *const p2,
-                    Utils::Vector3d const &d, double dist2, double dist) {
+dp3m_pair_force(Particle const *const p1, Particle const *const p2,
+                Utils::Vector3d const &d, double dist2, double dist) {
   if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
     return std::make_tuple(0.0, Utils::Vector3d{}, Utils::Vector3d{},
                            Utils::Vector3d{});

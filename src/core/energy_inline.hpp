@@ -198,7 +198,7 @@ inline void add_non_bonded_pair_energy(Particle const *const p1,
 #endif
 
 #ifdef DIPOLES
-  energy.dipolar[0] += Dipole::add_pair_energy(p1, p2, d, dist, dist2);
+  energy.dipolar[0] += Dipole::pair_energy(p1, p2, d, dist, dist2);
 #endif
 }
 

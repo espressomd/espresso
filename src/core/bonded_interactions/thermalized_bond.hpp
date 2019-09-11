@@ -109,9 +109,9 @@ inline Utils::Vector3d v_noise(int particle_id, int partner_id) {
  *  @return the forces on @p p1 and @p p2
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
-calc_thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
-                             Bonded_ia_parameters const *const iaparams,
-                             Utils::Vector3d const &dx) {
+thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
+                        Bonded_ia_parameters const *const iaparams,
+                        Utils::Vector3d const &dx) {
   // Bond broke?
   if (iaparams->p.thermalized_bond.r_cut > 0.0 &&
       dx.norm() > iaparams->p.thermalized_bond.r_cut) {

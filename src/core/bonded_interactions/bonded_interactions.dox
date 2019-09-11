@@ -54,16 +54,16 @@
  *  Every interaction resides in its own source .cpp and .hpp files. A simple
  *  example for a bonded interaction is the FENE bond in @ref fene.hpp and
  *  @ref fene.cpp. Use these two files as templates for your interaction.
- *  In particular, use the same function names: \c calc_NAME_pair_force,
- *  \c calc_NAME_pair_energy, \c NAME_set_params, \c angle_NAME_force,
+ *  In particular, use the same function names: \c NAME_pair_force,
+ *  \c NAME_pair_energy, \c NAME_set_params, \c angle_NAME_force,
  *  \c angle_NAME_energy, \c angle_NAME_set_params, etc. with \c NAME your
  *  interaction name. In the checklist below, we'll use \c NAME = \c fene.
  *
  *  * The recommended signatures of the force and energy functions are:
  *    @code{.cpp}
  *    inline boost::optional<Utils::Vector3d>
- *    calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
- *                         Utils::Vector3d const &dx);
+ *    fene_pair_force(Bonded_ia_parameters const *const iaparams,
+ *                    Utils::Vector3d const &dx);
  *    inline boost::optional<double>
  *    fene_pair_energy(Bonded_ia_parameters const *const iaparams,
  *                     Utils::Vector3d const &dx);
@@ -123,7 +123,7 @@
  *      boost::optional<Utils::Vector3d> result;
  *      // ...
  *      case BONDED_IA_FENE:
- *        result = calc_fene_pair_force(iaparams, dx);
+ *        result = fene_pair_force(iaparams, dx);
  *        break;
  *      @endcode
  *    - in function @ref add_bonded_force(): add the new interaction to the
@@ -132,7 +132,7 @@
  *      @code{.cpp}
  *      case BONDED_IA_ANGLE_HARMONIC:
  *        std::tie(force1, force2, force3) =
- *          calc_angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
+ *          angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
  *        break;
  *      @endcode
  *  * In energy_inline.hpp:

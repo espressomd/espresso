@@ -42,8 +42,8 @@ int harmonic_set_params(int bond_type, double k, double r, double r_cut);
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-calc_harmonic_pair_force(Bonded_ia_parameters const *const iaparams,
-                         Utils::Vector3d const &dx) {
+harmonic_pair_force(Bonded_ia_parameters const *const iaparams,
+                    Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
   if ((iaparams->p.harmonic.r_cut > 0.0) &&

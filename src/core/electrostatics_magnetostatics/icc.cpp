@@ -70,7 +70,7 @@ void force_calc_iccp3m(const ParticleRange &particles,
 inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
                                              Utils::Vector3d const &d,
                                              double dist, double dist2) {
-  auto forces = Coulomb::calc_pair_force(p1, p2, d, dist);
+  auto forces = Coulomb::pair_force(p1, p2, d, dist);
 
   p1->f.f += std::get<0>(forces);
   p2->f.f -= std::get<0>(forces);
