@@ -143,13 +143,6 @@ extern Lattice lblattice;
 
 extern HaloCommunicator update_halo_comm;
 
-void lb_realloc_fluid(boost::multi_array<double, 2> &lb_fluid_a,
-                      boost::multi_array<double, 2> &lb_fluid_b,
-                      Lattice::index_t halo_grid_volume,
-                      std::array<Utils::Span<double>, 19> &lb_fluid,
-                      std::array<Utils::Span<double>, 19> &lb_fluid_post,
-                      std::vector<LB_FluidNode> &lb_fields);
-
 void lb_init(const LB_Parameters &lb_parameters);
 
 void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
@@ -287,6 +280,9 @@ void lb_calc_fluid_momentum(double *result, const LB_Parameters &lb_parameters,
                             const std::vector<LB_FluidNode> &lb_fields,
                             const Lattice &lb_lattice);
 void lb_collect_boundary_forces(double *result);
+void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
+                          LB_Parameters const &lb_parameters,
+                          Lattice const &lb_lattice);
 
 /*@}*/
 

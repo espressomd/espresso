@@ -213,10 +213,6 @@ void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes,
                             int *host_boundary_index_list,
                             float *lb_bounday_velocity);
 #endif
-void lb_init_extern_nodeforcedensities_GPU(
-    int n_extern_node_force_densities,
-    LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities,
-    LB_parameters_gpu *lbpar_gpu);
 
 void lb_set_agrid_gpu(double agrid);
 

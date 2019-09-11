@@ -26,7 +26,7 @@ cdef class Globals:
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            return make_array_locked( < Vector3d > grid.box_geo.length())
+            return make_array_locked(< Vector3d > grid.box_geo.length())
 
     property time_step:
         def __set__(self, time_step):
@@ -58,7 +58,7 @@ cdef class Globals:
 
             for i in range(3):
                 periodicity[i] = grid.box_geo.periodic(i)
-                
+
             return array_locked(periodicity)
 
     property time:
