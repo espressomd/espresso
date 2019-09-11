@@ -17,7 +17,7 @@ using Utils::get_linear_index;
 ActiveLB lattice_switch = ActiveLB::NONE;
 
 struct NoLBActive : public std::exception {
-  const char *what() const throw() { return "LB not activated"; }
+  const char *what() const noexcept override { return "LB not activated"; }
 };
 
 /* LB CPU callback interface */
@@ -333,7 +333,8 @@ double lb_lbfluid_get_viscosity() {
 #else
     return {};
 #endif //  CUDA
-  } else if (lattice_switch == ActiveLB::CPU) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
     return lbpar.viscosity;
   }
   throw NoLBActive();
@@ -1151,7 +1152,8 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
     }
     return stress;
 #endif //  CUDA
-  } else if (lattice_switch == ActiveLB::CPU) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
     return mpi_call(::Communication::Result::one_rank, mpi_lb_get_stress, ind);
   }
   throw NoLBActive();
@@ -1184,7 +1186,8 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
     stress[5] += p0;
     return stress;
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
     Utils::Vector6d stress{};
     for (int i = 0; i < lblattice.global_grid[0]; i++) {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
