@@ -32,13 +32,16 @@ from .utils import array_locked, is_valid_type
 from .utils cimport make_array_locked, numeric_limits
 cimport globals
 
+
 def _construct(cls, params):
     obj = cls(**params)
     obj._params = params
     return obj
 
+
 def assert_agrid_tau_set(obj):
-    assert obj.agrid != obj.default_params()['agrid'] and obj.tau != obj.default_params()['tau'], "tau and agrid have to be set first!"
+    assert obj.agrid != obj.default_params()['agrid'] and obj.tau != obj.default_params()[
+                                           'tau'], "tau and agrid have to be set first!"
 
 cdef class HydrodynamicInteraction(Actor):
     def _lb_init(self):
@@ -215,11 +218,11 @@ cdef class HydrodynamicInteraction(Actor):
 
     property kT:
         def __get__(self):
-           return lb_lbfluid_get_kT()
+            return lb_lbfluid_get_kT()
 
         def __set__(self, kT):
-             cdef double _kT = kT
-             lb_lbfluid_set_kT(_kT)
+            cdef double _kT = kT
+            lb_lbfluid_set_kT(_kT)
 
     property seed:
         def __get__(self):
@@ -358,9 +361,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
@@ -446,7 +449,7 @@ cdef class LBFluidRoutines:
                    ))
 
         def __set__(self, population):
-            cdef Vector19d _population 
+            cdef Vector19d _population
             for i in range(19):
                 _population[i] = population[i]
             lb_lbnode_set_pop(self.node, _population)
