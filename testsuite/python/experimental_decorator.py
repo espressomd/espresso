@@ -30,15 +30,15 @@ class A:
 
 
 class RequireExperimental(ut.TestCase):
-    
+
     def test(self):
-        
+
         if espressomd.has_features("EXPERIMENTAL_FEATURES"):
             x = A(1, 3.0)
         else:
             with self.assertRaisesRegexp(Exception, "because"):
                 x = A(1, 3.0)
-                
+
 
 if __name__ == "__main__":
     ut.main()

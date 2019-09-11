@@ -73,7 +73,7 @@ class test_minimize_energy(ut.TestCase):
         self.system.integrator.run(500)
 
         self.system.constraints.clear()
-        
+
         # Check
         self.assertAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
@@ -81,7 +81,7 @@ class test_minimize_energy(ut.TestCase):
         if self.test_rotation:
             np.testing.assert_allclose(np.copy(self.system.part[:].dip), 
                                        np.hstack((-np.ones((self.n_part, 1)), np.zeros((self.n_part, 1)), np.zeros((self.n_part, 1)))), atol=1E-9)
-            
+
     def test_rescaling(self):
         self.system.part.add(pos=[5., 5., 4.9], type=0)
         self.system.part.add(pos=[5., 5., 5.1], type=0)

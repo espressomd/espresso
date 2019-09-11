@@ -186,7 +186,7 @@ def main():
     mass = np.array([0.17])
 
     num_types = len(wca_sig)
-    
+
     def mix_eps(eps1, eps2, rule='LB'):
         return math.sqrt(eps1 * eps2)
 

@@ -33,7 +33,7 @@ class VirtualSitesTracersCommon:
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))
     system.time_step = 0.05
     system.cell_system.skin = 0.1
-    
+
     def reset_lb(self, ext_force_density=[0, 0, 0]):
         box_height = 10 
         box_lw = 8
@@ -236,7 +236,7 @@ class VirtualSitesTracersCommon:
         # strongly-bonded should basically not stretch
         self.assertGreater(dist1non, 1.5)
         self.assertAlmostEqual(dist1weak, 1, delta=0.2)
-        self.assertAlmostEqual(dist1strong, 1, delta=0.03)
+        self.assertAlmostEqual(dist1strong, 1, delta=0.04)
 
         self.assertGreater(dist2non, 2)
         self.assertAlmostEqual(dist2weak, np.sqrt(2), delta=0.3)
