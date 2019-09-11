@@ -110,10 +110,6 @@ NO_INTRA_NB                     notest
 /* Debugging */
 ADDITIONAL_CHECKS
 
-VIRTUAL_SITES_DEBUG
-CUDA_DEBUG
-
-
 # External switches
 # Switches that are set by configure or gcc, not to be set manually
 CUDA external

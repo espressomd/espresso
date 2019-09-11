@@ -33,11 +33,6 @@
 #include <mpi.h>
 #include <utils/mpi/cart_comm.hpp>
 
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-
 /**********************************************
  * variables
  **********************************************/

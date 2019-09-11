@@ -52,8 +52,6 @@
 #include <boost/variant.hpp>
 
 #include <cmath>
-#include <cstdlib>
-#include <cstring>
 #include <unordered_map>
 #include <unordered_set>
 /************************************************

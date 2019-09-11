@@ -28,7 +28,6 @@
 #include "constraints.hpp"
 #include "ghosts.hpp"
 
-#include <cstring>
 #include <mpi.h>
 
 Cell *local;
