@@ -40,7 +40,7 @@ const std::shared_ptr<VirtualSites> &virtual_sites() { return m_virtual_sites; }
 
 void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
   m_virtual_sites = v;
-  recalc_forces = 1;
+  recalc_forces = true;
   invalidate_obs();
   on_ghost_flags_change();
 }

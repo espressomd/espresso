@@ -30,9 +30,7 @@
 
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 

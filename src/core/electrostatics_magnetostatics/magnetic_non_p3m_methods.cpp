@@ -49,7 +49,7 @@
 
 // Calculates dipolar energy and/or force between two particles
 double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
-                             Particle *p2, int force_flag) {
+                             Particle *p2, bool force_flag) {
 
   // Cache dipole moment
   auto const dip2 = p2->calc_dip();
@@ -127,7 +127,7 @@ double calc_dipole_dipole_ia(Particle *p1, const Utils::Vector3d &dip1,
    =============================================================================
 */
 
-double dawaanr_calculations(int force_flag, int energy_flag,
+double dawaanr_calculations(bool force_flag, bool energy_flag,
                             const ParticleRange &particles) {
 
   if (n_nodes != 1) {
@@ -186,7 +186,7 @@ int magnetic_dipolar_direct_sum_sanity_checks() {
 /************************************************************/
 
 double
-magnetic_dipolar_direct_sum_calculations(int force_flag, int energy_flag,
+magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                                          const ParticleRange &particles) {
   std::vector<double> x, y, z;
   std::vector<double> mx, my, mz;

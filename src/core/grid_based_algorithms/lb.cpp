@@ -32,7 +32,6 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -58,7 +57,6 @@ using Utils::get_linear_index;
 
 #include <cassert>
 #include <cinttypes>
-#include <cstdio>
 #include <fstream>
 #include <iostream>
 
@@ -568,14 +566,6 @@ void lb_sanity_checks(const LB_Parameters &lb_parameters) {
   }
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "LB requires domain-decomposition cellsystem";
-  }
-  if (skin == 0.0) {
-    runtimeErrorMsg() << "LB requires a positive skin";
-  }
-  if (cell_structure.use_verlet_list && skin >= lb_parameters.agrid / 2.0) {
-    runtimeErrorMsg() << "LB requires either no Verlet lists or that the skin "
-                         "of the verlet list to be less than half of "
-                         "lattice-Boltzmann grid spacing";
   }
 }
 

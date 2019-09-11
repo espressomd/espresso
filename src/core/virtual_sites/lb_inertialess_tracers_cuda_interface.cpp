@@ -27,7 +27,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #include "communication.hpp"
-#include "debug.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
