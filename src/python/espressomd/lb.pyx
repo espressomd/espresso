@@ -37,6 +37,9 @@ def _construct(cls, params):
     obj._params = params
     return obj
 
+def assert_agrid_tau_set(obj):
+    assert obj.agrid != obj.default_params()['agrid'] and obj.tau != obj.default_params()['tau'], "tau and agrid have to be set first!"
+
 cdef class HydrodynamicInteraction(Actor):
     def _lb_init(self):
         raise Exception(
@@ -95,8 +98,8 @@ cdef class HydrodynamicInteraction(Actor):
     def _set_params_in_es_core(self):
         default_params = self.default_params()
         self.agrid = self._params['agrid']
-        self.density = self._params['dens']
         self.tau = self._params['tau']
+        self.density = self._params['dens']
 
         if self._params['kT'] > 0.:
             self.seed = self._params['seed']
@@ -120,8 +123,8 @@ cdef class HydrodynamicInteraction(Actor):
     def _get_params_from_es_core(self):
         default_params = self.default_params()
         self._params['agrid'] = self.agrid
-        self._params['dens'] = self.density
         self._params["tau"] = self.tau
+        self._params['dens'] = self.density
         self._params["kT"] = lb_lbfluid_get_kT()
         if self._params['kT'] > 0.0:
             self._params['seed'] = lb_lbfluid_get_rng_state()
@@ -238,34 +241,42 @@ cdef class HydrodynamicInteraction(Actor):
 
     property ext_force_density:
         def __get__(self):
+            assert_agrid_tau_set(self)
             cdef Vector3d res
             res = python_lbfluid_get_ext_force_density(
                 self.agrid, self.tau)
             return make_array_locked(res)
 
         def __set__(self, ext_force_density):
+            assert_agrid_tau_set(self)
             python_lbfluid_set_ext_force_density(
                 ext_force_density, self.agrid, self.tau)
 
     property density:
         def __get__(self):
+            assert_agrid_tau_set(self)
             return python_lbfluid_get_density(self.agrid)
 
         def __set__(self, density):
+            assert_agrid_tau_set(self)
             python_lbfluid_set_density(density, self.agrid)
 
     property viscosity:
         def __get__(self):
+            assert_agrid_tau_set(self)
             return python_lbfluid_get_viscosity(self.agrid, self.tau)
 
         def __set__(self, viscosity):
+            assert_agrid_tau_set(self)
             python_lbfluid_set_viscosity(viscosity, self.agrid, self.tau)
 
     property bulk_viscosity:
         def __get__(self):
+            assert_agrid_tau_set(self)
             return python_lbfluid_get_bulk_viscosity(self.agrid, self.tau)
 
         def __set__(self, viscosity):
+            assert_agrid_tau_set(self)
             python_lbfluid_set_bulk_viscosity(viscosity, self.agrid, self.tau)
 
     property tau:
