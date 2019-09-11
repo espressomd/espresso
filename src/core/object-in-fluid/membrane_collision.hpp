@@ -49,8 +49,8 @@ inline double sigmoid_force_r(double a, double n, double r) {
 
 /** Calculate membrane-collision force between particle p1 and p2 */
 inline Utils::Vector3d
-membrane_collision_pair_force(Particle const *const p1,
-                              Particle const *const p2,
+membrane_collision_pair_force(Particle const &p1,
+                              Particle const &p2,
                               IA_parameters const &ia_params,
                               Utils::Vector3d const &d, double dist) {
   /************************
@@ -58,7 +58,7 @@ membrane_collision_pair_force(Particle const *const p1,
    * Description of implementation:
    * We have two particles, each belongs to the membrane of a different immersed
    *object For both particles we have the position of the particle - p, and in
-   *part->p.out_direction are the coordinates of the outward normal vector (with
+   *part.p.out_direction are the coordinates of the outward normal vector (with
    *respect to the immersed object).
    *
    * Algorithm:
@@ -78,8 +78,8 @@ membrane_collision_pair_force(Particle const *const p1,
 
     if (r_off > 0.0) {
 
-      auto const out1 = p1->p.out_direction;
-      auto const out2 = p2->p.out_direction;
+      auto const out1 = p1.p.out_direction;
+      auto const out2 = p2.p.out_direction;
       // check whether out_direction was set
       if (fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) +
               fabs(out2[1]) + fabs(out2[2]) <

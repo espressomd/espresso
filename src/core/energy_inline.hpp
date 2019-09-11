@@ -77,13 +77,13 @@
  *  @param dist       distance between p1 and p2.
  *  @return the short-range interaction energy between the two particles
  */
-inline double calc_non_bonded_pair_energy(Particle const *const p1,
-                                          Particle const *const p2,
+inline double calc_non_bonded_pair_energy(Particle const &p1,
+                                          Particle const &p2,
                                           IA_parameters const &ia_params,
                                           Utils::Vector3d const &d,
                                           double const dist) {
 #ifdef NO_INTRA_NB
-  if (p1->p.mol_id == p2->p.mol_id)
+  if (p1.p.mol_id == p2.p.mol_id)
     return 0;
 #endif
 
@@ -165,7 +165,7 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
 
 #ifdef GAY_BERNE
   /* Gay-Berne */
-  ret += gb_pair_energy(p1->r.calc_director(), p2->r.calc_director(), ia_params,
+  ret += gb_pair_energy(p1.r.calc_director(), p2.r.calc_director(), ia_params,
                         d, dist);
 #endif
 
@@ -180,21 +180,21 @@ inline double calc_non_bonded_pair_energy(Particle const *const p1,
  *  @param dist      distance between p1 and p2.
  *  @param dist2     distance squared between p1 and p2.
  */
-inline void add_non_bonded_pair_energy(Particle const *const p1,
-                                       Particle const *const p2,
+inline void add_non_bonded_pair_energy(Particle const &p1,
+                                       Particle const &p2,
                                        Utils::Vector3d const &d,
                                        double const dist, double const dist2) {
-  IA_parameters const &ia_params = *get_ia_param(p1->p.type, p2->p.type);
+  IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
 
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
 #endif
-    *obsstat_nonbonded(&energy, p1->p.type, p2->p.type) +=
+    *obsstat_nonbonded(&energy, p1.p.type, p2.p.type) +=
         calc_non_bonded_pair_energy(p1, p2, ia_params, d, dist);
 
 #ifdef ELECTROSTATICS
   energy.coulomb[0] +=
-      Coulomb::pair_energy(p1, p2, p1->p.q * p2->p.q, d, dist, dist2);
+      Coulomb::pair_energy(p1, p2, p1.p.q * p2.p.q, d, dist, dist2);
 #endif
 
 #ifdef DIPOLES
@@ -273,7 +273,7 @@ inline void add_bonded_energy(Particle const *const p1) {
         retval = bonded_coulomb_pair_energy(p1->p.q * p2->p.q, iaparams, dx);
         break;
       case BONDED_IA_BONDED_COULOMB_SR:
-        retval = bonded_coulomb_sr_pair_energy(p1, p2, iaparams, dx);
+        retval = bonded_coulomb_sr_pair_energy(*p1, *p2, iaparams, dx);
         break;
 #endif
 #ifdef LENNARD_JONES
@@ -371,23 +371,23 @@ inline void add_bonded_energy(Particle const *const p1) {
 /** Add kinetic energies for one particle to the @ref energy observable.
  *  @param[in] p1   particle for which to calculate energies
  */
-inline void add_kinetic_energy(Particle const *const p1) {
+inline void add_kinetic_energy(Particle const &p1) {
 #ifdef VIRTUAL_SITES
-  if (p1->p.is_virtual)
+  if (p1.p.is_virtual)
     return;
 #endif
 
   /* kinetic energy */
-  energy.data.e[0] += 0.5 * p1->p.mass * p1->m.v.norm2();
+  energy.data.e[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
 
 #ifdef ROTATION
-  if (p1->p.rotation) {
+  if (p1.p.rotation) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
 
-    energy.data.e[0] += 0.5 * (Utils::sqr(p1->m.omega[0]) * p1->p.rinertia[0] +
-                               Utils::sqr(p1->m.omega[1]) * p1->p.rinertia[1] +
-                               Utils::sqr(p1->m.omega[2]) * p1->p.rinertia[2]);
+    energy.data.e[0] += 0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
+                               Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
+                               Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
   }
 #endif
 }
@@ -396,9 +396,9 @@ inline void add_kinetic_energy(Particle const *const p1) {
  *  observable.
  *  @param[in] p   particle for which to calculate energies
  */
-inline void add_single_particle_energy(Particle const *const p) {
+inline void add_single_particle_energy(Particle const &p) {
   add_kinetic_energy(p);
-  add_bonded_energy(p);
+  add_bonded_energy(&p);
 }
 
 #endif // ENERGY_INLINE_HPP

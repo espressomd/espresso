@@ -33,8 +33,8 @@ int IBM_Tribend_SetParams(int bond_type, int ind1, int ind2, int ind3, int ind4,
  *  @return forces on @p p1, @p p2, @p p3, @p p4
  */
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-IBM_Tribend_CalcForce(Particle const *p1, Particle const *p2,
-                      Particle const *p3, Particle const *p4,
+IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
+                      Particle const &p3, Particle const &p4,
                       Bonded_ia_parameters const &iaparams);
 
 #endif

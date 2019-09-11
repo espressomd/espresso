@@ -67,16 +67,16 @@ void force_calc_iccp3m(const ParticleRange &particles,
 
 /** Variant of add_non_bonded_pair_force where only Coulomb
  *  contributions are calculated   */
-inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
+inline void add_non_bonded_pair_force_iccp3m(Particle &p1, Particle &p2,
                                              Utils::Vector3d const &d,
                                              double dist, double dist2) {
   auto forces = Coulomb::pair_force(p1, p2, d, dist);
 
-  p1->f.f += std::get<0>(forces);
-  p2->f.f -= std::get<0>(forces);
+  p1.f.f += std::get<0>(forces);
+  p2.f.f -= std::get<0>(forces);
 #ifdef P3M
-  p1->f.f += std::get<1>(forces);
-  p2->f.f += std::get<2>(forces);
+  p1.f.f += std::get<1>(forces);
+  p2.f.f += std::get<2>(forces);
 #endif
 }
 
@@ -198,7 +198,7 @@ void force_calc_iccp3m(const ParticleRange &particles,
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
     /* calc non bonded interactions */
-    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
+    add_non_bonded_pair_force_iccp3m(p1, p2, d.vec21, sqrt(d.dist2),
                                      d.dist2);
   });
 

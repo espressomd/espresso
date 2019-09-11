@@ -32,14 +32,14 @@
 
 #include <utils/constants.hpp>
 
-double calc_dipole_dipole_ia(Particle *p1, Utils::Vector3d const &dip1,
-                             Particle *p2, bool force_flag) {
+double calc_dipole_dipole_ia(Particle &p1, Utils::Vector3d const &dip1,
+                             Particle &p2, bool force_flag) {
 
   // Cache dipole moment
-  auto const dip2 = p2->calc_dip();
+  auto const dip2 = p2.calc_dip();
 
   // Distance between particles
-  auto const dr = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+  auto const dr = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
   // Powers of distance
   auto const r2 = dr.norm2();
@@ -67,16 +67,16 @@ double calc_dipole_dipole_ia(Particle *p1, Utils::Vector3d const &dip1,
 
     // Forces
     auto const ff = ab * dr + cc * dip1 + dd * dip2;
-    p1->f.f += dipole.prefactor * ff;
-    p2->f.f -= dipole.prefactor * ff;
+    p1.f.f += dipole.prefactor * ff;
+    p2.f.f -= dipole.prefactor * ff;
 
 #ifdef ROTATION
     // Torques
     auto const aa = vector_product(dip1, dip2);
     auto const b1 = vector_product(dip1, dr);
     auto const b2 = vector_product(dip2, dr);
-    p1->f.torque += dipole.prefactor * (-aa / r3 + b1 * cc);
-    p2->f.torque += dipole.prefactor * (aa / r3 + b2 * dd);
+    p1.f.torque += dipole.prefactor * (-aa / r3 + b1 * cc);
+    p2.f.torque += dipole.prefactor * (aa / r3 + b2 * dd);
 #endif
   }
 
@@ -122,7 +122,7 @@ double dawaanr_calculations(bool force_flag, bool energy_flag,
       if (jt->p.dipm == 0.0)
         continue;
       // Calculate energy and/or force between the particles
-      u += calc_dipole_dipole_ia(&(*it), dip1, &(*jt), force_flag);
+      u += calc_dipole_dipole_ia(*it, dip1, *jt, force_flag);
     }
   }
 

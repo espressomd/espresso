@@ -109,38 +109,34 @@ void init_correction_vector(const ParticleRange &particles) {
 
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
-  Bonded_ia_parameters *ia_params;
-  int j, k, cnt = -1;
-  Particle *p1, *p2;
 
-  for (auto &p : particles) {
-    p1 = &p;
-    k = 0;
-    while (k < p1->bl.n) {
-      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1->bl.e[k++]];
+  for (auto &p1 : particles) {
+    int k = 0;
+    while (k < p1.bl.n) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
       if (ia_params.type == BONDED_IA_RIGID_BOND) {
-        cnt++;
-        p2 = local_particles[p1->bl.e[k++]];
-        if (!p2) {
+        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
+                            << p1.p.identity << " and " << p1.bl.e[k - 1]
                             << " (particles not stored on the same node)";
           return;
         }
+        Particle &p2 = *pp2;
 
-        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+        auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
         auto const r_ij2 = r_ij.norm2();
 
         if (fabs(1.0 - r_ij2 / ia_params.p.rigid_bond.d2) >
             ia_params.p.rigid_bond.p_tol) {
-          auto const r_ij_t = get_mi_vector(p1->r.p_old, p2->r.p_old, box_geo);
+          auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
           auto const r_ij_dot = r_ij_t * r_ij;
           auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) /
-                         r_ij_dot / (p1->p.mass + p2->p.mass);
+                         r_ij_dot / (p1.p.mass + p2.p.mass);
 
           auto const pos_corr = G * r_ij_t;
-          p1->f.f += pos_corr * p2->p.mass;
-          p2->f.f -= pos_corr * p1->p.mass;
+          p1.f.f += pos_corr * p2.p.mass;
+          p2.f.f -= pos_corr * p1.p.mass;
 
           /*Increase the 'repeat' flag by one */
           *repeat_ = *repeat_ + 1;
@@ -215,35 +211,33 @@ void transfer_force_init_vel(const ParticleRange &particles,
 
 /** Velocity correction vectors are computed*/
 void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
-  int j, k;
-  Particle *p1, *p2;
 
-  for (auto &p : particles) {
-    p1 = &p;
-    k = 0;
-    while (k < p1->bl.n) {
-      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1->bl.e[k++]];
+  for (auto &p1 : particles) {
+    int k = 0;
+    while (k < p1.bl.n) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
       if (ia_params.type == BONDED_IA_RIGID_BOND) {
-        p2 = local_particles[p1->bl.e[k++]];
-        if (!p2) {
+        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
+                            << p1.p.identity << " and " << p1.bl.e[k - 1]
                             << " (particles not stored on the same node)";
           return;
         }
+        Particle &p2 = *pp2;
 
-        auto const v_ij = p1->m.v - p2->m.v;
-        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+        auto const v_ij = p1.m.v - p2.m.v;
+        auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
         auto const v_proj = v_ij * r_ij;
         if (std::abs(v_proj) > ia_params.p.rigid_bond.v_tol) {
           auto const K =
-              v_proj / ia_params.p.rigid_bond.d2 / (p1->p.mass + p2->p.mass);
+              v_proj / ia_params.p.rigid_bond.d2 / (p1.p.mass + p2.p.mass);
 
           auto const vel_corr = K * r_ij;
 
-          p1->f.f -= vel_corr * p2->p.mass;
-          p2->f.f += vel_corr * p1->p.mass;
+          p1.f.f -= vel_corr * p2.p.mass;
+          p2.f.f += vel_corr * p1.p.mass;
 
           *repeat_ = *repeat_ + 1;
         }

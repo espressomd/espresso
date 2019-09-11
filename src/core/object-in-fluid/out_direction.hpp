@@ -45,13 +45,13 @@ int oif_out_direction_set_params(int bond_type);
  *  oriented in such a way that its normal already points out of the object.
  */
 inline Utils::Vector3d
-calc_out_direction(Particle const *const p2, Particle const *const p3,
-                   Particle const *const p4) {
+calc_out_direction(Particle const &p2, Particle const &p3,
+                   Particle const &p4) {
 
   // first-fold-then-the-same approach
-  auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());
-  auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2, box_geo);
-  auto const fp4 = fp2 + get_mi_vector(p4->r.p, fp2, box_geo);
+  auto const fp2 = unfolded_position(p2.r.p, p2.l.i, box_geo.length());
+  auto const fp3 = fp2 + get_mi_vector(p3.r.p, fp2, box_geo);
+  auto const fp4 = fp2 + get_mi_vector(p4.r.p, fp2, box_geo);
 
   auto const n = get_n_triangle(fp2, fp3, fp4);
   auto const dn = n.norm();

@@ -64,20 +64,20 @@ void init_forces(const ParticleRange &particles) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_local_particle_force(&p);
+    p.f = init_local_particle_force(p);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : ghost_cells.particles()) {
-    p.f = init_ghost_force(&p);
+    p.f = init_ghost_force(p);
   }
 }
 
 void init_forces_ghosts(const ParticleRange &particles) {
   for (auto &p : particles) {
-    p.f = init_ghost_force(&p);
+    p.f = init_ghost_force(p);
   }
 }
 
@@ -118,13 +118,13 @@ void force_calc(CellStructure &cell_structure) {
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
-  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
+  short_range_loop([](Particle &p) { add_single_particle_force(p); },
                    [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
+                     add_non_bonded_pair_force(p1, p2, d.vec21,
                                                sqrt(d.dist2), d.dist2);
 #ifdef COLLISION_DETECTION
                      if (collision_params.mode != COLLISION_MODE_OFF)
-                       detect_collision(&p1, &p2, d.dist2);
+                       detect_collision(p1, p2, d.dist2);
 #endif
                    },
                    VerletCriterion{skin, cell_structure.min_range,

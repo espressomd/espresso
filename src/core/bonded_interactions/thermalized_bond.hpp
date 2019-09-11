@@ -109,7 +109,7 @@ inline Utils::Vector3d v_noise(int particle_id, int partner_id) {
  *  @return the forces on @p p1 and @p p2
  */
 inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
-thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
+thermalized_bond_forces(Particle const &p1, Particle const &p2,
                         Bonded_ia_parameters const &iaparams,
                         Utils::Vector3d const &dx) {
   // Bond broke?
@@ -118,17 +118,17 @@ thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
     return {};
   }
 
-  auto const mass_tot = p1->p.mass + p2->p.mass;
+  auto const mass_tot = p1.p.mass + p2.p.mass;
   auto const mass_tot_inv = 1.0 / mass_tot;
   auto const sqrt_mass_tot = sqrt(mass_tot);
-  auto const sqrt_mass_red = sqrt(p1->p.mass * p2->p.mass / mass_tot);
+  auto const sqrt_mass_red = sqrt(p1.p.mass * p2.p.mass / mass_tot);
   auto const com_vel =
-      mass_tot_inv * (p1->p.mass * p1->m.v + p2->p.mass * p2->m.v);
-  auto const dist_vel = p2->m.v - p1->m.v;
+      mass_tot_inv * (p1.p.mass * p1.m.v + p2.p.mass * p2.m.v);
+  auto const dist_vel = p2.m.v - p1.m.v;
 
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
-  Utils::Vector3d noise = v_noise(p1->p.identity, p2->p.identity);
+  Utils::Vector3d noise = v_noise(p1.p.identity, p2.p.identity);
 
   for (int i = 0; i < 3; i++) {
     double force_lv_com, force_lv_dist;
@@ -151,8 +151,8 @@ thermalized_bond_forces(Particle const *const p1, Particle const *const p2,
       force_lv_dist = -iaparams.p.thermalized_bond.pref1_dist * dist_vel[i];
     }
     // Add forces
-    force1[i] = p1->p.mass * mass_tot_inv * force_lv_com - force_lv_dist;
-    force2[i] = p2->p.mass * mass_tot_inv * force_lv_com + force_lv_dist;
+    force1[i] = p1.p.mass * mass_tot_inv * force_lv_com - force_lv_dist;
+    force2[i] = p2.p.mass * mass_tot_inv * force_lv_com + force_lv_dist;
   }
 
   return std::make_tuple(force1, force2);

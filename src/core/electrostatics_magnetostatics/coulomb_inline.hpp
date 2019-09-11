@@ -53,9 +53,9 @@ inline Utils::Vector3d central_force(double const q1q2,
 }
 
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-pair_force(Particle const *const p1, Particle const *const p2,
+pair_force(Particle const &p1, Particle const &p2,
            Utils::Vector3d const &d, double dist) {
-  auto const q1q2 = p1->p.q * p2->p.q;
+  auto const q1q2 = p1.p.q * p2.p.q;
 
   if (q1q2 == 0) {
     return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
@@ -94,8 +94,8 @@ pair_force(Particle const *const p1, Particle const *const p2,
  * @param dist |d|
  * @return Contribution to the pressure tensor.
  */
-inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
-                                                       Particle const *const p2,
+inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const &p1,
+                                                       Particle const &p2,
                                                        Utils::Vector3d const &d,
                                                        double dist) {
   switch (coulomb.method) {
@@ -108,7 +108,7 @@ inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
   case COULOMB_MMM1D:
   case COULOMB_DH:
   case COULOMB_RF: {
-    auto const force = central_force(p1->p.q * p2->p.q, d, dist);
+    auto const force = central_force(p1.p.q * p2.p.q, d, dist);
 
     return Utils::tensor_product(force, d);
   }
@@ -122,7 +122,7 @@ inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
 }
 
 // energy_inline
-inline double pair_energy(Particle const *const p1, Particle const *const p2,
+inline double pair_energy(Particle const &p1, Particle const &p2,
                           double const q1q2, Utils::Vector3d const &d,
                           double dist, double dist2) {
   /* real space Coulomb */

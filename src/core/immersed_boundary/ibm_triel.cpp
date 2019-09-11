@@ -69,18 +69,18 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 } // namespace
 
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-IBM_Triel_CalcForce(Particle const *const p1, Particle const *const p2,
-                    Particle const *const p3,
+IBM_Triel_CalcForce(Particle const &p1, Particle const &p2,
+                    Particle const &p3,
                     Bonded_ia_parameters const &iaparams) {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an Espresso function which considers PBC
-  auto const vec2 = get_mi_vector(p3->r.p, p1->r.p, box_geo);
+  auto const vec2 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
   auto const l = vec2.norm();
 
   // lp = length between 1 and 2
-  auto const vec1 = get_mi_vector(p2->r.p, p1->r.p, box_geo);
+  auto const vec1 = get_mi_vector(p2.r.p, p1.r.p, box_geo);
   auto const lp = vec1.norm();
 
   // Check for sanity

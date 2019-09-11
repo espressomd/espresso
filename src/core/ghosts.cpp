@@ -135,41 +135,41 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
     } else {
       Particle *part = gc->part_lists[pl]->part;
       for (int p = 0; p < np; p++) {
-        Particle *pt = &part[p];
+        Particle const &pt = part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memcpy(insert, &pt->p, sizeof(ParticleProperties));
+          memcpy(insert, &pt.p, sizeof(ParticleProperties));
           insert += sizeof(ParticleProperties);
           if (ghosts_have_bonds) {
-            *(int *)insert = pt->bl.n;
+            *(int *)insert = pt.bl.n;
             insert += sizeof(int);
-            if (pt->bl.n) {
-              s_bondbuffer.insert(s_bondbuffer.end(), pt->bl.e,
-                                  pt->bl.e + pt->bl.n);
+            if (pt.bl.n) {
+              s_bondbuffer.insert(s_bondbuffer.end(), pt.bl.e,
+                                  pt.bl.e + pt.bl.n);
             }
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          auto pp = pt->r;
+          auto pp = pt.r;
           pp.p += gc->shift;
           memcpy(insert, &pp, sizeof(pp));
           insert += sizeof(ParticlePosition);
         } else if (data_parts & GHOSTTRANS_POSITION) {
-          memcpy(insert, &pt->r, sizeof(ParticlePosition));
+          memcpy(insert, &pt.r, sizeof(ParticlePosition));
           insert += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memcpy(insert, &pt->m, sizeof(ParticleMomentum));
+          memcpy(insert, &pt.m, sizeof(ParticleMomentum));
           insert += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memcpy(insert, &pt->f, sizeof(ParticleForce));
+          memcpy(insert, &pt.f, sizeof(ParticleForce));
           insert += sizeof(ParticleForce);
         }
 
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(insert, &pt->swim, sizeof(ParticleParametersSwimming));
+          memcpy(insert, &pt.swim, sizeof(ParticleParametersSwimming));
           insert += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -239,38 +239,38 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
       int np = cur_list->n;
       Particle *part = cur_list->part;
       for (int p = 0; p < np; p++) {
-        Particle *pt = &part[p];
+        Particle &pt = part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memcpy(&pt->p, retrieve, sizeof(ParticleProperties));
+          memcpy(&pt.p, retrieve, sizeof(ParticleProperties));
           retrieve += sizeof(ParticleProperties);
           if (ghosts_have_bonds) {
             int n_bonds;
             memcpy(&n_bonds, retrieve, sizeof(int));
             retrieve += sizeof(int);
-            pt->bl.resize(n_bonds);
-            std::copy_n(bond_retrieve, n_bonds, pt->bl.begin());
+            pt.bl.resize(n_bonds);
+            std::copy_n(bond_retrieve, n_bonds, pt.bl.begin());
             bond_retrieve += n_bonds;
           }
-          if (local_particles[pt->p.identity] == nullptr) {
-            local_particles[pt->p.identity] = pt;
+          if (local_particles[pt.p.identity] == nullptr) {
+            local_particles[pt.p.identity] = &pt;
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
-          memcpy(&pt->r, retrieve, sizeof(ParticlePosition));
+          memcpy(&pt.r, retrieve, sizeof(ParticlePosition));
           retrieve += sizeof(ParticlePosition);
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memcpy(&pt->m, retrieve, sizeof(ParticleMomentum));
+          memcpy(&pt.m, retrieve, sizeof(ParticleMomentum));
           retrieve += sizeof(ParticleMomentum);
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memcpy(&pt->f, retrieve, sizeof(ParticleForce));
+          memcpy(&pt.f, retrieve, sizeof(ParticleForce));
           retrieve += sizeof(ParticleForce);
         }
 
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(&pt->swim, retrieve, sizeof(ParticleParametersSwimming));
+          memcpy(&pt.swim, retrieve, sizeof(ParticleParametersSwimming));
           retrieve += sizeof(ParticleParametersSwimming);
         }
 #endif
@@ -306,10 +306,10 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
     int np = gc->part_lists[pl]->n;
     Particle *part = gc->part_lists[pl]->part;
     for (int p = 0; p < np; p++) {
-      Particle *pt = &part[p];
+      Particle &pt = part[p];
       ParticleForce pf;
       memcpy(&pf, retrieve, sizeof(pf));
-      pt->f += pf;
+      pt.f += pf;
       retrieve += sizeof(ParticleForce);
     }
   }
@@ -336,29 +336,29 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
       Particle *part1 = src_list->part;
       Particle *part2 = dst_list->part;
       for (int p = 0; p < np; p++) {
-        Particle *pt1 = &part1[p];
-        Particle *pt2 = &part2[p];
+        Particle &pt1 = part1[p];
+        Particle &pt2 = part2[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          pt2->p = pt1->p;
+          pt2.p = pt1.p;
           if (ghosts_have_bonds) {
-            pt2->bl = pt1->bl;
+            pt2.bl = pt1.bl;
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
-          pt2->r = pt1->r;
-          pt2->r.p += gc->shift;
+          pt2.r = pt1.r;
+          pt2.r.p += gc->shift;
         } else if (data_parts & GHOSTTRANS_POSITION)
-          pt2->r = pt1->r;
+          pt2.r = pt1.r;
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          pt2->m = pt1->m;
+          pt2.m = pt1.m;
         }
         if (data_parts & GHOSTTRANS_FORCE)
-          pt2->f += pt1->f;
+          pt2.f += pt1.f;
 
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING)
-          pt2->swim = pt1->swim;
+          pt2.swim = pt1.swim;
 #endif
       }
     }

@@ -39,8 +39,8 @@ int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2);
 
 /** Calculate Thole force */
-inline Utils::Vector3d thole_pair_force(Particle const *const p1,
-                                        Particle const *const p2,
+inline Utils::Vector3d thole_pair_force(Particle const &p1,
+                                        Particle const &p2,
                                         IA_parameters const &ia_params,
                                         Utils::Vector3d const &d, double dist) {
   auto const thole_q1q2 = ia_params.thole.q1q2;
@@ -62,8 +62,8 @@ inline Utils::Vector3d thole_pair_force(Particle const *const p1,
 }
 
 /** Calculate Thole energy */
-inline double thole_pair_energy(Particle const *const p1,
-                                Particle const *const p2,
+inline double thole_pair_energy(Particle const &p1,
+                                Particle const &p2,
                                 IA_parameters const &ia_params,
                                 Utils::Vector3d const &d, double dist) {
 

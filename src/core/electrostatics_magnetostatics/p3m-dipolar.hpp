@@ -222,15 +222,15 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
 inline std::tuple<double, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-dp3m_pair_force(Particle const *const p1, Particle const *const p2,
-                Utils::Vector3d const &d, double dist2, double dist) {
-  if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
+dp3m_pair_force(Particle const &p1, Particle const &p2,
+                    Utils::Vector3d const &d, double dist2, double dist) {
+  if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.))
     return std::make_tuple(0.0, Utils::Vector3d{}, Utils::Vector3d{},
                            Utils::Vector3d{});
 
   if (dist < dp3m.params.r_cut && dist > 0) {
-    auto const dip1 = p1->calc_dip();
-    auto const dip2 = p2->calc_dip();
+    auto const dip1 = p1.calc_dip();
+    auto const dip2 = p2.calc_dip();
     auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
     auto const adist = dp3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
@@ -275,9 +275,9 @@ dp3m_pair_force(Particle const *const p1, Particle const *const p2,
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
-    auto const fac = dipole.prefactor * p1->p.dipm * p2->p.dipm * exp_adist2;
+    auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm * exp_adist2;
 #else
-    auto const fac = dipole.prefactor * p1->p.dipm * p2->p.dipm;
+    auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm;
 #endif
     auto const _energy = fac * (mimj * B_r - mir * mjr * C_r);
 #else
@@ -290,12 +290,12 @@ dp3m_pair_force(Particle const *const p1, Particle const *const p2,
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-inline double dp3m_pair_energy(Particle const *const p1,
-                               Particle const *const p2,
+inline double dp3m_pair_energy(Particle const &p1,
+                               Particle const &p2,
                                Utils::Vector3d const &d, double dist2,
                                double dist) {
-  auto const dip1 = p1->calc_dip();
-  auto const dip2 = p2->calc_dip();
+  auto const dip1 = p1.calc_dip();
+  auto const dip2 = p2.calc_dip();
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
@@ -304,11 +304,11 @@ inline double dp3m_pair_energy(Particle const *const p1,
 
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    /*  fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
+    /*  fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm; IT WAS WRONG */
     /* *exp(-adist*adist); */
 #else
     auto const erfc_part_ri = erfc(adist) / dist;
-    /* fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
+    /* fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm;  IT WAS WRONG*/
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
@@ -330,7 +330,7 @@ inline double dp3m_pair_energy(Particle const *const p1,
 
     /*
       printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",
-      p1->p.identity,p2->p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
+      p1.p.identity,p2.p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
     */
 
     /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/

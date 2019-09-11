@@ -174,8 +174,8 @@ Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
   return {};
 }
 
-Utils::Vector3d dpd_pair_force(Particle const *const p1,
-                               Particle const *const p2,
+Utils::Vector3d dpd_pair_force(Particle const &p1,
+                               Particle const &p2,
                                IA_parameters const &ia_params,
                                Utils::Vector3d const &d, double dist,
                                double dist2) {
@@ -184,10 +184,10 @@ Utils::Vector3d dpd_pair_force(Particle const *const p1,
     return {};
   }
 
-  auto const v21 = p1->m.v - p2->m.v;
+  auto const v21 = p1.m.v - p2.m.v;
   auto const noise_vec =
       (ia_params.dpd_radial.pref > 0.0 || ia_params.dpd_trans.pref > 0.0)
-          ? dpd_noise(p1->p.identity, p2->p.identity)
+          ? dpd_noise(p1.p.identity, p2.p.identity)
           : Vector3d{};
 
   auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, noise_vec);
