@@ -46,8 +46,7 @@ harmonic_pair_force(Bonded_ia_parameters const &iaparams,
                     Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams.p.harmonic.r_cut > 0.0) &&
-      (dist > iaparams.p.harmonic.r_cut)) {
+  if ((iaparams.p.harmonic.r_cut > 0.0) && (dist > iaparams.p.harmonic.r_cut)) {
     return {};
   }
 
@@ -70,8 +69,7 @@ harmonic_pair_energy(Bonded_ia_parameters const &iaparams,
                      Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
 
-  if ((iaparams.p.harmonic.r_cut > 0.0) &&
-      (dist > iaparams.p.harmonic.r_cut)) {
+  if ((iaparams.p.harmonic.r_cut > 0.0) && (dist > iaparams.p.harmonic.r_cut)) {
     return {};
   }
 

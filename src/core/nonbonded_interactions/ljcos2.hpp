@@ -53,9 +53,8 @@ inline double ljcos2_pair_force_factor(IA_parameters const &ia_params,
       fac =
           48.0 * ia_params.ljcos2.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     } else if (r_off < ia_params.ljcos2.rchange + ia_params.ljcos2.w) {
-      fac =
-          -ia_params.ljcos2.eps * M_PI / 2 / ia_params.ljcos2.w / dist *
-          sin(M_PI * (r_off - ia_params.ljcos2.rchange) / ia_params.ljcos2.w);
+      fac = -ia_params.ljcos2.eps * M_PI / 2 / ia_params.ljcos2.w / dist *
+            sin(M_PI * (r_off - ia_params.ljcos2.rchange) / ia_params.ljcos2.w);
     }
     return fac;
   }
@@ -70,8 +69,7 @@ inline Utils::Vector3d ljcos2_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate Lennard-Jones cosine squared energy */
-inline double ljcos2_pair_energy(IA_parameters const &ia_params,
-                                 double dist) {
+inline double ljcos2_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < (ia_params.ljcos2.cut + ia_params.ljcos2.offset)) {
     auto const r_off = dist - ia_params.ljcos2.offset;
     if (r_off < ia_params.ljcos2.rchange) {
@@ -80,9 +78,9 @@ inline double ljcos2_pair_energy(IA_parameters const &ia_params,
     }
     if (r_off < (ia_params.ljcos2.rchange + ia_params.ljcos2.w)) {
       return -ia_params.ljcos2.eps / 2 *
-                       (cos(M_PI * (r_off - ia_params.ljcos2.rchange) /
-                            ia_params.ljcos2.w) +
-                        1);
+             (cos(M_PI * (r_off - ia_params.ljcos2.rchange) /
+                  ia_params.ljcos2.w) +
+              1);
     }
   }
   return 0.0;

@@ -60,13 +60,14 @@ bonded_coulomb_sr_pair_force(Bonded_ia_parameters const &iaparams,
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
  */
-inline boost::optional<double> bonded_coulomb_sr_pair_energy(
-    Particle const &p1, Particle const &p2,
-    Bonded_ia_parameters const &iaparams, Utils::Vector3d const &dx) {
+inline boost::optional<double>
+bonded_coulomb_sr_pair_energy(Particle const &p1, Particle const &p2,
+                              Bonded_ia_parameters const &iaparams,
+                              Utils::Vector3d const &dx) {
   auto const dist2 = dx.norm2();
   auto const dist = sqrt(dist2);
-  return Coulomb::pair_energy(
-      p1, p2, iaparams.p.bonded_coulomb_sr.q1q2, dx, dist, dist2);
+  return Coulomb::pair_energy(p1, p2, iaparams.p.bonded_coulomb_sr.q1q2, dx,
+                              dist, dist2);
 }
 
 #endif

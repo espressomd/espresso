@@ -131,8 +131,8 @@ void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
             ia_params.p.rigid_bond.p_tol) {
           auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
           auto const r_ij_dot = r_ij_t * r_ij;
-          auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) /
-                         r_ij_dot / (p1.p.mass + p2.p.mass);
+          auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) / r_ij_dot /
+                         (p1.p.mass + p2.p.mass);
 
           auto const pos_corr = G * r_ij_t;
           p1.f.f += pos_corr * p2.p.mass;

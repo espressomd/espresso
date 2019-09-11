@@ -43,7 +43,7 @@ inline double morse_pair_force_factor(IA_parameters const &ia_params,
     auto const add =
         exp(-ia_params.morse.alpha * (dist - ia_params.morse.rmin));
     return -ia_params.morse.eps * 2.0 * ia_params.morse.alpha *
-                 (add - Utils::sqr(add)) / dist;
+           (add - Utils::sqr(add)) / dist;
   }
   return 0.0;
 }
@@ -55,13 +55,12 @@ inline Utils::Vector3d morse_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate Morse energy */
-inline double morse_pair_energy(IA_parameters const &ia_params,
-                                double dist) {
+inline double morse_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.morse.cut) {
     auto const add =
         exp(-ia_params.morse.alpha * (dist - ia_params.morse.rmin));
     return ia_params.morse.eps * (Utils::sqr(add) - 2 * add) -
-                     ia_params.morse.rest;
+           ia_params.morse.rest;
   }
   return 0.0;
 }

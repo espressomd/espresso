@@ -93,8 +93,8 @@ harmonic_dumbbell_pair_energy(Utils::Vector3d const &director,
   auto const diff = dhat - director;
 
   return 0.5 * iaparams.p.harmonic_dumbbell.k1 *
-                          Utils::sqr(dist - iaparams.p.harmonic.r) +
-                      0.5 * iaparams.p.harmonic_dumbbell.k2 * (torque * diff);
+             Utils::sqr(dist - iaparams.p.harmonic.r) +
+         0.5 * iaparams.p.harmonic_dumbbell.k2 * (torque * diff);
 }
 
 #endif // ROTATION

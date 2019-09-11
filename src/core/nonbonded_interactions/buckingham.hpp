@@ -56,10 +56,9 @@ inline double buck_pair_force_factor(IA_parameters const &ia_params,
              less than cutoff (true Buckingham region) */
     double fac;
     if (dist > ia_params.buckingham.discont) {
-      fac =
-          buck_force_r(ia_params.buckingham.A, ia_params.buckingham.B,
-                       ia_params.buckingham.C, ia_params.buckingham.D, dist) /
-          dist;
+      fac = buck_force_r(ia_params.buckingham.A, ia_params.buckingham.B,
+                         ia_params.buckingham.C, ia_params.buckingham.D, dist) /
+            dist;
     } else {
       /* resulting force/energy in the linear region*/
       fac = -ia_params.buckingham.F2 / dist;
@@ -76,8 +75,7 @@ inline Utils::Vector3d buck_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate Buckingham energy */
-inline double buck_pair_energy(IA_parameters const &ia_params,
-                               double dist) {
+inline double buck_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.buckingham.cut) {
     /* case: resulting force/energy greater than discont and
              less than cutoff (true Buckingham region) */

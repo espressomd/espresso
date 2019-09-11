@@ -306,14 +306,14 @@ inline void friction_thermo_langevin_rotation(Particle &p) {
 #ifdef PARTICLE_ANISOTROPY
     if (langevin_pref_noise_buf[j] > 0.0) {
       p.f.torque[j] = -langevin_pref_friction_buf[j] * p.m.omega[j] +
-                       langevin_pref_noise_buf[j] * noise[j];
+                      langevin_pref_noise_buf[j] * noise[j];
     } else {
       p.f.torque[j] = -langevin_pref_friction_buf[j] * p.m.omega[j];
     }
 #else
     if (langevin_pref_noise_buf > 0.0) {
       p.f.torque[j] = -langevin_pref_friction_buf * p.m.omega[j] +
-                       langevin_pref_noise_buf * noise[j];
+                      langevin_pref_noise_buf * noise[j];
     } else {
       p.f.torque[j] = -langevin_pref_friction_buf * p.m.omega[j];
     }

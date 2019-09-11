@@ -9,8 +9,8 @@
 namespace Dipole {
 // forces_inline
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-pair_force(Particle const &p1, Particle const &p2,
-           Utils::Vector3d const &d, double dist, double dist2) {
+pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
+           double dist, double dist2) {
   Utils::Vector3d force{}, torque1{}, torque2{};
   switch (dipole.method) {
 #ifdef DP3M

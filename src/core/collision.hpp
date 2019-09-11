@@ -112,8 +112,7 @@ bool validate_collision_parameters();
 void queue_collision(int part1, int part2);
 
 /** @brief Check additional criteria for the glue_to_surface collision mode */
-inline bool glue_to_surface_criterion(Particle const &p1,
-                                      Particle const &p2) {
+inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
   return (((p1.p.type == collision_params.part_type_to_be_glued) &&
            (p2.p.type == collision_params.part_type_to_attach_vs_to)) ||
           ((p2.p.type == collision_params.part_type_to_be_glued) &&

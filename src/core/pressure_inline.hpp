@@ -36,8 +36,7 @@
  *  @param d         vector between p1 and p2.
  *  @param dist      distance between p1 and p2.
  */
-inline void add_non_bonded_pair_virials(Particle const &p1,
-                                        Particle const &p2,
+inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
                                         Utils::Vector3d const &d, double dist) {
 #ifdef EXCLUSIONS
   if (do_nonbonded(p1, p2))
@@ -229,11 +228,10 @@ inline void add_three_body_bonded_stress(Particle const &p1) {
 inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
   /* kinetic energy */
   if (v_comp) {
-    virials.data.e[0] +=
-        ((p1.m.v * time_step) -
-         (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
-            .norm2() *
-        p1.p.mass;
+    virials.data.e[0] += ((p1.m.v * time_step) -
+                          (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
+                             .norm2() *
+                         p1.p.mass;
   } else {
     virials.data.e[0] += Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
   }

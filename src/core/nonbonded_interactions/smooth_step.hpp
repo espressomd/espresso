@@ -45,10 +45,10 @@ inline double SmSt_pair_force_factor(IA_parameters const &ia_params,
   auto const fracP = pow(frac, ia_params.smooth_step.n);
   auto const er =
       exp(2. * ia_params.smooth_step.k0 * (dist - ia_params.smooth_step.sig));
-  return (ia_params.smooth_step.n * fracP + 2. * ia_params.smooth_step.eps *
-                                              ia_params.smooth_step.k0 * dist *
-                                              er / Utils::sqr(1.0 + er)) /
-      Utils::sqr(dist);
+  return (ia_params.smooth_step.n * fracP +
+          2. * ia_params.smooth_step.eps * ia_params.smooth_step.k0 * dist *
+              er / Utils::sqr(1.0 + er)) /
+         Utils::sqr(dist);
 }
 
 /** Calculate smooth step force */
@@ -58,8 +58,7 @@ inline Utils::Vector3d SmSt_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate smooth step energy */
-inline double SmSt_pair_energy(IA_parameters const &ia_params,
-                               double dist) {
+inline double SmSt_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist >= ia_params.smooth_step.cut) {
     return 0.0;
   }

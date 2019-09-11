@@ -53,8 +53,7 @@ inline double ljcos_pair_force_factor(IA_parameters const &ia_params,
     /* Lennard-Jones part of the potential. */
     else if (dist > 0) {
       auto const frac6 = Utils::int_pow<6>(ia_params.ljcos.sig / r_off);
-      fac =
-          48.0 * ia_params.ljcos.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
+      fac = 48.0 * ia_params.ljcos.eps * frac6 * (frac6 - 0.5) / (r_off * dist);
     }
   }
   return fac;
@@ -67,8 +66,7 @@ inline Utils::Vector3d ljcos_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate Lennard-Jones cosine energy */
-inline double ljcos_pair_energy(IA_parameters const &ia_params,
-                                double dist) {
+inline double ljcos_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < (ia_params.ljcos.cut + ia_params.ljcos.offset)) {
     auto const r_off = dist - ia_params.ljcos.offset;
     /* Lennard-Jones part of the potential. */
@@ -79,9 +77,9 @@ inline double ljcos_pair_energy(IA_parameters const &ia_params,
     /* cosine part of the potential. */
     if (dist < (ia_params.ljcos.cut + ia_params.ljcos.offset)) {
       return .5 * ia_params.ljcos.eps *
-                       (cos(ia_params.ljcos.alfa * Utils::sqr(r_off) +
-                            ia_params.ljcos.beta) -
-                        1.);
+             (cos(ia_params.ljcos.alfa * Utils::sqr(r_off) +
+                  ia_params.ljcos.beta) -
+              1.);
     }
   }
   return 0.0;

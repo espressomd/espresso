@@ -69,7 +69,7 @@ umbrella_pair_energy(Bonded_ia_parameters const &ia_params,
                      Utils::Vector3d const &d) {
   auto const distn = d[ia_params.p.umbrella.dir];
   return 0.5 * ia_params.p.umbrella.k *
-                      Utils::sqr(distn - ia_params.p.umbrella.r);
+         Utils::sqr(distn - ia_params.p.umbrella.r);
 }
 
 #endif /* ifdef UMBRELLA */

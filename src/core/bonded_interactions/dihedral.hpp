@@ -194,7 +194,7 @@ dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   }
 
   return iaparams.p.dihedral.bend *
-      (1. - cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase));
+         (1. - cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase));
 }
 
 #endif

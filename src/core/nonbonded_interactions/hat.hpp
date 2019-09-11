@@ -65,8 +65,7 @@ inline Utils::Vector3d hat_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate hat energy */
-inline double hat_pair_energy(IA_parameters const &ia_params,
-                              double dist) {
+inline double hat_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.hat.r) {
     return hat_energy_r(ia_params.hat.Fmax, ia_params.hat.r, dist);
   }

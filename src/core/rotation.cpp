@@ -107,8 +107,8 @@ int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
   return 0;
 }
 
-void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
-                double S[3], double Wd[3]) {
+void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
+                double Wd[3]) {
   /* calculate the first derivative of the quaternion */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
@@ -129,19 +129,19 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
   if (p.p.rotation & ROTATION_X)
     Wd[0] = (p.f.torque[0] + p.m.omega[1] * p.m.omega[2] *
-                                  (p.p.rinertia[1] - p.p.rinertia[2])) /
+                                 (p.p.rinertia[1] - p.p.rinertia[2])) /
             p.p.rinertia[0];
   else
     Wd[0] = 0.0;
   if (p.p.rotation & ROTATION_Y)
     Wd[1] = (p.f.torque[1] + p.m.omega[2] * p.m.omega[0] *
-                                  (p.p.rinertia[2] - p.p.rinertia[0])) /
+                                 (p.p.rinertia[2] - p.p.rinertia[0])) /
             p.p.rinertia[1];
   else
     Wd[1] = 0.0;
   if (p.p.rotation & ROTATION_Z)
     Wd[2] = (p.f.torque[2] + p.m.omega[0] * p.m.omega[1] *
-                                  (p.p.rinertia[0] - p.p.rinertia[1])) /
+                                 (p.p.rinertia[0] - p.p.rinertia[1])) /
             p.p.rinertia[2];
   else
     Wd[2] = 0.0;
@@ -151,21 +151,21 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
   /* Calculate the second derivative of the quaternion. */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 8.*/
-  Qdd[0] = 0.5 * (-p.r.quat[1] * Wd[0] - p.r.quat[2] * Wd[1] -
-                  p.r.quat[3] * Wd[2]) -
-           p.r.quat[0] * S1;
+  Qdd[0] =
+      0.5 * (-p.r.quat[1] * Wd[0] - p.r.quat[2] * Wd[1] - p.r.quat[3] * Wd[2]) -
+      p.r.quat[0] * S1;
 
-  Qdd[1] = 0.5 * (p.r.quat[0] * Wd[0] - p.r.quat[3] * Wd[1] +
-                  p.r.quat[2] * Wd[2]) -
-           p.r.quat[1] * S1;
+  Qdd[1] =
+      0.5 * (p.r.quat[0] * Wd[0] - p.r.quat[3] * Wd[1] + p.r.quat[2] * Wd[2]) -
+      p.r.quat[1] * S1;
 
-  Qdd[2] = 0.5 * (p.r.quat[3] * Wd[0] + p.r.quat[0] * Wd[1] -
-                  p.r.quat[1] * Wd[2]) -
-           p.r.quat[2] * S1;
+  Qdd[2] =
+      0.5 * (p.r.quat[3] * Wd[0] + p.r.quat[0] * Wd[1] - p.r.quat[1] * Wd[2]) -
+      p.r.quat[2] * S1;
 
-  Qdd[3] = 0.5 * (-p.r.quat[2] * Wd[0] + p.r.quat[1] * Wd[1] +
-                  p.r.quat[0] * Wd[2]) -
-           p.r.quat[3] * S1;
+  Qdd[3] =
+      0.5 * (-p.r.quat[2] * Wd[0] + p.r.quat[1] * Wd[1] + p.r.quat[0] * Wd[2]) -
+      p.r.quat[3] * S1;
 
   S[0] = S1;
   S[1] = Qd[0] * Qdd[0] + Qd[1] * Qdd[1] + Qd[2] * Qdd[2] + Qd[3] * Qdd[3];

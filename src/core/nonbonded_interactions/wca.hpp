@@ -51,8 +51,7 @@ inline Utils::Vector3d wca_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate WCA energy */
-inline double wca_pair_energy(IA_parameters const &ia_params,
-                              double dist) {
+inline double wca_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < ia_params.wca.cut) {
     auto const frac6 = Utils::int_pow<6>(ia_params.wca.sig / dist);
     return 4.0 * ia_params.wca.eps * (Utils::sqr(frac6) - frac6 + .25);

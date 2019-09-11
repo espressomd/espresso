@@ -75,7 +75,7 @@ quartic_pair_energy(Bonded_ia_parameters const &iaparams,
   double dr2 = Utils::sqr(dist - iaparams.p.quartic.r);
 
   return 0.5 * iaparams.p.quartic.k0 * dr2 +
-                      0.25 * iaparams.p.quartic.k1 * Utils::sqr(dr2);
+         0.25 * iaparams.p.quartic.k1 * Utils::sqr(dr2);
 }
 
 #endif

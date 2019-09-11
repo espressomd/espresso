@@ -122,8 +122,7 @@ thermalized_bond_forces(Particle const &p1, Particle const &p2,
   auto const mass_tot_inv = 1.0 / mass_tot;
   auto const sqrt_mass_tot = sqrt(mass_tot);
   auto const sqrt_mass_red = sqrt(p1.p.mass * p2.p.mass / mass_tot);
-  auto const com_vel =
-      mass_tot_inv * (p1.p.mass * p1.m.v + p2.p.mass * p2.m.v);
+  auto const com_vel = mass_tot_inv * (p1.p.mass * p1.m.v + p2.p.mass * p2.m.v);
   auto const dist_vel = p2.m.v - p1.m.v;
 
   Utils::Vector3d force1{};

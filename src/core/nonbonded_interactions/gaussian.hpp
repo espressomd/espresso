@@ -39,7 +39,7 @@ inline double gaussian_pair_force_factor(IA_parameters const &ia_params,
                                          double dist) {
   if (dist < ia_params.gaussian.cut) {
     return ia_params.gaussian.eps / pow(ia_params.gaussian.sig, 2) *
-                     exp(-0.5 * Utils::sqr(dist / ia_params.gaussian.sig));
+           exp(-0.5 * Utils::sqr(dist / ia_params.gaussian.sig));
   }
   return 0.0;
 }

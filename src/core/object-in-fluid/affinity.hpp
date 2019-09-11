@@ -39,8 +39,7 @@ int affinity_set_params(int part_type_a, int part_type_b, int afftype,
                         double maxBond, double cut);
 
 /** Calculate soft-sphere potential force between particle p1 and p2 */
-inline Utils::Vector3d affinity_pair_force(Particle &p1,
-                                           Particle &p2,
+inline Utils::Vector3d affinity_pair_force(Particle &p1, Particle &p2,
                                            IA_parameters const &ia_params,
                                            Utils::Vector3d const &d,
                                            double dist) {
@@ -57,8 +56,7 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
     aff_type_extracted = ia_params.affinity.type;
   }
 
-  auto const unfolded_pos =
-      unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+  auto const unfolded_pos = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
   auto const vec = p1.p.bond_site - unfolded_pos;
   auto const len = vec.norm();
 
@@ -100,7 +98,7 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
         // %f\n",p1.p.bond_site[0],p1.p.bond_site[1],p1.p.bond_site[2]);
         if ((p1.p.bond_site[0] >= 0) && (p1.p.bond_site[1] >= 0) &&
             (p1.p.bond_site[2] >= 0)) // Checking whether any bond exists
-        {                            // Bond exists
+        {                             // Bond exists
           if (len > ia_params.affinity.r0) {
             fac = ia_params.affinity.kappa * (len - ia_params.affinity.r0);
             // printf("len %f r0 %f\n",len, ia_params.affinity.r0);
@@ -164,7 +162,7 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
      *********************/
     double fac = 0.0;
     if (dist < ia_params.affinity.cut) { // Checking whether I am inside the
-                                          // interaction cut-off radius.
+                                         // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1.p.bond_site[0],p1.p.bond_site[1],p1.p.bond_site[2]);
@@ -219,8 +217,8 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff,
-                      tmpF, tmpKoff, tmpK0, len);
+                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff, tmpF,
+                      tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist < ia_params.affinity
@@ -286,8 +284,8 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
             (p1.p.bond_site[2] >= 0)) // Checking whether any bond exists
         {                             // Bond exists
           if (len > ia_params.affinity.r0) {
-            fac = ia_params.affinity.kappa * (len - ia_params.affinity.r0) /
-                  len;
+            fac =
+                ia_params.affinity.kappa * (len - ia_params.affinity.r0) / len;
             // printf("len %f r0 %f\n",len, ia_params.affinity.r0);
           } else
             fac = 0.0;
@@ -365,7 +363,7 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
      *********************/
     double fac = 0.0;
     if (dist < ia_params.affinity.cut) { // Checking whether I am inside the
-                                          // interaction cut-off radius.
+                                         // interaction cut-off radius.
       if (dist > 0.0) {
         // printf("bond_site: %f %f
         // %f\n",p1.p.bond_site[0],p1.p.bond_site[1],p1.p.bond_site[2]);
@@ -413,8 +411,8 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff,
-                      tmpF, tmpKoff, tmpK0, len);
+                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff, tmpF,
+                      tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist < ia_params.affinity
@@ -530,8 +528,8 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff,
-                      tmpF, tmpKoff, tmpK0, len);
+                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff, tmpF,
+                      tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist < ia_params.affinity
@@ -647,8 +645,8 @@ inline Utils::Vector3d affinity_pair_force(Particle &p1,
               fprintf(fp,
                       "Pon %f, Kon %f, particle %d, Poff = %f, F = %f, Koff = "
                       "%f, K0 = %f, len = %f \n",
-                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff,
-                      tmpF, tmpKoff, tmpK0, len);
+                      tmpPon, ia_params.affinity.Kon, p1.p.identity, Poff, tmpF,
+                      tmpKoff, tmpK0, len);
               fclose(fp);
             }
         } else if (dist < ia_params.affinity

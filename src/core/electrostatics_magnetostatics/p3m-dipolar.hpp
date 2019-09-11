@@ -223,7 +223,7 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
  */
 inline std::tuple<double, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
 dp3m_pair_force(Particle const &p1, Particle const &p2,
-                    Utils::Vector3d const &d, double dist2, double dist) {
+                Utils::Vector3d const &d, double dist2, double dist) {
   if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.))
     return std::make_tuple(0.0, Utils::Vector3d{}, Utils::Vector3d{},
                            Utils::Vector3d{});
@@ -290,8 +290,7 @@ dp3m_pair_force(Particle const &p1, Particle const &p2,
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-inline double dp3m_pair_energy(Particle const &p1,
-                               Particle const &p2,
+inline double dp3m_pair_energy(Particle const &p1, Particle const &p2,
                                Utils::Vector3d const &d, double dist2,
                                double dist) {
   auto const dip1 = p1.calc_dip();

@@ -76,7 +76,7 @@ fene_pair_energy(Bonded_ia_parameters const &iaparams,
   }
 
   return -0.5 * iaparams.p.fene.k * iaparams.p.fene.drmax2 *
-                      log(1.0 - dr * dr * iaparams.p.fene.drmax2i);
+         log(1.0 - dr * dr * iaparams.p.fene.drmax2i);
 }
 
 #endif

@@ -53,8 +53,8 @@ inline Utils::Vector3d central_force(double const q1q2,
 }
 
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-pair_force(Particle const &p1, Particle const &p2,
-           Utils::Vector3d const &d, double dist) {
+pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
+           double dist) {
   auto const q1q2 = p1.p.q * p2.p.q;
 
   if (q1q2 == 0) {

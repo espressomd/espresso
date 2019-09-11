@@ -75,8 +75,7 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           dist, &torque1, &torque2);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        force1 +=
-            dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist2);
+        force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist2);
         // Additional use of DPD here requires counter increase
         dpd_rng_counter_increment();
       }
@@ -130,8 +129,8 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
           calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist);
     } else if ((dist <= 0) && m_penetrable) {
       if (!m_only_positive && (dist < 0)) {
-        nonbonded_en = calc_non_bonded_pair_energy(p, part_rep, ia_params,
-                                                   vec, -1.0 * dist);
+        nonbonded_en = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec,
+                                                   -1.0 * dist);
       }
     } else {
       runtimeErrorMsg() << "Constraint violated by particle " << p.p.identity;

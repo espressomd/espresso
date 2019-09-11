@@ -45,8 +45,7 @@ int subt_lj_set_params(int bond_type);
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<Utils::Vector3d>
-subt_lj_pair_force(IA_parameters const &iaparams,
-                   Utils::Vector3d const &dx) {
+subt_lj_pair_force(IA_parameters const &iaparams, Utils::Vector3d const &dx) {
   return -lj_pair_force(iaparams, dx, dx.norm());
 }
 
@@ -55,8 +54,7 @@ subt_lj_pair_force(IA_parameters const &iaparams,
  *  @param[in]  dx        %Distance between the particles.
  */
 inline boost::optional<double>
-subt_lj_pair_energy(IA_parameters const &iaparams,
-                    Utils::Vector3d const &dx) {
+subt_lj_pair_energy(IA_parameters const &iaparams, Utils::Vector3d const &dx) {
   return -lj_pair_energy(iaparams, dx.norm());
 }
 

@@ -69,8 +69,7 @@ RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
 } // namespace
 
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
-IBM_Triel_CalcForce(Particle const &p1, Particle const &p2,
-                    Particle const &p3,
+IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
                     Bonded_ia_parameters const &iaparams) {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));

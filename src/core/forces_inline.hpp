@@ -117,10 +117,9 @@ inline ParticleForce init_local_particle_force(Particle const &part) {
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
-    Particle const &p1, Particle const &p2,
-    IA_parameters const &ia_params, Utils::Vector3d const &d,
-    double const dist, Utils::Vector3d *torque1 = nullptr,
-    Utils::Vector3d *torque2 = nullptr) {
+    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
+    Utils::Vector3d const &d, double const dist,
+    Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
 #ifdef NO_INTRA_NB
   if (p1.p.mol_id == p2.p.mol_id)
     return {};
@@ -196,8 +195,8 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
   // The gb force function isn't inlined, probably due to its size
   if (dist < ia_params.gay_berne.cut) {
     auto const forces =
-        gb_pair_force(p1.r.calc_director(), p2.r.calc_director(), ia_params,
-                      d, dist, torque1, torque2);
+        gb_pair_force(p1.r.calc_director(), p2.r.calc_director(), ia_params, d,
+                      dist, torque1, torque2);
     force += std::get<0>(forces);
     if (torque1) {
       *torque1 += std::get<1>(forces);
@@ -212,9 +211,9 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force(
-    Particle const &p1, Particle const &p2,
-    IA_parameters const &ia_params, Utils::Vector3d const &d, double dist,
-    Utils::Vector3d *torque1 = nullptr, Utils::Vector3d *torque2 = nullptr) {
+    Particle const &p1, Particle const &p2, IA_parameters const &ia_params,
+    Utils::Vector3d const &d, double dist, Utils::Vector3d *torque1 = nullptr,
+    Utils::Vector3d *torque2 = nullptr) {
   return calc_non_bonded_pair_force_parts(p1, p2, ia_params, d, dist, torque1,
                                           torque2);
 }

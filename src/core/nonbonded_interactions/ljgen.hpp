@@ -59,8 +59,8 @@ inline double ljgen_pair_force_factor(IA_parameters const &ia_params,
 
 #ifdef LJGEN_SOFTCORE
     r_off *= r_off;
-    r_off += Utils::sqr(ia_params.ljgen.sig) *
-             (1.0 - ia_params.ljgen.lambda1) * ia_params.ljgen.softrad;
+    r_off += Utils::sqr(ia_params.ljgen.sig) * (1.0 - ia_params.ljgen.lambda1) *
+             ia_params.ljgen.softrad;
     r_off = sqrt(r_off);
 #else
     r_off = std::abs(r_off);
@@ -88,8 +88,7 @@ inline Utils::Vector3d ljgen_pair_force(IA_parameters const &ia_params,
 }
 
 /** Calculate Lennard-Jones energy */
-inline double ljgen_pair_energy(IA_parameters const &ia_params,
-                                double dist) {
+inline double ljgen_pair_energy(IA_parameters const &ia_params, double dist) {
   if (dist < (ia_params.ljgen.cut + ia_params.ljgen.offset)) {
     auto r_off = dist - ia_params.ljgen.offset;
 #ifdef LJGEN_SOFTCORE

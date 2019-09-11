@@ -362,8 +362,8 @@ void make_bond_type_exist(int type);
  * @param partner    bond partner
  * @param bond_type  numerical bond type
  */
-inline bool pair_bond_exists_on(Particle const &p,
-                                Particle const &partner, int bond_type) {
+inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
+                                int bond_type) {
   // First check the bonds of p1
   if (p.bl.e) {
     int i = 0;
