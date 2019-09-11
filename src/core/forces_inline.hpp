@@ -644,24 +644,6 @@ inline void add_bonded_force(Particle *const p1) {
   }   // loop over the particle's bond list
 }
 
-inline void check_particle_force(Particle const *const part) {
-  for (int i = 0; i < 3; i++) {
-    if (std::isnan(part->f.f[i])) {
-      runtimeErrorMsg() << "force on particle " << part->p.identity
-                        << " was NAN.";
-    }
-  }
-
-#ifdef ROTATION
-  for (int i = 0; i < 3; i++) {
-    if (std::isnan(part->f.torque[i])) {
-      runtimeErrorMsg() << "torque on particle " << part->p.identity
-                        << " was NAN.";
-    }
-  }
-#endif
-}
-
 inline void add_single_particle_force(Particle &p) {
   if (p.bl.n) {
     add_bonded_force(&p);

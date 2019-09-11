@@ -232,13 +232,6 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,
                                      const LB_Fluid &lb_fluid);
 
-#ifdef LB_BOUNDARIES
-inline void lb_local_fields_get_boundary_flag(Lattice::index_t index,
-                                              int *boundary) {
-  *boundary = lbfields[index].boundary;
-}
-#endif
-
 /**
  * @brief Get the populations as a function of density, flux density and stress.
  * @param density fluid density
