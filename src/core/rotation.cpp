@@ -158,10 +158,7 @@ void propagate_omega_quat_particle(Particle &p) {
                    (S[0] + time_step * (S[1] + time_step_half / 2. *
                                                    (S[2] - S[0] * S[0]))));
 
-  for (int j = 0; j < 3; j++) {
-    p.m.omega[j] += time_step_half * Wd[j];
-  }
-
+  p.m.omega += time_step_half * Wd;
   p.r.quat += time_step * (Qd + time_step_half * Qdd) - lambda * p.r.quat;
 
   /* and rescale quaternion, so it is exactly of unit length */
@@ -324,9 +321,7 @@ void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
   q.normalize();
 
   // Rotate the particle
-  auto const qn = multiply_quaternions(p.r.quat, q);
-  for (int k = 0; k < 4; k++)
-    p.r.quat[k] = qn[k];
+  p.r.quat = multiply_quaternions(p.r.quat, q);
 }
 
 #endif // ROTATION

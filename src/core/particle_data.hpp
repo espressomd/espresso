@@ -729,9 +729,9 @@ void set_particle_dipm(int part, double dipm);
 void set_particle_virtual(int part, bool is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_relative_quat);
+void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat);
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              double *rel_ori);
+                              Utils::Vector4d const &rel_ori);
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE

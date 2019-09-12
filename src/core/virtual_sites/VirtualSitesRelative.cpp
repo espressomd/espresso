@@ -56,9 +56,6 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(
         "particle associated with virtual site.\n");
   }
   p.r.quat = multiply_quaternions(p_real->r.quat, p.p.vs_relative.quat);
-#ifdef DIPOLES
-  // When dipoles are enabled, update dipole moment
-#endif
 }
 
 // This is the "relative" implementation for virtual sites.
