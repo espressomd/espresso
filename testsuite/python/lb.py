@@ -197,7 +197,6 @@ class TestLB:
         stress summed up over the entire fluid.
 
         """
-
         system = self.system
         self.n_col_part = 1000
         system.part.add(pos=np.random.random(
@@ -253,8 +252,8 @@ class TestLB:
 
         self.assertEqual(self.lbf[3, 2, 1].index, (3, 2, 1))
         ext_force_density = [0.1, 0.2, 1.2]
-        self.lbf[1, 2, 3].velocity = v_fluid
         self.lbf.ext_force_density = ext_force_density
+        self.lbf[1, 2, 3].velocity = v_fluid
         np.testing.assert_allclose(
             np.copy(self.lbf[1, 2, 3].velocity),
             v_fluid,
@@ -341,7 +340,7 @@ class TestLB:
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-    def test_a_ext_force_density(self):
+    def test_ext_force_density(self):
         ext_force_density = [2.3, 1.2, 0.1]
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
@@ -352,13 +351,13 @@ class TestLB:
         self.system.actors.add(self.lbf)
         n_time_steps = 5
         self.system.integrator.run(n_time_steps)
-        # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
-        # (force is applied only to the second half of the first integration step)
+        # ext_force_density is a force density, therefore v = ext_force_density
+        # / dens * tau * (n_time_steps + 0.5)
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
-            n_time_steps - 0.5) / self.params['dens']
+            n_time_steps + 0.5) / self.params['dens']
         for n in self.lbf.nodes():
             np.testing.assert_allclose(
-                np.copy(n.velocity), fluid_velocity, atol=1E-6)
+                np.copy(n.velocity), fluid_velocity, atol=1E-6, err_msg="Fluid node velocity not as expected on node {}".format(n.index))
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):

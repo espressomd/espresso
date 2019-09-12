@@ -19,8 +19,6 @@
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
-#include <cstdio>
-
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "debug.hpp"

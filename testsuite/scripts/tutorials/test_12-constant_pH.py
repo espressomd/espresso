@@ -19,22 +19,25 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-implementation = "gpu" if "gpu" in "@TEST_LABELS@".split(";") else "cpu"
-sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lbf.py", gpu=implementation == "gpu",
-    cmd_arguments=["--" + implementation], script_suffix=implementation)
+
+tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+    "@TUTORIALS_DIR@/12-constant_pH/12-constant_pH.py")
 
 
 @skipIfMissingFeatures
-class Sample(ut.TestCase):
-    system = sample.system
+class Tutorial(ut.TestCase):
+    system = tutorial.system
 
-    def test_electrophoresis_gradient(self):
-        # the force is applied along the z-axis
-        gradient = np.mean(np.gradient(sample.f_list.T, axis=1), axis=1)
-        self.assertAlmostEqual(gradient[0], 0.0, places=11)
-        self.assertAlmostEqual(gradient[1], 0.0, places=11)
-        self.assertAlmostEqual(gradient[2], -7.78814e-7, places=11)
+    def test(self):
+        expected_values = tutorial.ideal_degree_of_dissociation(
+            tutorial.pHs, tutorial.pK)
+        simulated_values = tutorial.degrees_of_dissociation
+        simulated_values_error = tutorial.std_dev_degree_of_dissociation / \
+            np.sqrt(tutorial.num_samples)
+        # test alpha +/- 0.05 and standard error of alpha less than 0.10
+        np.testing.assert_allclose(expected_values, simulated_values, rtol=0,
+                                   atol=0.05)
+        self.assertLess(np.max(simulated_values_error), 0.10)
 
 
 if __name__ == "__main__":

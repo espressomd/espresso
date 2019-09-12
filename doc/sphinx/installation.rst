@@ -405,8 +405,6 @@ General features
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
--  ``MOLFORCES`` (EXPERIMENTAL)
-
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
@@ -537,47 +535,11 @@ Some of the short-range interactions have additional features:
 Debug messages
 ^^^^^^^^^^^^^^
 
-Finally, there are a number of flags for debugging. The most important
-one are
+Finally, there is a flag for debugging:
 
 -  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
    especially in the cell systems. These checks are however too slow to
    be enabled in production runs.
-
-The following flags control the debug output of various sections of
-|es|. You will however understand the output very often only by
-looking directly at the code.
-
--  ``COMM_DEBUG`` Output from the asynchronous communication code.
-
--  ``EVENT_DEBUG`` Notifications for event calls, i.e. the ``on_...`` functions in
-   ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e.g. global variables.
-
--  ``CELL_DEBUG`` Cellsystem output.
-
--  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
-   ghost cell communication.
-
--  ``HALO_DEBUG``
-
--  ``P3M_DEBUG``
-
--  ``THERMO_DEBUG`` Output from the thermostats.
-
--  ``VIRTUAL_SITES_DEBUG``
-
--  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
-   in the detection of mismatching communication.
-
--  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
-
--  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
-
--  ``CUDA_DEBUG``
-
--  ``H5MD_DEBUG``
-
 
 
 

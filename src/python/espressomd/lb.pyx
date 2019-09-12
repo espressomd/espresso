@@ -130,9 +130,8 @@ cdef class HydrodynamicInteraction(Actor):
         self._params['dens'] = self.density
         self._params["kT"] = self.kT
         if self._params['kT'] > 0.0:
-            self._params['seed'] = lb_lbfluid_get_rng_state()
-        self._params['visc'] = python_lbfluid_get_viscosity(
-            self.agrid, self.tau)
+            self._params['seed'] = self.seed
+        self._params['visc'] = self.viscosity
         if not self._params["bulk_visc"] == default_params["bulk_visc"]:
             self._params['bulk_visc'] = self.bulk_viscosity
         self._params['ext_force_density'] = self.ext_force_density

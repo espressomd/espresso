@@ -33,7 +33,7 @@
  * add any variable that should be handled
  * automatically in global.cpp. This includes
  * distribution to other nodes and
- * read/user-defined access from Tcl.
+ * read/user-defined access from the script interface.
  **********************************************/
 
 /** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.

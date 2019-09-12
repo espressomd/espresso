@@ -93,6 +93,17 @@ void mpi_lb_set_population(Utils::Vector3i const &index,
 
 REGISTER_CALLBACK(mpi_lb_set_population)
 
+void mpi_lb_set_force_density(Utils::Vector3i const &index,
+                              Utils::Vector3d const &force_density) {
+  lb_set(index, [&](auto index) {
+    auto const linear_index =
+        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
+    lbfields[linear_index].force_density = force_density;
+  });
+}
+
+REGISTER_CALLBACK(mpi_lb_set_force_density)
+
 auto mpi_lb_get_momentum_density(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
     return lb_calc_momentum_density(modes, force_density);
@@ -239,6 +250,8 @@ void lb_lbfluid_reinit_fluid() {
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     lb_reinit_fluid(lbfields, lblattice, lbpar);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -433,7 +446,6 @@ double lb_lbfluid_get_gamma_even() {
     return lbpar.gamma_even;
   }
   throw NoLBActive();
-  ;
 }
 
 void lb_lbfluid_set_agrid(double agrid) {
@@ -581,7 +593,6 @@ double lb_lbfluid_get_kT() {
     return lbpar.kT;
   }
   throw NoLBActive();
-  ;
 }
 
 double lb_lbfluid_get_lattice_speed() {
@@ -1289,6 +1300,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
         lb_get_population_from_density_momentum_density_stress(
             density, momentum_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
+    mpi_call_all(mpi_lb_set_force_density, ind, Utils::Vector3d{});
   } else {
     throw NoLBActive();
   }
@@ -1334,6 +1346,7 @@ void lb_lbfluid_on_lb_params_change(LBParam field) {
     break;
   case LBParam::VISCOSITY:
   case LBParam::EXT_FORCE_DENSITY:
+    lb_initialize_fields(lbfields, lbpar, lblattice);
   case LBParam::BULKVISC:
   case LBParam::KT:
   case LBParam::GAMMA_ODD:

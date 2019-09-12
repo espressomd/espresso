@@ -26,10 +26,8 @@
 #include "nsquare.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
-#include "debug.hpp"
 #include "ghosts.hpp"
 
-#include <cstring>
 #include <mpi.h>
 
 Cell *local;
@@ -39,7 +37,6 @@ static Cell *nsq_id_to_cell(int id) {
 }
 
 void nsq_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: nsq_topology_release:\n", this_node));
   /* free ghost cell pointer list */
   free_comm(&cell_structure.ghost_cells_comm);
   free_comm(&cell_structure.exchange_ghosts_comm);
@@ -67,8 +64,6 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
 }
 
 void nsq_topology_init(CellPList *old) {
-  CELL_TRACE(fprintf(stderr, "%d: nsq_topology_init, %d\n", this_node, old->n));
-
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.particle_to_cell = [](const Particle &p) {
     return nsq_id_to_cell(p.identity());
@@ -109,8 +104,6 @@ void nsq_topology_init(CellPList *old) {
     }
 
     if (((diff > 0 && (diff % 2) == 0) || (diff < 0 && ((-diff) % 2) == 1))) {
-      CELL_TRACE(
-          fprintf(stderr, "%d: doing interactions with %d\n", this_node, n));
       red_neighbors.push_back(&cells.at(n));
     } else {
       black_neighbors.push_back(&cells.at(n));
