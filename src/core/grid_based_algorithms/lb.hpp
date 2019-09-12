@@ -22,13 +22,6 @@
  *
  * %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
- *  Some general remarks:
- *  This file implements the LB D3Q19 method to Espresso. The LB_Model
- *  construction is preserved for historical reasons and might be removed
- *  soon. It is constructed as a multi-relaxation time LB, thus all populations
- *  are converted to modes, then collision is performed and transfered back
- *  to population space, where the streaming is performed.
- *
  *  For performance reasons it is clever to do streaming and collision at the
  *  same time because every fluid node has to be read and written only once.
  *  This increases mainly cache efficiency. Two alternatives are implemented:
@@ -61,10 +54,6 @@
 #include <utils/Span.hpp>
 #include <utils/serialization/multi_array.hpp>
 
-/** Description of the LB Model in terms of the unit vectors of the
- *  velocity sub-lattice and the corresponding coefficients
- *  of the pseudo-equilibrium distribution
- */
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Data structure for fluid on a local lattice site */
