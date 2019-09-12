@@ -742,7 +742,7 @@ cdef class ParticleHandle:
 
                 if is_valid_type(_relto, int) and is_valid_type(
                         _dist, float) and all(is_valid_type(fq, float) for fq in q):
-                    set_particle_vs_relative(self._id, _relto, _dist, _q) 
+                    set_particle_vs_relative(self._id, _relto, _dist, _q)
                 else:
                     raise ValueError(
                         "vs_relative needs input like id<int>,distance<float>,(q1<float>,q2<float>,q3<float>,q4<float>).")
