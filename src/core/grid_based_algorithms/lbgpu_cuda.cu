@@ -95,8 +95,6 @@ LB_node_force_density_gpu node_f = {
 #endif
 };
 
-static LB_extern_nodeforcedensity_gpu *extern_node_force_densities = nullptr;
-
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
 
@@ -115,7 +113,6 @@ LB_nodes_gpu *current_nodes = nullptr;
 /*@{*/
 static size_t size_of_rho_v;
 static size_t size_of_rho_v_pi;
-static size_t size_of_extern_node_force_densities;
 /*@}*/
 
 /** Parameters residing in constant memory */
