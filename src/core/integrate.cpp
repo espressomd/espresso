@@ -59,7 +59,7 @@
 
 #include "integrators/steepest_descent.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
-#include "integrators/velocity_verlet_npt_inline.hpp"
+#include "integrators/velocity_verlet_npt.hpp"
 
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>

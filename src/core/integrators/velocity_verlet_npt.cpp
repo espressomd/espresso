@@ -1,5 +1,3 @@
-#ifndef INTEGRATORS_VELOCITY_VERLET_NPT_INLINE_HPP
-#define INTEGRATORS_VELOCITY_VERLET_NPT_INLINE_HPP
 
 #include "config.hpp"
 
@@ -7,8 +5,15 @@
 #include "ParticleRange.hpp"
 #include "npt.hpp"
 #include "particle_data.hpp"
+#include "utils/math/sqr.hpp"
+#include "integrate.hpp"
+#include "thermostat.hpp"
+#include "communication.hpp"
+#include "grid.hpp"
+#include "cells.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
-inline void
+void
 velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 
@@ -35,7 +40,7 @@ velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
     }
   }
 }
-inline void velocity_verlet_npt_finalize_p_inst() {
+void velocity_verlet_npt_finalize_p_inst() {
   double p_tmp = 0.0;
   int i;
   /* finalize derivation of p_inst */
@@ -55,7 +60,7 @@ inline void velocity_verlet_npt_finalize_p_inst() {
                     friction_thermV_nptiso(nptiso.p_diff);
   }
 }
-inline void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
   double scal[3] = {0., 0., 0.}, L_new = 0.0;
 
   /* finalize derivation of p_inst */
@@ -138,7 +143,7 @@ inline void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
   cells_on_geometry_change(CELL_FLAG_FAST);
 }
 
-inline void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
+void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
@@ -173,18 +178,17 @@ inline void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
   }
 }
 
-inline void velocity_verlet_npt_step_1(const ParticleRange &particles) {
+void velocity_verlet_npt_step_1(const ParticleRange &particles) {
   velocity_verlet_npt_propagate_vel(particles);
   velocity_verlet_npt_propagate_pos(particles);
   sim_time += time_step;
 }
 
-inline void velocity_verlet_npt_step_2(const ParticleRange &particles) {
+void velocity_verlet_npt_step_2(const ParticleRange &particles) {
   velocity_verlet_npt_propagate_vel_final(particles);
 #ifdef ROTATION
   convert_torques_propagate_omega(particles);
 #endif
   velocity_verlet_npt_finalize_p_inst();
 }
-#endif
 #endif
