@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef NPT
 void synchronize_npt_state(int n_steps) {
-  nptiso.invalidate_p_vel = 0;
+  nptiso.invalidate_p_vel = false;
   MPI_Bcast(&nptiso.p_inst, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&nptiso.p_diff, 1, MPI_DOUBLE, 0, comm_cart);
   MPI_Bcast(&nptiso.volume, 1, MPI_DOUBLE, 0, comm_cart);
