@@ -1069,7 +1069,7 @@ class Analysis:
     
         Returns
         -------
-        array of :obj:`float`
+        (3,) :obj:`ndarray` of :obj:`float`
            The center of mass of the system.
     
         """
