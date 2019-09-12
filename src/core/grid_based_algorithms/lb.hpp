@@ -22,6 +22,22 @@
  *
  * %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
+ *  Some general remarks:
+ *  This file implements the LB D3Q19 method to Espresso. The LB_Model
+ *  construction is preserved for historical reasons and might be removed
+ *  soon. It is constructed as a multi-relaxation time LB, thus all populations
+ *  are converted to modes, then collision is performed and transfered back
+ *  to population space, where the streaming is performed.
+ *
+ *  For performance reasons it is clever to do streaming and collision at the
+ *  same time because every fluid node has to be read and written only once.
+ *  This increases mainly cache efficiency. Two alternatives are implemented:
+ *  stream_collide and collide_stream.
+ *
+ *  The hydrodynamic fields, corresponding to density, velocity and stress, are
+ *  stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
+ *  which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
+ *
  * Implementation in lb.cpp.
  */
 
@@ -44,23 +60,6 @@
 #include <utils/Counter.hpp>
 #include <utils/Span.hpp>
 #include <utils/serialization/multi_array.hpp>
-
-/** Some general remarks:
- *  This file implements the LB D3Q19 method to Espresso. The LB_Model
- *  construction is preserved for historical reasons and might be removed
- *  soon. It is constructed as a multi-relaxation time LB, thus all populations
- *  are converted to modes, then collision is performed and transfered back
- *  to population space, where the streaming is performed.
- *
- *  For performance reasons it is clever to do streaming and collision at the
- *  same time because every fluid node has to be read and written only once.
- *  This increases mainly cache efficiency. Two alternatives are implemented:
- *  stream_collide and collide_stream.
- *
- *  The hydrodynamic fields, corresponding to density, velocity and stress, are
- *  stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
- *  which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
- */
 
 /** Description of the LB Model in terms of the unit vectors of the
  *  velocity sub-lattice and the corresponding coefficients
