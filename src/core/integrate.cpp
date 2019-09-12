@@ -563,7 +563,7 @@ void propagate_vel(const ParticleRange &particles) {
 
   for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(&p);
+    propagate_omega_quat_particle(p);
 #endif
 
 // Don't propagate translational degrees of freedom of vs
@@ -623,7 +623,7 @@ void propagate_pos(const ParticleRange &particles) {
 void propagate_vel_pos(const ParticleRange &particles) {
   for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(&p);
+    propagate_omega_quat_particle(p);
 #endif
 
 // Don't propagate translational degrees of freedom of vs

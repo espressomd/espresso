@@ -46,18 +46,12 @@ int bonded_coulomb_sr_set_params(int bond_type, double q1q2);
 /** Compute the short-range bonded Coulomb pair force.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] force     Force.
- *  @retval false
  */
-inline bool
-calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *const iaparams,
-                                  Utils::Vector3d const &dx,
-                                  Utils::Vector3d &force) {
+inline boost::optional<Utils::Vector3d>
+bonded_coulomb_sr_pair_force(Bonded_ia_parameters const &iaparams,
+                             Utils::Vector3d const &dx) {
   auto const dist = dx.norm();
-
-  force = Coulomb::central_force(iaparams->p.bonded_coulomb_sr.q1q2, dx, dist);
-
-  return false;
+  return Coulomb::central_force(iaparams.p.bonded_coulomb_sr.q1q2, dx, dist);
 }
 
 /** Compute the short-range bonded Coulomb pair energy.
@@ -65,20 +59,15 @@ calc_bonded_coulomb_sr_pair_force(Bonded_ia_parameters const *const iaparams,
  *  @param[in]  p2        Second particle.
  *  @param[in]  iaparams  Interaction parameters.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @retval false
  */
-inline bool
-bonded_coulomb_sr_pair_energy(Particle const *const p1,
-                              Particle const *const p2,
-                              Bonded_ia_parameters const *const iaparams,
-                              Utils::Vector3d const &dx, double *_energy) {
+inline boost::optional<double>
+bonded_coulomb_sr_pair_energy(Particle const &p1, Particle const &p2,
+                              Bonded_ia_parameters const &iaparams,
+                              Utils::Vector3d const &dx) {
   auto const dist2 = dx.norm2();
   auto const dist = sqrt(dist2);
-
-  *_energy = Coulomb::pair_energy(p1, p2, iaparams->p.bonded_coulomb_sr.q1q2,
-                                  dx, dist, dist2);
-  return false;
+  return Coulomb::pair_energy(p1, p2, iaparams.p.bonded_coulomb_sr.q1q2, dx,
+                              dist, dist2);
 }
 
 #endif

@@ -41,22 +41,23 @@ int membrane_collision_set_params(int part_type_a, int part_type_b, double a,
                                   double n, double cut, double offset);
 
 /** Resultant force due to a sigmoid potential between two
-// particles at interatomic separation r */
+ *  particles at interatomic separation r
+ */
 inline double sigmoid_force_r(double a, double n, double r) {
   return (a / (1 + exp(n * r)));
 }
 
 /** Calculate membrane-collision force between particle p1 and p2 */
-inline void add_membrane_collision_pair_force(
-    Particle const *const p1, Particle const *const p2,
-    IA_parameters const *const ia_params, Utils::Vector3d const &d, double dist,
-    Utils::Vector3d &force) {
+inline Utils::Vector3d
+membrane_collision_pair_force(Particle const &p1, Particle const &p2,
+                              IA_parameters const &ia_params,
+                              Utils::Vector3d const &d, double dist) {
   /************************
    *
    * Description of implementation:
    * We have two particles, each belongs to the membrane of a different immersed
    *object For both particles we have the position of the particle - p, and in
-   *part->p.out_direction are the coordinates of the outward normal vector (with
+   *part.p.out_direction are the coordinates of the outward normal vector (with
    *respect to the immersed object).
    *
    * Algorithm:
@@ -67,17 +68,17 @@ inline void add_membrane_collision_pair_force(
    *in the direction out1-out2
    *
    *********************/
+  Utils::Vector3d force{};
+  if (dist < (ia_params.membrane.cut + ia_params.membrane.offset)) {
 
-  if (dist < (ia_params->membrane.cut + ia_params->membrane.offset)) {
-
-    auto const r_off = dist - ia_params->membrane.offset;
+    auto const r_off = dist - ia_params.membrane.offset;
     // offset needs to be checked for the unphysical case when r_off should be
     // negative
 
     if (r_off > 0.0) {
 
-      auto const out1 = p1->p.out_direction;
-      auto const out2 = p2->p.out_direction;
+      auto const out1 = p1.p.out_direction;
+      auto const out2 = p2.p.out_direction;
       // check whether out_direction was set
       if (fabs(out1[0]) + fabs(out1[1]) + fabs(out1[2]) + fabs(out2[0]) +
               fabs(out2[1]) + fabs(out2[2]) <
@@ -96,13 +97,14 @@ inline void add_membrane_collision_pair_force(
       auto const angle = acos(product);
 
       if (fabs(angle) > SMALL_OIF_MEMBRANE_CUTOFF) {
-        auto const fac = sigmoid_force_r(ia_params->membrane.a,
-                                         ia_params->membrane.n, r_off) /
-                         dist;
-        force -= (fac / ndir) * dir;
+        auto const fac =
+            sigmoid_force_r(ia_params.membrane.a, ia_params.membrane.n, r_off) /
+            dist;
+        force = (-fac / ndir) * dir;
       }
     }
   }
+  return force;
 }
 
 #endif /* ifdef MEMBRANE_COLLISION */

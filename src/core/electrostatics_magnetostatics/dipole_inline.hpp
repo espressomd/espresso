@@ -8,20 +8,21 @@
 
 namespace Dipole {
 // forces_inline
-inline void calc_pair_force(Particle *p1, Particle *p2,
-                            Utils::Vector3d const &d, double dist, double dist2,
-                            Utils::Vector3d &force) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
+           double dist, double dist2) {
+  Utils::Vector3d force{}, torque1{}, torque2{};
   switch (dipole.method) {
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     // fall trough
   case DIPOLAR_P3M: {
+    double eng;
+    std::tie(eng, force, torque1, torque2) =
+        dp3m_pair_force(p1, p2, d, dist2, dist);
 #ifdef NPT
-    double eng = dp3m_add_pair_force(p1, p2, d, dist2, dist, force);
     if (integ_switch == INTEG_METHOD_NPT_ISO)
       nptiso.p_vir[0] += eng;
-#else
-    dp3m_add_pair_force(p1, p2, d, dist2, dist, force);
 #endif
     break;
   }
@@ -29,12 +30,12 @@ inline void calc_pair_force(Particle *p1, Particle *p2,
   default:
     break;
   }
+  return std::make_tuple(force, torque1, torque2);
 }
 
 // energy_inline
-inline void add_pair_energy(Particle const *const p1, Particle const *const p2,
-                            Utils::Vector3d const &d, double dist, double dist2,
-                            Observable_stat &energy) {
+inline double pair_energy(Particle const &p1, Particle const &p2,
+                          Utils::Vector3d const &d, double dist, double dist2) {
   double ret = 0;
   if (dipole.method != DIPOLAR_NONE) {
     // ret=0;
@@ -49,8 +50,8 @@ inline void add_pair_energy(Particle const *const p1, Particle const *const p2,
     default:
       ret = 0;
     }
-    energy.dipolar[0] += ret;
   }
+  return ret;
 }
 
 } // namespace Dipole
