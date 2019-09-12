@@ -58,9 +58,7 @@ Utils::Vector3d convert_vector_space_to_body(const Particle &p,
 /** convert a dipole moment to quaternions and dipolar strength  */
 inline std::pair<Utils::Vector4d, double>
 convert_dip_to_quat(const Utils::Vector3d &dip) {
-  Utils::Vector4d quat;
-  convert_director_to_quat(dip, quat);
-
+  auto quat = convert_director_to_quaternion(dip);
   return {quat, dip.norm()};
 }
 

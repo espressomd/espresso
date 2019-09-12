@@ -55,7 +55,7 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(
         "virtual_sites_relative.cpp - update_mol_pos_particle(): No real "
         "particle associated with virtual site.\n");
   }
-  multiply_quaternions(p_real->r.quat, p.p.vs_relative.quat, p.r.quat);
+  p.r.quat = multiply_quaternions(p_real->r.quat, p.p.vs_relative.quat);
 #ifdef DIPOLES
   // When dipoles are enabled, update dipole moment
 #endif
@@ -88,7 +88,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
   auto const director =
-      convert_quat_to_director(
+      quaternion_to_director(
           multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation))
           .normalize();
 

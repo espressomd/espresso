@@ -319,19 +319,12 @@ void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
 
   axis /= l;
 
-  double q[4];
-  q[0] = cos(phi / 2);
-  double tmp = sin(phi / 2);
-  q[1] = tmp * axis[0];
-  q[2] = tmp * axis[1];
-  q[3] = tmp * axis[2];
-
-  // Normalize
-  normalize_quaternion(q);
+  double s = sin(phi / 2);
+  Utils::Vector4d q = {cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]};
+  q.normalize();
 
   // Rotate the particle
-  double qn[4]; // Resulting quaternion
-  multiply_quaternions(p.r.quat, q, qn);
+  auto const qn = multiply_quaternions(p.r.quat, q);
   for (int k = 0; k < 4; k++)
     p.r.quat[k] = qn[k];
 }

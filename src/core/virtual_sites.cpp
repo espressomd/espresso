@@ -90,8 +90,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
       d[i] /= l;
 
     // Obtain quaternions from desired director
-    Utils::Vector4d quat_director;
-    convert_director_to_quat(d, quat_director);
+    Utils::Vector4d quat_director = convert_director_to_quaternion(d);
 
     // Define quat as described above:
     double x = 0;
@@ -118,8 +117,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
       quat[i] /= x;
 
     // Verify result
-    double qtemp[4];
-    multiply_quaternions(p_relate_to.r.quat, quat, qtemp);
+    Utils::Vector4d qtemp = multiply_quaternions(p_relate_to.r.quat, quat);
     for (i = 0; i < 4; i++)
       if (fabs(qtemp[i] - quat_director[i]) > 1E-9)
         fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n", i,
