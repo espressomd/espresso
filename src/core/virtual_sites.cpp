@@ -82,12 +82,12 @@ calculate_vs_relate_to_params(Particle const &p_current,
   //   = quat_(obtained from desired director)
   // Resolving this for the quat_(virtual particle)
 
+  Utils::Vector4d quat;
   // If the distance between real & virtual particle is 0 we just set the
   // relative orientation to {1 0 0 0}, as it is irrelevant but needs to be
   // a valid quaternion
   if (dist == 0) {
-    Utils::Vector4d quat = {1, 0, 0, 0};
-    return std::make_tuple(quat, 0);
+    quat = {1, 0, 0, 0};
   } else {
     d.normalize();
 
@@ -95,19 +95,19 @@ calculate_vs_relate_to_params(Particle const &p_current,
     Utils::Vector4d quat_director = convert_director_to_quaternion(d);
 
     // Define quaternion as described above
-    Utils::Vector4d quat = {p_relate_to.r.quat * quat_director,
-                            -quat_director[0] * p_relate_to.r.quat[1] +
-                                quat_director[1] * p_relate_to.r.quat[0] +
-                                quat_director[2] * p_relate_to.r.quat[3] -
-                                quat_director[3] * p_relate_to.r.quat[2],
-                            p_relate_to.r.quat[1] * quat_director[3] +
-                                p_relate_to.r.quat[0] * quat_director[2] -
-                                p_relate_to.r.quat[3] * quat_director[1] -
-                                p_relate_to.r.quat[2] * quat_director[0],
-                            quat_director[3] * p_relate_to.r.quat[0] -
-                                p_relate_to.r.quat[3] * quat_director[0] +
-                                p_relate_to.r.quat[2] * quat_director[1] -
-                                p_relate_to.r.quat[1] * quat_director[2]};
+    quat = {p_relate_to.r.quat * quat_director,
+            -quat_director[0] * p_relate_to.r.quat[1] +
+                quat_director[1] * p_relate_to.r.quat[0] +
+                quat_director[2] * p_relate_to.r.quat[3] -
+                quat_director[3] * p_relate_to.r.quat[2],
+            p_relate_to.r.quat[1] * quat_director[3] +
+                p_relate_to.r.quat[0] * quat_director[2] -
+                p_relate_to.r.quat[3] * quat_director[1] -
+                p_relate_to.r.quat[2] * quat_director[0],
+            quat_director[3] * p_relate_to.r.quat[0] -
+                p_relate_to.r.quat[3] * quat_director[0] +
+                p_relate_to.r.quat[2] * quat_director[1] -
+                p_relate_to.r.quat[1] * quat_director[2]};
     auto const norm = p_relate_to.r.quat * p_relate_to.r.quat;
     quat /= norm;
 
@@ -117,8 +117,8 @@ calculate_vs_relate_to_params(Particle const &p_current,
       if (fabs(qtemp[i] - quat_director[i]) > 1E-9)
         fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n", i,
                 qtemp[i], quat_director[i]);
-    return std::make_tuple(quat, dist);
   }
+  return std::make_tuple(quat, dist);
 }
 
 void local_vs_relate_to(Particle &p_current, Particle const &p_relate_to) {
