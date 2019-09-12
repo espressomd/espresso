@@ -24,8 +24,6 @@ import sys
 tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(
     "@TUTORIALS_DIR@/07-electrokinetics/07-electrokinetics.py",
     gpu=True, integration_length=600, dt=0.5)
-# use importlib directly to avoid an error for some myconfig.hpp configurations
-sys.path.insert(0, "@TUTORIALS_DIR@/07-electrokinetics/scripts/")
 tutorial_analytical, skipIfMissingFeatures_plot = iw.configure_and_import(
     "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_analytical.py")
 tutorial_plot, skipIfMissingFeatures_plot = iw.configure_and_import(
