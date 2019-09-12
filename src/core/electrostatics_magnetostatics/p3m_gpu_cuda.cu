@@ -744,6 +744,14 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
 
     if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+      if (mesh[0] % 7 == 0 || mesh[0] % 11 == 0 || mesh[0] % 13 == 0 ||
+          mesh[1] % 7 == 0 || mesh[1] % 11 == 0 || mesh[1] % 13 == 0 ||
+          mesh[2] % 7 == 0 || mesh[2] % 11 == 0 || mesh[2] % 13 == 0) {
+        throw std::string("Mesh size not supported");
+      }
+#endif
+
       /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
       const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                              (p3m_gpu_data.mesh[2] / 2 + 1);
