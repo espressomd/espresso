@@ -51,8 +51,6 @@ set(EspressoCore_SRC
   actor/ActorList.cpp
   actor/DipolarBarnesHut.cpp
   actor/DipolarDirectSum.cpp
-  actor/HarmonicOrientationWell.cpp
-  actor/HarmonicWell.cpp
   actor/Mmm1dgpuForce.cpp
   bonded_interactions/angle_cosine.cpp
   bonded_interactions/angle_cossquare.cpp
@@ -141,8 +139,6 @@ if(CUDA)
     EspressoSystemInterface_cuda.cu
     actor/DipolarBarnesHut_cuda.cu
     actor/DipolarDirectSum_cuda.cu
-    actor/HarmonicOrientationWell_cuda.cu
-    actor/HarmonicWell_cuda.cu
     actor/Mmm1dgpuForce_cuda.cu
     electrostatics_magnetostatics/p3m_gpu_cuda.cu
     electrostatics_magnetostatics/p3m_gpu_error_cuda.cu

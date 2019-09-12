@@ -19,7 +19,7 @@
 /* * @File Header file for the correlation class
  *
  * This module allow to compute correlations (and other two time averages) on
- * the fly an from files.
+ * the fly and from files.
  *
  * The basic idea is that the user can write arbitrary function A and B that
  * can depend on e.g. particle coordinates or whatever state of the MD box.
@@ -120,7 +120,6 @@
 #include <boost/serialization/access.hpp>
 
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -221,20 +220,6 @@ public:
    */
 
   int get_correlation_time(double *correlation_time);
-
-  /** The function to process a new datapoint of A and B
-   *
-   * First the function finds out if it necessary to make some space for the new
-   * entries of A and B.
-   * Then, if necessary, it compresses old Values of A and B to make for the new
-   * value. Finally
-   * The new values of A and B are stored in A[newest[0]] and B[newest[0]],
-   * where the newest indices
-   * have been increased before. Finally the correlation estimate is updated.
-   * TODO: Not all
-   * the correlation estimates have to be updated.
-   *
-   */
 
   /** Return correlation result */
   std::vector<double> get_correlation();

@@ -141,13 +141,8 @@ struct field_params_impl<Interpolated<T, codim>> {
              [this_]() { return this_().shape(); }},
             {"_field_codim", AutoParameter::read_only,
              []() { return static_cast<int>(codim); }},
-            {"_field_data", AutoParameter::read_only, [this_]() {
-               auto &field_data = this_().field_data();
-               auto data_ptr =
-                   reinterpret_cast<const double *>(field_data.data());
-               return std::vector<double>(
-                   data_ptr, data_ptr + codim * field_data.num_elements());
-             }}};
+            {"_field_data", AutoParameter::read_only,
+             [this_]() { return this_().field_data_flat(); }}};
   }
 };
 

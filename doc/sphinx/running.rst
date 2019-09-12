@@ -20,7 +20,7 @@ Velocity Verlet algorithm
 
 :func:`espressomd.integrate.Integrator.set_vv`
 
-The equations of motion for the trajectory of pointlike particles read 
+The equations of motion for the trajectory of point-like particles read
 
 .. math:: \dot v_i(t) = F_i(\{x_j\},v_i,t)/m_i \\ \dot x_i(t) = v_i(t),
 

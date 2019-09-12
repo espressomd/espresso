@@ -17,30 +17,40 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample performs a grand canonical simulation of a salt solution.
+This example script performs a grand canonical simulation of a system in contact
+with a salt reservoir and ensures constant chemical potential.
+It takes two command line arguments as input: 1) the reservoir salt concentration
+in units of 1/sigma^3 and 2) the excess chemical potential of the reservoir in
+units of kT.
+The excess chemical potential of the reservoir needs to be determined prior to
+running the grand canonical simulation using the script called widom_insertion.py
+which simulates a part of the reservoir at the prescribed salt concentration.
+Be aware that the reservoir excess chemical potential depends on all interactions
+in the reservoir system.
 """
 import numpy as np
-import sys
+import argparse
 
 import espressomd
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
-required_features = ["P3M", "EXTERNAL_FORCES", "LENNARD_JONES"]
+required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
-# print help message if proper command-line arguments are not provided
-if len(sys.argv) != 3:
-    print("\nGot ", str(len(sys.argv) - 1), " arguments, need 2\n\nusage:" +
-          sys.argv[0] + " [cs_bulk] [excess_chemical_potential/kT]\n")
-    sys.exit()
+parser = argparse.ArgumentParser(epilog=__doc__)
+parser.add_argument('cs_bulk', type=float,
+                    help="bulk salt concentration [1/sigma^3]")
+parser.add_argument('excess_chemical_potential', type=float,
+                    help="excess chemical potential [kT] "
+                         "(obtained from Widom's insertion method)")
+args = parser.parse_args()
 
 # System parameters
 #############################################################
 
-cs_bulk = float(sys.argv[1])
-excess_chemical_potential_pair = float(
-    sys.argv[2])  # from widom insertion simulation of pair insertion
+cs_bulk = args.cs_bulk
+excess_chemical_potential_pair = args.excess_chemical_potential
 box_l = 50.0
 
 # Integration parameters
@@ -54,7 +64,7 @@ system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature = 1.0
 system.thermostat.set_langevin(kT=temperature, gamma=.5, seed=42)
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 
 #############################################################
@@ -71,15 +81,13 @@ for i in range(int(cs_bulk * box_l**3)):
     system.part.add(pos=np.random.random(3) * system.box_l, type=1, q=-1)
     system.part.add(pos=np.random.random(3) * system.box_l, type=2, q=1)
 
-lj_eps = 1.0
-lj_sig = 1.0
-lj_cut = 2**(1.0 / 6) * lj_sig
+wca_eps = 1.0
+wca_sig = 1.0
 types = [0, 1, 2]
 for type_1 in types:
     for type_2 in types:
-        system.non_bonded_inter[type_1, type_2].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig,
-            cutoff=lj_cut, shift="auto")
+        system.non_bonded_inter[type_1, type_2].wca.set_params(
+            epsilon=wca_eps, sigma=wca_sig)
 
 RE = reaction_ensemble.ReactionEnsemble(
     temperature=temperature, exclusion_radius=2.0, seed=3)
@@ -96,36 +104,32 @@ RE.reaction(10000)
 p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
 p3m_params = p3m.get_params()
-for key in list(p3m_params.keys()):
-    print("{} = {}".format(key, p3m_params[key]))
+for key, value in p3m_params.items():
+    print("{} = {}".format(key, value))
 
 
 # Warmup
 #############################################################
-# warmup integration (with capped LJ potential)
+# warmup integration (with capped WCA potential)
 warm_steps = 1000
 warm_n_times = 20
-# do the warmup until the particles have at least the distance min_dist
-# set LJ cap
-lj_cap = 20
-system.force_cap = lj_cap
+# set WCA cap
+system.force_cap = 20
 
 # Warmup Integration Loop
-act_min_dist = system.analysis.min_dist()
 i = 0
-while (i < warm_n_times):
+while i < warm_n_times:
     print(i, "warmup")
     RE.reaction(100)
     system.integrator.run(steps=warm_steps)
     i += 1
-    #Increase LJ cap
-    lj_cap = lj_cap + 10
-    system.force_cap = lj_cap
+    # increase WCA cap
+    system.force_cap += 10
 
 # remove force capping
 system.force_cap = 0
 
-#MC warmup
+# MC warmup
 RE.reaction(1000)
 
 n_int_cycles = 10000

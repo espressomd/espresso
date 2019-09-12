@@ -95,7 +95,7 @@ auto invoke(F f, boost::mpi::packed_iarchive &ia) {
   std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
   Utils::for_each([&ia](auto &e) { ia >> e; }, params);
 
-  /* We add const here, so that parameters can only by by value
+  /* We add const here, so that parameters can only be by value
      or const reference. Output parameters on callbacks are not
      sensible because the changes are not propagated back, so
      we make sure this does not compile. */
@@ -239,7 +239,7 @@ template <typename F> auto make_model(F &&f) {
 /**
  * @brief Make a @ref callback_model_t for a function pointer.
  *
- * This instantiates a implementation of a callback for a function
+ * This instantiates an implementation of a callback for a function
  * pointer. The main task here is to transfer the signature from
  * the pointer to the callback_model_t by template argument type
  * deduction.
@@ -406,7 +406,7 @@ public:
    * Add a new callback to the system. This is a collective
    * function that must be run on all nodes.
    * Tag is one of the tag types from @namespace Communication::Result,
-   * which indicates what to to with the return values.
+   * which indicates what to do with the return values.
    *
    * @param tag Tag type indicating return operation
    * @param tag_args Argument for the return operation, if any.

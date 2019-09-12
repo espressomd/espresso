@@ -26,7 +26,6 @@
 #ifdef DIPOLAR_BARNES_HUT
 
 #include <cstdio>
-#include <ctime>
 #include <iostream>
 
 typedef float dds_float;
@@ -102,7 +101,7 @@ void initBHgpu(int blocks);
 // Building Barnes-Hut spatial min/max position box
 void buildBoxBH(int blocks);
 
-// Building Barnes-Hut tree in a linear childd array representation
+// Building Barnes-Hut tree in a linear child array representation
 // of octant cells and particles inside.
 void buildTreeBH(int blocks);
 
@@ -112,7 +111,7 @@ void buildTreeBH(int blocks);
 void summarizeBH(int blocks);
 
 // Sort particle indexes according to the BH tree representation.
-// Crucial for the per-warp perfomance tuning of forceCalculationKernel and
+// Crucial for the per-warp performance tuning of forceCalculationKernel and
 // energyCalculationKernel.
 void sortBH(int blocks);
 

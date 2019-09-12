@@ -20,7 +20,7 @@
 This sample sets up a diamond-structured polymer network.
 """
 import espressomd
-espressomd.assert_features(["LENNARD_JONES"])
+espressomd.assert_features(["WCA"])
 from espressomd import thermostat
 from espressomd import interactions
 from espressomd import diamond
@@ -40,17 +40,14 @@ system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=1, sigma=1)
 
-system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 1].wca.set_params(
+    epsilon=1, sigma=1)
 
-system.non_bonded_inter[1, 1].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[1, 1].wca.set_params(
+    epsilon=1, sigma=1)
 
 fene = interactions.FeneBond(k=30, d_r_max=1.5)
 system.bonded_inter.add(fene)
@@ -67,7 +64,7 @@ MPC = 15
 # length for Kremer-Grest chain
 bond_length = 0.966
 
-# The physical distance beween nodes such that a line of monomers "fit" needs to be worked out.
+# The physical distance between nodes such that a line of monomers "fit" needs to be worked out.
 # This is done via the unit diamond lattice size parameter "a".
 a = (MPC + 1) * bond_length / (0.25 * np.sqrt(3))
 
@@ -85,23 +82,23 @@ diamond.Diamond(a=a, bond_length=bond_length, MPC=MPC)
 
 print("Warming up...")
 warm_steps = 10
-lj_cap = 1
-system.force_cap = lj_cap
+wca_cap = 1
+system.force_cap = wca_cap
 act_min_dist = system.analysis.min_dist()
 
-# warmp with zero temperature to remove overlaps
+# warmup with zero temperature to remove overlaps
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # slowly ramp up the cap
-while (lj_cap < 5):
+while (wca_cap < 5):
     system.integrator.run(warm_steps)
     system.part[:].v = [0, 0, 0]
-    lj_cap = lj_cap * 1.1
-    system.force_cap = lj_cap
+    wca_cap = wca_cap * 1.1
+    system.force_cap = wca_cap
 
 # remove force cap
-lj_cap = 0
-system.force_cap = lj_cap
+wca_cap = 0
+system.force_cap = wca_cap
 system.integrator.run(warm_steps * 10)
 
 # restore simulation temperature

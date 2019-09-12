@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "cells.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "event.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"

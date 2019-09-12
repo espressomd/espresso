@@ -71,7 +71,7 @@ simulation, as particles will simply avoid overlapping. However,
 creating an initial dense random configuration without overlap is often
 difficult. By artificially capping the forces, it is possible to simulate a system
 with overlaps. By gradually raising the cap value, possible overlaps
-become unfavorable, and the system equilibrates to a overlap free
+become unfavorable, and the system equilibrates to an overlap-free
 configuration.
 
 Force capping can be activated via  :class:`espressomd.system.System`::

@@ -26,7 +26,6 @@
 #include "domain_decomposition.hpp"
 
 #include "communication.hpp"
-#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
@@ -326,12 +325,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
               dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-
-              CELL_TRACE(fprintf(stderr,
-                                 "%d: prep_comm %d send to   node %d "
-                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
-                                 this_node, cnt, comm->comm[cnt].node, lc[0],
-                                 lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
             }
           if (box_geo.periodic(dir) ||
@@ -346,11 +339,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
               dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-              CELL_TRACE(fprintf(stderr,
-                                 "%d: prep_comm %d recv from node %d "
-                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
-                                 this_node, cnt, comm->comm[cnt].node, lc[0],
-                                 lc[1], lc[2], hc[0], hc[1], hc[2]));
               cnt++;
             }
         }
@@ -367,9 +355,6 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
 void dd_revert_comm_order(GhostCommunicator *comm) {
   int i, j, nlist2;
   GhostCommunication tmp;
-
-  CELL_TRACE(fprintf(stderr, "%d: dd_revert_comm_order: anz comm: %d\n",
-                     this_node, comm->num));
 
   /* revert order */
   for (i = 0; i < (comm->num / 2); i++) {
@@ -533,7 +518,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        nonperiodic boundary. We also accept the particle if we are at
        the box boundary, and the particle is within the box. In this case
        the particle belongs here and could otherwise potentially be dismissed
-       due to rouding errors. */
+       due to rounding errors. */
     if (cpos[i] < 1) {
       if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
           local_geo.boundary()[2 * i])
@@ -570,12 +555,8 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
     }
 
   /* A full resorting is necessary if the grid has changed. We simply
-     don't have anything fast for this case. Probably also not
-     necessary. */
+   * don't have anything fast for this case. Probably also not necessary. */
   if (flags & CELL_FLAG_GRIDCHANGED) {
-    CELL_TRACE(
-        fprintf(stderr, "%d: dd_on_geometry_change full redo\n", this_node));
-
     /* Reset min num cells to default */
     min_num_cells = calc_processor_min_num_cells(grid);
 
@@ -627,7 +608,7 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   int exchange_data, update_data;
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
-    but may be set to a larger value by the user for performance reasons. */
+   * but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
@@ -678,14 +659,10 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   for (c = 0; c < local_cells.n; c++) {
     update_local_particles(local_cells.cell[c]);
   }
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: done\n", this_node));
 }
 
 /************************************************************/
 void dd_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
-  /* release cell interactions */
-
   /* free ghost cell pointer list */
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
   /* free ghost communicators */

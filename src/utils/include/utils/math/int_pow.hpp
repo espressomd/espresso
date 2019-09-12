@@ -35,7 +35,7 @@ template <class T, unsigned n, class = void> struct int_pow_impl {
   }
 };
 
-/* Specializaton for n even */
+/* Specialization for n even */
 template <class T, unsigned n>
 struct int_pow_impl<T, n, std::enable_if_t<n % 2 == 0>> {
   DEVICE_QUALIFIER constexpr T operator()(T x) const {
@@ -57,7 +57,7 @@ template <class T> struct int_pow_impl<T, 0> {
  * This functions calculates x^n, where
  * n is a positive integer that is known
  * at compile time. It uses exponentiation by
- * squaring to construct a efficient function.
+ * squaring to construct an efficient function.
  */
 template <unsigned n, typename T> DEVICE_QUALIFIER constexpr T int_pow(T x) {
   return detail::int_pow_impl<T, n>{}(x);

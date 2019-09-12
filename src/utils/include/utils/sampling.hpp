@@ -32,7 +32,7 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   auto const delta_phi = (phi_limits.second - phi_limits.first) / n_phi_bins;
 
   // For the smallest bin we chose samples along the z-direction for a single
-  // azimuthal angle per bin such that we fullfill the sampling density
+  // azimuthal angle per bin such that we fulfill the sampling density
   // requirement.
   auto const smallest_bin_volume =
       pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());

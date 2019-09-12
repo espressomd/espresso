@@ -96,6 +96,12 @@ cdef class mayaviLive:
                     radius = 0.5 * get_ia_param(t, t).lj.sig
                 except:
                     radius = 0.
+            IF WCA:
+                if radius == 0:
+                    try:
+                        radius = 0.5 * get_ia_param(t, t).wca.sig
+                    except:
+                        radius = 0.
 
             if radius == 0:
                 radius = 0.5  # fallback value

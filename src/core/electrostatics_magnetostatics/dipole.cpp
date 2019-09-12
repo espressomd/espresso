@@ -165,16 +165,16 @@ void calc_long_range_force(const ParticleRange &particles) {
     dp3m_dipole_assign(particles);
 #ifdef NPT
     if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      nptiso.p_vir[0] += dp3m_calc_kspace_forces(1, 1, particles);
+      nptiso.p_vir[0] += dp3m_calc_kspace_forces(true, true, particles);
       fprintf(stderr, "dipolar_P3M at this moment is added to p_vir[0]\n");
     } else
 #endif
-      dp3m_calc_kspace_forces(1, 0, particles);
+      dp3m_calc_kspace_forces(true, false, particles);
 
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    dawaanr_calculations(1, 0, particles);
+    dawaanr_calculations(true, false, particles);
     break;
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
@@ -182,7 +182,7 @@ void calc_long_range_force(const ParticleRange &particles) {
     // fall through
 #endif
   case DIPOLAR_DS:
-    magnetic_dipolar_direct_sum_calculations(1, 0, particles);
+    magnetic_dipolar_direct_sum_calculations(true, false, particles);
     break;
   case DIPOLAR_DS_GPU:
     // Do nothing. It's an actor
@@ -211,27 +211,27 @@ void calc_energy_long_range(Observable_stat &energy,
 #ifdef DP3M
   case DIPOLAR_P3M:
     dp3m_dipole_assign(particles);
-    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1, particles);
+    energy.dipolar[1] = dp3m_calc_kspace_forces(false, true, particles);
     break;
   case DIPOLAR_MDLC_P3M:
     dp3m_dipole_assign(particles);
-    energy.dipolar[1] = dp3m_calc_kspace_forces(0, 1, particles);
+    energy.dipolar[1] = dp3m_calc_kspace_forces(false, true, particles);
     energy.dipolar[2] = add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    energy.dipolar[1] = dawaanr_calculations(0, 1, particles);
+    energy.dipolar[1] = dawaanr_calculations(false, true, particles);
     break;
 #ifdef DP3M
   case DIPOLAR_MDLC_DS:
     energy.dipolar[1] =
-        magnetic_dipolar_direct_sum_calculations(0, 1, particles);
+        magnetic_dipolar_direct_sum_calculations(false, true, particles);
     energy.dipolar[2] = add_mdlc_energy_corrections(particles);
     break;
 #endif
   case DIPOLAR_DS:
     energy.dipolar[1] =
-        magnetic_dipolar_direct_sum_calculations(0, 1, particles);
+        magnetic_dipolar_direct_sum_calculations(false, true, particles);
     break;
   case DIPOLAR_DS_GPU:
     break;

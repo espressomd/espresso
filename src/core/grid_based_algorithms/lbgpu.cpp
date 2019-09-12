@@ -29,24 +29,19 @@
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "statistics.hpp"
 
 #include <utils/constants.hpp>
 
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <ctime>
 #include <random>
 
 LB_particle_allocation_state lb_reinit_particles_gpu;

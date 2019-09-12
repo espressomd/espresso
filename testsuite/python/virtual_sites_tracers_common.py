@@ -33,7 +33,7 @@ class VirtualSitesTracersCommon:
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))
     system.time_step = 0.05
     system.cell_system.skin = 0.1
-    
+
     def reset_lb(self, ext_force_density=[0, 0, 0]):
         box_height = 10 
         box_lw = 8
@@ -79,7 +79,7 @@ class VirtualSitesTracersCommon:
         system.virtual_sites = VirtualSitesInertialessTracers()
 
         # Establish steady state flow field
-        system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=1)
+        system.part.add(id=0, pos=(0, 5.5, 5.5), virtual=True)
         system.integrator.run(400)
 
         system.part[0].pos = (0, 5.5, 5.5)
@@ -124,10 +124,10 @@ class VirtualSitesTracersCommon:
         system.part.clear()
 
         # Add four particles
-        system.part.add(id=0, pos=[5, 5, 5], virtual=1)
-        system.part.add(id=1, pos=[5, 5, 6], virtual=1)
-        system.part.add(id=2, pos=[5, 6, 6], virtual=1)
-        system.part.add(id=3, pos=[5, 6, 5], virtual=1)
+        system.part.add(id=0, pos=[5, 5, 5], virtual=True)
+        system.part.add(id=1, pos=[5, 5, 6], virtual=True)
+        system.part.add(id=2, pos=[5, 6, 6], virtual=True)
+        system.part.add(id=3, pos=[5, 6, 5], virtual=True)
 
         # Add first triel, weak modulus
         from espressomd.interactions import IBM_Triel
@@ -172,17 +172,17 @@ class VirtualSitesTracersCommon:
         system.part.clear()
         # Add particles: 0-2 are non-bonded, 3-5 are weakly bonded, 6-8 are
         # strongly bonded
-        system.part.add(id=0, pos=[5, 5, 5], virtual=1)
-        system.part.add(id=1, pos=[5, 5, 6], virtual=1)
-        system.part.add(id=2, pos=[5, 6, 6], virtual=1)
+        system.part.add(id=0, pos=[5, 5, 5], virtual=True)
+        system.part.add(id=1, pos=[5, 5, 6], virtual=True)
+        system.part.add(id=2, pos=[5, 6, 6], virtual=True)
 
-        system.part.add(id=3, pos=[2, 5, 5], virtual=1)
-        system.part.add(id=4, pos=[2, 5, 6], virtual=1)
-        system.part.add(id=5, pos=[2, 6, 6], virtual=1)
+        system.part.add(id=3, pos=[2, 5, 5], virtual=True)
+        system.part.add(id=4, pos=[2, 5, 6], virtual=True)
+        system.part.add(id=5, pos=[2, 6, 6], virtual=True)
 
-        system.part.add(id=6, pos=[4, 7, 7], virtual=1)
-        system.part.add(id=7, pos=[4, 7, 8], virtual=1)
-        system.part.add(id=8, pos=[4, 8, 8], virtual=1)
+        system.part.add(id=6, pos=[4, 7, 7], virtual=True)
+        system.part.add(id=7, pos=[4, 7, 8], virtual=True)
+        system.part.add(id=8, pos=[4, 8, 8], virtual=True)
 
         # Add triel, weak modulus for 3-5
         from espressomd.interactions import IBM_Triel
@@ -236,7 +236,7 @@ class VirtualSitesTracersCommon:
         # strongly-bonded should basically not stretch
         self.assertGreater(dist1non, 1.5)
         self.assertAlmostEqual(dist1weak, 1, delta=0.2)
-        self.assertAlmostEqual(dist1strong, 1, delta=0.03)
+        self.assertAlmostEqual(dist1strong, 1, delta=0.04)
 
         self.assertGreater(dist2non, 2)
         self.assertAlmostEqual(dist2weak, np.sqrt(2), delta=0.3)
@@ -254,6 +254,6 @@ class VirtualSitesTracersCommon:
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0))
         system.integrator.run(1)
-        p.virtual = 1
+        p.virtual = True
         with(self.assertRaises(Exception)):
             system.integrator.run(1)

@@ -19,9 +19,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /** \file
- *  MMM2D algorithm for long range Coulomb interaction.
+ *  MMM2D algorithm for long-range %Coulomb interaction.
  *
- *  For more information about MMM2D, see \ref mmm2d.hpp "mmm2d.hpp".
+ *  Implementation of \ref mmm2d.hpp.
  */
 
 #include "electrostatics_magnetostatics/mmm2d.hpp"
@@ -33,7 +33,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "layered.hpp"
 #include "mmm-common.hpp"
 #include "particle_data.hpp"
 #include "specfunc.hpp"
@@ -41,6 +40,12 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/range/algorithm/fill.hpp>
+#include <boost/range/algorithm/transform.hpp>
+#include <boost/range/value_type.hpp>
+
+#include <boost/range/numeric.hpp>
 #include <cmath>
 #include <mpi.h>
 #include <numeric>
@@ -58,17 +63,10 @@ char const *mmm2d_errors[] = {
     "IC requires layered cellsystem with more than 3 layers",
 };
 
-/** if you define this, the Besselfunctions are calculated up
-    to machine precision, otherwise 10^-14, which should be
-    definitely enough for daily life. */
+/** if you define this, the Bessel functions are calculated up
+ *  to machine precision, otherwise 10^-14, which should be
+ *  definitely enough for daily life. */
 #undef BESSEL_MACHINE_PREC
-
-// #define CHECKPOINTS
-#if 0
-#define LOG_FORCES(x) x
-#else
-#define LOG_FORCES(x)
-#endif
 
 #ifndef BESSEL_MACHINE_PREC
 #define K0 LPK0
@@ -80,29 +78,29 @@ char const *mmm2d_errors[] = {
  ****************************************/
 
 /** Largest reasonable cutoff for far formula. A double cannot overflow
-    with this value. */
+ *  with this value. */
 #define MAXIMAL_FAR_CUT 100
 
 /** Largest reasonable cutoff for Bessel function. The Bessel functions
-    are quite slow, so do not make too large. */
+ *  are quite slow, so do not make too large. */
 #define MAXIMAL_B_CUT 50
 
 /** Largest reasonable order of polygamma series. These are pretty fast,
-    so use more of them. Also, the real cutoff is determined at run time,
-    so normally we are faster */
+ *  so use more of them. Also, the real cutoff is determined at run time,
+ *  so normally we are faster */
 #define MAXIMAL_POLYGAMMA 100
 
 /** internal relative precision of far formula. This controls how many
-    p,q vectors are done at once. This has nothing to do with the effective
-    precision, but rather controls how different values can be we add up without
-    loosing the smallest values. In principle one could choose smaller values,
-   but that would not make things faster */
+ *  p,q vectors are done at once. This has nothing to do with the effective
+ *  precision, but rather controls how different values can be we add up without
+ *  loosing the smallest values. In principle one could choose smaller values,
+ *  but that would not make things faster */
 #define FARRELPREC 1e-6
 
 /** number of steps in the complex cutoff table */
 #define COMPLEX_STEP 16
 /** map numbers from 0 to 1/2 onto the complex cutoff table
-    (with security margin) */
+ *  (with security margin) */
 #define COMPLEX_FAC (COMPLEX_STEP / (.5 + 0.01))
 
 /****************************************
@@ -125,17 +123,16 @@ static DoubleList bon;
 static double ux, ux2, uy, uy2, uz;
 /*@}*/
 
+static double layer_h;
+
 /** maximal z for near formula, minimal z for far formula.
-    Is identical in the theory, but with the Verlet tricks
-    this is no longer true, the skin has to be added/subtracted */
+ *  Is identical in the theory, but with the Verlet tricks
+ *  this is no longer true, the skin has to be added/subtracted */
 /*@{*/
 static double max_near, min_far;
 /*@}*/
 
-///
-static double self_energy;
-
-MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
+MMM2D_struct mmm2d_params = {1e100, 10, 1, false, false, false, 0, 1, 1, 1};
 
 /** return codes for \ref MMM2D_tune_near and \ref MMM2D_tune_far */
 /*@{*/
@@ -160,9 +157,9 @@ MMM2D_struct mmm2d_params = {1e100, 10, 1, 0, false, false, 0, 1, 1, 1};
  ****************************************/
 
 /** \name Product decomposition data organization
-    For the cell blocks
-    it is assumed that the lower blocks part is in the lower half.
-    This has to have positive sign, so that has to be first. */
+ *  For the cell blocks it is assumed that the lower blocks part is in the
+ *  lower half. This has to have positive sign, so that has to be first.
+ */
 /*@{*/
 
 #define POQESP 0
@@ -196,13 +193,13 @@ static int n_localpart = 0;
 static std::vector<double> partblk;
 /** for all local cells including ghosts */
 static std::vector<double> lclcblk;
-/** collected data from the cells above the top neighbor
-    of a cell rsp. below the bottom neighbor
-    (P=below, M=above, as the signs in the exp). */
+/** collected data from the cells above the top neighbor of a cell resp. below
+ *  the bottom neighbor (P=below, M=above, as the signs in the exp).
+ */
 static std::vector<double> gblcblk;
 
 /** contribution from the image charges */
-static double lclimge[8];
+static Utils::VectorXd<8> lclimge;
 
 struct SCCache {
   double s, c;
@@ -228,7 +225,7 @@ static void prepareBernoulliNumbers(int nmax);
 static int MMM2D_tune_near(double error);
 
 /** energy of all local particles with their copies */
-void MMM2D_self_energy(const ParticleRange &particles);
+double MMM2D_self_energy(const ParticleRange &particles);
 
 /*@}*/
 
@@ -237,10 +234,10 @@ void MMM2D_self_energy(const ParticleRange &particles);
 /*@{*/
 
 /** sin/cos storage */
-static void prepare_scx_cache();
-static void prepare_scy_cache();
+static void prepare_scx_cache(const ParticleRange &particles);
+static void prepare_scy_cache(const ParticleRange &particles);
 /** clear the image contributions if there is no dielectric contrast and no
- * image charges */
+ *  image charges */
 static void clear_image_contributions(int size);
 /** gather the informations for the far away image charges */
 static void gather_image_contributions(int size);
@@ -260,7 +257,7 @@ static void setup_Q(int q, double omega, double fac);
 static void add_Q_force();
 static double Q_energy(double omega);
 /** p,q <> 0 per frequency code */
-static void setup_PQ(int p, int q, double omega, double fac);
+static void setup_PQ(int p, int q, double omega, double fac, int n_localpart);
 static void add_PQ_force(int p, int q, double omega);
 static double PQ_energy(double omega);
 
@@ -269,13 +266,13 @@ static int MMM2D_tune_far(double error);
 
 /*@}*/
 
-///
 void MMM2D_setup_constants() {
   ux = 1 / box_geo.length()[0];
   ux2 = ux * ux;
   uy = 1 / box_geo.length()[1];
   uy2 = uy * uy;
   uz = 1 / box_geo.length()[2];
+  layer_h = local_geo.length()[2] / local_cells.n;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
@@ -315,30 +312,26 @@ static SCCache sc(double arg) { return {sin(arg), cos(arg)}; }
 
 template <size_t dir>
 static void prepare_sc_cache(std::vector<SCCache> &sccache, double u,
-                             int n_sccache) {
-  for (int freq = 1; freq <= n_sccache; freq++) {
-    auto const pref = C_2PI * u * freq;
-    auto const o = (freq - 1) * n_localpart;
+                             int n_sccache, const ParticleRange &particles) {
+  sccache.resize(n_sccache * particles.size());
 
-    int ic = 0;
-    for (int c = 1; c <= n_layers; c++) {
-      auto const np = cells[c].n;
-      auto part = cells[c].part;
-      for (int i = 0; i < np; i++) {
-        auto const arg = pref * part[i].r.p[dir];
-        sccache[o + ic] = sc(arg);
-        ic++;
-      }
-    }
+  for (int freq = 1; freq <= n_sccache; freq++) {
+    auto const o = sccache.begin() + (freq - 1) * particles.size();
+
+    boost::transform(particles, o,
+                     [pref = C_2PI * u * freq](const Particle &p) {
+                       auto const arg = pref * p.r.p[dir];
+                       return sc(arg);
+                     });
   }
 }
 
-static void prepare_scx_cache() {
-  prepare_sc_cache<0>(scxcache, ux, n_scxcache);
+static void prepare_scx_cache(const ParticleRange &particles) {
+  prepare_sc_cache<0>(scxcache, ux, n_scxcache, particles);
 }
 
-static void prepare_scy_cache() {
-  prepare_sc_cache<1>(scycache, uy, n_scycache);
+static void prepare_scy_cache(const ParticleRange &particles) {
+  prepare_sc_cache<1>(scycache, uy, n_scycache, particles);
 }
 
 /*****************************************************************/
@@ -348,47 +341,78 @@ static void prepare_scy_cache() {
 /* vector operations */
 
 /** pdc = 0 */
-inline void clear_vec(double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] = 0;
+template <class OutputRange> inline void clear_vec(OutputRange rng) {
+  boost::fill(rng, typename boost::range_value<OutputRange>::type{});
+}
+
+template <class T> inline void clear_vec(T *p, size_t size) {
+  clear_vec(Utils::make_span(p, size));
+}
+
+template <class OutputRange, class InputRange>
+void copy_vec(OutputRange out, InputRange in) {
+  assert(out.size() >= in.size());
+
+  boost::copy(in, out.begin());
 }
 
 /** pdc_d = pdc_s */
 inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s[i];
+  using Utils::make_const_span;
+  using Utils::make_span;
+
+  copy_vec(make_span(pdc_d, size), make_const_span(pdc_s, size));
+}
+
+template <class OutRange, class InRange1, class InRange2>
+void add_vec(OutRange out, InRange1 in1, InRange2 in2) {
+  assert(in2.size() == out.size());
+  boost::transform(in1, in2, out.begin(), std::plus<>{});
 }
 
 /** pdc_d = pdc_s1 + pdc_s2 */
 inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
                     int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = pdc_s1[i] + pdc_s2[i];
+  using Utils::make_const_span;
+  using Utils::make_span;
+
+  add_vec(make_span(pdc_d, size), make_const_span(pdc_s1, size),
+          make_const_span(pdc_s2, size));
+}
+
+template <class OutRange, class T, class InRange1, class InRange2>
+void addscale_vec(OutRange out, T scale, InRange1 in1, InRange2 in2) {
+  assert(in2.size() == out.size());
+  boost::transform(
+      in1, in2, out.begin(),
+      [scale](auto const &a, auto const &b) { return scale * a + b; });
 }
 
 /** pdc_d = scale*pdc_s1 + pdc_s2 */
 inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
                          double const *pdc_s2, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
+  using Utils::make_const_span;
+  using Utils::make_span;
+
+  addscale_vec(make_span(pdc_d, size), scale, make_const_span(pdc_s1, size),
+               make_const_span(pdc_s2, size));
+}
+
+template <class OutRange, class T> void scale_vec(T scale, OutRange out) {
+  boost::transform(out, out.begin(),
+                   [scale](auto const &e) { return scale * e; });
 }
 
 /** pdc_d = scale*pdc */
 inline void scale_vec(double scale, double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
-    pdc[i] *= scale;
+  scale_vec(scale, Utils::make_span(pdc, size));
 }
 
-/* block indexing - has to fit to the PQ block definitions above.
-   size gives the full size of the data block,
-   e_size is the size of only the top or bottom half, i.e. half of size.
-*/
-
+/** block indexing - has to fit to the PQ block definitions above.
+ *  @p size gives the full size of the data block,
+ *  @p e_size is the size of only the top or bottom half, i.e. half of @p size.
+ */
+/*@{*/
 inline double *block(std::vector<double> &p, int index, int size) {
   return &p[index * size];
 }
@@ -400,9 +424,10 @@ inline double *blwentry(std::vector<double> &p, int index, int e_size) {
 inline double *abventry(std::vector<double> &p, int index, int e_size) {
   return &p[(2 * index + 1) * e_size];
 }
+/*@}*/
 
-/* dealing with the image contributions from far outside the simulation box */
-
+/** dealing with the image contributions from far outside the simulation box */
+/*@{*/
 void clear_image_contributions(int e_size) {
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer
@@ -413,26 +438,29 @@ void clear_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(gblcblk, n_layers - 1, e_size), e_size);
+    clear_vec(abventry(gblcblk, local_cells.n - 1, e_size), e_size);
 }
 
 void gather_image_contributions(int e_size) {
-  double recvbuf[8];
+  Utils::VectorXd<8> recvbuf;
 
   /* collect the image charge contributions with at least a layer distance */
-  MPI_Allreduce(lclimge, recvbuf, 2 * e_size, MPI_DOUBLE, MPI_SUM, comm_cart);
+  boost::mpi::all_reduce(comm_cart, lclimge.data(), 2 * e_size, recvbuf.data(),
+                         std::plus<>{});
 
   if (this_node == 0)
     /* the gblcblk contains all contributions from layers deeper than one layer
        below our system,
        which is precisely what the gblcblk should contain for the lowest layer.
      */
-    copy_vec(blwentry(gblcblk, 0, e_size), recvbuf, e_size);
+    copy_vec(blwentry(gblcblk, 0, e_size), recvbuf.data(), e_size);
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf + e_size, e_size);
+    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size),
+             recvbuf.data() + e_size, e_size);
 }
+/*@}*/
 
 /* the data transfer routine for the lclcblks itself */
 void distribute(int e_size, double fac) {
@@ -447,16 +475,17 @@ void distribute(int e_size, double fac) {
     /* up */
     if (node == this_node) {
       /* calculate sums of cells below */
-      for (c = 1; c < n_layers; c++)
+      for (c = 1; c < local_cells.n; c++)
         addscale_vec(blwentry(gblcblk, c, e_size), fac,
                      blwentry(gblcblk, c - 1, e_size),
                      blwentry(lclcblk, c - 1, e_size), e_size);
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
-        addscale_vec(sendbuf, fac, blwentry(gblcblk, n_layers - 1, e_size),
-                     blwentry(lclcblk, n_layers - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk, n_layers, e_size), e_size);
+        addscale_vec(sendbuf, fac, blwentry(gblcblk, local_cells.n - 1, e_size),
+                     blwentry(lclcblk, local_cells.n - 1, e_size), e_size);
+        copy_vec(sendbuf + e_size, blwentry(lclcblk, local_cells.n, e_size),
+                 e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
     } else if (node + 1 == this_node) {
@@ -468,7 +497,7 @@ void distribute(int e_size, double fac) {
     /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
-      for (c = n_layers + 1; c > 2; c--)
+      for (c = local_cells.n + 1; c > 2; c--)
         addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
                      abventry(gblcblk, c - 2, e_size),
                      abventry(lclcblk, c, e_size), e_size);
@@ -483,79 +512,20 @@ void distribute(int e_size, double fac) {
     } else if (inv_node - 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, inv_node, 0, comm_cart,
                &status);
-      copy_vec(abventry(gblcblk, n_layers - 1, e_size), recvbuf, e_size);
-      copy_vec(abventry(lclcblk, n_layers + 1, e_size), recvbuf + e_size,
+      copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf, e_size);
+      copy_vec(abventry(lclcblk, local_cells.n + 1, e_size), recvbuf + e_size,
                e_size);
     }
   }
 }
-
-#ifdef CHECKPOINTS
-static void checkpoint(char *text, int p, int q, int e_size) {
-  int c, i;
-  fprintf(stderr, "%d: %s %d %d\n", this_node, text, p, q);
-
-  fprintf(stderr, "partblk\n");
-  for (c = 0; c < n_localpart; c++) {
-    fprintf(stderr, "%d", c);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk, c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(partblk, c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n");
-
-  fprintf(stderr, "lclcblk\n");
-  fprintf(stderr, "0");
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g", block(lclcblk, 0, 2 * e_size)[i]);
-  fprintf(stderr, "\n");
-  for (c = 1; c <= n_layers; c++) {
-    fprintf(stderr, "%d", c);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(lclcblk, c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(lclcblk, c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "%d", n_layers + 1);
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, "           ");
-  fprintf(stderr, " m");
-
-  for (i = 0; i < e_size; i++)
-    fprintf(stderr, " %10.3g",
-            block(lclcblk, n_layers + 1, 2 * e_size)[i + e_size]);
-  fprintf(stderr, "\n");
-
-  fprintf(stderr, "gblcblk\n");
-  for (c = 0; c < n_layers; c++) {
-    fprintf(stderr, "%d", c + 1);
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i]);
-    fprintf(stderr, " m");
-    for (i = 0; i < e_size; i++)
-      fprintf(stderr, " %10.3g", block(gblcblk, c, 2 * e_size)[i + e_size]);
-    fprintf(stderr, "\n");
-  }
-  fprintf(stderr, "\n");
-}
-#else
-#define checkpoint(text, p, q, size)
-#endif
 
 /*****************************************************************/
 /* 2 pi (sign)(z) */
 /*****************************************************************/
 
 static void setup_z_force() {
-  int np, c, i;
-  double pref = coulomb.prefactor * C_2PI * ux * uy;
-  Particle *part;
-  int e_size = 1, size = 2;
+  const double pref = coulomb.prefactor * C_2PI * ux * uy;
+  constexpr int e_size = 1, size = 2;
 
   /* there is NO contribution from images here, unlike claimed in Tyagi et al.
      Please refer to the Entropy
@@ -566,36 +536,34 @@ static void setup_z_force() {
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
   /* calculate local cellblks. partblks don't make sense */
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    lclcblk[size * c] = 0;
-    for (i = 0; i < np; i++) {
-      lclcblk[size * c] += part[i].p.q;
-    }
-    lclcblk[size * c] *= pref;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto cell = local_cells[c - 1];
+
+    lclcblk[size * c] = pref * boost::accumulate(cell->particles(), 0.,
+                                                 [](double Q, auto const &p) {
+                                                   return Q + p.p.q;
+                                                 });
+
     lclcblk[size * c + 1] = lclcblk[size * c];
   }
 }
 
 static void add_z_force(const ParticleRange &particles) {
-  double add;
-  double *othcblk;
-  int size = 2;
+  auto constexpr size = 2;
   double field_tot = 0;
 
   /* Const. potential: subtract global dipole moment */
-  if (mmm2d_params.const_pot_on) {
-    double gbl_dm_z = 0;
+  if (mmm2d_params.const_pot) {
     double lcl_dm_z = 0;
     for (auto const &p : particles) {
       lcl_dm_z += p.p.q * (p.r.p[2] + p.l.i[2] * box_geo.length()[2]);
     }
 
+    double gbl_dm_z = 0;
     MPI_Allreduce(&lcl_dm_z, &gbl_dm_z, 1, MPI_DOUBLE, MPI_SUM, comm_cart);
 
     coulomb.field_induced =
@@ -604,25 +572,20 @@ static void add_z_force(const ParticleRange &particles) {
     field_tot = coulomb.field_induced + coulomb.field_applied;
   }
 
-  for (int c = 1; c <= n_layers; c++) {
-    othcblk = block(gblcblk, c - 1, size);
-    add = othcblk[QQEQQP] - othcblk[QQEQQM];
-    auto np = cells[c].n;
-    auto part = cells[c].part;
-    for (int i = 0; i < np; i++) {
-      part[i].f.f[2] += part[i].p.q * (add + field_tot);
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto othcblk = block(gblcblk, c - 1, size);
+    auto const add = othcblk[QQEQQP] - othcblk[QQEQQM];
+    auto cell = local_cells[c - 1];
+
+    for (auto &p : cell->particles()) {
+      p.f.f[2] += p.p.q * (add + field_tot);
     }
   }
 }
 
 static void setup_z_energy() {
-  int np, c, i;
-  double pref = -coulomb.prefactor * C_2PI * ux * uy;
-  Particle *part;
-  int e_size = 2, size = 4;
+  const double pref = -coulomb.prefactor * C_2PI * ux * uy;
+  constexpr int e_size = 2, size = 4;
 
   if (this_node == 0)
     /* the lowest lclcblk does not contain anything, since there are no charges
@@ -631,17 +594,18 @@ static void setup_z_energy() {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
 
   /* calculate local cellblks. partblks don't make sense */
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto cell = local_cells[c - 1];
+
     clear_vec(blwentry(lclcblk, c, e_size), e_size);
-    for (i = 0; i < np; i++) {
-      lclcblk[size * c + ABEQQP] += part[i].p.q;
-      lclcblk[size * c + ABEQZP] += part[i].p.q * part[i].r.p[2];
+    for (auto const &p : cell->particles()) {
+      lclcblk[size * c + ABEQQP] += p.p.q;
+      lclcblk[size * c + ABEQZP] += p.p.q * p.r.p[2];
     }
+
     scale_vec(pref, blwentry(lclcblk, c, e_size), e_size);
     /* just to be able to use the standard distribution. Here below
        and above terms are the same */
@@ -651,23 +615,20 @@ static void setup_z_energy() {
 }
 
 static double z_energy(const ParticleRange &particles) {
-  int np, c, i;
-  Particle *part;
-  double *othcblk;
-  int size = 4;
+  constexpr int size = 4;
   double eng = 0;
-  for (c = 1; c <= n_layers; c++) {
-    othcblk = block(gblcblk, c - 1, size);
-    np = cells[c].n;
-    part = cells[c].part;
-    for (i = 0; i < np; i++) {
-      eng += part[i].p.q * (part[i].r.p[2] * othcblk[ABEQQP] - othcblk[ABEQZP] -
-                            part[i].r.p[2] * othcblk[ABEQQM] + othcblk[ABEQZM]);
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto othcblk = block(gblcblk, c - 1, size);
+    auto cell = local_cells[c - 1];
+
+    for (auto const &p : cell->particles()) {
+      eng += p.p.q * (p.r.p[2] * othcblk[ABEQQP] - othcblk[ABEQZP] -
+                      p.r.p[2] * othcblk[ABEQQM] + othcblk[ABEQZM]);
     }
   }
 
   /* total dipole moment term, for capacitor feature */
-  if (mmm2d_params.const_pot_on) {
+  if (mmm2d_params.const_pot) {
     double gbl_dm_z = 0;
     double lcl_dm_z = 0;
 
@@ -687,104 +648,101 @@ static double z_energy(const ParticleRange &particles) {
   return eng;
 }
 
-static void setup(int p, double omega, double fac, int n_sccache,
-                  Utils::Span<const SCCache> sccache) {
-  int np, c, i, ic, o = (p - 1) * n_localpart;
-  Particle *part;
-  double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
-  double h = box_geo.length()[2];
-  double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
-  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
-  double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
-  double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
-  double layer_top;
-  double e, e_di_l, e_di_h;
-  double *llclcblk;
-  double *lclimgebot = nullptr, *lclimgetop = nullptr;
-  int e_size = 2, size = 4;
+static void setup(int p, double omega, double fac,
+                  Utils::Span<const SCCache> sccache, const int n_localpart) {
+  auto const o = (p - 1) * n_localpart;
+  const double pref = coulomb.prefactor * 4 * M_PI * ux * uy * fac * fac;
+  const double h = box_geo.length()[2];
+  const double fac_imgsum =
+      1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
+  const double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
+  const double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
+  const double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
+  constexpr int e_size = 2, size = 4;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    clear_vec(lclimge.data(), size);
 
   if (this_node == 0) {
     /* on the lowest node, clear the lclcblk below, which only contains the
        images of the lowest layer
        if there is dielectric contrast, otherwise it is empty */
-    lclimgebot = block(lclcblk, 0, size);
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    lclimgetop = block(lclcblk, n_layers + 1, size);
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
-  layer_top = local_geo.my_left()[2] + layer_h;
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    llclcblk = block(lclcblk, c, size);
+  auto layer_top = local_geo.my_left()[2] + layer_h;
+  int ic = 0;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
-    for (i = 0; i < np; i++) {
-      e = exp(omega * (part[i].r.p[2] - layer_top));
+    auto cell = local_cells[c - 1];
+    for (auto const &p : cell->particles()) {
+      auto const e = exp(omega * (p.r.p[2] - layer_top));
 
-      partblk[size * ic + POQESM] = part[i].p.q * sccache[o + ic].s / e;
-      partblk[size * ic + POQESP] = part[i].p.q * sccache[o + ic].s * e;
-      partblk[size * ic + POQECM] = part[i].p.q * sccache[o + ic].c / e;
-      partblk[size * ic + POQECP] = part[i].p.q * sccache[o + ic].c * e;
+      partblk[size * ic + POQESM] = p.p.q * sccache[o + ic].s / e;
+      partblk[size * ic + POQESP] = p.p.q * sccache[o + ic].s * e;
+      partblk[size * ic + POQECM] = p.p.q * sccache[o + ic].c / e;
+      partblk[size * ic + POQECP] = p.p.q * sccache[o + ic].c * e;
 
       /* take images due to different dielectric constants into account */
       if (mmm2d_params.dielectric_contrast_on) {
+        double e_di_l;
         if (c == 1 && this_node == 0) {
           /* There are image charges at -(2h+z) and -(2h-z) etc. layer_h
              included due to the shift in z */
-          e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
+          e_di_l = (exp(omega * (-p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_bot +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
-          e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
-
-          lclimgebot[POQESP] += part[i].p.q * sccache[o + ic].s * e;
-          lclimgebot[POQECP] += part[i].p.q * sccache[o + ic].c * e;
-        } else
+          auto const e = exp(omega * (-p.r.p[2])) * mmm2d_params.delta_mid_bot;
+          auto lclimgebot = block(lclcblk, 0, size);
+          lclimgebot[POQESP] += p.p.q * sccache[o + ic].s * e;
+          lclimgebot[POQECP] += p.p.q * sccache[o + ic].c * e;
+        } else {
           /* There are image charges at -(z) and -(2h-z) etc. layer_h included
            * due to the shift in z */
-          e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
+          e_di_l = (exp(omega * (-p.r.p[2] + layer_h)) +
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
+        }
 
-        if (c == n_layers && this_node == n_nodes - 1) {
+        double e_di_h;
+        if (c == local_cells.n && this_node == n_nodes - 1) {
           /* There are image charges at (3h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
-          e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
+          e_di_h = (exp(omega * (p.r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
 
           /* There are image charges at (h-z) layer_h included due to the shift
            * in z */
-          e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
-              mmm2d_params.delta_mid_top;
+          auto e = exp(omega * (p.r.p[2] - h + layer_h)) *
+                   mmm2d_params.delta_mid_top;
 
-          lclimgetop[POQESM] += part[i].p.q * sccache[o + ic].s * e;
-          lclimgetop[POQECM] += part[i].p.q * sccache[o + ic].c * e;
+          auto lclimgetop = block(lclcblk, local_cells.n + 1, size);
+          lclimgetop[POQESM] += p.p.q * sccache[o + ic].s * e;
+          lclimgetop[POQECM] += p.p.q * sccache[o + ic].c * e;
         } else
           /* There are image charges at (h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
-          e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
+          e_di_h = (exp(omega * (p.r.p[2] - h + 2 * layer_h)) +
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
 
-        lclimge[POQESP] += part[i].p.q * sccache[o + ic].s * e_di_l;
-        lclimge[POQECP] += part[i].p.q * sccache[o + ic].c * e_di_l;
-        lclimge[POQESM] += part[i].p.q * sccache[o + ic].s * e_di_h;
-        lclimge[POQECM] += part[i].p.q * sccache[o + ic].c * e_di_h;
+        lclimge[POQESP] += p.p.q * sccache[o + ic].s * e_di_l;
+        lclimge[POQECP] += p.p.q * sccache[o + ic].c * e_di_l;
+        lclimge[POQESM] += p.p.q * sccache[o + ic].s * e_di_h;
+        lclimge[POQECM] += p.p.q * sccache[o + ic].c * e_di_h;
       }
 
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
@@ -797,11 +755,11 @@ static void setup(int p, double omega, double fac, int n_sccache,
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    scale_vec(pref, lclimge.data(), size);
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 }
 
@@ -809,36 +767,31 @@ static void setup(int p, double omega, double fac, int n_sccache,
 /* PoQ exp sum */
 /*****************************************************************/
 static void setup_P(int p, double omega, double fac) {
-  setup(p, omega, fac, n_scxcache, scxcache);
+  setup(p, omega, fac, scxcache, n_localpart);
 }
 
 /* compare setup_P */
 static void setup_Q(int q, double omega, double fac) {
-  setup(q, omega, fac, n_scycache, scycache);
+  setup(q, omega, fac, scycache, n_localpart);
 }
 
 template <size_t dir> static void add_force() {
   constexpr const auto size = 4;
 
   auto ic = 0;
-  for (int c = 1; c <= n_layers; c++) {
-    auto const np = cells[c].n;
-    auto const part = cells[c].part;
-    auto const othcblk = block(gblcblk, c - 1, size);
+  for (int c = 0; c < local_cells.n; c++) {
+    auto const othcblk = block(gblcblk, c, size);
 
-    for (int i = 0; i < np; i++) {
-      part[i].f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
-                          partblk[size * ic + POQECM] * othcblk[POQESP] +
-                          partblk[size * ic + POQESP] * othcblk[POQECM] -
-                          partblk[size * ic + POQECP] * othcblk[POQESM];
-      part[i].f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
-                        partblk[size * ic + POQESM] * othcblk[POQESP] -
-                        partblk[size * ic + POQECP] * othcblk[POQECM] -
-                        partblk[size * ic + POQESP] * othcblk[POQESM];
-
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+    auto cell = local_cells[c];
+    for (auto &p : cell->particles()) {
+      p.f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
+                    partblk[size * ic + POQECM] * othcblk[POQESP] +
+                    partblk[size * ic + POQESP] * othcblk[POQECM] -
+                    partblk[size * ic + POQECP] * othcblk[POQESM];
+      p.f.f[2] += partblk[size * ic + POQECM] * othcblk[POQECP] +
+                  partblk[size * ic + POQESM] * othcblk[POQESP] -
+                  partblk[size * ic + POQECP] * othcblk[POQECM] -
+                  partblk[size * ic + POQESP] * othcblk[POQESM];
       ic++;
     }
   }
@@ -848,17 +801,15 @@ static void add_P_force() { add_force<0>(); }
 static void add_Q_force() { add_force<1>(); }
 
 static double P_energy(double omega) {
-  int np, c, i, ic;
-  double *othcblk;
-  int size = 4;
+  const int size = 4;
   double eng = 0;
   double pref = 1 / omega;
 
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    othcblk = block(gblcblk, c - 1, size);
-    for (i = 0; i < np; i++) {
+  auto ic = 0;
+  for (int c = 0; c < local_cells.n; c++) {
+    auto const othcblk = block(gblcblk, c, size);
+    auto cell = local_cells[c];
+    for (int i = 0; i < cell->particles().size(); i++) {
       eng += pref * (partblk[size * ic + POQECM] * othcblk[POQECP] +
                      partblk[size * ic + POQESM] * othcblk[POQESP] +
                      partblk[size * ic + POQECP] * othcblk[POQECM] +
@@ -870,18 +821,16 @@ static double P_energy(double omega) {
 }
 
 static double Q_energy(double omega) {
-  int np, c, i, ic;
-  double *othcblk;
-  int size = 4;
+  constexpr int size = 4;
   double eng = 0;
-  double pref = 1 / omega;
+  const double pref = 1 / omega;
 
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    othcblk = block(gblcblk, c - 1, size);
+  auto ic = 0;
+  for (int c = 0; c < local_cells.n; c++) {
+    auto cell = local_cells[c];
+    auto othcblk = block(gblcblk, c, size);
 
-    for (i = 0; i < np; i++) {
+    for (int i = 0; i < cell->particles().size(); i++) {
       eng += pref * (partblk[size * ic + POQECM] * othcblk[POQECP] +
                      partblk[size * ic + POQESM] * othcblk[POQESP] +
                      partblk[size * ic + POQECP] * othcblk[POQECM] +
@@ -897,127 +846,129 @@ static double Q_energy(double omega) {
 /*****************************************************************/
 
 /* compare setup_P */
-static void setup_PQ(int p, int q, double omega, double fac) {
-  int np, c, i, ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
+static void setup_PQ(int p, int q, double omega, double fac,
+                     const int n_localpart) {
+  int np, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
   Particle *part;
-  double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
-  double h = box_geo.length()[2];
-  double fac_imgsum = 1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
-  double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
-  double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
-  double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
-  double layer_top;
-  double e, e_di_l, e_di_h;
-  double *llclcblk;
-  double *lclimgebot = nullptr, *lclimgetop = nullptr;
-  int e_size = 4, size = 8;
+  const double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
+  const double h = box_geo.length()[2];
+  const double fac_imgsum =
+      1 / (1 - mmm2d_params.delta_mult * exp(-omega * 2 * h));
+  const double fac_delta_mid_bot = mmm2d_params.delta_mid_bot * fac_imgsum;
+  const double fac_delta_mid_top = mmm2d_params.delta_mid_top * fac_imgsum;
+  const double fac_delta = mmm2d_params.delta_mult * fac_imgsum;
+  constexpr int e_size = 4, size = 8;
 
   if (mmm2d_params.dielectric_contrast_on)
-    clear_vec(lclimge, size);
+    clear_vec(lclimge.data(), size);
 
   if (this_node == 0) {
-    lclimgebot = block(lclcblk, 0, size);
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    lclimgetop = block(lclcblk, n_layers + 1, size);
-    clear_vec(abventry(lclcblk, n_layers + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 
-  layer_top = local_geo.my_left()[2] + layer_h;
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    llclcblk = block(lclcblk, c, size);
+  auto layer_top = local_geo.my_left()[2] + layer_h;
+  int ic = 0;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto const llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
-    for (i = 0; i < np; i++) {
-      e = exp(omega * (part[i].r.p[2] - layer_top));
+    auto cell = local_cells[c - 1];
+    for (auto const &p : cell->particles()) {
+      auto const e = exp(omega * (p.r.p[2] - layer_top));
 
       partblk[size * ic + PQESSM] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q / e;
+          scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q / e;
       partblk[size * ic + PQESCM] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q / e;
+          scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q / e;
       partblk[size * ic + PQECSM] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q / e;
+          scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q / e;
       partblk[size * ic + PQECCM] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q / e;
+          scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q / e;
 
       partblk[size * ic + PQESSP] =
-          scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+          scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e;
       partblk[size * ic + PQESCP] =
-          scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+          scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e;
       partblk[size * ic + PQECSP] =
-          scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+          scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e;
       partblk[size * ic + PQECCP] =
-          scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
+          scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e;
 
       if (mmm2d_params.dielectric_contrast_on) {
+        double e_di_l;
         if (c == 1 && this_node == 0) {
-          e_di_l = (exp(omega * (-part[i].r.p[2] - 2 * h + layer_h)) *
+          e_di_l = (exp(omega * (-p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_bot +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h))) *
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h))) *
                    fac_delta;
 
-          e = exp(omega * (-part[i].r.p[2])) * mmm2d_params.delta_mid_bot;
+          auto const e_di =
+              exp(omega * (-p.r.p[2])) * mmm2d_params.delta_mid_bot;
 
+          auto const lclimgebot = block(lclcblk, 0, size);
           lclimgebot[PQESSP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di;
           lclimgebot[PQESCP] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di;
           lclimgebot[PQECSP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di;
           lclimgebot[PQECCP] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
-        } else
-          e_di_l = (exp(omega * (-part[i].r.p[2] + layer_h)) +
-                    exp(omega * (part[i].r.p[2] - 2 * h + layer_h)) *
+              scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di;
+        } else {
+          e_di_l = (exp(omega * (-p.r.p[2] + layer_h)) +
+                    exp(omega * (p.r.p[2] - 2 * h + layer_h)) *
                         mmm2d_params.delta_mid_top) *
                    fac_delta_mid_bot;
+        }
 
-        if (c == n_layers && this_node == n_nodes - 1) {
-          e_di_h = (exp(omega * (part[i].r.p[2] - 3 * h + 2 * layer_h)) *
+        double e_di_h;
+        if (c == local_cells.n && this_node == n_nodes - 1) {
+          e_di_h = (exp(omega * (p.r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h))) *
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h))) *
                    fac_delta;
 
-          e = exp(omega * (part[i].r.p[2] - h + layer_h)) *
-              mmm2d_params.delta_mid_top;
+          auto const e_di = exp(omega * (p.r.p[2] - h + layer_h)) *
+                            mmm2d_params.delta_mid_top;
 
+          auto const lclimgetop = block(lclcblk, local_cells.n + 1, size);
           lclimgetop[PQESSM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di;
           lclimgetop[PQESCM] +=
-              scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e;
+              scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di;
           lclimgetop[PQECSM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e;
+              scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di;
           lclimgetop[PQECCM] +=
-              scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e;
-        } else
-          e_di_h = (exp(omega * (part[i].r.p[2] - h + 2 * layer_h)) +
-                    exp(omega * (-part[i].r.p[2] - h + 2 * layer_h)) *
+              scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di;
+        } else {
+          e_di_h = (exp(omega * (p.r.p[2] - h + 2 * layer_h)) +
+                    exp(omega * (-p.r.p[2] - h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_bot) *
                    fac_delta_mid_top;
+        }
 
         lclimge[PQESSP] +=
-            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di_l;
         lclimge[PQESCP] +=
-            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di_l;
         lclimge[PQECSP] +=
-            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di_l;
         lclimge[PQECCP] +=
-            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_l;
+            scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di_l;
 
         lclimge[PQESSM] +=
-            scxcache[ox + ic].s * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di_h;
         lclimge[PQESCM] +=
-            scxcache[ox + ic].s * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].s * scycache[oy + ic].c * p.p.q * e_di_h;
         lclimge[PQECSM] +=
-            scxcache[ox + ic].c * scycache[oy + ic].s * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].s * p.p.q * e_di_h;
         lclimge[PQECCM] +=
-            scxcache[ox + ic].c * scycache[oy + ic].c * part[i].p.q * e_di_h;
+            scxcache[ox + ic].c * scycache[oy + ic].c * p.p.q * e_di_h;
       }
 
       add_vec(llclcblk, llclcblk, block(partblk, ic, size), size);
@@ -1030,60 +981,50 @@ static void setup_PQ(int p, int q, double omega, double fac) {
   }
 
   if (mmm2d_params.dielectric_contrast_on) {
-    scale_vec(pref, lclimge, size);
+    scale_vec(pref, lclimge.data(), size);
 
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, n_layers + 1, e_size), e_size);
+      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
   }
 }
 
 static void add_PQ_force(int p, int q, double omega) {
-  int np, c, i, ic;
-  Particle *part;
-  double pref_x = C_2PI * ux * p / omega;
-  double pref_y = C_2PI * uy * q / omega;
-  double *othcblk;
-  int size = 8;
+  const double pref_x = C_2PI * ux * p / omega;
+  const double pref_y = C_2PI * uy * q / omega;
+  constexpr int size = 8;
 
-  ic = 0;
-  for (c = 1; c <= n_layers; c++) {
-    np = cells[c].n;
-    part = cells[c].part;
-    othcblk = block(gblcblk, c - 1, size);
+  int ic = 0;
+  for (int c = 1; c <= local_cells.n; c++) {
+    auto othcblk = block(gblcblk, c - 1, size);
 
-    for (i = 0; i < np; i++) {
-      part[i].f.f[0] +=
-          pref_x * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
-                    partblk[size * ic + PQESSM] * othcblk[PQECSP] -
-                    partblk[size * ic + PQECCM] * othcblk[PQESCP] -
-                    partblk[size * ic + PQECSM] * othcblk[PQESSP] +
-                    partblk[size * ic + PQESCP] * othcblk[PQECCM] +
-                    partblk[size * ic + PQESSP] * othcblk[PQECSM] -
-                    partblk[size * ic + PQECCP] * othcblk[PQESCM] -
-                    partblk[size * ic + PQECSP] * othcblk[PQESSM]);
-      part[i].f.f[1] +=
-          pref_y * (partblk[size * ic + PQECSM] * othcblk[PQECCP] +
-                    partblk[size * ic + PQESSM] * othcblk[PQESCP] -
-                    partblk[size * ic + PQECCM] * othcblk[PQECSP] -
-                    partblk[size * ic + PQESCM] * othcblk[PQESSP] +
-                    partblk[size * ic + PQECSP] * othcblk[PQECCM] +
-                    partblk[size * ic + PQESSP] * othcblk[PQESCM] -
-                    partblk[size * ic + PQECCP] * othcblk[PQECSM] -
-                    partblk[size * ic + PQESCP] * othcblk[PQESSM]);
-      part[i].f.f[2] += (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
-                         partblk[size * ic + PQECSM] * othcblk[PQECSP] +
-                         partblk[size * ic + PQESCM] * othcblk[PQESCP] +
-                         partblk[size * ic + PQESSM] * othcblk[PQESSP] -
-                         partblk[size * ic + PQECCP] * othcblk[PQECCM] -
-                         partblk[size * ic + PQECSP] * othcblk[PQECSM] -
-                         partblk[size * ic + PQESCP] * othcblk[PQESCM] -
-                         partblk[size * ic + PQESSP] * othcblk[PQESSM]);
-
-      LOG_FORCES(fprintf(stderr, "%d: part %d force %10.3g %10.3g %10.3g\n",
-                         this_node, part[i].p.identity, part[i].f.f[0],
-                         part[i].f.f[1], part[i].f.f[2]));
+    auto cell = local_cells[c - 1];
+    for (auto &p : cell->particles()) {
+      p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
+                            partblk[size * ic + PQESSM] * othcblk[PQECSP] -
+                            partblk[size * ic + PQECCM] * othcblk[PQESCP] -
+                            partblk[size * ic + PQECSM] * othcblk[PQESSP] +
+                            partblk[size * ic + PQESCP] * othcblk[PQECCM] +
+                            partblk[size * ic + PQESSP] * othcblk[PQECSM] -
+                            partblk[size * ic + PQECCP] * othcblk[PQESCM] -
+                            partblk[size * ic + PQECSP] * othcblk[PQESSM]);
+      p.f.f[1] += pref_y * (partblk[size * ic + PQECSM] * othcblk[PQECCP] +
+                            partblk[size * ic + PQESSM] * othcblk[PQESCP] -
+                            partblk[size * ic + PQECCM] * othcblk[PQECSP] -
+                            partblk[size * ic + PQESCM] * othcblk[PQESSP] +
+                            partblk[size * ic + PQECSP] * othcblk[PQECCM] +
+                            partblk[size * ic + PQESSP] * othcblk[PQESCM] -
+                            partblk[size * ic + PQECCP] * othcblk[PQECSM] -
+                            partblk[size * ic + PQESCP] * othcblk[PQESSM]);
+      p.f.f[2] += (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
+                   partblk[size * ic + PQECSM] * othcblk[PQECSP] +
+                   partblk[size * ic + PQESCM] * othcblk[PQESCP] +
+                   partblk[size * ic + PQESSM] * othcblk[PQESSP] -
+                   partblk[size * ic + PQECCP] * othcblk[PQECCM] -
+                   partblk[size * ic + PQECSP] * othcblk[PQECSM] -
+                   partblk[size * ic + PQESCP] * othcblk[PQESCM] -
+                   partblk[size * ic + PQESSP] * othcblk[PQESSM]);
       ic++;
     }
   }
@@ -1095,9 +1036,9 @@ static double PQ_energy(double omega) {
   double pref = 1 / omega;
 
   int ic = 0;
-  for (int c = 1; c <= n_layers; c++) {
-    int np = cells[c].n;
-    double *othcblk = block(gblcblk, c - 1, size);
+  for (int c = 1; c <= local_cells.n; c++) {
+    int np = local_cells[c - 1]->particles().size();
+    auto const *othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
       eng += pref * (partblk[size * ic + PQECCM] * othcblk[PQECCP] +
@@ -1132,7 +1073,6 @@ static void add_force_contribution(int p, int q,
       distribute(1, 1.);
 
       add_z_force(particles);
-      checkpoint("************2piz", 0, 0, 1);
 
     } else {
       omega = C_2PI * ux * p;
@@ -1144,7 +1084,6 @@ static void add_force_contribution(int p, int q,
         clear_image_contributions(2);
       distribute(2, fac);
       add_P_force();
-      checkpoint("************distri p", p, 0, 2);
     }
   } else if (p == 0) {
     omega = C_2PI * uy * q;
@@ -1156,18 +1095,16 @@ static void add_force_contribution(int p, int q,
       clear_image_contributions(2);
     distribute(2, fac);
     add_Q_force();
-    checkpoint("************distri q", 0, q, 2);
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
-    setup_PQ(p, q, omega, fac);
+    setup_PQ(p, q, omega, fac, n_localpart);
     if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(4);
     else
       clear_image_contributions(4);
     distribute(4, fac);
     add_PQ_force(p, q, omega);
-    checkpoint("************distri pq", p, q, 4);
   }
 }
 
@@ -1182,7 +1119,6 @@ static double energy_contribution(int p, int q,
       clear_image_contributions(2);
       distribute(2, 1.);
       eng = z_energy(particles);
-      checkpoint("E************2piz", 0, 0, 2);
     } else {
       omega = C_2PI * ux * p;
       fac = exp(-omega * layer_h);
@@ -1193,7 +1129,6 @@ static double energy_contribution(int p, int q,
         clear_image_contributions(2);
       distribute(2, fac);
       eng = P_energy(omega);
-      checkpoint("************distri p", p, 0, 2);
     }
   } else if (p == 0) {
     omega = C_2PI * uy * q;
@@ -1205,50 +1140,53 @@ static double energy_contribution(int p, int q,
       clear_image_contributions(2);
     distribute(2, fac);
     eng = Q_energy(omega);
-    checkpoint("************distri q", 0, q, 2);
   } else {
     omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
     fac = exp(-omega * layer_h);
-    setup_PQ(p, q, omega, fac);
+    setup_PQ(p, q, omega, fac, n_localpart);
     if (mmm2d_params.dielectric_contrast_on)
       gather_image_contributions(4);
     else
       clear_image_contributions(4);
     distribute(4, fac);
     eng = PQ_energy(omega);
-    checkpoint("************distri pq", p, q, 4);
   }
   return eng;
 }
 
-double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
-  int p, q;
-  double R, dR, q2;
+double MMM2D_add_far(bool calc_forces, bool calc_energies,
+                     const ParticleRange &particles) {
+
+  n_localpart = cells_get_n_particles();
+  n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
+  n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
+
+  partblk.resize(n_localpart * 8);
+  lclcblk.resize(cells.size() * 8);
+  gblcblk.resize(local_cells.n * 8);
 
   // It's not really far...
-  auto eng = e ? self_energy : 0;
+  auto eng = calc_energies ? MMM2D_self_energy(local_cells.particles()) : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5 * eng;
 
   auto undone = std::vector<int>(n_scxcache + 1);
 
-  prepare_scx_cache();
-  prepare_scy_cache();
+  prepare_scx_cache(local_cells.particles());
+  prepare_scy_cache(local_cells.particles());
 
   /* complicated loop. We work through the p,q vectors in rings
      from outside to inside to avoid problems with cancellation */
 
   /* up to which q vector we have to work */
-  for (p = 0; p <= n_scxcache; p++) {
-    if (p == 0)
+  for (int p = 0; p <= n_scxcache; p++) {
+    int q;
+    if (p == 0) {
       q = n_scycache;
-    else {
-      q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
-      if (q2 > 0)
-        q = 1 + (int)ceil(box_geo.length()[1] * sqrt(q2));
-      else
-        q = 1;
+    } else {
+      int const q2 = mmm2d_params.far_cut2 - Utils::sqr(ux * (p - 1));
+      q = 1 + ((q2 > 0) ? (int)ceil(box_geo.length()[1] * sqrt(q2)) : 0);
       /* just to be on the safe side... */
       if (q > n_scycache)
         q = n_scycache;
@@ -1256,31 +1194,29 @@ double MMM2D_add_far(int f, int e, const ParticleRange &particles) {
     undone[p] = q;
   }
 
-  dR = -log(FARRELPREC) / C_2PI * uz;
+  auto const dR = -log(FARRELPREC) / C_2PI * uz;
 
-  for (R = mmm2d_params.far_cut; R > 0; R -= dR) {
-    for (p = n_scxcache; p >= 0; p--) {
+  for (double R = mmm2d_params.far_cut; R > 0; R -= dR) {
+    for (int p = n_scxcache; p >= 0; p--) {
+      int q;
       for (q = undone[p]; q >= 0; q--) {
         if (ux2 * Utils::sqr(p) + uy2 * Utils::sqr(q) < Utils::sqr(R))
           break;
-        if (f)
+        if (calc_forces)
           add_force_contribution(p, q, particles);
-        if (e)
+        if (calc_energies)
           eng += energy_contribution(p, q, particles);
       }
       undone[p] = q;
     }
   }
-  // printf("yyyy\n");
   /* clean up left overs */
-  for (p = n_scxcache; p >= 0; p--) {
-    q = undone[p];
-    // fprintf(stderr, "left over %d\n", q);
+  for (int p = n_scxcache; p >= 0; p--) {
+    int q = undone[p];
     for (; q >= 0; q--) {
-      // printf("xxxxx %d %d\n", p, q);
-      if (f)
+      if (calc_forces)
         add_force_contribution(p, q, particles);
-      if (e)
+      if (calc_energies)
         eng += energy_contribution(p, q, particles);
     }
   }
@@ -1295,14 +1231,10 @@ static int MMM2D_tune_far(double error) {
   do {
     err = exp(-2 * M_PI * mmm2d_params.far_cut * min_far) / min_far *
           (C_2PI * mmm2d_params.far_cut + 2 * (ux + uy) + 1 / min_far);
-    // fprintf(stderr, "far tuning: %f -> %f, %f\n", mmm2d_params.far_cut, err,
-    // min_far);
     mmm2d_params.far_cut += min_inv_boxl;
   } while (err > error && mmm2d_params.far_cut * layer_h < MAXIMAL_FAR_CUT);
   if (mmm2d_params.far_cut * layer_h >= MAXIMAL_FAR_CUT)
     return ERROR_FARC;
-  // fprintf(stderr, "far cutoff %g %g %g\n", mmm2d_params.far_cut, err,
-  // min_far);
   mmm2d_params.far_cut -= min_inv_boxl;
   mmm2d_params.far_cut2 = Utils::sqr(mmm2d_params.far_cut);
   return 0;
@@ -1350,8 +1282,6 @@ static int MMM2D_tune_near(double error) {
   if (P == MAXIMAL_B_CUT)
     return ERROR_BESSEL;
 
-  // fprintf(stderr, "bessel cutoff %d %g\n", P, err);
-
   besselCutoff.resize(P);
   for (p = 1; p < P; p++)
     besselCutoff[p - 1] = (int)floor(((double)P) / (2 * p)) + 1;
@@ -1378,7 +1308,6 @@ static int MMM2D_tune_near(double error) {
   } while (err > 0.1 * part_error && n < MAXIMAL_POLYGAMMA);
   if (n == MAXIMAL_POLYGAMMA)
     return ERROR_POLY;
-  // fprintf(stderr, "polygamma cutoff %d %g\n", n, err);
 
   return 0;
 }
@@ -1483,7 +1412,6 @@ void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
       F[1] += c * k1ySum;
       F[2] += d[2] * c * k1Sum;
     }
-    // fprintf(stderr, " bessel force %f %f %f\n", F[0], F[1], F[2]);
   }
 
   /* complex sum */
@@ -1520,7 +1448,6 @@ void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
       ztn_i = ztn_r * zet2_i + ztn_i * zet2_r;
       ztn_r = tmp_r;
     }
-    // fprintf(stderr, "complex force %f %f %f %d\n", F[0], F[1], F[2], end);
   }
 
   /* psi sum */
@@ -1551,7 +1478,6 @@ void add_mmm2d_coulomb_pair_force(double pref, Utils::Vector3d const &d,
 
       uxrho_2nm2 = uxrho_2n;
     }
-    // fprintf(stderr, "    psi force %f %f %f %d\n", F[0], F[1], F[2], n);
   }
 
   F *= ux;
@@ -1617,7 +1543,6 @@ inline double calc_mmm2d_copy_pair_energy(Utils::Vector3d const &d) {
       c = 4 * cos(freq * d[0]);
       eng += c * k0Sum;
     }
-    // fprintf(stderr, " bessel energy %f\n", eng);
   }
 
   /* complex sum */
@@ -1651,7 +1576,6 @@ inline double calc_mmm2d_copy_pair_energy(Utils::Vector3d const &d) {
       ztn_i = ztn_r * zet2_i + ztn_i * zet2_r;
       ztn_r = tmp_r;
     }
-    // fprintf(stderr, "complex energy %f %d\n", eng, end);
   }
 
   /* psi sum */
@@ -1674,7 +1598,6 @@ inline double calc_mmm2d_copy_pair_energy(Utils::Vector3d const &d) {
         break;
       uxrho_2n *= uxrho2;
     }
-    // fprintf(stderr, "    psi energy %f %d\n", eng, n);
   }
 
   eng *= ux;
@@ -1701,19 +1624,17 @@ double mmm2d_coulomb_pair_energy(double charge_factor,
   return 0.0;
 }
 
-void MMM2D_self_energy(const ParticleRange &particles) {
+double MMM2D_self_energy(const ParticleRange &particles) {
   Utils::Vector3d dv{};
   double seng = coulomb.prefactor * calc_mmm2d_copy_pair_energy(dv);
 
   /* this one gives twice the real self energy, as it is used
      in the far formula which counts everything twice and in
      the end divides by two*/
-
-  auto parts = particles;
-  self_energy = std::accumulate(parts.begin(), parts.end(), 0.0,
-                                [seng](double sum, Particle const &p) {
-                                  return sum + seng * Utils::sqr(p.p.q);
-                                });
+  return std::accumulate(particles.begin(), particles.end(), 0.0,
+                         [seng](double sum, Particle const &p) {
+                           return sum + seng * Utils::sqr(p.p.q);
+                         });
 }
 
 /****************************************
@@ -1721,7 +1642,7 @@ void MMM2D_self_energy(const ParticleRange &particles) {
  ****************************************/
 
 int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
-                     double delta_bot, bool const_pot_on, double pot_diff) {
+                     double delta_bot, bool const_pot, double pot_diff) {
   int err;
 
   if (cell_structure.type != CELL_STRUCTURE_NSQUARE &&
@@ -1731,25 +1652,25 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
 
   mmm2d_params.maxPWerror = maxPWerror;
 
-  if (const_pot_on) {
+  if (const_pot) {
     mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = -1;
     mmm2d_params.delta_mid_bot = -1;
     mmm2d_params.delta_mult = 1;
-    mmm2d_params.const_pot_on = true;
+    mmm2d_params.const_pot = true;
     mmm2d_params.pot_diff = pot_diff;
   } else if (delta_top != 0.0 || delta_bot != 0.0) {
     mmm2d_params.dielectric_contrast_on = true;
     mmm2d_params.delta_mid_top = delta_top;
     mmm2d_params.delta_mid_bot = delta_bot;
     mmm2d_params.delta_mult = delta_top * delta_bot;
-    mmm2d_params.const_pot_on = false;
+    mmm2d_params.const_pot = false;
   } else {
     mmm2d_params.dielectric_contrast_on = false;
     mmm2d_params.delta_mid_top = 0;
     mmm2d_params.delta_mid_bot = 0;
     mmm2d_params.delta_mult = 0;
-    mmm2d_params.const_pot_on = false;
+    mmm2d_params.const_pot = false;
   }
 
   MMM2D_setup_constants();
@@ -1760,7 +1681,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
   /* if we cannot do the far formula, force off */
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
       (cell_structure.type == CELL_STRUCTURE_LAYERED &&
-       n_nodes * n_layers < 3)) {
+       n_nodes * local_cells.n < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
       return ERROR_ICL;
@@ -1769,11 +1690,11 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
     mmm2d_params.far_cut = far_cut;
     mmm2d_params.far_cut2 = Utils::sqr(far_cut);
     if (mmm2d_params.far_cut > 0)
-      mmm2d_params.far_calculated = 0;
+      mmm2d_params.far_calculated = false;
     else {
       if ((err = MMM2D_tune_far(maxPWerror)))
         return err;
-      mmm2d_params.far_calculated = 1;
+      mmm2d_params.far_calculated = true;
     }
   }
 
@@ -1820,7 +1741,7 @@ void MMM2D_init() {
   }
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
       (cell_structure.type == CELL_STRUCTURE_LAYERED &&
-       n_nodes * n_layers < 3)) {
+       n_nodes * local_cells.n < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
       runtimeErrorMsg() << "MMM2D auto-retuning: IC requires layered "
@@ -1837,119 +1758,93 @@ void MMM2D_init() {
   }
 }
 
-void MMM2D_on_resort_particles(const ParticleRange &particles) {
-  /* if we need MMM2D far formula, allocate caches */
-  if (cell_structure.type == CELL_STRUCTURE_LAYERED) {
-    n_localpart = cells_get_n_particles();
-    n_scxcache = (int)(ceil(mmm2d_params.far_cut / ux) + 1);
-    n_scycache = (int)(ceil(mmm2d_params.far_cut / uy) + 1);
-    scxcache.resize(n_scxcache * n_localpart);
-    scycache.resize(n_scycache * n_localpart);
+namespace {
+template <int dir>
+Utils::Vector3d reflect_z(BoxGeometry const &, Utils::Vector3d);
 
-    partblk.resize(n_localpart * 8);
-    lclcblk.resize(cells.size() * 8);
-    gblcblk.resize(n_layers * 8);
-  }
-  MMM2D_self_energy(particles);
+template <>
+Utils::Vector3d reflect_z<-1>(BoxGeometry const &, Utils::Vector3d v) {
+  return {v[0], v[1], -v[2]};
 }
 
+template <>
+Utils::Vector3d reflect_z<1>(BoxGeometry const &box, Utils::Vector3d v) {
+  return {v[0], v[1], 2. * box.length()[2] - v[2]};
+}
+} // namespace
+
 void MMM2D_dielectric_layers_force_contribution() {
-  int c, i, j;
-  Cell *celll;
-  int npl;
-  Particle *pl, *p1;
-  double charge_factor;
-  double a[3];
-  Utils::Vector3d force{};
-  double pref = coulomb.prefactor * C_2PI * ux * uy;
 
   if (!mmm2d_params.dielectric_contrast_on)
     return;
 
+  auto const pref = coulomb.prefactor * C_2PI * ux * uy;
+
   // First and last layer near field force contribution
   if (this_node == 0) {
-    c = 1;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
+    auto cell = local_cells[0];
+    for (auto &p1 : cell->particles()) {
+      Utils::Vector3d force{};
 
-    for (i = 0; i < npl; i++) {
-      // printf("enter mmm2d_dielectric %f \n",my_left[2]);
-      force = {};
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<-1>(box_geo, p2.r.p);
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
-        charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_bot;
+        auto const charge_factor = p1.p.q * p2.p.q * mmm2d_params.delta_mid_bot;
         add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] -= pref * charge_factor;
       }
-      p1->f.f += force;
+
+      p1.f.f += force;
     }
   }
 
   if (this_node == n_nodes - 1) {
+    auto cell = local_cells[local_cells.n - 1];
 
-    c = n_layers;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
-    for (i = 0; i < npl; i++) {
-      force = {};
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_geo.length()[2] - pl[j].r.p[2];
+    for (auto &p1 : cell->particles()) {
+      Utils::Vector3d force{};
+
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<1>(box_geo, p2.r.p);
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p2.r.p.data(), a.data());
         auto const dist2 = d.norm2();
         auto const dist = sqrt(dist2);
-        charge_factor = p1->p.q * pl[j].p.q * mmm2d_params.delta_mid_top;
+        auto const charge_factor = p1.p.q * p2.p.q * mmm2d_params.delta_mid_top;
         add_mmm2d_coulomb_pair_force(charge_factor, d, dist, force);
         /* remove unwanted 2 pi |z| part (cancels due to charge neutrality) */
         force[2] += pref * charge_factor;
       }
-      p1->f.f += force;
+
+      p1.f.f += force;
     }
   }
 }
 
 double MMM2D_dielectric_layers_energy_contribution() {
-  int c, i, j;
-  Cell *celll;
-  int npl;
-  Particle *pl, *p1;
-  double charge_factor;
-  double a[3];
-  double eng = 0.0;
-  double pref = coulomb.prefactor * C_2PI * ux * uy;
-
   if (!mmm2d_params.dielectric_contrast_on)
     return 0.0;
 
-  if (this_node == 0) {
-    c = 1;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
+  auto const pref = coulomb.prefactor * C_2PI * ux * uy;
+  double eng = 0.0;
 
-    for (i = 0; i < npl; i++) {
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = -pl[j].r.p[2];
+  if (this_node == 0) {
+    auto cell = local_cells[0];
+
+    for (auto const &p1 : cell->particles()) {
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<-1>(box_geo, p2.r.p);
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
         auto const dist2 = d.norm2();
-        charge_factor = mmm2d_params.delta_mid_bot * p1->p.q * pl[j].p.q;
+        auto const charge_factor = mmm2d_params.delta_mid_bot * p1.p.q * p2.p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
         eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) +
@@ -1959,20 +1854,16 @@ double MMM2D_dielectric_layers_energy_contribution() {
   }
 
   if (this_node == n_nodes - 1) {
-    c = n_layers;
-    celll = &cells[c];
-    pl = celll->part;
-    npl = celll->n;
-    for (i = 0; i < npl; i++) {
-      p1 = &pl[i];
-      for (j = 0; j < npl; j++) {
-        a[0] = pl[j].r.p[0];
-        a[1] = pl[j].r.p[1];
-        a[2] = 2 * box_geo.length()[2] - pl[j].r.p[2];
+    auto cell = local_cells[local_cells.n - 1];
+
+    for (auto const &p1 : cell->particles()) {
+      for (auto const &p2 : cell->particles()) {
+        auto const a = reflect_z<1>(box_geo, p2.r.p);
+
         Utils::Vector3d d;
-        layered_get_mi_vector(d.data(), p1->r.p.data(), a);
+        layered_get_mi_vector(d.data(), p1.r.p.data(), a.data());
         auto const dist2 = d.norm2();
-        charge_factor = mmm2d_params.delta_mid_top * p1->p.q * pl[j].p.q;
+        auto const charge_factor = mmm2d_params.delta_mid_top * p1.p.q * p2.p.q;
         /* last term removes unwanted 2 pi |z| part (cancels due to charge
          * neutrality) */
         eng += mmm2d_coulomb_pair_energy(charge_factor, d, sqrt(dist2)) -

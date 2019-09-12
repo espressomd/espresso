@@ -167,7 +167,7 @@ typedef struct {
   Cell **part_lists;
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
-     this is the shift vector. Normally this a integer multiple of the box
+     this is the shift vector. Normally this is an integer multiple of the box
      length. The shift is done on the sender side */
   Utils::Vector3d shift;
 } GhostCommunication;

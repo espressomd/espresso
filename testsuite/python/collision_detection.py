@@ -73,7 +73,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(self.s.collision_detection.mode, "off")
 
     def test_bind_centers(self):
-        # Check that it leaves particles alone, wehn off
+        # Check that it leaves particles alone, when off
         self.s.collision_detection.set_params(mode="off")
 
         self.s.part.clear()
@@ -153,7 +153,7 @@ class CollisionDetection(ut.TestCase):
         # From the two vs we find the two non-virtual particles
         for p in self.s.part:
             # Skip non-virtual
-            if p.virtual == 0:
+            if not p.virtual:
                 continue
             # Skip vs that doesn't have a bond
             if p.bonds == ():
@@ -165,7 +165,7 @@ class CollisionDetection(ut.TestCase):
             # get partner
             p2 = self.s.part[p.bonds[0][1]]
             # Is that really a vs
-            self.assertEqual(p2.virtual, 1)
+            self.assertEqual(p2.virtual, True)
             # Get base particles
             base_p1 = self.s.part[p.vs_relative[0]]
             base_p2 = self.s.part[p2.vs_relative[0]]
@@ -176,7 +176,7 @@ class CollisionDetection(ut.TestCase):
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
         p = self.s.part[parts_not_accounted_for[0]]
-        self.assertEqual(p.virtual, 0)
+        self.assertEqual(p.virtual, False)
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
         self.assertEqual(parts_not_accounted_for, [])
@@ -187,14 +187,14 @@ class CollisionDetection(ut.TestCase):
         self.assertTrue(p1.bonds == bond_p1 or p2.bonds == bond_p2)
 
         # Check for presence of vs
-        # Check for bond betwen vs
+        # Check for bond between vs
         bond_vs1 = ((self.s.bonded_inter[1], vs2.id),)
         bond_vs2 = ((self.s.bonded_inter[1], vs1.id),)
         self.assertTrue(vs1.bonds == bond_vs1 or vs2.bonds == bond_vs2)
 
         # Vs properties
-        self.assertEqual(vs1.virtual, 1)
-        self.assertEqual(vs2.virtual, 1)
+        self.assertEqual(vs1.virtual, True)
+        self.assertEqual(vs2.virtual, True)
 
         # vs_relative properties
         seen = []
@@ -280,8 +280,8 @@ class CollisionDetection(ut.TestCase):
         self.s.integrator.run(5000)
 
         # Analysis
-        virtual_sites = self.s.part.select(virtual=1)
-        non_virtual = self.s.part.select(virtual=0)
+        virtual_sites = self.s.part.select(virtual=True)
+        non_virtual = self.s.part.select(virtual=False)
 
         # Check bonds on non-virtual particles
         bonds = []
@@ -320,12 +320,8 @@ class CollisionDetection(ut.TestCase):
             self.assertTrue(base_particles in bonds)
 
         # Tidy
-        self.s.non_bonded_inter[
-            0,
-            0].lennard_jones.set_params(
-                epsilon=0,
-                sigma=0,
-         cutoff=0)
+        self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=0, sigma=0, cutoff=0)
 
     def run_test_glue_to_surface_for_pos(self, *positions):
         positions = list(positions)
@@ -375,10 +371,10 @@ class CollisionDetection(ut.TestCase):
         parts_not_accounted_for = list(range(expected_np))
 
         # We traverse particles. We look for a vs, get base particle from there
-        # and prtner particle via bonds
+        # and partner particle via bonds
         for p in self.s.part:
             # Skip non-virtual
-            if p.virtual == 0:
+            if not p.virtual:
                 continue
             # The vs shouldn't have bonds
             self.assertEqual(p.bonds, ())
@@ -413,7 +409,7 @@ class CollisionDetection(ut.TestCase):
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
         p = self.s.part[parts_not_accounted_for[0]]
-        self.assertEqual(p.virtual, 0)
+        self.assertEqual(p.virtual, False)
         self.assertEqual(p.type, self.other_type)
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
@@ -438,7 +434,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(vs.bonds, ())
 
         # Vs properties
-        self.assertEqual(vs.virtual, 1)
+        self.assertEqual(vs.virtual, True)
         self.assertEqual(vs.vs_relative[0], base_p.id)
 
         # Distance vs,bound_p
@@ -492,7 +488,7 @@ class CollisionDetection(ut.TestCase):
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
 
-        # Remove overalp between particles
+        # Remove overlap between particles
         self.s.integrator.set_steepest_descent(
             f_max=0,
             gamma=1,
@@ -510,8 +506,8 @@ class CollisionDetection(ut.TestCase):
         self.s.integrator.run(500)
 
         # Analysis
-        virtual_sites = self.s.part.select(virtual=1)
-        non_virtual = self.s.part.select(virtual=0)
+        virtual_sites = self.s.part.select(virtual=True)
+        non_virtual = self.s.part.select(virtual=False)
         to_be_glued = self.s.part.select(type=self.part_type_to_be_glued)
         after_glueing = self.s.part.select(type=self.part_type_after_glueing)
 
@@ -579,12 +575,8 @@ class CollisionDetection(ut.TestCase):
             self.assertEqual(p.type, self.part_type_vs)
 
         # Tidy
-        self.s.non_bonded_inter[
-            0,
-            0].lennard_jones.set_params(
-                epsilon=0,
-                sigma=0,
-         cutoff=0)
+        self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=0, sigma=0, cutoff=0)
 
     def test_bind_three_particles(self):
         # Setup particles
@@ -614,7 +606,7 @@ class CollisionDetection(ut.TestCase):
             mode="bind_three_particles", bond_centers=self.H,
                                               bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
         self.get_state_set_state_consistency()
-        
+
         self.s.time_step = 1E-6
         self.s.integrator.run(1, recalc_forces=True)
         self.verify_triangle_binding(cutoff, self.s.bonded_inter[2], res)

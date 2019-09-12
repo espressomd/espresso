@@ -30,9 +30,7 @@
 
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
@@ -157,7 +155,7 @@ int iccp3m_iteration(const ParticleRange &particles,
 
         /* check if the charge now is more than 1e6, to determine if ICC still
          * leads to reasonable results */
-        /* this is kind a arbitrary measure but, does a good job spotting
+        /* this is kind of an arbitrary measure but does a good job spotting
          * divergence !*/
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()

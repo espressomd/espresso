@@ -59,8 +59,8 @@ extern double skin;
 /** True iff the user has changed the skin setting. */
 extern bool skin_set;
 
-/** If non-zero, the forces will be recalculated before the next integration. */
-extern int recalc_forces;
+/** If true, the forces will be recalculated before the next integration. */
+extern bool recalc_forces;
 /** Average number of integration steps the Verlet list has been re
     used. */
 extern double verlet_reuse;

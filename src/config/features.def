@@ -84,17 +84,17 @@ MORSE
 BUCKINGHAM
 SOFT_SPHERE
 HAT
-UMBRELLA                           requires EXPERIMENTAL_FEATURES 
+UMBRELLA                           requires EXPERIMENTAL_FEATURES
 GAY_BERNE                       implies ROTATION
-GAY_BERNE                       requires EXPERIMENTAL_FEATURES
+GAY_BERNE
 OVERLAPPED
 THOLE                           requires ELECTROSTATICS
 
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES
 OIF_GLOBAL_FORCES
-AFFINITY
-MEMBRANE_COLLISION
+AFFINITY requires EXPERIMENTAL_FEATURES
+MEMBRANE_COLLISION requires EXPERIMENTAL_FEATURES
 
 /* Immersed-Boundary Bayreuth version */
 SCAFACOS_DIPOLES                requires SCAFACOS
@@ -109,18 +109,6 @@ NO_INTRA_NB                     notest
 
 /* Debugging */
 ADDITIONAL_CHECKS
-
-COMM_DEBUG
-EVENT_DEBUG
-CELL_DEBUG
-GHOST_DEBUG
-HALO_DEBUG
-P3M_DEBUG
-THERMO_DEBUG
-VIRTUAL_SITES_DEBUG
-CUDA_DEBUG
-H5MD_DEBUG
-
 
 # External switches
 # Switches that are set by configure or gcc, not to be set manually

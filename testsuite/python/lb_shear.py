@@ -34,7 +34,7 @@ VISC = 3.2
 DENS = 2.3
 TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
-# The number of grid cells should be devisible by four and 3 in all directions
+# The number of grid cells should be divisible by four and 3 in all directions
 # for testing on multiple mpi nodes.
 H = 12 * AGRID 
 W = 6 * AGRID  

@@ -21,12 +21,10 @@
 #ifndef CORE_THERMOSTAT_HPP
 #define CORE_THERMOSTAT_HPP
 /** \file
-
-*/
+ */
 
 #include "config.hpp"
 
-#include "debug.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
 #include "random.hpp"
@@ -42,10 +40,9 @@
 #include <tuple>
 #include <utils/math/rotation_matrix.hpp>
 
-/** \name Thermostat switches*/
+/** \name Thermostat switches */
 /************************************************************/
 /*@{*/
-
 #define THERMO_OFF 0
 #define THERMO_LANGEVIN 1
 #define THERMO_DPD 2
@@ -87,10 +84,10 @@ extern Thermostat::GammaType langevin_gamma;
 extern Thermostat::GammaType langevin_gamma_rotation;
 
 /** Friction coefficient for nptiso-thermostat's inline-function
- * friction_therm0_nptiso */
+ *  friction_therm0_nptiso */
 extern double nptiso_gamma0;
 /** Friction coefficient for nptiso-thermostat's inline-function
- * friction_thermV_nptiso */
+ *  friction_thermV_nptiso */
 extern double nptiso_gammav;
 
 extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
@@ -102,7 +99,7 @@ extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 /** only require seed if rng is not initialized */
 bool langevin_is_seed_required();
 
-/** philox functiontality: increment, get/set */
+/** philox functionality: increment, get/set */
 void langevin_rng_counter_increment();
 void langevin_set_rng_state(uint64_t counter);
 uint64_t langevin_get_rng_state();
@@ -112,13 +109,11 @@ uint64_t langevin_get_rng_state();
 void thermo_init();
 
 /** very nasty: if we recalculate force when leaving/reentering the integrator,
-    a(t) and a((t-dt)+dt) are NOT equal in the vv algorithm. The random
-    numbers are drawn twice, resulting in a different variance of the random
-   force.
+    a(t) and a((t-dt)+dt) are NOT equal in the vv algorithm. The random numbers
+    are drawn twice, resulting in a different variance of the random force.
     This is corrected by additional heat when restarting the integrator here.
     Currently only works for the Langevin thermostat, although probably also
-   others
-    are affected.
+    others are affected.
 */
 void thermo_heat_up();
 
@@ -127,10 +122,11 @@ void thermo_cool_down();
 
 #ifdef NPT
 /** add velocity-dependent noise and friction for NpT-sims to the particle's
-   velocity
+    velocity
     @param vj     j-component of the velocity
     @return       j-component of the noise added to the velocity, also scaled by
-   dt (contained in prefactors) */
+                  dt (contained in prefactors)
+ */
 inline double friction_therm0_nptiso(double vj) {
   extern double nptiso_pref1, nptiso_pref2;
   if (thermo_switch & THERMO_NPT_ISO) {
@@ -143,7 +139,7 @@ inline double friction_therm0_nptiso(double vj) {
 }
 
 /** add p_diff-dependent noise and friction for NpT-sims to \ref
- * nptiso_struct::p_diff */
+ *  nptiso_struct::p_diff */
 inline double friction_thermV_nptiso(double p_diff) {
   extern double nptiso_pref3, nptiso_pref4;
   if (thermo_switch & THERMO_NPT_ISO) {
@@ -159,7 +155,7 @@ inline double friction_thermV_nptiso(double p_diff) {
 /** Return a random 3d vector with the philox thermostat.
     Random numbers depend on
     1. langevin_rng_counter (initialized by seed) which is increased on
-   integration
+       integration
     2. Salt (decorrelates different counter)
     3. Particle ID (decorrelates particles, gets rid of seed-per-node)
 */
@@ -185,7 +181,7 @@ inline Utils::Vector3d v_noise(int particle_id) {
 /** Langevin thermostat core function.
     Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
     Collects the langevin parameters kt, gamma (different for
-   LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
+    LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
 */
 inline Utils::Vector3d friction_thermo_langevin(const Particle *p) {
   // Early exit for virtual particles without thermostat
@@ -199,7 +195,7 @@ inline Utils::Vector3d friction_thermo_langevin(const Particle *p) {
   // first, set defaults
   Thermostat::GammaType langevin_pref_friction_buf = langevin_pref1;
   Thermostat::GammaType langevin_pref_noise_buf = langevin_pref2;
-// Override defaults if per-particle values for T and gamma are given
+  // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   auto const constexpr langevin_temp_coeff = 24.0;
   if (p->p.gamma >= Thermostat::GammaType{}) {
@@ -272,7 +268,7 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
   langevin_pref_friction_buf = langevin_gamma_rotation;
   langevin_pref_noise_buf = langevin_pref2_rotation;
 
-// Override defaults if per-particle values for T and gamma are given
+  // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
   // If a particle-specific gamma is given
   auto const constexpr langevin_temp_coeff = 24.0;
@@ -323,10 +319,6 @@ inline void friction_thermo_langevin_rotation(Particle *p) {
     }
 #endif
   }
-
-  THERMO_TRACE(fprintf(stderr, "%d: Thermo: P %d: force=(%.3e,%.3e,%.3e)\n",
-                       this_node, p->p.identity, p->f.f[0], p->f.f[1],
-                       p->f.f[2]));
 }
 
 #endif // ROTATION

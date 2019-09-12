@@ -69,7 +69,7 @@ public:
   /// For mode "glue to surface": The particle type to which the virtual site is
   /// attached
   int part_type_to_attach_vs_to;
-  /// Particle type to which the newly glued particle is converd
+  /// Particle type to which the newly glued particle is converted
   int part_type_after_glueing;
   /// first bond type (for zero degrees)) used for the three-particle bond
   /// (angle potential)
@@ -93,9 +93,6 @@ extern Collision_parameters collision_params;
     COLLISION_MODE_ERROR|COLLISION_MODE_BOND.
 */
 /*@{*/
-/** raise a background error on collision, to allow further processing in Tcl.
-    Can be combined with a bonding mode, if desired
- */
 
 void prepare_local_collision_queue();
 

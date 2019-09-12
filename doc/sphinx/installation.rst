@@ -177,7 +177,7 @@ Installing python dependencies
 
 There are a few python packages needed to e.g. build the documentation.
 To install the required packages as a non-root user execute the following
-command in |es| 's source directory:
+command in |es|'s source directory:
 
 .. code-block:: bash
 
@@ -190,18 +190,19 @@ Please note that on some systems, ``pip3`` has to be replaced by ``pip`` or ``pi
 Quick installation
 ------------------
 
-If you have installed the requirements (see section :ref:`Requirements
-<requirements>` ) in standard locations, to compile, it is usually enough to
-create a build directory and call ``cmake`` and ``make`` (optional steps
-which modify the build process are commented out).
-To chose the correct Python version, run
+If you have installed the requirements (see section :ref:`Requirements`) in
+standard locations, compiling |es| is usually only a matter of
+creating a build directory and calling ``cmake`` and ``make`` in it.
+To choose the correct Python version, run
 
 .. code-block:: bash
 
     python -V
     python3 -V
 
-This shows which Python version the binaries are for. Then pass the one you'd like to use in the cmake command line, below.
+This shows which Python versions are available on your system. Then pass the
+one you'd like to use (we recommend Python 3) in the ``cmake`` command line,
+shown below (optional steps which modify the build process are commented out).
 
 
 .. code-block:: bash
@@ -215,7 +216,7 @@ This shows which Python version the binaries are for. Then pass the one you'd li
     make
 
 This will build |es| with a default feature set, namely
-:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file,
+:file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
 which defines the features that should be compiled in.
 You may want to adjust the feature set to your needs. This can be easily done
 by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
@@ -269,19 +270,17 @@ Configuring
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
-features, as this will slow down significantly. Instead, compile in only
+features, as this will slow down |es| significantly. Instead, compile in only
 the features that are actually required. A strong gain in speed can be
-achieved, by disabling all non-bonded interactions except for a single
-one, e.g. . For the developers, it is also possible to turn on or off a
+achieved by disabling all non-bonded interactions except for a single
+one, e.g. ``LENNARD_JONES``. For developers, it is also possible to turn on or off a
 number of debugging messages. The features and debug messages can be
 controlled via a configuration header file that contains C-preprocessor
-declarations. Appendix lists and describes all available features. The
-file :file:`myconfig-sample.hpp` that configure will generate in the build
-directory contains a list of all possible features that can be copied
-into your own configuration file. When no configuration header is
-provided by the user, a default header, found in
-:file:`src/core/myconfig-default.hpp`, will be used that turns on the
-default features.
+declarations. Subsection :ref:`Features` describes all available features. If a
+file named :file:`myconfig.hpp` is present in the build directory when ``cmake``
+is run, all features defined in it will be compiled in. If no such file exists,
+the configuration file :file:`src/config/myconfig-default.hpp` will be used
+instead, which turns on the default features.
 
 When you distinguish between the build and the source directory, the
 configuration header can be put in either of these. Note, however, that
@@ -340,7 +339,7 @@ Features
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
-will negatively effect |es| 's performance.
+will negatively effect |es|'s performance.
 
 Features can be activated in the configuration header :file:`myconfig.hpp` (see
 section :ref:`myconfig.hpp\: Activating and deactivating features`). To
@@ -405,8 +404,6 @@ General features
    .. seealso:: :meth:`espressomd.particle_data.ParticleHandle.add_exclusion`
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
-
--  ``MOLFORCES`` (EXPERIMENTAL)
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
@@ -538,47 +535,11 @@ Some of the short-range interactions have additional features:
 Debug messages
 ^^^^^^^^^^^^^^
 
-Finally, there are a number of flags for debugging. The most important
-one are
+Finally, there is a flag for debugging:
 
 -  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
    especially in the cell systems. These checks are however too slow to
    be enabled in production runs.
-
-The following flags control the debug output of various sections of
-|es|. You will however understand the output very often only by
-looking directly at the code.
-
--  ``COMM_DEBUG`` Output from the asynchronous communication code.
-
--  ``EVENT_DEBUG`` Notifications for event calls, i.e. the ``on_...`` functions in
-   ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e.g. global variables.
-
--  ``CELL_DEBUG`` Cellsystem output.
-
--  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
-   ghost cell communication.
-
--  ``HALO_DEBUG``
-
--  ``P3M_DEBUG``
-
--  ``THERMO_DEBUG`` Output from the thermostats.
-
--  ``VIRTUAL_SITES_DEBUG``
-
--  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
-   in the detection of mismatching communication.
-
--  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
-
--  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
-
--  ``CUDA_DEBUG``
-
--  ``H5MD_DEBUG``
-
 
 
 
@@ -748,10 +709,10 @@ Running |es|
 ------------
 
 |es| is implemented as a Python module. This means that you need to write a
-python script for any task you want to perform with . In this chapter,
+python script for any task you want to perform with |es|. In this chapter,
 the basic structure of the interface will be explained. For a practical
 introduction, see the tutorials, which are also part of the
-distribution. To use , you need to import the espressomd module in your
+distribution. To use |es|, you need to import the espressomd module in your
 Python script. To this end, the folder containing the python module
 needs to be in the Python search path. The module is located in the
 src/python folder under the build directory. A convenient way to run
@@ -767,6 +728,54 @@ self built python modules to the systems python interpreter by
 modifying the  ``$PYTHONPATH``.
 Please see the following chapters describing how to actually write
 a simulation script for |es|.
+
+Running the Jupyter interpreter requires using the ipypresso script, which is
+also located in the build directory (its name comes from the IPython
+interpreter, today known as Jupyter). To run the tutorials, you will need
+to start the Jupyter interpreter in notebook mode:
+
+.. code-block:: bash
+
+    cd doc/tutorials
+    ../../ipypresso notebook
+
+You may then browse through the different tutorial folders. Files whose name
+ends with extension .ipynb can be opened in the browser. Click on the Run
+button to execute the current block, or use the keyboard shortcut Shift+Enter.
+If the current block is a code block, the ``In [ ]`` label to the left will
+change to ``In [*]`` while the code is being executed, and become ``In [1]``
+once the execution has completed. The number increments itself every time a
+code cell is executed. This bookeeping is extremely useful when modifying
+previous code cells, as it shows which cells are out-of-date. It's also
+possible to run all cells by clicking on the "Run" drop-down menu, then on
+"Run All Below". This will change all labels to ``In [*]`` to show that the
+first one is running, while the subsequent ones are awaiting execution.
+You'll also see that many cells generate an output. When the output becomes
+very long, Jupyter will automatically put it in a box with a vertical scrollbar.
+The output may also contain static plots, dynamic plots and videos. It is also
+possible to start a 3D visualizer in a new window, however closing the window
+will exit the Python interpreter and Jupyter will notify you that the current
+Python kernel stopped. If a cell takes too long to execute, you may interrupt
+it with the stop button.
+
+To close the Jupyter notebook, go to the terminal where it was started and use
+the keyboard shortcut Ctrl+C twice.
+
+When starting the Jupyter interpreter in notebook mode, you may see the
+following warning in the terminal:
+
+.. code-block:: none
+
+    [TerminalIPythonApp] WARNING | Subcommand `ipython notebook` is deprecated and will be removed in future versions.
+    [TerminalIPythonApp] WARNING | You likely want to use `jupyter notebook` in the future
+
+This only means |es| was compiled with IPython instead of Jupyter. If Jupyter
+is installed on your system, the notebook will automatically close IPython and
+start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
+``-DIPYTHON_EXECUTABLE=$(which jupyter)``.
+
+You can find the official Jupyter documentation at
+https://jupyter.readthedocs.io/en/latest/running.html
 
 .. _Debugging es:
 

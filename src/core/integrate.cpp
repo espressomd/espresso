@@ -88,7 +88,7 @@ double sim_time = 0.0;
 double skin = 0.0;
 bool skin_set = false;
 
-int recalc_forces = 1;
+bool recalc_forces = true;
 
 double verlet_reuse = 0.0;
 
@@ -451,7 +451,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #ifdef ELECTROSTATICS
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If electrostatics is being used you must "
-                         "use the the cubic box npt.";
+                         "use the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
@@ -461,7 +461,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
 #ifdef DIPOLES
   if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
-                         "use the the cubic box npt.";
+                         "use the cubic box npt.";
     integ_switch = INTEG_METHOD_NVT;
     mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;

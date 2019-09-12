@@ -89,6 +89,7 @@ void force_calc(CellStructure &cell_structure) {
 #endif
 
   auto particles = cell_structure.local_cells().particles();
+  auto ghost_particles = cell_structure.ghost_cells().particles();
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles, cell_structure.ghost_cells().particles());
 #endif
@@ -149,7 +150,8 @@ void force_calc(CellStructure &cell_structure) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation();
 
-  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles);
+  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
+                                         ghost_particles);
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
@@ -168,7 +170,6 @@ void force_calc(CellStructure &cell_structure) {
   // Communication Step: ghost forces
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
-  particles = cell_structure.local_cells().particles();
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, particles);
 
@@ -176,7 +177,7 @@ void force_calc(CellStructure &cell_structure) {
   forcecap_cap(particles);
 
   // mark that forces are now up-to-date
-  recalc_forces = 0;
+  recalc_forces = false;
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {

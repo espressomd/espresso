@@ -71,10 +71,10 @@ cdef class HydrodynamicInteraction(Actor):
             raise Exception("LB_FLUID density not set")
         elif not (self._params["dens"] > 0.0 and (is_valid_type(self._params["dens"], float) or is_valid_type(self._params["dens"], int))):
             raise ValueError("Density must be one positive double")
-        
+
         if (self._params["tau"] <= 0.):
             raise Exception("LB_FLUID tau has to be > 0")
-            
+
     # list of valid keys for parameters
     ####################################################
     def valid_keys(self):
@@ -115,7 +115,7 @@ cdef class HydrodynamicInteraction(Actor):
         python_lbfluid_set_density(
     self._params["dens"],
     self._params["agrid"])
-        
+
         lb_lbfluid_set_tau(self._params["tau"])
 
         python_lbfluid_set_viscosity(
@@ -249,7 +249,7 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
-    
+
     property shape:
         def __get__(self):
             cdef Vector3i shape = lb_lbfluid_get_shape()
@@ -280,7 +280,7 @@ cdef class HydrodynamicInteraction(Actor):
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
-        
+
         shape = self.shape
         for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
             yield self[i, j, k]
@@ -301,7 +301,7 @@ cdef class LBFluid(HydrodynamicInteraction):
         self.validate_params()
         self._set_lattice_switch()
         self._set_params_in_es_core()
-    
+
 IF CUDA:
     cdef class LBFluidGPU(HydrodynamicInteraction):
         """
@@ -344,9 +344,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
@@ -360,7 +360,7 @@ cdef class LBFluidRoutines:
         self.node[2] = key[2]
         if not lb_lbnode_is_index_valid(self.node):
             raise ValueError("LB node index out of bounds")
-    
+
     property index:
         def __get__(self):
             return (self.node[0], self.node[1], self.node[2])

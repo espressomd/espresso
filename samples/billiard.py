@@ -28,7 +28,7 @@ import espressomd.interactions
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 import espressomd.shapes
 
-required_features = ["LENNARD_JONES", "MASS", "EXTERNAL_FORCES"]
+required_features = ["WCA", "MASS", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
 print('''8Ball BILLIARD - An ESPResSo Visualizer Demo
@@ -180,28 +180,25 @@ def main():
             particle_type=types['hole'],
             penetrable=True)
 
-    lj_eps = np.array([1])
-    lj_sig = np.array([ball_diam])
-    lj_cut = lj_sig * 2.0**(1.0 / 6.0)
-    lj_cap = 20
+    wca_eps = np.array([1])
+    wca_sig = np.array([ball_diam])
+    wca_cap = 20
     mass = np.array([0.17])
 
-    num_types = len(lj_sig)
+    num_types = len(wca_sig)
 
-    # LENNARD JONES
     def mix_eps(eps1, eps2, rule='LB'):
         return math.sqrt(eps1 * eps2)
 
     def mix_sig(sig1, sig2, rule='LB'):
         return 0.5 * (sig1 + sig2)
 
+    # WCA
     for t1 in range(4):
         for t2 in range(6):
-            system.non_bonded_inter[t1, t2].lennard_jones.set_params(
-                epsilon=mix_eps(lj_eps[0], lj_eps[0]),
-                sigma=mix_sig(lj_sig[0], lj_sig[0]),
-                cutoff=mix_sig(lj_cut[0], lj_cut[0]),
-                shift="auto")
+            system.non_bonded_inter[t1, t2].wca.set_params(
+                epsilon=mix_eps(wca_eps[0], wca_eps[0]),
+              sigma=mix_sig(wca_sig[0], wca_sig[0]))
 
     ball_y = table_h + ball_diam * 1.5
 
@@ -213,11 +210,11 @@ def main():
     spawnpos.append(ball_start_pos)
     ball = system.part[0]
 
-    d = lj_sig[0] * 1.15
+    d = wca_sig[0] * 1.15
     a1 = np.array([d * math.sqrt(3) / 2.0, 0, -0.5 * d])
     a2 = np.array([d * math.sqrt(3) / 2.0, 0, 0.5 * d])
     sp = [system.box_l[0] * 0.7, ball_y,
-          system.box_l[2] * 0.5 + lj_sig[0] * 0.5]
+          system.box_l[2] * 0.5 + wca_sig[0] * 0.5]
     pid = 1
     order = [
         types['solid_ball'],
@@ -279,10 +276,10 @@ def main():
                         t = p.type - 1
                         cleared_balls[t] += 1
                         if t == 0:
-                            z = table_dim[1] - lj_sig[0] * 0.6
+                            z = table_dim[1] - wca_sig[0] * 0.6
                         else:
-                            z = lj_sig[0] * 0.6
-                        p.pos = [cleared_balls[t] * lj_sig[0] * 1.5, 1.1, z]
+                            z = wca_sig[0] * 0.6
+                        p.pos = [cleared_balls[t] * wca_sig[0] * 1.5, 1.1, z]
                         p.fix = [1, 1, 1]
                         p.v = [0, 0, 0]
 
