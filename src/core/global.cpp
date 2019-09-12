@@ -51,7 +51,7 @@ namespace {
 /** Type describing global variables. These are accessible from the
     front end, and are distributed to all compute nodes. */
 typedef struct {
-  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
+  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2, UNSIGNED_LONG = 3 };
   /** Physical address of the variable. */
   void *data;
   /** Type of the variable. */
@@ -126,8 +126,8 @@ const std::unordered_map<int, Datafield> fields{
      {&nptiso.piston, Datafield::Type::DOUBLE, 1,
       "npt_piston"}}, /* 27 from pressure.cpp */
     {FIELD_PERIODIC,
-     {&box_geo.m_periodic, Datafield::Type::INT, 1,
-      "periodicity"}}, /* 28 from grid.cpp */
+     {&box_geo.m_periodic, Datafield::Type::UNSIGNED_LONG, 1,
+      "periodicity"}}, /* 28 from BoxGeometry.hpp */
     {FIELD_SKIN,
      {&skin, Datafield::Type::DOUBLE, 1, "skin"}}, /* 29 from integrate.cpp */
     {FIELD_TEMPERATURE,
@@ -179,6 +179,10 @@ std::size_t hash_value(Datafield const &field) {
     auto ptr = reinterpret_cast<int *>(field.data);
     return hash_range(ptr, ptr + field.dimension);
   }
+  case Datafield::Type::UNSIGNED_LONG: {
+    auto ptr = reinterpret_cast<unsigned long *>(field.data);
+    return hash_range(ptr, ptr + field.dimension);
+  }
   case Datafield::Type::BOOL: {
     auto ptr = reinterpret_cast<char *>(field.data);
     return hash_range(ptr, ptr + 1);
@@ -197,6 +201,10 @@ void common_bcast_parameter(int i) {
   case Datafield::Type::INT:
     MPI_Bcast((int *)fields.at(i).data, fields.at(i).dimension, MPI_INT, 0,
               comm_cart);
+    break;
+  case Datafield::Type::UNSIGNED_LONG:
+    MPI_Bcast((unsigned long *)fields.at(i).data, fields.at(i).dimension,
+              MPI_UNSIGNED_LONG, 0, comm_cart);
     break;
   case Datafield::Type::BOOL:
     static_assert(sizeof(bool) == sizeof(char),
