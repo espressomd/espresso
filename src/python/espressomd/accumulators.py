@@ -239,7 +239,7 @@ class Correlator(ScriptInterfaceHelper):
         """
         Returns
         -------
-        
+
         numpy.ndarray
             The result of the correlation function as a 2d-array. 
             The first column contains the values of the lag time tau.

@@ -12,11 +12,11 @@ MASS = 2.1
 @utx.skipIfMissingFeatures("MASS")
 class LinearMomentumTest(ut.TestCase):
     system = None
-    
+
     @classmethod
     def setUpClass(cls):
         cls.system = espressomd.System(box_l=[10.0] * 3)
-        
+
     def test(self):
         self.system.part.add(pos=np.random.random((N_PART, 3)), v=np.ones(
             (N_PART, 3)) * VELOCITY, mass=np.ones((N_PART)) * MASS)

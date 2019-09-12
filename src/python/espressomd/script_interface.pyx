@@ -338,7 +338,7 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
 
     def __len__(self):
         return self.call_method("size")
-    
+
     def __reduce__(self):
         res = []
         for item in self.__iter__():

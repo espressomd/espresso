@@ -58,20 +58,20 @@ class WidomInsertionTest(ut.TestCase):
         x=radius)   
     # numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
     integreateRest = (BOX_L**3 - 4.0 / 3.0 * np.pi * LJ_CUT**3)
-                      
+
     # calculate excess chemical potential of the system, see Frenkel Smith,
     # p 174. Note: He uses scaled coordinates, which is why we need to divide
     # by the box volume
     target_mu_ex = -TEMPERATURE * \
         np.log((integrateUpToCutOff + integreateRest) / BOX_L**3)
-                                       
+
     system = espressomd.System(box_l=np.ones(3) * BOX_L)
     system.cell_system.set_n_square()
     system.seed = system.cell_system.get_state()['n_nodes'] * [2]
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     volume = np.prod(system.box_l)  # cuboid box
-    
+
     Widom = reaction_ensemble.WidomInsertion(
         temperature=TEMPERATURE, seed=1)    
 
