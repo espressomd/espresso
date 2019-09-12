@@ -20,18 +20,19 @@
 */
 /** \file
  *
- * %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
+ *  %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
  *  For performance reasons it is clever to do streaming and collision at the
  *  same time because every fluid node has to be read and written only once.
- *  This increases mainly cache efficiency. Two alternatives are implemented:
- *  stream_collide and collide_stream.
+ *  This increases mainly cache efficiency. This is achieved by
+ *  @ref lb_collide_stream.
  *
  *  The hydrodynamic fields, corresponding to density, velocity and stress, are
- *  stored in LB_FluidNodes in the array lbfields, the populations in lbfluid
- *  which is constructed as 2 x (Nx x Ny x Nz) x 19 array.
+ *  stored in @ref LB_FluidNode in the array @ref lbfields, the populations
+ *  in @ref LB_Fluid in the array @ref lbfluid which is constructed as
+ *  2 x (Nx x Ny x Nz) x 19 array.
  *
- * Implementation in lb.cpp.
+ *  Implementation in lb.cpp.
  */
 
 #ifndef LB_H
@@ -54,6 +55,7 @@
 #include <utils/Span.hpp>
 #include <utils/serialization/multi_array.hpp>
 
+/** Counter for the RNG */
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
 /** Data structure for fluid on a local lattice site */
@@ -112,9 +114,11 @@ struct LB_Parameters {
   bool is_TRT;
 
   /** \name Derived parameters */
+  /*@{*/
   /** amplitudes of the fluctuations of the modes */
   Utils::Vector19d phi;
-  // Thermal energy
+  /*@}*/
+  /** Thermal energy */
   double kT;
 
   template <class Archive> void serialize(Archive &ar, long int) {
@@ -129,6 +133,7 @@ extern LB_Parameters lbpar;
 /** The underlying lattice */
 extern Lattice lblattice;
 
+/** Communicator for halo exchange between processors */
 extern HaloCommunicator update_halo_comm;
 
 void lb_init(const LB_Parameters &lb_parameters);
@@ -185,11 +190,11 @@ void lattice_boltzmann_update();
 void lb_sanity_checks(const LB_Parameters &lb_parameters);
 
 /** Sets the equilibrium distributions.
-    @param index Index of the local site
-    @param density local fluid density
-    @param momentum_density local fluid flux density
-    @param stress local fluid stress
-*/
+ *  @param index Index of the local site
+ *  @param density local fluid density
+ *  @param momentum_density local fluid flux density
+ *  @param stress local fluid stress
+ */
 void lb_set_population_from_density_momentum_density_stress(
     Lattice::index_t index, double density,
     Utils::Vector3d const &momentum_density, Utils::Vector6d const &stress);
@@ -219,7 +224,7 @@ std::array<double, 19> lb_calc_modes(Lattice::index_t index,
  * @param momentum_density       fluid flux density
  * @param stress      fluid stress
  * @return 19 populations (including equilibrium density contribution).
- **/
+ */
 Utils::Vector19d lb_get_population_from_density_momentum_density_stress(
     double density, Utils::Vector3d const &momentum_density,
     Utils::Vector6d const &stress);

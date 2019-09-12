@@ -57,8 +57,6 @@
 #include <stdlib.h>
 #include <vector>
 
-/** defining structures residing in global memory */
-
 /** device_rho_v: struct for hydrodynamic fields: this is for internal use
  *  (i.e. stores values in LB units) and should not used for
  *  printing values
@@ -80,10 +78,8 @@ static LB_nodes_gpu nodes_a;
 static LB_nodes_gpu nodes_b;
 /*@}*/
 
-/** @name structs for boundary information */
-/*@{*/
+/** boundary information */
 static LB_boundaries_gpu boundaries;
-/*@}*/
 
 /** struct for node force density */
 LB_node_force_density_gpu node_f = {
@@ -117,13 +113,10 @@ static size_t size_of_rho_v_pi;
 
 /** Parameters residing in constant memory */
 __device__ __constant__ LB_parameters_gpu para[1];
-/*-------------------------------------------------------*/
+
 /*********************************************************/
 /** \name device functions called by kernel functions */
 /*********************************************************/
-/*-------------------------------------------------------*/
-
-/*-------------------------------------------------------*/
 
 static constexpr float sqrt12 = 3.4641016151377544f;
 boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;

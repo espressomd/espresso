@@ -110,10 +110,8 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid,
                                   const Lattice &lb_lattice);
 #endif // ADDITIONAL_CHECKS
 
-/** Counter for the RNG */
 boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
-/** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
     // density
     0.0,
@@ -142,7 +140,6 @@ LB_Parameters lbpar = {
     // Thermal energy
     0.0};
 
-/** The underlying lattice structure */
 Lattice lblattice;
 
 using LB_FluidData = boost::multi_array<double, 2>;
@@ -156,16 +153,12 @@ static LB_FluidData lbfluid_b;
 LB_Fluid lbfluid;
 LB_Fluid lbfluid_post;
 
-/** Pointer to the hydrodynamic fields of the fluid nodes */
 std::vector<LB_FluidNode> lbfields;
 
-/** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
-
-/***********************************************************************/
 
 #include "errorhandling.hpp"
 #include "global.hpp"
@@ -312,7 +305,7 @@ void lb_reinit_parameters(LB_Parameters &lb_parameters) {
   }
 }
 
-/* Halo communication for push scheme */
+/** Halo communication for push scheme */
 static void halo_push_communication(LB_Fluid &lb_fluid,
                                     const Lattice &lb_lattice) {
   Lattice::index_t index;
@@ -944,10 +937,10 @@ inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-/* loop over all lattice cells (halo excluded) */
+  /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-  for (auto &lbboundarie : LBBoundaries::lbboundaries) {
-    (*lbboundarie).reset_force();
+  for (auto &lbboundary : LBBoundaries::lbboundaries) {
+    (*lbboundary).reset_force();
   }
 #endif // LB_BOUNDARIES
 
@@ -955,8 +948,8 @@ inline void lb_collide_stream() {
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
       for (int x = 1; x <= lblattice.grid[0]; x++) {
-// as we only want to apply this to non-boundary nodes we can throw out
-// the if-clause if we have a non-bounded domain
+        // as we only want to apply this to non-boundary nodes we can throw out
+        // the if-clause if we have a non-bounded domain
 #ifdef LB_BOUNDARIES
         if (!lbfields[index].boundary)
 #endif // LB_BOUNDARIES
@@ -1016,11 +1009,6 @@ inline void lb_collide_stream() {
 #endif
 }
 
-/***********************************************************************/
-/** \name Update step for the lattice Boltzmann fluid                  */
-/***********************************************************************/
-/*@{*/
-
 /** Update the lattice Boltzmann fluid.
  *
  *  This function is called from the integrator. Since the time step
@@ -1038,14 +1026,10 @@ void lattice_boltzmann_update() {
   }
 }
 
-/*@}*/
-
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
 /*@{*/
-
-/***********************************************************************/
 
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;
