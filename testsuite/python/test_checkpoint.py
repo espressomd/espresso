@@ -57,9 +57,9 @@ class CheckpointTest(ut.TestCase):
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
-        nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
-        ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
-        nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+        nx = lbf.shape[0] 
+        ny = lbf.shape[1] 
+        nz = lbf.shape[2] 
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
             (nx, ny, nz), dtype=float)
@@ -74,7 +74,7 @@ class CheckpointTest(ut.TestCase):
         reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
         for key, val in reference.items():
             self.assertTrue(key in state)
-            self.assertAlmostEqual(reference[key], state[key], delta=1E-9)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
     @utx.skipIfMissingFeatures('ELECTROKINETICS')
     @ut.skipIf(not EK, "Skipping test due to missing mode.")
