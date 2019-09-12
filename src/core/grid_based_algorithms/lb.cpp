@@ -32,6 +32,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -52,6 +53,7 @@ using Utils::get_linear_index;
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
+#include <boost/range/numeric.hpp>
 #include <mpi.h>
 #include <profiler/profiler.hpp>
 
@@ -159,10 +161,6 @@ HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
-
-#include "errorhandling.hpp"
-#include "global.hpp"
-#include "grid.hpp"
 
 /********************** The Main LB Part *************************************/
 
@@ -755,8 +753,6 @@ void lb_set_population_from_density_momentum_density_stress(
   lb_set_population(index, population);
 }
 /*@}*/
-
-#include <boost/range/numeric.hpp>
 
 /** Calculation of hydrodynamic modes */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,
