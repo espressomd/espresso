@@ -27,6 +27,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "quaternion.hpp"
 #include "rotation.hpp"
 
 void VirtualSitesRelative::update(bool recalc_positions) const {

@@ -27,6 +27,7 @@
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
+#include "quaternion.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
 

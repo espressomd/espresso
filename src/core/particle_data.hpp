@@ -40,6 +40,8 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
+#include "quaternion.hpp"
+
 #include <memory>
 
 /************************************************
@@ -220,10 +222,7 @@ struct ParticlePosition {
   Utils::Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
   inline const Utils::Vector3d calc_director() const {
-    return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
-            2 * (quat[2] * quat[3] - quat[0] * quat[1]),
-            quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-                quat[3] * quat[3]};
+    return convert_quat_to_director(quat);
   };
 #endif
 
