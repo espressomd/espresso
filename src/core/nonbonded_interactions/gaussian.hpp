@@ -34,23 +34,29 @@
 int gaussian_set_params(int part_type_a, int part_type_b, double eps,
                         double sig, double cut);
 
-/** Calculate Gaussian force */
-inline void add_gaussian_pair_force(IA_parameters const *const ia_params,
-                                    Utils::Vector3d const &d, double dist,
-                                    Utils::Vector3d &force) {
-  if (dist < ia_params->gaussian.cut) {
-    auto const fac = ia_params->gaussian.eps / pow(ia_params->gaussian.sig, 2) *
-                     exp(-0.5 * Utils::sqr(dist / ia_params->gaussian.sig));
-    force += fac * d;
+/** Calculate Gaussian force factor */
+inline double gaussian_pair_force_factor(IA_parameters const &ia_params,
+                                         double dist) {
+  if (dist < ia_params.gaussian.cut) {
+    return ia_params.gaussian.eps / pow(ia_params.gaussian.sig, 2) *
+           exp(-0.5 * Utils::sqr(dist / ia_params.gaussian.sig));
   }
+  return 0.0;
+}
+
+/** Calculate Gaussian force */
+inline Utils::Vector3d gaussian_pair_force(IA_parameters const &ia_params,
+                                           Utils::Vector3d const &d,
+                                           double dist) {
+  return d * gaussian_pair_force_factor(ia_params, dist);
 }
 
 /** Calculate Gaussian energy */
-inline double gaussian_pair_energy(IA_parameters const *const ia_params,
+inline double gaussian_pair_energy(IA_parameters const &ia_params,
                                    double dist) {
-  if (dist < ia_params->gaussian.cut) {
-    return ia_params->gaussian.eps *
-           exp(-0.5 * Utils::sqr(dist / ia_params->gaussian.sig));
+  if (dist < ia_params.gaussian.cut) {
+    return ia_params.gaussian.eps *
+           exp(-0.5 * Utils::sqr(dist / ia_params.gaussian.sig));
   }
   return 0.0;
 }

@@ -17,12 +17,6 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/** \file
- * Routines to calculate the outward direction of the
- * membrane using a particle quadruple (one particle and its 3 strategically
- * placed neighbors)
- */
-
 #include "out_direction.hpp"
 
 #ifdef MEMBRANE_COLLISION
@@ -30,7 +24,6 @@
 
 #include <utils/constants.hpp>
 
-// set out_direction parameters
 int oif_out_direction_set_params(int bond_type) {
   if (bond_type < 0)
     return ES_ERROR;

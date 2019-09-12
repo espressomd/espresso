@@ -4,13 +4,14 @@
 #include "ParticleRange.hpp"
 #include "config.hpp"
 #include "particle_data.hpp"
+#include "rotation.hpp"
 
 inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
 
   auto const skin2 = Utils::sqr(0.5 * skin);
   for (auto &p : particles) {
 #ifdef ROTATION
-    propagate_omega_quat_particle(&p);
+    propagate_omega_quat_particle(p);
 #endif
 
 // Don't propagate translational degrees of freedom of vs

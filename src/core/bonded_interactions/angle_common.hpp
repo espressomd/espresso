@@ -84,10 +84,9 @@ calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
  */
 template <typename ForceFactor>
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_generic_force(Utils::Vector3d const &r_mid,
-                         Utils::Vector3d const &r_left,
-                         Utils::Vector3d const &r_right,
-                         ForceFactor forceFactor, bool sanitize_cosine) {
+angle_generic_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                    Utils::Vector3d const &r_right, ForceFactor forceFactor,
+                    bool sanitize_cosine) {
   Utils::Vector3d vec1, vec2;
   double d1i, d2i, cosine;
   std::tie(vec1, vec2, d1i, d2i, cosine) =

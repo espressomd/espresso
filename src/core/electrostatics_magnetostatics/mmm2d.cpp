@@ -849,7 +849,6 @@ static double Q_energy(double omega) {
 static void setup_PQ(int p, int q, double omega, double fac,
                      const int n_localpart) {
   int np, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
-  Particle *part;
   const double pref = coulomb.prefactor * 8 * M_PI * ux * uy * fac * fac;
   const double h = box_geo.length()[2];
   const double fac_imgsum =

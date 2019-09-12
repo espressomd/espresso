@@ -34,10 +34,11 @@ namespace {
  *  system, construct vector perpendicular to r(p1->p2); note that f3 is not
  *  calculated here but is implicitly calculated by f3 = -(f1+f2) which is
  *  consistent with the literature
+ *  @return forces on particles 1, 2, 3
  */
-void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
-                  Utils::Vector3d &f1, Utils::Vector3d &f2,
-                  Utils::Vector3d const &v12, Utils::Vector3d const &v13) {
+std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
+             Utils::Vector3d const &v12, Utils::Vector3d const &v13) {
   // fRot is in the rotated system, i.e. in a system where the side lPrime of
   // the triangle (i.e. v12) is parallel to the x-axis, and the y-axis is
   // perpendicular to the x-axis (cf. Krueger, Fig. 7.1c).
@@ -60,29 +61,31 @@ void RotateForces(Utils::Vector2d const &f1_rot, Utils::Vector2d const &f2_rot,
   auto const yu = (v13 - (v13 * xu) * xu).normalize();
 
   // Calculate forces in 3D
-  f1 = f1_rot[0] * xu + f1_rot[1] * yu;
-  f2 = f2_rot[0] * xu + f2_rot[1] * yu;
+  auto const force1 = f1_rot[0] * xu + f1_rot[1] * yu;
+  auto const force2 = f2_rot[0] * xu + f2_rot[1] * yu;
+  auto const force3 = -(force1 + force2);
+  return std::make_tuple(force1, force2, force3);
 }
 } // namespace
 
-int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
-                        Particle *const p3,
-                        Bonded_ia_parameters const *const iaparams) {
+boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
+                    Bonded_ia_parameters const &iaparams) {
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
   // get_mi_vector is an Espresso function which considers PBC
-  auto const vec2 = get_mi_vector(p3->r.p, p1->r.p, box_geo);
+  auto const vec2 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
   auto const l = vec2.norm();
 
   // lp = length between 1 and 2
-  auto const vec1 = get_mi_vector(p2->r.p, p1->r.p, box_geo);
+  auto const vec1 = get_mi_vector(p2.r.p, p1.r.p, box_geo);
   auto const lp = vec1.norm();
 
   // Check for sanity
-  if ((lp - iaparams->p.ibm_triel.lp0 > iaparams->p.ibm_triel.maxDist) ||
-      (l - iaparams->p.ibm_triel.l0 > iaparams->p.ibm_triel.maxDist)) {
-    return 1;
+  if ((lp - iaparams.p.ibm_triel.lp0 > iaparams.p.ibm_triel.maxDist) ||
+      (l - iaparams.p.ibm_triel.l0 > iaparams.p.ibm_triel.maxDist)) {
+    return {};
   }
 
   // angles between these vectors; calculated directly via the products
@@ -91,15 +94,15 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
   auto const sinPhi = vecpro.norm() / (l * lp);
 
   // Variables in the reference state
-  const double l0 = iaparams->p.ibm_triel.l0;
-  const double lp0 = iaparams->p.ibm_triel.lp0;
-  const double cosPhi0 = iaparams->p.ibm_triel.cosPhi0;
-  const double sinPhi0 = iaparams->p.ibm_triel.sinPhi0;
-  const double a1 = iaparams->p.ibm_triel.a1;
-  const double a2 = iaparams->p.ibm_triel.a2;
-  const double b1 = iaparams->p.ibm_triel.b1;
-  const double b2 = iaparams->p.ibm_triel.b2;
-  const double A0 = iaparams->p.ibm_triel.area0;
+  const double l0 = iaparams.p.ibm_triel.l0;
+  const double lp0 = iaparams.p.ibm_triel.lp0;
+  const double cosPhi0 = iaparams.p.ibm_triel.cosPhi0;
+  const double sinPhi0 = iaparams.p.ibm_triel.sinPhi0;
+  const double a1 = iaparams.p.ibm_triel.a1;
+  const double a2 = iaparams.p.ibm_triel.a2;
+  const double b1 = iaparams.p.ibm_triel.b1;
+  const double b2 = iaparams.p.ibm_triel.b2;
+  const double A0 = iaparams.p.ibm_triel.area0;
 
   // Displacement gradient tensor D: Eq. (C.9) Krüger thesis
   const double Dxx = lp / lp0;
@@ -120,15 +123,15 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
   // Derivatives of energy density E used in chain rule below: Eq. (C.14)
   double dEdI1;
   double dEdI2;
-  if (iaparams->p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean) {
+  if (iaparams.p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean) {
     // Neo-Hookean
-    dEdI1 = iaparams->p.ibm_triel.k1 / 6.0;
-    dEdI2 = (-1) * iaparams->p.ibm_triel.k1 / (6.0 * (i2 + 1.0) * (i2 + 1.0));
+    dEdI1 = iaparams.p.ibm_triel.k1 / 6.0;
+    dEdI2 = (-1) * iaparams.p.ibm_triel.k1 / (6.0 * (i2 + 1.0) * (i2 + 1.0));
   } else {
     // Skalak
-    dEdI1 = iaparams->p.ibm_triel.k1 * (i1 + 1) / 6.0;
-    dEdI2 = (-1) * iaparams->p.ibm_triel.k1 / 6.0 +
-            iaparams->p.ibm_triel.k2 * i2 / 6.0;
+    dEdI1 = iaparams.p.ibm_triel.k1 * (i1 + 1) / 6.0;
+    dEdI2 = (-1) * iaparams.p.ibm_triel.k1 / 6.0 +
+            iaparams.p.ibm_triel.k2 * i2 / 6.0;
   }
 
   // ******** Achim's version *****************
@@ -208,11 +211,11 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
    const double i24 = Gxx;
 
    //For sake of better readability shorten the call for the triangle's
-   constants: A0 = iaparams->p.stretching_force_ibm.Area0; a1 =
-   iaparams->p.stretching_force_ibm.a1; a2 =
-   iaparams->p.stretching_force_ibm.a2; b1 =
-   iaparams->p.stretching_force_ibm.b1; b2 =
-   iaparams->p.stretching_force_ibm.b2;
+   constants: A0 = iaparams.p.stretching_force_ibm.Area0; a1 =
+   iaparams.p.stretching_force_ibm.a1; a2 =
+   iaparams.p.stretching_force_ibm.a2; b1 =
+   iaparams.p.stretching_force_ibm.b1; b2 =
+   iaparams.p.stretching_force_ibm.b2;
 
    f1_rot[0] = A0*((-1)*e1*((i11*2*a1*dxx)+(i12*2*b1*dxy))+
    (-1)*e2*((i21*2*a1*dxx)+(i22*(a1*dxy+b1*dxx))+(i23*(a1*dxy+b1*dxx))+(i24*2*b1*dxy)));
@@ -226,16 +229,9 @@ int IBM_Triel_CalcForce(Particle *const p1, Particle *const p2,
    */
 
   // Rotate forces back into original position of triangle
-  Utils::Vector3d force1{};
-  Utils::Vector3d force2{};
-  RotateForces(f1_rot, f2_rot, force1, force2, vec1, vec2);
+  auto forces = RotateForces(f1_rot, f2_rot, vec1, vec2);
 
-  // Calculate f3 from equilibrium and add
-  p1->f.f += force1;
-  p2->f.f += force2;
-  p3->f.f -= force1 + force2;
-
-  return 0;
+  return forces;
 }
 
 int IBM_Triel_ResetParams(const int bond_type, const double k1,
