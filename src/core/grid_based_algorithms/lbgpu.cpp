@@ -99,17 +99,9 @@ LB_parameters_gpu lbpar_gpu = {
 /** this is the array that stores the hydrodynamic fields for the output */
 std::vector<LB_rho_v_pi_gpu> host_values(0);
 
-static int max_ran = 1000000;
-// static double tau;
-
 /** measures the MD time since the last fluid update */
 static int fluidstep = 0;
 
-// clock_t start, end;
-int i;
-
-int n_extern_node_force_densities = 0;
-std::vector<LB_extern_nodeforcedensity_gpu> host_extern_node_force_densities;
 bool ek_initialized = false;
 
 /*-----------------------------------------------------------*/

@@ -71,7 +71,7 @@ class LBThermostatCommon:
         error_tol = 0.01
         for i in range(3):
             hist = np.histogram(v_stored[:, i], range=(-minmax, minmax),
-                                bins=n_bins, normed=False)
+                                bins=n_bins, density=False)
             data = hist[0] / float(v_stored.shape[0])
             bins = hist[1]
             for j in range(n_bins):
