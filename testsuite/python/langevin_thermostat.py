@@ -46,7 +46,7 @@ class LangevinThermostat(ut.TestCase):
            analytical result for kT."""
         for i in range(3):
             hist = np.histogram(
-                vel[:, i], range=(-minmax, minmax), bins=n_bins, normed=False)
+                vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
             data = hist[0] / float(vel.shape[0])
             bins = hist[1]
             for j in range(n_bins):

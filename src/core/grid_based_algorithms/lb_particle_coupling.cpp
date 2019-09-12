@@ -108,37 +108,37 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
  *
  *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
- * @param[in,out] p         The coupled particle.
+ * @param[in] p             The coupled particle.
  * @param[in]     f_random  Additional force to be included.
  *
  * @return The viscous coupling force plus f_random.
  */
-Utils::Vector3d lb_viscous_coupling(Particle *p,
+Utils::Vector3d lb_viscous_coupling(Particle const &p,
                                     Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(p->r.p) *
+      lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
       lb_lbfluid_get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
-  if (p->swim.swimming) {
-    v_drift += p->swim.v_swim * p->r.calc_director();
+  if (p.swim.swimming) {
+    v_drift += p.swim.v_swim * p.r.calc_director();
   }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  v_drift += p->p.mu_E;
+  v_drift += p.p.mu_E;
 #endif
 
   /* calculate viscous force
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
    * */
-  auto const force = -lb_lbcoupling_get_gamma() * (p->m.v - v_drift) + f_random;
+  auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
 
-  add_md_force(p->r.p, force);
+  add_md_force(p.r.p, force);
 
   return force;
 }
@@ -309,14 +309,14 @@ void lb_lbcoupling_calc_particle_lattice_ia(
            * is resposible to adding its force */
           if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
-                &p, noise_amplitude * f_random(p.identity()));
+                p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
             p.f.f += force;
             /* Particle is not in our domain, but adds to the force
              * density in our domain, only calculate contribution to
              * the LB force density. */
           } else if (in_local_halo(p.r.p)) {
-            lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
+            lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()));
           }
 
 #ifdef ENGINE

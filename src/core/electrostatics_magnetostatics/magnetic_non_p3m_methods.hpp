@@ -21,15 +21,18 @@
 #ifndef MAG_NON_P3M_H
 #define MAG_NON_P3M_H
 /** \file
- * Header of
- * all 3d non P3M methods to deal with the magnetic dipoles
+ *  All 3d non-P3M methods to deal with the magnetic dipoles
  *
- *  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
- *  Handling of a system of dipoles where no replicas exist
- *  assuming minimum image convention
+ *  DAWAANR => Dipolar All With All And No Replica
+ *   Handling of a system of dipoles where no replicas exist.
+ *   Assumes minimum image convention for those axis in which the
+ *   system is periodic as defined by setmd.
  *
- *  MDDS => Magnetic dipoles direct sum, compute the interactions via direct
- * sum,
+ *  MDDS => Magnetic Dipoles Direct Sum
+ *   Calculate dipole-dipole interaction of a periodic system
+ *   by explicitly summing the dipole-dipole interaction over several copies of
+ *   the system.
+ *   Uses spherical summation order.
  *
  */
 #include "config.hpp"
@@ -38,21 +41,22 @@
 #ifdef DIPOLES
 #include "particle_data.hpp"
 
-// Calculates dipolar energy and/or force between two particles
-double calc_dipole_dipole_ia(Particle *p1, Particle *p2, bool force_flag);
+/** Calculates dipolar energy and/or force between two particles */
+double calc_dipole_dipole_ia(Particle &p1, Particle &p2, bool force_flag);
 
 /* =============================================================================
-                  DAWAANR => DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA
+                  DAWAANR => DIPOLAR ALL WITH ALL AND NO REPLICA
    =============================================================================
 */
 
 /** Core of the DAWAANR method: here you compute all the magnetic forces,
- * torques and the magnetic energy for the whole system*/
+ *  torques and the magnetic energy for the whole system
+ */
 double dawaanr_calculations(bool force_flag, bool energy_flag,
-                            const ParticleRange &particles);
+                            ParticleRange const &particles);
 
-/** switch on DAWAANR magnetostatics.
-    @return ES_ERROR, if not on a single CPU
+/** Switch on DAWAANR magnetostatics.
+ *  @return ES_ERROR, if not on a single CPU
  */
 int dawaanr_set_params();
 
@@ -61,18 +65,19 @@ int dawaanr_set_params();
    =============================================================================
 */
 
-/* Sanity checks for the magnetic dipolar direct sum*/
+/** Sanity checks for the magnetic dipolar direct sum*/
 int magnetic_dipolar_direct_sum_sanity_checks();
 
-/* Core of the method: here you compute all the magnetic forces,torques and the
- * energy for the whole system using direct sum*/
+/** Core of the method: here you compute all the magnetic forces, torques and
+ *  the energy for the whole system using direct sum
+ */
 double magnetic_dipolar_direct_sum_calculations(bool force_flag,
                                                 bool energy_flag,
-                                                const ParticleRange &particles);
+                                                ParticleRange const &particles);
 
 /** switch on direct sum magnetostatics.
-    @param n_cut cut off for the explicit summation
-    @return ES_ERROR, if not on a single CPU
+ *  @param n_cut cut off for the explicit summation
+ *  @return ES_ERROR, if not on a single CPU
  */
 int mdds_set_params(int n_cut);
 

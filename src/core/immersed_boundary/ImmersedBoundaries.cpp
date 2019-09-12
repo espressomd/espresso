@@ -28,12 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utils/constants.hpp>
 
-/************
-  IBM_VolumeConservation
-Calculate (1) volumes, (2) volume force and (3) add it to each virtual particle
-This function is called from integrate_vv
- **************/
-
+/** Volume conservation.
+ *  Calculate volumes, volume force and add it to each virtual particle.
+ *  This function is called from integrate_vv
+ */
 void ImmersedBoundaries::volume_conservation() {
   if (VolumeInitDone && !BoundariesFound) {
     return;
@@ -48,10 +46,7 @@ void ImmersedBoundaries::volume_conservation() {
   //    IBM_CalcCentroids(frameNum, simTime);
 }
 
-/************
-  IBM_InitVolumeConservation
- *************/
-
+/** Initialize volume conservation */
 void ImmersedBoundaries::init_volume_conservation() {
 
   // Check since this function is called at the start of every integrate loop
@@ -83,14 +78,7 @@ void ImmersedBoundaries::init_volume_conservation() {
   VolumeInitDone = true;
 }
 
-/****************
-  IBM_VolumeConservation_ResetParams
- *****************/
-
-/***********
-   IBM_VolumeConservation_SetParams
-************/
-
+/** Set parameters of volume conservation */
 int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
                                                        const int softID,
                                                        const double kappaV) {
@@ -127,12 +115,7 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
   return ES_OK;
 }
 
-/****************
-   calc_volumes
-Calculate partial volumes on all compute nodes
-and call MPI to sum up
-****************/
-
+/** Calculate partial volumes on all compute nodes and call MPI to sum up */
 void ImmersedBoundaries::calc_volumes() {
 
   // Partial volumes for each soft particle, to be summed up
@@ -182,7 +165,7 @@ void ImmersedBoundaries::calc_volumes() {
           if (type == BONDED_IA_IBM_TRIEL) {
             // Our particle is the leading particle of a triel
             // Get second and third particle of the triangle
-            Particle *p2 = local_particles[p1.bl.e[j + 1]];
+            Particle const *const p2 = local_particles[p1.bl.e[j + 1]];
             if (!p2) {
               runtimeErrorMsg()
                   << "{IBM_calc_volumes: 078 bond broken between particles "
@@ -190,7 +173,7 @@ void ImmersedBoundaries::calc_volumes() {
                   << " (particles not stored on the same node)} ";
               return;
             }
-            Particle *p3 = local_particles[p1.bl.e[j + 2]];
+            Particle const *const p3 = local_particles[p1.bl.e[j + 2]];
             if (!p3) {
               runtimeErrorMsg()
                   << "{IBM_calc_volumes: 078 bond broken between particles "
@@ -243,11 +226,7 @@ void ImmersedBoundaries::calc_volumes() {
                 MPI_DOUBLE, MPI_SUM, comm_cart);
 }
 
-/*****************
-  calc_volume_force
-Calculate and add the volume force to each node
-*******************/
-
+/** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force() {
   // Loop over all particles on local node
   for (int c = 0; c < local_cells.n; c++) {
@@ -296,8 +275,8 @@ void ImmersedBoundaries::calc_volume_force() {
           if (type == BONDED_IA_IBM_TRIEL) {
             // Our particle is the leading particle of a triel
             // Get second and third particle of the triangle
-            Particle *p2 = local_particles[p1.bl.e[j + 1]];
-            Particle *p3 = local_particles[p1.bl.e[j + 2]];
+            Particle &p2 = *local_particles[p1.bl.e[j + 1]];
+            Particle &p3 = *local_particles[p1.bl.e[j + 2]];
 
             // Unfold position of first node
             // this is to get a continuous trajectory with no jumps when box
@@ -306,8 +285,8 @@ void ImmersedBoundaries::calc_volume_force() {
 
             // Unfolding seems to work only for the first particle of a triel
             // so get the others from relative vectors considering PBC
-            auto const a12 = get_mi_vector(p2->r.p, x1, box_geo);
-            auto const a13 = get_mi_vector(p3->r.p, x1, box_geo);
+            auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
+            auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
 
             // Now we have the true and good coordinates
             // Compute force according to eq. C.46 Krüger thesis
@@ -328,9 +307,9 @@ void ImmersedBoundaries::calc_volume_force() {
              vector_product(x3, x2, n);
              for (int k=0; k < 3; k++) p1.f.f[k] += fact*n[k];
              vector_product(x1, x3, n);
-             for (int k=0; k < 3; k++) p2->f.f[k] += fact*n[k];
+             for (int k=0; k < 3; k++) p2.f.f[k] += fact*n[k];
              vector_product(x2, x1, n);
-             for (int k=0; k < 3; k++) p3->f.f[k] += fact*n[k];*/
+             for (int k=0; k < 3; k++) p3.f.f[k] += fact*n[k];*/
 
             // This is Dupin 2008. I guess the result will be very similar as
             // the code above
@@ -344,8 +323,8 @@ void ImmersedBoundaries::calc_volume_force() {
             auto const force = -fact * A * nHat;
 
             p1.f.f += force;
-            p2->f.f += force;
-            p3->f.f += force;
+            p2.f.f += force;
+            p3.f.f += force;
           }
           // Iterate, increase by the number of partners of this bond + 1 for
           // bond type
