@@ -130,7 +130,7 @@ def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None,
 position_list = []
 density_list = []
 velocity_list = []
-pressure_xz_list = []
+pressure_xy_list = []
 
 for i in range(int(box_z / agrid)):
     if (i * agrid >= padding) and (i * agrid < box_z - padding):
@@ -147,10 +147,10 @@ for i in range(int(box_z / agrid)):
                                       force=force, viscosity_kinematic=viscosity_kinematic,
                                       density_water=density_water))
         # xz component pressure tensor
-        pressure_xz_list.append(pressure_tensor_offdiagonal(x=position, xi=xi,
+        pressure_xy_list.append(pressure_tensor_offdiagonal(x=position, xi=xi,
                                                             bjerrum_length=bjerrum_length, force=force))
 
 np.savetxt(
     "eof_analytical.dat", np.column_stack(
-        (position_list, density_list, velocity_list, pressure_xz_list)),
-           header="#position calculated_density calculated_velocity calculated_pressure_xz")
+        (position_list, density_list, velocity_list, pressure_xy_list)),
+           header="#position calculated_density calculated_velocity calculated_pressure_xy")

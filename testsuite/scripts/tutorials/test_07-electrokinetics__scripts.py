@@ -46,7 +46,7 @@ class Tutorial(ut.TestCase):
         b /= scale
 
     def test_simulation(self):
-        for varname in ("density", "velocity", "pressure_xz"):
+        for varname in ("density", "velocity", "pressure_xy"):
             sim = np.array(tutorial_simulation.__dict__[varname + "_list"])
             ana = np.array(tutorial_analytical.__dict__[varname + "_list"])
             self.normalize_two_datasets(sim, ana)
