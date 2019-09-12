@@ -32,12 +32,17 @@ const std::shared_ptr<VirtualSites> &virtual_sites();
 void set_virtual_sites(std::shared_ptr<VirtualSites> const &v);
 
 #ifdef VIRTUAL_SITES_RELATIVE
+
+/** Setup the @ref ParticleProperties::vs_relative "vs_relative" of a particle
+ *  so that the given virtual particle will follow the given real particle.
+ */
 void vs_relate_to(int part_num, int relate_to);
 
-// Setup the virtual_sites_relative properties of a particle so that the given
-// virtual particle will follow the given real particle Local version, expects
-// both particles to be accessible through local_particles and only executes the
-// changes on the virtual site locally
+/** Setup the @ref ParticleProperties::vs_relative "vs_relative" of a particle
+ *  so that the given virtual particle will follow the given real particle.
+ *  Local version, expects both particles to be accessible through @ref
+ *  local_particles and only executes the changes on the virtual site locally
+ */
 void local_vs_relate_to(Particle &p_current, Particle const &p_relate_to);
 
 #endif

@@ -50,6 +50,7 @@ void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
 
 #ifdef VIRTUAL_SITES_RELATIVE
 
+/** Calculate the rotation quaternion and distance between two particles */
 inline std::tuple<Utils::Vector4d, double>
 calculate_vs_relate_to_params(Particle const &p_current,
                               Particle const &p_relate_to) {
@@ -72,28 +73,28 @@ calculate_vs_relate_to_params(Particle const &p_current,
 
   // Now, calculate the quaternions which specify the angle between
   // the director of the particle we relate to and the vector
-  // (paritlce_we_relate_to - this_particle)
+  // (particle_we_relate_to - this_particle)
   // The vs_relative implementation later obtains the director by multiplying
   // the quaternions representing the orientation of the real particle
   // with those in the virtual particle. The resulting quaternion is then
   // converted to a director.
-  // We have quat_(real particle) *quat_(virtual particle)
-  // = quat_(obtained from desired director)
+  // We have quat_(real particle) * quat_(virtual particle)
+  //   = quat_(obtained from desired director)
   // Resolving this for the quat_(virtual particle)
 
-  // If the distance between real & virtual particle is 0
-  // we just set the relative orientation to 1 0 0 0, as it is irrelevant but
-  // needs to be a valid quaternion
+  // If the distance between real & virtual particle is 0 we just set the
+  // relative orientation to {1 0 0 0}, as it is irrelevant but needs to be
+  // a valid quaternion
   if (dist == 0) {
     Utils::Vector4d quat = {1, 0, 0, 0};
     return std::make_tuple(quat, 0);
   } else {
     d.normalize();
 
-    // Obtain quaternions from desired director
+    // Obtain quaternion from desired director
     Utils::Vector4d quat_director = convert_director_to_quaternion(d);
 
-    // Define quat as described above:
+    // Define quaternion as described above
     Utils::Vector4d quat = {p_relate_to.r.quat * quat_director,
                             -quat_director[0] * p_relate_to.r.quat[1] +
                                 quat_director[1] * p_relate_to.r.quat[0] +
@@ -120,10 +121,6 @@ calculate_vs_relate_to_params(Particle const &p_current,
   }
 }
 
-// Setup the virtual_sites_relative properties of a particle so that the given
-// virtual particle will follow the given real particle Local version, expects
-// both particles to be accessible through local_particles and only executes the
-// changes on the virtual site locally
 void local_vs_relate_to(Particle &p_current, Particle const &p_relate_to) {
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
@@ -133,8 +130,6 @@ void local_vs_relate_to(Particle &p_current, Particle const &p_relate_to) {
       calculate_vs_relate_to_params(p_current, p_relate_to);
 }
 
-// Setup the virtual_sites_relative properties of a particle so that the given
-// virtual particle will follow the given real particle
 void vs_relate_to(int part_num, int relate_to) {
   // Get the data for the particle we act on and the one we want to relate
   // it to.

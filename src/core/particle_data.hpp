@@ -98,8 +98,8 @@ struct ParticleProperties {
   /** particle type, used for non bonded interactions. */
   int type = 0;
 
-#ifdef MASS
   /** particle mass */
+#ifdef MASS
   double mass = 1.0;
 #else
   constexpr static double mass{1.0};
@@ -122,8 +122,7 @@ struct ParticleProperties {
   Utils::Vector3d out_direction = {0., 0., 0.};
 #endif
 
-  // Determines, whether a particle's rotational degrees of freedom are
-  // integrated
+  /** bitfield for the particle axes of rotation */
   int rotation = 0;
 
   /** charge. */
@@ -139,7 +138,7 @@ struct ParticleProperties {
 #endif
 
 #ifdef DIPOLES
-  /** dipole moment (absolute value)*/
+  /** dipole moment (absolute value) */
   double dipm = 0.;
 #endif
 
@@ -147,18 +146,18 @@ struct ParticleProperties {
   /** is particle virtual */
   bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
-  /** In case, the "relative" implementation of virtual sites is enabled, the
-  following properties define, with respect to which real particle a virtual
-  site is placed and in what distance. The relative orientation of the vector
-  pointing from real particle to virtual site with respect to the orientation
-  of the real particle is stored in the virtual site's quaternion attribute.
-  */
-  struct VirtualSitesRelativeParameteres {
+  /** The following properties define, with respect to which real particle a
+   *  virtual site is placed and at what distance. The relative orientation of
+   *  the vector pointing from real particle to virtual site with respect to the
+   *  orientation of the real particle is stored in the virtual site's
+   *  quaternion attribute.
+   */
+  struct VirtualSitesRelativeParameters {
     int to_particle_id = 0;
     double distance = 0;
-    // Store relative position of the virtual site.
+    /** Relative position of the virtual site. */
     Utils::Vector4d rel_orientation = {0., 0., 0., 0.};
-    // Store the orientation of the virtual particle in the body fixed frame.
+    /** Orientation of the virtual particle in the body fixed frame. */
     Utils::Vector4d quat = {0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
@@ -168,7 +167,6 @@ struct ParticleProperties {
       ar &quat;
     }
   } vs_relative;
-
 #endif
 #else  /* VIRTUAL_SITES */
   static constexpr const bool is_virtual = false;
@@ -181,7 +179,7 @@ struct ParticleProperties {
 #else
   Utils::Vector3d gamma = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
-/* Friction coefficient gamma for rotation */
+/** Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
   double gamma_rot = -1.;
@@ -212,28 +210,30 @@ struct ParticleProperties {
 };
 
 /** Positional information on a particle. Information that is
-    communicated to calculate interactions with ghost particles. */
+ *  communicated to calculate interactions with ghost particles.
+ */
 struct ParticlePosition {
   /** periodically folded position. */
   Utils::Vector3d p = {0, 0, 0};
 
 #ifdef ROTATION
-  /** quaternions to define particle orientation */
+  /** quaternion to define particle orientation */
   Utils::Vector4d quat = {1., 0., 0., 0.};
-  /** unit director calculated from the quaternions */
+  /** unit director calculated from the quaternion */
   inline const Utils::Vector3d calc_director() const {
     return quaternion_to_director(quat);
   };
 #endif
 
 #ifdef BOND_CONSTRAINT
-  /**stores the particle position at the previous time step*/
+  /** particle position at the previous time step */
   Utils::Vector3d p_old = {0., 0., 0.};
 #endif
 };
 
 /** Force information on a particle. Forces of ghost particles are
-    collected and added up to the force of the original particle. */
+ *  collected and added up to the force of the original particle.
+ */
 struct ParticleForce {
   ParticleForce() = default;
   ParticleForce(ParticleForce const &) = default;
