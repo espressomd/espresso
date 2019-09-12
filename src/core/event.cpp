@@ -179,9 +179,6 @@ void on_observable_calc() {
   cells_update_ghosts();
   if (recalc_forces) {
 #ifdef VIRTUAL_SITES
-    if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
     virtual_sites()->update();
 #endif
     cells_update_ghosts();
