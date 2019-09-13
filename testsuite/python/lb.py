@@ -225,7 +225,10 @@ class TestLB:
                                [obs_stress[1], obs_stress[2], obs_stress[4]],
                                [obs_stress[3], obs_stress[4], obs_stress[5]]])
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
-        np.testing.assert_allclose(np.copy(self.lbf.stress), obs_stress, atol=1E-10)
+        np.testing.assert_allclose(
+            np.copy(self.lbf.stress),
+            obs_stress,
+            atol=1E-10)
 
     def test_lb_node_set_get(self):
         self.lbf = self.lb_class(
