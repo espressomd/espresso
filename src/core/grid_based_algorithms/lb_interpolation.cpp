@@ -13,7 +13,6 @@
 namespace {
 
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
-
 }
 
 void mpi_set_interpolation_order(InterpolationOrder const &order) {
