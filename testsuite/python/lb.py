@@ -133,8 +133,13 @@ class TestLB:
                                    delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
+            # NOTE: this particle momentum prediction is due to the missing f/2 part in the
+            #       LB fluid.
+            particle_momentum = np.sum(
+                [p.mass * p.v + 0.5 * p.f * self.system.time_step for p in self.system.part], axis=0)
+            fluid_momentum = self.system.analysis.linear_momentum(False, True)
             np.testing.assert_allclose(
-                self.system.analysis.linear_momentum(), self.tot_mom,
+                particle_momentum + fluid_momentum, self.tot_mom,
                 atol=self.params['mom_prec'])
 
             # Calc particle temperature
