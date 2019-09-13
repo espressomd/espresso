@@ -18,6 +18,7 @@
 */
 
 #include "VirtualSitesRelative.hpp"
+#include <utils/math/quaternion.hpp>
 #include <utils/math/sqr.hpp>
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -27,7 +28,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "quaternion.hpp"
 #include "rotation.hpp"
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
@@ -77,8 +77,9 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
   auto const director =
-      convert_quaternion_to_director(
-          multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation))
+      Utils::convert_quaternion_to_director(
+          Utils::multiply_quaternions(p_real->r.quat,
+                                      p.p.vs_relative.rel_orientation))
           .normalize();
 
   auto const new_pos = p_real->r.p + director * p.p.vs_relative.distance;

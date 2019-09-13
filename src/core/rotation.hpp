@@ -30,8 +30,8 @@
 
 #include "ParticleRange.hpp"
 #include "particle_data.hpp"
-#include "quaternion.hpp"
 #include <utils/Vector.hpp>
+#include <utils/math/quaternion.hpp>
 
 constexpr const int ROTATION_X = 2;
 constexpr const int ROTATION_Y = 4;
@@ -58,7 +58,7 @@ Utils::Vector3d convert_vector_space_to_body(const Particle &p,
 /** convert a dipole moment to quaternions and dipolar strength  */
 inline std::pair<Utils::Vector4d, double>
 convert_dip_to_quat(const Utils::Vector3d &dip) {
-  auto quat = convert_director_to_quaternion(dip);
+  auto quat = Utils::convert_director_to_quaternion(dip);
   return {quat, dip.norm()};
 }
 

@@ -43,10 +43,10 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "quaternion.hpp"
 #include "thermostat.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/quaternion.hpp>
 #include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
@@ -321,7 +321,7 @@ void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
   q.normalize();
 
   // Rotate the particle
-  p.r.quat = multiply_quaternions(p.r.quat, q);
+  p.r.quat = Utils::multiply_quaternions(p.r.quat, q);
 }
 
 #endif // ROTATION

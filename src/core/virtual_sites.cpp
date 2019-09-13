@@ -27,11 +27,11 @@
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
-#include "quaternion.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/quaternion.hpp>
 
 #include <tuple>
 
@@ -92,7 +92,7 @@ calculate_vs_relate_to_params(Particle const &p_current,
     d.normalize();
 
     // Obtain quaternion from desired director
-    Utils::Vector4d quat_director = convert_director_to_quaternion(d);
+    Utils::Vector4d quat_director = Utils::convert_director_to_quaternion(d);
 
     // Define quaternion as described above
     quat = {p_relate_to.r.quat * quat_director,
@@ -112,7 +112,8 @@ calculate_vs_relate_to_params(Particle const &p_current,
     quat /= norm;
 
     // Verify result
-    Utils::Vector4d qtemp = multiply_quaternions(p_relate_to.r.quat, quat);
+    Utils::Vector4d qtemp =
+        Utils::multiply_quaternions(p_relate_to.r.quat, quat);
     for (int i = 0; i < 4; i++)
       if (fabs(qtemp[i] - quat_director[i]) > 1E-9)
         fprintf(stderr, "vs_relate_to: component %d: %f instead of %f\n", i,
