@@ -76,9 +76,8 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
         if (not p.p.is_virtual) {
           return std::pair<Utils::Vector3d, double>{
               sum.first + p.p.mass * p.m.v, sum.second + p.p.mass};
-        } else {
-          return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
         }
+        return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
       });
 }
 
