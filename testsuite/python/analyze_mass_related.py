@@ -19,6 +19,7 @@ import numpy as np
 import espressomd
 from espressomd.galilei import GalileiTransform
 
+
 class AnalyzeMassRelated(ut.TestCase):
 
     """Test analysis routines that involve particle mass. E.g., center of mass, intertia tensor, ...
@@ -97,17 +98,13 @@ class AnalyzeMassRelated(ut.TestCase):
         
         # Center of mass
         np.testing.assert_allclose(
-           g.system_CMS(),
+            g.system_CMS(),
            np.average(no_virtual.pos, weights=no_virtual.mass, axis=0))
         # Center of mass velocity
         np.testing.assert_allclose(
-           g.system_CMS_velocity(),
+            g.system_CMS_velocity(),
            np.average(no_virtual.v, weights=no_virtual.mass, axis=0))
 
-
-        
-
-    
     def test_angularmomentum(self):
         no_virtual_type_0 = self.system.part.select(
             lambda p: (not p.virtual) and p.type == 0)

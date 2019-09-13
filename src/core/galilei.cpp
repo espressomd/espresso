@@ -61,11 +61,11 @@ std::pair<Utils::Vector3d, double> local_system_CMS() {
         if (not p.p.is_virtual) {
           return std::pair<Utils::Vector3d, double>{
               sum.first +
-                p.p.mass * unfolded_position(p.r.p, p.l.i, box_geo.length()),
+                  p.p.mass * unfolded_position(p.r.p, p.l.i, box_geo.length()),
               sum.second + p.p.mass};
-            } else {
-              return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
-            }
+        } else {
+          return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
+        }
       });
 }
 
@@ -74,13 +74,12 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
       local_cells.particles(), std::pair<Utils::Vector3d, double>{},
       [](auto sum, const Particle &p) {
         if (not p.p.is_virtual) {
-        return std::pair<Utils::Vector3d, double>{sum.first + p.p.mass * p.m.v,
-                                                  sum.second + p.p.mass};
+          return std::pair<Utils::Vector3d, double>{
+              sum.first + p.p.mass * p.m.v, sum.second + p.p.mass};
         } else {
           return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
         }
       });
-
 }
 
 /* Remove the CMS velocity */
