@@ -13,7 +13,6 @@ enum class InterpolationOrder { linear, quadratic };
  */
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &interpolation_order);
-void mpi_set_interpolation_order_slave(int order, int);
 
 InterpolationOrder lb_lbinterpolation_get_interpolation_order();
 /**

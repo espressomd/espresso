@@ -13,17 +13,18 @@
 namespace {
 
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
+
 }
 
-void mpi_set_interpolation_order_slave(int, int) {
-  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
+void mpi_set_interpolation_order(InterpolationOrder const &order) {
+  interpolation_order = order;
 }
+
+REGISTER_CALLBACK(mpi_set_interpolation_order)
 
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &order) {
-  interpolation_order = order;
-  mpi_call(mpi_set_interpolation_order_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
+  mpi_call_all(mpi_set_interpolation_order, order);
 }
 
 InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
