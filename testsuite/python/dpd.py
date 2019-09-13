@@ -439,6 +439,26 @@ class DPDThermostat(ut.TestCase):
 
         np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
         np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
+    
+    def test_momentum_conservation(self):
+        r_cut = 1.0
+        gamma = 5.
+        r_cut = 2.9 
+
+        s = self.s
+        s.thermostat.set_dpd(kT=1.3, seed=42)
+        s.part.clear()
+        s.part.add(pos=((0, 0, 0), (0.1, 0.1, 0.1), (0.1, 0, 0)), mass=(1, 2, 3))
+
+        s.non_bonded_inter[0, 0].dpd.set_params(
+          weight_function=1, gamma=gamma, r_cut=r_cut,
+          trans_weight_function=1, trans_gamma=gamma/2.0, trans_r_cut=r_cut)
+        momentum = np.matmul(s.part[:].v.T, s.part[:].mass)
+        for i in range(10):
+            s.integrator.run(25)
+            np.testing.assert_array_less(np.zeros((3, 3)), np.abs(s.part[:].f))
+            np.testing.assert_allclose(np.matmul(s.part[:].v.T, s.part[:].mass), momentum, atol=1E-12)
+
 
 if __name__ == "__main__":
     ut.main()

@@ -16,6 +16,10 @@ using Utils::get_linear_index;
 
 ActiveLB lattice_switch = ActiveLB::NONE;
 
+struct NoLBActive : public std::exception {
+  const char *what() const noexcept override { return "LB not activated"; }
+};
+
 /* LB CPU callback interface */
 namespace {
 
@@ -153,14 +157,16 @@ void lb_lbfluid_update() {
 }
 
 void lb_lbfluid_propagate() {
-  lb_lbfluid_update();
-  if (lb_lbfluid_get_kT() > 0.0) {
-    if (lattice_switch == ActiveLB::GPU) {
+  if (lattice_switch != ActiveLB::NONE) {
+    lb_lbfluid_update();
+    if (lb_lbfluid_get_kT() > 0.0) {
+      if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-      rng_counter_fluid_gpu->increment();
+        rng_counter_fluid_gpu->increment();
 #endif
-    } else if (lattice_switch == ActiveLB::CPU) {
-      rng_counter_fluid->increment();
+      } else if (lattice_switch == ActiveLB::CPU) {
+        rng_counter_fluid->increment();
+      }
     }
   }
 }
@@ -245,7 +251,7 @@ void lb_lbfluid_reinit_fluid() {
   } else if (lattice_switch == ActiveLB::CPU) {
     lb_reinit_fluid(lbfields, lblattice, lbpar);
   } else {
-    throw std::runtime_error("LB not activated.");
+    throw NoLBActive();
   }
 }
 
@@ -271,7 +277,7 @@ uint64_t lb_lbfluid_get_rng_state() {
     return lb_fluid_get_rng_state_gpu();
 #endif
   }
-  return {};
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_rng_state(uint64_t counter) {
@@ -281,20 +287,25 @@ void lb_lbfluid_set_rng_state(uint64_t counter) {
 #ifdef CUDA
     lb_fluid_set_rng_state_gpu(counter);
 #endif
+  } else {
+    throw NoLBActive();
   }
 }
 
 void lb_lbfluid_set_density(double density) {
   if (density <= 0)
-    throw std::invalid_argument("Density has to be > 0.");
+    throw std::invalid_argument("Density has to be > 0. but got " +
+                                std::to_string(density));
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.rho = static_cast<float>(density);
     lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.density = density;
     mpi_bcast_lb_params(LBParam::DENSITY);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -309,7 +320,7 @@ double lb_lbfluid_get_density() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.density;
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_viscosity(double viscosity) {
@@ -320,9 +331,11 @@ void lb_lbfluid_set_viscosity(double viscosity) {
     lbpar_gpu.viscosity = static_cast<float>(viscosity);
     lb_lbfluid_on_lb_params_change(LBParam::VISCOSITY);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.viscosity = viscosity;
     mpi_bcast_lb_params(LBParam::VISCOSITY);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -337,22 +350,25 @@ double lb_lbfluid_get_viscosity() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.viscosity;
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_bulk_viscosity(double bulk_viscosity) {
   if (bulk_viscosity <= 0)
-    throw std::invalid_argument("Bulk viscosity has to be >0.");
+    throw std::invalid_argument("Bulk viscosity has to be >0. but got " +
+                                std::to_string(bulk_viscosity));
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.bulk_viscosity = static_cast<float>(bulk_viscosity);
     lbpar_gpu.is_TRT = false;
     lb_lbfluid_on_lb_params_change(LBParam::BULKVISC);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.bulk_viscosity = bulk_viscosity;
     lbpar.is_TRT = false;
     mpi_bcast_lb_params(LBParam::BULKVISC);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -367,7 +383,7 @@ double lb_lbfluid_get_bulk_viscosity() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.bulk_viscosity;
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_gamma_odd(double gamma_odd) {
@@ -379,10 +395,12 @@ void lb_lbfluid_set_gamma_odd(double gamma_odd) {
     lbpar_gpu.is_TRT = false;
     lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.gamma_odd = gamma_odd;
     lbpar.is_TRT = false;
     mpi_bcast_lb_params(LBParam::GAMMA_ODD);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -397,7 +415,7 @@ double lb_lbfluid_get_gamma_odd() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.gamma_odd;
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_gamma_even(double gamma_even) {
@@ -409,10 +427,12 @@ void lb_lbfluid_set_gamma_even(double gamma_even) {
     lbpar_gpu.is_TRT = false;
     lb_lbfluid_on_lb_params_change(LBParam::GAMMA_EVEN);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.gamma_even = gamma_even;
     lbpar.is_TRT = false;
     mpi_bcast_lb_params(LBParam::DENSITY);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -425,9 +445,7 @@ double lb_lbfluid_get_gamma_even() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.gamma_even;
   }
-  throw std::runtime_error("LB not activated.");
-
-  return {};
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_agrid(double agrid) {
@@ -438,9 +456,11 @@ void lb_lbfluid_set_agrid(double agrid) {
     lb_set_agrid_gpu(agrid);
     lb_lbfluid_on_lb_params_change(LBParam::AGRID);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.agrid = agrid;
     mpi_bcast_lb_params(LBParam::AGRID);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -453,9 +473,7 @@ double lb_lbfluid_get_agrid() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.agrid;
   }
-  throw std::runtime_error("LB not activated.");
-
-  return {};
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
@@ -473,9 +491,11 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
     lb_reinit_extern_nodeforce_GPU(&lbpar_gpu);
 
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.ext_force_density = force_density;
     mpi_bcast_lb_params(LBParam::EXT_FORCE_DENSITY);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -489,7 +509,7 @@ const Utils::Vector3d lb_lbfluid_get_ext_force_density() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.ext_force_density;
   }
-  return {};
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_tau(double tau) {
@@ -500,9 +520,11 @@ void lb_lbfluid_set_tau(double tau) {
     lbpar_gpu.tau = static_cast<float>(tau);
     lb_lbfluid_on_lb_params_change(LBParam::TAU);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.tau = tau;
     mpi_bcast_lb_params(LBParam::TAU);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -532,7 +554,7 @@ double lb_lbfluid_get_tau() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.tau;
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
@@ -556,6 +578,8 @@ void lb_lbfluid_set_kT(double kT) {
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.kT = kT;
     mpi_bcast_lb_params(LBParam::KT);
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -568,7 +592,7 @@ double lb_lbfluid_get_kT() {
   if (lattice_switch == ActiveLB::CPU) {
     return lbpar.kT;
   }
-  return {};
+  throw NoLBActive();
 }
 
 double lb_lbfluid_get_lattice_speed() {
@@ -1066,7 +1090,7 @@ Utils::Vector3i lb_lbfluid_get_shape() {
   if (lattice_switch == ActiveLB::CPU) {
     return lblattice.global_grid;
   }
-  throw std::runtime_error("No LB active");
+  throw NoLBActive();
 }
 
 bool lb_lbnode_is_index_valid(Utils::Vector3i const &ind) {
@@ -1090,7 +1114,7 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind) {
     return ::Communication::mpiCallbacks().call(
         ::Communication::Result::one_rank, mpi_lb_get_density, ind);
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
@@ -1111,9 +1135,7 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
         ::Communication::Result::one_rank, mpi_lb_get_momentum_density, ind);
     return momentum_density / density;
   }
-  throw std::runtime_error("LB not activated.");
-
-  return {};
+  throw NoLBActive();
 }
 
 const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
@@ -1129,9 +1151,9 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
 }
 
 const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
-  Utils::Vector6d stress{};
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
+    Utils::Vector6d stress{};
     static LB_rho_v_pi_gpu host_print_values;
     int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
@@ -1139,21 +1161,22 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
     for (int i = 0; i < 6; i++) {
       stress[i] = host_print_values.pi[i];
     }
+    return stress;
 #endif //  CUDA
-  } else if (lattice_switch == ActiveLB::CPU) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
     return mpi_call(::Communication::Result::one_rank, mpi_lb_get_stress, ind);
   }
-  return stress;
+  throw NoLBActive();
 }
 
 /** calculates the average stress of all nodes by iterating
  * over all nodes and dividing by the number_of_nodes.
  */
 const Utils::Vector6d lb_lbfluid_get_stress() {
-  Utils::Vector6d stress{};
-
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
+    Utils::Vector6d stress{};
     // Copy observable data from gpu
     host_values.resize(lbpar_gpu.number_of_nodes);
     lb_get_values_GPU(host_values.data());
@@ -1172,9 +1195,11 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
     stress[0] += p0;
     stress[2] += p0;
     stress[5] += p0;
-
+    return stress;
 #endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  }
+  if (lattice_switch == ActiveLB::CPU) {
+    Utils::Vector6d stress{};
     for (int i = 0; i < lblattice.global_grid[0]; i++) {
       for (int j = 0; j < lblattice.global_grid[1]; j++) {
         for (int k = 0; k < lblattice.global_grid[2]; k++) {
@@ -1189,10 +1214,9 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
                                  lblattice.global_grid[2];
 
     stress /= static_cast<double>(number_of_nodes);
-  } else {
-    throw std::runtime_error("LB method called on inactive LB");
+    return stress;
   }
-  return stress;
+  throw NoLBActive();
 }
 
 int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
@@ -1211,7 +1235,7 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
     return mpi_call(::Communication::Result::one_rank, mpi_lb_get_boundary_flag,
                     ind);
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
@@ -1232,7 +1256,7 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
     return mpi_call(::Communication::Result::one_rank, mpi_lb_get_populations,
                     ind);
   }
-  throw std::runtime_error("LB not activated.");
+  throw NoLBActive();
 }
 
 void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
@@ -1252,7 +1276,7 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
             p_density, momentum_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
   } else {
-    throw std::runtime_error("LB not activated.");
+    throw NoLBActive();
   }
 }
 
@@ -1268,7 +1292,7 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
                            ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif //  CUDA
-  } else {
+  } else if (lattice_switch == ActiveLB::CPU) {
     auto const density = lb_lbnode_get_density(ind);
     auto const momentum_density = u * density;
     auto const stress = lb_lbnode_get_stress(ind);
@@ -1277,6 +1301,8 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
             density, momentum_density, stress);
     mpi_call_all(mpi_lb_set_population, ind, population);
     mpi_call_all(mpi_lb_set_force_density, ind, Utils::Vector3d{});
+  } else {
+    throw NoLBActive();
   }
 }
 
@@ -1294,7 +1320,7 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
   } else if (lattice_switch == ActiveLB::CPU) {
     mpi_call_all(mpi_lb_set_population, ind, p_pop);
   } else {
-    throw std::runtime_error("LB not activated.");
+    throw NoLBActive();
   }
 }
 

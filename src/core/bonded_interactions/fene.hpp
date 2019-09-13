@@ -38,52 +38,45 @@ int fene_set_params(int bond_type, double k, double drmax, double r0);
 /** Compute the FENE bond force.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] force     Force.
- *  @return whether the bond is broken
  */
-inline bool calc_fene_pair_force(Bonded_ia_parameters const *const iaparams,
-                                 Utils::Vector3d const &dx,
-                                 Utils::Vector3d &force) {
+inline boost::optional<Utils::Vector3d>
+fene_pair_force(Bonded_ia_parameters const &iaparams,
+                Utils::Vector3d const &dx) {
   auto const len = dx.norm();
-  auto const dr = len - iaparams->p.fene.r0;
+  auto const dr = len - iaparams.p.fene.r0;
 
-  if (dr >= iaparams->p.fene.drmax) {
-    return true;
+  if (dr >= iaparams.p.fene.drmax) {
+    return {};
   }
 
   auto fac =
-      -iaparams->p.fene.k * dr / (1.0 - dr * dr * iaparams->p.fene.drmax2i);
+      -iaparams.p.fene.k * dr / (1.0 - dr * dr * iaparams.p.fene.drmax2i);
   if (len > ROUND_ERROR_PREC) {
     fac /= len;
   } else {
     fac = 0.0;
   }
 
-  force = fac * dx;
-
-  return false;
+  return fac * dx;
 }
 
 /** Compute the FENE bond energy.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @return whether the bond is broken
  */
-inline bool fene_pair_energy(Bonded_ia_parameters const *const iaparams,
-                             Utils::Vector3d const &dx, double *_energy) {
+inline boost::optional<double>
+fene_pair_energy(Bonded_ia_parameters const &iaparams,
+                 Utils::Vector3d const &dx) {
   /* compute bond stretching (r-r0) */
-  double const dr = dx.norm() - iaparams->p.fene.r0;
+  double const dr = dx.norm() - iaparams.p.fene.r0;
 
   /* check bond stretching */
-  if (dr >= iaparams->p.fene.drmax) {
-    return true;
+  if (dr >= iaparams.p.fene.drmax) {
+    return {};
   }
 
-  auto energy = -0.5 * iaparams->p.fene.k * iaparams->p.fene.drmax2;
-  energy *= log((1.0 - dr * dr * iaparams->p.fene.drmax2i));
-  *_energy = energy;
-  return false;
+  return -0.5 * iaparams.p.fene.k * iaparams.p.fene.drmax2 *
+         log(1.0 - dr * dr * iaparams.p.fene.drmax2i);
 }
 
 #endif

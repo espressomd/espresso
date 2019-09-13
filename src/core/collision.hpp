@@ -19,13 +19,19 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
+/** \name bits of possible modes for collision handling.
+ *  The modes can be combined by or-ing together, but not all combinations are
+ *  possible.
+ */
+/*@{*/
 #define COLLISION_MODE_OFF 0
-/// just create bond between centers of colliding particles
+/// Just create bond between centers of colliding particles
 #define COLLISION_MODE_BOND 2
-/** create a bond between the centers of the colliding particles,
-    plus two virtual sites at the point of collision and bind them
-    together. This prevents the particles from sliding against each
-    other. Requires VIRTUAL_SITES_RELATIVE and COLLISION_MODE_BOND*/
+/** Create a bond between the centers of the colliding particles,
+ *  plus two virtual sites at the point of collision and bind them
+ *  together. This prevents the particles from sliding against each
+ *  other. Requires VIRTUAL_SITES_RELATIVE and @ref COLLISION_MODE_BOND
+ */
 #define COLLISION_MODE_VS 4
 /** Glue a particle to a specific spot on the surface of an other */
 #define COLLISION_MODE_GLUE_TO_SURF 8
@@ -71,28 +77,25 @@ public:
   int part_type_to_attach_vs_to;
   /// Particle type to which the newly glued particle is converted
   int part_type_after_glueing;
-  /// first bond type (for zero degrees)) used for the three-particle bond
+  /// First bond type (for zero degrees) used for the three-particle bond
   /// (angle potential)
   int bond_three_particles;
   /// Number of angle bonds to use (angular resolution)
   /// different angle bonds with different equilibrium angles
   /// Are expected to have ids immediately following to bond_three_particles
   int three_particle_angle_resolution;
-  /** Placement of virtual sites for MODE_VS. 0=on same particle as related to,
-   * 1=on collision partner. 0.5=in the middle between */
+  /** Placement of virtual sites for MODE_VS.
+   *  0=on same particle as related to,
+   *  1=on collision partner,
+   *  0.5=in the middle between
+   */
   double vs_placement;
 };
+
 /// Parameters for collision detection
 extern Collision_parameters collision_params;
 
 #ifdef COLLISION_DETECTION
-
-/** \name bits of possible modes for collision handling.
-    The modes can be combined by or-ing together. Not all combinations are
-   possible.
-    COLLISION_MODE_ERROR|COLLISION_MODE_BOND.
-*/
-/*@{*/
 
 void prepare_local_collision_queue();
 
@@ -103,21 +106,21 @@ void handle_collisions();
  */
 bool validate_collision_parameters();
 
-/** @brief add the collision between the given particle ids to the collision
- * queue */
+/** @brief Add the collision between the given particle ids to the collision
+ *  queue
+ */
 void queue_collision(int part1, int part2);
 
 /** @brief Check additional criteria for the glue_to_surface collision mode */
-inline bool glue_to_surface_criterion(const Particle *const p1,
-                                      const Particle *const p2) {
-  return (((p1->p.type == collision_params.part_type_to_be_glued) &&
-           (p2->p.type == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2->p.type == collision_params.part_type_to_be_glued) &&
-           (p1->p.type == collision_params.part_type_to_attach_vs_to)));
+inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
+  return (((p1.p.type == collision_params.part_type_to_be_glued) &&
+           (p2.p.type == collision_params.part_type_to_attach_vs_to)) ||
+          ((p2.p.type == collision_params.part_type_to_be_glued) &&
+           (p1.p.type == collision_params.part_type_to_attach_vs_to)));
 }
 
 /** @brief Detect (and queue) a collision between the given particles. */
-inline void detect_collision(const Particle *const p1, const Particle *const p2,
+inline void detect_collision(Particle const &p1, Particle const &p2,
                              const double &dist_betw_part2) {
   if (dist_betw_part2 > collision_params.distance2)
     return;
@@ -130,7 +133,7 @@ inline void detect_collision(const Particle *const p1, const Particle *const p2,
 
 #ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
-  if ((p1->p.is_virtual) || (p2->p.is_virtual))
+  if ((p1.p.is_virtual) || (p2.p.is_virtual))
     return;
 #endif
 
@@ -145,10 +148,10 @@ inline void detect_collision(const Particle *const p1, const Particle *const p2,
      we have a new collision */
 
   // do not create bond between ghost particles
-  if (p1->l.ghost && p2->l.ghost) {
+  if (p1.l.ghost && p2.l.ghost) {
     return;
   }
-  queue_collision(p1->p.identity, p2->p.identity);
+  queue_collision(p1.p.identity, p2.p.identity);
 }
 
 #endif

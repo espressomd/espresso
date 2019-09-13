@@ -1404,7 +1404,6 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
-  Bonded_ia_parameters *ia_params;
 
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as an interleaved list */
@@ -1417,8 +1416,8 @@ void auto_exclusions(int distance) {
   for (auto const &part1 : partCfg()) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
-      ia_params = &bonded_ia_params[part1.bl.e[i++]];
-      if (ia_params->num == 1) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[part1.bl.e[i++]];
+      if (ia_params.num == 1) {
         p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
@@ -1427,7 +1426,7 @@ void auto_exclusions(int distance) {
           add_partner(&partners[p2], p2, p1, 1);
         }
       } else
-        i += ia_params->num;
+        i += ia_params.num;
     }
   }
 
