@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(convert_director_to_quaternion) {
   using Utils::convert_director_to_quaternion;
   using Utils::Vector3d;
   using Utils::Vector4d;
-  constexpr double cos_pi_4 = std::sqrt(2.) / 2.;
+  double const cos_pi_4 = std::sqrt(2.) / 2.;
   constexpr double eps = std::numeric_limits<double>::epsilon();
 #define CHECK_QUAT(input, ref)                                                 \
   BOOST_CHECK_LE((convert_director_to_quaternion(input) - ref).norm2(), eps);
