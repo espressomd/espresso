@@ -221,7 +221,7 @@ struct ParticlePosition {
   Utils::Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternion */
   inline const Utils::Vector3d calc_director() const {
-    return quaternion_to_director(quat);
+    return convert_quaternion_to_director(quat);
   };
 #endif
 

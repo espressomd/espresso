@@ -77,7 +77,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
   auto const director =
-      quaternion_to_director(
+      convert_quaternion_to_director(
           multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation))
           .normalize();
 

@@ -42,7 +42,8 @@ Utils::Vector<T, 4> multiply_quaternions(Utils::Vector<T, 4> const &a,
 
 /** Convert quaternion to director */
 template <class T>
-Utils::Vector<T, 3> quaternion_to_director(Utils::Vector<T, 4> const &quat) {
+Utils::Vector<T, 3>
+convert_quaternion_to_director(Utils::Vector<T, 4> const &quat) {
   return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
           2 * (quat[2] * quat[3] - quat[0] * quat[1]),
           quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
