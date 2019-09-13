@@ -1791,11 +1791,11 @@ int p3m_adaptive_tune(char **log) {
     // When running on HIP, we don't support mesh sizes whose prime factors are
     // not 2, 3 or 5. So we skip the other supported prime factors during
     // tuning.
-    if (tmp_mesh[0] % 7 == 0 || tmp_mesh[0] % 11 == 0 ||
-        tmp_mesh[0] % 13 == 0 || tmp_mesh[1] % 7 == 0 ||
-        tmp_mesh[1] % 11 == 0 || tmp_mesh[1] % 13 == 0 ||
-        tmp_mesh[2] % 7 == 0 || tmp_mesh[2] % 11 == 0 ||
-        tmp_mesh[2] % 13 == 0) {
+    if (tune_mesh && (tmp_mesh[0] % 7 == 0 || tmp_mesh[0] % 11 == 0 ||
+                      tmp_mesh[0] % 13 == 0 || tmp_mesh[1] % 7 == 0 ||
+                      tmp_mesh[1] % 11 == 0 || tmp_mesh[1] % 13 == 0 ||
+                      tmp_mesh[2] % 7 == 0 || tmp_mesh[2] % 11 == 0 ||
+                      tmp_mesh[2] % 13 == 0)) {
       continue;
     }
 #endif
