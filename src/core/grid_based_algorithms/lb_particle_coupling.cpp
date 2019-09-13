@@ -32,9 +32,7 @@ void mpi_bcast_lb_particle_coupling() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-void lb_lbcoupling_activate() {
-  lb_particle_coupling.couple_to_md = true;
-}
+void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
   if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
