@@ -751,7 +751,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
       if (mesh[0] % 7 == 0 || mesh[0] % 11 == 0 || mesh[0] % 13 == 0 ||
           mesh[1] % 7 == 0 || mesh[1] % 11 == 0 || mesh[1] % 13 == 0 ||
           mesh[2] % 7 == 0 || mesh[2] % 11 == 0 || mesh[2] % 13 == 0) {
-        throw std::string("Mesh size not supported");
+        throw std::runtime_error("Mesh size not supported");
       }
 #endif
 
@@ -774,7 +774,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
                       FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
           cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
                       FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
-        throw std::string("Unable to create fft plan");
+        throw std::runtime_error("Unable to create fft plan");
       }
     }
 
