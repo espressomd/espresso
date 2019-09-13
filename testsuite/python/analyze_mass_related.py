@@ -17,7 +17,7 @@
 import unittest as ut
 import numpy as np
 import espressomd
-
+from espressomd.galilei import GalileiTransform
 
 class AnalyzeMassRelated(ut.TestCase):
 
@@ -90,6 +90,23 @@ class AnalyzeMassRelated(ut.TestCase):
         np.testing.assert_allclose(
             com,
             self.system.analysis.center_of_mass(p_type=0))
+    
+    def test_galilei_transform(self):
+        g = GalileiTransform()
+        no_virtual = self.system.part.select(virtual=False)
+        
+        # Center of mass
+        np.testing.assert_allclose(
+           g.system_CMS(),
+           np.average(no_virtual.pos, weights=no_virtual.mass, axis=0))
+        # Center of mass velocity
+        np.testing.assert_allclose(
+           g.system_CMS_velocity(),
+           np.average(no_virtual.v, weights=no_virtual.mass, axis=0))
+
+
+        
+
     
     def test_angularmomentum(self):
         no_virtual_type_0 = self.system.part.select(

@@ -27,7 +27,11 @@ public:
 
   template <typename T, typename Particle>
   T operator()(const Particle &p, const T &x) const {
-    return p.p.mass * x;
+    if (not p.p.is_virtual) {
+      return p.p.mass * x;
+    } else {
+      return T{};
+    }
   }
 };
 } // namespace Coupling
