@@ -44,7 +44,9 @@ Vector<T, 4> multiply_quaternions(Vector<T, 4> const &a,
           a[0] * b[3] + a[3] * b[0] + a[1] * b[2] - a[2] * b[1]};
 }
 
-/** Convert quaternion to director */
+/** Convert quaternion to director
+ *  @return A (non-normalized) director.
+ */
 template <class T>
 Vector<T, 3> convert_quaternion_to_director(Vector<T, 4> const &quat) {
   return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
@@ -55,7 +57,7 @@ Vector<T, 3> convert_quaternion_to_director(Vector<T, 4> const &quat) {
 
 /** Convert director to quaternion
  *  @param d  Director
- *  @return A quaternion from the director, or {1, 0, 0, 0}
+ *  @return A (non-normalized) quaternion from the director, or {1, 0, 0, 0}
  *  if the director is the null vector.
  */
 template <class T>
@@ -81,8 +83,9 @@ Vector<T, 4> convert_director_to_quaternion(Vector<T, 3> const &d) {
     // We suppose that theta2 = theta/2 and phi2 = (phi - pi/2)/2,
     // where angles theta and phi are in spherical coordinates
     theta2 = std::acos(d[2] / dm) / 2;
-    phi2 =
-        ((d[1] > 0) ? 1 : -1) * std::acos(d[0] / d_xy) / 2 - Utils::pi<T>() / 4;
+    // here we do not use the signum function due to the edge case d[1] = 0
+    auto const phi = ((d[1] > 0) ? 1 : -1) * std::acos(d[0] / d_xy);
+    phi2 = phi / 2 - Utils::pi<T>() / 4;
   }
 
   // Calculate the quaternion from the angles
