@@ -29,9 +29,8 @@ public:
   T operator()(const Particle &p, const T &x) const {
     if (not p.p.is_virtual) {
       return p.p.mass * x;
-    } else {
-      return T{};
     }
+    return T{};
   }
 };
 } // namespace Coupling

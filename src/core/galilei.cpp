@@ -63,9 +63,8 @@ std::pair<Utils::Vector3d, double> local_system_CMS() {
               sum.first +
                   p.p.mass * unfolded_position(p.r.p, p.l.i, box_geo.length()),
               sum.second + p.p.mass};
-        } else {
-          return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
         }
+        return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
       });
 }
 
