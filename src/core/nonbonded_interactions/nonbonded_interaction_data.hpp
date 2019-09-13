@@ -386,8 +386,8 @@ void reset_ia_params();
 int interactions_sanity_checks();
 
 /**  check if a non bonded interaction is defined */
-inline int checkIfInteraction(const IA_parameters *data) {
-  return data->max_cut != INACTIVE_CUTOFF;
+inline bool checkIfInteraction(IA_parameters const &data) {
+  return data.max_cut != INACTIVE_CUTOFF;
 }
 
 /** Returns true if the particles are to be considered for short range

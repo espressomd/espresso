@@ -35,9 +35,10 @@ int IBM_Triel_SetParams(int bond_type, int ind1, int ind2, int ind3,
 int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
 
 /** Calculate the forces
- *  @retval 0
+ *  @return the forces on @p p1, @p p2, @p p3
  */
-int IBM_Triel_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                        Bonded_ia_parameters const *iaparams);
+boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
+                    Bonded_ia_parameters const &iaparams);
 
 #endif

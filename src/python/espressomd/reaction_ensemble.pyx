@@ -353,7 +353,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
 
         self.REptr.reset(new CReactionEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.REptr.get()
-        
+
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]

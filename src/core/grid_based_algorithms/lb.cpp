@@ -32,6 +32,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
@@ -52,6 +53,7 @@ using Utils::get_linear_index;
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>
+#include <boost/range/numeric.hpp>
 #include <mpi.h>
 #include <profiler/profiler.hpp>
 
@@ -110,10 +112,8 @@ static void lb_check_halo_regions(const LB_Fluid &lbfluid,
                                   const Lattice &lb_lattice);
 #endif // ADDITIONAL_CHECKS
 
-/** Counter for the RNG */
 boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid;
 
-/** Struct holding the Lattice Boltzmann parameters */
 LB_Parameters lbpar = {
     // density
     0.0,
@@ -142,7 +142,6 @@ LB_Parameters lbpar = {
     // Thermal energy
     0.0};
 
-/** The underlying lattice structure */
 Lattice lblattice;
 
 using LB_FluidData = boost::multi_array<double, 2>;
@@ -156,22 +155,59 @@ static LB_FluidData lbfluid_b;
 LB_Fluid lbfluid;
 LB_Fluid lbfluid_post;
 
-/** Pointer to the hydrodynamic fields of the fluid nodes */
 std::vector<LB_FluidNode> lbfields;
 
-/** Communicator for halo exchange between processors */
 HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
 /** measures the MD time since the last fluid update */
 static double fluidstep = 0.0;
 
-/***********************************************************************/
-
-#include "errorhandling.hpp"
-#include "global.hpp"
-#include "grid.hpp"
-
 /********************** The Main LB Part *************************************/
+
+/**
+ * @brief Initialize fluid nodes.
+ * @param[out] fields         Vector containing the fluid nodes
+ * @param[in]  lb_parameters  Parameters for the LB
+ * @param[in]  lb_lattice     Lattice instance
+ */
+void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
+                          LB_Parameters const &lb_parameters,
+                          Lattice const &lb_lattice) {
+  fields.resize(lb_lattice.halo_grid_volume);
+  for (auto &field : fields) {
+    field.force_density = lb_parameters.ext_force_density;
+#ifdef LB_BOUNDARIES
+    field.boundary = false;
+#endif // LB_BOUNDARIES
+  }
+}
+
+/** (Re-)allocate memory for the fluid and initialize pointers. */
+void lb_realloc_fluid(LB_FluidData &lb_fluid_a, LB_FluidData &lb_fluid_b,
+                      const Lattice::index_t halo_grid_volume,
+                      LB_Fluid &lb_fluid, LB_Fluid &lb_fluid_post) {
+  const std::array<int, 2> size = {{D3Q19::n_vel, halo_grid_volume}};
+
+  lb_fluid_a.resize(size);
+  lb_fluid_b.resize(size);
+
+  using Utils::Span;
+  for (int i = 0; i < size[0]; i++) {
+    lb_fluid[i] = Span<double>(lb_fluid_a[i].origin(), size[1]);
+    lb_fluid_post[i] = Span<double>(lb_fluid_b[i].origin(), size[1]);
+  }
+}
+
+void lb_set_equilibrium_populations(const Lattice &lb_lattice,
+                                    const LB_Parameters &lb_parameters) {
+  for (Lattice::index_t index = 0; index < lb_lattice.halo_grid_volume;
+       ++index) {
+    lb_set_population_from_density_momentum_density_stress(
+        index, lb_parameters.density, Utils::Vector3d{} /*momentum density*/,
+        Utils::Vector6d{} /*stress*/);
+  }
+}
+
 void lb_init(const LB_Parameters &lb_parameters) {
   if (lb_parameters.agrid <= 0.0) {
     runtimeErrorMsg()
@@ -181,7 +217,6 @@ void lb_init(const LB_Parameters &lb_parameters) {
     return;
 
   /* initialize the local lattice domain */
-
   try {
     lblattice = Lattice(lb_parameters.agrid, 0.5 /*offset*/, 1 /*halo size*/,
                         local_geo.length(), local_geo.my_right(),
@@ -193,7 +228,9 @@ void lb_init(const LB_Parameters &lb_parameters) {
 
   /* allocate memory for data structures */
   lb_realloc_fluid(lbfluid_a, lbfluid_b, lblattice.halo_grid_volume, lbfluid,
-                   lbfluid_post, lbfields);
+                   lbfluid_post);
+
+  lb_initialize_fields(lbfields, lbpar, lblattice);
 
   /* prepare the halo communication */
   lb_prepare_communication(update_halo_comm, lblattice);
@@ -201,32 +238,18 @@ void lb_init(const LB_Parameters &lb_parameters) {
   /* initialize derived parameters */
   lb_reinit_parameters(lbpar);
 
-  /* setup the initial populations */
-  lb_reinit_fluid(lbfields, lblattice, lbpar);
-}
-
-void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
-                     const Lattice &lb_lattice,
-                     const LB_Parameters &lb_parameters) {
-  std::fill(lb_fields.begin(), lb_fields.end(), LB_FluidNode());
-  /* default values for fields in lattice units */
-  Utils::Vector3d momentum_density{};
-  Utils::Vector6d stress{};
-
-  for (Lattice::index_t index = 0; index < lb_lattice.halo_grid_volume;
-       ++index) {
-    // sets equilibrium distribution
-    lb_set_population_from_density_momentum_density_stress(
-        index, lb_parameters.density, momentum_density, stress);
-
-#ifdef LB_BOUNDARIES
-    lb_fields[index].boundary = 0;
-#endif // LB_BOUNDARIES
-  }
+  lb_set_equilibrium_populations(lblattice, lbpar);
 
 #ifdef LB_BOUNDARIES
   LBBoundaries::lb_init_boundaries();
-#endif // LB_BOUNDARIES
+#endif
+}
+
+void lb_reinit_fluid(std::vector<LB_FluidNode> &lb_fields,
+                     Lattice const &lb_lattice,
+                     LB_Parameters const &lb_parameters) {
+  lb_set_equilibrium_populations(lb_lattice, lb_parameters);
+  lb_initialize_fields(lbfields, lb_parameters, lb_lattice);
 }
 
 void lb_reinit_parameters(LB_Parameters &lb_parameters) {
@@ -280,7 +303,7 @@ void lb_reinit_parameters(LB_Parameters &lb_parameters) {
   }
 }
 
-/* Halo communication for push scheme */
+/** Halo communication for push scheme */
 static void halo_push_communication(LB_Fluid &lb_fluid,
                                     const Lattice &lb_lattice) {
   Lattice::index_t index;
@@ -587,25 +610,6 @@ void lb_fluid_set_rng_state(uint64_t counter) {
 
 /***********************************************************************/
 
-/** (Re-)allocate memory for the fluid and initialize pointers. */
-void lb_realloc_fluid(LB_FluidData &lb_fluid_a, LB_FluidData &lb_fluid_b,
-                      const Lattice::index_t halo_grid_volume,
-                      LB_Fluid &lb_fluid, LB_Fluid &lb_fluid_post,
-                      std::vector<LB_FluidNode> &lb_fields) {
-  const std::array<int, 2> size = {{D3Q19::n_vel, halo_grid_volume}};
-
-  lb_fluid_a.resize(size);
-  lb_fluid_b.resize(size);
-
-  using Utils::Span;
-  for (int i = 0; i < size[0]; i++) {
-    lb_fluid[i] = Span<double>(lb_fluid_a[i].origin(), size[1]);
-    lb_fluid_post[i] = Span<double>(lb_fluid_b[i].origin(), size[1]);
-  }
-
-  lb_fields.resize(halo_grid_volume);
-}
-
 /** Set up the structures for exchange of the halo regions.
  *  See also \ref halo.cpp
  */
@@ -749,8 +753,6 @@ void lb_set_population_from_density_momentum_density_stress(
   lb_set_population(index, population);
 }
 /*@}*/
-
-#include <boost/range/numeric.hpp>
 
 /** Calculation of hydrodynamic modes */
 std::array<double, 19> lb_calc_modes(Lattice::index_t index,
@@ -931,31 +933,19 @@ inline void lb_stream(LB_Fluid &lbfluid, Lattice::index_t index,
 /* Collisions and streaming (push scheme) */
 inline void lb_collide_stream() {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
-/* loop over all lattice cells (halo excluded) */
+  /* loop over all lattice cells (halo excluded) */
 #ifdef LB_BOUNDARIES
-  for (auto &lbboundarie : LBBoundaries::lbboundaries) {
-    (*lbboundarie).reset_force();
+  for (auto &lbboundary : LBBoundaries::lbboundaries) {
+    (*lbboundary).reset_force();
   }
 #endif // LB_BOUNDARIES
-
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  // Safeguard the node forces so that we can later use them for the IBM
-  // particle update
-  // In the following loop the lbfields[XX].force are reset to zero
-  // Safeguard the node forces so that we can later use them for the IBM
-  // particle update In the following loop the lbfields[XX].force are reset to
-  // zero
-  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    lbfields[i].force_density_buf = lbfields[i].force_density;
-  }
-#endif
 
   Lattice::index_t index = lblattice.halo_offset;
   for (int z = 1; z <= lblattice.grid[2]; z++) {
     for (int y = 1; y <= lblattice.grid[1]; y++) {
       for (int x = 1; x <= lblattice.grid[0]; x++) {
-// as we only want to apply this to non-boundary nodes we can throw out
-// the if-clause if we have a non-bounded domain
+        // as we only want to apply this to non-boundary nodes we can throw out
+        // the if-clause if we have a non-bounded domain
 #ifdef LB_BOUNDARIES
         if (!lbfields[index].boundary)
 #endif // LB_BOUNDARIES
@@ -973,6 +963,12 @@ inline void lb_collide_stream() {
           /* apply forces */
           auto const modes_with_forces =
               lb_apply_forces(index, thermalized_modes, lbpar, lbfields);
+
+#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+          // Safeguard the node forces so that we can later use them for the IBM
+          // particle update
+          lbfields[index].force_density_buf = lbfields[index].force_density;
+#endif
 
           /* reset the force density */
           lbfields[index].force_density = lbpar.ext_force_density;
@@ -1009,11 +1005,6 @@ inline void lb_collide_stream() {
 #endif
 }
 
-/***********************************************************************/
-/** \name Update step for the lattice Boltzmann fluid                  */
-/***********************************************************************/
-/*@{*/
-
 /** Update the lattice Boltzmann fluid.
  *
  *  This function is called from the integrator. Since the time step
@@ -1031,14 +1022,10 @@ void lattice_boltzmann_update() {
   }
 }
 
-/*@}*/
-
 /***********************************************************************/
 /** \name Coupling part */
 /***********************************************************************/
 /*@{*/
-
-/***********************************************************************/
 
 static int compare_buffers(double *buf1, double *buf2, int size) {
   int ret;

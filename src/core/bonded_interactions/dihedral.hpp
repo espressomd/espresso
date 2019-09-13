@@ -109,17 +109,13 @@ calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
  *  @param[in]  r3        Position of the third particle.
  *  @param[in]  r4        Position of the fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
- *  @param[out] force2    Force on particle 2.
- *  @param[out] force1    Force on particle 1.
- *  @param[out] force3    Force on particle 3.
- *  @return false
+ *  @return the forces on @p p2, @p p1, @p p3
  */
-inline bool
-calc_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
-                    Utils::Vector3d const &r3, Utils::Vector3d const &r4,
-                    Bonded_ia_parameters const *const iaparams,
-                    Utils::Vector3d &force2, Utils::Vector3d &force1,
-                    Utils::Vector3d &force3) {
+inline boost::optional<
+    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+               Utils::Vector3d const &r3, Utils::Vector3d const &r4,
+               Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -133,10 +129,7 @@ calc_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
-    force1 = {};
-    force2 = {};
-    force3 = {};
-    return false;
+    return {};
   }
 
   auto const f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23;
@@ -148,7 +141,7 @@ calc_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   auto const v12Xf1 = vector_product(v12, f1);
 
   /* calculate force magnitude */
-  fac = -iaparams->p.dihedral.bend * iaparams->p.dihedral.mult;
+  fac = -iaparams.p.dihedral.bend * iaparams.p.dihedral.mult;
 
   if (fabs(sin(phi)) < TINY_SIN_VALUE) {
     /*(comes from taking the first term of the MacLaurin expansion of
@@ -156,23 +149,23 @@ calc_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
       The original code had a 2PI term in the cosine (cos(2PI - nPhi))
       but I removed it because it wasn't doing anything. AnaVV*/
     sinmphi_sinphi =
-        iaparams->p.dihedral.mult *
-        cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase) /
+        iaparams.p.dihedral.mult *
+        cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase) /
         cosphi;
   } else {
     sinmphi_sinphi =
-        sin(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase) /
+        sin(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase) /
         sin(phi);
   }
 
   fac *= sinmphi_sinphi;
 
   /* store dihedral forces */
-  force1 = fac * v23Xf1;
-  force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
-  force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
+  auto const force1 = fac * v23Xf1;
+  auto const force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
+  auto const force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
 
-  return false;
+  return std::make_tuple(force2, force1, force3);
 }
 
 /** Compute the four-body dihedral interaction energy.
@@ -182,13 +175,11 @@ calc_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
  *  @param[in]  r3        Position of the third particle.
  *  @param[in]  r4        Position of the fourth particle.
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
- *  @param[out] _energy   Energy.
- *  @return false
  */
-inline bool
+inline boost::optional<double>
 dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                 Utils::Vector3d const &r3, Utils::Vector3d const &r4,
-                Bonded_ia_parameters const *const iaparams, double *_energy) {
+                Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -197,12 +188,13 @@ dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
 
   calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  /* dihedral angle not defined - force zero */
+  if (phi == -1.0) {
+    return {};
+  }
 
-  *_energy =
-      iaparams->p.dihedral.bend *
-      (1. - cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase));
-
-  return false;
+  return iaparams.p.dihedral.bend *
+         (1. - cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase));
 }
 
 #endif

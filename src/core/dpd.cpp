@@ -115,11 +115,11 @@ void dpd_cool_down() {
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
+  IA_parameters &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
 
-  data->dpd_radial = DPDParameters{
+  ia_params.dpd_radial = DPDParameters{
       gamma, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
-  data->dpd_trans = DPDParameters{
+  ia_params.dpd_trans = DPDParameters{
       tgamma, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
 
   /* broadcast interaction parameters */
@@ -131,12 +131,12 @@ int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
 void dpd_init() {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      auto data = get_ia_param(type_a, type_b);
+      IA_parameters &ia_params = *get_ia_param(type_a, type_b);
 
-      data->dpd_radial.pref =
-          sqrt(24.0 * temperature * data->dpd_radial.gamma / time_step);
-      data->dpd_trans.pref =
-          sqrt(24.0 * temperature * data->dpd_trans.gamma / time_step);
+      ia_params.dpd_radial.pref =
+          sqrt(24.0 * temperature * ia_params.dpd_radial.gamma / time_step);
+      ia_params.dpd_trans.pref =
+          sqrt(24.0 * temperature * ia_params.dpd_trans.gamma / time_step);
     }
   }
 }
@@ -144,10 +144,10 @@ void dpd_init() {
 void dpd_update_params(double pref_scale) {
   for (int type_a = 0; type_a < max_seen_particle_type; type_a++) {
     for (int type_b = 0; type_b < max_seen_particle_type; type_b++) {
-      auto data = get_ia_param(type_a, type_b);
+      IA_parameters &ia_params = *get_ia_param(type_a, type_b);
 
-      data->dpd_radial.pref *= pref_scale;
-      data->dpd_trans.pref *= pref_scale;
+      ia_params.dpd_radial.pref *= pref_scale;
+      ia_params.dpd_trans.pref *= pref_scale;
     }
   }
 }
@@ -174,24 +174,22 @@ Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
   return {};
 }
 
-Utils::Vector3d dpd_pair_force(Particle const *const p1,
-                               Particle const *const p2,
-                               IA_parameters const *const ia_params,
+Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
+                               IA_parameters const &ia_params,
                                Utils::Vector3d const &d, double dist,
                                double dist2) {
-  if (ia_params->dpd_radial.cutoff <= 0.0 &&
-      ia_params->dpd_trans.cutoff <= 0.0) {
+  if (ia_params.dpd_radial.cutoff <= 0.0 && ia_params.dpd_trans.cutoff <= 0.0) {
     return {};
   }
 
-  auto const v21 = p1->m.v - p2->m.v;
+  auto const v21 = p1.m.v - p2.m.v;
   auto const noise_vec =
-      (ia_params->dpd_radial.pref > 0.0 || ia_params->dpd_trans.pref > 0.0)
-          ? dpd_noise(p1->p.identity, p2->p.identity)
+      (ia_params.dpd_radial.pref > 0.0 || ia_params.dpd_trans.pref > 0.0)
+          ? dpd_noise(p1.p.identity, p2.p.identity)
           : Vector3d{};
 
-  auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, noise_vec);
-  auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, noise_vec);
+  auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, noise_vec);
+  auto const f_t = dpd_pair_force(ia_params.dpd_trans, v21, dist, noise_vec);
 
   /* Projection operator to radial direction */
   auto const P = tensor_product(d / dist2, d);
@@ -210,11 +208,11 @@ static auto dpd_viscous_stress_local() {
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
         auto const v21 = p1.m.v - p2.m.v;
 
-        auto ia_params = get_ia_param(p1.p.type, p2.p.type);
+        IA_parameters const &ia_params = *get_ia_param(p1.p.type, p2.p.type);
         auto const dist = std::sqrt(d.dist2);
 
-        auto const f_r = dpd_pair_force(ia_params->dpd_radial, v21, dist, {});
-        auto const f_t = dpd_pair_force(ia_params->dpd_trans, v21, dist, {});
+        auto const f_r = dpd_pair_force(ia_params.dpd_radial, v21, dist, {});
+        auto const f_t = dpd_pair_force(ia_params.dpd_trans, v21, dist, {});
 
         /* Projection operator to radial direction */
         auto const P = tensor_product(d.vec21 / d.dist2, d.vec21);

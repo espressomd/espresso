@@ -1021,7 +1021,7 @@ class openGLLive:
             try:
                 radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()[
                     'sigma'] * 0.5
-                
+
                 if radius == 0:
                     radius = self.system.non_bonded_inter[ptype, ptype].wca.get_params()[
                         'sigma'] * 0.5

@@ -46,18 +46,18 @@ int angle_cossquare_set_params(int bond_type, double bend, double phi0);
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_cossquare_3body_forces(Utils::Vector3d const &r_mid,
-                                  Utils::Vector3d const &r_left,
-                                  Utils::Vector3d const &r_right,
-                                  Bonded_ia_parameters const *const iaparams) {
+angle_cossquare_3body_forces(Utils::Vector3d const &r_mid,
+                             Utils::Vector3d const &r_left,
+                             Utils::Vector3d const &r_right,
+                             Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
-    auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-    auto const k = iaparams->p.angle_cossquare.bend;
+    auto const cos_phi0 = iaparams.p.angle_cossquare.cos_phi0;
+    auto const k = iaparams.p.angle_cossquare.bend;
     return k * (cos_phi - cos_phi0);
   };
 
-  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
+  return angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
 }
 
 /** Compute the three-body angle interaction force.
@@ -65,18 +65,14 @@ calc_angle_cossquare_3body_forces(Utils::Vector3d const &r_mid,
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] f_mid     Force on @p p_mid.
- *  @param[out] f_left    Force on @p p_left.
- *  @param[out] f_right   Force on @p p_right.
- *  @retval false
+ *  @return the forces on the second, first and third particles.
  */
-inline bool calc_angle_cossquare_force(
-    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-    Utils::Vector3d const &r_right, Bonded_ia_parameters const *const iaparams,
-    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
-  std::tie(f_mid, f_left, f_right) =
-      calc_angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
-  return false;
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+angle_cossquare_force(Utils::Vector3d const &r_mid,
+                      Utils::Vector3d const &r_left,
+                      Utils::Vector3d const &r_right,
+                      Bonded_ia_parameters const &iaparams) {
+  return angle_cossquare_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Computes the three-body angle interaction energy.
@@ -84,20 +80,16 @@ inline bool calc_angle_cossquare_force(
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] _energy   Energy.
- *  @retval false
  */
-inline bool angle_cossquare_energy(Utils::Vector3d const &r_mid,
-                                   Utils::Vector3d const &r_left,
-                                   Utils::Vector3d const &r_right,
-                                   Bonded_ia_parameters const *const iaparams,
-                                   double *_energy) {
+inline double angle_cossquare_energy(Utils::Vector3d const &r_mid,
+                                     Utils::Vector3d const &r_left,
+                                     Utils::Vector3d const &r_right,
+                                     Bonded_ia_parameters const &iaparams) {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
-  auto const cos_phi0 = iaparams->p.angle_cossquare.cos_phi0;
-  auto const k = iaparams->p.angle_cossquare.bend;
-  *_energy = 0.5 * k * Utils::sqr(cos_phi - cos_phi0);
-  return false;
+  auto const cos_phi0 = iaparams.p.angle_cossquare.cos_phi0;
+  auto const k = iaparams.p.angle_cossquare.bend;
+  return 0.5 * k * Utils::sqr(cos_phi - cos_phi0);
 }
 
 #endif /* ANGLE_COSSQUARE_H */

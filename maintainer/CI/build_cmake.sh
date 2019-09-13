@@ -136,7 +136,7 @@ if [ ${with_ccache} = true ]; then
     cmake_params="${cmake_params} -DWITH_CCACHE=ON"
 fi
 
-command -v nvidia-smi && nvidia-smi
+command -v nvidia-smi && nvidia-smi || true
 if [ ${hide_gpu} = true ]; then
     echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
     export CUDA_VISIBLE_DEVICES=""

@@ -635,7 +635,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
-        
+
         def _deactivate_method(self):
             dereference(self.thisptr).deactivate()
 

@@ -182,7 +182,7 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
 
 /** Compute the dipolar surface terms */
 static double calc_surface_term(bool force_flag, bool energy_flag,
-                                const ParticleRange &particles);
+                                ParticleRange const &particles);
 
 /** \name P3M Tuning Functions */
 /************************************************************/
@@ -471,7 +471,7 @@ double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]) {
 }
 
 /******************
- * functions related to the parsing&tuning of the dipolar parameters
+ * functions related to the parsing & tuning of the dipolar parameters
  ******************/
 
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
@@ -720,7 +720,7 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles) {
 }
 
 #ifdef ROTATION
-/* Assign the torques obtained from k-space */
+/** Assign the torques obtained from k-space */
 static void P3M_assign_torques(double prefac, int d_rs,
                                const ParticleRange &particles) {
   /* particle counter, charge fraction counter */
@@ -781,7 +781,7 @@ static void P3M_assign_torques(double prefac, int d_rs,
 }
 #endif
 
-/* Assign the dipolar forces obtained from k-space */
+/** Assign the dipolar forces obtained from k-space */
 static void dp3m_assign_forces_dip(double prefac, int d_rs,
                                    const ParticleRange &particles) {
   /* particle counter, charge fraction counter */
@@ -823,7 +823,6 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs,
 double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                                const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
-  /**************************************************************/
   /* k-space energy */
   double dipole_prefac;
   double surface_term = 0.0;
