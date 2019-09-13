@@ -24,7 +24,7 @@
  *  Quaternion algebra.
  */
 
-#ifdef ROTATION
+#include <limits>
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -61,24 +61,24 @@ convert_director_to_quaternion(Utils::Vector<T, 3> const &d) {
   auto const dm = d.norm();
 
   // null vectors cannot be converted to quaternions
-  if (dm < ROUND_ERROR_PREC) {
+  if (dm < std::numeric_limits<T>::epsilon()) {
     return {1, 0, 0, 0};
   }
 
   // Calculate angles
   auto const d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
-  double theta2, phi2;
+  T theta2, phi2;
   if (d_xy == 0) {
     // Here the director is co-linear with the z-azis
     // We need to distinguish between (0, 0, +d_z) and (0, 0, -d_z)
-    theta2 = (d[2] > 0) ? 0 : Utils::pi() / 2;
+    theta2 = (d[2] > 0) ? 0 : Utils::pi<T>() / 2;
     phi2 = 0;
   } else {
     // Here we take care of all other directions
     // We suppose that theta2 = theta/2 and phi2 = (phi - pi/2)/2,
     // where angles theta and phi are in spherical coordinates
     theta2 = acos(d[2] / dm) / 2;
-    phi2 = ((d[1] > 0) ? 1 : -1) * acos(d[0] / d_xy) / 2 - Utils::pi() / 4;
+    phi2 = ((d[1] > 0) ? 1 : -1) * acos(d[0] / d_xy) / 2 - Utils::pi<T>() / 4;
   }
 
   // Calculate the quaternion from the angles
@@ -90,5 +90,4 @@ convert_director_to_quaternion(Utils::Vector<T, 3> const &d) {
           cos_theta2 * sin_phi2};
 }
 
-#endif // ROTATION
 #endif
