@@ -231,8 +231,6 @@ bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
  */
 Utils::Vector3i lb_lbfluid_get_shape();
 
-void lb_lbfluid_on_lb_params_change(LBParam field);
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 
 /**

@@ -269,6 +269,7 @@ void lb_collect_boundary_forces(double *result);
 void lb_initialize_fields(std::vector<LB_FluidNode> &fields,
                           LB_Parameters const &lb_parameters,
                           Lattice const &lb_lattice);
+void lb_on_param_change(LBParam param);
 
 /*@}*/
 
