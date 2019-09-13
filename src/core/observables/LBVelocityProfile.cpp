@@ -18,7 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "LBVelocityProfile.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
 #include <utils/Histogram.hpp>
 
 namespace Observables {
@@ -32,7 +31,7 @@ std::vector<double> LBVelocityProfile::operator()() const {
        std::make_pair(min_z, max_z)}};
   Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
   for (auto const &p : sampling_positions) {
-    const auto v = lb_lbinterpolation_get_interpolated_velocity_global(p) *
+    const auto v = lb_lbfluid_get_interpolated_velocity(p) *
                    lb_lbfluid_get_lattice_speed();
     histogram.update(p, v);
   }

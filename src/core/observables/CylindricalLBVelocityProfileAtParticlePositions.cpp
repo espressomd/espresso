@@ -19,7 +19,6 @@
 */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
 #include <boost/range/algorithm/transform.hpp>
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
@@ -43,11 +42,11 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   });
 
   std::vector<Utils::Vector3d> velocities(ids().size());
-  boost::transform(
-      folded_positions, velocities.begin(), [](const Utils::Vector3d &pos) {
-        return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
-               lb_lbfluid_get_lattice_speed();
-      });
+  boost::transform(folded_positions, velocities.begin(),
+                   [](const Utils::Vector3d &pos) {
+                     return lb_lbfluid_get_interpolated_velocity(pos) *
+                            lb_lbfluid_get_lattice_speed();
+                   });
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {

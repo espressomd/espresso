@@ -25,14 +25,6 @@ const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &p);
 
 /**
- * @brief Calculates the interpolated fluid velocity on the master process.
- * @param pos Position at which the velocity is to be calculated.
- * @retval interpolated fluid velocity.
- */
-const Utils::Vector3d
-lb_lbinterpolation_get_interpolated_velocity_global(const Utils::Vector3d &pos);
-
-/**
  * @brief Add a force density to the fluid at the given position.
  */
 void lb_lbinterpolation_add_force_density(const Utils::Vector3d &p,

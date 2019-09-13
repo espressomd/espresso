@@ -122,7 +122,6 @@ int n_nodes = -1;
   CB(mpi_rotate_system_slave)                                                  \
   CB(mpi_update_particle_slave)                                                \
   CB(mpi_bcast_lb_particle_coupling_slave)                                     \
-  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
   CB(mpi_set_interpolation_order_slave)
 
 // create the forward declarations
@@ -617,28 +616,6 @@ int mpi_iccp3m_init() {
 #endif
 }
 #endif
-
-Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
-                                                  Utils::Vector3d const &pos) {
-  if (this_node == 0) {
-    comm_cart.send(node, SOME_TAG, pos);
-    mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
-    Utils::Vector3d interpolated_u{};
-    comm_cart.recv(node, SOME_TAG, interpolated_u);
-    return interpolated_u;
-  }
-  return {};
-}
-
-void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
-  if (node == this_node) {
-    Utils::Vector3d pos{};
-    comm_cart.recv(0, SOME_TAG, pos);
-    auto const interpolated_u =
-        lb_lbinterpolation_get_interpolated_velocity(pos);
-    comm_cart.send(0, SOME_TAG, interpolated_u);
-  }
-}
 
 /****************************************************/
 

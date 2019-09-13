@@ -235,4 +235,12 @@ void lb_lbfluid_on_lb_params_change(LBParam field);
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
 
+/**
+ * @brief Calculates the interpolated fluid velocity on the master process.
+ * @param pos Position at which the velocity is to be calculated.
+ * @retval interpolated fluid velocity.
+ */
+const Utils::Vector3d
+lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
+
 #endif

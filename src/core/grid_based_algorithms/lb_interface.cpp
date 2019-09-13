@@ -7,6 +7,7 @@
 #include "grid.hpp"
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
+#include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
 
 #include <utils/index.hpp>
@@ -39,6 +40,15 @@ auto lb_calc(Utils::Vector3i const &index, Kernel kernel) {
   return boost::optional<R>();
 }
 
+template <typename Kernel>
+auto lb_calc_for_pos(Utils::Vector3d const &pos, Kernel kernel) {
+  using R = decltype(kernel(pos));
+  if (map_position_node_array(pos) == this_node) {
+    return boost::optional<R>(kernel(pos));
+  }
+  return boost::optional<R>();
+}
+
 template <class Kernel>
 auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
   return lb_calc(index, [&](auto index) {
@@ -49,6 +59,14 @@ auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
     return kernel(modes, force_density);
   });
 }
+
+auto mpi_lb_get_interpolated_velocity(Utils::Vector3d const &pos) {
+  return lb_calc_for_pos(pos, [&](auto pos) {
+    return lb_lbinterpolation_get_interpolated_velocity(pos);
+  });
+}
+
+REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_interpolated_velocity)
 
 auto mpi_lb_get_density(Utils::Vector3i const &index) {
   return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
@@ -1367,4 +1385,37 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
     mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
   }
   return fluid_momentum;
+}
+
+const Utils::Vector3d
+lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
+  auto const folded_pos = folded_position(pos, box_geo);
+  auto const interpolation_order = lb_lbinterpolation_get_interpolation_order();
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    Utils::Vector3d interpolated_u{};
+    switch (interpolation_order) {
+    case (InterpolationOrder::linear):
+      lb_get_interpolated_velocity_gpu<8>(folded_pos.data(),
+                                          interpolated_u.data(), 1);
+      break;
+    case (InterpolationOrder::quadratic):
+      lb_get_interpolated_velocity_gpu<27>(folded_pos.data(),
+                                           interpolated_u.data(), 1);
+      break;
+    }
+    return interpolated_u;
+#endif
+  }
+  if (lattice_switch == ActiveLB::CPU) {
+    switch (interpolation_order) {
+    case (InterpolationOrder::quadratic):
+      throw std::runtime_error("The non-linear interpolation scheme is not "
+                               "implemented for the CPU LB.");
+    case (InterpolationOrder::linear):
+      return mpi_call(::Communication::Result::one_rank,
+                      mpi_lb_get_interpolated_velocity, folded_pos);
+    }
+  }
+  throw NoLBActive();
 }

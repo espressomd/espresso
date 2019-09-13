@@ -22,7 +22,6 @@
 
 #include "CylindricalLBVelocityProfile.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
@@ -37,9 +36,8 @@ std::vector<double> CylindricalLBVelocityProfile::operator()() const {
        std::make_pair(min_z, max_z)}};
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
   for (auto const &p : sampling_positions) {
-    auto const velocity =
-        lb_lbinterpolation_get_interpolated_velocity_global(p) *
-        lb_lbfluid_get_lattice_speed();
+    auto const velocity = lb_lbfluid_get_interpolated_velocity(p) *
+                          lb_lbfluid_get_lattice_speed();
     auto const pos_shifted = p - center;
     auto const pos_cyl =
         Utils::transform_coordinate_cartesian_to_cylinder(pos_shifted, axis);
