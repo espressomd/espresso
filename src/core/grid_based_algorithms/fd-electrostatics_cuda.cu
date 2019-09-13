@@ -5,6 +5,7 @@
 #include "cuda_utils.hpp"
 #include "cufft_wrapper.hpp"
 #include "grid_based_algorithms/fd-electrostatics.cuh"
+#include <stdexcept>
 #include <string>
 //#include <cuda_interface.hpp>
 #include <cstdio>
