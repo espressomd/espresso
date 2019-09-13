@@ -271,6 +271,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
       }
     }
   }
+  if (cnt == 0)
+    return;
 
   /* normalization */
   *low /= (double)cnt;
@@ -328,6 +330,8 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
       }
     }
   }
+  if (cnt == 0)
+    return;
 
   /* normalization */
   volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
