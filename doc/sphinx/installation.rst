@@ -56,8 +56,7 @@ MPI
     environment that implements the MPI standard version 1.2.
 
 Python
-    ESPResSo's main user interface is via the Python scripting interface.
-    We strongly recommend Python 3. Python 2 support is about to be removed.
+    ESPResSo's main user interface is via the Python 3 scripting interface.
 
 Cython
     Cython is used for connecting the C++ core to Python.
@@ -68,10 +67,6 @@ Cython
 
 Installing Requirements on Ubuntu Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These instructions pertain to Python 3. If you need to use the deprecated
-Python 2 support, leave out the `3` in the Python package names.
-I.e., use `python-numpy` rather than `python3-numpy`.
-
 
 To make ESPResSo run on 18.04 LTS, its dependencies can be
 installed with:
@@ -183,27 +178,15 @@ command in |es|'s source directory:
 
     pip3 install -r requirements.txt --user --upgrade
 
-Please note that on some systems, ``pip3`` has to be replaced by ``pip`` or ``pip2`` to install Python 2 versions of the packages.
-
 .. _Quick installation:
 
 Quick installation
 ------------------
 
 If you have installed the requirements (see section :ref:`Requirements`) in
-standard locations, compiling |es| is usually only a matter of
-creating a build directory and calling ``cmake`` and ``make`` in it.
-To choose the correct Python version, run
-
-.. code-block:: bash
-
-    python -V
-    python3 -V
-
-This shows which Python versions are available on your system. Then pass the
-one you'd like to use (we recommend Python 3) in the ``cmake`` command line,
-shown below (optional steps which modify the build process are commented out).
-
+standard locations, compiling |es| is usually only a matter of creating a build
+directory and calling ``cmake`` and ``make`` in it. See for example the command
+lines below (optional steps which modify the build process are commented out):
 
 .. code-block:: bash
 
@@ -211,7 +194,7 @@ shown below (optional steps which modify the build process are commented out).
     cd build
     #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
     #nano myconfig.hpp                    # edit to add/remove features as desired
-    cmake -DPYTHON_EXECUTABLE=`which python3` ..
+    cmake ..
     #ccmake . // in order to add/remove features like SCAFACOS or CUDA
     make
 
