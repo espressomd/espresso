@@ -537,9 +537,17 @@ Debug messages
 
 Finally, there is a flag for debugging:
 
--  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
-   especially in the cell systems. These checks are however too slow to
-   be enabled in production runs.
+-  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect
+   inconsistencies especially in the cell systems. These checks are however
+   too slow to be enabled in production runs.
+
+   .. note::
+      Because of a bug in OpenMPI versions 2.0-2.1, 3.0.0-3.0.2 and 3.1.0-3.1.2
+      that causes a segmentation fault when running the |es| OpenGL visualizer
+      with feature ``ADDITIONAL_CHECKS`` enabled together with either
+      ``ELECTROSTATICS`` or ``DIPOLES``, the subset of additional checks for
+      those two features are disabled if an unpatched version of OpenMPI is
+      detected during compilation.
 
 
 
