@@ -632,8 +632,8 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
         std::sqrt(m_uniform_real_distribution(
             m_generator)); // for uniform disk point picking in cylinder
     double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
-    out_pos[0] = cyl_x+random_radius * cos(phi);
-    out_pos[1] = cyl_y+random_radius * sin(phi);
+    out_pos[0] = cyl_x + random_radius * cos(phi);
+    out_pos[1] = cyl_y + random_radius * sin(phi);
     out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   } else if (box_has_wall_constraints) {
     out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
