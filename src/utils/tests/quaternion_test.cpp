@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(multiply_quaternions) {
   BOOST_CHECK(multiply_quaternions(scalar_quat, vector_quat) ==
               w * vector_quat);
   BOOST_CHECK(multiply_quaternions(zero_quat, full_quat) == zero_quat);
-  Vector4i const vector_quat2{{-(x * x + y * y + z * z), 0, 0, 0}};
-  BOOST_CHECK(multiply_quaternions(vector_quat, vector_quat) == vector_quat2);
+  BOOST_CHECK(multiply_quaternions(vector_quat, vector_quat) ==
+              -vector_quat.norm2() * identity_quat);
   /* other */
   Vector4i const reference_quat{{-4, -20, -30, -40}};
   BOOST_CHECK(multiply_quaternions(full_quat, full_quat) == reference_quat);
@@ -95,7 +95,8 @@ BOOST_AUTO_TEST_CASE(convert_director_to_quaternion) {
           continue;
         }
         // here the case where j is zero is also tested
-        Vector3d input{{(double)i, (double)j, (double)k}};
+        Vector3d input{{static_cast<double>(i), static_cast<double>(j),
+                        static_cast<double>(k)}};
         Vector3d output = convert_quaternion_to_director(
             convert_director_to_quaternion(input));
         input.normalize();
