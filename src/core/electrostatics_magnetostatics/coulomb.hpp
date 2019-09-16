@@ -85,6 +85,11 @@ int set_prefactor(double prefactor);
     This was part of coulomb_set_bjerrum()
 */
 void deactivate_method();
+
+/** @brief Update particles with properties depending on other particles
+ *   e.g., charges of ICC particles
+ */
+void update_dependent_particles();
 } // namespace Coulomb
 #endif // ELECTROSTATICS
 #endif // ESPRESSO_COULOMB_HPP

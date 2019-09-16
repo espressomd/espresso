@@ -91,7 +91,7 @@ cdef extern from "statistics.hpp":
                      double r_min, double r_max, int r_bins, vector[double] rdf,
                      int n_conf)
 
-    void angularmomentum(PartCfg &, int p_type, double * com)
+    Vector3d angularmomentum(PartCfg &, int p_type)
 
     void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
 
@@ -107,7 +107,7 @@ cdef extern from "statistics_chain.hpp":
     int chain_n_chains
     int chain_length
     array4 calc_re(PartCfg & )
-    array4 calc_rg(PartCfg & )
+    array4 calc_rg(PartCfg & ) except +
     array2 calc_rh(PartCfg & )
 
 cdef extern from "pressure.hpp":

@@ -46,10 +46,21 @@ BOOST_AUTO_TEST_CASE(mass) {
   struct {
     struct {
       const double mass = 1.23;
+      bool is_virtual = false;
     } p;
+
   } p;
 
+  struct {
+    struct {
+      const double mass = 1.23;
+      bool is_virtual = true;
+    } p;
+
+  } p_virtual;
+
   BOOST_CHECK((p.p.mass * 2.0) == Mass()(p, 2.0));
+  BOOST_CHECK((0.0 == Mass()(p_virtual, 2.0)));
 }
 
 BOOST_AUTO_TEST_CASE(direct) {

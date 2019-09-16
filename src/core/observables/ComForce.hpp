@@ -32,6 +32,8 @@ public:
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
     for (int i : ids()) {
+      if (partCfg[i].p.is_virtual)
+        continue;
       res[0] += partCfg[i].f.f[0] * partCfg[i].p.mass;
       res[1] += partCfg[i].f.f[1] * partCfg[i].p.mass;
       res[2] += partCfg[i].f.f[2] * partCfg[i].p.mass;
