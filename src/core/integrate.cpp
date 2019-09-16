@@ -120,7 +120,7 @@ void integrator_sanity_checks() {
 /************************************************************/
 
 /** @brief Calls the hook for propagation kernels before the force calculation
-    @return whether or not to sto the integration loop early.
+    @return whether or not to stop the integration loop early.
 */
 bool integrator_step_1(ParticleRange &particles) {
   switch (integ_switch) {
@@ -175,7 +175,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
   /* Integration Step: Preparation for first integration step:
      Calculate forces f(t) as function of positions p(t) ( and velocities v(t) )
-     */
+   */
   /* reuse_forces logic:
      -1: recalculate forces unconditionally, mostly used for timing
       0: recalculate forces if recalc_forces is set, meaning it is probably
@@ -239,7 +239,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     philox_counter_increment();
 
 #ifdef BOND_CONSTRAINT
-    /**Correct those particle positions that participate in a rigid/constrained
+    /* Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
       correct_pos_shake(cell_structure.local_cells().particles());

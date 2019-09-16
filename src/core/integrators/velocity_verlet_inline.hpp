@@ -7,9 +7,10 @@
 #include "rotation.hpp"
 
 /** Propagate the velocities and positions. Integration steps before force
-   calculation of the Velocity Verlet integrator: <br> \f[ v(t+0.5 \Delta t) =
-   v(t) + 0.5 \Delta t f(t)/m \f] <br> \f[ p(t+\Delta t) = p(t) + \Delta t
-   v(t+0.5 \Delta t) \f] */
+ *  calculation of the Velocity Verlet integrator: <br> \f[ v(t+0.5 \Delta t) =
+ *  v(t) + 0.5 \Delta t f(t)/m \f] <br> \f[ p(t+\Delta t) = p(t) + \Delta t
+ *  v(t+0.5 \Delta t) \f]
+ */
 inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
 
   auto const skin2 = Utils::sqr(0.5 * skin);
@@ -46,8 +47,9 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
   }
 }
 
-/** Final integration step of the Velocity Verletintegrator
-    \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f] */
+/** Final integration step of the Velocity Verlet integrator
+ *  \f[ v(t+\Delta t) = v(t+0.5 \Delta t) + 0.5 \Delta t f(t+\Delta t)/m \f]
+ */
 inline void
 velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
 

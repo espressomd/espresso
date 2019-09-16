@@ -82,26 +82,26 @@ void integrator_sanity_checks();
     \param reuse_forces if nonzero, blindly trust
     the forces still stored with the particles for the first time step.
 
-    @detials This function calls two hooks for propagatoin kernels such as
-    velocity verlet, veleocity verlet + npt box changes, and steepest_descent.
+    @details This function calls two hooks for propagation kernels such as
+    velocity verlet, velocity verlet + npt box changes, and steepest_descent.
     One hook is called before and one after the force calculation.
     It is up to the propagation kernels to increment the simulation time.
 
     This function propagates the system according to the choice of integrator
-    stored in integ_switch. The general structure is:
+    stored in @ref integ_switch. The general structure is:
     - if reuse_forces is zero, recalculate the forces based on the current
       state of the system
     - Loop over the number of simulation steps:
       -# initialization (e.g., RATTLE)
       -# First hook for propagation kernels
-      -# Update dependent particles and properties (RATTLEr, virtual sites)
+      -# Update dependent particles and properties (RATTLE, virtual sites)
       -# Calculate forces for the current state of the system. This includes
    forces added by the Langevin thermostat and the Lattice-Boltzmann-particle
    coupling
       -# Second hook for propagation kernels
       -# Update dependent properties (Virtual sites, RATTLE)
-      -# Run singel step algorithms (Lattice-Boltzmann propagation, collision
-   deteciotn, NPT update)
+      -# Run single step algorithms (Lattice-Boltzmann propagation, collision
+   detection, NPT update)
     - Final update of dependent properties and statistics/counters
 
     High-level documentation of the integration and thermostatting schemes
