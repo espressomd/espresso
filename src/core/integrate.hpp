@@ -95,11 +95,15 @@ void integrator_sanity_checks();
       -# initialization (e.g., RATTLE)
       -# First hook for propagation kernels
       -# Update dependent particles and properties (RATTLEr, virtual sites)
-      -# Calculate forces for the current state of the system
+      -# Calculate forces for the current state of the system. This includes forces added by the Langevin thermostat and the Lattice-Boltzmann-particle coupling
       -# Second hook for propagation kernels
       -# Update dependent properties (Virtual sites, RATTLE)
       -# Run singel step algorithms (Lattice-Boltzmann propagation, collision deteciotn, NPT update)
     - Final update of dependent properties and statistics/counters
+
+    High-level documentation of the integration and thermostatting schemes
+    can be found in doc/sphinx/system_setup.rst and /doc/sphinx/running.rst
+
  */
 void integrate_vv(int n_steps, int reuse_forces);
 
