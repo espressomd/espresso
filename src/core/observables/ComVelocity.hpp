@@ -33,6 +33,8 @@ public:
     std::vector<double> res(n_values());
     double total_mass = 0;
     for (int i : ids()) {
+      if (partCfg[i].p.is_virtual)
+        continue;
       double mass = partCfg[i].p.mass;
       res[0] += mass * partCfg[i].m.v[0];
       res[1] += mass * partCfg[i].m.v[1];

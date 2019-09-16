@@ -175,7 +175,7 @@ class Analysis:
     def linear_momentum(self, include_particles=True,
                                 include_lbfluid=True):
         """
-        Calculates the systems linear momentum.
+        Calculates the system's linear momentum.
 
         Parameters
         ----------
@@ -200,7 +200,9 @@ class Analysis:
 
     def center_of_mass(self, p_type=None):
         """
-        Calculates the systems center of mass.
+        Calculates the system's center of mass.
+
+        Note that virtual sites are not included, as they do not have a meaningful mass.
 
         Parameters
         ----------
@@ -1054,15 +1056,30 @@ class Analysis:
     #
 
     def angular_momentum(self, p_type=None):
+        """
+        Calculates the system's angular momentum with respect to the origin.
+    
+        Note that virtual sites are not included, as they do not have a meaningful mass.
+    
+        Parameters
+        ----------
+        p_type : :obj:`int`
+            Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
+            which to calculate the center of mass.
+    
+        Returns
+        -------
+        (3,) :obj:`ndarray` of :obj:`float`
+           The center of mass of the system.
+    
+        """
         check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
 
-        cdef double[3] com
         cdef int p1 = p_type
+        cdef Vector3d res = analyze.angularmomentum(analyze.partCfg(), p1)
 
-        analyze.angularmomentum(analyze.partCfg(), p1, com)
-
-        return np.array([com[0], com[1], com[2]])
+        return np.array([res[0], res[1], res[2]])
 
     #
     # gyration_tensor

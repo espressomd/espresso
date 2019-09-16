@@ -225,23 +225,26 @@ inline void add_three_body_bonded_stress(Particle const &p1) {
  *                (hence it only works with domain decomposition); naturally it
  *                therefore doesn't make sense to use it without NpT.
  */
-inline void add_kinetic_virials(Particle const &p1, bool v_comp) {
-  /* kinetic energy */
-  if (v_comp) {
-    virials.data.e[0] += ((p1.m.v * time_step) -
-                          (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
-                             .norm2() *
-                         p1.p.mass;
-  } else {
-    virials.data.e[0] += Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
-  }
+inline void add_kinetic_virials(Particle const &p1, int v_comp) {
+  if (not p1.p.is_virtual) {
+    /* kinetic energy */
+    if (v_comp) {
+      virials.data.e[0] +=
+          ((p1.m.v * time_step) -
+           (p1.f.f * (0.5 * Utils::sqr(time_step) / p1.p.mass)))
+              .norm2() *
+          p1.p.mass;
+    } else {
+      virials.data.e[0] += Utils::sqr(time_step) * p1.m.v.norm2() * p1.p.mass;
+    }
 
-  /* ideal gas contribution (the rescaling of the velocities by '/=time_step'
-   * each will be done later) */
-  for (int k = 0; k < 3; k++)
-    for (int l = 0; l < 3; l++)
-      p_tensor.data.e[k * 3 + l] +=
-          (p1.m.v[k] * time_step) * (p1.m.v[l] * time_step) * p1.p.mass;
+    /* ideal gas contribution (the rescaling of the velocities by '/=time_step'
+     * each will be done later) */
+    for (int k = 0; k < 3; k++)
+      for (int l = 0; l < 3; l++)
+        p_tensor.data.e[k * 3 + l] +=
+            (p1.m.v[k] * time_step) * (p1.m.v[l] * time_step) * p1.p.mass;
+  }
 }
 
 #endif

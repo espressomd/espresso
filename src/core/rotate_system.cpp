@@ -35,10 +35,10 @@ void local_rotate_system(double phi, double theta, double alpha,
   double local_mass = 0.0;
 
   for (auto const &p : particles) {
-    for (int j = 0; j < 3; j++) {
-      local_com[j] += p.p.mass * p.r.p[j];
+    if (not p.p.is_virtual) {
+      local_com += p.p.mass * p.r.p;
+      local_mass += p.p.mass;
     }
-    local_mass += p.p.mass;
   }
 
   auto const total_mass = mpi::all_reduce(comm_cart, local_mass, std::plus<>());
@@ -66,6 +66,7 @@ void local_rotate_system(double phi, double theta, double alpha,
 
   set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
+  update_dependent_particles();
 }
 
 void mpi_rotate_system_slave(int, int) {

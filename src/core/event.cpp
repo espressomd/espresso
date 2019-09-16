@@ -191,12 +191,7 @@ void on_observable_calc() {
    * information */
 
   cells_update_ghosts();
-  if (recalc_forces) {
-#ifdef VIRTUAL_SITES
-    virtual_sites()->update();
-#endif
-    cells_update_ghosts();
-  }
+  update_dependent_particles();
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
     Coulomb::on_observable_calc();
@@ -466,5 +461,19 @@ void on_ghost_flags_change() {
   if (collision_params.mode) {
     ghosts_have_bonds = true;
   }
+#endif
+}
+
+void update_dependent_particles() {
+#ifdef VIRTUAL_SITES
+  if (virtual_sites()->is_relative()) {
+    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  }
+  virtual_sites()->update();
+#endif
+  cells_update_ghosts();
+
+#ifdef ELECTROSTATICS
+  Coulomb::update_dependent_particles();
 #endif
 }

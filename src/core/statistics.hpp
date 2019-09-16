@@ -206,9 +206,8 @@ Utils::Vector3d centerofmass(PartCfg &, int part_type);
 /** Calculate the angular momentum of a special type of the current
  *  configuration.
  *  \param type  type of the particle
- *  \param com   angular momentum vector
  */
-void angularmomentum(PartCfg &, int type, double *com);
+Utils::Vector3d angularmomentum(PartCfg &, int type);
 
 /** Calculate the center of mass of a special type of a saved configuration.
  *  \param partCfg     @copybrief PartCfg
