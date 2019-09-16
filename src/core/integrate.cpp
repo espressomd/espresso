@@ -295,7 +295,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
       break;
     }
 
-  } // for(step ...)
+  } // for-loop over integration steps
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
