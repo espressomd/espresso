@@ -285,9 +285,9 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 
 #ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    npt_update_instantaneous_pressure();
-  }
+    if (integ_switch == INTEG_METHOD_NPT_ISO) {
+      npt_update_instantaneous_pressure();
+    }
 #endif
 
     if (check_runtime_errors(comm_cart))
