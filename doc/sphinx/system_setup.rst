@@ -32,11 +32,11 @@ for further calculations, you should explicitly make a copy e.g. via
 * :py:attr:`~espressomd.system.System.periodicity`
 
     (int[3]) Specifies periodicity for the three directions. |es| can be instructed
-    to treat some dimensions as non-periodic. Per default espresso assumes periodicity in
-    all directions which equals setting this variable to [1,1,1]. A
-    dimension is specified as non-periodic via setting the periodicity
-    variable for this dimension to 0. E.g. Periodicity only in z-direction
-    is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
+    to treat some dimensions as non-periodic. By default |es| assumes periodicity in
+    all directions which equals setting this variable to ``[True, True, True]``.
+    A dimension is specified as non-periodic via setting the periodicity
+    variable for this dimension to ``False``. E.g. Periodicity only in z-direction
+    is obtained by ``[False, False, True]``. Caveat: Be aware of the fact that making a
     dimension non-periodic does not hinder particles from leaving the box in
     this direction. In this case for keeping particles in the simulation box
     a constraint has to be set.
@@ -52,9 +52,9 @@ for further calculations, you should explicitly make a copy e.g. via
 * :py:attr:`~espressomd.system.System.min_global_cut`
 
     (float) Minimal total cutoff for real space. Effectively, this plus the
-    :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible cell size. Espresso typically determines
-    this value automatically, but some algorithms, virtual sites, require
-    you to specify it manually.
+    :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible
+    cell size. |es| typically determines this value automatically, but some
+    algorithms, virtual sites, require you to specify it manually.
 
 * :py:attr:`~espressomd.system.System.max_cut_bonded`
 
@@ -105,7 +105,7 @@ The properties of the cell system can be accessed by
     * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
 
     (int) Maximal number of cells for the link cell algorithm. Reasonable
-    values are between 125 and 1000, or for some problems :math:`n_part / nnodes`.
+    values are between 125 and 1000, or for some problems ``n_part / nnodes``.
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
 
@@ -496,8 +496,7 @@ the device id as key and the device name as its' value.
 Selection of CUDA device
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-When you start ``pypresso`` your first GPU should
-be selected.
+When you start ``pypresso`` your first GPU should be selected.
 If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 

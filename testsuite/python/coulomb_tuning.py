@@ -78,7 +78,7 @@ class CoulombCloudWallTune(ut.TestCase):
         self.system.integrator.run(0)
         self.compare("p3m")
 
-    @utx.skipIfMissingGPU(skip_ci_amd=True)
+    @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
         # We have to add some tolerance here, because the reference
         # system is not homogeneous

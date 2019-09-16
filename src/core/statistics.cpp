@@ -86,28 +86,27 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   return std::sqrt(mindist2);
 }
 
-void predict_momentum_particles(double *result,
-                                const ParticleRange &particles) {
-  double momentum[3] = {0.0, 0.0, 0.0};
+Utils::Vector3d local_particle_momentum() {
+  auto const particles = local_cells.particles();
+  auto const momentum =
+      std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
+                      [](Utils::Vector3d &m, Particle const &p) {
+                        return std::move(m) + p.p.mass * p.m.v;
+                      });
 
-  for (auto const &p : particles) {
-    auto const mass = p.p.mass;
-
-    momentum[0] += mass * (p.m.v[0] + p.f.f[0] * 0.5 * time_step / p.p.mass);
-    momentum[1] += mass * (p.m.v[1] + p.f.f[1] * 0.5 * time_step / p.p.mass);
-    momentum[2] += mass * (p.m.v[2] + p.f.f[2] * 0.5 * time_step / p.p.mass);
-  }
-
-  MPI_Reduce(momentum, result, 3, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  return momentum;
 }
+
+REGISTER_CALLBACK_REDUCTION(local_particle_momentum,
+                            std::plus<Utils::Vector3d>())
 
 Utils::Vector3d calc_linear_momentum(int include_particles,
                                      int include_lbfluid) {
   Utils::Vector3d linear_momentum{};
   if (include_particles) {
-    Utils::Vector3d momentum_particles{};
-    mpi_gather_stats(4, momentum_particles.data(), nullptr, nullptr, nullptr);
-    linear_momentum += momentum_particles;
+    linear_momentum +=
+        mpi_call(::Communication::Result::reduction,
+                 std::plus<Utils::Vector3d>(), local_particle_momentum);
   }
   if (include_lbfluid) {
     linear_momentum += lb_lbfluid_calc_fluid_momentum();
@@ -271,6 +270,8 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
       }
     }
   }
+  if (cnt == 0)
+    return;
 
   /* normalization */
   *low /= (double)cnt;
@@ -328,6 +329,8 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
       }
     }
   }
+  if (cnt == 0)
+    return;
 
   /* normalization */
   volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];

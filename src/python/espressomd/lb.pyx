@@ -233,11 +233,11 @@ cdef class HydrodynamicInteraction(Actor):
 
     property stress:
         def __get__(self):
-            cdef Vector6d res
-            res = lb_lbfluid_get_stress()
-            return array_locked((
-                res[0], res[1], res[2], res[3], res[4], res[5]))
-
+            cdef Vector6d stress = python_lbfluid_get_stress(self.agrid, self.tau)
+            return array_locked(np.array([[stress[0], stress[1], stress[3]],
+                                          [stress[1], stress[2], stress[4]],
+                                          [stress[3], stress[4], stress[5]]]))
+        
         def __set__(self, value):
             raise NotImplementedError
 

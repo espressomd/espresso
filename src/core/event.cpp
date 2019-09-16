@@ -73,6 +73,19 @@ static int reinit_magnetostatics = false;
 static int reinit_particle_comm_gpu = true;
 #endif
 
+#if defined(OPEN_MPI) &&                                                       \
+    (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION <= 1 ||                     \
+     OMPI_MAJOR_VERSION == 3 &&                                                \
+         (OMPI_MINOR_VERSION == 0 && OMPI_RELEASE_VERSION <= 2 ||              \
+          OMPI_MINOR_VERSION == 1 && OMPI_RELEASE_VERSION <= 2))
+/** Workaround for segmentation fault "Signal code: Address not mapped (1)"
+ *  that happens when the visualizer is used. This is a bug in OpenMPI 2.0-2.1,
+ *  3.0.0-3.0.2 and 3.1.0-3.1.2
+ *  https://github.com/espressomd/espresso/issues/3056
+ */
+#define OPENMPI_BUG_MPI_ALLOC_MEM
+#endif
+
 void on_program_start() {
 
 #ifdef CUDA
@@ -157,7 +170,7 @@ void on_integration_start() {
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
-
+#ifndef OPENMPI_BUG_MPI_ALLOC_MEM
 #ifdef ELECTROSTATICS
   if (!Utils::Mpi::all_compare(comm_cart, coulomb.method))
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
@@ -165,6 +178,7 @@ void on_integration_start() {
 #ifdef DIPOLES
   if (!Utils::Mpi::all_compare(comm_cart, dipole.method))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
+#endif
 #endif
   check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
