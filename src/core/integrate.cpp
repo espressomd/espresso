@@ -119,6 +119,9 @@ void integrator_sanity_checks() {
 
 /************************************************************/
 
+/** @brief Calls the hook for propagation kernels before the force calculation
+    @return whether or not to sto the integration loop early.
+*/
 bool integrator_step_1(ParticleRange &particles) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
@@ -139,6 +142,7 @@ bool integrator_step_1(ParticleRange &particles) {
   return false;
 }
 
+/** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
