@@ -11,7 +11,7 @@ is tested and known to run on a number of platforms.
 Alternatively, people that want to use the newest features of |es| or that
 want to start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from |es| 's project page at Github  [3]_. This code might be not as well
+from |es|'s project page at Github  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -34,7 +34,7 @@ Requirements
 ------------
 
 The following tools libraries, including header files, are required to be able
-to compile and use ESPResSo:
+to compile and use |es|:
 
 CMake
     The build system is based on CMake
@@ -43,21 +43,20 @@ C++ Compiler
     C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
-    A number of advanced C++ features used by ESPResSo is provided by Boost.
+    A number of advanced C++ features used by |es| are provided by Boost.
     We strongly recommend to use at least boost 1.67.
 
 FFTW
-    For some algorithms (P\ :math:`^3`\ M), ESPResSo needs the FFTW library
+    For some algorithms (P\ :math:`^3`\ M), |es| needs the FFTW library
     version 3 or later  [5]_ for Fourier transforms, including header
     files.
 
 MPI
-    Because ESPResSo is parallelized with MPI, you need a working MPI
+    Because |es| is parallelized with MPI, you need a working MPI
     environment that implements the MPI standard version 1.2.
 
 Python
-    ESPResSo's main user interface is via the Python scripting interface.
-    We strongly recommend Python 3. Python 2 support is about to be removed.
+    |es|'s main user interface is via the Python 3 scripting interface.
 
 Cython
     Cython is used for connecting the C++ core to Python.
@@ -68,13 +67,8 @@ Cython
 
 Installing Requirements on Ubuntu Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These instructions pertain to Python 3. If you need to use the deprecated
-Python 2 support, leave out the `3` in the Python package names.
-I.e., use `python-numpy` rather than `python3-numpy`.
 
-
-To make ESPResSo run on 18.04 LTS, its dependencies can be
-installed with:
+To make |es| run on 18.04 LTS, its dependencies can be installed with:
 
 .. code-block:: bash
 
@@ -183,27 +177,15 @@ command in |es|'s source directory:
 
     pip3 install -r requirements.txt --user --upgrade
 
-Please note that on some systems, ``pip3`` has to be replaced by ``pip`` or ``pip2`` to install Python 2 versions of the packages.
-
 .. _Quick installation:
 
 Quick installation
 ------------------
 
 If you have installed the requirements (see section :ref:`Requirements`) in
-standard locations, compiling |es| is usually only a matter of
-creating a build directory and calling ``cmake`` and ``make`` in it.
-To choose the correct Python version, run
-
-.. code-block:: bash
-
-    python -V
-    python3 -V
-
-This shows which Python versions are available on your system. Then pass the
-one you'd like to use (we recommend Python 3) in the ``cmake`` command line,
-shown below (optional steps which modify the build process are commented out).
-
+standard locations, compiling |es| is usually only a matter of creating a build
+directory and calling ``cmake`` and ``make`` in it. See for example the command
+lines below (optional steps which modify the build process are commented out):
 
 .. code-block:: bash
 
@@ -211,7 +193,7 @@ shown below (optional steps which modify the build process are commented out).
     cd build
     #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
     #nano myconfig.hpp                    # edit to add/remove features as desired
-    cmake -DPYTHON_EXECUTABLE=`which python3` ..
+    cmake ..
     #ccmake . // in order to add/remove features like SCAFACOS or CUDA
     make
 
@@ -244,7 +226,7 @@ command:
 
     ./pypresso <SCRIPT>
 
-where is ``<SCRIPT>`` is a ``python`` script which has to
+where ``<SCRIPT>`` is a ``python`` script which has to
 be written by the user. You can find some examples in the :file:`samples`
 folder of the source code directory. If you want to run in parallel, you should
 have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
@@ -307,7 +289,7 @@ different configuration headers:
 
     #define LJCOS
 
-Then you can simply compile two different versions of via:
+Then you can simply compile two different versions of |es| via:
 
 .. code-block:: bash
 
@@ -319,7 +301,7 @@ Then you can simply compile two different versions of via:
     cmake ..
     make
 
-To see, what features were activated in :file:`myconfig.hpp`, run:
+To see what features were activated in :file:`myconfig.hpp`, run:
 
 .. code-block:: bash
 
@@ -587,8 +569,7 @@ are ever modified by the build process.
     cmake ..
     make
 
-Afterwards Espresso can be run via calling :file:`./pypresso` from the command
-line.
+Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
 
 .. _ccmake:
 
@@ -600,9 +581,8 @@ to configure |es| interactively.
 
 **Example:**
 
-Alternatively to the previous example, instead of cmake, the ccmake executable is
-called in the build directory to configure ESPResSo,
-followed by a call to make:
+Alternatively to the previous example, instead of cmake, the ccmake executable
+is called in the build directory to configure |es|, followed by a call to make:
 
 .. code-block:: bash
 
@@ -723,7 +703,7 @@ introduction, see the tutorials, which are also part of the
 distribution. To use |es|, you need to import the espressomd module in your
 Python script. To this end, the folder containing the python module
 needs to be in the Python search path. The module is located in the
-src/python folder under the build directory. A convenient way to run
+:file:`src/python` folder under the build directory. A convenient way to run
 python with the correct path is to use the pypresso script located in
 the build directory.
 
@@ -731,14 +711,13 @@ the build directory.
 
     ./pypresso simulation.py
 
-The ``pypresso`` script is just a wrapper in order to expose our
-self built python modules to the systems python interpreter by
-modifying the  ``$PYTHONPATH``.
-Please see the following chapters describing how to actually write
-a simulation script for |es|.
+The ``pypresso`` script is just a wrapper in order to expose the |es| python
+module to the system's python interpreter by modifying the ``$PYTHONPATH``.
+Please see the following chapter :ref:`Setting up the system` describing how
+to actually write a simulation script for |es|.
 
-Running the Jupyter interpreter requires using the ipypresso script, which is
-also located in the build directory (its name comes from the IPython
+Running the Jupyter interpreter requires using the ``ipypresso`` script, which
+is also located in the build directory (its name comes from the IPython
 interpreter, today known as Jupyter). To run the tutorials, you will need
 to start the Jupyter interpreter in notebook mode:
 
@@ -791,7 +770,7 @@ Debugging |es|
 --------------
 
 Exceptional situations occur in every program.  If |es| crashes with a
-segmentation fault that means that there was a memory fault in the
+segmentation fault, that means that there was a memory fault in the
 simulation core which requires running the program in a debugger.  The
 ``pypresso`` executable file is actually not a program but a script
 which sets the Python path appropriately and starts the Python
