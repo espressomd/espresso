@@ -39,6 +39,8 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
     }
   }
 }
+
+/** Scale and communicate instantaneous NPT pressure */
 void velocity_verlet_npt_finalize_p_inst() {
   double p_tmp = 0.0;
   int i;
@@ -59,6 +61,7 @@ void velocity_verlet_npt_finalize_p_inst() {
                     friction_thermV_nptiso(nptiso.p_diff);
   }
 }
+
 void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
   double scal[3] = {0., 0., 0.}, L_new = 0.0;
 
