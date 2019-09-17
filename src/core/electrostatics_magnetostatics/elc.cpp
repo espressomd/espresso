@@ -1133,7 +1133,7 @@ int ELC_sanity_checks() {
     runtimeErrorMsg() << "ELC does currently not support non-neutral "
                          "systems with a dielectric contrast.";
     return ES_ERROR;  
-      }
+  }
 
   return ES_OK;
 }
