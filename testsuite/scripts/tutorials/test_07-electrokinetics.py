@@ -22,11 +22,10 @@ import sys
 
 # these tutorials need to be executed sequentially
 tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(
-    "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_electrokinetics.py",
+    "@TUTORIALS_DIR@/07-electrokinetics/07-electrokinetics.py",
     gpu=True, integration_length=600, dt=0.5)
-# use importlib directly to avoid an error for some myconfig.hpp configurations
-sys.path.insert(0, "@TUTORIALS_DIR@/07-electrokinetics/scripts/")
-tutorial_analytical = iw.importlib.import_module("eof_analytical")
+tutorial_analytical, skipIfMissingFeatures_plot = iw.configure_and_import(
+    "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_analytical.py")
 tutorial_plot, skipIfMissingFeatures_plot = iw.configure_and_import(
     "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py")
 
@@ -45,7 +44,7 @@ class Tutorial(ut.TestCase):
         b /= scale
 
     def test_simulation(self):
-        for varname in ("density", "velocity", "pressure_xz"):
+        for varname in ("density", "velocity", "pressure_xy"):
             sim = np.array(tutorial_simulation.__dict__[varname + "_list"])
             ana = np.array(tutorial_analytical.__dict__[varname + "_list"])
             self.normalize_two_datasets(sim, ana)

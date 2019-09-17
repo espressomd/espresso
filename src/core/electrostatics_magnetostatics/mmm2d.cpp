@@ -1165,15 +1165,15 @@ double MMM2D_add_far(bool calc_forces, bool calc_energies,
   gblcblk.resize(local_cells.n * 8);
 
   // It's not really far...
-  auto eng = calc_energies ? MMM2D_self_energy(local_cells.particles()) : 0;
+  auto eng = calc_energies ? MMM2D_self_energy(particles) : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5 * eng;
 
   auto undone = std::vector<int>(n_scxcache + 1);
 
-  prepare_scx_cache(local_cells.particles());
-  prepare_scy_cache(local_cells.particles());
+  prepare_scx_cache(particles);
+  prepare_scy_cache(particles);
 
   /* complicated loop. We work through the p,q vectors in rings
      from outside to inside to avoid problems with cancellation */

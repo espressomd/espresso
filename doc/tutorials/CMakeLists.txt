@@ -105,6 +105,7 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_04_3_html
   tutorials_04_4_html
   tutorials_05_html
+  tutorials_07_html
   tutorials_08_html
   tutorials_11_1_html
   tutorials_11_2_html
@@ -121,6 +122,7 @@ add_custom_target(tutorials_python_only DEPENDS
   tutorials_04_3_python
   tutorials_04_4_python
   tutorials_05_python
+  tutorials_07_python
   tutorials_08_python
   tutorials_11_1_python
   tutorials_11_2_python
