@@ -545,7 +545,6 @@ endif(WITH_BENCHMARKS)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(libs)
-add_subdirectory(config)
 #
 # Feature summary
 #
