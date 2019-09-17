@@ -1126,13 +1126,14 @@ int ELC_sanity_checks() {
                          "non-metallic dielectric contrast.";
     return ES_ERROR;
   }
-  
-  // Disable this line to make ELC work again with non-neutral systems and metallic boundaries
+
+  // Disable this line to make ELC work again with non-neutral systems and
+  // metallic boundaries
   if (elc_params.dielectric_contrast_on && elc_params.const_pot &&
       p3m.square_sum_q > ROUND_ERROR_PREC) {
     runtimeErrorMsg() << "ELC does currently not support non-neutral "
                          "systems with a dielectric contrast.";
-    return ES_ERROR;  
+    return ES_ERROR;
   }
 
   return ES_OK;

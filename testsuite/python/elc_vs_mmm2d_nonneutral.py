@@ -41,21 +41,21 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
                 "maxPWerror": self.acc,
                 "neutralize": False,
                 "check_neutrality": False}
-#            "const_pot_0": {
-#                "gap_size": self.elc_gap,
-#                "maxPWerror": self.acc,
-#                "const_pot": True,
-#                "pot_diff": 0.0},
-#            "const_pot_1": {
-#                "gap_size": self.elc_gap,
-#                "maxPWerror": self.acc,
-#                "const_pot": True,
-#                "pot_diff": 1.0},
-#            "const_pot_m1": {
-#                "gap_size": self.elc_gap,
-#                "maxPWerror": self.acc,
-#                "const_pot": True,
-#                "pot_diff": -1.0}
+            #            "const_pot_0": {
+            #                "gap_size": self.elc_gap,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 0.0},
+            #            "const_pot_1": {
+            #                "gap_size": self.elc_gap,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 1.0},
+            #            "const_pot_m1": {
+            #                "gap_size": self.elc_gap,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": -1.0}
         }
 
         mmm2d_param_sets = {
@@ -63,21 +63,21 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
                 "check_neutrality": False}
-#            "const_pot_0": {
-#                "prefactor": 1.0,
-#                "maxPWerror": self.acc,
-#                "const_pot": True,
-#                "pot_diff": 0.0},
-#            "const_pot_1": {
-#                "prefactor": 1.0,
-#                "maxPWerror": self.acc,
-#                "const_pot": True,
-#                "pot_diff": 1.0},
-#            "const_pot_m1": {
-#                "prefactor": 1.0,
-#                "maxPWerror": self.acc,
-#                "const_pot": True,
-#                "pot_diff": -1.0}
+            #            "const_pot_0": {
+            #                "prefactor": 1.0,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 0.0},
+            #            "const_pot_1": {
+            #                "prefactor": 1.0,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 1.0},
+            #            "const_pot_m1": {
+            #                "prefactor": 1.0,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": -1.0}
         }
 
         self.system.box_l = 3 * [self.box_l]
