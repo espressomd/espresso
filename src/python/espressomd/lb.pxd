@@ -231,6 +231,12 @@ cdef inline Vector3d python_lbfluid_get_ext_force_density(p_agrid, p_tau):
         c_ext_force_density[i] /= p_agrid * p_agrid * p_tau * p_tau
     return c_ext_force_density
 
+cdef inline Vector6d python_lbfluid_get_stress(agrid, tau):
+    cdef Vector6d stress = lb_lbfluid_get_stress()
+    for i in range(6):
+        stress[i] *= 1. / agrid * 1. / tau**2.0
+    return stress
+
 cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
     cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()
     cdef Vector3d c_velocity = velocity * inv_lattice_speed

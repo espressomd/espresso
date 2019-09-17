@@ -78,6 +78,11 @@ std::array<double, 4> calc_rg(PartCfg &partCfg) {
     Utils::Vector3d r_CM{};
     for (int j = 0; j < chain_length; j++) {
       p = chain_start + i * chain_length + j;
+      if (partCfg[p].p.is_virtual) {
+        throw std::runtime_error(
+            "Gyration tensor is not well-defined for chains including virtual "
+            "sites. Virtual sites do not have a meaningful mass.");
+      }
       r_CM += partCfg[p].r.p * partCfg[p].p.mass;
       M += partCfg[p].p.mass;
     }

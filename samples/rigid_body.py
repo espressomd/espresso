@@ -58,10 +58,17 @@ y = box_l * 0.5
 z = box_l * 0.5
 
 # place six branches, pointing +/-x +/-y and +/-z
+# note that we do not make the particles virtual at this point.
+# The script uses center of mass an moment of inertia analysis routines
+# to obtain the position and inertia moments of the central particle.
+# Once a particle is made virtual, it will no longer contribute to 
+# observables involving mass. Virtual sites are not integrated via
+# Newton's equation of motion and therefore do not have a meaningful mass.
+
 for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     for n in range(branch_len):
         system.part.add(pos=[x, y, z] + (n + 1) * direction,
-                        type=type_A, virtual=True)
+                        type=type_A)
         system.part.add(pos=[x, y, z] - (n + 1) * direction,
                         type=type_A, virtual=True)
 
@@ -94,9 +101,10 @@ p_center = system.part.add(
     pos=com, mass=branch_len * 6 + 1, rinertia=momI,
     rotation=[1, 1, 1], type=type_centre)
 
-# The virtual particles relate to the center one
+# Relate the particles that make up the rigid body to the central particle.
+# This will also mark them as `virtual = True`
 for p in system.part:
-    if p.virtual:
+    if p != p_center: 
         p.vs_auto_relate_to(p_center.id)
 
 for frame in range(200):

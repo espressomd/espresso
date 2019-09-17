@@ -65,10 +65,12 @@ for filepath in new_cells:
     with open(filepath, encoding='utf-8') as f:
         code = f.read()
     # remove ESPResSo copyright header
-    m = re.search('# Copyright \(C\) \d+(?:\d+)? The ESPResSo project\n.+?'
+    m = re.search('# Copyright \(C\) \d+(?:-\d+)? The ESPResSo project\n.+?'
                   'If not, see <http://www\.gnu\.org/licenses/>\.\n', code, re.DOTALL)
     if m and all(x.startswith('#') for x in m.group(0).strip().split('\n')):
         code = re.sub('^(#\n)+', '', code.replace(m.group(0), ''), re.M)
+    # strip first component in relative paths
+    code = re.sub('(?<=[\'\"])\.\./', './', code)
     # if matplotlib is imported in this script, split into two cells
     if 'import matplotlib' in code:
         cells_code = re.split('^((?:|.*\n)import matplotlib.*?)\n', code,

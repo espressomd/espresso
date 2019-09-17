@@ -91,7 +91,7 @@ class CoulombCloudWall(ut.TestCase):
         self.S.integrator.run(0)
         self.compare("p3m", energy=True)
 
-    @utx.skipIfMissingGPU(skip_ci_amd=True)
+    @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
             self.S.actors.add(
                 espressomd.electrostatics.P3MGPU(
