@@ -21,14 +21,18 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_bcast_lb_particle_coupling_slave(int, int) {
+void mpi_bcast_lb_particle_coupling_slave() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-void lb_lbcoupling_activate() {
-  lb_particle_coupling.couple_to_md = true;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
+REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_slave)
+
+void mpi_bcast_lb_particle_coupling() {
+  mpi_call(mpi_bcast_lb_particle_coupling_slave);
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
+
+void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
   if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
@@ -40,7 +44,6 @@ void lb_lbcoupling_deactivate() {
   }
 
   lb_particle_coupling.couple_to_md = false;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_set_gamma(double gamma) {

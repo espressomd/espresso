@@ -253,11 +253,6 @@ void mpi_bcast_cell_structure(int cs);
  */
 void mpi_bcast_nptiso_geom();
 
-void mpi_bcast_lb_particle_coupling();
-
-Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
-                                                  Utils::Vector3d const &pos);
-
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();
 

@@ -107,6 +107,27 @@ extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
      {{1, 0, -1, 1, 1, -1, -1, 0, 0, -1, 0, -1, 1, 0, 1, -1, 1, -1, -1}}}};
 } // namespace
 
+void lb_on_param_change(LBParam param) {
+  switch (param) {
+  case LBParam::AGRID:
+    lb_init(lbpar);
+    break;
+  case LBParam::DENSITY:
+    lb_reinit_fluid(lbfields, lblattice, lbpar);
+    break;
+  case LBParam::VISCOSITY:
+  case LBParam::EXT_FORCE_DENSITY:
+    lb_initialize_fields(lbfields, lbpar, lblattice);
+  case LBParam::BULKVISC:
+  case LBParam::KT:
+  case LBParam::GAMMA_ODD:
+  case LBParam::GAMMA_EVEN:
+  case LBParam::TAU:
+    break;
+  }
+  lb_reinit_parameters(lbpar);
+}
+
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions(const LB_Fluid &lbfluid,
                                   const Lattice &lb_lattice);

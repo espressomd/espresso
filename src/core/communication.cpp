@@ -120,10 +120,7 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_update_particle_slave)                                                \
-  CB(mpi_bcast_lb_particle_coupling_slave)                                     \
-  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)
+  CB(mpi_update_particle_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -544,13 +541,6 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
 }
 
-/******************* REQ_BCAST_LBPAR ********************/
-
-void mpi_bcast_lb_particle_coupling() {
-  mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
-}
-
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
 
 void mpi_bcast_cuda_global_part_vars() {
@@ -608,28 +598,6 @@ int mpi_iccp3m_init() {
 #endif
 }
 #endif
-
-Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
-                                                  Utils::Vector3d const &pos) {
-  if (this_node == 0) {
-    comm_cart.send(node, SOME_TAG, pos);
-    mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
-    Utils::Vector3d interpolated_u{};
-    comm_cart.recv(node, SOME_TAG, interpolated_u);
-    return interpolated_u;
-  }
-  return {};
-}
-
-void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
-  if (node == this_node) {
-    Utils::Vector3d pos{};
-    comm_cart.recv(0, SOME_TAG, pos);
-    auto const interpolated_u =
-        lb_lbinterpolation_get_interpolated_velocity(pos);
-    comm_cart.send(0, SOME_TAG, interpolated_u);
-  }
-}
 
 /****************************************************/
 

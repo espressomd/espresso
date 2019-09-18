@@ -172,7 +172,7 @@ cdef class HydrodynamicInteraction(Actor):
 
         for i in range(3):
             p[i] = pos[i]
-        cdef Vector3d v = lb_lbinterpolation_get_interpolated_velocity_global(p) * lb_lbfluid_get_lattice_speed()
+        cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
         return make_array_locked(v)
 
     def print_vtk_velocity(self, path, bb1=None, bb2=None):
