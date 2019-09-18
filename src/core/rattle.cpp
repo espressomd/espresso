@@ -160,7 +160,8 @@ void app_pos_correction(const ParticleRange &particles) {
   } // for i loop
 }
 
-void correct_pos_shake(const ParticleRange &particles) {
+void correct_pos_shake(ParticleRange const &particles) {
+  cells_update_ghosts();
   int repeat_, cnt = 0;
   int repeat = 1;
 
@@ -169,7 +170,7 @@ void correct_pos_shake(const ParticleRange &particles) {
     repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    app_pos_correction(particles);
+    app_pos_correction(cell_structure.local_cells().particles());
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (this_node == 0)
@@ -273,7 +274,9 @@ void revert_force(const ParticleRange &particles,
     revert(p);
 }
 
-void correct_vel_shake(CellStructure &cell_structure) {
+void correct_vel_shake() {
+  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle

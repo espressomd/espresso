@@ -145,18 +145,20 @@ cdef class Integrator:
             If this optional parameter is true, a cubic box is assumed.
 
         """
-        self._method = "NPT"
-        self._isotropic_npt_params['ext_pressure'] = ext_pressure
-        self._isotropic_npt_params['piston'] = piston
-        self._isotropic_npt_params['direction'] = direction
-        self._isotropic_npt_params['cubic_box'] = cubic_box
-        if "NPT" not in espressomd.code_info.features():
-            raise Exception("NPT is not compiled in")
-        check_type_or_throw_except(
-            ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")
-        check_type_or_throw_except(
-            piston, 1, float, "NPT parameter piston must be a float")
-        check_type_or_throw_except(
-            direction, 3, int, "NPT parameter direction must be an array-like of three ints")
-        if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0], direction[1], direction[2], cubic_box)):
-            handle_errors("Encountered errors setting up the NPT integrator")
+        IF NPT:
+            self._method = "NPT"
+            self._isotropic_npt_params['ext_pressure'] = ext_pressure
+            self._isotropic_npt_params['piston'] = piston
+            self._isotropic_npt_params['direction'] = direction
+            self._isotropic_npt_params['cubic_box'] = cubic_box
+            check_type_or_throw_except(
+                ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")
+            check_type_or_throw_except(
+                piston, 1, float, "NPT parameter piston must be a float")
+            check_type_or_throw_except(
+                direction, 3, int, "NPT parameter direction must be an array-like of three ints")
+            if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0], direction[1], direction[2], cubic_box)):
+                handle_errors(
+                    "Encountered errors setting up the NPT integrator")
+        ELSE:
+            raise Exception("NPT not compiled in.")

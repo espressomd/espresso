@@ -18,6 +18,7 @@
 */
 
 #include "VirtualSitesRelative.hpp"
+#include "forces_inline.hpp"
 #include <utils/math/sqr.hpp>
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -30,7 +31,12 @@
 #include "rotation.hpp"
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
-
+  // Ghost update logic
+  if (n_nodes > 0) {
+    if (recalc_positions or get_have_velocity()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
+  }
   for (auto &p : local_cells.particles()) {
     if (!p.p.is_virtual)
       continue;
@@ -128,6 +134,9 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts(cell_structure.ghost_cells().particles());
+
   // Iterate over all the particles in the local cells
   for (auto &p : local_cells.particles()) {
     // We only care about virtual particles

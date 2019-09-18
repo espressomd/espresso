@@ -21,9 +21,10 @@ set(EspressoCore_SRC
   immersed_boundaries.cpp
   event.cpp
   integrate.cpp
+  integrators/velocity_verlet_npt.cpp
   layered.cpp
   metadynamics.cpp
-  minimize_energy.cpp
+  integrators/steepest_descent.cpp
   npt.cpp
   nsquare.cpp
   partCfg_global.cpp

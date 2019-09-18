@@ -54,9 +54,7 @@ void init_forces(const ParticleRange &particles) {
      thermodynamic ensemble */
 
 #ifdef NPT
-  /* reset virial part of instantaneous pressure */
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
-    nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+  npt_reset_instantaneous_virials();
 #endif
 
   /* initialize forces with Langevin thermostat forces
@@ -165,10 +163,6 @@ void force_calc(CellStructure &cell_structure) {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  if (virtual_sites()->is_relative()) {
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    init_forces_ghosts(ghost_particles);
-  }
   virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
