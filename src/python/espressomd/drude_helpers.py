@@ -75,7 +75,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     if verbose:
         print(
             "Adding to core", p_core.id, "drude id", id_drude, "  pol", alpha,
-              "  core charge", p_core.q, "->", p_core.q - q_drude, "   drude charge", q_drude)
+            "  core charge", p_core.q, "->", p_core.q - q_drude, "   drude charge", q_drude)
 
     p_core.q -= q_drude
     p_core.mass -= mass_drude

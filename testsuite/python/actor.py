@@ -107,5 +107,6 @@ class ActorTest(ut.TestCase):
         self.assertFalse(params["b"])
         self.assertTrue(params["c"])
 
+
 if __name__ == "__main__":
     ut.main()

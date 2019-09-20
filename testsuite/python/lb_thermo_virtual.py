@@ -89,5 +89,6 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     def test_lb_gpu(self):
         self.check_virtual(espressomd.lb.LBFluidGPU)
 
+
 if __name__ == "__main__":
     ut.main()

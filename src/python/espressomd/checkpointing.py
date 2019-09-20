@@ -131,7 +131,7 @@ class Checkpoint:
                 raise ValueError(
                     "The object that should be checkpointed is identified with its name given as a string.")
 
-            #if not a in dir(self.calling_module):
+            # if not a in dir(self.calling_module):
             if not self.__hasattr_submodule(self.calling_module, a):
                 raise KeyError(
                     "The given object '{}' was not found in the current scope.".format(a))
@@ -194,7 +194,7 @@ class Checkpoint:
         using cPickle.
 
         """
-        #get attributes of registered objects
+        # get attributes of registered objects
         checkpoint_data = OrderedDict()
         for obj_name in self.checkpoint_objects:
             checkpoint_data[obj_name] = self.__getattr_submodule(

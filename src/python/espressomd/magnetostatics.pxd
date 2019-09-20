@@ -16,8 +16,8 @@ IF DIPOLES == 1:
             DIPOLAR_SCAFACOS
 
         ctypedef struct Dipole_parameters:
-                    double prefactor
-                    DipolarInteraction method
+            double prefactor
+            DipolarInteraction method
 
         cdef extern Dipole_parameters dipole
 
@@ -38,7 +38,7 @@ IF DIPOLES == 1:
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef extern from "actor/DipolarBarnesHut.hpp":
             void activate_dipolar_barnes_hut(float epssq, float itolsq)
-            #void activate_dipolar_barnes_hut()
+            # void activate_dipolar_barnes_hut()
             void deactivate_dipolar_barnes_hut()
 
 IF DP3M == 1:

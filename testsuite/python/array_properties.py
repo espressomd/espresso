@@ -322,5 +322,6 @@ class ArrayPropertyTest(ut.TestCase):
         # System
         self.set_copy(self.system.periodicity)
 
+
 if __name__ == "__main__":
     ut.main()

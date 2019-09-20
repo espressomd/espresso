@@ -300,18 +300,18 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
-            #Sets lb, bcast, resets vars to zero if lb=0
+            # Sets lb, bcast, resets vars to zero if lb=0
             set_prefactor(self._params["prefactor"])
-            #Sets cdef vars and calls p3m_set_params() in core
+            # Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
                                   self._params["mesh"], self._params["cao"],
                                   self._params["alpha"], self._params["accuracy"])
-            #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
-            #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
+            # p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
+            # Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
             #         which resets r_cut if lb is zero. OK.
-            #Sets eps, bcast
+            # Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
-            #Sets ninterpol, bcast
+            # Sets ninterpol, bcast
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 

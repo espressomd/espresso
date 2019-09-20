@@ -44,5 +44,6 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         with self.assertRaises(RuntimeError):
             c.shape = Wall(thisparameterdoesnotexist=0)
 
+
 if __name__ == "__main__":
     ut.main()

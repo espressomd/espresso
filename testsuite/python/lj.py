@@ -80,5 +80,6 @@ class LennardJonesTest(ut.TestCase):
         self.system.integrator.run(recalc_forces=True, steps=0)
         self.check()
 
+
 if __name__ == '__main__':
     ut.main()

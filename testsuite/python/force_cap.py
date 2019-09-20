@@ -67,5 +67,6 @@ class ForceCap(ut.TestCase):
         # maximum should now be f_cap.
         self.assertAlmostEqual(self.calc_f_max(), f_cap, places=7)
 
+
 if __name__ == "__main__":
     ut.main()

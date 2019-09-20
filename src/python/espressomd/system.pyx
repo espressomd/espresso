@@ -363,8 +363,8 @@ cdef class System:
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
                     states[i] = (" ".join(map(str,
-                                 rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
-                    )).encode('utf-8')
+                                              rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
+                                          )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError(

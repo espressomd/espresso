@@ -2066,6 +2066,7 @@ class HarmonicBond(BondedInteraction):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
+
 if ELECTROSTATICS:
 
     class BondedCoulomb(BondedInteraction):
@@ -2229,6 +2230,7 @@ class ThermalizedBond(BondedInteraction):
         thermalized_bond_set_params(
             self._bond_id, self._params["temp_com"], self._params["gamma_com"],
             self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
+
 
 IF THOLE:
 
@@ -3338,6 +3340,7 @@ class OifLocalForces(BondedInteraction):
             self._params["A01"], self._params["A02"], self._params["kal"],
             self._params["kvisc"])
 
+
 IF MEMBRANE_COLLISION == 1:
 
     class OifOutDirection(BondedInteraction):
@@ -3433,6 +3436,7 @@ class QuarticBond(BondedInteraction):
     def _set_params_in_es_core(self):
         quartic_set_params(
             self._bond_id, self._params["k0"], self._params["k1"], self._params["r"], self._params["r_cut"])
+
 
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,

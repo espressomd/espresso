@@ -117,13 +117,13 @@ def positions(**kwargs):
     valid_keys = [
         "n_polymers",
         "beads_per_chain",
-     "bond_length",
-     "start_positions",
-     "min_distance",
-     "max_tries",
-     "bond_angle",
-     "respect_constraints",
-     "seed"]
+        "bond_length",
+        "start_positions",
+        "min_distance",
+        "max_tries",
+        "bond_angle",
+        "respect_constraints",
+        "seed"]
 
     required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
 
@@ -149,15 +149,15 @@ def positions(**kwargs):
     data = draw_polymer_positions(
         partCfg(),
         params["n_polymers"],
-     params["beads_per_chain"],
-     params["bond_length"],
-     start_positions,
-     params["min_distance"],
-     params["max_tries"],
-     int(params["use_bond_angle"]),
-     params["bond_angle"],
-     int(params["respect_constraints"]),
-     params["seed"])
+        params["beads_per_chain"],
+        params["bond_length"],
+        start_positions,
+        params["min_distance"],
+        params["max_tries"],
+        int(params["use_bond_angle"]),
+        params["bond_angle"],
+        int(params["respect_constraints"]),
+        params["seed"])
     positions = []
     for polymer in data:
         p = []

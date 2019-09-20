@@ -80,6 +80,7 @@ def main():
         visualizer.update()
         cnt += 1
 
+
 # Start simulation in separate thread
 t = Thread(target=main)
 t.daemon = True

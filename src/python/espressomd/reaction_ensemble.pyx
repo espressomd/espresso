@@ -236,7 +236,7 @@ cdef class ReactionAlgorithm:
         if(isinstance(self._params["default_charges"], dict) == False):
             raise ValueError(
                 "No dictionary for relation between types and default charges provided.")
-        #check electroneutrality of the provided reaction
+        # check electroneutrality of the provided reaction
         if(self._params["check_for_electroneutrality"]):
             charges = np.array(list(self._params["default_charges"].values()))
             if(np.count_nonzero(charges) == 0):
@@ -447,8 +447,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         status_wang_landau = deref(
             self.WLRptr).do_reaction(int(reaction_steps))
         if(status_wang_landau < 0):
-                raise WangLandauHasConverged(
-                    "The Wang-Landau algorithm has converged.")
+            raise WangLandauHasConverged(
+                "The Wang-Landau algorithm has converged.")
 
     def add_collective_variable_degree_of_association(self, *args, **kwargs):
         """

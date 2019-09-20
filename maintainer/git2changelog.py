@@ -131,7 +131,7 @@ for line in fin:
         # Write out the commit line
         print(commit)
 
-        #Now reset all the variables ready for a new commit block.
+        # Now reset all the variables ready for a new commit block.
         authorFound = False
         dateFound = False
         messageFound = False

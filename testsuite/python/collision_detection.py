@@ -604,7 +604,7 @@ class CollisionDetection(ut.TestCase):
         cutoff = 0.11
         self.s.collision_detection.set_params(
             mode="bind_three_particles", bond_centers=self.H,
-                                              bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
+            bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
         self.get_state_set_state_consistency()
 
         self.s.time_step = 1E-6

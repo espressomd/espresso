@@ -224,6 +224,7 @@ class TestCylindricalObservable(ut.TestCase):
         self.flux_density_profile_test()
         self.density_profile_test()
 
+
 if __name__ == "__main__":
     suite = ut.TestSuite()
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(

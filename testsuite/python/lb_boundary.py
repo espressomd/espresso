@@ -139,5 +139,6 @@ class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
         self.system.lbboundaries.clear()
         self.system.actors.remove(self.lbf)
 
+
 if __name__ == "__main__":
     ut.main()

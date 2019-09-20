@@ -68,8 +68,8 @@ cpdef check_type_or_throw_except(x, n, t, msg):
             for i in range(len(x)):
                 if not isinstance(x[i], t):
                     if not ((t == float and is_valid_type(x[i], int))
-                      or (t == float and issubclass(type(x[i]), np.integer))) \
-                      and not (t == int and issubclass(type(x[i]), np.integer)):
+                            or (t == float and issubclass(type(x[i]), np.integer))) \
+                            and not (t == int and issubclass(type(x[i]), np.integer)):
                         raise ValueError(
                             msg + " -- Item " + str(i) + " was of type " + type(x[i]).__name__)
         else:
@@ -133,7 +133,7 @@ def to_char_pointer(s):
 
     """
     if isinstance(s, unicode):
-        s = (< unicode > s).encode('utf8')
+        s = ( < unicode > s).encode('utf8')
     return s
 
 
@@ -149,7 +149,7 @@ def to_str(s):
     if isinstance(s, unicode):
         return < unicode > s
     elif isinstance(s, bytes):
-        return (< bytes > s).decode('ascii')
+        return ( < bytes > s).decode('ascii')
     else:
         raise ValueError('Unknown string type {}'.format(type(s)))
 
@@ -303,10 +303,10 @@ def requires_experimental_features(reason):
 
     def exception_raiser(self, *args, **kwargs):
         raise Exception(
-    "Class " +
-    self.__class__.__name__ +
-    " is experimental. Define EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\nReason: " +
-    reason)
+            "Class " +
+            self.__class__.__name__ +
+            " is experimental. Define EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\nReason: " +
+            reason)
 
     def modifier(cls):
         cls.__init__ = exception_raiser

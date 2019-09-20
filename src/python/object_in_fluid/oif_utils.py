@@ -569,8 +569,8 @@ def output_vtk_lines(lines, out_file):
 
 
 def output_vtk_pore(
-    axis, length, outer_rad_left, outer_rad_right, pos, rad_left, rad_right,
-                    smoothing_radius, m, out_file):
+        axis, length, outer_rad_left, outer_rad_right, pos, rad_left, rad_right,
+        smoothing_radius, m, out_file):
     """
     Outputs the VTK files for visualisation of a pore in e.g. Paraview.
 

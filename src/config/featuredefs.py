@@ -70,7 +70,7 @@ class defs:
             # Ignore empty and comment lines
             if not line or line.startswith('#') \
                     or line.startswith('//') or line.startswith('/*'):
-                    continue
+                continue
 
             # Tokenify line
             tokens = line.split(None, 2)
@@ -160,7 +160,7 @@ class defs:
 
         # handle implications
         for feature, implied in self.implications:
-#            print feature, ' -> ', implied
+            #            print feature, ' -> ', implied
             if feature in newset and not implied in newset:
                 newset.add(implied)
 #        print 'Implied set: ' + str(newset)
@@ -173,7 +173,7 @@ class defs:
             featurevars[feature] = feature in newset
 
         for feature, expr, undef in self.requirements:
-#            print 'Requirement: ', feature, ' -> ', expr
+            #            print 'Requirement: ', feature, ' -> ', expr
             if feature in newset:
                 if not eval(expr, featurevars):
                     return None

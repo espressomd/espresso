@@ -32,7 +32,7 @@ class AnalyzeGyration(ut.TestCase):
         cube_centre = 0.5 * (cls.cube_len - 1)
         cls.system.box_l = np.array([box_l, box_l, box_l])
         cls.system.cell_system.set_n_square(use_verlet_lists=False)
-        #4x4 cube
+        # 4x4 cube
         for x, y, z in np.ndindex((cls.cube_len, cls.cube_len, cls.cube_len)):
             cls.system.part.add(pos=[x, y, z], type=cls.type_cube)
         # long stick in z, force z as principal axis
@@ -61,7 +61,7 @@ class AnalyzeGyration(ut.TestCase):
             p_type=[self.type_stick, self.type_cube])
         rg = self.system.analysis.calc_rg(
             chain_start=0, number_of_chains=1, chain_length=len(self.system.part[:]))[0]
-        #test if principal and secondary  axis is [0,0,1] and [0,1,0]
+        # test if principal and secondary  axis is [0,0,1] and [0,1,0]
         self.assertTrue(
             np.allclose(np.abs(res['eva0'][1]), [0., 0., 1.], atol=1e-6))
         self.assertTrue(

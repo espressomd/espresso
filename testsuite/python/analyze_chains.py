@@ -95,7 +95,7 @@ class AnalyzeChain(ut.TestCase):
             ij = np.triu_indices(len(r), k=1)
             r_ij = r[ij[0]] - r[ij[1]]
             dist = np.sqrt(np.sum(r_ij**2, axis=1))
-            #rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
+            # rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
             # the other way do it, with the proper prefactor of N(N-1)
             rh.append(1. / np.mean(1. / dist))
         rh = np.array(rh)
@@ -127,6 +127,7 @@ class AnalyzeChain(ut.TestCase):
         # restore PBC
         self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
+
 
 if __name__ == "__main__":
     ut.main()

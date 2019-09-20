@@ -13,7 +13,7 @@ IF ELECTROKINETICS and CUDA:
 
         DEF MAX_NUMBER_OF_SPECIES = 10
 
-        #EK data struct
+        # EK data struct
         ctypedef struct EK_parameters:
             float agrid
             float time_step

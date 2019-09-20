@@ -114,5 +114,6 @@ class RdfTest(ut.TestCase):
 
         self.assertTrue(np.allclose(rdf[1], rdf_av[1]))
 
+
 if __name__ == "__main__":
     ut.main()

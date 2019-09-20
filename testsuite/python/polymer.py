@@ -87,7 +87,7 @@ class PolymerPositions(ut.TestCase):
         for bond_length in bond_lengths:
             positions = polymer.positions(
                 n_polymers=num_poly, beads_per_chain=num_mono,
-                    bond_length=bond_length, seed=self.seed)
+                bond_length=bond_length, seed=self.seed)
 
             self.assertShape(positions, num_poly, num_mono)
             self.assertBondLength(positions, bond_length)

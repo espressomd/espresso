@@ -2044,16 +2044,16 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
 
 
 def draw_slitpore(
-    channel_width,
-     lower_smoothing_radius,
-     upper_smoothing_radius,
-     pore_length,
-     pore_mouth,
-     pore_width,
-     max_box_l,
-     color,
-     material,
-     quality):
+        channel_width,
+        lower_smoothing_radius,
+        upper_smoothing_radius,
+        pore_length,
+        pore_mouth,
+        pore_width,
+        max_box_l,
+        color,
+        material,
+        quality):
     set_solid_material(color, material)
     # If pore is large, an additional wall is necessary
     if (pore_width > 2. * lower_smoothing_radius):

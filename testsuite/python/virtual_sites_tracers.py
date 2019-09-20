@@ -30,5 +30,6 @@ class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
     def setUp(self):
         self.LBClass = lb.LBFluid
 
+
 if __name__ == "__main__":
     ut.main()

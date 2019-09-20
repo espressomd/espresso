@@ -95,5 +95,6 @@ class LBGPULinearMomentum(ut.TestCase, LinearMomentumTest):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU
 
+
 if __name__ == '__main__':
     ut.main()

@@ -150,5 +150,6 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             self.system.actors.clear()
             self.system.part.clear()
 
+
 if __name__ == '__main__':
     ut.main()

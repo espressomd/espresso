@@ -79,5 +79,6 @@ class Galilei(ut.TestCase):
         np.testing.assert_allclose(
             np.copy(g.system_CMS_velocity()), np.zeros((3,)), atol=1e-15)
 
+
 if __name__ == "__main__":
     ut.main()

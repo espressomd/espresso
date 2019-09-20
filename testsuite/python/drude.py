@@ -129,10 +129,10 @@ class Drude(ut.TestCase):
         box_center = 0.5 * np.array(3 * [box_l])
         system.min_global_cut = 3.5
 
-        #Place Particles
+        # Place Particles
         dmol = 5.0
 
-        #Test Anion
+        # Test Anion
         pos_pf6 = box_center + np.array([0, dmol, 0])
         system.part.add(id=0, type=types["PF6"], pos=pos_pf6, q=charges["PF6"],
                         mass=masses["PF6"], fix=[1, 1, 1])
@@ -158,7 +158,7 @@ class Drude(ut.TestCase):
 
         system.actors.add(p3m)
 
-        #Drude related Bonds
+        # Drude related Bonds
 
         thermalized_dist_bond = espressomd.interactions.ThermalizedBond(
             temp_com=temperature_com, gamma_com=gamma_com, r_cut=1.0,
@@ -268,7 +268,8 @@ class Drude(ut.TestCase):
 
         pol_pf6 = []
         pol_bmim = []
-        Efield = 96.48536  # = 1 V/A in kJ / (Avogadro Number) / Angstrom / elementary charge
+        # = 1 V/A in kJ / (Avogadro Number) / Angstrom / elementary charge
+        Efield = 96.48536
 
         res = measure_pol(Efield, 0)
         pol_pf6.append(res[0])
@@ -288,6 +289,7 @@ class Drude(ut.TestCase):
             pol_bmim,
             atol=atol,
             rtol=rtol)
+
 
 if __name__ == "__main__":
     ut.main()

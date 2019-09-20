@@ -49,10 +49,10 @@ class Rotation(ut.TestCase):
 
     def validate(self, rotate, coord):
         if rotate:
-            #self.assertNotEqual(self.s.part[0].torque_body[coord],0)
+            # self.assertNotEqual(self.s.part[0].torque_body[coord],0)
             self.assertNotEqual(self.s.part[0].omega_body[coord], 0)
         else:
-            #self.assertEqual(self.s.part[0].torque_body[coord],0)
+            # self.assertEqual(self.s.part[0].torque_body[coord],0)
             self.assertEqual(self.s.part[0].omega_body[coord], 0)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")

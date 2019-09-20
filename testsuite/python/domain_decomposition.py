@@ -63,5 +63,6 @@ class DomainDecomposition(ut.TestCase):
         self.assertGreaterEqual(n_cells, cs.min_num_cells)
         self.assertLessEqual(n_cells, cs.max_num_cells)
 
+
 if __name__ == "__main__":
     ut.main()

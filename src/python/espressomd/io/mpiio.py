@@ -99,4 +99,5 @@ class Mpiio:
         self._instance.call_method(
             "read", prefix=prefix, pos=positions, vel=velocities, typ=types, bond=bonds)
 
+
 mpiio = Mpiio()

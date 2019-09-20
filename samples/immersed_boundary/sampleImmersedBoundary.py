@@ -42,16 +42,16 @@ k1 = 0.1
 k2 = 1
 AddSoft(system, 10, 10, 10, k1, k2)
 
-## case without bending and volCons
+# case without bending and volCons
 #outputDir = "outputPure"
 
-## case with bending
+# case with bending
 from addBending import AddBending
 kb = 1
 AddBending(system, kb)
 #outputDir = "outputBendPara"
 
-## case with bending and volCons
+# case with bending and volCons
 from addVolCons import AddVolCons
 kV = 10
 AddVolCons(system, kV)
@@ -73,11 +73,11 @@ for wall in walls:
     system.lbboundaries.add(wall)
 
 
-## make directory
+# make directory
 from os import mkdir
 mkdir(outputDir)
 
-## Perform integration
+# Perform integration
 from writeVTK import WriteVTK
 WriteVTK(system, str(outputDir + "/cell_" + str(0) + ".vtk"))
 

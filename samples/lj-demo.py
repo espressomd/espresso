@@ -321,6 +321,7 @@ class Controls(HasTraits):
 #      Integration                                          #
 #############################################################
 
+
 # get initial observables
 pressure = system.analysis.pressure()
 temperature = 0.0

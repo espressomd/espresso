@@ -65,5 +65,6 @@ class ComFixed(ut.TestCase):
 
             s.integrator.run(10)
 
+
 if __name__ == "__main__":
     ut.main()

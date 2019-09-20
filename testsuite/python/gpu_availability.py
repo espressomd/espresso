@@ -32,5 +32,6 @@ class GPUAvailability(ut.TestCase):
         else:
             self.assertFalse(espressomd.gpu_available())
 
+
 if __name__ == "__main__":
     ut.main()

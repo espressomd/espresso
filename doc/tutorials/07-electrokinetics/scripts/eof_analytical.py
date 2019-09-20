@@ -50,6 +50,7 @@ def solve(xi=None, d=None, bjerrum_length=None, sigma=None, valency=None):
     el_char = 1.0
     return xi * np.tan(xi * d / 2.0) + 2.0 * np.pi * bjerrum_length * sigma / (valency * el_char)
 
+
 size = np.pi / (2.0 * width)
 
 pnt0 = 0.0
@@ -127,6 +128,7 @@ def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None,
                          tensor_entry=None):
     return 0.0
 
+
 position_list = []
 density_list = []
 velocity_list = []
@@ -153,4 +155,4 @@ for i in range(int(box_z / agrid)):
 np.savetxt(
     "eof_analytical.dat", np.column_stack(
         (position_list, density_list, velocity_list, pressure_xy_list)),
-           header="#position calculated_density calculated_velocity calculated_pressure_xy")
+    header="#position calculated_density calculated_velocity calculated_pressure_xy")

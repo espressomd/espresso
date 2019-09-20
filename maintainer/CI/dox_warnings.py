@@ -26,7 +26,7 @@ with open('doc/doxygen/warnings.log') as f:
 
 raw_warnings = re.findall(
     r'(?:^|\n)doxygen:(.+?):(\d+): warning: (.+?)(?=\n\S|\n*$)',
-     content, re.DOTALL)
+    content, re.DOTALL)
 
 # collect list of empty @param and @tparam blocks
 with open('doc/doxygen/empty-params.log') as f:
