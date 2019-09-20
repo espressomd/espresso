@@ -211,7 +211,8 @@ class ObservableTests(ut.TestCase):
         np.testing.assert_allclose(
             obs.calculate(), cos_persistence_angles(self.system.part[:].pos))
         self.system.part.clear()
-        # Second test: place particles with fixed angles and check that the result of PersistenceAngle.calculate()[i] is i*phi
+        # Second test: place particles with fixed angles and check that the
+        # result of PersistenceAngle.calculate()[i] is i*phi
         delta_phi = np.radians(4)
         for i in range(10):
             pos = [np.cos(i * delta_phi), np.sin(i * delta_phi), 0.0]

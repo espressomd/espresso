@@ -48,7 +48,8 @@ density_counterions = -2.0 * sigma / width
 
 def solve(xi=None, d=None, bjerrum_length=None, sigma=None, valency=None):
     el_char = 1.0
-    return xi * np.tan(xi * d / 2.0) + 2.0 * np.pi * bjerrum_length * sigma / (valency * el_char)
+    return xi * np.tan(xi * d / 2.0) + 2.0 * np.pi * \
+        bjerrum_length * sigma / (valency * el_char)
 
 
 size = np.pi / (2.0 * width)
@@ -106,7 +107,8 @@ def density(x=None, xi=None, bjerrum_length=None):
 
 def velocity(x=None, xi=None, d=None, bjerrum_length=None, force=None,
              viscosity_kinematic=None, density_water=None):
-    return force * np.log(np.cos(xi * x) / np.cos(xi * d / 2.0)) / (2.0 * np.pi * bjerrum_length * viscosity_kinematic * density_water)
+    return force * np.log(np.cos(xi * x) / np.cos(xi * d / 2.0)) / \
+        (2.0 * np.pi * bjerrum_length * viscosity_kinematic * density_water)
 
 # function to calculate the nonzero component of the pressure tensor
 

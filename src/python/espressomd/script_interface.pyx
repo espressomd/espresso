@@ -85,7 +85,7 @@ cdef class PScriptInterface:
         try:
             ptr = get_instance(oid).lock()
             self.set_sip(ptr)
-        except:
+        except BaseException:
             raise Exception("Could not get sip for given_id")
 
     def id(self):
@@ -344,7 +344,8 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
         for item in self.__iter__():
             res.append(item)
 
-        return (_unpickle_script_object_registry, (self._so_name, self.get_params(), res))
+        return (_unpickle_script_object_registry,
+                (self._so_name, self.get_params(), res))
 
 
 def _unpickle_script_object_registry(so_name, params, items):

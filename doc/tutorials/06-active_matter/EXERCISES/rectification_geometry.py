@@ -1,4 +1,4 @@
-################################################################################
+##########################################################################
 #                                                                              #
 # Copyright (C) 2010-2018 The ESPResSo project            #
 #                                                                              #
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License            #
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
 #                                                                              #
-################################################################################
+##########################################################################
 #                                                                              #
 #                   Active Matter: Rectification System Setup                  #
 #                                                                              #
@@ -40,7 +40,7 @@ from espressomd.shapes import Cylinder, Wall, HollowCone
 outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
-except:
+except BaseException:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
 # Setup the box (we pad the diameter to ensure that the LB boundaries
@@ -70,7 +70,7 @@ lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt)
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
-################################################################################
+##########################################################################
 #
 # Now we set up the three LB boundaries that form the rectifying geometry.
 # The cylinder boundary/constraint is actually already capped, but we put
@@ -121,7 +121,7 @@ system.lbboundaries.add(hollow_cone)
 
 lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
 
-################################################################################
+##########################################################################
 ## Exercise 2 ##
 # Visualize this geometry using paraview
 

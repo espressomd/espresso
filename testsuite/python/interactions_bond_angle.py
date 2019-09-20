@@ -93,7 +93,8 @@ class InteractionsAngleBondTest(ut.TestCase):
         p0.add_bond((self.harmonic_bond, 1))
 
         d_phi = np.pi / self.N
-        for i in range(1, self.N):  # avoid corner cases at phi = 0 and phi = pi
+        for i in range(
+                1, self.N):  # avoid corner cases at phi = 0 and phi = pi
             p2.pos = self.start_pos + \
                 self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
             self.system.integrator.run(recalc_forces=True, steps=0)

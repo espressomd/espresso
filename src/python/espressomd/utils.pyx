@@ -79,7 +79,8 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     else:
         # N=1 and a single value
         if not isinstance(x, t):
-            if not (t == float and is_valid_type(x, int)) and not (t == int and issubclass(type(x), np.integer)):
+            if not (t == float and is_valid_type(x, int)) and not (
+                    t == int and issubclass(type(x), np.integer)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
 
@@ -292,8 +293,10 @@ def is_valid_type(value, t):
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
         if hasattr(np, 'float128'):
-            return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
-        return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
+            return isinstance(
+                value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        return isinstance(
+            value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)
 

@@ -85,7 +85,7 @@ system.bonded_inter.add(harmonicangle)
 
 
 # Create Monomer beads and bonds
-#########################################################################################
+##########################################################################
 n_monomers = 20
 
 init_polymer_pos = np.dstack(

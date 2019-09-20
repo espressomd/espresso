@@ -157,7 +157,8 @@ cdef class Integrator:
                 piston, 1, float, "NPT parameter piston must be a float")
             check_type_or_throw_except(
                 direction, 3, int, "NPT parameter direction must be an array-like of three ints")
-            if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0], direction[1], direction[2], cubic_box)):
+            if (integrate_set_npt_isotropic(ext_pressure, piston,
+                                            direction[0], direction[1], direction[2], cubic_box)):
                 handle_errors(
                     "Encountered errors setting up the NPT integrator")
         ELSE:

@@ -325,7 +325,8 @@ class _Interpolated(Constraint):
     @property
     def field(self):
         shape = self._field_shape
-        return np.reshape(self._field_data, (shape[0], shape[1], shape[2], self._field_codim))
+        return np.reshape(self._field_data,
+                          (shape[0], shape[1], shape[2], self._field_codim))
 
 
 @script_interface_register

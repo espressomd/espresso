@@ -94,13 +94,13 @@ cdef class mayaviLive:
             IF LENNARD_JONES:
                 try:
                     radius = 0.5 * get_ia_param(t, t).lj.sig
-                except:
+                except BaseException:
                     radius = 0.
             IF WCA:
                 if radius == 0:
                     try:
                         radius = 0.5 * get_ia_param(t, t).wca.sig
-                    except:
+                    except BaseException:
                         radius = 0.
 
             if radius == 0:
@@ -115,7 +115,7 @@ cdef class mayaviLive:
         else:
             try:
                 radius = self.particle_sizes[t]
-            except:
+            except BaseException:
                 radius = radius_from_lj(t)
         return radius
 
@@ -241,7 +241,7 @@ cdef class mayaviLive:
             p1 = get_particle_data_ptr(get_particle_data(i))
             p2 = get_particle_data_ptr(get_particle_data(j))
             bond_coords[n, :3] = numpy.array([p1.r.p[0], p1.r.p[1], p1.r.p[2]])
-            bond_coords[n, 3:6] = make_array_locked(< const Vector3d > get_mi_vector(Vector3d(p2.r.p), Vector3d(p1.r.p), box_geo))
+            bond_coords[n, 3:6] = make_array_locked( < const Vector3d > get_mi_vector(Vector3d(p2.r.p), Vector3d(p1.r.p), box_geo))
             bond_coords[n, 6] = t
 
         boxl = self.system.box_l

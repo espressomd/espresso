@@ -187,7 +187,7 @@ cdef class ReactionAlgorithm:
         for k in self._valid_keys_add():
             try:
                 self._params[k] = kwargs[k]
-            except:
+            except BaseException:
                 pass
         self._check_lengths_of_arrays()
         self._validate_params_default_charge()
@@ -197,7 +197,8 @@ cdef class ReactionAlgorithm:
         return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
+        return ["gamma", "reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges"]
 
     def _check_lengths_of_arrays(self):
         if(len(self._params["reactant_types"]) != len(self._params["reactant_coefficients"])):
@@ -299,20 +300,24 @@ cdef class ReactionAlgorithm:
         reactions = []
         for single_reaction_i in range(deref(self.RE).reactions.size()):
             reactant_types = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
                 reactant_types.append(
                     deref(self.RE).reactions[single_reaction_i].reactant_types[i])
             reactant_coefficients = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
                 reactant_coefficients.append(
                     deref(self.RE).reactions[single_reaction_i].reactant_coefficients[i])
 
             product_types = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].product_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].product_types.size()):
                 product_types.append(
                     deref(self.RE).reactions[single_reaction_i].product_types[i])
             product_coefficients = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].product_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].product_types.size()):
                 product_coefficients.append(
                     deref(self.RE).reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients,
@@ -323,7 +328,8 @@ cdef class ReactionAlgorithm:
                         "gamma": deref(self.RE).reactions[single_reaction_i].gamma}
             reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": deref(self.RE).temperature, "exclusion_radius": deref(self.RE).exclusion_radius}
+        return {"reactions": reactions, "temperature": deref(
+            self.RE).temperature, "exclusion_radius": deref(self.RE).exclusion_radius}
 
     def delete_particle(self, p_id):
         """
@@ -671,7 +677,8 @@ cdef class WidomInsertion(ReactionAlgorithm):
         return "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
+        return ["reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges"]
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1}

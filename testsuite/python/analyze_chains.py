@@ -68,7 +68,8 @@ class AnalyzeChain(ut.TestCase):
         tail_id = head_id + self.num_mono - 1
         dist = self.system.part[head_id].pos - self.system.part[tail_id].pos
         dist = np.sum(dist**2, axis=-1)
-        return np.mean(np.sqrt(dist)), np.std(np.sqrt(dist)), np.mean(dist), np.std(dist)
+        return np.mean(np.sqrt(dist)), np.std(
+            np.sqrt(dist)), np.mean(dist), np.std(dist)
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -81,7 +82,8 @@ class AnalyzeChain(ut.TestCase):
                 np.var(self.system.part[head_id[p]:tail_id[p] + 1].pos, axis=0))
         rg2 = np.array(rg2)
         rg2 = np.sum(rg2, axis=1)
-        return np.mean(np.sqrt(rg2)), np.std(np.sqrt(rg2)), np.mean(rg2), np.std(rg2)
+        return np.mean(np.sqrt(rg2)), np.std(
+            np.sqrt(rg2)), np.mean(rg2), np.std(rg2)
 
     # python version of the espresso core function,
     # does not check mirror distances

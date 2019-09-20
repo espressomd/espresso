@@ -85,7 +85,8 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     p_core.temp = 0.0
     p_core.gamma = gamma_off
 
-    if type_drude in drude_dict and not (drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
+    if type_drude in drude_dict and not (
+            drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
         raise Exception(
             "Drude particles with different drude charges have to have different types for THOLE")
 

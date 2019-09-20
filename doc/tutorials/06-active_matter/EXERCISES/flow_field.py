@@ -1,4 +1,4 @@
-################################################################################
+##########################################################################
 #                                                                              #
 # Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License            #
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
 #                                                                              #
-################################################################################
+##########################################################################
 #                                                                              #
 #                  Active Matter: Swimmer Flow Field Tutorial                  #
 #                                                                              #
@@ -51,7 +51,7 @@ pos = ...
 outdir = ...
 try:
     os.makedirs(outdir)
-except:
+except BaseException:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
 # System parameters

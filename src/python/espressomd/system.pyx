@@ -483,7 +483,8 @@ cdef class System:
             auto_exclusions(distance)
 
     def _is_valid_type(self, current_type):
-        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.max_seen_particle_type))
+        return (not (isinstance(current_type, int) or current_type <
+                     0 or current_type > globals.max_seen_particle_type))
 
     def check_valid_type(self, current_type):
         if self._is_valid_type(current_type):

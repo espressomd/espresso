@@ -1,4 +1,4 @@
-################################################################################
+##########################################################################
 #                                                                              #
 # Copyright (C) 2010-2018 The ESPResSo project                                 #
 #                                                                              #
@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License            #
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
 #                                                                              #
-################################################################################
+##########################################################################
 #                                                                              #
 #                  Active Matter: Enhanced Diffusion Tutorial                  #
 #                                                                              #
@@ -40,7 +40,7 @@ assert_features(required_features)
 outdir = "./RESULTS_ENHANCED_DIFFUSION/"
 try:
     os.makedirs(outdir)
-except:
+except BaseException:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
 ##########################################################################
@@ -61,7 +61,7 @@ system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.3
 system.time_step = tstep
 
-################################################################################
+##########################################################################
 #
 # To obtain accurate statistics, you will need to run the simulation
 # several times, which is accomplished by this loop. Do not increase

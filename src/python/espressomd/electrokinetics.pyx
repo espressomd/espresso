@@ -22,7 +22,8 @@ IF ELECTROKINETICS:
         """
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if isinstance(key, tuple) or isinstance(
+                    key, list) or isinstance(key, np.ndarray):
                 if len(key) == 3:
                     return ElectrokineticsRoutines(np.array(key))
             else:
@@ -36,11 +37,13 @@ IF ELECTROKINETICS:
             """
             default_params = self.default_params()
 
-            if not (self._params["stencil"] in ["linkcentered", "nodecentered"]):
+            if not (self._params["stencil"] in [
+                    "linkcentered", "nodecentered"]):
                 raise ValueError(
                     "stencil has to be 'linkcentered' or 'nodecentered'.")
 
-            if not (self._params["fluid_coupling"] in ["friction", "estatics"]):
+            if not (self._params["fluid_coupling"]
+                    in ["friction", "estatics"]):
                 raise ValueError(
                     "fluid_coupling has to be 'friction' or 'estatics'.")
 
@@ -56,7 +59,8 @@ IF ELECTROKINETICS:
             Returns the necessary options to initialize the electrokinetic method.
 
             """
-            return ["agrid", "lb_density", "viscosity", "friction", "T", "prefactor"]
+            return ["agrid", "lb_density", "viscosity",
+                    "friction", "T", "prefactor"]
 
         def default_params(self):
             """
@@ -158,7 +162,8 @@ IF ELECTROKINETICS:
             if node is None:
                 ek_set_density(species, density)
             else:
-                if not (isinstance(node, list) or isinstance(node, np.ndarray)):
+                if not (isinstance(node, list)
+                        or isinstance(node, np.ndarray)):
                     if len(node) != 3:
                         raise ValueError(
                             "node has to be an array of length 3 of integers.")
@@ -405,7 +410,8 @@ IF ELECTROKINETICS:
             return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if isinstance(key, tuple) or isinstance(
+                    key, list) or isinstance(key, np.ndarray):
                 if len(key) == 3:
                     return SpecieRoutines(np.array(key), self.id)
             else:
@@ -527,7 +533,8 @@ IF ELECTROKINETICS:
         property density:
             def __set__(self, value):
                 if is_valid_type(value, float) or is_valid_type(value, int):
-                    if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
+                    if ek_node_set_density(
+                            self.id, self.node[0], self.node[1], self.node[2], value) != 0:
                         raise Exception("Species has not been added to EK.")
                 else:
                     raise ValueError(
@@ -545,7 +552,8 @@ IF ELECTROKINETICS:
 
             def __get__(self):
                 cdef double flux[3]
-                if ek_node_print_flux(self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
+                if ek_node_print_flux(
+                        self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
                     raise Exception("Species has not been added to EK.")
 
                 return np.array(flux[0], flux[1], flux[2])

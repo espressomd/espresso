@@ -53,7 +53,8 @@ cdef class HydrodynamicInteraction(Actor):
         return _construct, (self.__class__, self._params), None
 
     def __getitem__(self, key):
-        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+        if isinstance(key, tuple) or isinstance(
+                key, list) or isinstance(key, np.ndarray):
             if len(key) == 3:
                 return LBFluidRoutines(np.array(key))
         else:
@@ -302,7 +303,8 @@ cdef class HydrodynamicInteraction(Actor):
         """Provides a generator for iterating over all lb nodes"""
 
         shape = self.shape
-        for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
+        for i, j, k in itertools.product(
+                range(shape[0]), range(shape[1]), range(shape[2])):
             yield self[i, j, k]
 
 

@@ -17,7 +17,8 @@
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 import espressomd.lbboundaries
 
-if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+if any(i in espressomd.code_info.features()
+       for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     @script_interface_register
     class EKBoundaries(espressomd.lbboundaries.LBBoundaries):
 

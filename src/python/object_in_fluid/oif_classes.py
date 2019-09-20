@@ -32,7 +32,8 @@ class FixedPoint:
     def __init__(self, pos, id):
         if not isinstance(id, int):
             raise TypeError("Id must be integer.")
-        if not ((len(pos) == 3) and isinstance(pos[0], float) and isinstance(pos[1], float) and isinstance(pos[2], float)):
+        if not ((len(pos) == 3) and isinstance(pos[0], float) and isinstance(
+                pos[1], float) and isinstance(pos[2], float)):
             raise TypeError("Pos must be a list of three floats.")
 
         self.x = pos[0]
@@ -56,7 +57,8 @@ class PartPoint:
 
     # part is physical ESPResSo particle corresponding to that particular point
     def __init__(self, part, id, part_id):
-        if not (isinstance(part, espressomd.particle_data.ParticleHandle) and isinstance(id, int) and isinstance(part_id, int)):
+        if not (isinstance(part, espressomd.particle_data.ParticleHandle)
+                and isinstance(id, int) and isinstance(part_id, int)):
             raise TypeError("Arguments to PartPoint are incorrect.")
         self.part = part
         self.part_id = part_id  # because in adding bonds to the particles in OifCell
@@ -102,7 +104,8 @@ class Edge:
     """
 
     def __init__(self, A, B):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))):
+        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (
+                isinstance(B, PartPoint) or (isinstance(B, FixedPoint))):
             TypeError("Arguments to Edge must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -119,7 +122,8 @@ class Triangle:
     """
 
     def __init__(self, A, B, C):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))):
+        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (isinstance(B, PartPoint) or (
+                isinstance(B, FixedPoint))) and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))):
             TypeError("Arguments to Triangle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -205,9 +209,11 @@ class Mesh:
         self.ids_extremal_points = [0, 0, 0, 0, 0, 0, 0]
 
         if not ((nodes_file is None) or (triangles_file is None)):
-            if not (isinstance(nodes_file, str) and isinstance(triangles_file, str)):
+            if not (isinstance(nodes_file, str)
+                    and isinstance(triangles_file, str)):
                 raise TypeError("Mesh: Filenames must be strings.")
-            if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(resize[1], float) and isinstance(resize[2], float)):
+            if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(
+                    resize[1], float) and isinstance(resize[2], float)):
                 raise TypeError("Mesh: Pos must be a list of three floats.")
             if not isinstance(particle_type, int):
                 raise TypeError("Mesh: particle_type must be integer.")
@@ -283,11 +289,14 @@ class Mesh:
                 pa = triangle.A.id
                 pb = triangle.B.id
                 pc = triangle.C.id
-                if ([pa, pb] not in tmp_edge_incidences) and ([pb, pa] not in tmp_edge_incidences):
+                if ([pa, pb] not in tmp_edge_incidences) and (
+                        [pb, pa] not in tmp_edge_incidences):
                     tmp_edge_incidences.append([pa, pb])
-                if ([pb, pc] not in tmp_edge_incidences) and ([pc, pb] not in tmp_edge_incidences):
+                if ([pb, pc] not in tmp_edge_incidences) and (
+                        [pc, pb] not in tmp_edge_incidences):
                     tmp_edge_incidences.append([pb, pc])
-                if ([pa, pc] not in tmp_edge_incidences) and ([pc, pa] not in tmp_edge_incidences):
+                if ([pa, pc] not in tmp_edge_incidences) and (
+                        [pc, pa] not in tmp_edge_incidences):
                     tmp_edge_incidences.append([pa, pc])
             for tmp_incid in tmp_edge_incidences:
                 tmp_edge = Edge(
@@ -696,7 +705,8 @@ class Mesh:
         if out_file_name == "":
             raise Exception(
                 "Cell.Mirror: output meshnodes file for new mesh is missing. Quitting.")
-        if (mirror_x != 0 and mirror_x != 1) or (mirror_y != 0 and mirror_y != 1) or (mirror_z != 0 and mirror_z != 1):
+        if (mirror_x != 0 and mirror_x != 1) or (mirror_y !=
+                                                 0 and mirror_y != 1) or (mirror_z != 0 and mirror_z != 1):
             raise Exception(
                 "Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting.")
         if mirror_x + mirror_y + mirror_z > 1:
@@ -734,12 +744,15 @@ class OifCellType:  # analogous to oif_template
         if (nodes_file == "") or (triangles_file == ""):
             raise Exception(
                 "OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
-        if not (isinstance(nodes_file, str) and isinstance(triangles_file, str)):
+        if not (isinstance(nodes_file, str)
+                and isinstance(triangles_file, str)):
             raise TypeError("OifCellType: Filenames must be strings.")
-        if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(resize[1], float) and isinstance(resize[2], float)):
+        if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(
+                resize[1], float) and isinstance(resize[2], float)):
             raise TypeError(
                 "OifCellType: Resize must be a list of three floats.")
-        if not (isinstance(ks, float) and isinstance(ks, float) and isinstance(kb, float) and isinstance(kal, float) and isinstance(kag, float) and isinstance(kv, float) and isinstance(kvisc, float)):
+        if not (isinstance(ks, float) and isinstance(ks, float) and isinstance(kb, float) and isinstance(
+                kal, float) and isinstance(kag, float) and isinstance(kv, float) and isinstance(kvisc, float)):
             raise TypeError("OifCellType: Elastic parameters must be floats.")
         if not isinstance(normal, bool):
             raise TypeError("OifCellType: normal must be bool.")
@@ -823,7 +836,8 @@ class OifCell:
                 "OifCell: No particle_type specified or wrong type. Quitting.")
         if not isinstance(particle_mass, float):
             raise Exception("OifCell: particle mass must be float.")
-        if (rotate is not None) and not ((len(rotate) == 3) and isinstance(rotate[0], float) and isinstance(rotate[1], float) and isinstance(rotate[2], float)):
+        if (rotate is not None) and not ((len(rotate) == 3) and isinstance(
+                rotate[0], float) and isinstance(rotate[1], float) and isinstance(rotate[2], float)):
             raise TypeError("Rotate must be list of three floats.")
 
         self.cell_type = cell_type
@@ -1147,7 +1161,8 @@ class OifCell:
                                 "specifying which f_metric will be calculated. The order in the sixtuple is (ks, kb, kal, "
                                 "kag, kv, total)")
         # calculation of stretching forces and f_metric
-        if (el_forces[0] == 1) or (el_forces[5] == 1) or (f_metric[0] == 1) or (f_metric[5] == 1):
+        if (el_forces[0] == 1) or (el_forces[5] == 1) or (
+                f_metric[0] == 1) or (f_metric[5] == 1):
             # initialize list
             stretching_forces_list = []
             for p in self.mesh.points:
@@ -1172,7 +1187,8 @@ class OifCell:
                     ks_f_metric += norm(stretching_forces_list[p.id])
 
         # calculation of bending forces and f_metric
-        if (el_forces[1] == 1) or (el_forces[5] == 1) or (f_metric[1] == 1) or (f_metric[5] == 1):
+        if (el_forces[1] == 1) or (el_forces[5] == 1) or (
+                f_metric[1] == 1) or (f_metric[5] == 1):
             # initialize list
             bending_forces_list = []
             for p in self.mesh.points:
@@ -1211,7 +1227,8 @@ class OifCell:
                     kb_f_metric += norm(bending_forces_list[p.id])
 
         # calculation of local area forces and f_metric
-        if (el_forces[2] == 1) or (el_forces[5] == 1) or (f_metric[2] == 1) or (f_metric[5] == 1):
+        if (el_forces[2] == 1) or (el_forces[5] == 1) or (
+                f_metric[2] == 1) or (f_metric[5] == 1):
             # initialize list
             local_area_forces_list = []
             for p in self.mesh.points:
@@ -1246,7 +1263,8 @@ class OifCell:
                     kal_f_metric += norm(local_area_forces_list[p.id])
 
         # calculation of global area forces and f_metric
-        if (el_forces[3] == 1) or (el_forces[5] == 1) or (f_metric[3] == 1) or (f_metric[5] == 1):
+        if (el_forces[3] == 1) or (el_forces[5] == 1) or (
+                f_metric[3] == 1) or (f_metric[5] == 1):
             # initialize list
             global_area_forces_list = []
             for p in self.mesh.points:
@@ -1277,7 +1295,8 @@ class OifCell:
                     kag_f_metric += norm(global_area_forces_list[p.id])
 
         # calculation of volume forces and f_metric
-        if (el_forces[4] == 1) or (el_forces[5] == 1) or (f_metric[4] == 1) or (f_metric[5] == 1):
+        if (el_forces[4] == 1) or (el_forces[5] == 1) or (
+                f_metric[4] == 1) or (f_metric[5] == 1):
             # initialize list
             volume_forces_list = []
             for p in self.mesh.points:
@@ -1316,7 +1335,8 @@ class OifCell:
                     total_f_metric += norm(elastic_forces_list[p.id])
 
         # calculate norms of resulting forces
-        if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 0:
+        if (el_forces[0] + el_forces[1] + el_forces[2] +
+                el_forces[3] + el_forces[4] + el_forces[5]) != 0:
             if el_forces[0] == 1:
                 stretching_forces_norms_list = []
                 for p in self.mesh.points:
@@ -1388,7 +1408,8 @@ class OifCell:
 
         # output raw data
         if raw_data_file is not None:
-            if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 1:
+            if (el_forces[0] + el_forces[1] + el_forces[2] +
+                    el_forces[3] + el_forces[4] + el_forces[5]) != 1:
                 raise Exception("OifCell: elastic_forces: Only one type of elastic forces can be written into one "
                                 "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - "
                                 "once per elastic force.")
@@ -1412,7 +1433,8 @@ class OifCell:
                     file_name=raw_data_file, data=elastic_forces_list)
 
         # return f_metric
-        if f_metric[0] + f_metric[1] + f_metric[2] + f_metric[3] + f_metric[4] + f_metric[5] > 0:
+        if f_metric[0] + f_metric[1] + f_metric[2] + \
+                f_metric[3] + f_metric[4] + f_metric[5] > 0:
             results = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
             if f_metric[0] == 1:
                 results[0] = ks_f_metric

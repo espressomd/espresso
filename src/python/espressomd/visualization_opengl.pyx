@@ -856,7 +856,8 @@ class openGLLive:
                     p = np.array([i, j, k]) * sp
                     dist, vec = shape.call_method(
                         "calc_distance", position=p.tolist())
-                    if not np.isnan(vec).any() and not np.isnan(dist) and abs(dist) < sp:
+                    if not np.isnan(vec).any() and not np.isnan(
+                            dist) and abs(dist) < sp:
                         points.append((p - vec).tolist())
         return points
 
@@ -946,10 +947,12 @@ class openGLLive:
             for j in range(int(dims[1])):
                 for k in range(int(dims[2])):
                     n = np.array([i, j, k]) * cell_size
-                    if self.specs['LB_draw_node_boundaries'] and self.lb[i, j, k].boundary:
+                    if self.specs['LB_draw_node_boundaries'] and self.lb[i,
+                                                                         j, k].boundary:
                         draw_box(n, cell_size, self.lb_box_color_boundary,
                                  self.materials['transparent2'], 5.0)
-                    if self.specs['LB_draw_nodes'] and not self.lb[i, j, k].boundary:
+                    if self.specs['LB_draw_nodes'] and not self.lb[i,
+                                                                   j, k].boundary:
                         draw_box(n, cell_size, self.lb_box_color,
                                  self.materials['transparent2'], 1.5)
 
@@ -1054,7 +1057,8 @@ class openGLLive:
 
             # Only change material if type/charge has changed, colorById or
             # material was resetted by arrows
-            if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId or self.specs['particle_coloring'] == 'node':
+            if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId or self.specs[
+                    'particle_coloring'] == 'node':
                 reset_material = False
 
                 radius = self._determine_radius(ptype)
@@ -1106,9 +1110,12 @@ class openGLLive:
                 self.particles['pos'][pid], radius, self.specs['quality_particles'])
 
             if self.has_images:
-                for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                for imx in range(-self.specs['periodic_images'][0],
+                                 self.specs['periodic_images'][0] + 1):
+                    for imy in range(-self.specs['periodic_images'][1],
+                                     self.specs['periodic_images'][1] + 1):
+                        for imz in range(-self.specs['periodic_images'][2],
+                                         self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
                                 self._redraw_sphere(
                                     self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
@@ -1175,9 +1182,12 @@ class openGLLive:
                     self.particles['pos'][
                         b[0]], self.particles['pos'][b[1]], radius,
                     col, mat, self.specs['quality_bonds'])
-                for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                for imx in range(-self.specs['periodic_images'][0],
+                                 self.specs['periodic_images'][0] + 1):
+                    for imy in range(-self.specs['periodic_images'][1],
+                                     self.specs['periodic_images'][1] + 1):
+                        for imz in range(-self.specs['periodic_images'][2],
+                                         self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
                                 im = np.array([imx, imy, imz])
                                 draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], self.particles['pos'][b[1]] +
@@ -1208,9 +1218,12 @@ class openGLLive:
                     draw_cylinder(self.particles['pos'][b[1]], s1, radius, col,
                                   mat, self.specs['quality_bonds'])
 
-                    for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
-                        for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
-                            for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                    for imx in range(-self.specs['periodic_images'][0],
+                                     self.specs['periodic_images'][0] + 1):
+                        for imy in range(-self.specs['periodic_images'][1],
+                                         self.specs['periodic_images'][1] + 1):
+                            for imz in range(-self.specs['periodic_images'][2],
+                                             self.specs['periodic_images'][2] + 1):
                                 if imx != 0 or imy != 0 or imz != 0:
                                     im = np.array([imx, imy, imz])
                                     draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], s0 + im *
@@ -1257,11 +1270,13 @@ class openGLLive:
     def _color_by_charge(self, q):
         if q < 0:
             c = 1.0 * q / self.minq
-            return np.array(self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1])
+            return np.array(
+                self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1])
         else:
             c = 1.0 * q / self.maxq
 
-            return np.array(self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1])
+            return np.array(
+                self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1])
 
     # ON INITIALIZATION, CHECK q_max/q_min
     def _update_charge_color_range(self):
@@ -1519,13 +1534,15 @@ class openGLLive:
 
     def _id_to_fcolor(self, pid):
         pid += 1
-        return [int(pid / (256 * 256)) / 255.0, int((pid % (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
+        return [int(pid / (256 * 256)) / 255.0, int((pid %
+                                                     (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
 
     def _fcolor_to_id(self, fcol):
         if (fcol == [0, 0, 0]).all():
             return -1
         else:
-            return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
+            return 256 * 256 * int(fcol[0] * 255) + 256 * \
+                int(fcol[1] * 255) + int(fcol[2] * 255) - 1
 
     def _set_particle_drag(self, pos, pos_old):
         pid, depth = self._get_particle_id(pos, pos_old)
@@ -2305,7 +2322,8 @@ class MouseManager:
             self.pressedTime[button] = time.time()
 
         for me in self.mouseEventsDoubleClick:
-            if me.button == button and state == OpenGL.GLUT.GLUT_DOWN and self.pressedTime[button] - self.pressedTimeOld[button] < 0.25:
+            if me.button == button and state == OpenGL.GLUT.GLUT_DOWN and self.pressedTime[
+                    button] - self.pressedTimeOld[button] < 0.25:
                 if me.positional:
                     me.callback(self.mousePos, self.mousePosOld)
                 else:

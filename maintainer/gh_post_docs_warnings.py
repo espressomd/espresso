@@ -39,7 +39,8 @@ prefix = {'sphinx': 'doc', 'doxygen': 'dox'}[doc_type]
 # Delete all existing comments
 comments = requests.get(URL)
 for comment in comments.json():
-    if comment['user']['login'] == 'espresso-ci' and prefix + '_warnings.sh' in comment['body']:
+    if comment['user']['login'] == 'espresso-ci' and prefix + \
+            '_warnings.sh' in comment['body']:
         requests.delete(comment['url'] + '?access_token=' +
                         os.environ['GITHUB_TOKEN'])
 

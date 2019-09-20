@@ -25,7 +25,8 @@ import espressomd.interactions
 import espressomd.virtual_sites
 import espressomd.accumulators
 import espressomd.observables
-if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
+if espressomd.has_features(
+        "LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
     from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
@@ -57,13 +58,15 @@ if LB_implementation:
     system.actors.add(lbf)
     if 'LBTHERM' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
-    if espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
+    if espressomd.has_features(
+            "LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU"):
         if 'EK.GPU' not in modes:
             system.lbboundaries.add(
                 LBBoundary(shape=Wall(normal=(0, 0, 1), dist=0.5), velocity=(1e-4, 1e-4, 0)))
 
 EK_implementation = None
-if 'EK.GPU' in modes and espressomd.gpu_available() and espressomd.has_features('ELECTROKINETICS'):
+if 'EK.GPU' in modes and espressomd.gpu_available(
+) and espressomd.has_features('ELECTROKINETICS'):
     EK_implementation = espressomd.electrokinetics
     ek = EK_implementation.Electrokinetics(
         agrid=0.5,

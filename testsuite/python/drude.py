@@ -248,7 +248,8 @@ class Drude(ut.TestCase):
             mux_pf6, mux_c1, mux_c2, mux_c3, mux_bmim = measure_dipole_moments(
             )
 
-            return calc_pol(mu0_pf6[dim], mux_pf6[dim], Es), calc_pol(mu0_bmim[dim], mux_bmim[dim], Es)
+            return calc_pol(mu0_pf6[dim], mux_pf6[dim], Es), calc_pol(
+                mu0_bmim[dim], mux_bmim[dim], Es)
 
         mu0_pf6, mu0_c1, mu0_c2, mu0_c3, mu0_bmim = measure_dipole_moments()
         eA_to_Debye = 4.8032047

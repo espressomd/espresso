@@ -126,12 +126,13 @@ IF ELECTROSTATICS:
             mesh_offset[0] = mesh_off[0]
             mesh_offset[1] = mesh_off[1]
             mesh_offset[2] = mesh_off[2]
-            return p3m_set_mesh_offset(mesh_offset[0], mesh_offset[1], mesh_offset[2])
+            return p3m_set_mesh_offset(
+                mesh_offset[0], mesh_offset[1], mesh_offset[2])
 
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
             cdef int response
-            response = p3m_adaptive_tune(& log)
+            response = p3m_adaptive_tune( & log)
             handle_errors("Error in p3m_adaptive_tune")
             if log.strip():
                 print(to_str(log))
@@ -223,7 +224,7 @@ IF ELECTROSTATICS:
         if MMM1D_sanity_checks() == 1:
             handle_errors(
                 "MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
-        resp = mmm1d_tune( & log)
+        resp = mmm1d_tune(& log)
         if resp:
             print(to_str(log))
         return resp
