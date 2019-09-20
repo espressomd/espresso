@@ -900,13 +900,6 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
       N[2] = u[0] * h[1] - u[1] * h[0];
 
       for (l = 0; l < 3; l++) {
-        if (f[l] != f[l] || h[l] != h[l]) { // nan
-          printf("Force Kernel: NAN in particle[%d]\n", i);
-          printf("x = %f, y = %f, z = %f,\n", bhpara->u[3 * i + 0],
-                 bhpara->u[3 * i + 1], bhpara->u[3 * i + 2]);
-          printf("fx = %f, fy = %f, fz = %f,\n", f[0], f[1], f[2]);
-          printf("hx = %f, hy = %f, hz = %f,\n", h[0], h[1], h[2]);
-        }
         atomicAdd(force + 3 * i + l, f[l] * pf);
         atomicAdd(torque + 3 * i + l, N[l] * pf);
       }
@@ -1040,12 +1033,6 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
 
       for (l = 0; l < 3; l++) {
         sum += -u[l] * h[l];
-        if (h[l] != h[l]) { // nan
-          printf("Energy Kernel: NAN in particle[%d]\n", i);
-          printf("x = %f, y = %f, z = %f,\n", bhpara->u[3 * i + 0],
-                 bhpara->u[3 * i + 1], bhpara->u[3 * i + 2]);
-          printf("hx = %f, hy = %f, hz = %f,\n", h[0], h[1], h[2]);
-        }
       }
     }
   }
