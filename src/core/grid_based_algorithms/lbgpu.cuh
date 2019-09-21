@@ -32,7 +32,7 @@
 
 #include <utils/Array.hpp>
 
-#ifdef  CUDA
+#ifdef CUDA
 /** Velocity densities for the lattice Boltzmann system. */
 struct LB_nodes_gpu {
   /** velocity density of the node */
@@ -44,15 +44,18 @@ struct LB_nodes_gpu {
 struct LB_boundaries_gpu {
   /** For each fluid node this array contains either
    *  0 if the node is not a boundary, or the index of
-   *  the boundary in LBBoundaries::lbboundaries minus one. */
+   *  the boundary in LBBoundaries::lbboundaries minus one.
+   */
   unsigned int *index = nullptr;
   /** If the node is a boundary node, this contains the
-   *  velocity of the boundary */
+   *  velocity of the boundary
+   */
   Utils::Array<float, 3> *velocity = nullptr;
 };
 
-inline __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
-                                        uint64_t philox_counter){
+inline __device__ float4 random_wrapper_philox(unsigned int index,
+                                               unsigned int mode,
+                                               uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.
   uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
   uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
