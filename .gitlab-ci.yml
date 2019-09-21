@@ -436,13 +436,15 @@ run_tutorials:
     - linux
     - cuda
 
-check_doxygen:
+run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   needs:
     - cuda9-maxset
   when: on_success
+  only:
+    - python
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make doxygen
@@ -517,7 +519,7 @@ deploy_sphinx_documentation:
 deploy_doxygen_documentation:
   extends: .deploy_base
   dependencies:
-    - check_doxygen
+    - run_doxygen
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox
