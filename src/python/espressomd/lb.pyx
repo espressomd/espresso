@@ -53,8 +53,7 @@ cdef class HydrodynamicInteraction(Actor):
         return _construct, (self.__class__, self._params), None
 
     def __getitem__(self, key):
-        if isinstance(key, tuple) or isinstance(
-                key, list) or isinstance(key, np.ndarray):
+        if isinstance(key, (tuple, list, np.ndarray)):
             if len(key) == 3:
                 return LBFluidRoutines(np.array(key))
         else:

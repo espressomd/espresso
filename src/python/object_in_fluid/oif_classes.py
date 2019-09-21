@@ -229,8 +229,7 @@ class Mesh:
             in_file.close()
             # removes a blank line at the end of the file if there is any:
             nodes_coord = filter(None, nodes_coord)
-            # here we have list of lines with triplets of
-            # strings
+            # here we have list of lines with triplets of strings
             for line in nodes_coord:  # extracts coordinates from the string line
                 line = np.array([float(x) for x in line.split()])
                 coords = np.array(resize) * line
@@ -489,9 +488,8 @@ class Mesh:
                     tmp_pos[1]), discard_epsilon(tmp_pos[2])]
             if origin is not None:
                 tmp_pos += np.array(origin)
+            # to remember the global id of the ESPResSo particle
             new_part_id = len(self.system.part)
-            # to remember the global id of the ESPResSo
-            # particle
             self.system.part.add(
                 pos=tmp_pos, type=particle_type, mass=particle_mass, mol_id=particle_type)
             new_part = self.system.part[new_part_id]
@@ -705,8 +703,9 @@ class Mesh:
         if out_file_name == "":
             raise Exception(
                 "Cell.Mirror: output meshnodes file for new mesh is missing. Quitting.")
-        if (mirror_x != 0 and mirror_x != 1) or (mirror_y !=
-                                                 0 and mirror_y != 1) or (mirror_z != 0 and mirror_z != 1):
+        if (mirror_x != 0 and mirror_x != 1) or (
+                mirror_y != 0 and mirror_y != 1) or (
+                mirror_z != 0 and mirror_z != 1):
             raise Exception(
                 "Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting.")
         if mirror_x + mirror_y + mirror_z > 1:
@@ -751,7 +750,7 @@ class OifCellType:  # analogous to oif_template
                 resize[1], float) and isinstance(resize[2], float)):
             raise TypeError(
                 "OifCellType: Resize must be a list of three floats.")
-        if not (isinstance(ks, float) and isinstance(ks, float) and isinstance(kb, float) and isinstance(
+        if not (isinstance(ks, float) and isinstance(kslin, float) and isinstance(kb, float) and isinstance(
                 kal, float) and isinstance(kag, float) and isinstance(kv, float) and isinstance(kvisc, float)):
             raise TypeError("OifCellType: Elastic parameters must be floats.")
         if not isinstance(normal, bool):
@@ -1102,8 +1101,7 @@ class OifCell:
         in_file.close()
         # removes a blank line at the end of the file if there is any:
         nodes_coord = filter(None, nodes_coord)
-        # here we have list of lines with triplets of
-        # strings
+        # here we have list of lines with triplets of strings
         if len(nodes_coord) != n_points:
             raise Exception("OifCell: Mesh nodes not set to new positions: "
                             "number of lines in the file does not equal number of Cell nodes. Quitting.")
@@ -1335,8 +1333,7 @@ class OifCell:
                     total_f_metric += norm(elastic_forces_list[p.id])
 
         # calculate norms of resulting forces
-        if (el_forces[0] + el_forces[1] + el_forces[2] +
-                el_forces[3] + el_forces[4] + el_forces[5]) != 0:
+        if sum(el_forces) != 0:
             if el_forces[0] == 1:
                 stretching_forces_norms_list = []
                 for p in self.mesh.points:
@@ -1408,8 +1405,7 @@ class OifCell:
 
         # output raw data
         if raw_data_file is not None:
-            if (el_forces[0] + el_forces[1] + el_forces[2] +
-                    el_forces[3] + el_forces[4] + el_forces[5]) != 1:
+            if sum(el_forces) != 1:
                 raise Exception("OifCell: elastic_forces: Only one type of elastic forces can be written into one "
                                 "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - "
                                 "once per elastic force.")

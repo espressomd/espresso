@@ -154,7 +154,7 @@ class Checkpoint:
 
         """
         for a in args:
-            if not isinstance(a, str) or not a in self.checkpoint_objects:
+            if not isinstance(a, str) or a not in self.checkpoint_objects:
                 raise KeyError(
                     "The given object '{}' was not registered for checkpointing yet.".format(a))
 
@@ -269,7 +269,7 @@ class Checkpoint:
 
         signals = self.read_signals()
 
-        if not signum in signals:
+        if signum not in signals:
             signals.append(signum)
             signals = " ".join(str(i) for i in signals)
             with open(os.path.join(self.checkpoint_dir, "signals"), "w") as signal_file:

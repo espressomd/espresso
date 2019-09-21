@@ -55,7 +55,7 @@ ROT_Z = 8
 particle_attributes = []
 for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-        if not d in ["pos_folded"]:
+        if d != "pos_folded":
             particle_attributes.append(d)
 
 cdef class ParticleHandle:
@@ -1163,7 +1163,7 @@ cdef class ParticleHandle:
         def delete_exclusion(self, _partner):
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
-            if not _partner in self.exclusions:
+            if _partner not in self.exclusions:
                 raise Exception("Particle with id " +
                                 str(_partner) + " is not in exclusion list.")
             if change_exclusion(self._id, _partner, 1) == 1:
@@ -1428,8 +1428,8 @@ cdef class ParticleHandle:
         bond_id = bond[0]._bond_id
         # Number of partners
         if bonded_ia_params[bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond[
-                             0]._bond_id, "needs", bonded_ia_params[bond_id].num, "partners.")
+            raise ValueError("Bond of type", bond[0]._bond_id, "needs",
+                             bonded_ia_params[bond_id].num, "partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
@@ -1743,8 +1743,7 @@ cdef class ParticleList:
         except BaseException:
             pass
 
-        if isinstance(key, tuple) or isinstance(
-                key, list) or isinstance(key, np.ndarray):
+        if isinstance(key, (tuple, list, np.ndarray)):
             return ParticleSlice(np.array(key))
 
         return ParticleHandle(key)
@@ -1841,7 +1840,7 @@ cdef class ParticleList:
                     "add() takes either a dictionary or a bunch of keyword args.")
 
         # Check for presence of pos attribute
-        if not "pos" in P:
+        if "pos" not in P:
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
@@ -1852,7 +1851,7 @@ cdef class ParticleList:
 
     def _place_new_particle(self, P):
         # Handling of particle id
-        if not "id" in P:
+        if "id" not in P:
             # Generate particle id
             P["id"] = max_seen_particle + 1
         else:
@@ -1917,8 +1916,7 @@ Set quat and scalar dipole moment (dipm) instead.")
     def exists(self, idx):
         if is_valid_type(idx, int):
             return particle_exists(idx)
-        if isinstance(idx, slice) or isinstance(idx, tuple) or isinstance(
-                idx, list) or isinstance(idx, np.ndarray):
+        if isinstance(idx, (slice, tuple, list, np.ndarray)):
             tf_array = np.zeros(len(idx), dtype=np.bool)
             for i in range(len(idx)):
                 tf_array[i] = particle_exists(idx[i])

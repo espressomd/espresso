@@ -128,7 +128,7 @@ def positions(**kwargs):
     required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
 
     for k in kwargs:
-        if not k in valid_keys:
+        if k not in valid_keys:
             raise ValueError("Unknown parameter '%s'" % k)
         params[k] = kwargs[k]
 

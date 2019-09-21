@@ -13,7 +13,7 @@ from .grid cimport get_mi_vector, box_geo
 
 include "myconfig.pxi"
 
-if not "ETS_TOOLKIT" in os.environ:
+if "ETS_TOOLKIT" not in os.environ:
     os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab
 from pyface.api import GUI

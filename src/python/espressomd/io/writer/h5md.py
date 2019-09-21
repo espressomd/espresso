@@ -22,7 +22,7 @@ import sys
 from ...script_interface import PScriptInterface  # pylint: disable=import
 from ...code_info import features
 
-if not 'H5MD' in features():
+if 'H5MD' not in features():
     class H5md:
 
         def __init__(self, *args, **kwargs):

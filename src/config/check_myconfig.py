@@ -42,8 +42,8 @@ def damerau_levenshtein_distance(s1, s2):
                 d[(i - 1, j - 1)] + cost,  # substitution
             )
             if i and j and s1[i] == s2[j - 1] and s1[i - 1] == s2[j]:
-                d[(i, j)] = min(d[(i, j)], d[i - 2, j - 2] + cost)
                 # transposition
+                d[(i, j)] = min(d[(i, j)], d[i - 2, j - 2] + cost)
 
     return d[lenstr1 - 1, lenstr2 - 1]
 

@@ -120,8 +120,8 @@ class SwimmerTest():
         pass
         # forces on particles are checked
         # total force on the fluid matches (momentum conservation)
-        # TODO only thing left to check is the location of the fluid force
-        # There is no counter torque when using the rotational_friction-feature 
+        # TODO: only thing left to check is the location of the fluid force.
+        # There is no counter torque when using the rotational_friction-feature
         # so there is nothing to be tested
 
 

@@ -194,7 +194,7 @@ class Actors:
             Actor to add to this container.
 
         """
-        if not actor in Actors.active_actors:
+        if actor not in Actors.active_actors:
             self.active_actors.append(actor)
             actor._activate()
         else:
@@ -208,7 +208,7 @@ class Actors:
             Actor to remove from this container.
 
         """
-        if not actor in self.active_actors:
+        if actor not in self.active_actors:
             raise Exception("Actor is not active")
         actor._deactivate()
         self.active_actors.remove(actor)

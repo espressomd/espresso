@@ -366,7 +366,7 @@ class openGLLive:
         self.particle_attributes = []
         for d in dir(ParticleHandle):
             if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-                if not d in ["pos_folded"]:
+                if d not in ["pos_folded"]:
                     self.particle_attributes.append(d)
         self.max_len_attr = max([len(a) for a in self.particle_attributes])
 
@@ -466,7 +466,7 @@ class openGLLive:
                 for check_nb in all_non_bonded_inters:
                     nb = getattr(
                         self.system.non_bonded_inter[t1, t2], check_nb)
-                    if not nb is None and nb.is_active():
+                    if nb is not None and nb.is_active():
                         self.system_info['Non-bonded interactions'].append(
                             [t1, t2, nb.type_name(), nb.get_params()])
         if len(self.system_info['Non-bonded interactions']) == 0:
@@ -503,9 +503,15 @@ class openGLLive:
             rbo = OpenGL.GL.glGenRenderbuffers(1)
             OpenGL.GL.glBindRenderbuffer(OpenGL.GL.GL_RENDERBUFFER, rbo)
             OpenGL.GL.glRenderbufferStorage(
-                OpenGL.GL.GL_RENDERBUFFER, OpenGL.GL.GL_RGB, self.specs['window_size'][0], self.specs['window_size'][1])
+                OpenGL.GL.GL_RENDERBUFFER,
+                OpenGL.GL.GL_RGB,
+                self.specs['window_size'][0],
+                self.specs['window_size'][1])
             OpenGL.GL.glFramebufferRenderbuffer(
-                OpenGL.GL.GL_FRAMEBUFFER, OpenGL.GL.GL_COLOR_ATTACHMENT0, OpenGL.GL.GL_RENDERBUFFER, rbo)
+                OpenGL.GL.GL_FRAMEBUFFER,
+                OpenGL.GL.GL_COLOR_ATTACHMENT0,
+                OpenGL.GL.GL_RENDERBUFFER,
+                rbo)
             # DEPTH BUFFER
             dbo = OpenGL.GL.glGenRenderbuffers(1)
             OpenGL.GL.glBindRenderbuffer(OpenGL.GL.GL_RENDERBUFFER, dbo)
@@ -513,7 +519,10 @@ class openGLLive:
                 OpenGL.GL.GL_RENDERBUFFER, OpenGL.GL.GL_DEPTH_COMPONENT,
                 self.specs['window_size'][0], self.specs['window_size'][1])
             OpenGL.GL.glFramebufferRenderbuffer(
-                OpenGL.GL.GL_FRAMEBUFFER, OpenGL.GL.GL_DEPTH_ATTACHMENT, OpenGL.GL.GL_RENDERBUFFER, dbo)
+                OpenGL.GL.GL_FRAMEBUFFER,
+                OpenGL.GL.GL_DEPTH_ATTACHMENT,
+                OpenGL.GL.GL_RENDERBUFFER,
+                dbo)
 
             self._reshape_window(
                 self.specs['window_size'][0], self.specs['window_size'][1])
@@ -532,7 +541,12 @@ class openGLLive:
         # READ THE PIXELS
         OpenGL.GL.glReadBuffer(OpenGL.GL.GL_COLOR_ATTACHMENT0)
         data = OpenGL.GL.glReadPixels(
-            0, 0, self.specs['window_size'][0], self.specs['window_size'][1], OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)
+            0,
+            0,
+            self.specs['window_size'][0],
+            self.specs['window_size'][1],
+            OpenGL.GL.GL_RGB,
+            OpenGL.GL.GL_FLOAT)
 
         # RESHAPE THE DATA
         data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
@@ -751,7 +765,8 @@ class openGLLive:
         # Collect shapes and interaction type (for coloring) from constraints
         primitive_shapes = [
             'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
-            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
+            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere',
+            'Shapes::SpheroCylinder']
 
         coll_shape_obj = collections.defaultdict(list)
         for c in self.system.constraints:
@@ -947,12 +962,12 @@ class openGLLive:
             for j in range(int(dims[1])):
                 for k in range(int(dims[2])):
                     n = np.array([i, j, k]) * cell_size
-                    if self.specs['LB_draw_node_boundaries'] and self.lb[i,
-                                                                         j, k].boundary:
+                    if self.specs['LB_draw_node_boundaries'] \
+                            and self.lb[i, j, k].boundary:
                         draw_box(n, cell_size, self.lb_box_color_boundary,
                                  self.materials['transparent2'], 5.0)
-                    if self.specs['LB_draw_nodes'] and not self.lb[i,
-                                                                   j, k].boundary:
+                    if self.specs['LB_draw_nodes'] \
+                            and not self.lb[i, j, k].boundary:
                         draw_box(n, cell_size, self.lb_box_color,
                                  self.materials['transparent2'], 1.5)
 
@@ -1057,8 +1072,8 @@ class openGLLive:
 
             # Only change material if type/charge has changed, colorById or
             # material was resetted by arrows
-            if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId or self.specs[
-                    'particle_coloring'] == 'node':
+            if reset_material or colorById or not ptype == ptype_last or \
+                    pid == self.dragId or pid == self.infoId or self.specs['particle_coloring'] == 'node':
                 reset_material = False
 
                 radius = self._determine_radius(ptype)
@@ -2038,8 +2053,11 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     # torus segment
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
-    OpenGL.GLUT.glutSolidTorus(smoothing_radius, (radius +
-                                                  smoothing_radius), quality, quality)
+    OpenGL.GLUT.glutSolidTorus(
+        smoothing_radius,
+        (radius + smoothing_radius),
+        quality,
+        quality)
     OpenGL.GL.glDisable(clip_plane)
     # wall
     OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
@@ -2049,8 +2067,11 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
-    OpenGL.GLUT.glutSolidTorus(smoothing_radius, (radius +
-                                                  smoothing_radius), quality, quality)
+    OpenGL.GLUT.glutSolidTorus(
+        smoothing_radius,
+        (radius + smoothing_radius),
+        quality,
+        quality)
     OpenGL.GL.glDisable(clip_plane)
     # wall
     OpenGL.GL.glTranslate(0, 0, smoothing_radius)
@@ -2424,7 +2445,7 @@ class KeyboardManager:
     def keyboard_down(self, button):
         self.pressedKeys.add(button)
         self.keyState[button] = 1  # Key down
-        if not button in self.keyStateOld.keys():
+        if button not in self.keyStateOld.keys():
             self.keyStateOld[button] = 0
 
 # CAMERA

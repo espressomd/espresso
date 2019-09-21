@@ -269,7 +269,7 @@ class Drude(ut.TestCase):
 
         pol_pf6 = []
         pol_bmim = []
-        # = 1 V/A in kJ / (Avogadro Number) / Angstrom / elementary charge
+        # E = 1 V/A in kJ / (Avogadro Number) / Angstrom / elementary charge
         Efield = 96.48536
 
         res = measure_pol(Efield, 0)
