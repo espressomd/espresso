@@ -125,12 +125,10 @@ no_rotation:
 
 ### Builds with different Distributions
 
-#debian:8 removed: similar to ubuntu:1404
-
-debian:9:
+debian:10:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian-python3:9
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian-python3:10
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
