@@ -181,7 +181,7 @@ fedora:
 cuda10-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=maxset with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - export cmake_params="-DIPYTHON_EXECUTABLE=$(which jupyter)"
@@ -394,9 +394,9 @@ intel:18:
 check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   needs:
-    - cuda-maxset
+    - cuda10-maxset
   when: on_success
   script:
     - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
