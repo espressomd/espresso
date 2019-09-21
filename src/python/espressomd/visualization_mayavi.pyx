@@ -34,7 +34,7 @@ cdef class mayaviLive:
     This class provides live visualization using Enthought Mayavi.  Use the
     update method to push your current simulation state after integrating. If
     you run your integrate loop in a separate thread, you can call
-    run_gui_event_loop in your main thread to be able to interact with the GUI.
+    :meth:`start` in your main thread to be able to interact with the GUI.
 
     Parameters
     ----------

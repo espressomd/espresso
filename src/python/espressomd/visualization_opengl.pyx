@@ -25,8 +25,9 @@ class openGLLive:
     This class provides live visualization using pyOpenGL.
     Use the update method to push your current simulation state after
     integrating. Modify the appearance with a list of keywords.
-    Timed callbacks can be registered via the register_callback method.
-    Keyboad callbacks via  keyboardManager.register_button().
+    Timed callbacks can be registered via the :meth:`register_callback` method
+    and keyboard callbacks via :meth:`keyboardManager.register_button()
+    <espressomd.visualization_opengl.KeyboardManager.register_button>`.
 
     Parameters
     ----------
@@ -61,29 +62,29 @@ class openGLLive:
     far_cut_distance : :obj:`float`, optional
         The distance from the viewer to the far clipping plane.
     camera_position : :obj:`str` or (3,) array_like of :obj:`float`, optional
-        Initial camera position. ``auto`` (default) for shiftet position in z-direction.
+        Initial camera position. Use ``'auto'`` (default) for shifted position in z-direction.
     camera_target : :obj:`str` or (3,) array_like of :obj:`float`, optional
-        Initial camera target. ``auto`` (default) to look towards the system center.
+        Initial camera target. Use ``'auto'`` (default) to look towards the system center.
     camera_right : (3,) array_like of :obj:`float`, optional
-        Camera right vector in system coordinates. Default is [1, 0, 0]
+        Camera right vector in system coordinates. Default is ``[1, 0, 0]``
     particle_sizes : :obj:`str` or array_like :obj:`float` or callable, optional
-        auto (default): The Lennard-Jones sigma value of the
-        self-interaction is used for the particle diameter.
-        callable: A lambda function with one argument. Internally,
-        the numerical particle type is passed to the lambda
-        function to determine the particle radius.  list: A list
-        of particle radii, indexed by the particle type.
+        * ``'auto'`` (default): The Lennard-Jones sigma value of the
+          self-interaction is used for the particle diameter.
+        * callable: A lambda function with one argument. Internally,
+          the numerical particle type is passed to the lambda
+          function to determine the particle radius.
+        * list: A list of particle radii, indexed by the particle type.
     particle_coloring : :obj:`str`, optional
-        auto (default): Colors of charged particles are
-        specified by particle_charge_colors, neutral particles
-        by particle_type_colors. charge: Minimum and maximum
-        charge of all particles is determined by the
-        visualizer. All particles are colored by a linear
-        interpolation of the two colors given by
-        particle_charge_colors according to their charge. type:
-        Particle colors are specified by particle_type_colors,
-        indexed by their numerical particle type.
-        node: Color according to the node the particle is on.
+        * ``'auto'`` (default): Colors of charged particles are
+          specified by ``particle_charge_colors``, neutral particles
+          by ``particle_type_colors``.
+        * ``'charge'``: Minimum and maximum charge of all particles is determined by the
+          visualizer. All particles are colored by a linear
+          interpolation of the two colors given by
+          ``particle_charge_colors`` according to their charge.
+        * ``'type'``: Particle colors are specified by ``particle_type_colors``,
+          indexed by their numerical particle type.
+        * ``'node'``: Color according to the node the particle is on.
     particle_type_colors : array_like :obj:`float`, optional
         Colors for particle types.
     particle_type_materials : :obj:`str`, optional
