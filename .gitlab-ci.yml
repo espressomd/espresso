@@ -399,7 +399,7 @@ check_sphinx:
   script:
     - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
     - cd ${CI_PROJECT_DIR}/build
-    - make -t && make sphinx
+    - make -t && rm src/python/espressomd/visualization.* && make sphinx
     - bash ../maintainer/CI/doc_warnings.sh
   artifacts:
     paths:
