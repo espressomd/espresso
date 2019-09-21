@@ -45,7 +45,7 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
   dependencies: []
   before_script:
     - git submodule deinit .
