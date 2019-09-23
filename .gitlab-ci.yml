@@ -12,12 +12,14 @@ stages:
   except:
     - staging.tmp
     - trying.tmp
+  timeout: 1h
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
   variables:
     GIT_SUBMODULE_STRATEGY: none
   dependencies: []
+  timeout: 15m
   tags:
     - linux
 
@@ -314,6 +316,7 @@ rocm-maxset:
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
+  timeout: 6h
   tags:
     - docker
     - linux
@@ -327,6 +330,7 @@ ubuntu:armhf:
 
 ubuntu:i386:
   <<: *arch_definition
+  imeout: 1h
   only:
     - branches
     - tags
@@ -368,6 +372,7 @@ clang:6.0:
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900
     - bash maintainer/CI/build_cmake.sh
+  timeout: 2h
   tags:
     - docker
     - linux
