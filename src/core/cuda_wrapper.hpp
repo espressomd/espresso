@@ -1,6 +1,12 @@
 #ifndef CUDA_WRAPPER_HPP
 #define CUDA_WRAPPER_HPP
 
+#if defined(__CUDACC__)
+
+#include <cuda.h>
+
+#endif
+
 #if defined(__HIPCC__) // AMD or Nvidia via HIP
 
 #include <hip/hip_runtime.h>

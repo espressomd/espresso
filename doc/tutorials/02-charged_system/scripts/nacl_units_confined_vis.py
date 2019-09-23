@@ -44,7 +44,7 @@ gamma = 50
 #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
 l_bjerrum = 130878.0 / temp
 Vz = 0  # potential difference between the electrodes
-Ez = 364.5  # conversion from potential to electrical field
+Vz_to_Ez = 364.5  # conversion from potential to electrical field
 
 # Particle parameters
 types = {"Cl": 0, "Na": 1, "Electrode": 2}
@@ -143,15 +143,15 @@ def increaseElectricField():
     Vz += 3
     for p in system.part:
         p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
-    print('Potential difference: {:.0V}'.format(Vz))
+    print('Potential difference: {:.0f}'.format(Vz))
 
 
 def decreaseElectricField():
-    global Ez
+    global Vz
     Vz -= 3
     for p in system.part:
         p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
-    print('Potential difference: {:.0V}'.format(Vz))
+    print('Potential difference: {:.0f}'.format(Vz))
 
 
 # Register buttons
