@@ -332,7 +332,7 @@ ubuntu:armhf:
 
 ubuntu:i386:
   <<: *arch_definition
-  imeout: 1h
+  timeout: 1h
   only:
     - branches
     - tags
