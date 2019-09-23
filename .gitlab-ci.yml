@@ -13,6 +13,7 @@ stages:
     - staging.tmp
     - trying.tmp
   timeout: 1h
+  interruptible: true
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
@@ -20,6 +21,7 @@ stages:
     GIT_SUBMODULE_STRATEGY: none
   dependencies: []
   timeout: 15m
+  interruptible: false
   tags:
     - linux
 
@@ -506,6 +508,7 @@ check_with_odd_no_of_processors:
     - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
     - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  interruptible: false
   tags:
     - docker
     - linux
