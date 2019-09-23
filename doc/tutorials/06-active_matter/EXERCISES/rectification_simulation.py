@@ -210,9 +210,8 @@ with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
 
         system.integrator.run(prod_length)
 
-# Output the geometry and final configuration
+# Output the final configuration
 
-lbf.print_vtk_boundary("{}/boundary.vtk".format(outdir))
 system.part.writevtk("{}/points_{}.vtk".format(outdir, vel), types=[0])
 
 ## Exercise 5 ##
