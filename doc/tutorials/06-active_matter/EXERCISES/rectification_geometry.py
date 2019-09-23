@@ -42,17 +42,21 @@ try:
 except BaseException:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
-# Setup the box (we pad the diameter to ensure that the LB boundaries
-# and therefore the constraints, are away from the edge of the box)
+# Setup the box (we pad the geometry to make sure
+# the LB boundaries are away from the edges of the box)
 
 length = 100
 diameter = 20
+padding = 2
 dt = 0.01
 
 # Setup the MD parameters
 
-system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+box_l = np.array(
+    [length + 2 * padding,
+     diameter + 2 * padding,
+     diameter + 2 * padding])
+system = espressomd.System(box_l=box_l)
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
@@ -60,14 +64,11 @@ system.min_global_cut = 0.5
 # Setup LB parameters (these are irrelevant here) and fluid
 
 agrid = 1
-vskin = 0.1
-frict = 20.0
 visco = 1.0
 densi = 1.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt)
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 ##########################################################################
 #
@@ -83,15 +84,15 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 cylinder = LBBoundary(
     shape=Cylinder(
-        center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+        center=box_l / 2.,
         axis=[1, 0, 0], radius=diameter / 2.0, length=length, direction=-1))
 system.lbboundaries.add(cylinder)
 
 # Setup walls
 
 ## Exercise 1 ##
-# Set up two walls to cap the cylinder a distance of 2 away
-# from the edge of the box, with a normal along the x-axis
+# Set up two walls to cap the cylinder respecting the padding
+# between them and the edge of the box, with a normal along the x-axis
 wall = ...
 
 # Setup cone
@@ -103,9 +104,9 @@ shift = 0.25 * orad * cos(angle)
 
 hollow_cone = LBBoundary(
     shape=HollowCone(
-        center=[length / 2.0 + shift,
-                (diameter + 4) / 2.0,
-                (diameter + 4) / 2.0],
+        center=[box_l[0] / 2. + shift,
+                box_l[1] / 2.,
+                box_l[2] / 2.,
         axis=[-1, 0, 0],
         outer_radius=orad,
         inner_radius=irad,

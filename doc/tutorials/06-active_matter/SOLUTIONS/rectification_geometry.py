@@ -47,11 +47,15 @@ except BaseException:
 
 length = 100
 diameter = 20
+padding = 2
 dt = 0.01
 
 # Setup the MD parameters
-
-system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
+box_l = np.array(
+    [length + 2 * padding,
+     diameter + 2 * padding,
+     diameter + 2 * padding])
+system = espressomd.System(box_l=box_l)
 system.cell_system.skin = 0.1
 system.time_step = dt
 system.min_global_cut = 0.5
@@ -59,14 +63,11 @@ system.min_global_cut = 0.5
 # Setup LB parameters (these are irrelevant here) and fluid
 
 agrid = 1
-vskin = 0.1
-frict = 20.0
 visco = 1.0
 densi = 1.0
 
 lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt)
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 ##########################################################################
 #
@@ -82,16 +83,16 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 cylinder = LBBoundary(
     shape=Cylinder(
-        center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+        center=0.5 * box_l,
         axis=[1, 0, 0], radius=diameter / 2.0, length=length, direction=-1))
 system.lbboundaries.add(cylinder)
 
 # Setup walls
 
-wall = LBBoundary(shape=Wall(dist=2, normal=[1, 0, 0]))
+wall = LBBoundary(shape=Wall(dist=padding, normal=[1, 0, 0]))
 system.lbboundaries.add(wall)
 
-wall = LBBoundary(shape=Wall(dist=-(length - 2), normal=[-1, 0, 0]))
+wall = LBBoundary(shape=Wall(dist=-(length + padding), normal=[-1, 0, 0]))
 system.lbboundaries.add(wall)
 
 # Setup cone
@@ -103,9 +104,9 @@ shift = 0.25 * orad * cos(angle)
 
 hollow_cone = LBBoundary(
     shape=HollowCone(
-        center=[length / 2.0 + shift,
-                (diameter + 4) / 2.0,
-                (diameter + 4) / 2.0],
+        center=[box_l[0] / 2.0 + shift,
+                box_l[1] / 2.0,
+                box_l[2] / 2.0],
         axis=[-1, 0, 0],
         outer_radius=orad,
         inner_radius=irad,
