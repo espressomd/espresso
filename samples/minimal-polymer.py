@@ -84,7 +84,7 @@ while (act_min_dist < 0.95):
     wca_cap = wca_cap * 1.01
     system.force_cap = wca_cap
 
-#remove force cap
+# remove force cap
 wca_cap = 0
 system.force_cap = wca_cap
 system.integrator.run(warm_steps * 10)

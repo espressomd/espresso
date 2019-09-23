@@ -152,5 +152,6 @@ class BHGPUTest(ut.TestCase):
             self.system.actors.clear()
             self.system.part.clear()
 
+
 if __name__ == '__main__':
     ut.main()

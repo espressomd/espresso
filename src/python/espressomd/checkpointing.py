@@ -47,7 +47,8 @@ class Checkpoint:
 
     def __init__(self, checkpoint_id=None, checkpoint_path="."):
         # check if checkpoint_id is valid (only allow a-z A-Z 0-9 _ -)
-        if not isinstance(checkpoint_id, str) or bool(re.compile(r"[^a-zA-Z0-9_\-]").search(checkpoint_id)):
+        if not isinstance(checkpoint_id, str) or bool(
+                re.compile(r"[^a-zA-Z0-9_\-]").search(checkpoint_id)):
             raise ValueError("Invalid checkpoint id.")
 
         if not isinstance(checkpoint_path, str):
@@ -66,7 +67,8 @@ class Checkpoint:
 
         # update checkpoint counter
         self.counter = 0
-        while os.path.isfile(os.path.join(self.checkpoint_dir, "{}.checkpoint".format(self.counter))):
+        while os.path.isfile(os.path.join(
+                self.checkpoint_dir, "{}.checkpoint".format(self.counter))):
             self.counter += 1
 
         # init signals
@@ -131,7 +133,7 @@ class Checkpoint:
                 raise ValueError(
                     "The object that should be checkpointed is identified with its name given as a string.")
 
-            #if not a in dir(self.calling_module):
+            # if not a in dir(self.calling_module):
             if not self.__hasattr_submodule(self.calling_module, a):
                 raise KeyError(
                     "The given object '{}' was not found in the current scope.".format(a))
@@ -152,7 +154,7 @@ class Checkpoint:
 
         """
         for a in args:
-            if not isinstance(a, str) or not a in self.checkpoint_objects:
+            if not isinstance(a, str) or a not in self.checkpoint_objects:
                 raise KeyError(
                     "The given object '{}' was not registered for checkpointing yet.".format(a))
 
@@ -194,7 +196,7 @@ class Checkpoint:
         using cPickle.
 
         """
-        #get attributes of registered objects
+        # get attributes of registered objects
         checkpoint_data = OrderedDict()
         for obj_name in self.checkpoint_objects:
             checkpoint_data[obj_name] = self.__getattr_submodule(
@@ -267,7 +269,7 @@ class Checkpoint:
 
         signals = self.read_signals()
 
-        if not signum in signals:
+        if signum not in signals:
             signals.append(signum)
             signals = " ".join(str(i) for i in signals)
             with open(os.path.join(self.checkpoint_dir, "signals"), "w") as signal_file:

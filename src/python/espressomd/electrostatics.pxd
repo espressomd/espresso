@@ -45,16 +45,16 @@ IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/coulomb.hpp":
 
         cdef enum CoulombMethod:
-                    COULOMB_NONE, \
-                    COULOMB_DH, \
-                    COULOMB_P3M, \
-                    COULOMB_MMM1D, \
-                    COULOMB_MMM2D, \
-                    COULOMB_ELC_P3M, \
-                    COULOMB_RF, \
-                    COULOMB_P3M_GPU, \
-                    COULOMB_MMM1D_GPU, \
-                    COULOMB_SCAFACOS
+            COULOMB_NONE, \
+                COULOMB_DH, \
+                COULOMB_P3M, \
+                COULOMB_MMM1D, \
+                COULOMB_MMM2D, \
+                COULOMB_ELC_P3M, \
+                COULOMB_RF, \
+                COULOMB_P3M_GPU, \
+                COULOMB_MMM1D_GPU, \
+                COULOMB_SCAFACOS
 
         ctypedef struct Coulomb_parameters:
             double prefactor
@@ -126,7 +126,8 @@ IF ELECTROSTATICS:
             mesh_offset[0] = mesh_off[0]
             mesh_offset[1] = mesh_off[1]
             mesh_offset[2] = mesh_off[2]
-            return p3m_set_mesh_offset(mesh_offset[0], mesh_offset[1], mesh_offset[2])
+            return p3m_set_mesh_offset(
+                mesh_offset[0], mesh_offset[1], mesh_offset[2])
 
         cdef inline python_p3m_adaptive_tune():
             cdef char * log = NULL
@@ -202,16 +203,16 @@ IF ELECTROSTATICS:
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm1d.hpp":
         ctypedef struct MMM1D_struct:
-            double far_switch_radius_2;
-            double maxPWerror;
-            int    bessel_cutoff;
+            double far_switch_radius_2
+            double maxPWerror
+            int    bessel_cutoff
 
-        cdef extern MMM1D_struct mmm1d_params;
+        cdef extern MMM1D_struct mmm1d_params
 
-        int MMM1D_set_params(double switch_rad, double maxPWerror);
-        void MMM1D_init();
-        int MMM1D_sanity_checks();
-        int mmm1d_tune(char ** log);
+        int MMM1D_set_params(double switch_rad, double maxPWerror)
+        void MMM1D_init()
+        int MMM1D_sanity_checks()
+        int mmm1d_tune(char ** log)
 
     cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         int coulomb_set_prefactor(double prefactor)
@@ -219,7 +220,7 @@ IF ELECTROSTATICS:
     cdef inline pyMMM1D_tune():
         cdef char * log = NULL
         cdef int resp
-        MMM1D_init();
+        MMM1D_init()
         if MMM1D_sanity_checks() == 1:
             handle_errors(
                 "MMM1D Sanity check failed: wrong periodicity or wrong cellsystem, PRTFM")
@@ -231,54 +232,54 @@ IF ELECTROSTATICS:
 IF ELECTROSTATICS:
     cdef extern from "electrostatics_magnetostatics/mmm2d.hpp":
         ctypedef struct MMM2D_struct:
-            double maxPWerror;
-            double far_cut;
-            double far_cut2;
-            int far_calculated;
-            bool dielectric_contrast_on;
-            bool const_pot;
-            double pot_diff;
-            double delta_mid_top;
-            double delta_mid_bot;
-            double delta_mult;
+            double maxPWerror
+            double far_cut
+            double far_cut2
+            int far_calculated
+            bool dielectric_contrast_on
+            bool const_pot
+            double pot_diff
+            double delta_mid_top
+            double delta_mid_bot
+            double delta_mult
 
-        cdef extern MMM2D_struct mmm2d_params;
+        cdef extern MMM2D_struct mmm2d_params
 
-        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, bool const_pot, double pot_diff);
+        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, bool const_pot, double pot_diff)
 
-        void MMM2D_init();
+        void MMM2D_init()
 
-        int MMM2D_sanity_checks();
+        int MMM2D_sanity_checks()
 
 IF ELECTROSTATICS and MMM1D_GPU:
 
     cdef extern from "actor/Mmm1dgpuForce.hpp":
         ctypedef float mmm1dgpu_real
         cdef cppclass Mmm1dgpuForce:
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff);
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius);
-            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror);
-            void setup(SystemInterface & s);
-            void tune(SystemInterface & s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
-            void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual);
-            void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff);
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius, int bessel_cutoff)
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror, mmm1dgpu_real far_switch_radius)
+            Mmm1dgpuForce(SystemInterface & s, mmm1dgpu_real coulomb_prefactor, mmm1dgpu_real maxPWerror)
+            void setup(SystemInterface & s)
+            void tune(SystemInterface & s, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
+            void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff, bool manual)
+            void set_params(mmm1dgpu_real _boxz, mmm1dgpu_real _coulomb_prefactor, mmm1dgpu_real _maxPWerror, mmm1dgpu_real _far_switch_radius, int _bessel_cutoff)
 
-            unsigned int numThreads;
-            unsigned int numBlocks(SystemInterface & s);
+            unsigned int numThreads
+            unsigned int numBlocks(SystemInterface & s)
 
-            mmm1dgpu_real host_boxz;
-            int host_npart;
-            bool need_tune;
+            mmm1dgpu_real host_boxz
+            int host_npart
+            bool need_tune
 
-            int pairs;
-            mmm1dgpu_real * dev_forcePairs;
-            mmm1dgpu_real * dev_energyBlocks;
+            int pairs
+            mmm1dgpu_real * dev_forcePairs
+            mmm1dgpu_real * dev_energyBlocks
 
-            mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius;
-            int bessel_cutoff;
+            mmm1dgpu_real coulomb_prefactor, maxPWerror, far_switch_radius
+            int bessel_cutoff
 
-            float force_benchmark(SystemInterface & s);
+            float force_benchmark(SystemInterface & s)
 
-            void check_periodicity();
-            void activate();
-            void deactivate();
+            void check_periodicity()
+            void activate()
+            void deactivate()

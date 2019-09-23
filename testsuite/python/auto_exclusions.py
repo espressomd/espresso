@@ -76,5 +76,6 @@ class AutoExclusions(ut.TestCase):
                 self.assertTrue((p - i) % 10 in excl)
                 self.assertTrue((p + i) % 10 in excl)
 
+
 if __name__ == "__main__":
     ut.main()

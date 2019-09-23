@@ -84,7 +84,8 @@ class LBStreamingCommon:
         """Set all populations to 0.0.
 
         """
-        for i in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
+        for i in itertools.product(range(self.grid[0]), range(
+                self.grid[1]), range(self.grid[2])):
             self.lbf[i].population = np.zeros(19)
 
     def set_fluid_populations(self, grid_index):
@@ -96,7 +97,8 @@ class LBStreamingCommon:
 
     def test_population_streaming(self):
         self.prepare()
-        for grid_index in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
+        for grid_index in itertools.product(
+                range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
             self.set_fluid_populations(grid_index)
             self.system.integrator.run(1)
             for n_v in range(19):

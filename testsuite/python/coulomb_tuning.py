@@ -88,5 +88,6 @@ class CoulombCloudWallTune(ut.TestCase):
         self.system.integrator.run(0)
         self.compare("p3m_gpu")
 
+
 if __name__ == "__main__":
     ut.main()

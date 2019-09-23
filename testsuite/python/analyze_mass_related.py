@@ -91,19 +91,19 @@ class AnalyzeMassRelated(ut.TestCase):
         np.testing.assert_allclose(
             com,
             self.system.analysis.center_of_mass(p_type=0))
-    
+
     def test_galilei_transform(self):
         g = GalileiTransform()
         no_virtual = self.system.part.select(virtual=False)
-        
+
         # Center of mass
         np.testing.assert_allclose(
             np.copy(g.system_CMS()),
-           np.average(no_virtual.pos, weights=no_virtual.mass, axis=0))
+            np.average(no_virtual.pos, weights=no_virtual.mass, axis=0))
         # Center of mass velocity
         np.testing.assert_allclose(
             np.copy(g.system_CMS_velocity()),
-           np.average(no_virtual.v, weights=no_virtual.mass, axis=0))
+            np.average(no_virtual.v, weights=no_virtual.mass, axis=0))
 
     def test_angularmomentum(self):
         no_virtual_type_0 = self.system.part.select(
@@ -122,7 +122,7 @@ class AnalyzeMassRelated(ut.TestCase):
             np.sum(no_virtual.mass * np.sum(no_virtual.v**2, axis=1), axis=0)
         np.testing.assert_allclose(
             E_kin, self.system.analysis.energy()["kinetic"])
-    
+
     def test_kinetic_pressure(self):
         no_virtual = self.system.part.select(virtual=False)
         P_kin = np.sum(
@@ -145,6 +145,7 @@ class AnalyzeMassRelated(ut.TestCase):
                 core_rg = self.system.analysis.calc_rg(chain_start=0,
                                                        number_of_chains=1,
                                                        chain_length=len(self.system.part))
+
 
 if __name__ == "__main__":
     ut.main()

@@ -63,5 +63,6 @@ class TimeSeriesTest(ut.TestCase):
         time_series.clear()
         self.assertEqual(len(time_series.time_series()), 0)
 
+
 if __name__ == "__main__":
     ut.main()

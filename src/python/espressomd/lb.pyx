@@ -41,7 +41,8 @@ def _construct(cls, params):
 
 def assert_agrid_tau_set(obj):
     assert obj.agrid != obj.default_params()['agrid'] and obj.tau != obj.default_params()[
-                                           'tau'], "tau and agrid have to be set first!"
+        'tau'], "tau and agrid have to be set first!"
+
 
 cdef class HydrodynamicInteraction(Actor):
     def _lb_init(self):
@@ -52,7 +53,7 @@ cdef class HydrodynamicInteraction(Actor):
         return _construct, (self.__class__, self._params), None
 
     def __getitem__(self, key):
-        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+        if isinstance(key, (tuple, list, np.ndarray)):
             if len(key) == 3:
                 return LBFluidRoutines(np.array(key))
         else:
@@ -205,7 +206,7 @@ cdef class HydrodynamicInteraction(Actor):
 
     def _activate_method(self):
         raise Exception(
-"Subclasses of HydrodynamicInteraction have to implement _activate_method.")
+            "Subclasses of HydrodynamicInteraction have to implement _activate_method.")
 
     def _deactivate_method(self):
         lb_lbfluid_set_lattice_switch(NONE)
@@ -225,7 +226,7 @@ cdef class HydrodynamicInteraction(Actor):
 
     property seed:
         def __get__(self):
-            return lb_lbfluid_get_rng_state();
+            return lb_lbfluid_get_rng_state()
 
         def __set__(self, seed):
             cdef stdint.uint64_t _seed = seed
@@ -237,7 +238,7 @@ cdef class HydrodynamicInteraction(Actor):
             return array_locked(np.array([[stress[0], stress[1], stress[3]],
                                           [stress[1], stress[2], stress[4]],
                                           [stress[3], stress[4], stress[5]]]))
-        
+
         def __set__(self, value):
             raise NotImplementedError
 
@@ -301,7 +302,8 @@ cdef class HydrodynamicInteraction(Actor):
         """Provides a generator for iterating over all lb nodes"""
 
         shape = self.shape
-        for i, j, k in itertools.product(range(shape[0]), range(shape[1]), range(shape[2])):
+        for i, j, k in itertools.product(
+                range(shape[0]), range(shape[1]), range(shape[2])):
             yield self[i, j, k]
 
 
@@ -361,9 +363,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
@@ -446,7 +448,7 @@ cdef class LBFluidRoutines:
                                           double_return[16],
                                           double_return[17],
                                           double_return[18]]
-                   ))
+                                         ))
 
         def __set__(self, population):
             cdef Vector19d _population

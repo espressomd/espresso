@@ -201,4 +201,5 @@ def rotate():
 
 # visualizer.registerCallback(rotate, interval = 16)
 
+
 visualizer.run(1)

@@ -71,5 +71,6 @@ class LBEHTest(ut.TestCase):
 
         np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
 
+
 if __name__ == "__main__":
     ut.main()

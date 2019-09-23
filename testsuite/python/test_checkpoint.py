@@ -68,8 +68,8 @@ class CheckpointTest(ut.TestCase):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
                         np.copy(lbf[i, j, k].population),
-                                grid_3D[i, j, k] * np.arange(1, 20),
-                                decimal=precision)
+                        grid_3D[i, j, k] * np.arange(1, 20),
+                        decimal=precision)
         state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
         for key, val in reference.items():
@@ -221,7 +221,8 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(tests_common.lists_contain_same_elements(
             system.part[2].exclusions, [0, 1]))
 
-    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
+                                    or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
     def test_lb_boundaries(self):
         self.assertEqual(len(system.lbboundaries), 1)
         np.testing.assert_allclose(
@@ -278,6 +279,7 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
             self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)
             self.assertAlmostEqual(c[7].phi, 1.4, delta=1E-10)
+
 
 if __name__ == '__main__':
     ut.main()

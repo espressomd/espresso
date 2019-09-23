@@ -166,9 +166,9 @@ class TestLB:
     def test_properties(self):
         self.lbf = self.lb_class(
             kT=1.0, seed=42, visc=self.params['viscosity'],
-          dens=self.params['dens'],
-          agrid=self.params['agrid'],
-          tau=self.system.time_step)
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step)
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
             self.lbf.density = -0.1
@@ -247,8 +247,8 @@ class TestLB:
 
         self.assertEqual(self.lbf.shape, 
                          (
-                         int(self.system.box_l[0] / self.params["agrid"]),
-                         int(self.system.box_l[1] / self.params["agrid"]),
+                             int(self.system.box_l[0] / self.params["agrid"]),
+                             int(self.system.box_l[1] / self.params["agrid"]),
                              int(self.system.box_l[2] / self.params["agrid"])))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
@@ -394,7 +394,7 @@ class TestLB:
         v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
         f1 = np.copy(self.system.part[0].f)
         self.system.actors.clear()
-        #get fresh LBfluid and change time steps
+        # get fresh LBfluid and change time steps
         lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -403,7 +403,7 @@ class TestLB:
             ext_force_density=ext_force_density)
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
-        #illegal time_step/ tau combinations
+        # illegal time_step/ tau combinations
         with self.assertRaises(ValueError):
             lbf.tau = 0.5 * self.system.time_step
         with self.assertRaises(ValueError):

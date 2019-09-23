@@ -126,5 +126,6 @@ class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
 class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
     from espressomd.electrostatics import MMM1D
 
+
 if __name__ == "__main__":
     ut.main()

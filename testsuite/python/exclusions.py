@@ -153,5 +153,6 @@ class Exclusions(ut.TestCase):
         self.assertAlmostEqual(self.s.analysis.pressure()[('coulomb', 0)],
                                pair_pressure, places=7)
 
+
 if __name__ == "__main__":
     ut.main()

@@ -1,26 +1,25 @@
-################################################################################
-#                                                                              #
-# Copyright (C) 2010-2018 The ESPResSo project            #
-#                                                                              #
-# This file is part of ESPResSo.                                               #
-#                                                                              #
-# ESPResSo is free software: you can redistribute it and/or modify             #
-# it under the terms of the GNU General Public License as published by         #
-# the Free Software Foundation, either version 3 of the License, or            #
-# (at your option) any later version.                                          #
-#                                                                              #
-# ESPResSo is distributed in the hope that it will be useful,                  #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
-# GNU General Public License for more details.                                 #
-#                                                                              #
-# You should have received a copy of the GNU General Public License            #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
-#                                                                              #
-################################################################################
-#                                                                              #
-#                   Active Matter: Rectification System Setup                  #
-#                                                                              #
+#
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##########################################################################
+#
+#            Active Matter: Rectification System Setup
+#
 ##########################################################################
 
 from math import cos, pi, sin
@@ -40,7 +39,7 @@ from espressomd.shapes import Cylinder, Wall, HollowCone
 outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
-except:
+except BaseException:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
 # Setup the box (we pad the diameter to ensure that the LB boundaries
@@ -69,7 +68,7 @@ lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt)
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
-################################################################################
+##########################################################################
 #
 # Now we set up the three LB boundaries that form the rectifying geometry.
 # The cylinder boundary/constraint is actually already capped, but we put

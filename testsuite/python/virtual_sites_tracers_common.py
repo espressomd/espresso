@@ -207,7 +207,7 @@ class VirtualSitesTracersCommon:
                 np.testing.assert_allclose(
                     np.copy(p.v), np.copy(
                         self.lbf.get_interpolated_velocity(p.pos)),
-                   atol=2E-2)
+                    atol=2E-2)
         # get new shapes
         dist1non = np.linalg.norm(
             np.array(system.part[1].pos - system.part[0].pos))

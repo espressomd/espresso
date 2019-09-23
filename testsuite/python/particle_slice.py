@@ -185,8 +185,8 @@ class ParticleSliceTest(ut.TestCase):
         self.system.part[:].bonds = []
         b = [[fene, 0], [fene, 1]]
         self.system.part[2:].bonds = b
-        self.assertEqual(self.system.part[:].bonds, [(), (),
-                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
         # tuples for each
         self.system.part[:].bonds = []
@@ -206,15 +206,15 @@ class ParticleSliceTest(ut.TestCase):
         self.system.part[:].bonds = []
         b = (((fene, 0), (fene, 1)), ((fene, 0), (fene, 1)))
         self.system.part[2:].bonds = b
-        self.assertEqual(self.system.part[:].bonds, [(), (),
-                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
         # multi lists for each
         self.system.part[:].bonds = []
         b = [[[fene, 0], [fene, 1]], [[fene, 0], [fene, 1]]]
         self.system.part[2:].bonds = b
-        self.assertEqual(self.system.part[:].bonds, [(), (),
-                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
         # Add/Del bonds
         self.system.part[:].bonds = []
@@ -222,8 +222,8 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(self.system.part[:].bonds,
                          [(), (), ((fene, 0),), ((fene, 0),)])
         self.system.part[2:].add_bond((fene, 1))
-        self.assertEqual(self.system.part[:].bonds, [(), (),
-                         ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
+        self.assertEqual(self.system.part[:].bonds,
+                         [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
         self.system.part[2:].delete_bond((fene, 1))
         self.assertEqual(self.system.part[:].bonds,
                          [(), (), ((fene, 0),), ((fene, 0),)])
@@ -315,7 +315,7 @@ class ParticleSliceTest(ut.TestCase):
         self.assertTrue(
             self.cmp_array_like(self.system.part[:].exclusions, [[2, 3], [2, 3], [0, 1], [0, 1]]))
 
-        #Add/Del exclusions
+        # Add/Del exclusions
         self.system.part[:].exclusions = []
         self.system.part[2:].add_exclusion(1)
         self.assertTrue(self.cmp_array_like(
@@ -395,6 +395,7 @@ class ParticleSliceTest(ut.TestCase):
     def test_non_existing_property(self):
         with self.assertRaises(AttributeError):
             self.system.part[:].thispropertydoesnotexist = 1.0
+
 
 if __name__ == "__main__":
     ut.main()

@@ -186,7 +186,7 @@ class Timestep(base.Timestep):
         x = self._unitcell[self._ts_order_x]
         y = self._unitcell[self._ts_order_y]
         z = self._unitcell[self._ts_order_z]
-            # this ordering is correct! (checked it, OB)
+        # this ordering is correct! (checked it, OB)
         return triclinic_box(x, y, z)
 
     @dimensions.setter

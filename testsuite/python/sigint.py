@@ -35,5 +35,6 @@ class SigintTest(ut.TestCase):
         time.sleep(1)
         self.assertFalse(self.process.poll() is None)
 
+
 if __name__ == '__main__':
     ut.main()

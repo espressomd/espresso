@@ -95,5 +95,6 @@ class TabulatedTest(ut.TestCase):
 
         self.s.part[0].delete_bond((tb, 1))
 
+
 if __name__ == "__main__":
     ut.main()

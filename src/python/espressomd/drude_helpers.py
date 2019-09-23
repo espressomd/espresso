@@ -75,7 +75,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     if verbose:
         print(
             "Adding to core", p_core.id, "drude id", id_drude, "  pol", alpha,
-              "  core charge", p_core.q, "->", p_core.q - q_drude, "   drude charge", q_drude)
+            "  core charge", p_core.q, "->", p_core.q - q_drude, "   drude charge", q_drude)
 
     p_core.q -= q_drude
     p_core.mass -= mass_drude
@@ -85,7 +85,8 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     p_core.temp = 0.0
     p_core.gamma = gamma_off
 
-    if type_drude in drude_dict and not (drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
+    if type_drude in drude_dict and not (
+            drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
         raise Exception(
             "Drude particles with different drude charges have to have different types for THOLE")
 
@@ -93,7 +94,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
 
     # Add new Thole nonbonded interaction for D-D, D-C, C-C for all existing
     # Drude types if this type is seen for the first time
-    if not type_drude in drude_dict:
+    if type_drude not in drude_dict:
 
         # Bookkeeping of q, alphas and damping parameter
         drude_dict[type_drude] = {}
@@ -111,15 +112,15 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
         drude_dict[p_core.type]["drude_type"] = type_drude
 
     # Collect unique Drude types
-    if not type_drude in drude_type_list:
+    if type_drude not in drude_type_list:
         drude_type_list.append(type_drude)
 
     # Collect unique core types
-    if not p_core.type in core_type_list:
+    if p_core.type not in core_type_list:
         core_type_list.append(p_core.type)
 
     # Collect unique Drude ids
-    if not id_drude in drude_id_list:
+    if id_drude not in drude_id_list:
         drude_id_list.append(id_drude)
 
 

@@ -149,5 +149,6 @@ class AnalyzeDistributions(ut.TestCase):
         self.assertTrue(np.allclose(core_rdf[1],
                                     np.cumsum(self.calc_min_distribution(bins, type_list_a=[0]))))
 
+
 if __name__ == "__main__":
     ut.main()

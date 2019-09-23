@@ -236,14 +236,17 @@ IF P3M == 1:
             if not (self._params["prefactor"] > 0.0):
                 raise ValueError("prefactor should be a positive float")
 
-            if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+            if not (self._params["r_cut"] >= 0
+                    or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
+            if not (is_valid_type(self._params["mesh"], int)
+                    or len(self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
-            if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
+            if (isinstance(self._params["mesh"], basestring) and len(
+                    self._params["mesh"]) == 3):
                 if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                    (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                    (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
@@ -260,22 +263,27 @@ IF P3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params = 0.0
 
-            if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (is_valid_type(self._params["epsilon"], float)
+                    or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"] or self._params["inter"] >= 0):
+            if not (self._params["inter"] == default_params["inter"]
+                    or self._params["inter"] >= 0):
                 raise ValueError("inter should be a positive integer")
 
-            if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
+            if not (self._params["mesh_off"] == default_params["mesh_off"]
+                    or len(self._params) != 3):
                 raise ValueError(
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
-            if not (self._params["alpha"] == default_params["alpha"] or self._params["alpha"] > 0):
+            if not (self._params["alpha"] == default_params["alpha"]
+                    or self._params["alpha"] > 0):
                 raise ValueError(
                     "alpha should be positive")
 
         def valid_keys(self):
-            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_neutrality", "inter"
+            return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
+                    "prefactor", "tune", "check_neutrality", "inter"]
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
@@ -300,18 +308,18 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
-            #Sets lb, bcast, resets vars to zero if lb=0
+            # Sets lb, bcast, resets vars to zero if lb=0
             set_prefactor(self._params["prefactor"])
-            #Sets cdef vars and calls p3m_set_params() in core
+            # Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
                                   self._params["mesh"], self._params["cao"],
                                   self._params["alpha"], self._params["accuracy"])
-            #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
-            #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
+            # p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
+            # Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
             #         which resets r_cut if lb is zero. OK.
-            #Sets eps, bcast
+            # Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
-            #Sets ninterpol, bcast
+            # Sets ninterpol, bcast
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
@@ -377,21 +385,25 @@ IF P3M == 1:
             def validate_params(self):
                 default_params = self.default_params()
 
-                if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+                if not (self._params["r_cut"] >= 0
+                        or self._params["r_cut"] == default_params["r_cut"]):
                     raise ValueError("P3M r_cut has to be >=0")
 
-                if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
+                if not (is_valid_type(self._params["mesh"], int)
+                        or len(self._params["mesh"]) == 3):
                     raise ValueError(
                         "P3M mesh has to be an integer or integer list of length 3")
 
-                if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
+                if (isinstance(self._params["mesh"], basestring) and len(
+                        self._params["mesh"]) == 3):
                     if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                        (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                        (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
                         raise ValueError(
                             "P3M requires an even number of mesh points in all directions")
 
-                if not (self._params["cao"] >= -1 and self._params["cao"] <= 7):
+                if not (self._params["cao"] >= -1
+                        and self._params["cao"] <= 7):
                     raise ValueError(
                         "P3M cao has to be an integer between -1 and 7")
 
@@ -401,19 +413,23 @@ IF P3M == 1:
                 # if self._params["epsilon"] == "metallic":
                 #  self._params = 0.0
 
-                if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+                if not (is_valid_type(self._params["epsilon"], float)
+                        or self._params["epsilon"] == "metallic"):
                     raise ValueError(
                         "epsilon should be a double or 'metallic'")
 
-                if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
+                if not (self._params["inter"] == default_params["inter"]
+                        or self._params["inter"] > 0):
                     raise ValueError("inter should be a positive integer")
 
-                if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
+                if not (self._params["mesh_off"] == default_params["mesh_off"]
+                        or len(self._params) != 3):
                     raise ValueError(
                         "mesh_off should be a list of length 3 with values between 0.0 and 1.0")
 
             def valid_keys(self):
-                return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_neutrality"
+                return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
+                        "prefactor", "tune", "check_neutrality"]
 
             def required_keys(self):
                 return ["prefactor", "accuracy"]
@@ -694,9 +710,11 @@ IF ELECTROSTATICS:
                 raise ValueError("prefactor should be a positive float")
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
-            if self._params["dielectric"] == 1 and (self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
+            if self._params["dielectric"] == 1 and (
+                    self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
                 raise ValueError("Dielectric constants should be > 0!")
-            if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
+            if self._params["dielectric_contrast_on"] == 1 and (
+                    self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
                 raise ValueError("Dielectric constrast not set!")
             if self._params["dielectric"] and self._params["dielectric_contrast_on"]:
                 raise ValueError(

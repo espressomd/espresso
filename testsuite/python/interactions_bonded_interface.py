@@ -173,5 +173,6 @@ class ParticleProperties(ut.TestCase):
         0, espressomd.interactions.TabulatedDihedral, {"energy": [1., 2., 3.],
                                                        "force": [3., 4., 5.]})
 
+
 if __name__ == "__main__":
     ut.main()

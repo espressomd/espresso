@@ -79,5 +79,6 @@ class RescaleTest(ut.TestCase):
     def test_z(self):
         self.dir_test(2)
 
+
 if __name__ == "__main__":
     ut.main()

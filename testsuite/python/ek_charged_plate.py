@@ -111,7 +111,7 @@ class ek_charged_plate(ut.TestCase):
                 positive_ions[i, 10, j].density = 1.0 / agrid
                 negative_ions[i, 30, j].density = 1.0 / agrid
 
-        #Setup MD particle and integrate
+        # Setup MD particle and integrate
         force_difference = 0.0
 
         for i in range(7, 14):

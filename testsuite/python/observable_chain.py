@@ -20,6 +20,7 @@ import espressomd
 import numpy as np
 import espressomd.observables
 
+
 def cos_persistence_angles(positions):
     """ Python implementation for PersistenceAngles observable.
 
@@ -27,14 +28,16 @@ def cos_persistence_angles(positions):
     no_of_bonds = positions.shape[0] - 1
     no_of_angles = no_of_bonds - 1
     bond_vecs = positions[1:] - positions[:-1]
-    bond_vecs = np.divide(bond_vecs, np.linalg.norm(bond_vecs, axis=1)[:, np.newaxis])
+    bond_vecs = np.divide(bond_vecs, np.linalg.norm(
+        bond_vecs, axis=1)[:, np.newaxis])
     angles = np.zeros(no_of_angles)
     for i in range(no_of_angles):
         average = 0.0
-        for j in range(no_of_angles-i):
-            average += np.dot(bond_vecs[j], bond_vecs[j+i+1])
+        for j in range(no_of_angles - i):
+            average += np.dot(bond_vecs[j], bond_vecs[j + i + 1])
         angles[i] = average / (no_of_angles - i)
     return angles
+
 
 class ObservableTests(ut.TestCase):
     n_tries = 50
@@ -49,7 +52,7 @@ class ObservableTests(ut.TestCase):
     def setUp(self):
         for i in range(self.n_parts):
             self.system.part.add(pos=[1 + i, 1 + i, 1 + i], id=i)
-    
+
     def tearDown(self):
         self.system.part.clear()
 
@@ -71,7 +74,7 @@ class ObservableTests(ut.TestCase):
             pos = np.zeros((self.n_parts, 3), dtype=float)
             pos[0] = p[0].pos = np.random.uniform(low=0, high=min_dim, size=3)
             for i in range(self.n_parts):
-                pos[i] = p[i].pos = pos[i-1] + np.random.uniform(
+                pos[i] = p[i].pos = pos[i - 1] + np.random.uniform(
                     low=0, high=max_bond_length, size=3)
             # expected values
             distances = np.linalg.norm(pos[1:] - pos[:-1], axis=1)
@@ -105,7 +108,7 @@ class ObservableTests(ut.TestCase):
             pos = np.zeros((self.n_parts, 3), dtype=float)
             pos[0] = p[0].pos = np.random.uniform(low=0, high=min_dim, size=3)
             for i in range(self.n_parts):
-                pos[i] = p[i].pos = pos[i-1] + np.random.uniform(
+                pos[i] = p[i].pos = pos[i - 1] + np.random.uniform(
                     low=0, high=max_bond_length, size=3)
             # expected values
             v1 = pos[:-2] - pos[1:-1]
@@ -179,13 +182,13 @@ class ObservableTests(ut.TestCase):
                     # place particles and keep list of unfolded positions
                     pos = place_particles(bond_length, 3 * [offset])
                     # rotate the 1st particle
-                    p[0].pos = pos[0] = rotate_particle(*pos[0:4,:][::-1],
+                    p[0].pos = pos[0] = rotate_particle(*pos[0:4, :][::-1],
                                                         phi=phi)
                     # rotate the 5th particle
-                    p[4].pos = pos[4] = rotate_particle(*pos[1:5,:], phi=phi)
+                    p[4].pos = pos[4] = rotate_particle(*pos[1:5, :], phi=phi)
                     # expected values
-                    dih1 = calculate_dihedral(*pos[0:4,:][::-1])
-                    dih2 = calculate_dihedral(*pos[1:5,:])
+                    dih1 = calculate_dihedral(*pos[0:4, :][::-1])
+                    dih2 = calculate_dihedral(*pos[1:5, :])
                     # observed values
                     self.system.integrator.run(0)
                     res_obs_single = obs_single.calculate()
@@ -201,18 +204,24 @@ class ObservableTests(ut.TestCase):
     def test_CosPersistenceAngles(self):
         # First test: compare with python implementation
         self.system.part.clear()
-        self.system.part.add(pos= np.array([np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
-        obs = espressomd.observables.CosPersistenceAngles(ids=range(len(self.system.part)))
-        np.testing.assert_allclose(obs.calculate(), cos_persistence_angles(self.system.part[:].pos))
+        self.system.part.add(pos=np.array(
+            [np.linspace(0, self.system.box_l[0], 20)] * 3).T + np.random.random((20, 3)))
+        obs = espressomd.observables.CosPersistenceAngles(
+            ids=range(len(self.system.part)))
+        np.testing.assert_allclose(
+            obs.calculate(), cos_persistence_angles(self.system.part[:].pos))
         self.system.part.clear()
-        # Second test: place particles with fixed angles and check that the result of PersistenceAngle.calculate()[i] is i*phi
+        # Second test: place particles with fixed angles and check that the
+        # result of PersistenceAngle.calculate()[i] is i*phi
         delta_phi = np.radians(4)
         for i in range(10):
-            pos = [np.cos(i*delta_phi), np.sin(i*delta_phi), 0.0]
+            pos = [np.cos(i * delta_phi), np.sin(i * delta_phi), 0.0]
             self.system.part.add(pos=pos)
-        obs = espressomd.observables.CosPersistenceAngles(ids=range(len(self.system.part)))
+        obs = espressomd.observables.CosPersistenceAngles(
+            ids=range(len(self.system.part)))
         expected = np.arange(1, 9) * delta_phi
         np.testing.assert_allclose(obs.calculate(), np.cos(expected))
+
 
 if __name__ == "__main__":
     ut.main()

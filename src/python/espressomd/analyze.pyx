@@ -155,7 +155,7 @@ class Analysis:
         if id is not None:
             if not is_valid_type(id, int):
                 raise ValueError("Id has to be an integer")
-            if not id in self._system.part[:].id:
+            if id not in self._system.part[:].id:
                 raise ValueError(
                     "Id has to be an index of an existing particle")
             _pos = self._system.part[id].pos
@@ -173,7 +173,7 @@ class Analysis:
     #
 
     def linear_momentum(self, include_particles=True,
-                                include_lbfluid=True):
+                        include_lbfluid=True):
         """
         Calculates the system's linear momentum.
 
@@ -337,8 +337,7 @@ class Analysis:
         cdef map[string, vector[vector[vector[double]]]] distribution
         analyze.calc_cylindrical_average(
             analyze.partCfg(), c_center, c_direction, c_length,
-                                           c_radius, c_bins_axial, c_bins_radial, c_types,
-                                           distribution)
+            c_radius, c_bins_axial, c_bins_radial, c_types, distribution)
 
         cdef double binwd_axial = c_length / c_bins_axial
         cdef double binwd_radial = c_radius / c_bins_radial
@@ -831,8 +830,11 @@ class Analysis:
         id_max = chain_start + chain_length * number_of_chains
         for i in range(id_min, id_max):
             if (not self._system.part.exists(i)):
-                raise ValueError('particle with id {0:.0f} does not exist\ncannot perform analysis on the range chain_start={1:.0f}, n_chains={2:.0f}, chain_length={3:.0f}\nplease provide a contiguous range of particle ids'.format(
-                    i, chain_start, number_of_chains, chain_length));
+                raise ValueError('particle with id {0:.0f} does not exist\n'
+                                 'cannot perform analysis on the range chain_start={1:.0f}, '
+                                 'n_chains={2:.0f}, chain_length={3:.0f}\n'
+                                 'please provide a contiguous range of particle ids'.format(
+                                     i, chain_start, number_of_chains, chain_length))
         analyze.chain_start = chain_start
         analyze.chain_n_chains = number_of_chains
         analyze.chain_length = chain_length
@@ -942,11 +944,11 @@ class Analysis:
 
         if rdf_type == 'rdf':
             analyze.calc_rdf(analyze.partCfg(), p1_types,
-                               p2_types, r_min, r_max, r_bins, rdf)
+                             p2_types, r_min, r_max, r_bins, rdf)
         elif rdf_type == '<rdf>':
             analyze.calc_rdf_av(
                 analyze.partCfg(), p1_types, p2_types, r_min,
-                                  r_max, r_bins, rdf, n_conf)
+                r_max, r_bins, rdf, n_conf)
         else:
             raise Exception(
                 "rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
@@ -1058,20 +1060,20 @@ class Analysis:
     def angular_momentum(self, p_type=None):
         """
         Calculates the system's angular momentum with respect to the origin.
-    
+
         Note that virtual sites are not included, as they do not have a meaningful mass.
-    
+
         Parameters
         ----------
         p_type : :obj:`int`
             Particle :attr:`~espressomd.particle_data.ParticleHandle.type` for
             which to calculate the center of mass.
-    
+
         Returns
         -------
         (3,) :obj:`ndarray` of :obj:`float`
            The center of mass of the system.
-    
+
         """
         check_type_or_throw_except(
             p_type, 1, int, "p_type has to be an int")
@@ -1134,14 +1136,14 @@ class Analysis:
         aspheric = w[order[0]] - 0.5 * (w[order[1]] + w[order[2]])
         acylindric = w[order[1]] - w[order[2]]
         rel_shape_anis = (aspheric**2 + 0.75 * acylindric**2) / rad_gyr_sqr**2
-        return{
-        "Rg^2": rad_gyr_sqr,
-        "shape": [aspheric,
-                  acylindric,
-                  rel_shape_anis],
-        "eva0": (w[order[0]], v[:, order[0]]),
-        "eva1": (w[order[1]], v[:, order[1]]),
-        "eva2": (w[order[2]], v[:, order[2]])}
+        return {
+            "Rg^2": rad_gyr_sqr,
+            "shape": [aspheric,
+                      acylindric,
+                      rel_shape_anis],
+            "eva0": (w[order[0]], v[:, order[0]]),
+            "eva1": (w[order[1]], v[:, order[1]]),
+            "eva2": (w[order[2]], v[:, order[2]])}
 
     #
     # momentofinertiamatrix

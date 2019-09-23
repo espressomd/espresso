@@ -604,7 +604,7 @@ class CollisionDetection(ut.TestCase):
         cutoff = 0.11
         self.s.collision_detection.set_params(
             mode="bind_three_particles", bond_centers=self.H,
-                                              bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
+            bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
         self.get_state_set_state_consistency()
 
         self.s.time_step = 1E-6
@@ -664,18 +664,21 @@ class CollisionDetection(ut.TestCase):
                     d_ik /= np.sqrt(np.sum(d_ik**2))
                     d_jk /= np.sqrt(np.sum(d_jk**2))
 
-                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(p_i, p_k) <= distance:
+                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(
+                            p_i, p_k) <= distance:
                         id_i = first_bond._bond_id + \
                             int(np.round(
                                 np.arccos(np.dot(d_ij, d_ik)) * angle_res / np.pi))
                         expected_angle_bonds.append((i, id_i, j, k))
 
-                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(p_j, p_k) <= distance:
+                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(
+                            p_j, p_k) <= distance:
                         id_j = first_bond._bond_id + \
                             int(np.round(
                                 np.arccos(np.dot(-d_ij, d_jk)) * angle_res / np.pi))
                         expected_angle_bonds.append((j, id_j, i, k))
-                    if self.s.distance(p_i, p_k) <= distance and self.s.distance(p_j, p_k) <= distance:
+                    if self.s.distance(p_i, p_k) <= distance and self.s.distance(
+                            p_j, p_k) <= distance:
                         id_k = first_bond._bond_id + \
                             int(np.round(
                                 np.arccos(np.dot(-d_ik, -d_jk)) * angle_res / np.pi))

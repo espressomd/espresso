@@ -254,5 +254,6 @@ class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
         self.system.actors.remove(self.lbf)
         self.system.part.clear()
 
+
 if __name__ == "__main__":
     ut.main()

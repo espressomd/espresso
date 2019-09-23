@@ -78,5 +78,6 @@ class SimplePoreConstraint(ut.TestCase):
 
         self.assertLess(rel_diff, 1e-3)
 
+
 if __name__ == "__main__":
     ut.main()

@@ -46,7 +46,8 @@ cdef class NonBondedInteraction:
         if self.user_interactions is None:
             self.user_interactions = {}
         # Interaction id as argument
-        if len(args) == 2 and is_valid_type(args[0], int) and is_valid_type(args[1], int):
+        if len(args) == 2 and is_valid_type(
+                args[0], int) and is_valid_type(args[1], int):
             self._part_types = args
 
             # Load the parameters currently set in the Espresso core
@@ -156,7 +157,8 @@ cdef class NonBondedInteraction:
 
         """
         attr = object.__getattribute__(self, name)
-        if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
+        if hasattr(
+                attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
                 result = attr(*args, **kwargs)
                 self._params.update(self._get_params_from_es_core())
@@ -539,15 +541,18 @@ IF LENNARD_JONES_GENERIC == 1:
 
             """
             IF LJGEN_SOFTCORE:
-                return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2", "delta", "lam"}
+                return {"epsilon", "sigma", "cutoff", "shift",
+                        "offset", "e1", "e2", "b1", "b2", "delta", "lam"}
             ELSE:
-                return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"}
+                return {"epsilon", "sigma", "cutoff",
+                        "shift", "offset", "e1", "e2", "b1", "b2"}
 
         def required_keys(self):
             """Parameters that have to be set.
 
             """
-            return {"epsilon", "sigma", "cutoff", "shift", "offset", "e1", "e2", "b1", "b2"}
+            return {"epsilon", "sigma", "cutoff",
+                    "shift", "offset", "e1", "e2", "b1", "b2"}
 
 IF LJCOS:
 
@@ -863,7 +868,8 @@ IF DPD:
             }
 
         def is_active(self):
-            return (self._params["r_cut"] > 0) or (self._params["trans_r_cut"] > 0)
+            return (self._params["r_cut"] > 0) or (
+                self._params["trans_r_cut"] > 0)
 
         def set_params(self, **kwargs):
             """Set parameters for the DPD interaction.
@@ -912,7 +918,8 @@ IF DPD:
             return "DPD"
 
         def valid_keys(self):
-            return {"weight_function", "gamma", "r_cut", "trans_weight_function", "trans_gamma", "trans_r_cut"}
+            return {"weight_function", "gamma", "r_cut",
+                    "trans_weight_function", "trans_gamma", "trans_r_cut"}
 
         def required_keys(self):
             return set()
@@ -1047,7 +1054,8 @@ IF BMHTF_NACL == 1:
             """Check if interaction is active.
 
             """
-            return (self._params["a"] > 0) and (self._params["c"] > 0) and (self._params["d"] > 0)
+            return (self._params["a"] > 0) and (
+                self._params["c"] > 0) and (self._params["d"] > 0)
 
         def _set_params_in_es_core(self):
             if BMHTF_set_params(self._part_types[0],
@@ -1228,7 +1236,8 @@ IF BUCKINGHAM == 1:
             """Check if interaction is active.
 
             """
-            return (self._params["a"] > 0) or (self._params["b"] > 0) or (self._params["d"] > 0) or (self._params["shift"] > 0)
+            return (self._params["a"] > 0) or (self._params["b"] > 0) or (
+                self._params["d"] > 0) or (self._params["shift"] > 0)
 
         def _set_params_in_es_core(self):
             if buckingham_set_params(self._part_types[0], self._part_types[1],
@@ -1429,10 +1438,12 @@ IF AFFINITY == 1:
             return "Affinity"
 
         def valid_keys(self):
-            return {"affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
+            return {"affinity_type", "affinity_kappa", "affinity_r0",
+                    "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
 
         def required_keys(self):
-            return {"affinity_type", "affinity_kappa", "affinity_r0", "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
+            return {"affinity_type", "affinity_kappa", "affinity_r0",
+                    "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
 
 
 IF MEMBRANE_COLLISION == 1:
@@ -1728,7 +1739,8 @@ cdef class NonBondedInteractions:
         if not isinstance(key, tuple):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
-        if len(key) != 2 or (not is_valid_type(key[0], int)) or (not is_valid_type(key[1], int)):
+        if len(key) != 2 or (not is_valid_type(key[0], int)) or (
+                not is_valid_type(key[1], int)):
             raise ValueError(
                 "NonBondedInteractions[] expects two particle types as indices.")
         return NonBondedInteractionHandle(key[0], key[1])
@@ -1843,7 +1855,8 @@ cdef class BondedInteraction:
 
         """
         attr = object.__getattribute__(self, name)
-        if hasattr(attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
+        if hasattr(
+                attr, '__call__') and attr.__name__ == "_set_params_in_es_core":
             def sync_params(*args, **kwargs):
                 result = attr(*args, **kwargs)
                 self._params.update(self._get_params_from_es_core())
@@ -1901,7 +1914,8 @@ cdef class BondedInteraction:
         else:
             id_str = str(self._bond_id)
 
-        return self.__class__.__name__ + "(" + id_str + "): " + self._params.__str__()
+        return self.__class__.__name__ + \
+            "(" + id_str + "): " + self._params.__str__()
 
     def __richcmp__(self, other, i):
         if i != 2:
@@ -2066,6 +2080,7 @@ class HarmonicBond(BondedInteraction):
         harmonic_set_params(
             self._bond_id, self._params["k"], self._params["r_0"], self._params["r_cut"])
 
+
 if ELECTROSTATICS:
 
     class BondedCoulomb(BondedInteraction):
@@ -2192,7 +2207,8 @@ class ThermalizedBond(BondedInteraction):
         return "THERMALIZED_DIST"
 
     def valid_keys(self):
-        return {"temp_com", "gamma_com", "temp_distance", "gamma_distance", "r_cut", "seed"}
+        return {"temp_com", "gamma_com", "temp_distance",
+                "gamma_distance", "r_cut", "seed"}
 
     def required_keys(self):
         return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
@@ -2229,6 +2245,7 @@ class ThermalizedBond(BondedInteraction):
         thermalized_bond_set_params(
             self._bond_id, self._params["temp_com"], self._params["gamma_com"],
             self._params["temp_distance"], self._params["gamma_distance"], self._params["r_cut"])
+
 
 IF THOLE:
 
@@ -3305,13 +3322,15 @@ class OifLocalForces(BondedInteraction):
         """All parameters that can be set.
 
         """
-        return {"r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"}
+        return {"r0", "ks", "kslin", "phi0",
+                "kb", "A01", "A02", "kal", "kvisc"}
 
     def required_keys(self):
         """Parameters that have to be set.
 
         """
-        return {"r0", "ks", "kslin", "phi0", "kb", "A01", "A02", "kal", "kvisc"}
+        return {"r0", "ks", "kslin", "phi0",
+                "kb", "A01", "A02", "kal", "kvisc"}
 
     def set_default_params(self):
         """Sets parameters that are not required to their default value.
@@ -3337,6 +3356,7 @@ class OifLocalForces(BondedInteraction):
             self._params["kslin"], self._params["phi0"], self._params["kb"],
             self._params["A01"], self._params["A02"], self._params["kal"],
             self._params["kvisc"])
+
 
 IF MEMBRANE_COLLISION == 1:
 
@@ -3433,6 +3453,7 @@ class QuarticBond(BondedInteraction):
     def _set_params_in_es_core(self):
         quartic_set_params(
             self._bond_id, self._params["k0"], self._params["k1"], self._params["r"], self._params["r_cut"])
+
 
 bonded_interaction_classes = {
     int(BONDED_IA_FENE): FeneBond,
