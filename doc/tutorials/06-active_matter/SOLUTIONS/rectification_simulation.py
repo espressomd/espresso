@@ -212,7 +212,7 @@ with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
         print("{} {} {}".format(system.time, dev, dev_av), file=outfile)
 
         system.integrator.run(prod_length)
-        
+
 print()
 
 # Output the final configuration
