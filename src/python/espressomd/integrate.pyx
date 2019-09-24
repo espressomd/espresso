@@ -107,7 +107,7 @@ cdef class Integrator:
         """
         req = ["f_max", "gamma", "max_displacement"]
         for key in kwargs:
-            if not key in req:
+            if key not in req:
                 raise Exception("Set required parameter %s first." % key)
 
         self._steepest_descent_params.update(kwargs)
@@ -157,7 +157,8 @@ cdef class Integrator:
                 piston, 1, float, "NPT parameter piston must be a float")
             check_type_or_throw_except(
                 direction, 3, int, "NPT parameter direction must be an array-like of three ints")
-            if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0], direction[1], direction[2], cubic_box)):
+            if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0],
+                                            direction[1], direction[2], cubic_box)):
                 handle_errors(
                     "Encountered errors setting up the NPT integrator")
         ELSE:

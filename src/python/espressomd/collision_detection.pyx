@@ -105,7 +105,8 @@ class CollisionDetection(ScriptInterfaceHelper):
                 "Collision mode must be specified via the mode keyword argument")
 
         # Completeness of parameter set
-        if not (set(kwargs.keys()) == set(self._params_for_mode(kwargs["mode"]))):
+        if not (set(kwargs.keys()) == set(
+                self._params_for_mode(kwargs["mode"]))):
             raise Exception("Parameter set does not match mode. ",
                             kwargs["mode"], "requires ",
                             self._params_for_mode(kwargs["mode"]))
@@ -172,11 +173,14 @@ class CollisionDetection(ScriptInterfaceHelper):
         if mode == "bind_centers":
             return ("mode", "bond_centers", "distance")
         if mode == "bind_at_point_of_collision":
-            return ("mode", "bond_centers", "bond_vs", "part_type_vs", "distance", "vs_placement")
+            return ("mode", "bond_centers", "bond_vs",
+                    "part_type_vs", "distance", "vs_placement")
         if mode == "glue_to_surface":
-            return ("mode", "bond_centers", "bond_vs", "part_type_vs", "part_type_to_be_glued", "part_type_to_attach_vs_to", "part_type_after_glueing", "distance", "distance_glued_particle_to_vs")
+            return ("mode", "bond_centers", "bond_vs", "part_type_vs", "part_type_to_be_glued",
+                    "part_type_to_attach_vs_to", "part_type_after_glueing", "distance", "distance_glued_particle_to_vs")
         if mode == "bind_three_particles":
-            return ("mode", "bond_centers", "distance", "bond_three_particles", "three_particle_binding_angle_resolution")
+            return ("mode", "bond_centers", "distance", "bond_three_particles",
+                    "three_particle_binding_angle_resolution")
         raise Exception("Mode not hanled: " + mode.__str__())
 
     _int_mode = {

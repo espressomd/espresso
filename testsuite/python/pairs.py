@@ -121,5 +121,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
+
 if __name__ == "__main__":
     ut.main()

@@ -1,26 +1,25 @@
-################################################################################
-#                                                                              #
-# Copyright (C) 2010-2018 The ESPResSo project                                 #
-#                                                                              #
-# This file is part of ESPResSo.                                               #
-#                                                                              #
-# ESPResSo is free software: you can redistribute it and/or modify             #
-# it under the terms of the GNU General Public License as published by         #
-# the Free Software Foundation, either version 3 of the License, or            #
-# (at your option) any later version.                                          #
-#                                                                              #
-# ESPResSo is distributed in the hope that it will be useful,                  #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
-# GNU General Public License for more details.                                 #
-#                                                                              #
-# You should have received a copy of the GNU General Public License            #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
-#                                                                              #
-################################################################################
-#                                                                              #
-#                     Active Matter: Rectification Tutorial                    #
-#                                                                              #
+#
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##########################################################################
+#
+#            Active Matter: Rectification Tutorial
+#
 ##########################################################################
 
 from math import cos, pi, sin
@@ -73,7 +72,7 @@ vel = float(sys.argv[1])
 outdir = "./RESULTS_RECTIFICATION"
 try:
     os.makedirs(outdir)
-except:
+except BaseException:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
 # Setup the box (we pad the diameter to ensure that the LB boundaries
@@ -93,7 +92,7 @@ system.time_step = dt
 system.min_global_cut = 0.5
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-################################################################################
+##########################################################################
 #
 # Here we use exactly the same parameters for the geometry of the constraints
 # that was used for the LB boundaries. This can be done, since the distance
@@ -130,7 +129,7 @@ hollow_cone = HollowCone(
     direction=1)
 system.constraints.add(shape=hollow_cone, particle_type=4)
 
-################################################################################
+##########################################################################
 #
 # We set up a WCA (almost-hard) interaction between the particles and the
 # confining geometry. We do not have particle-particle interactions, which
@@ -152,7 +151,7 @@ system.non_bonded_inter[0, 3].lennard_jones.set_params(
 system.non_bonded_inter[0, 4].lennard_jones.set_params(
     epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
 
-################################################################################
+##########################################################################
 #
 # Setup the particles. We put them all in two points one in each chamber
 # and give them random directions. This speeds up the equilibration, since

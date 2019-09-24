@@ -275,7 +275,8 @@ cdef class Thermostat:
                 raise ValueError(
                     "temperature and gamma must be positive numbers")
         else:
-            if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
+            if float(kT) < 0. or float(gamma[0]) < 0. or float(
+                    gamma[1]) < 0. or float(gamma[2]) < 0.:
                 raise ValueError(
                     "temperature and diagonal elements of the gamma tensor must be positive numbers")
         if gamma_rotation is not None:
@@ -284,7 +285,8 @@ cdef class Thermostat:
                     raise ValueError(
                         "gamma_rotation must be positive number")
             else:
-                if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
+                if float(gamma_rotation[0]) < 0. or float(
+                        gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 

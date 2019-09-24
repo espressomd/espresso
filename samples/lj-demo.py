@@ -43,10 +43,10 @@ if use_opengl:
 
 try:
     import midi
-except:
+except BaseException:
     try:
         from pygame import midi
-    except:
+    except BaseException:
         from portmidi import midi
 midi.init()
 
@@ -166,7 +166,7 @@ class Controls(HasTraits):
         default_input = inputs
 
     for i in inputs:
-        if not "Through Port" in i[1]:
+        if "Through Port" not in i[1]:
             default_input = i
             break
 
@@ -175,7 +175,7 @@ class Controls(HasTraits):
     default_output = -1
     through_port_output = None
     for i in outputs:
-        if not "Through Port" in i[1]:
+        if "Through Port" not in i[1]:
             default_output = i
             break
         else:
@@ -281,8 +281,8 @@ class Controls(HasTraits):
 
     def _volume_fired(self):
         status = self.MIDI_NUM_VOLUME
-        data1 = limit_range(int((system.box_l[0]**3. - self.min_vol) /
-                                (self.max_vol - self.min_vol) * 127), minval=0, maxval=127)
+        data1 = limit_range(int((system.box_l[0]**3. - self.min_vol) / (
+            self.max_vol - self.min_vol) * 127), minval=0, maxval=127)
         data2 = data1
 
         if self.midi_output is not None:
@@ -292,11 +292,17 @@ class Controls(HasTraits):
         status = self.MIDI_NUM_PRESSURE
 
         if pressure_log_flag:
-            data1 = limit_range(int(127 * (np.log(self.pressure) - np.log(self.min_press)) / (
-                np.log(self.max_press) - np.log(self.min_press))), minval=0, maxval=127)
+            data1 = limit_range(int(127 *
+                                    (np.log(self.pressure) -
+                                     np.log(self.min_press)) /
+                                    (np.log(self.max_press) -
+                                        np.log(self.min_press))), minval=0, maxval=127)
         else:
-            data1 = limit_range(int((self.pressure - self.min_press) /
-                                    (self.max_press - self.min_press) * 127), minval=0, maxval=127)
+            data1 = limit_range(int((self.pressure -
+                                     self.min_press) /
+                                    (self.max_press -
+                                     self.min_press) *
+                                    127), minval=0, maxval=127)
         data2 = data1
         if self.midi_output is not None:
             self.midi_output.write_short(status, data1, data2)
@@ -320,6 +326,7 @@ class Controls(HasTraits):
 #############################################################
 #      Integration                                          #
 #############################################################
+
 
 # get initial observables
 pressure = system.analysis.pressure()

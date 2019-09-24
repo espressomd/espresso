@@ -109,7 +109,8 @@ def combination_rule_sigma(rule, sig1, sig2):
         return ValueError("No combination rule defined")
 
 
-for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"], ["Na", "Electrode"], ["Cl", "Electrode"]]:
+for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
+          ["Na", "Electrode"], ["Cl", "Electrode"]]:
     lj_sig = combination_rule_sigma(
         "Berthelot", lj_sigmas[s[0]], lj_sigmas[s[1]])
     lj_cut = combination_rule_sigma("Berthelot", lj_cuts[s[0]], lj_cuts[s[1]])

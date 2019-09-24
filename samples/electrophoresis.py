@@ -85,7 +85,7 @@ system.bonded_inter.add(harmonicangle)
 
 
 # Create Monomer beads and bonds
-#########################################################################################
+##########################################################################
 n_monomers = 20
 
 init_polymer_pos = np.dstack(
@@ -105,7 +105,7 @@ for i in range(n_monomers):
     if i > 0:
         system.part[i].add_bond((harmonic, i - 1))
 
-for i in range(1, n_monomers-1):
+for i in range(1, n_monomers - 1):
     system.part[i].add_bond((harmonicangle, i - 1, i + 1))
 
 system.part[:n_monomers].q = -np.ones(n_monomers)
@@ -145,7 +145,7 @@ for i in range(1000):
         sys.stdout.write("\rWarmup: %03i" % i)
         sys.stdout.flush()
     system.integrator.run(steps=1)
-    system.force_cap = 10*i
+    system.force_cap = 10 * i
 
 system.force_cap = 0
 
@@ -235,7 +235,7 @@ if tuple(map(int, np.__version__.split("."))) >= (1, 10):
     from numpy.linalg import norm
 
     # First get bond vectors
-    bond_vec = pos_list[:, 1:,:] - pos_list[:, :-1,:]
+    bond_vec = pos_list[:, 1:, :] - pos_list[:, :-1, :]
     bond_abs = norm(bond_vec, axis=2, keepdims=True)
     bond_abs_avg = bond_abs.mean(axis=0)[:, 0]
 
@@ -247,7 +247,7 @@ if tuple(map(int, np.__version__.split("."))) >= (1, 10):
 
     bv_zero = np.empty_like(bv_norm)
     for i in range(bv_zero.shape[1]):
-        bv_zero[:, i,:] = bv_norm[:, 0,:]
+        bv_zero[:, i, :] = bv_norm[:, 0, :]
 
     # Calculate <cos(theta)>
     cos_theta = (bv_zero * bv_norm).sum(axis=2).mean(axis=0)

@@ -1,26 +1,25 @@
-################################################################################
-#                                                                              #
-# Copyright (C) 2010-2018 The ESPResSo project                                 #
-#                                                                              #
-# This file is part of ESPResSo.                                               #
-#                                                                              #
-# ESPResSo is free software: you can redistribute it and/or modify             #
-# it under the terms of the GNU General Public License as published by         #
-# the Free Software Foundation, either version 3 of the License, or            #
-# (at your option) any later version.                                          #
-#                                                                              #
-# ESPResSo is distributed in the hope that it will be useful,                  #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
-# GNU General Public License for more details.                                 #
-#                                                                              #
-# You should have received a copy of the GNU General Public License            #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
-#                                                                              #
-################################################################################
-#                                                                              #
-#                  Active Matter: Enhanced Diffusion Tutorial                  #
-#                                                                              #
+#
+# Copyright (C) 2010-2018 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+##########################################################################
+#
+#            Active Matter: Enhanced Diffusion Tutorial
+#
 ##########################################################################
 
 import numpy as np
@@ -41,7 +40,7 @@ assert_features(required_features)
 outdir = "./RESULTS_ENHANCED_DIFFUSION/"
 try:
     os.makedirs(outdir)
-except:
+except BaseException:
     print("INFO: Directory \"{}\" exists".format(outdir))
 
 ##########################################################################
@@ -69,7 +68,7 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.3
 system.time_step = tstep
 
-################################################################################
+##########################################################################
 #
 # To obtain accurate statistics, you will need to run the simulation
 # several times, which is accomplished by this loop. Do not increase

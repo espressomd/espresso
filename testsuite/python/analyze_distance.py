@@ -113,5 +113,6 @@ class AnalyzeDistance(ut.TestCase):
             self.assertAlmostEqual(self.system.analysis.dist_to(id=i),
                                    self.dist_to_id(i))
 
+
 if __name__ == "__main__":
     ut.main()

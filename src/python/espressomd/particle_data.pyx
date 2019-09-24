@@ -41,6 +41,7 @@ PARTICLE_EXT_FORCE = 1
 def _COORD_FIXED(coord):
     return 2L << coord
 
+
 COORDS_FIX_MASK = _COORD_FIXED(0) | _COORD_FIXED(1) | _COORD_FIXED(2)
 COORDS_ALL_FIXED = _COORD_FIXED(0) & _COORD_FIXED(1) & _COORD_FIXED(2)
 PARTICLE_EXT_TORQUE = 16
@@ -54,7 +55,7 @@ ROT_Z = 8
 particle_attributes = []
 for d in dir(ParticleHandle):
     if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-        if not d in ["pos_folded"]:
+        if d != "pos_folded":
             particle_attributes.append(d)
 
 cdef class ParticleHandle:
@@ -162,7 +163,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
@@ -205,7 +206,8 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(folded_position(Vector3d(self.particle_data.r.p), box_geo))
+            return make_array_locked(folded_position(
+                Vector3d(self.particle_data.r.p), box_geo))
 
     property image_box:
         """
@@ -402,7 +404,8 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                return array_locked(self.convert_vector_body_to_space(self.omega_body))
+                return array_locked(
+                    self.convert_vector_body_to_space(self.omega_body))
 
         property quat:
             """
@@ -564,7 +567,8 @@ cdef class ParticleHandle:
                 self.update_particle_data()
                 cdef const double * out_direction = NULL
                 pointer_to_out_direction(self.particle_data, out_direction)
-                return np.array([out_direction[0], out_direction[1], out_direction[2]])
+                return np.array(
+                    [out_direction[0], out_direction[1], out_direction[2]])
 
     IF AFFINITY:
         property bond_site:
@@ -736,7 +740,8 @@ cdef class ParticleHandle:
                 for i in range(4):
                     _q[i] = q[i]
 
-                if is_valid_type(_relto, int) and is_valid_type(_dist, float) and all(is_valid_type(fq, float) for fq in q):
+                if is_valid_type(_relto, int) and is_valid_type(
+                        _dist, float) and all(is_valid_type(fq, float) for fq in q):
                     set_particle_vs_relative(self._id, _relto, _dist, _q) 
                 else:
                     raise ValueError(
@@ -1007,7 +1012,8 @@ cdef class ParticleHandle:
                         cdef const double * gamma_rot = NULL
                         pointer_to_gamma_rot(
                             self.particle_data, gamma_rot)
-                        return array_locked([gamma_rot[0], gamma_rot[1], gamma_rot[2]])
+                        return array_locked(
+                            [gamma_rot[0], gamma_rot[1], gamma_rot[2]])
             ELSE:
                 property gamma_rot:
                     """
@@ -1157,7 +1163,7 @@ cdef class ParticleHandle:
         def delete_exclusion(self, _partner):
             check_type_or_throw_except(
                 _partner, 1, int, "PID of partner has to be an int.")
-            if not _partner in self.exclusions:
+            if _partner not in self.exclusions:
                 raise Exception("Particle with id " +
                                 str(_partner) + " is not in exclusion list.")
             if change_exclusion(self._id, _partner, 1) == 1:
@@ -1422,8 +1428,8 @@ cdef class ParticleHandle:
         bond_id = bond[0]._bond_id
         # Number of partners
         if bonded_ia_params[bond_id].num != len(bond) - 1:
-            raise ValueError("Bond of type", bond[
-                             0]._bond_id, "needs", bonded_ia_params[bond_id].num, "partners.")
+            raise ValueError("Bond of type", bond[0]._bond_id, "needs",
+                             bonded_ia_params[bond_id].num, "partners.")
 
         # Type check on partners
         for i in range(1, len(bond)):
@@ -1734,10 +1740,10 @@ cdef class ParticleList:
         try:
             if isinstance(key, range):
                 return ParticleSlice(key)
-        except:
+        except BaseException:
             pass
 
-        if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+        if isinstance(key, (tuple, list, np.ndarray)):
             return ParticleSlice(np.array(key))
 
         return ParticleHandle(key)
@@ -1834,7 +1840,7 @@ cdef class ParticleList:
                     "add() takes either a dictionary or a bunch of keyword args.")
 
         # Check for presence of pos attribute
-        if not "pos" in P:
+        if "pos" not in P:
             raise ValueError(
                 "pos attribute must be specified for new particle")
 
@@ -1845,7 +1851,7 @@ cdef class ParticleList:
 
     def _place_new_particle(self, P):
         # Handling of particle id
-        if not "id" in P:
+        if "id" not in P:
             # Generate particle id
             P["id"] = max_seen_particle + 1
         else:
@@ -1910,7 +1916,7 @@ Set quat and scalar dipole moment (dipm) instead.")
     def exists(self, idx):
         if is_valid_type(idx, int):
             return particle_exists(idx)
-        if isinstance(idx, slice) or isinstance(idx, tuple) or isinstance(idx, list) or isinstance(idx, np.ndarray):
+        if isinstance(idx, (slice, tuple, list, np.ndarray)):
             tf_array = np.zeros(len(idx), dtype=np.bool)
             for i in range(len(idx)):
                 tf_array[i] = particle_exists(idx[i])
@@ -2075,7 +2081,8 @@ Set quat and scalar dipole moment (dipm) instead.")
         # Ids of the selected particles
         ids = []
         # Did we get a function as argument?
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(args[0], types.FunctionType):
+        if len(args) == 1 and len(kwargs) == 0 and isinstance(
+                args[0], types.FunctionType):
             # Go over all particles and pass them to the user-provided function
             for p in self:
                 if args[0](p):

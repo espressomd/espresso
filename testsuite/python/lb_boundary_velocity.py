@@ -55,5 +55,6 @@ class LBBoundaryVelocityTest(ut.TestCase):
         self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)
         self.assertAlmostEqual(v_fluid[2], v_boundary[2], places=3)
 
+
 if __name__ == "__main__":
     ut.main()

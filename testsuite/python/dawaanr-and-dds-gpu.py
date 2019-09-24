@@ -140,5 +140,6 @@ class DDSGPUTest(ut.TestCase):
             self.es.actors.clear()
             self.es.part.clear()
 
+
 if __name__ == '__main__':
     ut.main()

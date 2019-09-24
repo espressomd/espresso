@@ -123,11 +123,11 @@ class LBShearCommon:
 
             v_expected = shear_flow(
                 x=(np.arange(0, sample_points) + .5) * AGRID,
-                                t=self.system.time - t0,
-                                nu=VISC,
-                                v=SHEAR_VELOCITY,
-                                h=H,
-                                k_max=100)
+                t=self.system.time - t0,
+                nu=VISC,
+                v=SHEAR_VELOCITY,
+                h=H,
+                k_max=100)
             for j in range(1, sample_points):
                 ind = np.max(((1, 1, 1), shear_plane_normal * j + 1), 0)
                 ind = np.array(ind, dtype=int)

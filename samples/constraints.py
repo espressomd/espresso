@@ -104,7 +104,8 @@ act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # warmup with zero temperature to remove overlaps
-while (act_min_dist < min_dist or c1.min_dist() < min_dist or c2.min_dist() < min_dist):
+while (act_min_dist < min_dist or c1.min_dist()
+       < min_dist or c2.min_dist() < min_dist):
     for j in range(warm_steps + wca_cap):
         print(j)
         system.integrator.run(1)

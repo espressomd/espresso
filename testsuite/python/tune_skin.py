@@ -48,5 +48,6 @@ class TuneSkin(ut.TestCase):
             int_steps=3,
             adjust_max_skin=True)
 
+
 if __name__ == "__main__":
     ut.main()

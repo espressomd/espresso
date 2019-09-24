@@ -25,7 +25,8 @@ class ThereCanOnlyBeOne(BaseException):
         self._cls = cls
 
     def __str__(self):
-        return "There can only be one instance of '{}' at any time.".format(self._cls)
+        return "There can only be one instance of '{}' at any time.".format(
+            self._cls)
 
 
 def highlander(klass):

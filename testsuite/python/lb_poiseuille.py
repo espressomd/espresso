@@ -183,5 +183,6 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
         rmsd = np.sqrt(np.sum(np.square(v_expected - velocities[:, 1])))
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
 
+
 if __name__ == '__main__':
     ut.main()

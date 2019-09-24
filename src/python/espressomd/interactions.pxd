@@ -26,7 +26,7 @@ from libc cimport stdint
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
-#force include of config.hpp
+# force include of config.hpp
 cdef extern from "config.hpp":
     pass
 
@@ -337,7 +337,7 @@ IF TABULATED:
                                  vector[double] force)
 IF ROTATION:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-    #* Parameters for the harmonic dumbbell bond potential */
+        #* Parameters for the harmonic dumbbell bond potential */
         cdef struct Harmonic_dumbbell_bond_parameters:
             double k1
             double k2

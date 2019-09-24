@@ -38,7 +38,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
        3d: as long as the independently written p3m and p2nfft agree, we are safe.
     """
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.seed  = s.cell_system.get_state()['n_nodes'] * [1234]
+    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
     s.time_step = 0.01
     s.cell_system.skin = .4
     s.periodicity = [1, 1, 1]
@@ -62,8 +62,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         f.close()
 
         # Particles
-        data = np.genfromtxt(abspath("data/mdlc_reference_data_forces_torques.dat"))
-        for p in data[:,:]:
+        data = np.genfromtxt(
+            abspath("data/mdlc_reference_data_forces_torques.dat"))
+        for p in data[:, :]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
         s.part[:].rotation = (1, 1, 1)
 
@@ -73,8 +74,10 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
         s.actors.add(dlc)
         s.thermostat.turn_off()
         s.integrator.run(0)
-        err_f = np.sum(np.linalg.norm(s.part[:].f - data[:, 7:10], axis=1)) / np.sqrt(data.shape[0])
-        err_t = np.sum(np.linalg.norm(s.part[:].torque_lab - data[:, 10:13], axis=1)) / np.sqrt(data.shape[0])
+        err_f = np.sum(np.linalg.norm(
+            s.part[:].f - data[:, 7:10], axis=1)) / np.sqrt(data.shape[0])
+        err_t = np.sum(np.linalg.norm(
+            s.part[:].torque_lab - data[:, 10:13], axis=1)) / np.sqrt(data.shape[0])
         err_e = s.analysis.energy()["dipolar"] - ref_E
         print("Energy difference", err_e)
         print("Force difference", err_f)
@@ -108,7 +111,7 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
-        for p in data[:,:]:
+        for p in data[:, :]:
             s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7])
         s.part[:].rotation = (1, 1, 1)
 
@@ -116,9 +119,12 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
             prefactor=1, mesh=32, accuracy=1E-6, epsilon="metallic")
         s.actors.add(p3m)
         s.integrator.run(0)
-        expected = np.genfromtxt(abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
-        err_f = np.sum(np.linalg.norm(s.part[:].f - expected[:, 0:3], axis=1)) / np.sqrt(data.shape[0])
-        err_t = np.sum(np.linalg.norm(s.part[:].torque_lab - expected[:, 3:6], axis=1)) / np.sqrt(data.shape[0])
+        expected = np.genfromtxt(
+            abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
+        err_f = np.sum(np.linalg.norm(
+            s.part[:].f - expected[:, 0:3], axis=1)) / np.sqrt(data.shape[0])
+        err_t = np.sum(np.linalg.norm(
+            s.part[:].torque_lab - expected[:, 3:6], axis=1)) / np.sqrt(data.shape[0])
         ref_E = 5.570
         err_e = s.analysis.energy()["dipolar"] - ref_E
         print("Energy difference", err_e)
@@ -153,8 +159,9 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
 
         # Particles
         data = np.genfromtxt(abspath("data/p3m_magnetostatics_system.data"))
-        for p in data[:,:]:
-            s.part.add(id=int(p[0]), pos=p[1:4], dip=p[4:7], rotation=(1, 1, 1))
+        for p in data[:, :]:
+            s.part.add(id=int(p[0]), pos=p[1:4],
+                       dip=p[4:7], rotation=(1, 1, 1))
 
         scafacos = magnetostatics.Scafacos(
             prefactor=1,
@@ -171,9 +178,12 @@ class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
                 "p2nfft_alpha": "0.31"})
         s.actors.add(scafacos)
         s.integrator.run(0)
-        expected = np.genfromtxt(abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
-        err_f = np.sum(np.linalg.norm(s.part[:].f - expected[:, 0:3], axis=1)) / np.sqrt(data.shape[0])
-        err_t = np.sum(np.linalg.norm(s.part[:].torque_lab - expected[:, 3:6], axis=1)) / np.sqrt(data.shape[0])
+        expected = np.genfromtxt(
+            abspath("data/p3m_magnetostatics_expected.data"))[:, 1:]
+        err_f = np.sum(np.linalg.norm(
+            s.part[:].f - expected[:, 0:3], axis=1)) / np.sqrt(data.shape[0])
+        err_t = np.sum(np.linalg.norm(
+            s.part[:].torque_lab - expected[:, 3:6], axis=1)) / np.sqrt(data.shape[0])
         ref_E = 5.570
         err_e = s.analysis.energy()["dipolar"] - ref_E
         print("Energy difference", err_e)

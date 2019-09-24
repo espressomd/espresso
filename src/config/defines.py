@@ -55,6 +55,7 @@ class Defines:
         else:
             return all_defs - self._buildin
 
+
 if __name__ == "__main__":
     compiler = argv[1]
     filename = argv[2]

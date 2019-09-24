@@ -74,7 +74,7 @@ if args.mode == "reaction_ensemble":
     RE = reaction_ensemble.ReactionEnsemble(
         temperature=1,
         exclusion_radius=1,
-     seed=77)
+        seed=77)
 elif args.mode == "constant_pH_ensemble":
     RE = reaction_ensemble.ConstantpHEnsemble(
         temperature=1, exclusion_radius=1, seed=77)

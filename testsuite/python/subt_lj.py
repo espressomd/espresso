@@ -58,5 +58,6 @@ class SubtLjTest(ut.TestCase):
         self.assertAlmostEqual(f, 0, places=10)
         self.assertAlmostEqual(s.analysis.energy()['total'], 0, places=9)
 
+
 if __name__ == "__main__":
     ut.main()

@@ -134,6 +134,7 @@ def combination_rule_sigma(rule, sig1, sig2):
     else:
         return ValueError("No combination rule defined")
 
+
 # Lennard-Jones interactions parameters
 for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"]]:
     lj_sig = combination_rule_sigma(

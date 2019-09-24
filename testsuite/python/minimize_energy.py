@@ -100,5 +100,6 @@ class test_minimize_energy(ut.TestCase):
 
         np.testing.assert_allclose(f_old, np.copy(self.system.part[:].f))
 
+
 if __name__ == "__main__":
     ut.main()

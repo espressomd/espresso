@@ -363,8 +363,8 @@ cdef class System:
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
                     states[i] = (" ".join(map(str,
-                                 rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
-                    )).encode('utf-8')
+                                              rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
+                                          )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError(
@@ -483,7 +483,9 @@ cdef class System:
             auto_exclusions(distance)
 
     def _is_valid_type(self, current_type):
-        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.max_seen_particle_type))
+        return not (isinstance(current_type, int)
+                    or current_type < 0
+                    or current_type > globals.max_seen_particle_type)
 
     def check_valid_type(self, current_type):
         if self._is_valid_type(current_type):

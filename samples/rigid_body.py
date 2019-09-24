@@ -39,7 +39,7 @@ skin = 10.0
 system.cell_system.skin = skin
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-### Particle types
+# Particle types
 type_centre = 0
 type_A = 1
 
@@ -92,11 +92,11 @@ if system.cell_system.get_state()['n_nodes'] > 1:
     system.min_global_cut = max_dist
 
 mat_I = system.analysis.moment_of_inertia_matrix(p_type=type_A)
-#in this simple case, the cluster has principal axes aligned with the box
+# in this simple case, the cluster has principal axes aligned with the box
 momI = [mat_I[0, 0], mat_I[1, 1], mat_I[2, 2]]
 print("moment of intertia is", momI)
 
-#place center bead
+# place center bead
 p_center = system.part.add(
     pos=com, mass=branch_len * 6 + 1, rinertia=momI,
     rotation=[1, 1, 1], type=type_centre)

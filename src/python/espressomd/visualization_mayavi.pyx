@@ -13,7 +13,7 @@ from .grid cimport get_mi_vector, box_geo
 
 include "myconfig.pxi"
 
-if not "ETS_TOOLKIT" in os.environ:
+if "ETS_TOOLKIT" not in os.environ:
     os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab
 from pyface.api import GUI
@@ -34,7 +34,7 @@ cdef class mayaviLive:
     This class provides live visualization using Enthought Mayavi.  Use the
     update method to push your current simulation state after integrating. If
     you run your integrate loop in a separate thread, you can call
-    run_gui_event_loop in your main thread to be able to interact with the GUI.
+    :meth:`start` in your main thread to be able to interact with the GUI.
 
     Parameters
     ----------
@@ -94,13 +94,13 @@ cdef class mayaviLive:
             IF LENNARD_JONES:
                 try:
                     radius = 0.5 * get_ia_param(t, t).lj.sig
-                except:
+                except BaseException:
                     radius = 0.
             IF WCA:
                 if radius == 0:
                     try:
                         radius = 0.5 * get_ia_param(t, t).wca.sig
-                    except:
+                    except BaseException:
                         radius = 0.
 
             if radius == 0:
@@ -115,7 +115,7 @@ cdef class mayaviLive:
         else:
             try:
                 radius = self.particle_sizes[t]
-            except:
+            except BaseException:
                 radius = radius_from_lj(t)
         return radius
 
@@ -249,11 +249,11 @@ cdef class mayaviLive:
         if self.data is None:
             self.data = coords, types, radii, (self.last_N != N), \
                 bond_coords, (self.last_Nbonds != Nbonds), \
-                        boxl, (self.last_boxl != boxl).any()
+                boxl, (self.last_boxl != boxl).any()
         else:
             self.data = coords, types, radii, self.data[3] or (self.last_N != N), \
                 bond_coords, self.data[5] or (self.last_Nbonds != Nbonds), \
-                        boxl, self.data[7] or (self.last_boxl != boxl).any()
+                boxl, self.data[7] or (self.last_boxl != boxl).any()
         self.last_N = N
         self.last_Nbonds = Nbonds
         self.last_boxl = boxl

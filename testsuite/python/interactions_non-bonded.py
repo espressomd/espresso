@@ -123,7 +123,7 @@ class InteractionsNonBondedTest(ut.TestCase):
 
         E_ref = tests_common.lj_generic_potential(
             r=np.arange(1, 232) * self.step_width, eps=wca_eps, sig=wca_sig,
-                cutoff=wca_cutoff, shift=4. * wca_shift)
+            cutoff=wca_cutoff, shift=4. * wca_shift)
 
         for i in range(231):
             self.system.part[1].pos = self.system.part[1].pos + self.step
@@ -612,7 +612,7 @@ class InteractionsNonBondedTest(ut.TestCase):
                 the approximated gradient of func at x0
 
             """
-            partial_x = lambda x: (func(x0 + x) - func(x0 - x)) / (
+            def partial_x(x): return (func(x0 + x) - func(x0 - x)) / (
                 2.0 * np.linalg.norm(x))
             delta = np.array([dx, 0.0, 0.0])
             return np.array([partial_x(np.roll(delta, i)) for i in range(3)])
@@ -653,12 +653,12 @@ class InteractionsNonBondedTest(ut.TestCase):
         def get_reference_force(gb_params, r, dir1, dir2):
             return -gradient(
                 lambda x: get_reference_energy(gb_params, x, dir1, dir2),
-                    x0=r, dx=1.0e-7)
+                x0=r, dx=1.0e-7)
 
         def get_reference_torque(gb_params, r, dir1, dir2):
             force_in_dir1 = gradient(
                 lambda x: get_reference_energy(gb_params, r, x, dir2),
-                    x0=dir1, dx=1.0e-7)
+                x0=dir1, dx=1.0e-7)
 
             return np.cross(-dir1, force_in_dir1)
 

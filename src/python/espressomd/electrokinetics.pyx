@@ -22,7 +22,8 @@ IF ELECTROKINETICS:
         """
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if isinstance(key, tuple) or isinstance(
+                    key, list) or isinstance(key, np.ndarray):
                 if len(key) == 3:
                     return ElectrokineticsRoutines(np.array(key))
             else:
@@ -36,11 +37,11 @@ IF ELECTROKINETICS:
             """
             default_params = self.default_params()
 
-            if not (self._params["stencil"] in ["linkcentered", "nodecentered"]):
+            if self._params["stencil"] not in ["linkcentered", "nodecentered"]:
                 raise ValueError(
                     "stencil has to be 'linkcentered' or 'nodecentered'.")
 
-            if not (self._params["fluid_coupling"] in ["friction", "estatics"]):
+            if self._params["fluid_coupling"] not in ["friction", "estatics"]:
                 raise ValueError(
                     "fluid_coupling has to be 'friction' or 'estatics'.")
 
@@ -49,14 +50,19 @@ IF ELECTROKINETICS:
             Returns the valid options used for the electrokinetic method.
             """
 
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling", "species"
+            return ["agrid", "lb_density", "viscosity", "friction",
+                    "bulk_viscosity", "gamma_even", "gamma_odd", "T",
+                    "prefactor", "stencil", "advection", "fluid_coupling",
+                    "fluctuations", "fluctuation_amplitude", "es_coupling",
+                    "species"]
 
         def required_keys(self):
             """
             Returns the necessary options to initialize the electrokinetic method.
 
             """
-            return ["agrid", "lb_density", "viscosity", "friction", "T", "prefactor"]
+            return ["agrid", "lb_density", "viscosity",
+                    "friction", "T", "prefactor"]
 
         def default_params(self):
             """
@@ -158,7 +164,7 @@ IF ELECTROKINETICS:
             if node is None:
                 ek_set_density(species, density)
             else:
-                if not (isinstance(node, list) or isinstance(node, np.ndarray)):
+                if not isinstance(node, (list, np.ndarray)):
                     if len(node) != 3:
                         raise ValueError(
                             "node has to be an array of length 3 of integers.")
@@ -405,7 +411,7 @@ IF ELECTROKINETICS:
             return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if isinstance(key, (tuple, list, np.ndarray)):
                 if len(key) == 3:
                     return SpecieRoutines(np.array(key), self.id)
             else:
@@ -455,21 +461,22 @@ IF ELECTROKINETICS:
             return {
                 "density": ek_parameters.density[
                     ek_parameters.species_index[self.id]],
-                    "D": ek_parameters.D[ek_parameters.species_index[self.id]],
-                    "valency": ek_parameters.valency[
-                        ek_parameters.species_index[self.id]],
-                    "ext_force_density": [ek_parameters.ext_force_density[0][ek_parameters.species_index[self.id]],
-                                          ek_parameters.ext_force_density[1][
-                                          ek_parameters.species_index[
-                                              self.id]],
-                                          ek_parameters.ext_force_density[2][ek_parameters.species_index[self.id]]]}
+                "D": ek_parameters.D[ek_parameters.species_index[self.id]],
+                "valency": ek_parameters.valency[
+                    ek_parameters.species_index[self.id]],
+                "ext_force_density":
+                    [ek_parameters.ext_force_density[0][ek_parameters.species_index[self.id]],
+                     ek_parameters.ext_force_density[1][ek_parameters.species_index[self.id]],
+                     ek_parameters.ext_force_density[2][ek_parameters.species_index[self.id]]]}
 
         def _set_params_in_es_core(self):
             ek_set_D(self.id, self._params["D"])
             ek_set_valency(self.id, self._params["valency"])
             ek_set_density(self.id, self._params["density"])
-            ek_set_ext_force_density(self.id, self._params["ext_force_density"][
-                                     0], self._params["ext_force_density"][1], self._params["ext_force_density"][2])
+            ek_set_ext_force_density(self.id,
+                                     self._params["ext_force_density"][0],
+                                     self._params["ext_force_density"][1],
+                                     self._params["ext_force_density"][2])
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -527,7 +534,8 @@ IF ELECTROKINETICS:
         property density:
             def __set__(self, value):
                 if is_valid_type(value, float) or is_valid_type(value, int):
-                    if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
+                    if ek_node_set_density(
+                            self.id, self.node[0], self.node[1], self.node[2], value) != 0:
                         raise Exception("Species has not been added to EK.")
                 else:
                     raise ValueError(
@@ -545,7 +553,8 @@ IF ELECTROKINETICS:
 
             def __get__(self):
                 cdef double flux[3]
-                if ek_node_print_flux(self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
+                if ek_node_print_flux(
+                        self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
                     raise Exception("Species has not been added to EK.")
 
                 return np.array(flux[0], flux[1], flux[2])

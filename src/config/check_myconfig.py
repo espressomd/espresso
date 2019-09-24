@@ -38,12 +38,12 @@ def damerau_levenshtein_distance(s1, s2):
                 cost = 1
             d[(i, j)] = min(
                 d[(i - 1, j)] + 1,  # deletion
-                           d[(i, j - 1)] + 1,  # insertion
-                           d[(i - 1, j - 1)] + cost,  # substitution
+                d[(i, j - 1)] + 1,  # insertion
+                d[(i - 1, j - 1)] + cost,  # substitution
             )
             if i and j and s1[i] == s2[j - 1] and s1[i - 1] == s2[j]:
+                # transposition
                 d[(i, j)] = min(d[(i, j)], d[i - 2, j - 2] + cost)
-                   # transposition
 
     return d[lenstr1 - 1, lenstr2 - 1]
 
@@ -112,6 +112,7 @@ def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
         raise FeatureError("There were errors in '{}'".format(sys.argv[3]))
     else:
         return
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 4:

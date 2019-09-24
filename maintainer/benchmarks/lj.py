@@ -89,7 +89,7 @@ system = espressomd.System(box_l=3 * (box_l,))
 #############################################################
 system.random_number_generator_state = list(range(
     n_proc * (system._get_PRNG_state_size() + 1)))
-#np.random.seed(1)
+# np.random.seed(1)
 # Integration parameters
 #############################################################
 system.time_step = 0.01

@@ -97,14 +97,17 @@ IF DP3M == 1:
             super().validate_params()
             default_params = self.default_params()
 
-            if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+            if not (self._params["r_cut"] >= 0
+                    or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
+            if not (is_valid_type(self._params["mesh"], int) or len(
+                    self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
-            if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
+            if isinstance(self._params["mesh"], basestring) and len(
+                    self._params["mesh"]) == 3:
                 if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                    (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                    (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
@@ -121,13 +124,16 @@ IF DP3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
 
-            if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (is_valid_type(self._params["epsilon"], float)
+                    or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
+            if not (self._params["inter"] == default_params["inter"]
+                    or self._params["inter"] > 0):
                 raise ValueError("inter should be a positive integer")
 
-            if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params["mesh_off"]) == 3):
+            if not (self._params["mesh_off"] == default_params["mesh_off"]
+                    or len(self._params["mesh_off"]) == 3):
                 raise ValueError(
                     "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
@@ -194,7 +200,8 @@ IF DP3M == 1:
             mesh_offset[0] = mesh_off[0]
             mesh_offset[1] = mesh_off[1]
             mesh_offset[2] = mesh_off[2]
-            return dp3m_set_mesh_offset(mesh_offset[0], mesh_offset[1], mesh_offset[2])
+            return dp3m_set_mesh_offset(
+                mesh_offset[0], mesh_offset[1], mesh_offset[2])
 
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
@@ -302,7 +309,8 @@ IF DIPOLES == 1:
             return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
-            return {"prefactor": dipole.prefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
+            return {"prefactor": dipole.prefactor,
+                    "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -422,4 +430,4 @@ IF DIPOLES == 1:
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_barnes_hut(
                     self._params["epssq"], self._params["itolsq"])
-                #activate_dipolar_barnes_hut()
+                # activate_dipolar_barnes_hut()

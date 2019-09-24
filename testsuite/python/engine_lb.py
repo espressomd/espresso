@@ -31,12 +31,12 @@ class SwimmerTest():
                  'tau': system.time_step}    
     gamma = 0.3
     lbf = None
-    
+
     def add_all_types_of_swimmers(
-        self,
-        fix=False,
-     rotation=False,
-     put_in_corners=True):
+            self,
+            fix=False,
+            rotation=False,
+            put_in_corners=True):
         """Places all combinations of pusher/puller and f_swim/v_swim
         in a box, either in the corners or around the center
         """
@@ -45,12 +45,12 @@ class SwimmerTest():
         plus_y = np.sqrt([0, 0, .5, .5])
         plus_z = np.sqrt([.5, 0, 0, .5])
         minus_y = np.sqrt([.5, .5, 0, 0])
-        
+
         pos0 = [2, 0.01, 3] if put_in_corners else [2, 3, 2.5]
         pos1 = [5.99, 2, 3] if put_in_corners else [3.1, 2.1, 2.2]
         pos2 = [2, 3, 5.99] if put_in_corners else [2.9, 2.5, 3]
         pos3 = [1.5, 5.99, 1] if put_in_corners else [2, 2, 2.5]
-        
+
         system.part.add(pos=pos0, quat=minus_y, fix=3 * [fix],
                         mass=0.9, rinertia=3 * [7], rotation=3 * [rotation],
                         swimming={"mode": "pusher", "f_swim": 0.10,
@@ -74,14 +74,14 @@ class SwimmerTest():
         self.system.lbboundaries.clear()
         self.system.thermostat.turn_off()
         self.lbf = None
-    
+
     def test_conflicting_parameters(self):
         """v_swim and f_swim can't be set at the same time
         """
         swimmer = self.system.part.add(pos=[3] * 3)
         with self.assertRaises(Exception):
             swimmer.swimming = {"v_swim": 0.3, "f_swim": 0.6}      
-    
+
     def test_momentum_conservation(self):
         """friction as well as 'active' forces apply to particles
         and to the fluid, so total momentum is conserved
@@ -98,31 +98,31 @@ class SwimmerTest():
         self.add_all_types_of_swimmers(rotation=False)
         self.system.integrator.run(10)
         for swimmer in self.system.part:
-            
+
             f_swim = swimmer.swimming['f_swim']
             v_swim = swimmer.swimming['v_swim']
             director = swimmer.director
-            
-            #due to dt/2 time-shift between force calculation and LB-update,
-            #v_swimmer has to be calculated at the half step
+
+            # due to dt/2 time-shift between force calculation and LB-update,
+            # v_swimmer has to be calculated at the half step
             v_swimmer = swimmer.v + \
                 0.5 * self.system.time_step * swimmer.f / swimmer.mass 
-            #for friction coupling, the old fluid at the new position is used
+            # for friction coupling, the old fluid at the new position is used
             v_fluid = self.lbf.get_interpolated_velocity(
                 swimmer.pos + self.system.time_step * v_swimmer)
             force = -self.gamma * (v_swimmer - v_fluid) + \
                 f_swim * director + self.gamma * v_swim * director
-                
+
             self.system.integrator.run(1, reuse_forces=True)
             np.testing.assert_allclose(swimmer.f, force, atol=self.tol)
-    
+
     def check_fluid_force(self, swimmer):
         pass
-        #forces on particles are checked
-        #total force on the fluid matches (momentum conservation)
-        #TODO only thing left to check is the location of the fluid force
-        #There is no counter torque when using the rotational_friction-feature 
-        #so there is nothing to be tested
+        # forces on particles are checked
+        # total force on the fluid matches (momentum conservation)
+        # TODO: only thing left to check is the location of the fluid force.
+        # There is no counter torque when using the rotational_friction-feature
+        # so there is nothing to be tested
 
 
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATION", "MASS"])
@@ -133,23 +133,23 @@ class SwimmerTestCPU(SwimmerTest, ut.TestCase):
         self.lbf = lb.LBFluid(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
-    
+
     def test_rotfric_exception(self):
         """rotational_friction feature is disabled on CPU for more than one core
         """
         if self.system.cell_system.get_state()["n_nodes"] > 1:
-            #swimming without rot_fric is fine
+            # swimming without rot_fric is fine
             self.system.part.add(pos=[0, 0, 0], rotation=3 * [True],
                                  swimming={"f_swim": 0.1, "mode": "pusher"})
             self.system.integrator.run(3)
-            #with rot_fric it is not
+            # with rot_fric it is not
             with self.assertRaises(Exception):
                 self.system.part.add(pos=[0, 0, 0], rotation=3 * [True],
                                      swimming={"f_swim": 0.1, 
                                                "mode": "pusher", 
                                                "rotational_friction": 0.3})
                 self.system.integrator.run(3)
-            
+
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATION", "MASS"])
@@ -160,12 +160,12 @@ class SwimmerTestGPU(SwimmerTest, ut.TestCase):
         self.lbf = lb.LBFluidGPU(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
-    
+
     def test_particle_torques(self):
         """setup shear flow and check if resulting torques match 
         the formulae in the core
         """
-        
+
         bottom = shapes.Wall(normal=[0, 0, 1], 
                              dist=self.LB_params['agrid'])
         top = shapes.Wall(normal=[0, 0, -1],
@@ -174,38 +174,39 @@ class SwimmerTestGPU(SwimmerTest, ut.TestCase):
         self.system.lbboundaries.add(
             lbboundaries.LBBoundary(shape=top, velocity=[1e-3, 1e-3, 0]))
         self.system.integrator.run(100)
-    
-        #fix the particles so inaccuracies from position updates
-        #before torque calculation don't matter
+
+        # fix the particles so inaccuracies from position updates
+        # before torque calculation don't matter
         self.add_all_types_of_swimmers(fix=True, rotation=True,
                                        put_in_corners=False)
 
         self.system.integrator.run(20)
         for swimmer in self.system.part:
-            
+
             director = swimmer.director
             dip_len = swimmer.swimming["dipole_length"]
             mode_fac = 1. if swimmer.swimming["mode"] == "puller" else -1.
             source_pos = swimmer.pos + mode_fac * dip_len * director 
-            
+
             v_center = self.lbf.get_interpolated_velocity(swimmer.pos)
             v_source = self.lbf.get_interpolated_velocity(source_pos)
             diff = v_center - v_source
             cross = np.cross(diff, director) 
-            #half-step omega with isotropic rinertia
+            # half-step omega with isotropic rinertia
             omega_part = swimmer.omega_lab + 0.5 * self.system.time_step * \
                 swimmer.torque_lab / swimmer.rinertia[0]
             omega_swim = cross / np.linalg.norm(cross) * \
                 np.linalg.norm(diff) / dip_len
             torque = swimmer.swimming["rotational_friction"] * \
                 (omega_swim - omega_part)
-                    
+
             self.system.integrator.run(1, reuse_forces=True)
             np.testing.assert_allclose(
                 swimmer.torque_lab,
                 torque,
                 atol=self.tol)    
-        
+
+
 if __name__ == "__main__":
     suite = ut.TestSuite()
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(SwimmerTestGPU))

@@ -96,7 +96,8 @@ cdef class MinimizeEnergy:
         if self._params["gamma"] < 0:
             raise ValueError(
                 "gamma has to be a positive floating point number")
-        if self._params["max_steps"] < 0 or not is_valid_type(self._params["max_steps"], int):
+        if self._params["max_steps"] < 0 or not is_valid_type(
+                self._params["max_steps"], int):
             raise ValueError(
                 "max_steps has to be a positive integer")
         if self._params["max_displacement"] < 0:

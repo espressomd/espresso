@@ -12,12 +12,16 @@ stages:
   except:
     - staging.tmp
     - trying.tmp
+  timeout: 1h
+  interruptible: true
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
   variables:
     GIT_SUBMODULE_STRATEGY: none
   dependencies: []
+  timeout: 15m
+  interruptible: false
   tags:
     - linux
 
@@ -45,7 +49,7 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang:6.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
   dependencies: []
   before_script:
     - git submodule deinit .
@@ -125,12 +129,10 @@ no_rotation:
 
 ### Builds with different Distributions
 
-#debian:8 removed: similar to ubuntu:1404
-
-debian:9:
+debian:10:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian-python3:9
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian-python3:10
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check=false
@@ -181,7 +183,7 @@ fedora:
 cuda10-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=maxset with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - export cmake_params="-DIPYTHON_EXECUTABLE=$(which jupyter)"
@@ -195,7 +197,7 @@ cuda10-maxset:
     - linux
     - cuda
 
-cuda-maxset:
+cuda9-maxset:
   <<: *global_job_definition
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
@@ -216,7 +218,7 @@ cuda-maxset:
 tutorials-samples-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=maxset with_coverage=false make_check=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
@@ -229,7 +231,7 @@ tutorials-samples-maxset:
 tutorials-samples-default:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=default with_coverage=false make_check=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
@@ -244,7 +246,7 @@ tutorials-samples-default:
 tutorials-samples-empty:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=empty with_coverage=false make_check=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
@@ -259,7 +261,7 @@ tutorials-samples-empty:
 tutorials-samples-no-gpu:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:tutorials
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=maxset with_coverage=false make_check=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 hide_gpu=true
@@ -316,6 +318,7 @@ rocm-maxset:
     - export OMPI_MCA_btl_vader_single_copy_mechanism=none
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
+  timeout: 6h
   tags:
     - docker
     - linux
@@ -329,6 +332,7 @@ ubuntu:armhf:
 
 ubuntu:i386:
   <<: *arch_definition
+  timeout: 1h
   only:
     - branches
     - tags
@@ -370,6 +374,7 @@ clang:6.0:
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900
     - bash maintainer/CI/build_cmake.sh
+  timeout: 2h
   tags:
     - docker
     - linux
@@ -394,14 +399,14 @@ intel:18:
 check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   needs:
-    - cuda-maxset
+    - cuda10-maxset
   when: on_success
   script:
     - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
     - cd ${CI_PROJECT_DIR}/build
-    - make -t && make sphinx
+    - make -t && rm src/python/espressomd/visualization.* && make sphinx
     - bash ../maintainer/CI/doc_warnings.sh
   artifacts:
     paths:
@@ -415,7 +420,7 @@ check_sphinx:
 run_tutorials:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:10.1
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   needs:
     - cuda10-maxset
   when: on_success
@@ -436,13 +441,15 @@ run_tutorials:
     - linux
     - cuda
 
-check_doxygen:
+run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   needs:
-    - cuda-maxset
+    - cuda9-maxset
   when: on_success
+  only:
+    - python
   script:
     - cd ${CI_PROJECT_DIR}/build
     - make -t && make doxygen
@@ -460,7 +467,7 @@ check_cuda_maxset_no_gpu:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   needs: 
-    - cuda-maxset
+    - cuda9-maxset
   script:
     - export CUDA_VISIBLE_DEVICES=""
     - cd ${CI_PROJECT_DIR}/build
@@ -476,7 +483,7 @@ check_with_odd_no_of_processors:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
   when: on_success
   needs: 
-    - cuda-maxset
+    - cuda9-maxset
   script:
     - cd ${CI_PROJECT_DIR}/build
     - cmake -DTEST_NP=3 .
@@ -501,6 +508,7 @@ check_with_odd_no_of_processors:
     - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
     - echo "$SSH_PUBLIC_KEY" > ${HOME}/.ssh/espresso_rsa.pub && chmod 600 ${HOME}/.ssh/espresso_rsa.pub
     - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+  interruptible: false
   tags:
     - docker
     - linux
@@ -517,7 +525,7 @@ deploy_sphinx_documentation:
 deploy_doxygen_documentation:
   extends: .deploy_base
   dependencies:
-    - check_doxygen
+    - run_doxygen
   script:
     - cd ${CI_PROJECT_DIR}/build/doc/doxygen/html &&
       rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/dox

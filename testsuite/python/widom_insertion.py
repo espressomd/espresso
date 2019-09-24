@@ -115,5 +115,6 @@ class WidomInsertionTest(ut.TestCase):
             + "  target_mu_ex: " + str(target_mu_ex)
         )
 
+
 if __name__ == "__main__":
     ut.main()
