@@ -27,10 +27,5 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def test_stokes_force(self):
-        difference = abs(tutorial.size(tutorial.force) - tutorial.stokes_force)
-        self.assertLess(difference, 0.1)
-
-
 if __name__ == "__main__":
     ut.main()
