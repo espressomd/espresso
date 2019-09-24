@@ -74,12 +74,7 @@ system.time_step = tstep
 #
 ##########################################################################
 
-## Exercise 3 ##
-# Once you have tested the routine for a single , then
-# make it such that you can loop over the run parameter
-# and repeat the simulation 5 times.
-
-for ...:
+for run in range(1):
 
     # Use the Langevin thermostat (no hydrodynamics)
     # Set up a random seed (a new one for each run)
@@ -88,7 +83,7 @@ for ...:
 
     # Place a single active particle that can rotate in all 3 dimensions.
     # Set mass and rotational inertia to separate the timescales for 
-    # spatial and rotational diffusion.
+    # translational and rotational diffusion.
     system.part.add(pos=[5.0, 5.0, 5.0], swimming={'v_swim': vel},
                     mass=0.1, rotation=3 * [True], rinertia=3 * [1.])
 
@@ -131,3 +126,10 @@ for ...:
     ...
 
     ...
+
+## Exercise 3 ##
+# Once you have tested the routine for a single run,
+# loop over 5 runs.
+# Use a program of your choice to visualize the mean and 
+# standard error of the three correlations for a passive (vel = 0) 
+# and an active (vel != 0) particle
