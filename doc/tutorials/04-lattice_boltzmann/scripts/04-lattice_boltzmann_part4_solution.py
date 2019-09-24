@@ -13,18 +13,21 @@ AGRID = 0.5
 VISCOSITY = 2.0
 FORCE_DENSITY = [0.0, 0.001, 0.0]
 DENSITY = 1.5
-system = espressomd.System(box_l=[BOX_L]*3)
+system = espressomd.System(box_l=[BOX_L] * 3)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-lbf = espressomd.lb.LBFluidGPU(agrid=AGRID, dens=DENSITY, visc=VISCOSITY, tau=0.01,
-                    ext_force_density=FORCE_DENSITY)
+lbf = espressomd.lb.LBFluidGPU(
+    agrid=AGRID, dens=DENSITY, visc=VISCOSITY, tau=0.01,
+                              ext_force_density=FORCE_DENSITY)
 system.actors.add(lbf)
 
 # Setup boundaries
 WALL_OFFSET = AGRID
-top_wall = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=WALL_OFFSET))
-bottom_wall = espressomd.lbboundaries.LBBoundary(shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-(BOX_L - WALL_OFFSET)))
+top_wall = espressomd.lbboundaries.LBBoundary(
+    shape=espressomd.shapes.Wall(normal=[1, 0, 0], dist=WALL_OFFSET))
+bottom_wall = espressomd.lbboundaries.LBBoundary(
+    shape=espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-(BOX_L - WALL_OFFSET)))
 
 system.lbboundaries.add(top_wall)
 system.lbboundaries.add(bottom_wall)
@@ -42,14 +45,23 @@ for x in range(lbf.shape[0]):
     fluid_velocities[x, 0] = (x + 0.5) * AGRID
     fluid_velocities[x, 1] = np.average(v_tmp)               
 
+
 def poiseuille_flow(x, force_density, dynamic_viscosity, height):
     return force_density / (2.0 * dynamic_viscosity) * (height**2.0 / 4.0 - x**2.0)
 
 x_values = np.linspace(0.0, BOX_L, lbf.shape[0])
 HEIGHT = BOX_L - 2.0 * AGRID
 
-# Note that the LB viscosity is not the dynamic viscosity but the kinematic viscosity (mu=LB_viscosity * density)
-plt.plot(x_values, poiseuille_flow(x_values - (HEIGHT / 2.0 + AGRID), FORCE_DENSITY[1], VISCOSITY * DENSITY, HEIGHT), 'o-', label='analytical')
+# Note that the LB viscosity is not the dynamic viscosity but the
+# kinematic viscosity (mu=LB_viscosity * density)
+plt.plot(
+    x_values,
+     poiseuille_flow(x_values - (HEIGHT / 2.0 + AGRID),
+                     FORCE_DENSITY[1],
+                     VISCOSITY * DENSITY,
+                     HEIGHT),
+     'o-',
+     label='analytical')
 plt.plot(fluid_velocities[:, 0], fluid_velocities[:, 1], label='simulation')
 plt.legend()
 plt.show()

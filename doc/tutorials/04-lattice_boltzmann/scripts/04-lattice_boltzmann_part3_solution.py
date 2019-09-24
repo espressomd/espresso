@@ -40,9 +40,9 @@ for index, N in enumerate(N_MONOMERS):
     system.auto_update_accumulators.clear()
     # Setup polymer of part_id 0 with fene bond
     positions = espressomd.polymer.positions(n_polymers=1,
-                              beads_per_chain=N,
-                              bond_length=1, seed=5642,
-                              min_distance=0.9)
+                                             beads_per_chain=N,
+                                             bond_length=1, seed=5642,
+                                             min_distance=0.9)
     for i, pos in enumerate(positions[0]):
         pid = len(system.part)
         system.part.add(id=pid, pos=pos)
@@ -51,7 +51,11 @@ for index, N in enumerate(N_MONOMERS):
 
     logging.info("Warming up the polymer chain.")
     system.time_step = 0.002
-    system.minimize_energy.init(f_max=1.0, gamma=10, max_steps=2000, max_displacement=0.01)
+    system.minimize_energy.init(
+        f_max=1.0,
+        gamma=10,
+     max_steps=2000,
+     max_displacement=0.01)
     system.minimize_energy.minimize()
     logging.info("Warmup finished.")
 
@@ -63,7 +67,13 @@ for index, N in enumerate(N_MONOMERS):
 
     system.thermostat.turn_off()
 
-    lbf = espressomd.lb.LBFluidGPU(kT=1, seed=123, agrid=1, dens=1, visc=5, tau=TIME_STEP)
+    lbf = espressomd.lb.LBFluidGPU(
+        kT=1,
+        seed=123,
+     agrid=1,
+     dens=1,
+     visc=5,
+     tau=TIME_STEP)
     system.actors.add(lbf)
     system.thermostat.set_lb(LB_fluid=lbf, seed=142, gamma=5)
 
@@ -73,7 +83,8 @@ for index, N in enumerate(N_MONOMERS):
 
     # configure correlator
     com_pos = espressomd.observables.ComPosition(ids=range(N))
-    correlator = espressomd.accumulators.Correlator(obs1=com_pos, tau_lin=16, tau_max=LOOPS * STEPS, delta_N=1,
+    correlator = espressomd.accumulators.Correlator(
+        obs1=com_pos, tau_lin=16, tau_max=LOOPS * STEPS, delta_N=1,
                    corr_operation="square_distance_componentwise", compress1="discard1")
     system.auto_update_accumulators.add(correlator)
 
@@ -81,7 +92,10 @@ for index, N in enumerate(N_MONOMERS):
     rhs = np.zeros(LOOPS)
     for i in range(LOOPS):
         system.integrator.run(STEPS)
-        rhs[i] = system.analysis.calc_rh(chain_start=0, number_of_chains=1, chain_length=N)[0]
+        rhs[i] = system.analysis.calc_rh(
+            chain_start=0,
+            number_of_chains=1,
+            chain_length=N)[0]
 
     logging.info("Sampling finished.")
 
