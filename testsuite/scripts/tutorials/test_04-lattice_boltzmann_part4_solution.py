@@ -29,13 +29,13 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
     def test_flow_profile(self):
         analytical = tutorial.poiseuille_flow(tutorial.x_values - (tutorial.HEIGHT / 2.0 + tutorial.AGRID),
-                    tutorial.FORCE_DENSITY[1],
-                    tutorial.VISCOSITY * tutorial.DENSITY,
-                    tutorial.HEIGHT)
+                                              tutorial.FORCE_DENSITY[1],
+                                              tutorial.VISCOSITY * tutorial.DENSITY,
+                                              tutorial.HEIGHT)
         simulation = tutorial.fluid_velocities[:, 1]
         rmsd = np.sqrt(np.sum(np.square(analytical - simulation)))
         self.assertLess(rmsd, 0.02 * tutorial.AGRID / tutorial.lbf.tau)
-        
+
 
 if __name__ == "__main__":
     ut.main()
