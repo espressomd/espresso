@@ -20,27 +20,14 @@ import importlib_wrapper
 import numpy as np
 
 
-def substitutions(code):
-    # inject the solution into the notebook
-    with open("@TUTORIALS_DIR@/04-lattice_boltzmann/scripts/part4_plot.py") as f:
-        code_plot = f.read()
-    return code + "\n" + code_plot
-
-
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part4.py",
-    gpu=True, substitutions=substitutions)
+    gpu=True)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
-
-    def test_analytical_solution(self):
-        difference = tutorial.scaling * tutorial.sim - tutorial.ana
-        accuracy = np.max(np.abs(difference))
-        self.assertLess(accuracy, 1e-3)
-
 
 if __name__ == "__main__":
     ut.main()
