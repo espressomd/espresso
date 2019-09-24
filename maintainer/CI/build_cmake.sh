@@ -97,6 +97,7 @@ set_default_value make_check_benchmarks false
 set_default_value with_cuda true
 set_default_value build_type "Debug"
 set_default_value with_ccache false
+set_default_value with_scafacos true
 set_default_value test_timeout 300
 set_default_value hide_gpu false
 
@@ -106,8 +107,8 @@ else
     run_checks=false
 fi
 
-# If there are no user-provided flags they
-# are added according to ${with_coverage}.
+# If there are no user-provided flags, default
+# ones are added according to ${with_coverage}
 nvcc_flags=${cxx_flags}
 if [ -z "${cxx_flags}" ]; then
     if ${with_coverage}; then
@@ -128,12 +129,15 @@ if [ ${with_coverage} = true ]; then
     bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
-cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params} -DWITH_SCAFACOS=ON"
+cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"
 cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
 if [ ${with_ccache} = true ]; then
     cmake_params="${cmake_params} -DWITH_CCACHE=ON"
+fi
+if [ ${with_scafacos} = true ]; then
+    cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
 fi
 
 command -v nvidia-smi && nvidia-smi || true

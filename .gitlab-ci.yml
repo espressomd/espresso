@@ -249,7 +249,7 @@ tutorials-samples-empty:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=empty with_coverage=false make_check=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
