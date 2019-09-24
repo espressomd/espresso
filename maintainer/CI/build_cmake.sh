@@ -162,25 +162,6 @@ outp insource srcdir builddir \
     build_procs check_procs \
     with_cuda with_ccache
 
-# enforce style rules
-pylint_command () {
-    if hash pylint 2> /dev/null; then
-        pylint "$@"
-    elif hash pylint3 2> /dev/null; then
-        pylint3 "$@"
-    elif hash pylint-3 2> /dev/null; then
-        pylint-3 "$@"
-    else
-        echo "pylint not found";
-        exit 1
-    fi
-}
-if [ $(pylint_command --version | grep -o 'pylint.*[0-9]\.[0-9]\.[0-9]' | awk '{ print $2 }' | cut -d'.' -f2) -gt 6 ]; then
-    score_option='--score=no'
-else
-    score_option=''
-fi
-
 if [ ${insource} = false ]; then
     if [ ! -d "${builddir}" ]; then
         echo "Creating ${builddir}..."

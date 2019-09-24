@@ -36,3 +36,24 @@ if [ "$CI" != "" ]; then
     maintainer/gh_post_style_patch.py
 fi
 
+# enforce style rules
+pylint_command () {
+    if hash pylint 2> /dev/null; then
+        pylint "$@"
+    elif hash pylint3 2> /dev/null; then
+        pylint3 "$@"
+    elif hash pylint-3 2> /dev/null; then
+        pylint-3 "$@"
+    else
+        echo "pylint not found";
+        exit 1
+    fi
+}
+pylint_command --score=no --reports=no --disable=all --enable=W0614,R1714,R1701,C0325,W0611,C0303 $(find ./src -name '*.py*') | tee pylint.log
+errors=$(grep -P '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log  | wc -l)
+if [ ${errors} != 0 ]; then
+  echo "pylint found ${errors} errors"
+  exit 1;
+else
+  echo "pylint found no error"
+fi
