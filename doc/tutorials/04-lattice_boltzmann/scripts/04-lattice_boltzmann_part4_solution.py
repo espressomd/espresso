@@ -13,12 +13,13 @@ AGRID = 0.5
 VISCOSITY = 2.0
 FORCE_DENSITY = [0.0, 0.001, 0.0]
 DENSITY = 1.5
+TIME_STEP = 0.01
 system = espressomd.System(box_l=[BOX_L] * 3)
-system.time_step = 0.01
+system.time_step = TIME_STEP
 system.cell_system.skin = 0.4
 
 lbf = espressomd.lb.LBFluidGPU(
-    agrid=AGRID, dens=DENSITY, visc=VISCOSITY, tau=0.01,
+    agrid=AGRID, dens=DENSITY, visc=VISCOSITY, tau=TIME_STEP,
     ext_force_density=FORCE_DENSITY)
 system.actors.add(lbf)
 
