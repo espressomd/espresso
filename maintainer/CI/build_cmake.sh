@@ -162,32 +162,6 @@ outp insource srcdir builddir \
     build_procs check_procs \
     with_cuda with_ccache
 
-# check indentation of python files
-pep8_command () {
-    if hash pep8 2> /dev/null; then
-        pep8 "$@"
-    elif hash pycodestyle 2> /dev/null; then
-        pycodestyle "$@"
-    elif hash pycodestyle-3 2> /dev/null; then
-        pycodestyle-3 "$@"
-    else
-        echo "pep8 not found";
-        exit 1
-    fi
-}
-
-pep8_command --filename=*.pyx,*.pxd,*.py --select=E111 "${srcdir}/src/python/espressomd/"
-ec=$?
-if [ ${ec} -eq 0 ]; then
-    echo ""
-    echo "Indentation in Python files correct..."
-    echo ""
-else
-    echo ""
-    echo "Error: Python files are not indented the right way. Please use 4 spaces per indentation level!"
-    echo ""
-    exit ${ec}
-fi
 # enforce style rules
 pylint_command () {
     if hash pylint 2> /dev/null; then
