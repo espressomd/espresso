@@ -69,18 +69,19 @@ system.time_step = tstep
 ##########################################################################
 
 for run in range(5):
-    # Set up a random seed (a new one for each run)
-    system.seed = np.random.randint(0, 2**31 - 1)
-
     # Use the Langevin thermostat (no hydrodynamics)
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
+    # Set up a random seed (a new one for each run)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.,
+                                   seed=np.random.randint(0, 1000))
 
-    # Place a single active particle (that can rotate freely! rotation=[1,1,1])
-    system.part.add(pos=[5.0, 5.0, 5.0], swimming={
-                    'v_swim': vel}, rotation=[1, 1, 1])
+    # Place a single active particle that can rotate in all 3 dimensions.
+    # Set mass and rotational inertia to separate the timescales for 
+    # translational and rotational diffusion.
+    system.part.add(pos=[5.0, 5.0, 5.0], swimming={'v_swim': vel},
+                    mass=0.1, rotation=3 * [True], rinertia=3 * [1.])
 
     # Initialize the mean squared displacement (MSD) correlator
-    tmax = tstep * sampsteps
+    tmax = system.time_step * sampsteps
 
     pos_id = ParticlePositions(ids=[0])
     msd = Correlator(obs1=pos_id,

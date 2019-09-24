@@ -59,12 +59,10 @@ sampsteps = 5000
 samplength = 1000
 tstep = 0.01
 
-## Exercise 2 ##
+## Exercise 1 ##
 # Why can we get away with such a small box?
 # Could it be even smaller?
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-
 system.cell_system.skin = 0.3
 system.time_step = tstep
 
@@ -76,26 +74,23 @@ system.time_step = tstep
 #
 ##########################################################################
 
-## Exercise 4 ##
+## Exercise 3 ##
 # Once you have tested the routine for a single , then
 # make it such that you can loop over the run parameter
 # and repeat the simulation 5 times.
 
 for ...:
-    # Set up a random seed (a new one for each run)
-
-    ## Exercise 1 ##
-    # Explain the choice of the random seed
-    system.seed = np.random.randint(0, 2**31 - 1)
 
     # Use the Langevin thermostat (no hydrodynamics)
+    # Set up a random seed (a new one for each run)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0, 
+                                   seed=np.random.randint(0, 1000))
 
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
-
-    # Place a single active particle (that can rotate freely! rotation=[1,1,1])
-
-    system.part.add(pos=[5.0, 5.0, 5.0], swimming={
-                    'v_swim': vel}, rotation=[1, 1, 1])
+    # Place a single active particle that can rotate in all 3 dimensions.
+    # Set mass and rotational inertia to separate the timescales for 
+    # spatial and rotational diffusion.
+    system.part.add(pos=[5.0, 5.0, 5.0], swimming={'v_swim': vel},
+                    mass=0.1, rotation=3 * [True], rinertia=3 * [1.])
 
     # Initialize the mean squared displacement (MSD) correlator
 
@@ -109,7 +104,7 @@ for ...:
                      tau_lin=16)
     system.auto_update_accumulators.add(msd)
 
-## Exercise 3 ##
+## Exercise 2 ##
 # Construct the auto-accumulators for the VACF and AVACF,
 # using the example of the MSD
 
