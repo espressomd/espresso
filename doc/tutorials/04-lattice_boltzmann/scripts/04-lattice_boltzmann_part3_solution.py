@@ -54,8 +54,8 @@ for index, N in enumerate(N_MONOMERS):
     system.minimize_energy.init(
         f_max=1.0,
         gamma=10,
-     max_steps=2000,
-     max_displacement=0.01)
+        max_steps=2000,
+        max_displacement=0.01)
     system.minimize_energy.minimize()
     logging.info("Warmup finished.")
 
@@ -70,10 +70,10 @@ for index, N in enumerate(N_MONOMERS):
     lbf = espressomd.lb.LBFluidGPU(
         kT=1,
         seed=123,
-     agrid=1,
-     dens=1,
-     visc=5,
-     tau=TIME_STEP)
+        agrid=1,
+        dens=1,
+        visc=5,
+        tau=TIME_STEP)
     system.actors.add(lbf)
     system.thermostat.set_lb(LB_fluid=lbf, seed=142, gamma=5)
 
@@ -85,7 +85,7 @@ for index, N in enumerate(N_MONOMERS):
     com_pos = espressomd.observables.ComPosition(ids=range(N))
     correlator = espressomd.accumulators.Correlator(
         obs1=com_pos, tau_lin=16, tau_max=LOOPS * STEPS, delta_N=1,
-                   corr_operation="square_distance_componentwise", compress1="discard1")
+        corr_operation="square_distance_componentwise", compress1="discard1")
     system.auto_update_accumulators.add(correlator)
 
     logging.info("Sampling started.")

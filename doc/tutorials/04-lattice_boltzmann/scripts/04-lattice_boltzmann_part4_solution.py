@@ -19,7 +19,7 @@ system.cell_system.skin = 0.4
 
 lbf = espressomd.lb.LBFluidGPU(
     agrid=AGRID, dens=DENSITY, visc=VISCOSITY, tau=0.01,
-                              ext_force_density=FORCE_DENSITY)
+    ext_force_density=FORCE_DENSITY)
 system.actors.add(lbf)
 
 # Setup boundaries
@@ -47,7 +47,9 @@ for x in range(lbf.shape[0]):
 
 
 def poiseuille_flow(x, force_density, dynamic_viscosity, height):
-    return force_density / (2.0 * dynamic_viscosity) * (height**2.0 / 4.0 - x**2.0)
+    return force_density / (2.0 * dynamic_viscosity) * \
+        (height**2.0 / 4.0 - x**2.0)
+
 
 x_values = np.linspace(0.0, BOX_L, lbf.shape[0])
 HEIGHT = BOX_L - 2.0 * AGRID
@@ -56,12 +58,12 @@ HEIGHT = BOX_L - 2.0 * AGRID
 # kinematic viscosity (mu=LB_viscosity * density)
 plt.plot(
     x_values,
-     poiseuille_flow(x_values - (HEIGHT / 2.0 + AGRID),
-                     FORCE_DENSITY[1],
-                     VISCOSITY * DENSITY,
-                     HEIGHT),
-     'o-',
-     label='analytical')
+    poiseuille_flow(x_values - (HEIGHT / 2.0 + AGRID),
+                    FORCE_DENSITY[1],
+                    VISCOSITY * DENSITY,
+                    HEIGHT),
+    'o-',
+    label='analytical')
 plt.plot(fluid_velocities[:, 0], fluid_velocities[:, 1], label='simulation')
 plt.legend()
 plt.show()
