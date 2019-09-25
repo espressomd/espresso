@@ -72,7 +72,7 @@ style:
 style_doxygen:
   <<: *global_job_definition
   stage: prepare
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   dependencies: []
   script:
     - mkdir build
@@ -174,7 +174,7 @@ fedora:
     - docker
     - linux
 
-#ubuntu:1604 not needed: used in cuda:9.0
+#ubuntu:1604 not needed: used in ubuntu-python3:cuda-9.0
 #ubuntu:1804 not needed: default used in non-CUDA builds
 #ubuntu:1904 not needed: base image for builds on different architectures
 
@@ -200,7 +200,7 @@ cuda10-maxset:
 cuda9-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   script:
     - export myconfig=maxset with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - sed -i 's/ or "DISPLAY" in os.environ/ or True/' src/python/espressomd/visualization.pyx
@@ -249,7 +249,7 @@ tutorials-samples-empty:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=empty with_coverage=false make_check=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -275,7 +275,7 @@ tutorials-samples-no-gpu:
 empty:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   script:
     - export myconfig=empty
     - bash maintainer/CI/build_cmake.sh
@@ -444,7 +444,7 @@ run_tutorials:
 run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   needs:
     - cuda9-maxset
   when: on_success
@@ -464,7 +464,7 @@ run_doxygen:
 check_cuda_maxset_no_gpu:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   when: on_success
   needs: 
     - cuda9-maxset
@@ -480,7 +480,7 @@ check_cuda_maxset_no_gpu:
 check_with_odd_no_of_processors:
   <<: *global_job_definition
   stage: additional_checks 
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   when: on_success
   needs: 
     - cuda9-maxset
@@ -497,7 +497,7 @@ check_with_odd_no_of_processors:
 .deploy_base:
   <<: *global_job_definition
   stage: deploy
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/cuda:9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   only:
     - python
   before_script:
