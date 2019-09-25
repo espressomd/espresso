@@ -99,7 +99,7 @@ system.random_number_generator_state = list(range(
 # Integration parameters
 #############################################################
 system.time_step = 0.01
-system.cell_system.skin = .4 
+system.cell_system.skin = .4
 system.thermostat.turn_off()
 
 

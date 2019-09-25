@@ -93,7 +93,7 @@ class TestCylindricalObservable(ut.TestCase):
                  (len(self.params['ids']) + 1) - self.params['center'][2]])
             v_y = (position[0] * np.sqrt(position[0]**2 + position[1]**2) *
                    self.v_phi + position[1] * self.v_r) / np.sqrt(
-                position[0]**2 + position[1]**2)
+                       position[0]**2 + position[1]**2)
             v_x = (self.v_r * np.sqrt(position[0]**2 + position[1]**2)
                    - position[1] * v_y) / position[0]
             velocity = np.array([v_x, v_y, self.v_z])

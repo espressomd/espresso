@@ -142,7 +142,7 @@ class ThermalizedBond(ut.TestCase):
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
             self.system.integrator.run(12)
-            v_dist = self.system.part[1::2].v - self.system.part[::2].v 
+            v_dist = self.system.part[1::2].v - self.system.part[::2].v
             v_stored[i * N2:(i + 1) * N2, :] = v_dist
 
         v_minmax = 5

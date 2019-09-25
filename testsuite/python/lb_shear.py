@@ -37,8 +37,8 @@ TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
 # The number of grid cells should be divisible by four and 3 in all directions
 # for testing on multiple mpi nodes.
-H = 12 * AGRID 
-W = 6 * AGRID  
+H = 12 * AGRID
+W = 6 * AGRID
 SHEAR_VELOCITY = 0.3
 
 LB_PARAMS = {'agrid': AGRID,
@@ -164,7 +164,7 @@ class LBShearCommon:
             np.copy(wall1.get_force()),
             -np.copy(wall2.get_force()),
             atol=1E-4)
-        np.testing.assert_allclose(np.copy(wall1.get_force()), 
+        np.testing.assert_allclose(np.copy(wall1.get_force()),
                                    shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=2E-4)
 
     def test(self):

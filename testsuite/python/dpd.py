@@ -447,7 +447,7 @@ class DPDThermostat(ut.TestCase):
     def test_momentum_conservation(self):
         r_cut = 1.0
         gamma = 5.
-        r_cut = 2.9 
+        r_cut = 2.9
 
         s = self.s
         s.thermostat.set_dpd(kT=1.3, seed=42)

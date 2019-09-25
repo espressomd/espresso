@@ -238,7 +238,7 @@ class VirtualSitesTracersCommon:
         self.assertAlmostEqual(dist2strong, np.sqrt(2), delta=0.1)
 
     def test_zz_without_lb(self):
-        """Check behaviour without lb. Ignore non-virtual particles, complain on 
+        """Check behaviour without lb. Ignore non-virtual particles, complain on
         virtual ones.
 
         """

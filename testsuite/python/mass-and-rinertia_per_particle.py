@@ -32,7 +32,7 @@ class ThermoTest(ut.TestCase):
     kT = 0.0
     gamma_global = np.zeros((3))
     gamma_global_rot = np.zeros((3))
-    # Test ranges    
+    # Test ranges
     gamma_min = 5.
     gamma_max = 10.
 

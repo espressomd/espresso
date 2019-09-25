@@ -610,8 +610,9 @@ class InteractionsNonBondedTest(ut.TestCase):
                 the approximated gradient of func at x0
 
             """
-            def partial_x(x): return (func(x0 + x) - func(x0 - x)) / (
-                2.0 * np.linalg.norm(x))
+            def partial_x(x):
+                return (func(x0 + x) - func(x0 - x)) / (
+                    2.0 * np.linalg.norm(x))
             delta = np.array([dx, 0.0, 0.0])
             return np.array([partial_x(np.roll(delta, i)) for i in range(3)])
 

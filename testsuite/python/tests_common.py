@@ -34,8 +34,8 @@ def params_match(inParams, outParams):
                 return False
         else:
             if outParams[k] != inParams[k]:
-                print("Mismatch in parameter ", k, inParams[
-                      k], outParams[k], type(inParams[k]), type(outParams[k]))
+                print("Mismatch in parameter ", k, inParams[k],
+                      outParams[k], type(inParams[k]), type(outParams[k]))
                 return False
 
     return True
@@ -485,8 +485,8 @@ def morse_potential(r, eps, alpha, cutoff, rmin=0):
     if r < cutoff:
         V = eps * (np.exp(-2. * alpha * (r - rmin)) -
                    2 * np.exp(-alpha * (r - rmin)))
-        V -= eps * (np.exp(-2. * alpha * (cutoff - rmin)
-                           ) - 2 * np.exp(-alpha * (cutoff - rmin)))
+        V -= eps * (np.exp(-2. * alpha * (cutoff - rmin)) -
+                    2 * np.exp(-alpha * (cutoff - rmin)))
     return V
 
 
@@ -585,14 +585,14 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
     sigma = sigma_0 \
         / np.sqrt(
             (1 - 0.5 * chi * (
-             (r_u_i + r_u_j)**2 / (1 + chi * u_i_u_j) +
-             (r_u_i - r_u_j)**2 / (1 - chi * u_i_u_j))))
+                (r_u_i + r_u_j)**2 / (1 + chi * u_i_u_j) +
+                (r_u_i - r_u_j)**2 / (1 - chi * u_i_u_j))))
 
     epsilon = epsilon_0 *\
         (1 - chi**2 * u_i_u_j**2)**(-nu / 2.) *\
         (1 - chi_d / 2. * (
-         (r_u_i + r_u_j)**2 / (1 + chi_d * u_i_u_j) +
-         (r_u_i - r_u_j)**2 / (1 - chi_d * u_i_u_j)))**mu
+            (r_u_i + r_u_j)**2 / (1 + chi_d * u_i_u_j) +
+            (r_u_i - r_u_j)**2 / (1 - chi_d * u_i_u_j)))**mu
 
     rr = np.linalg.norm((np.linalg.norm(r_ij) - sigma + sigma_0) / sigma_0)
 

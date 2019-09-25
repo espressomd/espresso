@@ -29,7 +29,7 @@ class RotDiffAniso(ut.TestCase):
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 5.0
-    system.seed = range(system.cell_system.get_state()["n_nodes"]) 
+    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     # The NVT thermostat parameters
     kT = 0.0

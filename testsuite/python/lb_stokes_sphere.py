@@ -34,15 +34,15 @@ import numpy as np
 
 # Define the LB Parameters
 TIME_STEP = 0.4
-AGRID = 0.6 
-KVISC = 6 
-DENS = 2.3 
+AGRID = 0.6
+KVISC = 6
+DENS = 2.3
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP}
 # System setup
-radius = 8 * AGRID 
+radius = 8 * AGRID
 box_width = 62 * AGRID
 real_width = box_width + 2 * AGRID
 box_length = 62 * AGRID

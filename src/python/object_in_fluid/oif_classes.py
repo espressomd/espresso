@@ -667,10 +667,10 @@ class Mesh:
                 triangle.A.get_pos(), triangle.B.get_pos(), triangle.C.get_pos())
             tmp_normal_length = norm(tmp_normal)
             tmp_sum_z_coords = 1.0 / 3.0 * \
-                (triangle.A.get_pos()[2] + triangle.B.get_pos()[
-                 2] + triangle.C.get_pos()[2])
-            volume -= triangle.area() * tmp_normal[
-                2] / tmp_normal_length * tmp_sum_z_coords
+                (triangle.A.get_pos()[2] + triangle.B.get_pos()[2] +
+                 triangle.C.get_pos()[2])
+            volume -= (triangle.area() * tmp_normal[2] / tmp_normal_length *
+                       tmp_sum_z_coords)
         return volume
 
     def get_n_nodes(self):

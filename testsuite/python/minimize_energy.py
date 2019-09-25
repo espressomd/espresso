@@ -79,7 +79,7 @@ class test_minimize_energy(ut.TestCase):
             self.system.analysis.energy()["total"], 0, places=10)
         np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
         if self.test_rotation:
-            np.testing.assert_allclose(np.copy(self.system.part[:].dip), 
+            np.testing.assert_allclose(np.copy(self.system.part[:].dip),
                                        np.hstack((-np.ones((self.n_part, 1)), np.zeros((self.n_part, 1)), np.zeros((self.n_part, 1)))), atol=1E-9)
 
     def test_rescaling(self):
