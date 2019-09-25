@@ -31,13 +31,13 @@ public:
   int n_values() const override { return 3; };
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values(), 0.0);
-    for (int i : ids()) {
 #ifdef DIPOLES
+    for (int i : ids()) {
       res[0] += partCfg[i].calc_dip()[0];
       res[1] += partCfg[i].calc_dip()[1];
       res[2] += partCfg[i].calc_dip()[2];
-#endif
     }
+#endif
     return res;
   }
 };

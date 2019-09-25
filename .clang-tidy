@@ -32,7 +32,6 @@ Checks: |
    readability-redundant-control-flow,
    readability-simplify-boolean-expr,
    readability-simplify-subscript-expr,
-   readability-static-accessed-through-instance,
    readability-static-definition-in-anonymous-namespace,
    readability-string-compare,
    readability-uniqueptr-delete-release,

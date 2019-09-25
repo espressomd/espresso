@@ -70,25 +70,23 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
-      auto const dist2 = dist * dist;
       force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
                                           dist, &torque1, &torque2);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist2);
+        force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist*dist);
         // Additional use of DPD here requires counter increase
         dpd_rng_counter_increment();
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
-        auto const dist2 = dist * dist;
         force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
                                             -dist, &torque1, &torque2);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
           force1 +=
-              dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist2);
+              dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
           // Additional use of DPD here requires counter increase
           dpd_rng_counter_increment();
         }
