@@ -91,7 +91,6 @@ class WidomInsertionTest(ut.TestCase):
             default_charges={self.TYPE_HA: self.CHARGE_HA})
 
     def test_widom_insertion(self):   
-        TYPE_HA = WidomInsertionTest.TYPE_HA
         system = WidomInsertionTest.system
         Widom = WidomInsertionTest.Widom
         target_mu_ex = WidomInsertionTest.target_mu_ex
@@ -99,7 +98,7 @@ class WidomInsertionTest(ut.TestCase):
         system.seed = system.cell_system.get_state()[
             'n_nodes'] * [np.random.randint(5)]
         num_samples = 100000
-        for i in range(num_samples):
+        for _ in range(num_samples):
             # 0 for insertion reaction
             Widom.measure_excess_chemical_potential(0)
         mu_ex = Widom.measure_excess_chemical_potential(0)

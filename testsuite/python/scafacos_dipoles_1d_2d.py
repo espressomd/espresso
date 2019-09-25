@@ -39,7 +39,6 @@ class Scafacos1d2d(ut.TestCase):
         n_particle = 100
 
         particle_radius = 0.5
-        dipole_lambda = 3.0
 
         #################################################
 

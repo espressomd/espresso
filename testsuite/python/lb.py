@@ -109,7 +109,7 @@ class TestLB:
         all_temp_fluid = []
 
         # Integration
-        for i in range(self.params['int_times']):
+        for _ in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
 
             # Summation vars
@@ -293,13 +293,13 @@ class TestLB:
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
-            v = self.lbf[
+            _ = self.lbf[
                 int(self.params['box_l'] / self.params['agrid']) + 1, 0, 0].velocity
         with self.assertRaises(ValueError):
-            v = self.lbf[
+            _ = self.lbf[
                 0, int(self.params['box_l'] / self.params['agrid']) + 1, 0].velocity
         with self.assertRaises(ValueError):
-            v = self.lbf[
+            _ = self.lbf[
                 0, 0, int(self.params['box_l'] / self.params['agrid']) + 1].velocity
 
     def test_incompatible_agrid(self):

@@ -33,13 +33,13 @@ tol = 1.0e-13
 # analytical result for convective stress
 
 
-def stress_kinetic(vel, box_l):
+def stress_kinetic(vel):
     return np.einsum('ij,ik->jk', vel, vel) / np.prod(system.box_l)
 
 # analytical result for stress originating from bond force
 
 
-def stress_bonded(pos, box_l):
+def stress_bonded(pos):
     stress = np.zeros([3, 3])
     for p1, p2 in zip(pos[0::2], pos[1::2]):
         r = p1 - p2
@@ -50,7 +50,7 @@ def stress_bonded(pos, box_l):
 # analytical result for stress originating from non-bonded force
 
 
-def stress_nonbonded(particle_pairs, box_l):
+def stress_nonbonded(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if (p1.type == 0 and p2.type == 0) or (p1.type == 1 and p2.type == 2):
@@ -62,7 +62,7 @@ def stress_nonbonded(particle_pairs, box_l):
     return stress
 
 
-def stress_nonbonded_inter(particle_pairs, box_l):
+def stress_nonbonded_inter(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 1 and p2.type == 2 and p1.mol_id != p2.mol_id:
@@ -74,7 +74,7 @@ def stress_nonbonded_inter(particle_pairs, box_l):
     return stress
 
 
-def stress_nonbonded_intra(particle_pairs, box_l):
+def stress_nonbonded_intra(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 0 and p2.type == 0 and p1.mol_id == p2.mol_id:
@@ -94,8 +94,7 @@ class Stress(ut.TestCase):
 
     def test(self):
         # system parameters
-        box_l = 10.0
-        system.box_l = [box_l, box_l, box_l]
+        system.box_l = 3 * [10.0]
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step
@@ -160,13 +159,13 @@ class Stress(ut.TestCase):
             'non_bonded_intra', 0, 0]
         sim_pressure_total = system.analysis.pressure()['total']
 
-        anal_stress_kinetic = stress_kinetic(vel, box_l)
-        anal_stress_bonded = stress_bonded(pos, box_l)
-        anal_stress_nonbonded = stress_nonbonded(system.part.pairs(), box_l)
+        anal_stress_kinetic = stress_kinetic(vel)
+        anal_stress_bonded = stress_bonded(pos)
+        anal_stress_nonbonded = stress_nonbonded(system.part.pairs())
         anal_stress_nonbonded_inter = stress_nonbonded_inter(
-            system.part.pairs(), box_l)
+            system.part.pairs())
         anal_stress_nonbonded_intra = stress_nonbonded_intra(
-            system.part.pairs(), box_l)
+            system.part.pairs())
         anal_stress_total = anal_stress_kinetic + \
             anal_stress_bonded + anal_stress_nonbonded
         anal_pressure_kinetic = np.einsum('ii', anal_stress_kinetic) / 3.0
@@ -243,8 +242,7 @@ class StressFENE(ut.TestCase):
 
     def test_fene(self):
         # system parameters
-        box_l = 10.0
-        system.box_l = [box_l, box_l, box_l]
+        system.box_l = 3 * [10.0]
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step

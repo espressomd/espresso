@@ -118,7 +118,6 @@ class RotDiffAniso(ut.TestCase):
         """
         # Global diffusivity tensor in the body frame:
         D = self.kT / self.gamma_global
-        dt0 = self.J / self.gamma_global
 
         # Thermalizing...
         therm_steps = 100
@@ -151,7 +150,7 @@ class RotDiffAniso(ut.TestCase):
         self.system.time = 0.0
         int_steps = 20
         loops = 100
-        for step in range(loops):
+        for _ in range(loops):
             self.system.integrator.run(steps=int_steps)
             dcosjj = np.zeros((3))
             dcosjj2 = np.zeros((3))

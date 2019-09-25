@@ -131,7 +131,7 @@ class LangevinThermostat(ut.TestCase):
             system.thermostat.set_langevin(kT=0, gamma=gamma_t_i, seed=41)
 
         system.time = 0
-        for i in range(100):
+        for _ in range(100):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
@@ -175,7 +175,7 @@ class LangevinThermostat(ut.TestCase):
             rinertia = np.copy(system.part[0].rinertia)
         else:
             rinertia = np.array((1, 1, 1))
-        for i in range(100):
+        for _ in range(100):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
@@ -423,7 +423,6 @@ class LangevinThermostat(ut.TestCase):
             # Decide on effective gamma rotation, since for rotation it is
             # direction dependent
             eff_gamma_rot = None
-            per_part_eff_gamma_rot = None
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 eff_gamma_rot = gamma_rot_a
                 eff_per_part_gamma_rot = per_part_gamma_rot_a

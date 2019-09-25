@@ -69,10 +69,8 @@ class LBBoundariesBase:
     def test_clear(self):
         lbb = self.system.lbboundaries
 
-        b1 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
 
         lbb.clear()
 

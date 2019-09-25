@@ -269,7 +269,7 @@ class ParticleProperties(ut.TestCase):
             except AttributeError:
                 print("Skipping read-only", p)
             # Cause a different mpi callback to uncover deadlock immediately
-            x = getattr(s.part[:], p)
+            _ = getattr(s.part[:], p)
 
     def test_zz_remove_all(self):
         for id in self.system.part[:].id:

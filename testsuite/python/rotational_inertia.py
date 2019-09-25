@@ -148,7 +148,7 @@ class RotationalInertia(ut.TestCase):
         E0 = self.energy(p)
         m0 = self.momentum(p)
         system.time_step = 0.001
-        for i in range(1000):
+        for _ in range(1000):
             system.integrator.run(100)
             self.assertAlmostEqual(self.energy(p), E0, places=3)
             self.assertAlmostEqual(self.momentum(p), m0, places=3)

@@ -56,8 +56,7 @@ def norm(vect):
           Input vector
 
     """
-    v = np.array(vect)
-    return np.sqrt(np.dot(v, v))
+    return np.linalg.norm(vect)
 
 
 def vec_distance(a, b):
@@ -147,7 +146,7 @@ def discard_epsilon(x):
           real number
 
     """
-    if (x > -small_epsilon and x < small_epsilon):
+    if abs(x) < small_epsilon:
         res = 0.0
     else:
         res = x

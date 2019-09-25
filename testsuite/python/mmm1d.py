@@ -24,7 +24,7 @@ import tests_common
 import espressomd
 
 
-if(not espressomd.has_features(("ELECTROSTATICS"))):
+if not espressomd.has_features("ELECTROSTATICS"):
     sys.exit()
 
 

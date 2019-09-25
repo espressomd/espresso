@@ -77,11 +77,11 @@ class Observables(ut.TestCase):
             part_data = getattr(self.system.part[id_list], pprop_name)
             # Reshape and aggregate to linear array
             if len(part_data.shape) > 1:
-                if (agg_type == "average"):
-                    part_data = average(part_data, 0)
-                if (agg_type == "sum"):
-                    part_data = sum(part_data, 0)
-                if (agg_type == 'com'):
+                if agg_type == "average":
+                    part_data = np.average(part_data, 0)
+                if agg_type == "sum":
+                    part_data = np.sum(part_data, 0)
+                if agg_type == 'com':
                     part_data = calc_com_x(self.system, pprop_name)
                 part_data = part_data.flatten()
 

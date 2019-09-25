@@ -230,7 +230,7 @@ class DPDThermostat(ut.TestCase):
             trans_weight_function=1, trans_gamma=gamma, trans_r_cut=1.4)
 
         def omega(dist, r_cut):
-            return (1. - dist / r_cut)
+            return 1. - dist / r_cut
 
         s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
         v = [.5, .8, .3]
@@ -459,7 +459,7 @@ class DPDThermostat(ut.TestCase):
             weight_function=1, gamma=gamma, r_cut=r_cut,
             trans_weight_function=1, trans_gamma=gamma / 2.0, trans_r_cut=r_cut)
         momentum = np.matmul(s.part[:].v.T, s.part[:].mass)
-        for i in range(10):
+        for _ in range(10):
             s.integrator.run(25)
             np.testing.assert_array_less(np.zeros((3, 3)), np.abs(s.part[:].f))
             np.testing.assert_allclose(

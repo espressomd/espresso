@@ -118,7 +118,7 @@ class LBShearCommon:
         t0 = self.system.time
         sample_points = int(H / AGRID - 1)
 
-        for i in range(9):
+        for _ in range(9):
             self.system.integrator.run(50)
 
             v_expected = shear_flow(

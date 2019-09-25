@@ -95,7 +95,7 @@ class ObservableProfileLBCommon:
         lb_velocity_params_local['sampling_delta_y'] = 0.0
         lb_velocity_params_local['sampling_delta_z'] = 0.0
         with self.assertRaises(RuntimeError):
-            obs2 = espressomd.observables.LBVelocityProfile(
+            _ = espressomd.observables.LBVelocityProfile(
                 **lb_velocity_params_local)
 
     def test_error_if_no_LB(self):

@@ -100,7 +100,7 @@ class CylindricalLBObservableCommon:
         self.v_phi = 2.5
         self.v_z = 1.5
         node_positions = np.arange(-4.5, 5.0, 1.0)
-        for i, value in enumerate(node_positions):
+        for i, _ in enumerate(node_positions):
             position = np.array(
                 [node_positions[i], node_positions[i], node_positions[i]])
             v_y = (position[0] * np.sqrt(position[0]**2 + position[1]**2) * self.v_phi +

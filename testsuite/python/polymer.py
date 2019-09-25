@@ -166,7 +166,7 @@ class PolymerPositions(ut.TestCase):
 
         w = espressomd.shapes.Wall(normal=[0., 0., 1.], dist=0.5 * self.box_l)
         wall_constraint = espressomd.constraints.ShapeBasedConstraint(shape=w)
-        c = self.system.constraints.add(wall_constraint)
+        self.system.constraints.add(wall_constraint)
 
         positions = polymer.positions(
             n_polymers=num_poly, beads_per_chain=num_mono,

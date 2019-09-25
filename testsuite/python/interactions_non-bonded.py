@@ -446,8 +446,6 @@ class InteractionsNonBondedTest(ut.TestCase):
         b_disc = 1.03
         b_cut = 2.253
         b_shift = 0.133
-        b_f1 = 0.123
-        b_f2 = 0.123
 
         self.system.non_bonded_inter[0, 0].buckingham.set_params(
             a=b_a, b=b_b, c=b_c, d=b_d, discont=b_disc, cutoff=b_cut,

@@ -66,8 +66,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                          * (rad + distance),
                          math.cos(theta_angle) * (rad + distance)]) + rad
 
-                    shape_dist, shape_dist_vec = sphere_shape.call_method(
-                        "calc_distance", position=pos.tolist())
+                    shape_dist, _ = sphere_shape.calc_distance(
+                        position=pos.tolist())
                     self.assertAlmostEqual(shape_dist, -distance)
 
     def test_ellipsoid(self):
@@ -245,8 +245,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
                     phi_rot_point = np.dot(
                         phi_rot_matrix, start_point - center) + center
 
-                    shape_dist, shape_dist_vec = cylinder_shape_finite.call_method(
-                        "calc_distance", position=phi_rot_point.tolist())
+                    shape_dist, _ = cylinder_shape_finite.calc_distance(
+                        position=phi_rot_point.tolist())
 
                     dist = -distance
                     if distance > 0.0:
@@ -642,8 +642,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                         [x + (self.box_l + length[0] - x_range) / 2.0,
                          y + (self.box_l + length[1] - y_range) / 2.0,
                          z + (self.box_l + length[2] - z_range) / 2.0])
-                    shape_dist, shape_dist_vec = rhomboid_shape.call_method(
-                        "calc_distance",
+                    shape_dist, shape_dist_vec = rhomboid_shape.calc_distance(
                         position=pos.tolist())
 
                     outside = False
@@ -837,8 +836,7 @@ class ShapeBasedConstraintTest(ut.TestCase):
                         phi_rot_matrix,
                         theta_rot_point - center) + center
 
-                    shape_dist, shape_dist_vec = torus_shape.call_method(
-                        "calc_distance",
+                    shape_dist, _ = torus_shape.calc_distance(
                         position=phi_rot_point.tolist())
                     self.assertAlmostEqual(shape_dist, distance)
 

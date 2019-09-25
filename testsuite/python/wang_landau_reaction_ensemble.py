@@ -102,7 +102,7 @@ class ReactionEnsembleTest(ut.TestCase):
         while True:
             try:
                 self.WLRE.reaction()
-                for i in range(2):
+                for _ in range(2):
                     self.WLRE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break

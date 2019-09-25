@@ -86,12 +86,9 @@ class ReactionEnsembleTest(ut.TestCase):
         type_A = ReactionEnsembleTest.type_A
         type_H = ReactionEnsembleTest.type_H
         type_HA = ReactionEnsembleTest.type_HA
-        box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         gamma = ReactionEnsembleTest.gamma
-        nubar = ReactionEnsembleTest.nubar
 
-        volume = ReactionEnsembleTest.volume
         RE = ReactionEnsembleTest.RE
         target_alpha = ReactionEnsembleTest.target_alpha
 
@@ -103,7 +100,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 1000
-        for i in range(num_samples):
+        for _ in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
             average_NHA += system.number_of_particles(type=type_HA)

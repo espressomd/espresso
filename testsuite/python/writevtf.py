@@ -65,7 +65,7 @@ class CommonTests(ut.TestCase):
         if self.types_to_write == 'all':
             simulation_pos = np.array(
                 [((i), float(i), float(i), float(i)) for i in range(npart)])
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             simulation_pos = np.array(
                 [((i * 2), float(i * 2), float(i * 2), float(i * 2)) for i in range(npart // 2)])
 
@@ -77,7 +77,7 @@ class CommonTests(ut.TestCase):
         """Test if bonds have been written properly: just look at number of bonds"""
         if self.types_to_write == 'all':
             simulation_bonds = np.array([1, 2, 3])  # the two bonded particles
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             types = [2]
             simulation_bonds = np.array(2)  # only this one is type 2
 
@@ -90,7 +90,7 @@ class CommonTests(ut.TestCase):
         if self.types_to_write == 'all':
             simulation_atoms = np.array(
                 [((i), (1 + (-1)**i)) for i in range(npart)])
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             simulation_atoms = np.array([((i * 2), 2)
                                          for i in range(npart // 2)])
 

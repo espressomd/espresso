@@ -146,9 +146,6 @@ class CollisionDetection(ut.TestCase):
         # At the end of test, this list should be empty
         parts_not_accounted_for = list(range(expected_np))
 
-        # Collect pairs of non-virtual-particles found
-        non_virtual_pairs = []
-
         # We traverse particles. We look for a vs with a bond to find the other vs.
         # From the two vs we find the two non-virtual particles
         for p in self.s.part:
@@ -203,7 +200,7 @@ class CollisionDetection(ut.TestCase):
             rel_to = r[0]
             dist = r[1]
             # Vs is related to one of the particles
-            self.assertTrue(rel_to == p1.id or rel_to == p2.id)
+            self.assertTrue(rel_to in (p1.id, p2.id))
             # The two vs relate to two different particles
             self.assertNotIn(rel_to, seen)
             seen.append(rel_to)
@@ -330,18 +327,18 @@ class CollisionDetection(ut.TestCase):
         # Place particle which should not take part in collisions
         # In this case, it is skipped, because it is of the wrong type,
         # even if it is within range for a collision
-        p = self.s.part.add(pos=positions[0], type=self.other_type)
+        self.s.part.add(pos=positions[0], type=self.other_type)
         for pos in positions:
             # Since this is non-symmetric, we randomize order
             if np.random.random() > .5:
-                p1 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
-                p2 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0.1, 0, 0), type=self.part_type_to_be_glued)
             else:
-                p2 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0.1, 0, 0), type=self.part_type_to_be_glued)
-                p1 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
 
         # 2 non-virtual + 1 virtual + one that doesn't take part
@@ -508,7 +505,6 @@ class CollisionDetection(ut.TestCase):
         # Analysis
         virtual_sites = self.s.part.select(virtual=True)
         non_virtual = self.s.part.select(virtual=False)
-        to_be_glued = self.s.part.select(type=self.part_type_to_be_glued)
         after_glueing = self.s.part.select(type=self.part_type_after_glueing)
 
         # One virtual site per glued particle?
@@ -583,7 +579,6 @@ class CollisionDetection(ut.TestCase):
         self.s.part.clear()
         dx = np.array((1, 0, 0))
         dy = np.array((0, 1, 0))
-        dz = np.array((0, 0, 1))
         a = np.array((0.499, 0.499, 0.499))
         b = a + 0.1 * dx
         c = a + 0.03 * dx + 0.03 * dy

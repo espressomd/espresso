@@ -96,7 +96,6 @@ class Checkpoint:
 
         """
         names = name.split('.')
-        tmp_obj = obj
         for i in range(len(names) - 1):
             obj = getattr(obj, names[i], None)
 
