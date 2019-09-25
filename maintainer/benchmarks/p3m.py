@@ -58,11 +58,9 @@ if not args.visualizer:
 
 
 import espressomd
-from espressomd import thermostat
 from espressomd import electrostatics
 if args.visualizer:
     from espressomd import visualization
-    from threading import Thread
 
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)

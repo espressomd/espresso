@@ -19,7 +19,6 @@
 import espressomd
 import numpy as np
 import unittest as ut
-import unittest_decorators as utx
 
 
 class InteractionsAngleBondTest(ut.TestCase):

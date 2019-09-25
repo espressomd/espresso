@@ -24,7 +24,6 @@ import unittest as ut
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd import reaction_ensemble
-from espressomd import system
 import numpy.testing as npt
 
 

@@ -20,7 +20,6 @@ import numpy as np
 from numpy.random import uniform
 import espressomd
 import math
-import random
 
 
 @utx.skipIfMissingFeatures(["MASS", "PARTICLE_ANISOTROPY",

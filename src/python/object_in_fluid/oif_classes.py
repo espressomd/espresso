@@ -14,12 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import espressomd
 import numpy as np
-from .oif_utils import *
-from espressomd.interactions import OifLocalForces
-from espressomd.interactions import OifGlobalForces
-from espressomd.interactions import OifOutDirection
+import espressomd
+from espressomd.interactions import OifLocalForces, OifGlobalForces, OifOutDirection
+from .oif_utils import (
+    large_number, small_epsilon, discard_epsilon, custom_str, norm,
+    vec_distance, get_triangle_normal, area_triangle, angle_btw_triangles,
+    oif_calc_stretching_force, oif_calc_bending_force,
+    oif_calc_local_area_force, oif_calc_global_area_force, oif_calc_volume_force
+)
 
 
 class FixedPoint:

@@ -23,7 +23,7 @@ from espressomd.interactions import HarmonicBond
 from espressomd.interactions import FeneBond
 from espressomd.observables import StressTensor
 
-from tests_common import fene_force, fene_potential, fene_force2
+from tests_common import fene_force2
 
 import numpy as np
 

@@ -27,7 +27,7 @@
 # boundaries, where the velocity is fixed to $v.
 #
 import espressomd
-from espressomd import lb, lbboundaries, shapes, has_features
+from espressomd import lbboundaries, shapes
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np

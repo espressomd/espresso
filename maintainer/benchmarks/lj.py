@@ -58,7 +58,6 @@ if not args.visualizer:
 
 
 import espressomd
-from espressomd import thermostat
 if args.visualizer:
     from espressomd import visualization
     from threading import Thread

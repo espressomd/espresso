@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from collections import OrderedDict
-import sys
 import inspect
 import os
 import re

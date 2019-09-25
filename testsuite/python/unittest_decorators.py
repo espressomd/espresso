@@ -16,8 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import unittest
-import espressomd  # pylint: disable=import-error
-from espressomd.utils import to_str
+import espressomd
 
 
 def _id(x):

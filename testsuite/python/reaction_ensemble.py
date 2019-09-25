@@ -21,7 +21,7 @@
 """
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import reaction_ensemble
 
 

@@ -18,7 +18,6 @@
 import unittest as ut
 import importlib_wrapper as iw
 import numpy as np
-import sys
 
 # these tutorials need to be executed sequentially
 tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(

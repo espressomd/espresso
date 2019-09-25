@@ -16,8 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 import math
-from espressomd.shapes import Rhomboid
-from espressomd.shapes import Cylinder
 
 small_epsilon = 0.000000001
 large_number = 10000000.0

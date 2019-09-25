@@ -20,7 +20,6 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-import os
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx

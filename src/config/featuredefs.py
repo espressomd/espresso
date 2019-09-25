@@ -20,7 +20,6 @@
 # This module parses the feature definition file features.def
 #
 import fileinput
-import string
 import re
 
 

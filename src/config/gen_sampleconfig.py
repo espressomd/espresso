@@ -20,8 +20,6 @@
 # This script appends the sample list of features to the file
 #   myconfig-sample.h.
 #
-import time
-import string
 import fileinput
 import inspect
 import sys

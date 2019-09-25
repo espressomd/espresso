@@ -18,7 +18,7 @@ import unittest as ut
 import numpy as np
 import espressomd
 from espressomd import polymer
-from espressomd.shapes import Wall
+import espressomd.shapes
 
 
 class PolymerPositions(ut.TestCase):

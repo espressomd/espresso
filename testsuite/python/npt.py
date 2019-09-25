@@ -20,7 +20,6 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-from espressomd import thermostat
 import tests_common
 
 

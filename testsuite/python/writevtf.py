@@ -20,11 +20,10 @@
 """
 Testmodule for the VTF file writing.
 """
-import os
 import sys
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import interactions
 from espressomd.io.writer import vtf
 import tempfile
