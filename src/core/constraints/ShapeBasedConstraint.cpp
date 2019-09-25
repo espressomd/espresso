@@ -74,7 +74,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                           dist, &torque1, &torque2);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist*dist);
+        force1 +=
+            dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
         // Additional use of DPD here requires counter increase
         dpd_rng_counter_increment();
       }
@@ -85,8 +86,8 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
                                             -dist, &torque1, &torque2);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-          force1 +=
-              dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
+          force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
+                                   dist * dist);
           // Additional use of DPD here requires counter increase
           dpd_rng_counter_increment();
         }
