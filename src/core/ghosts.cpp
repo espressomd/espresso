@@ -123,7 +123,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
     s_buffer = Utils::realloc(s_buffer, max_s_buffer);
   }
 
-  s_bondbuffer.resize(0);
+  s_bondbuffer.clear();
 
   /* put in data */
   char *insert = s_buffer;
@@ -296,7 +296,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
             this_node, r_bondbuffer.end() - bond_retrieve);
     errexit();
   }
-  r_bondbuffer.resize(0);
+  r_bondbuffer.clear();
 }
 
 void add_forces_from_recv_buffer(GhostCommunication *gc) {
