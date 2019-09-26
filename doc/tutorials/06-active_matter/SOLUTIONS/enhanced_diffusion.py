@@ -25,6 +25,7 @@
 import numpy as np
 import os
 import sys
+import argparse
 import time
 
 import espressomd
@@ -32,33 +33,33 @@ from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.accumulators import Correlator
 
-required_features = ["ENGINE", "ROTATION"]
-assert_features(required_features)
+espressomd.assert_features(
+    ["ENGINE", "ROTATION", "MASS", "ROTATIONAL_INERTIA"])
 
 # create an output folder
+
 outdir = "./RESULTS_ENHANCED_DIFFUSION/"
-try:
-    os.makedirs(outdir)
-except BaseException:
-    print("INFO: Directory \"{}\" exists".format(outdir))
+os.makedirs(outdir, exist_ok=True)
+
 
 ##########################################################################
 
 # Read in the active velocity from the command prompt
-if len(sys.argv) != 2:
-    print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
-    exit()
 
-vel = float(sys.argv[1])
+parser = argparse.ArgumentParser()
+parser.add_argument('vel', type=float, help='Velocity of active particle.')
+args = parser.parse_args()
+vel = args.vel
 
 # Set the basic simulation parameters
-sampsteps = 5000
-samplength = 1000
-tstep = 0.01
+
+SAMP_STEPS = 5000
+SAMP_LENGTH = 1000
+T_STEP = 0.01
 
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.3
-system.time_step = tstep
+system.time_step = T_STEP
 
 ##########################################################################
 #
@@ -69,18 +70,19 @@ system.time_step = tstep
 ##########################################################################
 
 for run in range(5):
-    # Set up a random seed (a new one for each run)
-    system.seed = np.random.randint(0, 2**31 - 1)
-
     # Use the Langevin thermostat (no hydrodynamics)
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
+    # Set up a random seed (a new one for each run)
+    system.thermostat.set_langevin(kT=1.0, gamma=1.,
+                                   seed=np.random.randint(0, 1000))
 
-    # Place a single active particle (that can rotate freely! rotation=[1,1,1])
-    system.part.add(pos=[5.0, 5.0, 5.0], swimming={
-                    'v_swim': vel}, rotation=[1, 1, 1])
+    # Place a single active particle that can rotate in all 3 dimensions.
+    # Set mass and rotational inertia to separate the timescales for 
+    # translational and rotational diffusion.
+    system.part.add(pos=[5.0, 5.0, 5.0], swimming={'v_swim': vel},
+                    mass=0.1, rotation=3 * [True], rinertia=3 * [1.])
 
     # Initialize the mean squared displacement (MSD) correlator
-    tmax = tstep * sampsteps
+    tmax = system.time_step * SAMP_STEPS
 
     pos_id = ParticlePositions(ids=[0])
     msd = Correlator(obs1=pos_id,
@@ -110,12 +112,12 @@ for run in range(5):
     system.auto_update_accumulators.add(avacf)
 
     # Integrate 5,000,000 steps. This can be done in one go as well.
-    for i in range(sampsteps):
+    for i in range(SAMP_STEPS):
         if (i + 1) % 100 == 0:
-            print('\rrun %i: %.0f%%' % (run + 1, (i + 1) * 100. / sampsteps),
+            print('\rrun %i: %.0f%%' % (run + 1, (i + 1) * 100. / SAMP_STEPS),
                   end='')
             sys.stdout.flush()
-        system.integrator.run(samplength)
+        system.integrator.run(SAMP_LENGTH)
     print()
 
     # Finalize the accumulators and write to disk
