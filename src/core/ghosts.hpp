@@ -151,7 +151,7 @@ further details.
 /************************************************************/
 /*@{*/
 
-typedef struct {
+struct GhostCommunication {
 
   /** Communication type. */
   int type;
@@ -167,10 +167,10 @@ typedef struct {
      this is the shift vector. Normally this is an integer multiple of the box
      length. The shift is done on the sender side */
   Utils::Vector3d shift;
-} GhostCommunication;
+};
 
 /** Properties for a ghost communication. A ghost communication is defined */
-typedef struct {
+struct GhostCommunicator {
 
   /** Particle data parts to transfer */
   int data_parts;
@@ -181,7 +181,7 @@ typedef struct {
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
 
-} GhostCommunicator;
+};
 
 /*@}*/
 
