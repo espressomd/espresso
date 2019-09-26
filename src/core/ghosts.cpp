@@ -474,17 +474,12 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
           boost::mpi::broadcast(comm_cart, r_buffer.bonds(), node);
         }
         break;
-      case GHOST_RDCE: {
+      case GHOST_RDCE:
         if (node == this_node)
-          MPI_Reduce(reinterpret_cast<double *>(s_buffer.data()),
-                     reinterpret_cast<double *>(r_buffer.data()),
-                     s_buffer.size() / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                     comm_cart);
+          boost::mpi::reduce(comm_cart, reinterpret_cast<double *>(s_buffer.data()), s_buffer.size(), reinterpret_cast<double *>(r_buffer.data()), std::plus<double>{}, node);
         else
-          MPI_Reduce(reinterpret_cast<double *>(s_buffer.data()), nullptr,
-                     s_buffer.size() / sizeof(double), MPI_DOUBLE, MPI_SUM, node,
-                     comm_cart);
-      } break;
+          boost::mpi::reduce(comm_cart, reinterpret_cast<double *>(s_buffer.data()), s_buffer.size(), std::plus<double>{}, node);
+        break;
       }
 
       // recv op; write back data directly, if no PSTSTORE delay is requested.
