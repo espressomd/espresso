@@ -207,7 +207,7 @@ void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc, int data_par
         if (data_parts & GHOSTTRANS_PROPRTS) {
           ar << pt.p;
           if (ghosts_have_bonds) {
-            ar << pt.bl.n;
+            ar << static_cast<int>(pt.bl.n);
             bar << Utils::make_const_span<int const>(pt.bl.data(), pt.bl.size());
           }
         }
