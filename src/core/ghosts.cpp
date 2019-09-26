@@ -30,13 +30,13 @@
 #include "particle_data.hpp"
 
 #include <algorithm>
+#include <boost/serialization/vector.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
 #include <type_traits>
 #include <vector>
-#include <boost/serialization/vector.hpp>
 
 #include <utils/Span.hpp>
 
@@ -51,6 +51,7 @@ struct CommBuf {
   size_t size() { return buf.size(); }
   void resize(size_t new_size) { buf.resize(new_size); }
   std::vector<int> &bonds() { return bondbuf; }
+
 private:
   std::vector<char> buf;
   std::vector<int> bondbuf;
@@ -107,8 +108,7 @@ private:
 public:
   BondArchiver(CommBuf &cb)
       : cb(cb), bond_retrieve(cb.bondbuf.begin()),
-        initial_begin(cb.bondbuf.begin()), initial_size(cb.bondbuf.size()) {
-  }
+        initial_begin(cb.bondbuf.begin()), initial_size(cb.bondbuf.size()) {}
 
   ~BondArchiver() {
     if (bond_retrieve != initial_begin + initial_size) {
@@ -141,13 +141,13 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   comm->data_parts = data_parts;
   comm->num = num;
   comm->comm.resize(num);
-  for (auto &gc: comm->comm)
+  for (auto &gc : comm->comm)
     gc.shift.fill(0.0);
 }
 
 void free_comm(GhostCommunicator *comm) {
   // Invalidate the elements in all "part_lists" of all GhostCommunications.
-  for (auto &gc: comm->comm)
+  for (auto &gc : comm->comm)
     gc.part_lists.clear();
 }
 
@@ -177,14 +177,15 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
       n_buffer_new += sizeof(ParticleParametersSwimming);
 #endif
     int count = 0;
-    for (auto const &pl: gc->part_lists)
+    for (auto const &pl : gc->part_lists)
       count += pl->n;
     n_buffer_new *= count;
   }
   return n_buffer_new;
 }
 
-void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc, int data_parts) {
+void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc,
+                         int data_parts) {
   /* reallocate send buffer */
   s_buffer.resize(calc_transmit_size(gc, data_parts));
   s_buffer.bonds().clear();
@@ -193,17 +194,18 @@ void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc, int data_par
   auto bar = BondArchiver{s_buffer};
 
   /* put in data */
-  for (auto cur_list: gc->part_lists) {
+  for (auto cur_list : gc->part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       int np = cur_list->n;
       ar << np;
     } else {
-      for (Particle const &pt: cur_list->particles()) {
+      for (Particle const &pt : cur_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           ar << pt.p;
           if (ghosts_have_bonds) {
             ar << static_cast<int>(pt.bl.n);
-            bar << Utils::make_const_span<int const>(pt.bl.data(), pt.bl.size());
+            bar << Utils::make_const_span<int const>(pt.bl.data(),
+                                                     pt.bl.size());
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
@@ -256,23 +258,25 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   }
 }
 
-void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc, int data_parts) {
+void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc,
+                         int data_parts) {
   /* reallocate recv buffer */
   r_buffer.resize(calc_transmit_size(gc, data_parts));
 }
 
-void put_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc, int data_parts) {
+void put_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc,
+                     int data_parts) {
   /* put back data */
   auto ar = Archiver{r_buffer};
   auto bar = BondArchiver{r_buffer};
 
-  for (auto cur_list: gc->part_lists) {
+  for (auto cur_list : gc->part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       int np;
       ar >> np;
       prepare_ghost_cell(cur_list, np);
     } else {
-      for (Particle &pt: cur_list->particles()) {
+      for (Particle &pt : cur_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           ar >> pt.p;
           if (ghosts_have_bonds) {
@@ -449,18 +453,25 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         break;
       case GHOST_BCST:
         if (node == this_node) {
-          boost::mpi::broadcast(comm_cart, s_buffer.data(), s_buffer.size(), node);
+          boost::mpi::broadcast(comm_cart, s_buffer.data(), s_buffer.size(),
+                                node);
           boost::mpi::broadcast(comm_cart, s_buffer.bonds(), node);
         } else {
-          boost::mpi::broadcast(comm_cart, r_buffer.data(), r_buffer.size(), node);
+          boost::mpi::broadcast(comm_cart, r_buffer.data(), r_buffer.size(),
+                                node);
           boost::mpi::broadcast(comm_cart, r_buffer.bonds(), node);
         }
         break;
       case GHOST_RDCE:
         if (node == this_node)
-          boost::mpi::reduce(comm_cart, reinterpret_cast<double *>(s_buffer.data()), s_buffer.size(), reinterpret_cast<double *>(r_buffer.data()), std::plus<double>{}, node);
+          boost::mpi::reduce(
+              comm_cart, reinterpret_cast<double *>(s_buffer.data()),
+              s_buffer.size(), reinterpret_cast<double *>(r_buffer.data()),
+              std::plus<double>{}, node);
         else
-          boost::mpi::reduce(comm_cart, reinterpret_cast<double *>(s_buffer.data()), s_buffer.size(), std::plus<double>{}, node);
+          boost::mpi::reduce(comm_cart,
+                             reinterpret_cast<double *>(s_buffer.data()),
+                             s_buffer.size(), std::plus<double>{}, node);
         break;
       }
 
