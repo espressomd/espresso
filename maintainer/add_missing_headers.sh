@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright (C) 2018-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -20,28 +21,23 @@
 
 # Get files without headers
 all_files=`maintainer/files_with_header.sh`
-files_to_check=`grep -iL copyright $all_files`
-py_files=`echo $files_to_check|tr " " "\n" |grep -P '\.(pyx?|pxd|sh)$'`
-cpp_files=`echo $files_to_check|tr " " "\n" |grep -P '\.([c|h]pp|cuh?|dox)$'`
+files_to_check=`grep -iL copyright ${all_files}`
+py_files=`echo ${files_to_check} | tr " " "\n" | grep -P '\.(pyx?|pxd|sh)$'`
+cpp_files=`echo ${files_to_check} | tr " " "\n" | grep -P '\.([c|h]pp|cuh?|dox)$'`
 
 tmp=`mktemp`
 # process python/cython/bash files
-for f in `echo $py_files`
-do
-(sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'; cat $f) >$tmp
-cp $tmp $f
+for f in `echo ${py_files}`; do
+  (sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'; cat ${f}) > ${tmp}
+  cp ${tmp} ${f}
 done
 # process c++/cuda/doxygen files
-for f in `echo $cpp_files`
-do
-(
-echo '/*'
-sed -e 's/^/ * /' maintainer/header_template.txt | sed 's/ $//'
-echo '*/' 
-cat $f) >$tmp
-cp $tmp $f
+for f in `echo ${cpp_files}`; do
+  (echo '/*'
+   sed -e 's/^/ * /' maintainer/header_template.txt | sed 's/ $//'
+   echo ' */'
+   cat ${f}) > ${tmp}
+  cp ${tmp} ${f}
 done
-
-
-
+rm ${tmp}
 
