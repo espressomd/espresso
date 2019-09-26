@@ -181,9 +181,6 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
       count += pl->n;
     n_buffer_new *= count;
   }
-  // also sending length of bond buffer
-  if (data_parts & GHOSTTRANS_PROPRTS)
-    n_buffer_new += sizeof(int);
   return n_buffer_new;
 }
 
@@ -233,9 +230,6 @@ void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc, int data_par
 #endif
       }
     }
-  }
-  if (data_parts & GHOSTTRANS_PROPRTS) {
-    ar << static_cast<int>(s_buffer.bonds().size());
   }
 }
 
@@ -314,12 +308,6 @@ void put_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc, int data_parts) 
 #endif
       }
     }
-  }
-
-  if (data_parts & GHOSTTRANS_PROPRTS) {
-    // skip the final information on bonds to be sent in a second round
-    int dummy;
-    ar >> dummy;
   }
 
   r_buffer.bonds().clear();
