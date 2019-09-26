@@ -365,12 +365,12 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
   }
 }
 
-static int is_send_op(int comm_type, int node) {
+static bool is_send_op(int comm_type, int node) {
   return ((comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
           (comm_type == GHOST_BCST && node == this_node));
 }
 
-static int is_recv_op(int comm_type, int node) {
+static bool is_recv_op(int comm_type, int node) {
   return ((comm_type == GHOST_RECV) ||
           (comm_type == GHOST_BCST && node != this_node) ||
           (comm_type == GHOST_RDCE && node == this_node));
