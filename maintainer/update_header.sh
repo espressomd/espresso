@@ -25,6 +25,8 @@
 # 1.1.2. Insert new line "Copyright (C) <current_year> The ESPResSo
 #        project" before the copyright disclaimer
 #
+# To review the diff:
+# $> git diff --word-diff-regex=. -U0 | grep -Po 'Copyright.+' | sort | uniq
 files=`sh maintainer/files_with_header.sh`
 num_files=`echo $files | wc -w`
 current_year=`date +%Y`
@@ -45,10 +47,9 @@ done
 noyear_files=`egrep -l "Copyright.*The ESPResSo project" $files`
 echo "  Adding current year to project copyright disclaimer..."
 echo "    \"$current_year\""
-tmpfile=`mktemp`
 for file in $noyear_files; do
     echo "    $file"
-    sed -ie 's/Copyright (C) \(20[0-9][0-9]\).*The ESPR/Copyright (C) \1-2018 The ESPR/' $file
+    sed -i -r -e "s/Copyright \(C\) ([0-9,]*)(-20[0-9][0-9])? .*The ESPR/Copyright (C) \1-$current_year The ESPR/" $file
 done
 
 noproject_files=`egrep -L "Copyright.*The ESPResSo project" $files`
@@ -58,6 +59,7 @@ echo "  $num_files files."
 echo "  Adding project copyright disclaimer..."
 disclaimer="Copyright (C) $current_year The ESPResSo project"
 echo "    \"$disclaimer\""
+tmpfile=`mktemp`
 for file in $noproject_files; do
     echo "    $file"
     perl -pe "if (!\$done) { s/^(.*)Copyright/\1$disclaimer\n\1Copyright/ and \$done=1; }" $file > $tmpfile
