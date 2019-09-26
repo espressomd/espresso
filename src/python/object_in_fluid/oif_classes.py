@@ -56,6 +56,7 @@ class PartPoint:
     """
 
     # part is physical ESPResSo particle corresponding to that particular point
+
     def __init__(self, part, id, part_id):
         if not (isinstance(part, espressomd.particle_data.ParticleHandle)
                 and isinstance(id, int) and isinstance(part_id, int)):
