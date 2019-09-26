@@ -25,6 +25,7 @@
 import numpy as np
 import os
 import sys
+import argparse
 import time
 
 import espressomd
@@ -32,39 +33,36 @@ from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.accumulators import Correlator
 
-required_features = ["ENGINE", "ROTATION"]
-assert_features(required_features)
+espressomd.assert_features(
+    ["ENGINE", "ROTATION", "MASS", "ROTATIONAL_INERTIA"])
 
 # create an output folder
 
 outdir = "./RESULTS_ENHANCED_DIFFUSION/"
-try:
-    os.makedirs(outdir)
-except BaseException:
-    print("INFO: Directory \"{}\" exists".format(outdir))
+os.makedirs(outdir, exist_ok=True)
+
 
 ##########################################################################
 
 # Read in the active velocity from the command prompt
 
-if len(sys.argv) != 2:
-    print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
-    exit()
-
-vel = float(sys.argv[1])
+parser = argparse.ArgumentParser()
+parser.add_argument('vel', type=float, help='Velocity of active particle.')
+args = parser.parse_args()
+vel = args.vel
 
 # Set the basic simulation parameters
 
-sampsteps = 5000
-samplength = 1000
-tstep = 0.01
+SAMP_STEPS = 5000
+SAMP_LENGTH = 1000
+T_STEP = 0.01
 
 ## Exercise 1 ##
 # Why can we get away with such a small box?
 # Could it be even smaller?
 system = espressomd.System(box_l=[10.0, 10.0, 10.0])
 system.cell_system.skin = 0.3
-system.time_step = tstep
+system.time_step = T_STEP
 
 ##########################################################################
 #
@@ -89,11 +87,11 @@ for run in range(1):
 
     # Initialize the mean squared displacement (MSD) correlator
 
-    tmax = tstep * sampsteps
+    tmax = T_STEP * SAMP_STEPS
 
     pos_id = ParticlePositions(ids=[0])
     msd = Correlator(obs1=pos_id,
-                     corr_operation="square_distance_componentwise",
+                     corr_operation="scalar_product",
                      delta_N=1,
                      tau_max=tmax,
                      tau_lin=16)
@@ -114,8 +112,8 @@ for run in range(1):
 
     # Integrate 5,000,000 steps. This can be done in one go as well.
 
-    for i in range(sampsteps):
-        system.integrator.run(samplength)
+    for i in range(SAMP_STEPS):
+        system.integrator.run(SAMP_LENGTH)
 
     # Finalize the accumulators and write to disk
 
