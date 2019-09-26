@@ -158,10 +158,8 @@ struct GhostCommunication {
   /** Node to communicate with (to use with all MPI operations). */
   int node;
 
-  /** Number of particle lists to communicate. */
-  int n_part_lists;
   /** Pointer array to particle lists to communicate. */
-  Cell **part_lists;
+  std::vector<Cell *> part_lists;
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this is an integer multiple of the box

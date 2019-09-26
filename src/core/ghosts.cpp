@@ -65,29 +65,22 @@ void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
   comm->data_parts = data_parts;
   comm->num = num;
   comm->comm.resize(num);
-  for (int i = 0; i < num; i++) {
-    comm->comm[i].shift[0] = comm->comm[i].shift[1] = comm->comm[i].shift[2] =
-        0.0;
-    comm->comm[i].n_part_lists = 0;
-    comm->comm[i].part_lists = nullptr;
-  }
+  for (auto &gc: comm->comm)
+    gc.shift.fill(0.0);
 }
 
 void free_comm(GhostCommunicator *comm) {
-  for (int n = 0; n < comm->num; n++)
-    free(comm->comm[n].part_lists);
+  // Invalidate the elements in all "part_lists" of all GhostCommunications.
+  for (auto &gc: comm->comm)
+    gc.part_lists.clear();
 }
 
 int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
-    n_buffer_new = sizeof(int) * gc->n_part_lists;
+    n_buffer_new = sizeof(int) * gc->part_lists.size();
   else {
-    int count = 0;
-    for (int p = 0; p < gc->n_part_lists; p++)
-      count += gc->part_lists[p]->n;
-
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
@@ -107,6 +100,9 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
     if (data_parts & GHOSTTRANS_SWIMMING)
       n_buffer_new += sizeof(ParticleParametersSwimming);
 #endif
+    int count = 0;
+    for (auto const &pl: gc->part_lists)
+      count += pl->n;
     n_buffer_new *= count;
   }
   // also sending length of bond buffer
@@ -127,7 +123,7 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 
   /* put in data */
   char *insert = s_buffer;
-  for (int pl = 0; pl < gc->n_part_lists; pl++) {
+  for (int pl = 0; pl < gc->part_lists.size(); pl++) {
     int np = gc->part_lists[pl]->n;
     if (data_parts & GHOSTTRANS_PARTNUM) {
       *(int *)insert = np;
@@ -230,7 +226,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 
   std::vector<int>::const_iterator bond_retrieve = r_bondbuffer.begin();
 
-  for (int pl = 0; pl < gc->n_part_lists; pl++) {
+  for (int pl = 0; pl < gc->part_lists.size(); pl++) {
     auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(cur_list, *(int *)retrieve);
@@ -302,7 +298,7 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 void add_forces_from_recv_buffer(GhostCommunication *gc) {
   /* put back data */
   char *retrieve = r_buffer;
-  for (int pl = 0; pl < gc->n_part_lists; pl++) {
+  for (int pl = 0; pl < gc->part_lists.size(); pl++) {
     int np = gc->part_lists[pl]->n;
     Particle *part = gc->part_lists[pl]->part;
     for (int p = 0; p < np; p++) {
@@ -324,7 +320,7 @@ void add_forces_from_recv_buffer(GhostCommunication *gc) {
 
 void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
   /* transfer data */
-  int const offset = gc->n_part_lists / 2;
+  int const offset = gc->part_lists.size() / 2;
   for (int pl = 0; pl < offset; pl++) {
     Cell *src_list = gc->part_lists[pl];
     Cell *dst_list = gc->part_lists[pl + offset];
