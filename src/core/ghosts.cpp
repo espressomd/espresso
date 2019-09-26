@@ -193,14 +193,12 @@ void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc, int data_par
   auto bar = BondArchiver{s_buffer};
 
   /* put in data */
-  for (int pl = 0; pl < gc->part_lists.size(); pl++) {
-    int np = gc->part_lists[pl]->n;
+  for (auto cur_list: gc->part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
+      int np = cur_list->n;
       ar << np;
     } else {
-      Particle *part = gc->part_lists[pl]->part;
-      for (int p = 0; p < np; p++) {
-        Particle const &pt = part[p];
+      for (Particle const &pt: cur_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           ar << pt.p;
           if (ghosts_have_bonds) {
@@ -268,17 +266,13 @@ void put_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc, int data_parts) 
   auto ar = Archiver{r_buffer};
   auto bar = BondArchiver{r_buffer};
 
-  for (int pl = 0; pl < gc->part_lists.size(); pl++) {
-    auto cur_list = gc->part_lists[pl];
+  for (auto cur_list: gc->part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       int np;
       ar >> np;
       prepare_ghost_cell(cur_list, np);
     } else {
-      int np = cur_list->n;
-      Particle *part = cur_list->part;
-      for (int p = 0; p < np; p++) {
-        Particle &pt = part[p];
+      for (Particle &pt: cur_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           ar >> pt.p;
           if (ghosts_have_bonds) {
