@@ -36,6 +36,7 @@
 #include <mpi.h>
 #include <type_traits>
 #include <vector>
+#include <boost/serialization/vector.hpp>
 
 #include <utils/Span.hpp>
 
@@ -453,60 +454,24 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         prepare_recv_buffer(r_buffer, gcn, data_parts);
 
       /* transfer data */
+      // Use two send/recvs in order to avoid, having to serialize CommBuf
+      // (which consists of already serialized data).
       switch (comm_type) {
-      case GHOST_RECV: {
-        MPI_Recv(r_buffer.data(), r_buffer.size(), MPI_BYTE, node, REQ_GHOST_SEND,
-                 comm_cart, MPI_STATUS_IGNORE);
-        if (data_parts & GHOSTTRANS_PROPRTS) {
-          int n_bonds = *(int *)(r_buffer.data() + r_buffer.size() - sizeof(int));
-          if (n_bonds) {
-            r_buffer.bonds().resize(n_bonds);
-            MPI_Recv(r_buffer.bonds().data(), n_bonds, MPI_INT, node, REQ_GHOST_SEND,
-                     comm_cart, MPI_STATUS_IGNORE);
-          }
-        }
+      case GHOST_RECV:
+        comm_cart.recv(node, REQ_GHOST_SEND, r_buffer.data(), r_buffer.size());
+        comm_cart.recv(node, REQ_GHOST_SEND, r_buffer.bonds());
         break;
-      }
-      case GHOST_SEND: {
-        MPI_Send(s_buffer.data(), s_buffer.size(), MPI_BYTE, node, REQ_GHOST_SEND,
-                 comm_cart);
-        int n_bonds = s_buffer.bonds().size();
-        if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
-          fprintf(stderr,
-                  "%d: INTERNAL ERROR: not sending properties, but bond buffer "
-                  "not empty\n",
-                  this_node);
-          errexit();
-        }
-        if (n_bonds) {
-          MPI_Send(s_buffer.bonds().data(), n_bonds, MPI_INT, node, REQ_GHOST_SEND,
-                   comm_cart);
-        }
+      case GHOST_SEND:
+        comm_cart.send(node, REQ_GHOST_SEND, s_buffer.data(), s_buffer.size());
+        comm_cart.send(node, REQ_GHOST_SEND, s_buffer.bonds());
         break;
-      }
       case GHOST_BCST:
         if (node == this_node) {
-          MPI_Bcast(s_buffer.data(), s_buffer.size(), MPI_BYTE, node, comm_cart);
-          int n_bonds = s_buffer.bonds().size();
-          if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
-            fprintf(stderr,
-                    "%d: INTERNAL ERROR: not sending properties, but bond "
-                    "buffer not empty\n",
-                    this_node);
-            errexit();
-          }
-          if (n_bonds) {
-            MPI_Bcast(s_buffer.bonds().data(), n_bonds, MPI_INT, node, comm_cart);
-          }
+          boost::mpi::broadcast(comm_cart, s_buffer.data(), s_buffer.size(), node);
+          boost::mpi::broadcast(comm_cart, s_buffer.bonds(), node);
         } else {
-          MPI_Bcast(r_buffer.data(), r_buffer.size(), MPI_BYTE, node, comm_cart);
-          if (data_parts & GHOSTTRANS_PROPRTS) {
-            int n_bonds = *(int *)(r_buffer.data() + r_buffer.size() - sizeof(int));
-            if (n_bonds) {
-              r_buffer.bonds().resize(n_bonds);
-              MPI_Bcast(r_buffer.bonds().data(), n_bonds, MPI_INT, node, comm_cart);
-            }
-          }
+          boost::mpi::broadcast(comm_cart, r_buffer.data(), r_buffer.size(), node);
+          boost::mpi::broadcast(comm_cart, r_buffer.bonds(), node);
         }
         break;
       case GHOST_RDCE: {
