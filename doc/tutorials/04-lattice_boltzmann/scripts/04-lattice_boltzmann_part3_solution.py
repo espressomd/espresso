@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 
 # Setup constant
 TIME_STEP = 0.01
-LOOPS = 25000
+LOOPS = 5000
 STEPS = 100
 
 # System setup
@@ -28,7 +28,7 @@ system.non_bonded_inter[0, 0].lennard_jones.set_params(
 fene = espressomd.interactions.FeneBond(k=7, d_r_max=2)
 system.bonded_inter.add(fene)
 
-N_MONOMERS = [10, 30, 90]
+N_MONOMERS = [10, 20, 40]
 
 rh_results = np.zeros(len(N_MONOMERS))
 diffusion_constant_results = np.zeros(len(N_MONOMERS))
@@ -79,7 +79,7 @@ for index, N in enumerate(N_MONOMERS):
 
     logging.info("Warming up the system with LB fluid.")
     system.integrator.run(1000)
-    logging.info("LB fluid warming finished.")
+    logging.info("Warming up the system with LB fluid finished.")
 
     # configure correlator
     com_pos = espressomd.observables.ComPosition(ids=range(N))
