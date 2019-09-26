@@ -33,7 +33,8 @@ tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(
 sys.path.insert(0, "@TUTORIALS_DIR@/07-electrokinetics/scripts/")
 tutorial_analytical = iw.importlib.import_module("eof_analytical")
 tutorial_plot, skipIfMissingFeatures_plot = iw.configure_and_import(
-    "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py")
+    "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py",
+    move_to_script_dir=False)
 
 
 @skipIfMissingFeatures_simulation
