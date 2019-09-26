@@ -352,7 +352,7 @@ form
 
 pos_id = ParticlePositions(ids=[0])
 msd = Correlator(obs1=pos_id,
-                   corr_operation="scalar_product",
+                   corr_operation="square_distance_componentwise",
                    delta_N=1,
                    tau_max=tmax,
                    tau_lin=16)
@@ -374,8 +374,8 @@ only particle in the simulation (with ID 0). Then an MSD correlation is created
 on the next line. Since the MSD is an auto-correlation function, we only
 require one entry for the observables, see the User Guide for additional
 information~\cite{UG}. The command \codees{corr_operation} allows one to choose
-the type of correlation, in this case \codees{"scalar_product"},
-which gives the MSD. The time step \codees{dt}
+the type of correlation, in this case \codees{"square_distance_componentwise"},
+which gives the MSD for each component (x, y, and z). The time step \codees{dt}
 is set next, followed by the value of the maximum time (\codees{tmax}) over
 which the correlation is to be computed. This maximum can be set to the total
 integrated time. However, it is recommended --- as in the script --- not to do
@@ -417,7 +417,8 @@ averaging over $\tau$. The first task is to get the script up and running. Once
 you have done this, you will find that you can output a single measurement of
 the MSD and (A)VACF for a passive system (\codees{vel=0.0}) or an active on
 (e.g., \codees{vel=5.0}). You can plot these using \codees{matplotlib.pyplot}, 
-for instance.
+for instance. For the MSD there are three data entries, as the MSD is calculated in each
+direction (x, y, and z).
 
 \begin{figure}[!htb]
 \begin{center}

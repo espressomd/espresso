@@ -86,7 +86,7 @@ for run in range(5):
 
     pos_id = ParticlePositions(ids=[0])
     msd = Correlator(obs1=pos_id,
-                     corr_operation="scalar_product",
+                     corr_operation="square_distance_componentwise",
                      delta_N=1,
                      tau_max=tmax,
                      tau_lin=16)
