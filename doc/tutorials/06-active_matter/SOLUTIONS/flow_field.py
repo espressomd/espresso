@@ -36,8 +36,8 @@ assert_features(["ENGINE", "CUDA", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
 
 parser = argparse.ArgumentParser()
 parser.add_argument('mode',
-                      choices=['pusher', 'puller'],
-                      help='Type of the swimmer')
+                    choices=['pusher', 'puller'],
+                    help='Type of the swimmer')
 parser.add_argument('z_position', type=float,
                     help="Z-position of the swimmer to start off from.")
 args = parser.parse_args()
@@ -87,7 +87,7 @@ system.part.add(
 ##########################################################################
 
 # Setup the fluid (quiescent)
-lbf= lb.LBFluidGPU(agrid=1.0, dens=1.0,
+lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0,
                     visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=20.0, seed=42)
@@ -113,7 +113,7 @@ with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
 
         # Output 50 simulations
         if k % (PROD_STEPS / 50) == 0:
-            num= k // (PROD_STEPS // 50)
+            num = k // (PROD_STEPS // 50)
             lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir, num))
             system.part.writevtk(
                 "{}/position_{}.vtk".format(outdir, num), types=[0])
