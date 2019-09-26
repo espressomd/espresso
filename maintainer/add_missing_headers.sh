@@ -28,7 +28,15 @@ cpp_files=`echo ${files_to_check} | tr " " "\n" | grep -P '\.([c|h]pp|cuh?|dox)$
 tmp=`mktemp`
 # process python/cython/bash files
 for f in `echo ${py_files}`; do
-  (sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'; cat ${f}) > ${tmp}
+  head -n1 ${f} | grep -q '^#!'
+  if [ $? = 0 ]; then
+    # preseve shebang on first line
+    (head -n1 ${f}
+     sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'
+     tail -n+2 ${f}) > ${tmp}
+  else
+    (sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'; cat ${f}) > ${tmp}
+  fi
   cp ${tmp} ${f}
 done
 # process c++/cuda/doxygen files
