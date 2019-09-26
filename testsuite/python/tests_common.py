@@ -84,7 +84,7 @@ def lj_force_vector(v_d, d, lj_params):
     return 4. * lj_params["epsilon"] * v_d * (-12.0 * d**-14 + 6.0 * d**-8)
 
 
-def verify_lj_forces(system, tolerance, ids_to_skip=[]):
+def verify_lj_forces(system, tolerance, ids_to_skip=()):
     """Goes over all pairs of particles in system and compares the forces on them
        to what would be expected based on the systems LJ parameters.
        Particle ids listed in ids_to_skip are not checked
