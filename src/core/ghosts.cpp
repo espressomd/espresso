@@ -381,7 +381,6 @@ void ghost_communicator(GhostCommunicator *gc) {
 }
 
 void ghost_communicator(GhostCommunicator *gc, int data_parts) {
-  MPI_Status status;
   /* if ghosts should have uptodate velocities, they have to be updated like
    * positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
@@ -438,13 +437,13 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       switch (comm_type) {
       case GHOST_RECV: {
         MPI_Recv(r_buffer, n_r_buffer, MPI_BYTE, node, REQ_GHOST_SEND,
-                 comm_cart, &status);
+                 comm_cart, MPI_STATUS_IGNORE);
         if (data_parts & GHOSTTRANS_PROPRTS) {
           int n_bonds = *(int *)(r_buffer + n_r_buffer - sizeof(int));
           if (n_bonds) {
             r_bondbuffer.resize(n_bonds);
             MPI_Recv(&r_bondbuffer[0], n_bonds, MPI_INT, node, REQ_GHOST_SEND,
-                     comm_cart, &status);
+                     comm_cart, MPI_STATUS_IGNORE);
           }
         }
         break;
