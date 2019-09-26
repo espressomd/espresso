@@ -34,13 +34,99 @@
 #include <cstdlib>
 #include <cstring>
 #include <mpi.h>
+#include <type_traits>
 #include <vector>
+
+#include <utils/Span.hpp>
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
 
-static std::vector<char> s_buffer, r_buffer;
-std::vector<int> s_bondbuffer, r_bondbuffer;
+struct CommBuf {
+  friend class Archiver;
+  friend class BondArchiver;
+
+  char *data() { return buf.data(); }
+  size_t size() { return buf.size(); }
+  void resize(size_t new_size) { buf.resize(new_size); }
+  std::vector<int> &bonds() { return bondbuf; }
+private:
+  std::vector<char> buf;
+  std::vector<int> bondbuf;
+};
+
+/**
+ * Adapter to CommBuf that allows putting in and getting out data.
+ */
+struct Archiver {
+private:
+  CommBuf &cb;
+  // For insertion
+  char *insert;
+
+public:
+  Archiver(CommBuf &cb) : cb(cb), insert(cb.data()) {}
+  ~Archiver() {
+    // Sanity check
+    if (insert - cb.data() != cb.size()) {
+      fprintf(stderr,
+              "%d: INTERNAL ERROR: ghost comm buffer size %zu "
+              "differs from what archiver put in (%td)\n",
+              this_node, cb.size(), insert - cb.data());
+      errexit();
+    }
+  }
+
+  template <typename T, typename = typename std::enable_if<
+                            std::is_trivially_copyable<T>::value>::type>
+  inline void operator<<(const T &value) {
+    std::memcpy(insert, &value, sizeof(T));
+    insert += sizeof(T);
+  }
+
+  template <typename T, typename = typename std::enable_if<
+                            std::is_trivially_copyable<T>::value>::type>
+  inline void operator>>(T &value) {
+    std::memcpy(&value, insert, sizeof(T));
+    insert += sizeof(T);
+  }
+};
+
+/**
+ * Adapter to CommBuf that allows putting in and getting back bond data.
+ */
+struct BondArchiver {
+private:
+  CommBuf &cb;
+  decltype(CommBuf::bondbuf)::const_iterator bond_retrieve;
+  // Need to save these because send buffer will invalidate cb.bondbuffer.
+  const decltype(CommBuf::bondbuf)::const_iterator initial_begin;
+  const size_t initial_size;
+
+public:
+  BondArchiver(CommBuf &cb)
+      : cb(cb), bond_retrieve(cb.bondbuf.begin()),
+        initial_begin(cb.bondbuf.begin()), initial_size(cb.bondbuf.size()) {
+  }
+
+  ~BondArchiver() {
+    if (bond_retrieve != initial_begin + initial_size) {
+      fprintf(stderr,
+              "%d: recv bond buffer was not used up, %td elements remain\n",
+              this_node, cb.bondbuf.end() - bond_retrieve);
+      errexit();
+    }
+  }
+
+  template <typename T> inline void operator<<(const Utils::Span<T> data) {
+    cb.bondbuf.insert(cb.bondbuf.end(), data.cbegin(), data.cend());
+  }
+
+  template <typename T> inline void operator>>(Utils::Span<T> data) {
+    std::copy_n(bond_retrieve, data.size(), data.begin());
+    bond_retrieve += data.size();
+  }
+};
 
 /** whether the ghosts should have velocity information, e.g. for DPD or RATTLE.
  *  You need this whenever you need the relative velocity of two particles.
@@ -100,73 +186,55 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
   return n_buffer_new;
 }
 
-void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
+void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc, int data_parts) {
   /* reallocate send buffer */
   s_buffer.resize(calc_transmit_size(gc, data_parts));
-  s_bondbuffer.clear();
+  s_buffer.bonds().clear();
+
+  auto ar = Archiver{s_buffer};
+  auto bar = BondArchiver{s_buffer};
 
   /* put in data */
-  char *insert = s_buffer.data();
   for (int pl = 0; pl < gc->part_lists.size(); pl++) {
     int np = gc->part_lists[pl]->n;
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      *(int *)insert = np;
-      insert += sizeof(int);
+      ar << np;
     } else {
       Particle *part = gc->part_lists[pl]->part;
       for (int p = 0; p < np; p++) {
         Particle const &pt = part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memcpy(insert, &pt.p, sizeof(ParticleProperties));
-          insert += sizeof(ParticleProperties);
+          ar << pt.p;
           if (ghosts_have_bonds) {
-            *(int *)insert = pt.bl.n;
-            insert += sizeof(int);
-            if (pt.bl.n) {
-              s_bondbuffer.insert(s_bondbuffer.end(), pt.bl.e,
-                                  pt.bl.e + pt.bl.n);
-            }
+            ar << pt.bl.n;
+            bar << Utils::make_const_span<int const>(pt.bl.data(), pt.bl.size());
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
           auto pp = pt.r;
           pp.p += gc->shift;
-          memcpy(insert, &pp, sizeof(pp));
-          insert += sizeof(ParticlePosition);
+          ar << pp;
         } else if (data_parts & GHOSTTRANS_POSITION) {
-          memcpy(insert, &pt.r, sizeof(ParticlePosition));
-          insert += sizeof(ParticlePosition);
+          ar << pt.r;
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memcpy(insert, &pt.m, sizeof(ParticleMomentum));
-          insert += sizeof(ParticleMomentum);
+          ar << pt.m;
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memcpy(insert, &pt.f, sizeof(ParticleForce));
-          insert += sizeof(ParticleForce);
+          ar << pt.f;
         }
 
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(insert, &pt.swim, sizeof(ParticleParametersSwimming));
-          insert += sizeof(ParticleParametersSwimming);
+          ar << pt.swim;
         }
 #endif
       }
     }
   }
   if (data_parts & GHOSTTRANS_PROPRTS) {
-    *(int *)insert = int(s_bondbuffer.size());
-    insert += sizeof(int);
-  }
-
-  if (insert - s_buffer.data() != s_buffer.size()) {
-    fprintf(stderr,
-            "%d: INTERNAL ERROR: send buffer size %zu "
-            "differs from what I put in (%td)\n",
-            this_node, s_buffer.size(), insert - s_buffer.data());
-    errexit();
+    ar << static_cast<int>(s_buffer.bonds().size());
   }
 }
 
@@ -195,59 +263,52 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   }
 }
 
-void prepare_recv_buffer(GhostCommunication *gc, int data_parts) {
+void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc, int data_parts) {
   /* reallocate recv buffer */
   r_buffer.resize(calc_transmit_size(gc, data_parts));
 }
 
-void put_recv_buffer(GhostCommunication *gc, int data_parts) {
+void put_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc, int data_parts) {
   /* put back data */
-  char *retrieve = r_buffer.data();
-
-  std::vector<int>::const_iterator bond_retrieve = r_bondbuffer.begin();
+  auto ar = Archiver{r_buffer};
+  auto bar = BondArchiver{r_buffer};
 
   for (int pl = 0; pl < gc->part_lists.size(); pl++) {
     auto cur_list = gc->part_lists[pl];
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(cur_list, *(int *)retrieve);
-      retrieve += sizeof(int);
+      int np;
+      ar >> np;
+      prepare_ghost_cell(cur_list, np);
     } else {
       int np = cur_list->n;
       Particle *part = cur_list->part;
       for (int p = 0; p < np; p++) {
         Particle &pt = part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
-          memcpy(&pt.p, retrieve, sizeof(ParticleProperties));
-          retrieve += sizeof(ParticleProperties);
+          ar >> pt.p;
           if (ghosts_have_bonds) {
             int n_bonds;
-            memcpy(&n_bonds, retrieve, sizeof(int));
-            retrieve += sizeof(int);
+            ar >> n_bonds;
             pt.bl.resize(n_bonds);
-            std::copy_n(bond_retrieve, n_bonds, pt.bl.begin());
-            bond_retrieve += n_bonds;
+            bar >> Utils::make_span<int>(pt.bl.data(), pt.bl.size());
           }
           if (local_particles[pt.p.identity] == nullptr) {
             local_particles[pt.p.identity] = &pt;
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
-          memcpy(&pt.r, retrieve, sizeof(ParticlePosition));
-          retrieve += sizeof(ParticlePosition);
+          ar >> pt.r;
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
-          memcpy(&pt.m, retrieve, sizeof(ParticleMomentum));
-          retrieve += sizeof(ParticleMomentum);
+          ar >> pt.m;
         }
         if (data_parts & GHOSTTRANS_FORCE) {
-          memcpy(&pt.f, retrieve, sizeof(ParticleForce));
-          retrieve += sizeof(ParticleForce);
+          ar >> pt.f;
         }
 
 #ifdef ENGINE
         if (data_parts & GHOSTTRANS_SWIMMING) {
-          memcpy(&pt.swim, retrieve, sizeof(ParticleParametersSwimming));
-          retrieve += sizeof(ParticleParametersSwimming);
+          ar >> pt.swim;
         }
 #endif
       }
@@ -256,45 +317,25 @@ void put_recv_buffer(GhostCommunication *gc, int data_parts) {
 
   if (data_parts & GHOSTTRANS_PROPRTS) {
     // skip the final information on bonds to be sent in a second round
-    retrieve += sizeof(int);
+    int dummy;
+    ar >> dummy;
   }
 
-  if (retrieve - r_buffer.data() != r_buffer.size()) {
-    fprintf(stderr,
-            "%d: recv buffer size %zu differs "
-            "from what I read out (%td)\n",
-            this_node, r_buffer.size(), retrieve - r_buffer.data());
-    errexit();
-  }
-  if (bond_retrieve != r_bondbuffer.end()) {
-    fprintf(stderr,
-            "%d: recv bond buffer was not used up, %td elements remain\n",
-            this_node, r_bondbuffer.end() - bond_retrieve);
-    errexit();
-  }
-  r_bondbuffer.clear();
+  r_buffer.bonds().clear();
 }
 
-void add_forces_from_recv_buffer(GhostCommunication *gc) {
+void add_forces_from_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc) {
   /* put back data */
-  char *retrieve = r_buffer.data();
+  auto ar = Archiver{r_buffer};
   for (int pl = 0; pl < gc->part_lists.size(); pl++) {
     int np = gc->part_lists[pl]->n;
     Particle *part = gc->part_lists[pl]->part;
     for (int p = 0; p < np; p++) {
       Particle &pt = part[p];
       ParticleForce pf;
-      memcpy(&pf, retrieve, sizeof(pf));
+      ar >> pf;
       pt.f += pf;
-      retrieve += sizeof(ParticleForce);
     }
-  }
-  if (retrieve - r_buffer.data() != r_buffer.size()) {
-    fprintf(stderr,
-            "%d: recv buffer size %zu differs "
-            "from what I put in %td\n",
-            this_node, r_buffer.size(), retrieve - r_buffer.data());
-    errexit();
   }
 }
 
@@ -357,6 +398,8 @@ void ghost_communicator(GhostCommunicator *gc) {
 }
 
 void ghost_communicator(GhostCommunicator *gc, int data_parts) {
+  static CommBuf s_buffer, r_buffer;
+
   /* if ghosts should have uptodate velocities, they have to be updated like
    * positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
@@ -376,7 +419,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       if (is_send_op(comm_type, node)) {
         /* ok, we send this step, prepare send buffer if not yet done */
         if (!prefetch)
-          prepare_send_buffer(gcn, data_parts);
+          prepare_send_buffer(s_buffer, gcn, data_parts);
         else {
 #ifdef ADDITIONAL_CHECKS
           if (n_s_buffer != calc_transmit_size(gcn, data_parts)) {
@@ -398,7 +441,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
             int const prefetch2 = gcn2->type & GHOST_PREFETCH;
             int const node2 = gcn2->node;
             if (is_send_op(comm_type2, node2) && prefetch2) {
-              prepare_send_buffer(gcn2, data_parts);
+              prepare_send_buffer(s_buffer, gcn2, data_parts);
               break;
             }
           }
@@ -407,7 +450,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
 
       /* recv buffer for recv and multinode operations to this node */
       if (is_recv_op(comm_type, node))
-        prepare_recv_buffer(gcn, data_parts);
+        prepare_recv_buffer(r_buffer, gcn, data_parts);
 
       /* transfer data */
       switch (comm_type) {
@@ -417,8 +460,8 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           int n_bonds = *(int *)(r_buffer.data() + r_buffer.size() - sizeof(int));
           if (n_bonds) {
-            r_bondbuffer.resize(n_bonds);
-            MPI_Recv(&r_bondbuffer[0], n_bonds, MPI_INT, node, REQ_GHOST_SEND,
+            r_buffer.bonds().resize(n_bonds);
+            MPI_Recv(r_buffer.bonds().data(), n_bonds, MPI_INT, node, REQ_GHOST_SEND,
                      comm_cart, MPI_STATUS_IGNORE);
           }
         }
@@ -427,7 +470,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       case GHOST_SEND: {
         MPI_Send(s_buffer.data(), s_buffer.size(), MPI_BYTE, node, REQ_GHOST_SEND,
                  comm_cart);
-        int n_bonds = s_bondbuffer.size();
+        int n_bonds = s_buffer.bonds().size();
         if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
           fprintf(stderr,
                   "%d: INTERNAL ERROR: not sending properties, but bond buffer "
@@ -436,7 +479,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
           errexit();
         }
         if (n_bonds) {
-          MPI_Send(&s_bondbuffer[0], n_bonds, MPI_INT, node, REQ_GHOST_SEND,
+          MPI_Send(s_buffer.bonds().data(), n_bonds, MPI_INT, node, REQ_GHOST_SEND,
                    comm_cart);
         }
         break;
@@ -444,7 +487,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       case GHOST_BCST:
         if (node == this_node) {
           MPI_Bcast(s_buffer.data(), s_buffer.size(), MPI_BYTE, node, comm_cart);
-          int n_bonds = s_bondbuffer.size();
+          int n_bonds = s_buffer.bonds().size();
           if (!(data_parts & GHOSTTRANS_PROPRTS) && n_bonds > 0) {
             fprintf(stderr,
                     "%d: INTERNAL ERROR: not sending properties, but bond "
@@ -453,15 +496,15 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
             errexit();
           }
           if (n_bonds) {
-            MPI_Bcast(&s_bondbuffer[0], n_bonds, MPI_INT, node, comm_cart);
+            MPI_Bcast(s_buffer.bonds().data(), n_bonds, MPI_INT, node, comm_cart);
           }
         } else {
           MPI_Bcast(r_buffer.data(), r_buffer.size(), MPI_BYTE, node, comm_cart);
           if (data_parts & GHOSTTRANS_PROPRTS) {
             int n_bonds = *(int *)(r_buffer.data() + r_buffer.size() - sizeof(int));
             if (n_bonds) {
-              r_bondbuffer.resize(n_bonds);
-              MPI_Bcast(&r_bondbuffer[0], n_bonds, MPI_INT, node, comm_cart);
+              r_buffer.bonds().resize(n_bonds);
+              MPI_Bcast(r_buffer.bonds().data(), n_bonds, MPI_INT, node, comm_cart);
             }
           }
         }
@@ -485,9 +528,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
           /* forces have to be added, the rest overwritten. Exception is RDCE,
            * where the addition is integrated into the communication. */
           if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-            add_forces_from_recv_buffer(gcn);
+            add_forces_from_recv_buffer(r_buffer, gcn);
           else
-            put_recv_buffer(gcn, data_parts);
+            put_recv_buffer(r_buffer, gcn, data_parts);
         }
       } else {
         /* send op; write back delayed data from last recv, when this was a
@@ -511,9 +554,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
 #endif
               /* as above */
               if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-                add_forces_from_recv_buffer(gcn2);
+                add_forces_from_recv_buffer(r_buffer, gcn2);
               else
-                put_recv_buffer(gcn2, data_parts);
+                put_recv_buffer(r_buffer, gcn2, data_parts);
               break;
             }
           }
