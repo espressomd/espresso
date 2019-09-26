@@ -81,7 +81,7 @@ FORCE = 0.1
 
 # Setup the particle
 system.part.add(
-    pos=[X0, Y0, Z0, type=0, mass=SPHERE_MASS, rinertia=[I_XYZ, I_XYZ, I_XYZ],
+    pos=[X0, Y0, Z0], type=0, mass=SPHERE_MASS, rinertia=[I_XYZ, I_XYZ, I_XYZ],
     swimming={'f_swim': FORCE, 'mode': mode, 'dipole_length': SPHERE_SIZE + 0.5})
 
 ##########################################################################
