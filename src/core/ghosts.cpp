@@ -407,17 +407,17 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         /* ok, we send this step, prepare send buffer if not yet done */
         if (!prefetch)
           prepare_send_buffer(s_buffer, gcn, data_parts);
-        else {
 #ifdef ADDITIONAL_CHECKS
-          if (s_buffer.size() != calc_transmit_size(gcn, data_parts)) {
-            fprintf(stderr,
-                    "%d: ghost_comm transmission size and current size of "
-                    "cells to transmit do not match\n",
-                    this_node);
-            errexit();
-          }
-#endif
+        // Check prefetched send buffers (must also hold for buffers allocated
+        // in the previous lines.)
+        if (s_buffer.size() != calc_transmit_size(gcn, data_parts)) {
+          fprintf(stderr,
+                  "%d: ghost_comm transmission size and current size of "
+                  "cells to transmit do not match\n",
+                  this_node);
+          errexit();
         }
+#endif
       } else {
         /* we do not send this time, let's look for a prefetch */
         if (prefetch) {
