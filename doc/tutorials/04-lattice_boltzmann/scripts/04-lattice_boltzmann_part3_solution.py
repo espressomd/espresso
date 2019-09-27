@@ -63,7 +63,7 @@ for index, N in enumerate(N_MONOMERS):
     system.time_step = TIME_STEP
     system.thermostat.set_langevin(kT=1.0, gamma=10, seed=42)
     system.integrator.run(50000)
-    logging.info("Equilibration finized.")
+    logging.info("Equilibration finished.")
 
     system.thermostat.turn_off()
 
