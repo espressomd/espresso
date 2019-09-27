@@ -428,14 +428,12 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         errexit();
       }
 #endif
-    } else {
+    } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
-      if (prefetch) {
-        auto pref_gcn = std::find_if(std::next(gc->comm.begin(), n + 1),
-                                     gc->comm.end(), is_prefetchable);
-        if (pref_gcn != gc->comm.end())
-          prepare_send_buffer(s_buffer, &(*pref_gcn), data_parts);
-      }
+      auto pref_gcn = std::find_if(std::next(gc->comm.begin(), n + 1),
+                                   gc->comm.end(), is_prefetchable);
+      if (pref_gcn != gc->comm.end())
+        prepare_send_buffer(s_buffer, &(*pref_gcn), data_parts);
     }
 
     /* recv buffer for recv and multinode operations to this node */
