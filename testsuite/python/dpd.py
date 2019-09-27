@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,6 +28,7 @@ from tests_common import single_component_maxwell
 
 @utx.skipIfMissingFeatures("DPD")
 class DPDThermostat(ut.TestCase):
+
     """Tests the velocity distribution created by the dpd thermostat against
        the single component Maxwell distribution."""
 
