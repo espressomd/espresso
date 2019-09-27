@@ -28,7 +28,7 @@ configpath, configfilename = sys.argv[1:3]
 
 # find featuredefs.py
 sys.path.append(configpath)
-import featuredefs  # isort: skip
+import featuredefs  # isort:skip
 
 if len(sys.argv) != 3:
     print(

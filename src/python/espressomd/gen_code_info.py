@@ -25,7 +25,8 @@ import sys
 # find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
 sys.path.append(os.path.join(moduledir, '..', '..', 'config'))
-import featuredefs  # isort: fix
+import featuredefs  # isort:skip
+
 
 if len(sys.argv) != 3:
     print("Usage: {} DEFFILE PYXFILE".format(sys.argv[0]), file=sys.stderr)
