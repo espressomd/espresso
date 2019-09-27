@@ -18,15 +18,26 @@
 This sample simulates planar Poiseuille flow in Espresso. A spherical RBC-like
 particle is added and advected with and without volume conservation.
 """
+# make directory
+from os import mkdir
+
+import numpy as np
+
 import espressomd
+# case with bending
+from addBending import AddBending
+from addSoft import AddSoft
+# case with bending and volCons
+from addVolCons import AddVolCons
+from espressomd import System, lb, lbboundaries, shapes
+from espressomd.virtual_sites import VirtualSitesInertialessTracers
+# Perform integration
+from writeVTK import WriteVTK
 
 required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS",
                      "EXPERIMENTAL_FEATURES"]
 espressomd.assert_features(required_features)
 
-from espressomd import System, lb, shapes, lbboundaries
-import numpy as np
-from espressomd.virtual_sites import VirtualSitesInertialessTracers
 
 # System setup
 boxZ = 20
@@ -37,7 +48,6 @@ system.virtual_sites = VirtualSitesInertialessTracers()
 print("Parallelization: " + str(system.cell_system.node_grid))
 
 force = 0.001
-from addSoft import AddSoft
 k1 = 0.1
 k2 = 1
 AddSoft(system, 10, 10, 10, k1, k2)
@@ -45,14 +55,10 @@ AddSoft(system, 10, 10, 10, k1, k2)
 # case without bending and volCons
 #outputDir = "outputPure"
 
-# case with bending
-from addBending import AddBending
 kb = 1
 AddBending(system, kb)
 #outputDir = "outputBendPara"
 
-# case with bending and volCons
-from addVolCons import AddVolCons
 kV = 10
 AddVolCons(system, kV)
 outputDir = "outputVolParaCUDA"
@@ -73,12 +79,8 @@ for wall in walls:
     system.lbboundaries.add(wall)
 
 
-# make directory
-from os import mkdir
 mkdir(outputDir)
 
-# Perform integration
-from writeVTK import WriteVTK
 WriteVTK(system, str(outputDir + "/cell_" + str(0) + ".vtk"))
 
 stepSize = 1000

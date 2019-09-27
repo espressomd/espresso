@@ -19,14 +19,14 @@ Demonstrates the construction of a rigid object by means of the
 VIRTUAL_SITES_RELATIVE feature.
 """
 
+import numpy as np
+
 import espressomd
-required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
-espressomd.assert_features(required_features)
-from espressomd import thermostat
-from espressomd import integrate
+from espressomd import integrate, thermostat
 from espressomd.virtual_sites import VirtualSitesRelative
 
-import numpy as np
+required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
+espressomd.assert_features(required_features)
 
 
 box_l = 100

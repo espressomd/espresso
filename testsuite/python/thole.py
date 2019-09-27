@@ -14,12 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import unittest as ut
-import unittest_decorators as utx
-import espressomd
-import numpy as np
 import math
+import unittest as ut
+
+import numpy as np
+
+import espressomd
 import espressomd.interactions
+import unittest_decorators as utx
 
 COULOMB_PREFACTOR = 4.01
 

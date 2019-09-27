@@ -19,13 +19,13 @@ Visualization sample for bonds. Simulates a large chain of particles connected
 via harmonic bonds.
 """
 
-import espressomd
-from espressomd import thermostat
-from espressomd import integrate
-from espressomd.interactions import HarmonicBond
-from espressomd import visualization
-import numpy as np
 from threading import Thread
+
+import numpy as np
+
+import espressomd
+from espressomd import integrate, thermostat, visualization
+from espressomd.interactions import HarmonicBond
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)

@@ -21,14 +21,16 @@
 Testmodule for MPI-IO.
 """
 
+import os
+import random
+import unittest as ut
+from argparse import Namespace
+
+import numpy
+
 import espressomd
 import espressomd.io
 from espressomd.interactions import AngleHarmonic
-import numpy
-import unittest as ut
-import random
-import os
-from argparse import Namespace
 
 # Number of particles
 npart = 1023

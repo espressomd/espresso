@@ -17,14 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import unittest_decorators as utx
+
+import numpy as np
+from numpy import random
+
 import espressomd
+import unittest_decorators as utx
+from tests_common import verify_lj_forces
+
 if espressomd.has_features("VIRTUAL_SITES_RELATIVE"):
     from espressomd.virtual_sites import VirtualSitesRelative, VirtualSitesOff
-import numpy as np
-
-from tests_common import verify_lj_forces
-from numpy import random
 
 
 @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")

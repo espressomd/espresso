@@ -19,14 +19,14 @@
 """
 This sample sets up a diamond-structured polymer network.
 """
+import numpy as np
+
 import espressomd
-espressomd.assert_features(["WCA"])
-from espressomd import thermostat
-from espressomd import interactions
-from espressomd import diamond
+from espressomd import diamond, interactions, thermostat
 from espressomd.io.writer import vtf  # pylint: disable=import-error
 
-import numpy as np
+espressomd.assert_features(["WCA"])
+
 
 # System parameters
 #############################################################

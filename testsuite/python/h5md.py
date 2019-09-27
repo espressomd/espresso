@@ -23,10 +23,12 @@ Testmodule for the H5MD interface.
 import os
 import sys
 import unittest as ut
-import unittest_decorators as utx
-import numpy as np
-import espressomd
+
 import h5py  # h5py has to be imported *after* espressomd (MPI)
+import numpy as np
+
+import espressomd
+import unittest_decorators as utx
 from espressomd.interactions import Virtual
 
 npart = 26

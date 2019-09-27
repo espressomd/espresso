@@ -19,9 +19,10 @@
 """
 This sample illustrates how particles of interest can be accessed via slicing.
 """
+import numpy as np
+
 import espressomd
 from espressomd import thermostat
-import numpy as np
 
 print("""
 =======================================================

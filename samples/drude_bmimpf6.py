@@ -19,25 +19,26 @@ Particle polarization with cold Drude oscillators on a coarse grained
 ionic liquid BMIM PF6.
 """
 
+import argparse
+import os
 import sys
 import time
-import os
-import numpy as np
-import argparse
 from threading import Thread
 from time import sleep
 
+import numpy as np
+
 import espressomd
+import espressomd.visualization_opengl
+from espressomd import drude_helpers
+from espressomd.electrostatics import P3M
+from espressomd.interactions import HarmonicBond, ThermalizedBond
+from espressomd.virtual_sites import VirtualSitesRelative
+
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "ROTATIONAL_INERTIA", "VIRTUAL_SITES_RELATIVE",
                      "THOLE", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
-
-from espressomd.electrostatics import P3M
-from espressomd.interactions import ThermalizedBond, HarmonicBond
-from espressomd import drude_helpers
-from espressomd.virtual_sites import VirtualSitesRelative
-import espressomd.visualization_opengl
 
 
 print("""This script demonstrates particle polarization with cold Drude

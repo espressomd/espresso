@@ -19,10 +19,11 @@ Visualization sample for charged particles. Simulates a pool of particles
 with various charges, LJ parameters and masses.
 """
 
-import espressomd
-from espressomd.visualization_opengl import openGLLive
-from espressomd import electrostatics
 import numpy as np
+
+import espressomd
+from espressomd import electrostatics
+from espressomd.visualization_opengl import openGLLive
 
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)

@@ -16,11 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from collections import OrderedDict
 import inspect
 import os
 import re
 import signal
+from collections import OrderedDict
+
 from espressomd.utils import is_valid_type
 
 try:

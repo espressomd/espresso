@@ -18,9 +18,10 @@
 Visualization of the system cells and MPI domains.
 """
 
+import numpy as np
+
 import espressomd
 from espressomd.visualization_opengl import openGLLive
-import numpy as np
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)

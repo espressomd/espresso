@@ -18,10 +18,12 @@
 Visualization sample for Poiseuille flow with Lattice Boltzmann.
 """
 
-from espressomd import System, lb, shapes, lbboundaries
-import numpy as np
 from threading import Thread
+
+import numpy as np
+
 import espressomd.visualization_opengl
+from espressomd import System, lb, lbboundaries, shapes
 
 required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)

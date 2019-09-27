@@ -16,8 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import importlib_wrapper
+
 import numpy as np
+
+import importlib_wrapper
 
 implementation = "gpu" if "gpu" in "@TEST_LABELS@".split(";") else "cpu"
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(

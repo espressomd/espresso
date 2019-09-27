@@ -22,14 +22,12 @@ in which ensemble you want to simulate via either providing --reaction_ensemble 
 Be aware that in the case of the reaction ensemble the dissociation constant gamma is not the thermodynamic reaction constant K, but rather K*1mol/l and therefore carries a unit!.
 In the case of the of the constant pH method gamma is the thermodynamic reaction constant!
 """
-import numpy as np
 import argparse
 
+import numpy as np
+
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
-from espressomd import reaction_ensemble
+from espressomd import analyze, code_info, integrate, reaction_ensemble
 
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()

@@ -19,13 +19,14 @@ Visualization sample for particle dumbbells in the constant-temperature,
 constant-pressure ensemble.
 """
 
-import numpy as np
 from threading import Thread
 
+import numpy as np
+
 import espressomd
+import espressomd.visualization_opengl
 from espressomd import thermostat
 from espressomd.interactions import HarmonicBond
-import espressomd.visualization_opengl
 
 required_features = ["NPT", "LENNARD_JONES"]
 espressomd.assert_features(required_features)

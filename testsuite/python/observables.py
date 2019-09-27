@@ -16,11 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-import unittest_decorators as utx
-import espressomd
+
 import numpy as np
-from numpy.random import random, randint
+from numpy.random import randint, random
+
+import espressomd
 import espressomd.observables
+import unittest_decorators as utx
 
 
 def calc_com_x(system, x):

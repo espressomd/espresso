@@ -19,12 +19,14 @@
 # This script generates gen_pxiconfig.cpp, which in turn generates myconfig.pxi.
 #
 import inspect
-import sys
 import os
+import sys
+
+import featuredefs
+
 # find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
 sys.path.append(os.path.join(moduledir, '..', '..', 'config'))
-import featuredefs
 
 if len(sys.argv) != 3:
     print("Usage: {} DEFFILE CPPFILE".format(sys.argv[0]), file=sys.stderr)

@@ -16,8 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import importlib_wrapper
+
 import numpy as np
+
+import importlib_wrapper
 from espressomd.observables import ParticleVelocities
 
 

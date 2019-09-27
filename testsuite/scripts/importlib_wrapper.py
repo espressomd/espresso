@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import re
+import importlib
 import os
+import re
 import sys
 import unittest
-import importlib
-import espressomd
 from unittest.mock import MagicMock
+
+import espressomd
 
 
 def _id(x):

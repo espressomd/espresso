@@ -14,8 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .particle_data import ParticleHandle, ParticleSlice
+from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
 @script_interface_register

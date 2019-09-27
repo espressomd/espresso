@@ -22,13 +22,13 @@ Visualization sample for a Lennard-Jones liquid with live plotting via
 matplotlib.
 """
 
+from threading import Thread
+
 import numpy as np
 from matplotlib import pyplot
-from threading import Thread
+
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
-from espressomd import visualization
+from espressomd import integrate, thermostat, visualization
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)

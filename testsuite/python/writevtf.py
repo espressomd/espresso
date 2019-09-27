@@ -21,12 +21,14 @@
 Testmodule for the VTF file writing.
 """
 import sys
+import tempfile
 import unittest as ut
+
 import numpy as np
+
 import espressomd
 from espressomd import interactions
 from espressomd.io.writer import vtf
-import tempfile
 
 npart = 50
 

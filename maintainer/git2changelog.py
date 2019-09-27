@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import re
 import os
+import re
 
 # Execute git log with the desired command line options.
 fin = os.popen(

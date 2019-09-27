@@ -14,12 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import unittest as ut
-import unittest_decorators as utx
-import numpy as np
 import itertools
+import unittest as ut
+
+import numpy as np
 
 import espressomd.lb
+import unittest_decorators as utx
 
 """
 Check linear momentum calculation for lattice-Boltzmann.

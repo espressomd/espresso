@@ -19,10 +19,18 @@
 """
 This example shows how to integrate MDAnalysis in ESPResSo
 """
+import MDAnalysis as mda
+import numpy as np
+#
+# ========================================================="
+# Example #3: Calculate a radial distribution function     "
+# ========================================================="
+#
+from MDAnalysis.analysis.rdf import InterRDF
+from MDAnalysis.coordinates.TRR import TRRWriter
+
 import espressomd
 from espressomd import MDA_ESP
-import numpy as np
-import MDAnalysis as mda
 
 # set up a minimal sample system
 
@@ -85,13 +93,6 @@ u.atoms.write("system.pdb")
 print("===> The initial configuration has been written on system.pdb ")
 
 
-#
-# ========================================================="
-# Example #3: Calculate a radial distribution function     "
-# ========================================================="
-#
-from MDAnalysis.analysis.rdf import InterRDF
-
 charged = u.select_atoms("prop charge  > 0")
 rdf = InterRDF(charged, charged, nbins=7, range=(0, 10))
 
@@ -105,7 +106,6 @@ rdf.run()
 # ========================================================="
 #
 
-from MDAnalysis.coordinates.TRR import TRRWriter
 
 W = TRRWriter("traj.trr", n_atoms=len(system.part))
 

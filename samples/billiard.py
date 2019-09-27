@@ -18,15 +18,17 @@
 ESPResSo 8Ball billiard game.
 """
 
-import numpy as np
 import math
 from threading import Thread
 
+import numpy as np
+
 import espressomd
-from espressomd import thermostat
 import espressomd.interactions
-from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 import espressomd.shapes
+from espressomd import thermostat
+from espressomd.visualization_opengl import (KeyboardButtonEvent,
+                                             KeyboardFireEvent, openGLLive)
 
 required_features = ["WCA", "MASS", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)

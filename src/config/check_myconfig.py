@@ -17,8 +17,8 @@
 import sys
 from subprocess import CalledProcessError
 
-from defines import Defines
 import featuredefs
+from defines import Defines
 
 
 def damerau_levenshtein_distance(s1, s2):

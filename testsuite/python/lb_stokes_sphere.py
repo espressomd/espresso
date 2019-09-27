@@ -21,16 +21,18 @@
 # i.e. the stokes force on the particles.
 
 
+import unittest as ut
+
+import numpy as np
+
 # We create a box of size box_width x box_width x box_length and
 # place an object in the center. We measure the drag force
 # in z direction. We create walls in the xz and yz plane at the box
 # boundaries, where the velocity is fixed to $v.
 #
 import espressomd
-from espressomd import lbboundaries, shapes
-import unittest as ut
 import unittest_decorators as utx
-import numpy as np
+from espressomd import lbboundaries, shapes
 
 # Define the LB Parameters
 TIME_STEP = 0.4

@@ -22,8 +22,8 @@ using the Observables/Correlators framework.
 import numpy as np
 
 import espressomd
-import espressomd.observables
 import espressomd.accumulators
+import espressomd.observables
 
 # System setup
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])

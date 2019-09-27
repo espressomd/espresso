@@ -28,12 +28,12 @@ which simulates a part of the reservoir at the prescribed salt concentration.
 Be aware that the reservoir excess chemical potential depends on all interactions
 in the reservoir system.
 """
-import numpy as np
 import argparse
 
+import numpy as np
+
 import espressomd
-from espressomd import reaction_ensemble
-from espressomd import electrostatics
+from espressomd import electrostatics, reaction_ensemble
 
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)

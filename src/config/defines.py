@@ -14,8 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import tempfile
 import subprocess
+import tempfile
 from sys import argv
 
 

@@ -19,23 +19,21 @@ This sample loads model red blood cells and simulates its motion
 in a complex geometry.
 """
 
+import os
+import sys
+import warnings
+
+import numpy as np
+
 import espressomd
+import object_in_fluid as oif
+from espressomd import lb, lbboundaries, shapes
+from object_in_fluid.oif_utils import output_vtk_cylinder, output_vtk_rhomboid
 
 required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES", "SOFT_SPHERE",
                      "MEMBRANE_COLLISION", "OIF_GLOBAL_FORCES", "OIF_LOCAL_FORCES", "MASS"]
 espressomd.assert_features(required_features)
 
-from espressomd import lb
-from espressomd import lbboundaries
-from espressomd import shapes
-
-import numpy as np
-import os
-import sys
-import warnings
-
-import object_in_fluid as oif
-from object_in_fluid.oif_utils import output_vtk_rhomboid, output_vtk_cylinder
 
 assert len(sys.argv) == 2, "please provide a number for the simulation"
 simNo = sys.argv[1]

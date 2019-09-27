@@ -14,8 +14,10 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
+import inspect
 import os
+import sys
+
 import sphinx
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -262,5 +264,4 @@ def setup(app):
 def isfunction(obj):
     return hasattr(type(obj), "__code__")
 
-import inspect
 inspect.isfunction = isfunction

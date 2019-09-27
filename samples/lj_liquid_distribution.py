@@ -23,13 +23,17 @@ repulsive WCA interaction. Type 1 particles neither interact with themselves
 nor with Type 0 particles. The distribution of minimum distances between
 particles of Type 0 and Type 1 is recorded.
 """
+# Just to see what else we may get from the c code
+import pprint
+
 import numpy as np
+
 import espressomd
+from espressomd import thermostat
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
 
 print("""
 =======================================================
@@ -172,8 +176,6 @@ while (i < warm_n_times and act_min_dist < min_dist):
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
 
-# Just to see what else we may get from the c code
-import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
 pprint.pprint(system.__getstate__())

@@ -19,7 +19,10 @@ This sample checks if particles or a polymer added to the system obey(s)
 constraints.
 """
 
+import numpy as np
+
 import espressomd
+from espressomd import interactions, polymer, shapes, thermostat
 
 # Check if necessary features have been compiled
 #############################################################
@@ -27,12 +30,6 @@ import espressomd
 required_features = ["WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
-from espressomd import interactions
-from espressomd import shapes
-from espressomd import polymer
-
-import numpy as np
 
 # System parameters
 #############################################################

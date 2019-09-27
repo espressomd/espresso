@@ -17,8 +17,7 @@
 
 import unittest as ut
 
-from ek_eof_one_species_base import ek_eof_one_species
-from ek_eof_one_species_base import params_base
+from ek_eof_one_species_base import ek_eof_one_species, params_base
 
 params_y = dict([
     ('box_x', params_base['width'] + 2 * params_base['padding']),

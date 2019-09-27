@@ -17,14 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import unittest_decorators as utx
+
 import numpy as np
 
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
-from espressomd import scafacos
 import tests_common
+import unittest_decorators as utx
+from espressomd import scafacos
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])

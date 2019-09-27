@@ -16,19 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import sys
+
 import numpy as np
 
 import espressomd
-espressomd.assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
+from espressomd import (analyze, code_info, electrostatics, integrate,
+                        interactions, polymer, reaction_ensemble)
 from espressomd.interactions import *
-from espressomd import reaction_ensemble
-from espressomd import polymer
-from espressomd import interactions
-from espressomd import electrostatics
-import sys
+
+espressomd.assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 
 # System parameters
 #

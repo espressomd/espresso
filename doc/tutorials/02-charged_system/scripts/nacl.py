@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import numpy
+
 import espressomd
 from espressomd import assert_features, electrostatics
-import numpy
 
 assert_features(["ELECTROSTATICS", "LENNARD_JONES"])
 

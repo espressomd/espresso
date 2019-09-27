@@ -15,15 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-import unittest_decorators as utx
+
 import numpy as np
 
+import espressomd.accumulators
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.observables
 import espressomd.shapes
-import espressomd.accumulators
-
+import unittest_decorators as utx
 
 """
 Check the Lattice Boltzmann 'pressure' driven flow in a cylindrical constraint

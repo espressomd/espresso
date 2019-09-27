@@ -19,21 +19,24 @@
 """
 This sample simulates electrophoresis using P3M solver.
 """
+import os
+import sys
+
+# Plot Results
+############################################################
+import matplotlib.pyplot as pp
+import numpy as np
+
 import espressomd
+from espressomd import electrostatics, interactions, thermostat
 
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
-from espressomd import interactions
-from espressomd import electrostatics
-import sys
-import numpy as np
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
-import os
 
 print(espressomd.features())
 
@@ -260,9 +263,6 @@ if tuple(map(int, np.__version__.split("."))) >= (1, 10):
     print(c_length.shape, cos_theta.shape)
     print("PERSISTENCE LENGTH", fit[0])
 
-# Plot Results
-############################################################
-import matplotlib.pyplot as pp
 
 direction = ["x", "y", "z"]
 fig1 = pp.figure()

@@ -19,12 +19,13 @@ This sample sets up a DPD fluid and calculates pressure as a function of
 varying density. The fluid is thermalized using a DPD thermostat.
 """
 
+import numpy as np
+
 import espressomd
 
 required_features = ["DPD"]
 espressomd.assert_features(required_features)
 
-import numpy as np
 
 # Set up the box and time step
 system = espressomd.System(box_l=3 * [10])

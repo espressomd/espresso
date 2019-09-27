@@ -18,11 +18,13 @@
 #
 # Check whether all features used in the code are defined
 #
-import sys
 import os
-sys.path.append(os.path.join(sys.path[0], '..', 'config'))
+import sys
 
 import featuredefs
+
+sys.path.append(os.path.join(sys.path[0], '..', 'config'))
+
 
 if len(sys.argv) != 2:
     print("Usage: %s FILE" % sys.argv[0])

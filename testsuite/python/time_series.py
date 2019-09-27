@@ -22,10 +22,12 @@ Testmodule for the observable recorder.
 
 """
 import unittest as ut
+
 import numpy as np
+
 import espressomd
-from espressomd.observables import ParticlePositions
 from espressomd.accumulators import TimeSeries
+from espressomd.observables import ParticlePositions
 
 N_PART = 100
 

@@ -18,15 +18,17 @@
 #
 # This script generates the files featureconfig.h and featureconfig.c.
 #
-import time
-import string
 import inspect
-import sys
 import os
+import string
+import sys
+import time
+
+import featuredefs
+
 # find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
 sys.path.append(os.path.join(moduledir, '..'))
-import featuredefs
 
 if len(sys.argv) != 4:
     print("Usage: {} DEFFILE HPPFILE CPPFILE".format(

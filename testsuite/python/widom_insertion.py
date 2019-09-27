@@ -20,9 +20,11 @@
 """Testmodule for the Widom Insertion.
 """
 import unittest as ut
-import unittest_decorators as utx
+
 import numpy as np
+
 import espressomd
+import unittest_decorators as utx
 from espressomd import reaction_ensemble
 from tests_common import lj_potential
 

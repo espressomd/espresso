@@ -14,14 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import unittest as ut
-import unittest_decorators as utx
-import numpy as np
 import copy
+import unittest as ut
+
+import numpy as np
 
 import espressomd
 import espressomd.lb
 import espressomd.observables
+import unittest_decorators as utx
 
 """
 Tests for the LB fluid profile observables.

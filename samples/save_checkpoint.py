@@ -18,16 +18,16 @@
 This sample demonstrates how to checkpoint a simulation.
 """
 
+import signal
+
+import numpy as np
+
 import espressomd
+from espressomd import checkpointing, electrostatics
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import electrostatics
-from espressomd import checkpointing
-
-import numpy as np
-import signal
 
 checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint")
 

@@ -18,13 +18,14 @@
 #
 """Testmodule for the Wang-Landau Reaction Ensemble.
 """
-import numpy as np
 import unittest as ut
 
-import espressomd
-from espressomd.interactions import HarmonicBond
-from espressomd import reaction_ensemble
+import numpy as np
 import numpy.testing as npt
+
+import espressomd
+from espressomd import reaction_ensemble
+from espressomd.interactions import HarmonicBond
 
 
 class ReactionEnsembleTest(ut.TestCase):

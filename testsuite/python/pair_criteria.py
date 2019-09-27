@@ -17,10 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import unittest_decorators as utx
+
 import espressomd
-from espressomd.interactions import FeneBond
+import unittest_decorators as utx
 from espressomd import pair_criteria
+from espressomd.interactions import FeneBond
 
 
 class PairCriteria(ut.TestCase):

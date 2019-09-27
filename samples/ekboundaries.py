@@ -18,14 +18,15 @@
 This sample sets up an electrokinetics (LB) fluid confined between charged walls.
 """
 
+import os
+import sys
+
 import espressomd
+from espressomd import System, ekboundaries, electrokinetics, shapes
 
 required_features = ["ELECTROKINETICS", "EK_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-from espressomd import System, shapes, electrokinetics, ekboundaries
-import sys
-import os
 
 system = System(box_l=[10, 10, 10])
 system.set_random_state_PRNG()

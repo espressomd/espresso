@@ -19,19 +19,19 @@ This sample simulates the flow of a Lattice-Boltzmann fluid past a cylinder,
 obtains the velocity profile in polar coordinates and compares it with the
 analytical solution.
 """
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 import espressomd
+import espressomd.accumulators
+import espressomd.lb
+import espressomd.lbboundaries
+import espressomd.observables
+import espressomd.shapes
 
 required_features = ["CUDA", "LB_BOUNDARIES_GPU"]
 espressomd.assert_features(required_features)
 
-import espressomd.lb
-import espressomd.observables
-import espressomd.shapes
-import espressomd.lbboundaries
-import espressomd.accumulators
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
 system.time_step = 0.01

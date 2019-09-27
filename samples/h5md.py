@@ -19,10 +19,10 @@ Sample for the usage of H5MD trajectory writing in ESPResSo.
 """
 
 import numpy as np
+
 import espressomd  # pylint: disable=import-error
+from espressomd import interactions, polymer
 from espressomd.io.writer import h5md  # pylint: disable=import-error
-from espressomd import polymer
-from espressomd import interactions
 
 system = espressomd.System(box_l=[100.0, 100.0, 100.0])
 system.set_random_state_PRNG()

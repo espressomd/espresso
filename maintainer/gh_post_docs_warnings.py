@@ -18,9 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import re
 import os
+import re
 import sys
+
 import requests
 
 if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):

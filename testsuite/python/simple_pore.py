@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-import unittest_decorators as utx
+
 import espressomd
-from espressomd.shapes import SimplePore, Cylinder
+import unittest_decorators as utx
+from espressomd.shapes import Cylinder, SimplePore
 
 # Integration test for simple pore
 # The rationale is to hit the pore everywhere with particles

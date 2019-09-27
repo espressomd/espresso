@@ -16,15 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+# Just to see what else we may get from the c code
+import pprint
+
 import numpy as np
+
 import espressomd
+from espressomd import electrostatic_extensions, electrostatics, thermostat
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
-from espressomd import electrostatics
-from espressomd import electrostatic_extensions
 
 print("""
 =======================================================
@@ -170,8 +172,6 @@ while (i < warm_n_times or act_min_dist < min_dist):
     wca_cap += 20
     system.force_cap = wca_cap
 
-# Just to see what else we may get from the c code
-import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
 pprint.pprint(system.__getstate__())

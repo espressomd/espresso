@@ -18,8 +18,10 @@
 #
 
 import unittest as ut
-import espressomd
+
 import numpy as np
+
+import espressomd
 
 
 class RdfTest(ut.TestCase):

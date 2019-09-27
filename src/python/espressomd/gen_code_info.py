@@ -19,12 +19,13 @@
 # This script generates code_info.pyx
 #
 import inspect
-import sys
 import os
+import sys
+
 # find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
 sys.path.append(os.path.join(moduledir, '..', '..', 'config'))
-import featuredefs
+import featuredefs  # isort: fix
 
 if len(sys.argv) != 3:
     print("Usage: {} DEFFILE PYXFILE".format(sys.argv[0]), file=sys.stderr)

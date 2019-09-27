@@ -16,14 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import numpy as np
 import unittest as ut
-import unittest_decorators as utx
+
+import numpy as np
 
 import espressomd
 import espressomd.cuda_init
 import espressomd.electrostatics
 import tests_common
+import unittest_decorators as utx
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])

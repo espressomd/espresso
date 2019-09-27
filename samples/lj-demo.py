@@ -16,19 +16,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import matplotlib
-matplotlib.use('WXAgg')
-import espressomd
-espressomd.assert_features(["LENNARD_JONES"])
-from espressomd import thermostat
-from espressomd import visualization
-import numpy as np
-from matplotlib import pyplot
-from threading import Thread
-from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
-from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
 import sys
 import time
+from threading import Thread
+
+import matplotlib
+import numpy as np
+from matplotlib import pyplot
+
+import espressomd
+from espressomd import thermostat, visualization
+from traits.api import Any, Button, Enum, Float, HasTraits, List, Range
+from traitsui.api import (CheckListEditor, EnumEditor, Group, Item,
+                          RangeEditor, View)
+
+matplotlib.use('WXAgg')
+espressomd.assert_features(["LENNARD_JONES"])
 
 use_opengl = "opengl" in sys.argv
 use_mayavi = "mayavi" in sys.argv

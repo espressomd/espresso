@@ -18,10 +18,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import espressomd
-from espressomd import electrostatics, electrostatic_extensions, assert_features
-from espressomd.shapes import Wall
 import numpy
+
+import espressomd
+from espressomd import (assert_features, electrostatic_extensions,
+                        electrostatics)
+from espressomd.shapes import Wall
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 

@@ -15,12 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-import unittest_decorators as utx
+from itertools import product
+
 import espressomd
 import espressomd.lb
-from espressomd.shapes import Wall
 import espressomd.lbboundaries
-from itertools import product
+import unittest_decorators as utx
+from espressomd.shapes import Wall
 
 
 class LBBoundariesBase:

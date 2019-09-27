@@ -19,13 +19,13 @@
 """
 This sample sets up a polymer.
 """
-import espressomd
-espressomd.assert_features(["WCA"])
-from espressomd import thermostat
-from espressomd import interactions
-from espressomd import polymer
-from espressomd.io.writer import vtf  # pylint: disable=import-error
 import numpy as np
+
+import espressomd
+from espressomd import interactions, polymer, thermostat
+from espressomd.io.writer import vtf  # pylint: disable=import-error
+
+espressomd.assert_features(["WCA"])
 
 # System parameters
 #############################################################

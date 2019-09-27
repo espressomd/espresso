@@ -17,11 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import unittest_decorators as utx
-import espressomd
+
 import numpy as np
+
+import espressomd
+import unittest_decorators as utx
 from espressomd.accumulators import Correlator
-from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
+from espressomd.observables import (ParticleBodyAngularVelocities,
+                                    ParticleVelocities)
 from tests_common import single_component_maxwell
 
 

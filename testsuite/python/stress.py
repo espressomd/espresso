@@ -16,16 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import unittest_decorators as utx
-
-import espressomd
-from espressomd.interactions import HarmonicBond
-from espressomd.interactions import FeneBond
-from espressomd.observables import StressTensor
-
-from tests_common import fene_force2
 
 import numpy as np
+
+import espressomd
+import unittest_decorators as utx
+from espressomd.interactions import FeneBond, HarmonicBond
+from espressomd.observables import StressTensor
+from tests_common import fene_force2
 
 # allowed deviation from analytical results
 tol = 1.0e-13

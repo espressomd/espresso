@@ -20,7 +20,9 @@
 """Testmodule for the Reaction Ensemble.
 """
 import unittest as ut
+
 import numpy as np
+
 import espressomd
 from espressomd import reaction_ensemble
 

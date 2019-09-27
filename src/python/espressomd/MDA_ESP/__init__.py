@@ -51,24 +51,21 @@ try:
 except ImportError:
     from io import StringIO
 
-import numpy as np
-import MDAnalysis
-
 from distutils.version import LooseVersion
 
-from MDAnalysis.lib import util
-from MDAnalysis.coordinates.core import triclinic_box
-from MDAnalysis.lib.util import NamedStream
-from MDAnalysis.topology.base import TopologyReaderBase
+import MDAnalysis
+import numpy as np
 from MDAnalysis.coordinates import base
 from MDAnalysis.coordinates.base import SingleFrameReaderBase
+from MDAnalysis.coordinates.core import triclinic_box
 from MDAnalysis.core.topology import Topology
-
-from MDAnalysis.core.topologyattrs import (
-    Atomnames, Atomids, Atomtypes, Masses,
-    Resids, Resnums, Segids, Resnames, AltLocs,
-    ICodes, Occupancies, Tempfactors, Charges
-)
+from MDAnalysis.core.topologyattrs import (AltLocs, Atomids, Atomnames,
+                                           Atomtypes, Charges, ICodes, Masses,
+                                           Occupancies, Resids, Resnames,
+                                           Resnums, Segids, Tempfactors)
+from MDAnalysis.lib import util
+from MDAnalysis.lib.util import NamedStream
+from MDAnalysis.topology.base import TopologyReaderBase
 
 
 class Stream:

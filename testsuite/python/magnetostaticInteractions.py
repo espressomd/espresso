@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+
 import espressomd
 from espressomd import magnetostatics
 from tests_common import generate_test_for_class

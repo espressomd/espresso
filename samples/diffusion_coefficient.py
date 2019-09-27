@@ -21,10 +21,11 @@ function of its velocity to the expected value. It uses the
 Observables/Correlators framework.
 """
 
+import numpy as np
+
 import espressomd
 from espressomd.accumulators import Correlator
 from espressomd.observables import ParticlePositions, ParticleVelocities
-import numpy as np
 
 gamma = 2.4
 kT = 1.37

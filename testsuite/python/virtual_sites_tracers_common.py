@@ -16,14 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import espressomd
-from espressomd import lb, shapes, lbboundaries
 import numpy as np
+
+import espressomd
+from espressomd import lb, lbboundaries, shapes
+from espressomd.utils import handle_errors
+
 try:
     from espressomd.virtual_sites import VirtualSitesInertialessTracers, VirtualSitesOff
 except ImportError:
     pass
-from espressomd.utils import handle_errors
 
 
 class VirtualSitesTracersCommon:

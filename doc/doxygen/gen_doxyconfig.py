@@ -20,10 +20,15 @@
 # This script generates the file doxy-features
 #
 import inspect
-import sys
 import os
-
+import sys
 import time
+
+configpath, configfilename = sys.argv[1:3]
+
+# find featuredefs.py
+sys.path.append(configpath)
+import featuredefs  # isort: skip
 
 if len(sys.argv) != 3:
     print(
@@ -31,11 +36,6 @@ if len(sys.argv) != 3:
         file=sys.stderr)
     exit(2)
 
-configpath, configfilename = sys.argv[1:3]
-
-# find featuredefs.py
-sys.path.append(configpath)
-import featuredefs
 
 deffilename = os.path.join(configpath, 'features.def')
 

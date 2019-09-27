@@ -18,15 +18,16 @@
 ESPResSo as a game engine.
 """
 
-from threading import Thread
-import numpy as np
 import time
+from threading import Thread
+
+import numpy as np
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 import espressomd.shapes
-from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
+from espressomd import integrate, thermostat
+from espressomd.visualization_opengl import (KeyboardButtonEvent,
+                                             KeyboardFireEvent, openGLLive)
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
                      "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]

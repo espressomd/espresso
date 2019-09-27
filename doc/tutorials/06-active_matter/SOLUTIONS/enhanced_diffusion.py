@@ -22,15 +22,17 @@
 #
 ##########################################################################
 
-import numpy as np
 import os
 import sys
 import time
 
+import numpy as np
+
 import espressomd
 from espressomd import assert_features
-from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.accumulators import Correlator
+from espressomd.observables import (ParticleAngularVelocities,
+                                    ParticlePositions, ParticleVelocities)
 
 required_features = ["ENGINE", "ROTATION"]
 assert_features(required_features)

@@ -23,6 +23,7 @@ Testmodule for the actor base class.
 """
 
 import unittest as ut
+
 from espressomd import actors
 
 

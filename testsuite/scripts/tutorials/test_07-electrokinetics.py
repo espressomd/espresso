@@ -16,8 +16,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import importlib_wrapper as iw
+
 import numpy as np
+
+import importlib_wrapper as iw
 
 # these tutorials need to be executed sequentially
 tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(

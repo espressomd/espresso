@@ -18,8 +18,9 @@
 #
 # Integration test for exclusions
 import unittest as ut
-import unittest_decorators as utx
+
 import espressomd
+import unittest_decorators as utx
 
 
 @utx.skipIfMissingFeatures(['EXCLUSIONS'])

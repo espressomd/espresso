@@ -22,12 +22,12 @@
 #
 ##########################################################################
 
-import numpy as np
 import os
+
+import numpy as np
 
 import espressomd
 from espressomd import assert_features, lb
-
 
 ## Exercise 1 ##
 # Create a routine to read in the hydrodynamic type

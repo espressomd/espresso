@@ -15,16 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest as ut
-import unittest_decorators as utx
-import sys
 import math
+import sys
+import unittest as ut
+
 import numpy as np
 
+import ek_common
 import espressomd
 import espressomd.electrokinetics
 import espressomd.shapes
-import ek_common
+import unittest_decorators as utx
 from tests_common import DynamicDict
 
 ##########################################################################

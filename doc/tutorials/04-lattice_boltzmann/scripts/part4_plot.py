@@ -18,6 +18,7 @@
 #
 
 import matplotlib.pyplot as plt
+
 plt.ion()
 
 # get the simulated data points

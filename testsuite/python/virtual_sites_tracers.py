@@ -17,9 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+
 import unittest_decorators as utx
 from espressomd import lb
-
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 

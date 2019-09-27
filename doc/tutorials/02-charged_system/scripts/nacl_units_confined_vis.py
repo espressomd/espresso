@@ -18,13 +18,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import espressomd
-from espressomd import assert_features, electrostatics, electrostatic_extensions
-from espressomd.shapes import Wall
-from espressomd import visualization_opengl
-import numpy
 from threading import Thread
 from time import sleep
+
+import numpy
+
+import espressomd
+from espressomd import (assert_features, electrostatic_extensions,
+                        electrostatics, visualization_opengl)
+from espressomd.shapes import Wall
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 

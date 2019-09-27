@@ -15,14 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-import unittest_decorators as utx
-from numpy.random import random
+
 import numpy as np
+from numpy.random import random
 
 import espressomd
+import espressomd.analyze
 import espressomd.interactions
 import espressomd.magnetostatics
-import espressomd.analyze
+import unittest_decorators as utx
 
 
 @utx.skipIfMissingGPU()

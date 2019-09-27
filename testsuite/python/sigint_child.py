@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import numpy as np
+
 import espressomd
 
 system = espressomd.System(box_l=[100, 100, 100])

@@ -16,7 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-from espressomd import has_features, code_info
+
+from espressomd import code_info, has_features
 
 
 class Features(ut.TestCase):

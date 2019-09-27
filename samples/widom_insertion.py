@@ -22,15 +22,13 @@ fluid via Widom's insertion method.
 As input this script requires you to provide particle number density in units
 of 1/sigma^3.
 """
-import numpy as np
 import argparse
 
+import numpy as np
+
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
-from espressomd import reaction_ensemble
-from espressomd import electrostatics
+from espressomd import (analyze, code_info, electrostatics, integrate,
+                        reaction_ensemble)
 
 required_features = ["WCA", "P3M"]
 espressomd.assert_features(required_features)

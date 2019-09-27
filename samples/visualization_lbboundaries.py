@@ -20,8 +20,8 @@ Visualization sample for Lattice Boltzmann boundary nodes.
 
 import espressomd
 import espressomd.lb
-import espressomd.shapes
 import espressomd.lbboundaries
+import espressomd.shapes
 from espressomd import visualization_opengl
 
 required_features = ["LB_BOUNDARIES"]

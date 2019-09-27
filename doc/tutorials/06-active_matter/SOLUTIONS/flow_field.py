@@ -22,13 +22,13 @@
 #
 ##########################################################################
 
-import numpy as np
 import os
 import sys
 
+import numpy as np
+
 import espressomd
 from espressomd import assert_features, lb
-
 
 assert_features(["ENGINE", "CUDA", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
 

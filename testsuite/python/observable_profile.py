@@ -16,10 +16,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import unittest as ut
-import unittest_decorators as utx
+
 import numpy as np
+
 import espressomd
 import espressomd.observables
+import unittest_decorators as utx
 
 
 class ProfileObservablesTest(ut.TestCase):

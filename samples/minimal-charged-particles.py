@@ -21,13 +21,14 @@ This sample simulates equal number of positively and negatively charged
 particles using the P3M solver. The system is maintained at a constant
 temperature using a Langevin thermostat.
 """
+import numpy as np
+
 import espressomd
+from espressomd import electrostatics
 
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import electrostatics
-import numpy as np
 
 # System parameters
 #############################################################

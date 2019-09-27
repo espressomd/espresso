@@ -16,15 +16,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
-import re
+import argparse
 import os
+import re
 import sys
 import uuid
-import argparse
+
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
+
+from importlib_wrapper import mock_es_visualization, substitute_variable_values
+
 sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
-from importlib_wrapper import substitute_variable_values, mock_es_visualization
 
 parser = argparse.ArgumentParser(description='Process IPython notebooks.')
 parser.add_argument('--input', type=str,

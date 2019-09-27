@@ -16,11 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import argparse
 import os
 import sys
+from time import sleep, time
+
 import numpy as np
-from time import time, sleep
-import argparse
+
+import espressomd
 
 parser = argparse.ArgumentParser(description="Benchmark LJ simulations. "
                                  "Save the results to a CSV file.")
@@ -57,7 +60,6 @@ if not args.visualizer:
         "{} steps per tick are too short".format(measurement_steps)
 
 
-import espressomd
 if args.visualizer:
     from espressomd import visualization
     from threading import Thread

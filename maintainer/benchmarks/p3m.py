@@ -16,11 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import argparse
 import os
 import sys
-import numpy as np
 from time import time
-import argparse
+
+import numpy as np
+
+import espressomd
+from espressomd import electrostatics
 
 parser = argparse.ArgumentParser(description="Benchmark P3M simulations. "
                                  "Save the results to a CSV file.")
@@ -57,8 +61,6 @@ if not args.visualizer:
         "{} steps per tick are too short".format(measurement_steps)
 
 
-import espressomd
-from espressomd import electrostatics
 if args.visualizer:
     from espressomd import visualization
 

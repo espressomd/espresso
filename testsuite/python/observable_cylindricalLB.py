@@ -14,14 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import numpy as np
 import unittest as ut
-import unittest_decorators as utx
-import espressomd
-import espressomd.observables
-import espressomd.lb
-import tests_common
 
+import numpy as np
+
+import espressomd
+import espressomd.lb
+import espressomd.observables
+import tests_common
+import unittest_decorators as utx
 
 AGRID = 1.0
 VISC = 2.7

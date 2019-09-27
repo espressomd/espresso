@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 
-from espressomd.shapes import Wall, Sphere
 from espressomd.constraints import ShapeBasedConstraint
+from espressomd.shapes import Sphere, Wall
 
 
 class ScriptInterfaceObjectParams(ut.TestCase):

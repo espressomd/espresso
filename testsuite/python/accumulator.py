@@ -23,10 +23,12 @@ Testmodule for the observable accumulator.
 """
 import sys
 import unittest as ut
+
 import numpy as np
+
 import espressomd
-import espressomd.observables
 import espressomd.accumulators
+import espressomd.observables
 
 
 class AccumulatorTest(ut.TestCase):

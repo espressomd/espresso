@@ -16,14 +16,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import unittest_decorators as utx
+
 import numpy as np
 
 import espressomd
 import espressomd.checkpointing
 import espressomd.virtual_sites
-from espressomd.shapes import Sphere, Wall
 import tests_common
+import unittest_decorators as utx
+from espressomd.shapes import Sphere, Wall
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}

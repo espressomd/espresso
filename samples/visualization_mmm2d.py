@@ -19,14 +19,14 @@ Visualization sample of a simple plate capacitor with applied potential
 difference and charged particles.
 """
 
-import numpy as np
 import math
 from threading import Thread
 
+import numpy as np
+
 import espressomd
 import espressomd.shapes
-from espressomd import electrostatics
-from espressomd import visualization
+from espressomd import electrostatics, visualization
 
 required_features = ["ELECTROSTATICS", "WCA"]
 espressomd.assert_features(required_features)

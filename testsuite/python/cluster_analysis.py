@@ -17,12 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import espressomd
-from espressomd.utils import handle_errors
+
 import numpy as np
-from espressomd.interactions import FeneBond
-from espressomd.pair_criteria import DistanceCriterion, BondCriterion
+
+import espressomd
 from espressomd.cluster_analysis import ClusterStructure
+from espressomd.interactions import FeneBond
+from espressomd.pair_criteria import BondCriterion, DistanceCriterion
+from espressomd.utils import handle_errors
 
 
 class ClusterAnalysis(ut.TestCase):

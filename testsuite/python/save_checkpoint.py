@@ -14,24 +14,25 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import unittest as ut
-import numpy as np
 import os
+import unittest as ut
+
+import numpy as np
 
 import espressomd
+import espressomd.accumulators
 import espressomd.checkpointing
+import espressomd.electrokinetics
 import espressomd.electrostatics
 import espressomd.interactions
-import espressomd.virtual_sites
-import espressomd.accumulators
+import espressomd.lb
 import espressomd.observables
-from espressomd import has_features
+import espressomd.virtual_sites
+from espressomd import constraints, has_features
+from espressomd.shapes import Sphere, Wall
+
 if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     from espressomd.lbboundaries import LBBoundary
-import espressomd.lb
-import espressomd.electrokinetics
-from espressomd.shapes import Wall, Sphere
-from espressomd import constraints
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}

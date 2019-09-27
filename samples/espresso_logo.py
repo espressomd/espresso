@@ -15,12 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import math
+
 import numpy as np
 
 import espressomd
-espressomd.assert_features(["WCA", "MASS"])
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive
+
+espressomd.assert_features(["WCA", "MASS"])
 
 box_l = 50
 system = espressomd.System(box_l=[box_l, 15, box_l])

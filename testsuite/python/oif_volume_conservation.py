@@ -14,8 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import espressomd
 import unittest as ut
+
+import espressomd
 import unittest_decorators as utx
 from tests_common import abspath
 

@@ -19,8 +19,8 @@
 
 import sys
 
-from ...script_interface import PScriptInterface  # pylint: disable=import
 from ...code_info import features
+from ...script_interface import PScriptInterface  # pylint: disable=import
 
 if 'H5MD' not in features():
     class H5md:

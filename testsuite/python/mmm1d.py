@@ -16,13 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import numpy as np
 import sys
 import unittest as ut
-import unittest_decorators as utx
-import tests_common
-import espressomd
 
+import numpy as np
+
+import espressomd
+import tests_common
+import unittest_decorators as utx
 
 if not espressomd.has_features("ELECTROSTATICS"):
     sys.exit()

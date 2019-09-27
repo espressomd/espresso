@@ -16,13 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+# Just to see what else we may get from the c code
+import pprint
+
 import numpy as np
+
 import espressomd
+from espressomd import thermostat
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
 
 print("""
 =======================================================
@@ -154,8 +158,6 @@ while (i < warm_n_times and act_min_dist < min_dist):
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
 
-# Just to see what else we may get from the c code
-import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 pprint.pprint(system.__getstate__())
 

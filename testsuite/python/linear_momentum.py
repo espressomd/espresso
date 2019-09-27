@@ -1,4 +1,5 @@
 import unittest as ut
+
 import numpy as np
 
 import espressomd

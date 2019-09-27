@@ -18,9 +18,11 @@
 #
 
 import unittest as ut
-import unittest_decorators as utx
-import espressomd
+
 import numpy as np
+
+import espressomd
+import unittest_decorators as utx
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")

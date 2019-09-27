@@ -15,9 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest as ut
-import importlib_wrapper as iw
 import sys
+import unittest as ut
+
+import importlib_wrapper as iw
 
 
 class importlib_wrapper(ut.TestCase):

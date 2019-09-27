@@ -20,8 +20,9 @@
 
 """List all tutorial files to deploy (PDF, HTML and figures)"""
 
-import os
 import glob
+import os
+
 import lxml.html
 
 deploy_list = glob.glob('*/*.pdf')

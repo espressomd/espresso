@@ -15,11 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-import unittest_decorators as utx
+
 import numpy as np
+
 import espressomd
-from espressomd.interactions import FeneBond
+import unittest_decorators as utx
 from espressomd import polymer
+from espressomd.interactions import FeneBond
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")

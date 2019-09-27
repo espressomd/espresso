@@ -19,12 +19,12 @@ Visualization samples with keyboard control and particle repositioning via
 timed callback.
 """
 
-import espressomd
-from espressomd import thermostat
-from espressomd import integrate
-import numpy as np
 from threading import Thread
-from espressomd import visualization_opengl
+
+import numpy as np
+
+import espressomd
+from espressomd import integrate, thermostat, visualization_opengl
 
 required_features = []
 espressomd.assert_features(required_features)

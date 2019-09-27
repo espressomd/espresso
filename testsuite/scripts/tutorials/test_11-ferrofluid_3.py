@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest as ut
-import importlib_wrapper
 
+import importlib_wrapper
 
 # value of a reference simulation (10000 equilibration steps; 200000
 # sampling rounds; 10 sampling steps per round)

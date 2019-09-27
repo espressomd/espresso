@@ -14,9 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
 from .__init__ import has_features
-
+from .script_interface import (ScriptInterfaceHelper, ScriptObjectRegistry,
+                               script_interface_register)
 
 if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     @script_interface_register

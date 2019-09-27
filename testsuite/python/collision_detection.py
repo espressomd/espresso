@@ -17,11 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import unittest_decorators as utx
-import espressomd
-from espressomd.interactions import HarmonicBond, AngleHarmonic
-import numpy as np
 from random import shuffle
+
+import numpy as np
+
+import espressomd
+import unittest_decorators as utx
+from espressomd.interactions import AngleHarmonic, HarmonicBond
 
 
 @utx.skipIfMissingFeatures("COLLISION_DETECTION")

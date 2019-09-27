@@ -20,11 +20,13 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-import numpy as np
 import unittest as ut
-import unittest_decorators as utx
+
+import numpy as np
+
 import espressomd
 import espressomd.magnetostatics as magnetostatics
+import unittest_decorators as utx
 from tests_common import abspath
 
 

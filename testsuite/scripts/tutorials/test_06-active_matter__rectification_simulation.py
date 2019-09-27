@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import unittest as ut
-import importlib_wrapper
 import os
+import unittest as ut
+
 import numpy as np
+
+import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/06-active_matter/SOLUTIONS/rectification_simulation.py",

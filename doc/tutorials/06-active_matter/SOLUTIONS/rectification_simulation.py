@@ -22,15 +22,15 @@
 #
 ##########################################################################
 
-from math import cos, pi, sin
-import numpy as np
 import os
 import sys
+from math import cos, pi, sin
+
+import numpy as np
 
 import espressomd
 from espressomd import assert_features
-from espressomd.shapes import Cylinder, Wall, HollowCone
-
+from espressomd.shapes import Cylinder, HollowCone, Wall
 
 assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
 
