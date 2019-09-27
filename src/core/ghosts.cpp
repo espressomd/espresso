@@ -470,14 +470,15 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       break;
     case GHOST_RDCE:
       if (node == this_node)
-        boost::mpi::reduce(
-            comm_cart, reinterpret_cast<double *>(s_buffer.data()),
-            s_buffer.size(), reinterpret_cast<double *>(r_buffer.data()),
-            std::plus<double>{}, node);
-      else
         boost::mpi::reduce(comm_cart,
                            reinterpret_cast<double *>(s_buffer.data()),
-                           s_buffer.size(), std::plus<double>{}, node);
+                           s_buffer.size() / sizeof(double),
+                           reinterpret_cast<double *>(r_buffer.data()),
+                           std::plus<double>{}, node);
+      else
+        boost::mpi::reduce(
+            comm_cart, reinterpret_cast<double *>(s_buffer.data()),
+            s_buffer.size() / sizeof(double), std::plus<double>{}, node);
       break;
     }
 
