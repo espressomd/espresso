@@ -221,9 +221,9 @@ def disable_matplotlib_gui(code):
     # find under which name pyplot was imported
     re_plt_aliases = [re.compile(pat, flags=re.M) for pat in [
         r"^[\t\ ]*import[\t\ ]+(matplotlib\.pyplot)[\t\ ]*(?=$|#)",
-        r"^[\t\ ]*import[\t\ ]+matplotlib\.pyplot[\t\ ]*as[\t\ ]+([^\s;]+)[\t\ ]*(?=$|#)",
-        r"^[\t\ ]*from[\t\ ]+matplotlib[\t\ ]import[\t\ ](pyplot)[\t\ ]*(?=$|#)",
-        r"^[\t\ ]*from[\t\ ]+matplotlib[\t\ ]import[\t\ ]pyplot"
+        r"^[\t\ ]*import[\t\ ]+matplotlib\.pyplot[\t\ ]+as[\t\ ]+([^\s;]+)[\t\ ]*(?=$|#)",
+        r"^[\t\ ]*from[\t\ ]+matplotlib[\t\ ]+import[\t\ ]+(pyplot)[\t\ ]*(?=$|#)",
+        r"^[\t\ ]*from[\t\ ]+matplotlib[\t\ ]+import[\t\ ]+pyplot"
         r"[\t\ ]+as[\t\ ]+([^\s;]+)[\t\ ]*(?=$|#)"]]
     aliases_plt = set(x for re_p in re_plt_aliases for x in re_p.findall(code))
     # remove any custom backend
