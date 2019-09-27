@@ -486,33 +486,31 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         else
           put_recv_buffer(r_buffer, gcn, data_parts);
       }
-    } else {
+    } else if (poststore) {
       /* send op; write back delayed data from last recv, when this was a
        * prefetch send. */
-      if (poststore) {
-        /* find previous action where we recv and which has PSTSTORE set */
-        for (int n2 = n - 1; n2 >= 0; n2--) {
-          GhostCommunication *gcn2 = &gc->comm[n2];
-          int const comm_type2 = gcn2->type & GHOST_JOBMASK;
-          int const poststore2 = gcn2->type & GHOST_PSTSTORE;
-          int const node2 = gcn2->node;
-          if (is_recv_op(comm_type2, node2) && poststore2) {
+      /* find previous action where we recv and which has PSTSTORE set */
+      for (int n2 = n - 1; n2 >= 0; n2--) {
+        GhostCommunication *gcn2 = &gc->comm[n2];
+        int const comm_type2 = gcn2->type & GHOST_JOBMASK;
+        int const poststore2 = gcn2->type & GHOST_PSTSTORE;
+        int const node2 = gcn2->node;
+        if (is_recv_op(comm_type2, node2) && poststore2) {
 #ifdef ADDITIONAL_CHECKS
-            if (r_buffer.size() != calc_transmit_size(gcn2, data_parts)) {
-              fprintf(stderr,
-                      "%d: ghost_comm transmission size and current size of "
-                      "cells to transmit do not match\n",
-                      this_node);
-              errexit();
-            }
-#endif
-            /* as above */
-            if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-              add_forces_from_recv_buffer(r_buffer, gcn2);
-            else
-              put_recv_buffer(r_buffer, gcn2, data_parts);
-            break;
+          if (r_buffer.size() != calc_transmit_size(gcn2, data_parts)) {
+            fprintf(stderr,
+                    "%d: ghost_comm transmission size and current size of "
+                    "cells to transmit do not match\n",
+                    this_node);
+            errexit();
           }
+#endif
+          /* as above */
+          if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+            add_forces_from_recv_buffer(r_buffer, gcn2);
+          else
+            put_recv_buffer(r_buffer, gcn2, data_parts);
+          break;
         }
       }
     }
