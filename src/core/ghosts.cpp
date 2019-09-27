@@ -44,8 +44,8 @@
 #define REQ_GHOST_SEND 100
 
 struct CommBuf {
-  friend class Archiver;
-  friend class BondArchiver;
+  friend struct Archiver;
+  friend struct BondArchiver;
 
   char *data() { return buf.data(); }
   size_t size() { return buf.size(); }
