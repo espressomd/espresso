@@ -1,11 +1,11 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
 import espressomd
 espressomd.assert_features(['LB_BOUNDARIES_GPU'])
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 # System setup
 BOX_L = 16.0

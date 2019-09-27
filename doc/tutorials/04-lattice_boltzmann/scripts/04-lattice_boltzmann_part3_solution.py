@@ -1,14 +1,14 @@
+import logging
+import numpy as np
+logging.basicConfig(level=logging.INFO)
+import matplotlib.pyplot as plt
+import scipy
+
 import espressomd
 espressomd.assert_features(['LENNARD_JONES'])
-import espressomd.observables
 import espressomd.accumulators
+import espressomd.observables
 import espressomd.polymer
-
-import numpy as np
-import logging
-logging.basicConfig(level=logging.INFO)
-import scipy
-import matplotlib.pyplot as plt
 
 # Setup constant
 TIME_STEP = 0.01
