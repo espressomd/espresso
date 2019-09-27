@@ -409,7 +409,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
           prepare_send_buffer(s_buffer, gcn, data_parts);
         else {
 #ifdef ADDITIONAL_CHECKS
-          if (n_s_buffer != calc_transmit_size(gcn, data_parts)) {
+          if (s_buffer.size() != calc_transmit_size(gcn, data_parts)) {
             fprintf(stderr,
                     "%d: ghost_comm transmission size and current size of "
                     "cells to transmit do not match\n",
@@ -497,7 +497,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
             int const node2 = gcn2->node;
             if (is_recv_op(comm_type2, node2) && poststore2) {
 #ifdef ADDITIONAL_CHECKS
-              if (n_r_buffer != calc_transmit_size(gcn2, data_parts)) {
+              if (r_buffer.size() != calc_transmit_size(gcn2, data_parts)) {
                 fprintf(stderr,
                         "%d: ghost_comm transmission size and current size of "
                         "cells to transmit do not match\n",
