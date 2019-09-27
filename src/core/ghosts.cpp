@@ -160,7 +160,7 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
-      // sending size of bond/exclusion lists
+      // sending size of bond lists
       if (ghosts_have_bonds) {
         n_buffer_new += sizeof(int);
       }
