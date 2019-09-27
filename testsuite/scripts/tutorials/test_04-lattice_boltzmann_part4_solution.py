@@ -17,15 +17,24 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
+
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part2.py",
-    gpu=True, LOOPS=400)
+    "@TUTORIALS_DIR@/04-lattice_boltzmann/scripts/04-lattice_boltzmann_part4_solution.py",
+    gpu=True)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
-    system = tutorial.system
+    def test_flow_profile(self):
+        analytical = tutorial.poiseuille_flow(tutorial.x_values - (tutorial.HEIGHT / 2.0 + tutorial.AGRID),
+                                              tutorial.FORCE_DENSITY[1],
+                                              tutorial.VISCOSITY * tutorial.DENSITY,
+                                              tutorial.HEIGHT)
+        simulation = tutorial.fluid_velocities[:, 1]
+        rmsd = np.sqrt(np.sum(np.square(analytical - simulation)))
+        self.assertLess(rmsd, 0.02 * tutorial.AGRID / tutorial.lbf.tau)
 
 
 if __name__ == "__main__":
