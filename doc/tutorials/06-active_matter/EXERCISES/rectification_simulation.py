@@ -26,6 +26,7 @@ from math import cos, pi, sin
 import numpy as np
 import os
 import sys
+import argparse
 
 import espressomd
 from espressomd import assert_features
@@ -58,37 +59,38 @@ def a2quat(phi, theta):
 
 # Read in the active velocity from the command prompt
 
-if len(sys.argv) != 2:
-    print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
-    exit()
+parser = argparse.ArgumentParser()
+parser.add_argument("vel", type=float, help="Velocity of active particles.")
+args = parser.parse_args()
 
-vel = float(sys.argv[1])
+vel = args.vel
 
 ##########################################################################
 
 # create an output folder
 
 outdir = "./RESULTS_RECTIFICATION"
-try:
-    os.makedirs(outdir)
-except BaseException:
-    print("INFO: Directory \"{}\" exists".format(outdir))
+os.makedirs(outdir, exist_ok=True)
 
 # Setup the box (we pad the diameter to ensure that the LB boundaries
 # and therefore the constraints, are away from the edge of the box)
 
-length = 100
-diameter = 20
-prod_steps = 500
-prod_length = 500
-dt = 0.01
+LENGTH = 100
+DIAMETER = 20
+PADDING = 2
+PROD_STEPS = 500
+PROD_LENGTH = 500
+TIME_STEP = 0.005
 
 # Setup the MD parameters
 
-system = System(box_l=[length, diameter + 4, diameter + 4])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+box_l = np.array(
+    [LENGTH + 2 * PADDING,
+     DIAMETER + 2 * PADDING,
+     DIAMETER + 2 * PADDING])
+system = espressomd.System(box_l=box_l)
 system.cell_system.skin = 0.1
-system.time_step = dt
+system.time_step = TIME_STEP
 system.min_global_cut = 0.5
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 ## Exercise 1 ##
@@ -105,7 +107,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 ##########################################################################
 
 ## Exercise 2 ##
-# Complete the following from the LB-based Tcl
+# Complete the geometry from the LB-based 
 # script. You need to add types to the walls
 # and cone as well.
 
@@ -115,17 +117,17 @@ system.constraints.add(shape=cylinder, particle_type=1)
 # Setup walls
 
 wall = Wall(...)
-system.constraints.add(shape=wall, particle_type=2)
+system.constraints.add(shape=wall, particle_type=1)
 
 wall = Wall(...)
-system.constraints.add(shape=wall, particle_type=3)
+system.constraints.add(shape=wall, particle_type=1)
 
 # Setup cone
 
 ...
 
 hollow_cone = HollowCone(...)
-system.constraints.add(shape=hollow_cone, particle_type=4)
+system.constraints.add(shape=hollow_cone, particle_type=1)
 
 ##########################################################################
 #
@@ -135,19 +137,13 @@ system.constraints.add(shape=hollow_cone, particle_type=4)
 #
 ##########################################################################
 
-sig = 0.5
-cut = 1.12246 * sig
-eps = 1.0
-shift = 0.25
+SIGMA = 0.5
+CUTOFF = 1.12246 * SIGMA
+EPSILON = 1.0
+SHIFT = 0.25
 
 system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
-system.non_bonded_inter[0, 2].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
-system.non_bonded_inter[0, 3].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
-system.non_bonded_inter[0, 4].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
+    epsilon=EPSILON, sigma=SIGMA, cutoff=CUTOFF, shift=SHIFT)
 
 ##########################################################################
 #
@@ -169,6 +165,7 @@ for cntr in range(npart):
     x = ...
     y = ...
     z = ...
+
     quats = ...
 
     system.part.add(pos=[x, y, z], type=0, swimming={'v_swim': vel},
@@ -178,7 +175,7 @@ for cntr in range(npart):
 
 # Equilibrate
 
-system.integrator.run(25 * prod_length)
+system.integrator.run(25 * PROD_LENGTH)
 
 # Output the CMS coordinates
 
@@ -197,21 +194,19 @@ with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
 
     dev_sum = 0.0
     dev_av = 0.0
-    time_0 = system.time
-    for i in range(prod_steps):
+    system.time = 0.
+    for i in range(PROD_STEPS):
         # We output the coordinate of the center of mass in
         # the direction of the long axis, here we consider
-        # the deviation from the center
+        # the deviation from the center (keep the padding in mind)
 
         dev = ...
 
-        ...
+        dev_av = ...
 
-        time = system.time - time_0
+        print("{} {} {}".format(system.time, dev, dev_av), file=outfile)
 
-        print("{} {} {}".format(time, dev, dev_av), file=outfile)
-
-        system.integrator.run(prod_length)
+        system.integrator.run(PROD_LENGTH)
 
 # Output the final configuration
 
