@@ -395,123 +395,125 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   for (int n = 0; n < gc->num; n++) {
     GhostCommunication *gcn = &gc->comm[n];
     int const comm_type = gcn->type & GHOST_JOBMASK;
+
+    if (comm_type == GHOST_LOCL) {
+      cell_cell_transfer(gcn, data_parts);
+      continue;
+    }
+
     int const prefetch = gcn->type & GHOST_PREFETCH;
     int const poststore = gcn->type & GHOST_PSTSTORE;
     int const node = gcn->node;
 
-    if (comm_type == GHOST_LOCL)
-      cell_cell_transfer(gcn, data_parts);
-    else {
-      /* prepare send buffer if necessary */
-      if (is_send_op(comm_type, node)) {
-        /* ok, we send this step, prepare send buffer if not yet done */
-        if (!prefetch)
-          prepare_send_buffer(s_buffer, gcn, data_parts);
+    /* prepare send buffer if necessary */
+    if (is_send_op(comm_type, node)) {
+      /* ok, we send this step, prepare send buffer if not yet done */
+      if (!prefetch)
+        prepare_send_buffer(s_buffer, gcn, data_parts);
 #ifdef ADDITIONAL_CHECKS
-        // Check prefetched send buffers (must also hold for buffers allocated
-        // in the previous lines.)
-        if (s_buffer.size() != calc_transmit_size(gcn, data_parts)) {
-          fprintf(stderr,
-                  "%d: ghost_comm transmission size and current size of "
-                  "cells to transmit do not match\n",
-                  this_node);
-          errexit();
-        }
+      // Check prefetched send buffers (must also hold for buffers allocated
+      // in the previous lines.)
+      if (s_buffer.size() != calc_transmit_size(gcn, data_parts)) {
+        fprintf(stderr,
+                "%d: ghost_comm transmission size and current size of "
+                "cells to transmit do not match\n",
+                this_node);
+        errexit();
+      }
 #endif
-      } else {
-        /* we do not send this time, let's look for a prefetch */
-        if (prefetch) {
-          /* find next action where we send and which has PREFETCH set */
-          for (int n2 = n + 1; n2 < gc->num; n2++) {
-            GhostCommunication *gcn2 = &gc->comm[n2];
-            int const comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int const prefetch2 = gcn2->type & GHOST_PREFETCH;
-            int const node2 = gcn2->node;
-            if (is_send_op(comm_type2, node2) && prefetch2) {
-              prepare_send_buffer(s_buffer, gcn2, data_parts);
-              break;
-            }
+    } else {
+      /* we do not send this time, let's look for a prefetch */
+      if (prefetch) {
+        /* find next action where we send and which has PREFETCH set */
+        for (int n2 = n + 1; n2 < gc->num; n2++) {
+          GhostCommunication *gcn2 = &gc->comm[n2];
+          int const comm_type2 = gcn2->type & GHOST_JOBMASK;
+          int const prefetch2 = gcn2->type & GHOST_PREFETCH;
+          int const node2 = gcn2->node;
+          if (is_send_op(comm_type2, node2) && prefetch2) {
+            prepare_send_buffer(s_buffer, gcn2, data_parts);
+            break;
           }
         }
       }
+    }
 
-      /* recv buffer for recv and multinode operations to this node */
-      if (is_recv_op(comm_type, node))
-        prepare_recv_buffer(r_buffer, gcn, data_parts);
+    /* recv buffer for recv and multinode operations to this node */
+    if (is_recv_op(comm_type, node))
+      prepare_recv_buffer(r_buffer, gcn, data_parts);
 
-      /* transfer data */
-      // Use two send/recvs in order to avoid, having to serialize CommBuf
-      // (which consists of already serialized data).
-      switch (comm_type) {
-      case GHOST_RECV:
-        comm_cart.recv(node, REQ_GHOST_SEND, r_buffer.data(), r_buffer.size());
-        comm_cart.recv(node, REQ_GHOST_SEND, r_buffer.bonds());
-        break;
-      case GHOST_SEND:
-        comm_cart.send(node, REQ_GHOST_SEND, s_buffer.data(), s_buffer.size());
-        comm_cart.send(node, REQ_GHOST_SEND, s_buffer.bonds());
-        break;
-      case GHOST_BCST:
-        if (node == this_node) {
-          boost::mpi::broadcast(comm_cart, s_buffer.data(), s_buffer.size(),
-                                node);
-          boost::mpi::broadcast(comm_cart, s_buffer.bonds(), node);
-        } else {
-          boost::mpi::broadcast(comm_cart, r_buffer.data(), r_buffer.size(),
-                                node);
-          boost::mpi::broadcast(comm_cart, r_buffer.bonds(), node);
-        }
-        break;
-      case GHOST_RDCE:
-        if (node == this_node)
-          boost::mpi::reduce(
-              comm_cart, reinterpret_cast<double *>(s_buffer.data()),
-              s_buffer.size(), reinterpret_cast<double *>(r_buffer.data()),
-              std::plus<double>{}, node);
-        else
-          boost::mpi::reduce(comm_cart,
-                             reinterpret_cast<double *>(s_buffer.data()),
-                             s_buffer.size(), std::plus<double>{}, node);
-        break;
-      }
-
-      // recv op; write back data directly, if no PSTSTORE delay is requested.
-      if (is_recv_op(comm_type, node)) {
-        if (!poststore) {
-          /* forces have to be added, the rest overwritten. Exception is RDCE,
-           * where the addition is integrated into the communication. */
-          if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-            add_forces_from_recv_buffer(r_buffer, gcn);
-          else
-            put_recv_buffer(r_buffer, gcn, data_parts);
-        }
+    /* transfer data */
+    // Use two send/recvs in order to avoid, having to serialize CommBuf
+    // (which consists of already serialized data).
+    switch (comm_type) {
+    case GHOST_RECV:
+      comm_cart.recv(node, REQ_GHOST_SEND, r_buffer.data(), r_buffer.size());
+      comm_cart.recv(node, REQ_GHOST_SEND, r_buffer.bonds());
+      break;
+    case GHOST_SEND:
+      comm_cart.send(node, REQ_GHOST_SEND, s_buffer.data(), s_buffer.size());
+      comm_cart.send(node, REQ_GHOST_SEND, s_buffer.bonds());
+      break;
+    case GHOST_BCST:
+      if (node == this_node) {
+        boost::mpi::broadcast(comm_cart, s_buffer.data(), s_buffer.size(),
+                              node);
+        boost::mpi::broadcast(comm_cart, s_buffer.bonds(), node);
       } else {
-        /* send op; write back delayed data from last recv, when this was a
-         * prefetch send. */
-        if (poststore) {
-          /* find previous action where we recv and which has PSTSTORE set */
-          for (int n2 = n - 1; n2 >= 0; n2--) {
-            GhostCommunication *gcn2 = &gc->comm[n2];
-            int const comm_type2 = gcn2->type & GHOST_JOBMASK;
-            int const poststore2 = gcn2->type & GHOST_PSTSTORE;
-            int const node2 = gcn2->node;
-            if (is_recv_op(comm_type2, node2) && poststore2) {
+        boost::mpi::broadcast(comm_cart, r_buffer.data(), r_buffer.size(),
+                              node);
+        boost::mpi::broadcast(comm_cart, r_buffer.bonds(), node);
+      }
+      break;
+    case GHOST_RDCE:
+      if (node == this_node)
+        boost::mpi::reduce(
+            comm_cart, reinterpret_cast<double *>(s_buffer.data()),
+            s_buffer.size(), reinterpret_cast<double *>(r_buffer.data()),
+            std::plus<double>{}, node);
+      else
+        boost::mpi::reduce(comm_cart,
+                           reinterpret_cast<double *>(s_buffer.data()),
+                           s_buffer.size(), std::plus<double>{}, node);
+      break;
+    }
+
+    // recv op; write back data directly, if no PSTSTORE delay is requested.
+    if (is_recv_op(comm_type, node)) {
+      if (!poststore) {
+        /* forces have to be added, the rest overwritten. Exception is RDCE,
+         * where the addition is integrated into the communication. */
+        if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+          add_forces_from_recv_buffer(r_buffer, gcn);
+        else
+          put_recv_buffer(r_buffer, gcn, data_parts);
+      }
+    } else {
+      /* send op; write back delayed data from last recv, when this was a
+       * prefetch send. */
+      if (poststore) {
+        /* find previous action where we recv and which has PSTSTORE set */
+        for (int n2 = n - 1; n2 >= 0; n2--) {
+          GhostCommunication *gcn2 = &gc->comm[n2];
+          int const comm_type2 = gcn2->type & GHOST_JOBMASK;
+          int const poststore2 = gcn2->type & GHOST_PSTSTORE;
+          int const node2 = gcn2->node;
+          if (is_recv_op(comm_type2, node2) && poststore2) {
 #ifdef ADDITIONAL_CHECKS
-              if (r_buffer.size() != calc_transmit_size(gcn2, data_parts)) {
-                fprintf(stderr,
-                        "%d: ghost_comm transmission size and current size of "
-                        "cells to transmit do not match\n",
-                        this_node);
-                errexit();
-              }
-#endif
-              /* as above */
-              if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-                add_forces_from_recv_buffer(r_buffer, gcn2);
-              else
-                put_recv_buffer(r_buffer, gcn2, data_parts);
-              break;
+            if (r_buffer.size() != calc_transmit_size(gcn2, data_parts)) {
+              fprintf(stderr,
+                      "%d: ghost_comm transmission size and current size of "
+                      "cells to transmit do not match\n",
+                      this_node);
+              errexit();
             }
+#endif
+            /* as above */
+            if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+              add_forces_from_recv_buffer(r_buffer, gcn2);
+            else
+              put_recv_buffer(r_buffer, gcn2, data_parts);
+            break;
           }
         }
       }
