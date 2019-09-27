@@ -151,7 +151,7 @@ void free_comm(GhostCommunicator *comm) {
     gc.part_lists.clear();
 }
 
-int calc_transmit_size(GhostCommunication &gc, int data_parts) {
+static int calc_transmit_size(GhostCommunication &gc, int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
@@ -184,8 +184,8 @@ int calc_transmit_size(GhostCommunication &gc, int data_parts) {
   return n_buffer_new;
 }
 
-void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication &gc,
-                         int data_parts) {
+static void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication &gc,
+                                int data_parts) {
   /* reallocate send buffer */
   s_buffer.resize(calc_transmit_size(gc, data_parts));
   s_buffer.bonds().clear();
@@ -258,14 +258,14 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   }
 }
 
-void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
-                         int data_parts) {
+static void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
+                                int data_parts) {
   /* reallocate recv buffer */
   r_buffer.resize(calc_transmit_size(gc, data_parts));
 }
 
-void put_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
-                     int data_parts) {
+static void put_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
+                            int data_parts) {
   /* put back data */
   auto ar = Archiver{r_buffer};
   auto bar = BondArchiver{r_buffer};
@@ -311,7 +311,8 @@ void put_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
   r_buffer.bonds().clear();
 }
 
-void add_forces_from_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc) {
+static void add_forces_from_recv_buffer(CommBuf &r_buffer,
+                                        GhostCommunication &gc) {
   /* put back data */
   auto ar = Archiver{r_buffer};
   for (int pl = 0; pl < gc.part_lists.size(); pl++) {
@@ -326,7 +327,7 @@ void add_forces_from_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc) {
   }
 }
 
-void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
+static void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
   /* transfer data */
   int const offset = gc->part_lists.size() / 2;
   for (int pl = 0; pl < offset; pl++) {
