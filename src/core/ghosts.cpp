@@ -151,11 +151,11 @@ void free_comm(GhostCommunicator *comm) {
     gc.part_lists.clear();
 }
 
-int calc_transmit_size(GhostCommunication *gc, int data_parts) {
+int calc_transmit_size(GhostCommunication &gc, int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
-    n_buffer_new = sizeof(int) * gc->part_lists.size();
+    n_buffer_new = sizeof(int) * gc.part_lists.size();
   else {
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -177,14 +177,14 @@ int calc_transmit_size(GhostCommunication *gc, int data_parts) {
       n_buffer_new += sizeof(ParticleParametersSwimming);
 #endif
     int count = 0;
-    for (auto const &pl : gc->part_lists)
+    for (auto const &pl : gc.part_lists)
       count += pl->n;
     n_buffer_new *= count;
   }
   return n_buffer_new;
 }
 
-void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc,
+void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication &gc,
                          int data_parts) {
   /* reallocate send buffer */
   s_buffer.resize(calc_transmit_size(gc, data_parts));
@@ -194,7 +194,7 @@ void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc,
   auto bar = BondArchiver{s_buffer};
 
   /* put in data */
-  for (auto cur_list : gc->part_lists) {
+  for (auto cur_list : gc.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       int np = cur_list->n;
       ar << np;
@@ -211,7 +211,7 @@ void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication *gc,
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
           auto pp = pt.r;
-          pp.p += gc->shift;
+          pp.p += gc.shift;
           ar << pp;
         } else if (data_parts & GHOSTTRANS_POSITION) {
           ar << pt.r;
@@ -258,19 +258,19 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   }
 }
 
-void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc,
+void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
                          int data_parts) {
   /* reallocate recv buffer */
   r_buffer.resize(calc_transmit_size(gc, data_parts));
 }
 
-void put_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc,
+void put_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
                      int data_parts) {
   /* put back data */
   auto ar = Archiver{r_buffer};
   auto bar = BondArchiver{r_buffer};
 
-  for (auto cur_list : gc->part_lists) {
+  for (auto cur_list : gc.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       int np;
       ar >> np;
@@ -311,12 +311,12 @@ void put_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc,
   r_buffer.bonds().clear();
 }
 
-void add_forces_from_recv_buffer(CommBuf &r_buffer, GhostCommunication *gc) {
+void add_forces_from_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc) {
   /* put back data */
   auto ar = Archiver{r_buffer};
-  for (int pl = 0; pl < gc->part_lists.size(); pl++) {
-    int np = gc->part_lists[pl]->n;
-    Particle *part = gc->part_lists[pl]->part;
+  for (int pl = 0; pl < gc.part_lists.size(); pl++) {
+    int np = gc.part_lists[pl]->n;
+    Particle *part = gc.part_lists[pl]->part;
     for (int p = 0; p < np; p++) {
       Particle &pt = part[p];
       ParticleForce pf;
@@ -423,11 +423,11 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
     if (is_send_op(comm_type, node)) {
       /* ok, we send this step, prepare send buffer if not yet done */
       if (!prefetch)
-        prepare_send_buffer(s_buffer, gcn, data_parts);
+        prepare_send_buffer(s_buffer, *gcn, data_parts);
 #ifdef ADDITIONAL_CHECKS
       // Check prefetched send buffers (must also hold for buffers allocated
       // in the previous lines.)
-      if (s_buffer.size() != calc_transmit_size(gcn, data_parts)) {
+      if (s_buffer.size() != calc_transmit_size(*gcn, data_parts)) {
         fprintf(stderr,
                 "%d: ghost_comm transmission size and current size of "
                 "cells to transmit do not match\n",
@@ -440,12 +440,12 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       auto pref_gcn = std::find_if(std::next(gc->comm.begin(), n + 1),
                                    gc->comm.end(), is_prefetchable);
       if (pref_gcn != gc->comm.end())
-        prepare_send_buffer(s_buffer, &(*pref_gcn), data_parts);
+        prepare_send_buffer(s_buffer, *pref_gcn, data_parts);
     }
 
     /* recv buffer for recv and multinode operations to this node */
     if (is_recv_op(comm_type, node))
-      prepare_recv_buffer(r_buffer, gcn, data_parts);
+      prepare_recv_buffer(r_buffer, *gcn, data_parts);
 
     /* transfer data */
     // Use two send/recvs in order to avoid, having to serialize CommBuf
@@ -489,9 +489,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
         /* forces have to be added, the rest overwritten. Exception is RDCE,
          * where the addition is integrated into the communication. */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-          add_forces_from_recv_buffer(r_buffer, gcn);
+          add_forces_from_recv_buffer(r_buffer, *gcn);
         else
-          put_recv_buffer(r_buffer, gcn, data_parts);
+          put_recv_buffer(r_buffer, *gcn, data_parts);
       }
     } else if (poststore) {
       /* send op; write back delayed data from last recv, when this was a
@@ -503,7 +503,7 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
 
       if (postst_gcn != gc->comm.rend()) {
 #ifdef ADDITIONAL_CHECKS
-        if (r_buffer.size() != calc_transmit_size(&(*postst_gcn), data_parts)) {
+        if (r_buffer.size() != calc_transmit_size(*postst_gcn, data_parts)) {
           fprintf(stderr,
                   "%d: ghost_comm transmission size and current size of "
                   "cells to transmit do not match\n",
@@ -513,9 +513,9 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
 #endif
         /* as above */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-          add_forces_from_recv_buffer(r_buffer, &(*postst_gcn));
+          add_forces_from_recv_buffer(r_buffer, *postst_gcn);
         else
-          put_recv_buffer(r_buffer, &(*postst_gcn), data_parts);
+          put_recv_buffer(r_buffer, *postst_gcn, data_parts);
       }
     }
   }
