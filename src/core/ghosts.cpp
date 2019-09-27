@@ -380,6 +380,13 @@ static bool is_recv_op(int comm_type, int node) {
           (comm_type == GHOST_RDCE && node == this_node));
 }
 
+static bool is_prefetchable(GhostCommunication const &gcn) {
+  int const comm_type = gcn.type & GHOST_JOBMASK;
+  int const prefetch = gcn.type & GHOST_PREFETCH;
+  int const node = gcn.node;
+  return is_send_op(comm_type, node) && prefetch;
+}
+
 void ghost_communicator(GhostCommunicator *gc) {
   ghost_communicator(gc, gc->data_parts);
 }
@@ -424,17 +431,10 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
     } else {
       /* we do not send this time, let's look for a prefetch */
       if (prefetch) {
-        /* find next action where we send and which has PREFETCH set */
-        for (int n2 = n + 1; n2 < gc->num; n2++) {
-          GhostCommunication *gcn2 = &gc->comm[n2];
-          int const comm_type2 = gcn2->type & GHOST_JOBMASK;
-          int const prefetch2 = gcn2->type & GHOST_PREFETCH;
-          int const node2 = gcn2->node;
-          if (is_send_op(comm_type2, node2) && prefetch2) {
-            prepare_send_buffer(s_buffer, gcn2, data_parts);
-            break;
-          }
-        }
+        auto pref_gcn = std::find_if(std::next(gc->comm.begin(), n + 1),
+                                     gc->comm.end(), is_prefetchable);
+        if (pref_gcn != gc->comm.end())
+          prepare_send_buffer(s_buffer, &(*pref_gcn), data_parts);
       }
     }
 
