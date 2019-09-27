@@ -136,7 +136,7 @@ following commands:
     sudo port select --set cython cython37
     sudo port select --set python3 python37
     sudo port select --set pip pip37
-    sudo port select --set mpi openmpi-mp-fortran
+    sudo port select --set mpi openmpi-mp
 
 Alternatively, you can use Homebrew.
 
