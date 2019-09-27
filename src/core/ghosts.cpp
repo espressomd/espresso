@@ -387,6 +387,13 @@ static bool is_prefetchable(GhostCommunication const &gcn) {
   return is_send_op(comm_type, node) && prefetch;
 }
 
+static bool is_poststorable(GhostCommunication const &gcn) {
+  int const comm_type = gcn.type & GHOST_JOBMASK;
+  int const poststore = gcn.type & GHOST_PSTSTORE;
+  int const node = gcn.node;
+  return is_recv_op(comm_type, node) && poststore;
+}
+
 void ghost_communicator(GhostCommunicator *gc) {
   ghost_communicator(gc, gc->data_parts);
 }
@@ -490,28 +497,25 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
       /* send op; write back delayed data from last recv, when this was a
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
-      for (int n2 = n - 1; n2 >= 0; n2--) {
-        GhostCommunication *gcn2 = &gc->comm[n2];
-        int const comm_type2 = gcn2->type & GHOST_JOBMASK;
-        int const poststore2 = gcn2->type & GHOST_PSTSTORE;
-        int const node2 = gcn2->node;
-        if (is_recv_op(comm_type2, node2) && poststore2) {
+      auto postst_gcn = std::find_if(
+          std::make_reverse_iterator(std::next(gc->comm.begin(), n)),
+          gc->comm.rend(), is_poststorable);
+
+      if (postst_gcn != gc->comm.rend()) {
 #ifdef ADDITIONAL_CHECKS
-          if (r_buffer.size() != calc_transmit_size(gcn2, data_parts)) {
-            fprintf(stderr,
-                    "%d: ghost_comm transmission size and current size of "
-                    "cells to transmit do not match\n",
-                    this_node);
-            errexit();
-          }
-#endif
-          /* as above */
-          if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-            add_forces_from_recv_buffer(r_buffer, gcn2);
-          else
-            put_recv_buffer(r_buffer, gcn2, data_parts);
-          break;
+        if (r_buffer.size() != calc_transmit_size(&(*postst_gcn), data_parts)) {
+          fprintf(stderr,
+                  "%d: ghost_comm transmission size and current size of "
+                  "cells to transmit do not match\n",
+                  this_node);
+          errexit();
         }
+#endif
+        /* as above */
+        if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+          add_forces_from_recv_buffer(r_buffer, &(*postst_gcn));
+        else
+          put_recv_buffer(r_buffer, &(*postst_gcn), data_parts);
       }
     }
   }
