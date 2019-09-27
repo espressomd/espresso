@@ -315,11 +315,8 @@ static void add_forces_from_recv_buffer(CommBuf &r_buffer,
                                         GhostCommunication &gc) {
   /* put back data */
   auto ar = Archiver{r_buffer};
-  for (int pl = 0; pl < gc.part_lists.size(); pl++) {
-    int np = gc.part_lists[pl]->n;
-    Particle *part = gc.part_lists[pl]->part;
-    for (int p = 0; p < np; p++) {
-      Particle &pt = part[p];
+  for (auto &pl : gc.part_lists) {
+    for (Particle &pt : pl->particles()) {
       ParticleForce pf;
       ar >> pf;
       pt.f += pf;
