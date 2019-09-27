@@ -238,6 +238,8 @@ def disable_matplotlib_gui(code):
     for alias in aliases_plt:
         code = re.sub(r"((?:^[\t\ ]*|;)" + alias + r")\.ion\(",
                       "\g<1>.ioff(", code, flags=re.M)
+    # remove magic function
+    code = re.sub(r"^get_ipython.*", "", code, flags=re.M)
     return code
 
 
