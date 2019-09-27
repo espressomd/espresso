@@ -320,7 +320,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
@@ -332,7 +333,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
         }
