@@ -150,7 +150,7 @@ Getting the minimal distance to a constraint
 
 Calculates the smallest distance to all interacting
 constraints that can be repulsive (wall, cylinder, sphere, rhomboid,
-maze, pore, slitpore). Negative distances mean that the position is
+pore, slitpore). Negative distances mean that the position is
 within the area that particles should not access. Helpful to find
 initial configurations.
 
@@ -455,7 +455,7 @@ Pictured is an example constraint with a ``Hollowcone`` shape created with ::
     system.constraints.add(shape=hollowcone, particle_type=0, penetrable=True)
 
 
-For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``, ``maze``,
+For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
 ``pore`` and ``stomatocyte``, constraints are able to be penetrated if
 ``penetrable`` is set to ``True``. Otherwise, when the ``penetrable`` option is
 ignored or is set to ``False``, the constraint cannot be violated, i.e. no
@@ -568,17 +568,17 @@ Constant fields
 ~~~~~~~~~~~~~~~
 
 These are fields that are constant in space or simple linear functions
-of the position.  The available fields are
+of the position.  The available fields are:
 
-:class:`espressomd.constraints.HomogeneousMagneticField`
-:class:`espressomd.constraints.ElectricPlaneWave`
-:class:`espressomd.constraints.LinearElectricPotential`
-:class:`espressomd.constraints.HomogeneousFlowField`
-:class:`espressomd.constraints.Gravity`
+* :class:`espressomd.constraints.HomogeneousMagneticField`
+* :class:`espressomd.constraints.ElectricPlaneWave`
+* :class:`espressomd.constraints.LinearElectricPotential`
+* :class:`espressomd.constraints.HomogeneousFlowField`
+* :class:`espressomd.constraints.Gravity`
 
-a detailed description can be found in the class documentation.
+A detailed description can be found in the class documentation.
 
-please be aware of the fact that a constant per particle force can be
+Please be aware of the fact that a constant per-particle force can be
 set via the ``ext_force`` property of the particles and is not provided
 here.
 
@@ -591,8 +591,8 @@ which has to be provided by the user. The fields differ by how
 they couple to particles, for a detailed description see their respective
 class documentation.
 
-:class:`espressomd.constraints.ForceField`
-:class:`espressomd.constraints.PotentialField`
-:class:`espressomd.constraints.ElectricPotential`
-:class:`espressomd.constraints.FlowField`
+* :class:`espressomd.constraints.ForceField`
+* :class:`espressomd.constraints.PotentialField`
+* :class:`espressomd.constraints.ElectricPotential`
+* :class:`espressomd.constraints.FlowField`
 

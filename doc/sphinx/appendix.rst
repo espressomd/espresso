@@ -462,7 +462,7 @@ Errors
 
 Common to all algorithms of the MMM family is that accuracy is cheap
 with respect to computation time. More precisely, the maximal pairwise
-error, i.e. the maximal error of the :math:`\psi` expression, decreases
+error, i.e. the maximal error of the :math:`\psi` expression decreases
 exponentially with the cutoffs. In turn, the computation time grows
 logarithmically with the accuracy. This is quite in contrast to the
 Ewald methods, for which decreasing the error bound can lead to
@@ -481,10 +481,12 @@ additional error source.
 
 .. figure:: figures/elc-errordist.pdf
    :alt: Error distribution of the ELC method.
+   :align: center
+   :height: 6.00000cm
 
    Error distribution of the ELC method.
 
-Figure [fig:ELC-error] shows the error distribution of the ELC method
+The figure shows the error distribution of the ELC method
 for a gap size of :math:`10\%` of the total system height. For MMM2D and
 MMM1D the error distribution is less homogeneous, however, also here it
 is always better to have some extra precision, especially since it is

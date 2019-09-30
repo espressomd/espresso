@@ -312,29 +312,11 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`billiard.py`
     A simple billiard game, needs the Python ``pypopengl`` module
 
-* :file:`bonds-tst.py`
-   Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
-
-   * print defined bonded interactions
-   * print bonds on a particle
-   * delete bonds by index or name
-   * save/load a bond to/from a variable
-
-* :file:`cellsystem_test.py`
-    Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.
-
-    ..
-        .. todo:: implement the older [tune_cells] call
-        .. todo:: add save/load optimal cell parameters from tune_skin()
-
 * :file:`chamber_game.py`
     Lennard-Jones gas used for demonstration purposes to showcase |es|. The
     game is based on the Maxwell's demon thought experiment. The snake is
     controlled by a gamepad or the keyboard to move particles between chambers
     against a pressure gradient.
-
-* :file:`debye_hueckel.py`
-    Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`.
 
 * :file:`ekboundaries.py`
 
@@ -365,20 +347,14 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
     Uses :meth:`~espressomd.analyze.Analysis.structure_factor()` to analyze a
     simple Lennard-Jones liquid. See :ref:`Structure factor`.
 
-* :file:`load_bonds.py`, :file:`store_bonds.py`
-    Uses the Python ``pickle`` module to store and load bond information.
-
 * :file:`load_checkpoint.py`,  :file:`save_checkpoint.py`
-   Basing usage of the checkpointing feature. Shows how to write/load the state of:
+   Basic usage of the checkpointing feature. Shows how to write/load the state of:
 
    * custom user variables
-   * non bonded interactions
+   * non-bonded interactions
    * particles
    * P3M parameters
    * thermostat
-
-* :file:`load_properties.py`, :file:`store_properties.py`
-    Uses the Python ``pickle`` module to store and load system information.
 
 * :file:`MDAnalysisIntegration.py`
     Shows how to expose configuration to ``MDAnalysis`` at run time. The
@@ -403,7 +379,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`slice_input.py`
     Uses python array slicing to set and extract various particle properties.
 
-* :file:`visualization.py`
+* :file:`visualization_ljliquid.py`
     A visualization for Mayavi/OpenGL of the LJ-liquid with interactive plotting.
 
 * :file:`visualization_bonded.py`
@@ -415,7 +391,7 @@ or in the `git repository <https://github.com/espressomd/espresso/blob/python/sa
 * :file:`visualization_npt.py`
     Simple test visualization for the NPT ensemble.
 
-* :file:`visualization_poisseuille.py`
+* :file:`visualization_poiseuille.py`
     Visualization for Poiseuille flow with lattice Boltzmann.
 
 * :file:`visualization_constraints.py`

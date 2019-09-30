@@ -125,7 +125,7 @@ details). Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
 of dealing with varying numbers of particles.
 
-To write data in a hdf5-file according to the H5MD proposal (http://nongnu.org/h5md/), first an object of the class
+To write data in a hdf5-file according to the H5MD proposal (https://nongnu.org/h5md/), first an object of the class
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
@@ -178,7 +178,7 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
 After the last write call, you have to call the ``close()`` method to remove
 the backup file and to close the datasets etc.
 
-H5MD files can be read and modified with the python module h5py (for documentation see `h5py <http://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
+H5MD files can be read and modified with the python module h5py (for documentation see `h5py <https://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
 
 .. code:: python
     
@@ -226,7 +226,7 @@ There exists a legacy python script in the :file:`tools` directory which can con
 MPI-IO data to the now unsupported blockfile format. Check it out if you want
 to post-process the data without ESPResSo.
 
-*WARNING* Do not attempt to read these binary files on a machine with a different
+*WARNING*: Do not attempt to read these binary files on a machine with a different
 architecture!
 
 .. _Writing VTF files:
@@ -366,7 +366,7 @@ Note that the |es| particles are ordered in increasing order, thus ``id=3`` corr
 Writing various formats using MDAnalysis
 ----------------------------------------
 
-If the MDAnalysis package (http://mdanalysis.org) is installed, it
+If the MDAnalysis package (https://mdanalysis.org) is installed, it
 is possible to use it to convert frames to any of the supported
 configuration/trajectory formats, including PDB, GROMACS, GROMOS,
 CHARMM/NAMD, AMBER, LAMMPS, ...)
@@ -396,7 +396,7 @@ using MDAnalysis. A simple example is the following:
         u.load_new(eos.trajectory)  # load the frame to the MDA universe
         W.write_next_timestep(u.trajectory.ts)  # append it to the trajectory
 
-For other examples see samples/python/MDAnalysisIntegration.py
+For other examples, see :file:`/samples/MDAnalysisIntegration.py`
 
 .. _Parsing PDB Files:
 

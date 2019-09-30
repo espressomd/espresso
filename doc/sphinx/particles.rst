@@ -382,9 +382,9 @@ To set up a virtual site,
 
 #. Repeat the previous step with more virtual sites, if desired.
 
-#. To update the positions of all virtual sites, call
+#. To update the positions of all virtual sites, call::
 
-   system.integrator.run(0,recalc_forces=True)
+      system.integrator.run(0, recalc_forces=True)
 
 Please note:
 
@@ -400,8 +400,9 @@ Please note:
    guaranteed. Always relate a virtual site to a non-virtual particle
    placed in the center of mass of the rigid arrangement of particles.
 
--  In case you know the correct quaternions, you can also setup a
-   virtual site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative` and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
+-  In case you know the correct quaternions, you can also setup a virtual
+   site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative`
+   and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle

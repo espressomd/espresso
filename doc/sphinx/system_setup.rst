@@ -182,7 +182,7 @@ In a multiple processor environment, the nsquared cellsystem uses a
 simple particle balancing scheme to have a nearly equal number of
 particles per CPU, :math:`n` nodes have :math:`m` particles, and
 :math:`p-n` nodes have :math:`m+1` particles, such that
-:math:`n*m+(p-n)*(m+1)=N`, the total number of particles. Therefore the
+:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles. Therefore the
 computational load should be balanced fairly equal among the nodes, with
 one exception: This code always uses one CPU for the interaction between
 two different nodes. For an odd number of nodes, this is fine, because

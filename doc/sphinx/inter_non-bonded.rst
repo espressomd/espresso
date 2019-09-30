@@ -581,7 +581,7 @@ only has an effect if the DPD thermostat is activated.
 The interaction consists of a friction force :math:`\vec{F}_{ij}^{D}` and
 a random force :math:`\vec{F}_{ij}^R` added to the other interactions
 between particles :math:`i` and :math:`j`. It is decomposed into a component
-parallel and perpendicular to the distance vector :math:`\vec{r}_{ij}` of the particle pair .
+parallel and perpendicular to the distance vector :math:`\vec{r}_{ij}` of the particle pair.
 The friction force contributions of the parallel part are
 
 .. math:: \vec{F}_{ij}^{D} = -\gamma_\parallel w_\parallel (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
