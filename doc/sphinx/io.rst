@@ -47,9 +47,9 @@ Checkpointing is implemented by the :class:`espressomd.checkpointing.Checkpoint`
     from espressomd import checkpointing
     checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path=".")
 
-Here, `checkpoint_id` denotes the identifier for a checkpoint. Legal characters for an id
+Here, ``checkpoint_id`` denotes the identifier for a checkpoint. Legal characters for an id
 are "0-9", "a-zA-Z", "-", "_".
-The parameter `checkpoint_path`, specifies the relative or absolute path where the checkpoints are
+The parameter ``checkpoint_path``, specifies the relative or absolute path where the checkpoints are
 stored. The current working directory is assumed, when this parameter is skipped.
 
 After the simulation system and user variables are set up, they can be
@@ -66,7 +66,7 @@ To give an example::
     checkpoint.register("my_var")
     # ...
 
-will register the user variable `my_var` and the instance of the simulation system. The checkpoint can be saved via::
+will register the user variable ``my_var`` and the instance of the simulation system. The checkpoint can be saved via::
 
 
     checkpoint.save()
@@ -96,11 +96,11 @@ The checkpointing instance itself will also be restored. I.e., the same variable
 
 Be aware of the following limitations: 
 
-  * Checkpointing makes use of the `pickle` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, `numpy` arrays and many other objects. Still, pickling support cannot be taken for granted.
+  * Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
 
   * Pickling support of the Espresso system instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms then can be tested.
 
-  * The active actors, i.e., the content of `system.actors`, are checkpointed. For lattice Boltzmann fluids, this only includes the parameters such as the lattice constant (`agrid`). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
+  * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
     and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint
 

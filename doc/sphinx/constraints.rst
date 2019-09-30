@@ -269,8 +269,6 @@ Pictured is an example constraint with a ``Cylinder`` shape created with ::
 :class:`espressomd.shapes.Rhomboid`
     A rhomboid or parallelepiped.
 
-:todo: `This shape is currently broken. Please do not use.`
-
 The resulting surface is a rhomboid, defined by one corner located at ``corner``
 and three adjacent edges, defined by the three vectors connecting the
 corner ``corner`` with its three neighboring corners:
@@ -544,18 +542,18 @@ define nodes which are part of a boundary, please refer to :ref:`Using shapes
 as lattice Boltzmann boundary`.
 
 
+..
+    .. _Creating a harmonic trap:
 
-.. _Creating a harmonic trap:
+    Creating a harmonic trap
+    ------------------------
 
-Creating a harmonic trap
-------------------------
+    .. todo:: This feature is not yet implemented.
 
-:todo: `This feature is not yet implemented.`
-
-Calculates a spring force for all particles, where the equilibrium
-position of the spring is at and its force constant is . A more
-flexible trap can be constructed with constraints, but this one runs on
-the GPU.
+    Calculates a spring force for all particles, where the equilibrium
+    position of the spring is at and its force constant is . A more
+    flexible trap can be constructed with constraints, but this one runs on
+    the GPU.
 
 .. _External Fields:
 

@@ -259,7 +259,7 @@ and then adding it to the system: ::
 .. rubric:: Integration
 
 So far we just *added* particles and interactions, but did not propagate the
-system. This is done by the `integrator`.  It uses by default the velocity
+system. This is done by the *integrator*.  It uses by default the velocity
 Verlet algorithm and is already created by the system class. To perform an
 integration step, just execute::
 

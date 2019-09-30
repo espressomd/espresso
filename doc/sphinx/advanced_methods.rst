@@ -21,7 +21,7 @@ The collision detection is controlled via the :attr:`espressomd.system.System.co
 
 Several modes are available for different types of binding.
 
-* ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction `stiff` enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
+* ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction *stiff* enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
 
     import espressomd
     from espressomd.interactions import HarmonicBond
@@ -64,13 +64,13 @@ Several modes are available for different types of binding.
     * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
     * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
-* ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them `inert`. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
+* ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them *inert*. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
 
-  * ``part_type_to_attach_vs_to``: Type of the particle to which the virtual site is attached, i.e., the `big` particle.
-  * ``part_type_to_be_glued``: Type of the particle bound to the virtual site (the `small` particle).
-  * ``part_type_after_glueing``: The type assigned to the particle bound to the virtual site (`small` particle) after the collision.
+  * ``part_type_to_attach_vs_to``: Type of the particle to which the virtual site is attached, i.e., the *big* particle.
+  * ``part_type_to_be_glued``: Type of the particle bound to the virtual site (the *small* particle).
+  * ``part_type_after_glueing``: The type assigned to the particle bound to the virtual site (*small* particle) after the collision.
   * ``part_type_vs``: Particle type assigned to the virtual site created during the collision.
-  * ``distance_glued_particle_to_vs``: Distance of the virtual site to the particle being bound to it (`small` particle).
+  * ``distance_glued_particle_to_vs``: Distance of the virtual site to the particle being bound to it (*small* particle).
 
   Note: When the type of a particle is changed on collision, this makes the
   particle inert with regards to further collision. Should a particle  of
@@ -119,7 +119,7 @@ The following limitations currently apply for the collision detection:
 * The ``"bind at point of collision"`` approach cannot handle collisions
   between virtual sites
 
-..
+
 .. _Lees-Edwards boundary conditions:
 
 Lees-Edwards boundary conditions
@@ -1367,8 +1367,8 @@ least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``frictio
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
 lattice Boltzmann command, this parameter is instead taken directly from the value set for
-:attr:`espressomd.system.System.time_step`. The LB `mass density` is set independently from the
-electrokinetic `number densities`, since the LB fluid serves only as a
+:attr:`espressomd.system.System.time_step`. The LB *mass density* is set independently from the
+electrokinetic *number densities*, since the LB fluid serves only as a
 medium through which hydrodynamic interactions are propagated, as will
 be explained further in the next paragraph. If no ``lb_density`` is specified, then our
 algorithm assumes ``lb_density= 1.0``. The two 'new' parameters are the temperature ``T`` at
@@ -1508,8 +1508,8 @@ visualization software such as ParaView [5]_ and Mayavi2 [6]_.
     species.print_vtk_density(path)
 
 These commands are similar to the above. They enable the
-export of diffusive species properties, namely: `density` and `flux`, which specify the
-number density and flux of species `species`, respectively.
+export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
+number density and flux of species ``species``, respectively.
 
 .. _Local Quantities:
 
@@ -1526,7 +1526,7 @@ A single node can be addressed using three integer values
 which run from 0 to ``dim_x/agrid``, ``dim_y/agrid``, and ``dim_z/agrid``, respectively. The
 velocity, electrostatic potential and the pressure of a LB fluid node can be obtained this way.
 
-The local `density` and `flux` of a species can be obtained in the same fashion:
+The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
 
 ::
 

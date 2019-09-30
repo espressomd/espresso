@@ -75,7 +75,7 @@ It is based on :cite:`brodka04a` and the dipolar version of
 
 Usage notes:
 
-  * The non-periodic direction is always the `z`-direction.
+  * The non-periodic direction is always the ``z``-direction.
 
   * The method relies on a slab of the simulation box perpendicular to the z-direction not to contain particles. The size in z-direction of this slab is controlled by the ``gap_size`` parameter. The user has to ensure that no particles enter this region by means of constraints or by fixing the particles' z-coordinate. When there is no empty slab of the specified size, the method will silently produce wrong results.
 

@@ -686,7 +686,7 @@ setting up the Drude particles, so the simple call::
 
 given the :class:`espressomd.System() <espressomd.system.System>` object, uses this information to create all
 necessary Thole interactions. The method calculates the mixed scaling
-coefficient `s` and creates the non-bonded Thole interactions between the
+coefficient ``s`` and creates the non-bonded Thole interactions between the
 collected types to cover all the Drude-Drude, Drude-core and core-core
 combinations. No further calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` should
 follow. Set ``verbose`` to ``True`` to print out the coefficients, charge factors

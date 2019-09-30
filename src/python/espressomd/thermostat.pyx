@@ -37,7 +37,7 @@ def AssertThermostatType(*allowedthermostats):
         >>> @AssertThermostatType(THERMO_LANGEVIN)
         >>> def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
 
-    This will prefix an assertion for THERMO_LANGEVIN to the call.
+    This will prefix an assertion for ``THERMO_LANGEVIN`` to the call.
 
     """
     def decoratorfunction(function):

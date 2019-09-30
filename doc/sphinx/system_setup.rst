@@ -421,8 +421,8 @@ and set the following parameters:
 Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
 and the parameters:
 
-    * ``ext_pressure``:  (float) The external pressure as float variable.
-    * ``piston``:        (float) The mass of the applied piston as float variable.
+    * ``ext_pressure``:  (float) The external pressure.
+    * ``piston``:        (float) The mass of the applied piston.
 
 For example::
 
@@ -489,7 +489,7 @@ you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g.,
     print(system.cuda_init_handle.device_list)
 
 This attribute is read only and will return a dictionary containing
-the device id as key and the device name as its' value.
+the device id as key and the device name as its value.
 
 .. _Selection of CUDA device:
 

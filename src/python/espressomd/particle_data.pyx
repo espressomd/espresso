@@ -100,7 +100,7 @@ cdef class ParticleHandle:
             Nonbonded interactions act between different types of particles.
 
         .. note::
-           The value of `type` has to be an integer >= 0.
+           The value of ``type`` has to be an integer >= 0.
 
         """
 
@@ -173,7 +173,7 @@ cdef class ParticleHandle:
             The particles' position.
 
         .. note::
-           Setting the folded position is ambiguous and is thus not possible, please use `pos`.
+           Setting the folded position is ambiguous and is thus not possible, please use ``pos``.
 
         Examples
         --------
@@ -282,13 +282,13 @@ cdef class ParticleHandle:
 
         bonds : list/tuple of tuples/lists
             a bond tuple is specified as a bond identifier associated with
-            a particle `(bond_ID, part_ID)`. A single particle may contain
+            a particle ``(bond_ID, part_ID)``. A single particle may contain
             multiple such tuples.
 
         See Also
         --------
-        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a `Particle`
-        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a `Particle`
+        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a ``Particle``
+        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a ``Particle``
 
         .. note::
            Bond ids have to be an integer >= 0.
@@ -528,8 +528,8 @@ cdef class ParticleHandle:
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
             coordinate axes in the particle’s co-rotating coordinate system.
-            When the particle's quaternions are set to 1 0 0 0, the co-rotating
-            and the fixed (lab) frame are co-aligned.
+            When the particle's quaternions are set to ``[1, 0, 0, 0,]``, the
+            co-rotating and the fixed (lab) frames are co-aligned.
 
             .. note::
                This needs the feature ``ROTATIONAL_INERTIA``.
@@ -924,7 +924,7 @@ cdef class ParticleHandle:
                 """
                 The body-fixed frictional coefficient used in the Langevin thermostat.
 
-                gamma : `float` or (3,) array_like of :obj:`float`
+                gamma : :obj:`float` or (3,) array_like of :obj:`float`
 
                 .. note::
                     This needs features ``LANGEVIN_PER_PARTICLE`` and
@@ -988,7 +988,7 @@ cdef class ParticleHandle:
                     """
                     The particle translational frictional coefficient used in the Langevin thermostat.
 
-                    gamma_rot : :obj:`float` of (3,) array_like of :obj:`float`
+                    gamma_rot : :obj:`float` or (3,) array_like of :obj:`float`
 
                     .. note::
                         This needs features ``LANGEVIN_PER_PARTICLE``,
@@ -1344,8 +1344,8 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        add_bond : Delete an unverified bond held by the `Particle`.
-        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
+        add_bond : Delete an unverified bond held by the ``Particle``.
+        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
 
         """
 
@@ -1375,8 +1375,8 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        delete_bond : Delete an unverified bond held by the `Particle`.
-        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
+        delete_bond : Delete an unverified bond held by the ``Particle``.
+        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
 
         """
 
@@ -1393,9 +1393,9 @@ cdef class ParticleHandle:
         Checks the validity of the given bond:
 
             - If the bondtype is given as an object or a numerical id
-            - If all partners are of type int
+            - If all partners are of type :obj:`int`
             - If the number of partners satisfies the bond
-            - If the bond type used exists (is lower than n_bonded_ia)
+            - If the bond type used exists (is lower than ``n_bonded_ia``)
             - If the number of bond partners fits the bond type
 
         Throws an exception if any of these are not met.
@@ -1455,7 +1455,7 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
+        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
 
         Examples
         --------
@@ -1585,9 +1585,9 @@ cdef class ParticleHandle:
 
             Parameters
             ----------
-            axis : array-like
+            axis : (3,) array_like of :obj:`float`
 
-            angle : float
+            angle : :obj:`float`
 
             """
             cdef Vector3d a
@@ -1973,7 +1973,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         >>> system.part.writevtk("part_type_2.vtk", types=[2])
         >>> system.part.writevtk("part_all.vtk")
 
-        .. todo:: `move to ./io/writer/`
+        .. todo:: move to ``./io/writer/``
 
         """
 

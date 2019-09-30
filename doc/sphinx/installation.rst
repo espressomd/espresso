@@ -674,7 +674,7 @@ targets are available:
     subdirectory.
 
 ``sphinx``
-    Creates the `sphinx` code documentation in the :file:`doc/sphinx`
+    Creates the ``sphinx`` code documentation in the :file:`doc/sphinx`
     subdirectory.
 
 ``tutorials``

@@ -147,7 +147,7 @@ A pairwise Coulomb interaction can be instantiated via
     system.bonded_inter.add(bonded_coulomb)
     system.part[0].add_bond((bonded_coulomb, 1))
 
-This creates a bond with a Coulomb pair potential between particles `0` and `1`.
+This creates a bond with a Coulomb pair potential between particles ``0`` and ``1``.
 It is given by
 
 .. math:: V(r) = \frac{\alpha q_1 q_2}{r},

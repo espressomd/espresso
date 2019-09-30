@@ -76,7 +76,7 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        mode : str, \{"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"\}
+        mode : :obj:`str`, \{"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"\}
             Collision detection mode
 
         distance : :obj:`float`
