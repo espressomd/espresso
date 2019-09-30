@@ -35,7 +35,7 @@ string(REGEX
                SOVERSION
                "${PROJECT_VERSION}")
 if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
-  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
+  message(FATAL_ERROR "Could not determine SOVERSION from ${PROJECT_VERSION}")
 endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 #

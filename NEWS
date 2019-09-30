@@ -32,8 +32,8 @@ Changed requirements
   For additional information, please see
   https://github.com/espressomd/espresso/wiki/python_2_3_transition.
 
-* Espresso now needs a C++14-capable compiler, such as GCC 4.9 or later
-  and Clang 4 and later.
+* Espresso now needs a C++14-capable compiler, such as GCC 4.9 and later
+  or Clang 4 and later.
 
 * It is discouraged to use Espresso with Boost versions below 1.67.
 
@@ -68,7 +68,8 @@ Added functionality and documentation
 
 * Visualization of slit pores in the OpenGL visualizer.
 
-* A Weeks-Chandler-Anderson short range potential has been added (WCA).
+* A Weeks-Chandler-Anderson short-range potential has been added
+  (``WCA``).
 
 * The external force density applied to a lattice-Boltzmann fluid
   can now be changed during the simulation.
@@ -78,7 +79,7 @@ Added functionality and documentation
 
 * The ``system.cell_system.tune_skin()`` method now has a keyword
   argument ``adjust_max_skin``. If set to ``True``, the maximum skin
-  to be tested will be reduced such that it is compatible to the local
+  to be tested will be reduced such that it is compatible with the local
   box size.
 
 * For the CPU lattice-Boltzmann implementation, the limit on the Verlet
@@ -265,7 +266,7 @@ Under the hood changes
 
 * The rotation-related code has been simplified.
 
-* Long-ranged electrostatic and magnetostatic methods now have a common
+* Long-range electrostatic and magnetostatic methods now have a common
   interface.
 
 * The kernels for short-range and bonded interactions have been
