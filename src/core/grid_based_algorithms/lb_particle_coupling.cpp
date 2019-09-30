@@ -327,7 +327,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
             return;
 
           /* Particle is in our LB volume, so this node
-           * is resposible to adding its force */
+           * is responsible to adding its force */
           if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
                 p, noise_amplitude * f_random(p.identity()));

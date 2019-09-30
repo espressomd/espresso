@@ -94,7 +94,7 @@ if system.cell_system.get_state()['n_nodes'] > 1:
 mat_I = system.analysis.moment_of_inertia_matrix(p_type=type_A)
 # in this simple case, the cluster has principal axes aligned with the box
 momI = [mat_I[0, 0], mat_I[1, 1], mat_I[2, 2]]
-print("moment of intertia is", momI)
+print("moment of inertia is", momI)
 
 # place center bead
 p_center = system.part.add(

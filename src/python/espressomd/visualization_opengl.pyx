@@ -118,7 +118,7 @@ class openGLLive:
     quality_constraints : :obj:`int`, optional
         The number of subdivisions for primitive constraints.
     constraint_type_colors : array_like :obj:`float`, optional
-        Colors of the constaints by type.
+        Colors of the constraints by type.
     constraint_type_materials : array_like :obj:`str`, optional
         Materials of the constraints by type.
     draw_bonds : :obj:`bool`, optional

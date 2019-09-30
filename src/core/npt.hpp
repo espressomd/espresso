@@ -90,7 +90,7 @@ extern nptiso_struct nptiso;
 #define NPTGEOM_ZDIR 4
 
 /** @brief Synchronizes npt state such as instantaneous and average pressure
- *   @param n_steps Number of interation steps since the last sync
+ *   @param n_steps Number of integration steps since the last sync
  */
 void synchronize_npt_state(int n_steps);
 void npt_ensemble_init(const BoxGeometry &box);

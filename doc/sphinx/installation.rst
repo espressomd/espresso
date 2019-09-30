@@ -732,7 +732,7 @@ button to execute the current block, or use the keyboard shortcut Shift+Enter.
 If the current block is a code block, the ``In [ ]`` label to the left will
 change to ``In [*]`` while the code is being executed, and become ``In [1]``
 once the execution has completed. The number increments itself every time a
-code cell is executed. This bookeeping is extremely useful when modifying
+code cell is executed. This bookkeeping is extremely useful when modifying
 previous code cells, as it shows which cells are out-of-date. It's also
 possible to run all cells by clicking on the "Run" drop-down menu, then on
 "Run All Below". This will change all labels to ``In [*]`` to show that the

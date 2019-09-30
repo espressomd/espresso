@@ -30,7 +30,7 @@ tmp=`mktemp`
 for f in `echo ${py_files}`; do
   head -n1 ${f} | grep -q '^#!'
   if [ $? = 0 ]; then
-    # preseve shebang on first line
+    # preserve shebang on first line
     (head -n1 ${f}
      sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'
      tail -n+2 ${f}) > ${tmp}

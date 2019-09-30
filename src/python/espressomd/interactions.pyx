@@ -3384,8 +3384,7 @@ IF MEMBRANE_COLLISION == 1:
             self._params = {}
 
         def _get_params_from_es_core(self):
-            return \
-                {}
+            return {}
 
         def _set_params_in_es_core(self):
             oif_out_direction_set_params(
@@ -3524,7 +3523,7 @@ class BondedInteractions:
         # type of key must be int
         if not is_valid_type(key, int):
             raise ValueError(
-                "Index to BondedInteractions[] has to ba an integer referring to a bond id")
+                "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
         # Value must be subclass off BondedInteraction
         if not isinstance(value, BondedInteraction):
