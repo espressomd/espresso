@@ -21,9 +21,10 @@ from sys import argv
 
 class Defines:
 
-    def __init__(self, compiler, flags=[]):
+    def __init__(self, compiler, flags=()):
         self._compiler = compiler
-        self._flags = flags + ["-E", "-dM"]
+        assert isinstance(flags, (list, tuple))
+        self._flags = list(flags) + ["-E", "-dM"]
 
         build_in = self._build_in_defs()
         self._buildin = set(build_in)
