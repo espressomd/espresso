@@ -140,13 +140,13 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(system.part[1].f), particle_force1)
 
     @ut.skipIf('LBTHERM' not in modes, 'LB thermostat not in modes')
-    def test_thermostat(self):
+    def test_thermostat_LB(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LB')
         self.assertEqual(system.thermostat.get_state()[0]['seed'], 23)
         self.assertEqual(system.thermostat.get_state()[0]['gamma'], 2.0)
 
     @ut.skipIf('LBTHERM' in modes, 'Langevin incompatible with LB thermostat')
-    def test_thermostat(self):
+    def test_thermostat_no_LB(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
         self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
         self.assertEqual(system.thermostat.get_state()[0]['seed'], 42)
