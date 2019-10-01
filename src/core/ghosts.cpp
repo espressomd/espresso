@@ -29,22 +29,20 @@
 #include "errorhandling.hpp"
 #include "particle_data.hpp"
 
-#include <algorithm>
 #include <boost/serialization/vector.hpp>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <mpi.h>
+#include <utils/Span.hpp>
+
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
 #include <type_traits>
 #include <vector>
-
-#include <utils/Span.hpp>
 
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
 
 struct CommBuf {
-  friend struct Archiver;
   friend struct BondArchiver;
 
   char *data() { return buf.data(); }
@@ -67,28 +65,19 @@ private:
   char *insert;
 
 public:
-  Archiver(CommBuf &cb) : cb(cb), insert(cb.data()) {}
-  ~Archiver() {
-    // Sanity check
-    if (insert - cb.data() != cb.size()) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: ghost comm buffer size %zu "
-              "differs from what archiver put in (%td)\n",
-              this_node, cb.size(), insert - cb.data());
-      errexit();
-    }
-  }
+  explicit Archiver(CommBuf &cb) : cb(cb), insert(cb.data()) {}
+  ~Archiver() { assert(insert - cb.data() == cb.size()); }
 
   template <typename T, typename = typename std::enable_if<
                             std::is_trivially_copyable<T>::value>::type>
-  inline void operator<<(const T &value) {
+  void operator<<(const T &value) {
     std::memcpy(insert, &value, sizeof(T));
     insert += sizeof(T);
   }
 
   template <typename T, typename = typename std::enable_if<
                             std::is_trivially_copyable<T>::value>::type>
-  inline void operator>>(T &value) {
+  void operator>>(T &value) {
     std::memcpy(&value, insert, sizeof(T));
     insert += sizeof(T);
   }
@@ -106,18 +95,11 @@ private:
   const size_t initial_size;
 
 public:
-  BondArchiver(CommBuf &cb)
+  explicit BondArchiver(CommBuf &cb)
       : cb(cb), bond_retrieve(cb.bondbuf.begin()),
         initial_begin(cb.bondbuf.begin()), initial_size(cb.bondbuf.size()) {}
 
-  ~BondArchiver() {
-    if (bond_retrieve != initial_begin + initial_size) {
-      fprintf(stderr,
-              "%d: recv bond buffer was not used up, %td elements remain\n",
-              this_node, cb.bondbuf.end() - bond_retrieve);
-      errexit();
-    }
-  }
+  ~BondArchiver() { assert(bond_retrieve == initial_begin + initial_size); }
 
   template <typename T> inline void operator<<(const Utils::Span<T> data) {
     cb.bondbuf.insert(cb.bondbuf.end(), data.cbegin(), data.cend());
@@ -204,8 +186,7 @@ static void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication &gc,
           ar << pt.p;
           if (ghosts_have_bonds) {
             ar << static_cast<int>(pt.bl.n);
-            bar << Utils::make_const_span<int const>(pt.bl.data(),
-                                                     pt.bl.size());
+            bar << Utils::make_const_span(pt.bl.data(), pt.bl.size());
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
