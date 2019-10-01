@@ -142,7 +142,8 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('LBTHERM' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         self.assertEqual(system.thermostat.get_state()[0]['type'], 'LB')
-        self.assertEqual(system.thermostat.get_state()[0]['seed'], 23)
+        self.assertEqual(system.thermostat.get_state()[0]['rng_counter_fluid'],
+                         0)  # rng_counter_fluid = seed, seed is 0 because kT=0
         self.assertEqual(system.thermostat.get_state()[0]['gamma'], 2.0)
 
     @ut.skipIf('LBTHERM' in modes, 'Langevin incompatible with LB thermostat')

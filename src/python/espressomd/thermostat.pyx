@@ -104,6 +104,7 @@ cdef class Thermostat:
                 self.set_lb(
                     LB_fluid=thmst["LB_fluid"],
                     act_on_virtual=thmst["act_on_virtual"],
+                    gamma=thmst["gamma"],
                     seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], p_diff=thmst["p_diff"],
@@ -166,7 +167,7 @@ cdef class Thermostat:
             # thermo_dict["piston"] = nptiso.piston
             # thermo_dict["p_diff"] = nptiso.p_diff
             thermo_list.append(npt_dict)
-        if (thermo_switch & THERMO_DPD):
+        if thermo_switch & THERMO_DPD:
             IF DPD:
                 dpd_dict = {}
                 dpd_dict["type"] = "DPD"
@@ -221,7 +222,7 @@ cdef class Thermostat:
             Thermal energy of the simulated heat bath.
         gamma : :obj:`float`
             Contains the friction coefficient of the bath. If the feature
-            ``PARTICLE_ANISOTROPY`` is compiled in then ``gamma`` can be a list
+            ``PARTICLE_ANISOTROPY`` is compiled in, then ``gamma`` can be a list
             of three positive floats, for the friction coefficient in each
             cardinal direction.
         gamma_rotation : :obj:`float`, optional
