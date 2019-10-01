@@ -148,8 +148,7 @@ one of::
     lb.set_interpolation_order('quadratic')
     
 A note on boundaries:
-
-Both interpolation schemes don't take into account the physical location of the boundaries
+both interpolation schemes don't take into account the physical location of the boundaries
 (e.g. in the middle between two nodes for a planar wall) but will use the boundary node slip velocity 
 at the node position. This means that every interpolation involving at least one
 boundary node will introduce an error.
@@ -392,7 +391,7 @@ Intersecting boundaries are in principle possible but must be treated
 with care. In the current implementation, all nodes that are
 within at least one boundary are treated as boundary nodes.
 
-Currently, only the so called "link-bounce-back" algorithm for wall
+Currently, only the so-called "link-bounce-back" algorithm for wall
 nodes is available. This creates a boundary that is located
 approximately midway between the lattice nodes, so in the above example ``wall[0]``
 corresponds to a boundary at :math:`x=1.5`. Note that the

@@ -287,7 +287,7 @@ IF DIPOLES == 1:
 
         """Calculate magnetostatic interactions by direct summation over all pairs.
 
-        If the system has periodic boundaries, `n_replica` copies of the system are
+        If the system has periodic boundaries, ``n_replica`` copies of the system are
         taken into account in the respective directions. Spherical cutoff is applied.
 
         Attributes

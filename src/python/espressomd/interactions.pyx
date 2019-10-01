@@ -2274,9 +2274,9 @@ IF THOLE:
             scaling_coeff : :obj:`float`
                 The factor used in the Thole damping function between
                 polarizable particles i and j. Usually calculated by
-                the polarizabilities alpha_i, alpha_j and damping
-                parameters  a_i, a_j via
-                scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
+                the polarizabilities :math:`\\alpha_i`, :math:`\\alpha_j`
+                and damping parameters :math:`a_i`, :math:`a_j` via
+                :math:`s_{ij} = \\frac{(a_i+a_j)/2}{((\\alpha_i\\cdot\\alpha_j)^{1/2})^{1/3}}`
             q1q2: :obj:`float`
                 Charge factor of the involved charges. Has to be set because
                 it acts only on the portion of the Drude core charge that is
@@ -2553,9 +2553,9 @@ class _TabulatedBase(BondedInteraction):
     max : :obj:`float`
         The maximal interaction distance. Has to be pi for angles and 2pi for
         dihedrals.
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table.
 
     """
@@ -2638,9 +2638,9 @@ class TabulatedDistance(_TabulatedBase):
         The minimal interaction distance.
     max : :obj:`float`
         The maximal interaction distance.
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table.
 
     """
@@ -2672,9 +2672,9 @@ class TabulatedAngle(_TabulatedBase):
     Parameters
     ----------
 
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table for the range :math:`0-\\pi`.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table for the range :math:`0-\\pi`.
 
     """
@@ -2712,9 +2712,9 @@ class TabulatedDihedral(_TabulatedBase):
     Parameters
     ----------
 
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table for the range :math:`0-2\\pi`.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table for the range :math:`0-2\\pi`.
 
     """
@@ -2785,9 +2785,9 @@ IF TABULATED == 1:
                 The minimal interaction distance.
             max : :obj:`float`,
                 The maximal interaction distance.
-            energy: array_like :obj:`float`
+            energy: array_like of :obj:`float`
                 The energy table.
-            force: array_like :obj:`float`
+            force: array_like of :obj:`float`
                 The force table.
 
             """
@@ -3384,8 +3384,7 @@ IF MEMBRANE_COLLISION == 1:
             self._params = {}
 
         def _get_params_from_es_core(self):
-            return \
-                {}
+            return {}
 
         def _set_params_in_es_core(self):
             oif_out_direction_set_params(
@@ -3524,7 +3523,7 @@ class BondedInteractions:
         # type of key must be int
         if not is_valid_type(key, int):
             raise ValueError(
-                "Index to BondedInteractions[] has to ba an integer referring to a bond id")
+                "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
         # Value must be subclass off BondedInteraction
         if not isinstance(value, BondedInteraction):

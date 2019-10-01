@@ -77,7 +77,7 @@ using are_allowed_arguments =
  * @brief Invoke a callable with arguments from an mpi buffer.
  *
  * @tparam F A Callable that can be called with Args as parameters.
- * @tparam Args Pack of arguments for @type F
+ * @tparam Args Pack of arguments for @p F
  *
  * @param f Functor to be called
  * @param ia Buffer to extract the parameters from

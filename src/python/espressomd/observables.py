@@ -252,7 +252,7 @@ class LBVelocityProfile(Observable):
     sampling_offset_z : :obj:`float`, default=0.0
         Offset for the sampling grid in ``z``-direction.
     allow_empty_bins : :obj:`bool`, default=False
-        Wether or not to allow bins that will not be sampled at all.
+        Whether or not to allow bins that will not be sampled at all.
 
     """
     _so_name = "Observables::LBVelocityProfile"

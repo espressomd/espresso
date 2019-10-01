@@ -187,10 +187,10 @@ cdef class ReactionAlgorithm:
         product_coefficients : list of :obj:`int`
             List of stoichiometric coefficients of products of the reaction in
             the same order as the list of their types
-        default_charges : dictionary
+        default_charges : :obj:`dict`
             A dictionary of default charges for types that occur in the provided reaction.
         check_for_electroneutrality : :obj:`bool`
-            Check for electroneutrality of the given reaction if True.
+            Check for electroneutrality of the given reaction if ``True``.
 
         """
         self._params["check_for_electroneutrality"] = True
@@ -410,7 +410,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     def add_reaction(self, *args, **kwargs):
         if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
             raise ValueError(
-                "The constant pH method is only implemented for reactionw with two product types and one educt type.")
+                "The constant pH method is only implemented for reactions with two product types and one adduct type.")
         if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
             raise ValueError(
                 "All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
