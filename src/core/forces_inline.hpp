@@ -56,7 +56,6 @@
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
-#include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"

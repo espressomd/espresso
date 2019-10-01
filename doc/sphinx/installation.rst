@@ -444,8 +444,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``LB_BOUNDARIES_GPU``
 
--  ``AFFINITY``
-
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
 
