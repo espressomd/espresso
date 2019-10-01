@@ -400,38 +400,6 @@ struct Particle {
 #endif
 };
 
-/**
- * These functions cause a compile time error if
- * Particles are copied by memmove or memcpy,
- * which do not keep class invariants.
- *
- * These are templates so that the error is caused
- * at the place they are used.
- */
-template <typename Size> void memmove(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memmove(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size> void memcpy(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memcpy(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle const *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
  *  Access using \ref realloc_particlelist, ...
