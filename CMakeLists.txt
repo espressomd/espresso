@@ -28,7 +28,7 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.1-dev")
+set(PROJECT_VERSION "4.1.0")
 string(REGEX
        REPLACE "^([1-9]+)\\.[0-9]+.*$"
                "\\1"
