@@ -66,7 +66,7 @@ class LBStreamingCommon:
 
     """
     Check the streaming step of the LB fluid implementation by setting all populations
-    to zero except one. Relaxation is supressed by choosing appropriate parameters.
+    to zero except one. Relaxation is suppressed by choosing appropriate parameters.
 
     """
     lbf = None

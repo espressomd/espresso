@@ -102,7 +102,7 @@ class ShapeBasedConstraint(Constraint):
     only_positive : :obj:`bool`
         Act only in the direction of positive normal,
         only useful if penetrable is ``True``.
-    particle_type : int
+    particle_type : :obj:`int`
         Interaction type of the constraint.
     particle_velocity : array_like of :obj:`float`
         Interaction velocity of the boundary

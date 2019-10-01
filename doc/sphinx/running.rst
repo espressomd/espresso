@@ -10,7 +10,7 @@ To run the integrator call the method
 
 where ``number_of_steps`` is the number of time steps the integrator
 should perform. The two main integration schemes of |es| are the Velocity Verlet algorithm 
-and an adaption of the Velocity Verlet algorithms to simulate an NPT ensemble.
+and an adaption of the Velocity Verlet algorithm to simulate an NPT ensemble.
 A steepest descent implementation is also available.
 
 .. _Velocity Verlet Algorithm:
@@ -192,7 +192,7 @@ Whether or not rotational degrees of freedom are propagated, is controlled on a 
 It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
 In this way, just compiling in the ``ROTATION`` feature no longer changes the physics of the system.
 
-The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled::
+The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation enabled on the x axis::
 
     import espressomd
     s = espressomd.System()
@@ -235,9 +235,7 @@ A common application is removing overlap between randomly placed particles.
 Please note that the behavior is undefined if a thermostat is activated.
 It runs a simple steepest descent algorithm:
 
-Iterate
-
-.. math:: p_i = p_i + \min(\texttt{gamma} \times F_i, \texttt{max_displacement}),
+.. math:: \vec{r}_{i+1} = \vec{r}_i + \min(\gamma \vec{F}_i, \vec{r}_{\text{max_displacement}}),
 
 while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.

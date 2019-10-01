@@ -450,7 +450,7 @@ IF ELECTROKINETICS:
                 if k in self.valid_keys():
                     self._params[k] = kwargs[k]
                 else:
-                    raise KeyError("%s is not a vaild key" % k)
+                    raise KeyError("%s is not a valid key" % k)
 
         def valid_keys(self):
             """

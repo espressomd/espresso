@@ -15,7 +15,7 @@
 ##    @code{.sh}
 ##    #!/bin/bash
 ##    # load Unit Testing library
-##    source /work/jgrad/espresso-fork/benchmarks/BashUnitTests.sh
+##    source /path/to/espresso/testsuite/cmake/BashUnitTests.sh
 ##
 ##    # setup
 ##    function set_up() {

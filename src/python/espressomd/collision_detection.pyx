@@ -31,11 +31,11 @@ cdef extern from "collision.hpp":
 class CollisionDetection(ScriptInterfaceHelper):
 
     """
-    Inteface to the collision detection / dynamic binding.
+    Interface to the collision detection / dynamic binding.
 
     See :ref:`Creating bonds when particles collide` for detailed instructions.
 
-    This class should not be instanciated by the user. Instead, use
+    This class should not be instantiated by the user. Instead, use
     the :attr:`espressomd.system.System.collision_detection` attribute
     of the system class to access the collision detection.
 
@@ -76,7 +76,7 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        mode : str, \{"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"\}
+        mode : :obj:`str`, \{"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"\}
             Collision detection mode
 
         distance : :obj:`float`
@@ -199,7 +199,7 @@ class CollisionDetection(ScriptInterfaceHelper):
         if mode == "bind_three_particles":
             return ("mode", "bond_centers", "distance", "bond_three_particles",
                     "three_particle_binding_angle_resolution")
-        raise Exception("Mode not hanled: " + mode.__str__())
+        raise Exception("Mode not handled: " + mode.__str__())
 
     _int_mode = {
         "off": int(COLLISION_MODE_OFF),

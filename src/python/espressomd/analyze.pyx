@@ -127,9 +127,9 @@ class Analysis:
         ----------
         id : :obj:`int`, optional
             Calculate distance to particle with
-            :attr:`~espressomd.particle_data.ParticleHandle.id` `id`.
+            :attr:`~espressomd.particle_data.ParticleHandle.id` ``id``.
         pos : array of :obj:`float`, optional
-            Calculate distance to position `pos`.
+            Calculate distance to position ``pos``.
 
         Returns
         -------
@@ -240,7 +240,7 @@ class Analysis:
         r_catch : :obj:`float`
             Radius of the region.
         plane : :obj:`str`, \{'xy', 'xz', 'yz'\}
-            If given, `r_catch` is the distance to the respective plane.
+            If given, ``r_catch`` is the distance to the respective plane.
 
         Returns
         -------
@@ -306,8 +306,11 @@ class Analysis:
         Returns
         -------
         list of lists
-            columns indicate `index_radial`, `index_axial`, `pos_radial`, `pos_axial`, `binvolume`, `density`, `v_radial`, `v_axial`, `density`, `v_radial` and `v_axial`.
-            Note that the columns `density`, `v_radial` and `v_axial` appear for each type indicated in `types` in the same order.
+            columns indicate ``index_radial``, ``index_axial``, ``pos_radial``,
+            ``pos_axial``, ``binvolume``, ``density``, ``v_radial``,
+            ``v_axial``, ``density``, ``v_radial`` and ``v_axial``.
+            Note that the columns ``density``, ``v_radial`` and ``v_axial``
+            appear for each type indicated in ``types``, in the same order.
 
         """
 
@@ -384,7 +387,7 @@ class Analysis:
 
         Returns
         -------
-        dict
+        :obj:`dict`
             A dictionary with the following keys:
 
             * ``"total"``: total pressure
@@ -498,7 +501,7 @@ class Analysis:
 
         Returns
         -------
-        dict
+        :obj:`dict`
             A dictionary with the following keys:
 
             * ``"total"``: total stress tensor
@@ -633,8 +636,8 @@ class Analysis:
         Returns
         -------
         :obj:`dict`
-            A dictionary with keys `total`, `kinetic`, `bonded`, `nonbonded`,
-            `coulomb`, `external_fields`.
+            A dictionary with keys ``total``, ``kinetic``, ``bonded``, ``nonbonded``,
+            ``coulomb``, ``external_fields``.
 
 
         Examples
@@ -647,8 +650,8 @@ class Analysis:
         >>> print(energy["external_fields"])
 
         """
-    #  if system.n_part == 0:
-    #    raise Exception('no particles')
+        #  if system.n_part == 0:
+        #    raise Exception('no particles')
 
         e = OrderedDict()
 
@@ -694,12 +697,12 @@ class Analysis:
                 e["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
                 if i <= j:
                     total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
-    #        total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-    #        e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
-    #        e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
-    #        total_inter+= analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
-    #  e["nonBondedIntra"]=total_intra
-    #  e["nonBondedInter"]=total_inter
+        #       total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
+        #       e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
+        #       e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
+        #       total_inter+= analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
+        # e["nonBondedIntra"]=total_intra
+        # e["nonBondedInter"]=total_inter
         e["non_bonded"] = total_non_bonded
 
         # Electrostatics
@@ -847,9 +850,10 @@ class Analysis:
         """
         Calculate the structure factor for given types.  Returns the
         spherically averaged structure factor of particles specified in
-        `types`.  The structure factor is calculated for all possible wave
-        vectors q up to `order` Do not choose parameter `order` too large
-        because the number of calculations grows as `order` to the third power.
+        ``sf_types``.  The structure factor is calculated for all possible wave
+        vectors q up to ``sf_order``. Do not choose parameter ``sf_order`` too
+        large because the number of calculations grows as ``sf_order`` to the
+        third power.
 
         Parameters
         ----------
@@ -1100,7 +1104,7 @@ class Analysis:
 
         Returns
         -------
-        dict
+        :obj:`dict`
             A dictionary with the following keys:
 
             * ``"Rg^2"``: squared radius of gyration

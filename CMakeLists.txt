@@ -28,14 +28,14 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.1-dev")
+set(PROJECT_VERSION "5.0-dev")
 string(REGEX
        REPLACE "^([1-9]+)\\.[0-9]+.*$"
                "\\1"
                SOVERSION
                "${PROJECT_VERSION}")
 if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
-  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
+  message(FATAL_ERROR "Could not determine SOVERSION from ${PROJECT_VERSION}")
 endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 #

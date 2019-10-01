@@ -146,7 +146,7 @@ bool integrator_step_1(ParticleRange &particles) {
 void integrator_step_2(ParticleRange &particles) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
-    // Nothgin
+    // Nothing
     break;
   case INTEG_METHOD_NVT:
     velocity_verlet_step_2(particles);
