@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -34,7 +34,7 @@ class VirtualSitesTracersCommon:
     system.time_step = 0.05
     system.cell_system.skin = 0.1
 
-    def reset_lb(self, ext_force_density=[0, 0, 0]):
+    def reset_lb(self, ext_force_density=(0, 0, 0)):
         box_height = 10 
         box_lw = 8
         self.system.actors.clear()

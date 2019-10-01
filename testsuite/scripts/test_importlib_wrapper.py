@@ -68,6 +68,11 @@ class importlib_wrapper(ut.TestCase):
                    "import matplotlib as mp\n\n")
         str_out = iw.disable_matplotlib_gui(str_inp)
         self.assertEqual(str_out, str_exp)
+        str_inp = "\nimport matplotlib.pyplot as plt\nplt.ion()\n"
+        str_exp = ("\nimport matplotlib as _mpl;_mpl.use('Agg');"
+                   "import matplotlib.pyplot as plt\nplt.ioff()\n")
+        str_out = iw.disable_matplotlib_gui(str_inp)
+        self.assertEqual(str_out, str_exp)
 
     def test_set_random_seeds(self):
         # ESPResSo seed

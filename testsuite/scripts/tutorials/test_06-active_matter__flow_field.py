@@ -21,7 +21,7 @@ import os
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/06-active_matter/SOLUTIONS/flow_field.py", gpu=True,
-    cmd_arguments=["pusher", 5.0], prod_steps=100, prod_length=50)
+    cmd_arguments=["pusher", 5.0], PROD_STEPS=100, PROD_LENGTH=50)
 
 
 @skipIfMissingFeatures

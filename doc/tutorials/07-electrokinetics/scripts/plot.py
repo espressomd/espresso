@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data_anal = np.loadtxt("eof_analytical.dat")
-data_ek = np.loadtxt("../eof_electrokinetics.dat")
+data_ek = np.loadtxt("eof_electrokinetics.dat")
 
 fig1 = plt.figure(figsize=(16, 4))
 ax = fig1.add_subplot(131)

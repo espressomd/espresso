@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -256,23 +256,29 @@ class Correlator(ScriptInterfaceHelper):
 class AutoUpdateAccumulators(ScriptObjectRegistry):
 
     """
-    Class for handling auto-update of Accumulators used by
+    Class for handling the auto-update of accumulators used by
     :class:`espressomd.system.System`.
 
     """
     _so_name = "Accumulators::AutoUpdateAccumulators"
     _so_creation_policy = "LOCAL"
 
-    def add(self, Accumulator):
+    def add(self, accumulator):
         """
-        Adds a Accumulator instance to the auto-update list in the system.
+        Adds an accumulator instance to the auto-update list.
 
         """
-        self.call_method("add", object=Accumulator)
+        self.call_method("add", object=accumulator)
 
-    def remove(self, Accumulator):
+    def remove(self, accumulator):
         """
-        Removes an MeanVarianceCalculator from the auto-update list.
+        Removes an accumulator from the auto-update list.
 
         """
-        self.call_method("remove", object=Accumulator)
+        self.call_method("remove", object=accumulator)
+
+    def clear(self):
+        """
+        Removes all accumulators from the auto-update list.
+        """
+        self.call_method("clear")

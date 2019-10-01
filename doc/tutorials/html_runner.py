@@ -71,7 +71,11 @@ for filepath in new_cells:
         code = re.sub('^(#\n)+', '', code.replace(m.group(0), ''), re.M)
     # strip first component in relative paths
     code = re.sub('(?<=[\'\"])\.\./', './', code)
-    # if matplotlib is imported in this script, split into two cells
+    # if matplotlib is used in this script, split cell to keep the import
+    # statement separate and avoid a know bug in the Jupyter backend which
+    # causes the plot object to be represented as a string instead of a
+    # canvas when created in the cell where matplotlib is imported
+    # (https://github.com/jupyter/notebook/issues/3523)
     if 'import matplotlib' in code:
         cells_code = re.split('^((?:|.*\n)import matplotlib.*?)\n', code,
                               maxsplit=1, flags=re.DOTALL)[1:]

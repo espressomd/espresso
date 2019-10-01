@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 
 #
 # This file is part of ESPResSo.
@@ -32,6 +32,7 @@ from tests_common import abspath
 
 @utx.skipIfMissingFeatures(["DIPOLES", "FFTW"])
 class Dipolar_p3m_mdlc_p2nfft(ut.TestCase):
+
     """Tests mdlc (2d)  as well as dipolar p3m and dipolar p2nfft (3d) against
        stored data. Validity of the stored data:
        2d: as long as this test AND the scafacos_dipolar_1d_2d test passes, we are safe.

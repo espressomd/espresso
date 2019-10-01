@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -98,7 +98,8 @@ system.part.add(pos=init_polymer_pos)
 
 
 # system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
-# system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2], np.arange(n_monomers)[2:]))
+# system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2],
+# np.arange(n_monomers)[2:]))
 
 # Particle creation with loops:
 for i in range(n_monomers):
