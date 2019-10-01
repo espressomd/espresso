@@ -141,18 +141,22 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf('LBTHERM' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
-        self.assertEqual(system.thermostat.get_state()[0]['type'], 'LB')
-        self.assertEqual(system.thermostat.get_state()[0]['rng_counter_fluid'],
-                         0)  # rng_counter_fluid = seed, seed is 0 because kT=0
-        self.assertEqual(system.thermostat.get_state()[0]['gamma'], 2.0)
+        thmst = system.thermostat.get_state()[0]
+        if 'LB.GPU' in modes and not espressomd.gpu_available():
+            self.assertEqual(thmst['type'], 'OFF')
+        else:
+            self.assertEqual(thmst['type'], 'LB')
+            # rng_counter_fluid = seed, seed is 0 because kT=0
+            self.assertEqual(thmst['rng_counter_fluid'], 0)
+            self.assertEqual(thmst['gamma'], 2.0)
 
     @ut.skipIf('LBTHERM' in modes, 'Langevin incompatible with LB thermostat')
     def test_thermostat_no_LB(self):
-        self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
-        self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
-        self.assertEqual(system.thermostat.get_state()[0]['seed'], 42)
-        np.testing.assert_array_equal(system.thermostat.get_state()[
-            0]['gamma'], np.array([2.0, 2.0, 2.0]))
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'LANGEVIN')
+        self.assertEqual(thmst['kT'], 1.0)
+        self.assertEqual(thmst['seed'], 42)
+        np.testing.assert_array_equal(thmst['gamma'], np.array(3 * [2.0]))
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
