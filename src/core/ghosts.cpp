@@ -43,8 +43,6 @@
 #define REQ_GHOST_SEND 100
 
 struct CommBuf {
-  friend struct BondArchiver;
-
   char *data() { return buf.data(); }
   size_t size() { return buf.size(); }
   void resize(size_t new_size) { buf.resize(new_size); }
@@ -60,12 +58,11 @@ private:
  */
 struct Archiver {
 private:
-  CommBuf &cb;
-  // For insertion
+  Utils::Span<char> cb;
   char *insert;
 
 public:
-  explicit Archiver(CommBuf &cb) : cb(cb), insert(cb.data()) {}
+  explicit Archiver(Utils::Span<char> cb) : cb(cb), insert(cb.data()) {}
   ~Archiver() { assert(insert - cb.data() == cb.size()); }
 
   template <typename T, typename = typename std::enable_if<
@@ -88,21 +85,27 @@ public:
  */
 struct BondArchiver {
 private:
-  CommBuf &cb;
-  decltype(CommBuf::bondbuf)::const_iterator bond_retrieve;
+  /* underlying buffer type */
+  using buffer_type = std::vector<int>;
+  buffer_type &bondbuf;
+
+  /* iterator into the underlying buffer */
+  using const_iterator = buffer_type::const_iterator;
+  const_iterator bond_retrieve;
+
   // Need to save these because send buffer will invalidate cb.bondbuffer.
-  const decltype(CommBuf::bondbuf)::const_iterator initial_begin;
+  const const_iterator initial_begin;
   const size_t initial_size;
 
 public:
-  explicit BondArchiver(CommBuf &cb)
-      : cb(cb), bond_retrieve(cb.bondbuf.begin()),
-        initial_begin(cb.bondbuf.begin()), initial_size(cb.bondbuf.size()) {}
+  explicit BondArchiver(buffer_type &bondbuf)
+      : bondbuf(bondbuf), bond_retrieve(bondbuf.cbegin()),
+        initial_begin(bondbuf.cbegin()), initial_size(bondbuf.size()) {}
 
   ~BondArchiver() { assert(bond_retrieve == initial_begin + initial_size); }
 
   template <typename T> inline void operator<<(const Utils::Span<T> data) {
-    cb.bondbuf.insert(cb.bondbuf.end(), data.cbegin(), data.cend());
+    bondbuf.insert(bondbuf.end(), data.cbegin(), data.cend());
   }
 
   template <typename T> inline void operator>>(Utils::Span<T> data) {
@@ -172,8 +175,8 @@ static void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication &gc,
   s_buffer.resize(calc_transmit_size(gc, data_parts));
   s_buffer.bonds().clear();
 
-  auto ar = Archiver{s_buffer};
-  auto bar = BondArchiver{s_buffer};
+  auto ar = Archiver{Utils::make_span(s_buffer)};
+  auto bar = BondArchiver{s_buffer.bonds()};
 
   /* put in data */
   for (auto cur_list : gc.part_lists) {
@@ -186,7 +189,7 @@ static void prepare_send_buffer(CommBuf &s_buffer, GhostCommunication &gc,
           ar << pt.p;
           if (ghosts_have_bonds) {
             ar << static_cast<int>(pt.bl.n);
-            bar << Utils::make_const_span(pt.bl.data(), pt.bl.size());
+            bar << Utils::make_const_span(pt.bl);
           }
         }
         if (data_parts & GHOSTTRANS_POSSHFTD) {
@@ -248,8 +251,8 @@ static void prepare_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
 static void put_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
                             int data_parts) {
   /* put back data */
-  auto ar = Archiver{r_buffer};
-  auto bar = BondArchiver{r_buffer};
+  auto ar = Archiver{Utils::make_span(r_buffer)};
+  auto bar = BondArchiver{r_buffer.bonds()};
 
   for (auto cur_list : gc.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
@@ -264,7 +267,7 @@ static void put_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
             int n_bonds;
             ar >> n_bonds;
             pt.bl.resize(n_bonds);
-            bar >> Utils::make_span<int>(pt.bl.data(), pt.bl.size());
+            bar >> Utils::make_span(pt.bl);
           }
           if (local_particles[pt.p.identity] == nullptr) {
             local_particles[pt.p.identity] = &pt;
@@ -295,7 +298,7 @@ static void put_recv_buffer(CommBuf &r_buffer, GhostCommunication &gc,
 static void add_forces_from_recv_buffer(CommBuf &r_buffer,
                                         GhostCommunication &gc) {
   /* put back data */
-  auto ar = Archiver{r_buffer};
+  auto ar = Archiver{Utils::make_span(r_buffer)};
   for (auto &pl : gc.part_lists) {
     for (Particle &pt : pl->particles()) {
       ParticleForce pf;
