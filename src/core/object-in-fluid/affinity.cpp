@@ -24,31 +24,3 @@
  */
 #include "affinity.hpp"
 
-#ifdef AFFINITY
-#include "communication.hpp"
-
-#include <utils/constants.hpp>
-
-int affinity_set_params(int part_type_a, int part_type_b, int afftype,
-                        double kappa, double r0, double Kon, double Koff,
-                        double maxBond, double cut) {
-  IA_parameters *data = get_ia_param_safe(part_type_a, part_type_b);
-
-  if (!data)
-    return ES_ERROR;
-
-  data->affinity.type = afftype;
-  data->affinity.kappa = kappa;
-  data->affinity.r0 = r0;
-  data->affinity.Kon = Kon;
-  data->affinity.Koff = Koff;
-  data->affinity.maxBond = maxBond;
-  data->affinity.cut = cut;
-
-  /* broadcast interaction parameters */
-  mpi_bcast_ia_params(part_type_a, part_type_b);
-
-  return ES_OK;
-}
-
-#endif

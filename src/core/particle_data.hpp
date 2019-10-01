@@ -110,10 +110,6 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-#ifdef AFFINITY
-  /** parameters for affinity mechanisms */
-  Utils::Vector3d bond_site = {-1., -1., -1.};
-#endif
 
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
@@ -638,13 +634,6 @@ void set_particle_rotation(int part, int rot);
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
 
-#ifdef AFFINITY
-/** Call only on the master node: set particle affinity.
- *  @param part the particle.
- *  @param bond_site its new site of the affinity bond.
- */
-void set_particle_affinity(int part, double *bond_site);
-#endif
 
 #ifdef MEMBRANE_COLLISION
 /** Call only on the master node: set particle out_direction.
@@ -989,9 +978,6 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
-#endif
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res);
 #endif
 
 #ifdef MEMBRANE_COLLISION

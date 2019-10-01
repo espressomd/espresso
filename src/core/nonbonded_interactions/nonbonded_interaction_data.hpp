@@ -252,9 +252,6 @@ struct IA_parameters {
   SoftSphere_Parameters soft_sphere;
 #endif
 
-#ifdef AFFINITY
-  Affinity_Parameters affinity;
-#endif
 
 #ifdef MEMBRANE_COLLISION
   Membrane_Parameters membrane;

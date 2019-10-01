@@ -324,11 +324,6 @@ IF SOFT_SPHERE:
                                         double a, double n,
                                         double cut, double offset)
 
-IF AFFINITY:
-    cdef extern from "object-in-fluid/affinity.hpp":
-        cdef int affinity_set_params(int part_type_a, int part_type_b,
-                                     int afftype, double kappa, double r0,
-                                     double Kon, double Koff, double maxBond, double cut)
 IF TABULATED:
     cdef extern from "nonbonded_interactions/nonbonded_tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b,
