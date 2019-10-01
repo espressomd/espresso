@@ -241,7 +241,6 @@ struct IA_parameters {
   SoftSphere_Parameters soft_sphere;
 #endif
 
-
 #ifdef MEMBRANE_COLLISION
   Membrane_Parameters membrane;
 #endif

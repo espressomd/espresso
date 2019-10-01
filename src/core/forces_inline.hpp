@@ -251,7 +251,6 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /* bond creation and breaking                  */
   /***********************************************/
 
-
   /***********************************************/
   /* non-bonded pair potentials                  */
   /***********************************************/

@@ -881,7 +881,6 @@ void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
 }
 #endif
 
-
 #ifdef MEMBRANE_COLLISION
 void set_particle_out_direction(int part, double *out_direction) {
   mpi_update_particle_property<Utils::Vector3d,
@@ -1597,7 +1596,6 @@ void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia.data();
 }
 #endif
-
 
 #ifdef MEMBRANE_COLLISION
 void pointer_to_out_direction(const Particle *p, const double *&res) {

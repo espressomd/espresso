@@ -110,7 +110,6 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
   Utils::Vector3d out_direction = {0., 0., 0.};
@@ -633,7 +632,6 @@ void set_particle_rotation(int part, int rot);
  *  @param angle rotation angle
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
-
 
 #ifdef MEMBRANE_COLLISION
 /** Call only on the master node: set particle out_direction.
