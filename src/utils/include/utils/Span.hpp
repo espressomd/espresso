@@ -29,7 +29,6 @@
 
 namespace Utils {
 namespace detail {
-
 template <class T, class C>
 using has_data =
     std::is_convertible<std::decay_t<decltype(std::declval<C>().data())> *,
@@ -118,11 +117,20 @@ DEVICE_QUALIFIER constexpr Span<T> make_span(T *p, size_t N) {
   return Span<T>(p, N);
 }
 
+template <class C> DEVICE_QUALIFIER constexpr auto make_span(C &c) {
+  return make_span(c.data(), c.size());
+}
+
 template <typename T>
 DEVICE_QUALIFIER constexpr Span<std::add_const_t<T>> make_const_span(T *p,
                                                                      size_t N) {
   return Span<std::add_const_t<T>>(p, N);
 }
+
+template <class C> DEVICE_QUALIFIER constexpr auto make_const_span(C &c) {
+  return make_const_span(c.data(), c.size());
+}
+
 } // namespace Utils
 
 #endif
