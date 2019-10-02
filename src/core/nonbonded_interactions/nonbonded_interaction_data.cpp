@@ -148,10 +148,6 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
                              (data.soft_sphere.cut + data.soft_sphere.offset));
 #endif
 
-#ifdef AFFINITY
-  max_cut_current = std::max(max_cut_current, data.affinity.cut);
-#endif
-
 #ifdef MEMBRANE_COLLISION
   max_cut_current = std::max(max_cut_current, data.membrane.cut);
 #endif

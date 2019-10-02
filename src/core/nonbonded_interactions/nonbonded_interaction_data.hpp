@@ -135,17 +135,6 @@ struct SoftSphere_Parameters {
   double offset = 0.0;
 };
 
-/** affinity potential */
-struct Affinity_Parameters {
-  int type = -1;
-  double kappa = INACTIVE_CUTOFF;
-  double r0 = INACTIVE_CUTOFF;
-  double Kon = INACTIVE_CUTOFF;
-  double Koff = INACTIVE_CUTOFF;
-  double maxBond = INACTIVE_CUTOFF;
-  double cut = INACTIVE_CUTOFF;
-};
-
 /** membrane collision potential */
 struct Membrane_Parameters {
   double a = 0.0;
@@ -250,10 +239,6 @@ struct IA_parameters {
 
 #ifdef SOFT_SPHERE
   SoftSphere_Parameters soft_sphere;
-#endif
-
-#ifdef AFFINITY
-  Affinity_Parameters affinity;
 #endif
 
 #ifdef MEMBRANE_COLLISION
