@@ -157,7 +157,6 @@ else(CUDA)
 endif(CUDA)
 
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
-set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WITH_COVERAGE)
   target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-g>")

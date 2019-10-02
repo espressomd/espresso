@@ -4,7 +4,6 @@ set(cluster_analysis_SRC
 )
 add_library(cluster_analysis SHARED ${cluster_analysis_SRC})
 install(TARGETS cluster_analysis LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
-set_target_properties(cluster_analysis PROPERTIES SOVERSION ${SOVERSION})
 set_target_properties(cluster_analysis PROPERTIES MACOSX_RPATH TRUE)
 target_link_libraries(cluster_analysis PUBLIC EspressoCore PRIVATE EspressoConfig)
 
