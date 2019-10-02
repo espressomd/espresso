@@ -340,12 +340,10 @@ static void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->n);
     } else {
-      int np = src_list->n;
-      Particle *part1 = src_list->part;
-      Particle *part2 = dst_list->part;
+      int const np = src_list->n;
       for (int p = 0; p < np; p++) {
-        Particle &pt1 = part1[p];
-        Particle &pt2 = part2[p];
+        Particle const &pt1 = src_list->part[p];
+        Particle &pt2 = dst_list->part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
           pt2.p = pt1.p;
           if (ghosts_have_bonds) {
