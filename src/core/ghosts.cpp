@@ -336,12 +336,12 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
   }
 }
 
-static void cell_cell_transfer(GhostCommunication *ghost_comm, int data_parts) {
+static void cell_cell_transfer(GhostCommunication &ghost_comm, int data_parts) {
   /* transfer data */
-  int const offset = ghost_comm->part_lists.size() / 2;
+  int const offset = ghost_comm.part_lists.size() / 2;
   for (int pl = 0; pl < offset; pl++) {
-    Cell *src_list = ghost_comm->part_lists[pl];
-    Cell *dst_list = ghost_comm->part_lists[pl + offset];
+    Cell *src_list = ghost_comm.part_lists[pl];
+    Cell *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->n);
@@ -359,7 +359,7 @@ static void cell_cell_transfer(GhostCommunication *ghost_comm, int data_parts) {
         if (data_parts & GHOSTTRANS_POSSHFTD) {
           /* ok, this is not nice, but perhaps fast */
           part2.r = part1.r;
-          part2.r.p += ghost_comm->shift;
+          part2.r.p += ghost_comm.shift;
         } else if (data_parts & GHOSTTRANS_POSITION)
           part2.r = part1.r;
         if (data_parts & GHOSTTRANS_MOMENTUM) {
@@ -415,27 +415,27 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
     data_parts |= GHOSTTRANS_MOMENTUM;
 
   for (int n = 0; n < gcr->num; n++) {
-    GhostCommunication *ghost_comm = &gcr->comm[n];
-    int const comm_type = ghost_comm->type & GHOST_JOBMASK;
+    GhostCommunication &ghost_comm = gcr->comm[n];
+    int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
       cell_cell_transfer(ghost_comm, data_parts);
       continue;
     }
 
-    int const prefetch = ghost_comm->type & GHOST_PREFETCH;
-    int const poststore = ghost_comm->type & GHOST_PSTSTORE;
-    int const node = ghost_comm->node;
+    int const prefetch = ghost_comm.type & GHOST_PREFETCH;
+    int const poststore = ghost_comm.type & GHOST_PSTSTORE;
+    int const node = ghost_comm.node;
 
     /* prepare send buffer if necessary */
     if (is_send_op(comm_type, node)) {
       /* ok, we send this step, prepare send buffer if not yet done */
       if (!prefetch) {
-        prepare_send_buffer(send_buffer, *ghost_comm, data_parts);
+        prepare_send_buffer(send_buffer, ghost_comm, data_parts);
       }
       // Check prefetched send buffers (must also hold for buffers allocated
       // in the previous lines.)
-      assert(send_buffer.size() == calc_transmit_size(*ghost_comm, data_parts));
+      assert(send_buffer.size() == calc_transmit_size(ghost_comm, data_parts));
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
       auto prefetch_ghost_comm =
@@ -447,7 +447,7 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
 
     /* recv buffer for recv and multinode operations to this node */
     if (is_recv_op(comm_type, node))
-      prepare_recv_buffer(recv_buffer, *ghost_comm, data_parts);
+      prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
 
     /* transfer data */
     // Use two send/recvs in order to avoid, having to serialize CommBuf
@@ -494,9 +494,9 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
         /* forces have to be added, the rest overwritten. Exception is RDCE,
          * where the addition is integrated into the communication. */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-          add_forces_from_recv_buffer(recv_buffer, *ghost_comm);
+          add_forces_from_recv_buffer(recv_buffer, ghost_comm);
         else
-          put_recv_buffer(recv_buffer, *ghost_comm, data_parts);
+          put_recv_buffer(recv_buffer, ghost_comm, data_parts);
       }
     } else if (poststore) {
       /* send op; write back delayed data from last recv, when this was a
