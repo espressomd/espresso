@@ -56,7 +56,6 @@
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
-#include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
@@ -246,18 +245,6 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   Utils::Vector3d _torque2{};
   torque1 = &_torque1;
   torque2 = &_torque2;
-#endif
-
-  /***********************************************/
-  /* bond creation and breaking                  */
-  /***********************************************/
-
-#ifdef AFFINITY
-  /* affinity potential */
-  // Prevent jump to non-inlined function
-  if (dist < ia_params.affinity.cut) {
-    force += affinity_pair_force(p1, p2, ia_params, d, dist);
-  }
 #endif
 
   /***********************************************/

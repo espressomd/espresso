@@ -570,25 +570,6 @@ cdef class ParticleHandle:
                 return np.array(
                     [out_direction[0], out_direction[1], out_direction[2]])
 
-    IF AFFINITY:
-        property bond_site:
-            """OIF bond_site"""
-
-            def __set__(self, _bond_site):
-                cdef double bond_site[3]
-                check_type_or_throw_except(
-                    _bond_site, 3, float, "bond_site has to be 3 floats")
-                for i in range(3):
-                    bond_site[i] = _bond_site[i]
-                set_particle_affinity(self.id, bond_site) 
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * bond_site = NULL
-                pointer_to_bond_site(self.particle_data, bond_site)
-                return array_locked([bond_site[0], bond_site[1], bond_site[2]])
-
-
 # Charge
     property q:
         """
