@@ -23,6 +23,10 @@
  *
  *  For more information on ghosts,
  *  see \ref ghosts.hpp "ghosts.hpp"
+ * 
+ * Note on variable naming:
+ * - a "GhostCommunicator" is always named "gcr",
+ * - a "GhostCommunication" is always named "ghost_comm".
  */
 #include "ghosts.hpp"
 #include "communication.hpp"
@@ -39,7 +43,7 @@
 #include <type_traits>
 #include <vector>
 
-/** Tag for communication in ghost_comm. */
+/** Tag for ghosts communications. */
 #define REQ_GHOST_SEND 100
 
 /**
@@ -143,18 +147,18 @@ public:
 bool ghosts_have_v = false;
 bool ghosts_have_bonds = false;
 
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num) {
-  assert(comm);
-  comm->data_parts = data_parts;
-  comm->num = num;
-  comm->comm.resize(num);
-  for (auto &ghost_comm : comm->comm)
+void prepare_comm(GhostCommunicator *gcr, int data_parts, int num) {
+  assert(gcr);
+  gcr->data_parts = data_parts;
+  gcr->num = num;
+  gcr->comm.resize(num);
+  for (auto &ghost_comm : gcr->comm)
     ghost_comm.shift.fill(0.0);
 }
 
-void free_comm(GhostCommunicator *comm) {
+void free_comm(GhostCommunicator *gcr) {
   // Invalidate the elements in all "part_lists" of all GhostCommunications.
-  for (auto &ghost_comm : comm->comm)
+  for (auto &ghost_comm : gcr->comm)
     ghost_comm.part_lists.clear();
 }
 
@@ -398,11 +402,11 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
   return is_recv_op(comm_type, node) && poststore;
 }
 
-void ghost_communicator(GhostCommunicator *gc) {
-  ghost_communicator(gc, gc->data_parts);
+void ghost_communicator(GhostCommunicator *gcr) {
+  ghost_communicator(gcr, gcr->data_parts);
 }
 
-void ghost_communicator(GhostCommunicator *gc, int data_parts) {
+void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
   /* if ghosts should have uptodate velocities, they have to be updated like
@@ -410,8 +414,8 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
 
-  for (int n = 0; n < gc->num; n++) {
-    GhostCommunication *ghost_comm = &gc->comm[n];
+  for (int n = 0; n < gcr->num; n++) {
+    GhostCommunication *ghost_comm = &gcr->comm[n];
     int const comm_type = ghost_comm->type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
@@ -442,8 +446,8 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
       auto prefetch_ghost_comm = std::find_if(
-          std::next(gc->comm.begin(), n + 1), gc->comm.end(), is_prefetchable);
-      if (prefetch_ghost_comm != gc->comm.end())
+          std::next(gcr->comm.begin(), n + 1), gcr->comm.end(), is_prefetchable);
+      if (prefetch_ghost_comm != gcr->comm.end())
         prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
     }
 
@@ -505,10 +509,10 @@ void ghost_communicator(GhostCommunicator *gc, int data_parts) {
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
       auto poststore_ghost_comm = std::find_if(
-          std::make_reverse_iterator(std::next(gc->comm.begin(), n)),
-          gc->comm.rend(), is_poststorable);
+          std::make_reverse_iterator(std::next(gcr->comm.begin(), n)),
+          gcr->comm.rend(), is_poststorable);
 
-      if (poststore_ghost_comm != gc->comm.rend()) {
+      if (poststore_ghost_comm != gcr->comm.rend()) {
 #ifdef ADDITIONAL_CHECKS
         if (recv_buffer.size() !=
             calc_transmit_size(*poststore_ghost_comm, data_parts)) {
