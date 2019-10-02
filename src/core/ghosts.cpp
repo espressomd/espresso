@@ -23,7 +23,7 @@
  *
  *  For more information on ghosts,
  *  see \ref ghosts.hpp "ghosts.hpp"
- * 
+ *
  * Note on variable naming:
  * - a "GhostCommunicator" is always named "gcr",
  * - a "GhostCommunication" is always named "ghost_comm".
@@ -430,23 +430,17 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
     /* prepare send buffer if necessary */
     if (is_send_op(comm_type, node)) {
       /* ok, we send this step, prepare send buffer if not yet done */
-      if (!prefetch)
+      if (!prefetch) {
         prepare_send_buffer(send_buffer, *ghost_comm, data_parts);
-#ifdef ADDITIONAL_CHECKS
+      }
       // Check prefetched send buffers (must also hold for buffers allocated
       // in the previous lines.)
-      if (send_buffer.size() != calc_transmit_size(*ghost_comm, data_parts)) {
-        fprintf(stderr,
-                "%d: ghost_comm transmission size and current size of "
-                "cells to transmit do not match\n",
-                this_node);
-        errexit();
-      }
-#endif
+      assert(send_buffer.size() == calc_transmit_size(*ghost_comm, data_parts));
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
-      auto prefetch_ghost_comm = std::find_if(
-          std::next(gcr->comm.begin(), n + 1), gcr->comm.end(), is_prefetchable);
+      auto prefetch_ghost_comm =
+          std::find_if(std::next(gcr->comm.begin(), n + 1), gcr->comm.end(),
+                       is_prefetchable);
       if (prefetch_ghost_comm != gcr->comm.end())
         prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
     }
@@ -513,16 +507,8 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
           gcr->comm.rend(), is_poststorable);
 
       if (poststore_ghost_comm != gcr->comm.rend()) {
-#ifdef ADDITIONAL_CHECKS
-        if (recv_buffer.size() !=
-            calc_transmit_size(*poststore_ghost_comm, data_parts)) {
-          fprintf(stderr,
-                  "%d: ghost_comm transmission size and current size of "
-                  "cells to transmit do not match\n",
-                  this_node);
-          errexit();
-        }
-#endif
+        assert(recv_buffer.size() ==
+               calc_transmit_size(*poststore_ghost_comm, data_parts));
         /* as above */
         if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
           add_forces_from_recv_buffer(recv_buffer, *poststore_ghost_comm);
