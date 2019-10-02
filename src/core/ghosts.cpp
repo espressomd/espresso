@@ -42,19 +42,39 @@
 /** Tag for communication in ghost_comm. */
 #define REQ_GHOST_SEND 100
 
-struct CommBuf {
+/**
+ * Class that stores marshalled data for ghost communications.
+ * To store and retrieve data, use the adapter classes below.
+ */
+class CommBuf {
+public:
+  /** Returns a pointer to the non-bond storage.
+   */
   char *data() { return buf.data(); }
+
+  /** Returns the number of elements in the non-bond storage.
+   */
   size_t size() { return buf.size(); }
+
+  /** Resizes the underlying storage s.t. the object is capable
+   * of holding "new_size" chars.
+   * @param new_size new size
+   */
   void resize(size_t new_size) { buf.resize(new_size); }
+
+  /** Returns a reference to the bond storage.
+   */
   std::vector<int> &bonds() { return bondbuf; }
 
 private:
-  std::vector<char> buf;
-  std::vector<int> bondbuf;
+  std::vector<char> buf; //< Buffer for everything but bonds
+  std::vector<int> bondbuf; //< Buffer for bond lists
 };
 
 /**
  * Adapter to CommBuf that allows putting in and getting out data.
+ * Note: The underlying buffer (span) must be large enough. This class
+ * does *not* resize the buffer.
  */
 struct Archiver {
 private:
@@ -82,6 +102,8 @@ public:
 
 /**
  * Adapter to CommBuf that allows putting in and getting back bond data.
+ * Note, this class inserts the data handed to operator<< at the end
+ * of the underlying buffer. It does resize the buffer.
  */
 struct BondArchiver {
 private:
