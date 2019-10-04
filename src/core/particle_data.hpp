@@ -445,10 +445,6 @@ void free_particle(Particle *part);
 /*    Functions acting on Particle Lists        */
 /************************************************/
 
-/** Initialize a particle list.
- *  Use with care and ONLY for initialization! */
-void init_particlelist(ParticleList *pList);
-
 /** Allocate storage for local particles and ghosts. This version
     does \em not care for the bond information to be freed if necessary.
     \param plist the list on which to operate
