@@ -446,7 +446,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i) {
       int blen = boff[i + 1] - boff[i];
-      if(blen) {
+      if (blen) {
         auto &bl = local_particles[id[i]]->bl;
         bl.resize(blen);
         std::copy_n(&bond[boff[i]], blen, bl.begin());
