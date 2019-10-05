@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -77,6 +77,7 @@ class RotateSystemTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(s.part[0].pos), [6, 4, 4])
             np.testing.assert_allclose(np.copy(s.part[1].pos), [4, 6, 6])
             np.testing.assert_allclose(np.copy(s.part[2].pos), [4, 6, 6])
+
 
 if __name__ == "__main__":
     ut.main()

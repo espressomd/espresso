@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -175,6 +175,7 @@ class Non_bonded_interactionsTests(ut.TestCase):
             {"eps": 1.0, "sig": 1.0, "cut": 4.0, "k1": 3.0,
              "k2": 5.0, "mu": 2.0, "nu": 1.0},
             "gay_berne")
+
 
 if __name__ == "__main__":
     ut.main()

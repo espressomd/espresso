@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -45,7 +45,7 @@ try:
           "\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)"
           "\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)"
           "\nRESTART: (JOYSTICK START), (KEYBOARD b)")
-except:
+except BaseException:
     has_pygame = False
     print("\nCONTROLS:"
           "\nMOVE: (KEYBOARD i/j/k/l)"

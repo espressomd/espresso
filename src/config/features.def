@@ -75,7 +75,6 @@ LENNARD_JONES_GENERIC           implies LENNARD_JONES
 LJCOS
 LJCOS2
 LJGEN_SOFTCORE                  implies LENNARD_JONES_GENERIC
-GAY_BERNE                       depends EXPERIMENTAL_FEATURES
 SMOOTH_STEP
 HERTZIAN
 GAUSSIAN
@@ -93,7 +92,6 @@ THOLE                           requires ELECTROSTATICS
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES
 OIF_GLOBAL_FORCES
-AFFINITY requires EXPERIMENTAL_FEATURES
 MEMBRANE_COLLISION requires EXPERIMENTAL_FEATURES
 
 /* Immersed-Boundary Bayreuth version */

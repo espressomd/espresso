@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -68,6 +68,7 @@ class Integrate(ut.TestCase):
                 np.testing.assert_allclose(np.copy(p.pos), np.copy(
                     0.5 * ext_force / p.mass * (i * system.time_step)**2 + v * i * system.time_step), atol=1E-12)
                 system.integrator.run(1)
+
 
 if __name__ == '__main__':
     ut.main()

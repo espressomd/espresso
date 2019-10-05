@@ -37,7 +37,8 @@ def skipIfMissingFeatures(*args):
 def skipIfMissingModules(*args):
     """Unittest skipIf decorator for missing Python modules."""
 
-    if len(args) == 1 and not isinstance(args[0], str) and hasattr(args[0], "__iter__"):
+    if len(args) == 1 and not isinstance(
+            args[0], str) and hasattr(args[0], "__iter__"):
         args = set(args[0])
     else:
         args = set(args)

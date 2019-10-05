@@ -20,14 +20,21 @@ import importlib_wrapper as iw
 import numpy as np
 import sys
 
-# these tutorials need to be executed sequentially
+# The tutorial and scripts need to be executed sequentially. Due to a
+# race condition in CI, configure_and_import() cannot be used on all
+# 3 imports, otherwise the following error is raised when importing
+# plot.py: "ModuleNotFoundError: No module named 'plot_processed'".
+# This bug happens at random on empty and default configurations.
+# To work around it, the eof_analytical.py script is imported
+# directly without changes using importlib.import_module().
 tutorial_simulation, skipIfMissingFeatures_simulation = iw.configure_and_import(
     "@TUTORIALS_DIR@/07-electrokinetics/07-electrokinetics.py",
     gpu=True, integration_length=600, dt=0.5)
-tutorial_analytical, skipIfMissingFeatures_plot = iw.configure_and_import(
-    "@TUTORIALS_DIR@/07-electrokinetics/scripts/eof_analytical.py")
+sys.path.insert(0, "@TUTORIALS_DIR@/07-electrokinetics/scripts/")
+tutorial_analytical = iw.importlib.import_module("eof_analytical")
 tutorial_plot, skipIfMissingFeatures_plot = iw.configure_and_import(
-    "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py")
+    "@TUTORIALS_DIR@/07-electrokinetics/scripts/plot.py",
+    move_to_script_dir=False)
 
 
 @skipIfMissingFeatures_simulation

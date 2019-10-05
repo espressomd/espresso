@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -87,6 +87,7 @@ class CoulombCloudWallTune(ut.TestCase):
                                              tune=True))
         self.system.integrator.run(0)
         self.compare("p3m_gpu")
+
 
 if __name__ == "__main__":
     ut.main()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -209,6 +209,7 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
+
 
 if __name__ == '__main__':
     ut.main()

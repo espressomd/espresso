@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -102,7 +102,7 @@ class ShapeBasedConstraint(Constraint):
     only_positive : :obj:`bool`
         Act only in the direction of positive normal,
         only useful if penetrable is ``True``.
-    particle_type : int
+    particle_type : :obj:`int`
         Interaction type of the constraint.
     particle_velocity : array_like of :obj:`float`
         Interaction velocity of the boundary
@@ -325,7 +325,8 @@ class _Interpolated(Constraint):
     @property
     def field(self):
         shape = self._field_shape
-        return np.reshape(self._field_data, (shape[0], shape[1], shape[2], self._field_codim))
+        return np.reshape(self._field_data,
+                          (shape[0], shape[1], shape[2], self._field_codim))
 
 
 @script_interface_register

@@ -112,7 +112,7 @@ ROCm SDK to make use of GPU computation:
     wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
     echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
     sudo apt update
-    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand hip-thrust
+    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand rocthrust
 
 .. _Installing Requirements on Mac OS X:
 
@@ -136,7 +136,7 @@ following commands:
     sudo port select --set cython cython37
     sudo port select --set python3 python37
     sudo port select --set pip pip37
-    sudo port select --set mpi openmpi-mp-fortran
+    sudo port select --set mpi openmpi-mp
 
 Alternatively, you can use Homebrew.
 
@@ -444,8 +444,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``LB_BOUNDARIES_GPU``
 
--  ``AFFINITY``
-
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
 
@@ -674,7 +672,7 @@ targets are available:
     subdirectory.
 
 ``sphinx``
-    Creates the `sphinx` code documentation in the :file:`doc/sphinx`
+    Creates the ``sphinx`` code documentation in the :file:`doc/sphinx`
     subdirectory.
 
 ``tutorials``
@@ -732,7 +730,7 @@ button to execute the current block, or use the keyboard shortcut Shift+Enter.
 If the current block is a code block, the ``In [ ]`` label to the left will
 change to ``In [*]`` while the code is being executed, and become ``In [1]``
 once the execution has completed. The number increments itself every time a
-code cell is executed. This bookeeping is extremely useful when modifying
+code cell is executed. This bookkeeping is extremely useful when modifying
 previous code cells, as it shows which cells are out-of-date. It's also
 possible to run all cells by clicking on the "Run" drop-down menu, then on
 "Run All Below". This will change all labels to ``In [*]`` to show that the

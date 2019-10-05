@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -138,6 +138,7 @@ class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
     def tearDown(self):
         self.system.lbboundaries.clear()
         self.system.actors.remove(self.lbf)
+
 
 if __name__ == "__main__":
     ut.main()

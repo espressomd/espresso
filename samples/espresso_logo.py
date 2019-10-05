@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -200,5 +200,6 @@ def rotate():
     visualizer.camera.rotateSystemXL()
 
 # visualizer.registerCallback(rotate, interval = 16)
+
 
 visualizer.run(1)

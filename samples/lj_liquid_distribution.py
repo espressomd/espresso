@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -208,8 +208,8 @@ for i in range(int_n_times):
 
     r, dist = system.analysis.distribution(
         type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
-                                           r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
-                                           log_flag=distr_log_flag, int_flag=distr_int_flag)
+        r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
+        log_flag=distr_log_flag, int_flag=distr_int_flag)
     distr_r = r
     distr_values += dist
 

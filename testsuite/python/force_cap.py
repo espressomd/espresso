@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -66,6 +66,7 @@ class ForceCap(ut.TestCase):
         # Since there was a force larger than f_cap, the
         # maximum should now be f_cap.
         self.assertAlmostEqual(self.calc_f_max(), f_cap, places=7)
+
 
 if __name__ == "__main__":
     ut.main()

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -84,6 +84,7 @@ def stress_nonbonded_intra(particle_pairs, box_l):
             f = (24.0 * 1.0 * (2.0 * 1.0**12 / d**13 - 1.0**6 / d**7)) * r_hat
             stress += np.einsum('i,j', f, r) / np.prod(system.box_l)
     return stress
+
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
@@ -213,7 +214,7 @@ class Stress(ut.TestCase):
         self.assertTrue(
             np.abs(sim_pressure_nonbonded_inter12 -
                    anal_pressure_nonbonded_inter) < tol,
-                        'non-bonded intermolecular pressure molecule 1 and 2 does not match analytical result')
+            'non-bonded intermolecular pressure molecule 1 and 2 does not match analytical result')
         self.assertTrue(np.abs(sim_pressure_nonbonded_intra - anal_pressure_nonbonded_intra)
                         < tol, 'non-bonded intramolecular pressure does not match analytical result')
         self.assertTrue(np.abs(sim_pressure_nonbonded_intra00 - anal_pressure_nonbonded_intra) <
@@ -226,7 +227,7 @@ class Stress(ut.TestCase):
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(
             StressTensor().calculate(),
-             system.analysis.stress_tensor()["total"].reshape(9),
+            system.analysis.stress_tensor()["total"].reshape(9),
             atol=1E-10)
 
 

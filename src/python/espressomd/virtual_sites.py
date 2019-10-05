@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,11 +23,12 @@ if has_features("VIRTUAL_SITES"):
 
         """Handle for the virtual sites implementation active in the core
 
-           This should not be used directly.
+        This should not be used directly.
 
-           Attributes
-           ----------
-           implementation : instance of a virtual sites implementation
+        Attributes
+        ----------
+        implementation :
+            instance of a virtual sites implementation
 
         """
         _so_name = "VirtualSites::ActiveVirtualSitesHandle"
@@ -43,7 +44,8 @@ if has_features("VIRTUAL_SITES_INERTIALESS_TRACERS"):
     @script_interface_register
     class VirtualSitesInertialessTracers(ScriptInterfaceHelper):
 
-        """Virtual sites which are advected with an lb fluid without inertia. Forces are on them are transferred to the fluid instantly.
+        """Virtual sites which are advected with an lb fluid without inertia.
+        Forces are on them are transferred to the fluid instantly.
 
         """
         _so_name = "VirtualSites::VirtualSitesInertialessTracers"
@@ -53,17 +55,17 @@ if has_features("VIRTUAL_SITES_RELATIVE"):
     @script_interface_register
     class VirtualSitesRelative(ScriptInterfaceHelper):
 
-        """Virtual sites implementation placing virtual sites relative to other particles.
-           See :ref:`Rigid arrangements of particles` for details.
+        """Virtual sites implementation placing virtual sites relative to other
+        particles. See :ref:`Rigid arrangements of particles` for details.
 
-           Attributes
-           ----------
-           have_velocity : :obj:`bool`
-               Determines whether the velocity of the virtual sites is calculated.
-               This carries a performance cost.
+        Attributes can be set on the instance or passed to the constructor as
+        keyword arguments.
 
-           Attributes can be set on the instance or passed to the constructor as
-           keyword arguments.
+        Attributes
+        ----------
+        have_velocity : :obj:`bool`
+            Determines whether the velocity of the virtual sites is calculated.
+            This carries a performance cost.
 
         """
         _so_name = "VirtualSites::VirtualSitesRelative"

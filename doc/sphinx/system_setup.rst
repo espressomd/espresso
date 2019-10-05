@@ -182,7 +182,7 @@ In a multiple processor environment, the nsquared cellsystem uses a
 simple particle balancing scheme to have a nearly equal number of
 particles per CPU, :math:`n` nodes have :math:`m` particles, and
 :math:`p-n` nodes have :math:`m+1` particles, such that
-:math:`n*m+(p-n)*(m+1)=N`, the total number of particles. Therefore the
+:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles. Therefore the
 computational load should be balanced fairly equal among the nodes, with
 one exception: This code always uses one CPU for the interaction between
 two different nodes. For an odd number of nodes, this is fine, because
@@ -421,8 +421,8 @@ and set the following parameters:
 Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
 and the parameters:
 
-    * ``ext_pressure``:  (float) The external pressure as float variable.
-    * ``piston``:        (float) The mass of the applied piston as float variable.
+    * ``ext_pressure``:  (float) The external pressure.
+    * ``piston``:        (float) The mass of the applied piston.
 
 For example::
 
@@ -489,7 +489,7 @@ you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g.,
     print(system.cuda_init_handle.device_list)
 
 This attribute is read only and will return a dictionary containing
-the device id as key and the device name as its' value.
+the device id as key and the device name as its value.
 
 .. _Selection of CUDA device:
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,7 +28,7 @@ class Observable(ScriptInterfaceHelper):
 class ComForce(Observable):
 
     """Calculates the total force on particles with given ids.
-    
+
     Note that virtual sites are not included since they do not have a meaningful mass.
 
     Output format: :math:`\\left(\\sum_i f^x_i, \\sum_i f^y_i, \\sum_i f^z_i\\right)`
@@ -252,7 +252,7 @@ class LBVelocityProfile(Observable):
     sampling_offset_z : :obj:`float`, default=0.0
         Offset for the sampling grid in ``z``-direction.
     allow_empty_bins : :obj:`bool`, default=False
-        Wether or not to allow bins that will not be sampled at all.
+        Whether or not to allow bins that will not be sampled at all.
 
     """
     _so_name = "Observables::LBVelocityProfile"

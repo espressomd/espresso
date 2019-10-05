@@ -10,7 +10,7 @@ Analysis
   calculation and data accumulation performed in the core.
 - :ref:`Observables and correlators`: This provides a more flexible concept of
   in-core analysis, where a certain observable (:ref:`Available observables`),
-  a rule for data accumulation (ref Accumulators) and/or correlation (:ref:`Correlations`) can be defined.
+  a rule for data accumulation (:ref:`Accumulators`) and/or correlation (:ref:`Correlations`) can be defined.
 
 
 .. _Direct analysis routines:
@@ -147,7 +147,7 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     ~~~~~~~~~~~~~~~~~~
     .. todo:: This feature is not implemented
 
-    analyze radial\_density\_map
+    analyze radial_density_map
 
     Returns the radial density of particles around a given axis. Parameters
     are:
@@ -231,7 +231,7 @@ index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_ra
 0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0
 =============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
 
-As one can see the columns `density`, `v_radial` and `v_axial` appear twice.
+As one can see the columns **density**, **v_radial** and **v_axial** appear twice.
 The order of appearance corresponds to the order of the types in the argument ``types``.
 For example if was set to ``types=[0, 1]`` then the first triple is associated to type 0 and
 the second triple to type 1.
@@ -288,8 +288,8 @@ Structure factor
 Calculate the structure factor for given types.
 
 Returns the spherically averaged structure factor :math:`S(q)` of
-particles specified in . :math:`S(q)` is calculated for all possible
-wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}` `order`.
+particles specified in ``sf_types``. :math:`S(q)` is calculated for all possible
+wave vectors :math:`\frac{2\pi}{L} \leq q \leq \frac{2\pi}{L}` up to ``sf_order``.
 
 ..
     .. _Van-Hove autocorrelation function:
@@ -415,7 +415,7 @@ electrostatic interactions in P3M, the :math:`k`-space contribution is implement
 The implementation of the Coulomb P3M pressure is tested against LAMMPS.
 
 Four-body dihedral potentials are not included. Except of
-VIRTUAL\_SITES\_RELATIVE constraints all other
+``VIRTUAL_SITES_RELATIVE`` constraints all other
 constraints of any kind are not currently accounted for in the pressure
 calculations. The pressure is no longer correct, e.g., when particles
 are confined to a plane.
@@ -713,8 +713,8 @@ all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.BondDihedrals`: Dihedral angles between bond triples on a polymer chain.
 
-   - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The `i`-th value in the result vector corresponds to the cosine of the angle between
-     bonds that are separated by `i` bonds. This observable might be useful for measuring the persistence length of a polymer.
+   - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The ``i``-th value in the result vector corresponds to the cosine of the angle between
+     bonds that are separated by ``i`` bonds. This observable might be useful for measuring the persistence length of a polymer.
 
 - Profile observables sampling the spatial profile of various quantities:
 
