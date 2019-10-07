@@ -121,11 +121,60 @@ After installing the ROCm SDK, please reboot your computer.
 Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To make |es| run on Mac OS X 10.9 or higher, its dependencies can be
-installed using MacPorts. First, download the installer package
-appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it. Then, run the
+Preparation
++++++++++++
+
+To make |es| run on Mac OS X 10.9 or higher, you need to install its
+dependencies. There are two possibilities for this, MacPorts and Homebrew.
+We recommend MacPorts, but if you already have Homebrew installed, you can use
+that too. To check whether you already have one or the other installed, run the
 following commands:
+
+.. code-block:: bash
+
+    test -e /opt/local/bin/port && echo "MacPorts is installed"
+    test -e /usr/local/bin/brew && echo "Homebrew is installed"
+
+If both are installed, you need to remove one of the two. To do that, run one
+of the following two commands:
+
+.. code-block:: bash
+
+    sudo port -f uninstall installed && rm -r /opt/local
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+
+If Homebrew is already installed, you should resolve any problems reported by
+the command
+
+.. code-block:: bash
+
+    brew doctor
+
+If Anaconda Python or the Python from www.python.org are installed, you
+will likely not be able to run |es|. Therefore, please uninstall them
+using the following commands:
+
+.. code-block:: bash
+
+    sudo rm -r ~/anaconda[23]
+    sudo rm -r /Library/Python
+
+If you want to install MacPorts, download the installer package
+appropriate for your Mac OS X version from
+https://www.macports.org/install.php and install it.
+
+If you want to install Homebrew, use the following commands.
+
+.. code-block:: bash
+
+    sudo xcode-select --install
+    sudo xcodebuild -license accept
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+Installing Packages using MacPorts
+++++++++++++++++++++++++++++++++++
+    
+Run thefollowing commands:
 
 .. code-block:: bash
 
@@ -141,27 +190,20 @@ following commands:
     sudo port select --set pip pip37
     sudo port select --set mpi openmpi-mp
 
-Alternatively, you can use Homebrew.
+
+Installing Packages using Homebrew
+++++++++++++++++++++++++++++++++++
 
 .. code-block:: bash
 
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     brew install cmake python cython boost boost-mpi fftw \
       doxygen gsl numpy ipython jupyter
     brew install hdf5
     brew link --force cython
     pip install PyOpenGL matplotlib
 
-Note: If both MacPorts and Homebrew are installed, you will not be able to
-run |es|. Therefore, if you have both installed, please uninstall one
-or the other by running one of the following two commands:
-
-.. code-block:: bash
-
-    sudo port -f uninstall installed && rm -r /opt/local
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+Installing CUDA
++++++++++++++++
 
 If your Mac has an Nvidia graphics card, you should also download and install the
 CUDA SDK [6]_ to make use of GPU computation.
