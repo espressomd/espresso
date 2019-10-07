@@ -114,6 +114,8 @@ ROCm SDK to make use of GPU computation:
     sudo apt update
     sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand rocthrust
 
+After installing the ROCm SDK, please reboot your computer.
+
 .. _Installing Requirements on Mac OS X:
 
 Installing Requirements on Mac OS X
@@ -132,7 +134,8 @@ following commands:
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
-      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi
+      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi \
+      py37-matplotlib py37-ipython py37-jupyter
     sudo port select --set cython cython37
     sudo port select --set python3 python37
     sudo port select --set pip pip37
@@ -145,12 +148,11 @@ Alternatively, you can use Homebrew.
     sudo xcode-select --install
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install cmake python@3 cython boost boost-mpi fftw \
-      doxygen gsl
-    brew install hdf5 --with-mpi
-    brew install numpy --without-python@2
-    ln -s /usr/local/bin/python2 /usr/local/bin/python
-    pip install --user PyOpenGL
+    brew install cmake python cython boost boost-mpi fftw \
+      doxygen gsl numpy ipython jupyter
+    brew install hdf5
+    brew link --force cython
+    pip install PyOpenGL matplotlib
 
 Note: If both MacPorts and Homebrew are installed, you will not be able to
 run |es|. Therefore, if you have both installed, please uninstall one

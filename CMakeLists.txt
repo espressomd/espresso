@@ -336,7 +336,7 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 # MPI
 #
 
-find_package(MPI REQUIRED)
+find_package(MPI REQUIRED 3.0)
 
 # CMake < 3.9
 if(NOT TARGET MPI::MPI_CXX)
