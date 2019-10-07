@@ -9,9 +9,8 @@ namespace ScriptInterface {
 void ObjectManager::make_handle(ObjectId id, const std::string &name,
                                 const PackedMap &parameters) {
   try {
-    ObjectRef so = Context::make_bare(name);
-    m_policy.emplace(so.get(),
-                   CreationPolicy::LOCAL);
+    ObjectRef so = m_factory.make(name);
+    m_policy.emplace(so.get(), CreationPolicy::LOCAL);
 
     so->construct(unpack(parameters, m_local_objects));
 
@@ -65,9 +64,10 @@ void ObjectManager::nofity_call_method(const ObjectHandle *o,
 }
 
 std::shared_ptr<ObjectHandle>
-ObjectManager::make_shared(std::string const &name, CreationPolicy policy,
+ObjectManager::make_shared(const ObjectHandle *, std::string const &name,
+                           CreationPolicy policy,
                            const VariantMap &parameters) {
-  auto sp = Context::make_bare(name);
+  auto sp = m_factory.make(name);
 
   auto const id = object_id(sp.get());
 
@@ -82,19 +82,9 @@ ObjectManager::make_shared(std::string const &name, CreationPolicy policy,
   return sp;
 }
 
-std::string ObjectManager::serialize(const ObjectRef &o) const {
-  return Utils::pack(std::make_pair(Context::serialize(o), policy(o.get())));
-}
-
 std::shared_ptr<ObjectHandle>
-ObjectManager::unserialize(std::string const &state_) {
-  std::string state;
-  CreationPolicy policy;
-
-  std::tie(state, policy) = Utils::unpack<
-      std::pair<std::string, CreationPolicy>
-      >(state_);
-
-  return {};
+ObjectManager::make_shared(const ObjectHandle *self, std::string const &name,
+                           const VariantMap &parameters) {
+  return make_shared(self, name, policy(self), parameters);
 }
 } // namespace ScriptInterface

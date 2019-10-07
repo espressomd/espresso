@@ -20,7 +20,6 @@
 #ifndef SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 #define SCRIPT_INTERFACE_SCRIPT_INTERFACE_BASE_HPP
 #include "Variant.hpp"
-#include "Context.hpp"
 
 #include <utils/Span.hpp>
 
@@ -28,7 +27,7 @@
 #include <boost/utility/string_ref.hpp>
 
 namespace ScriptInterface {
-class ObjectManager;
+class Context;
 
 /**
  * @brief Base class for generic script interfaces.
@@ -51,6 +50,10 @@ private:
   friend class Context;
   std::shared_ptr<Context> m_manager = {};
   boost::string_ref m_name;
+
+  boost::string_ref name() const {
+    return m_name;
+  }
 
 public:
   /**
@@ -78,7 +81,6 @@ public:
    *               are valid for a default-constructed object are valid.
    */
   void construct(VariantMap const &params) {
-
     do_construct(params);
   }
 

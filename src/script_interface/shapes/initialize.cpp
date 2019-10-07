@@ -30,25 +30,37 @@
 #include "Torus.hpp"
 #include "Union.hpp"
 #include "Wall.hpp"
+
+#include "script_interface/ClassName.hpp"
 #include "script_interface/ScriptInterface.hpp"
+
+#include <utils/tuple.hpp>
+
+#include <tuple>
 
 namespace ScriptInterface {
 namespace Shapes {
-void initialize(ObjectManager *om) {
-  om->register_new<ScriptInterface::Shapes::HollowConicalFrustum>(
-      "Shapes::HollowConicalFrustum");
-  om->register_new<ScriptInterface::Shapes::Union>("Shapes::Union");
-  om->register_new<ScriptInterface::Shapes::NoWhere>("Shapes::NoWhere");
-  om->register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
-  om->register_new<ScriptInterface::Shapes::Ellipsoid>("Shapes::Ellipsoid");
-  om->register_new<ScriptInterface::Shapes::Sphere>("Shapes::Sphere");
-  om->register_new<ScriptInterface::Shapes::Cylinder>("Shapes::Cylinder");
-  om->register_new<ScriptInterface::Shapes::SpheroCylinder>(
-      "Shapes::SpheroCylinder");
-  om->register_new<ScriptInterface::Shapes::Rhomboid>("Shapes::Rhomboid");
-  om->register_new<ScriptInterface::Shapes::Slitpore>("Shapes::Slitpore");
-  om->register_new<ScriptInterface::Shapes::SimplePore>("Shapes::SimplePore");
-  om->register_new<ScriptInterface::Shapes::Torus>("Shapes::Torus");
+constexpr auto class_names() {
+  return std::make_tuple(
+      ClassName<HollowConicalFrustum>{"Shapes::HollowConicalFrustum"},
+      ClassName<Union>{"Shapes::Union"}, ClassName<NoWhere>{"Shapes::NoWhere"},
+      ClassName<Wall>{"Shapes::Wall"},
+      ClassName<Ellipsoid>{"Shapes::Ellipsoid"},
+      ClassName<Sphere>{"Shapes::Sphere"},
+      ClassName<Cylinder>{"Shapes::Cylinder"},
+      ClassName<SpheroCylinder>{"Shapes::SpheroCylinder"},
+      ClassName<Rhomboid>{"Shapes::Rhomboid"},
+      ClassName<Slitpore>{"Shapes::Slitpore"},
+      ClassName<SimplePore>{"Shapes::SimplePore"},
+      ClassName<Torus>{"Shapes::Torus"});
+}
+
+void initialize(ObjectManager *f) {
+  Utils::for_each(
+      [f](auto name) {
+        f->register_new<typename decltype(name)::class_type>(name.name);
+      },
+      class_names());
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

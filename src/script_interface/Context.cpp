@@ -6,23 +6,9 @@
 
 #include <boost/serialization/utility.hpp>
 
-namespace ScriptInterface {
-ObjectRef Context::make_bare(const std::string &name) {
-  auto sp = m_factory.make(name);
-
-  sp->m_manager = shared_from_this();
-  sp->m_name = m_factory.stable_name(name);
-
-  return sp;
-}
-
-boost::string_ref Context::name(const ObjectHandle *o) const {
-  return o->m_name;
-}
-
-std::string Context::serialize(const ObjectRef &o) const {
+std::string serialize(const ObjectRef &o) const {
   ObjectState state{
-      std::string{name(o.get())}, {}, {}, o->get_internal_state()};
+      std::string{name(o.get())}, {}, {}, o->get_internal_state(), {}};
 
   auto const params = o->get_parameters();
   state.params.resize(params.size());
@@ -44,7 +30,7 @@ std::string Context::serialize(const ObjectRef &o) const {
   return Utils::pack(state);
 }
 
-void Context::unserialize(ObjectHandle *o, std::string const &state_) const {
+void unserialize(ObjectHandle *o, std::string const &state_) const {
   /*
   auto const state = Utils::unpack<ObjectState>(state_);
 

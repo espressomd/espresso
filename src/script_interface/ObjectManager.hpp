@@ -6,11 +6,15 @@
 #include "ObjectHandle.hpp"
 #include "PackedVariant.hpp"
 
+#include <utils/Factory.hpp>
+
 #include <boost/serialization/utility.hpp>
 
 namespace ScriptInterface {
 
 class ObjectManager : public Context {
+  enum class CreationPolicy { LOCAL, GLOBAL };
+
   using ObjectId = std::size_t;
 
   /* Instances on this node that are managed by the
@@ -21,8 +25,14 @@ class ObjectManager : public Context {
 
   CreationPolicy policy(const ObjectHandle *o) const { return m_policy.at(o); }
 
+  Utils::Factory<ObjectHandle> m_factory;
+
 public:
   auto const &local_objects() const { return m_local_objects; }
+
+  template <class T> void register_new(const char *name) {
+    m_factory.register_new<T>(name);
+  }
 
 private:
   Communication::CallbackHandle<ObjectId, const std::string &,
@@ -37,8 +47,10 @@ private:
   Communication::CallbackHandle<ObjectId> cb_delete_handle;
 
 public:
-  explicit ObjectManager(Communication::MpiCallbacks &callbacks)
-      : cb_make_handle(&callbacks,
+  ObjectManager(Communication::MpiCallbacks &callbacks,
+                Utils::Factory<ObjectHandle> factory)
+      : m_factory(std::move(factory)),
+        cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,
                               const PackedMap &parameters) {
                          make_handle(id, name, parameters);
@@ -115,20 +127,19 @@ public:
    * name.
    *
    */
-  std::shared_ptr<ObjectHandle> make_shared(std::string const &name,
+  std::shared_ptr<ObjectHandle>
+  make_shared(const ObjectHandle *self, std::string const &name,
+              const VariantMap &parameters) override;
+
+  /**
+   * @brief Get a new reference counted instance of a script interface by
+   * name.
+   *
+   */
+  std::shared_ptr<ObjectHandle> make_shared(const ObjectHandle *self,
+                                            std::string const &name,
                                             CreationPolicy policy,
-                                            const VariantMap &parameters = {});
-
-  /**
-   * @brief Returns a binary representation of the state of a object.
-   */
-  std::string serialize(const ObjectRef &o) const override;
-
-  /**
-   * @brief Creates a new instance from a binary state,
-   *        as returned by @function serialize.
-   */
-  std::shared_ptr<ObjectHandle> unserialize(std::string const &state_);
+                                            const VariantMap &parameters);
 };
 } // namespace ScriptInterface
 

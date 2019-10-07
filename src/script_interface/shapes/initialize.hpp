@@ -24,8 +24,7 @@
 
 namespace ScriptInterface {
 namespace Shapes {
-
-void initialize(ObjectManager *om);
+void initialize(ObjectManager *f);
 
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

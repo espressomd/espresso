@@ -3,6 +3,11 @@
 
 #include "PackedVariant.hpp"
 
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/variant.hpp>
+#include <utils/serialization/unordered_map.hpp>
+
 #include <string>
 #include <utility>
 #include <vector>

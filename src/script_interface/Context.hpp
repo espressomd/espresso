@@ -1,11 +1,13 @@
 #ifndef ESPRESSO_CONTEXT_HPP
 #define ESPRESSO_CONTEXT_HPP
 
+#include "ObjectHandle.hpp"
+#include "ObjectState.hpp"
 #include "Variant.hpp"
 
-#include <utils/Factory.hpp>
-
 #include <boost/utility/string_ref.hpp>
+#include <utils/serialization/pack.hpp>
+#include <utils/print.hpp>
 
 #include <memory>
 
@@ -19,7 +21,7 @@ public:
    * @param name Name of the method to call
    * @param arguments Arguments to the call
    */
-  virtual void nofity_call_method(const ObjectHandle *o,
+  virtual void nofity_call_method(const ObjectHandle *self,
                                   std::string const &name,
                                   VariantMap const &arguments) = 0;
 
@@ -30,7 +32,7 @@ public:
    * @param name Name of the parameter to change
    * @param value Value to set it to
    */
-  virtual void notify_set_parameter(const ObjectHandle *o,
+  virtual void notify_set_parameter(const ObjectHandle *self,
                                     std::string const &name,
                                     Variant const &value) = 0;
 
@@ -39,52 +41,79 @@ public:
    *
    * @param o Internal identified of the instance
    */
-  virtual void nofity_delete_handle(const ObjectHandle *o) = 0;
+  virtual void nofity_delete_handle(const ObjectHandle *self) = 0;
 
   /**
-   * @brief Returns a binary representation of the state of a object.
-   */
-  virtual std::string serialize(const ObjectRef &o) const;
-
-  /**
-    * @brief Initialize a bare object from binary state,
-    * as returned by @function serialize.
-    */
-  void
-  unserialize(ObjectHandle *o, std::string const &state_) const;
-
-public:
-  /**
-   * @brief Register new class type for this context.
+   * @brief Get a new reference counted instance of a script interface by
+   * name.
    *
-   * @tparam T class type derived from @class ObjectHandle.
-   * @param name Name by which the class should be registered.
    */
-  template <typename T>
-  std::enable_if_t<std::is_base_of<ObjectHandle, T>::value>
-      register_new(std::string const &name) {
-    /* Register with the factory */
-    m_factory.register_new<T>(name);
-  }
-
-  virtual std::shared_ptr<ObjectHandle> make_shared(const ObjectHandle *,
-                                            std::string const &name,
-                                            const VariantMap &parameters) {};
+  virtual std::shared_ptr<ObjectHandle>
+  make_shared(const ObjectHandle *self, std::string const &name,
+              const VariantMap &parameters) = 0;
 
 protected:
-  /**
-   * @brief Make a bare new object
-   *
-   * @param name Class name
-   * @return New instance
-   */
-  ObjectRef make_bare(const std::string &name);
+  void set_manager(ObjectHandle *o) { o->m_manager = this->shared_from_this(); }
+
+  void set_name(ObjectHandle *o, boost::string_ref name) const {
+    o->m_name = name;
+  }
+
+  std::string serialize_params(const ObjectHandle *o) const {
+    ObjectState state;
+
+    auto const params = o->get_parameters();
+    state.params.resize(params.size());
+
+    PackVisitor v;
+
+    /* Pack parameters and keep track of ObjectRef parameters */
+    boost::transform(params, state.params.begin(),
+                     [&v](auto const &kv) -> PackedMap::value_type {
+                       return {kv.first, boost::apply_visitor(v, kv.second)};
+                     });
+
+    /* Packed Object parameters */
+    state.objects.resize(v.objects().size());
+    boost::transform(
+        v.objects(), state.objects.begin(), [this](auto const &kv) {
+          return std::make_pair(kv.first, serialize_params(kv.second.get()));
+        });
+
+    state.name = name(o).to_string();
+    state.internal_state = o->get_internal_state();
+
+    return Utils::pack(state);
+  }
+
+  template<class Factory>
+  ObjectRef deserialize_params(Factory const& f, std::string const &state_) {
+    auto const state = Utils::unpack<ObjectState>(state_);
+
+    std::unordered_map<ObjectId, ObjectRef> objects;
+    boost::transform(state.objects, std::inserter(objects, objects.end()),
+                     [this, f](auto const &kv) {
+                       return std::make_pair(kv.first, deserialize_params(f, kv.second));
+                     });
+
+    VariantMap params;
+    for (auto const &kv : state.params) {
+      Utils::print(__PRETTY_FUNCTION__, "restoring parameter", kv.first);
+      params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
+    }
+
+    auto o = f(state.name);
+    o->construct(params);
+    o->set_internal_state(state.internal_state);
+
+    return o;
+  }
+
+public:
+  boost::string_ref name(const ObjectHandle *o) const { return o->name(); }
+
 public:
   virtual ~Context() = default;
-
-  boost::string_ref name(const ObjectHandle *) const;
-private:
-  Utils::Factory<ObjectHandle> m_factory;
 };
-}
-#endif //ESPRESSO_CONTEXT_HPP
+} // namespace ScriptInterface
+#endif // ESPRESSO_CONTEXT_HPP
