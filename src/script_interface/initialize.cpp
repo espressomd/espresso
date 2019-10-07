@@ -35,7 +35,6 @@
 
 #include "ComFixed.hpp"
 
-#include "core/communication.hpp"
 #include "virtual_sites/initialize.hpp"
 
 #include "ObjectManager.hpp"
