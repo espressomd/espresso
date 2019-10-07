@@ -669,7 +669,7 @@ which the observable should take into account.
 
 The current value of an observable can be obtained using its calculate()-method::
 
-    print(par_pos.calculate())
+    print(part_pos.calculate())
 
 .. _Available observables:
 
