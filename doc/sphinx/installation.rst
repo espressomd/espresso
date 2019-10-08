@@ -122,7 +122,7 @@ Installing Requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Preparation
-+++++++++++
+"""""""""""
 
 To make |es| run on Mac OS X 10.9 or higher, you need to install its
 dependencies. There are two possibilities for this, MacPorts and Homebrew.
@@ -172,7 +172,7 @@ If you want to install Homebrew, use the following commands.
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 Installing Packages using MacPorts
-++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""
     
 Run thefollowing commands:
 
@@ -192,7 +192,7 @@ Run thefollowing commands:
 
 
 Installing Packages using Homebrew
-++++++++++++++++++++++++++++++++++
+""""""""""""""""""""""""""""""""""
 
 .. code-block:: bash
 
@@ -203,7 +203,7 @@ Installing Packages using Homebrew
     pip install PyOpenGL matplotlib
 
 Installing CUDA
-+++++++++++++++
+"""""""""""""""
 
 If your Mac has an Nvidia graphics card, you should also download and install the
 CUDA SDK [6]_ to make use of GPU computation.
