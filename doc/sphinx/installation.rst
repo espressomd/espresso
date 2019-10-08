@@ -66,7 +66,7 @@ Cython
 .. _Installing Requirements on Ubuntu Linux:
 
 Installing Requirements on Ubuntu Linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To make |es| run on 18.04 LTS, its dependencies can be installed with:
 
@@ -120,7 +120,7 @@ After installing the ROCm SDK, please reboot your computer.
 .. _Installing Requirements on Mac OS X:
 
 Installing Requirements on Mac OS X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Preparation
 """""""""""
@@ -279,7 +279,7 @@ Configuring
 .. _myconfig.hpp\: Activating and deactivating features:
 
 :file:`myconfig.hpp`: Activating and deactivating features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
@@ -348,7 +348,7 @@ and then in the Python interpreter:
 .. _Features:
 
 Features
-~~~~~~~~
+--------
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
@@ -563,7 +563,7 @@ Finally, there is a flag for debugging:
 
 
 Features marked as experimental
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
@@ -571,7 +571,7 @@ Some of the above features are marked as EXPERIMENTAL. Activating these features
 .. _cmake:
 
 cmake
-~~~~~
+^^^^^
 
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
@@ -603,7 +603,7 @@ Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
 .. _ccmake:
 
 ccmake
-~~~~~~
+^^^^^^
 
 Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
