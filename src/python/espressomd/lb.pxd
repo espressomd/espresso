@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-
 include "myconfig.pxi"
 
 from libcpp cimport bool
@@ -65,6 +63,7 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     const Vector3d lb_lbfluid_get_ext_force_density() except +
     void lb_lbfluid_set_bulk_viscosity(double c_bulk_visc) except +
     double lb_lbfluid_get_bulk_viscosity() except +
+    void lb_lbfluid_sanity_checks() except +
     void lb_lbfluid_print_vtk_velocity(string filename) except +
     void lb_lbfluid_print_vtk_velocity(string filename, vector[int] bb1, vector[int] bb2) except +
     void lb_lbfluid_print_vtk_boundary(string filename) except +
@@ -81,8 +80,8 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbnode_set_velocity(const Vector3i & ind, const Vector3d & u) except +
     double lb_lbnode_get_density(const Vector3i & ind) except +
     void lb_lbnode_set_density(const Vector3i & ind, double density) except +
-    const Vector6d lb_lbnode_get_pi(const Vector3i & ind) except +
-    const Vector6d lb_lbnode_get_pi_neq(const Vector3i & ind) except +
+    const Vector6d lb_lbnode_get_stress(const Vector3i & ind) except +
+    const Vector6d lb_lbnode_get_stress_neq(const Vector3i & ind) except +
     const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
     void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
     int lb_lbnode_get_boundary(const Vector3i & ind) except +
@@ -91,6 +90,8 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_set_kT(double) except +
     double lb_lbfluid_get_kT() except +
     double lb_lbfluid_get_lattice_speed() except +
+    void check_tau_time_step_consistency(double tau, double time_s) except +
+    const Vector3d lb_lbfluid_get_interpolated_velocity(Vector3d & p) except +
 
 cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     void lb_lbcoupling_set_rng_state(stdint.uint64_t)
@@ -104,7 +105,6 @@ cdef extern from "grid_based_algorithms/lbgpu.hpp":
     void quadratic_velocity_interpolation(double * positions, double * velocities, int length)
 
 cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
-    const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(Vector3d & p) except +
     cdef cppclass InterpolationOrder:
         pass
     void lb_lbinterpolation_set_interpolation_order(InterpolationOrder & order)
@@ -195,7 +195,6 @@ cdef inline python_lbfluid_set_gamma_even(gamma_even):
     lb_lbfluid_set_gamma_even(c_gamma_even)
 
 ###############################################
-
 cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p_tau):
 
     cdef Vector3d c_ext_force_density
@@ -211,64 +210,32 @@ cdef inline python_lbfluid_set_ext_force_density(p_ext_force_density, p_agrid, p
             2] * p_agrid * p_agrid * p_tau * p_tau
     lb_lbfluid_set_ext_force_density(c_ext_force_density)
 
-cdef inline python_lbfluid_get_density(p_dens, agrid):
-    cdef double c_dens
-    # call c-function
-    c_dens = lb_lbfluid_get_density()
-    if isinstance(p_dens, float) or isinstance(p_dens, int):
-        p_dens = <double > c_dens / agrid / agrid / agrid
-    else:
-        p_dens = c_dens / agrid / agrid / agrid
+cdef inline double python_lbfluid_get_density(agrid):
+    return lb_lbfluid_get_density() / agrid / agrid / agrid
 
-cdef inline python_lbfluid_get_viscosity(p_visc, p_agrid, p_tau):
-    cdef double c_visc
-    # call c-function
-    c_visc = lb_lbfluid_get_viscosity()
-    if isinstance(p_visc, float) or isinstance(p_visc, int):
-        p_visc = <double > c_visc / p_tau * (p_agrid * p_agrid)
-    else:
-        p_visc = c_visc / p_tau * (p_agrid * p_agrid)
+cdef inline double python_lbfluid_get_viscosity(p_agrid, p_tau):
+    return lb_lbfluid_get_viscosity() / p_tau * (p_agrid * p_agrid)
 
-cdef inline python_lbfluid_get_agrid(p_agrid):
-    cdef double c_agrid
-    # call c-function
-    c_agrid = lb_lbfluid_get_agrid()
-    p_agrid = <double > c_agrid
+cdef inline double python_lbfluid_get_bulk_viscosity(p_agrid, p_tau):
+    return lb_lbfluid_get_bulk_viscosity() / p_tau * (p_agrid * p_agrid)
 
-cdef inline python_lbfluid_get_bulk_viscosity(p_bvisc, p_agrid, p_tau):
-    cdef double c_bvisc
-    # call c-function
-    c_bvisc = lb_lbfluid_get_bulk_viscosity()
-    if isinstance(p_bvisc, float) or isinstance(p_bvisc, int):
-        p_bvisc = <double > c_bvisc / p_tau * (p_agrid * p_agrid)
-    else:
-        p_bvisc = c_bvisc / p_tau * (p_agrid * p_agrid)
+cdef inline double python_lbfluid_get_gamma():
+    return lb_lbcoupling_get_gamma()
 
-cdef inline python_lbfluid_get_gamma(p_gamma):
-    cdef double c_gamma
-    # call c-function
-    c_gamma = lb_lbcoupling_get_gamma()
-    if isinstance(p_gamma, float) or isinstance(p_gamma, int):
-        p_gamma = <double > c_gamma
-    else:
-        p_gamma = c_gamma
-
-
-cdef inline python_lbfluid_get_ext_force_density(p_ext_force_density, p_agrid, p_tau):
-
+cdef inline Vector3d python_lbfluid_get_ext_force_density(p_agrid, p_tau):
     cdef Vector3d c_ext_force_density
     # call c-function
     c_ext_force_density = lb_lbfluid_get_ext_force_density()
     # unit conversion LB -> MD
-    p_ext_force_density[
-        0] = c_ext_force_density[
-            0] / p_agrid / p_agrid / p_tau / p_tau
-    p_ext_force_density[
-        1] = c_ext_force_density[
-            1] / p_agrid / p_agrid / p_tau / p_tau
-    p_ext_force_density[
-        2] = c_ext_force_density[
-            2] / p_agrid / p_agrid / p_tau / p_tau
+    for i in range(3):
+        c_ext_force_density[i] /= p_agrid * p_agrid * p_tau * p_tau
+    return c_ext_force_density
+
+cdef inline Vector6d python_lbfluid_get_stress(agrid, tau):
+    cdef Vector6d stress = lb_lbfluid_get_stress()
+    for i in range(6):
+        stress[i] *= 1. / agrid * 1. / tau**2.0
+    return stress
 
 cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
     cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()
@@ -290,16 +257,16 @@ cdef inline double python_lbnode_get_density(Vector3i node):
     cdef double c_density = lb_lbnode_get_density(node)
     return c_density / agrid / agrid / agrid
 
-cdef inline Vector6d python_lbnode_get_pi(Vector3i node):
+cdef inline Vector6d python_lbnode_get_stress(Vector3i node):
     cdef double tau = lb_lbfluid_get_tau()
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
-    cdef Vector6d c_pi = lb_lbnode_get_pi(node)
-    return c_pi * unit_conversion
+    cdef Vector6d c_stress = lb_lbnode_get_stress(node)
+    return c_stress * unit_conversion
 
-cdef inline Vector6d python_lbnode_get_pi_neq(Vector3i node):
+cdef inline Vector6d python_lbnode_get_stress_neq(Vector3i node):
     cdef double tau = lb_lbfluid_get_tau()
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
-    cdef Vector6d c_pi = lb_lbnode_get_pi_neq(node)
-    return c_pi * unit_conversion
+    cdef Vector6d c_stress = lb_lbnode_get_stress_neq(node)
+    return c_stress * unit_conversion

@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Particles and particle lists.
  *
@@ -52,8 +52,6 @@
 #include <boost/variant.hpp>
 
 #include <cmath>
-#include <cstdlib>
-#include <cstring>
 #include <unordered_map>
 #include <unordered_set>
 /************************************************
@@ -70,7 +68,7 @@ namespace {
 /**
  * @brief A generic particle update.
  *
- * Here the sub-struct struture of Particle is
+ * Here the sub-struct structure of Particle is
  * used: the specification of the data member to update
  * consists of two parts, the pointer to the substruct @p s
  * and a pointer to a member of that substruct @p m.
@@ -102,7 +100,7 @@ using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 /**
  * @brief Special updater for the external flags.
  *
- * These need to be treated specialy as they are
+ * These need to be treated specially as they are
  * updated masked and not overwritten.
  */
 struct UpdateExternalFlag {
@@ -139,9 +137,6 @@ using UpdatePropertyMessage = boost::variant
 #ifdef ROTATIONAL_INERTIA
         , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
-#ifdef AFFINITY
-        , UpdateProperty<Utils::Vector3d, &Prop::bond_site>
-#endif
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
@@ -156,7 +151,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::dipm>
 #endif
 #ifdef VIRTUAL_SITES
-        , UpdateProperty<int, &Prop::is_virtual>
+        , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
         , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
                          &Prop::vs_relative>
@@ -296,11 +291,11 @@ struct UpdateOrientation {
  * A message is either updates a property,
  * or a position, or ...
  * New messages can be added here, if they
- * fullfill the type requirements, namely:
+ * fulfill the type requirements, namely:
  * They either have an integer member id indicating
  * the particle that should be updated an operator()(const Particle&)
  * that is called with the particle, or a tree of
- * variants with leafs that have such a operator() and member.
+ * variants with leafs that have such an operator() and member.
  */
 using UpdateMessage = boost::variant
         < UpdatePropertyMessage
@@ -346,7 +341,7 @@ using message_type_t = typename message_type<S, s>::type;
  * @brief Visitor for message evaluation.
  *
  * This visitor either recurses into the active type
- * if it is a variant type, or otherwise callse
+ * if it is a variant type, or otherwise calls
  * operator()(Particle&) on the active type with
  * the particle that ought to be updated. This construction
  * allows to nest message variants to allow for sub-
@@ -487,7 +482,7 @@ void mpi_who_has_slave(int, int) {
   MPI_Send(sendbuf.data(), npart, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
-void mpi_who_has() {
+void mpi_who_has(const ParticleRange &particles) {
   static auto *sizes = new int[n_nodes];
   std::vector<int> pdata;
 
@@ -500,7 +495,7 @@ void mpi_who_has() {
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
-      for (auto const &p : local_cells.particles())
+      for (auto const &p : particles)
         particle_node[p.p.identity] = this_node;
 
     } else if (sizes[pnode] > 0) {
@@ -518,7 +513,7 @@ void mpi_who_has() {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() { mpi_who_has(); }
+void build_particle_node() { mpi_who_has(local_cells.particles()); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
@@ -573,9 +568,6 @@ int realloc_particlelist(ParticleList *l, int size) {
   assert(size >= 0);
   int old_max = l->max;
   Particle *old_start = l->part;
-
-  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, (void *)l, l->n, l->max, size));
 
   if (size < l->max) {
     if (size == 0)
@@ -898,13 +890,6 @@ void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
 }
 #endif
 
-#ifdef AFFINITY
-void set_particle_affinity(int part, double *bond_site) {
-  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::bond_site>(
-      part, Utils::Vector3d(bond_site, bond_site + 3));
-}
-#endif
-
 #ifdef MEMBRANE_COLLISION
 void set_particle_out_direction(int part, double *out_direction) {
   mpi_update_particle_property<Utils::Vector3d,
@@ -931,8 +916,8 @@ void set_particle_dip(int part, double const *const dip) {
 #endif
 
 #ifdef VIRTUAL_SITES
-void set_particle_virtual(int part, int is_virtual) {
-  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(
+void set_particle_virtual(int part, bool is_virtual) {
+  mpi_update_particle_property<bool, &ParticleProperties::is_virtual>(
       part, is_virtual);
 }
 #endif
@@ -1190,7 +1175,7 @@ void local_remove_particle(int part) {
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
   auto i = Utils::Vector3i{};
-  fold_position(pp, i);
+  fold_position(pp, i, box_geo);
 
   if (_new) {
     Particle new_part;
@@ -1370,8 +1355,6 @@ void try_delete_exclusion(Particle *part, int part2) {
 #endif
 
 void send_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
-                     particles->n, node));
 
   comm_cart.send(node, REQ_SNDRCV_PART, *particles);
 
@@ -1385,7 +1368,6 @@ void send_particles(ParticleList *particles, int node) {
 }
 
 void recv_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
   comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);
@@ -1421,10 +1403,9 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
-  Bonded_ia_parameters *ia_params;
 
   /* partners is a list containing the currently found excluded particles for
-     each particle, and their distance, as a interleaved list */
+     each particle, and their distance, as an interleaved list */
   std::unordered_map<int, IntList> partners;
 
   /* We need bond information */
@@ -1434,8 +1415,8 @@ void auto_exclusions(int distance) {
   for (auto const &part1 : partCfg()) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
-      ia_params = &bonded_ia_params[part1.bl.e[i++]];
-      if (ia_params->num == 1) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[part1.bl.e[i++]];
+      if (ia_params.num == 1) {
         p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
@@ -1444,7 +1425,7 @@ void auto_exclusions(int distance) {
           add_partner(&partners[p2], p2, p1, 1);
         }
       } else
-        i += ia_params->num;
+        i += ia_params.num;
     }
   }
 
@@ -1506,11 +1487,11 @@ void remove_id_from_map(int part_id, int type) {
     particle_type_map.at(type).erase(part_id);
 }
 
-int get_random_p_id(int type) {
-  if (particle_type_map.at(type).empty())
-    throw std::runtime_error("No particles of given type could be found");
-  int rand_index = i_random(particle_type_map.at(type).size());
-  return *std::next(particle_type_map[type].begin(), rand_index);
+int get_random_p_id(int type, int random_index_in_type_map) {
+  if (random_index_in_type_map + 1 > particle_type_map.at(type).size())
+    throw std::runtime_error("The provided index exceeds the number of "
+                             "particles listed in the type_map");
+  return *std::next(particle_type_map[type].begin(), random_index_in_type_map);
 }
 
 void add_id_to_type_map(int part_id, int type) {
@@ -1541,7 +1522,7 @@ void pointer_to_quat(Particle const *p, double const *&res) {
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res) {
+void pointer_to_virtual(Particle const *p, bool const *&res) {
   res = &(p->p.is_virtual);
 }
 #endif
@@ -1630,12 +1611,6 @@ void pointer_to_radius(Particle const *p,
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia.data();
-}
-#endif
-
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res) {
-  res = p->p.bond_site.data();
 }
 #endif
 

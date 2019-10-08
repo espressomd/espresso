@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -41,7 +41,7 @@ LB_PARAMS = {'agrid': AGRID,
              'seed': 123}
 
 
-class LBThermostatCommon(object):
+class LBThermostatCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -50,7 +50,6 @@ class LBThermostatCommon(object):
     system.cell_system.skin = 0.4 * AGRID
 
     def prepare(self):
-        self.system.set_random_state_PRNG()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
         self.system.part.add(
@@ -71,7 +70,7 @@ class LBThermostatCommon(object):
         error_tol = 0.01
         for i in range(3):
             hist = np.histogram(v_stored[:, i], range=(-minmax, minmax),
-                                bins=n_bins, normed=False)
+                                bins=n_bins, density=False)
             data = hist[0] / float(v_stored.shape[0])
             bins = hist[1]
             for j in range(n_bins):

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,7 +23,6 @@ repulsive WCA interaction. Type 1 particles neither interact with themselves
 nor with Type 0 particles. The distribution of minimum distances between
 particles of Type 0 and Type 1 is recorded.
 """
-from __future__ import print_function
 import numpy as np
 import espressomd
 
@@ -54,7 +53,7 @@ density = 0.7
 
 lj_eps = 1.0
 lj_sig = 1.0
-lj_cut = 1.12246
+lj_cut = 2.5 * lj_sig
 lj_cap = 20
 
 # Integration parameters
@@ -209,8 +208,8 @@ for i in range(int_n_times):
 
     r, dist = system.analysis.distribution(
         type_list_a=distr_type_list_a, type_list_b=distr_type_list_b,
-                                           r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
-                                           log_flag=distr_log_flag, int_flag=distr_int_flag)
+        r_min=distr_r_min, r_max=distr_r_max, r_bins=distr_r_bins,
+        log_flag=distr_log_flag, int_flag=distr_int_flag)
     distr_r = r
     distr_values += dist
 

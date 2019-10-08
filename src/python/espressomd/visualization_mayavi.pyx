@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy
 cimport numpy
 import os
@@ -8,11 +24,12 @@ from .particle_data cimport *
 from .interactions cimport *
 from .system cimport *
 from .interactions import NonBondedInteractions
-from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
+from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
+from .grid cimport get_mi_vector, box_geo
 
 include "myconfig.pxi"
 
-if not "ETS_TOOLKIT" in os.environ:
+if "ETS_TOOLKIT" not in os.environ:
     os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab
 from pyface.api import GUI
@@ -28,12 +45,12 @@ output = vtk.vtkFileOutputWindow()
 output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
-cdef class mayaviLive(object):
+cdef class mayaviLive:
     """
     This class provides live visualization using Enthought Mayavi.  Use the
     update method to push your current simulation state after integrating. If
     you run your integrate loop in a separate thread, you can call
-    run_gui_event_loop in your main thread to be able to interact with the GUI.
+    :meth:`start` in your main thread to be able to interact with the GUI.
 
     Parameters
     ----------
@@ -92,9 +109,15 @@ cdef class mayaviLive(object):
             radius = 0.
             IF LENNARD_JONES:
                 try:
-                    radius = 0.5 * get_ia_param(t, t).LJ_sig
-                except:
+                    radius = 0.5 * get_ia_param(t, t).lj.sig
+                except BaseException:
                     radius = 0.
+            IF WCA:
+                if radius == 0:
+                    try:
+                        radius = 0.5 * get_ia_param(t, t).wca.sig
+                    except BaseException:
+                        radius = 0.
 
             if radius == 0:
                 radius = 0.5  # fallback value
@@ -108,7 +131,7 @@ cdef class mayaviLive(object):
         else:
             try:
                 radius = self.particle_sizes[t]
-            except:
+            except BaseException:
                 radius = radius_from_lj(t)
         return radius
 
@@ -201,7 +224,7 @@ cdef class mayaviLive(object):
                 k += 1
                 # Iterate over bond partners and store each connection
                 if bonded_ia_params[t].num == 3 and bonded_ia_params[t].type \
-                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED):
+                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL):
                     for l in range(2):
                         bonds.push_back(i)
                         bonds.push_back(p.bl[k])
@@ -226,7 +249,7 @@ cdef class mayaviLive(object):
         cdef int n
         cdef const particle * p1
         cdef const particle * p2
-        cdef double bond_vec[3]
+        cdef Vector3d bond_vec
         for n in range(Nbonds):
             i = bonds[3 * n]
             j = bonds[3 * n + 1]
@@ -234,8 +257,7 @@ cdef class mayaviLive(object):
             p1 = get_particle_data_ptr(get_particle_data(i))
             p2 = get_particle_data_ptr(get_particle_data(j))
             bond_coords[n, :3] = numpy.array([p1.r.p[0], p1.r.p[1], p1.r.p[2]])
-            get_mi_vector(bond_vec, p2.r.p.data(), p1.r.p.data())
-            bond_coords[n, 3:6] = bond_vec
+            bond_coords[n, 3:6] = make_array_locked( < const Vector3d > get_mi_vector(Vector3d(p2.r.p), Vector3d(p1.r.p), box_geo))
             bond_coords[n, 6] = t
 
         boxl = self.system.box_l
@@ -243,11 +265,11 @@ cdef class mayaviLive(object):
         if self.data is None:
             self.data = coords, types, radii, (self.last_N != N), \
                 bond_coords, (self.last_Nbonds != Nbonds), \
-                        boxl, (self.last_boxl != boxl).any()
+                boxl, (self.last_boxl != boxl).any()
         else:
             self.data = coords, types, radii, self.data[3] or (self.last_N != N), \
                 bond_coords, self.data[5] or (self.last_Nbonds != Nbonds), \
-                        boxl, self.data[7] or (self.last_boxl != boxl).any()
+                boxl, self.data[7] or (self.last_boxl != boxl).any()
         self.last_N = N
         self.last_Nbonds = Nbonds
         self.last_boxl = boxl

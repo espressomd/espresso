@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,7 +19,6 @@ Visualization sample of a simple plate capacitor with applied potential
 difference and charged particles.
 """
 
-from __future__ import print_function
 import numpy as np
 import math
 from threading import Thread
@@ -29,7 +28,7 @@ import espressomd.shapes
 from espressomd import electrostatics
 from espressomd import visualization
 
-required_features = ["PARTIAL_PERIODIC", "ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["ELECTROSTATICS", "WCA"]
 espressomd.assert_features(required_features)
 
 box_l = 20
@@ -59,10 +58,10 @@ system.constraints.add(shape=espressomd.shapes.Wall(
     dist=-box_l, normal=[0, 0, -1]), particle_type=1)
 
 WCA_cut = 2.**(1. / 6.)
-system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=1.0, sigma=1.0, cutoff=WCA_cut, shift="auto")
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1.0, sigma=1.0, cutoff=WCA_cut, shift="auto")
+system.non_bonded_inter[0, 1].wca.set_params(
+    epsilon=1.0, sigma=1.0)
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=1.0, sigma=1.0)
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total=", energy['total'])

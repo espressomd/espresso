@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,8 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
+from .utils import requires_experimental_features
 import numpy as np
 from globals cimport temperature
 from .actors cimport Actor
@@ -35,7 +35,7 @@ IF DIPOLES == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -70,17 +70,17 @@ IF DP3M == 1:
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         accuracy : :obj:`float`
             P3M tunes its parameters to provide this target accuracy.
         alpha : :obj:`float`
             Ewald parameter.
         cao : :obj:`int`
             Charge-assignment order, an integer between -1 and 7.
-        mesh : :obj:`int` or array_like of :obj:`int`
+        mesh : :obj:`int` or (3,) array_like of :obj:`int`
             The number of mesh points in x, y and z direction. Use a single
             value for cubic boxes.
-        mesh_off : array_like :obj:`float`
+        mesh_off : (3,) array_like of :obj:`float`
             Mesh offset.
         r_cut : :obj:`float`
             Real space cutoff.
@@ -94,17 +94,20 @@ IF DP3M == 1:
             """Check validity of parameters.
 
             """
-            super(DipolarP3M, self).validate_params()
+            super().validate_params()
             default_params = self.default_params()
 
-            if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+            if not (self._params["r_cut"] >= 0
+                    or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
+            if not (is_valid_type(self._params["mesh"], int) or len(
+                    self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
-            if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
+            if isinstance(self._params["mesh"], basestring) and len(
+                    self._params["mesh"]) == 3:
                 if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                    (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                    (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
@@ -121,15 +124,18 @@ IF DP3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params["epsilon"] = 0.0
 
-            if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (is_valid_type(self._params["epsilon"], float)
+                    or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
+            if not (self._params["inter"] == default_params["inter"]
+                    or self._params["inter"] > 0):
                 raise ValueError("inter should be a positive integer")
 
-            if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params["mesh_off"]) == 3):
+            if not (self._params["mesh_off"] == default_params["mesh_off"]
+                    or len(self._params["mesh_off"]) == 3):
                 raise ValueError(
-                    "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
+                    "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
         def valid_keys(self):
             return ["prefactor", "alpha_L", "r_cut_iL", "mesh", "mesh_off",
@@ -187,19 +193,20 @@ IF DP3M == 1:
 
         def _deactivate_method(self):
             dp3m_deactivate()
-            super(type(self), self)._deactivate_method()
+            super()._deactivate_method()
 
         def python_dp3m_set_mesh_offset(self, mesh_off):
             cdef double mesh_offset[3]
             mesh_offset[0] = mesh_off[0]
             mesh_offset[1] = mesh_off[1]
             mesh_offset[2] = mesh_off[2]
-            return dp3m_set_mesh_offset(mesh_offset[0], mesh_offset[1], mesh_offset[2])
+            return dp3m_set_mesh_offset(
+                mesh_offset[0], mesh_offset[1], mesh_offset[2])
 
         def python_dp3m_adaptive_tune(self):
             cdef char * log = NULL
             cdef int response
-            response = dp3m_adaptive_tune(& log)
+            response = dp3m_adaptive_tune( & log)
             handle_errors(
                 "dipolar P3M_init: k-space cutoff is larger than half of box dimension")
             return response, log
@@ -249,7 +256,7 @@ IF DIPOLES == 1:
         ----------
 
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
         """
 
@@ -275,16 +282,18 @@ IF DIPOLES == 1:
             handle_errors("Could not activate magnetostatics method "
                           + self.__class__.__name__)
 
-    cdef class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
+    @requires_experimental_features("No test coverage")
+    class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
+
         """Calculate magnetostatic interactions by direct summation over all pairs.
 
-        If the system has periodic boundaries, `n_replica` copies of the system are
+        If the system has periodic boundaries, ``n_replica`` copies of the system are
         taken into account in the respective directions. Spherical cutoff is applied.
 
         Attributes
         ----------
         prefactor : :obj:`float`
-            Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+            Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
         n_replica : :obj:`int`
             Number of replicas to be taken into account at periodic boundaries.
 
@@ -300,7 +309,8 @@ IF DIPOLES == 1:
             return ("prefactor", "n_replica")
 
         def _get_params_from_es_core(self):
-            return {"prefactor": dipole.prefactor, "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
+            return {"prefactor": dipole.prefactor,
+                    "n_replica": Ncut_off_magnetic_dipolar_direct_sum}
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -321,7 +331,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
             method_name : :obj:`str`
                 Name of the method as defined in Scafacos
             method_params : :obj:`dict`
@@ -362,7 +372,7 @@ IF DIPOLES == 1:
             Attributes
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\mu_0/(4\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
             """
 
@@ -382,7 +392,7 @@ IF DIPOLES == 1:
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                super(type(self), self)._deactivate_method()
+                super()._deactivate_method()
                 deactivate_dipolar_direct_sum_gpu()
 
             def _set_params_in_es_core(self):
@@ -413,11 +423,11 @@ IF DIPOLES == 1:
                 self._set_params_in_es_core()
 
             def _deactivate_method(self):
-                super(type(self), self)._deactivate_method()
+                super()._deactivate_method()
                 deactivate_dipolar_barnes_hut()
 
             def _set_params_in_es_core(self):
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_barnes_hut(
                     self._params["epssq"], self._params["itolsq"])
-                #activate_dipolar_barnes_hut()
+                # activate_dipolar_barnes_hut()

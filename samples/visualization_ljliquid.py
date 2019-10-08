@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,7 +22,6 @@ Visualization sample for a Lennard-Jones liquid with live plotting via
 matplotlib.
 """
 
-from __future__ import print_function
 import numpy as np
 from matplotlib import pyplot
 from threading import Thread

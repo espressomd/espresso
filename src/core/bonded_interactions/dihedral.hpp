@@ -1,30 +1,32 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef DIHEDRAL_H
 #define DIHEDRAL_H
 /** \file
  *  Routines to calculate the dihedral energy or/and
  *  force for a particle quadruple.  Note that usage of dihedrals
  *  increases the interaction range of bonded interactions to 2 times
- *  the maximal bond length!  \ref forces.cpp
+ *  the maximal bond length!
+ *
+ *  Implementation in \ref dihedral.cpp.
  */
 
 #include "bonded_interaction_data.hpp"
@@ -50,7 +52,7 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase);
  * If the a,b or b,c are parallel the dihedral angle is not defined in which
  * case the routine returns phi=-1. Calling functions should check for that
  *
- * @param[in]  p1 , p2 , p3 , p4 Particles forming the dihedral
+ * @param[in]  r1 , r2 , r3 , r4 Positions of the particles forming the dihedral
  * @param[out] a Vector from @p p1 to @p p2
  * @param[out] b Vector from @p p2 to @p p3
  * @param[out] c Vector from @p p3 to @p p4
@@ -61,15 +63,15 @@ int dihedral_set_params(int bond_type, int mult, double bend, double phase);
  * @param[out] cosphi Cosine of the dihedral angle
  * @param[out] phi Dihedral angle
  */
-inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
-                                Particle const *p3, Particle const *p4,
-                                Utils::Vector3d &a, Utils::Vector3d &b,
-                                Utils::Vector3d &c, Utils::Vector3d &aXb,
-                                double *l_aXb, Utils::Vector3d &bXc,
-                                double *l_bXc, double *cosphi, double *phi) {
-  a = get_mi_vector(p2->r.p, p1->r.p);
-  b = get_mi_vector(p3->r.p, p2->r.p);
-  c = get_mi_vector(p4->r.p, p3->r.p);
+inline void
+calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                    Utils::Vector3d const &r3, Utils::Vector3d const &r4,
+                    Utils::Vector3d &a, Utils::Vector3d &b, Utils::Vector3d &c,
+                    Utils::Vector3d &aXb, double *l_aXb, Utils::Vector3d &bXc,
+                    double *l_bXc, double *cosphi, double *phi) {
+  a = get_mi_vector(r2, r1, box_geo);
+  b = get_mi_vector(r3, r2, box_geo);
+  c = get_mi_vector(r4, r3, box_geo);
 
   /* calculate vector product a X b and b X c */
   aXb = vector_product(a, b);
@@ -100,15 +102,20 @@ inline void calc_dihedral_angle(Particle const *p1, Particle const *p2,
     *phi = (2.0 * Utils::pi()) - *phi;
 }
 
-/** calculate dihedral force between particles p1, p2 p3 and p4
-    Written by Arijit Maitra, adapted to new force interface by Hanjo,
-    more general new dihedral form by Ana.
-*/
-inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
-                               Particle const *p3, Particle const *p4,
-                               Bonded_ia_parameters const *iaparams,
-                               double force2[3], double force1[3],
-                               double force3[3]) {
+/** Compute the four-body dihedral interaction force.
+ *
+ *  @param[in]  r1        Position of the first particle.
+ *  @param[in]  r2        Position of the second particle.
+ *  @param[in]  r3        Position of the third particle.
+ *  @param[in]  r4        Position of the fourth particle.
+ *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
+ *  @return the forces on @p p2, @p p1, @p p3
+ */
+inline boost::optional<
+    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+               Utils::Vector3d const &r3, Utils::Vector3d const &r4,
+               Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral angle calculation */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
@@ -118,16 +125,11 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
   double fac;
 
   /* dihedral angle */
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
   /* dihedral angle not defined - force zero */
   if (phi == -1.0) {
-    for (int i = 0; i < 3; i++) {
-      force1[i] = 0.0;
-      force2[i] = 0.0;
-      force3[i] = 0.0;
-    }
-    return 0;
+    return {};
   }
 
   auto const f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23;
@@ -139,7 +141,7 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
   auto const v12Xf1 = vector_product(v12, f1);
 
   /* calculate force magnitude */
-  fac = -iaparams->p.dihedral.bend * iaparams->p.dihedral.mult;
+  fac = -iaparams.p.dihedral.bend * iaparams.p.dihedral.mult;
 
   if (fabs(sin(phi)) < TINY_SIN_VALUE) {
     /*(comes from taking the first term of the MacLaurin expansion of
@@ -147,46 +149,52 @@ inline int calc_dihedral_force(Particle const *p2, Particle const *p1,
       The original code had a 2PI term in the cosine (cos(2PI - nPhi))
       but I removed it because it wasn't doing anything. AnaVV*/
     sinmphi_sinphi =
-        iaparams->p.dihedral.mult *
-        cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase) /
+        iaparams.p.dihedral.mult *
+        cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase) /
         cosphi;
   } else {
     sinmphi_sinphi =
-        sin(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase) /
+        sin(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase) /
         sin(phi);
   }
 
   fac *= sinmphi_sinphi;
 
   /* store dihedral forces */
-  for (int i = 0; i < 3; i++) {
-    force1[i] = fac * v23Xf1[i];
-    force2[i] = fac * (v34Xf4[i] - v12Xf1[i] - v23Xf1[i]);
-    force3[i] = fac * (v12Xf1[i] - v23Xf4[i] - v34Xf4[i]);
-  }
-  return 0;
+  auto const force1 = fac * v23Xf1;
+  auto const force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
+  auto const force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
+
+  return std::make_tuple(force2, force1, force3);
 }
 
-/** calculate dihedral energy between particles p1, p2 p3 and p4
-    Written by Arijit Maitra, adapted to new force interface by Hanjo */
-inline int dihedral_energy(Particle const *p1, Particle const *p2,
-                           Particle const *p3, Particle const *p4,
-                           Bonded_ia_parameters const *iaparams,
-                           double *_energy) {
+/** Compute the four-body dihedral interaction energy.
+ *
+ *  @param[in]  r1        Position of the first particle.
+ *  @param[in]  r2        Position of the second particle.
+ *  @param[in]  r3        Position of the third particle.
+ *  @param[in]  r4        Position of the fourth particle.
+ *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
+ */
+inline boost::optional<double>
+dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
+                Utils::Vector3d const &r3, Utils::Vector3d const &r4,
+                Bonded_ia_parameters const &iaparams) {
   /* vectors for dihedral calculations. */
   Utils::Vector3d v12, v23, v34, v12Xv23, v23Xv34;
   double l_v12Xv23, l_v23Xv34;
   /* dihedral angle, cosine of the dihedral angle */
   double phi, cosphi;
 
-  calc_dihedral_angle(p1, p2, p3, p4, v12, v23, v34, v12Xv23, &l_v12Xv23,
+  calc_dihedral_angle(r1, r2, r3, r4, v12, v23, v34, v12Xv23, &l_v12Xv23,
                       v23Xv34, &l_v23Xv34, &cosphi, &phi);
+  /* dihedral angle not defined - force zero */
+  if (phi == -1.0) {
+    return {};
+  }
 
-  *_energy =
-      iaparams->p.dihedral.bend *
-      (1. - cos(iaparams->p.dihedral.mult * phi - iaparams->p.dihedral.phase));
-
-  return 0;
+  return iaparams.p.dihedral.bend *
+         (1. - cos(iaparams.p.dihedral.mult * phi - iaparams.p.dihedral.phase));
 }
 
 #endif

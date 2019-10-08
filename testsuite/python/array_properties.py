@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -296,7 +295,7 @@ class ArrayPropertyTest(ut.TestCase):
         self.system.part[0].dip = [2, 2, 2]
         np.testing.assert_allclose(
             [2, 2, 2], np.copy(self.system.part[0].dip), atol=1E-15)
-        
+
         # Check if copy is settable
         # Particle
         self.set_copy(self.system.part[0].dip)
@@ -308,7 +307,6 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.locked_operators(self.system.part[0].exclusions)
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_partial_periodic(self):
 
         # Check for exception for various operators
@@ -323,6 +321,7 @@ class ArrayPropertyTest(ut.TestCase):
         # Check if copy is settable
         # System
         self.set_copy(self.system.periodicity)
+
 
 if __name__ == "__main__":
     ut.main()

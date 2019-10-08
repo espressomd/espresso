@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _GHOSTS_H
 #define _GHOSTS_H
 /** \file
@@ -167,9 +167,9 @@ typedef struct {
   Cell **part_lists;
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
-     this is the shift vector. Normally this a integer multiple of the box
+     this is the shift vector. Normally this is an integer multiple of the box
      length. The shift is done on the sender side */
-  double shift[3];
+  Utils::Vector3d shift;
 } GhostCommunication;
 
 /** Properties for a ghost communication. A ghost communication is defined */
@@ -208,10 +208,6 @@ void ghost_communicator(GhostCommunicator *gc);
  * @brief Do a ghost communication with caller specified data parts.
  */
 void ghost_communicator(GhostCommunicator *gc, int data_parts);
-
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
-    local_particles. Part of \ref dd_exchange_and_sort_particles.*/
-void invalidate_ghosts();
 
 /*@}*/
 

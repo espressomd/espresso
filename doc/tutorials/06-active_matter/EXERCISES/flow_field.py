@@ -1,29 +1,26 @@
-################################################################################
-#                                                                              #
-# Copyright (C) 2010-2018 The ESPResSo project                                 #
-#                                                                              #
-# This file is part of ESPResSo.                                               #
-#                                                                              #
-# ESPResSo is free software: you can redistribute it and/or modify             #
-# it under the terms of the GNU General Public License as published by         #
-# the Free Software Foundation, either version 3 of the License, or            #
-# (at your option) any later version.                                          #
-#                                                                              #
-# ESPResSo is distributed in the hope that it will be useful,                  #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
-# GNU General Public License for more details.                                 #
-#                                                                              #
-# You should have received a copy of the GNU General Public License            #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
-#                                                                              #
-################################################################################
-#                                                                              #
-#                  Active Matter: Swimmer Flow Field Tutorial                  #
-#                                                                              #
+#
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 ##########################################################################
-
-from __future__ import print_function
+#
+#            Active Matter: Swimmer Flow Field Tutorial
+#
+##########################################################################
 
 import numpy as np
 import os
@@ -51,22 +48,19 @@ pos = ...
 # 'outdir' to store this path
 
 outdir = ...
-try:
-    os.makedirs(outdir)
-except:
-    print("INFO: Directory \"{}\" exists".format(outdir))
+os.makedirs(outdir, exist_ok=True)
 
 # System parameters
 
-length = 25.0
-prod_steps = 1000
-prod_length = 50
-dt = 0.01
+LENGTH = 25.0
+PROD_STEPS = 1000
+PROD_LENGTH = 50
+TIME_STEP = 0.01
 
-system = espressomd.System(box_l=[length, length, length])
+system = espressomd.System(box_l=[LENGTH, LENGTH, LENGTH])
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.cell_system.skin = 0.3
-system.time_step = dt
+system.time_step = TIME_STEP
 system.min_global_cut = 1.0
 
 ##########################################################################
@@ -110,18 +104,12 @@ system.part.add(
 
 # Setup the fluid (quiescent)
 
-agrid = 1
-vskin = 0.1
-frict = 20.0
-visco = 1.0
-densi = 1.0
-
-lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco,
-                    tau=dt)
+lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0,
+                    tau=TIME_STEP)
 ## Exercise 6 ##
 # Can the particle rotate in the flow field?
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=20.0, seed=42)
 
 ##########################################################################
 
@@ -134,20 +122,20 @@ with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
 
     # Production run
 
-    for k in range(prod_steps):
+    for k in range(PROD_STEPS):
         # Output quantities
         print("{time} {pos[0]} {pos[1]} {pos[2]} {vel[0]} {vel[1]} {vel[2]}"
               .format(time=system.time, pos=system.part[0].pos, vel=system.part[0].v),
               file=outfile)
 
         # Output 50 simulations
-        if k % (prod_steps / 50) == 0:
-            num = k / (prod_steps / 50)
+        if k % (PROD_STEPS / 50) == 0:
+            num = k / (PROD_STEPS / 50)
             lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir, num))
             system.part.writevtk(
                 "{}/position_{}.vtk".format(outdir, num), types=[0])
 
-        system.integrator.run(prod_length)
+        system.integrator.run(PROD_LENGTH)
 
 ## Exercise 7 ##
 # Use the snapshots and paraview to visualize the final state.

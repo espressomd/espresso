@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
 import numpy as np
@@ -29,9 +28,9 @@ def validate_params(_params, default):
     if _params["n_polymers"] <= 0:
         raise ValueError(
             "n_polymers has to be a positive integer")
-    if _params["beads_per_chain"] <= 1:
+    if _params["beads_per_chain"] <= 0:
         raise ValueError(
-            "beads_per_chain has to be a positive integer larger than 1")
+            "beads_per_chain has to be a positive integer")
     if _params["bond_length"] < 0:
         raise ValueError(
             "bond_length has to be a positive float")
@@ -93,7 +92,7 @@ def positions(**kwargs):
 
     Returns
     -------
-    array_like :obj:`float`
+    :obj:`ndarray`
         Three-dimensional numpy array, namely a list of polymers containing the
         coordinates of the respective monomers.
 
@@ -112,24 +111,24 @@ def positions(**kwargs):
 
     params = default_params
 
-    # use bond_angle if set via kwarg
+    # use bond_angle if set via kwargs
     params["use_bond_angle"] = "bond_angle" in kwargs
 
     valid_keys = [
         "n_polymers",
         "beads_per_chain",
-     "bond_length",
-     "start_positions",
-     "min_distance",
-     "max_tries",
-     "bond_angle",
-     "respect_constraints",
-     "seed"]
+        "bond_length",
+        "start_positions",
+        "min_distance",
+        "max_tries",
+        "bond_angle",
+        "respect_constraints",
+        "seed"]
 
     required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
 
     for k in kwargs:
-        if not k in valid_keys:
+        if k not in valid_keys:
             raise ValueError("Unknown parameter '%s'" % k)
         params[k] = kwargs[k]
 
@@ -150,15 +149,15 @@ def positions(**kwargs):
     data = draw_polymer_positions(
         partCfg(),
         params["n_polymers"],
-     params["beads_per_chain"],
-     params["bond_length"],
-     start_positions,
-     params["min_distance"],
-     params["max_tries"],
-     int(params["use_bond_angle"]),
-     params["bond_angle"],
-     int(params["respect_constraints"]),
-     params["seed"])
+        params["beads_per_chain"],
+        params["bond_length"],
+        start_positions,
+        params["min_distance"],
+        params["max_tries"],
+        int(params["use_bond_angle"]),
+        params["bond_angle"],
+        int(params["respect_constraints"]),
+        params["seed"])
     positions = []
     for polymer in data:
         p = []

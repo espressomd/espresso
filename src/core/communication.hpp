@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _COMMUNICATION_HPP
 #define _COMMUNICATION_HPP
 /** \file
@@ -26,7 +26,7 @@
  *  It is the header file for communication.cpp.
  *
  *  The asynchronous MPI communication is used during the script
- *  evaluation. Except for the master node that interprets the Tcl
+ *  evaluation. Except for the master node that interprets the interface
  *  script, all other nodes wait in mpi_loop() for the master node to
  *  issue an action using mpi_call(). mpi_loop() immediately
  *  executes an MPI_Bcast and therefore waits for the master node to
@@ -36,18 +36,17 @@
  *  the action issued. If applicable, the second parameter is the node
  *  number of the slave this request is dedicated to.
  *
- *  To add new actions (e.g. to implement new Tcl commands), do the
+ *  To add new actions (e.g. to implement new interface functionality), do the
  *  following:
- *  - write the mpi_* function that is executed on the master
- *  - write the mpi_*_slave function
+ *  - write the @c mpi_* function that is executed on the master
+ *  - write the @c mpi_*_slave function
  *  - Add your slave function to \ref CALLBACK_LIST in communication.cpp
  *
  *  After this your procedure is free to do anything. However, it has
- *  to be in (MPI) sync with what your new mpi_*_slave does. This
+ *  to be in (MPI) sync with what your new @c mpi_*_slave does. This
  *  procedure is called immediately after the broadcast with the
  *  arbitrary integer as parameter. To this aim it has also to be added
- *  to \ref CALLBACK_LIST. A debug message will be created automatically
- *  in \ref anonymous_namespace{communication.cpp}::names "names".
+ *  to \ref CALLBACK_LIST.
  */
 
 #include "MpiCallbacks.hpp"
@@ -128,14 +127,6 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/**
- * @brief Replace the MPI communicator by a new one with the given periodicity
- * and node grid.
- */
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity = {
-                                  {1, 1, 1}});
-
 /** Issue REQ_PLACE: move particle to a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to move.
@@ -174,9 +165,7 @@ void mpi_remove_particle(int node, int id);
  */
 int mpi_integrate(int n_steps, int reuse_forces);
 
-/** Issue REQ_MIN_ENERGY: start energy minimization.
- *  @return nonzero on error
- */
+/** Issue REQ_MIN_ENERGY: start energy minimization. */
 void mpi_minimize_energy();
 
 void mpi_bcast_all_ia_params();
@@ -209,7 +198,6 @@ void mpi_bcast_max_seen_particle_type(int s);
  *           using \ref pressure_calc.
  *      \arg \c 3 calculate and reduce (sum up) instantaneous pressure,
  *           using \ref pressure_calc.
- *      \arg \c 4 use \ref predict_momentum_particles
  *      \arg \c 6 use \ref lb_calc_fluid_momentum
  *      \arg \c 8 use \ref lb_collect_boundary_forces
  *  \param result where to store the gathered value(s):
@@ -264,11 +252,6 @@ void mpi_bcast_cell_structure(int cs);
  *  nodes.
  */
 void mpi_bcast_nptiso_geom();
-
-void mpi_bcast_lb_particle_coupling();
-
-Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
-                                                  Utils::Vector3d const &pos);
 
 /** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
 void mpi_bcast_cuda_global_part_vars();

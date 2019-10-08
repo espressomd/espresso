@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
-import sys
 import unittest as ut
 import numpy as np
 import espressomd
@@ -89,7 +87,7 @@ class PolymerPositions(ut.TestCase):
         for bond_length in bond_lengths:
             positions = polymer.positions(
                 n_polymers=num_poly, beads_per_chain=num_mono,
-                    bond_length=bond_length, seed=self.seed)
+                bond_length=bond_length, seed=self.seed)
 
             self.assertShape(positions, num_poly, num_mono)
             self.assertBondLength(positions, bond_length)
@@ -182,9 +180,7 @@ class PolymerPositions(ut.TestCase):
             self.assertGreaterEqual(z, 0.5 * self.box_l)
 
         # assert that illegal start position raises error
-        assertRaisesRegex = self.assertRaisesRegexp if sys.version_info < (
-            3, 2) else self.assertRaisesRegex
-        with assertRaisesRegex(Exception, 'Invalid start positions.'):
+        with self.assertRaisesRegex(Exception, 'Invalid start positions.'):
             illegal_start = np.array([[1., 1., 0.2 * self.box_l]])
             positions = polymer.positions(
                 n_polymers=1,

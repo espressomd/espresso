@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #ifdef GSL
@@ -25,6 +25,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <vector>
 
 #include "Cluster.hpp"
+
+#include "errorhandling.hpp"
 
 namespace ClusterAnalysis {
 
@@ -42,29 +44,30 @@ Cluster::center_of_mass_subcluster(std::vector<int> &subcl_partcicle_ids) {
   // are smaller than box_l/2 in a periodic system. The 1st particle
   // of the cluster is arbitrarily chosen as reference.
 
-  Utils::Vector3d reference_position = folded_position(partCfg()[particles[0]]);
-  Utils::Vector3d dist_to_reference;
+  auto const reference_position =
+      folded_position(partCfg()[particles[0]].r.p, box_geo);
   double total_mass = 0.;
   for (int pid :
        subcl_partcicle_ids) // iterate over all particle ids within a cluster
   {
-    const Utils::Vector3d folded_pos = folded_position(partCfg()[pid]);
-    get_mi_vector(dist_to_reference, folded_pos,
-                  reference_position); // add current particle positions
-    com = com + dist_to_reference * partCfg()[pid].p.mass;
+    auto const folded_pos = folded_position(partCfg()[pid].r.p, box_geo);
+    auto const dist_to_reference =
+        get_mi_vector(folded_pos, reference_position,
+                      box_geo); // add current particle positions
+    com += dist_to_reference * partCfg()[pid].p.mass;
     total_mass += partCfg()[pid].p.mass;
   }
 
   // Normalize by number of particles
-  com = com * 1. / total_mass;
+  com /= total_mass;
 
   // Re-add reference position
-  com = com + reference_position;
+  com += reference_position;
 
   // Fold into simulation box
 
   for (int i = 0; i < 3; i++) {
-    com[i] = fmod(com[i], box_l[i]);
+    com[i] = fmod(com[i], box_geo.length()[i]);
   }
   return com;
 }
@@ -74,7 +77,7 @@ double Cluster::longest_distance() {
   for (auto a = particles.begin(); a != particles.end(); a++) {
     for (auto b = a; ++b != particles.end();) {
       auto const dist =
-          get_mi_vector(partCfg()[*a].r.p, partCfg()[*b].r.p).norm();
+          get_mi_vector(partCfg()[*a].r.p, partCfg()[*b].r.p, box_geo).norm();
 
       // Larger than previous largest distance?
       ld = std::max(ld, dist);
@@ -95,7 +98,7 @@ Cluster::radius_of_gyration_subcluster(std::vector<int> &subcl_particle_ids) {
   double sum_sq_dist = 0.;
   for (auto const pid : subcl_particle_ids) {
     // calculate square length of this distance
-    sum_sq_dist += get_mi_vector(com, partCfg()[pid].r.p).norm2();
+    sum_sq_dist += get_mi_vector(com, partCfg()[pid].r.p, box_geo).norm2();
   }
 
   return sqrt(sum_sq_dist / subcl_particle_ids.size());
@@ -125,7 +128,7 @@ std::pair<double, double> Cluster::fractal_dimension(double dr) {
   std::vector<double> distances;
 
   for (auto const &it : particles) {
-    distances.push_back(get_mi_vector(com.begin(), partCfg()[it].r.p)
+    distances.push_back(get_mi_vector(com, partCfg()[it].r.p, box_geo)
                             .norm()); // add distance from the current particle
                                       // to the com in the distances vectors
   }

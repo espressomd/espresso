@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -74,7 +74,7 @@ def poiseuille_flow(r, R, ext_force_density, dyn_visc):
     return ext_force_density * 1. / (4 * dyn_visc) * (R**2.0 - r**2.0)
 
 
-class LBPoiseuilleCommon(object):
+class LBPoiseuilleCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None

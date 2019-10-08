@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2018 The ESPResSo project
+# Copyright (C) 2009-2019 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -28,14 +28,14 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.1-dev")
+set(PROJECT_VERSION "5.0-dev")
 string(REGEX
        REPLACE "^([1-9]+)\\.[0-9]+.*$"
                "\\1"
                SOVERSION
                "${PROJECT_VERSION}")
 if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
-  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
+  message(FATAL_ERROR "Could not determine SOVERSION from ${PROJECT_VERSION}")
 endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 #
@@ -56,8 +56,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-set(WITH_PYTHON yes)
-
+option(WITH_PYTHON "Build with Python bindings"  ON)
 option(WITH_GSL    "Build with GSL support"  ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
@@ -191,6 +190,7 @@ if(WITH_CUDA)
       find_package(HIP MODULE)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
+      set(HIP 1)
       list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
@@ -235,7 +235,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp REQUIRED)
+find_package(PythonInterp 3.3 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
@@ -253,25 +253,15 @@ if(WITH_PYTHON)
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    set(
-      CYTHON_FLAGS "-2"
+
+  set(CYTHON_FLAGS "-3"
       CACHE STRING "Flags used by the Cython compiler during all build types.")
-  else()
-    set(
-      CYTHON_FLAGS "-3"
-      CACHE STRING "Flags used by the Cython compiler during all build types.")
-  endif()
 
   if(WARNINGS_ARE_ERRORS)
     set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
   endif()
 
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    find_program(IPYTHON_EXECUTABLE NAMES ipython2 ipython jupyter)
-  else()
-    find_program(IPYTHON_EXECUTABLE NAMES ipython3 ipython jupyter)
-  endif()
+  find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
 
 
@@ -280,7 +270,7 @@ if(FFTW3_FOUND)
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
-# If we build either interface turn on script interface
+# If we build Python bindings, turn on script interface
 if(WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
@@ -547,7 +537,9 @@ if(WITH_TESTS)
     set(WITH_UNIT_TESTS ON)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
-  add_subdirectory(testsuite)
+  if(WITH_PYTHON)
+    add_subdirectory(testsuite)
+  endif(WITH_PYTHON)
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)
@@ -562,7 +554,6 @@ endif(WITH_BENCHMARKS)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(libs)
-add_subdirectory(config)
 #
 # Feature summary
 #

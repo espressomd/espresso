@@ -193,7 +193,7 @@ html_show_sourcelink = False
 # If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
 html_show_sphinx = False
 
-# If true, "(C) Copyright (C) 2018 The ESPResSo project" is shown
+# If true, "(C) Copyright (C) 2019 The ESPResSo project" is shown
 # in the HTML footer. Default is True.
 html_show_copyright = True
 
@@ -239,7 +239,7 @@ rst_prolog = """
 """
 # Style ESPResSo
 rst_epilog = """
-.. |es| replace:: `ESPResSo`
+.. |es| replace:: *ESPResSo*
 """
 # Re-enable grouping of arguments in numpydoc
 # https://github.com/sphinx-doc/sphinx/issues/2227
@@ -250,7 +250,7 @@ napoleon_use_param = False
 
 # Suppress warnings for features not compiled in
 # http://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
-autodoc_mock_imports = ['featuredefs', 'mayavi', 'pyface', 'tvtk', 'vtk', 'MDAnalysis', 'electrostatics']
+autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'mayavi', 'pyface', 'tvtk', 'vtk', 'MDAnalysis', 'electrostatics']
 
 def setup(app):
     app.add_stylesheet('bibtex.css')

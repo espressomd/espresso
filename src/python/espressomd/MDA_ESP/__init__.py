@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -71,7 +71,7 @@ from MDAnalysis.core.topologyattrs import (
 )
 
 
-class Stream(object):
+class Stream:
 
     """
     Create an object that provides a MDAnalysis topology and a coordinate reader
@@ -186,7 +186,7 @@ class Timestep(base.Timestep):
         x = self._unitcell[self._ts_order_x]
         y = self._unitcell[self._ts_order_y]
         z = self._unitcell[self._ts_order_z]
-            # this ordering is correct! (checked it, OB)
+        # this ordering is correct! (checked it, OB)
         return triclinic_box(x, y, z)
 
     @dimensions.setter

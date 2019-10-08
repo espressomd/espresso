@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,12 +14,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function, absolute_import
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
-import espressomd.code_info
+from .__init__ import has_features
 
 
-if any(i in espressomd.code_info.features() for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     @script_interface_register
     class LBBoundaries(ScriptObjectRegistry):
 

@@ -1,23 +1,24 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "VirtualSitesRelative.hpp"
+#include "forces_inline.hpp"
 #include <utils/math/sqr.hpp>
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -30,7 +31,12 @@
 #include "rotation.hpp"
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
-
+  // Ghost update logic
+  if (n_nodes > 0) {
+    if (recalc_positions or get_have_velocity()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
+  }
   for (auto &p : local_cells.particles()) {
     if (!p.p.is_virtual)
       continue;
@@ -95,7 +101,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   /* The shift has to respect periodic boundaries: if the reference particles
    * is not in the same image box, we potentially avoid to shift to the other
    * side of the box. */
-  auto const shift = get_mi_vector(new_pos, p.r.p);
+  auto const shift = get_mi_vector(new_pos, p.r.p, box_geo);
   p.r.p += shift;
 
   if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
@@ -115,7 +121,7 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
     return;
   }
 
-  auto const d = get_mi_vector(p.r.p, p_real->r.p);
+  auto const d = get_mi_vector(p.r.p, p_real->r.p, box_geo);
 
   // Get omega of real particle in space-fixed frame
   Utils::Vector3d omega_space_frame =
@@ -128,6 +134,9 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts(cell_structure.ghost_cells().particles());
+
   // Iterate over all the particles in the local cells
   for (auto &p : local_cells.particles()) {
     // We only care about virtual particles
@@ -142,7 +151,8 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 
       // Add forces and torques
       p_real->f.torque +=
-          vector_product(get_mi_vector(p.r.p, p_real->r.p), p.f.f) + p.f.torque;
+          vector_product(get_mi_vector(p.r.p, p_real->r.p, box_geo), p.f.f) +
+          p.f.torque;
       p_real->f.f += p.f.f;
     }
   }
@@ -169,8 +179,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     // Get distance vector pointing from real to virtual particle, respecting
     // periodic boundary i
     // conditions
-    double d[3];
-    get_mi_vector(d, p_real->r.p, p.r.p);
+    auto const d = get_mi_vector(p_real->r.p, p.r.p, box_geo);
 
     // Stress tensor contribution
     for (int k = 0; k < 3; k++)
@@ -179,7 +188,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
 
     // Pressure = 1/3 trace of stress tensor
     // but the 1/3 is applied somewhere else.
-    *pressure += (p.f.f[0] * d[0] + p.f.f[1] * d[1] + p.f.f[2] * d[2]);
+    *pressure += p.f.f * d;
   }
 }
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
-from sys import argv
 import sys
 from subprocess import CalledProcessError
 
@@ -40,23 +38,23 @@ def damerau_levenshtein_distance(s1, s2):
                 cost = 1
             d[(i, j)] = min(
                 d[(i - 1, j)] + 1,  # deletion
-                           d[(i, j - 1)] + 1,  # insertion
-                           d[(i - 1, j - 1)] + cost,  # substitution
+                d[(i, j - 1)] + 1,  # insertion
+                d[(i - 1, j - 1)] + cost,  # substitution
             )
             if i and j and s1[i] == s2[j - 1] and s1[i - 1] == s2[j]:
+                # transposition
                 d[(i, j)] = min(d[(i, j)], d[i - 2, j - 2] + cost)
-                   # transposition
 
     return d[lenstr1 - 1, lenstr2 - 1]
 
 
-def handle_unkown(f, all_features):
+def handle_unknown(f, all_features):
     match = None
     max_dist = max(2, len(f) // 2)
     for d in all_features:
         dist = damerau_levenshtein_distance(f, d)
         if dist < max_dist:
-            min_dist = dist
+            max_dist = dist
             match = d
 
     if match:
@@ -75,8 +73,8 @@ def print_exception(ex):
 
 
 def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
-# This does not work on all compilers, so if the parsing fails
-# we just bail out.
+    # This does not work on all compilers, so if the parsing fails
+    # we just bail out.
     external_defs = []
 
     if pre_header:
@@ -94,7 +92,7 @@ def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
         print_exception(ex)
         return
 
-# Parse feature file
+    # Parse feature file
     defs = featuredefs.defs(feature_file)
 
     error_state = False
@@ -108,21 +106,22 @@ def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
         if u.startswith('__'):
             continue
         error_state = True
-        handle_unkown(u, defs.features)
+        handle_unknown(u, defs.features)
 
     if error_state:
-        raise FeatureError("There were errors in '{}'".format(argv[3]))
+        raise FeatureError("There were errors in '{}'".format(sys.argv[3]))
     else:
         return
 
+
 if __name__ == "__main__":
-    if(len(argv) > 4):
-        pre_header = argv[4]
+    if len(sys.argv) > 4:
+        pre_header = sys.argv[4]
     else:
         pre_header = None
 
     try:
-        check_myconfig(argv[1], argv[2], argv[3], pre_header)
+        check_myconfig(sys.argv[1], sys.argv[2], sys.argv[3], pre_header)
         sys.exit()
     except FeatureError:
-        sys.exit("There were errors in '{}'".format(argv[3]))
+        sys.exit("There were errors in '{}'".format(sys.argv[3]))

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Integration test for exclusions
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -153,6 +152,7 @@ class Exclusions(ut.TestCase):
                                pair_energy, places=7)
         self.assertAlmostEqual(self.s.analysis.pressure()[('coulomb', 0)],
                                pair_pressure, places=7)
+
 
 if __name__ == "__main__":
     ut.main()

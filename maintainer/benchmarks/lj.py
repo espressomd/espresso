@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import os
 import sys
 import numpy as np
@@ -32,6 +31,8 @@ parser.add_argument("--volume_fraction", metavar="FRAC", action="store",
                     type=float, default=0.50, required=False,
                     help="Fraction of the simulation box volume occupied by "
                     "particles (range: [0.01-0.74], default: 0.50)")
+parser.add_argument("--bonds", action="store_true",
+                    help="Add bonds between particle pairs, default: false")
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--output", metavar="FILEPATH", action="store",
                    type=str, required=False, default="benchmarks.csv",
@@ -49,6 +50,8 @@ n_iterations = 30
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
 assert args.volume_fraction < np.pi / (3 * np.sqrt(2)), \
     "volume_fraction exceeds the physical limit of sphere packing (~0.74)"
+assert not (args.bonds and args.volume_fraction > 0.5), \
+    "volume_fraction too dense (>0.50) for a diatomic liquid, risk of bonds breaking"
 if not args.visualizer:
     assert(measurement_steps >= 100), \
         "{} steps per tick are too short".format(measurement_steps)
@@ -86,7 +89,7 @@ system = espressomd.System(box_l=3 * (box_l,))
 #############################################################
 system.random_number_generator_state = list(range(
     n_proc * (system._get_PRNG_state_size() + 1)))
-#np.random.seed(1)
+# np.random.seed(1)
 # Integration parameters
 #############################################################
 system.time_step = 0.01
@@ -109,8 +112,17 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 # Particle setup
 #############################################################
 
-for i in range(n_part):
-    system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+if not args.bonds:
+    for i in range(n_part):
+        system.part.add(id=i, pos=np.random.random(3) * system.box_l)
+else:
+    hb = espressomd.interactions.HarmonicBond(r_0=lj_cut, k=2)
+    system.bonded_inter.add(hb)
+    for i in range(0, n_part, 2):
+        pos = np.random.random(3) * system.box_l
+        system.part.add(id=i, pos=pos)
+        system.part.add(id=i + 1, pos=pos + np.random.random(3) / np.sqrt(3))
+        system.part[i].add_bond((hb, i + 1))
 
 #############################################################
 #  Warmup Integration                                       #
@@ -124,7 +136,8 @@ system.integrator.set_steepest_descent(
 # warmup
 while system.analysis.energy()["total"] > 3 * n_part:
     print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
-    system.integrator.run(10)
+    system.integrator.run(20)
+print("minimization: {:.1f}".format(system.analysis.energy()["total"]))
 print()
 system.integrator.set_vv()
 
@@ -154,8 +167,9 @@ if not args.visualizer:
         system.integrator.run(measurement_steps)
         tock = time()
         t = (tock - tick) / measurement_steps
-        print("step {}, time = {:.2e}, verlet: {:.2f}"
-              .format(i, t, system.cell_system.get_state()["verlet_reuse"]))
+        print("step {}, time = {:.2e}, verlet: {:.2f}, energy: {:.2e}"
+              .format(i, t, system.cell_system.get_state()["verlet_reuse"],
+                      system.analysis.energy()["total"]))
         all_t.append(t)
     main_tock = time()
     # average time
@@ -171,16 +185,13 @@ if not args.visualizer:
     # write report
     cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
     report = ('"{script}","{arguments}",{cores},"{mpi}",{mean:.3e},'
-              '{ci:.3e},{n},{dur:.1f},{E1:.5e},{E2:.5e},{E3:.5e}\n'.format(
+              '{ci:.3e},{n},{dur:.1f}\n'.format(
                   script=os.path.basename(sys.argv[0]), arguments=cmd,
                   cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci,
-                  E1=system.analysis.energy()["total"],
-                  E2=system.analysis.energy()["kinetic"],
-                  E3=system.analysis.energy()["non_bonded"]))
+                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci))
     if not os.path.isfile(args.output):
         report = ('"script","arguments","cores","MPI","mean","ci",'
-                  '"steps_per_tick","duration","E1","E2","E3"\n' + report)
+                  '"nsteps","duration"\n' + report)
     with open(args.output, "a") as f:
         f.write(report)
 else:
@@ -191,7 +202,7 @@ else:
         while True:
             system.integrator.run(1)
             visualizer.update()
-            sleep(1 / 60.)  # limit framerate to at most 60 FPS
+            sleep(1 / 60.)  # limit frame rate to at most 60 FPS
 
     t = Thread(target=main_thread)
     t.daemon = True

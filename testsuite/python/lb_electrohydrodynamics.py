@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -70,6 +70,7 @@ class LBEHTest(ut.TestCase):
         s.integrator.run(steps=500)
 
         np.testing.assert_allclose(v_term, np.copy(s.part[0].v), atol=1e-5)
+
 
 if __name__ == "__main__":
     ut.main()

@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  This file contains everything needed to create a start-up configuration
  *  of (partially charged) diamond structure polymer chains with counterions
@@ -29,16 +29,12 @@
 
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 #include "PartCfg.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
-#include "debug.hpp"
 #include "diamond.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
@@ -54,9 +50,9 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
   int max_cnt = 0;
   for (int n = 0; n < N_CI; ++n) {
     for (cnt1 = 0; cnt1 < max_try; ++cnt1) {
-      pos[0] = box_l[0] * d_random();
-      pos[1] = box_l[1] * d_random();
-      pos[2] = box_l[2] * d_random();
+      pos[0] = box_geo.length()[0] * d_random();
+      pos[1] = box_geo.length()[1] * d_random();
+      pos[2] = box_geo.length()[2] * d_random();
       if ((mode != 0) or (mindist(partCfg, pos) > shield))
         break;
     }
@@ -71,7 +67,6 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
     part_id++;
     max_cnt = std::max(cnt1, max_cnt);
   }
-  POLY_TRACE(printf(" %d->%d \n", cnt1, max_cnt));
 
   return max_cnt;
 }

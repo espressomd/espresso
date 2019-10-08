@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,6 @@
 Visualization sample for Poiseuille flow with Lattice Boltzmann.
 """
 
-from __future__ import print_function
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 from threading import Thread

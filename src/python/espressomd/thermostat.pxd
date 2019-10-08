@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
-
 from libcpp cimport bool as cbool
 from libc cimport stdint
 from libcpp.string cimport string
@@ -48,9 +46,15 @@ cdef extern from "thermostat.hpp":
 
     stdint.uint64_t langevin_get_rng_state()
 
-IF STOKESIAN_DYNAMICS:
-    cdef extern from "stokesian_dynamics/sd_interface.hpp":
+cdef extern from "stokesian_dynamics/sd_interface.hpp":
+    IF STOKESIAN_DYNAMICS:
         void set_sd_viscosity(double eta)
         double get_sd_viscosity()
         void set_sd_device(const string &dev)
         string get_sd_device()
+
+cdef extern from "dpd.hpp":
+    IF DPD:
+        void dpd_set_rng_state(stdint.uint64_t counter)
+        cbool dpd_is_seed_required()
+        stdint.uint64_t dpd_get_rng_state()

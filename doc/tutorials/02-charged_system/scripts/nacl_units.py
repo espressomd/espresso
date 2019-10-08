@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -60,7 +60,7 @@ masses = {"Cl": 35.453, "Na": 22.99}
 # Setup System
 box_l = (n_ionpairs * sum(masses.values()) / density)**(1. / 3.)
 system.box_l = [box_l, box_l, box_l]
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)

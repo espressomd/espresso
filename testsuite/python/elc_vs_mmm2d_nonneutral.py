@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -24,7 +23,7 @@ import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
-@utx.skipIfMissingFeatures(["P3M", "PARTIAL_PERIODIC"])
+@utx.skipIfMissingFeatures(["P3M"])
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
@@ -41,44 +40,44 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
                 "neutralize": False,
-                "check_neutrality": False},
-            "const_pot_0": {
-                "gap_size": self.elc_gap,
-                "maxPWerror": self.acc,
-                "const_pot": True,
-                "pot_diff": 0.0},
-            "const_pot_1": {
-                "gap_size": self.elc_gap,
-                "maxPWerror": self.acc,
-                "const_pot": True,
-                "pot_diff": 1.0},
-            "const_pot_m1": {
-                "gap_size": self.elc_gap,
-                "maxPWerror": self.acc,
-                "const_pot": True,
-                "pot_diff": -1.0}
+                "check_neutrality": False}
+            #            "const_pot_0": {
+            #                "gap_size": self.elc_gap,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 0.0},
+            #            "const_pot_1": {
+            #                "gap_size": self.elc_gap,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 1.0},
+            #            "const_pot_m1": {
+            #                "gap_size": self.elc_gap,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": -1.0}
         }
 
         mmm2d_param_sets = {
             "inert": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "check_neutrality": False},
-            "const_pot_0": {
-                "prefactor": 1.0,
-                "maxPWerror": self.acc,
-                "const_pot": True,
-                "pot_diff": 0.0},
-            "const_pot_1": {
-                "prefactor": 1.0,
-                "maxPWerror": self.acc,
-                "const_pot": True,
-                "pot_diff": 1.0},
-            "const_pot_m1": {
-                "prefactor": 1.0,
-                "maxPWerror": self.acc,
-                "const_pot": True,
-                "pot_diff": -1.0}
+                "check_neutrality": False}
+            #            "const_pot_0": {
+            #                "prefactor": 1.0,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 0.0},
+            #            "const_pot_1": {
+            #                "prefactor": 1.0,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": 1.0},
+            #            "const_pot_m1": {
+            #                "prefactor": 1.0,
+            #                "maxPWerror": self.acc,
+            #                "const_pot": True,
+            #                "pot_diff": -1.0}
         }
 
         self.system.box_l = 3 * [self.box_l]
@@ -99,14 +98,14 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         mmm2d_res = {}
         mmm2d_res["inert"] = self.scan()
 
-        mmm2d.set_params(**mmm2d_param_sets["const_pot_0"])
-        mmm2d_res["const_pot_0"] = self.scan()
+#        mmm2d.set_params(**mmm2d_param_sets["const_pot_0"])
+#        mmm2d_res["const_pot_0"] = self.scan()
 
-        mmm2d.set_params(**mmm2d_param_sets["const_pot_1"])
-        mmm2d_res["const_pot_1"] = self.scan()
+#        mmm2d.set_params(**mmm2d_param_sets["const_pot_1"])
+#        mmm2d_res["const_pot_1"] = self.scan()
 
-        mmm2d.set_params(**mmm2d_param_sets["const_pot_m1"])
-        mmm2d_res["const_pot_m1"] = self.scan()
+#        mmm2d.set_params(**mmm2d_param_sets["const_pot_m1"])
+#        mmm2d_res["const_pot_m1"] = self.scan()
 
         self.system.actors.remove(mmm2d)
 
@@ -126,14 +125,14 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         elc_res = {}
         elc_res["inert"] = self.scan()
 
-        elc.set_params(**elc_param_sets["const_pot_0"])
-        elc_res["const_pot_0"] = self.scan()
+#        elc.set_params(**elc_param_sets["const_pot_0"])
+#        elc_res["const_pot_0"] = self.scan()
 
-        elc.set_params(**elc_param_sets["const_pot_1"])
-        elc_res["const_pot_1"] = self.scan()
+#        elc.set_params(**elc_param_sets["const_pot_1"])
+#        elc_res["const_pot_1"] = self.scan()
 
-        elc.set_params(**elc_param_sets["const_pot_m1"])
-        elc_res["const_pot_m1"] = self.scan()
+#        elc.set_params(**elc_param_sets["const_pot_m1"])
+#        elc_res["const_pot_m1"] = self.scan()
 
         for run in elc_res:
             self.assertTrue(np.testing.assert_allclose(
@@ -154,6 +153,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             res.append(m)
 
         return res
+
 
 if __name__ == "__main__":
     ut.main()

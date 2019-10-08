@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import espressomd
 
 
 class ParticleProperties(ut.TestCase):
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
     # Particle id to work on
     pid = 17
@@ -33,7 +32,7 @@ class ParticleProperties(ut.TestCase):
     def bondsMatch(self, inType, outType, inParams, outParams):
         """Check, if the bond type set and gotten back as well as the bond
         parameters set and gotten back match. Only check keys present in
-        inParams.
+        ``inParams``.
         """
         if inType != outType:
             return False
@@ -46,16 +45,61 @@ class ParticleProperties(ut.TestCase):
 
         return True
 
+    def parameterKeys(self, bondObject):
+        """
+        Check :meth:`~espressomd.interactions.NonBondedInteraction.valid_keys`
+        and :meth:`~espressomd.interactions.NonBondedInteraction.required_keys`
+        return sets, and that
+        :meth:`~espressomd.interactions.NonBondedInteraction.set_default_params`
+        returns a dictionary with the correct keys.
+
+        Parameters
+        ----------
+        bondObject: instance of a class derived from :class:`espressomd.interactions.BondedInteraction`
+            Object of the interaction to test, e.g.
+            :class:`~espressomd.interactions.FeneBond`
+        """
+        classname = bondObject.__class__.__name__
+        valid_keys = bondObject.valid_keys()
+        required_keys = bondObject.required_keys()
+        old_params = dict(bondObject.params)
+        bondObject.set_default_params()
+        default_keys = set(bondObject.params.keys())
+        bondObject.params = old_params
+        self.assertIsInstance(valid_keys, set,
+                              "{}.valid_keys() must return a set".format(
+                                  classname))
+        self.assertIsInstance(required_keys, set,
+                              "{}.required_keys() must return a set".format(
+                                  classname))
+        self.assertTrue(default_keys.issubset(valid_keys),
+                        "{}.set_default_params() has unknown parameters: {}".format(
+            classname, default_keys.difference(valid_keys)))
+        self.assertTrue(default_keys.isdisjoint(required_keys),
+                        "{}.set_default_params() has extra parameters: {}".format(
+            classname, default_keys.intersection(required_keys)))
+        self.assertSetEqual(default_keys, valid_keys - required_keys,
+                            "{}.set_default_params() should have keys: {}, got: {}".format(
+                                classname, valid_keys - required_keys, default_keys))
+
     def setUp(self):
         if not self.system.part.exists(self.pid):
             self.system.part.add(id=self.pid, pos=(0, 0, 0, 0))
 
     def generateTestForBondParams(_bondId, _bondClass, _params):
-        """Generates test cases for checking bond parameters set and gotten back
-        from Es actually match. Only keys which are present in _params are checked
-        1st arg: Id of the bonded ia in Espresso to test on, i.e., 0,2,1...
-        2nd: Class of the bond potential to test, ie.e, FeneBond, HarmonicBond
-        3rd: Bond parameters as dictionary, i.e., {"k"=1.,"r_0"=0}
+        """Generates test cases for checking bond parameters set and gotten
+        back from the espresso core actually match those in the Python classes.
+        Only keys which are present in ``_params`` are checked.
+
+        Parameters
+        ----------
+        _bondId: :obj:`int`
+            Identifier of the bonded IA in Espresso to test on, e.g. 0, 2, 1...
+        _bondClass: class derived from :class:`espressomd.interactions.BondedInteraction`
+            Class of the interaction to test, e.g.
+            :class:`~espressomd.interactions.FeneBond`
+        _params: :obj:`dict`
+            Bond parameters, e.g. ``{"k": 1., "r_0": 0}``
         """
         bondId = _bondId
         bondClass = _bondClass
@@ -83,6 +127,7 @@ class ParticleProperties(ut.TestCase):
                 params.__str__() +
                 " vs. " +
                 outParams.__str__())
+            self.parameterKeys(outBond)
 
         return func
 
@@ -95,7 +140,9 @@ class ParticleProperties(ut.TestCase):
     test_harmonic2 = generateTestForBondParams(
         0, espressomd.interactions.HarmonicBond, {"r_0": 1.1, "k": 5.2, "r_cut": 1.3})
 
-    if espressomd.has_features(["ROTATION"]):
+    # HarmonicDumbbell has only interface tests, so it is marked as
+    # experimental
+    if espressomd.has_features(["ROTATION", "EXPERIMENTAL_FEATURES"]):
         test_harmonic_dumbbell = generateTestForBondParams(
             0, espressomd.interactions.HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5})
         test_harmonic_dumbbell2 = generateTestForBondParams(
@@ -114,13 +161,18 @@ class ParticleProperties(ut.TestCase):
         test_subt_lj = generateTestForBondParams(
             0, espressomd.interactions.SubtLJ, {})
 
-    if espressomd.has_features(["TABULATED"]):
-        test_tabulated = generateTestForBondParams(
-            0, espressomd.interactions.Tabulated, {"type": "distance",
-                                                   "min": 1.,
-                                                   "max": 2.,
-                                                   "energy": [1., 2., 3.],
-                                                   "force": [3., 4., 5.]})
+    test_tabulated_bond = generateTestForBondParams(
+        0, espressomd.interactions.TabulatedDistance, {"min": 1.,
+                                                       "max": 2.,
+                                                       "energy": [1., 2., 3.],
+                                                       "force": [3., 4., 5.]})
+    test_tabulated = generateTestForBondParams(
+        0, espressomd.interactions.TabulatedAngle, {"energy": [1., 2., 3.],
+                                                    "force": [3., 4., 5.]})
+    test_tabulated = generateTestForBondParams(
+        0, espressomd.interactions.TabulatedDihedral, {"energy": [1., 2., 3.],
+                                                       "force": [3., 4., 5.]})
+
 
 if __name__ == "__main__":
     ut.main()

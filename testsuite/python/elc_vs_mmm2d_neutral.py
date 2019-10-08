@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -23,12 +22,12 @@ import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
-@utx.skipIfMissingFeatures(["P3M", "PARTIAL_PERIODIC"])
+@utx.skipIfMissingFeatures(["P3M"])
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    acc = 1e-6
-    elc_gap = 5.0
+    acc = 1e-7
+    elc_gap = 10.0
     box_l = 10.0
     bl2 = box_l * 0.5
     system.time_step = 0.01
@@ -128,7 +127,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=self.acc,
-                                            mesh=[16, 16, 24], cao=6)
+                                            mesh=[24, 24, 32], cao=6)
         self.system.actors.add(p3m)
 
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])
@@ -167,6 +166,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             res.append(m)
 
         return res
+
 
 if __name__ == "__main__":
     ut.main()

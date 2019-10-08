@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,9 +24,9 @@ import espressomd.shapes
 import espressomd.lb
 
 AGRID = 1.5
-VISC = 1.0
-DENS = 1.0
-FRIC = 1.0
+VISC = 1.2
+DENS = 1.3
+FRIC = 1.4
 TAU = 0.2
 BOX_L = 18.0
 TIME_STEP = TAU
@@ -43,7 +43,7 @@ def velocity_profile(x):
     return V_BOUNDARY / (BOX_L - 2. * AGRID) * (x - AGRID)
 
 
-class LBInterpolation(object):
+class LBInterpolation:
 
     """
     Couette flow profile along x in z-direction. Check that velocity at shear
@@ -70,14 +70,16 @@ class LBInterpolation(object):
         Check that the interpolated LB fluid velocity is zero between boundary
         node and first fluid node.
         """
-        self.system.lbboundaries.clear()
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
         self.system.integrator.run(1200)
         # Shear plane for boundary 1
         # for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #     np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
         # Bulk
-        for pos in itertools.product(np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        for pos in itertools.product(
+                np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_almost_equal(
                 self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
         # Shear plane for boundary 2
@@ -91,16 +93,16 @@ class LBInterpolation(object):
 
         """
         max_vel = 0.31 * AGRID / TAU
-        self.system.lbboundaries.clear()
-        self.set_boundaries([0.0, 0.0, max_vel])
         with self.assertRaises(Exception):
+            self.set_boundaries([0.0, 0.0, max_vel])
             self.system.integrator.run(1)
-        
+
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
 class LBInterpolationCPU(ut.TestCase, LBInterpolation):
 
     def setUp(self):
+        self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
         self.system.actors.add(self.lbf)
@@ -111,6 +113,7 @@ class LBInterpolationCPU(ut.TestCase, LBInterpolation):
 class LBInterpolationGPU(ut.TestCase, LBInterpolation):
 
     def setUp(self):
+        self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMETERS)
         self.system.actors.add(self.lbf)

@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
 /** \file
@@ -110,11 +110,6 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-#ifdef AFFINITY
-  /** parameters for affinity mechanisms */
-  Utils::Vector3d bond_site = {-1., -1., -1.};
-#endif
-
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
   Utils::Vector3d out_direction = {0., 0., 0.};
@@ -142,10 +137,8 @@ struct ParticleProperties {
 #endif
 
 #ifdef VIRTUAL_SITES
-  /** is particle virtual
-      0 = real particle
-      else = virtual particle */
-  int is_virtual = 0;
+  /** is particle virtual */
+  bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** In case, the "relative" implementation of virtual sites is enabled, the
   following properties define, with respect to which real particle a virtual
@@ -171,7 +164,7 @@ struct ParticleProperties {
 
 #endif
 #else  /* VIRTUAL_SITES */
-  static constexpr const int is_virtual = 0;
+  static constexpr const bool is_virtual = false;
 #endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -286,13 +279,12 @@ struct ParticleMomentum {
  *  node the particle belongs to
  */
 struct ParticleLocal {
+  /** check whether a particle is a ghost or not */
+  bool ghost = false;
   /** position in the last time step before last Verlet list update. */
   Utils::Vector3d p_old = {0, 0, 0};
   /** index of the simulation box image where the particle really sits. */
   Utils::Vector3i i = {0, 0, 0};
-
-  /** check whether a particle is a ghost or not */
-  int ghost = 0;
 };
 
 struct ParticleParametersSwimming {
@@ -453,6 +445,8 @@ struct ParticleList {
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
+
+  Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
 };
 
 /************************************************
@@ -586,12 +580,12 @@ void invalidate_fetch_cache();
  *  Move a particle to a new position.
  *  If it does not exist, it is created.
  *  @param part the identity of the particle to move
- *  @param p_    its new position
+ *  @param p    its new position
  *  @retval ES_PART_OK if particle existed
  *  @retval ES_PART_CREATED if created
  *  @retval ES_PART_ERROR if id is illegal
  */
-int place_particle(int part, const double *p_);
+int place_particle(int part, const double *p);
 
 /** Call only on the master node: set particle velocity.
  *  @param part the particle.
@@ -642,14 +636,6 @@ void set_particle_rotation(int part, int rot);
  *  @param angle rotation angle
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
-
-#ifdef AFFINITY
-/** Call only on the master node: set particle affinity.
- *  @param part the particle.
- *  @param bond_site its new site of the affinity bond.
- */
-void set_particle_affinity(int part, double *bond_site);
-#endif
 
 #ifdef MEMBRANE_COLLISION
 /** Call only on the master node: set particle out_direction.
@@ -728,11 +714,11 @@ void set_particle_dipm(int part, double dipm);
 #endif
 
 #ifdef VIRTUAL_SITES
-/** Call only on the master node: set particle dipole moment (absolute value).
+/** Call only on the master node: set particle virtual flag.
  *  @param part the particle.
- *  @param is_virtual its new is_virtual.
+ *  @param is_virtual new @ref ParticleProperties::is_virtual "is_virtual" flag.
  */
-void set_particle_virtual(int part, int is_virtual);
+void set_particle_virtual(int part, bool is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat);
@@ -857,7 +843,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 void added_particle(int part);
 
 /** Used for example by \ref mpi_send_exclusion.
- *  Locally add a exclusion to a particle.
+ *  Locally add an exclusion to a particle.
  *  @param part1 the identity of the first exclusion partner
  *  @param part2 the identity of the second exclusion partner
  *  @param _delete if true, delete the exclusion instead of add
@@ -906,11 +892,11 @@ void recv_particles(ParticleList *particles, int node);
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
  *  calculated.
  */
-inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
+inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
-  return std::none_of(p1->el.begin(), p1->el.end(),
-                      [p2](int id) { return p2->p.identity == id; });
+  return std::none_of(p1.el.begin(), p1.el.end(),
+                      [&p2](int id) { return p2.p.identity == id; });
 }
 #endif
 
@@ -935,7 +921,7 @@ void auto_exclusions(int distance);
 void init_type_map(int type);
 
 /* find a particle of given type and return its id */
-int get_random_p_id(int type);
+int get_random_p_id(int type, int random_index_in_type_map);
 int number_of_particles_with_type(int type);
 
 // The following functions are used by the python interface to obtain
@@ -955,7 +941,7 @@ void pointer_to_quat(Particle const *p, double const *&res);
 void pointer_to_q(Particle const *p, double const *&res);
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res);
+void pointer_to_virtual(Particle const *p, bool const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -1000,9 +986,6 @@ void pointer_to_radius(Particle const *p, double const *&res);
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
-#endif
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res);
 #endif
 
 #ifdef MEMBRANE_COLLISION

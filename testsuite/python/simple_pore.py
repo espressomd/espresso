@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import division, print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -78,6 +77,7 @@ class SimplePoreConstraint(ut.TestCase):
         rel_diff = abs(end_energy - start_energy) / start_energy
 
         self.assertLess(rel_diff, 1e-3)
+
 
 if __name__ == "__main__":
     ut.main()

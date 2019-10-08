@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2010-2018 The ESPResSo project
-
-   This file is part of ESPResSo.
-
-   ESPResSo is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ESPResSo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_wrapper.hpp"
 
@@ -1951,7 +1951,6 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
                    ek_lbparameters_gpu->dim_z;
 
     float efield[3] = {0., 0., 0.};
-#pragma unroll 3
     for (unsigned int dim = 0; dim < 3; ++dim) {
       // 0 0 0
       efield[dim] +=
@@ -2308,7 +2307,7 @@ int ek_init() {
 
     if (lattice_switch != ActiveLB::NONE) {
       fprintf(stderr,
-              "ERROR: Electrokinetics automatically intializes the LB on the "
+              "ERROR: Electrokinetics automatically initializes the LB on the "
               "GPU and can therefore not be used in conjunction with LB.\n");
       fprintf(stderr, "ERROR: Please run either electrokinetics or LB.\n");
 
@@ -3609,8 +3608,8 @@ LOOKUP_TABLE default\n",
 }
 
 int ek_print_vtk_lbforce_density(char *filename) {
-#ifndef EK_DEBUG
-  return 1;
+#if !defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && !defined(EK_DEBUG)
+  throw std::runtime_error("Please rebuild Espresso with EK_DEBUG");
 #else
 
   FILE *fp = fopen(filename, "w");

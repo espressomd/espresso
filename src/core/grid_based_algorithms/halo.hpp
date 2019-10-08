@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *
  * Halo scheme for parallelization of lattice algorithms.
@@ -50,7 +50,7 @@
 
 /** Layout of the lattice data.
  *  The description is similar to MPI datatypes but a bit more compact.
- *  See \ref halo_create_fieldtype, \ref halo_create_field_vector and \ref
+ *  See \ref halo_create_field_vector and \ref
  *  halo_dtcopy to understand how it works.
  */
 typedef struct _Fieldtype *Fieldtype;
@@ -62,7 +62,7 @@ struct _Fieldtype {
   int vblocks;  /**< number of blocks in field vectors */
   int vstride;  /**< size of strides in field vectors */
   int vskip;    /**< displacement between strides in field vectors */
-  int vflag;
+  bool vflag;
   Fieldtype subtype;
 };
 
@@ -91,23 +91,14 @@ typedef struct {
 
 /** Structure holding a set of \ref HaloInfo which comprise a certain
  *  parallelization scheme */
-typedef struct {
+class HaloCommunicator {
+public:
+  HaloCommunicator(int num) : num(num){};
 
   int num; /**< number of halo communications in the scheme */
 
-  HaloInfo *halo_info; /**< set of halo communications */
-
-} HaloCommunicator;
-
-/** Creates a fieldtype describing the data layout
- *  @param      count   number of subtypes
- *  @param[in]  lengths array of lengths of the subtypes
- *  @param[in]  disps   array of displacements the subtypes
- *  @param      extent  extent of the whole new fieldtype
- *  @param[out] newtype newly created fieldtype
- */
-void halo_create_fieldtype(int count, int const *lengths, int const *disps,
-                           int extent, Fieldtype *newtype);
+  std::vector<HaloInfo> halo_info; /**< set of halo communications */
+};
 
 /** Creates a field vector layout
  *  @param vblocks       number of vector blocks

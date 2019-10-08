@@ -1,28 +1,27 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "random.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 
 #include <sstream>
 
@@ -40,7 +39,7 @@ std::uniform_real_distribution<double> uniform_real_distribution(0, 1);
 
 bool user_has_seeded = false;
 
-/** Local functions */
+/* Local functions */
 
 /**
  * @brief Get a string representation of the state of the PRNG.
@@ -69,7 +68,7 @@ int get_state_size_of_generator() {
                                    // this member variable
 }
 
-/** Communication */
+/* Communication */
 
 void mpi_random_seed_slave(int, int) {
   int this_seed;
@@ -77,7 +76,6 @@ void mpi_random_seed_slave(int, int) {
 
   MPI_Scatter(nullptr, 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
 
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
   init_random_seed(this_seed);
 }
 
@@ -87,8 +85,6 @@ void mpi_random_seed(int cnt, vector<int> &seeds) {
   mpi_call(mpi_random_seed_slave, -1, cnt);
 
   MPI_Scatter(&seeds[0], 1, MPI_INT, &this_seed, 1, MPI_INT, 0, comm_cart);
-
-  RANDOM_TRACE(printf("%d: Received seed %d\n", this_node, this_seed));
 
   init_random_seed(this_seed);
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -50,10 +49,10 @@ class Rotation(ut.TestCase):
 
     def validate(self, rotate, coord):
         if rotate:
-            #self.assertNotEqual(self.s.part[0].torque_body[coord],0)
+            # self.assertNotEqual(self.s.part[0].torque_body[coord],0)
             self.assertNotEqual(self.s.part[0].omega_body[coord], 0)
         else:
-            #self.assertEqual(self.s.part[0].torque_body[coord],0)
+            # self.assertEqual(self.s.part[0].torque_body[coord],0)
             self.assertEqual(self.s.part[0].omega_body[coord], 0)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")

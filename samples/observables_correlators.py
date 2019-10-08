@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,7 +19,6 @@ This scripts demonstrates the measurement of the mean square displacement
 using the Observables/Correlators framework.
 """
 
-from __future__ import print_function
 import numpy as np
 
 import espressomd

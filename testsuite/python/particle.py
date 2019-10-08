@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -227,7 +226,7 @@ class ParticleProperties(ut.TestCase):
         res = s.part.select(pos=(0.2, 0.3, 0.4), q=0)
         self.assertEqual(tuple(res.id), (0,))
 
-        # Emtpy result
+        # Empty result
         res = s.part.select(q=17)
         self.assertEqual(tuple(res.id), ())
         # User-specified criterion

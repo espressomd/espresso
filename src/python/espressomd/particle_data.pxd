@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, List, Span
+from espressomd.utils cimport Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
@@ -53,7 +52,7 @@ cdef extern from "particle_data.hpp":
         Vector3d v
 
     ctypedef struct particle_local "ParticleLocal":
-        int i[3]
+        Vector3i i
 
     ctypedef struct particle "Particle":
         particle_properties p
@@ -125,10 +124,6 @@ cdef extern from "particle_data.hpp":
         void set_particle_out_direction(int part, double out_direction[3])
         void pointer_to_out_direction(particle * p, double * & res)
 
-    IF AFFINITY:
-        void set_particle_affinity(int part, double bond_site[3])
-        void pointer_to_bond_site(particle * p, double * & res)
-
     IF MASS:
         void pointer_to_mass(particle * p, double * & res)
 
@@ -140,7 +135,7 @@ cdef extern from "particle_data.hpp":
 
     IF VIRTUAL_SITES:
         void set_particle_virtual(int part, int isVirtual)
-        void pointer_to_virtual(const particle * P, const int * & res)
+        void pointer_to_virtual(const particle * P, const bint * & res)
 
     IF LANGEVIN_PER_PARTICLE:
         void set_particle_temperature(int part, double T)
@@ -225,7 +220,7 @@ cdef extern from "rotation.hpp":
     Vector3d convert_vector_space_to_body(const particle & p, const Vector3d & v)
     void rotate_particle(int id, Vector3d axis, double angle)
 
-cdef class ParticleHandle(object):
+cdef class ParticleHandle:
     cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
@@ -233,9 +228,3 @@ cdef class ParticleHandle(object):
 cdef class _ParticleSliceImpl:
     cdef public id_selection
     cdef int _chunk_size
-
-cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle * )
-    Vector3d unfolded_position(const particle * )
-    cdef void fold_position(double * , int*)
-    void unfold_position(double pos[3], int image_box[3])

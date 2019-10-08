@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,7 +19,6 @@
 """
 This example shows how to integrate MDAnalysis in ESPResSo
 """
-from __future__ import print_function
 import espressomd
 from espressomd import MDA_ESP
 import numpy as np

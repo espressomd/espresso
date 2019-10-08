@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, division
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -167,7 +166,6 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
     # Test Tabulated Dihedral Angle
-    @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
         N = 111
         d_phi = 2 * np.pi / N
@@ -176,9 +174,8 @@ class InteractionsBondedTest(ut.TestCase):
         tab_energy = [np.cos(i * d_phi) for i in range(N + 1)]
         tab_force = [np.cos(i * d_phi) for i in range(N + 1)]
 
-        dihedral_tabulated = espressomd.interactions.Tabulated(
-            type='dihedral', energy=tab_energy, force=tab_force, min=0.,
-            max=2 * np.pi)
+        dihedral_tabulated = espressomd.interactions.TabulatedDihedral(
+            energy=tab_energy, force=tab_force)
         self.system.bonded_inter.add(dihedral_tabulated)
         self.system.part[1].add_bond((dihedral_tabulated, 0, 2, 3))
         self.system.part[2].pos = self.system.part[1].pos + [1, 0, 0]
@@ -212,6 +209,7 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
+
 
 if __name__ == '__main__':
     ut.main()

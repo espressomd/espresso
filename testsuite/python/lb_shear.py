@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,6 +17,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
+import math
 
 import espressomd.lb
 import espressomd.lbboundaries
@@ -34,7 +35,7 @@ VISC = 3.2
 DENS = 2.3
 TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
-# The number of grid cells should be devisible by four and 3 in all directions
+# The number of grid cells should be divisible by four and 3 in all directions
 # for testing on multiple mpi nodes.
 H = 12 * AGRID 
 W = 6 * AGRID  
@@ -76,10 +77,10 @@ def shear_flow(x, t, nu, v, h, k_max):
     for k in np.arange(1, k_max + 1):
         u += 1.0 / (np.pi * k) * np.exp(
             -4 * np.pi ** 2 * nu * k ** 2 / h ** 2 * t) * np.sin(2 * np.pi / h * k * x)
-    return v * u
+    return -v * u
 
 
-class LBShearCommon(object):
+class LBShearCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -107,7 +108,7 @@ class LBShearCommon(object):
         wall_shape2 = espressomd.shapes.Wall(
             normal=-1.0 * shear_plane_normal, dist=-(H + AGRID))
         wall1 = espressomd.lbboundaries.LBBoundary(
-            shape=wall_shape1, velocity=-0.5 * SHEAR_VELOCITY * shear_direction)
+            shape=wall_shape1, velocity=-.5 * SHEAR_VELOCITY * shear_direction)
         wall2 = espressomd.lbboundaries.LBBoundary(
             shape=wall_shape2, velocity=.5 * SHEAR_VELOCITY * shear_direction)
 
@@ -122,25 +123,38 @@ class LBShearCommon(object):
 
             v_expected = shear_flow(
                 x=(np.arange(0, sample_points) + .5) * AGRID,
-                                t=self.system.time - t0,
-                                nu=VISC,
-                                v=SHEAR_VELOCITY,
-                                h=H,
-                                k_max=100)
+                t=self.system.time - t0,
+                nu=VISC,
+                v=SHEAR_VELOCITY,
+                h=H,
+                k_max=100)
             for j in range(1, sample_points):
                 ind = np.max(((1, 1, 1), shear_plane_normal * j + 1), 0)
                 ind = np.array(ind, dtype=int)
                 v_measured = self.lbf[ind[0], ind[1], ind[2]].velocity
                 np.testing.assert_allclose(
                     np.copy(v_measured),
-                    np.copy(v_expected[j]) * shear_direction, atol=3E-3)
+                    -np.copy(v_expected[j]) * shear_direction, atol=3E-3)
 
-        # Test steady state stress tensor on a node
-        p_eq = DENS * AGRID**2 / TIME_STEP**2 / 3
-        p_expected = np.diag((p_eq, p_eq, p_eq))
-        p_expected += -VISC * DENS * SHEAR_VELOCITY / H * (
-            np.outer(shear_plane_normal, shear_direction)
-           + np.outer(shear_direction, shear_plane_normal))
+        # speed of sound of the LB fluid in MD units (agrid/tau is due to
+        # LB->MD unit conversion)
+        speed_of_sound = 1. / math.sqrt(3.) * self.lbf.agrid / self.lbf.tau
+        # equation of state for the LB fluid
+        p_eq = speed_of_sound**2.0 * DENS
+        # see Eq. 1.15 and 1.29 in
+        # Krüger, Timm, et al. "The lattice Boltzmann method." Springer International Publishing 10 (2017): 978-3.
+        # and
+        # https://de.wikipedia.org/wiki/Navier-Stokes-Gleichungen
+        # note that for an incompressible fluid the viscous stress tensor is
+        # defined as \sigma = -p 1 + \mu [\nabla * u + (\nabla * u)^T]
+        # where 'p' is the static pressure, '\mu' is the dynamic viscosity,
+        # '*' denotes the outer product and 'u' is the velocity field
+        # NOTE: the so called stress property of the fluid is actually the
+        # pressure tensor not the viscous stress tensor!
+        shear_rate = SHEAR_VELOCITY / H
+        dynamic_viscosity = self.lbf.viscosity * self.lbf.density
+        p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
+            np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
         for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):
             node_stress = np.copy(self.lbf[n[0], n[1], n[2]].stress)
             np.testing.assert_allclose(node_stress,

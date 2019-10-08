@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2010-2018 The ESPResSo project
-
-   This file is part of ESPResSo.
-
-   ESPResSo is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ESPResSo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_wrapper.hpp"
 
@@ -30,11 +30,28 @@
 
 #ifdef ELECTROSTATICS
 
-#ifdef P3M_GPU_DEBUG
-#define P3M_GPU_TRACE(A) A
-#else
-#define P3M_GPU_TRACE(A)
+#define _P3M_GPU_FLOAT
+//#define _P3M_GPU_REAL_DOUBLE
+
+#ifdef _P3M_GPU_FLOAT
+#define REAL_TYPE float
+#define FFT_TYPE_COMPLEX cufftComplex
+#define FFT_FORW_FFT cufftExecR2C
+#define FFT_BACK_FFT cufftExecC2R
+#define FFT_PLAN_FORW_FLAG CUFFT_R2C
+#define FFT_PLAN_BACK_FLAG CUFFT_C2R
 #endif
+
+#ifdef _P3M_GPU_REAL_DOUBLE
+#define REAL_TYPE double
+#define FFT_TYPE_COMPLEX cufftDoubleComplex
+#define FFT_FORW_FFT cufftExecD2Z
+#define FFT_BACK_FFT cufftExecZ2D
+#define FFT_PLAN_FORW_FLAG CUFFT_D2Z
+#define FFT_PLAN_BACK_FLAG CUFFT_Z2D
+#endif
+
+#include "BoxGeometry.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,7 +76,7 @@ using Utils::sqr;
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
-extern double box_l[3];
+extern BoxGeometry box_geo;
 
 struct P3MGpuData {
   /** Charge mesh */
@@ -666,9 +683,6 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
  */
 
 void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
-  P3M_GPU_TRACE(printf("cao %d mesh %d %d %d, alpha %e, box (%e %e %e)\n", cao,
-                       mesh[0], mesh[1], mesh[2], alpha, box_l[0], box_l[1],
-                       box_l[2]));
   if (this_node == 0) {
     espressoSystemInterface.requestParticleStructGpu();
 
@@ -695,10 +709,12 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
       reinit_if = 1;
     }
 
+    auto const box_l = box_geo.length();
+
     if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
         (p3m_gpu_data.box[1] != box_l[1]) ||
         (p3m_gpu_data.box[2] != box_l[2])) {
-      std::copy(box_l, box_l + 3, p3m_gpu_data.box);
+      std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
       reinit_if = 1;
     }
 
@@ -728,6 +744,17 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
 
     if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+      // rocFFT gives wrong P3M results for mesh sizes whose prime factors are
+      // not 2, 3 or 5. So we check for the other supported prime factors and
+      // throw an error if they are used with HIP.
+      if (mesh[0] % 7 == 0 || mesh[0] % 11 == 0 || mesh[0] % 13 == 0 ||
+          mesh[1] % 7 == 0 || mesh[1] % 11 == 0 || mesh[1] % 13 == 0 ||
+          mesh[2] % 7 == 0 || mesh[2] % 11 == 0 || mesh[2] % 13 == 0) {
+        throw std::runtime_error("Mesh size not supported");
+      }
+#endif
+
       /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
       const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                              (p3m_gpu_data.mesh[2] / 2 + 1);
@@ -747,7 +774,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
                       FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
           cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
                       FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
-        throw std::string("Unable to create fft plan");
+        throw std::runtime_error("Unable to create fft plan");
       }
     }
 
@@ -760,10 +787,6 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
       block.z = 1;
       grid.x = mesh[0] / block.x + 1;
       grid.z = mesh[2] / 2 + 1;
-
-      P3M_GPU_TRACE(printf("mesh %d %d %d, grid (%d %d %d), block (%d %d %d)\n",
-                           mesh[0], mesh[1], mesh[2], grid.x, grid.y, grid.z,
-                           block.x, block.y, block.z));
 
       switch (p3m_gpu_data.cao) {
       case 1:

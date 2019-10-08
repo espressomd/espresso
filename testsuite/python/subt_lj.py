@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -58,6 +57,7 @@ class SubtLjTest(ut.TestCase):
 
         self.assertAlmostEqual(f, 0, places=10)
         self.assertAlmostEqual(s.analysis.energy()['total'], 0, places=9)
+
 
 if __name__ == "__main__":
     ut.main()

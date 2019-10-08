@@ -1,24 +1,23 @@
-/*#include "nonbonded_interactions/nonbonded_interaction_data.hpp"#include
-  "nonbonded_interactions/nonbonded_interaction_data.hpp" Copyright (C)
-  2010-2018 The ESPResSo project Copyright (C)
-  2002,2003,2004,2005,2006,2007,2008,2009,2010 Max-Planck-Institute for Polymer
-  Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
     MMM1D algorithm for long range Coulomb interactions.
     Implementation of the MMM1D method for the calculation of the electrostatic
@@ -64,11 +63,11 @@ int MMM1D_sanity_checks();
 /// initialize the MMM1D constants
 void MMM1D_init();
 
-void add_mmm1d_coulomb_pair_force(double chpref, const double d[3], double r,
-                                  double force[3]);
+void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
+                                  double r, Utils::Vector3d &force);
 
-double mmm1d_coulomb_pair_energy(double q1q2, double const d[3], double r2,
-                                 double r);
+double mmm1d_coulomb_pair_energy(double q1q2, Utils::Vector3d const &d,
+                                 double r2, double r);
 
 /** Tuning of the parameters which are not set by the user, e.g. the
  *  switching radius or the bessel_cutoff. Call this only on the master node.

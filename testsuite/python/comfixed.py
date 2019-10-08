@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import espressomd
 import espressomd.analyze
@@ -65,6 +64,7 @@ class ComFixed(ut.TestCase):
                 self.assertAlmostEqual(com_0[j], com_i[j], places=10)
 
             s.integrator.run(10)
+
 
 if __name__ == "__main__":
     ut.main()

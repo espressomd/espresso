@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -48,8 +48,8 @@
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "io/mpiio/mpiio.hpp"
-#include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -73,9 +73,11 @@
 #include <utils/u32_to_u64.hpp>
 
 #include <boost/mpi.hpp>
+#include <boost/range/algorithm/min_element.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 using namespace std;
 
@@ -118,34 +120,18 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_update_particle_slave)                                                \
-  CB(mpi_bcast_lb_particle_coupling_slave)                                     \
-  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)
+  CB(mpi_update_particle_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
+#ifndef DOXYGEN
+/* this conditional on DOXYGEN prevents an interaction in Doxygen between
+ * CALLBACK_LIST and whatever follows next, e.g. a function "int foo();"
+ * would otherwise become "CALLBACK_LIST int foo();" */
 CALLBACK_LIST
-
-#undef CB
-
-#ifdef DOXYGEN
-    (void); /* this line prevents an interaction in Doxygen between
-               CALLBACK_LIST and the anonymous namespace that follows */
 #endif
 
-namespace {
-#ifdef COMM_DEBUG
-// create the list of names
-#define CB(name) #name,
-
-/** List of callback names for debugging. */
-std::vector<std::string> names{CALLBACK_LIST};
 #undef CB
-#endif
-} // namespace
-
-/** Forward declarations */
 
 int mpi_check_runtime_errors();
 
@@ -217,11 +203,12 @@ void mpi_init() {
 #endif
 
   MPI_Comm_size(MPI_COMM_WORLD, &n_nodes);
-  MPI_Dims_create(n_nodes, 3, node_grid.data());
+  node_grid = Utils::Mpi::dims_create<3>(n_nodes);
 
-  mpi_reshape_communicator({{node_grid[0], node_grid[1], node_grid[2]}},
-                           /* periodicity */ {{1, 1, 1}});
-  MPI_Cart_coords(comm_cart, this_node, 3, node_pos.data());
+  comm_cart =
+      Utils::Mpi::cart_create(comm_cart, node_grid, /* reorder */ false);
+
+  this_node = comm_cart.rank();
 
   Communication::m_callbacks =
       std::make_unique<Communication::MpiCallbacks>(comm_cart);
@@ -234,17 +221,6 @@ void mpi_init() {
   partCfg(std::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
   on_program_start();
-}
-
-void mpi_reshape_communicator(std::array<int, 3> const &node_grid,
-                              std::array<int, 3> const &periodicity) {
-  MPI_Comm temp_comm;
-  MPI_Cart_create(MPI_COMM_WORLD, 3, const_cast<int *>(node_grid.data()),
-                  const_cast<int *>(periodicity.data()), 0, &temp_comm);
-  comm_cart =
-      boost::mpi::communicator(temp_comm, boost::mpi::comm_take_ownership);
-
-  this_node = comm_cart.rank();
 }
 
 /****************** REQ_PLACE/REQ_PLACE_NEW ************/
@@ -348,18 +324,16 @@ void mpi_bcast_ia_params(int i, int j) {
   if (j >= 0) {
     /* non-bonded interaction parameters */
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-
-    *get_ia_param(j, i) = *get_ia_param(i, j);
   } else {
     /* bonded interaction parameters */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
-#endif
   }
 
   on_short_range_ia_change();
@@ -369,22 +343,19 @@ void mpi_bcast_ia_params_slave(int i, int j) {
   if (j >= 0) { /* non-bonded interaction parameters */
 
     boost::mpi::broadcast(comm_cart, *get_ia_param(i, j), 0);
-
-    *get_ia_param(j, i) = *get_ia_param(i, j);
-
   } else {                   /* bonded interaction parameters */
     make_bond_type_exist(i); /* realloc bonded_ia_params on slave nodes! */
     MPI_Bcast(&(bonded_ia_params[i]), sizeof(Bonded_ia_parameters), MPI_BYTE, 0,
               comm_cart);
-#ifdef TABULATED
     /* For tabulated potentials we have to send the tables extra */
-    if (bonded_ia_params[i].type == BONDED_IA_TABULATED) {
+    if (bonded_ia_params[i].type == BONDED_IA_TABULATED_DISTANCE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_ANGLE or
+        bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       auto *tab_pot = new TabulatedPotential();
       boost::mpi::broadcast(comm_cart, *tab_pot, 0);
 
       bonded_ia_params[i].p.tab.pot = tab_pot;
     }
-#endif
   }
 
   on_short_range_ia_change();
@@ -403,7 +374,7 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
   switch (job) {
   case 1:
     mpi_call(mpi_gather_stats_slave, -1, 1);
-    energy_calc((double *)result);
+    energy_calc((double *)result, sim_time);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or
@@ -417,13 +388,9 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
                   (double *)result_t_nb, 1);
     break;
-  case 4:
-    mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles((double *)result);
-    break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
-    lb_calc_fluid_momentum((double *)result);
+    lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
     break;
   case 7:
     break;
@@ -446,7 +413,7 @@ void mpi_gather_stats_slave(int, int job) {
   switch (job) {
   case 1:
     /* calculate and reduce (sum up) energies */
-    energy_calc(nullptr);
+    energy_calc(nullptr, sim_time);
     break;
   case 2:
     /* calculate and reduce (sum up) virials for 'analyze pressure' or 'analyze
@@ -458,11 +425,8 @@ void mpi_gather_stats_slave(int, int job) {
      * for 'analyze p_inst' */
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
-  case 4:
-    predict_momentum_particles(nullptr);
-    break;
   case 6:
-    lb_calc_fluid_momentum(nullptr);
+    lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
     break;
   case 7:
     break;
@@ -492,6 +456,10 @@ void mpi_set_time_step_slave(double dt) {
 REGISTER_CALLBACK(mpi_set_time_step_slave)
 
 void mpi_set_time_step(double time_s) {
+  if (time_s <= 0.)
+    throw std::invalid_argument("time_step must be > 0.");
+  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
   mpi_call_all(mpi_set_time_step_slave, time_s);
 }
 
@@ -552,10 +520,12 @@ void mpi_rescale_particles_slave(int, int dir) {
 
 void mpi_bcast_cell_structure(int cs) {
   mpi_call(mpi_bcast_cell_structure_slave, -1, cs);
-  cells_re_init(cs);
+  cells_re_init(cs, cell_structure.min_range);
 }
 
-void mpi_bcast_cell_structure_slave(int, int cs) { cells_re_init(cs); }
+void mpi_bcast_cell_structure_slave(int, int cs) {
+  cells_re_init(cs, cell_structure.min_range);
+}
 
 /*************** REQ_BCAST_NPTISO_GEOM *****************/
 
@@ -569,13 +539,6 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.dimension, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.cubic_box, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
-}
-
-/******************* REQ_BCAST_LBPAR ********************/
-
-void mpi_bcast_lb_particle_coupling() {
-  mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
@@ -617,6 +580,7 @@ void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
 #ifdef ELECTROSTATICS
   iccp3m_cfg = iccp3m_cfg_;
 
+  on_particle_charge_change();
   check_runtime_errors(comm_cart);
 #endif
 }
@@ -627,34 +591,13 @@ int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
 
+  on_particle_charge_change();
   return check_runtime_errors(comm_cart);
 #else
   return 0;
 #endif
 }
 #endif
-
-Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
-                                                  Utils::Vector3d const &pos) {
-  if (this_node == 0) {
-    comm_cart.send(node, SOME_TAG, pos);
-    mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
-    Utils::Vector3d interpolated_u{};
-    comm_cart.recv(node, SOME_TAG, interpolated_u);
-    return interpolated_u;
-  }
-  return {};
-}
-
-void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
-  if (node == this_node) {
-    Utils::Vector3d pos{};
-    comm_cart.recv(0, SOME_TAG, pos);
-    auto const interpolated_u =
-        lb_lbinterpolation_get_interpolated_velocity(pos);
-    comm_cart.send(0, SOME_TAG, interpolated_u);
-  }
-}
 
 /****************************************************/
 
@@ -670,7 +613,8 @@ void mpi_bcast_max_mu() {
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
-  local_kill_particle_motion(rotation);
+  local_kill_particle_motion(rotation,
+                             cell_structure.local_cells().particles());
   on_particle_change();
 }
 
@@ -681,7 +625,7 @@ void mpi_kill_particle_motion(int rotation) {
 }
 
 void mpi_kill_particle_forces_slave(int torque) {
-  local_kill_particle_forces(torque);
+  local_kill_particle_forces(torque, cell_structure.local_cells().particles());
   on_particle_change();
 }
 

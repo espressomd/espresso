@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -37,7 +37,7 @@ LB_PARAMS = {'agrid': AGRID,
              'seed': 23}
 
 
-class LBMassCommon(object):
+class LBMassCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None

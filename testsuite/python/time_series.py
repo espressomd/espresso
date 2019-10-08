@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,8 +21,6 @@
 Testmodule for the observable recorder.
 
 """
-from __future__ import print_function
-
 import unittest as ut
 import numpy as np
 import espressomd  # pylint: disable=import-error
@@ -64,6 +62,7 @@ class TimeSeriesTest(ut.TestCase):
 
         time_series.clear()
         self.assertEqual(len(time_series.time_series()), 0)
+
 
 if __name__ == "__main__":
     ut.main()

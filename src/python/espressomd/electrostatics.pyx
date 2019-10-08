@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from cython.operator cimport dereference
 include "myconfig.pxi"
 from espressomd cimport actors
@@ -56,13 +55,13 @@ IF ELECTROSTATICS == 1:
     cdef class ElectrostaticInteraction(actors.Actor):
         def _tune(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the _tune() \
-                method or chosen method does not support tuning.")
+                "Subclasses of ElectrostaticInteraction must define the "
+                "_tune() method or chosen method does not support tuning.")
 
         def _set_params_in_es_core(self):
             raise Exception(
-                "Subclasses of ElectrostaticInteraction must define the \
-                _set_params_in_es_core() method.")
+                "Subclasses of ElectrostaticInteraction must define the "
+                "_set_params_in_es_core() method.")
 
         def _deactivate_method(self):
             deactivate_method()
@@ -81,7 +80,7 @@ IF ELECTROSTATICS == 1:
 IF ELECTROSTATICS:
     cdef class DH(ElectrostaticInteraction):
         """
-        Solve electrostatics in the Debye-Hueckel framework see
+        Electrostatics solver based on the Debye-Hueckel framework. See
         :ref:`Debye-Hückel potential` for more details.
 
         Parameters
@@ -96,12 +95,11 @@ IF ELECTROSTATICS:
         """
 
         def validate_params(self):
-            if (self._params["prefactor"] <= 0):
-                raise ValueError(
-                    "prefactor should be a positive float")
-            if (self._params["kappa"] < 0):
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
+            if self._params["kappa"] < 0:
                 raise ValueError("kappa should be a non-negative double")
-            if (self._params["r_cut"] < 0):
+            if self._params["r_cut"] < 0:
                 raise ValueError("r_cut should be a non-negative double")
 
         def valid_keys(self):
@@ -131,70 +129,67 @@ IF ELECTROSTATICS:
                     "check_neutrality": True}
 
     cdef class ReactionField(ElectrostaticInteraction):
-            """
-            Solve electrostatics in the Reaction-Field framework
+        """
+        Electrostatics solver based on the Reaction-Field framework.
 
-            Parameters
-            ----------
-            prefactor : :obj:`float`
-                Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-            kappa : :obj:`float`
-                Inverse Debye screening length.
-            epsilon1 : :obj:`float`
-                interior dielectric constant
-            epsilon2 : :obj:`float`
-                exterior dielectric constant
-            r_cut : :obj:`float`
-                Cut off radius for this interaction.
+        Parameters
+        ----------
+        prefactor : :obj:`float`
+            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
+        kappa : :obj:`float`
+            Inverse Debye screening length.
+        epsilon1 : :obj:`float`
+            interior dielectric constant
+        epsilon2 : :obj:`float`
+            exterior dielectric constant
+        r_cut : :obj:`float`
+            Cut off radius for this interaction.
 
-            """
+        """
 
-            def validate_params(self):
-                if (self._params["prefactor"] <= 0):
-                    raise ValueError(
-                        "prefactor should be a positive float")
-                if (self._params["kappa"] < 0):
-                    raise ValueError("kappa should be a non-negative double")
-                if (self._params["epsilon1"] < 0):
-                                    raise ValueError(
-                                        "epsilon1 should be a non-negative double")
-                if (self._params["epsilon2"] < 0):
-                                    raise ValueError(
-                                        "epsilon2 should be a non-negative double")
-                if (self._params["r_cut"] < 0):
-                    raise ValueError("r_cut should be a non-negative double")
+        def validate_params(self):
+            if self._params["prefactor"] <= 0:
+                raise ValueError("prefactor should be a positive float")
+            if self._params["kappa"] < 0:
+                raise ValueError("kappa should be a non-negative double")
+            if self._params["epsilon1"] < 0:
+                raise ValueError("epsilon1 should be a non-negative double")
+            if self._params["epsilon2"] < 0:
+                raise ValueError("epsilon2 should be a non-negative double")
+            if self._params["r_cut"] < 0:
+                raise ValueError("r_cut should be a non-negative double")
 
-            def valid_keys(self):
-                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
+        def valid_keys(self):
+            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
 
-            def required_keys(self):
-                return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
+        def required_keys(self):
+            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
 
-            def _set_params_in_es_core(self):
-                set_prefactor(self._params["prefactor"])
-                rf_set_params(
-                    self._params["kappa"],
-                    self._params["epsilon1"],
-                    self._params["epsilon2"],
-                    self._params["r_cut"])
+        def _set_params_in_es_core(self):
+            set_prefactor(self._params["prefactor"])
+            rf_set_params(
+                self._params["kappa"],
+                self._params["epsilon1"],
+                self._params["epsilon2"],
+                self._params["r_cut"])
 
-            def _get_params_from_es_core(self):
-                params = {}
-                params.update(rf_params)
-                return params
+        def _get_params_from_es_core(self):
+            params = {}
+            params.update(rf_params)
+            return params
 
-            def _activate_method(self):
-                check_neutrality(self._params)
-                coulomb.method = COULOMB_RF
-                self._set_params_in_es_core()
+        def _activate_method(self):
+            check_neutrality(self._params)
+            coulomb.method = COULOMB_RF
+            self._set_params_in_es_core()
 
-            def default_params(self):
-                return {"prefactor": -1,
-                        "kappa": -1,
-                        "epsilon1": -1,
-                        "epsilon2": -1,
-                        "r_cut": -1,
-                        "check_neutrality": True}
+        def default_params(self):
+            return {"prefactor": -1,
+                    "kappa": -1,
+                    "epsilon1": -1,
+                    "epsilon2": -1,
+                    "r_cut": -1,
+                    "check_neutrality": True}
 
 
 IF P3M == 1:
@@ -219,7 +214,7 @@ IF P3M == 1:
             A positive number for the dielectric constant of the
             surrounding medium. Use ``'metallic'`` to set the dielectric
             constant of the surrounding medium to infinity (default).
-        mesh : :obj:`int` or array_like of :obj:`int`, optional
+        mesh : :obj:`int` or (3,) array_like of :obj:`int`, optional
             The number of mesh points in x, y and z direction. Use a single
             value for cubic boxes.
         r_cut : :obj:`float`, optional
@@ -234,21 +229,24 @@ IF P3M == 1:
         """
 
         def __init__(self, *args, **kwargs):
-            super(type(self), self).__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)
 
         def validate_params(self):
             default_params = self.default_params()
             if not (self._params["prefactor"] > 0.0):
                 raise ValueError("prefactor should be a positive float")
 
-            if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+            if not (self._params["r_cut"] >= 0
+                    or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
+            if not (is_valid_type(self._params["mesh"], int)
+                    or len(self._params["mesh"]) == 3):
                 raise ValueError(
                     "P3M mesh has to be an integer or integer list of length 3")
 
-            if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
+            if (isinstance(self._params["mesh"], basestring) and len(
+                    self._params["mesh"]) == 3):
                 if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                    (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                    (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
@@ -265,22 +263,27 @@ IF P3M == 1:
             if self._params["epsilon"] == "metallic":
                 self._params = 0.0
 
-            if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+            if not (is_valid_type(self._params["epsilon"], float)
+                    or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"] or self._params["inter"] >= 0):
+            if not (self._params["inter"] == default_params["inter"]
+                    or self._params["inter"] >= 0):
                 raise ValueError("inter should be a positive integer")
 
-            if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
+            if not (self._params["mesh_off"] == default_params["mesh_off"]
+                    or len(self._params) != 3):
                 raise ValueError(
                     "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
 
-            if not (self._params["alpha"] == default_params["alpha"] or self._params["alpha"] > 0):
+            if not (self._params["alpha"] == default_params["alpha"]
+                    or self._params["alpha"] > 0):
                 raise ValueError(
                     "alpha should be positive")
 
         def valid_keys(self):
-            return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_neutrality", "inter"
+            return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
+                    "prefactor", "tune", "check_neutrality", "inter"]
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
@@ -305,18 +308,18 @@ IF P3M == 1:
             return params
 
         def _set_params_in_es_core(self):
-            #Sets lb, bcast, resets vars to zero if lb=0
+            # Sets lb, bcast, resets vars to zero if lb=0
             set_prefactor(self._params["prefactor"])
-            #Sets cdef vars and calls p3m_set_params() in core
+            # Sets cdef vars and calls p3m_set_params() in core
             python_p3m_set_params(self._params["r_cut"],
                                   self._params["mesh"], self._params["cao"],
                                   self._params["alpha"], self._params["accuracy"])
-            #p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
-            #Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
+            # p3m_set_params()  -> set r_cuts, mesh, cao, validates sanity, bcasts
+            # Careful: bcast calls on_coulomb_change(), which calls p3m_init(),
             #         which resets r_cut if lb is zero. OK.
-            #Sets eps, bcast
+            # Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
-            #Sets ninterpol, bcast
+            # Sets ninterpol, bcast
             p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
@@ -362,7 +365,7 @@ IF P3M == 1:
                 A positive number for the dielectric constant of the
                 surrounding medium. Use ``'metallic'`` to set the dielectric
                 constant of the surrounding medium to infinity (default).
-            mesh : :obj:`int` or array_like of :obj:`int`, optional
+            mesh : :obj:`int` or (3,) array_like of :obj:`int`, optional
                 The number of mesh points in x, y and z direction. Use a single
                 value for cubic boxes.
             r_cut : :obj:`float`, optional
@@ -377,26 +380,30 @@ IF P3M == 1:
             """
 
             def __init__(self, *args, **kwargs):
-                super(type(self), self).__init__(*args, **kwargs)
+                super().__init__(*args, **kwargs)
 
             def validate_params(self):
                 default_params = self.default_params()
 
-                if not (self._params["r_cut"] >= 0 or self._params["r_cut"] == default_params["r_cut"]):
+                if not (self._params["r_cut"] >= 0
+                        or self._params["r_cut"] == default_params["r_cut"]):
                     raise ValueError("P3M r_cut has to be >=0")
 
-                if not (is_valid_type(self._params["mesh"], int) or len(self._params["mesh"]) == 3):
+                if not (is_valid_type(self._params["mesh"], int)
+                        or len(self._params["mesh"]) == 3):
                     raise ValueError(
                         "P3M mesh has to be an integer or integer list of length 3")
 
-                if (isinstance(self._params["mesh"], basestring) and len(self._params["mesh"]) == 3):
+                if (isinstance(self._params["mesh"], basestring) and len(
+                        self._params["mesh"]) == 3):
                     if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                        (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                        (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
                         raise ValueError(
                             "P3M requires an even number of mesh points in all directions")
 
-                if not (self._params["cao"] >= -1 and self._params["cao"] <= 7):
+                if not (self._params["cao"] >= -1
+                        and self._params["cao"] <= 7):
                     raise ValueError(
                         "P3M cao has to be an integer between -1 and 7")
 
@@ -406,19 +413,23 @@ IF P3M == 1:
                 # if self._params["epsilon"] == "metallic":
                 #  self._params = 0.0
 
-                if not (is_valid_type(self._params["epsilon"], float) or self._params["epsilon"] == "metallic"):
+                if not (is_valid_type(self._params["epsilon"], float)
+                        or self._params["epsilon"] == "metallic"):
                     raise ValueError(
                         "epsilon should be a double or 'metallic'")
 
-                if not (self._params["inter"] == default_params["inter"] or self._params["inter"] > 0):
+                if not (self._params["inter"] == default_params["inter"]
+                        or self._params["inter"] > 0):
                     raise ValueError("inter should be a positive integer")
 
-                if not (self._params["mesh_off"] == default_params["mesh_off"] or len(self._params) != 3):
+                if not (self._params["mesh_off"] == default_params["mesh_off"]
+                        or len(self._params) != 3):
                     raise ValueError(
                         "mesh_off should be a list of length 3 with values between 0.0 and 1.0")
 
             def valid_keys(self):
-                return "mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut", "prefactor", "tune", "check_neutrality"
+                return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
+                        "prefactor", "tune", "check_neutrality"]
 
             def required_keys(self):
                 return ["prefactor", "accuracy"]
@@ -480,7 +491,7 @@ IF P3M == 1:
 IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
+        Electrostatics solver for systems with one periodic direction.
         See :ref:`MMM1D Theory` for more details.
 
         Parameters
@@ -494,6 +505,7 @@ IF ELECTROSTATICS:
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
             Specify whether to automatically tune ore not. The default is True.
+
         """
 
         def validate_params(self):
@@ -555,8 +567,8 @@ IF ELECTROSTATICS:
 IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1DGPU(ElectrostaticInteraction):
         """
-        Electrostatics solver for Systems with one periodic direction.
-        See :ref:`MMM1D Theory` for more details.
+        Electrostatics solver with GPU support for systems with one periodic
+        direction. See :ref:`MMM1D Theory` for more details.
 
         Parameters
         ----------
@@ -622,8 +634,9 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                grid.box_l[2], coulomb.prefactor, self._params["maxPWerror"],
-                self._params["far_switch_radius"], self._params["bessel_cutoff"])
+                grid.box_geo.length()[2], coulomb.prefactor,
+                self._params["maxPWerror"], self._params["far_switch_radius"],
+                self._params["bessel_cutoff"])
 
         def _tune(self):
             self.thisptr.setup(dereference(self.interface))
@@ -638,7 +651,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             if self._params["tune"]:
                 self._tune()
             self._set_params_in_es_core()
-        
+
         def _deactivate_method(self):
             dereference(self.thisptr).deactivate()
 
@@ -697,10 +710,12 @@ IF ELECTROSTATICS:
                 raise ValueError("prefactor should be a positive float")
             if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
                 raise ValueError("maxPWerror should be a positive double")
-            if self._params["dielectric"] == 1 and (self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
+            if self._params["dielectric"] == 1 and (
+                    self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
                 raise ValueError("Dielectric constants should be > 0!")
-            if self._params["dielectric_contrast_on"] == 1 and (self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
-                raise ValueError("Dielectric constrast not set!")
+            if self._params["dielectric_contrast_on"] == 1 and (
+                    self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
+                raise ValueError("Dielectric contrast not set!")
             if self._params["dielectric"] and self._params["dielectric_contrast_on"]:
                 raise ValueError(
                     "dielectric and dielectric_contrast are mutually exclusive!")
@@ -774,7 +789,10 @@ IF ELECTROSTATICS:
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
 
-            """Calculates Coulomb interactions using method from the SCAFACOs library."""
+            """
+            Calculate the Coulomb interaction using the ScaFaCoS library.
+            """
+
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance
@@ -791,6 +809,6 @@ IF ELECTROSTATICS:
                 return {}
 
             def _deactivate_method(self):
-                super(Scafacos, self)._deactivate_method()
+                super()._deactivate_method()
                 scafacos.free_handle()
                 mpi_bcast_coulomb_params()

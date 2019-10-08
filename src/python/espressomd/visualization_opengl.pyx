@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import OpenGL.GLUT
 import OpenGL.GLU
 import OpenGL.GL
@@ -16,196 +32,197 @@ include "myconfig.pxi"
 from copy import deepcopy
 import espressomd
 from espressomd.particle_data import ParticleHandle
-from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED
+from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
 
 
-class openGLLive(object):
+class openGLLive:
 
     """
     This class provides live visualization using pyOpenGL.
     Use the update method to push your current simulation state after
     integrating. Modify the appearance with a list of keywords.
-    Timed callbacks can be registered via the register_callback method.
-    Keyboad callbacks via  keyboardManager.register_button().
+    Timed callbacks can be registered via the :meth:`register_callback` method
+    and keyboard callbacks via :meth:`keyboardManager.register_button()
+    <espressomd.visualization_opengl.KeyboardManager.register_button>`.
 
     Parameters
     ----------
 
     system : :class:`espressomd.system.System`
-    window_size : array_like :obj:`int`, optional
-                  Size of the visualizer window in pixels.
+    window_size : (2,) array_like of :obj:`int`, optional
+        Size of the visualizer window in pixels.
     name : :obj:`str`, optional
-           The name of the visualizer window.
-    background_color : array_like :obj:`int`, optional
-                       RGB of the background.
-    periodic_images : array_like :obj:`int`, optional
-                      Periodic repetitions on both sides of the box in xyzdirection.
+        The name of the visualizer window.
+    background_color : (3,) array_like of :obj:`int`, optional
+        RGB of the background.
+    periodic_images : (3,) array_like of :obj:`int`, optional
+        Periodic repetitions on both sides of the box in xyz-direction.
     draw_box : :obj:`bool`, optional
-               Draw wireframe boundaries.
+        Draw wireframe boundaries.
     draw_axis : :obj:`bool`, optional
-                Draw xyz system axes.
+        Draw xyz system axes.
     draw_nodes : :obj:`bool`, optional
-                Draw node boxes.
+        Draw node boxes.
     draw_cells : :obj:`bool`, optional
-                Draw cell boxes.
+        Draw cell boxes.
     quality_particles : :obj:`int`, optional
-                        The number of subdivisions for particle spheres.
+        The number of subdivisions for particle spheres.
     quality_bonds : :obj:`int`, optional
-                    The number of subdivisions for cylindrical bonds.
+        The number of subdivisions for cylindrical bonds.
     quality_arrows : :obj:`int`, optional
-                     The number of subdivisions for external force arrows.
+        The number of subdivisions for external force arrows.
     quality_constraints : :obj:`int`, optional
-                          The number of subdivisions for primitive constraints.
+        The number of subdivisions for primitive constraints.
     close_cut_distance : :obj:`float`, optional
-                         The distance from the viewer to the near clipping plane.
+        The distance from the viewer to the near clipping plane.
     far_cut_distance : :obj:`float`, optional
-                       The distance from the viewer to the far clipping plane.
-    camera_position : :obj:`str` or array_like :obj:`float`, optional
-                      Initial camera position. ``auto`` (default) for shiftet position in z-direction.
-    camera_target : :obj:`str` or array_like :obj:`float`, optional
-                    Initial camera target. ``auto`` (default) to look towards the system center.
-    camera_right : array_like :obj:`float`, optional
-                   Camera right vector in system coordinates. Default is [1, 0, 0]
+        The distance from the viewer to the far clipping plane.
+    camera_position : :obj:`str` or (3,) array_like of :obj:`float`, optional
+        Initial camera position. Use ``'auto'`` (default) for shifted position in z-direction.
+    camera_target : :obj:`str` or (3,) array_like of :obj:`float`, optional
+        Initial camera target. Use ``'auto'`` (default) to look towards the system center.
+    camera_right : (3,) array_like of :obj:`float`, optional
+        Camera right vector in system coordinates. Default is ``[1, 0, 0]``
     particle_sizes : :obj:`str` or array_like :obj:`float` or callable, optional
-                     auto (default): The Lennard-Jones sigma value of the
-                     self-interaction is used for the particle diameter.
-                     callable: A lambda function with one argument. Internally,
-                     the numerical particle type is passed to the lambda
-                     function to determine the particle radius.  list: A list
-                     of particle radii, indexed by the particle type.
+        * ``'auto'`` (default): The Lennard-Jones sigma value of the
+          self-interaction is used for the particle diameter.
+        * callable: A lambda function with one argument. Internally,
+          the numerical particle type is passed to the lambda
+          function to determine the particle radius.
+        * list: A list of particle radii, indexed by the particle type.
     particle_coloring : :obj:`str`, optional
-                        auto (default): Colors of charged particles are
-                        specified by particle_charge_colors, neutral particles
-                        by particle_type_colors. charge: Minimum and maximum
-                        charge of all particles is determined by the
-                        visualizer. All particles are colored by a linear
-                        interpolation of the two colors given by
-                        particle_charge_colors according to their charge. type:
-                        Particle colors are specified by particle_type_colors,
-                        indexed by their numerical particle type.
-                        node: Color according to the node the particle is on.
+        * ``'auto'`` (default): Colors of charged particles are
+          specified by ``particle_charge_colors``, neutral particles
+          by ``particle_type_colors``.
+        * ``'charge'``: Minimum and maximum charge of all particles is determined by the
+          visualizer. All particles are colored by a linear
+          interpolation of the two colors given by
+          ``particle_charge_colors`` according to their charge.
+        * ``'type'``: Particle colors are specified by ``particle_type_colors``,
+          indexed by their numerical particle type.
+        * ``'node'``: Color according to the node the particle is on.
     particle_type_colors : array_like :obj:`float`, optional
-                           Colors for particle types.
+        Colors for particle types.
     particle_type_materials : :obj:`str`, optional
-                              Materials of the particle types.
-    particle_charge_colors : array_like :obj:`float`, optional
-                             Two colors for min/max charged particles.
+        Materials of the particle types.
+    particle_charge_colors : (2,) array_like of :obj:`float`, optional
+        Two colors for min/max charged particles.
     draw_constraints : :obj:`bool`, optional
-                       Enables constraint visualization. For simple constraints
-                       (planes, spheres and cylinders), OpenGL primitives are
-                       used. Otherwise, visualization by rasterization is used.
+        Enables constraint visualization. For simple constraints
+        (planes, spheres and cylinders), OpenGL primitives are
+        used. Otherwise, visualization by rasterization is used.
     rasterize_pointsize : :obj:`float`, optional
-                          Point size for the rasterization dots.
+        Point size for the rasterization dots.
     rasterize_resolution : :obj:`float`, optional
-                           Accuracy of the rasterization.
+        Accuracy of the rasterization.
     quality_constraints : :obj:`int`, optional
-                          The number of subdivisions for primitive constraints.
+        The number of subdivisions for primitive constraints.
     constraint_type_colors : array_like :obj:`float`, optional
-                             Colors of the constaints by type.
+        Colors of the constraints by type.
     constraint_type_materials : array_like :obj:`str`, optional
-                                Materials of the constraints by type.
+        Materials of the constraints by type.
     draw_bonds : :obj:`bool`, optional
-                 Enables bond visualization.
+        Enables bond visualization.
     bond_type_radius : array_like :obj:`float`, optional
-                       Radii of bonds by type.
+        Radii of bonds by type.
     bond_type_colors : array_like :obj:`float`, optional
-                       Color of bonds by type.
+        Color of bonds by type.
     bond_type_materials : array_like :obj:`float`, optional
-                          Materials of bonds by type.
+        Materials of bonds by type.
     ext_force_arrows : :obj:`bool`, optional
-                       Enables external force visualization.
+        Enables external force visualization.
     ext_force_arrows_type_scale : array_like :obj:`float`, optional
-                                  List of scale factors of external force arrows for different particle types.
+        List of scale factors of external force arrows for different particle types.
     ext_force_arrows_type_colors : array_like :obj:`float`, optional
-                                   Colors of ext_force arrows for different particle types.
+        Colors of ext_force arrows for different particle types.
     ext_force_arrows_type_materials : array_like :obj:`float`, optional
-                                      Materils of ext_force arrows for different particle types.
+        Materials of ext_force arrows for different particle types.
     ext_force_arrows_type_radii : array_like :obj:`float`, optional
-                                   List of arrow radii for different particle types.
+        List of arrow radii for different particle types.
     force_arrows : :obj:`bool`, optional
-                   Enables particle force visualization.
+        Enables particle force visualization.
     force_arrows_type_scale : array_like :obj:`float`, optional
-                              List of scale factors of particle force arrows for different particle types.
+        List of scale factors of particle force arrows for different particle types.
     force_arrows_type_colors : array_like :obj:`float`, optional
-                               Colors of particle force arrows for different particle types.
+        Colors of particle force arrows for different particle types.
     force_arrows_type_materials : array_like :obj:`float`, optional
-                                  Materials of particle force arrows for different particle types.
+        Materials of particle force arrows for different particle types.
     force_arrows_type_radii : array_like :obj:`float`, optional
-                               List of arrow radii for different particle types.
+        List of arrow radii for different particle types.
     velocity_arrows : :obj:`bool`, optional
-                       Enables particle velocity visualization.
+        Enables particle velocity visualization.
     velocity_arrows_type_scale : array_like :obj:`float`, optional
-                                 List of scale factors of particle velocity arrows for different particle types.
+        List of scale factors of particle velocity arrows for different particle types.
     velocity_arrows_type_colors : array_like :obj:`float`, optional
-                                  Colors of particle velocity arrows for different particle types.
+        Colors of particle velocity arrows for different particle types.
     velocity_arrows_type_materials : array_like :obj:`float`, optional
-                                     Materials of particle velocity arrows for different particle types.
+        Materials of particle velocity arrows for different particle types.
     velocity_arrows_type_radii : array_like :obj:`float`, optional
-                                  List of arrow radii for different particle types.
+        List of arrow radii for different particle types.
     director_arrows : :obj:`bool`, optional
-                       Enables particle director visualization.
+        Enables particle director visualization.
     director_arrows_type_scale : :obj:`float`, optional
-                             Scale factor of particle director arrows for different particle types.
+        Scale factor of particle director arrows for different particle types.
     director_arrows_type_colors : array_like :obj:`float`, optional
-                                  Colors of particle director arrows for different particle types.
+        Colors of particle director arrows for different particle types.
     director_arrows_type_materials : array_like :obj:`float`, optional
-                                     Materials of particle director arrows for different particle types.
+        Materials of particle director arrows for different particle types.
     director_arrows_type_radii : array_like :obj:`float`, optional
-                                  List of arrow radii for different particle types.
+        List of arrow radii for different particle types.
     drag_enabled : :obj:`bool`, optional
-                   Enables mouse-controlled particles dragging (Default: False)
+        Enables mouse-controlled particles dragging (Default: False)
     drag_force : :obj:`bool`, optional
-                 Factor for particle dragging
+        Factor for particle dragging
 
     LB_draw_nodes : :obj:`bool`, optional
-                   Draws a lattice representation of the LB nodes that are no boundaries.
+        Draws a lattice representation of the LB nodes that are no boundaries.
     LB_draw_node_boundaries : :obj:`bool`, optional
-                             Draws a lattice representation of the LB nodes that are boundaries.
+        Draws a lattice representation of the LB nodes that are boundaries.
     LB_draw_boundaries : :obj:`bool`, optional
-                        Draws the LB shapes.
+        Draws the LB shapes.
     LB_draw_velocity_plane : :obj:`bool`, optional
-                             Draws LB node velocity arrows specified by LB_plane_axis, LB_plane_dist, LB_plane_ngrid.
-    light_pos : array_like :obj:`float`, optional
-                If auto (default) is used, the light is placed dynamically in
-                the particle barycenter of the system. Otherwise, a fixed
-                coordinate can be set.
+        Draws LB node velocity arrows specified by LB_plane_axis, LB_plane_dist, LB_plane_ngrid.
+    light_pos : (3,) array_like of :obj:`float`, optional
+        If auto (default) is used, the light is placed dynamically in
+        the particle barycenter of the system. Otherwise, a fixed
+        coordinate can be set.
     light_colors : array_like :obj:`float`, optional
-                   Three lists to specify ambient, diffuse and specular light colors.
+        Three lists to specify ambient, diffuse and specular light colors.
     light_brightness : :obj:`float`, optional
-                       Brightness (inverse constant attenuation) of the light.
+        Brightness (inverse constant attenuation) of the light.
     light_size : :obj:`float`, optional
-                 Size (inverse linear attenuation) of the light. If auto
-                 (default) is used, the light size will be set to a reasonable
-                 value according to the box size at start.
+        Size (inverse linear attenuation) of the light. If auto
+        (default) is used, the light size will be set to a reasonable
+        value according to the box size at start.
     spotlight_enabled : :obj:`bool`, optional
-                        If set to True (default), it enables a spotlight on the
-                        camera position pointing in look direction.
+        If set to True (default), it enables a spotlight on the
+        camera position pointing in look direction.
     spotlight_colors : array_like :obj:`float`, optional
-                       Three lists to specify ambient, diffuse and specular spotlight colors.
+        Three lists to specify ambient, diffuse and specular spotlight colors.
     spotlight_angle : :obj:`float`, optional
-                      The spread angle of the spotlight in degrees (from 0 to 90).
+        The spread angle of the spotlight in degrees (from 0 to 90).
     spotlight_brightness : :obj:`float`, optional
-                           Brightness (inverse constant attenuation) of the spotlight.
+        Brightness (inverse constant attenuation) of the spotlight.
     spotlight_focus : :obj:`float`, optional
-                      Focus (spot exponent) for the spotlight from 0 (uniform) to 128.
+        Focus (spot exponent) for the spotlight from 0 (uniform) to 128.
 
     """
 
-    def __init__(self, system, **kwargs):
-        # MATERIALS
-        self.materials = {
-            'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
-            'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
-            'dark': [0.4, 0.5, 0.1, 0.4, 1.0],
-            'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
-            'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
-            'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
-            'rubber': [0, 0.4, 0.7, 0.078125, 1.0],
-            'chrome': [0.25, 0.4, 0.774597, 0.6, 1.0],
-            'plastic': [0, 0.55, 0.7, 0.25, 1.0],
-            'steel': [0.25, 0.38, 0, 0.32, 1.0]
-        }
+    # MATERIALS
+    materials = {
+        'bright': [0.9, 1.0, 0.8, 0.4, 1.0],
+        'medium': [0.6, 0.8, 0.2, 0.4, 1.0],
+        'dark': [0.4, 0.5, 0.1, 0.4, 1.0],
+        'transparent1': [0.6, 0.8, 0.2, 0.5, 0.8],
+        'transparent2': [0.6, 0.8, 0.2, 0.5, 0.4],
+        'transparent3': [0.6, 0.8, 0.2, 0.5, 0.2],
+        'rubber': [0, 0.4, 0.7, 0.078125, 1.0],
+        'chrome': [0.25, 0.4, 0.774597, 0.6, 1.0],
+        'plastic': [0, 0.55, 0.7, 0.25, 1.0],
+        'steel': [0.25, 0.38, 0, 0.32, 1.0]
+    }
 
+    def __init__(self, system, **kwargs):
         # DEFAULT PROPERTIES
         self.specs = {
             'window_size': [800, 800],
@@ -336,12 +353,6 @@ class openGLLive(object):
         IF not ROTATION:
             self.specs['director_arrows'] = False
 
-        IF not CUDA:
-            self.specs['LB_draw_velocity_plane'] = False
-            self.specs['LB_draw_boundaries'] = False
-            self.specs['LB_draw_nodes'] = False
-            self.specs['LB_draw_node_boundaries'] = False
-
         IF not LB_BOUNDARIES and not LB_BOUNDARIES_GPU:
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_node_boundaries'] = False
@@ -372,7 +383,7 @@ class openGLLive(object):
         self.particle_attributes = []
         for d in dir(ParticleHandle):
             if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
-                if not d in ["pos_folded"]:
+                if d not in ["pos_folded"]:
                     self.particle_attributes.append(d)
         self.max_len_attr = max([len(a) for a in self.particle_attributes])
 
@@ -472,7 +483,7 @@ class openGLLive(object):
                 for check_nb in all_non_bonded_inters:
                     nb = getattr(
                         self.system.non_bonded_inter[t1, t2], check_nb)
-                    if not nb is None and nb.is_active():
+                    if nb is not None and nb.is_active():
                         self.system_info['Non-bonded interactions'].append(
                             [t1, t2, nb.type_name(), nb.get_params()])
         if len(self.system_info['Non-bonded interactions']) == 0:
@@ -494,25 +505,30 @@ class openGLLive(object):
         self.timers.append((int(interval), cb))
 
     def screenshot(self, path):
-        """Renders the current state and into an image file at path with dimensions of
-        specs['window_size'].  """
+        """Renders the current state into an image file at ``path`` with
+        dimensions of ``specs['window_size']`` in PNG format."""
 
         # ON FIRST CALL: INIT AND CREATE BUFFERS
         if not self.screenshot_initialized:
             self.screenshot_initialized = True
             self._init_opengl()
 
-            # CREATE BUFFERS THAT CAN BE LARGER THAN THE SCREEN
-            # FRAME BUFFER
+            # CREATE BUFFERS THAT CAN BE LARGER THAN THE SCREEN FRAME BUFFER
             fbo = OpenGL.GL.glGenFramebuffers(1)
             OpenGL.GL.glBindFramebuffer(OpenGL.GL.GL_FRAMEBUFFER, fbo)
             # COLOR BUFFER
             rbo = OpenGL.GL.glGenRenderbuffers(1)
             OpenGL.GL.glBindRenderbuffer(OpenGL.GL.GL_RENDERBUFFER, rbo)
             OpenGL.GL.glRenderbufferStorage(
-                OpenGL.GL.GL_RENDERBUFFER, OpenGL.GL.GL_RGB, self.specs['window_size'][0], self.specs['window_size'][1])
+                OpenGL.GL.GL_RENDERBUFFER,
+                OpenGL.GL.GL_RGB,
+                self.specs['window_size'][0],
+                self.specs['window_size'][1])
             OpenGL.GL.glFramebufferRenderbuffer(
-                OpenGL.GL.GL_FRAMEBUFFER, OpenGL.GL.GL_COLOR_ATTACHMENT0, OpenGL.GL.GL_RENDERBUFFER, rbo)
+                OpenGL.GL.GL_FRAMEBUFFER,
+                OpenGL.GL.GL_COLOR_ATTACHMENT0,
+                OpenGL.GL.GL_RENDERBUFFER,
+                rbo)
             # DEPTH BUFFER
             dbo = OpenGL.GL.glGenRenderbuffers(1)
             OpenGL.GL.glBindRenderbuffer(OpenGL.GL.GL_RENDERBUFFER, dbo)
@@ -520,7 +536,10 @@ class openGLLive(object):
                 OpenGL.GL.GL_RENDERBUFFER, OpenGL.GL.GL_DEPTH_COMPONENT,
                 self.specs['window_size'][0], self.specs['window_size'][1])
             OpenGL.GL.glFramebufferRenderbuffer(
-                OpenGL.GL.GL_FRAMEBUFFER, OpenGL.GL.GL_DEPTH_ATTACHMENT, OpenGL.GL.GL_RENDERBUFFER, dbo)
+                OpenGL.GL.GL_FRAMEBUFFER,
+                OpenGL.GL.GL_DEPTH_ATTACHMENT,
+                OpenGL.GL.GL_RENDERBUFFER,
+                dbo)
 
             self._reshape_window(
                 self.specs['window_size'][0], self.specs['window_size'][1])
@@ -536,10 +555,15 @@ class openGLLive(object):
         OpenGL.GL.glLoadMatrixf(self.camera.modelview)
         self._draw_system()
 
-        # READ THE PIXES
+        # READ THE PIXELS
         OpenGL.GL.glReadBuffer(OpenGL.GL.GL_COLOR_ATTACHMENT0)
         data = OpenGL.GL.glReadPixels(
-            0, 0, self.specs['window_size'][0], self.specs['window_size'][1], OpenGL.GL.GL_RGB, OpenGL.GL.GL_FLOAT)
+            0,
+            0,
+            self.specs['window_size'][0],
+            self.specs['window_size'][1],
+            OpenGL.GL.GL_RGB,
+            OpenGL.GL.GL_FLOAT)
 
         # RESHAPE THE DATA
         data = np.flipud(data.reshape((data.shape[1], data.shape[0], 3)))
@@ -740,7 +764,7 @@ class openGLLive(object):
 
     def _update_nodes(self):
         self.node_box_origins = []
-        self.local_box_l = self.system.cell_system.get_state()['local_box_l']
+        self.local_box_l = np.array([0, 0, 0])
         for i in range(self.system.cell_system.node_grid[0]):
             for j in range(self.system.cell_system.node_grid[1]):
                 for k in range(self.system.cell_system.node_grid[2]):
@@ -758,7 +782,8 @@ class openGLLive(object):
         # Collect shapes and interaction type (for coloring) from constraints
         primitive_shapes = [
             'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
-            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
+            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere',
+            'Shapes::SpheroCylinder']
 
         coll_shape_obj = collections.defaultdict(list)
         for c in self.system.constraints:
@@ -774,7 +799,7 @@ class openGLLive(object):
         if self.specs['LB_draw_boundaries']:
             ni = 0
             for c in self.system.lbboundaries:
-                if type(c) == espressomd.ekboundaries.EKBoundary:
+                if type(c) == espressomd.lbboundaries.LBBoundary:
                     t = ni
                     ni += 1
                     s = c.get_parameter('shape')
@@ -863,7 +888,8 @@ class openGLLive(object):
                     p = np.array([i, j, k]) * sp
                     dist, vec = shape.call_method(
                         "calc_distance", position=p.tolist())
-                    if not np.isnan(vec).any() and not np.isnan(dist) and abs(dist) < sp:
+                    if not np.isnan(vec).any() and not np.isnan(
+                            dist) and abs(dist) < sp:
                         points.append((p - vec).tolist())
         return points
 
@@ -877,7 +903,7 @@ class openGLLive(object):
                     # b[0]: Bond, b[1:] Partners
                     t = b[0].type_number()
                     if len(b) == 4 and t in (BONDED_IA_DIHEDRAL,
-                                             BONDED_IA_TABULATED):
+                                             BONDED_IA_TABULATED_DIHEDRAL):
                         self.bonds.append([i, b[1], t])
                         self.bonds.append([i, b[2], t])
                         self.bonds.append([b[2], b[3], t])
@@ -935,17 +961,15 @@ class openGLLive(object):
     def _draw_nodes(self):
         for n in self.node_box_origins:
             draw_box(
-                n, self.local_box_l, self.node_box_color, self.materials[
-                    'transparent1'],
-                1.5 * self.line_width_fac)
+                n, self.local_box_l, self.node_box_color,
+                self.materials['transparent1'], 1.5 * self.line_width_fac)
 
     def _draw_cells(self):
         for n in self.node_box_origins:
             for c in self.cell_box_origins:
                 draw_box(
-                    c + n, self.cell_size, self.cell_box_color, self.materials[
-                        'transparent1'],
-                    0.75 * self.line_width_fac)
+                    c + n, self.cell_size, self.cell_box_color,
+                    self.materials['transparent1'], 0.75 * self.line_width_fac)
 
     def _draw_lb_grid(self):
         a = self.lb_params['agrid']
@@ -955,10 +979,12 @@ class openGLLive(object):
             for j in range(int(dims[1])):
                 for k in range(int(dims[2])):
                     n = np.array([i, j, k]) * cell_size
-                    if self.specs['LB_draw_node_boundaries'] and self.lb[i, j, k].boundary:
+                    if self.specs['LB_draw_node_boundaries'] \
+                            and self.lb[i, j, k].boundary:
                         draw_box(n, cell_size, self.lb_box_color_boundary,
                                  self.materials['transparent2'], 5.0)
-                    if self.specs['LB_draw_nodes'] and not self.lb[i, j, k].boundary:
+                    if self.specs['LB_draw_nodes'] \
+                            and not self.lb[i, j, k].boundary:
                         draw_box(n, cell_size, self.lb_box_color,
                                  self.materials['transparent2'], 1.5)
 
@@ -1030,6 +1056,10 @@ class openGLLive(object):
             try:
                 radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()[
                     'sigma'] * 0.5
+
+                if radius == 0:
+                    radius = self.system.non_bonded_inter[ptype, ptype].wca.get_params()[
+                        'sigma'] * 0.5
             except BaseException:
                 radius = 0.5
             if radius == 0:
@@ -1059,7 +1089,8 @@ class openGLLive(object):
 
             # Only change material if type/charge has changed, colorById or
             # material was resetted by arrows
-            if reset_material or colorById or not ptype == ptype_last or pid == self.dragId or pid == self.infoId or self.specs['particle_coloring'] == 'node':
+            if reset_material or colorById or not ptype == ptype_last or \
+                    pid == self.dragId or pid == self.infoId or self.specs['particle_coloring'] == 'node':
                 reset_material = False
 
                 radius = self._determine_radius(ptype)
@@ -1111,9 +1142,12 @@ class openGLLive(object):
                 self.particles['pos'][pid], radius, self.specs['quality_particles'])
 
             if self.has_images:
-                for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                for imx in range(-self.specs['periodic_images'][0],
+                                 self.specs['periodic_images'][0] + 1):
+                    for imy in range(-self.specs['periodic_images'][1],
+                                     self.specs['periodic_images'][1] + 1):
+                        for imz in range(-self.specs['periodic_images'][2],
+                                         self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
                                 self._redraw_sphere(
                                     self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
@@ -1180,9 +1214,12 @@ class openGLLive(object):
                     self.particles['pos'][
                         b[0]], self.particles['pos'][b[1]], radius,
                     col, mat, self.specs['quality_bonds'])
-                for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                for imx in range(-self.specs['periodic_images'][0],
+                                 self.specs['periodic_images'][0] + 1):
+                    for imy in range(-self.specs['periodic_images'][1],
+                                     self.specs['periodic_images'][1] + 1):
+                        for imz in range(-self.specs['periodic_images'][2],
+                                         self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
                                 im = np.array([imx, imy, imz])
                                 draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], self.particles['pos'][b[1]] +
@@ -1213,9 +1250,12 @@ class openGLLive(object):
                     draw_cylinder(self.particles['pos'][b[1]], s1, radius, col,
                                   mat, self.specs['quality_bonds'])
 
-                    for imx in range(-self.specs['periodic_images'][0], self.specs['periodic_images'][0] + 1):
-                        for imy in range(-self.specs['periodic_images'][1], self.specs['periodic_images'][1] + 1):
-                            for imz in range(-self.specs['periodic_images'][2], self.specs['periodic_images'][2] + 1):
+                    for imx in range(-self.specs['periodic_images'][0],
+                                     self.specs['periodic_images'][0] + 1):
+                        for imy in range(-self.specs['periodic_images'][1],
+                                         self.specs['periodic_images'][1] + 1):
+                            for imz in range(-self.specs['periodic_images'][2],
+                                             self.specs['periodic_images'][2] + 1):
                                 if imx != 0 or imy != 0 or imz != 0:
                                     im = np.array([imx, imy, imz])
                                     draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], s0 + im *
@@ -1262,11 +1302,13 @@ class openGLLive(object):
     def _color_by_charge(self, q):
         if q < 0:
             c = 1.0 * q / self.minq
-            return np.array(self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1])
+            return np.array(
+                self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1])
         else:
             c = 1.0 * q / self.maxq
 
-            return np.array(self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1])
+            return np.array(
+                self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1])
 
     # ON INITIALIZATION, CHECK q_max/q_min
     def _update_charge_color_range(self):
@@ -1524,13 +1566,15 @@ class openGLLive(object):
 
     def _id_to_fcolor(self, pid):
         pid += 1
-        return [int(pid / (256 * 256)) / 255.0, int((pid % (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
+        return [int(pid / (256 * 256)) / 255.0, int((pid %
+                                                     (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
 
     def _fcolor_to_id(self, fcol):
         if (fcol == [0, 0, 0]).all():
             return -1
         else:
-            return 256 * 256 * int(fcol[0] * 255) + 256 * int(fcol[1] * 255) + int(fcol[2] * 255) - 1
+            return 256 * 256 * int(fcol[0] * 255) + 256 * \
+                int(fcol[1] * 255) + int(fcol[2] * 255) - 1
 
     def _set_particle_drag(self, pos, pos_old):
         pid, depth = self._get_particle_id(pos, pos_old)
@@ -1581,18 +1625,15 @@ class openGLLive(object):
 
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
+            lb_types = [espressomd.lb.LBFluid]
+            IF CUDA:
+                lb_types.append(espressomd.lb.LBFluidGPU)
             for a in self.system.actors:
-                types = [types.append(espressomd.lb.LBFluid)]
-                IF CUDA:
-                    types.append(espressomd.lb.LBFluidGPU)
-
-                # if type(a) == espressomd.lb.LBFluidGPU or type(a) ==
-                # espressomd.lb.LBFluid
-                if type(a) in types:
+                if isinstance(a, tuple(lb_types)):
                     # if 'agrid' in pa:
                     self.lb_params = a.get_params()
                     self.lb = a
-                    self.lb_is_cpu = type(a) == espressomd.lb.LBFluid
+                    self.lb_is_cpu = isinstance(a, espressomd.lb.LBFluid)
                     break
 
         if self.specs['LB_draw_velocity_plane']:
@@ -1771,8 +1812,8 @@ class openGLLive(object):
         OpenGL.GLUT.glutInitDisplayMode(
             OpenGL.GLUT.GLUT_DOUBLE | OpenGL.GLUT.GLUT_RGB | OpenGL.GLUT.GLUT_DEPTH)
 
-        OpenGL.GLUT.glutInitWindowSize(self.specs['window_size'][
-            0], self.specs['window_size'][1])
+        OpenGL.GLUT.glutInitWindowSize(self.specs['window_size'][0],
+                                       self.specs['window_size'][1])
 
         OpenGL.GLUT.glutCreateWindow(b"ESPResSo visualization")
 
@@ -1838,10 +1879,7 @@ class openGLLive(object):
             OpenGL.GL.glLightfv(
                 OpenGL.GL.GL_LIGHT1,
                 OpenGL.GL.GL_POSITION,
-                [0,
-                 0,
-                 0,
-                 1])
+                [0, 0, 0, 1])
 
             OpenGL.GL.glLightfv(
                 OpenGL.GL.GL_LIGHT1,
@@ -1861,9 +1899,7 @@ class openGLLive(object):
             OpenGL.GL.glLightfv(
                 OpenGL.GL.GL_LIGHT1,
                 OpenGL.GL.GL_SPOT_DIRECTION,
-                [1.0,
-                 1.0,
-                 1.0])
+                [1.0, 1.0, 1.0])
             OpenGL.GL.glLightf(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_SPOT_EXPONENT,
                                self.specs['spotlight_focus'])
 
@@ -2034,8 +2070,11 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     # torus segment
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
-    OpenGL.GLUT.glutSolidTorus(smoothing_radius, (radius +
-                                                  smoothing_radius), quality, quality)
+    OpenGL.GLUT.glutSolidTorus(
+        smoothing_radius,
+        (radius + smoothing_radius),
+        quality,
+        quality)
     OpenGL.GL.glDisable(clip_plane)
     # wall
     OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
@@ -2045,8 +2084,11 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
-    OpenGL.GLUT.glutSolidTorus(smoothing_radius, (radius +
-                                                  smoothing_radius), quality, quality)
+    OpenGL.GLUT.glutSolidTorus(
+        smoothing_radius,
+        (radius + smoothing_radius),
+        quality,
+        quality)
     OpenGL.GL.glDisable(clip_plane)
     # wall
     OpenGL.GL.glTranslate(0, 0, smoothing_radius)
@@ -2057,16 +2099,16 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
 
 
 def draw_slitpore(
-    channel_width,
-     lower_smoothing_radius,
-     upper_smoothing_radius,
-     pore_length,
-     pore_mouth,
-     pore_width,
-     max_box_l,
-     color,
-     material,
-     quality):
+        channel_width,
+        lower_smoothing_radius,
+        upper_smoothing_radius,
+        pore_length,
+        pore_mouth,
+        pore_width,
+        max_box_l,
+        color,
+        material,
+        quality):
     set_solid_material(color, material)
     # If pore is large, an additional wall is necessary
     if (pore_width > 2. * lower_smoothing_radius):
@@ -2220,7 +2262,7 @@ def draw_arrow(pos, d, radius, color, material, quality):
 
 
 # MOUSE EVENT MANAGER
-class MouseFireEvent(object):
+class MouseFireEvent:
 
     """Event type of mouse button used for mouse callbacks.
 
@@ -2233,7 +2275,7 @@ class MouseFireEvent(object):
     DoubleClick = 4
 
 
-class MouseButtonEvent(object):
+class MouseButtonEvent:
 
     """Mouse event used for mouse callbacks. Stores button and callback.
 
@@ -2246,7 +2288,7 @@ class MouseButtonEvent(object):
         self.positional = positional
 
 
-class MouseManager(object):
+class MouseManager:
 
     """Handles mouse callbacks.
 
@@ -2318,7 +2360,8 @@ class MouseManager(object):
             self.pressedTime[button] = time.time()
 
         for me in self.mouseEventsDoubleClick:
-            if me.button == button and state == OpenGL.GLUT.GLUT_DOWN and self.pressedTime[button] - self.pressedTimeOld[button] < 0.25:
+            if me.button == button and state == OpenGL.GLUT.GLUT_DOWN and self.pressedTime[
+                    button] - self.pressedTimeOld[button] < 0.25:
                 if me.positional:
                     me.callback(self.mousePos, self.mousePosOld)
                 else:
@@ -2334,7 +2377,7 @@ class MouseManager(object):
 # KEYBOARD EVENT MANAGER
 
 
-class KeyboardFireEvent(object):
+class KeyboardFireEvent:
 
     """Event type of button used for keyboard callbacks.
 
@@ -2345,7 +2388,7 @@ class KeyboardFireEvent(object):
     Released = 2
 
 
-class KeyboardButtonEvent(object):
+class KeyboardButtonEvent:
 
     """Keyboard event used for keyboard callbacks. Stores button, event type and callback.
 
@@ -2358,7 +2401,7 @@ class KeyboardButtonEvent(object):
         self.internal = internal
 
 
-class KeyboardManager(object):
+class KeyboardManager:
 
     """Handles keyboard callbacks.
 
@@ -2419,13 +2462,13 @@ class KeyboardManager(object):
     def keyboard_down(self, button):
         self.pressedKeys.add(button)
         self.keyState[button] = 1  # Key down
-        if not button in self.keyStateOld.keys():
+        if button not in self.keyStateOld.keys():
             self.keyStateOld[button] = 0
 
 # CAMERA
 
 
-class Camera(object):
+class Camera:
 
     def __init__(self):
         pass

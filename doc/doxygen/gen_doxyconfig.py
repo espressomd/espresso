@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -19,7 +19,6 @@
 #
 # This script generates the file doxy-features
 #
-from __future__ import print_function
 import inspect
 import sys
 import os

@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -112,7 +111,7 @@ class ek_charged_plate(ut.TestCase):
                 positive_ions[i, 10, j].density = 1.0 / agrid
                 negative_ions[i, 30, j].density = 1.0 / agrid
 
-        #Setup MD particle and integrate
+        # Setup MD particle and integrate
         force_difference = 0.0
 
         for i in range(7, 14):

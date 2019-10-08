@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
@@ -55,6 +54,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)
         self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)
         self.assertAlmostEqual(v_fluid[2], v_boundary[2], places=3)
+
 
 if __name__ == "__main__":
     ut.main()

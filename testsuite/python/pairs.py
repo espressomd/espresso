@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -76,7 +75,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_nsquare_partial_z(self):
         self.s.cell_system.set_n_square()
         self.s.periodicity = [1, 1, 0]
@@ -96,7 +94,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_dd_partial_z(self):
         self.s.cell_system.set_domain_decomposition()
         self.s.periodicity = [1, 1, 0]
@@ -115,7 +112,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    @utx.skipIfMissingFeatures(["PARTIAL_PERIODIC"])
     def test_layered_partial_z(self):
         self.s.cell_system.set_layered()
         self.s.periodicity = [1, 1, 0]
@@ -124,6 +120,7 @@ class PairTest(ut.TestCase):
         self.check()
         self.s.integrator.run(100)
         self.check()
+
 
 if __name__ == "__main__":
     ut.main()

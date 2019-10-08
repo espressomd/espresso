@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,7 +19,6 @@
 """
 This sample illustrates how particles of interest can be accessed via slicing.
 """
-from __future__ import print_function
 import espressomd
 from espressomd import thermostat
 import numpy as np

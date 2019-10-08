@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2016-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2016-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef SCRIPT_INTERFACE_GET_VALUE_HPP
 #define SCRIPT_INTERFACE_GET_VALUE_HPP
@@ -98,6 +98,14 @@ struct vector_conversion_visitor : boost::static_visitor<Utils::Vector<T, N>> {
     return ret;
   }
 
+  Utils::Vector<T, N>
+  operator()(std::vector<T, std::allocator<T>> const &v) const {
+    if (N != v.size()) {
+      throw boost::bad_get{};
+    }
+    return Utils::Vector<T, N>(v);
+  }
+
   template <typename U> Utils::Vector<T, N> operator()(U const &) const {
     throw boost::bad_get{};
   }
@@ -130,7 +138,7 @@ struct GetVectorOrEmpty : boost::static_visitor<std::vector<T>> {
 };
 
 /* std::vector cases
- * We implicitly transform an empty vector<Variant> into a empty vector<T>. */
+ * We implicitly transform an empty vector<Variant> into an empty vector<T>. */
 template <> struct get_value_helper<std::vector<int>, void> {
   std::vector<int> operator()(Variant const &v) const {
     return boost::apply_visitor(GetVectorOrEmpty<int>{}, v);

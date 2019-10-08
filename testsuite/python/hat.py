@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -63,6 +62,7 @@ class HatTest(ut.TestCase):
                 self.force(F_max, cutoff, i * dx), s.part[0].f[0], places=7)
             self.assertAlmostEqual(
                 self.pot(F_max, cutoff, i * dx), s.analysis.energy()['total'], places=7)
+
 
 if __name__ == "__main__":
     ut.main()

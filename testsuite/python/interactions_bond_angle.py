@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import espressomd
 import numpy as np
 import unittest as ut
@@ -94,7 +93,7 @@ class InteractionsAngleBondTest(ut.TestCase):
         p0.add_bond((self.harmonic_bond, 1))
 
         d_phi = np.pi / self.N
-        for i in range(1, self.N):  # avoid corner cases at phi = 0 and phi = pi
+        for i in range(1, self.N):  # avoid corner cases at phi = 0 or phi = pi
             p2.pos = self.start_pos + \
                 self.rotate_vector(self.rel_pos, self.axis, i * d_phi)
             self.system.integrator.run(recalc_forces=True, steps=0)
@@ -161,9 +160,9 @@ class InteractionsAngleBondTest(ut.TestCase):
             bend=ah_bend, phi0=ah_phi0)
         self.run_test(angle_harmonic,
                       lambda phi: self.angle_harmonic_force(
-                      phi=phi, bend=ah_bend, phi0=ah_phi0),
+                          phi=phi, bend=ah_bend, phi0=ah_phi0),
                       lambda phi: self.angle_harmonic_potential(
-                      phi=phi, bend=ah_bend, phi0=ah_phi0),
+                          phi=phi, bend=ah_bend, phi0=ah_phi0),
                       ah_phi0)
 
     def test_angle_cosine(self):
@@ -174,9 +173,9 @@ class InteractionsAngleBondTest(ut.TestCase):
             bend=ac_bend, phi0=ac_phi0)
         self.run_test(angle_cosine,
                       lambda phi: self.angle_cosine_force(
-                      phi=phi, bend=ac_bend, phi0=ac_phi0),
+                          phi=phi, bend=ac_bend, phi0=ac_phi0),
                       lambda phi: self.angle_cosine_potential(
-                      phi=phi, bend=ac_bend, phi0=ac_phi0),
+                          phi=phi, bend=ac_bend, phi0=ac_phi0),
                       ac_phi0)
 
     def test_angle_cos_squared(self):
@@ -187,12 +186,11 @@ class InteractionsAngleBondTest(ut.TestCase):
             bend=acs_bend, phi0=acs_phi0)
         self.run_test(angle_cos_squared,
                       lambda phi: self.angle_cos_squared_force(
-                      phi=phi, bend=acs_bend, phi0=acs_phi0),
+                          phi=phi, bend=acs_bend, phi0=acs_phi0),
                       lambda phi: self.angle_cos_squared_potential(
-                      phi=phi, bend=acs_bend, phi0=acs_phi0),
+                          phi=phi, bend=acs_bend, phi0=acs_phi0),
                       acs_phi0)
 
-    @utx.skipIfMissingFeatures("TABULATED")
     def test_angle_tabulated(self):
         """Check that we can reproduce the three other potentials."""
         at_bend = 1
@@ -202,16 +200,16 @@ class InteractionsAngleBondTest(ut.TestCase):
                 (self.angle_cosine_potential, self.angle_cosine_force),
                 (self.angle_harmonic_potential, self.angle_harmonic_force),
                 (self.angle_cos_squared_potential, self.angle_cos_squared_force)]:
-            angle_tabulated = espressomd.interactions.Tabulated(
-                type='angle', min=0, max=np.pi,
+            angle_tabulated = espressomd.interactions.TabulatedAngle(
                 energy=fun_pot(phi=phi, bend=at_bend, phi0=at_phi0),
                 force=fun_force(phi=phi, bend=at_bend, phi0=at_phi0))
             self.run_test(angle_tabulated,
                           lambda phi: fun_force(
-                          phi=phi, bend=at_bend, phi0=at_phi0),
+                              phi=phi, bend=at_bend, phi0=at_phi0),
                           lambda phi: fun_pot(
-                          phi=phi, bend=at_bend, phi0=at_phi0),
+                              phi=phi, bend=at_bend, phi0=at_phi0),
                           at_phi0)
+
 
 if __name__ == '__main__':
     ut.main()

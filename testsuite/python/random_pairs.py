@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -48,8 +47,8 @@ class RandomPairTest(ut.TestCase):
 
         dist_func = self.system.distance
         for pair in self.system.part.pairs():
-                if dist_func(pair[0], pair[1]) < 1.5:
-                    self.all_pairs.append((pair[0].id, pair[1].id))
+            if dist_func(pair[0], pair[1]) < 1.5:
+                self.all_pairs.append((pair[0].id, pair[1].id))
 
         self.all_pairs = set(self.all_pairs)
         self.assertTrue(len(self.all_pairs))
@@ -58,7 +57,7 @@ class RandomPairTest(ut.TestCase):
         self.system.part.clear()
 
     def pairs_n2(self, dist):
-        # Go through list of all possible pairs for full periodicy
+        # Go through list of all possible pairs for full periodicity
         # and skip those that ar not within the desired distance
         # for the current periodicity
 
@@ -92,10 +91,7 @@ class RandomPairTest(ut.TestCase):
         self.check_pairs(n2_pairs)
 
     def test(self):
-        if espressomd.has_features("PARTIAL_PERIODIC"):
-            periods = [0, 1]
-        else:
-            periods = [1]
+        periods = [0, 1]
 
         for periodicity in itertools.product(periods, periods, periods):
             self.system.periodicity = periodicity

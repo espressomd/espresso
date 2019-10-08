@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,7 +20,6 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-from __future__ import print_function
 import os
 import numpy as np
 import unittest as ut

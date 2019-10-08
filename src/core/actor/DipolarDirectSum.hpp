@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "config.hpp"
 
 #ifdef DIPOLAR_DIRECT_SUM
@@ -65,7 +65,7 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = s.box()[i];
-      per[i] = (PERIODIC(i));
+      per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_force(k, s.npart_gpu(), s.rGpuBegin(),
                                           s.dipGpuBegin(), s.fGpuBegin(),
@@ -76,7 +76,7 @@ public:
     int per[3];
     for (int i = 0; i < 3; i++) {
       box[i] = s.box()[i];
-      per[i] = (PERIODIC(i));
+      per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_energy(
         k, s.npart_gpu(), s.rGpuBegin(), s.dipGpuBegin(), box, per,

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
@@ -30,6 +29,10 @@ class ComForce(Observable):
 
     """Calculates the total force on particles with given ids.
 
+    Note that virtual sites are not included since they do not have a meaningful mass.
+
+    Output format: :math:`\\left(\\sum_i f^x_i, \\sum_i f^y_i, \\sum_i f^z_i\\right)`
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -43,6 +46,10 @@ class ComForce(Observable):
 class ComPosition(Observable):
 
     """Calculates the center of mass for particles with given ids.
+
+    Note that virtual sites are not included since they do not have a meaningful mass.
+
+    Output format: :math:`\\frac{1}{\\sum_i m_i} \\left( \\sum_i m_i r^x_i, \\sum_i m_i r^y_i, \\sum_i m_i r^z_i\\right)`
 
     Parameters
     ----------
@@ -58,6 +65,10 @@ class ComVelocity(Observable):
 
     """Calculates the center of mass velocity for particles with given ids.
 
+    Note that virtual sites are not included since they do not have a meaningful mass.
+
+    Output format: :math:`\\frac{1}{\\sum_i m_i} \\left( \\sum_i m_i v^x_i, \\sum_i m_i v^y_i, \\sum_i m_i v^z_i\\right)`
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -71,6 +82,8 @@ class ComVelocity(Observable):
 class Current(Observable):
 
     """Calculates the electric current for particles with given ids.
+
+    Output format: :math:`\\left(\\sum_i q_i v^x_i, \\sum_i q_i v^y_i, \\sum_i q_i v^z_i, \\right)`
 
     Parameters
     ----------
@@ -117,6 +130,8 @@ class DensityProfile(Observable):
 class DipoleMoment(Observable):
 
     """Calculates the dipole moment for particles with given ids.
+
+    Output format: :math:`\\left(\\sum_i q_i r^x_i, \\sum_i q_i r^y_i, \\sum_i q_i r^z_i\\right)`
 
     Parameters
     ----------
@@ -237,7 +252,7 @@ class LBVelocityProfile(Observable):
     sampling_offset_z : :obj:`float`, default=0.0
         Offset for the sampling grid in ``z``-direction.
     allow_empty_bins : :obj:`bool`, default=False
-        Wether or not to allow bins that will not be sampled at all.
+        Whether or not to allow bins that will not be sampled at all.
 
     """
     _so_name = "Observables::LBVelocityProfile"
@@ -261,6 +276,8 @@ class MagneticDipoleMoment(Observable):
 
     """Calculates the magnetic dipole moment for particles with given ids.
 
+    Output format: :math:`\\left(\\sum_i \\mu^x_i, \\sum_i \\mu^y_i, \\sum_i \\mu^z_i\\right)`
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -275,6 +292,10 @@ class ParticleAngularVelocities(Observable):
     _so_name = "Observables::ParticleAngularVelocities"
 
     """Calculates the angular velocity (omega) in the spaced-fixed frame of reference
+
+    Output format: :math:`\\omega^x_1,\\ \\omega^y_1,\\ \\omega^z_1,\\ \\omega^x_2,\\ \\omega^y_2,\\ \\omega^z_2, \\dots\\ \\omega^x_n,\\ \\omega^y_n,\\ \\omega^z_n`.
+
+    The particles are ordered according to the list of ids passed to the observable.
 
     Parameters
     ----------
@@ -308,6 +329,10 @@ class ParticleBodyVelocities(Observable):
     For each particle, the body-fixed frame of reference is obtained from the particle's
     orientation stored in the quaternions.
 
+    Output format: :math:`v_{x1},\\ v_{y1},\\ v_{z1},\\ v_{x2},\\ v_{y2},\\ v_{z2},\\ \\dots\\ v_{xn},\\ v_{yn},\\ v_{zn}`.
+
+    The particles are ordered according to the list of ids passed to the observable.
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -321,6 +346,10 @@ class ParticleBodyVelocities(Observable):
 class ParticleForces(Observable):
 
     """Calculates the particle forces for particles with given ids.
+
+    Output format: :math:`f_{x1},\\ f_{y1},\\ f_{z1},\\ f_{x2},\\ f_{y2},\ f_{z2},\\ \\dots\\ f_{xn},\\ f_{yn},\\ f_{zn}`.
+
+    The particles are ordered according to the list of ids passed to the observable.
 
     Parameters
     ----------
@@ -336,6 +365,10 @@ class ParticlePositions(Observable):
 
     """Calculates the particle positions for particles with given ids.
 
+    Output format: :math:`x_1,\\ y_1,\\ z_1,\\ x_2,\\ y_2,\\ z_2,\\ \\dots\\ x_n,\\ y_n,\\ z_n`.
+
+    The particles are ordered according to the list of ids passed to the observable.
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
@@ -349,6 +382,10 @@ class ParticlePositions(Observable):
 class ParticleVelocities(Observable):
 
     """Calculates the particle velocities for particles with given ids.
+
+    Output format: :math:`v_{x1},\\ v_{y1},\\ v_{z1},\\ v_{x2},\\ v_{y2},\\ v_{z2},\\ \\dots\\ v_{xn},\\ v_{yn},\\ v_{zn}`.
+
+    The particles are ordered according to the list of ids passed to the observable.
 
     Parameters
     ----------
@@ -375,9 +412,9 @@ class ParticleDistances(Observable):
 
 
 @script_interface_register
-class ParticleAngles(Observable):
+class BondAngles(Observable):
 
-    """Calculates the angles between particles with given ids along a
+    """Calculates the angles between bonds of particles with given ids along a
     polymer chain.
 
     Parameters
@@ -386,11 +423,28 @@ class ParticleAngles(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name = "Observables::ParticleAngles"
+    _so_name = "Observables::BondAngles"
 
 
 @script_interface_register
-class ParticleDihedrals(Observable):
+class CosPersistenceAngles(Observable):
+
+    """Calculates the cosine of mutual bond angles for chained particles with given ids.
+
+    The *i*-th  value of the result contains the cosine of the angle between bonds that
+    are separated by *i* bonds. The values are averaged over the chain.
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::CosPersistenceAngles"
+
+
+@script_interface_register
+class BondDihedrals(Observable):
 
     """Calculates the dihedrals between particles with given ids along a
     polymer chain.
@@ -401,7 +455,7 @@ class ParticleDihedrals(Observable):
           The ids of (existing) particles to take into account.
 
     """
-    _so_name = "Observables::ParticleDihedrals"
+    _so_name = "Observables::BondDihedrals"
 
 
 @script_interface_register
@@ -436,9 +490,9 @@ class CylindricalDensityProfile(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : (3,) array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : (3,) array_like of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -472,9 +526,9 @@ class CylindricalFluxDensityProfile(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : (3,) array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : (3,) array_like of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -508,9 +562,9 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : (3,) array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : (3,) array_like of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -544,9 +598,9 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : (3,) array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : (3,) array_like of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -580,9 +634,9 @@ class CylindricalVelocityProfile(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
-    center : array_like of :obj:`float`
+    center : (3,) array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : (3,) array_like of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
@@ -618,9 +672,9 @@ class CylindricalLBVelocityProfile(Observable):
 
     Parameters
     ----------
-    center : array_like of :obj:`float`
+    center : (3,) array_like of :obj:`float`
              Position of the center of the polar coordinate system for the histogram.
-    axis : array_like
+    axis : (3,) array_like of :obj:`float`
            Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.

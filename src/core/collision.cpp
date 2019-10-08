@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2011-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2011-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "collision.hpp"
 #include "cells.hpp"
@@ -36,12 +36,6 @@
 #include <boost/serialization/serialization.hpp>
 
 #include <vector>
-
-#ifdef COLLISION_DETECTION_DEBUG
-#define TRACE(a) a
-#else
-#define TRACE(a)
-#endif
 
 #ifdef COLLISION_DETECTION
 
@@ -97,6 +91,10 @@ bool validate_collision_parameters() {
       runtimeErrorMsg() << "collision_detection distance must be >0";
       return false;
     }
+
+    // Cache square of cutoff
+    collision_params.distance2 = Utils::sqr(collision_params.distance);
+
     if (collision_params.distance > min_global_cut) {
       runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
                            "must be larger or equal the collision detection "
@@ -110,7 +108,7 @@ bool validate_collision_parameters() {
   // If we don't have virtual sites, virtual site binding isn't possible.
   if ((collision_params.mode & COLLISION_MODE_VS) ||
       (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-    runtimeErrorMsg() << "Virtual sites based collisoin modes modes require "
+    runtimeErrorMsg() << "Virtual sites based collision modes require "
                          "the VIRTUAL_SITES feature";
     return false;
   }
@@ -228,21 +226,20 @@ bool validate_collision_parameters() {
 
     if (collision_params.part_type_after_glueing < 0) {
       runtimeErrorMsg()
-          << "Collision detection particle type after glueing needs to be >=0";
+          << "Collision detection particle type after gluing needs to be >=0";
       return false;
     }
     if (this_node == 0)
       make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
-  recalc_forces = 1;
-  rebuild_verletlist = 1;
+  recalc_forces = true;
+  rebuild_verletlist = true;
   on_ghost_flags_change();
 
   return true;
 }
 
-//* Allocate memory for the collision queue /
 void prepare_local_collision_queue() { local_collision_queue.clear(); }
 
 void queue_collision(const int part1, const int part2) {
@@ -255,7 +252,7 @@ const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
                                             const Particle &p2,
                                             Utils::Vector3d &pos) {
   double c;
-  auto const vec21 = get_mi_vector(p1.r.p, p2.r.p);
+  auto const vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
   const double dist_betw_part = vec21.norm();
 
   // Find out, which is the particle to be glued.
@@ -281,12 +278,9 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
                                             const Particle *const p2,
                                             Utils::Vector3d &pos1,
                                             Utils::Vector3d &pos2) {
-  double vec21[3];
-  get_mi_vector(vec21, p1->r.p, p2->r.p);
-  for (int i = 0; i < 3; i++) {
-    pos1[i] = p1->r.p[i] - vec21[i] * collision_params.vs_placement;
-    pos2[i] = p1->r.p[i] - vec21[i] * (1. - collision_params.vs_placement);
-  }
+  auto const vec21 = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+  pos1 = p1->r.p - vec21 * collision_params.vs_placement;
+  pos2 = p1->r.p - vec21 * (1. - collision_params.vs_placement);
 }
 
 // Considers three particles for three_particle_binding and performs
@@ -294,10 +288,10 @@ void bind_at_point_of_collision_calc_vs_pos(const Particle *const p1,
 void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // If p1 and p2 are not closer or equal to the cutoff distance, skip
   // p1:
-  if (get_mi_vector(p.r.p, p1.r.p).norm() > collision_params.distance)
+  if (get_mi_vector(p.r.p, p1.r.p, box_geo).norm() > collision_params.distance)
     return;
   // p2:
-  if (get_mi_vector(p.r.p, p2.r.p).norm() > collision_params.distance)
+  if (get_mi_vector(p.r.p, p2.r.p, box_geo).norm() > collision_params.distance)
     return;
 
   // Check, if there already is a three-particle bond centered on p
@@ -337,9 +331,9 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // First, find the angle between the particle p, p1 and p2
 
   /* vector from p to p1 */
-  auto const vec1 = get_mi_vector(p.r.p, p1.r.p).normalize();
+  auto const vec1 = get_mi_vector(p.r.p, p1.r.p, box_geo).normalize();
   /* vector from p to p2 */
-  auto const vec2 = get_mi_vector(p.r.p, p2.r.p).normalize();
+  auto const vec2 = get_mi_vector(p.r.p, p2.r.p, box_geo).normalize();
 
   auto const cosine =
       boost::algorithm::clamp(vec1 * vec2, -TINY_COS_VALUE, TINY_COS_VALUE);
@@ -376,7 +370,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
 
   local_vs_relate_to(p_vs, &get_part(relate_to));
 
-  p_vs->p.is_virtual = 1;
+  p_vs->p.is_virtual = true;
   p_vs->p.type = collision_params.vs_particle_type;
 }
 

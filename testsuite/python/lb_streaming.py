@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -62,11 +62,11 @@ LB_PARAMETERS = {
 }
 
 
-class LBStreamingCommon(object):
+class LBStreamingCommon:
 
     """
     Check the streaming step of the LB fluid implementation by setting all populations
-    to zero except one. Relaxation is supressed by choosing appropriate parameters.
+    to zero except one. Relaxation is suppressed by choosing appropriate parameters.
 
     """
     lbf = None
@@ -84,7 +84,8 @@ class LBStreamingCommon(object):
         """Set all populations to 0.0.
 
         """
-        for i in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
+        for i in itertools.product(range(self.grid[0]), range(
+                self.grid[1]), range(self.grid[2])):
             self.lbf[i].population = np.zeros(19)
 
     def set_fluid_populations(self, grid_index):
@@ -96,7 +97,8 @@ class LBStreamingCommon(object):
 
     def test_population_streaming(self):
         self.prepare()
-        for grid_index in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
+        for grid_index in itertools.product(
+                range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
             self.set_fluid_populations(grid_index)
             self.system.integrator.run(1)
             for n_v in range(19):

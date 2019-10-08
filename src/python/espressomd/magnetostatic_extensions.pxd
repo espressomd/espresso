@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,6 @@
 #
 # Handling of electrostatics
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from espressomd.system cimport *
 from espressomd.utils cimport *

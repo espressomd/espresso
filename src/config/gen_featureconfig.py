@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -18,7 +18,6 @@
 #
 # This script generates the files featureconfig.h and featureconfig.c.
 #
-from __future__ import print_function
 import time
 import string
 import inspect

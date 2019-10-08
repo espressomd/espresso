@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -41,7 +41,7 @@ LB_PARAMS = {'agrid': AGRID,
              'ext_force_density': [0.1, 0.2, 0.3]}
 
 
-class LinearMomentumTest(object):
+class LinearMomentumTest:
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -57,7 +57,8 @@ class LinearMomentumTest(object):
         self.system.actors.clear()
         self.lbf = self.lbf(**LB_PARAMS)
         self.system.actors.add(self.lbf)
-        for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
+        for index in itertools.product(
+                np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             self.lbf[index].velocity = np.random.random(3) - 0.5
 
     def test(self):
@@ -67,7 +68,8 @@ class LinearMomentumTest(object):
         """
         self.prepare()
         linear_momentum = np.zeros(3)
-        for index in itertools.product(np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
+        for index in itertools.product(
+                np.arange(0, int(np.floor(BOX_L / AGRID))), repeat=3):
             linear_momentum += DENS * AGRID**3.0 * self.lbf[index].velocity
         analyze_linear_momentum = self.system.analysis.linear_momentum(True,  # particles
                                                                        True)  # LB fluid
@@ -94,6 +96,7 @@ class LBGPULinearMomentum(ut.TestCase, LinearMomentumTest):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU
+
 
 if __name__ == '__main__':
     ut.main()

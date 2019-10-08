@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _CELLS_H
 #define _CELLS_H
 /** \file
@@ -129,6 +129,8 @@ struct CellPList {
   Cell **begin() { return cell; }
   Cell **end() { return cell + n; }
 
+  Cell *operator[](int i) { return assert(i < n), cell[i]; }
+
   Cell **cell;
   int n;
   int max;
@@ -146,6 +148,21 @@ struct CellStructure {
   int type = CELL_STRUCTURE_NONEYET;
 
   bool use_verlet_list = true;
+
+  /** Maximal pair range supported by current
+   * cell system.
+   */
+  Utils::Vector3d max_range = {};
+
+  /**
+   * Minimum range that has to be supported.
+   */
+  double min_range;
+
+  /** returns the global local_cells */
+  CellPList local_cells() const;
+  /** returns the global ghost_cells */
+  CellPList ghost_cells() const;
 
   /** Communicator to exchange ghost cell information. */
   GhostCommunicator ghost_cells_comm;
@@ -184,17 +201,11 @@ extern CellPList ghost_cells;
 /** Type of cell structure in use ( \ref Cell Structure ). */
 extern CellStructure cell_structure;
 
-/** Maximal interaction range - also the minimum cell size. Any
- *  cellsystem makes sure that the particle pair loop visits all pairs
- *  of particles that are closer than this.
- */
-extern double max_range;
-
 /** If non-zero, cell systems should reset the position for checking
  *  the Verlet criterion. Moreover, the Verlet list has to be
  *  rebuilt.
  */
-extern int rebuild_verletlist;
+extern bool rebuild_verletlist;
 
 /*@}*/
 
@@ -203,14 +214,12 @@ extern int rebuild_verletlist;
 /************************************************************/
 /*@{*/
 
-/** Switch for choosing the topology init function of a certain cell system. */
-void topology_init(int cs, CellPList *local);
-
 /** Reinitialize the cell structures.
  *  @param new_cs gives the new topology to use afterwards. May be set to
  *  \ref CELL_STRUCTURE_CURRENT for not changing it.
+ *  @param range Desired interaction range
  */
-void cells_re_init(int new_cs);
+void cells_re_init(int new_cs, double range);
 
 /** Reallocate the list of all cells (\ref cells::cells). */
 void realloc_cells(int size);

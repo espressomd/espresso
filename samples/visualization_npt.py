@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,7 +19,6 @@ Visualization sample for particle dumbbells in the constant-temperature,
 constant-pressure ensemble.
 """
 
-from __future__ import print_function
 import numpy as np
 from threading import Thread
 
@@ -81,7 +80,8 @@ def main():
         visualizer.update()
         cnt += 1
 
-# Start simulation in seperate thread
+
+# Start simulation in separate thread
 t = Thread(target=main)
 t.daemon = True
 t.start()

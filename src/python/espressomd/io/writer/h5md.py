@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,18 +19,16 @@
 
 import sys
 
-from six import iteritems
-
 from ...script_interface import PScriptInterface  # pylint: disable=import
 from ...code_info import features
 
-if not 'H5MD' in features():
-    class H5md(object):
+if 'H5MD' not in features():
+    class H5md:
 
         def __init__(self, *args, **kwargs):
             raise RuntimeError("H5md not available.")
 else:
-    class H5md(object):
+    class H5md:
 
         """H5md file object.
 
@@ -74,7 +72,7 @@ else:
                          'write_charge': 1 << 5}
             self.valid_params.append(self.what.keys())
             self.what_bin = 0
-            for i, j in iteritems(kwargs):
+            for i, j in kwargs.items():
                 if i in self.what.keys():
                     if isinstance(j, bool):
                         if j:

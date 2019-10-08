@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -79,7 +78,7 @@ class CoulombCloudWallTune(ut.TestCase):
         self.system.integrator.run(0)
         self.compare("p3m")
 
-    @utx.skipIfMissingGPU(skip_ci_amd=True)
+    @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
         # We have to add some tolerance here, because the reference
         # system is not homogeneous
@@ -88,6 +87,7 @@ class CoulombCloudWallTune(ut.TestCase):
                                              tune=True))
         self.system.integrator.run(0)
         self.compare("p3m_gpu")
+
 
 if __name__ == "__main__":
     ut.main()

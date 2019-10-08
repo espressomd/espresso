@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_UTILS_LIST_HPP
 #define CORE_UTILS_LIST_HPP
 
@@ -66,7 +66,7 @@ private:
     std::copy(rhs.begin(), rhs.end(), begin());
   }
 
-  void move(List &&rhs) {
+  void move(List &&rhs) noexcept {
     using std::swap;
     swap(n, rhs.n);
     swap(max, rhs.max);
@@ -108,7 +108,7 @@ private:
    * @brief Realloc memory in an exception safe way.
    *
    * If Utils::realloc fails, the original memory block
-   * is unchanged an still valid, but Utils::realloc will
+   * is unchanged and still valid, but Utils::realloc will
    * throw. Because this->e is then not updated the List
    * actually stays unchanged, so that
    * we can give the strong exception safety guarantee here.
@@ -140,8 +140,9 @@ public:
     assert(size <= max_size());
     if (size != capacity()) {
       realloc(size);
-      this->n = size;
     }
+
+    this->n = size;
   }
 
   void push_back(T const &v) {

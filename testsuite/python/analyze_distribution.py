@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -149,6 +148,7 @@ class AnalyzeDistributions(ut.TestCase):
                                                      int_flag=1)
         self.assertTrue(np.allclose(core_rdf[1],
                                     np.cumsum(self.calc_min_distribution(bins, type_list_a=[0]))))
+
 
 if __name__ == "__main__":
     ut.main()

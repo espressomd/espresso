@@ -17,6 +17,7 @@
 import sys
 import unittest
 import espressomd  # pylint: disable=import-error
+from espressomd.utils import to_str
 
 
 def _id(x):
@@ -26,8 +27,8 @@ def _id(x):
 def skipIfMissingFeatures(*args):
     """Unittest skipIf decorator for missing Espresso features."""
 
-    missing_features = espressomd.missing_features(*args)
-    if missing_features:
+    if not espressomd.has_features(*args):
+        missing_features = espressomd.missing_features(*args)
         return unittest.skip("Skipping test: missing feature{} {}".format(
             's' if len(missing_features) else '', ', '.join(missing_features)))
     return _id
@@ -36,7 +37,8 @@ def skipIfMissingFeatures(*args):
 def skipIfMissingModules(*args):
     """Unittest skipIf decorator for missing Python modules."""
 
-    if len(args) == 1 and not isinstance(args[0], str) and hasattr(args[0], "__iter__"):
+    if len(args) == 1 and not isinstance(
+            args[0], str) and hasattr(args[0], "__iter__"):
         args = set(args[0])
     else:
         args = set(args)
@@ -47,13 +49,11 @@ def skipIfMissingModules(*args):
     return _id
 
 
-def skipIfMissingGPU(skip_ci_amd=False):
+def skipIfMissingGPU():
     """Unittest skipIf decorator for missing GPU."""
 
     if not espressomd.gpu_available():
         return unittest.skip("Skipping test: no GPU available")
-    # special case for our CI infrastructure: disable specific GPU tests
-    # for AMD GPUs, see https://github.com/espressomd/espresso/pull/2653
-    if skip_ci_amd and str(espressomd.cuda_init.CudaInitHandle().device_list[0]) == "Device 687f":
-        return unittest.skip("Skipping test: AMD GPU")
+    devices = espressomd.cuda_init.CudaInitHandle().device_list
+    current_device_id = espressomd.cuda_init.CudaInitHandle().device
     return _id

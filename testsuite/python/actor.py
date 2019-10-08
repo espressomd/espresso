@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018 The ESPResSo project
+# Copyright (C) 2018-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -34,7 +34,7 @@ class TestActor(actors.Actor):
         self._deactivated = False
         self._validated = False
 
-        super(TestActor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def _get_params_from_es_core(self):
         return self._core_args
@@ -106,6 +106,7 @@ class ActorTest(ut.TestCase):
         self.assertTrue(params["a"])
         self.assertFalse(params["b"])
         self.assertTrue(params["c"])
+
 
 if __name__ == "__main__":
     ut.main()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -44,7 +44,7 @@ gamma = 50
 #l_bjerrum = 0.885^2 * e^2/(4*pi*epsilon_0*k_B*T)
 l_bjerrum = 130878.0 / temp
 Vz = 0  # potential difference between the electrodes
-Ez = 364.5  # conversion from potential to electical field
+Vz_to_Ez = 364.5  # conversion from potential to electrical field
 
 # Particle parameters
 types = {"Cl": 0, "Na": 1, "Electrode": 2}
@@ -65,7 +65,7 @@ box_z = box_l + 2.0 * (lj_sigmas["Electrode"])
 box_volume = box_l * box_l * box_z
 elc_gap = box_z * 0.15
 system.box_l = [box_l, box_l, box_z + elc_gap]
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
@@ -116,7 +116,8 @@ def combination_rule_sigma(rule, sig1, sig2):
         return ValueError("No combination rule defined")
 
 
-for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"], ["Na", "Electrode"], ["Cl", "Electrode"]]:
+for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
+          ["Na", "Electrode"], ["Cl", "Electrode"]]:
     lj_sig = combination_rule_sigma(
         "Berthelot", lj_sigmas[s[0]], lj_sigmas[s[1]])
     lj_cut = combination_rule_sigma("Berthelot", lj_cuts[s[0]], lj_cuts[s[1]])
@@ -142,15 +143,15 @@ def increaseElectricField():
     Vz += 3
     for p in system.part:
         p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
-    print('Potential difference: {:.0V}'.format(Vz))
+    print('Potential difference: {:.0f}'.format(Vz))
 
 
 def decreaseElectricField():
-    global Ez
+    global Vz
     Vz -= 3
     for p in system.part:
         p.ext_force = [0, 0, p.q * Vz * Vz_to_Ez]
-    print('Potential difference: {:.0V}'.format(Vz))
+    print('Potential difference: {:.0f}'.format(Vz))
 
 
 # Register buttons

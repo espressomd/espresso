@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import os
 import numpy as np
 
@@ -76,7 +75,7 @@ def generate_test_for_class(_system, _interClass, _params):
 
 
 def lj_force_vector(v_d, d, lj_params):
-    """Returns lj force for distance d and distance vecotr v_d based on the given lj_params.
+    """Returns lj force for distance d and distance vector v_d based on the given lj_params.
     Supports epsilon and cutoff."""
 
     if d >= lj_params["cutoff"]:
@@ -85,9 +84,9 @@ def lj_force_vector(v_d, d, lj_params):
     return 4. * lj_params["epsilon"] * v_d * (-12.0 * d**-14 + 6.0 * d**-8)
 
 
-def verify_lj_forces(system, tolerance, ids_to_skip=[]):
+def verify_lj_forces(system, tolerance, ids_to_skip=()):
     """Goes over all pairs of particles in system and compares the forces on them
-       to what would be expected based on the systems LJ parametes.
+       to what would be expected based on the systems LJ parameters.
        Particle ids listed in ids_to_skip are not checked
        Do not run this with a thermostat enabled."""
 
@@ -154,7 +153,8 @@ def transform_pos_from_cartesian_to_polar_coordinates(pos):
         The given position in polar coordinates.
 
     """
-    return np.array([np.sqrt(pos[0]**2.0 + pos[1]**2.0), np.arctan2(pos[1], pos[0]), pos[2]])
+    return np.array([np.sqrt(pos[0]**2.0 + pos[1]**2.0),
+                     np.arctan2(pos[1], pos[0]), pos[2]])
 
 
 def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
@@ -298,12 +298,14 @@ def fene_potential(scalar_r, k, d_r_max, r_0):
 
 
 def fene_force(scalar_r, k, d_r_max, r_0):
-    return k * (scalar_r - r_0) * d_r_max**2 / ((scalar_r - r_0)**2 - d_r_max**2)
+    return k * (scalar_r - r_0) * d_r_max**2 / \
+        ((scalar_r - r_0)**2 - d_r_max**2)
 
 
 def fene_force2(bond_vector, k, d_r_max, r_0):
     r = np.linalg.norm(bond_vector)
-    return k * (r - r_0) / (r * (1 - ((r - r_0) / d_r_max)**2)) * np.array(bond_vector)
+    return k * (r - r_0) / (r * (1 - ((r - r_0) / d_r_max)**2)) * \
+        np.array(bond_vector)
 
 # Coulomb bond
 
@@ -600,7 +602,7 @@ def gay_berne_potential(r_ij, u_i, u_j, epsilon_0, sigma_0, mu, nu, k_1, k_2):
 class DynamicDict(dict):
 
     def __getitem__(self, key):
-        value = super(DynamicDict, self).__getitem__(key)
+        value = super().__getitem__(key)
         return eval(value, self) if isinstance(value, str) else value
 
 

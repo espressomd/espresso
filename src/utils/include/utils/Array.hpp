@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef UTILS_ARRAY_HPP
 #define UTILS_ARRAY_HPP
 
@@ -43,23 +61,23 @@ template <typename T, std::size_t N> struct Array {
 
   DEVICE_QUALIFIER constexpr reference at(size_type i) {
     if (i >= N)
-      throw std::out_of_range("Array access out of bounds.");
+      DEVICE_THROW(std::out_of_range("Array access out of bounds."));
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference at(size_type i) const {
     if (i >= N)
-      throw std::out_of_range("Array access out of bounds.");
+      DEVICE_THROW(std::out_of_range("Array access out of bounds."));
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr reference operator[](size_type i) {
-    assert(i < N);
+    DEVICE_ASSERT(i < N);
     return m_storage.m_data[i];
   }
 
   DEVICE_QUALIFIER constexpr const_reference operator[](size_type i) const {
-    assert(i < N);
+    DEVICE_ASSERT(i < N);
     return m_storage.m_data[i];
   }
 
@@ -124,6 +142,14 @@ template <typename T, std::size_t N> struct Array {
     }
     return ret;
   }
+
+#ifdef __HCC__
+  // workaround for https://github.com/RadeonOpenCompute/hcc/issues/860
+  __attribute__((annotate("serialize"))) void
+  __cxxamp_serialize(Kalmar::Serialize &s) const;
+  __attribute__((annotate("user_deserialize"))) void
+  cxxamp_deserialize()[[cpu]][[hc]];
+#endif
 
 private:
   friend boost::serialization::access;

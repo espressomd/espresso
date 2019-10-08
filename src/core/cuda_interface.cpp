@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_interface.hpp"
 
@@ -23,7 +23,6 @@
 
 #include "communication.hpp"
 #include "config.hpp"
-#include "debug.hpp"
 #include "energy.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "serialization/CUDA_particle_data.hpp"
@@ -35,12 +34,7 @@
 static void cuda_mpi_send_v_cs_slave(ParticleRange particles);
 #endif
 
-void cuda_bcast_global_part_params() {
-  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params\n", this_node));
-  mpi_bcast_cuda_global_part_vars();
-  COMM_TRACE(fprintf(stderr, "%d: cuda_bcast_global_part_params finished\n",
-                     this_node));
-}
+void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }
 
 /* TODO: We should only transfer data for enabled methods,
          not for those that are barely compiled in. (fw)
@@ -52,7 +46,7 @@ static void pack_particles(ParticleRange particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    buffer[i].p = static_cast<Vector3f>(folded_position(part));
+    buffer[i].p = static_cast<Vector3f>(folded_position(part.r.p, box_geo));
 
 #ifdef CUDA
     buffer[i].identity = part.p.identity;
@@ -100,8 +94,6 @@ void cuda_mpi_get_particles(ParticleRange particles,
   auto const n_part = particles.size();
 
   if (this_node > 0) {
-    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %ld particles\n",
-                       this_node, n_part));
     static std::vector<CUDA_particle_data> buffer;
     buffer.resize(n_part);
     /* pack local parts into buffer */
@@ -114,8 +106,6 @@ void cuda_mpi_get_particles(ParticleRange particles,
 
     Utils::Mpi::gather_buffer(particle_data_host, n_part, comm_cart);
   }
-
-  COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
 /**
@@ -170,8 +160,6 @@ void cuda_mpi_send_forces(ParticleRange particles,
 
     add_forces_and_torques(particles, host_forces, host_torques);
   }
-
-  COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
 #if defined(ENGINE) && defined(CUDA)
@@ -203,7 +191,6 @@ void cuda_mpi_send_v_cs(ParticleRange particles,
     Utils::Mpi::scatter_buffer(host_v_cs.data(), n_part, comm_cart);
     set_v_cs(particles, host_v_cs);
   }
-  COMM_TRACE(fprintf(stderr, "%d: finished send\n", this_node));
 }
 #endif // ifdef ENGINE
 

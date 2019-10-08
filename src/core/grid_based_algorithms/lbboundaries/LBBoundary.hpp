@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef LBBOUNDARIES_LBBOUNDARY_HPP
 #define LBBOUNDARIES_LBBOUNDARY_HPP
 
@@ -28,7 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-int lbboundary_get_force(void *lbb, double *f);
+class LBBoundary;
+Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb);
 void lb_init_boundaries();
 #endif
 class LBBoundary {
@@ -44,7 +45,8 @@ public:
   }
 
   /* Calculate distance from the lbboundary */
-  void calc_dist(const Utils::Vector3d &pos, double *dist, double *vec) const {
+  void calc_dist(const Utils::Vector3d &pos, double &dist,
+                 Utils::Vector3d &vec) const {
     m_shape->calculate_dist(pos, dist, vec);
   }
 
@@ -63,11 +65,9 @@ public:
   Shapes::Shape const &shape() const { return *m_shape; }
   Utils::Vector3d &velocity() { return m_velocity; }
   Utils::Vector3d &force() { return m_force; }
-  Utils::Vector3d get_force() {
+  Utils::Vector3d get_force() const {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-    double tmp_force[3];
-    lbboundary_get_force(this, tmp_force);
-    return Utils::Vector3d{tmp_force[0], tmp_force[1], tmp_force[2]};
+    return lbboundary_get_force(this);
 #else
     throw std::runtime_error("Needs LB_BOUNDARIES or LB_BOUNDARIES_GPU.");
 #endif

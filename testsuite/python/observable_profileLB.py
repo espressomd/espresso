@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -60,7 +60,7 @@ LB_VELOCITY_PROFILE_PARAMS = {
     'allow_empty_bins': False}
 
 
-class ObservableProfileLBCommon(object):
+class ObservableProfileLBCommon:
     lbf = None
     system = espressomd.System(box_l=[12.0, 12.0, 12.0])
     system.time_step = TIME_STEP

@@ -1,33 +1,31 @@
-################################################################################
-#                                                                              #
-# Copyright (C) 2010-2018 The ESPResSo project                                 #
-#                                                                              #
-# This file is part of ESPResSo.                                               #
-#                                                                              #
-# ESPResSo is free software: you can redistribute it and/or modify             #
-# it under the terms of the GNU General Public License as published by         #
-# the Free Software Foundation, either version 3 of the License, or            #
-# (at your option) any later version.                                          #
-#                                                                              #
-# ESPResSo is distributed in the hope that it will be useful,                  #
-# but WITHOUT ANY WARRANTY; without even the implied warranty of               #
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the                #
-# GNU General Public License for more details.                                 #
-#                                                                              #
-# You should have received a copy of the GNU General Public License            #
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.        #
-#                                                                              #
-################################################################################
-#                                                                              #
-#                  Active Matter: Swimmer Flow Field Tutorial                  #
-#                                                                              #
+#
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
 ##########################################################################
-
-from __future__ import print_function
+#
+#            Active Matter: Swimmer Flow Field Tutorial
+#
+##########################################################################
 
 import numpy as np
 import os
 import sys
+import argparse
 
 import espressomd
 from espressomd import assert_features, lb
@@ -35,64 +33,64 @@ from espressomd import assert_features, lb
 
 assert_features(["ENGINE", "CUDA", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument('mode',
+                    choices=['pusher', 'puller'],
+                    help='Type of the swimmer')
+parser.add_argument('z_position', type=float,
+                    help="Z-position of the swimmer to start off from.")
+args = parser.parse_args()
+
 # Read in the hydrodynamic type (pusher/puller) and position
 if len(sys.argv) != 3:
     print("Usage:", sys.argv[0], "<type> <pos>")
     exit()
 
-mode = sys.argv[1]
-pos = float(sys.argv[2])
+mode = args.mode
+pos = args.z_position
 
 ##########################################################################
 
 outdir = "./RESULTS_FLOW_FIELD/T_{}_P_{}/".format(mode, pos)
-try:
-    os.makedirs(outdir)
-except:
-    print("INFO: Directory \"{}\" exists".format(outdir))
+os.makedirs(outdir, exist_ok=True)
 
 # System parameters
-length = 25.0
-prod_steps = 1000
-prod_length = 50
-dt = 0.01
+LENGTH = 25.0
+PROD_STEPS = 1000
+PROD_LENGTH = 50
+TIME_STEP = 0.01
 
-system = espressomd.System(box_l=[length, length, length])
+system = espressomd.System(box_l=[LENGTH, LENGTH, LENGTH])
 system.cell_system.skin = 0.3
-system.time_step = dt
+system.time_step = TIME_STEP
 system.min_global_cut = 1.0
 
 ##########################################################################
 
 # Set the position of the particle
-x0 = 0.5 * length
-y0 = 0.5 * length
-z0 = 0.5 * length + pos
+X0 = 0.5 * LENGTH
+Y0 = 0.5 * LENGTH
+Z0 = 0.5 * LENGTH + pos
 
 # Sphere size, mass, and moment of inertia, dipole force
-sph_size = 0.5
-sph_mass = 4.8
-Ixyz = 4.8
-force = 0.1
+SPHERE_SIZE = 0.5
+SPHERE_MASS = 4.8
+I_XYZ = 4.8
+FORCE = 0.1
 
 # Setup the particle
 system.part.add(
-    pos=[x0, y0, z0], type=0, mass=sph_mass, rinertia=[Ixyz, Ixyz, Ixyz],
-    swimming={'f_swim': force, 'mode': mode, 'dipole_length': sph_size + 0.5})
+    pos=[X0, Y0, Z0], type=0, mass=SPHERE_MASS, rinertia=[I_XYZ, I_XYZ, I_XYZ],
+    swimming={'f_swim': FORCE, 'mode': mode, 'dipole_length': SPHERE_SIZE + 0.5})
 
 ##########################################################################
 
 # Setup the fluid (quiescent)
-agrid = 1
-vskin = 0.1
-frict = 20.0
-visco = 1.0
-densi = 1.0
-
-lbf = lb.LBFluidGPU(agrid=agrid, dens=densi,
-                    visc=visco, tau=dt)
+lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0,
+                    visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
+system.thermostat.set_lb(LB_fluid=lbf, gamma=20.0, seed=42)
 
 ##########################################################################
 
@@ -103,9 +101,9 @@ with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
     print("####################################################", file=outfile)
 
     # Production run
-    for k in range(prod_steps):
+    for k in range(PROD_STEPS):
         if (k + 1) % 10 == 0:
-            print('\rprogress: %.0f%%' % ((k + 1) * 100. / prod_steps), end='')
+            print('\rprogress: %.0f%%' % ((k + 1) * 100. / PROD_STEPS), end='')
             sys.stdout.flush()
 
         # Output quantities
@@ -114,11 +112,11 @@ with open("{}/trajectory.dat".format(outdir), 'w') as outfile:
               file=outfile)
 
         # Output 50 simulations
-        if k % (prod_steps / 50) == 0:
-            num = k // (prod_steps // 50)
+        if k % (PROD_STEPS / 50) == 0:
+            num = k // (PROD_STEPS // 50)
             lbf.print_vtk_velocity("{}/lb_velocity_{}.vtk".format(outdir, num))
             system.part.writevtk(
                 "{}/position_{}.vtk".format(outdir, num), types=[0])
 
-        system.integrator.run(prod_length)
+        system.integrator.run(PROD_LENGTH)
 print()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2018 The ESPResSo project
+# Copyright (C) 2018-2019 The ESPResSo project
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -15,13 +15,12 @@
 ##    @code{.sh}
 ##    #!/bin/bash
 ##    # load Unit Testing library
-##    source /work/jgrad/espresso-fork/benchmarks/BashUnitTests.sh
+##    source /path/to/espresso/testsuite/cmake/BashUnitTests.sh
 ##
 ##    # setup
 ##    function set_up() {
 ##      cat >> myconfig.hpp << EOF
 ##      /* global features */
-##      #define PARTIAL_PERIODIC
 ##      #define ELECTROSTATICS
 ##      #define EXTERNAL_FORCES
 ##    EOF
@@ -38,10 +37,10 @@
 ##    # write tests
 ##    function test_install() {
 ##      assert_file_exists bin/main
-##      assert_file_exists lib/python2.7/site-packages/espressomd/__init__.py
+##      assert_file_exists lib/python3.6/site-packages/espressomd/__init__.py
 ##    }
 ##    function test_run() {
-##      assert_return_code python2 -c "import espressomd"
+##      assert_return_code python3 -c "import espressomd"
 ##    }
 ##
 ##    # run tests

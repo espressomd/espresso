@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -35,7 +35,7 @@ LB_PARAMS = {'agrid': AGRID,
              }
 
 
-class CylindricalLBObservableCommon(object):
+class CylindricalLBObservableCommon:
 
     """
     Testcase for the CylindricalLBObservable.
@@ -253,6 +253,7 @@ class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
         del self.positions[:]
         self.system.actors.remove(self.lbf)
         self.system.part.clear()
+
 
 if __name__ == "__main__":
     ut.main()

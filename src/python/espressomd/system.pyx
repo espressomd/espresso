@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from libcpp cimport bool
 include "myconfig.pxi"
 
@@ -24,7 +23,7 @@ from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport box_l
+from grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -33,7 +32,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits
+from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
 from .lb cimport lb_lbfluid_get_tau
 from .lb cimport lb_lbfluid_get_lattice_switch
 from .lb cimport NONE
@@ -75,13 +74,34 @@ if OIF_GLOBAL_FORCES:
 
 cdef bool _system_created = False
 
-cdef class System(object):
-    """ The base class for espressomd.system.System().
+cdef class System:
+    """The espresso system class.
 
     .. note:: every attribute has to be declared at the class level.
               This means that methods cannot define an attribute by using
               ``self.new_attr = somevalue`` without declaring it inside this
               indentation level, either as method, property or reference.
+
+    Attributes
+    ----------
+    globals : :class:`espressomd.globals.Globals`
+    actors : :class:`espressomd.actors.Actors`
+    analysis : :class:`espressomd.analyze.Analysis`
+    auto_update_accumulators : :class:`espressomd.accumulators.AutoUpdateAccumulators`
+    bonded_inter : :class:`espressomd.interactions.BondedInteractions`
+    cell_system : :class:`espressomd.cellsystem.CellSystem`
+    collision_detection : :class:`espressomd.collision_detection.CollisionDetection`
+    comfixed : :class:`espressomd.comfixed.ComFixed`
+    constraints : :class:`espressomd.constraints.Constraints`
+    cuda_init_handle : :class:`espressomd.cuda_init.CudaInitHandle`
+    galilei : :class:`espressomd.galilei.GalileiTransform`
+    integrator : :class:`espressomd.integrate.Integrator`
+    lbboundaries : :class:`espressomd.lbboundaries.LBBoundaries`
+    ekboundaries : :class:`espressomd.ekboundaries.EKBoundaries`
+    minimize_energy : :class:`espressomd.minimize_energy.MinimizeEnergy`
+    non_bonded_inter : :class:`espressomd.interactions.NonBondedInteractions`
+    part : :class:`espressomd.particle_data.ParticleList`
+    thermostat : :class:`espressomd.thermostat.Thermostat`
 
     """
     cdef public:
@@ -185,7 +205,7 @@ cdef class System(object):
 
     property box_l:
         """
-        array_like of :obj:`float`:
+        (3,) array_like of :obj:`float`:
             Dimensions of the simulation box
 
         """
@@ -216,7 +236,7 @@ cdef class System(object):
 
     property periodicity:
         """
-        array_like of :obj:`bool`:
+        (3,) array_like of :obj:`bool`:
             System periodicity in ``[x, y, z]``, ``False`` for no periodicity
             in this direction, ``True`` for periodicity
 
@@ -227,13 +247,6 @@ cdef class System(object):
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
-            for i in range(3):
-                if not _periodic[i]:
-                    IF PARTIAL_PERIODIC:
-                        pass
-                    ELSE:
-                        raise ValueError(
-                            "The feature PARTIAL_PERIODIC needs to be activated in myconfig.hpp")
             self.globals.periodicity = _periodic
 
         def __get__(self):
@@ -261,17 +274,6 @@ cdef class System(object):
         """
 
         def __set__(self, double _time_step):
-            if _time_step <= 0:
-                raise ValueError("Time Step must be positive")
-
-            cdef double tau
-            if lb_lbfluid_get_lattice_switch() != NONE:
-                tau = lb_lbfluid_get_tau()
-                if (tau >= 0.0 and
-                        tau - _time_step > numeric_limits[float].epsilon() * abs(tau + _time_step)):
-                    raise ValueError(
-                        "Time Step (" + str(time_step) + ") must be > LB_time_step (" + str(tau) + ")")
-
             self.globals.time_step = _time_step
 
         def __get__(self):
@@ -286,11 +288,11 @@ cdef class System(object):
 
     property max_cut_nonbonded:
         def __get__(self):
-            return max_cut_nonbonded
+            return recalc_maximal_cutoff_nonbonded()
 
     property max_cut_bonded:
         def __get__(self):
-            return max_cut_bonded
+            return recalc_maximal_cutoff_bonded()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
@@ -361,8 +363,8 @@ cdef class System(object):
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
                     states[i] = (" ".join(map(str,
-                                 rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
-                    )).encode('utf-8')
+                                              rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
+                                          )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError(
@@ -403,10 +405,10 @@ cdef class System(object):
         Parameters
         ----------
         d_new : :obj:`float`
-                New box length
+            New box length
         dir : :obj:`str`, optional
-                Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-                Isotropic assumes a cubic box.
+            Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
+            Isotropic assumes a cubic box.
 
         """
 
@@ -442,12 +444,10 @@ cdef class System(object):
         """Return the distance vector between the particles, respecting periodic boundaries.
 
         """
-        cdef double[3] res, a, b
-        a = p1.pos
-        b = p2.pos
 
-        get_mi_vector(res, b, a)
-        return np.array((res[0], res[1], res[2]))
+        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
+
+        return make_array_locked(mi_vec)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.
@@ -458,11 +458,11 @@ cdef class System(object):
         Parameters
         ----------
         phi : :obj:`float`
-                Angle between the z-axis and the rotation axis.
+            Angle between the z-axis and the rotation axis.
         theta : :obj:`float`
-                Rotation of the axis around the y-axis.
+            Rotation of the axis around the y-axis.
         alpha : :obj:`float`
-                How much to rotate
+            How much to rotate
 
         """
         rotate_system(kwargs['phi'], kwargs['theta'], kwargs['alpha'])
@@ -477,13 +477,15 @@ cdef class System(object):
             Parameters
             ----------
             distance : :obj:`int`
-                       Bond distance upto which the exclusions should be added.
+                Bond distance upto which the exclusions should be added.
 
             """
             auto_exclusions(distance)
 
     def _is_valid_type(self, current_type):
-        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.max_seen_particle_type))
+        return not (isinstance(current_type, int)
+                    or current_type < 0
+                    or current_type > globals.max_seen_particle_type)
 
     def check_valid_type(self, current_type):
         if self._is_valid_type(current_type):
@@ -510,8 +512,8 @@ cdef class System(object):
         """
         Parameters
         ----------
-        current_type : :obj:`int` (:attr:`espressomd.particle_data.ParticleHandle.type`)
-                       Particle type to count the number for.
+        current_type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
+            Particle type to count the number for.
 
         Returns
         -------
@@ -522,13 +524,3 @@ cdef class System(object):
         self.check_valid_type(type)
         number = number_of_particles_with_type(type)
         return int(number)
-
-    def find_particle(self, type=None):
-        """
-        The command will return a randomly chosen particle id, for a particle of
-        the given type.
-
-        """
-        self.check_valid_type(type)
-        pid = get_random_p_id(type)
-        return int(pid)

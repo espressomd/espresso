@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef OBSERVABLES_CYLINDRICALVELOCITYPROFILE_HPP
 #define OBSERVABLES_CYLINDRICALVELOCITYPROFILE_HPP
 
@@ -37,7 +37,8 @@ public:
     std::vector<::Utils::Vector3d> folded_positions;
     std::transform(ids().begin(), ids().end(),
                    std::back_inserter(folded_positions), [&partCfg](int id) {
-                     return ::Utils::Vector3d(folded_position(partCfg[id]));
+                     return ::Utils::Vector3d(
+                         folded_position(partCfg[id].r.p, box_geo));
                    });
     std::vector<::Utils::Vector3d> velocities;
     std::transform(ids().begin(), ids().end(), std::back_inserter(velocities),

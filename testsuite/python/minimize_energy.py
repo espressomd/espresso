@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -74,7 +73,7 @@ class test_minimize_energy(ut.TestCase):
         self.system.integrator.run(500)
 
         self.system.constraints.clear()
-        
+
         # Check
         self.assertAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
@@ -82,7 +81,7 @@ class test_minimize_energy(ut.TestCase):
         if self.test_rotation:
             np.testing.assert_allclose(np.copy(self.system.part[:].dip), 
                                        np.hstack((-np.ones((self.n_part, 1)), np.zeros((self.n_part, 1)), np.zeros((self.n_part, 1)))), atol=1E-9)
-            
+
     def test_rescaling(self):
         self.system.part.add(pos=[5., 5., 4.9], type=0)
         self.system.part.add(pos=[5., 5., 5.1], type=0)
@@ -100,6 +99,7 @@ class test_minimize_energy(ut.TestCase):
         self.system.integrator.run(1)
 
         np.testing.assert_allclose(f_old, np.copy(self.system.part[:].f))
+
 
 if __name__ == "__main__":
     ut.main()

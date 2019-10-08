@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 import particle_data
 from libcpp.vector cimport vector
@@ -37,9 +36,6 @@ cdef extern from "random.hpp" namespace "Random":
     void mpi_random_set_stat(const vector[string] & stat)
     int get_state_size_of_generator()
 
-cdef extern from "grid.hpp":
-    void get_mi_vector(double * res, double * a, double * b)
-
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)
 
@@ -51,5 +47,4 @@ cdef bool skin_set
 
 cdef extern from "particle_data.hpp":
     int init_type_map(int type) except +
-    int get_random_p_id(int type) except +
     int number_of_particles_with_type(int type) except +

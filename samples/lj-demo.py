@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, division
 import matplotlib
 matplotlib.use('WXAgg')
 import espressomd
+espressomd.assert_features(["LENNARD_JONES"])
 from espressomd import thermostat
 from espressomd import visualization
 import numpy as np
@@ -43,10 +43,10 @@ if use_opengl:
 
 try:
     import midi
-except:
+except BaseException:
     try:
         from pygame import midi
-    except:
+    except BaseException:
         from portmidi import midi
 midi.init()
 
@@ -83,7 +83,7 @@ density = 0.7
 
 lj_eps = 1.0
 lj_sig = 1.0
-lj_cut = 1.12246
+lj_cut = 2.5 * lj_sig
 lj_cap = 20
 
 # Integration parameters
@@ -166,21 +166,25 @@ class Controls(HasTraits):
         default_input = inputs
 
     for i in inputs:
-        if not "Through Port" in i[1]:
+        if "Through Port" not in i[1]:
             default_input = i
             break
 
     default_input = default_input if inputs else None
 
     default_output = -1
+    through_port_output = None
     for i in outputs:
-        if not "Through Port" in i[1]:
+        if "Through Port" not in i[1]:
             default_output = i
             break
         else:
             through_port_output = i
     default_output = default_output if len(
         outputs) > 1 else through_port_output
+
+    if default_input is None or default_output is None:
+        print('Cannot connect to any MIDI device')
 
     input_device = List(value=default_input,
                         editor=CheckListEditor(values=inputs))
@@ -277,8 +281,8 @@ class Controls(HasTraits):
 
     def _volume_fired(self):
         status = self.MIDI_NUM_VOLUME
-        data1 = limit_range(int((system.box_l[0]**3. - self.min_vol) /
-                                (self.max_vol - self.min_vol) * 127), minval=0, maxval=127)
+        data1 = limit_range(int((system.box_l[0]**3. - self.min_vol) / (
+            self.max_vol - self.min_vol) * 127), minval=0, maxval=127)
         data2 = data1
 
         if self.midi_output is not None:
@@ -288,11 +292,17 @@ class Controls(HasTraits):
         status = self.MIDI_NUM_PRESSURE
 
         if pressure_log_flag:
-            data1 = limit_range(int(127 * (np.log(self.pressure) - np.log(self.min_press)) / (
-                np.log(self.max_press) - np.log(self.min_press))), minval=0, maxval=127)
+            data1 = limit_range(int(127 *
+                                    (np.log(self.pressure) -
+                                     np.log(self.min_press)) /
+                                    (np.log(self.max_press) -
+                                        np.log(self.min_press))), minval=0, maxval=127)
         else:
-            data1 = limit_range(int((self.pressure - self.min_press) /
-                                    (self.max_press - self.min_press) * 127), minval=0, maxval=127)
+            data1 = limit_range(int((self.pressure -
+                                     self.min_press) /
+                                    (self.max_press -
+                                     self.min_press) *
+                                    127), minval=0, maxval=127)
         data2 = data1
         if self.midi_output is not None:
             self.midi_output.write_short(status, data1, data2)
@@ -316,6 +326,7 @@ class Controls(HasTraits):
 #############################################################
 #      Integration                                          #
 #############################################################
+
 
 # get initial observables
 pressure = system.analysis.pressure()

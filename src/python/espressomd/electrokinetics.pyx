@@ -1,9 +1,24 @@
-from __future__ import print_function, absolute_import
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 IF CUDA:
     from .lb cimport HydrodynamicInteraction
     from .lb cimport lb_lbfluid_print_vtk_boundary
-    from .lb cimport python_lbnode_get_pi
+    from .lb cimport python_lbnode_get_stress
     from .lb cimport lb_lbnode_is_index_valid
     from .lb cimport lb_lbfluid_set_lattice_switch
     from .lb cimport GPU
@@ -23,7 +38,8 @@ IF ELECTROKINETICS:
         """
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if isinstance(key, tuple) or isinstance(
+                    key, list) or isinstance(key, np.ndarray):
                 if len(key) == 3:
                     return ElectrokineticsRoutines(np.array(key))
             else:
@@ -37,11 +53,11 @@ IF ELECTROKINETICS:
             """
             default_params = self.default_params()
 
-            if not (self._params["stencil"] in ["linkcentered", "nodecentered"]):
+            if self._params["stencil"] not in ["linkcentered", "nodecentered"]:
                 raise ValueError(
                     "stencil has to be 'linkcentered' or 'nodecentered'.")
 
-            if not (self._params["fluid_coupling"] in ["friction", "estatics"]):
+            if self._params["fluid_coupling"] not in ["friction", "estatics"]:
                 raise ValueError(
                     "fluid_coupling has to be 'friction' or 'estatics'.")
 
@@ -50,14 +66,19 @@ IF ELECTROKINETICS:
             Returns the valid options used for the electrokinetic method.
             """
 
-            return "agrid", "lb_density", "viscosity", "friction", "bulk_viscosity", "gamma_even", "gamma_odd", "T", "prefactor", "stencil", "advection", "fluid_coupling", "fluctuations", "fluctuation_amplitude", "es_coupling", "species"
+            return ["agrid", "lb_density", "viscosity", "friction",
+                    "bulk_viscosity", "gamma_even", "gamma_odd", "T",
+                    "prefactor", "stencil", "advection", "fluid_coupling",
+                    "fluctuations", "fluctuation_amplitude", "es_coupling",
+                    "species"]
 
         def required_keys(self):
             """
             Returns the necessary options to initialize the electrokinetic method.
 
             """
-            return ["agrid", "lb_density", "viscosity", "friction", "T", "prefactor"]
+            return ["agrid", "lb_density", "viscosity",
+                    "friction", "T", "prefactor"]
 
         def default_params(self):
             """
@@ -144,11 +165,11 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             species : :obj:`int`
-                      species for which the density will apply.
+                species for which the density will apply.
             density : :obj:`float`
-                      The value to which the density will be set to.
+                The value to which the density will be set to.
             node : numpy-array of type :obj:`int` of length (3)
-                   If set the density will be only applied on this specific node.
+                If set the density will be only applied on this specific node.
 
             """
 
@@ -159,7 +180,7 @@ IF ELECTROKINETICS:
             if node is None:
                 ek_set_density(species, density)
             else:
-                if not (isinstance(node, list) or isinstance(node, np.ndarray)):
+                if not isinstance(node, (list, np.ndarray)):
                     if len(node) != 3:
                         raise ValueError(
                             "node has to be an array of length 3 of integers.")
@@ -178,16 +199,16 @@ IF ELECTROKINETICS:
             Sets the global density of a species to a specific value
             for which the whole system will have no net charge.
 
+            .. note :: The previous density of the species will be ignored and
+                       it will be homogeneous distributed over the whole system
+                       The species must be charged to begin with. If the
+                       neutralization would lead to a negative species density
+                       an exception will be raised.
+
             Parameters
             ----------
             species : :obj:`int`
-                      The species which will be changed to neutralize the system.
-
-            note : The previous density of the species will be ignored and
-                   it will be homogeneous distributed over the whole system
-                   The species must be charged to begin with.
-                   If the neutralization would lead to a negative species density
-                   an exception will be raised.
+                The species which will be changed to neutralize the system.
 
             """
             err = ek_neutralize_system(species.id)
@@ -226,7 +247,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             species : :obj:`int`
-                      Species to be initialized.
+                Species to be initialized.
 
             """
             self._params["species"].append(species)
@@ -246,7 +267,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the boundary is written to.
+                The path and vtk-file name the boundary is written to.
 
             """
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
@@ -258,7 +279,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the velocity is written to.
+                The path and vtk-file name the velocity is written to.
 
             """
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
@@ -270,7 +291,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the LB density is written to.
+                The path and vtk-file name the LB density is written to.
 
             """
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
@@ -282,7 +303,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the electrostatic potential is written to.
+                The path and vtk-file name the electrostatic potential is written to.
 
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
@@ -294,7 +315,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the LB force is written to.
+                The path and vtk-file name the LB force is written to.
 
             """
             ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
@@ -303,12 +324,12 @@ IF ELECTROKINETICS:
             """
             Writes the electrostatic particle potential into a vtk-file.
 
+            .. note :: This only works if 'es_coupling' is active.
+
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the electrostatic potential is written to.
-
-            note : This only works if 'es_coupling' is active.
+                The path and vtk-file name the electrostatic potential is written to.
 
             """
 
@@ -338,7 +359,7 @@ IF ELECTROKINETICS:
         def add_boundary(self, shape):
             raise Exception("This method is not implemented yet.")
 
-    cdef class ElectrokineticsRoutines(object):
+    cdef class ElectrokineticsRoutines:
         cdef Vector3i node
 
         def __init__(self, key):
@@ -369,16 +390,16 @@ IF ELECTROKINETICS:
 
         property pressure:
             def __get__(self):
-                cdef Vector6d pi
-                pi = python_lbnode_get_pi(self.node)
-                return np.array([[pi[0], pi[1], pi[3]],
-                                 [pi[1], pi[2], pi[4]],
-                                 [pi[3], pi[4], pi[5]]])
+                cdef Vector6d stress
+                stress = python_lbnode_get_stress(self.node)
+                return np.array([[stress[0], stress[1], stress[3]],
+                                 [stress[1], stress[2], stress[4]],
+                                 [stress[3], stress[4], stress[5]]])
 
             def __set__(self, value):
                 raise Exception("Not implemented.")
 
-    class Species(object):
+    class Species:
 
         """
         Creates a species object that is passed to the ek instance.
@@ -406,7 +427,7 @@ IF ELECTROKINETICS:
             return self.__class__.__name__ + "(" + str(self.get_params()) + ")"
 
         def __getitem__(self, key):
-            if isinstance(key, tuple) or isinstance(key, list) or isinstance(key, np.ndarray):
+            if isinstance(key, (tuple, list, np.ndarray)):
                 if len(key) == 3:
                     return SpecieRoutines(np.array(key), self.id)
             else:
@@ -429,7 +450,7 @@ IF ELECTROKINETICS:
                 if k in self.valid_keys():
                     self._params[k] = kwargs[k]
                 else:
-                    raise KeyError("%s is not a vaild key" % k)
+                    raise KeyError("%s is not a valid key" % k)
 
         def valid_keys(self):
             """
@@ -456,21 +477,22 @@ IF ELECTROKINETICS:
             return {
                 "density": ek_parameters.density[
                     ek_parameters.species_index[self.id]],
-                    "D": ek_parameters.D[ek_parameters.species_index[self.id]],
-                    "valency": ek_parameters.valency[
-                        ek_parameters.species_index[self.id]],
-                    "ext_force_density": [ek_parameters.ext_force_density[0][ek_parameters.species_index[self.id]],
-                                          ek_parameters.ext_force_density[1][
-                                          ek_parameters.species_index[
-                                              self.id]],
-                                          ek_parameters.ext_force_density[2][ek_parameters.species_index[self.id]]]}
+                "D": ek_parameters.D[ek_parameters.species_index[self.id]],
+                "valency": ek_parameters.valency[
+                    ek_parameters.species_index[self.id]],
+                "ext_force_density":
+                    [ek_parameters.ext_force_density[0][ek_parameters.species_index[self.id]],
+                     ek_parameters.ext_force_density[1][ek_parameters.species_index[self.id]],
+                     ek_parameters.ext_force_density[2][ek_parameters.species_index[self.id]]]}
 
         def _set_params_in_es_core(self):
             ek_set_D(self.id, self._params["D"])
             ek_set_valency(self.id, self._params["valency"])
             ek_set_density(self.id, self._params["density"])
-            ek_set_ext_force_density(self.id, self._params["ext_force_density"][
-                                     0], self._params["ext_force_density"][1], self._params["ext_force_density"][2])
+            ek_set_ext_force_density(self.id,
+                                     self._params["ext_force_density"][0],
+                                     self._params["ext_force_density"][1],
+                                     self._params["ext_force_density"][2])
 
         def _activate_method(self):
             self._set_params_in_es_core()
@@ -490,7 +512,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the species density is written to.
+                The path and vtk-file name the species density is written to.
 
             """
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
@@ -502,7 +524,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                   The path and vtk-file name the species flux is written to.
+                The path and vtk-file name the species flux is written to.
 
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))
@@ -513,7 +535,7 @@ IF ELECTROKINETICS:
         def print_vtk_flux_link(self, path):
             ek_print_vtk_flux_link(self.id, utils.to_char_pointer(path))
 
-    cdef class SpecieRoutines(object):
+    cdef class SpecieRoutines:
         cdef Vector3i node
         cdef int id
 
@@ -528,7 +550,8 @@ IF ELECTROKINETICS:
         property density:
             def __set__(self, value):
                 if is_valid_type(value, float) or is_valid_type(value, int):
-                    if ek_node_set_density(self.id, self.node[0], self.node[1], self.node[2], value) != 0:
+                    if ek_node_set_density(
+                            self.id, self.node[0], self.node[1], self.node[2], value) != 0:
                         raise Exception("Species has not been added to EK.")
                 else:
                     raise ValueError(
@@ -546,7 +569,8 @@ IF ELECTROKINETICS:
 
             def __get__(self):
                 cdef double flux[3]
-                if ek_node_print_flux(self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
+                if ek_node_print_flux(
+                        self.id, self.node[0], self.node[1], self.node[2], flux) != 0:
                     raise Exception("Species has not been added to EK.")
 
                 return np.array(flux[0], flux[1], flux[2])

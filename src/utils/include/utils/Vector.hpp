@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
@@ -137,6 +137,8 @@ public:
   }
 };
 
+template <class T> using Vector3 = Vector<T, 3>;
+
 template <size_t N> using VectorXd = Vector<double, N>;
 using Vector2d = VectorXd<2>;
 using Vector3d = VectorXd<3>;
@@ -150,6 +152,8 @@ using Vector3f = VectorXf<3>;
 
 template <size_t N> using VectorXi = Vector<int, N>;
 using Vector3i = VectorXi<3>;
+
+template <class T, size_t N, size_t M> using Matrix = Vector<Vector<T, M>, N>;
 
 namespace detail {
 template <size_t N, typename T, typename U, typename Op>
@@ -299,6 +303,20 @@ auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
   return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
 }
 
+template <size_t N, typename T, class U,
+          class = std::enable_if_t<std::is_integral<T>::value &&
+                                   std::is_integral<U>::value>>
+auto operator%(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() % declval<U>());
+  Vector<R, N> ret;
+
+  std::transform(std::begin(a), std::end(a), std::begin(b), std::begin(ret),
+                 [](T const &ai, U const &bi) { return ai % bi; });
+
+  return ret;
+}
+
 /* Componentwise square root */
 template <size_t N, typename T> Vector<T, N> sqrt(Vector<T, N> const &a) {
   using std::sqrt;
@@ -314,6 +332,30 @@ template <class T>
 Vector<T, 3> vector_product(Vector<T, 3> const &a, Vector<T, 3> const &b) {
   return {a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
           a[0] * b[1] - a[1] * b[0]};
+}
+
+template <class T, class U, size_t N>
+auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret;
+  std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
+                 [](auto ai, auto bi) { return ai * bi; });
+
+  return ret;
+}
+
+template <class T, class U, size_t N>
+auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret;
+  std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
+                 [](auto ai, auto bi) { return ai / bi; });
+
+  return ret;
 }
 
 /**

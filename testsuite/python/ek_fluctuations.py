@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from __future__ import print_function
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
@@ -109,6 +108,7 @@ class ek_fluctuations(ut.TestCase):
         self.assertLess(max_diff, 5.0e-03,
                         "Density distribution accuracy not achieved, allowed "
                         "deviation: 5.0e-03, measured: {}".format(max_diff))
+
 
 if __name__ == "__main__":
     ut.main()
