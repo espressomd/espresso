@@ -202,10 +202,6 @@ struct ParticleProperties {
   Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
 #endif
-
-#ifdef STOKESIAN_DYNAMICS
-  double radius = -1.;
-#endif
 };
 
 /** Positional information on a particle. Information that is
@@ -977,12 +973,6 @@ void pointer_to_rotation(Particle const *p, int const *&res);
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim);
 #endif
-
-#ifdef STOKESIAN_DYNAMICS
-void set_particle_radius(int part, double r);
-void pointer_to_radius(Particle const *p, double const *&res);
-#endif
-
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);

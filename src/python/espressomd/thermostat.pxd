@@ -19,6 +19,7 @@
 from libcpp cimport bool as cbool
 from libc cimport stdint
 from libcpp.string cimport string
+from libcpp.unordered_map cimport unordered_map
 
 include "myconfig.pxi"
 from .utils cimport Vector3d
@@ -52,6 +53,8 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
         double get_sd_viscosity()
         void set_sd_device(const string &dev)
         string get_sd_device()
+        void set_sd_radius_dict(const unordered_map[int, double] &radius_dict)
+        unordered_map[int, double] get_sd_radius_dict()
 
 cdef extern from "dpd.hpp":
     IF DPD:

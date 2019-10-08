@@ -10,11 +10,12 @@ system = espressomd.System(box_l=[10,10,10])
 system.time_step = 1.0
 system.cell_system.skin = 0.4
 
-system.thermostat.set_sd(viscosity=1.0,device="cpu")
+system.thermostat.set_sd(viscosity=1.0,device="cpu",radii={ 0: 1.0 })
+system.integrator.set_sd()
 
-system.part.add(pos=[-5,0,0],rotation=[1,1,1],radius=1.0)
-system.part.add(pos=[ 0,0,0],rotation=[1,1,1],radius=1.0)
-system.part.add(pos=[ 7,0,0],rotation=[1,1,1],radius=1.0)
+system.part.add(pos=[-5,0,0],rotation=[1,1,1])
+system.part.add(pos=[ 0,0,0],rotation=[1,1,1])
+system.part.add(pos=[ 7,0,0],rotation=[1,1,1])
 
 gravity = constraints.Gravity(g=[0,-1,0])
 system.constraints.add(gravity)

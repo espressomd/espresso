@@ -1302,29 +1302,6 @@ cdef class ParticleHandle:
 
                 return swim
 
-    # Radius
-    IF STOKESIAN_DYNAMICS:
-        property radius:
-            """
-            Particle radius for Stokesian dynamics.
-
-            radius : :obj:`float`
-
-            .. note::
-               This needs the feature STOKESIAN_DYNAMICS.
-
-            """
-
-            def __set__(self, r):
-                check_type_or_throw_except(r, 1, float, "radius has to be float.")
-                set_particle_radius(self._id, r)
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * r = NULL
-                pointer_to_radius(self.particle_data, r)
-                return r[0]
-
     def remove(self):
         """
         Delete the particle.

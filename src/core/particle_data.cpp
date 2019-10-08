@@ -179,9 +179,6 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
 #endif
 #endif
-#ifdef STOKESIAN_DYNAMICS
-        , UpdateProperty<double, &Prop::radius>
-#endif
         >;
 
 using UpdatePositionMessage = boost::variant
@@ -856,12 +853,6 @@ void set_particle_f(int part, const Utils::Vector3d &F) {
   mpi_update_particle<ParticleForce, &Particle::f, Utils::Vector3d,
                       &ParticleForce::f>(part, F);
 }
-
-#ifdef STOKESIAN_DYNAMICS
-void set_particle_radius(int part, double r) {
-  mpi_update_particle_property<double, &ParticleProperties::radius>(part, r);
-}
-#endif
 
 #if defined(MASS)
 void set_particle_mass(int part, double mass) {
@@ -1599,14 +1590,6 @@ void pointer_to_swimming(Particle const *p,
   swim = &(p->swim);
 }
 #endif
-
-#ifdef STOKESIAN_DYNAMICS
-void pointer_to_radius(Particle const *p,
-                       double const *&res) {
-  res = &(p->p.radius);
-}
-#endif
-
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {

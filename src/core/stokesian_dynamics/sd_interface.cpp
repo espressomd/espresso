@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <boost/config.hpp>
@@ -28,6 +29,8 @@ namespace {
 double sd_viscosity = -1.0;
 
 enum { CPU, GPU, INVALID } device = INVALID;
+
+std::unordered_map<int, double> radius_dict;
 } // namespace
 
 void set_sd_viscosity(double eta) { sd_viscosity = eta; }
@@ -54,6 +57,12 @@ std::string get_sd_device() {
     return "invalid";
   }
 }
+
+void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
+  radius_dict = x;
+}
+
+std::unordered_map<int, double> get_sd_radius_dict() { return radius_dict; }
 
 void propagate_vel_pos_sd() {
   if (thermo_switch & THERMO_SD) {
@@ -87,13 +96,14 @@ void propagate_vel_pos_sd() {
       f_host[6 * i + 4] = p.f.torque[1];
       f_host[6 * i + 5] = p.f.torque[2];
 
-      if (BOOST_UNLIKELY(p.p.radius < 0.0)) {
-        runtimeErrorMsg() << "particle " + std::to_string(p.p.identity) +
+      double radius = radius_dict[p.p.type];
+      if (BOOST_UNLIKELY(radius < 0.0)) {
+        runtimeErrorMsg() << "particle of type " + std::to_string(p.p.type) +
                                  " has an invalid radius: " +
-                                 std::to_string(p.p.radius);
+                                 std::to_string(radius);
         return;
       }
-      a_host[i] = p.p.radius;
+      a_host[i] = radius;
 
       ++i;
     }
@@ -136,7 +146,8 @@ void propagate_vel_pos_sd() {
       double v[] = {v_sd[6 * i + 0], v_sd[6 * i + 1], v_sd[6 * i + 2]};
       set_particle_v(id[i], v);
 
-      Utils::Vector3d omega = {v_sd[6 * i + 3], v_sd[6 * i + 4], v_sd[6 * i + 5]};
+      Utils::Vector3d omega = {v_sd[6 * i + 3], v_sd[6 * i + 4],
+                               v_sd[6 * i + 5]};
       set_particle_omega_body(id[i], omega);
 
       // integrate and set new positions
