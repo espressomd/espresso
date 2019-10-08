@@ -16,14 +16,14 @@
 #include "thermostat.hpp"
 
 #if defined(BLAS) && defined(LAPACK)
-#include "stokesian_dynamics/sd_cpu.hpp"
+#include "sd_cpu.hpp"
 #endif
 
 #ifdef CUDA
-#include "stokesian_dynamics/sd_gpu.hpp"
+#include "sd_gpu.hpp"
 #endif
 
-#include "stokesian_dynamics/sd_interface.hpp"
+#include "sd_interface.hpp"
 
 namespace {
 double sd_viscosity = -1.0;
