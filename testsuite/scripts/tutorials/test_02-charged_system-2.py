@@ -35,6 +35,8 @@ class Tutorial(ut.TestCase):
           self.assertGreater(tutorial.res[pos[0], 0], tutorial.wall_margin)
           self.assertLess(tutorial.res[pos[-1], 0], tutorial.box_z - tutorial.wall_margin)
           
+          self.assertAlmostEqual(np.mean(tutorial.res[pos, i]), 0.0148, delta=1e-3)
+          
 
 
 if __name__ == "__main__":
