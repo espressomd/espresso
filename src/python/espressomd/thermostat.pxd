@@ -55,6 +55,16 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
         string get_sd_device()
         void set_sd_radius_dict(const unordered_map[int, double] &radius_dict)
         unordered_map[int, double] get_sd_radius_dict()
+        void set_sd_flags(int flg)
+        int get_sd_flags()
+
+IF STOKESIAN_DYNAMICS:
+    cpdef enum flags:
+        NONE = 0,
+        SELF_MOBILITY = 1 << 0,
+        PAIR_MOBILITY = 1 << 1,
+        LUBRICATION = 1 << 2,
+        FTS = 1 << 3
 
 cdef extern from "dpd.hpp":
     IF DPD:

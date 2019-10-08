@@ -15,11 +15,11 @@
 namespace sd {
 
 enum flags {
-    NONE = 1 << 0,
-    SELF_MOBILITY = 1 << 1,
-    PAIR_MOBILITY = 1 << 2,
-    LUBRICATION = 1 << 3,
-    FTS = 1 << 4,
+    NONE = 0,
+    SELF_MOBILITY = 1 << 0,
+    PAIR_MOBILITY = 1 << 1,
+    LUBRICATION = 1 << 2,
+    FTS = 1 << 3,
 };
 
 // Compute distance between particle pairs and check for overlaps
@@ -1028,8 +1028,7 @@ struct solver {
     std::vector<T> calc_vel(std::vector<T> const &x_host,
                             std::vector<T> const &f_host,
                             std::vector<T> const &a_host,
-                            int const flg = SELF_MOBILITY | PAIR_MOBILITY |
-                                            LUBRICATION | FTS) {
+                            int const flg = SELF_MOBILITY | PAIR_MOBILITY | FTS) {
         assert(x_host.size() == 6 * n_part);
         vector_type<T> x(x_host.begin(), x_host.end());
         assert(a_host.size() == n_part);

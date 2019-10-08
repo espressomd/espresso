@@ -114,7 +114,8 @@ cdef class Thermostat:
             if thmst["type"] == "SD":
                 self.set_sd(viscosity=thmst["viscosity"],
                             device=thmst["device"],
-                            radii=thmst["radii"])
+                            radii=thmst["radii"],
+                            flags=thmst["flags"])
 
     def get_ts(self):
         return thermo_switch
@@ -185,6 +186,7 @@ cdef class Thermostat:
                 sd_dict["viscosity"] = get_sd_viscosity()
                 sd_dict["device"] = get_sd_device()
                 sd_dict["radii"] = get_sd_radius_dict()
+                sd_dict["flags"] = get_sd_flags()
                 thermo_list.append(sd_dict)
         return thermo_list
 
@@ -506,7 +508,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
-        def set_sd(self, viscosity=None, device=None, radii=None):
+        def set_sd(self, viscosity=None, device=None, radii=None, flags=SELF_MOBILITY | PAIR_MOBILITY | FTS):
             """
             Sets the SD thermostat with required parameters.  This
             also activates hydrodynamic interactions and the SD
@@ -521,6 +523,11 @@ cdef class Thermostat:
                        "cpu" and "gpu".
             'radii'  : :obj:`dict`
                        Dictionary that maps particle types to radii
+            'flags'  : :obj:`int`
+                       Bit mask for feature selection.
+                       Available features:
+
+                           NONE, SELF_MOBILITY, PAIR_MOBILITY, LUBRICATION, FTS
 
             """
 
@@ -532,6 +539,9 @@ cdef class Thermostat:
 
             utils.check_type_or_throw_except(radii, 1, dict, "radii must be a dictionary")
             set_sd_radius_dict(radii)
+
+            utils.check_type_or_throw_except(flags, 1, int, "flags must be an integer")
+            set_sd_flags(flags)
 
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)

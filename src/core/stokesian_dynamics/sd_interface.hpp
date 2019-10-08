@@ -14,6 +14,8 @@ void set_sd_device(std::string const &dev);
 std::string get_sd_device();
 void set_sd_radius_dict(std::unordered_map<int, double> const &x);
 std::unordered_map<int, double> get_sd_radius_dict();
+void set_sd_flags(int flg);
+int get_sd_flags();
 void propagate_vel_pos_sd();
 
 #endif // STOKESIAN_DYNAMICS

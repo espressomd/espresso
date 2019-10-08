@@ -31,6 +31,8 @@ double sd_viscosity = -1.0;
 enum { CPU, GPU, INVALID } device = INVALID;
 
 std::unordered_map<int, double> radius_dict;
+
+int sd_flags = 0;
 } // namespace
 
 void set_sd_viscosity(double eta) { sd_viscosity = eta; }
@@ -63,6 +65,10 @@ void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
 }
 
 std::unordered_map<int, double> get_sd_radius_dict() { return radius_dict; }
+
+void set_sd_flags(int flg) { sd_flags = flg; }
+
+int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd() {
   if (thermo_switch & THERMO_SD) {
@@ -113,13 +119,13 @@ void propagate_vel_pos_sd() {
 
 #if defined(BLAS) && defined(LAPACK)
     case CPU:
-      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity);
+      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity, sd_flags);
       break;
 #endif
 
 #ifdef CUDA
     case GPU:
-      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity);
+      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity, sd_flags);
       break;
 #endif
 
