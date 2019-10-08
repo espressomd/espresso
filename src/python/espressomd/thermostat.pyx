@@ -26,6 +26,7 @@ from .lb cimport *
 from .lb import HydrodynamicInteraction
 from .lb cimport lb_lbcoupling_set_gamma
 from .lb cimport lb_lbcoupling_get_gamma
+from espressomd.utils import to_char_pointer
 
 
 def AssertThermostatType(*allowedthermostats):
@@ -522,7 +523,7 @@ cdef class Thermostat:
             set_sd_viscosity(viscosity)
 
             utils.check_type_or_throw_except(device, 1, str, "device must be a string")
-            set_sd_device(device.lower())
+            set_sd_device(to_char_pointer(device.lower()))
 
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_SD)

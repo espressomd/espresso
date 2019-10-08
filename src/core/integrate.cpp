@@ -139,7 +139,7 @@ bool integrator_step_1(ParticleRange &particles) {
 #endif
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_npt_step_1(particles);
+    stokesian_dynamics_step_1(particles);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -164,7 +164,7 @@ void integrator_step_2(ParticleRange &particles) {
 #endif
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
-    stokesian_dynamics_npt_step_2(particles);
+    stokesian_dynamics_step_2(particles);
     break;
 #endif // STOKESIAN_DYNAMICS
   default:
@@ -411,6 +411,11 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
 void integrate_set_nvt() {
   integ_switch = INTEG_METHOD_NVT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+}
+
+void integrate_set_sd() {
+  integ_switch = INTEG_METHOD_SD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 
