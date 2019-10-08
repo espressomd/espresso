@@ -73,8 +73,8 @@ To make |es| run on 18.04 LTS, its dependencies can be installed with:
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-numpy \
-    libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-    doxygen python3-opengl python3-sphinx python3-pip libgsl-dev
+      libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
+      python3-opengl libgsl-dev
 
 
 Optionally the ccmake utility can be installed for easier configuration:
@@ -88,7 +88,8 @@ are required:
 
 .. code-block:: bash
 
-    pip3 install --upgrade jupyter scipy matplotlib sphinxcontrib-bibtex numpydoc
+    sudo apt install python3-matplotlib python3-scipy \
+      ipython3 jupyter-notebook
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
@@ -174,7 +175,7 @@ If you want to install Homebrew, use the following commands.
 Installing Packages using MacPorts
 """"""""""""""""""""""""""""""""""
     
-Run thefollowing commands:
+Run the following commands:
 
 .. code-block:: bash
 
@@ -183,11 +184,10 @@ Run thefollowing commands:
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
-      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi \
+      doxygen py37-opengl py37-sphinx gsl hdf5 +openmpi \
       py37-matplotlib py37-ipython py37-jupyter
     sudo port select --set cython cython37
     sudo port select --set python3 python37
-    sudo port select --set pip pip37
     sudo port select --set mpi openmpi-mp
 
 
@@ -207,19 +207,6 @@ Installing CUDA
 
 If your Mac has an Nvidia graphics card, you should also download and install the
 CUDA SDK [6]_ to make use of GPU computation.
-
-.. _Installing python dependencies:
-
-Installing python dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are a few python packages needed to e.g. build the documentation.
-To install the required packages as a non-root user execute the following
-command in |es|'s source directory:
-
-.. code-block:: bash
-
-    pip3 install -r requirements.txt --user --upgrade
 
 .. _Quick installation:
 
