@@ -1,13 +1,9 @@
 import numpy as np
-import scipy.constants as const
-
 # physical constants
-# kg atomic mass unit
-amu = const.physical_constants['atomic mass constant'][0]
-N_Av = const.N_A  # Avogadro 1/mol
+import scipy.constants
+#as const
 
-
-class si_units():
+class SIunits():
     def __init__(self, **kwargs):
         self.params = kwargs
         required_params = ['sigma_in_nm', 'T_in_K']
@@ -20,13 +16,13 @@ class si_units():
         self.sigma_to_nm = self.params['sigma_in_nm']
         # conversion factor for the unit of concentration
         self.conc_N_sigma_to_mol_L = 1.0e-3 / \
-            (N_Av * (self.params['sigma_in_nm'] * 1e-9)**3)
+            (scipy.constants.N_A * (self.params['sigma_in_nm'] * 1e-9)**3)
         pass
 
     def convert(self, from_value, from_unit, to_unit, exponent=1.0):
         if (from_unit == "sigma" and to_unit == "nm"):
             return from_value * self.sigma_to_nm
-        if (from_unit == "nm" and to_unit == "nm"):
+        if (from_unit == "nm" and to_unit == "sigma"):
             return from_value / self.sigma_to_nm
         if (from_unit == "mol/L" and to_unit == "N/sigma^3"):
             return from_value * self.conc_N_sigma_to_mol_L
