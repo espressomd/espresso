@@ -1,6 +1,5 @@
 import espressomd
 from espressomd import constraints
-from espressomd.thermostat import flags
 import numpy as np
 import matplotlib.pyplot as plt
 import unittest as ut
@@ -11,6 +10,11 @@ from tests_common import abspath
 @utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
 class StokesianDynamicsTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+
+    # Digitized reference data of Figure 5b from
+    #
+    # Durlofsky et al., J. Fluid Mech. 180, 21 (1987)
+    # https://doi.org/10.1017/S002211208700171X
     data = np.loadtxt(abspath('data/dancing.txt'))
 
     def setUp(self):
@@ -24,6 +28,7 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
         self.system.part.add(pos=[7, 0, 0], rotation=[1, 1, 1])
 
+        from espressomd.thermostat import flags
         self.system.thermostat.set_sd(viscosity=1.0,
                                       device="cpu",
                                       radii={0: 1.0},
@@ -54,7 +59,8 @@ class StokesianDynamicsTest(ut.TestCase):
                     continue
 
                 idx = np.abs(y - y_ref).argmin()
-                self.assertTrue(np.abs(y_ref - y[idx]) < 0.5)
+                dist = np.sqrt((x_ref - x[idx])**2 + (y_ref - y[idx])**2)
+                self.assertLess(dist, 0.5)
 
 
 if __name__ == '__main__':
