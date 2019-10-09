@@ -26,7 +26,8 @@
 
 #ifdef STOKESIAN_DYNAMICS
 
-inline void stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
+inline void
+stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   auto const skin2 = Utils::sqr(0.5 * skin);
 
   propagate_vel_pos_sd();

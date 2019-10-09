@@ -51,9 +51,9 @@ cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
         void set_sd_viscosity(double eta)
         double get_sd_viscosity()
-        void set_sd_device(const string &dev)
+        void set_sd_device(const string & dev)
         string get_sd_device()
-        void set_sd_radius_dict(const unordered_map[int, double] &radius_dict)
+        void set_sd_radius_dict(const unordered_map[int, double] & radius_dict)
         unordered_map[int, double] get_sd_radius_dict()
         void set_sd_flags(int flg)
         int get_sd_flags()

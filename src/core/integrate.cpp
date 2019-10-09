@@ -58,9 +58,9 @@
 #include "virtual_sites.hpp"
 
 #include "integrators/steepest_descent.hpp"
+#include "integrators/stokesian_dynamics_inline.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
-#include "integrators/stokesian_dynamics_inline.hpp"
 
 #include <profiler/profiler.hpp>
 #include <utils/constants.hpp>

@@ -508,7 +508,8 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
-        def set_sd(self, viscosity=None, device=None, radii=None, flags=SELF_MOBILITY | PAIR_MOBILITY | FTS):
+        def set_sd(self, viscosity=None, device=None, radii=None,
+                   flags=SELF_MOBILITY | PAIR_MOBILITY | FTS):
             """
             Sets the SD thermostat with required parameters.  This
             also activates hydrodynamic interactions and the SD
@@ -531,16 +532,20 @@ cdef class Thermostat:
 
             """
 
-            utils.check_type_or_throw_except(viscosity, 1, float, "viscosity must be a number")
+            utils.check_type_or_throw_except(
+                viscosity, 1, float, "viscosity must be a number")
             set_sd_viscosity(viscosity)
 
-            utils.check_type_or_throw_except(device, 1, str, "device must be a string")
+            utils.check_type_or_throw_except(
+                device, 1, str, "device must be a string")
             set_sd_device(to_char_pointer(device.lower()))
 
-            utils.check_type_or_throw_except(radii, 1, dict, "radii must be a dictionary")
+            utils.check_type_or_throw_except(
+                radii, 1, dict, "radii must be a dictionary")
             set_sd_radius_dict(radii)
 
-            utils.check_type_or_throw_except(flags, 1, int, "flags must be an integer")
+            utils.check_type_or_throw_except(
+                flags, 1, int, "flags must be an integer")
             set_sd_flags(flags)
 
             global thermo_switch
