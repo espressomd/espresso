@@ -33,7 +33,10 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   propagate_vel_pos_sd();
 
   for (auto &p : particles) {
-    /* Verlet criterion check*/
+    // Perform rotation
+    local_rotate_particle(p, p.m.omega, p.m.omega.norm());
+
+    // Verlet criterion check
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
             Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
             Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
@@ -47,10 +50,6 @@ inline void stokesian_dynamics_step_1(const ParticleRange &particles) {
   sim_time += time_step;
 }
 
-inline void stokesian_dynamics_step_2(const ParticleRange &particles) {
-#ifdef ROTATION
-  convert_torques_propagate_omega(particles);
-#endif
-}
+inline void stokesian_dynamics_step_2(const ParticleRange &particles) {}
 
 #endif // STOKESIAN_DYNAMICS
