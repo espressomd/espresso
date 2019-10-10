@@ -63,9 +63,9 @@ Cython
     At least version 0.23 is required.
 
 
-.. _Installing Requirements on Ubuntu Linux:
+.. _Installing requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu Linux
+Installing requirements on Ubuntu Linux
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To make |es| run on 18.04 LTS, its dependencies can be installed with:
@@ -114,9 +114,9 @@ ROCm SDK to make use of GPU computation:
     sudo apt update
     sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand rocthrust
 
-.. _Installing Requirements on Mac OS X:
+.. _Installing requirements on Mac OS X:
 
-Installing Requirements on Mac OS X
+Installing requirements on Mac OS X
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To make |es| run on Mac OS X 10.9 or higher, its dependencies can be
@@ -281,7 +281,7 @@ different configuration headers:
   .. code-block:: c++
 
     #define ELECTROSTATICS
-    #define LENNARD-JONES
+    #define LENNARD_JONES
 
 *  :file:`$builddir2/myconfig.hpp`:
 
