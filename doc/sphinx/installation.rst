@@ -117,6 +117,21 @@ ROCm SDK to make use of GPU computation:
 
 After installing the ROCm SDK, please reboot your computer.
 
+
+.. _Installing requirements on other Linux distributions:
+
+Installing requirements on other Linux distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please refer to the following Dockerfiles to find the minimum set of packages
+required to compile |es| on other Linux distributions:
+
+* `CentOS 7 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-7>`_
+* `Fedora 30 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-next>`_
+* `Debian 10 <https://github.com/espressomd/docker/blob/master/docker/debian-python3/Dockerfile-10>`_
+* `OpenSUSE Leap 15.1 <https://github.com/espressomd/docker/blob/master/docker/opensuse/Dockerfile-15.1>`_
+
+
 .. _Installing requirements on Mac OS X:
 
 Installing requirements on Mac OS X
