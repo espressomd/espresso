@@ -280,7 +280,7 @@ at temperature :math:`T` and satisfies
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
 This reduces the accuracy of the Velocity Verlet integrator
-by one order in :math:`dt` because forces are now velocity dependent.
+by one order in :math:`dt` because forces are now velocity-dependent.
 
 The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
 :math:`\overline{\eta}` for each component of all the particle forces. 
@@ -380,7 +380,7 @@ The friction coefficients and cutoff are controlled via the
 see there.
 
 The friction (dissipative) and noise (random) term are coupled via the
-fluctuation- dissipation theorem. The friction term is a function of the
+fluctuation-dissipation theorem. The friction term is a function of the
 relative velocity of particle pairs. The DPD thermostat is better for
 dynamics than the Langevin thermostat, since it mimics hydrodynamics in
 the system.

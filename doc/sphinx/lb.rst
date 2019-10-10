@@ -288,7 +288,7 @@ Electrohydrodynamics
         .. note::
            This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
 
-If the feature is activated, the Lattice Boltzmann Code can be
+If the feature is activated, the lattice-Boltzmann code can be
 used to implicitly model surrounding salt ions in an external electric
 field by having the charged particles create flow.
 

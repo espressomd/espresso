@@ -368,7 +368,7 @@ Physics related corrections:
     module did not get assigned a random velocity. This was not a problem if you were looking at observables
     which do not depend on velocity.
 
-  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
+  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity-dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
 
   * Under some conditions, the torque on self-propelled particles
     in a lattice-Boltzmann fluid was incorrect due to a sign error in the
