@@ -412,17 +412,7 @@ Isotropic NPT thermostat
 This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
-and set the following parameters:
-
-    * ``kT``:     (float) Thermal energy of the heat bath
-    * ``gamma0``: (float) Friction coefficient of the bath
-    * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
-
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
-and the parameters:
-
-    * ``ext_pressure``:  (float) The external pressure.
-    * ``piston``:        (float) The mass of the applied piston.
+and setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`.
 
 For example::
 
