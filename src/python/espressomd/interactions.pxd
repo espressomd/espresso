@@ -39,6 +39,12 @@ cdef extern from "TabulatedPotential.hpp":
         vector[double] energy_tab
         vector[double] force_tab
 
+cdef extern from "GenericPotential.hpp":
+    struct GenericPotential:
+        double maxval
+        string force_expr
+        string energy_expr
+
 cdef extern from "dpd.hpp":
     cdef struct DPDParameters:
         double gamma
@@ -174,6 +180,8 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         SoftSphere_Parameters soft_sphere
 
         TabulatedPotential tab
+
+        GenericPotential gen
 
         GayBerne_Parameters gay_berne
 
@@ -319,6 +327,12 @@ IF TABULATED:
                                  double min, double max,
                                  vector[double] energy,
                                  vector[double] force)
+
+IF EXPRESSION:
+    cdef extern from "nonbonded_interactions/nonbonded_gen.hpp":
+        int generic_set_params(int part_type_a, int part_type_b,
+                               double max, string energy, string force)
+
 IF ROTATION:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         #* Parameters for the harmonic dumbbell bond potential */
@@ -339,6 +353,10 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef struct Tabulated_bond_parameters:
         int type
         TabulatedPotential * pot
+
+    cdef struct Generic_bond_parameters:
+        int type
+        GenericPotential * pot
 
 IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
@@ -502,6 +520,7 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Angle_cossquare_bond_parameters angle_cossquare
         Dihedral_bond_parameters dihedral
         Tabulated_bond_parameters tab
+        Generic_bond_parameters gen
         Overlap_bond_parameters overlap
         Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
@@ -571,9 +590,16 @@ IF ROTATION:
 cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
     cdef enum TabulatedBondedInteraction:
         TAB_UNKNOWN = 0, TAB_BOND_LENGTH, TAB_BOND_ANGLE, TAB_BOND_DIHEDRAL
+    cdef enum GenericBondedInteraction:
+        GEN_UNKNOWN = 0, GEN_BOND_LENGTH, GEN_BOND_ANGLE, GEN_BOND_DIHEDRAL
 
 cdef extern from "bonded_interactions/bonded_tab.hpp":
     int tabulated_bonded_set_params(int bond_type, TabulatedBondedInteraction tab_type, double min, double max, vector[double] energy, vector[double] force)
+
+cdef extern from "bonded_interactions/bonded_gen.hpp":
+    int generic_bonded_set_params(int bond_type, GenericBondedInteraction gen_type,
+                                  double max, string energy, string force)
+
 
 IF ELECTROSTATICS:
     cdef extern from "bonded_interactions/bonded_coulomb.hpp":
@@ -597,6 +623,9 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         BONDED_IA_TABULATED_DISTANCE,
         BONDED_IA_TABULATED_ANGLE,
         BONDED_IA_TABULATED_DIHEDRAL,
+        BONDED_IA_GENERIC_DISTANCE,
+        BONDED_IA_GENERIC_ANGLE,
+        BONDED_IA_GENERIC_DIHEDRAL,
         BONDED_IA_SUBT_LJ,
         BONDED_IA_RIGID_BOND,
         BONDED_IA_VIRTUAL_BOND,

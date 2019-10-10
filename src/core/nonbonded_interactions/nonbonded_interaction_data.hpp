@@ -24,6 +24,7 @@
  *  Various procedures concerning interactions between particles.
  */
 
+#include "GenericPotential.hpp"
 #include "TabulatedPotential.hpp"
 #include "dpd.hpp"
 #include "particle_data.hpp"
@@ -263,6 +264,10 @@ struct IA_parameters {
 
 #ifdef TABULATED
   TabulatedPotential tab;
+#endif
+
+#ifdef EXPRESSION
+  GenericPotential gen;
 #endif
 
 #ifdef DPD

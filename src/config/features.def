@@ -69,6 +69,7 @@ EK_DOUBLE_PREC                  requires ELECTROKINETICS
 
 /* Interaction features */
 TABULATED
+EXPRESSION
 LENNARD_JONES
 WCA
 LENNARD_JONES_GENERIC           implies LENNARD_JONES

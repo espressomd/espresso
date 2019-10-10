@@ -29,6 +29,7 @@
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_gen.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "bonded_interactions/dihedral.hpp"
@@ -50,6 +51,7 @@
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_gen.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/smooth_step.hpp"
@@ -156,6 +158,11 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
 #ifdef TABULATED
   /* tabulated */
   ret += tabulated_pair_energy(ia_params, dist);
+#endif
+
+#ifdef EXPRESSION
+  /* generic */
+  ret += generic_pair_energy(ia_params, dist);
 #endif
 
 #ifdef LJCOS
@@ -288,6 +295,11 @@ inline void add_bonded_energy(Particle const *const p1) {
       case BONDED_IA_TABULATED_DISTANCE:
         retval = tab_bond_energy(iaparams, dx);
         break;
+#ifdef EXPRESSION
+      case BONDED_IA_GENERIC_DISTANCE:
+        retval = gen_bond_energy(iaparams, dx);
+        break;
+#endif
 #ifdef UMBRELLA
       case BONDED_IA_UMBRELLA:
         retval = umbrella_pair_energy(iaparams, dx);
@@ -320,6 +332,12 @@ inline void add_bonded_energy(Particle const *const p1) {
         retval = boost::optional<double>(
             tab_angle_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
         break;
+#ifdef EXPRESSION
+      case BONDED_IA_GENERIC_ANGLE:
+        retval = boost::optional<double>(
+            gen_angle_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
+        break;
+#endif
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
                           << ") of atom " << p1->p.identity << " unknown\n";
@@ -335,6 +353,12 @@ inline void add_bonded_energy(Particle const *const p1) {
         retval =
             tab_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         break;
+#ifdef EXPRESSION
+      case BONDED_IA_GENERIC_DIHEDRAL:
+        retval =
+            gen_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
+        break;
+#endif
       default:
         runtimeErrorMsg() << "add_bonded_energy: bond type (" << type
                           << ") of atom " << p1->p.identity << " unknown\n";

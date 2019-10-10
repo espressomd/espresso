@@ -1608,6 +1608,7 @@ class NonBondedInteractionHandle:
     hertzian = None
     gaussian = None
     tabulated = None
+    generic = None
     membrane_collision = None
     gay_berne = None
     dpd = None
@@ -1652,6 +1653,8 @@ class NonBondedInteractionHandle:
             self.gaussian = GaussianInteraction(_type1, _type2)
         IF TABULATED:
             self.tabulated = TabulatedNonBonded(_type1, _type2)
+        IF EXPRESSION:
+            self.generic = GenericNonBonded(_type1, _type2)
         IF GAY_BERNE:
             self.gay_berne = GayBerneInteraction(_type1, _type2)
         IF DPD:
@@ -2760,6 +2763,319 @@ IF TABULATED == 1:
                 return True
 
 
+class _GenericBase(BondedInteraction):
+    """
+    Generic bond initializer. Used to instantiate a generic bond identifier
+    from a mathematical expression.
+
+    Parameters
+    ----------
+
+    cutoff: :obj:`float`,
+            The maximal interaction distance. Has to be pi if
+            type is 'angle'.
+    energy: :obj:`str`
+            Expression for the energy.
+    force: :obj:`str`
+           Expression for the force.
+
+    Notes
+    -----
+
+    In the expressions ``force`` and ``energy`` you may use
+    all of the mathematical operations supported by `Boost
+    Matheval <https://hmenke.github.io/boost_matheval/>`_.
+    There are also two predefined symbols: ``x`` is the
+    position variable which holds the current particle
+    distance or angle (depending on ``type``) and ``t`` holds
+    the current simulation time.
+
+    Examples
+    --------
+
+    >>> import espressomd
+    >>> from espressomd.interactions import GenericBond
+    >>> system = espressomd.System()
+
+    define a harmonic potential and add it to the system
+
+    >>> params = { 'k': 1.0, 'r_0': 1.0, 'r_cut': 1.0 }
+    >>> bond = GenericBond(type='distance', cutoff=params['r_cut'],
+    >>>                    energy="{k}/2*(x-{r_0})**2".format(**params),
+    >>>                    force="{k}*(x-{r_0})".format(**params))
+    >>> system.bonded_inter.add(bond)
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def type_number(self):
+        return "BONDED_IA_GENERIC"
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "GENERIC_BOND"
+
+    def valid_keys(self):
+        """All parameters that can be set.
+
+        """
+        return {"cutoff", "energy", "force"}
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return {"cutoff", "energy", "force"}
+
+    def set_default_params(self):
+        """Sets parameters that are not required to their default value.
+
+        """
+        self._params = {'cutoff': -1., 'energy': "", 'force': ""}
+
+    def _get_params_from_es_core(self):
+        make_bond_type_exist(self._bond_id)
+        res = {
+            "cutoff": bonded_ia_params[self._bond_id].p.gen.pot.maxval,
+            "energy": bonded_ia_params[self._bond_id].p.gen.pot.energy_expr.decode('UTF-8'),
+            "force": bonded_ia_params[self._bond_id].p.gen.pot.force_expr.decode('UTF-8')
+        }
+        return res
+
+    def _set_params_in_es_core(self):
+        if self.type_number() == BONDED_IA_GENERIC_DISTANCE:
+            type_num = GEN_BOND_LENGTH
+        elif self.type_number() == BONDED_IA_GENERIC_ANGLE:
+            type_num = GEN_BOND_ANGLE
+        elif self.type_number() == BONDED_IA_GENERIC_DIHEDRAL:
+            type_num = GEN_BOND_DIHEDRAL
+        else:
+            raise ValueError(
+                "Generic type needs to be distance, angle, or dihedral")
+
+        res = generic_bonded_set_params(
+            self._bond_id, type_num,
+            self._params["cutoff"],
+            self._params["energy"].encode('UTF-8'),
+            self._params["force"].encode('UTF-8'))
+
+        if res == 1:
+            raise Exception(
+                "Could not setup bond from mathematical expression. Invalid bond type.")
+        # Retrieve some params, Es calculates.
+        self._params = self._get_params_from_es_core()
+
+
+class GenericDistance(_GenericBase):
+
+    """
+    Generic bond length.
+
+    Parameters
+    ----------
+
+    cutoff: :obj:`float`,
+            The maximal interaction distance. Has to be pi if
+            type is 'angle'.
+    energy: :obj:`str`
+            Expression for the energy.
+    force: :obj:`str`
+           Expression for the force.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def type_number(self):
+        return BONDED_IA_GENERIC_DISTANCE
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "GENERIC_DISTANCE"
+
+    def validate_params(self):
+        """Check that parameters are valid.
+
+        """
+        pass
+
+
+class GenericAngle(_GenericBase):
+
+    """
+    Generic bond angle.
+
+    Parameters
+    ----------
+
+    energy: :obj:`str`
+            Expression for the energy.
+    force: :obj:`str`
+           Expression for the force.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def type_number(self):
+        return BONDED_IA_GENERIC_ANGLE
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "GENERIC_ANGLE"
+
+    def validate_params(self):
+        """Check that parameters are valid.
+
+        """
+        pass
+
+
+class GenericDihedral(_GenericBase):
+
+    """
+    Generic bond dihedral.
+
+    Parameters
+    ----------
+
+    energy: :obj:`str`
+            Expression for the energy.
+    force: :obj:`str`
+           Expression for the force.
+
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def type_number(self):
+        return BONDED_IA_GENERIC_DIHEDRAL
+
+    def type_name(self):
+        """Name of interaction type.
+
+        """
+        return "GENERIC_DIHEDRAL"
+
+    def validate_params(self):
+        """Check that parameters are valid.
+
+        """
+        pass
+
+
+IF EXPRESSION == 1:
+
+    cdef class GenericNonBonded(NonBondedInteraction):
+
+        cdef int state
+
+        def __init__(self, *args, **kwargs):
+            self.state = -1
+            super().__init__(*args, **kwargs)
+
+        def type_number(self):
+            return "GENERIC_NONBONDED"
+
+        def type_name(self):
+            """Name of the potential.
+
+            """
+            return "TABULATED"
+
+        def valid_keys(self):
+            """All parameters that can be set.
+
+            """
+            return {"cutoff", "energy", "force"}
+
+        def required_keys(self):
+            """Parameters that have to be set.
+
+            """
+            return {"cutoff", "energy", "force"}
+
+        def set_params(self, **kwargs):
+            """ Set parameters for the GenericNonBonded interaction.
+
+            Parameters
+            ----------
+
+            cutoff: :obj:`float`
+                    The maximal interaction distance.
+            energy: :obj:`str`
+                    Expression for the energy.
+            force: :obj:`str`
+                   Expression for the force.
+
+            Notes
+            -----
+
+            In the expressions ``force`` and ``energy`` you may use
+            all of the mathematical operations supported by `Boost
+            Matheval <https://hmenke.github.io/boost_matheval/>`_.
+            There are also two predefined symbols: ``x`` is the
+            position variable which holds the current particle
+            distance and ``t`` holds the current simulation time.
+
+            Examples
+            --------
+
+            >>> import espressomd
+            >>> from espressomd.interactions import GenericBond
+            >>> system = espressomd.System()
+
+            define a harmonic potential between particles of type 0
+
+            >>> params = { 'k': 1.0, 'r_0': 1.0, 'r_cut': 1.0 }
+            >>> system.non_bonded_inter[0,0].generic.set_params(
+            >>>     cutoff=params['r_cut'],
+            >>>     energy="{k}/2*(x - {r_0})**2".format(**params),
+            >>>     force="{k}*(x - {r_0})".format(**params))
+            """
+            super().set_params(**kwargs)
+
+        def set_default_params(self):
+            """Set parameters that are not required to their default value.
+
+            """
+            self._params = {'cutoff': -1, 'energy': "", 'force': ""}
+
+        def _get_params_from_es_core(self):
+            cdef IA_parameters * ia_params = get_ia_param_safe(
+                self._part_types[0],
+                self._part_types[1])
+
+            return {'cutoff': ia_params.gen.maxval,
+                    'energy': ia_params.gen.energy_expr.decode('UTF-8'),
+                    'force': ia_params.gen.force_expr.decode('UTF-8')}
+
+        def _set_params_in_es_core(self):
+            self.state = generic_set_params(self._part_types[0],
+                                            self._part_types[1],
+                                            self._params["cutoff"],
+                                            self._params["energy"].encode(
+                                                'UTF-8'),
+                                            self._params["force"].encode('UTF-8'))
+
+        def is_active(self):
+            """Check if interaction is active.
+
+            """
+            if self.state == 0:
+                return True
+
+
 IF LENNARD_JONES == 1:
 
     class SubtLJ(BondedInteraction):
@@ -3398,6 +3714,9 @@ bonded_interaction_classes = {
     int(BONDED_IA_TABULATED_DISTANCE): TabulatedDistance,
     int(BONDED_IA_TABULATED_ANGLE): TabulatedAngle,
     int(BONDED_IA_TABULATED_DIHEDRAL): TabulatedDihedral,
+    int(BONDED_IA_GENERIC_DISTANCE): GenericDistance,
+    int(BONDED_IA_GENERIC_ANGLE): GenericAngle,
+    int(BONDED_IA_GENERIC_DIHEDRAL): GenericDihedral,
     int(BONDED_IA_VIRTUAL_BOND): Virtual,
     int(BONDED_IA_ANGLE_HARMONIC): AngleHarmonic,
     int(BONDED_IA_ANGLE_COSINE): AngleCosine,

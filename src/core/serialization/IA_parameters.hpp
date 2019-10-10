@@ -19,6 +19,9 @@
 #ifndef SERIALIZATION_IA_PARAMETERS_HPP
 #define SERIALIZATION_IA_PARAMETERS_HPP
 
+#include <memory>
+
+#include "matheval/matheval.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 namespace boost {
@@ -34,6 +37,18 @@ void load(Archive &ar, IA_parameters &p,
 
   new (&(p.tab)) TabulatedPotential(std::move(tab));
 #endif
+
+#ifdef EXPRESSION
+  GenericPotential gen;
+  ar >> gen;
+
+  gen.force_parser = std::make_shared<matheval::Parser>();
+  gen.energy_parser = std::make_shared<matheval::Parser>();
+
+  gen.parse();
+
+  new (&(p.gen)) GenericPotential(std::move(gen));
+#endif
 }
 
 template <typename Archive>
@@ -43,6 +58,10 @@ void save(Archive &ar, IA_parameters const &p,
 
 #ifdef TABULATED
   ar << p.tab;
+#endif
+
+#ifdef EXPRESSION
+  ar << p.gen;
 #endif
 }
 

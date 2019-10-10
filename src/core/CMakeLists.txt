@@ -60,6 +60,7 @@ set(EspressoCore_SRC
   bonded_interactions/bonded_coulomb_sr.cpp
   bonded_interactions/bonded_interaction_data.cpp
   bonded_interactions/bonded_tab.cpp
+  bonded_interactions/bonded_gen.cpp
   bonded_interactions/dihedral.cpp
   bonded_interactions/fene.cpp
   bonded_interactions/harmonic.cpp
@@ -111,6 +112,7 @@ set(EspressoCore_SRC
   nonbonded_interactions/morse.cpp
   nonbonded_interactions/nonbonded_interaction_data.cpp
   nonbonded_interactions/nonbonded_tab.cpp
+  nonbonded_interactions/nonbonded_gen.cpp
   nonbonded_interactions/soft_sphere.cpp
   nonbonded_interactions/smooth_step.cpp
   nonbonded_interactions/thole.cpp
@@ -185,6 +187,9 @@ endif()
 if(SCAFACOS)
   target_link_libraries(EspressoCore PRIVATE Scafacos)
 endif(SCAFACOS)
+
+target_include_directories(EspressoCore SYSTEM PUBLIC ${CMAKE_SOURCE_DIR}/libs)
+target_link_libraries(EspressoCore PUBLIC matheval)
 
 # Subdirectories
 add_subdirectory(io)

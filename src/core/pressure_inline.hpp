@@ -124,6 +124,11 @@ calc_three_body_bonded_forces(Utils::Vector3d const &r_mid,
   case BONDED_IA_TABULATED_ANGLE:
     result = angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
     break;
+#ifdef EXPRESSION
+  case BONDED_IA_GENERIC_ANGLE:
+    result = angle_3body_generic_forces(r_mid, r_left, r_right, iaparams);
+    break;
+#endif
   default:
     fprintf(stderr, "calc_three_body_bonded_forces: \
             WARNING: Bond type %d unhandled\n",

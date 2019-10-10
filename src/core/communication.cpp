@@ -33,6 +33,7 @@
 #include "errorhandling.hpp"
 
 #include "EspressoSystemInterface.hpp"
+#include "bonded_interactions/bonded_gen.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -334,6 +335,13 @@ void mpi_bcast_ia_params(int i, int j) {
         bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
+#ifdef EXPRESSION
+    if (bonded_ia_params[i].type == BONDED_IA_GENERIC_DISTANCE ||
+        bonded_ia_params[i].type == BONDED_IA_GENERIC_ANGLE ||
+        bonded_ia_params[i].type == BONDED_IA_GENERIC_DIHEDRAL) {
+      boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.gen.pot, 0);
+    }
+#endif
   }
 
   on_short_range_ia_change();
@@ -356,6 +364,21 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
       bonded_ia_params[i].p.tab.pot = tab_pot;
     }
+#ifdef EXPRESSION
+    if (bonded_ia_params[i].type == BONDED_IA_GENERIC_DISTANCE ||
+        bonded_ia_params[i].type == BONDED_IA_GENERIC_ANGLE ||
+        bonded_ia_params[i].type == BONDED_IA_GENERIC_DIHEDRAL) {
+      auto *pot = new GenericPotential();
+      boost::mpi::broadcast(comm_cart, *pot, 0);
+
+      pot->force_parser = std::make_shared<matheval::Parser>();
+      pot->energy_parser = std::make_shared<matheval::Parser>();
+
+      pot->parse();
+
+      bonded_ia_params[i].p.gen.pot = pot;
+    }
+#endif
   }
 
   on_short_range_ia_change();

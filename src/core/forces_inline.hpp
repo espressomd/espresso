@@ -26,6 +26,7 @@
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
 #include "bonded_interactions/angle_harmonic.hpp"
+#include "bonded_interactions/bonded_gen.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "bonded_interactions/dihedral.hpp"
 #include "bonded_interactions/fene.hpp"
@@ -50,6 +51,7 @@
 #include "nonbonded_interactions/ljcos2.hpp"
 #include "nonbonded_interactions/ljgen.hpp"
 #include "nonbonded_interactions/morse.hpp"
+#include "nonbonded_interactions/nonbonded_gen.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "nonbonded_interactions/smooth_step.hpp"
 #include "nonbonded_interactions/soft_sphere.hpp"
@@ -188,6 +190,10 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 /* tabulated */
 #ifdef TABULATED
   force_factor += tabulated_pair_force_factor(ia_params, dist);
+#endif
+/* generic */
+#ifdef EXPRESSION
+  force_factor += generic_pair_force_factor(ia_params, dist);
 #endif
 /* Gay-Berne */
 #ifdef GAY_BERNE
@@ -374,6 +380,11 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
   case BONDED_IA_TABULATED_DISTANCE:
     result = tab_bond_force(iaparams, dx);
     break;
+#ifdef EXPRESSION
+  case BONDED_IA_GENERIC_DISTANCE:
+    result = gen_bond_force(iaparams, dx);
+    break;
+#endif
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
     result = umbrella_pair_force(iaparams, dx);
@@ -496,6 +507,13 @@ inline void add_bonded_force(Particle *const p1) {
             tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
+#ifdef EXPRESSION
+      case BONDED_IA_GENERIC_ANGLE:
+        std::tie(force1, force2, force3) =
+            gen_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
+        bond_broken = false;
+        break;
+#endif
       case BONDED_IA_IBM_TRIEL: {
         auto result = IBM_Triel_CalcForce(*p1, *p2, *p3, iaparams);
         if (result) {
@@ -554,6 +572,18 @@ inline void add_bonded_force(Particle *const p1) {
         }
         break;
       }
+#ifdef EXPRESSION
+      case BONDED_IA_GENERIC_DIHEDRAL: {
+        auto result =
+            gen_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
+        if (result) {
+          std::tie(force1, force2, force3) = result.get();
+          force4 = -(force1 + force2 + force3);
+          bond_broken = false;
+        }
+        break;
+      }
+#endif
       default:
         runtimeErrorMsg() << "add_bonded_force: bond type of atom "
                           << p1->p.identity << " unknown " << type << ","

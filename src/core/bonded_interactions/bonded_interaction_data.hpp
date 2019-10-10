@@ -21,6 +21,7 @@
 
 #include <boost/optional.hpp>
 
+#include "GenericPotential.hpp"
 #include "TabulatedPotential.hpp"
 #include "particle_data.hpp"
 #include <utils/Counter.hpp>
@@ -57,6 +58,15 @@ enum BondedInteraction {
   BONDED_IA_TABULATED_ANGLE,
   /** Type of bonded interaction is a tabulated dihedral potential. */
   BONDED_IA_TABULATED_DIHEDRAL,
+  /** Type of bonded interaction is distance potential from mathematical
+     expression. */
+  BONDED_IA_GENERIC_DISTANCE,
+  /** Type of bonded interaction is angle potential from mathematical
+     expression. */
+  BONDED_IA_GENERIC_ANGLE,
+  /** Type of bonded interaction is dihedral potential from mathematical
+     expression. */
+  BONDED_IA_GENERIC_DIHEDRAL,
   /** Type of bonded interaction is a subtracted-LJ potential. */
   BONDED_IA_SUBT_LJ,
   /** Type of bonded interaction is a rigid/constrained bond. */
@@ -96,6 +106,14 @@ enum TabulatedBondedInteraction {
   TAB_BOND_LENGTH = 1,  /**< Flag for @ref BONDED_IA_TABULATED_DISTANCE */
   TAB_BOND_ANGLE = 2,   /**< Flag for @ref BONDED_IA_TABULATED_ANGLE */
   TAB_BOND_DIHEDRAL = 3 /**< Flag for @ref BONDED_IA_TABULATED_DIHEDRAL */
+};
+
+/** Specify generic bonded interactions  */
+enum GenericBondedInteraction {
+  GEN_UNKNOWN = 0,
+  GEN_BOND_LENGTH = 1,
+  GEN_BOND_ANGLE = 2,
+  GEN_BOND_DIHEDRAL = 3
 };
 
 /** Parameters for FENE bond Potential. */
@@ -251,6 +269,11 @@ struct Tabulated_bond_parameters {
   TabulatedPotential *pot;
 };
 
+/** Parameters for n-body potential from mathematical expression. */
+struct Generic_bond_parameters {
+  GenericPotential *pot;
+};
+
 #ifdef UMBRELLA
 /** Parameters for umbrella potential */
 struct Umbrella_bond_parameters {
@@ -342,6 +365,7 @@ union Bond_parameters {
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
   Tabulated_bond_parameters tab;
+  Generic_bond_parameters gen;
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif
