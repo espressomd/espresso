@@ -422,7 +422,7 @@ For example::
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
-For an explanation of the algorithm involved, see :ref:`Isotropic NPT thermostat`
+For an explanation of the algorithm involved, see :ref:`Isotropic NPT integrator`.
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange

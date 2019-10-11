@@ -394,16 +394,16 @@ The instantaneous pressure is calculated (if there are no electrostatic interact
 by the volume averaged, direction averaged instantaneous virial pressure
 
 .. math::
-     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+     p = \frac{2E_{\text{kinetic}}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
      :label: eqptens
 
 where :math:`f=3` is the number of translational degrees of freedom of
 each particle, :math:`V` is the volume of the system,
-:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
+:math:`E_{\text{kinetic}}` is the kinetic energy, :math:`F_{ij}` the force
 between particles i and j, and :math:`r_{ij}` is the distance between
 them. The kinetic energy divided by the degrees of freedom is
 
-.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
+.. math:: \frac{2E_{\text{kinetic}}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
 
 Note that Equation :eq:`eqptens` can only be applied to pair potentials and
 central forces. Description of how contributions from other interactions

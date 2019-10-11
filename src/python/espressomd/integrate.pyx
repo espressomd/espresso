@@ -144,7 +144,9 @@ cdef class Integrator:
         piston : :obj:`float`
             The mass of the applied piston.
         direction : (3,) array_like of :obj:`int`, optional
-            Set the box geometry for non-cubic boxes.
+            Select which dimensions are allowed to fluctuate by assigning
+            them to ``1``. In the special case where all dimensions are set
+            to ``0`` (default), they are all set to ``1`` in the core.
         cubic_box : :obj:`bool`, optional
             If this optional parameter is true, a cubic box is assumed.
 
