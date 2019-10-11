@@ -32,6 +32,10 @@ enum { CPU, GPU, INVALID } device = INVALID;
 
 std::unordered_map<int, double> radius_dict;
 
+double sd_kT = 0.0;
+
+std::size_t sd_seed = 0UL;
+
 int sd_flags = 0;
 } // namespace
 
@@ -66,6 +70,14 @@ void set_sd_radius_dict(std::unordered_map<int, double> const &x) {
 
 std::unordered_map<int, double> get_sd_radius_dict() { return radius_dict; }
 
+void set_sd_kT(double kT) { sd_kT = kT; }
+
+double get_sd_kT() { return sd_kT; }
+
+void set_sd_seed(std::size_t seed) { sd_seed = seed; }
+
+std::size_t get_sd_seed() { return sd_seed; }
+
 void set_sd_flags(int flg) { sd_flags = flg; }
 
 int get_sd_flags() { return sd_flags; }
@@ -74,6 +86,12 @@ void propagate_vel_pos_sd() {
   if (thermo_switch & THERMO_SD) {
     if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
       runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
+                               std::to_string(sd_viscosity);
+      return;
+    }
+
+    if (BOOST_UNLIKELY(sd_kT < 0.0)) {
+      runtimeErrorMsg() << "sd_kT has an invalid value: " +
                                std::to_string(sd_viscosity);
       return;
     }
@@ -114,18 +132,19 @@ void propagate_vel_pos_sd() {
       ++i;
     }
 
+    std::size_t offset = std::round(sim_time / time_step);
     std::vector<double> v_sd;
     switch (device) {
 
 #if defined(BLAS) && defined(LAPACK)
     case CPU:
-      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity, sd_flags);
+      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity, sd_kT, offset, sd_seed, sd_flags);
       break;
 #endif
 
 #ifdef CUDA
     case GPU:
-      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity, sd_flags);
+      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity, sd_kT, offset, sd_seed, sd_flags);
       break;
 #endif
 

@@ -8,6 +8,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/functional.h>
 #include <thrust/tabulate.h>
+#include <thrust/tuple.h>
 
 #include <cublas_v2.h>
 #include <cusolverDn.h>
@@ -276,6 +277,8 @@ private:
     storage_type m_data;
 
 public:
+    device_matrix() : m_rows(0), m_cols(0), m_data(m_rows * m_cols) {}
+
     explicit device_matrix(size_type rows, size_type cols)
         : m_rows(rows), m_cols(cols), m_data(m_rows * m_cols) {}
 
@@ -414,8 +417,8 @@ public:
         return C;
     }
 
-    /// Compute the inverse.
-    device_matrix inverse() const {
+    /// Compute the inverse and the Cholesky decomposition.
+    thrust::tuple<device_matrix, device_matrix> inverse_and_cholesky() const {
         static_assert(std::is_same<T, double>::value,
                       "Data type of device_matrix must be floating point for "
                       "BLAS/LAPACK operations");
@@ -427,7 +430,12 @@ public:
             thrust::raw_pointer_cast(A.data()),
             thrust::raw_pointer_cast(B.data()), m_rows);
 
-        return B;
+        return thrust::make_tuple(B, A);
+    }
+
+    /// Compute the inverse.
+    device_matrix inverse() const {
+        return thrust::get<0>(inverse_and_cholesky());
     }
 
     /// \}

@@ -115,6 +115,8 @@ cdef class Thermostat:
                 self.set_sd(viscosity=thmst["viscosity"],
                             device=thmst["device"],
                             radii=thmst["radii"],
+                            kT=thmst["kT"],
+                            seed=thmst["seed"],
                             flags=thmst["flags"])
 
     def get_ts(self):
@@ -186,6 +188,8 @@ cdef class Thermostat:
                 sd_dict["viscosity"] = get_sd_viscosity()
                 sd_dict["device"] = get_sd_device()
                 sd_dict["radii"] = get_sd_radius_dict()
+                sd_dict["kT"] = get_sd_kT()
+                sd_dict["seed"] = get_sd_seed()
                 sd_dict["flags"] = get_sd_flags()
                 thermo_list.append(sd_dict)
         return thermo_list
@@ -508,7 +512,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
     IF STOKESIAN_DYNAMICS:
-        def set_sd(self, viscosity=None, device=None, radii=None,
+        def set_sd(self, viscosity=None, device=None, radii=None, kT=None, seed=None,
                    flags=SELF_MOBILITY | PAIR_MOBILITY | FTS):
             """
             Sets the SD thermostat with required parameters.  This
@@ -522,11 +526,15 @@ cdef class Thermostat:
             'device' : :obj:`str`
                        Device to execute on.  Possible values are
                        "cpu" and "gpu".
-            'radii'  : :obj:`dict`
-                       Dictionary that maps particle types to radii
-            'flags'  : :obj:`int`
-                       Bit mask for feature selection.
-                       Available features:
+            'radii' : :obj:`dict`
+                      Dictionary that maps particle types to radii
+            'kT' : :obj:`float`
+                   Temperature
+            'seed' : :obj:`int`
+                     Seed for the random number generator
+            'flags' : :obj:`int`
+                      Bit mask for feature selection.
+                      Available features:
 
                            NONE, SELF_MOBILITY, PAIR_MOBILITY, LUBRICATION, FTS
 
@@ -543,6 +551,14 @@ cdef class Thermostat:
             utils.check_type_or_throw_except(
                 radii, 1, dict, "radii must be a dictionary")
             set_sd_radius_dict(radii)
+
+            utils.check_type_or_throw_except(
+                kT, 1, float, "kT must be a float")
+            set_sd_kT(kT)
+
+            utils.check_type_or_throw_except(
+                seed, 1, int, "seed must be an integer")
+            set_sd_seed(seed)
 
             utils.check_type_or_throw_except(
                 flags, 1, int, "flags must be an integer")

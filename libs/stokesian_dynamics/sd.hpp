@@ -4,6 +4,8 @@
 #include "device_matrix.hpp"
 #include "multi_array.hpp"
 
+#include <curand_kernel.h>
+
 #ifdef __CUDACC__
 #define DEVICE_FUNC __host__ __device__
 #define KERNEL_ABORT asm("trap;")
@@ -1001,6 +1003,22 @@ struct lubrication {
     }
 };
 
+template <typename T>
+struct thermalizer {
+    T kT;
+    std::size_t offset;
+    std::size_t seed;
+#ifdef __CUDACC__
+    __device__
+#endif
+    T operator()(std::size_t index) {
+        uint4 rnd_ints = curand_Philox4x32_10(make_uint4(offset >> 32, seed >> 32, index >> 32, index),
+                                              make_uint2(offset, seed));
+        T rnd = _curand_uniform_double_hq(rnd_ints.w, rnd_ints.x);
+        return 12 * std::sqrt(T{2.0}) * kT * (rnd - 0.5);
+    }
+};
+
 template <typename Policy, typename T>
 struct solver {
     static_assert(policy::is_policy<Policy>::value,
@@ -1028,6 +1046,9 @@ struct solver {
     std::vector<T> calc_vel(std::vector<T> const &x_host,
                             std::vector<T> const &f_host,
                             std::vector<T> const &a_host,
+                            T kT,
+                            std::size_t offset,
+                            std::size_t seed,
                             int const flg = SELF_MOBILITY | PAIR_MOBILITY | FTS) {
         assert(x_host.size() == 6 * n_part);
         vector_type<T> x(x_host.begin(), x_host.end());
@@ -1116,7 +1137,21 @@ struct solver {
         vector_type<T> fext(f_host.begin(), f_host.end());
         vector_type<T> uinf(n_part * 6, T{0.0});
         vector_type<T> einf(n_part * 5, T{0.0});
-        vector_type<T> u = rfu.inverse() * (fext + rfe * einf) + uinf;
+
+        device_matrix<T, Policy> rfu_inv;
+        device_matrix<T, Policy> rfu_inv_sqrt;
+        thrust::tie(rfu_inv, rfu_inv_sqrt) = rfu.inverse_and_cholesky();
+
+        vector_type<T> psi(f_host.size());
+        thrust::tabulate(Policy::par(), psi.begin(), psi.end(), thermalizer<T>{kT, offset, seed});
+
+        // There is possibly an additional term for the thermalization
+        //
+        //     \nabla \cdot R_{FU}^{-1} \Delta t
+        //
+        // But this seems to be omitted in most cases in the literature.  It is
+        // also very unclear how to actually calculate it.
+        vector_type<T> u = rfu_inv * (fext + rfe * einf) + uinf + rfu_inv_sqrt * psi;
 
         // return the change in velocity due to HI
         std::vector<T> out(u.size());

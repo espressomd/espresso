@@ -34,7 +34,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
 
   for (auto &p : particles) {
     // Perform rotation
-    local_rotate_particle(p, p.m.omega, p.m.omega.norm());
+    local_rotate_particle(p, p.m.omega, p.m.omega.norm() * time_step);
 
     // Verlet criterion check
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
