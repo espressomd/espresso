@@ -40,7 +40,7 @@ target_include_directories(EspressoConfig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${C
 
 find_package(Git)
 # Parse repository info from git if available
-# Run this a build time to avoid rebuilds
+# Run this at build time to avoid rebuilds
 add_custom_target(version COMMAND ${CMAKE_COMMAND}
   -DPROJECT_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
   -DGIT_EXECUTABLE="${GIT_EXECUTABLE}"
