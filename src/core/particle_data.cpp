@@ -555,12 +555,6 @@ void realloc_local_particles(int part) {
   }
 }
 
-void init_particlelist(ParticleList *pList) {
-  pList->n = 0;
-  pList->max = 0;
-  pList->part = nullptr;
-}
-
 int realloc_particlelist(ParticleList *l, int size) {
   assert(size >= 0);
   int old_max = l->max;
