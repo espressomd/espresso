@@ -58,8 +58,3 @@ cdef extern from "integrators/steepest_descent.hpp":
     void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement)
 cdef extern from "communication.hpp":
     int mpi_minimize_energy()
-
-
-# cdef class Integrator:
-#     cdef public _method
-#     cdef public _steepest_descent_params

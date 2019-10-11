@@ -161,11 +161,6 @@ cdef class Thermostat:
             npt_dict["gamma0"] = nptiso_gamma0
             npt_dict["gammav"] = nptiso_gammav
             npt_dict.update(nptiso)
-            # thermo_dict["p_ext"] = nptiso.p_ext
-            # thermo_dict["p_inst"] = nptiso.p_inst
-            # thermo_dict["p_inst_av"] = nptiso.p_inst_av
-            # thermo_dict["piston"] = nptiso.piston
-            # thermo_dict["p_diff"] = nptiso.p_diff
             thermo_list.append(npt_dict)
         if thermo_switch & THERMO_DPD:
             IF DPD:
