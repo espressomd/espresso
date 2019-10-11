@@ -21,7 +21,7 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/02-charged_system/02-charged_system-2.py",
-    num_steps_equilibration=60, num_configs=5, integ_steps_per_config=60)
+    num_steps_equilibration=200, num_configs=5, integ_steps_per_config=60)
 
 
 @skipIfMissingFeatures
