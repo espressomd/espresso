@@ -159,6 +159,49 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['seed'], 42)
         np.testing.assert_array_equal(thmst['gamma'], np.array(3 * [2.0]))
 
+    @ut.skipIf('THERM.DPD' not in modes, 'DPD thermostat not in modes')
+    def test_thermostat_DPD(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'DPD')
+        self.assertEqual(thmst['kT'], 1.0)
+        self.assertEqual(thmst['seed'], 42 + 6)
+
+    @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')
+    def test_thermostat_NPT(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'NPT_ISO')
+        self.assertEqual(thmst['gamma0'], 2.0)
+        self.assertEqual(thmst['gammav'], 0.1)
+
+    @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')
+    def test_integrator_NPT(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'NPT')
+        params = integ['_isotropic_npt_params']
+        self.assertEqual(params['ext_pressure'], 2.0)
+        self.assertEqual(params['piston'], 0.01)
+        self.assertEqual(params['direction'], [1, 0, 0])
+        self.assertEqual(params['cubic_box'], False)
+
+    @ut.skipIf('INT.SD' not in modes, 'SD integrator not in modes')
+    def test_integrator_SD(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'STEEPEST_DESCENT')
+        params = integ['_steepest_descent_params']
+        self.assertEqual(params['f_max'], 2.0)
+        self.assertEqual(params['gamma'], 0.1)
+        self.assertEqual(params['max_displacement'], 0.01)
+
+    @ut.skipIf('INT.NVT' not in modes, 'NVT integrator not in modes')
+    def test_integrator_VV(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'NVT')
+
+    @ut.skipIf('INT' in modes, 'VV integrator not the default')
+    def test_integrator_VV(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'VV')
+
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
     def test_non_bonded_inter(self):
