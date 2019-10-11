@@ -39,6 +39,7 @@ cdef class Integrator:
         self._steepest_descent_params = {}
         self._isotropic_npt_params = {}
 
+    # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         state = {}
         state['_method'] = self._method
@@ -56,6 +57,10 @@ cdef class Integrator:
             npt_params = state['_isotropic_npt_params']
             self.set_isotropic_npt(npt_params['ext_pressure'], npt_params[
                                    'piston'], direction=npt_params['direction'], cubic_box=npt_params['cubic_box'])
+
+    def get_state(self):
+        """Returns the integrator status."""
+        return self.__getstate__()
 
     def run(self, steps=1, recalc_forces=False, reuse_forces=False):
         """
