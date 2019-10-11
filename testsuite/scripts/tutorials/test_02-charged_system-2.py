@@ -30,19 +30,13 @@ class Tutorial(ut.TestCase):
 
     def test_distribution(self):
         """
-        checks if the particle distribution is within the box and
-        the mean of the distribution matches with a reference value
+        checks if the particle distribution is within the box
         """
-        avg = 0
         for i in range(1, 3):
             pos = np.flatnonzero(tutorial.res[:, i] > 0)
             self.assertGreater(tutorial.res[pos[0], 0], tutorial.wall_margin)
             self.assertLess(tutorial.res[pos[-1], 0],
                             tutorial.box_z - tutorial.wall_margin)
-
-            avg += np.mean(tutorial.res[pos, i])
-        avg *= 0.5
-        self.assertAlmostEqual(avg, 0.0148, delta=5e-4)
 
 
 if __name__ == "__main__":
