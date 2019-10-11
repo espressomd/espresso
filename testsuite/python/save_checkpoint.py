@@ -56,7 +56,7 @@ elif 'LB.GPU' in modes and espressomd.gpu_available():
 if LB_implementation:
     lbf = LB_implementation(agrid=0.5, visc=1.3, dens=1.5, tau=0.01)
     system.actors.add(lbf)
-    if 'LBTHERM' in modes:
+    if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
     if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
         if 'EK.GPU' not in modes:
@@ -134,8 +134,10 @@ if espressomd.has_features("ELECTROSTATICS"):
         E0=[1., -2., 3.], k=[-.1, .2, .3], omega=5., phi=1.4))
 
 
-if 'LBTHERM' not in modes:
-    system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
+if 'LB.OFF' in modes:
+    # set thermostat
+    if 'THERM.LANGEVIN' in modes:
+        system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
@@ -151,7 +153,7 @@ if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:
 harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 system.part[1].add_bond((harmonic_bond, 0))
-if 'LBTHERM' not in modes:
+if 'THERM.LB' not in modes:
     thermalized_bond = espressomd.interactions.ThermalizedBond(
         temp_com=0.0, gamma_com=0.0, temp_distance=0.2, gamma_distance=0.5,
         r_cut=2, seed=51)

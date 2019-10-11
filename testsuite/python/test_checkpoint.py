@@ -139,7 +139,7 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(system.part[0].f), particle_force0)
         np.testing.assert_allclose(np.copy(system.part[1].f), particle_force1)
 
-    @ut.skipIf('LBTHERM' not in modes, 'LB thermostat not in modes')
+    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
     def test_thermostat_LB(self):
         thmst = system.thermostat.get_state()[0]
         if 'LB.GPU' in modes and not espressomd.gpu_available():
@@ -150,8 +150,9 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(thmst['rng_counter_fluid'], 0)
             self.assertEqual(thmst['gamma'], 2.0)
 
-    @ut.skipIf('LBTHERM' in modes, 'Langevin incompatible with LB thermostat')
-    def test_thermostat_no_LB(self):
+    @ut.skipIf('THERM.LANGEVIN' not in modes,
+               'Langevin thermostat not in modes')
+    def test_thermostat_Langevin(self):
         thmst = system.thermostat.get_state()[0]
         self.assertEqual(thmst['type'], 'LANGEVIN')
         self.assertEqual(thmst['kT'], 1.0)
@@ -179,7 +180,7 @@ class CheckpointTest(ut.TestCase):
         reference = {'r_0': 0.0, 'k': 1.0}
         for key in reference.keys():
             self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
-        if 'LBTHERM' not in modes:
+        if 'THERM.LB' not in modes:
             state = system.part[1].bonds[1][0].params
             reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
                          'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
