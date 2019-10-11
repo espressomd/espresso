@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2019 The ESPResSo project
+# Copyright (C) 2013-2018 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,16 +26,10 @@ from libcpp cimport bool
 
 from boost cimport string_ref
 
-from .utils cimport Span
-from .communication cimport MpiCallbacks
+from utils cimport Span, Factory
+from communication cimport MpiCallbacks
 
-cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
-    cppclass ObjectManager:
-        ObjectManager(MpiCallbacks *)
-
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
-    shared_ptr[ObjectManager] initialize(MpiCallbacks &)
-    void initialize(ObjectManager *)
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass Variant:
         Variant()
         Variant(const Variant & )
@@ -45,10 +39,7 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
     bool is_none(const Variant &)
     ctypedef unordered_map[string, Variant] VariantMap
 
-cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
-    T get_value[T](const Variant T)
-
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     Variant make_variant[T](const T & x)
 
     cdef cppclass ObjectHandle:
@@ -60,20 +51,27 @@ cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterfa
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::GlobalContext":
     cdef cppclass CreationPolicy:
         pass
     shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
 
-cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::CreationPolicy":
+cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::GlobalContext::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
-cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
-    cppclass ObjectManager:
+cdef extern from "Context.hpp" namespace "ScriptInterface":
+    cppclass Context:
         shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
-        string serialize(const shared_ptr[ObjectHandle] &) except +
-        shared_ptr[ObjectHandle] unserialize(const string & state) except +
+        string serialize(const ObjectHandle *) except +
+        shared_ptr[ObjectHandle] deserialize(const string & state) except +
         string_ref name(const ObjectHandle *)
+
+cdef extern from "initialize.hpp" namespace "ScriptInterface":
+    void initialize(Factory[ObjectHandle] *)
+    shared_ptr[Context] default_context(MpiCallbacks &, Factory[ObjectHandle])
+
+cdef extern from "get_value.hpp" namespace "ScriptInterface":
+    T get_value[T](const Variant T)
 
 cdef void init(MpiCallbacks &)

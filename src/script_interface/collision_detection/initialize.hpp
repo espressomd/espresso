@@ -20,12 +20,12 @@
 #ifndef SCRIPT_INTERFACE_COLLISIONDETECTION_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_COLLISIONDETECTION_INITIALIZE_HPP
 
-#include <script_interface/ObjectManager.hpp>
+#include <script_interface/GlobalContext.hpp>
 
 namespace ScriptInterface {
 namespace CollisionDetection {
 
-void initialize(ObjectManager *om);
+void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace CollisionDetection */
 } /* namespace ScriptInterface */

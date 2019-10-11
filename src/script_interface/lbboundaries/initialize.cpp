@@ -26,7 +26,7 @@
 namespace ScriptInterface {
 namespace LBBoundaries {
 
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<LBBoundaries>("LBBoundaries::LBBoundaries");
   om->register_new<LBBoundary>("LBBoundaries::LBBoundary");
 }

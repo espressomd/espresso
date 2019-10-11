@@ -29,7 +29,7 @@
 namespace ScriptInterface {
 namespace VirtualSites {
 
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef VIRTUAL_SITES
   om->register_new<VirtualSitesOff>("VirtualSites::VirtualSitesOff");
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS

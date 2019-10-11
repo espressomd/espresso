@@ -24,7 +24,7 @@
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<ClusterStructure>("ClusterAnalysis::ClusterStructure");
   om->register_new<ClusterAnalysis::Cluster>("ClusterAnalysis::Cluster");
 }

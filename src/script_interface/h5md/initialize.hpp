@@ -21,14 +21,15 @@
 #define SCRIPT_INTERFACE_H5MD_INITIALIZE_HPP
 
 #include "config.hpp"
+#include <script_interface/GlobalContext.hpp>
 #ifdef H5MD
 
-#include <script_interface/ObjectManager.hpp>
+#include "GlobalContext.hpp"
 
 namespace ScriptInterface {
 namespace Writer {
 
-void initialize(ObjectManager *om);
+void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace Writer */
 } /* namespace ScriptInterface */

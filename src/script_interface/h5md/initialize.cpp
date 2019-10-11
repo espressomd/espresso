@@ -25,7 +25,7 @@
 
 namespace ScriptInterface {
 namespace Writer {
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<H5md>("ScriptInterface::Writer::H5md");
 }
 } /* namespace Writer */

@@ -28,7 +28,7 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<AutoUpdateAccumulators>(
       "Accumulators::AutoUpdateAccumulators");
 

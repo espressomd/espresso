@@ -20,11 +20,16 @@
 #ifndef SCRIPT_INTERFACE_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_INITIALIZE_HPP
 
+#include "Context.hpp"
 #include "MpiCallbacks.hpp"
-#include "ObjectManager.hpp"
+
+#include <utils/Factory.hpp>
+
 
 namespace ScriptInterface {
-void initialize(ObjectManager *om);
+std::shared_ptr<Context> default_context(Communication::MpiCallbacks &,
+                                         Utils::Factory<ObjectHandle>);
+void initialize(Utils::Factory<ObjectHandle> *om);
 } /* namespace ScriptInterface */
 
 #endif

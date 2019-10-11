@@ -7,7 +7,6 @@
 
 #include <boost/utility/string_ref.hpp>
 #include <utils/serialization/pack.hpp>
-#include <utils/print.hpp>
 
 #include <memory>
 
@@ -49,17 +48,12 @@ public:
    *
    */
   virtual std::shared_ptr<ObjectHandle>
-  make_shared(const ObjectHandle *self, std::string const &name,
-              const VariantMap &parameters) = 0;
+  make_shared(std::string const &name, const VariantMap &parameters) = 0;
 
-protected:
-  void set_manager(ObjectHandle *o) { o->m_manager = this->shared_from_this(); }
-
-  void set_name(ObjectHandle *o, boost::string_ref name) const {
-    o->m_name = name;
-  }
-
-  std::string serialize_params(const ObjectHandle *o) const {
+  /**
+   * @brief String representation of the state of an object.
+   */
+  std::string serialize(const ObjectHandle *o) const {
     ObjectState state;
 
     auto const params = o->get_parameters();
@@ -77,7 +71,7 @@ protected:
     state.objects.resize(v.objects().size());
     boost::transform(
         v.objects(), state.objects.begin(), [this](auto const &kv) {
-          return std::make_pair(kv.first, serialize_params(kv.second.get()));
+          return std::make_pair(kv.first, serialize(kv.second.get()));
         });
 
     state.name = name(o).to_string();
@@ -86,27 +80,37 @@ protected:
     return Utils::pack(state);
   }
 
-  template<class Factory>
-  ObjectRef deserialize_params(Factory const& f, std::string const &state_) {
+  /**
+   * @brief Make object from serialized state.
+   */
+  ObjectRef deserialize(std::string const &state_) {
     auto const state = Utils::unpack<ObjectState>(state_);
 
     std::unordered_map<ObjectId, ObjectRef> objects;
     boost::transform(state.objects, std::inserter(objects, objects.end()),
-                     [this, f](auto const &kv) {
-                       return std::make_pair(kv.first, deserialize_params(f, kv.second));
+                     [this](auto const &kv) {
+                       return std::make_pair(kv.first,
+                                             deserialize(kv.second));
                      });
 
     VariantMap params;
     for (auto const &kv : state.params) {
-      Utils::print(__PRETTY_FUNCTION__, "restoring parameter", kv.first);
-      params[kv.first] = boost::apply_visitor(UnpackVisitor(objects), kv.second);
+      params[kv.first] =
+          boost::apply_visitor(UnpackVisitor(objects), kv.second);
     }
 
-    auto o = f(state.name);
+    auto o = make_shared(state.name, {});
     o->construct(params);
     o->set_internal_state(state.internal_state);
 
     return o;
+  }
+
+protected:
+  void set_manager(ObjectHandle *o) { o->m_manager = this->shared_from_this(); }
+
+  void set_name(ObjectHandle *o, boost::string_ref name) const {
+    o->m_name = name;
   }
 
 public:

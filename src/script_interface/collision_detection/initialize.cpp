@@ -26,7 +26,7 @@
 namespace ScriptInterface {
 namespace CollisionDetection {
 
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef COLLISION_DETECTION
   om->register_new<CollisionDetection>(
       "CollisionDetection::CollisionDetection");

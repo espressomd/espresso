@@ -55,7 +55,7 @@ constexpr auto class_names() {
       ClassName<Torus>{"Shapes::Torus"});
 }
 
-void initialize(ObjectManager *f) {
+void initialize(Utils::Factory<ObjectHandle> *f) {
   Utils::for_each(
       [f](auto name) {
         f->register_new<typename decltype(name)::class_type>(name.name);

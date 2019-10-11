@@ -37,24 +37,34 @@
 
 #include "virtual_sites/initialize.hpp"
 
-#include "ObjectManager.hpp"
+#include "GlobalContext.hpp"
+#include "LocalContext.hpp"
 
 namespace ScriptInterface {
-void initialize(ObjectManager *om) {
-  Shapes::initialize(om);
-  Constraints::initialize(om);
+void initialize(Utils::Factory<ObjectHandle> *f) {
+  Shapes::initialize(f);
+  Constraints::initialize(f);
 #ifdef H5MD
-  Writer::initialize(om);
+  Writer::initialize(f);
 #endif
-  Accumulators::initialize(om);
-  Observables::initialize(om);
-  ClusterAnalysis::initialize(om);
-  LBBoundaries::initialize(om);
-  PairCriteria::initialize(om);
-  VirtualSites::initialize(om);
-  MPIIO::initialize(om);
-  CollisionDetection::initialize(om);
+  Accumulators::initialize(f);
+  Observables::initialize(f);
+  ClusterAnalysis::initialize(f);
+  LBBoundaries::initialize(f);
+  PairCriteria::initialize(f);
+  VirtualSites::initialize(f);
+  MPIIO::initialize(f);
+  CollisionDetection::initialize(f);
 
-  om->register_new<ComFixed>("ComFixed");
+  f->register_new<ComFixed>("ComFixed");
+}
+
+std::shared_ptr<Context> default_context(Communication::MpiCallbacks &cb,
+                                         Utils::Factory<ObjectHandle> factory ) {
+  if(cb.comm().size() == 1) {
+    return std::make_shared<LocalContext>(std::move(factory));
+  } else {
+    return std::make_shared<GlobalContext>(cb, std::move(factory));
+  }
 }
 } /* namespace ScriptInterface */

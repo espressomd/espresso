@@ -21,11 +21,11 @@
 #ifndef SCRIPT_INTERFACE_PAIR_CRITERIA_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_PAIR_CRITERIA_INITIALIZE_HPP
 
-#include <script_interface/ObjectManager.hpp>
+#include <script_interface/GlobalContext.hpp>
 
 namespace ScriptInterface {
 namespace PairCriteria {
-void initialize(ObjectManager *om);
+void initialize(Utils::Factory<ObjectHandle> *om);
 
 } /* namespace PairCriteria */
 } /* namespace ScriptInterface */

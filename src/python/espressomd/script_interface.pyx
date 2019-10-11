@@ -21,7 +21,7 @@ from .utils cimport Vector3d, make_array_locked, handle_errors
 from libc.stdint cimport uintptr_t
 from libcpp.memory cimport make_shared
 
-cdef shared_ptr[ObjectManager] _om
+cdef shared_ptr[Context] _om
 
 cdef class PObjectRef(object):
     def __richcmp__(a, b, op):
@@ -137,11 +137,11 @@ cdef class PScriptInterface:
 
     def _serialize(self):
         global _om
-        return _om.get().serialize(self.sip)
+        return _om.get().serialize(self.sip.get())
 
     def _unserialize(self, state):
         global _om
-        cdef shared_ptr[ObjectHandle] so_ptr = _om.get().unserialize(state)
+        cdef shared_ptr[ObjectHandle] so_ptr = _om.get().deserialize(state)
         self.set_sip(so_ptr)
 
     cdef VariantMap _sanitize_params(self, in_params) except *:
@@ -261,7 +261,7 @@ def _unpickle_so_class(so_name, state):
     cdef PObjectRef so_ptr
     so_ptr = PObjectRef()
     global _om
-    so_ptr.sip = _om.get().unserialize(state)
+    so_ptr.sip = _om.get().deserialize(state)
 
     so = _python_class_by_so_name[so_name](sip=so_ptr)
     so.define_bound_methods()
@@ -375,7 +375,11 @@ def script_interface_register(c):
     return c
 
 cdef void init(MpiCallbacks &cb):
+    cdef Factory[ObjectHandle] f
     print("espressomd.script_interface.init()")
+
+    initialize(&f)
+
     global _om
-    _om = make_shared[ObjectManager](cb)
-    initialize(_om.get())
+    _om = default_context(cb, f)
+

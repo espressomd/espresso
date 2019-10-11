@@ -73,7 +73,7 @@ constexpr auto class_names() {
   );
 }
 
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   Utils::for_each(
       [om](auto name) {
         om->register_new<typename decltype(name)::class_type>(name.name);

@@ -39,7 +39,7 @@ struct Dummy : si::ObjectHandle {
   }
 
   Utils::Span<const boost::string_ref> valid_parameters() const override {
-    static boost::string_ref parameter_names[] = {"id", "object_param"};
+    static const boost::string_ref parameter_names[] = {"id", "object_param"};
 
     return Utils::make_const_span(parameter_names, std::min(params.size(), 2lu));
   }
@@ -55,7 +55,7 @@ auto factory = []() {
 BOOST_AUTO_TEST_CASE(LocalContext_make_shared) {
   auto ctx = std::make_shared<si::LocalContext>(factory);
 
-  auto res = ctx->make_shared("Dummy", {});
+  auto res = ctx->make_shared({}, <#initializer #>);
   BOOST_REQUIRE(res != nullptr);
   BOOST_CHECK_EQUAL(res->manager(), ctx.get());
   BOOST_CHECK_EQUAL(ctx->name(res.get()), "Dummy");
@@ -65,9 +65,9 @@ BOOST_AUTO_TEST_CASE(LocalContext_serialization) {
   auto ctx = std::make_shared<si::LocalContext>(factory);
 
   auto const serialized = [&]() {
-    auto d1 = ctx->make_shared("Dummy", {});
-    auto d2 = ctx->make_shared("Dummy", {});
-    auto d3 = ctx->make_shared("Dummy", {});
+    auto d1 = ctx->make_shared({}, <#initializer #>);
+    auto d2 = ctx->make_shared({}, <#initializer #>);
+    auto d3 = ctx->make_shared({}, <#initializer #>);
 
     d1->set_parameter("object_param", d2);
     d1->set_parameter("id", 1);

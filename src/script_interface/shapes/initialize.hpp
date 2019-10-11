@@ -20,11 +20,11 @@
 #ifndef SCRIPT_INTERFACE_SHAPES_INITIALIZE_HPP
 #define SCRIPT_INTERFACE_SHAPES_INITIALIZE_HPP
 
-#include "script_interface/ObjectManager.hpp"
+#include "script_interface/GlobalContext.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
-void initialize(ObjectManager *f);
+void initialize(Utils::Factory<ObjectHandle> *f);
 
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

@@ -23,7 +23,7 @@
 
 namespace ScriptInterface {
 namespace PairCriteria {
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<DistanceCriterion>("PairCriteria::DistanceCriterion");
   om->register_new<EnergyCriterion>("PairCriteria::EnergyCriterion");
   om->register_new<BondCriterion>("PairCriteria::BondCriterion");
