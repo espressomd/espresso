@@ -552,13 +552,16 @@ cdef class Thermostat:
                 radii, 1, dict, "radii must be a dictionary")
             set_sd_radius_dict(radii)
 
-            utils.check_type_or_throw_except(
-                kT, 1, float, "kT must be a float")
-            set_sd_kT(kT)
+            if kT is None:
+                set_sd_kT(0.0)
+            else:
+                utils.check_type_or_throw_except(
+                    kT, 1, float, "kT must be a float")
+                set_sd_kT(kT)
 
-            utils.check_type_or_throw_except(
-                seed, 1, int, "seed must be an integer")
-            set_sd_seed(seed)
+                utils.check_type_or_throw_except(
+                    seed, 1, int, "seed must be an integer")
+                set_sd_seed(seed)
 
             utils.check_type_or_throw_except(
                 flags, 1, int, "flags must be an integer")

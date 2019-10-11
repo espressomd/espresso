@@ -1142,16 +1142,21 @@ struct solver {
         device_matrix<T, Policy> rfu_inv_sqrt;
         thrust::tie(rfu_inv, rfu_inv_sqrt) = rfu.inverse_and_cholesky();
 
-        vector_type<T> psi(f_host.size());
-        thrust::tabulate(Policy::par(), psi.begin(), psi.end(), thermalizer<T>{kT, offset, seed});
+        vector_type<T> u = rfu_inv * (fext + rfe * einf) + uinf;
 
-        // There is possibly an additional term for the thermalization
-        //
-        //     \nabla \cdot R_{FU}^{-1} \Delta t
-        //
-        // But this seems to be omitted in most cases in the literature.  It is
-        // also very unclear how to actually calculate it.
-        vector_type<T> u = rfu_inv * (fext + rfe * einf) + uinf + rfu_inv_sqrt * psi;
+        if (kT > 0.0) {
+            vector_type<T> psi(f_host.size());
+            thrust::tabulate(Policy::par(), psi.begin(), psi.end(),
+                             thermalizer<T>{kT, offset, seed});
+
+            // There is possibly an additional term for the thermalization
+            //
+            //     \nabla \cdot R_{FU}^{-1} \Delta t
+            //
+            // But this seems to be omitted in most cases in the literature.
+            // It is also very unclear how to actually calculate it.
+            u = u + rfu_inv_sqrt * psi;
+        }
 
         // return the change in velocity due to HI
         std::vector<T> out(u.size());
