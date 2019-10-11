@@ -137,12 +137,12 @@ if 'LB.OFF' in modes:
     # set thermostat
     if 'THERM.LANGEVIN' in modes:
         system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
-    elif 'THERM.NPT' in modes:
+    elif 'THERM.NPT' in modes and has_features('NPT'):
         system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1)
-    elif 'THERM.DPD' in modes:
+    elif 'THERM.DPD' in modes and has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     # set integrator
-    if 'INT.NPT' in modes:
+    if 'INT.NPT' in modes and has_features('NPT'):
         system.integrator.set_isotropic_npt(ext_pressure=2.0, piston=0.01,
                                             direction=[1, 0, 0])
     elif 'INT.SD' in modes:

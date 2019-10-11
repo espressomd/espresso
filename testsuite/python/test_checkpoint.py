@@ -159,6 +159,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['seed'], 42)
         np.testing.assert_array_equal(thmst['gamma'], np.array(3 * [2.0]))
 
+    @utx.skipIfMissingFeatures('DPD')
     @ut.skipIf('THERM.DPD' not in modes, 'DPD thermostat not in modes')
     def test_thermostat_DPD(self):
         thmst = system.thermostat.get_state()[0]
@@ -166,6 +167,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42 + 6)
 
+    @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')
     def test_thermostat_NPT(self):
         thmst = system.thermostat.get_state()[0]
@@ -173,6 +175,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['gamma0'], 2.0)
         self.assertEqual(thmst['gammav'], 0.1)
 
+    @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')
     def test_integrator_NPT(self):
         integ = system.integrator.get_state()
