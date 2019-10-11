@@ -48,15 +48,14 @@ cdef class Integrator:
         return state
 
     def __setstate__(self, state):
+        self.__init__()
         self._method = state['_method']
         if self._method == "STEEPEST_DESCENT":
-            self.set_steepest_descent(state['_steepest_descent_params'])
+            self.set_steepest_descent(**state['_steepest_descent_params'])
         elif self._method == "NVT":
             self.set_nvt()
         elif self._method == "NPT":
-            npt_params = state['_isotropic_npt_params']
-            self.set_isotropic_npt(npt_params['ext_pressure'], npt_params[
-                                   'piston'], direction=npt_params['direction'], cubic_box=npt_params['cubic_box'])
+            self.set_isotropic_npt(**state['_isotropic_npt_params'])
 
     def get_state(self):
         """Returns the integrator status."""
