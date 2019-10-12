@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -182,6 +182,7 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
                                      VISC * DENS)
         rmsd = np.sqrt(np.sum(np.square(v_expected - velocities[:, 1])))
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+
 
 if __name__ == '__main__':
     ut.main()

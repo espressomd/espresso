@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -91,23 +91,24 @@ class CoulombCloudWall(ut.TestCase):
         self.S.integrator.run(0)
         self.compare("p3m", energy=True)
 
-    @utx.skipIfMissingGPU(skip_ci_amd=True)
+    @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
-            self.S.actors.add(
-                espressomd.electrostatics.P3MGPU(
-                    prefactor=1,
-                    r_cut=1.001,
-                    accuracy=1e-3,
-                    mesh=[64, 64, 128],
-                    cao=7,
-                    alpha=2.70746,
-                    tune=False))
-            self.S.integrator.run(0)
-            self.compare("p3m_gpu", energy=False)
+        self.S.actors.add(
+            espressomd.electrostatics.P3MGPU(
+                prefactor=1,
+                r_cut=1.001,
+                accuracy=1e-3,
+                mesh=[64, 64, 128],
+                cao=7,
+                alpha=2.70746,
+                tune=False))
+        self.S.integrator.run(0)
+        self.compare("p3m_gpu", energy=False)
 
     def test_zz_deactivation(self):
         # Is the energy 0, if no methods active
         self.assertTrue(self.S.analysis.energy()["total"] == 0.0)
+
 
 if __name__ == "__main__":
     ut.main()

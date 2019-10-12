@@ -195,9 +195,7 @@ Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to have polymers in your system, you can use the function
-`espressomd.polymer.positions()` to determine suitable positions.
-See :attr:`espressomd.polymer.positions()` for a detailed list of
-arguments.
+:func:`espressomd.polymer.positions()` to determine suitable positions.
 
 Required arguments are the desired number of polymers ``n_polymers``, the
 number of monomers per polymer chain ``beads_per_chain``, and the parameter
@@ -207,7 +205,7 @@ Determining suitable particle positions pseudo-randomly requires the use of
 a pseudo-random number generator, which has to be seeded. This ``seed``
 is therefore also a mandatory parameter.
 
-The function :attr:`espressomd.polymer.positions()` returns a
+The function :func:`espressomd.polymer.positions()` returns a
 three-dimensional numpy array, namely a list of polymers containing the
 positions of monomers (x, y, z). A quick example of how to set up polymers::
 
@@ -284,9 +282,7 @@ See :class:`espressomd.diamond.Diamond` for more details. For simulating compres
     Cross-linking polymers
     ~~~~~~~~~~~~~~~~~~~~~~
 
-            :todo: `This is not implemented in Python`
-
-    crosslink
+    .. todo:: This is not implemented in Python
 
     Attempts to end-crosslink the current configuration of equally long
     polymers with monomers each, returning how many ends are successfully
@@ -392,7 +388,7 @@ active virtual sites scheme (see above). To set up a virtual site,
 
 #. To update the positions of all virtual sites, call::
 
-       system.integrator.run(0, recalc_forces=True)
+      system.integrator.run(0, recalc_forces=True)
 
 Please note:
 
@@ -408,8 +404,8 @@ Please note:
    guaranteed. Always relate a virtual site to a non-virtual particle
    placed in the center of mass of the rigid arrangement of particles.
 
--  In case you know the correct quaternions, you can also setup a
-   virtual site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative`
+-  In case you know the correct quaternions, you can also setup a virtual
+   site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative`
    and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
@@ -454,7 +450,7 @@ Please note that the velocity attribute of the virtual particles does not carry 
     Virtual sites in the center of mass of a molecule
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    :todo: `This is not implemented in Python, yet`
+    .. todo:: This is not implemented in Python, yet
 
     To activate this implementation, enable the feature ``VIRTUAL_SITES_COM`` in :file:`myconfig.hpp`. Virtual sites are then placed in the center of mass of
     a set of particles (as defined below). Their velocity will also be that
@@ -498,7 +494,7 @@ Please note that the velocity attribute of the virtual particles does not carry 
        would assign 0 to particles 1-4, 1 to particles 5-8 and 2 to
        particles 9-11. Alternatively, you can call
 
-       analyze set topo\_part\_sync
+       analyze set topo_part_sync
 
        to set the s from the molecule declarations.
 

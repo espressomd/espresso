@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
 /** \file
@@ -67,9 +67,6 @@ enum {
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether all of
- *  the coordinates are fixed. */
-#define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
@@ -109,11 +106,6 @@ struct ParticleProperties {
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
-#endif
-
-#ifdef AFFINITY
-  /** parameters for affinity mechanisms */
-  Utils::Vector3d bond_site = {-1., -1., -1.};
 #endif
 
 #ifdef MEMBRANE_COLLISION
@@ -219,7 +211,7 @@ struct ParticlePosition {
   /** quaternion to define particle orientation */
   Utils::Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternion */
-  inline const Utils::Vector3d calc_director() const {
+  Utils::Vector3d calc_director() const {
     return Utils::convert_quaternion_to_director(quat);
   };
 #endif
@@ -350,9 +342,7 @@ struct Particle {
   ///
   ParticlePosition r;
 #ifdef DIPOLES
-  inline const Utils::Vector3d calc_dip() const {
-    return r.calc_director() * p.dipm;
-  }
+  Utils::Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
 #endif
   ///
   ParticleMomentum m;
@@ -399,38 +389,6 @@ struct Particle {
   ParticleParametersSwimming swim;
 #endif
 };
-
-/**
- * These functions cause a compile time error if
- * Particles are copied by memmove or memcpy,
- * which do not keep class invariants.
- *
- * These are templates so that the error is caused
- * at the place they are used.
- */
-template <typename Size> void memmove(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memmove(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size> void memcpy(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memcpy(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle const *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
 
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
@@ -481,10 +439,6 @@ void free_particle(Particle *part);
 
 /*    Functions acting on Particle Lists        */
 /************************************************/
-
-/** Initialize a particle list.
- *  Use with care and ONLY for initialization! */
-void init_particlelist(ParticleList *pList);
 
 /** Allocate storage for local particles and ghosts. This version
     does \em not care for the bond information to be freed if necessary.
@@ -635,14 +589,6 @@ void set_particle_rotation(int part, int rot);
  *  @param angle rotation angle
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
-
-#ifdef AFFINITY
-/** Call only on the master node: set particle affinity.
- *  @param part the particle.
- *  @param bond_site its new site of the affinity bond.
- */
-void set_particle_affinity(int part, double *bond_site);
-#endif
 
 #ifdef MEMBRANE_COLLISION
 /** Call only on the master node: set particle out_direction.
@@ -987,9 +933,6 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
-#endif
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res);
 #endif
 
 #ifdef MEMBRANE_COLLISION

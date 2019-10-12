@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2018 The ESPResSo project
+# Copyright (C) 2009-2019 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -28,14 +28,14 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.1-dev")
+set(PROJECT_VERSION "5.0-dev")
 string(REGEX
        REPLACE "^([1-9]+)\\.[0-9]+.*$"
                "\\1"
                SOVERSION
                "${PROJECT_VERSION}")
 if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
-  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
+  message(FATAL_ERROR "Could not determine SOVERSION from ${PROJECT_VERSION}")
 endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
 
 #
@@ -190,6 +190,7 @@ if(WITH_CUDA)
       find_package(HIP MODULE)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
+      set(HIP 1)
       list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
@@ -335,7 +336,7 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 # MPI
 #
 
-find_package(MPI REQUIRED)
+find_package(MPI 3.0 REQUIRED)
 
 # CMake < 3.9
 if(NOT TARGET MPI::MPI_CXX)
@@ -544,7 +545,6 @@ endif(WITH_BENCHMARKS)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(libs)
-add_subdirectory(config)
 #
 # Feature summary
 #

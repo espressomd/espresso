@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -133,8 +133,13 @@ class TestLB:
                                    delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
+            # NOTE: this particle momentum prediction is due to the missing f/2 part in the
+            #       LB fluid.
+            particle_momentum = np.sum(
+                [p.mass * p.v + 0.5 * p.f * self.system.time_step for p in self.system.part], axis=0)
+            fluid_momentum = self.system.analysis.linear_momentum(False, True)
             np.testing.assert_allclose(
-                self.system.analysis.linear_momentum(), self.tot_mom,
+                particle_momentum + fluid_momentum, self.tot_mom,
                 atol=self.params['mom_prec'])
 
             # Calc particle temperature
@@ -161,9 +166,9 @@ class TestLB:
     def test_properties(self):
         self.lbf = self.lb_class(
             kT=1.0, seed=42, visc=self.params['viscosity'],
-          dens=self.params['dens'],
-          agrid=self.params['agrid'],
-          tau=self.system.time_step)
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step)
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
             self.lbf.density = -0.1
@@ -225,6 +230,10 @@ class TestLB:
                                [obs_stress[1], obs_stress[2], obs_stress[4]],
                                [obs_stress[3], obs_stress[4], obs_stress[5]]])
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
+        np.testing.assert_allclose(
+            np.copy(self.lbf.stress),
+            obs_stress,
+            atol=1E-10)
 
     def test_lb_node_set_get(self):
         self.lbf = self.lb_class(
@@ -238,8 +247,8 @@ class TestLB:
 
         self.assertEqual(self.lbf.shape, 
                          (
-                         int(self.system.box_l[0] / self.params["agrid"]),
-                         int(self.system.box_l[1] / self.params["agrid"]),
+                             int(self.system.box_l[0] / self.params["agrid"]),
+                             int(self.system.box_l[1] / self.params["agrid"]),
                              int(self.system.box_l[2] / self.params["agrid"])))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
@@ -385,7 +394,7 @@ class TestLB:
         v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
         f1 = np.copy(self.system.part[0].f)
         self.system.actors.clear()
-        #get fresh LBfluid and change time steps
+        # get fresh LBfluid and change time steps
         lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -394,7 +403,7 @@ class TestLB:
             ext_force_density=ext_force_density)
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
-        #illegal time_step/ tau combinations
+        # illegal time_step/ tau combinations
         with self.assertRaises(ValueError):
             lbf.tau = 0.5 * self.system.time_step
         with self.assertRaises(ValueError):

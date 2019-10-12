@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -73,12 +73,12 @@ IF ELECTROSTATICS and P3M:
             This corresponds then to a formal regularization of the forces and
             energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
             explicitly as constraints, you have to disable the neutralization.
-            When using a dielectric contrast or full metallic walls (`delta_mid_top
-            != 0` or `delta_mid_bot != 0` or `const_pot=True`), `neutralize` is
-            overwritten and switched off internally. Note that the special case of
-            non-neutral systems with a *non-metallic* dielectric jump (eg.
-            `delta_mid_top` or `delta_mid_bot` in `]-1,1[`) is not covered by the
-            algorithm and will throw an error.
+            When using a dielectric contrast or full metallic walls
+            (``delta_mid_top != 0`` or ``delta_mid_bot != 0`` or ``const_pot=True``),
+            ``neutralize`` is overwritten and switched off internally. Note that
+            the special case of non-neutral systems with a *non-metallic*
+            dielectric jump (eg. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``)
+            is not covered by the algorithm and will throw an error.
         far_cut : :obj:`float`, optional
             Cut off radius, use with care, intended for testing purposes.
         """

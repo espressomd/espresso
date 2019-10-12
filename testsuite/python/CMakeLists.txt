@@ -40,7 +40,7 @@ function(PYTHON_TEST)
   if(EXISTS ${MPIEXEC})
     add_test(NAME ${TEST_NAME}
             COMMAND
-            ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE}
+            ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE} ${MPIEXEC_POSTFLAGS}
             )
   else()
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE})
@@ -137,7 +137,7 @@ python_test(FILE force_cap.py MAX_NUM_PROC 2)
 python_test(FILE dpd.py MAX_NUM_PROC 4)
 python_test(FILE hat.py MAX_NUM_PROC 4)
 python_test(FILE analyze_energy.py MAX_NUM_PROC 2)
-python_test(FILE analyze_itensor.py MAX_NUM_PROC 4)
+python_test(FILE analyze_mass_related.py MAX_NUM_PROC 4)
 python_test(FILE rdf.py MAX_NUM_PROC 1)
 python_test(FILE coulomb_mixed_periodicity.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE coulomb_cloud_wall_duplicated.py MAX_NUM_PROC 4 LABELS gpu LABELS long)

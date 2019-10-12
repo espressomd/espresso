@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -54,6 +54,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)
         self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)
         self.assertAlmostEqual(v_fluid[2], v_boundary[2], places=3)
+
 
 if __name__ == "__main__":
     ut.main()

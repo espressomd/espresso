@@ -37,7 +37,8 @@ def skipIfMissingFeatures(*args):
 def skipIfMissingModules(*args):
     """Unittest skipIf decorator for missing Python modules."""
 
-    if len(args) == 1 and not isinstance(args[0], str) and hasattr(args[0], "__iter__"):
+    if len(args) == 1 and not isinstance(
+            args[0], str) and hasattr(args[0], "__iter__"):
         args = set(args[0])
     else:
         args = set(args)
@@ -48,16 +49,11 @@ def skipIfMissingModules(*args):
     return _id
 
 
-def skipIfMissingGPU(skip_ci_amd=False):
+def skipIfMissingGPU():
     """Unittest skipIf decorator for missing GPU."""
 
     if not espressomd.gpu_available():
         return unittest.skip("Skipping test: no GPU available")
-    # special case for our CI infrastructure: disable specific GPU tests
-    # for AMD GPUs, see https://github.com/espressomd/espresso/pull/2653
-    ci_amd_gpus = {"Device 687f", "Vega 10 XT [Radeon RX Vega 64]"}
     devices = espressomd.cuda_init.CudaInitHandle().device_list
     current_device_id = espressomd.cuda_init.CudaInitHandle().device
-    if skip_ci_amd and to_str(devices[current_device_id]) in ci_amd_gpus:
-        return unittest.skip("Skipping test: AMD GPU")
     return _id

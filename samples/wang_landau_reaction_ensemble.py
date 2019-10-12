@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,7 +24,7 @@ With the setup of the Wang-Landau algorithm in this script you sample the densit
 as a function of the two collective variables 1) degree of association and 2) potential energy.
 The recorded Wang-Landau potential (which is updated during the simulation) is written to the file WL_potential_out.dat 
 In this simulation setup the Wang-Landau potential is the density of states. You can view the converged Wang-Landau potential e.g. via plotting with gnuplot: splot "WL_potential_out.dat". 
-As expected the three dimensional harmonic oscilltor has a density of states which goes like sqrt(E_pot).
+As expected the three dimensional harmonic oscillator has a density of states which goes like sqrt(E_pot).
 For a scientific description and different ways to use the algorithm please consult https://pubs.acs.org/doi/full/10.1021/acs.jctc.6b00791 
 """
 import numpy as np

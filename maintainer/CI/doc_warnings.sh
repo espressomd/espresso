@@ -31,9 +31,6 @@
 # negative lookahead filters out common Python types (for performance reasons).
 regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict|(?:numpy\.|np\.)?(?:nd)?array)<)[^<>]+?</span></code>(?!</a>)'
 
-# list of espresso modules not compiled in CI (scafacos)
-regex_ignored_es_features_ci='(espressomd\.)?(([a-z]+\.)?[sS]cafacos)'
-
 if [ ! -f doc/sphinx/html/index.html ]; then
     echo "Please run Sphinx first."
     exit 1
@@ -54,18 +51,12 @@ if [ $? = "0" ]; then
         is_standard_type_or_module="false"
         grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
         [ "$?" = "0" ] && is_standard_type_or_module="true"
-        # skip espresso modules not compiled in CI
-        is_es_feature_skipped="false"
-        if [ "${CI}" != "" ]; then
-            grep -Pq "^${regex_ignored_es_features_ci}" <<< "${reference}"
-            [ "$?" = "0" ] && is_es_feature_skipped="true"
-        fi
         # private objects are not documented and cannot be linked
         is_private="false"
         grep -Pq "(^_|\._)" <<< "${reference}"
         [ "$?" = "0" ] && is_private="true"
         # filter out false positives
-        if [ ${is_standard_type_or_module} = "true" ] || [ ${is_es_feature_skipped} = "true" ] || [ ${is_private} = "true" ]; then
+        if [ ${is_standard_type_or_module} = "true" ] || [ ${is_private} = "true" ]; then
             continue
         fi
         if [ ${found} = "false" ]; then
@@ -102,11 +93,6 @@ if [ $? = "0" ]; then
     echo "The Sphinx documentation contains ${n_warnings} broken links:" > doc_warnings.log
     cat doc_warnings.log~ >> doc_warnings.log
     rm doc_warnings.log~
-    # warn user about ignored features in CI
-    grep -Pq "${regex_ignored_es_features_ci}" doc_warnings.log
-    if [ "$?" = "0" ] && [ "${CI}" = "" ]; then
-        echo "(Note that feature Scafacos is ignored in CI)"
-    fi
 fi
 
 # Find malformed reSt roles, appearing as raw text in the HTML output:

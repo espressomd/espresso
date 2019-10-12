@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -58,6 +58,7 @@ class CorrelatorTest(ut.TestCase):
             self.assertAlmostEqual(corr[i, 2], t * t, places=3)
             self.assertAlmostEqual(corr[i, 3], 4 * t * t, places=3)
             self.assertAlmostEqual(corr[i, 4], 9 * t * t, places=3)
+
 
 if __name__ == "__main__":
     ut.main()

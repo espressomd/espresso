@@ -333,5 +333,5 @@ distance of particle and mouse cursor).
 Visualization example scripts
 -----------------------------
 
-Various :ref:`Sample Scripts` can be found in :file:`samples/visualization*`
+Various :ref:`Sample Scripts` can be found in :file:`/samples/visualization_*.py`
 or in the :ref:`Tutorials` "Visualization" and "Charged Systems".

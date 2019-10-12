@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -94,6 +94,7 @@ class TabulatedTest(ut.TestCase):
         self.check()
 
         self.s.part[0].delete_bond((tb, 1))
+
 
 if __name__ == "__main__":
     ut.main()

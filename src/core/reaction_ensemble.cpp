@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /** @file */
 
@@ -632,17 +632,8 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
         std::sqrt(m_uniform_real_distribution(
             m_generator)); // for uniform disk point picking in cylinder
     double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
-    out_pos[0] = random_radius * cos(phi);
-    out_pos[1] = random_radius * sin(phi);
-    while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
-           std::pow(exclusion_radius, 2)) {
-      random_radius =
-          cyl_radius * std::sqrt(m_uniform_real_distribution(m_generator));
-      out_pos[0] = random_radius * cos(phi);
-      out_pos[1] = random_radius * sin(phi);
-    }
-    out_pos[0] += cyl_x;
-    out_pos[1] += cyl_y;
+    out_pos[0] = cyl_x + random_radius * cos(phi);
+    out_pos[1] = cyl_y + random_radius * sin(phi);
     out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   } else if (box_has_wall_constraints) {
     out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);

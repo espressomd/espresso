@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -47,8 +47,8 @@ class RandomPairTest(ut.TestCase):
 
         dist_func = self.system.distance
         for pair in self.system.part.pairs():
-                if dist_func(pair[0], pair[1]) < 1.5:
-                    self.all_pairs.append((pair[0].id, pair[1].id))
+            if dist_func(pair[0], pair[1]) < 1.5:
+                self.all_pairs.append((pair[0].id, pair[1].id))
 
         self.all_pairs = set(self.all_pairs)
         self.assertTrue(len(self.all_pairs))

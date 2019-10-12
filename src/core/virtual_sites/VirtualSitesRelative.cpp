@@ -1,23 +1,24 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "VirtualSitesRelative.hpp"
+#include "forces_inline.hpp"
 #include <utils/math/quaternion.hpp>
 #include <utils/math/sqr.hpp>
 
@@ -31,7 +32,12 @@
 #include "rotation.hpp"
 
 void VirtualSitesRelative::update(bool recalc_positions) const {
-
+  // Ghost update logic
+  if (n_nodes > 0) {
+    if (recalc_positions or get_have_velocity()) {
+      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    }
+  }
   for (auto &p : local_cells.particles()) {
     if (!p.p.is_virtual)
       continue;
@@ -117,6 +123,9 @@ void VirtualSitesRelative::update_vel(Particle &p) const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
+  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  init_forces_ghosts(cell_structure.ghost_cells().particles());
+
   // Iterate over all the particles in the local cells
   for (auto &p : local_cells.particles()) {
     // We only care about virtual particles

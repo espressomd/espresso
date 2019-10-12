@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -172,6 +172,7 @@ class ParticleProperties(ut.TestCase):
     test_tabulated = generateTestForBondParams(
         0, espressomd.interactions.TabulatedDihedral, {"energy": [1., 2., 3.],
                                                        "force": [3., 4., 5.]})
+
 
 if __name__ == "__main__":
     ut.main()

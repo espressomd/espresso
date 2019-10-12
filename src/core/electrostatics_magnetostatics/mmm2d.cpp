@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  MMM2D algorithm for long-range %Coulomb interaction.
  *
@@ -1165,15 +1165,15 @@ double MMM2D_add_far(bool calc_forces, bool calc_energies,
   gblcblk.resize(local_cells.n * 8);
 
   // It's not really far...
-  auto eng = calc_energies ? MMM2D_self_energy(local_cells.particles()) : 0;
+  auto eng = calc_energies ? MMM2D_self_energy(particles) : 0;
 
   if (mmm2d_params.far_cut == 0.0)
     return 0.5 * eng;
 
   auto undone = std::vector<int>(n_scxcache + 1);
 
-  prepare_scx_cache(local_cells.particles());
-  prepare_scy_cache(local_cells.particles());
+  prepare_scx_cache(particles);
+  prepare_scy_cache(particles);
 
   /* complicated loop. We work through the p,q vectors in rings
      from outside to inside to avoid problems with cancellation */

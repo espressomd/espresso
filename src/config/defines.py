@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -54,6 +54,7 @@ class Defines:
             return all_defs
         else:
             return all_defs - self._buildin
+
 
 if __name__ == "__main__":
     compiler = argv[1]

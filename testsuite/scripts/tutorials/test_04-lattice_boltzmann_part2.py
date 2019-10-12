@@ -20,7 +20,7 @@ import importlib_wrapper
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part2.py",
-    gpu=True, loops=400)
+    gpu=True, LOOPS=400)
 
 
 @skipIfMissingFeatures

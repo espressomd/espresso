@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -91,6 +91,7 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     double lb_lbfluid_get_kT() except +
     double lb_lbfluid_get_lattice_speed() except +
     void check_tau_time_step_consistency(double tau, double time_s) except +
+    const Vector3d lb_lbfluid_get_interpolated_velocity(Vector3d & p) except +
 
 cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     void lb_lbcoupling_set_rng_state(stdint.uint64_t)
@@ -104,7 +105,6 @@ cdef extern from "grid_based_algorithms/lbgpu.hpp":
     void quadratic_velocity_interpolation(double * positions, double * velocities, int length)
 
 cdef extern from "grid_based_algorithms/lb_interpolation.hpp":
-    const Vector3d lb_lbinterpolation_get_interpolated_velocity_global(Vector3d & p) except +
     cdef cppclass InterpolationOrder:
         pass
     void lb_lbinterpolation_set_interpolation_order(InterpolationOrder & order)
@@ -230,6 +230,12 @@ cdef inline Vector3d python_lbfluid_get_ext_force_density(p_agrid, p_tau):
     for i in range(3):
         c_ext_force_density[i] /= p_agrid * p_agrid * p_tau * p_tau
     return c_ext_force_density
+
+cdef inline Vector6d python_lbfluid_get_stress(agrid, tau):
+    cdef Vector6d stress = lb_lbfluid_get_stress()
+    for i in range(6):
+        stress[i] *= 1. / agrid * 1. / tau**2.0
+    return stress
 
 cdef inline void python_lbnode_set_velocity(Vector3i node, Vector3d velocity):
     cdef double inv_lattice_speed = lb_lbfluid_get_tau() / lb_lbfluid_get_agrid()

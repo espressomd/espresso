@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 #
 # Copyright (C) 2018-2019 The ESPResSo project
 #
@@ -44,7 +44,7 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
     if len(patch) <= SIZELIMIT:
         comment += 'Specifically, I suggest you make the following changes:\n'
         comment += '```diff\n'
-        comment += patch.replace('`', r'\`').strip()
+        comment += patch.decode('utf-8').replace('`', r'\`').strip()
         comment += '\n```\n'
         comment += 'To apply these changes, please do one of the following:\n'
     else:

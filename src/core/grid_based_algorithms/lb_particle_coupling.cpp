@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "lb_particle_coupling.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -21,14 +39,18 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_bcast_lb_particle_coupling_slave(int, int) {
+void mpi_bcast_lb_particle_coupling_slave() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-void lb_lbcoupling_activate() {
-  lb_particle_coupling.couple_to_md = true;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
+REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_slave)
+
+void mpi_bcast_lb_particle_coupling() {
+  mpi_call(mpi_bcast_lb_particle_coupling_slave);
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
+
+void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
   if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
@@ -40,7 +62,6 @@ void lb_lbcoupling_deactivate() {
   }
 
   lb_particle_coupling.couple_to_md = false;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_set_gamma(double gamma) {
@@ -306,7 +327,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
             return;
 
           /* Particle is in our LB volume, so this node
-           * is resposible to adding its force */
+           * is responsible to adding its force */
           if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
                 p, noise_amplitude * f_random(p.identity()));

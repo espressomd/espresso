@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Hook procedures.
  *
@@ -71,6 +71,19 @@ static int reinit_magnetostatics = false;
 
 #ifdef CUDA
 static int reinit_particle_comm_gpu = true;
+#endif
+
+#if defined(OPEN_MPI) &&                                                       \
+    (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION <= 1 ||                     \
+     OMPI_MAJOR_VERSION == 3 &&                                                \
+         (OMPI_MINOR_VERSION == 0 && OMPI_RELEASE_VERSION <= 2 ||              \
+          OMPI_MINOR_VERSION == 1 && OMPI_RELEASE_VERSION <= 2))
+/** Workaround for segmentation fault "Signal code: Address not mapped (1)"
+ *  that happens when the visualizer is used. This is a bug in OpenMPI 2.0-2.1,
+ *  3.0.0-3.0.2 and 3.1.0-3.1.2
+ *  https://github.com/espressomd/espresso/issues/3056
+ */
+#define OPENMPI_BUG_MPI_ALLOC_MEM
 #endif
 
 void on_program_start() {
@@ -138,8 +151,9 @@ void on_integration_start() {
     recalc_forces = true;
   }
 
-  /* Ensemble preparation: NVT or NPT */
-  integrate_ensemble_init();
+#ifdef NPT
+  npt_ensemble_init(box_geo);
+#endif
 
   /* Update particle and observable information for routines in statistics.cpp
    */
@@ -156,7 +170,7 @@ void on_integration_start() {
   if (!Utils::Mpi::all_compare(comm_cart, cell_structure.use_verlet_list)) {
     runtimeErrorMsg() << "Nodes disagree about use of verlet lists.";
   }
-
+#ifndef OPENMPI_BUG_MPI_ALLOC_MEM
 #ifdef ELECTROSTATICS
   if (!Utils::Mpi::all_compare(comm_cart, coulomb.method))
     runtimeErrorMsg() << "Nodes disagree about Coulomb long range method";
@@ -164,6 +178,7 @@ void on_integration_start() {
 #ifdef DIPOLES
   if (!Utils::Mpi::all_compare(comm_cart, dipole.method))
     runtimeErrorMsg() << "Nodes disagree about dipolar long range method";
+#endif
 #endif
   check_global_consistency();
 #endif /* ADDITIONAL_CHECKS */
@@ -176,15 +191,7 @@ void on_observable_calc() {
    * information */
 
   cells_update_ghosts();
-  if (recalc_forces) {
-#ifdef VIRTUAL_SITES
-    if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
-    virtual_sites()->update();
-#endif
-    cells_update_ghosts();
-  }
+  update_dependent_particles();
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
     Coulomb::on_observable_calc();
@@ -454,5 +461,16 @@ void on_ghost_flags_change() {
   if (collision_params.mode) {
     ghosts_have_bonds = true;
   }
+#endif
+}
+
+void update_dependent_particles() {
+#ifdef VIRTUAL_SITES
+  virtual_sites()->update();
+#endif
+  cells_update_ghosts();
+
+#ifdef ELECTROSTATICS
+  Coulomb::update_dependent_particles();
 #endif
 }

@@ -1,5 +1,5 @@
 #! /bin/bash -x
-# Copyright (C) 2012-2018 The ESPResSo project
+# Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #  
 # This file is part of ESPResSo.

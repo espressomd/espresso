@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -37,7 +37,7 @@ def AssertThermostatType(*allowedthermostats):
         >>> @AssertThermostatType(THERMO_LANGEVIN)
         >>> def set_langevin(self, kT=None, gamma=None, gamma_rotation=None):
 
-    This will prefix an assertion for THERMO_LANGEVIN to the call.
+    This will prefix an assertion for ``THERMO_LANGEVIN`` to the call.
 
     """
     def decoratorfunction(function):
@@ -275,7 +275,8 @@ cdef class Thermostat:
                 raise ValueError(
                     "temperature and gamma must be positive numbers")
         else:
-            if float(kT) < 0. or float(gamma[0]) < 0. or float(gamma[1]) < 0. or float(gamma[2]) < 0.:
+            if float(kT) < 0. or float(gamma[0]) < 0. or float(
+                    gamma[1]) < 0. or float(gamma[2]) < 0.:
                 raise ValueError(
                     "temperature and diagonal elements of the gamma tensor must be positive numbers")
         if gamma_rotation is not None:
@@ -284,7 +285,8 @@ cdef class Thermostat:
                     raise ValueError(
                         "gamma_rotation must be positive number")
             else:
-                if float(gamma_rotation[0]) < 0. or float(gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
+                if float(gamma_rotation[0]) < 0. or float(
+                        gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
                     raise ValueError(
                         "diagonal elements of the gamma_rotation tensor must be positive numbers")
 
