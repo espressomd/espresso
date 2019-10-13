@@ -669,7 +669,7 @@ build directory and create a new one.
 .. _make\: Compiling, testing and installing:
 
 ``make``: Compiling, testing and installing
---------------------------------------------
+-------------------------------------------
 
 The command ``make`` is mainly used to compile the source code, but it
 can do a number of other things. The generic syntax of the ``make``
@@ -694,9 +694,12 @@ targets are available:
     Deletes all files that were created during the compilation.
 
 ``install``
-    Install |es|.
-    Use ``make DESTDIR=/home/john install`` to install to a
-    specific directory.
+    Install |es| in the path specified by the CMake variable
+    ``CMAKE_INSTALL_PREFIX``. The path can be changed by calling CMake
+    with ``cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/espresso``. Do not use
+    ``make DESTDIR=/path/to/espresso install`` to install to a specific path,
+    this will cause issues with the runtime path (RPATH) and will conflict
+    with the CMake variable ``CMAKE_INSTALL_PREFIX`` if it has been set.
 
 ``doxygen``
     Creates the Doxygen code documentation in the :file:`doc/doxygen`
