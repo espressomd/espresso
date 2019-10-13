@@ -33,7 +33,7 @@ endif()
 
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
 install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
-target_link_libraries(EspressoScriptInterface PRIVATE EspressoConfig PUBLIC EspressoCore Shapes cluster_analysis mpiio pdbreader)
+target_link_libraries(EspressoScriptInterface PRIVATE EspressoConfig PUBLIC EspressoCore Shapes core_cluster_analysis mpiio pdbreader)
 if(HDF5_FOUND)
  target_link_libraries(EspressoScriptInterface PRIVATE H5mdCore)
 endif()
