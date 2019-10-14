@@ -293,6 +293,8 @@ installation:
     - export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}${CI_INSTALL_PYTHON_PATH}"
     # run all tests with the installed files
     - sed -i "s|$(pwd)/pypresso|${CI_INSTALL_DIR}/bin/pypresso|" testsuite/{python,scripts/samples,scripts/tutorials}/CTestTestfile.cmake
+    # skip long tests
+    - sed -i "/tutorial_11-ferrofluid_3/d" testsuite/scripts/tutorials/CTestTestfile.cmake
     - make -j2 check_python_skip_long
     - make -j2 check_samples
     - make -j2 check_tutorials
