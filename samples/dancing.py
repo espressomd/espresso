@@ -20,7 +20,7 @@ system.part.add(pos=[7, 0, 0], rotation=[1, 1, 1])
 gravity = constraints.Gravity(g=[0, -1, 0])
 system.constraints.add(gravity)
 
-intsteps = 13000
+intsteps = int(13000 / system.time_step)
 pos = np.empty([intsteps, 3 * len(system.part)])
 for i in range(intsteps):
     system.integrator.run(1)

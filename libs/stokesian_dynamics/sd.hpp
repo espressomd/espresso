@@ -1015,7 +1015,9 @@ struct thermalizer {
         uint4 rnd_ints = curand_Philox4x32_10(make_uint4(offset >> 32, seed >> 32, index >> 32, index),
                                               make_uint2(offset, seed));
         T rnd = _curand_uniform_double_hq(rnd_ints.w, rnd_ints.x);
-        return 12 * std::sqrt(T{2.0}) * kT * (rnd - 0.5);
+        return 12 * kT * std::sqrt(T{12.0}) * (rnd - 0.5);
+        // 12 * kT * time_step is the desired variance
+        // the rest is a random number with unit variance and zero mean
     }
 };
 
