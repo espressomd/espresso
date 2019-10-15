@@ -19,6 +19,7 @@
 #include "readpdb.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/lj.hpp"
+#include "particle_data.hpp"
 
 #include <cmath>
 #include <iostream>

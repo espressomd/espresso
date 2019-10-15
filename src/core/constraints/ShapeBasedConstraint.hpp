@@ -22,8 +22,8 @@
 #include <memory>
 
 #include "Constraint.hpp"
+#include "Particle.hpp"
 #include "energy.hpp"
-#include "particle_data.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 

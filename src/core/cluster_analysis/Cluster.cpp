@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "Particle.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 #ifdef GSL
 #include "gsl/gsl_fit.h"
 #endif

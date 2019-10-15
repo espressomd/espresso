@@ -19,9 +19,9 @@
 #ifndef INTEGRATORS_VELOCITY_VERLET_HPP
 #define INTEGRATORS_VELOCITY_VERLET_HPP
 
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "config.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 
 /** Propagate the velocities and positions. Integration steps before force

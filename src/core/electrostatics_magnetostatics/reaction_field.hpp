@@ -31,7 +31,7 @@
 #include "config.hpp"
 
 #ifdef ELECTROSTATICS
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {

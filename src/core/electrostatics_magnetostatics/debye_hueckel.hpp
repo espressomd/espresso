@@ -28,7 +28,7 @@
 
 #ifdef ELECTROSTATICS
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 /** Structure to hold Debye-Hueckel Parameters. */
 typedef struct {

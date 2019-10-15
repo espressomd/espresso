@@ -24,9 +24,9 @@
  *  Various procedures concerning interactions between particles.
  */
 
+#include "Particle.hpp"
 #include "TabulatedPotential.hpp"
 #include "dpd.hpp"
-#include "particle_data.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/sqr.hpp>

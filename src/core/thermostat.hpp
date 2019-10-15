@@ -25,8 +25,8 @@
 
 #include "config.hpp"
 
+#include "Particle.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
 

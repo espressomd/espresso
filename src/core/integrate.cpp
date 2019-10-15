@@ -27,6 +27,7 @@
  */
 
 #include "integrate.hpp"
+#include "Particle.hpp"
 #include "accumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
@@ -49,7 +50,6 @@
 #include "immersed_boundaries.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"

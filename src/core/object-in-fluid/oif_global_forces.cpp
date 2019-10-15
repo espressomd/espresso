@@ -18,13 +18,13 @@
  */
 
 #include "oif_global_forces.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/triangle_functions.hpp>
 using Utils::angle_btw_triangles;

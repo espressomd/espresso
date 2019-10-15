@@ -19,7 +19,7 @@
 #ifndef CORE_UTILS_SERIALIZATION_PARTICLE_SWIM_HPP
 #define CORE_UTILS_SERIALIZATION_PARTICLE_SWIM_HPP
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 #include <boost/serialization/vector.hpp>
 

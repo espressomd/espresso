@@ -22,8 +22,8 @@
 #ifndef METADYNAMICS_H
 #define METADYNAMICS_H
 
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "particle_data.hpp"
 
 /** \file
  *

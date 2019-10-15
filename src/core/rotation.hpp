@@ -28,8 +28,8 @@
 
 #ifdef ROTATION
 
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "particle_data.hpp"
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 

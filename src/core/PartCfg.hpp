@@ -19,10 +19,10 @@
 #ifndef CORE_PART_CFG_HPP
 #define CORE_PART_CFG_HPP
 
+#include "Particle.hpp"
 #include "ParticleCache.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 #include "serialization/Particle.hpp"
 #include <utils/SkipIterator.hpp>
 

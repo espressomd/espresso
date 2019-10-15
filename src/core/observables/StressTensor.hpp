@@ -19,7 +19,7 @@
 #ifndef OBSERVABLES_STRESSTENSOR_HPP
 
 #include "Observable.hpp"
-#include "particle_data.hpp"
+#include "Particle.hpp"
 #include "pressure.hpp"
 #include <vector>
 

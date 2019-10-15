@@ -32,9 +32,9 @@
 
 #ifdef ELECTROSTATICS
 
+#include "Particle.hpp"
 #include "bonded_interaction_data.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
-#include "particle_data.hpp"
 
 /** Set the parameters for the short-range bonded Coulomb potential
  *

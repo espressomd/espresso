@@ -25,6 +25,7 @@
  */
 #include "event.hpp"
 
+#include "Particle.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -45,7 +46,6 @@
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"

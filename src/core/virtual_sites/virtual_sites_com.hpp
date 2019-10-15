@@ -24,7 +24,7 @@
 #include "config.hpp"
 
 #ifdef VIRTUAL_SITES_COM
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 // The following three functions have to be provided by all implementations
 // of virtual sites
