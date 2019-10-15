@@ -137,9 +137,6 @@ using UpdatePropertyMessage = boost::variant
 #ifdef ROTATIONAL_INERTIA
         , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
-#ifdef AFFINITY
-        , UpdateProperty<Utils::Vector3d, &Prop::bond_site>
-#endif
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
@@ -558,12 +555,6 @@ void realloc_local_particles(int part) {
   }
 }
 
-void init_particlelist(ParticleList *pList) {
-  pList->n = 0;
-  pList->max = 0;
-  pList->part = nullptr;
-}
-
 int realloc_particlelist(ParticleList *l, int size) {
   assert(size >= 0);
   int old_max = l->max;
@@ -881,13 +872,6 @@ void set_particle_rotation(int part, int rot) {
 #ifdef ROTATION
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
-}
-#endif
-
-#ifdef AFFINITY
-void set_particle_affinity(int part, double *bond_site) {
-  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::bond_site>(
-      part, Utils::Vector3d(bond_site, bond_site + 3));
 }
 #endif
 
@@ -1604,12 +1588,6 @@ void pointer_to_swimming(Particle const *p,
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia.data();
-}
-#endif
-
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res) {
-  res = p->p.bond_site.data();
 }
 #endif
 
