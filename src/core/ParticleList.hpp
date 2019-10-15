@@ -1,3 +1,23 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ESPRESSO_CORE_PARTICLE_LIST_HPP
 #define ESPRESSO_CORE_PARTICLE_LIST_HPP
 
@@ -24,7 +44,16 @@ struct ParticleList {
   /** granularity of the particle buffers in particles */
   static constexpr int INCREMENT = 8;
 
-  int resize(int size) {
+  /**
+   * @brief Allocate storage for local particles and ghosts.
+   *
+   * This version does \em not care for the bond information to be freed if
+   * necessary.
+   *     @param size the size to provide at least. It is rounded
+   *     up to multiples of @ref ParticleList::INCREMENT.
+   *     @return true iff particle addresses have changed
+   */
+  int realloc(int size) {
     assert(size >= 0);
     int old_max = max;
     Particle *old_start = part;
@@ -43,14 +72,11 @@ struct ParticleList {
       part = Utils::realloc(part, sizeof(Particle) * max);
     return part != old_start;
   }
+
+  int resize(int size) { return realloc(this->n = size); }
 };
 
-/** Allocate storage for local particles and ghosts. This version
-    does \em not care for the bond information to be freed if necessary.
-    \param l the list on which to operate
-    \param size the size to provide at least. It is rounded
-    up to multiples of \ref ParticleList::INCREMENT.
-    \return true iff particle addresses have changed */
+/** @copydoc ParticleList::resize */
 inline int realloc_particlelist(ParticleList *l, int size) {
   return assert(l), l->resize(size);
 }
