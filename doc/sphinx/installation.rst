@@ -187,9 +187,9 @@ If you want to install Homebrew, use the following commands.
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-Installing Packages using MacPorts
+Installing packages using MacPorts
 """"""""""""""""""""""""""""""""""
-    
+
 Run the following commands:
 
 .. code-block:: bash
@@ -206,7 +206,7 @@ Run the following commands:
     sudo port select --set mpi openmpi-mp
 
 
-Installing Packages using Homebrew
+Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
 
 .. code-block:: bash
