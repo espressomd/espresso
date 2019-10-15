@@ -19,7 +19,8 @@
 #ifndef CORE_CELL_HPP
 #define CORE_CELL_HPP
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
+#include "ParticleList.hpp"
 
 #include <utils/Span.hpp>
 

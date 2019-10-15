@@ -28,6 +28,7 @@
 #include "Particle.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "particle_data.hpp"
 
 #include <algorithm>
 #include <cstdio>

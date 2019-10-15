@@ -25,6 +25,7 @@
 #include "event.hpp"
 #include "integrate.hpp"
 #include "rotation.hpp"
+#include "particle_data.hpp"
 
 #include <utils/math/sqr.hpp>
 

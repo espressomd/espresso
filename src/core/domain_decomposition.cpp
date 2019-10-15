@@ -28,6 +28,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>

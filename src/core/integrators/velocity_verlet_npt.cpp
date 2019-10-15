@@ -20,7 +20,6 @@
 #include "config.hpp"
 
 #ifdef NPT
-#include "Particle.hpp"
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -29,7 +28,9 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "thermostat.hpp"
-#include "utils/math/sqr.hpp"
+#include "particle_data.hpp"
+
+#include <utils/math/sqr.hpp>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;

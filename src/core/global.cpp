@@ -37,6 +37,8 @@
 #include "rattle.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
+#include "particle_data.hpp"
+
 #include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
