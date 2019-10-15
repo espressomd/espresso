@@ -275,9 +275,9 @@ tutorials-samples-no-gpu:
 empty:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
   script:
-    - export myconfig=empty
+    - export myconfig=empty with_static_analysis=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker

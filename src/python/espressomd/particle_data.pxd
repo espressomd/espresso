@@ -19,7 +19,7 @@
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, Vector3i, List, Span
+from espressomd.utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
@@ -159,8 +159,8 @@ cdef extern from "particle_data.hpp":
     IF VIRTUAL_SITES_RELATIVE:
         void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3)
         void pointer_to_vs_quat(const particle * P, const double * & res)
-        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * rel_ori)
-        void set_particle_vs_quat(int part, double * vs_quat)
+        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, Vector4d rel_ori)
+        void set_particle_vs_quat(int part, Vector4d vs_quat)
 
     void pointer_to_q(const particle * P, const double * & res)
 
@@ -209,7 +209,7 @@ cdef inline const particle * get_particle_data_ptr(const particle & p):
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
-        int vs_relate_to(int part_num, int relate_to)
+        void vs_relate_to(int part_num, int relate_to)
 
 cdef extern from "rotation.hpp":
     Vector3d convert_vector_body_to_space(const particle & p, const Vector3d & v)

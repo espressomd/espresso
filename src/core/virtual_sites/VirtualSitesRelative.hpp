@@ -43,10 +43,16 @@ public:
                                           double *stress_tensor) const override;
 
 private:
+  /** Update the position of the given virtual particle as defined by the real
+   *  particles in the same molecule
+   */
   void update_pos(Particle &p) const;
+  /** Update the velocity of the given virtual particle as defined by the real
+   *  particles in the same molecule
+   */
   void update_vel(Particle &p) const;
-  /** @brief Update the orientation of the virtual particles with respect to the
-   * real particle.
+  /** @brief Update the orientation of the virtual particles with respect
+   *  to the real particle.
    */
   void update_virtual_particle_quaternion(Particle &p) const;
 };
