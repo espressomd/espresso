@@ -20,7 +20,6 @@ if(WITH_PYTHON AND PYTHONINTERP_FOUND)
 
   cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
 endif()
-set(DESTDIR "${CMAKE_CURRENT_BINARY_DIR}/install")
 
 add_custom_target(setup_install COMMAND make install WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 add_custom_target(check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -C serial --output-on-failure)
