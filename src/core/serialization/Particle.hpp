@@ -25,8 +25,6 @@
 
 #include <boost/serialization/vector.hpp>
 
-class Particle;
-
 namespace boost {
 namespace serialization {
 /* Pod serialize for Particle */
