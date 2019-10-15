@@ -35,8 +35,9 @@ function test_install() {
     assert_file_exists "${filepath}"
   done
 
-  # check the espressomd module can be imported
-  assert_return_code "@CMAKE_BINARY_DIR@/pypresso" -c "import sys;sys.path.insert(0, '@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@');import espressomd"
+  # check the espressomd module can be imported from python3 and pypresso
+  assert_return_code "@PYTHON_EXECUTABLE@" -c "import sys;sys.path.insert(0, '@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@');import espressomd"
+  assert_return_code "@CMAKE_INSTALL_PREFIX@/bin/pypresso" -c "import espressomd"
 }
 
 # run tests

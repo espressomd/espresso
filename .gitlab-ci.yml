@@ -289,8 +289,6 @@ installation:
     - CI_INSTALL_PYTHON_PATH=$(dirname $(find "${CI_INSTALL_DIR}/lib" -name espressomd))
     # deploy object-in-fluid module
     - cp -r "src/python/object_in_fluid" "${CI_INSTALL_PYTHON_PATH}/object_in_fluid"
-    # set the PYTHONPATH, guard the case where it is initially an empty string
-    - export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}${CI_INSTALL_PYTHON_PATH}"
     # run all tests with the installed files
     - sed -i "s|$(pwd)/pypresso|${CI_INSTALL_DIR}/bin/pypresso|" testsuite/{python,scripts/samples,scripts/tutorials}/CTestTestfile.cmake
     # skip long tests
