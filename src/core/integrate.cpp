@@ -401,7 +401,7 @@ void integrate_set_nvt() {
 int integrate_set_npt_isotropic(double ext_pressure, double piston,
                                 bool xdir_rescale, bool ydir_rescale,
                                 bool zdir_rescale, bool cubic_box) {
-  nptiso.cubic_box = 0;
+  nptiso.cubic_box = cubic_box;
   nptiso.p_ext = ext_pressure;
   nptiso.piston = piston;
 
@@ -428,10 +428,6 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
     nptiso.geometry |= NPTGEOM_ZDIR;
     nptiso.dimension += 1;
     nptiso.non_const_dim = 2;
-  }
-
-  if (cubic_box) {
-    nptiso.cubic_box = 1;
   }
 
   /* Sanity Checks */
