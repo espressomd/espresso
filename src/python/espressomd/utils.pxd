@@ -94,7 +94,8 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:
         pass
     cppclass Vector4d:
-        pass
+        double & operator[](int i)
+        double * data()
 
     cppclass Vector3i:
         int & operator[](int i)

@@ -365,8 +365,10 @@ site is placed at a fixed distance from the non-virtual particle. When
 the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
-To use this implementation of virtual sites, activate the feature ``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
-To set up a virtual site,
+To use this implementation of virtual sites, activate the feature
+``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of
+:class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the
+active virtual sites scheme (see above). To set up a virtual site,
 
 #. Place the particle to which the virtual site should be related. It
    needs to be in the center of mass of the rigid arrangement of
@@ -378,7 +380,9 @@ To set up a virtual site,
        p = system.part.add(pos=(1, 2, 3))
        p.vs_auto_relate_to(<ID>)
 
-   where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
+   where <ID> is the id of the central particle. This will also set the
+   :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on
+   the particle to ``True``.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -407,8 +411,8 @@ Please note:
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, when running on more than one core,
-   you need to set the
-   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance.
+   you need to set the system's :attr:`espressomd.system.System.min_global_cut`
+   attribute to this largest distance.
    An error is generated when this requirement is not met.
 
 -  If the virtual sites represent actual particles carrying a mass, the
@@ -425,9 +429,13 @@ Inertialess lattice Boltzmann tracers
 
 :class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
 
-When this implementation is selected, the virtual sites follow the motion of a lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
-Forces acting on the virtual sites are directly transferred as force density onto the lattice Boltzmann fluid, making the coupling free of inertia.
-The feature stems from the implementation of the :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
+When this implementation is selected, the virtual sites follow the motion of a
+lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating
+their position using the fluid velocity at the virtual sites' position.
+Forces acting on the virtual sites are directly transferred as force density
+onto the lattice Boltzmann fluid, making the coupling free of inertia.
+The feature stems from the implementation of the
+:ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
 
 For correct results, the LB thermostat has to be deactivated for virtual sites::
 
