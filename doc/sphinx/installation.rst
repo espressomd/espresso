@@ -421,14 +421,6 @@ General features
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
--  ``VIRTUAL_SITES_COM`` Virtual sites are particles, the position and velocity of which is
-   not obtained by integrating equations of motion. Rather, they are
-   placed using the position (and orientation) of other particles. The
-   feature allows to place a virtual particle into the center of mass of
-   a set of other particles.
-
-   .. seealso:: :ref:`Virtual sites`
-
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
    placed using the position (and orientation) of other particles. The
