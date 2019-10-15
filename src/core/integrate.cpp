@@ -405,8 +405,9 @@ void integrate_set_nvt() {
 
 #ifdef NPT
 /** Parse integrate npt_isotropic command */
-int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
-                                int ydir, int zdir, bool cubic_box) {
+int integrate_set_npt_isotropic(double ext_pressure, double piston,
+                                bool xdir_rescale, bool ydir_rescale,
+                                bool zdir_rescale, bool cubic_box) {
   nptiso.cubic_box = 0;
   nptiso.p_ext = ext_pressure;
   nptiso.piston = piston;
@@ -416,33 +417,23 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
                          "this integrator!\n";
     return ES_ERROR;
   }
-  if (xdir || ydir || zdir) {
-    /* set the geometry to include rescaling specified directions only*/
-    nptiso.geometry = 0;
-    nptiso.dimension = 0;
-    nptiso.non_const_dim = -1;
-    if (xdir) {
-      nptiso.geometry = (nptiso.geometry | NPTGEOM_XDIR);
-      nptiso.dimension += 1;
-      nptiso.non_const_dim = 0;
-    }
-    if (ydir) {
-      nptiso.geometry = (nptiso.geometry | NPTGEOM_YDIR);
-      nptiso.dimension += 1;
-      nptiso.non_const_dim = 1;
-    }
-    if (zdir) {
-      nptiso.geometry = (nptiso.geometry | NPTGEOM_ZDIR);
-      nptiso.dimension += 1;
-      nptiso.non_const_dim = 2;
-    }
-  } else {
-    /* set the geometry to include rescaling in all directions; the default*/
-    nptiso.geometry = 0;
-    nptiso.geometry = (nptiso.geometry | NPTGEOM_XDIR);
-    nptiso.geometry = (nptiso.geometry | NPTGEOM_YDIR);
-    nptiso.geometry = (nptiso.geometry | NPTGEOM_ZDIR);
-    nptiso.dimension = 3;
+  /* set the geometry to include rescaling specified directions only */
+  nptiso.geometry = 0;
+  nptiso.dimension = 0;
+  nptiso.non_const_dim = -1;
+  if (xdir_rescale) {
+    nptiso.geometry |= NPTGEOM_XDIR;
+    nptiso.dimension += 1;
+    nptiso.non_const_dim = 0;
+  }
+  if (ydir_rescale) {
+    nptiso.geometry |= NPTGEOM_YDIR;
+    nptiso.dimension += 1;
+    nptiso.non_const_dim = 1;
+  }
+  if (zdir_rescale) {
+    nptiso.geometry |= NPTGEOM_ZDIR;
+    nptiso.dimension += 1;
     nptiso.non_const_dim = 2;
   }
 
