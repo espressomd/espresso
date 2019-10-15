@@ -189,7 +189,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+    virtual_sites()->update(true);
 #endif
 
     // Communication step: distribute ghost positions
@@ -248,7 +248,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+    virtual_sites()->update(true);
 #endif
 
     // Communication step: distribute ghost positions

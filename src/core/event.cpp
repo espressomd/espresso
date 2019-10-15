@@ -466,7 +466,7 @@ void on_ghost_flags_change() {
 
 void update_dependent_particles() {
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update();
+  virtual_sites()->update(true);
 #endif
   cells_update_ghosts();
 

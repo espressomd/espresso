@@ -63,9 +63,9 @@ Cython
     At least version 0.23 is required.
 
 
-.. _Installing Requirements on Ubuntu Linux:
+.. _Installing requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu Linux
+Installing requirements on Ubuntu Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To make |es| run on 18.04 LTS, its dependencies can be installed with:
@@ -117,9 +117,24 @@ ROCm SDK to make use of GPU computation:
 
 After installing the ROCm SDK, please reboot your computer.
 
-.. _Installing Requirements on Mac OS X:
 
-Installing Requirements on Mac OS X
+.. _Installing requirements on other Linux distributions:
+
+Installing requirements on other Linux distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please refer to the following Dockerfiles to find the minimum set of packages
+required to compile |es| on other Linux distributions:
+
+* `CentOS 7 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-7>`_
+* `Fedora 30 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-next>`_
+* `Debian 10 <https://github.com/espressomd/docker/blob/master/docker/debian-python3/Dockerfile-10>`_
+* `OpenSUSE Leap 15.1 <https://github.com/espressomd/docker/blob/master/docker/opensuse/Dockerfile-15.1>`_
+
+
+.. _Installing requirements on Mac OS X:
+
+Installing requirements on Mac OS X
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Preparation
@@ -172,9 +187,9 @@ If you want to install Homebrew, use the following commands.
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-Installing Packages using MacPorts
+Installing packages using MacPorts
 """"""""""""""""""""""""""""""""""
-    
+
 Run the following commands:
 
 .. code-block:: bash
@@ -191,7 +206,7 @@ Run the following commands:
     sudo port select --set mpi openmpi-mp
 
 
-Installing Packages using Homebrew
+Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
 
 .. code-block:: bash
@@ -312,7 +327,7 @@ different configuration headers:
   .. code-block:: c++
 
     #define ELECTROSTATICS
-    #define LENNARD-JONES
+    #define LENNARD_JONES
 
 *  :file:`$builddir2/myconfig.hpp`:
 
@@ -420,14 +435,6 @@ General features
 
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
-
--  ``VIRTUAL_SITES_COM`` Virtual sites are particles, the position and velocity of which is
-   not obtained by integrating equations of motion. Rather, they are
-   placed using the position (and orientation) of other particles. The
-   feature allows to place a virtual particle into the center of mass of
-   a set of other particles.
-
-   .. seealso:: :ref:`Virtual sites`
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are

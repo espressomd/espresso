@@ -124,13 +124,13 @@ Interface changes
   number generation. For the following individual methods a random
   number seed has to be passed using the keyword argument ``seed``:
 
-   * [Langevin thermostat](http://espressomd.org/html/doc/espressomd.html?#espressomd.thermostat.Thermostat.set_langevin)
-   * [DPD thermostat](http://espressomd.org/html/doc/espressomd.html?#espressomd.thermostat.Thermostat.set_dpd)
-   * [LB Thermostat](http://espressomd.org/html/doc/espressomd.html?#espressomd.thermostat.Thermostat.set_lb)
-   * [Thermalized bond](http://espressomd.org/html/doc/espressomd.html?#espressomd.interactions.ThermalizedBond)
-   * [Wang-Landau reaction ensemble](http://espressomd.org/html/doc/espressomd.html?#module-espressomd.reaction_ensemble)
-   * [Constant pH ensemble](http://espressomd.org/html/doc/espressomd.html?#espressomd.reaction_ensemble.ConstantpHEnsemble)
-   * [Widom insertion method](http://espressomd.org/html/doc/espressomd.html?#espressomd.reaction_ensemble.WidomInsertion)
+   * [Langevin thermostat](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.thermostat.Thermostat.set_langevin)
+   * [DPD thermostat](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.thermostat.Thermostat.set_dpd)
+   * [LB Thermostat](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.thermostat.Thermostat.set_lb)
+   * [Thermalized bond](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.interactions.ThermalizedBond)
+   * [Wang-Landau reaction ensemble](http://espressomd.org/html/doc4.1.0/espressomd.html?#module-espressomd.reaction_ensemble)
+   * [Constant pH ensemble](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.reaction_ensemble.ConstantpHEnsemble)
+   * [Widom insertion method](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.reaction_ensemble.WidomInsertion)
 
 * Changes in the lattice-Boltzmann (LB) interface:
 
@@ -143,13 +143,13 @@ Interface changes
      parameter of the LB thermostat.
 
   For more detailed information on how to set up a LB fluid and
-  thermostat, please see http://espressomd.org/html/doc/lb.html.
+  thermostat, please see http://espressomd.org/html/doc4.1.0/lb.html.
 
 * The method for polymer creation has been replaced. Now
   ``espressomd.polymer.positions()`` can be used to obtain particle
   positions for one or more polymer chains. Based on these positions,
   polymers can be created. For an example please see
-  http://espressomd.org/html/doc/particles.html#setting-up-polymer-chains.
+  http://espressomd.org/html/doc4.1.0/particles.html#setting-up-polymer-chains.
 
 
 Changed and removed functionality
@@ -368,7 +368,7 @@ Physics related corrections:
     module did not get assigned a random velocity. This was not a problem if you were looking at observables
     which do not depend on velocity.
 
-  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
+  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity-dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
 
   * Under some conditions, the torque on self-propelled particles
     in a lattice-Boltzmann fluid was incorrect due to a sign error in the
