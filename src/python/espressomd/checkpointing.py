@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -171,8 +171,9 @@ class Checkpoint:
 
         Returns
         -------
-        bool
-            True if any checkpoints exist that match checkpoint_id and checkpoint_path otherwise False.
+        :obj:`bool`
+            ``True`` if any checkpoints exist that match ``checkpoint_id`` and
+            ``checkpoint_path`` otherwise ``False``.
 
         """
         return self.counter > 0
@@ -218,7 +219,7 @@ class Checkpoint:
         Parameters
         ----------
         checkpoint_index : :obj:`int`, optional
-            If not given, the latest checkpoint_index will be used.
+            If not given, the last ``checkpoint_index`` will be used.
 
         """
         if checkpoint_index is None:

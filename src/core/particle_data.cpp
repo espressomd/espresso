@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Particles and particle lists.
  *
@@ -137,9 +137,6 @@ using UpdatePropertyMessage = boost::variant
 #ifdef ROTATIONAL_INERTIA
         , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
-#ifdef AFFINITY
-        , UpdateProperty<Utils::Vector3d, &Prop::bond_site>
-#endif
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
@@ -156,7 +153,7 @@ using UpdatePropertyMessage = boost::variant
 #ifdef VIRTUAL_SITES
         , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
-        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
+        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameters,
                          &Prop::vs_relative>
 #endif
 #endif
@@ -558,12 +555,6 @@ void realloc_local_particles(int part) {
   }
 }
 
-void init_particlelist(ParticleList *pList) {
-  pList->n = 0;
-  pList->max = 0;
-  pList->part = nullptr;
-}
-
 int realloc_particlelist(ParticleList *l, int size) {
   assert(size >= 0);
   int old_max = l->max;
@@ -884,13 +875,6 @@ void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
 }
 #endif
 
-#ifdef AFFINITY
-void set_particle_affinity(int part, double *bond_site) {
-  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::bond_site>(
-      part, Utils::Vector3d(bond_site, bond_site + 3));
-}
-#endif
-
 #ifdef MEMBRANE_COLLISION
 void set_particle_out_direction(int part, double *out_direction) {
   mpi_update_particle_property<Utils::Vector3d,
@@ -924,24 +908,24 @@ void set_particle_virtual(int part, bool is_virtual) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_relative_quat) {
+void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Utils::Vector4d(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = vs_relative_quat;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              double *rel_ori) {
-  ParticleProperties::VirtualSitesRelativeParameteres vs_relative;
+                              Utils::Vector4d const &rel_ori) {
+  ParticleProperties::VirtualSitesRelativeParameters vs_relative;
   vs_relative.distance = vs_distance;
   vs_relative.to_particle_id = vs_relative_to;
-  vs_relative.rel_orientation = {rel_ori, rel_ori + 4};
+  vs_relative.rel_orientation = rel_ori;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 #endif
@@ -1604,12 +1588,6 @@ void pointer_to_swimming(Particle const *p,
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia.data();
-}
-#endif
-
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res) {
-  res = p->p.bond_site.data();
 }
 #endif
 

@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
@@ -171,10 +187,10 @@ cdef class ReactionAlgorithm:
         product_coefficients : list of :obj:`int`
             List of stoichiometric coefficients of products of the reaction in
             the same order as the list of their types
-        default_charges : dictionary
+        default_charges : :obj:`dict`
             A dictionary of default charges for types that occur in the provided reaction.
         check_for_electroneutrality : :obj:`bool`
-            Check for electroneutrality of the given reaction if True.
+            Check for electroneutrality of the given reaction if ``True``.
 
         """
         self._params["check_for_electroneutrality"] = True
@@ -394,7 +410,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     def add_reaction(self, *args, **kwargs):
         if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
             raise ValueError(
-                "The constant pH method is only implemented for reactionw with two product types and one educt type.")
+                "The constant pH method is only implemented for reactions with two product types and one adduct type.")
         if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
             raise ValueError(
                 "All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")

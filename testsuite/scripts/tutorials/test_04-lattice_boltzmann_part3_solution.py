@@ -17,19 +17,17 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
+
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/04-lattice_boltzmann/04-lattice_boltzmann_part1.py",
-    gpu=True)
+    "@TUTORIALS_DIR@/04-lattice_boltzmann/scripts/04-lattice_boltzmann_part3_solution.py",
+    gpu=True, LOOPS=100, STEPS=1, N_MONOMERS=[10])
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
-
-    def test_stokes_force(self):
-        difference = abs(tutorial.size(tutorial.force) - tutorial.stokes_force)
-        self.assertLess(difference, 0.1)
 
 
 if __name__ == "__main__":

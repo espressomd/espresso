@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,6 +26,7 @@ from tests_common import single_component_maxwell
 
 @utx.skipIfMissingFeatures(["MASS"])
 class ThermalizedBond(ut.TestCase):
+
     """Tests the two velocity distributions for COM and distance created by the
        thermalized bond independently against the single component Maxwell
        distribution. Adapted from langevin_thermostat testcase."""

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -145,7 +145,7 @@ cdef class HydrodynamicInteraction(Actor):
         Parameters
         ----------
         interpolation_order : :obj:`str`
-            ``linear`` refers to linear interpolation, ``quadratic`` to quadratic interpolation.
+            ``"linear"`` for linear interpolation, ``"quadratic"`` for quadratic interpolation.
 
         """
         if (interpolation_order == "linear"):
@@ -343,12 +343,12 @@ IF CUDA:
 
             Parameters
             ----------
-            positions : numpy-array of type :obj:`float` of shape (N,3)
+            positions : (N,3) numpy-array of type :obj:`float`
                 The 3-dimensional positions.
 
             Returns
             -------
-            velocities : numpy-array of type :obj:`float` of shape (N,3)
+            velocities : (N,3) numpy-array of type :obj:`float`
                 The 3-dimensional LB fluid velocities.
 
             Raises

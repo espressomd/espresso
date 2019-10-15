@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,7 +24,7 @@ class Mpiio:
     Used to output particle data using MPI-IO to binary files.
 
     .. note::
-        See the write and read methods for documentation.
+        See the :meth:`write` and :meth:`read` methods for documentation.
     """
 
     def __init__(self):
@@ -82,8 +82,8 @@ class Mpiio:
              types=False, bonds=False):
         """MPI-IO read.
 
-        This function reads data dumped by `write`. See the write documentation
-        for details.
+        This function reads data dumped by :meth`write`. See the :meth`write`
+        documentation for details.
 
         .. note::
             The files must be read on the same number of processes that wrote

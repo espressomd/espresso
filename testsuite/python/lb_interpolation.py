@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -76,9 +76,10 @@ class LBInterpolation:
         # for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #     np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
         # Bulk
-        for pos in itertools.product(np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
-                                     np.arange(0.5 * AGRID, BOX_L, AGRID),
-                                     np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        for pos in itertools.product(
+                np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_almost_equal(
                 self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
         # Shear plane for boundary 2

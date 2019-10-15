@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
 /** \file
@@ -39,6 +39,7 @@
 #include <utils/List.hpp>
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
+#include <utils/math/quaternion.hpp>
 
 #include <memory>
 
@@ -66,9 +67,6 @@ enum {
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether all of
- *  the coordinates are fixed. */
-#define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
@@ -96,8 +94,8 @@ struct ParticleProperties {
   /** particle type, used for non bonded interactions. */
   int type = 0;
 
-#ifdef MASS
   /** particle mass */
+#ifdef MASS
   double mass = 1.0;
 #else
   constexpr static double mass{1.0};
@@ -110,18 +108,12 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-#ifdef AFFINITY
-  /** parameters for affinity mechanisms */
-  Utils::Vector3d bond_site = {-1., -1., -1.};
-#endif
-
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
   Utils::Vector3d out_direction = {0., 0., 0.};
 #endif
 
-  // Determines, whether a particle's rotational degrees of freedom are
-  // integrated
+  /** bitfield for the particle axes of rotation */
   int rotation = 0;
 
   /** charge. */
@@ -137,7 +129,7 @@ struct ParticleProperties {
 #endif
 
 #ifdef DIPOLES
-  /** dipole moment (absolute value)*/
+  /** dipole moment (absolute value) */
   double dipm = 0.;
 #endif
 
@@ -145,18 +137,18 @@ struct ParticleProperties {
   /** is particle virtual */
   bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
-  /** In case, the "relative" implementation of virtual sites is enabled, the
-  following properties define, with respect to which real particle a virtual
-  site is placed and in what distance. The relative orientation of the vector
-  pointing from real particle to virtual site with respect to the orientation
-  of the real particle is stored in the virtual site's quaternion attribute.
-  */
-  struct VirtualSitesRelativeParameteres {
+  /** The following properties define, with respect to which real particle a
+   *  virtual site is placed and at what distance. The relative orientation of
+   *  the vector pointing from real particle to virtual site with respect to the
+   *  orientation of the real particle is stored in the virtual site's
+   *  quaternion attribute.
+   */
+  struct VirtualSitesRelativeParameters {
     int to_particle_id = 0;
     double distance = 0;
-    // Store relative position of the virtual site.
+    /** Relative position of the virtual site. */
     Utils::Vector4d rel_orientation = {0., 0., 0., 0.};
-    // Store the orientation of the virtual particle in the body fixed frame.
+    /** Orientation of the virtual particle in the body fixed frame. */
     Utils::Vector4d quat = {0., 0., 0., 0.};
 
     template <class Archive> void serialize(Archive &ar, long int) {
@@ -166,7 +158,6 @@ struct ParticleProperties {
       ar &quat;
     }
   } vs_relative;
-
 #endif
 #else  /* VIRTUAL_SITES */
   static constexpr const bool is_virtual = false;
@@ -179,7 +170,7 @@ struct ParticleProperties {
 #else
   Utils::Vector3d gamma = {-1., -1., -1.};
 #endif // PARTICLE_ANISOTROPY
-/* Friction coefficient gamma for rotation */
+/** Friction coefficient gamma for rotation */
 #ifdef ROTATION
 #ifndef PARTICLE_ANISOTROPY
   double gamma_rot = -1.;
@@ -210,31 +201,30 @@ struct ParticleProperties {
 };
 
 /** Positional information on a particle. Information that is
-    communicated to calculate interactions with ghost particles. */
+ *  communicated to calculate interactions with ghost particles.
+ */
 struct ParticlePosition {
   /** periodically folded position. */
   Utils::Vector3d p = {0, 0, 0};
 
 #ifdef ROTATION
-  /** quaternions to define particle orientation */
+  /** quaternion to define particle orientation */
   Utils::Vector4d quat = {1., 0., 0., 0.};
-  /** unit director calculated from the quaternions */
-  inline const Utils::Vector3d calc_director() const {
-    return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
-            2 * (quat[2] * quat[3] - quat[0] * quat[1]),
-            quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-                quat[3] * quat[3]};
+  /** unit director calculated from the quaternion */
+  Utils::Vector3d calc_director() const {
+    return Utils::convert_quaternion_to_director(quat);
   };
 #endif
 
 #ifdef BOND_CONSTRAINT
-  /**stores the particle position at the previous time step*/
+  /** particle position at the previous time step */
   Utils::Vector3d p_old = {0., 0., 0.};
 #endif
 };
 
 /** Force information on a particle. Forces of ghost particles are
-    collected and added up to the force of the original particle. */
+ *  collected and added up to the force of the original particle.
+ */
 struct ParticleForce {
   ParticleForce() = default;
   ParticleForce(ParticleForce const &) = default;
@@ -352,9 +342,7 @@ struct Particle {
   ///
   ParticlePosition r;
 #ifdef DIPOLES
-  inline const Utils::Vector3d calc_dip() const {
-    return r.calc_director() * p.dipm;
-  }
+  Utils::Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
 #endif
   ///
   ParticleMomentum m;
@@ -401,38 +389,6 @@ struct Particle {
   ParticleParametersSwimming swim;
 #endif
 };
-
-/**
- * These functions cause a compile time error if
- * Particles are copied by memmove or memcpy,
- * which do not keep class invariants.
- *
- * These are templates so that the error is caused
- * at the place they are used.
- */
-template <typename Size> void memmove(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memmove(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size> void memcpy(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memcpy(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle const *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
 
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
@@ -483,10 +439,6 @@ void free_particle(Particle *part);
 
 /*    Functions acting on Particle Lists        */
 /************************************************/
-
-/** Initialize a particle list.
- *  Use with care and ONLY for initialization! */
-void init_particlelist(ParticleList *pList);
 
 /** Allocate storage for local particles and ghosts. This version
     does \em not care for the bond information to be freed if necessary.
@@ -638,14 +590,6 @@ void set_particle_rotation(int part, int rot);
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
 
-#ifdef AFFINITY
-/** Call only on the master node: set particle affinity.
- *  @param part the particle.
- *  @param bond_site its new site of the affinity bond.
- */
-void set_particle_affinity(int part, double *bond_site);
-#endif
-
 #ifdef MEMBRANE_COLLISION
 /** Call only on the master node: set particle out_direction.
  *  @param part the particle.
@@ -730,9 +674,9 @@ void set_particle_dipm(int part, double dipm);
 void set_particle_virtual(int part, bool is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_relative_quat);
+void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat);
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              double *rel_ori);
+                              Utils::Vector4d const &rel_ori);
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -989,9 +933,6 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
-#endif
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res);
 #endif
 
 #ifdef MEMBRANE_COLLISION

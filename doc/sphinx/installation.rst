@@ -63,18 +63,18 @@ Cython
     At least version 0.23 is required.
 
 
-.. _Installing Requirements on Ubuntu Linux:
+.. _Installing requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu Linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing requirements on Ubuntu Linux
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To make |es| run on 18.04 LTS, its dependencies can be installed with:
 
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-numpy \
-    libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-    doxygen python3-opengl python3-sphinx python3-pip libgsl-dev
+      libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
+      python3-opengl libgsl-dev
 
 
 Optionally the ccmake utility can be installed for easier configuration:
@@ -88,7 +88,8 @@ are required:
 
 .. code-block:: bash
 
-    pip3 install --upgrade jupyter scipy matplotlib sphinxcontrib-bibtex numpydoc
+    sudo apt install python3-matplotlib python3-scipy \
+      ipython3 jupyter-notebook
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
@@ -114,16 +115,82 @@ ROCm SDK to make use of GPU computation:
     sudo apt update
     sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand rocthrust
 
-.. _Installing Requirements on Mac OS X:
+After installing the ROCm SDK, please reboot your computer.
 
-Installing Requirements on Mac OS X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To make |es| run on Mac OS X 10.9 or higher, its dependencies can be
-installed using MacPorts. First, download the installer package
-appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it. Then, run the
+.. _Installing requirements on other Linux distributions:
+
+Installing requirements on other Linux distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please refer to the following Dockerfiles to find the minimum set of packages
+required to compile |es| on other Linux distributions:
+
+* `CentOS 7 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-7>`_
+* `Fedora 30 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-next>`_
+* `Debian 10 <https://github.com/espressomd/docker/blob/master/docker/debian-python3/Dockerfile-10>`_
+* `OpenSUSE Leap 15.1 <https://github.com/espressomd/docker/blob/master/docker/opensuse/Dockerfile-15.1>`_
+
+
+.. _Installing requirements on Mac OS X:
+
+Installing requirements on Mac OS X
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Preparation
+"""""""""""
+
+To make |es| run on Mac OS X 10.9 or higher, you need to install its
+dependencies. There are two possibilities for this, MacPorts and Homebrew.
+We recommend MacPorts, but if you already have Homebrew installed, you can use
+that too. To check whether you already have one or the other installed, run the
 following commands:
+
+.. code-block:: bash
+
+    test -e /opt/local/bin/port && echo "MacPorts is installed"
+    test -e /usr/local/bin/brew && echo "Homebrew is installed"
+
+If both are installed, you need to remove one of the two. To do that, run one
+of the following two commands:
+
+.. code-block:: bash
+
+    sudo port -f uninstall installed && rm -r /opt/local
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+
+If Homebrew is already installed, you should resolve any problems reported by
+the command
+
+.. code-block:: bash
+
+    brew doctor
+
+If Anaconda Python or the Python from www.python.org are installed, you
+will likely not be able to run |es|. Therefore, please uninstall them
+using the following commands:
+
+.. code-block:: bash
+
+    sudo rm -r ~/anaconda[23]
+    sudo rm -r /Library/Python
+
+If you want to install MacPorts, download the installer package
+appropriate for your Mac OS X version from
+https://www.macports.org/install.php and install it.
+
+If you want to install Homebrew, use the following commands.
+
+.. code-block:: bash
+
+    sudo xcode-select --install
+    sudo xcodebuild -license accept
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+Installing packages using MacPorts
+""""""""""""""""""""""""""""""""""
+
+Run the following commands:
 
 .. code-block:: bash
 
@@ -132,50 +199,29 @@ following commands:
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
-      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi
+      doxygen py37-opengl py37-sphinx gsl hdf5 +openmpi \
+      py37-matplotlib py37-ipython py37-jupyter
     sudo port select --set cython cython37
     sudo port select --set python3 python37
-    sudo port select --set pip pip37
-    sudo port select --set mpi openmpi-mp-fortran
+    sudo port select --set mpi openmpi-mp
 
-Alternatively, you can use Homebrew.
 
-.. code-block:: bash
-
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install cmake python@3 cython boost boost-mpi fftw \
-      doxygen gsl
-    brew install hdf5 --with-mpi
-    brew install numpy --without-python@2
-    ln -s /usr/local/bin/python2 /usr/local/bin/python
-    pip install --user PyOpenGL
-
-Note: If both MacPorts and Homebrew are installed, you will not be able to
-run |es|. Therefore, if you have both installed, please uninstall one
-or the other by running one of the following two commands:
+Installing packages using Homebrew
+""""""""""""""""""""""""""""""""""
 
 .. code-block:: bash
 
-    sudo port -f uninstall installed && rm -r /opt/local
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+    brew install cmake python cython boost boost-mpi fftw \
+      doxygen gsl numpy ipython jupyter
+    brew install hdf5
+    brew link --force cython
+    pip install PyOpenGL matplotlib
+
+Installing CUDA
+"""""""""""""""
 
 If your Mac has an Nvidia graphics card, you should also download and install the
 CUDA SDK [6]_ to make use of GPU computation.
-
-.. _Installing python dependencies:
-
-Installing python dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are a few python packages needed to e.g. build the documentation.
-To install the required packages as a non-root user execute the following
-command in |es|'s source directory:
-
-.. code-block:: bash
-
-    pip3 install -r requirements.txt --user --upgrade
 
 .. _Quick installation:
 
@@ -248,7 +294,7 @@ Configuring
 .. _myconfig.hpp\: Activating and deactivating features:
 
 :file:`myconfig.hpp`: Activating and deactivating features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
@@ -281,7 +327,7 @@ different configuration headers:
   .. code-block:: c++
 
     #define ELECTROSTATICS
-    #define LENNARD-JONES
+    #define LENNARD_JONES
 
 *  :file:`$builddir2/myconfig.hpp`:
 
@@ -317,7 +363,7 @@ and then in the Python interpreter:
 .. _Features:
 
 Features
-~~~~~~~~
+--------
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
@@ -390,14 +436,6 @@ General features
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
--  ``VIRTUAL_SITES_COM`` Virtual sites are particles, the position and velocity of which is
-   not obtained by integrating equations of motion. Rather, they are
-   placed using the position (and orientation) of other particles. The
-   feature allows to place a virtual particle into the center of mass of
-   a set of other particles.
-
-   .. seealso:: :ref:`Virtual sites`
-
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
    placed using the position (and orientation) of other particles. The
@@ -443,8 +481,6 @@ Fluid dynamics and fluid structure interaction
 -  ``LB_BOUNDARIES``
 
 -  ``LB_BOUNDARIES_GPU``
-
--  ``AFFINITY``
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
@@ -534,7 +570,7 @@ Finally, there is a flag for debugging:
 
 
 Features marked as experimental
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
@@ -542,7 +578,7 @@ Some of the above features are marked as EXPERIMENTAL. Activating these features
 .. _cmake:
 
 cmake
-~~~~~
+^^^^^
 
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
@@ -574,7 +610,7 @@ Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
 .. _ccmake:
 
 ccmake
-~~~~~~
+^^^^^^
 
 Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
@@ -674,7 +710,7 @@ targets are available:
     subdirectory.
 
 ``sphinx``
-    Creates the `sphinx` code documentation in the :file:`doc/sphinx`
+    Creates the ``sphinx`` code documentation in the :file:`doc/sphinx`
     subdirectory.
 
 ``tutorials``
@@ -732,7 +768,7 @@ button to execute the current block, or use the keyboard shortcut Shift+Enter.
 If the current block is a code block, the ``In [ ]`` label to the left will
 change to ``In [*]`` while the code is being executed, and become ``In [1]``
 once the execution has completed. The number increments itself every time a
-code cell is executed. This bookeeping is extremely useful when modifying
+code cell is executed. This bookkeeping is extremely useful when modifying
 previous code cells, as it shows which cells are out-of-date. It's also
 possible to run all cells by clicking on the "Run" drop-down menu, then on
 "Run All Below". This will change all labels to ``In [*]`` to show that the

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -1382,69 +1382,6 @@ IF SOFT_SPHERE == 1:
             """
             return {"a", "n", "cutoff"}
 
-IF AFFINITY == 1:
-
-    cdef class AffinityInteraction(NonBondedInteraction):
-
-        def validate_params(self):
-            if self._params["affinity_cut"] < 0:
-                raise ValueError("Affinity cutoff has to be >=0")
-            if self._params["affinity_type"] < 0:
-                raise ValueError("Affinity type has to be >=0")
-            if self._params["affinity_kappa"] < 0:
-                raise ValueError("Affinity kappa has to be >=0")
-            if self._params["affinity_r0"] < 0:
-                raise ValueError("Affinity r0 has to be >=0")
-            if self._params["affinity_Kon"] < 0:
-                raise ValueError("Affinity Kon has to be >=0")
-            if self._params["affinity_Koff"] < 0:
-                raise ValueError("Affinity Koff has to be >=0")
-            if self._params["affinity_maxBond"] < 0:
-                raise ValueError("Affinity maxBond has to be >=0")
-            return True
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(self._part_types[0],
-                                          self._part_types[1])
-            return {
-                "affinity_type": ia_params.affinity.type,
-                "affinity_kappa": ia_params.affinity.kappa,
-                "affinity_r0": ia_params.affinity.r0,
-                "affinity_Kon": ia_params.affinity.Kon,
-                "affinity_Koff": ia_params.affinity.Koff,
-                "affinity_maxBond": ia_params.affinity.maxBond,
-                "affinity_cut": ia_params.affinity.cut}
-
-        def is_active(self):
-            return (self._params["affinity_kappa"] > 0)
-
-        def _set_params_in_es_core(self):
-            if affinity_set_params(self._part_types[0],
-                                   self._part_types[1],
-                                   self._params["affinity_type"],
-                                   self._params["affinity_kappa"],
-                                   self._params["affinity_r0"],
-                                   self._params["affinity_Kon"],
-                                   self._params["affinity_Koff"],
-                                   self._params["affinity_maxBond"],
-                                   self._params["affinity_cut"]):
-                raise Exception("Could not set Affinity parameters")
-
-        def default_params(self):
-            return {}
-
-        def type_name(self):
-            return "Affinity"
-
-        def valid_keys(self):
-            return {"affinity_type", "affinity_kappa", "affinity_r0",
-                    "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
-
-        def required_keys(self):
-            return {"affinity_type", "affinity_kappa", "affinity_r0",
-                    "affinity_Kon", "affinity_Koff", "affinity_maxBond", "affinity_cut"}
-
 
 IF MEMBRANE_COLLISION == 1:
 
@@ -1693,8 +1630,6 @@ class NonBondedInteractionHandle:
                 _type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
-        IF AFFINITY:
-            self.affinity = AffinityInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
             self.generic_lennard_jones = GenericLennardJonesInteraction(
                 _type1, _type2)
@@ -2274,9 +2209,9 @@ IF THOLE:
             scaling_coeff : :obj:`float`
                 The factor used in the Thole damping function between
                 polarizable particles i and j. Usually calculated by
-                the polarizabilities alpha_i, alpha_j and damping
-                parameters  a_i, a_j via
-                scaling_coeff = (a_i+a_j)/2 / ((alpha_i*alpha_j)^(1/2))^(1/3)
+                the polarizabilities :math:`\\alpha_i`, :math:`\\alpha_j`
+                and damping parameters :math:`a_i`, :math:`a_j` via
+                :math:`s_{ij} = \\frac{(a_i+a_j)/2}{((\\alpha_i\\cdot\\alpha_j)^{1/2})^{1/3}}`
             q1q2: :obj:`float`
                 Charge factor of the involved charges. Has to be set because
                 it acts only on the portion of the Drude core charge that is
@@ -2553,9 +2488,9 @@ class _TabulatedBase(BondedInteraction):
     max : :obj:`float`
         The maximal interaction distance. Has to be pi for angles and 2pi for
         dihedrals.
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table.
 
     """
@@ -2638,9 +2573,9 @@ class TabulatedDistance(_TabulatedBase):
         The minimal interaction distance.
     max : :obj:`float`
         The maximal interaction distance.
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table.
 
     """
@@ -2672,9 +2607,9 @@ class TabulatedAngle(_TabulatedBase):
     Parameters
     ----------
 
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table for the range :math:`0-\\pi`.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table for the range :math:`0-\\pi`.
 
     """
@@ -2712,9 +2647,9 @@ class TabulatedDihedral(_TabulatedBase):
     Parameters
     ----------
 
-    energy: array_like :obj:`float`
+    energy: array_like of :obj:`float`
         The energy table for the range :math:`0-2\\pi`.
-    force: array_like :obj:`float`
+    force: array_like of :obj:`float`
         The force table for the range :math:`0-2\\pi`.
 
     """
@@ -2785,9 +2720,9 @@ IF TABULATED == 1:
                 The minimal interaction distance.
             max : :obj:`float`,
                 The maximal interaction distance.
-            energy: array_like :obj:`float`
+            energy: array_like of :obj:`float`
                 The energy table.
-            force: array_like :obj:`float`
+            force: array_like of :obj:`float`
                 The force table.
 
             """
@@ -3384,8 +3319,7 @@ IF MEMBRANE_COLLISION == 1:
             self._params = {}
 
         def _get_params_from_es_core(self):
-            return \
-                {}
+            return {}
 
         def _set_params_in_es_core(self):
             oif_out_direction_set_params(
@@ -3524,7 +3458,7 @@ class BondedInteractions:
         # type of key must be int
         if not is_valid_type(key, int):
             raise ValueError(
-                "Index to BondedInteractions[] has to ba an integer referring to a bond id")
+                "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
         # Value must be subclass off BondedInteraction
         if not isinstance(value, BondedInteraction):

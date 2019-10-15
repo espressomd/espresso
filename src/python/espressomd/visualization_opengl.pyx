@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import OpenGL.GLUT
 import OpenGL.GLU
 import OpenGL.GL
@@ -102,7 +118,7 @@ class openGLLive:
     quality_constraints : :obj:`int`, optional
         The number of subdivisions for primitive constraints.
     constraint_type_colors : array_like :obj:`float`, optional
-        Colors of the constaints by type.
+        Colors of the constraints by type.
     constraint_type_materials : array_like :obj:`str`, optional
         Materials of the constraints by type.
     draw_bonds : :obj:`bool`, optional

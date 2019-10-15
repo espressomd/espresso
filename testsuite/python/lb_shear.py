@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -145,7 +145,7 @@ class LBShearCommon:
         # Krüger, Timm, et al. "The lattice Boltzmann method." Springer International Publishing 10 (2017): 978-3.
         # and
         # https://de.wikipedia.org/wiki/Navier-Stokes-Gleichungen
-        # note that for an imcompressible fluid the viscous stress tensor is
+        # note that for an incompressible fluid the viscous stress tensor is
         # defined as \sigma = -p 1 + \mu [\nabla * u + (\nabla * u)^T]
         # where 'p' is the static pressure, '\mu' is the dynamic viscosity,
         # '*' denotes the outer product and 'u' is the velocity field

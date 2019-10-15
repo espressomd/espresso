@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,6 +26,7 @@ from math import cos, pi, sin
 import numpy as np
 import os
 import sys
+import argparse
 
 import espressomd
 from espressomd import assert_features
@@ -59,36 +60,36 @@ def a2quat(phi, theta):
 
 ##########################################################################
 
-# Read in the active velocity from the command prompt
-if len(sys.argv) != 2:
-    print("Usage:", sys.argv[0], "<vel> (0 <= vel < 10.0)")
-    exit()
+parser = argparse.ArgumentParser()
+parser.add_argument("vel", type=float, help="Velocity of active particles.")
+args = parser.parse_args()
 
-vel = float(sys.argv[1])
-
+vel = args.vel
 ##########################################################################
 
 # create an output folder
 outdir = "./RESULTS_RECTIFICATION"
-try:
-    os.makedirs(outdir)
-except BaseException:
-    print("INFO: Directory \"{}\" exists".format(outdir))
+os.makedirs(outdir, exist_ok=True)
 
-# Setup the box (we pad the diameter to ensure that the LB boundaries
-# and therefore the constraints, are away from the edge of the box)
-length = 100
-diameter = 20
-prod_steps = 500
-prod_length = 500
-dt = 0.01
+# Setup the box (we pad the diameter to ensure that the constraints
+# are away from the edge of the box)
+
+LENGTH = 100
+DIAMETER = 20
+PADDING = 2
+PROD_STEPS = 500
+PROD_LENGTH = 500
+TIME_STEP = 0.005
 
 # Setup the MD parameters
-system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
-system.set_random_state_PRNG()
-system.box_l = [length, diameter + 4, diameter + 4]
+
+BOX_L = np.array(
+    [LENGTH + 2 * PADDING,
+     DIAMETER + 2 * PADDING,
+     DIAMETER + 2 * PADDING])
+system = espressomd.System(box_l=BOX_L)
 system.cell_system.skin = 0.1
-system.time_step = dt
+system.time_step = TIME_STEP
 system.min_global_cut = 0.5
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
@@ -102,32 +103,34 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 ##########################################################################
 
 cylinder = Cylinder(
-    center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
-    axis=[1, 0, 0], radius=diameter / 2.0, length=length, direction=-1)
+    center=0.5 * BOX_L,
+    axis=[1, 0, 0], radius=DIAMETER / 2.0, length=LENGTH, direction=-1)
 system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
-wall = Wall(dist=2, normal=[1, 0, 0])
-system.constraints.add(shape=wall, particle_type=2)
+wall = Wall(dist=PADDING, normal=[1, 0, 0])
+system.constraints.add(shape=wall, particle_type=1)
 
-wall = Wall(dist=-(length - 2), normal=[-1, 0, 0])
-system.constraints.add(shape=wall, particle_type=3)
+wall = Wall(dist=-(LENGTH + PADDING), normal=[-1, 0, 0])
+system.constraints.add(shape=wall, particle_type=1)
 
 # Setup cone
-irad = 4.0
-angle = pi / 4.0
-orad = (diameter - irad) / sin(angle)
-shift = 0.25 * orad * cos(angle)
+IRAD = 4.0
+ANGLE = pi / 4.0
+ORAD = (DIAMETER - IRAD) / sin(ANGLE)
+SHIFT = 0.25 * ORAD * cos(ANGLE)
 
 hollow_cone = HollowCone(
-    center=[length / 2.0 + shift, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
+    center=[BOX_L[0] / 2.0 + SHIFT,
+            BOX_L[1] / 2.0,
+            BOX_L[2] / 2.0],
     axis=[-1, 0, 0],
-    outer_radius=orad,
-    inner_radius=irad,
+    outer_radius=ORAD,
+    inner_radius=IRAD,
     width=2.0,
-    opening_angle=angle,
+    opening_angle=ANGLE,
     direction=1)
-system.constraints.add(shape=hollow_cone, particle_type=4)
+system.constraints.add(shape=hollow_cone, particle_type=1)
 
 ##########################################################################
 #
@@ -137,19 +140,13 @@ system.constraints.add(shape=hollow_cone, particle_type=4)
 #
 ##########################################################################
 
-sig = 0.5
-cut = 1.12246 * sig
-eps = 1.0
-shift = 0.25
+SIGMA = 0.5
+CUTOFF = 1.12246 * SIGMA
+EPSILON = 1
+SHIFT = 0.25
 
 system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
-system.non_bonded_inter[0, 2].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
-system.non_bonded_inter[0, 3].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
-system.non_bonded_inter[0, 4].lennard_jones.set_params(
-    epsilon=eps, sigma=sig, cutoff=cut, shift=shift)
+    epsilon=EPSILON, sigma=SIGMA, cutoff=CUTOFF, shift=SHIFT)
 
 ##########################################################################
 #
@@ -161,17 +158,17 @@ system.non_bonded_inter[0, 4].lennard_jones.set_params(
 #
 ##########################################################################
 
-npart = 500
-for cntr in range(npart):
+N_PART = 500
+for cntr in range(N_PART):
     if cntr % 2 == 0:
-        x = 0.25 * length
+        x = 0.25 * BOX_L[0]
     else:
-        x = 0.75 * length
+        x = 0.75 * BOX_L[0]
 
-    y = (diameter + 4) / 2.0
-    z = (diameter + 4) / 2.0
+    y = BOX_L[1] / 2.
+    z = BOX_L[2] / 2.
 
-    theta = float(2 * np.random.random() * np.pi)
+    theta = float(np.random.random() * np.pi)
     phi = float(2 * np.random.random() * np.pi)
     quats = a2quat(theta, phi)
 
@@ -181,7 +178,7 @@ for cntr in range(npart):
 ##########################################################################
 
 # Equilibrate
-system.integrator.run(25 * prod_length)
+system.integrator.run(25 * PROD_LENGTH)
 
 # Output the CMS coordinates
 with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
@@ -192,28 +189,28 @@ with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
     # Production run
     dev_sum = 0.0
     dev_av = 0.0
-    time_0 = system.time
-    for i in range(prod_steps):
+    system.time = 0.
+    for i in range(PROD_STEPS):
         if (i + 1) % 5 == 0:
-            print('\rprogress: %.0f%%' % ((i + 1) * 100. / prod_steps), end='')
+            print('\rprogress: %.0f%%' % ((i + 1) * 100. / PROD_STEPS), end='')
             sys.stdout.flush()
 
         # We output the coordinate of the center of mass in
         # the direction of the long axis, here we consider
-        # the deviation from the center
+        # the deviation from the center (keep the padding in mind)
 
-        dev = system.galilei.system_CMS()[0] - 0.5 * length
+        dev = system.galilei.system_CMS()[0] - 0.5 * BOX_L[0]
 
         if i > 0:
             dev_sum = dev_sum + dev
             dev_av = dev_sum / i
 
-        time = system.time - time_0
+        print("{} {} {}".format(system.time, dev, dev_av), file=outfile)
 
-        print("{} {} {}".format(time, dev, dev_av), file=outfile)
+        system.integrator.run(PROD_LENGTH)
 
-        system.integrator.run(prod_length)
+print()
 
 # Output the final configuration
+
 system.part.writevtk("{}/points_{}.vtk".format(outdir, vel), types=[0])
-print()

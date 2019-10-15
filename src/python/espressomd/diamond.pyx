@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from .interactions cimport bonded_ia_params
 from espressomd.utils cimport handle_errors
@@ -40,7 +56,7 @@ cdef class Diamond:
             if k in self.valid_keys():
                 self._params[k] = kwargs[k]
             else:
-                raise KeyError("%s is not a vaild key" % k)
+                raise KeyError("%s is not a valid key" % k)
 
         self.validate_params()
         self._set_params_in_es_core()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -39,6 +39,7 @@ cdef class Integrator:
         self._steepest_descent_params = {}
         self._isotropic_npt_params = {}
 
+    # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         state = {}
         state['_method'] = self._method
@@ -47,15 +48,18 @@ cdef class Integrator:
         return state
 
     def __setstate__(self, state):
+        self.__init__()
         self._method = state['_method']
         if self._method == "STEEPEST_DESCENT":
-            self.set_steepest_descent(state['_steepest_descent_params'])
+            self.set_steepest_descent(**state['_steepest_descent_params'])
         elif self._method == "NVT":
             self.set_nvt()
         elif self._method == "NPT":
-            npt_params = state['_isotropic_npt_params']
-            self.set_isotropic_npt(npt_params['ext_pressure'], npt_params[
-                                   'piston'], direction=npt_params['direction'], cubic_box=npt_params['cubic_box'])
+            self.set_isotropic_npt(**state['_isotropic_npt_params'])
+
+    def get_state(self):
+        """Returns the integrator status."""
+        return self.__getstate__()
 
     def run(self, steps=1, recalc_forces=False, reuse_forces=False):
         """
@@ -140,7 +144,9 @@ cdef class Integrator:
         piston : :obj:`float`
             The mass of the applied piston.
         direction : (3,) array_like of :obj:`int`, optional
-            Set the box geometry for non-cubic boxes.
+            Select which dimensions are allowed to fluctuate by assigning
+            them to ``1``. In the special case where all dimensions are set
+            to ``0`` (default), they are all set to ``1`` in the core.
         cubic_box : :obj:`bool`, optional
             If this optional parameter is true, a cubic box is assumed.
 

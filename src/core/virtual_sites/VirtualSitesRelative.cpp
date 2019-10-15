@@ -1,24 +1,25 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "VirtualSitesRelative.hpp"
 #include "forces_inline.hpp"
+#include <utils/math/quaternion.hpp>
 #include <utils/math/sqr.hpp>
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -60,20 +61,9 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(
         "virtual_sites_relative.cpp - update_mol_pos_particle(): No real "
         "particle associated with virtual site.\n");
   }
-  multiply_quaternions(p_real->r.quat, p.p.vs_relative.quat, p.r.quat);
-#ifdef DIPOLES
-  // When dipoles are enabled, update dipole moment
-#endif
+  p.r.quat = multiply_quaternions(p_real->r.quat, p.p.vs_relative.quat);
 }
 
-// This is the "relative" implementation for virtual sites.
-// Virtual particles are placed relative to the position of a real particle
-
-// Obtain the real particle from which a virtual particle derives it's position
-// Note: for now, we use the mol_di property of Particle
-
-// Update the pos of the given virtual particle as defined by the real
-// particles in the same molecule
 void VirtualSitesRelative::update_pos(Particle &p) const {
   // First obtain the real particle responsible for this virtual particle:
   // Find the 1st real particle in the topology for the virtual particle's
@@ -93,8 +83,9 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // of the real particle with the quaternion of the virtual particle, which
   // specifies the relative orientation.
   auto const director =
-      convert_quat_to_director(
-          multiply_quaternions(p_real->r.quat, p.p.vs_relative.rel_orientation))
+      Utils::convert_quaternion_to_director(
+          Utils::multiply_quaternions(p_real->r.quat,
+                                      p.p.vs_relative.rel_orientation))
           .normalize();
 
   auto const new_pos = p_real->r.p + director * p.p.vs_relative.distance;
@@ -108,8 +99,6 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
     set_resort_particles(Cells::RESORT_LOCAL);
 }
 
-// Update the vel of the given virtual particle as defined by the real
-// particles in the same molecule
 void VirtualSitesRelative::update_vel(Particle &p) const {
   // First obtain the real particle responsible for this virtual particle:
   Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
@@ -157,9 +146,6 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
     }
   }
 }
-
-// Setup the virtual_sites_relative properties of a particle so that the given
-// virtual particle will follow the given real particle
 
 // Rigid body contribution to scalar pressure and stress tensor
 void VirtualSitesRelative::pressure_and_stress_tensor_contribution(

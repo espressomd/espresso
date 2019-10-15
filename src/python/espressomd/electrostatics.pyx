@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -715,7 +715,7 @@ IF ELECTROSTATICS:
                 raise ValueError("Dielectric constants should be > 0!")
             if self._params["dielectric_contrast_on"] == 1 and (
                     self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
-                raise ValueError("Dielectric constrast not set!")
+                raise ValueError("Dielectric contrast not set!")
             if self._params["dielectric"] and self._params["dielectric_contrast_on"]:
                 raise ValueError(
                     "dielectric and dielectric_contrast are mutually exclusive!")

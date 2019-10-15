@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -37,37 +37,31 @@ from espressomd.shapes import Cylinder, Wall, HollowCone
 # Setup constants
 
 outdir = "./RESULTS_RECTIFICATION"
-try:
-    os.makedirs(outdir)
-except BaseException:
-    print("INFO: Directory \"{}\" exists".format(outdir))
+os.makedirs(outdir, exist_ok=True)
 
-# Setup the box (we pad the diameter to ensure that the LB boundaries
-# and therefore the constraints, are away from the edge of the box)
+# Setup the box (we pad the geometry to make sure
+# the LB boundaries are away from the edges of the box)
 
-length = 100
-diameter = 20
-dt = 0.01
+LENGTH = 100
+DIAMETER = 20
+padding = 2
+TIME_STEP = 0.01
 
 # Setup the MD parameters
 
-system = espressomd.System(box_l=[length, diameter + 4, diameter + 4])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
+BOX_L = np.array(
+    [LENGTH + 2 * padding,
+     DIAMETER + 2 * padding,
+     DIAMETER + 2 * padding])
+system = espressomd.System(box_l=BOX_L)
 system.cell_system.skin = 0.1
-system.time_step = dt
+system.time_step = TIME_STEP
 system.min_global_cut = 0.5
 
-# Setup LB parameters (these are irrelevant here) and fluid
+# Setup LB fluid
 
-agrid = 1
-vskin = 0.1
-frict = 20.0
-visco = 1.0
-densi = 1.0
-
-lbf = lb.LBFluidGPU(agrid=agrid, dens=densi, visc=visco, tau=dt)
+lbf = lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=TIME_STEP)
 system.actors.add(lbf)
-system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 ##########################################################################
 #
@@ -83,34 +77,34 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=frict, seed=42)
 
 cylinder = LBBoundary(
     shape=Cylinder(
-        center=[length / 2.0, (diameter + 4) / 2.0, (diameter + 4) / 2.0],
-        axis=[1, 0, 0], radius=diameter / 2.0, length=length, direction=-1))
+        center=BOX_L / 2.,
+        axis=[1, 0, 0], radius=DIAMETER / 2.0, length=LENGTH, direction=-1))
 system.lbboundaries.add(cylinder)
 
 # Setup walls
 
 ## Exercise 1 ##
-# Set up two walls to cap the cylinder a distance of 2 away
-# from the edge of the box, with a normal along the x-axis
+# Set up two walls to cap the cylinder respecting the padding
+# between them and the edge of the box, with a normal along the x-axis
 wall = ...
 
 # Setup cone
 
-irad = 4.0
-angle = pi / 4.0
-orad = (diameter - irad) / sin(angle)
-shift = 0.25 * orad * cos(angle)
+IRAD = 4.0
+ANGLE = pi / 4.0
+ORAD = (DIAMETER - IRAD) / sin(ANGLE)
+SHIFT = 0.25 * ORAD * cos(ANGLE)
 
 hollow_cone = LBBoundary(
     shape=HollowCone(
-        center=[length / 2.0 + shift,
-                (diameter + 4) / 2.0,
-                (diameter + 4) / 2.0],
+        center=[BOX_L[0] / 2. + SHIFT,
+                BOX_L[1] / 2.,
+                BOX_L[2] / 2.,
         axis=[-1, 0, 0],
-        outer_radius=orad,
-        inner_radius=irad,
+        outer_radius=ORAD,
+        inner_radius=IRAD,
         width=2.0,
-        opening_angle=angle,
+        opening_angle=ANGLE,
         direction=1))
 system.lbboundaries.add(hollow_cone)
 

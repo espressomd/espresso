@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,7 +22,7 @@ from espressomd.galilei import GalileiTransform
 
 class AnalyzeMassRelated(ut.TestCase):
 
-    """Test analysis routines that involve particle mass. E.g., center of mass, intertia tensor, ...
+    """Test analysis routines that involve particle mass. E.g., center of mass, inertia tensor, ...
     Checks that virtual sites (which do not have meaningful mass, are skipped
 
     """

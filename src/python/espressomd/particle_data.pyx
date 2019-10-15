@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -43,7 +43,6 @@ def _COORD_FIXED(coord):
 
 
 COORDS_FIX_MASK = _COORD_FIXED(0) | _COORD_FIXED(1) | _COORD_FIXED(2)
-COORDS_ALL_FIXED = _COORD_FIXED(0) & _COORD_FIXED(1) & _COORD_FIXED(2)
 PARTICLE_EXT_TORQUE = 16
 ROT_X = 2
 ROT_Y = 4
@@ -100,7 +99,7 @@ cdef class ParticleHandle:
             Nonbonded interactions act between different types of particles.
 
         .. note::
-           The value of `type` has to be an integer >= 0.
+           The value of ``type`` has to be an integer >= 0.
 
         """
 
@@ -122,7 +121,7 @@ cdef class ParticleHandle:
         mol_id : :obj:`int`
             The particle ``mol_id`` is used to differentiate between
             particles belonging to different molecules, e.g. when virtual
-            sites are used, or object-in-fuid cells. The default
+            sites are used, or object-in-fluid cells. The default
             ``mol_id`` for all particles is 0.
 
         .. note::
@@ -146,7 +145,7 @@ cdef class ParticleHandle:
         The unwrapped (not folded into central box) particle position.
 
         pos : (3,) array_like of :obj:`float`
-            The particles's absolute position.
+            The particles' absolute position.
 
         """
 
@@ -170,10 +169,10 @@ cdef class ParticleHandle:
         The wrapped (folded into central box) position vector of a particle.
 
         pos : (3,) array_like of :obj:`float`
-            The particles's position.
+            The particles' position.
 
         .. note::
-           Setting the folded position is ambiguous and is thus not possible, please use `pos`.
+           Setting the folded position is ambiguous and is thus not possible, please use ``pos``.
 
         Examples
         --------
@@ -229,7 +228,7 @@ cdef class ParticleHandle:
         The particle velocity in the lab frame.
 
         v : (3,) array_like of :obj:`float`
-            The particles's velocity
+            The particles' velocity
 
         .. note::
            The velocity remains variable and will be changed during integration.
@@ -259,7 +258,7 @@ cdef class ParticleHandle:
         .. note::
            Whereas the velocity is modified with respect to the velocity you set
            upon integration, the force it recomputed during the integration step and any
-           force set in this way is immediatly lost at the next integration step.
+           force set in this way is immediately lost at the next integration step.
 
         """
 
@@ -282,13 +281,13 @@ cdef class ParticleHandle:
 
         bonds : list/tuple of tuples/lists
             a bond tuple is specified as a bond identifier associated with
-            a particle `(bond_ID, part_ID)`. A single particle may contain
+            a particle ``(bond_ID, part_ID)``. A single particle may contain
             multiple such tuples.
 
         See Also
         --------
-        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a `Particle`
-        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a `Particle`
+        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a ``Particle``
+        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a ``Particle``
 
         .. note::
            Bond ids have to be an integer >= 0.
@@ -523,13 +522,13 @@ cdef class ParticleHandle:
             """
             The particle rotational inertia.
 
-            rintertia : (3,) array_like of :obj:`float`
+            rinertia : (3,) array_like of :obj:`float`
 
             Sets the diagonal elements of this particles rotational inertia
             tensor. These correspond with the inertial moments along the
             coordinate axes in the particle’s co-rotating coordinate system.
-            When the particle's quaternions are set to 1 0 0 0, the co-rotating
-            and the fixed (lab) frame are co-aligned.
+            When the particle's quaternions are set to ``[1, 0, 0, 0,]``, the
+            co-rotating and the fixed (lab) frames are co-aligned.
 
             .. note::
                This needs the feature ``ROTATIONAL_INERTIA``.
@@ -570,25 +569,6 @@ cdef class ParticleHandle:
                 return np.array(
                     [out_direction[0], out_direction[1], out_direction[2]])
 
-    IF AFFINITY:
-        property bond_site:
-            """OIF bond_site"""
-
-            def __set__(self, _bond_site):
-                cdef double bond_site[3]
-                check_type_or_throw_except(
-                    _bond_site, 3, float, "bond_site has to be 3 floats")
-                for i in range(3):
-                    bond_site[i] = _bond_site[i]
-                set_particle_affinity(self.id, bond_site) 
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * bond_site = NULL
-                pointer_to_bond_site(self.particle_data, bond_site)
-                return array_locked([bond_site[0], bond_site[1], bond_site[2]])
-
-
 # Charge
     property q:
         """
@@ -621,7 +601,7 @@ cdef class ParticleHandle:
 
             mu_E : :obj:`float`
 
-            This effectivly acts as a velocity offset between
+            This effectively acts as a velocity offset between
             a lattice-Boltzmann fluid and the particle. Has only
             an effect if LB is turned on.
 
@@ -699,10 +679,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, q):
-                if len(q) != 4:
-                    raise ValueError(
-                        "vs_quat has to be an array-like of length 4.")
-                cdef double _q[4]
+                check_type_or_throw_except(
+                    q, 4, float, "vs_quat has to be an array-like of length 4")
+                cdef Vector4d _q
                 for i in range(4):
                     _q[i] = q[i]
                 set_particle_vs_quat(self._id, _q)
@@ -736,13 +715,14 @@ cdef class ParticleHandle:
                 _relto = x[0]
                 _dist = x[1]
                 q = x[2]
-                cdef double _q[4]
+                cdef Vector4d _q
                 for i in range(4):
                     _q[i] = q[i]
 
                 if is_valid_type(_relto, int) and is_valid_type(
                         _dist, float) and all(is_valid_type(fq, float) for fq in q):
-                    set_particle_vs_relative(self._id, _relto, _dist, _q) 
+
+                    set_particle_vs_relative(self._id, _relto, _dist, _q)
                 else:
                     raise ValueError(
                         "vs_relative needs input like id<int>,distance<float>,(q1<float>,q2<float>,q3<float>,q4<float>).")
@@ -764,8 +744,7 @@ cdef class ParticleHandle:
             """
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
-            if vs_relate_to(self._id, _relto):
-                handle_errors("vs_relative setup failed.")
+            vs_relate_to(self._id, _relto)
 
     IF DIPOLES:
         property dip:
@@ -924,7 +903,7 @@ cdef class ParticleHandle:
                 """
                 The body-fixed frictional coefficient used in the Langevin thermostat.
 
-                gamma : `float` or (3,) array_like of :obj:`float`
+                gamma : :obj:`float` or (3,) array_like of :obj:`float`
 
                 .. note::
                     This needs features ``LANGEVIN_PER_PARTICLE`` and
@@ -988,7 +967,7 @@ cdef class ParticleHandle:
                     """
                     The particle translational frictional coefficient used in the Langevin thermostat.
 
-                    gamma_rot : :obj:`float` of (3,) array_like of :obj:`float`
+                    gamma_rot : :obj:`float` or (3,) array_like of :obj:`float`
 
                     .. note::
                         This needs features ``LANGEVIN_PER_PARTICLE``,
@@ -1201,10 +1180,10 @@ cdef class ParticleHandle:
             f_swim : :obj:`float`
                 Achieve a constant velocity by imposing a constant
                 force term ``f_swim`` that is balanced by friction of a
-                (Langevin) thermostat. This exludes the option ``v_swim``.
+                (Langevin) thermostat. This excludes the option ``v_swim``.
             v_swim : :obj:`float`
                 Achieve a constant velocity by imposing a constant terminal
-                velocity ``v_swim``. This exludes the option ``f_swim``.
+                velocity ``v_swim``. This excludes the option ``f_swim``.
             mode : :obj:`str`, \{'pusher', 'puller'\}
                 The LB flow field can be generated by a pushing or a
                 pulling mechanism, leading to change in the sign of the
@@ -1344,8 +1323,8 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        add_bond : Delete an unverified bond held by the `Particle`.
-        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
+        add_bond : Delete an unverified bond held by the ``Particle``.
+        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
 
         """
 
@@ -1375,8 +1354,8 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        delete_bond : Delete an unverified bond held by the `Particle`.
-        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
+        delete_bond : Delete an unverified bond held by the ``Particle``.
+        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
 
         """
 
@@ -1393,9 +1372,9 @@ cdef class ParticleHandle:
         Checks the validity of the given bond:
 
             - If the bondtype is given as an object or a numerical id
-            - If all partners are of type int
+            - If all partners are of type :obj:`int`
             - If the number of partners satisfies the bond
-            - If the bond type used exists (is lower than n_bonded_ia)
+            - If the bond type used exists (is lower than ``n_bonded_ia``)
             - If the number of bond partners fits the bond type
 
         Throws an exception if any of these are not met.
@@ -1455,7 +1434,7 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        bonds : `Particle` property containing a list of all current bonds help by `Particle`.
+        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
 
         Examples
         --------
@@ -1585,9 +1564,9 @@ cdef class ParticleHandle:
 
             Parameters
             ----------
-            axis : array-like
+            axis : (3,) array_like of :obj:`float`
 
-            angle : float
+            angle : :obj:`float`
 
             """
             cdef Vector3d a
@@ -1973,7 +1952,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         >>> system.part.writevtk("part_type_2.vtk", types=[2])
         >>> system.part.writevtk("part_all.vtk")
 
-        .. todo:: `move to ./io/writer/`
+        .. todo:: move to ``./io/writer/``
 
         """
 
