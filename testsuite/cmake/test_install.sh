@@ -23,15 +23,11 @@ source BashUnitTests.sh
 function test_install() {
   local filepaths=("@CMAKE_INSTALL_PREFIX@/bin/pypresso" \
                    "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/EspressoCore.so" \
+                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/_init.so" \
+                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/__init__.py"
                   )
-  if [ "@TESTING_PYTHON@" = "TRUE" ]
-  then
-    filepaths+=("@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/_init.so" \
-                "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/__init__.py"
-               )
-  fi
-  for filepath in ${filepaths[@]}
-  do
+
+  for filepath in ${filepaths[@]}; do
     assert_file_exists "${filepath}"
   done
 
@@ -42,4 +38,3 @@ function test_install() {
 
 # run tests
 run_test_suite
-
