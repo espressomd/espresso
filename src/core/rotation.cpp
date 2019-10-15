@@ -175,14 +175,9 @@ inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
   p.f.torque = Utils::Vector3d{};
 
   if (thermo_switch & THERMO_LANGEVIN) {
-#if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
-    if (!p.p.is_virtual)
-#endif
-    {
-      friction_thermo_langevin_rotation(p);
+    friction_thermo_langevin_rotation(p);
 
-      p.f.torque += t;
-    }
+    p.f.torque += t;
   } else {
     p.f.torque = t;
   }

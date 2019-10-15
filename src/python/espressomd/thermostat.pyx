@@ -424,7 +424,6 @@ cdef class Thermostat:
                 Friction coefficient of the bath
             gammav : :obj:`float`
                 Artificial friction coefficient for the volume fluctuations.
-                Mass of the artificial piston.
 
             """
 
