@@ -27,9 +27,9 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
-#include "particle_data.hpp"
 
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>

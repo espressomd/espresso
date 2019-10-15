@@ -27,8 +27,8 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "thermostat.hpp"
 #include "particle_data.hpp"
+#include "thermostat.hpp"
 
 #include <utils/math/sqr.hpp>
 

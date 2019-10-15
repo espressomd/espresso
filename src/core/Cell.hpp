@@ -107,10 +107,6 @@ public:
    * @brief All neighbors of the cell.
    */
   neighbors_type &neighbors() { return m_neighbors; }
-
-  void resize(size_t size) {
-    realloc_particlelist(static_cast<ParticleList *>(this), this->n = size);
-  }
 };
 
 #endif

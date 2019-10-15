@@ -21,10 +21,10 @@ struct ParticleList {
 
   Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
 
-  int resize(int size) {
-/** granularity of the particle buffers in particles */
-    constexpr int PART_INCREMENT  = 8;
+  /** granularity of the particle buffers in particles */
+  static constexpr int INCREMENT = 8;
 
+  int resize(int size) {
     assert(size >= 0);
     int old_max = max;
     Particle *old_start = part;
@@ -35,12 +35,10 @@ struct ParticleList {
         max = 0;
       else
         /* shrink not as fast, just lose half, rounded up */
-        max =
-            PART_INCREMENT *
-            (((max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
+        max = INCREMENT * (((max + size + 1) / 2 + INCREMENT - 1) / INCREMENT);
     } else
       /* round up */
-      max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
+      max = INCREMENT * ((size + INCREMENT - 1) / INCREMENT);
     if (max != old_max)
       part = Utils::realloc(part, sizeof(Particle) * max);
     return part != old_start;
@@ -49,9 +47,9 @@ struct ParticleList {
 
 /** Allocate storage for local particles and ghosts. This version
     does \em not care for the bond information to be freed if necessary.
-    \param plist the list on which to operate
+    \param l the list on which to operate
     \param size the size to provide at least. It is rounded
-    up to multiples of \ref PART_INCREMENT.
+    up to multiples of \ref ParticleList::INCREMENT.
     \return true iff particle addresses have changed */
 inline int realloc_particlelist(ParticleList *l, int size) {
   return assert(l), l->resize(size);

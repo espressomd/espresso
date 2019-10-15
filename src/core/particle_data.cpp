@@ -25,8 +25,8 @@
  */
 #include "particle_data.hpp"
 
-#include "Particle.hpp"
 #include "PartCfg.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -543,8 +543,7 @@ void realloc_local_particles(int part) {
 
   if (part >= max_local_particles) {
     /* round up part + 1 in granularity INCREMENT */
-    max_local_particles =
-        INCREMENT * ((part + INCREMENT) / INCREMENT);
+    max_local_particles = INCREMENT * ((part + INCREMENT) / INCREMENT);
     local_particles = Utils::realloc(local_particles,
                                      sizeof(Particle *) * max_local_particles);
 
