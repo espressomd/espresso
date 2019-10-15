@@ -23,8 +23,8 @@
 #include "config.hpp"
 #ifdef VIRTUAL_SITES_RELATIVE
 
+#include "Particle.hpp"
 #include "communication.hpp"
-#include "particle_data.hpp"
 #include "virtual_sites.hpp"
 
 /** @brief Virtual sites implementation for rigid bodies */

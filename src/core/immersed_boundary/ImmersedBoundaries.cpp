@@ -19,12 +19,12 @@
 
 #include "ImmersedBoundaries.hpp"
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 
@@ -133,7 +133,7 @@ void ImmersedBoundaries::calc_volumes() {
       // triangles, not all particles First round to check for volume
       // conservation and virtual Loop over all bonds of this particle Actually
       // j loops over the bond-list, i.e. the bond partners (see
-      // particle_data.hpp)
+      // Particle.hpp)
       int softID = -1;
       int j = 0;
       while (j < p1.bl.n) {
@@ -240,7 +240,7 @@ void ImmersedBoundaries::calc_volume_force() {
       // triangles, not all particles First round to check for volume
       // conservation and virtual Loop over all bonds of this particle Actually
       // j loops over the bond-list, i.e. the bond partners (see
-      // particle_data.hpp)
+      // Particle.hpp)
       int softID = -1;
       double volRef = 0.;
       double kappaV = 0.;

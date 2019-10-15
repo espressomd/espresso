@@ -26,10 +26,10 @@
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
+#include "Particle.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "serialization/ibm_cuda_particle_velocities_input.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 

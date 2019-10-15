@@ -16,21 +16,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# test espresso installation
-function helper_test_install_common() {
-  local root=$1
-  local filepaths=("${root}/bin/pypresso" \
-                   "${root}/@Python_SITEARCH@/espressomd/EspressoCore.so" \
+# load bash unit testing library
+source BashUnitTests.sh
+
+# test installation and Python bindings
+function test_install() {
+  local filepaths=("@CMAKE_INSTALL_PREFIX@/bin/pypresso" \
+                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/EspressoCore.so" \
+                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/_init.so" \
+                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/__init__.py"
                   )
-  if [ "@TESTING_PYTHON@" = "TRUE" ]
-  then
-    filepaths+=("${root}/@Python_SITEARCH@/espressomd/_init.so" \
-                "${root}/@Python_SITEARCH@/espressomd/__init__.py"
-               )
-  fi
-  for filepath in ${filepaths[@]}
-  do
+
+  for filepath in ${filepaths[@]}; do
     assert_file_exists "${filepath}"
   done
+
+  # check the espressomd module can be imported from pypresso
+  assert_return_code "@CMAKE_INSTALL_PREFIX@/bin/pypresso" -c "import espressomd"
 }
 
+# run tests
+run_test_suite

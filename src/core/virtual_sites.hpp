@@ -20,9 +20,10 @@
 #define VIRTUAL_SITES_HPP
 
 #include "config.hpp"
-#include <serialization/Particle.hpp>
 
 #ifdef VIRTUAL_SITES
+#include "Particle.hpp"
+
 #include "virtual_sites/VirtualSites.hpp"
 
 /** @brief get active virtual sites implementation */

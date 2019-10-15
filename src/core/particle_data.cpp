@@ -21,10 +21,10 @@
 /** \file
  *  Particles and particle lists.
  *
- *  The corresponding header file is particle_data.hpp.
+ *  The corresponding header file is Particle.hpp.
  */
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 #include "PartCfg.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"

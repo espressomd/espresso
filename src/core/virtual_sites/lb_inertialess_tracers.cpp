@@ -22,6 +22,7 @@
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
@@ -29,7 +30,6 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/sqr.hpp>
 

@@ -19,9 +19,9 @@
 #ifndef OBSERVABLES_PARTICLEFORCES_HPP
 #define OBSERVABLES_PARTICLEFORCES_HPP
 
+#include "Particle.hpp"
 #include "PidObservable.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include <vector>
 
 namespace Observables {

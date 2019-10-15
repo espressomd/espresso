@@ -60,9 +60,9 @@
 #include <utility>
 #include <vector>
 
+#include "Particle.hpp"
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
-#include "particle_data.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"

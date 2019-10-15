@@ -35,6 +35,7 @@
 #include "rotation.hpp"
 
 #ifdef ROTATION
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -42,7 +43,6 @@
 #include "global.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "thermostat.hpp"
 
 #include <utils/constants.hpp>

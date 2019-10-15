@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "EspressoSystemInterface.hpp"
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "cuda_interface.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 /* Initialize instance pointer */
 EspressoSystemInterface *EspressoSystemInterface::m_instance = nullptr;
