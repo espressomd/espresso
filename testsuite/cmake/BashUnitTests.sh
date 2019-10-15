@@ -24,13 +24,14 @@
 ##      #define ELECTROSTATICS
 ##      #define EXTERNAL_FORCES
 ##    EOF
+##      cmake .. -DCMAKE_INSTALL_PREFIX=/tmp/espresso
 ##      make
-##      make install DESTDIR="install"
+##      make install
 ##    }
 ##
 ##    # cleanup
 ##    function tear_down() {
-##      rm -rf install
+##      rm -rf /tmp/espresso
 ##      make dist-clean
 ##    }
 ##
