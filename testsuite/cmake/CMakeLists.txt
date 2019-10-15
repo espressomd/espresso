@@ -12,21 +12,17 @@ function(CMAKE_TEST)
 endfunction(CMAKE_TEST)
 
 if(WITH_PYTHON AND PYTHONINTERP_FOUND)
-  set(TESTING_PYTHON TRUE)
   # obtain Python*_SITEARCH without find_package(Python*)
   execute_process(
     COMMAND "${PYTHON_EXECUTABLE}" -c "from distutils import sysconfig as sc;print(sc.get_python_lib(prefix='', plat_specific=True, standard_lib=False))"
     OUTPUT_VARIABLE Python_SITEARCH
     OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
-  set(TESTING_PYTHON FALSE)
+
+  cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
 endif()
 set(DESTDIR "${CMAKE_CURRENT_BINARY_DIR}/install")
 
 add_custom_target(setup_install COMMAND make install WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-
-cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
-
 add_custom_target(check_cmake_install COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -C serial --output-on-failure)
 add_dependencies(check_cmake_install setup_install)
 
