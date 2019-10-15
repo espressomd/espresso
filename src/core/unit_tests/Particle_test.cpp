@@ -29,6 +29,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include "Particle.hpp"
 #include "serialization/Particle.hpp"
 
 BOOST_AUTO_TEST_CASE(comparison) {
