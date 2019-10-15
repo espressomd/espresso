@@ -41,8 +41,6 @@ typedef struct {
   double p_ext;
   /** instantaneous pressure the system currently has */
   double p_inst;
-  /** instantaneous pressure averaged over current integration cycle */
-  double p_inst_av;
   /** difference between \ref p_ext and \ref p_inst */
   double p_diff;
   /** virial (short-range) components of \ref p_inst */
@@ -93,7 +91,6 @@ extern nptiso_struct nptiso;
 void synchronize_npt_state(int n_steps);
 void npt_ensemble_init(const BoxGeometry &box);
 void integrator_npt_sanity_checks();
-void npt_update_instantaneous_pressure();
 void npt_reset_instantaneous_virials();
 void npt_add_virial_contribution(const Utils::Vector3d &force,
                                  const Utils::Vector3d &d);

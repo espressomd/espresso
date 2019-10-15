@@ -116,9 +116,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_NPTISO_PINST,
      {&nptiso.p_inst, Datafield::Type::DOUBLE, 1,
       "npt_p_inst"}}, /* 24 from pressure.cpp */
-    {FIELD_NPTISO_PINSTAV,
-     {&nptiso.p_inst_av, Datafield::Type::DOUBLE, 1,
-      "npt_p_inst_av"}}, /* 25 from pressure.cpp */
     {FIELD_NPTISO_PDIFF,
      {&nptiso.p_diff, Datafield::Type::DOUBLE, 1,
       "npt_p_diff"}}, /* 26 from pressure.cpp */
