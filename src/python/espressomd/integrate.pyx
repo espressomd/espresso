@@ -147,7 +147,8 @@ cdef class Integrator:
             Select which dimensions are allowed to fluctuate by assigning
             them to ``True``.
         cubic_box : :obj:`bool`, optional
-            If this optional parameter is ``True``, a cubic box is assumed.
+            If ``True``, a cubic box is assumed and the value of ``direction``
+            will be ignored when rescaling the box.
 
         """
         IF NPT:
