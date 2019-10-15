@@ -537,7 +537,7 @@ void mpi_bcast_nptiso_geom() {
 void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.geometry, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.dimension, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast(&nptiso.cubic_box, 1, MPI_INT, 0, comm_cart);
+  MPI_Bcast(&nptiso.cubic_box, 1, MPI_LOGICAL, 0, comm_cart);
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
 }
 

@@ -44,7 +44,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
-        if ((nptiso.geometry & nptiso.nptgeom_dir[j])) {
+        if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
                       friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
@@ -145,9 +145,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
     Utils::Vector3d new_box = box_geo.length();
 
     for (int i = 0; i < 3; i++) {
-      if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-        new_box[i] = L_new;
-      } else if (nptiso.cubic_box) {
+      if (nptiso.geometry & nptiso.nptgeom_dir[i] || nptiso.cubic_box) {
         new_box[i] = L_new;
       }
     }

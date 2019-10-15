@@ -70,7 +70,7 @@ typedef struct {
    *  less than 3, then box length motion in one or more directions will
    *  be decoupled from the particle motion
    */
-  int cubic_box;
+  bool cubic_box;
   /** An index to one of the non-constant dimensions. Handy if you just want
    *  the variable box_l
    */
