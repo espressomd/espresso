@@ -1,7 +1,6 @@
 import numpy as np
 # physical constants
 import scipy.constants
-#as const
 
 class SIunits():
     def __init__(self, **kwargs):
