@@ -18,13 +18,13 @@
  */
 
 #include "collision.hpp"
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
@@ -368,7 +368,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   new_part.r.p = pos;
   auto p_vs = append_indexed_particle(local_cells.cell[0], std::move(new_part));
 
-  local_vs_relate_to(p_vs, &get_part(relate_to));
+  local_vs_relate_to(*p_vs, get_part(relate_to));
 
   p_vs->p.is_virtual = true;
   p_vs->p.type = collision_params.vs_particle_type;

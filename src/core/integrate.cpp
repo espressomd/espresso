@@ -27,6 +27,7 @@
  */
 
 #include "integrate.hpp"
+#include "Particle.hpp"
 #include "accumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
@@ -49,7 +50,6 @@
 #include "immersed_boundaries.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rattle.hpp"
 #include "rotation.hpp"
@@ -189,7 +189,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+    virtual_sites()->update(true);
 #endif
 
     // Communication step: distribute ghost positions
@@ -248,7 +248,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update();
+    virtual_sites()->update(true);
 #endif
 
     // Communication step: distribute ghost positions

@@ -25,9 +25,9 @@
  *  see \ref ghosts.hpp "ghosts.hpp"
  */
 #include "ghosts.hpp"
+#include "Particle.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
-#include "particle_data.hpp"
 
 #include <algorithm>
 #include <cstdio>
@@ -363,21 +363,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
       }
     }
   }
-}
-
-void reduce_forces_sum(void *add, void *to, int const *const len,
-                       MPI_Datatype *type) {
-  auto *cadd = static_cast<ParticleForce *>(add),
-       *cto = static_cast<ParticleForce *>(to);
-  int const clen = *len / sizeof(ParticleForce);
-
-  if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
-    fprintf(stderr, "%d: transfer data type wrong\n", this_node);
-    errexit();
-  }
-
-  for (int i = 0; i < clen; i++)
-    cto[i] += cadd[i];
 }
 
 static int is_send_op(int comm_type, int node) {

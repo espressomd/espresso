@@ -28,8 +28,8 @@
 
 #include "Observable_stat.hpp"
 #include "PartCfg.hpp"
+#include "Particle.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <map>
 #include <string>

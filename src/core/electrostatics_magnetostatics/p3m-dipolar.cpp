@@ -36,6 +36,7 @@
 
 #ifdef DP3M
 
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
@@ -43,7 +44,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "tuning.hpp"
 
 #include <utils/strcat_alloc.hpp>

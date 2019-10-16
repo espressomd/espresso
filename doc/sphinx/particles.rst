@@ -365,8 +365,10 @@ site is placed at a fixed distance from the non-virtual particle. When
 the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
-To use this implementation of virtual sites, activate the feature ``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
-To set up a virtual site,
+To use this implementation of virtual sites, activate the feature
+``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of
+:class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the
+active virtual sites scheme (see above). To set up a virtual site,
 
 #. Place the particle to which the virtual site should be related. It
    needs to be in the center of mass of the rigid arrangement of
@@ -378,7 +380,9 @@ To set up a virtual site,
        p = system.part.add(pos=(1, 2, 3))
        p.vs_auto_relate_to(<ID>)
 
-   where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
+   where <ID> is the id of the central particle. This will also set the
+   :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on
+   the particle to ``True``.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
@@ -407,8 +411,8 @@ Please note:
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, when running on more than one core,
-   you need to set the
-   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance.
+   you need to set the system's :attr:`espressomd.system.System.min_global_cut`
+   attribute to this largest distance.
    An error is generated when this requirement is not met.
 
 -  If the virtual sites represent actual particles carrying a mass, the
@@ -425,9 +429,13 @@ Inertialess lattice Boltzmann tracers
 
 :class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
 
-When this implementation is selected, the virtual sites follow the motion of a lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
-Forces acting on the virtual sites are directly transferred as force density onto the lattice Boltzmann fluid, making the coupling free of inertia.
-The feature stems from the implementation of the :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
+When this implementation is selected, the virtual sites follow the motion of a
+lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating
+their position using the fluid velocity at the virtual sites' position.
+Forces acting on the virtual sites are directly transferred as force density
+onto the lattice Boltzmann fluid, making the coupling free of inertia.
+The feature stems from the implementation of the
+:ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
 
 For correct results, the LB thermostat has to be deactivated for virtual sites::
 
@@ -435,79 +443,6 @@ For correct results, the LB thermostat has to be deactivated for virtual sites::
 
 Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
 
-
-..
-    .. _Virtual sites in the center of mass of a molecule:
-
-    Virtual sites in the center of mass of a molecule
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    .. todo:: This is not implemented in Python, yet
-
-    To activate this implementation, enable the feature ``VIRTUAL_SITES_COM`` in :file:`myconfig.hpp`. Virtual sites are then placed in the center of mass of
-    a set of particles (as defined below). Their velocity will also be that
-    of the center of mass. Forces accumulating on the virtual sites are
-    distributed back to the particles which form the molecule. To place a
-    virtual site at the center of a molecule, perform the following steps in
-    that order
-
-    #. Create a particle of the desired type for each molecule. It should be
-       placed at least roughly in the center of the molecule to make sure,
-       its on the same node as the other particles forming the molecule, in
-       a simulation with more than one CPU.
-
-    #. Make it a virtual site using
-
-       part virtual 1
-
-    #. Declare the list of molecules and the particles they consist of:
-
-       analyze set { ...} ...
-
-       The lists of particles in a molecule comprise the non-virtual
-       particles as well as the virtual site. The id of this molecule is its
-       index in this list. For example,
-
-       analyze set {0 1 2 3 4} {0 5 6 7 8} {1 9 10 11}
-
-       declares three molecules, of which the first two consist of three
-       particles and a virtual site each (particles 14 and 58,
-       respectively). The third molecule has type 1 and consists of two
-       particles and a virtual site. The virtual sites were determined
-       before by setting the flag. You can choose freely one out of each
-       molecule, for example particles 1, 5, and 9.
-
-    #. Assign to all particles that belong to the same molecule the
-       molecules id
-
-       part mol
-
-       The molid is the index of the particle in the above list, so you
-       would assign 0 to particles 1-4, 1 to particles 5-8 and 2 to
-       particles 9-11. Alternatively, you can call
-
-       analyze set topo_part_sync
-
-       to set the s from the molecule declarations.
-
-    #. Update the position of all virtual particles (optional)
-
-       integrate 0
-
-    The type of the molecule you can choose freely, it is only used in
-    certain analysis functions, namely ``energy_kinetic_mol``,
-    ``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
-    pressure and dipole moment per molecule type, respectively.
-
-    .. _Additional features:
-
-    Additional features
-    ~~~~~~~~~~~~~~~~~~~
-
-    The behavior of virtual sites can be fine-tuned with the following
-    switches in :file:`myconfig.hpp`.
-
-    - ``THERMOSTAT_IGNORE_NON_VIRTUAL`` specifies that the thermostat does not act on non-virtual particles
 
 .. _Particle number counting feature:
 

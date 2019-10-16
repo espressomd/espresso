@@ -280,7 +280,7 @@ at temperature :math:`T` and satisfies
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
 This reduces the accuracy of the Velocity Verlet integrator
-by one order in :math:`dt` because forces are now velocity dependent.
+by one order in :math:`dt` because forces are now velocity-dependent.
 
 The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
 :math:`\overline{\eta}` for each component of all the particle forces. 
@@ -380,7 +380,7 @@ The friction coefficients and cutoff are controlled via the
 see there.
 
 The friction (dissipative) and noise (random) term are coupled via the
-fluctuation- dissipation theorem. The friction term is a function of the
+fluctuation-dissipation theorem. The friction term is a function of the
 relative velocity of particle pairs. The DPD thermostat is better for
 dynamics than the Langevin thermostat, since it mimics hydrodynamics in
 the system.
@@ -412,17 +412,7 @@ Isotropic NPT thermostat
 This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
-and set the following parameters:
-
-    * ``kT``:     (float) Thermal energy of the heat bath
-    * ``gamma0``: (float) Friction coefficient of the bath
-    * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
-
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
-and the parameters:
-
-    * ``ext_pressure``:  (float) The external pressure.
-    * ``piston``:        (float) The mass of the applied piston.
+and setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`.
 
 For example::
 
@@ -432,7 +422,7 @@ For example::
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
-For an explanation of the algorithm involved, see :ref:`Isotropic NPT thermostat`
+For an explanation of the algorithm involved, see :ref:`Isotropic NPT integrator`.
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange

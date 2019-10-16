@@ -27,12 +27,12 @@
 
 #if defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && defined(CUDA)
 
+#include "Particle.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
-#include "particle_data.hpp"
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 

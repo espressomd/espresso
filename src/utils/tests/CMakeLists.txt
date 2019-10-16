@@ -36,6 +36,7 @@ unit_test(NAME make_lin_space_test SRC make_lin_space_test.cpp DEPENDS utils)
 unit_test(NAME sampling_test SRC sampling_test.cpp DEPENDS utils)
 unit_test(NAME coordinate_transformation_test SRC coordinate_transformation.cpp DEPENDS utils)
 unit_test(NAME rotation_matrix_test SRC rotation_matrix_test.cpp DEPENDS utils)
+unit_test(NAME quaternion_test SRC quaternion_test.cpp DEPENDS utils)
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)

@@ -22,8 +22,8 @@
 #include "config.hpp"
 
 #ifdef NPT
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "particle_data.hpp"
 
 /** Special propagator for NPT ISOTROPIC
     Propagate the velocities and positions. Integration steps before force

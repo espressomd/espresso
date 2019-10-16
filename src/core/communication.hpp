@@ -52,9 +52,9 @@
 #include "MpiCallbacks.hpp"
 
 /** Included needed by callbacks. */
+#include "Particle.hpp"
 #include "cuda_init.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
-#include "particle_data.hpp"
 
 #include <boost/mpi/communicator.hpp>
 #include <utils/serialization/array.hpp>

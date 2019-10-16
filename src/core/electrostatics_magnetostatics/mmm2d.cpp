@@ -27,6 +27,7 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 
 #ifdef ELECTROSTATICS
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -34,7 +35,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "mmm-common.hpp"
-#include "particle_data.hpp"
 #include "specfunc.hpp"
 
 #include <utils/constants.hpp>

@@ -34,6 +34,7 @@
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
@@ -41,7 +42,6 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include "short_range_loop.hpp"
 #include <utils/NoOp.hpp>

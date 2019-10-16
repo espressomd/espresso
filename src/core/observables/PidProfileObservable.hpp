@@ -20,10 +20,10 @@
 #define OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
 #include "Observable.hpp"
+#include "Particle.hpp"
 #include "PidObservable.hpp"
 #include "ProfileObservable.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include <vector>
 
 namespace Observables {

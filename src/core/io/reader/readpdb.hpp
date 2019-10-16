@@ -20,8 +20,8 @@
 #ifndef __READ_PDB_HPP
 #define __READ_PDB_HPP
 
+#include "Particle.hpp"
 #include "PdbParser.hpp"
-#include "particle_data.hpp"
 
 namespace Reader {
 namespace PDB {

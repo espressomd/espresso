@@ -26,6 +26,7 @@
 
 #include "statistics.hpp"
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "energy.hpp"
@@ -36,7 +37,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "short_range_loop.hpp"
 

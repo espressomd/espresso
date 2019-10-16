@@ -21,10 +21,10 @@
 /** \file
  *  Particles and particle lists.
  *
- *  The corresponding header file is particle_data.hpp.
+ *  The corresponding header file is Particle.hpp.
  */
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 #include "PartCfg.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -153,7 +153,7 @@ using UpdatePropertyMessage = boost::variant
 #ifdef VIRTUAL_SITES
         , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
-        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
+        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameters,
                          &Prop::vs_relative>
 #endif
 #endif
@@ -555,12 +555,6 @@ void realloc_local_particles(int part) {
   }
 }
 
-void init_particlelist(ParticleList *pList) {
-  pList->n = 0;
-  pList->max = 0;
-  pList->part = nullptr;
-}
-
 int realloc_particlelist(ParticleList *l, int size) {
   assert(size >= 0);
   int old_max = l->max;
@@ -914,24 +908,24 @@ void set_particle_virtual(int part, bool is_virtual) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_relative_quat) {
+void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Utils::Vector4d(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = vs_relative_quat;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              double *rel_ori) {
-  ParticleProperties::VirtualSitesRelativeParameteres vs_relative;
+                              Utils::Vector4d const &rel_ori) {
+  ParticleProperties::VirtualSitesRelativeParameters vs_relative;
   vs_relative.distance = vs_distance;
   vs_relative.to_particle_id = vs_relative_to;
-  vs_relative.rel_orientation = {rel_ori, rel_ori + 4};
+  vs_relative.rel_orientation = rel_ori;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 #endif

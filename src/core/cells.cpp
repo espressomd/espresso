@@ -25,6 +25,7 @@
  *  Implementation of cells.hpp.
  */
 #include "cells.hpp"
+#include "Particle.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
@@ -37,7 +38,6 @@
 #include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
-#include "particle_data.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>

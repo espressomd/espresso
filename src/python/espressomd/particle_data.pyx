@@ -43,7 +43,6 @@ def _COORD_FIXED(coord):
 
 
 COORDS_FIX_MASK = _COORD_FIXED(0) | _COORD_FIXED(1) | _COORD_FIXED(2)
-COORDS_ALL_FIXED = _COORD_FIXED(0) & _COORD_FIXED(1) & _COORD_FIXED(2)
 PARTICLE_EXT_TORQUE = 16
 ROT_X = 2
 ROT_Y = 4
@@ -680,10 +679,9 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, q):
-                if len(q) != 4:
-                    raise ValueError(
-                        "vs_quat has to be an array-like of length 4.")
-                cdef double _q[4]
+                check_type_or_throw_except(
+                    q, 4, float, "vs_quat has to be an array-like of length 4")
+                cdef Vector4d _q
                 for i in range(4):
                     _q[i] = q[i]
                 set_particle_vs_quat(self._id, _q)
@@ -717,13 +715,14 @@ cdef class ParticleHandle:
                 _relto = x[0]
                 _dist = x[1]
                 q = x[2]
-                cdef double _q[4]
+                cdef Vector4d _q
                 for i in range(4):
                     _q[i] = q[i]
 
                 if is_valid_type(_relto, int) and is_valid_type(
                         _dist, float) and all(is_valid_type(fq, float) for fq in q):
-                    set_particle_vs_relative(self._id, _relto, _dist, _q) 
+
+                    set_particle_vs_relative(self._id, _relto, _dist, _q)
                 else:
                     raise ValueError(
                         "vs_relative needs input like id<int>,distance<float>,(q1<float>,q2<float>,q3<float>,q4<float>).")
@@ -745,8 +744,7 @@ cdef class ParticleHandle:
             """
             check_type_or_throw_except(
                 _relto, 1, int, "Argument of vs_auto_relate_to has to be of type int.")
-            if vs_relate_to(self._id, _relto):
-                handle_errors("vs_relative setup failed.")
+            vs_relate_to(self._id, _relto)
 
     IF DIPOLES:
         property dip:

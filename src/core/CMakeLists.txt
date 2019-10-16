@@ -125,11 +125,10 @@ set(EspressoCore_SRC
   observables/LBVelocityProfile.cpp
   virtual_sites/lb_inertialess_tracers.cpp
   virtual_sites/lb_inertialess_tracers_cuda_interface.cpp
-  virtual_sites/virtual_sites_com.cpp
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
   accumulators/TimeSeries.cpp
-        observables/PidObservable.cpp)
+  observables/PidObservable.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -157,7 +156,6 @@ else(CUDA)
 endif(CUDA)
 
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
-set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WITH_COVERAGE)
   target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-g>")

@@ -21,11 +21,11 @@
 /** \file
  *  Implementation of \ref elc.hpp.
  */
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include <cmath>
 #include <mpi.h>

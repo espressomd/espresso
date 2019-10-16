@@ -30,7 +30,7 @@
  */
 
 #include "PartCfg.hpp"
-#include "particle_data.hpp"
+#include "Particle.hpp"
 #include "utils/Vector.hpp"
 
 /** C implementation of 'counterions \<N_CI\> [options]'.

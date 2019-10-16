@@ -31,14 +31,14 @@ public:
   int n_values() const override { return 3; };
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
-    for (int i : ids()) {
 #ifdef ELECTROSTATICS
+    for (int i : ids()) {
       double charge = partCfg[i].p.q;
       res[0] += charge * partCfg[i].m.v[0];
       res[1] += charge * partCfg[i].m.v[1];
       res[2] += charge * partCfg[i].m.v[2];
-#endif
     };
+#endif
     return res;
   };
 };

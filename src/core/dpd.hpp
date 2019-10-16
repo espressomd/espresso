@@ -30,7 +30,7 @@
 #include "config.hpp"
 
 #ifdef DPD
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>

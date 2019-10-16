@@ -39,7 +39,7 @@
 #include <ParticleRange.hpp>
 
 #ifdef DIPOLES
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 /** Calculates dipolar energy and/or force between two particles */
 double calc_dipole_dipole_ia(Particle &p1, Particle &p2, bool force_flag);
