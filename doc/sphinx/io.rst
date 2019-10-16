@@ -369,7 +369,7 @@ Writing various formats using MDAnalysis
 If the MDAnalysis package (https://mdanalysis.org) is installed, it
 is possible to use it to convert frames to any of the supported
 configuration/trajectory formats, including PDB, GROMACS, GROMOS,
-CHARMM/NAMD, AMBER, LAMMPS, ...)
+CHARMM/NAMD, AMBER, LAMMPS, ...
 
 To use MDAnalysis to write in any of these formats, one has first to prepare a stream from
 the |es| particle data using the class :class:`espressomd.MDA_ESP`, and then read from it
@@ -397,10 +397,3 @@ using MDAnalysis. A simple example is the following:
         W.write_next_timestep(u.trajectory.ts)  # append it to the trajectory
 
 For other examples, see :file:`/samples/MDAnalysisIntegration.py`
-
-.. _Parsing PDB Files:
-
-Parsing PDB Files
------------------
-
-The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is :file:`.pdb`, the topology file extension is :file:`.itp`. Obviously the PDB file is placed instead of and the topology file instead of .
