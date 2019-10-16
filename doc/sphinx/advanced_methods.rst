@@ -1865,6 +1865,7 @@ Constant pH simulation using the Reaction Ensemble
 As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one ConstantpHEnsemble instance:
 
 .. code-block:: python
+
     cpH=reaction_ensemble.ConstantpHEnsemble(
         temperature=1, exclusion_radius=1, seed=77)
     cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
@@ -1941,7 +1942,9 @@ The Widom insertion method measures the change in excess free energy , i.e. the 
    \mu^\mathrm{ex}_B:=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)`
 
 For this one has to provide the following reaction to the Widom method:
+
 .. code-block:: python
+
     type_B=1
     widom = reaction_ensemble.WidomInsertion(
         temperature=temperature, seed=77)
@@ -1980,7 +1983,9 @@ One can measure the change in excess free energy due to the simultaneous inserti
    \mu^\mathrm{ex}:=\Delta F^\mathrm{ex, }:= F^\mathrm{ex}(N_1+1, N_2+1, N_3-1,V,T)-F^\mathrm{ex}(N_1, N_2, N_3 ,V,T)
 
 For this one has to provide the following reaction to the Widom method:
+
 .. code-block:: python
+
     widom.add_reaction(reactant_types=[type_3],
     reactant_coefficients=[1], product_types=[type_1, type_2],
     product_coefficients=[1,1], default_charges={1: 0})
