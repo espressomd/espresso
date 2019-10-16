@@ -299,7 +299,7 @@ Currently, the following tutorials are available:
 * :file:`08-visualization`: Using the online visualizers of |es|.
 * :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble.
 * :file:`11-ferrofluid`: Modelling a colloidal suspension of magnetic particles.
-* :file:`12-constant_pH`: Modelling an acid dissociation curve using the constant pH method
+* :file:`12-constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
 .. _Sample scripts:
 
