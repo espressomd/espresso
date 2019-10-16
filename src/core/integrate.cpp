@@ -120,8 +120,8 @@ void integrator_sanity_checks() {
 /************************************************************/
 
 /** @brief Calls the hook for propagation kernels before the force calculation
-    @return whether or not to stop the integration loop early.
-*/
+ *  @return whether or not to stop the integration loop early.
+ */
 bool integrator_step_1(ParticleRange &particles) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
@@ -241,7 +241,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef VIRTUAL_SITES
-    // VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
+    // VIRTUAL_SITES pos (and vel for DPD) update for security reason!!!
     virtual_sites()->update(true);
 #endif
 
@@ -264,7 +264,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     // propagate one-step functionalities
-
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       lb_lbfluid_propagate();
       lb_lbcoupling_propagate();
@@ -404,7 +403,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
                          "this integrator!\n";
     return ES_ERROR;
   }
-  /* set the geometry to include rescaling specified directions only */
+  /* set the NpT geometry */
   nptiso.geometry = 0;
   nptiso.dimension = 0;
   nptiso.non_const_dim = -1;
@@ -453,7 +452,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   mpi_bcast_parameter(FIELD_NPTISO_PISTON);
   mpi_bcast_parameter(FIELD_NPTISO_PEXT);
 
-  /* broadcast npt geometry information to all nodes */
+  /* broadcast NpT geometry information to all nodes */
   mpi_bcast_nptiso_geom();
   return ES_OK;
 }
