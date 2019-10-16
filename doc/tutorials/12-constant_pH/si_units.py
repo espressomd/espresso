@@ -25,9 +25,9 @@ class SIunits():
         if (from_unit == "nm" and to_unit == "sigma"):
             return from_value / self.sigma_to_nm
         if (from_unit == "mol/L" and to_unit == "N/sigma^3"):
-            return from_value * self.conc_N_sigma_to_mol_L
-        if (to_unit == "mol/L" and from_unit == "N/sigma^3"):
             return from_value / self.conc_N_sigma_to_mol_L
+        if (to_unit == "mol/L" and from_unit == "N/sigma^3"):
+            return from_value * self.conc_N_sigma_to_mol_L
         raise ValueError(
             "conversion from {} to {} is not implemented\n".format(
                 from_unit, to_unit))
