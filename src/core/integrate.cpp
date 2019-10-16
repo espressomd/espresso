@@ -429,8 +429,6 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If electrostatics is being used you must "
                          "use the cubic box npt.";
-    integ_switch = INTEG_METHOD_NVT;
-    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
   }
 #endif
@@ -439,8 +437,6 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
                          "use the cubic box npt.";
-    integ_switch = INTEG_METHOD_NVT;
-    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
   }
 #endif
@@ -448,11 +444,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   if (nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
     runtimeErrorMsg() << "You must enable at least one of the x y z components "
                          "as fluctuating dimension(s) for box length motion!";
-    runtimeErrorMsg() << "Cannot proceed with npt_isotropic, reverting to nvt "
-                         "integration... \n";
-    integ_switch = INTEG_METHOD_NVT;
-    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-    return (ES_ERROR);
+    return ES_ERROR;
   }
 
   /* set integrator switch */
@@ -463,6 +455,6 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
 
   /* broadcast npt geometry information to all nodes */
   mpi_bcast_nptiso_geom();
-  return (ES_OK);
+  return ES_OK;
 }
 #endif

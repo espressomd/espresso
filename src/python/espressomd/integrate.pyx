@@ -148,7 +148,8 @@ cdef class Integrator:
             them to ``True``.
         cubic_box : :obj:`bool`, optional
             If ``True``, a cubic box is assumed and the value of ``direction``
-            will be ignored when rescaling the box.
+            will be ignored when rescaling the box. This is required e.g. for
+            electrostatics and magnetostatics.
 
         """
         IF NPT:
