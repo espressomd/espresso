@@ -1870,7 +1870,7 @@ As before in the Reaction Ensemble one can define multiple reactions (e.g. for a
     cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                     product_types=[1, 2], product_coefficients=[1, 1],
                     default_charges={0: 0, 1: -1, 2: +1})
-    cpH.add_reaction(gamma=1/(14-K_diss), reactant_types=[3], reactant_coefficients=[1], product_types=[0, 2], product_coefficients=[1, 1], default_charges={0:0, 2:1, 3:1} )
+    cpH.add_reaction(gamma=1/(10**-14/K_diss), reactant_types=[3], reactant_coefficients=[1], product_types=[0, 2], product_coefficients=[1, 1], default_charges={0:0, 2:1, 3:1} )
 
 
 An Example script can be found here:

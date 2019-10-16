@@ -114,8 +114,8 @@ widom = reaction_ensemble.WidomInsertion(
 # add insertion reaction
 insertion_reaction_id = 0
 widom.add_reaction(reactant_types=[],
-                reactant_coefficients=[], product_types=[1, 2],
-                product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
+                   reactant_coefficients=[], product_types=[1, 2],
+                   product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(widom.get_status())
 system.setup_type_map([0, 1, 2])
 
