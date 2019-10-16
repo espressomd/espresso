@@ -1697,6 +1697,7 @@ Reaction Ensemble
 .. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
+Multiple reactions can be added to the same instance of the reaction ensemble. 
 An Example script can be found here:
 
 * `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
@@ -1847,9 +1848,12 @@ and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
 variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
-does not suffer from systematic errors. Additionally to the above
+does not suffer from systematic errors. 
+Additionally to the above
 commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+Wang-Landau reaction ensemble. 
+Multiple reactions and multiple collective variables can be set.
+For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
 .. _Constant pH simulation using the Reaction Ensemble:
 
@@ -1857,6 +1861,17 @@ Constant pH simulation using the Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
+
+As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one ConstantpHEnsemble instance:
+
+.. code-block:: python
+    cpH=reaction_ensemble.ConstantpHEnsemble(
+        temperature=1, exclusion_radius=1, seed=77)
+    cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                    product_types=[1, 2], product_coefficients=[1, 1],
+                    default_charges={0: 0, 1: -1, 2: +1})
+    cpH.add_reaction(gamma=1/(14-K_diss), reactant_types=[3], reactant_coefficients=[1], product_types=[0, 2], product_coefficients=[1, 1], default_charges={0:0, 2:1, 3:1} )
+
 
 An Example script can be found here:
 
@@ -1884,6 +1899,7 @@ constant :math:`K_c` for the following reaction:
 For an example of how to setup
 a Constant pH simulation, see the file in the testsuite directory.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
+
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
 
@@ -1961,6 +1977,63 @@ reaction ensemble transition probabilities.
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An example script can be found here:
+The Widom insertion method measures the change in excess free energy , i.e. the excess chemical potential due to the insertion of a new particle:
+
+    .. math::
+
+       \mu^\mathrm{ex}_B:=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)`
+
+For this one has to provide the following reaction to the Widom method:
+.. code-block:: python
+    type_B=1
+    widom = reaction_ensemble.WidomInsertion(
+        temperature=temperature, seed=77)
+    widom.add_reaction(reactant_types=[],
+    reactant_coefficients=[], product_types=[type_B],
+    product_coefficients=[1], default_charges={1: 0})
+    widom.measure_excess_chemical_potential(0)
+
+
+The call of ``add_reaction`` registers the "forward reaction"/ insertion :math:`\mathrm{\emptyset \to type_B` (which is the 0th registered reaction) and the "reverse reaction"/deletion :math:`\mathrm{type_B \to \emptyset ` (which is the 1st registered reaction). 
+Multiple reactions for the insertions for different types can be added to the same ``WidomInsertion`` instance.
+Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
+Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NPT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
+
+The current implementation can also use the inverse Widom method, where one deletes a particle from a NVT simulation. The deletion method is, however, only experimental at the moment. Use with care and consult your preferred source of literature before using it.
+For making use of the inverse Widom scheme one has to provide the same reaction as above to the Widom method but call the measurement function differently:
+
+.. code-block:: python
+
+    widom.measure_excess_chemical_potential(1)
+
+Here you call the method ``measure_excess_chemical_potential`` with argument 1 because you want to perform the deletion reaction. The deletion is rejected if there is no particle which can be removed from the system.
+
+The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles:
+
+    .. math::
+
+       \mu^\mathrm{ex, pair}:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right),
+
+
+
+One can measure the change in excess free energy due to the simultaneous insertions of particles of type 1 and 2 and the simultaneous removal of a particle of type $3$:
+
+    .. math::
+
+       \mu^\mathrm{ex}:=\Delta F^\mathrm{ex, }:= F^\mathrm{ex}(N_1+1, N_2+1, N_3-1,V,T)-F^\mathrm{ex}(N_1, N_2, N_3 ,V,T)
+
+For this one has to provide the following reaction to the Widom method:
+.. code-block:: python
+    widom.add_reaction(reactant_types=[type_3],
+    reactant_coefficients=[1], product_types=[type_1, type_2],
+    product_coefficients=[1,1], default_charges={1: 0})
+    widom.measure_excess_chemical_potential(0) #for the forward reaction
+    widom.measure_excess_chemical_potential(1) #for the backward reaction
+
+Be aware that in the current implementation for MC moves which add and remove particles the insertion of the new particle always takes place at the position where the last particle was remove. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core. 
+
+An example script which demonstrates the useage for measuring the pair excess chemical potential for inserting an ion pair into a salt solution can be found here:
 
 * `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
+
+

@@ -108,28 +108,28 @@ while i < warm_n_times:
 # remove force capping
 system.force_cap = 0
 
-RE = reaction_ensemble.WidomInsertion(
+widom = reaction_ensemble.WidomInsertion(
     temperature=temperature, seed=77)
 
 # add insertion reaction
 insertion_reaction_id = 0
-RE.add_reaction(reactant_types=[],
+widom.add_reaction(reactant_types=[],
                 reactant_coefficients=[], product_types=[1, 2],
                 product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
-print(RE.get_status())
+print(widom.get_status())
 system.setup_type_map([0, 1, 2])
 
 n_iterations = 100
 for i in range(n_iterations):
     for j in range(50):
-        RE.measure_excess_chemical_potential(insertion_reaction_id)
+        widom.measure_excess_chemical_potential(insertion_reaction_id)
     system.integrator.run(steps=500)
     if i % 20 == 0:
         print("mu_ex_pair ({:.4f}, +/- {:.4f})".format(
-            *RE.measure_excess_chemical_potential(insertion_reaction_id)))
+            *widom.measure_excess_chemical_potential(insertion_reaction_id)))
         print("HA", system.number_of_particles(type=0), "A-",
               system.number_of_particles(type=1), "H+",
               system.number_of_particles(type=2))
 
 print("excess chemical potential for an ion pair ",
-      RE.measure_excess_chemical_potential(insertion_reaction_id))
+      widom.measure_excess_chemical_potential(insertion_reaction_id))
