@@ -398,6 +398,42 @@ using MDAnalysis. A simple example is the following:
 
 For other examples, see :file:`/samples/MDAnalysisIntegration.py`
 
+.. _Reading various formats using MDAnalysis:
+
+Reading various formats using MDAnalysis
+----------------------------------------
+
+MDAnalysis can read various formats, including MD topologies and trajectories.
+To read a PDB file containing a single frame::
+
+    import MDAnalysis
+    import numpy as np
+    import espressomd
+    from espressomd.interactions import HarmonicBond
+
+    # parse protein structure
+    universe = MDAnalysis.Universe("protein.pdb")
+    # extract only the C-alpha atoms of chain A
+    chainA = universe.select_atoms("name CA and segid A")
+    # use the unit cell as box
+    box_l = np.ceil(universe.dimensions[0:3])
+    # setup system
+    system = espressomd.System(box_l=box_l)
+    system.time_step = 0.001
+    system.cell_system.skin = 0.4
+    # configure sphere size sigma and create a harmonic bond
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=1, sigma=1.5, cutoff=2, shift="auto")
+    system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.5)
+    # create particles and add bonds between them
+    system.part.add(pos=np.array(chainA.positions, dtype=float))
+    for i in range(0, len(chainA) - 1):
+        system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
+    # visualize protein in 3D
+    from espressomd import visualization
+    visualizer = visualization.openGLLive(system, bond_type_radius=[0.2])
+    visualizer.run(0)
+
 .. _Parsing PDB Files:
 
 Parsing PDB Files
