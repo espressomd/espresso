@@ -16,11 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "npt.hpp"
 #include "communication.hpp"
 #include "config.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
-#include "npt.hpp"
 
 #ifdef NPT
 void synchronize_npt_state(int n_steps) {
