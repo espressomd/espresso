@@ -15,9 +15,8 @@ physical systems. Currently, the following tutorials are available:
 * :file:`06-active_matter`: Modelling of self-propelling particles
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions
 * :file:`08-visualization`: Using the online visualizers of ESPResSo
-* :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble
 * :file:`11-ferrofluid`: Modelling a monolayer ferrofluid system
-* :file:`12-constant_pH`: Modelling an acid dissociation curve using the constant pH method
+* :file:`12-constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
 Using the tutorials
 -------------------
