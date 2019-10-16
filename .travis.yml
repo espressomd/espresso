@@ -1,4 +1,4 @@
-dist: trusty
+dist: bionic
 sudo: false
 
 language: cpp
@@ -15,7 +15,6 @@ matrix:
   include:
     - os: linux
       compiler: clang
-      env: Boost=1.54.0
       addons:
         apt:
           packages:
@@ -23,28 +22,11 @@ matrix:
             - libboost-test-dev
     - os: linux
       compiler: gcc
-      env: Boost=1.54.0
       addons:
         apt:
           packages:
             - libboost-dev
             - libboost-test-dev
-    - os: linux
-      compiler: clang
-      env: Boost=1.55.0
-      addons:
-        apt:
-          packages:
-            - libboost1.55-dev
-            - libboost-test1.55-dev
-    - os: linux
-      compiler: gcc
-      env: Boost=1.55.0
-      addons:
-        apt:
-          packages:
-            - libboost1.55-dev
-            - libboost-test1.55-dev
     - os: osx
       install:
         - brew link --force readline

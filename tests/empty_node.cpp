@@ -5,7 +5,7 @@
 
 BOOST_AUTO_TEST_CASE(empty_node)
 {
-    matheval::detail::expr_ast<double> ast;
-    matheval::detail::eval_ast<double> solver({});
+    matheval::ast::expression ast;
+    matheval::ast::eval solver({});
     BOOST_CHECK_EQUAL(solver(ast),0);
 }

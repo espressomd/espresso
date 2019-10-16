@@ -14,7 +14,7 @@ BOOST_AUTO_TEST_CASE(integration1) {
     std::string expr = "cbrt(x/2 + sqrt(x**2/4 + y**3/24))";
     double x = 2.0, y = -1.0;
 
-    matheval::Parser<double> parser;
+    matheval::Parser parser;
     BOOST_CHECK_NO_THROW(parser.parse(expr));
 
     std::map<std::string,double> symbol_table = {
@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(integration1) {
 BOOST_AUTO_TEST_CASE(integration2) {
     std::string expr = "(";
 
-    matheval::Parser<double> parser;
+    matheval::Parser parser;
 
     // Parsing should fail
     BOOST_CHECK_THROW(parser.parse(expr), std::runtime_error);
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(integration2) {
 BOOST_AUTO_TEST_CASE(integration3) {
     std::string expr = "x";
 
-    matheval::Parser<double> parser;
+    matheval::Parser parser;
 
     BOOST_CHECK_NO_THROW(parser.parse(expr));
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(integration3) {
 BOOST_AUTO_TEST_CASE(integration4) {
     std::string expr = "1 + 1";
 
-    matheval::Parser<double> parser;
+    matheval::Parser parser;
 
     BOOST_CHECK_NO_THROW(parser.parse(expr));
 

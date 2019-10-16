@@ -21,11 +21,10 @@
 
 #include <matheval.hpp>
 
-template < typename Iterator >
-boost::optional<double> evaluate(Iterator first, Iterator last)
+boost::optional<double> evaluate(std::string const &expr)
 {
     try {
-        auto res = matheval::parse<double>(first, last, {});
+        auto res = matheval::parse(expr, {});
         std::cout << res << '\n';
         return res;
     } catch (std::exception const &e) {
@@ -41,7 +40,7 @@ void commandline(int argc, char *argv[])
         expr.append(argv[i]); // NOLINT
     }
 
-    evaluate(expr.begin(), expr.end());
+    evaluate(expr);
 }
 
 void sigint_handler(int /*unused*/)
@@ -81,7 +80,7 @@ void interactive()
             }
 
             // Update result on success
-            if (auto ores = evaluate(line.begin(), line.end())) {
+            if (boost::optional<double> ores = evaluate(line)) {
                 res = *ores;
             }
         }

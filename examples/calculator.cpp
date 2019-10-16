@@ -15,7 +15,7 @@ int main()
         }
 
         try {
-            auto res = matheval::parse<double>(str, {});
+            double res = matheval::parse(str, {});
             std::cout << res << '\n';
         } catch (std::exception const &e) {
             std::cout << "Error: " << e.what() << '\n';
