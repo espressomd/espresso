@@ -59,7 +59,7 @@ nptiso_struct nptiso = {0.0,
                         0,
                         {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
                         0,
-                        0,
+                        false,
                         0};
 
 /************************************************************/
