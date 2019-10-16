@@ -28,7 +28,7 @@ void load(Archive &ar, ParticleList &pl, const unsigned int /* version */) {
   int size;
   ar >> size;
 
-  realloc_particlelist(&pl, pl.n = size);
+  pl.resize(size);
   for (int i = 0; i < size; i++) {
     ar >> pl.part[i];
   }

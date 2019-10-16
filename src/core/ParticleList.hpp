@@ -28,7 +28,6 @@
 
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
- *  Access using \ref realloc_particlelist, ...
  */
 struct ParticleList {
   ParticleList() : part{nullptr}, n{0}, max{0} {}
@@ -36,23 +35,11 @@ struct ParticleList {
   Particle *part;
   /** Number of particles contained */
   int n;
+
+private:
   /** Number of particles that fit in until a resize is needed */
   int max;
 
-  Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
-
-  /** granularity of the particle buffers in particles */
-  static constexpr int INCREMENT = 8;
-
-  /**
-   * @brief Allocate storage for local particles and ghosts.
-   *
-   * This version does \em not care for the bond information to be freed if
-   * necessary.
-   *     @param size the size to provide at least. It is rounded
-   *     up to multiples of @ref ParticleList::INCREMENT.
-   *     @return true iff particle addresses have changed
-   */
   int realloc(int size) {
     assert(size >= 0);
     int old_max = max;
@@ -73,12 +60,30 @@ struct ParticleList {
     return part != old_start;
   }
 
-  int resize(int size) { return realloc(this->n = size); }
-};
+public:
+  /** Current allocation size. */
+  auto capacity() const { return max; }
 
-/** @copydoc ParticleList::resize */
-inline int realloc_particlelist(ParticleList *l, int size) {
-  return assert(l), l->resize(size);
-}
+  Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
+
+  /** granularity of the particle buffers in particles */
+  static constexpr int INCREMENT = 8;
+
+  /**
+   * @brief Resize storage for local particles and ghosts.
+   *
+   * This version does \em not care for the bond information to be freed if
+   * necessary.
+   *     @param size the size to provide at least. It is rounded
+   *     up to multiples of @ref ParticleList::INCREMENT.
+   *     @return true iff particle addresses have changed
+   */
+  int resize(int size) { return realloc(this->n = size); }
+
+  /**
+   * @brief Resize the List to zero.
+   */
+  void clear() { resize(0); }
+};
 
 #endif

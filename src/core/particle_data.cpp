@@ -561,12 +561,12 @@ void update_local_particles(ParticleList *pl) {
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  realloc_particlelist(l, ++l->n);
+  l->resize(l->n + 1);
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
 Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = realloc_particlelist(l, ++l->n);
+  auto const re = l->resize(l->n + 1);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
   assert(p->p.identity <= max_seen_particle);
@@ -582,7 +582,7 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
 
-  realloc_particlelist(dl, ++dl->n);
+  dl->resize(dl->n + 1);
   auto dst = &dl->part[dl->n - 1];
   auto src = &sl->part[i];
   auto end = &sl->part[sl->n - 1];
@@ -592,14 +592,14 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  realloc_particlelist(sl, --sl->n);
+  sl->resize(sl->n - 1);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
-  int re = realloc_particlelist(dl, ++dl->n);
+  int re = dl->resize(dl->n + 1);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
@@ -617,7 +617,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -652,7 +652,7 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -1325,7 +1325,7 @@ void send_particles(ParticleList *particles, int node) {
     free_particle(&particles->part[pc]);
   }
 
-  realloc_particlelist(particles, particles->n = 0);
+  particles->clear();
 }
 
 void recv_particles(ParticleList *particles, int node) {
