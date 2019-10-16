@@ -1931,57 +1931,14 @@ particles). There exists a one to one mapping of the expressions in the
 grand canonical transition probabilities and the expressions in the
 reaction ensemble transition probabilities.
 
-..
-    The text below is commented-out because it is still an open research question how it should be used correctly.
-
-    This can be used to include water autoprotolysis in the implicit solvent simulation,
-    by means of a reaction:
-
-    .. math::
-
-       \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
-
-
-    add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
-    nihilo). Ex nihilo means that the reaction has no reactants or products.
-    Therefore, if :math:`\emptyset` is a product, particles vanish and if
-    :math:`\emptyset` is a reactant, then particles are created ex nihilo:
-
-    .. math::
-
-       \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,,
-
-    with reaction constant K
-
-    .. math::
-
-       \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,,
-
-    with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
-    constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
-    :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
-    :math:`\overline{\nu}=2` for the dissociation reaction and where x is
-    the value of the apparent dissociation constant that is converted from
-    :math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
-    where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
-    :math:`P^0` are provided in simulation units this will make :math:`K`
-    dimensionless. As a test for the autodissociation of water a big
-    simulation box can be set up and the autodissociation reaction can be
-    performed. Then the box should fill with the correct number of protons
-    and hydroxide ions (check for the number of protons and hydroxide ions
-    in the given simulation volume and compare this to the expected value at
-    pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
-    case of an initial excess of acid or base in the simulation box. Note
-    that this only works for big enough volumes.
-
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The Widom insertion method measures the change in excess free energy , i.e. the excess chemical potential due to the insertion of a new particle:
 
-    .. math::
+.. math::
 
-       \mu^\mathrm{ex}_B:=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)`
+   \mu^\mathrm{ex}_B:=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)`
 
 For this one has to provide the following reaction to the Widom method:
 .. code-block:: python
@@ -2010,17 +1967,17 @@ Here you call the method ``measure_excess_chemical_potential`` with argument 1 b
 
 The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles:
 
-    .. math::
+.. math::
 
-       \mu^\mathrm{ex, pair}:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right),
+   \mu^\mathrm{ex, pair}:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right),
 
 
 
 One can measure the change in excess free energy due to the simultaneous insertions of particles of type 1 and 2 and the simultaneous removal of a particle of type $3$:
 
-    .. math::
+.. math::
 
-       \mu^\mathrm{ex}:=\Delta F^\mathrm{ex, }:= F^\mathrm{ex}(N_1+1, N_2+1, N_3-1,V,T)-F^\mathrm{ex}(N_1, N_2, N_3 ,V,T)
+   \mu^\mathrm{ex}:=\Delta F^\mathrm{ex, }:= F^\mathrm{ex}(N_1+1, N_2+1, N_3-1,V,T)-F^\mathrm{ex}(N_1, N_2, N_3 ,V,T)
 
 For this one has to provide the following reaction to the Widom method:
 .. code-block:: python
