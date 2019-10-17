@@ -28,7 +28,7 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "5.0-dev")
+set(PROJECT_VERSION "4.2-dev")
 
 #
 # CMake internal vars
