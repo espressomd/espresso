@@ -128,4 +128,4 @@ endforeach(auxfile)
 
 # Install Python files
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${PYTHON_INSTDIR}
-        FILES_MATCHING PATTERN "*.py")
+        FILES_MATCHING PATTERN "*.py" PATTERN "CMakeFiles" EXCLUDE)
