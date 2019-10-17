@@ -168,7 +168,7 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
     auto const target_node = (p.identity() % n_nodes);
     send_buf.at(target_node).emplace_back(std::move(p));
   }
-  realloc_particlelist(displaced_parts, displaced_parts->n = 0);
+  displaced_parts->resize(0);
 
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(n_nodes);

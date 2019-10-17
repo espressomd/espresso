@@ -35,6 +35,7 @@
 #include "rotation.hpp"
 
 #ifdef ROTATION
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
@@ -46,6 +47,7 @@
 #include "thermostat.hpp"
 
 #include <utils/constants.hpp>
+#include <utils/math/quaternion.hpp>
 #include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
@@ -61,51 +63,6 @@
  */
 static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
                        double S[3], double Wd[3]);
-
-/** Convert director to quaternions */
-int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
-  double theta2, phi2;
-
-  // Calculate magnitude of the given vector
-  auto const dm = d.norm();
-
-  // The vector needs to be != 0 to be converted into a quaternion
-  if (dm < ROUND_ERROR_PREC) {
-    return 1;
-  }
-  // Calculate angles
-  auto const d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
-  // If dipole points along z axis:
-  if (d_xy == 0) {
-    // We need to distinguish between (0,0,d_z) and (0,0,d_z)
-    if (d[2] > 0)
-      theta2 = 0;
-    else
-      theta2 = Utils::pi() / 2.;
-    phi2 = 0;
-  } else {
-    // Here, we take care of all other directions
-    // Here we suppose that theta2 = 0.5*theta and phi2 = 0.5*(phi -
-    // Utils::pi()/2), where theta and phi - angles are in spherical coordinates
-    theta2 = 0.5 * acos(d[2] / dm);
-    if (d[1] < 0)
-      phi2 = -0.5 * acos(d[0] / d_xy) - Utils::pi() * 0.25;
-    else
-      phi2 = 0.5 * acos(d[0] / d_xy) - Utils::pi() * 0.25;
-  }
-
-  // Calculate the quaternion from the angles
-  auto const cos_theta2 = cos(theta2);
-  auto const sin_theta2 = sin(theta2);
-  auto const cos_phi2 = cos(phi2);
-  auto const sin_phi2 = sin(phi2);
-  quat[0] = cos_theta2 * cos_phi2;
-  quat[1] = -sin_theta2 * cos_phi2;
-  quat[2] = -sin_theta2 * sin_phi2;
-  quat[3] = cos_theta2 * sin_phi2;
-
-  return 0;
-}
 
 void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
                 double Wd[3]) {
@@ -202,10 +159,7 @@ void propagate_omega_quat_particle(Particle &p) {
                    (S[0] + time_step * (S[1] + time_step_half / 2. *
                                                    (S[2] - S[0] * S[0]))));
 
-  for (int j = 0; j < 3; j++) {
-    p.m.omega[j] += time_step_half * Wd[j];
-  }
-
+  p.m.omega += time_step_half * Wd;
   p.r.quat += time_step * (Qd + time_step_half * Qdd) - lambda * p.r.quat;
 
   /* and rescale quaternion, so it is exactly of unit length */
@@ -222,14 +176,9 @@ inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
   p.f.torque = Utils::Vector3d{};
 
   if (thermo_switch & THERMO_LANGEVIN) {
-#if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
-    if (!p.p.is_virtual)
-#endif
-    {
-      friction_thermo_langevin_rotation(p);
+    friction_thermo_langevin_rotation(p);
 
-      p.f.torque += t;
-    }
+    p.f.torque += t;
   } else {
     p.f.torque = t;
   }
@@ -363,21 +312,12 @@ void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
 
   axis /= l;
 
-  double q[4];
-  q[0] = cos(phi / 2);
-  double tmp = sin(phi / 2);
-  q[1] = tmp * axis[0];
-  q[2] = tmp * axis[1];
-  q[3] = tmp * axis[2];
-
-  // Normalize
-  normalize_quaternion(q);
+  double s = sin(phi / 2);
+  Utils::Vector4d q = {cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]};
+  q.normalize();
 
   // Rotate the particle
-  double qn[4]; // Resulting quaternion
-  multiply_quaternions(p.r.quat, q, qn);
-  for (int k = 0; k < 4; k++)
-    p.r.quat[k] = qn[k];
+  p.r.quat = Utils::multiply_quaternions(p.r.quat, q);
 }
 
-#endif
+#endif // ROTATION

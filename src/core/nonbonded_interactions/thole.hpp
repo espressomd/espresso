@@ -29,11 +29,11 @@
 #include "config.hpp"
 
 #ifdef THOLE
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2);

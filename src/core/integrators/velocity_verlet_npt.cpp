@@ -29,7 +29,8 @@
 #include "npt.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
-#include "utils/math/sqr.hpp"
+
+#include <utils/math/sqr.hpp>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;

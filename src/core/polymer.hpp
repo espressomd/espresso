@@ -30,7 +30,7 @@
  */
 
 #include "PartCfg.hpp"
-#include "particle_data.hpp"
+#include "Particle.hpp"
 #include "utils/Vector.hpp"
 
 Utils::Vector3d random_position(std::function<double()> const &generate_rn);

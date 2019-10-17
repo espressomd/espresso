@@ -39,10 +39,10 @@
 #include "config.hpp"
 
 #ifdef DP3M
+#include "Particle.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
-#include "particle_data.hpp"
 
 #include <ParticleRange.hpp>
 #include <utils/constants.hpp>

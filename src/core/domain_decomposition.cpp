@@ -28,6 +28,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
@@ -699,7 +700,7 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     }
   }
 
-  realloc_particlelist(&src, src.n = 0);
+  src.resize(0);
 }
 
 /**
@@ -760,7 +761,7 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
                            node_neighbors[2 * dir], 0, recv_buf);
 
-      realloc_particlelist(&send_buf, 0);
+      send_buf.clear();
 
       move_if_local(recv_buf, *pl);
     } else {
@@ -783,8 +784,8 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       move_if_local(recv_buf_l, *pl);
       move_if_local(recv_buf_r, *pl);
 
-      realloc_particlelist(&send_buf_l, 0);
-      realloc_particlelist(&send_buf_r, 0);
+      send_buf_l.clear();
+      send_buf_r.clear();
     }
   }
 }

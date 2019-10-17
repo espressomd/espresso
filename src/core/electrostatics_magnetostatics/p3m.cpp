@@ -26,6 +26,7 @@
 
 #ifdef P3M
 
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
@@ -38,7 +39,6 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "tuning.hpp"
 #ifdef CUDA
 #include "p3m_gpu_error.hpp"

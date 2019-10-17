@@ -36,6 +36,7 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 #if defined(DIPOLES) && defined(DP3M)
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"

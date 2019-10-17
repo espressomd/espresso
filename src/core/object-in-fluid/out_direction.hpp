@@ -27,9 +27,9 @@
 
 #ifdef MEMBRANE_COLLISION
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/triangle_functions.hpp>
 using Utils::get_n_triangle;

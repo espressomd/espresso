@@ -43,7 +43,7 @@ public:
    *  Velocities are only updated if get_have_velocity() returns true.
    *  @param recalc_positions  Skip the recalculation of positions if false.
    */
-  virtual void update(bool recalc_positions = true) const = 0;
+  virtual void update(bool recalc_positions) const = 0;
   /** Back-transfer forces (and torques) to non-virtual particles. */
   virtual void back_transfer_forces_and_torques() const = 0;
   /** @brief Called after force calculation (and before rattle/shake) */

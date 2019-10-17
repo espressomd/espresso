@@ -40,7 +40,7 @@ function(PYTHON_TEST)
   if(EXISTS ${MPIEXEC})
     add_test(NAME ${TEST_NAME}
             COMMAND
-            ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE}
+            ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE} ${MPIEXEC_POSTFLAGS}
             )
   else()
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE})
@@ -64,13 +64,18 @@ endfunction(PYTHON_TEST)
 
 # Checkpointing tests: semicolon-separated list of mutually-compatible features.
 # Separate features with hyphens, use a period to add an optional flag.
-foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj-lbtherm;lb.gpu-p3m.cpu-lj-lbtherm;ek.gpu)
+foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd)
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
   else()
     set(TEST_LABELS "")
   endif()
-  foreach(TEST_BINARY 1;0)
+  if(${TEST_COMBINATION} MATCHES "lb\\.off")
+    set(TEST_BINARY_LIST "1")
+  else()
+    set(TEST_BINARY_LIST "1;0")
+  endif()
+  foreach(TEST_BINARY ${TEST_BINARY_LIST})
     python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
     python_test(FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY}
                 DEPENDS save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})

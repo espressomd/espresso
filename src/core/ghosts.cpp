@@ -25,6 +25,7 @@
  *  see \ref ghosts.hpp "ghosts.hpp"
  */
 #include "ghosts.hpp"
+#include "Particle.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "particle_data.hpp"
@@ -192,11 +193,12 @@ void prepare_send_buffer(GhostCommunication *gc, int data_parts) {
 
 static void prepare_ghost_cell(Cell *cell, int size) {
   using Utils::make_span;
-  auto const old_cap = cell->max;
+  auto const old_cap = cell->capacity();
 
   /* reset excess particles */
-  if (size < cell->max) {
-    for (auto &p : make_span<Particle>(cell->part + size, cell->max - size)) {
+  if (size < cell->capacity()) {
+    for (auto &p :
+         make_span<Particle>(cell->part + size, cell->capacity() - size)) {
       p = Particle{};
       p.l.ghost = true;
     }
@@ -206,8 +208,9 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   cell->resize(size);
 
   /* initialize new particles */
-  if (old_cap < cell->max) {
-    auto new_parts = make_span(cell->part + old_cap, cell->max - old_cap);
+  if (old_cap < cell->capacity()) {
+    auto new_parts =
+        make_span(cell->part + old_cap, cell->capacity() - old_cap);
     std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
     for (auto &p : new_parts) {
       p.l.ghost = true;
@@ -363,21 +366,6 @@ void cell_cell_transfer(GhostCommunication *gc, int data_parts) {
       }
     }
   }
-}
-
-void reduce_forces_sum(void *add, void *to, int const *const len,
-                       MPI_Datatype *type) {
-  auto *cadd = static_cast<ParticleForce *>(add),
-       *cto = static_cast<ParticleForce *>(to);
-  int const clen = *len / sizeof(ParticleForce);
-
-  if (*type != MPI_BYTE || (*len % sizeof(ParticleForce)) != 0) {
-    fprintf(stderr, "%d: transfer data type wrong\n", this_node);
-    errexit();
-  }
-
-  for (int i = 0; i < clen; i++)
-    cto[i] += cadd[i];
 }
 
 static int is_send_op(int comm_type, int node) {

@@ -20,11 +20,11 @@
 /** @file */
 
 #include "reaction_ensemble.hpp"
+#include "Particle.hpp"
 #include "energy.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/index.hpp>

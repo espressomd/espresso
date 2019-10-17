@@ -25,6 +25,7 @@
  *  Implementation of cells.hpp.
  */
 #include "cells.hpp"
+#include "Particle.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
@@ -409,7 +410,7 @@ void cells_resort_particles(int global_flag) {
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = true;
 
-  realloc_particlelist(&displaced_parts, 0);
+  displaced_parts.clear();
 
   on_resort_particles(local_cells.particles());
 }
