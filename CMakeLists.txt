@@ -242,7 +242,7 @@ if(WITH_PYTHON)
     execute_process(
       COMMAND
         ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
+        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)

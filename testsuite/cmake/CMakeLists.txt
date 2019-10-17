@@ -11,10 +11,7 @@ function(CMAKE_TEST)
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 
-execute_process(
-  COMMAND "${PYTHON_EXECUTABLE}" -c "from distutils import sysconfig as sc;print(sc.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False))"
-  OUTPUT_VARIABLE PYTHON_DIR
-  OUTPUT_STRIP_TRAILING_WHITESPACE)
+set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR})
 
 cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
 
