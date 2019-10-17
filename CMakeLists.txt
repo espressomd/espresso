@@ -399,10 +399,6 @@ endif()
 # Paths
 #
 
-if(NOT DEFINED BINDIR)
-  set(BINDIR "bin")
-endif(NOT DEFINED BINDIR)
-
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 
 #
