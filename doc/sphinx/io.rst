@@ -369,7 +369,7 @@ Writing various formats using MDAnalysis
 If the MDAnalysis package (https://mdanalysis.org) is installed, it
 is possible to use it to convert frames to any of the supported
 configuration/trajectory formats, including PDB, GROMACS, GROMOS,
-CHARMM/NAMD, AMBER, LAMMPS, ...)
+CHARMM/NAMD, AMBER, LAMMPS, ...
 
 To use MDAnalysis to write in any of these formats, one has first to prepare a stream from
 the |es| particle data using the class :class:`espressomd.MDA_ESP`, and then read from it
@@ -398,9 +398,38 @@ using MDAnalysis. A simple example is the following:
 
 For other examples, see :file:`/samples/MDAnalysisIntegration.py`
 
-.. _Parsing PDB Files:
+.. _Reading various formats using MDAnalysis:
 
-Parsing PDB Files
------------------
+Reading various formats using MDAnalysis
+----------------------------------------
 
-The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is :file:`.pdb`, the topology file extension is :file:`.itp`. Obviously the PDB file is placed instead of and the topology file instead of .
+MDAnalysis can read various formats, including MD topologies and trajectories.
+To read a PDB file containing a single frame::
+
+    import MDAnalysis
+    import numpy as np
+    import espressomd
+    from espressomd.interactions import HarmonicBond
+
+    # parse protein structure
+    universe = MDAnalysis.Universe("protein.pdb")
+    # extract only the C-alpha atoms of chain A
+    chainA = universe.select_atoms("name CA and segid A")
+    # use the unit cell as box
+    box_l = np.ceil(universe.dimensions[0:3])
+    # setup system
+    system = espressomd.System(box_l=box_l)
+    system.time_step = 0.001
+    system.cell_system.skin = 0.4
+    # configure sphere size sigma and create a harmonic bond
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=1, sigma=1.5, cutoff=2, shift="auto")
+    system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.5)
+    # create particles and add bonds between them
+    system.part.add(pos=np.array(chainA.positions, dtype=float))
+    for i in range(0, len(chainA) - 1):
+        system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
+    # visualize protein in 3D
+    from espressomd import visualization
+    visualizer = visualization.openGLLive(system, bond_type_radius=[0.2])
+    visualizer.run(0)

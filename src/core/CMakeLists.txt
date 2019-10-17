@@ -173,7 +173,6 @@ endif()
 target_link_libraries(EspressoCore PUBLIC EspressoConfig utils)
 target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
 target_link_libraries(EspressoCore PRIVATE Profiler)
-target_link_libraries(EspressoCore PRIVATE pdbparser)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})

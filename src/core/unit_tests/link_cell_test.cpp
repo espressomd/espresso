@@ -46,8 +46,8 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
     c.m_neighbors = Neighbors<Cell *>(neighbors, {});
 
-    c.part = new Particle[n_part_per_cell];
-    c.n = c.max = n_part_per_cell;
+    c.resize(n_part_per_cell);
+    std::uninitialized_fill(c.part, c.part + c.n, Particle());
 
     for (unsigned i = 0; i < n_part_per_cell; ++i) {
       c.part[i].p.identity = id++;
@@ -86,8 +86,4 @@ BOOST_AUTO_TEST_CASE(link_cell) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
-
-  for (auto &c : cells) {
-    delete[] c.part;
-  }
 }

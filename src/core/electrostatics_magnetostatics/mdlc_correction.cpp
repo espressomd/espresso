@@ -44,6 +44,7 @@
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
 
 DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 

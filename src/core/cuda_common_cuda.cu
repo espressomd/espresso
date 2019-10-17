@@ -27,6 +27,7 @@
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 

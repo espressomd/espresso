@@ -31,7 +31,6 @@ add_subdirectory(config)
 add_subdirectory(utils)
 
 add_subdirectory(profiler)
-add_subdirectory(pdbparser)
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

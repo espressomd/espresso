@@ -18,6 +18,8 @@
  */
 
 #include "collision.hpp"
+
+#ifdef COLLISION_DETECTION
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -25,6 +27,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
@@ -36,8 +39,6 @@
 #include <boost/serialization/serialization.hpp>
 
 #include <vector>
-
-#ifdef COLLISION_DETECTION
 
 /// Data type holding the info about a single collision
 typedef struct {

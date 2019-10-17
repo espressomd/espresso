@@ -21,12 +21,12 @@
 /** \file
  *  Particles and particle lists.
  *
- *  The corresponding header file is Particle.hpp.
+ *  The corresponding header file is particle_data.hpp.
  */
-
-#include "Particle.hpp"
+#include "particle_data.hpp"
 
 #include "PartCfg.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -57,9 +57,6 @@
 /************************************************
  * defines
  ************************************************/
-
-/** granularity of the particle buffers in particles */
-#define PART_INCREMENT 8
 
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
@@ -542,10 +539,11 @@ void clear_particle_node() { particle_node.clear(); }
     \param part the highest existing particle
 */
 void realloc_local_particles(int part) {
+  constexpr auto INCREMENT = 8;
+
   if (part >= max_local_particles) {
-    /* round up part + 1 in granularity PART_INCREMENT */
-    max_local_particles =
-        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
+    /* round up part + 1 in granularity INCREMENT */
+    max_local_particles = INCREMENT * ((part + INCREMENT) / INCREMENT);
     local_particles = Utils::realloc(local_particles,
                                      sizeof(Particle *) * max_local_particles);
 
@@ -553,28 +551,6 @@ void realloc_local_particles(int part) {
     for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
       local_particles[i] = nullptr;
   }
-}
-
-int realloc_particlelist(ParticleList *l, int size) {
-  assert(size >= 0);
-  int old_max = l->max;
-  Particle *old_start = l->part;
-
-  if (size < l->max) {
-    if (size == 0)
-      /* to be able to free an array again */
-      l->max = 0;
-    else
-      /* shrink not as fast, just lose half, rounded up */
-      l->max =
-          PART_INCREMENT *
-          (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
-  } else
-    /* round up */
-    l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
-  if (l->max != old_max)
-    l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
-  return l->part != old_start;
 }
 
 void update_local_particles(ParticleList *pl) {
@@ -585,12 +561,12 @@ void update_local_particles(ParticleList *pl) {
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  realloc_particlelist(l, ++l->n);
+  l->resize(l->n + 1);
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
 Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = realloc_particlelist(l, ++l->n);
+  auto const re = l->resize(l->n + 1);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
   assert(p->p.identity <= max_seen_particle);
@@ -606,7 +582,7 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
 
-  realloc_particlelist(dl, ++dl->n);
+  dl->resize(dl->n + 1);
   auto dst = &dl->part[dl->n - 1];
   auto src = &sl->part[i];
   auto end = &sl->part[sl->n - 1];
@@ -616,14 +592,14 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  realloc_particlelist(sl, --sl->n);
+  sl->resize(sl->n - 1);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
-  int re = realloc_particlelist(dl, ++dl->n);
+  int re = dl->resize(dl->n + 1);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
@@ -641,7 +617,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -676,7 +652,7 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -1349,7 +1325,7 @@ void send_particles(ParticleList *particles, int node) {
     free_particle(&particles->part[pc]);
   }
 
-  realloc_particlelist(particles, particles->n = 0);
+  particles->clear();
 }
 
 void recv_particles(ParticleList *particles, int node) {

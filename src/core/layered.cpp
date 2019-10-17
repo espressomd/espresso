@@ -482,6 +482,6 @@ void layered_exchange_and_sort_particles(int global_flag,
     }
   }
 
-  realloc_particlelist(&recv_buf_up, 0);
-  realloc_particlelist(&recv_buf_dn, 0);
+  recv_buf_up.clear();
+  recv_buf_dn.clear();
 }
