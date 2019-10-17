@@ -21,18 +21,19 @@ source BashUnitTests.sh
 
 # test installation and Python bindings
 function test_install() {
-  local filepaths=("@CMAKE_INSTALL_PREFIX@/bin/pypresso" \
-                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/EspressoCore.so" \
-                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/_init.so" \
-                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/__init__.py"
-                  )
+  local -r site_package_espressomd="@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd"
+  local -r filepaths=("@CMAKE_INSTALL_FULL_BINDIR@/pypresso" \
+                      "${site_package_espressomd}/EspressoCore.so" \
+                      "${site_package_espressomd}/_init.so" \
+                      "${site_package_espressomd}/__init__.py"
+                     )
 
   for filepath in ${filepaths[@]}; do
     assert_file_exists "${filepath}"
   done
 
   # check the espressomd module can be imported from pypresso
-  assert_return_code "@CMAKE_INSTALL_PREFIX@/bin/pypresso" -c "import espressomd"
+  assert_return_code "@CMAKE_INSTALL_FULL_BINDIR@/pypresso" -c "import espressomd"
 }
 
 # run tests
