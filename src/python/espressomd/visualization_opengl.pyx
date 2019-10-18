@@ -103,7 +103,7 @@ class openGLLive:
         * ``'node'``: Color according to the node the particle is on.
     particle_type_colors : array_like :obj:`float`, optional
         Colors for particle types.
-    particle_type_materials : :obj:`str`, optional
+    particle_type_materials : array_like :obj:`str`, optional
         Materials of the particle types.
     particle_charge_colors : (2,) array_like of :obj:`float`, optional
         Two colors for min/max charged particles.

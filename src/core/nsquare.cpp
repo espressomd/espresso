@@ -55,11 +55,9 @@ static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
   prepare_comm(comm, data_parts, n_nodes);
   /* every node has its dedicated comm step */
   for (n = 0; n < n_nodes; n++) {
-    comm->comm[n].part_lists = (Cell **)Utils::malloc(sizeof(Cell *));
+    comm->comm[n].part_lists.resize(1);
     comm->comm[n].part_lists[0] = &cells[n];
-    comm->comm[n].n_part_lists = 1;
     comm->comm[n].node = n;
-    comm->comm[n].mpi_comm = comm_cart;
   }
 }
 
@@ -168,7 +166,7 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
     auto const target_node = (p.identity() % n_nodes);
     send_buf.at(target_node).emplace_back(std::move(p));
   }
-  realloc_particlelist(displaced_parts, displaced_parts->n = 0);
+  displaced_parts->resize(0);
 
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(n_nodes);

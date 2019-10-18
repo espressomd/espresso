@@ -120,7 +120,6 @@ cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:
         double p_ext
         double p_inst
-        double p_inst_av
         double p_diff
         double piston
     extern nptiso_struct nptiso

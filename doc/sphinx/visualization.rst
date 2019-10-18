@@ -205,7 +205,7 @@ used, which are indexed circularly by the numerical particle type::
     visualizer = visualization.openGLLive(system,
                                           particle_coloring='type',
                                           particle_type_colors=[[1, 1, 1], [0, 0, 1]],
-                                          particle_type_materials=[steel, bright])
+                                          particle_type_materials=["steel", "bright"])
 
 Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
 

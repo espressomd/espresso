@@ -120,8 +120,8 @@ void integrator_sanity_checks() {
 /************************************************************/
 
 /** @brief Calls the hook for propagation kernels before the force calculation
-    @return whether or not to stop the integration loop early.
-*/
+ *  @return whether or not to stop the integration loop early.
+ */
 bool integrator_step_1(ParticleRange &particles) {
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
@@ -164,7 +164,7 @@ void integrator_step_2(ParticleRange &particles) {
 void integrate_vv(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
-  /* Prepare the Integrator */
+  /* Prepare the integrator */
   on_integration_start();
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
@@ -174,13 +174,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
   /* Verlet list criterion */
 
   /* Integration Step: Preparation for first integration step:
-     Calculate forces f(t) as function of positions p(t) ( and velocities v(t) )
-   */
-  /* reuse_forces logic:
-     -1: recalculate forces unconditionally, mostly used for timing
-      0: recalculate forces if recalc_forces is set, meaning it is probably
-     necessary
-      1: do not recalculate forces. Mostly when reading checkpoints with forces
+   * Calculate forces F(t) as function of positions x(t) (and velocities v(t))
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
@@ -229,8 +223,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
       save_old_pos(particles, ghost_cells.particles());
-
 #endif
+
     bool early_exit = integrator_step_1(particles);
     if (early_exit)
       break;
@@ -246,8 +240,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
     }
 #endif
 
-// VIRTUAL_SITES pos (and vel for DPD) update for security reason !!!
 #ifdef VIRTUAL_SITES
+    // VIRTUAL_SITES pos (and vel for DPD) update for security reason!!!
     virtual_sites()->update(true);
 #endif
 
@@ -262,15 +256,14 @@ void integrate_vv(int n_steps, int reuse_forces) {
     virtual_sites()->after_force_calc();
 #endif
     integrator_step_2(particles);
-// SHAKE velocity updates
 #ifdef BOND_CONSTRAINT
+    // SHAKE velocity updates
     if (n_rigidbonds) {
       correct_vel_shake();
     }
 #endif
 
     // propagate one-step functionalities
-
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
       lb_lbfluid_propagate();
       lb_lbcoupling_propagate();
@@ -283,12 +276,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       handle_collisions();
 #endif
     }
-
-#ifdef NPT
-    if (integ_switch == INTEG_METHOD_NPT_ISO) {
-      npt_update_instantaneous_pressure();
-    }
-#endif
 
     if (check_runtime_errors(comm_cart))
       break;
@@ -305,8 +292,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif
 
-// VIRTUAL_SITES update vel
 #ifdef VIRTUAL_SITES
+  // VIRTUAL_SITES update vel
   virtual_sites()->update(false); // Recalc positions = false
 #endif
 
@@ -404,10 +391,10 @@ void integrate_set_nvt() {
 }
 
 #ifdef NPT
-/** Parse integrate npt_isotropic command */
-int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
-                                int ydir, int zdir, bool cubic_box) {
-  nptiso.cubic_box = 0;
+int integrate_set_npt_isotropic(double ext_pressure, double piston,
+                                bool xdir_rescale, bool ydir_rescale,
+                                bool zdir_rescale, bool cubic_box) {
+  nptiso.cubic_box = cubic_box;
   nptiso.p_ext = ext_pressure;
   nptiso.piston = piston;
 
@@ -416,50 +403,31 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
                          "this integrator!\n";
     return ES_ERROR;
   }
-  if (xdir || ydir || zdir) {
-    /* set the geometry to include rescaling specified directions only*/
-    nptiso.geometry = 0;
-    nptiso.dimension = 0;
-    nptiso.non_const_dim = -1;
-    if (xdir) {
-      nptiso.geometry = (nptiso.geometry | NPTGEOM_XDIR);
-      nptiso.dimension += 1;
-      nptiso.non_const_dim = 0;
-    }
-    if (ydir) {
-      nptiso.geometry = (nptiso.geometry | NPTGEOM_YDIR);
-      nptiso.dimension += 1;
-      nptiso.non_const_dim = 1;
-    }
-    if (zdir) {
-      nptiso.geometry = (nptiso.geometry | NPTGEOM_ZDIR);
-      nptiso.dimension += 1;
-      nptiso.non_const_dim = 2;
-    }
-  } else {
-    /* set the geometry to include rescaling in all directions; the default*/
-    nptiso.geometry = 0;
-    nptiso.geometry = (nptiso.geometry | NPTGEOM_XDIR);
-    nptiso.geometry = (nptiso.geometry | NPTGEOM_YDIR);
-    nptiso.geometry = (nptiso.geometry | NPTGEOM_ZDIR);
-    nptiso.dimension = 3;
+  /* set the NpT geometry */
+  nptiso.geometry = 0;
+  nptiso.dimension = 0;
+  nptiso.non_const_dim = -1;
+  if (xdir_rescale) {
+    nptiso.geometry |= NPTGEOM_XDIR;
+    nptiso.dimension += 1;
+    nptiso.non_const_dim = 0;
+  }
+  if (ydir_rescale) {
+    nptiso.geometry |= NPTGEOM_YDIR;
+    nptiso.dimension += 1;
+    nptiso.non_const_dim = 1;
+  }
+  if (zdir_rescale) {
+    nptiso.geometry |= NPTGEOM_ZDIR;
+    nptiso.dimension += 1;
     nptiso.non_const_dim = 2;
   }
 
-  if (cubic_box) {
-    /* enable if the volume fluctuations should also apply to dimensions which
-   are switched off by the above flags
-   and which do not contribute to the pressure (3D) / tension (2D, 1D) */
-    nptiso.cubic_box = 1;
-  }
-
-/* Sanity Checks */
+  /* Sanity Checks */
 #ifdef ELECTROSTATICS
   if (nptiso.dimension < 3 && !nptiso.cubic_box && coulomb.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If electrostatics is being used you must "
                          "use the cubic box npt.";
-    integ_switch = INTEG_METHOD_NVT;
-    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
   }
 #endif
@@ -468,8 +436,6 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   if (nptiso.dimension < 3 && !nptiso.cubic_box && dipole.prefactor > 0) {
     runtimeErrorMsg() << "WARNING: If magnetostatics is being used you must "
                          "use the cubic box npt.";
-    integ_switch = INTEG_METHOD_NVT;
-    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
     return ES_ERROR;
   }
 #endif
@@ -477,11 +443,7 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   if (nptiso.dimension == 0 || nptiso.non_const_dim == -1) {
     runtimeErrorMsg() << "You must enable at least one of the x y z components "
                          "as fluctuating dimension(s) for box length motion!";
-    runtimeErrorMsg() << "Cannot proceed with npt_isotropic, reverting to nvt "
-                         "integration... \n";
-    integ_switch = INTEG_METHOD_NVT;
-    mpi_bcast_parameter(FIELD_INTEG_SWITCH);
-    return (ES_ERROR);
+    return ES_ERROR;
   }
 
   /* set integrator switch */
@@ -490,8 +452,8 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
   mpi_bcast_parameter(FIELD_NPTISO_PISTON);
   mpi_bcast_parameter(FIELD_NPTISO_PEXT);
 
-  /* broadcast npt geometry information to all nodes */
+  /* broadcast NpT geometry information to all nodes */
   mpi_bcast_nptiso_geom();
-  return (ES_OK);
+  return ES_OK;
 }
 #endif

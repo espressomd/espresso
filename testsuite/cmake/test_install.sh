@@ -21,18 +21,23 @@ source BashUnitTests.sh
 
 # test installation and Python bindings
 function test_install() {
-  local filepaths=("@CMAKE_INSTALL_PREFIX@/bin/pypresso" \
-                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/EspressoCore.so" \
-                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/_init.so" \
-                   "@CMAKE_INSTALL_PREFIX@/@Python_SITEARCH@/espressomd/__init__.py"
-                  )
-
+  # check Python files were installed in espressomd
+  local -r filepaths=("@CMAKE_INSTALL_FULL_BINDIR@/pypresso" \
+                      "@PYTHON_DIR@/espressomd/EspressoCore.so" \
+                      "@PYTHON_DIR@/espressomd/_init.so" \
+                      "@PYTHON_DIR@/espressomd/__init__.py"
+                     )
   for filepath in ${filepaths[@]}; do
     assert_file_exists "${filepath}"
   done
 
+  # check no Python file was installed outside espressomd
+  paths=$(find "@CMAKE_INSTALL_PREFIX@" -path "@PYTHON_DIR@/espressomd" -prune -o \( -name '*.py' -o -name '*.so' \) -print)
+  count=$(echo "${paths}" | wc -l)
+  assert_string_equal "${paths}" "" "${count} files were installed in the wrong directories:"$'\n'"${paths}"
+
   # check the espressomd module can be imported from pypresso
-  assert_return_code "@CMAKE_INSTALL_PREFIX@/bin/pypresso" -c "import espressomd"
+  assert_return_code "@CMAKE_INSTALL_FULL_BINDIR@/pypresso" -c "import espressomd"
 }
 
 # run tests

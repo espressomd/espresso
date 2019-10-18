@@ -65,6 +65,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
+#include "particle_data.hpp"
 
 #include <utils/math/int_pow.hpp>
 using Utils::int_pow;

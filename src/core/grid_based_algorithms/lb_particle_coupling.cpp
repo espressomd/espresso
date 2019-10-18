@@ -27,6 +27,7 @@
 #include "lb_interface.hpp"
 #include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
 
 #include <profiler/profiler.hpp>

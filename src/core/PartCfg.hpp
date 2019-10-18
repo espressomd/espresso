@@ -23,6 +23,8 @@
 #include "ParticleCache.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
+
 #include "serialization/Particle.hpp"
 #include <utils/SkipIterator.hpp>
 
