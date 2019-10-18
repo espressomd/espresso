@@ -42,6 +42,7 @@ cdef extern from "reaction_ensemble.hpp" namespace "ReactionEnsemble":
         double get_acceptance_rate_configurational_moves()
         int delete_particle(int p_id)
         void add_reaction(double gamma, vector[int] _reactant_types, vector[int] _reactant_coefficients, vector[int] _product_types, vector[int] _product_coefficients) except +
+        void delete_reaction(int reaction_id)
 
         vector[SingleReaction] reactions
         int nr_different_types
