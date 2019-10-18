@@ -201,10 +201,8 @@ class ReactionEnsembleTest(ut.TestCase):
             product_coefficients=[1,4,3],
             default_charges={5: 0, 2: 0, 3: 0, 4: 0}, check_for_electroneutrality=True)
         nr_reactions_after_addition=len(RE.get_status()["reactions"])
-        print("AAA")
         RE.delete_reaction(1)
         nr_reactions_after_deletion=len(RE.get_status()["reactions"])
-        print(RE.get_status())
         self.assertEqual(
             2,
             nr_reactions_after_addition-nr_reactions_after_deletion, 
