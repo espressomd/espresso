@@ -55,8 +55,8 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
+#ifdef ROTATIONAL_INERTIA
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
@@ -118,7 +118,7 @@ struct ParticleProperties {
   } vs_relative;
 #endif
 #else  /* VIRTUAL_SITES */
-  static constexpr const bool is_virtual = false;
+  static constexpr bool is_virtual = false;
 #endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE

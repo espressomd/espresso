@@ -168,7 +168,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::gamma_rot>
 #else
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
