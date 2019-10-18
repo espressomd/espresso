@@ -587,7 +587,6 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef ROTATION
-void pointer_to_rotation(Particle const *p, int const *&res);
 #endif
 
 #ifdef ENGINE

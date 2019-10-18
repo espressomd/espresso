@@ -23,6 +23,7 @@ from espressomd.utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
+from libc cimport stdint
 
 include "myconfig.pxi"
 
@@ -30,9 +31,9 @@ include "myconfig.pxi"
 
 cdef extern from "particle_data.hpp":
     # DATA STRUCTURES
-    int ROTATION_X
-    int ROTATION_Y
-    int ROTATION_Z
+    stdint.uint8_t ROTATION_X
+    stdint.uint8_t ROTATION_Y
+    stdint.uint8_t ROTATION_Z
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
@@ -43,6 +44,7 @@ cdef extern from "particle_data.hpp":
         int    mol_id
         int    type
         double mass
+        stdint.uint8_t rotation
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
@@ -101,7 +103,6 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION:
         void set_particle_rotation(int part, int rot)
-        void pointer_to_rotation(const particle * p, const int * & res)
 
     void set_particle_q(int part, double q)
 

@@ -137,7 +137,9 @@ using UpdatePropertyMessage = boost::variant
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
-        , UpdateProperty<int, &Prop::rotation>
+#ifdef ROTATION
+        , UpdateProperty<uint8_t, &Prop::rotation>
+#endif
 #ifdef ELECTROSTATICS
         , UpdateProperty<double, &Prop::q>
 #endif
@@ -842,7 +844,8 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<int, &ParticleProperties::rotation>(part, rot);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
+                                                                       rot);
 }
 #endif
 #ifdef ROTATION
@@ -1549,10 +1552,6 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
   res = &(p->p.T);
 }
 #endif // LANGEVIN_PER_PARTICLE
-
-void pointer_to_rotation(Particle const *p, int const *&res) {
-  res = &(p->p.rotation);
-}
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,

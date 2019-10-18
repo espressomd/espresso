@@ -25,7 +25,9 @@
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 
-enum : int {
+#include <cstdint>
+
+enum : uint8_t {
   ROTATION_FIXED = 0u,
   ROTATION_X = 1u,
   ROTATION_Y = 2u,
@@ -67,9 +69,9 @@ struct ParticleProperties {
 
   /** bitfield for the particle axes of rotation */
 #ifdef ROTATION
-  int rotation = ROTATION_FIXED;
+  uint8_t rotation = ROTATION_FIXED;
 #else
-  constexpr int = ROTATION_FIXED;
+  static constexpr uint8_t rotation = ROTATION_FIXED;
 #endif
 
   /** charge. */

@@ -1066,9 +1066,8 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef const int * _rot = NULL
-                pointer_to_rotation(self.particle_data, _rot)
-                rot = _rot[0]
+                rot = self.particle_data.p.rotation
+
                 res = np.zeros(3, dtype=int)
                 if rot & ROTATION_X:
                     res[0] = 1
