@@ -30,7 +30,6 @@ include "myconfig.pxi"
 
 cdef extern from "particle_data.hpp":
     # DATA STRUCTURES
-
     int ROTATION_X
     int ROTATION_Y
     int ROTATION_Z

@@ -25,6 +25,13 @@
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 
+enum : int {
+  ROTATION_FIXED = 0u,
+  ROTATION_X = 1u,
+  ROTATION_Y = 2u,
+  ROTATION_Z = 4u
+};
+
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
  *  for all ghosts. Ghosts are particles which are
@@ -59,7 +66,11 @@ struct ParticleProperties {
 #endif
 
   /** bitfield for the particle axes of rotation */
-  int rotation = 0;
+#ifdef ROTATION
+  int rotation = ROTATION_FIXED;
+#else
+  constexpr int = ROTATION_FIXED;
+#endif
 
   /** charge. */
 #ifdef ELECTROSTATICS
