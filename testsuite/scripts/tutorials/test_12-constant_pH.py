@@ -34,11 +34,11 @@ else:
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def ideal_degree_of_dissociation(pH, pK):
+    def ideal_degree_of_dissociation(self, pH, pK):
         return 1. / (1 + 10**(pK - pH))
 
     def test(self):
-        expected_values = ideal_degree_of_dissociation(
+        expected_values = self.ideal_degree_of_dissociation(
             tutorial.pHs, tutorial.pK)
         simulated_values = tutorial.degrees_of_dissociation
         simulated_values_error = tutorial.std_dev_degree_of_dissociation / \
