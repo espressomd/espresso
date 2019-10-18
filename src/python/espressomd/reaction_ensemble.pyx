@@ -356,7 +356,7 @@ cdef class ReactionAlgorithm:
         """
         deref(self.RE).delete_particle(p_id)
 
-    def change_reaction_constant(self, reaction_id, gamma ):
+    def change_reaction_constant(self, reaction_id, gamma):
         """
         Changes the reaction constant of a given reaction 
         (for the forward and backward reaction). 
@@ -370,13 +370,16 @@ cdef class ReactionAlgorithm:
             reaction_id
         gamma : :obj:`float`
             new reaction constant
-            
+
         """
-        reaction_id=int(reaction_id)
-        if(reaction_id>deref(self.RE).reactions.size()/2-1 or reaction_id<0):
-            raise ValueError("You provided an invalid reaction_id, please provide a valid reaction_id")
-        deref(self.RE).reactions[2*reaction_id].gamma=gamma #for the forward reaction
-        deref(self.RE).reactions[2*reaction_id+1].gamma=1.0/gamma #for the backward reaction
+        reaction_id = int(reaction_id)
+        if(reaction_id > deref(self.RE).reactions.size() / 2 - 1 or reaction_id < 0):
+            raise ValueError(
+                "You provided an invalid reaction_id, please provide a valid reaction_id")
+        # for the forward reaction
+        deref(self.RE).reactions[2 * reaction_id].gamma = gamma
+        # for the backward reaction
+        deref(self.RE).reactions[2 * reaction_id + 1].gamma = 1.0 / gamma
 
     def delete_reaction(self, reaction_id):
         """
@@ -392,14 +395,15 @@ cdef class ReactionAlgorithm:
         ----------
         reaction_id : :obj:`int`
             reaction_id
-                
+
         """
-        reaction_id=int(reaction_id)
-        if(reaction_id>deref(self.RE).reactions.size()/2-1 or reaction_id<0):
-            raise ValueError("You provided an invalid reaction_id, please provide a valid reaction_id")
-        deref(self.RE).delete_reaction(2*reaction_id+1)
-        deref(self.RE).delete_reaction(2*reaction_id)
-        
+        reaction_id = int(reaction_id)
+        if(reaction_id > deref(self.RE).reactions.size() / 2 - 1 or reaction_id < 0):
+            raise ValueError(
+                "You provided an invalid reaction_id, please provide a valid reaction_id")
+        deref(self.RE).delete_reaction(2 * reaction_id + 1)
+        deref(self.RE).delete_reaction(2 * reaction_id)
+
 cdef class ReactionEnsemble(ReactionAlgorithm):
     """
     This class implements the Reaction Ensemble.
