@@ -28,19 +28,14 @@ tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Tutorial(ut.TestCase):
     system = tutorial.system
 
-    def ideal_degree_of_dissociation(pH, pK):
-        return 1. / (1 + 10**(pK - pH))
-
     def test(self):
-        expected_values = ideal_degree_of_dissociation(
-            tutorial.pHs, tutorial.pK)
-        simulated_values = tutorial.degrees_of_dissociation
-        simulated_values_error = tutorial.std_dev_degree_of_dissociation / \
-            np.sqrt(tutorial.num_samples)
-        # test alpha +/- 0.05 and standard error of alpha less than 0.10
+        expected_values = 1. / (1 + 10**(tutorial.pK - tutorial.pHs))
+        simulated_values = tutorial.av_alpha
+        simulated_values_error = tutorial.err_alpha
+        # test alpha +/- 0.05 and standard error of alpha less than 0.05
         np.testing.assert_allclose(expected_values, simulated_values, rtol=0,
                                    atol=0.05)
-        self.assertLess(np.max(simulated_values_error), 0.10)
+        self.assertLess(np.max(simulated_values_error), 0.05)
 
 
 if __name__ == "__main__":
