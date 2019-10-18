@@ -273,31 +273,19 @@ Utils::Vector3d convert_vector_space_to_body(const Particle &p,
  */
 void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
                            const double phi) {
-  // Convert rotation axis to body-fixed frame
-  Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
-
   // Rotation turned off entirely?
   if (!p.p.rotation)
     return;
 
-  // Per coordinate fixing
-  if (!(p.p.rotation & ROTATION_X))
-    axis[0] = 0;
-  if (!(p.p.rotation & ROTATION_Y))
-    axis[1] = 0;
-  if (!(p.p.rotation & ROTATION_Z))
-    axis[2] = 0;
-  // Re-normalize rotation axis
-  double l = axis.norm();
-  // Check, if the rotation axis is nonzero
-  if (l < std::numeric_limits<double>::epsilon())
-    return;
+  // Convert rotation axis to body-fixed frame
+  auto const axis =
+      mask(p.p.rotation, convert_vector_space_to_body(p, axis_space_frame))
+          .normalize();
 
-  axis /= l;
-
-  double s = sin(phi / 2);
-  Utils::Vector4d q = {cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]};
-  q.normalize();
+  auto const s = std::sin(phi / 2);
+  auto const q =
+      Utils::Vector4d{cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]}
+          .normalize();
 
   // Rotate the particle
   p.r.quat = Utils::multiply_quaternions(p.r.quat, q);

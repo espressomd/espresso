@@ -23,9 +23,9 @@
 
 #include <utils/mask.hpp>
 
-#include <tuple>
 #include <array>
 #include <cstdint>
+#include <tuple>
 
 BOOST_AUTO_TEST_CASE(mask_) {
   using Utils::get;

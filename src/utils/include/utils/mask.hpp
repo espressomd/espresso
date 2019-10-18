@@ -30,7 +30,8 @@ std::enable_if_t<std::is_unsigned<Integral>::value &&
                      (8 * sizeof(Integral) >= tuple_size<T>::value),
                  T>
 mask(Integral mask, T t) {
-  return detail::mask_impl(mask, t, std::make_index_sequence<tuple_size<T>::value>{});
+  return detail::mask_impl(mask, t,
+                           std::make_index_sequence<tuple_size<T>::value>{});
 }
 } // namespace Utils
 
