@@ -31,6 +31,5 @@ struct tuple_element : std::tuple_element<I, Tuple> {};
 
 template <std::size_t I, class Tuple>
 using tuple_element_t = typename tuple_element<I, Tuple>::type;
-
 } // namespace Utils
 #endif
