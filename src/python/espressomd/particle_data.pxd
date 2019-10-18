@@ -31,6 +31,10 @@ include "myconfig.pxi"
 cdef extern from "particle_data.hpp":
     # DATA STRUCTURES
 
+    int ROTATION_X
+    int ROTATION_Y
+    int ROTATION_Z
+
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
     # For all other properties, getter-functions have to be used on the c
