@@ -17,6 +17,7 @@
 
 from espressomd.utils import to_str
 
+
 def major():
     """Prints the major version of Espresso.
     """
