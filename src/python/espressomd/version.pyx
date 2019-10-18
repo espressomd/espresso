@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from espressomd.utils import to_str
+
 
 def major():
     """Prints the major version of Espresso.
@@ -38,14 +40,14 @@ def git_branch():
     """Git branch of the build if known, otherwise
        empty.
     """
-    return GIT_BRANCH
+    return to_str(GIT_BRANCH)
 
 
 def git_commit():
     """Git commit of the build if known, otherwise
        empty.
     """
-    return GIT_COMMIT_HASH
+    return to_str(GIT_COMMIT_HASH)
 
 
 def git_state():
@@ -54,4 +56,4 @@ def git_state():
        was not changed from git_commit(), "DIRTY"
        otherwise.
     """
-    return GIT_STATE
+    return to_str(GIT_STATE)
