@@ -168,25 +168,12 @@ void propagate_omega_quat_particle(Particle &p) {
 }
 
 inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
-  auto const t = convert_vector_space_to_body(p, p.f.torque);
-  p.f.torque = Utils::Vector3d{};
+  auto const torque = (thermo_switch & THERMO_LANGEVIN)
+                          ? friction_thermo_langevin_rotation(p) +
+                                convert_vector_space_to_body(p, p.f.torque)
+                          : convert_vector_space_to_body(p, p.f.torque);
 
-  if (thermo_switch & THERMO_LANGEVIN) {
-    friction_thermo_langevin_rotation(p);
-
-    p.f.torque += t;
-  } else {
-    p.f.torque = t;
-  }
-
-  if (!(p.p.rotation & ROTATION_X))
-    p.f.torque[0] = 0;
-
-  if (!(p.p.rotation & ROTATION_Y))
-    p.f.torque[1] = 0;
-
-  if (!(p.p.rotation & ROTATION_Z))
-    p.f.torque[2] = 0;
+  p.f.torque = mask(p.p.rotation, torque);
 }
 
 /** convert the torques to the body-fixed frames and propagate angular
