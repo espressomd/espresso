@@ -19,9 +19,15 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-
-tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/12-constant_pH/12-constant_pH.py")
+try:
+    import pint
+except ImportError:
+    tutorial = importlib_wrapper.MagicMock()
+    skipIfMissingFeatures = ut.skip(
+        "Python module pint not available, skipping test!")
+else:
+    tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+        "@TUTORIALS_DIR@/12-constant_pH/12-constant_pH.py")
 
 
 @skipIfMissingFeatures
