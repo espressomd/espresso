@@ -43,5 +43,9 @@ include(version)
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in
-  ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/version.hpp.tmp
+  )
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                ${CMAKE_CURRENT_BINARY_DIR}/version.hpp.tmp
+                ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
   )
