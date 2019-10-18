@@ -24,6 +24,7 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "version.hpp"
 
 #include <vector>
 
