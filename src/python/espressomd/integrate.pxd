@@ -32,7 +32,9 @@ cdef extern from "integrate.hpp" nogil:
 
 IF NPT:
     cdef extern from "integrate.hpp" nogil:
-        cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
+        cdef int integrate_set_npt_isotropic(double ext_pressure, double piston,
+                                             cbool xdir_rescale, cbool ydir_rescale,
+                                             cbool zdir_rescale, cbool cubic_box)
 
 cdef inline int _integrate(int nSteps, cbool recalc_forces, int reuse_forces):
     with nogil:

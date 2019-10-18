@@ -151,29 +151,24 @@ further details.
 /************************************************************/
 /*@{*/
 
-typedef struct {
+struct GhostCommunication {
 
   /** Communication type. */
   int type;
   /** Node to communicate with (to use with all MPI operations). */
   int node;
-  /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE).
-   */
-  MPI_Comm mpi_comm;
 
-  /** Number of particle lists to communicate. */
-  int n_part_lists;
   /** Pointer array to particle lists to communicate. */
-  Cell **part_lists;
+  std::vector<Cell *> part_lists;
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this is an integer multiple of the box
      length. The shift is done on the sender side */
   Utils::Vector3d shift;
-} GhostCommunication;
+};
 
 /** Properties for a ghost communication. A ghost communication is defined */
-typedef struct {
+struct GhostCommunicator {
 
   /** Particle data parts to transfer */
   int data_parts;
@@ -183,8 +178,7 @@ typedef struct {
 
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
-
-} GhostCommunicator;
+};
 
 /*@}*/
 
@@ -193,21 +187,21 @@ typedef struct {
 /*@{*/
 
 /** Initialize a communicator. */
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
+void prepare_comm(GhostCommunicator *gcr, int data_parts, int num);
 
 /** Free a communicator. */
-void free_comm(GhostCommunicator *comm);
+void free_comm(GhostCommunicator *gcr);
 
 /**
  * @brief do a ghost communication with the data parts specified
  *        in the communicator.
  */
-void ghost_communicator(GhostCommunicator *gc);
+void ghost_communicator(GhostCommunicator *gcr);
 
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator *gc, int data_parts);
+void ghost_communicator(GhostCommunicator *gcr, int data_parts);
 
 /*@}*/
 

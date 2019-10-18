@@ -132,8 +132,8 @@ cdef class Integrator:
         self._method = "NVT"
         integrate_set_nvt()
 
-    def set_isotropic_npt(self, ext_pressure, piston, direction=[0, 0, 0],
-                          cubic_box=False):
+    def set_isotropic_npt(self, ext_pressure, piston,
+                          direction=(True, True, True), cubic_box=False):
         """
         Set the integration method to NPT.
 
@@ -143,16 +143,19 @@ cdef class Integrator:
             The external pressure.
         piston : :obj:`float`
             The mass of the applied piston.
-        direction : (3,) array_like of :obj:`int`, optional
+        direction : (3,) array_like of :obj:`bool`, optional
             Select which dimensions are allowed to fluctuate by assigning
-            them to ``1``. In the special case where all dimensions are set
-            to ``0`` (default), they are all set to ``1`` in the core.
+            them to ``True``.
         cubic_box : :obj:`bool`, optional
-            If this optional parameter is true, a cubic box is assumed.
+            If ``True``, a cubic box is assumed and the value of ``direction``
+            will be ignored when rescaling the box. This is required e.g. for
+            electrostatics and magnetostatics.
 
         """
         IF NPT:
             self._method = "NPT"
+            if isinstance(direction, np.ndarray):
+                direction = list(map(int, direction))
             self._isotropic_npt_params['ext_pressure'] = ext_pressure
             self._isotropic_npt_params['piston'] = piston
             self._isotropic_npt_params['direction'] = direction
@@ -162,7 +165,9 @@ cdef class Integrator:
             check_type_or_throw_except(
                 piston, 1, float, "NPT parameter piston must be a float")
             check_type_or_throw_except(
-                direction, 3, int, "NPT parameter direction must be an array-like of three ints")
+                direction, 3, int, "NPT parameter direction must be an array-like of three bools")
+            check_type_or_throw_except(
+                cubic_box, 1, int, "NPT parameter cubic_box must be a bool")
             if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0],
                                             direction[1], direction[2], cubic_box)):
                 handle_errors(

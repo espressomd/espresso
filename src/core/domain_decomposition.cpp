@@ -281,9 +281,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           comm->comm[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists =
-              (Cell **)Utils::malloc(2 * n_comm_cells[dir] * sizeof(Cell *));
-          comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
+          comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
               local_geo.boundary()[2 * dir + lr] != 0) {
@@ -294,7 +292,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
@@ -313,9 +311,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
               if ((data_parts & GHOSTTRANS_POSSHFTD) &&
                   local_geo.boundary()[2 * dir + lr] != 0) {
@@ -325,7 +321,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
@@ -333,13 +330,12 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
         }
@@ -370,7 +366,7 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
     else if (comm->comm[i].type == GHOST_RECV)
       comm->comm[i].type = GHOST_SEND;
     else if (comm->comm[i].type == GHOST_LOCL) {
-      nlist2 = comm->comm[i].n_part_lists / 2;
+      nlist2 = comm->comm[i].part_lists.size() / 2;
       for (j = 0; j < nlist2; j++) {
         auto tmplist = comm->comm[i].part_lists[j];
         comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j + nlist2];
