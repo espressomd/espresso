@@ -353,7 +353,27 @@ function assert_file_exists() {
   fi
 }
 
-## @brief Check if two variables are identical
+## @brief Check if two strings are identical
+## @param $1 Obtained result
+## @param $2 Expected result
+## @param $3 Message on failure (optional)
+function assert_string_equal() {
+  local -r result=$1
+  local -r expected=$2
+  local message=$3
+  if [ -z "${message}" ]
+  then
+    message="${result} != ${expected}"
+  fi
+  if [ "${result}" = "${expected}" ]
+  then
+    log_success
+  else
+    log_failure "${message}"
+  fi
+}
+
+## @brief Check if two integers are identical
 ## @param $1 Obtained result
 ## @param $2 Expected result
 ## @param $3 Message on failure (optional)
