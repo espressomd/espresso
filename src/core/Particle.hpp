@@ -25,6 +25,15 @@
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 
+#include <cstdint>
+
+enum : uint8_t {
+  ROTATION_FIXED = 0u,
+  ROTATION_X = 1u,
+  ROTATION_Y = 2u,
+  ROTATION_Z = 4u
+};
+
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
  *  for all ghosts. Ghosts are particles which are
@@ -46,8 +55,8 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
+#ifdef ROTATIONAL_INERTIA
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
@@ -59,7 +68,11 @@ struct ParticleProperties {
 #endif
 
   /** bitfield for the particle axes of rotation */
-  int rotation = 0;
+#ifdef ROTATION
+  uint8_t rotation = ROTATION_FIXED;
+#else
+  static constexpr uint8_t rotation = ROTATION_FIXED;
+#endif
 
   /** charge. */
 #ifdef ELECTROSTATICS
@@ -105,7 +118,7 @@ struct ParticleProperties {
   } vs_relative;
 #endif
 #else  /* VIRTUAL_SITES */
-  static constexpr const bool is_virtual = false;
+  static constexpr bool is_virtual = false;
 #endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE

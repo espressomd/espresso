@@ -33,10 +33,6 @@
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 
-constexpr const int ROTATION_X = 2;
-constexpr const int ROTATION_Y = 4;
-constexpr const int ROTATION_Z = 8;
-
 /** Propagate angular velocities and update quaternions on a particle */
 void propagate_omega_quat_particle(Particle &p);
 
