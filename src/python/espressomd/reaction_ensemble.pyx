@@ -364,7 +364,7 @@ cdef class ReactionAlgorithm:
         depends on the order in which add_reaction() was called.
         The 0th reaction has reaction_id 0, 
         the next added reaction needs to be adressed with reaction_id=1, etc.
-        
+
         Parameters
         ----------
         reaction_id : :obj:`int`
@@ -392,7 +392,7 @@ cdef class ReactionAlgorithm:
         the next added reaction needs to be adressed with reaction_id=1, etc.
         After the deletion of a reaction subsequent reactions 
         take the reaction_id of the deleted reaction.
-        
+
         Parameters
         ----------
         reaction_id : :obj:`int`
