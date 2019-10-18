@@ -51,6 +51,7 @@
 #include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
+#include <utils/mask.hpp>
 
 /** Calculate the derivatives of the quaternion and angular acceleration
  *  for a given particle
@@ -135,19 +136,14 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
 void propagate_omega_quat_particle(Particle &p) {
 
   // If rotation for the particle is disabled entirely, return early.
-  if (!p.p.rotation)
+  if (p.p.rotation == ROTATION_FIXED)
     return;
 
   Utils::Vector4d Qd{}, Qdd{};
   Utils::Vector3d S{}, Wd{};
 
   // Clear rotational velocity for blocked rotation axes.
-  if (!(p.p.rotation & ROTATION_X))
-    p.m.omega[0] = 0;
-  if (!(p.p.rotation & ROTATION_Y))
-    p.m.omega[1] = 0;
-  if (!(p.p.rotation & ROTATION_Z))
-    p.m.omega[2] = 0;
+  p.m.omega = Utils::mask(p.p.rotation, p.m.omega);
 
   define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
