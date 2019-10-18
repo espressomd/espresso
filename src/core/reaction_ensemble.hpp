@@ -153,6 +153,7 @@ public:
                     const std::vector<int> &_reactant_coefficients,
                     const std::vector<int> &_product_types,
                     const std::vector<int> &_product_coefficients);
+  void delete_reaction(int reaction_id){ reactions.erase(reactions.begin()+reaction_id); }
 
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,

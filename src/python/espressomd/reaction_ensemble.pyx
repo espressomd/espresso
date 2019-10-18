@@ -356,7 +356,50 @@ cdef class ReactionAlgorithm:
         """
         deref(self.RE).delete_particle(p_id)
 
+    def change_reaction_constant(self, reaction_id, gamma ):
+        """
+        Changes the reaction constant of a given reaction 
+        (for the forward and backward reaction). 
+        The reaction_id which is assigned to a reaction
+        depends on the order in which add_reaction() was called.
+        The 0th reaction has reaction_id 0, 
+        the next added reaction needs to be adressed with reaction_id=1, etc.
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            reaction_id
+        gamma : :obj:`float`
+            new reaction constant
+            
+        """
+        reaction_id=int(reaction_id)
+        if(reaction_id>deref(self.RE).reactions.size()/2-1 or reaction_id<0):
+            raise ValueError("You provided an invalid reaction_id, please provide a valid reaction_id")
+        deref(self.RE).reactions[2*reaction_id].gamma=gamma #for the forward reaction
+        deref(self.RE).reactions[2*reaction_id+1].gamma=1.0/gamma #for the backward reaction
 
+    def delete_reaction(self, reaction_id):
+        """
+        Delete a reaction from the set of used reactions 
+        (the forward and backward reaction). 
+        The reaction_id which is assigned to a reaction
+        depends on the order in which add_reaction() was called.
+        The 0th reaction has reaction_id 0, 
+        the next added reaction needs to be adressed with reaction_id=1, etc.
+        After the deletion of a reaction subsequent reactions 
+        take the reaction_id of the deleted reaction.
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            reaction_id
+                
+        """
+        reaction_id=int(reaction_id)
+        if(reaction_id>deref(self.RE).reactions.size()/2-1 or reaction_id<0):
+            raise ValueError("You provided an invalid reaction_id, please provide a valid reaction_id")
+        deref(self.RE).delete_reaction(2*reaction_id+1)
+        deref(self.RE).delete_reaction(2*reaction_id)
+        
 cdef class ReactionEnsemble(ReactionAlgorithm):
     """
     This class implements the Reaction Ensemble.

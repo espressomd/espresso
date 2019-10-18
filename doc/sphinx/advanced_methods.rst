@@ -1968,13 +1968,14 @@ For making use of the inverse Widom scheme one has to provide the same reaction 
 
 Here you call the method ``measure_excess_chemical_potential`` with argument 1 because you want to perform the deletion reaction. The deletion is rejected if there is no particle which can be removed from the system.
 
-The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles:
+The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
 
 .. math::
 
-   \mu^\mathrm{ex, pair}:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right),
+   \mu^\mathrm{ex, pair}:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right)=-\kT \ln \left( \frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_N\right),
 
-
+Note that the measurement involves three averages: the ensemble average and the two volume averages. 
+Since the volume averages are obtained via brute force sampling of the insertion positions it can be beneficial to have multiple insertion tries on the same configuration.
 
 One can measure the change in excess free energy due to the simultaneous insertions of particles of type 1 and 2 and the simultaneous removal of a particle of type $3$:
 
