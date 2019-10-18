@@ -20,10 +20,17 @@
 #define UTILS_GET_HPP
 
 namespace Utils {
-
 template <std::size_t I, typename T> auto get(const T &v) {
   return std::get<I>(v);
 }
+
+template <class T> struct tuple_size : std::tuple_size<T> {};
+
+template <std::size_t I, class Tuple>
+struct tuple_element : std::tuple_element<I, Tuple> {};
+
+template <std::size_t I, class Tuple>
+using tuple_element_t = typename tuple_element<I, Tuple>::type;
 
 } // namespace Utils
 #endif
