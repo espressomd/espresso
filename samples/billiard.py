@@ -61,67 +61,60 @@ visualizer = openGLLive(
     light_colors=[[0.8, 0.8, 0.8], [0.9, 0.9, 0.9], [1.0, 1.0, 1.0]],
     light_brightness=1.0)
 
-stopped = True
-angle = np.pi * 0.5
-impulse = 10.0
+
+class Billiards:
+    def __init__(self):
+        self.stopped = True
+        self.angle = np.pi * 0.5
+        self.impulse = 10.0
+
+    def update_cueball_force(self):
+        direction = np.array([math.sin(self.angle), 0, math.cos(self.angle)])
+        system.part[0].ext_force = self.impulse * direction
+
+    def decreaseAngle(self):
+        if self.stopped:
+            self.angle += 0.01
+            self.update_cueball_force()
+
+    def increaseAngle(self):
+        if self.stopped:
+            self.angle -= 0.01
+            self.update_cueball_force()
+
+    def decreaseImpulse(self):
+        if self.stopped:
+            self.impulse -= 0.5
+            self.update_cueball_force()
+
+    def increaseImpulse(self):
+        if self.stopped:
+            self.impulse += 0.5
+            self.update_cueball_force()
+
+    def fire(self):
+        if self.stopped:
+            self.stopped = False
+            system.part[0].v = system.part[0].v + system.part[0].ext_force
+            system.part[0].fix = [False, True, False]
+            system.part[0].ext_force = [0, 0, 0]
 
 
-def decreaseAngle():
-    global angle, impulse
-    if stopped:
-        angle += 0.01
-        system.part[0].ext_force = impulse * \
-            np.array([math.sin(angle), 0, math.cos(angle)])
-
-
-def increaseAngle():
-    global angle, impulse
-    if stopped:
-        angle -= 0.01
-        system.part[0].ext_force = impulse * \
-            np.array([math.sin(angle), 0, math.cos(angle)])
-
-
-def decreaseImpulse():
-    global impulse, angle
-    if stopped:
-        impulse -= 0.5
-        system.part[0].ext_force = impulse * \
-            np.array([math.sin(angle), 0, math.cos(angle)])
-
-
-def increaseImpulse():
-    global impulse, angle
-    if stopped:
-        impulse += 0.5
-        system.part[0].ext_force = impulse * \
-            np.array([math.sin(angle), 0, math.cos(angle)])
-
-
-def fire():
-    global stopped
-    if stopped:
-        stopped = False
-        system.part[0].v = system.part[0].v + \
-            impulse * np.array([math.sin(angle), 0, math.cos(angle)])
-        system.part[0].fix = [0, 1, 0]
-        system.part[0].ext_force = [0, 0, 0]
-
+pool = Billiards()
 
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('4', KeyboardFireEvent.Hold, decreaseAngle))
+    KeyboardButtonEvent('4', KeyboardFireEvent.Hold, pool.decreaseAngle))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('6', KeyboardFireEvent.Hold, increaseAngle))
+    KeyboardButtonEvent('6', KeyboardFireEvent.Hold, pool.increaseAngle))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('2', KeyboardFireEvent.Hold, decreaseImpulse))
+    KeyboardButtonEvent('2', KeyboardFireEvent.Hold, pool.decreaseImpulse))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('8', KeyboardFireEvent.Hold, increaseImpulse))
+    KeyboardButtonEvent('8', KeyboardFireEvent.Hold, pool.increaseImpulse))
 visualizer.keyboardManager.register_button(
-    KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, fire))
+    KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, pool.fire))
 
 
 def main():
-    global stopped
 
     system.time_step = 0.00008
     system.cell_system.skin = 0.4
@@ -145,7 +138,6 @@ def main():
         shape=espressomd.shapes.Wall(dist=table_h, normal=[0.0, 1.0, 0.0]),
         particle_type=types['table'],
         penetrable=True)
-
     system.constraints.add(
         shape=espressomd.shapes.Wall(dist=0.01, normal=[1.0, 0.0, 0.0]),
         particle_type=types['wall'],
@@ -229,7 +221,7 @@ def main():
             spawnpos.append(pos)
             pid += 1
 
-    ball.ext_force = impulse * np.array([math.sin(angle), 0, math.cos(angle)])
+    pool.update_cueball_force()
     ball.fix = [True, True, True]
     system.thermostat.set_langevin(kT=0, gamma=0.8, seed=42)
 
@@ -255,9 +247,8 @@ def main():
                             p.v = [0, 0, 0]
                             p.fix = [False, True, False]
                         ball.fix = [True, True, True]
-                        ball.ext_force = impulse * \
-                            np.array([math.sin(angle), 0, math.cos(angle)])
-                        stopped = True
+                        pool.update_cueball_force()
+                        pool.stopped = True
                     else:
                         t = p.type - 1
                         cleared_balls[t] += 1
@@ -269,13 +260,12 @@ def main():
                         p.fix = [True, True, True]
                         p.v = [0, 0, 0]
 
-        if not stopped and vsum < 0.3:
-            stopped = True
+        if not pool.stopped and vsum < 0.3:
+            pool.stopped = True
             ball.fix = [True, True, True]
             for p in system.part:
                 p.v = [0, 0, 0]
-            ball.ext_force = impulse * \
-                np.array([math.sin(angle), 0, math.cos(angle)])
+            pool.update_cueball_force()
 
         visualizer.update()
 
