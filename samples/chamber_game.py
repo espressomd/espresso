@@ -23,8 +23,6 @@ import numpy as np
 import time
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
@@ -249,8 +247,7 @@ system.constraints.add(shape=espressomd.shapes.SimplePore(
 # BUBBLES
 n = 0
 
-# for i in range(bubbles_n):
-while (n < bubbles_n):
+while n < bubbles_n:
     # bpos = [pore_xr +  np.random.random() * (pore_xr - pore_xl -
     # snake_head_sigma*4) + snake_head_sigma * 2, np.random.random() * box[1],
     # box[2]*0.5]

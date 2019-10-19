@@ -23,7 +23,6 @@ import math
 from threading import Thread
 
 import espressomd
-from espressomd import thermostat
 import espressomd.interactions
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 import espressomd.shapes
@@ -129,9 +128,10 @@ def main():
 
     table_h = 0.5
     ball_diam = 0.0572
+    ball_mass = 0.17
     hole_dist = 0.02
     hole_rad = 0.08
-    hole_score_rad = 0.1
+    hole_score_rad = hole_rad + ball_diam / 2
     hole_pos = [[hole_dist, table_h, hole_dist],
                 [hole_dist, table_h, table_dim[1] - hole_dist],
                 [table_dim[0] - hole_dist, table_h, hole_dist],
@@ -180,41 +180,27 @@ def main():
             particle_type=types['hole'],
             penetrable=True)
 
-    wca_eps = np.array([1])
-    wca_sig = np.array([ball_diam])
-    wca_cap = 20
-    mass = np.array([0.17])
-
-    num_types = len(wca_sig)
-
-    def mix_eps(eps1, eps2, rule='LB'):
-        return math.sqrt(eps1 * eps2)
-
-    def mix_sig(sig1, sig2, rule='LB'):
-        return 0.5 * (sig1 + sig2)
-
     # WCA
     for t1 in range(4):
         for t2 in range(6):
             system.non_bonded_inter[t1, t2].wca.set_params(
-                epsilon=mix_eps(wca_eps[0], wca_eps[0]),
-                sigma=mix_sig(wca_sig[0], wca_sig[0]))
+                epsilon=1.0, sigma=ball_diam)
 
     ball_y = table_h + ball_diam * 1.5
 
     # PARTICLES
     ball_start_pos = [table_dim[0] * 0.25, ball_y, table_dim[1] * 0.5]
     system.part.add(id=0, pos=ball_start_pos,
-                    type=types['cue_ball'], mass=mass[0])
+                    type=types['cue_ball'], mass=ball_mass)
     spawnpos = []
     spawnpos.append(ball_start_pos)
     ball = system.part[0]
 
-    d = wca_sig[0] * 1.15
+    d = 1.15 * ball_diam
     a1 = np.array([d * math.sqrt(3) / 2.0, 0, -0.5 * d])
     a2 = np.array([d * math.sqrt(3) / 2.0, 0, 0.5 * d])
     sp = [system.box_l[0] * 0.7, ball_y,
-          system.box_l[2] * 0.5 + wca_sig[0] * 0.5]
+          system.box_l[2] * 0.5 + ball_diam * 0.5]
     pid = 1
     order = [
         types['solid_ball'],
@@ -239,12 +225,12 @@ def main():
             t = order[pid - 1]
             pos = sp + a1 * (N - j) + a2 * j
             system.part.add(
-                id=pid, pos=pos, mass=mass[0], type=t, fix=[0, 1, 0])
+                id=pid, pos=pos, mass=ball_mass, type=t, fix=[0, 1, 0])
             spawnpos.append(pos)
             pid += 1
 
     ball.ext_force = impulse * np.array([math.sin(angle), 0, math.cos(angle)])
-    ball.fix = [1, 1, 1]
+    ball.fix = [True, True, True]
     system.thermostat.set_langevin(kT=0, gamma=0.8, seed=42)
 
     cleared_balls = [0, 0]
@@ -259,7 +245,7 @@ def main():
 
                 d = ((p.pos_folded[0] - h[0])**2
                      + (p.pos_folded[2] - h[2])**2)**0.5
-                if (d < hole_score_rad):
+                if d < hole_score_rad:
                     if p.id == 0:
                         p.pos = ball_start_pos
                         p.v = [0, 0, 0]
@@ -267,25 +253,25 @@ def main():
                         for p in system.part:
                             p.pos = spawnpos[p.id]
                             p.v = [0, 0, 0]
-                            p.fix = [0, 1, 0]
-                        ball.fix = [1, 1, 1]
+                            p.fix = [False, True, False]
+                        ball.fix = [True, True, True]
                         ball.ext_force = impulse * \
                             np.array([math.sin(angle), 0, math.cos(angle)])
-                        stoppen = True
+                        stopped = True
                     else:
                         t = p.type - 1
                         cleared_balls[t] += 1
                         if t == 0:
-                            z = table_dim[1] - wca_sig[0] * 0.6
+                            z = table_dim[1] - ball_diam * 0.6
                         else:
-                            z = wca_sig[0] * 0.6
-                        p.pos = [cleared_balls[t] * wca_sig[0] * 1.5, 1.1, z]
-                        p.fix = [1, 1, 1]
+                            z = ball_diam * 0.6
+                        p.pos = [cleared_balls[t] * ball_diam * 1.5, 1.1, z]
+                        p.fix = [True, True, True]
                         p.v = [0, 0, 0]
 
         if not stopped and vsum < 0.3:
             stopped = True
-            ball.fix = [1, 1, 1]
+            ball.fix = [True, True, True]
             for p in system.part:
                 p.v = [0, 0, 0]
             ball.ext_force = impulse * \

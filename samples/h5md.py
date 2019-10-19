@@ -18,8 +18,7 @@
 Sample for the usage of H5MD trajectory writing in ESPResSo.
 """
 
-import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd.io.writer import h5md  # pylint: disable=import-error
 from espressomd import polymer
 from espressomd import interactions

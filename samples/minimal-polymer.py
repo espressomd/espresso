@@ -21,7 +21,6 @@ This sample sets up a polymer.
 """
 import espressomd
 espressomd.assert_features(["WCA"])
-from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
 from espressomd.io.writer import vtf  # pylint: disable=import-error
@@ -67,26 +66,24 @@ vtf.writevsf(system, outfile)
 warm_steps = 10
 wca_cap = 1
 system.force_cap = wca_cap
-i = 0
 act_min_dist = system.analysis.min_dist()
 
 # warmup with zero temperature to remove overlaps
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # slowly ramp un up the cap
-while (act_min_dist < 0.95):
+while act_min_dist < 0.95:
     vtf.writevcf(system, outfile)
     print("min_dist: {} \t force cap: {}".format(act_min_dist, wca_cap))
     system.integrator.run(warm_steps)
     system.part[:].v = [0, 0, 0]
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-    wca_cap = wca_cap * 1.01
+    wca_cap *= 1.01
     system.force_cap = wca_cap
 
 # remove force cap
-wca_cap = 0
-system.force_cap = wca_cap
+system.force_cap = 0
 system.integrator.run(warm_steps * 10)
 
 # restore simulation temperature

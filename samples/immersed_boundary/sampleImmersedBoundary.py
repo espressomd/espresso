@@ -24,13 +24,13 @@ required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS",
                      "EXPERIMENTAL_FEATURES"]
 espressomd.assert_features(required_features)
 
-from espressomd import System, lb, shapes, lbboundaries
+from espressomd import lb, shapes, lbboundaries
 import numpy as np
 from espressomd.virtual_sites import VirtualSitesInertialessTracers
 
 # System setup
 boxZ = 20
-system = System(box_l=(20, 20, boxZ))
+system = espressomd.System(box_l=(20, 20, boxZ))
 system.time_step = 1 / 6.
 system.cell_system.skin = 0.1
 system.virtual_sites = VirtualSitesInertialessTracers()
@@ -74,8 +74,8 @@ for wall in walls:
 
 
 # make directory
-from os import mkdir
-mkdir(outputDir)
+import os
+os.makedirs(outputDir)
 
 # Perform integration
 from writeVTK import WriteVTK

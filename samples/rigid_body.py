@@ -22,15 +22,13 @@ VIRTUAL_SITES_RELATIVE feature.
 import espressomd
 required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
 espressomd.assert_features(required_features)
-from espressomd import thermostat
-from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
 
 import numpy as np
 
 
 box_l = 100
-system = espressomd.System(box_l=[box_l, box_l, box_l])
+system = espressomd.System(box_l=3 * [box_l])
 system.set_random_state_PRNG()
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -53,9 +51,7 @@ print("** Placing particles")
 p_id = 1
 
 branch_len = 5
-x = box_l * 0.5
-y = box_l * 0.5
-z = box_l * 0.5
+x = y = z = box_l / 2
 
 # place six branches, pointing +/-x +/-y and +/-z
 # note that we do not make the particles virtual at this point.

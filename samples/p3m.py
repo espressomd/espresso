@@ -22,7 +22,6 @@ import espressomd
 required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
 
@@ -57,7 +56,7 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-thermostat.Thermostat().set_langevin(1.0, 1.0, seed=42)
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
@@ -89,7 +88,7 @@ print(system.non_bonded_inter[0, 0].wca.get_params())
 # Particle setup
 #############################################################
 
-volume = box_l * box_l * box_l
+volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
@@ -115,7 +114,7 @@ for i in range(n_part // 2 - 1):
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
-#p3m = electrostatics.P3M_GPU(prefactor=2.0, accuracy=1e-2)
+#p3m = electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
@@ -159,7 +158,7 @@ print(system.non_bonded_inter[0, 0].wca)
 
 # Warmup Integration Loop
 i = 0
-while (i < warm_n_times or act_min_dist < min_dist):
+while i < warm_n_times or act_min_dist < min_dist:
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
@@ -170,7 +169,7 @@ while (i < warm_n_times or act_min_dist < min_dist):
     wca_cap += 20
     system.force_cap = wca_cap
 
-# Just to see what else we may get from the c code
+# Just to see what else we may get from the C++ core
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
@@ -188,15 +187,13 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
 print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
 
 # remove force capping
-wca_cap = 0
-system.force_cap = wca_cap
+system.force_cap = 0
 print(system.non_bonded_inter[0, 0].wca)
 
-# print(initial energies)
+# print initial energies
 energies = system.analysis.energy()
 print(energies)
 
-j = 0
 for i in range(int_n_times):
     print("run %d at time=%f " % (i, system.time))
 

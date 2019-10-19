@@ -26,8 +26,6 @@ import espressomd
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
-
 print("""
 =======================================================
 =                    lj_liquid.py                     =
@@ -35,8 +33,6 @@ print("""
 
 Program Information:""")
 print(espressomd.features())
-
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -93,7 +89,7 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 # Particle setup
 #############################################################
 
-volume = box_l * box_l * box_l
+volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
@@ -107,7 +103,7 @@ print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 #############################################################
 #  Warmup Integration                                       #
@@ -133,22 +129,16 @@ print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # Warmup Integration Loop
 i = 0
-while (i < warm_n_times and act_min_dist < min_dist):
+while i < warm_n_times and act_min_dist < min_dist:
     system.integrator.run(steps=warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-# print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
-# (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
-
-#   write observables
-#    puts $obs_file "{ time [setmd time] } [analyze energy]"
-
-#   Increase LJ cap
+    # Increase LJ cap
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
 
-# Just to see what else we may get from the c code
+# Just to see what else we may get from the C++ core
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
@@ -172,7 +162,7 @@ lj_cap = 0
 system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# print(initial energies)
+# print initial energies
 energies = system.analysis.energy()
 print(energies)
 

@@ -23,15 +23,13 @@ import numpy as np
 from threading import Thread
 
 import espressomd
-from espressomd import thermostat
 from espressomd.interactions import HarmonicBond
 import espressomd.visualization_opengl
 
 required_features = ["NPT", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-box_l = 10
-system = espressomd.System(box_l=[box_l] * 3)
+system = espressomd.System(box_l=3 * [10])
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 
@@ -40,8 +38,6 @@ visualizer = espressomd.visualization_opengl.openGLLive(
 
 system.time_step = 0.0005
 system.cell_system.skin = 0.1
-
-system.box_l = [box_l, box_l, box_l]
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=2, sigma=1,

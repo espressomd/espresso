@@ -19,13 +19,10 @@ Particle polarization with cold Drude oscillators on a coarse grained
 ionic liquid BMIM PF6.
 """
 
-import sys
 import time
 import os
 import numpy as np
 import argparse
-from threading import Thread
-from time import sleep
 
 import espressomd
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
@@ -75,7 +72,7 @@ box_volume = n_ionpairs / rho_factor_bmim_pf6 / density_si
 box_l = box_volume**(1. / 3.)
 print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
-system = espressomd.System(box_l=[box_l, box_l, box_l])
+system = espressomd.System(box_l=3 * [box_l])
 system.virtual_sites = VirtualSitesRelative(have_velocity=True)
 system.set_random_state_PRNG()
 

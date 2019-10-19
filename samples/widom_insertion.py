@@ -26,9 +26,6 @@ import numpy as np
 import argparse
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
@@ -48,7 +45,7 @@ box_l = (N0 / cs_bulk)**(1.0 / 3.0)
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[box_l, box_l, box_l])
+system = espressomd.System(box_l=3 * [box_l])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)

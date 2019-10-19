@@ -20,12 +20,9 @@ via harmonic bonds.
 """
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
 import numpy as np
-from threading import Thread
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)

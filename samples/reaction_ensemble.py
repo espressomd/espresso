@@ -26,9 +26,6 @@ import numpy as np
 import argparse
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import reaction_ensemble
 
 parser = argparse.ArgumentParser()
@@ -53,7 +50,7 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 # Particle setup
 #############################################################

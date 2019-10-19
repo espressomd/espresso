@@ -21,7 +21,6 @@ This sample sets up a diamond-structured polymer network.
 """
 import espressomd
 espressomd.assert_features(["WCA"])
-from espressomd import thermostat
 from espressomd import interactions
 from espressomd import diamond
 from espressomd.io.writer import vtf  # pylint: disable=import-error
@@ -69,7 +68,7 @@ bond_length = 0.966
 a = (MPC + 1) * bond_length / (0.25 * np.sqrt(3))
 
 # Lastly, the created periodic connections requires a specific simulation box.
-system.box_l = [a, a, a]
+system.box_l = 3 * [a]
 print("box now at ", system.box_l)
 
 # We can now call diamond to place the monomers, crosslinks and bonds.
@@ -90,15 +89,14 @@ act_min_dist = system.analysis.min_dist()
 system.thermostat.set_langevin(kT=0.0, gamma=1.0)
 
 # slowly ramp up the cap
-while (wca_cap < 5):
+while wca_cap < 5:
     system.integrator.run(warm_steps)
     system.part[:].v = [0, 0, 0]
-    wca_cap = wca_cap * 1.1
+    wca_cap *= 1.1
     system.force_cap = wca_cap
 
 # remove force cap
-wca_cap = 0
-system.force_cap = wca_cap
+system.force_cap = 0
 system.integrator.run(warm_steps * 10)
 
 # restore simulation temperature

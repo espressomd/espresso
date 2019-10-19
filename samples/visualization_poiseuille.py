@@ -18,9 +18,8 @@
 Visualization sample for Poiseuille flow with Lattice Boltzmann.
 """
 
-from espressomd import System, lb, shapes, lbboundaries
+from espressomd import lb, shapes, lbboundaries
 import numpy as np
-from threading import Thread
 import espressomd.visualization_opengl
 
 required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES"]
@@ -28,7 +27,7 @@ espressomd.assert_features(required_features)
 
 # System setup
 box_l = 16
-system = System(box_l=[box_l] * 3)
+system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 

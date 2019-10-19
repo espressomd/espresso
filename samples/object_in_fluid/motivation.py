@@ -25,7 +25,6 @@ required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES", "SOFT_SPHERE",
                      "MEMBRANE_COLLISION", "OIF_GLOBAL_FORCES", "OIF_LOCAL_FORCES", "MASS"]
 espressomd.assert_features(required_features)
 
-from espressomd import lb
 from espressomd import lbboundaries
 from espressomd import shapes
 
@@ -39,11 +38,12 @@ from object_in_fluid.oif_utils import output_vtk_rhomboid, output_vtk_cylinder
 
 assert len(sys.argv) == 2, "please provide a number for the simulation"
 simNo = sys.argv[1]
-if not os.path.isdir("output/sim" + str(simNo)):
-    os.makedirs("output/sim" + str(simNo))
+output_path = "output/sim" + str(simNo)
+if not os.path.isdir(output_path):
+    os.makedirs(output_path)
 else:
     warnings.warn("Folder {} already exists, files will be overwritten"
-                  .format("output/sim" + str(simNo)))
+                  .format(output_path))
 
 boxX = 22.0
 boxY = 14.0
@@ -94,49 +94,49 @@ bottom_shape = shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[
                                boxX, 0.0, 0.0], b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0], direction=1)
 boundaries.append(bottom_shape)
 output_vtk_rhomboid(
-    bottom_shape, out_file="output/sim" + str(simNo) + "/wallBottom.vtk")
+    bottom_shape, out_file=output_path + "/wallBottom.vtk")
 
 # top of the channel
 top_shape = shapes.Rhomboid(corner=[0.0, 0.0, boxZ - 1], a=[
                             boxX, 0.0, 0.0], b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0], direction=1)
 boundaries.append(top_shape)
 output_vtk_rhomboid(
-    top_shape, out_file="output/sim" + str(simNo) + "/wallTop.vtk")
+    top_shape, out_file=output_path + "/wallTop.vtk")
 
 # front wall of the channel
 front_shape = shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[
                               boxX, 0.0, 0.0], b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
 boundaries.append(front_shape)
 output_vtk_rhomboid(
-    front_shape, out_file="output/sim" + str(simNo) + "/wallFront.vtk")
+    front_shape, out_file=output_path + "/wallFront.vtk")
 
 # back wall of the channel
 back_shape = shapes.Rhomboid(corner=[0.0, boxY - 1.0, 0.0], a=[
                              boxX, 0.0, 0.0], b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
 boundaries.append(back_shape)
 output_vtk_rhomboid(
-    back_shape, out_file="output/sim" + str(simNo) + "/wallBack.vtk")
+    back_shape, out_file=output_path + "/wallBack.vtk")
 
 # obstacle - cylinder A
 cylA_shape = shapes.Cylinder(center=[11.0, 2.0, 7.0], axis=[
                              0.0, 0.0, 1.0], length=7.0, radius=2.0, direction=1)
 boundaries.append(cylA_shape)
 output_vtk_cylinder(
-    cylA_shape, n=20, out_file="output/sim" + str(simNo) + "/cylinderA.vtk")
+    cylA_shape, n=20, out_file=output_path + "/cylinderA.vtk")
 
 # obstacle - cylinder B
 cylB_shape = shapes.Cylinder(center=[16.0, 8.0, 7.0], axis=[
                              0.0, 0.0, 1.0], length=7.0, radius=2.0, direction=1)
 boundaries.append(cylB_shape)
 output_vtk_cylinder(
-    cylB_shape, n=20, out_file="output/sim" + str(simNo) + "/cylinderB.vtk")
+    cylB_shape, n=20, out_file=output_path + "/cylinderB.vtk")
 
 # obstacle - cylinder C
 cylC_shape = shapes.Cylinder(center=[11.0, 12.0, 7.0], axis=[
                              0.0, 0.0, 1.0], length=7.0, radius=2.0, direction=1)
 boundaries.append(cylC_shape)
 output_vtk_cylinder(
-    cylC_shape, n=20, out_file="output/sim" + str(simNo) + "/cylinderC.vtk")
+    cylC_shape, n=20, out_file=output_path + "/cylinderC.vtk")
 
 for boundary in boundaries:
     system.lbboundaries.add(lbboundaries.LBBoundary(shape=boundary))
@@ -146,14 +146,14 @@ for boundary in boundaries:
 maxCycle = 50
 # main integration loop
 cell0.output_vtk_pos_folded(
-    file_name="output/sim" + str(simNo) + "/cell0_0.vtk")
+    file_name=output_path + "/cell0_0.vtk")
 cell1.output_vtk_pos_folded(
-    file_name="output/sim" + str(simNo) + "/cell1_0.vtk")
+    file_name=output_path + "/cell1_0.vtk")
 for i in range(1, maxCycle):
     system.integrator.run(steps=500)
     cell0.output_vtk_pos_folded(
-        file_name="output/sim" + str(simNo) + "/cell0_" + str(i) + ".vtk")
+        file_name=output_path + "/cell0_" + str(i) + ".vtk")
     cell1.output_vtk_pos_folded(
-        file_name="output/sim" + str(simNo) + "/cell1_" + str(i) + ".vtk")
+        file_name=output_path + "/cell1_" + str(i) + ".vtk")
     print("time: {:.1f}".format(i * time_step))
 print("Simulation completed.")

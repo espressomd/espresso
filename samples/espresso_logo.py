@@ -48,7 +48,7 @@ for i in range(cup_height):
 # cup bottom
 rad = cup_bot_circ / (2.0 * np.pi)
 posy = yoff
-while (rad > 1.0):
+while rad > 1.0:
     rad -= 0.9
     circ = 2.0 * np.pi * rad
     alpha = 2.0 * np.pi / int(circ)

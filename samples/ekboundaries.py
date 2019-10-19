@@ -23,11 +23,10 @@ import espressomd
 required_features = ["ELECTROKINETICS", "EK_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-from espressomd import System, shapes, electrokinetics, ekboundaries
-import sys
+from espressomd import shapes, electrokinetics, ekboundaries
 import os
 
-system = System(box_l=[10, 10, 10])
+system = espressomd.System(box_l=[10, 10, 10])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -67,8 +66,7 @@ if not os.path.isdir("ek"):
 n_int_cycles = 1000
 for i in range(n_int_cycles):
     system.integrator.run(100)
-    sys.stdout.write("\rIntegrating: %03i" % i)
-    sys.stdout.flush()
+    print("\rIntegrating: %03i" % i, end='', flush=True)
 
     pos.print_vtk_density("ek/pos_dens_%i.vtk" % i)
     neg.print_vtk_density("ek/neg_dens_%i.vtk" % i)

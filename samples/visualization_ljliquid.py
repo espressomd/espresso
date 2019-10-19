@@ -26,8 +26,6 @@ import numpy as np
 from matplotlib import pyplot
 from threading import Thread
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 from espressomd import visualization
 
 required_features = ["LENNARD_JONES"]
@@ -41,8 +39,6 @@ print("""
 
 Program Information:""")
 print(espressomd.features())
-
-dev = "cpu"
 
 # System parameters
 #############################################################
@@ -68,13 +64,12 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.001
 system.cell_system.skin = 0.4
-#es._espressoHandle.Tcl_Eval('thermostat langevin 1.0 1.0')
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # warmup integration (with capped LJ potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -99,7 +94,7 @@ print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
 # Particle setup
 #############################################################
 
-volume = box_l * box_l * box_l
+volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
@@ -113,7 +108,7 @@ print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 # Switch between openGl/Mayavi
 #visualizer = visualization.mayaviLive(system)
@@ -136,35 +131,15 @@ print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # Warmup Integration Loop
 i = 0
-while (i < warm_n_times and act_min_dist < min_dist):
+while i < warm_n_times and act_min_dist < min_dist:
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
-    # print("\rrun %d at time=%f (LJ cap=%f) min dist = %f\r" %
-    # (i,system.time,lj_cap,act_min_dist), end=' ')
     i += 1
-
     # Increase LJ cap
     lj_cap = lj_cap + 10
     system.force_cap = lj_cap
     visualizer.update()
-
-# Just to see what else we may get from the c code
-# print("""
-# ro variables:
-# cell_grid     {0.cell_grid}
-# cell_size     {0.cell_size}
-# local_box_l   {0.local_box_l}
-# max_cut       {0.max_cut}
-# max_part      {0.max_part}
-# max_range     {0.max_range}
-# max_skin      {0.max_skin}
-# n_nodes       {0.n_nodes}
-# n_part        {0.n_part}
-# n_part_types  {0.n_part_types}
-# periodicity   {0.periodicity}
-# verlet_reuse  {0.verlet_reuse}
-#""".format(system))
 
 #############################################################
 #      Integration                                          #
@@ -186,12 +161,10 @@ pyplot.ylabel("Energy")
 pyplot.legend()
 pyplot.show(block=False)
 
-j = 0
-
 
 def main_loop():
     global energies
-    print("run %d at time=%f " % (i, system.time))
+    print("run at time=%f " % system.time)
 
     system.integrator.run(int_steps)
     visualizer.update()
@@ -202,7 +175,7 @@ def main_loop():
 
 
 def main_thread():
-    for i in range(int_n_times):
+    for _ in range(int_n_times):
         main_loop()
 
 

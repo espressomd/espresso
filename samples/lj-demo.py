@@ -20,13 +20,12 @@ import matplotlib
 matplotlib.use('WXAgg')
 import espressomd
 espressomd.assert_features(["LENNARD_JONES"])
-from espressomd import thermostat
 from espressomd import visualization
 import numpy as np
 from matplotlib import pyplot
 from threading import Thread
-from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
-from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
+from traits.api import HasTraits, Any, Range, List, Enum, Float
+from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor
 import sys
 import time
 
@@ -75,9 +74,6 @@ NPTInitPistonMass = NPTMinPistonMass
 box_l = 7.5395
 density = 0.7
 
-#global_boxlen = box_l
-#mainthread_boxlen = box_l
-
 # Interaction parameters (repulsive Lennard Jones)
 #############################################################
 
@@ -88,7 +84,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(3 * [box_l])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -113,8 +109,6 @@ int_n_times = 5000000
 # Interaction setup
 #############################################################
 
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
@@ -123,7 +117,7 @@ system.force_cap = lj_cap
 # Particle setup
 #############################################################
 
-volume = box_l * box_l * box_l
+volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
@@ -132,7 +126,7 @@ for i in range(n_part):
 system.analysis.dist_to(0)
 
 act_min_dist = system.analysis.min_dist()
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 if use_mayavi:
     vis = visualization.mayaviLive(system)
@@ -396,7 +390,7 @@ def pressure_from_midi_val(midi_val, pmin, pmax, log_flag=pressure_log_flag):
     if log_flag:
         return pmin * (float(pmax) / pmin)**(float(midi_val) / 127)
     else:
-        return (midi_val * (pmax - pmin) / 127 + pmin)
+        return midi_val * (pmax - pmin) / 127 + pmin
 
 
 def main_loop():
@@ -489,7 +483,7 @@ def main_loop():
 
 
 def main_thread():
-    for i in range(int_n_times):
+    for _ in range(int_n_times):
         main_loop()
 
 

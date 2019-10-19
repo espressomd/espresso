@@ -20,10 +20,7 @@ timed callback.
 """
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 import numpy as np
-from threading import Thread
 from espressomd import visualization_opengl
 
 required_features = []
@@ -94,5 +91,5 @@ visualizer.keyboardManager.register_button(
 # Set initial position
 spin()
 
-# Start the visualizer and run the integration thread
+# Start the visualizer
 visualizer.run(1)

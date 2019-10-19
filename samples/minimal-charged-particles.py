@@ -56,7 +56,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # warmup integration (with capped WCA potential)
 warm_steps = 100
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min__dist
+# do the warmup until the particles have at least the distance min_dist
 min_dist = 0.9
 
 # integration
@@ -73,7 +73,7 @@ system.force_cap = wca_cap
 # Particle setup
 #############################################################
 
-volume = box_l * box_l * box_l
+volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
@@ -92,7 +92,7 @@ wca_cap = 20
 system.force_cap = wca_cap
 i = 0
 act_min_dist = system.analysis.min_dist()
-while (i < warm_n_times and act_min_dist < min_dist):
+while i < warm_n_times and act_min_dist < min_dist:
     system.integrator.run(warm_steps)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()

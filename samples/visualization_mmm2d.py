@@ -20,8 +20,6 @@ difference and charged particles.
 """
 
 import numpy as np
-import math
-from threading import Thread
 
 import espressomd
 import espressomd.shapes

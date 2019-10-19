@@ -20,7 +20,6 @@
 This sample illustrates how particles of interest can be accessed via slicing.
 """
 import espressomd
-from espressomd import thermostat
 import numpy as np
 
 print("""
@@ -47,7 +46,7 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 
 #############################################################

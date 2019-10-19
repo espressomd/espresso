@@ -24,10 +24,8 @@ import espressomd
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
 from espressomd import interactions
 from espressomd import electrostatics
-import sys
 import numpy as np
 try:
     import cPickle as pickle
@@ -40,7 +38,7 @@ print(espressomd.features())
 # System parameters
 #############################################################
 
-system = espressomd.System(box_l=[100.0, 100.0, 100.0])
+system = espressomd.System(box_l=3 * [100.0])
 
 # Seed
 #############################################################
@@ -50,10 +48,10 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.periodicity = [1, 1, 1]
+system.periodicity = [True, True, True]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # system.cell_system.set_n_square(use_verlet_lists=False)
-system.cell_system.max_num_cells = 2744
+system.cell_system.max_num_cells = 14**3
 
 # Non-bonded interactions
 ###############################################################
@@ -143,8 +141,7 @@ system.force_cap = 10
 
 for i in range(1000):
     if i % 100 == 0:
-        sys.stdout.write("\rWarmup: %03i" % i)
-        sys.stdout.flush()
+        print("\rWarmup: %03i" % i, end='', flush=True)
     system.integrator.run(steps=1)
     system.force_cap = 10 * i
 
@@ -202,8 +199,7 @@ pos_list = []
 # Sampling Loop
 for i in range(4000):
     if i % 100 == 0:
-        sys.stdout.write("\rSampling: %04i" % i)
-        sys.stdout.flush()
+        print("\rSampling: %04i" % i, end='', flush=True)
     system.integrator.run(steps=1)
     v_list.append(system.part[:n_monomers].v)
     pos_list.append(system.part[:n_monomers].pos)

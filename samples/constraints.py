@@ -20,17 +20,12 @@ constraints.
 """
 
 import espressomd
-
-# Check if necessary features have been compiled
-#############################################################
-
-required_features = ["WCA"]
-espressomd.assert_features(required_features)
-
-from espressomd import thermostat
 from espressomd import interactions
 from espressomd import shapes
 from espressomd import polymer
+
+required_features = ["WCA"]
+espressomd.assert_features(required_features)
 
 import numpy as np
 
@@ -122,7 +117,7 @@ system.integrator.run(warm_steps)
 
 # ramp up to simulation temperature
 temp = 0
-while (temp < 1.0):
+while temp < 1.0:
     system.thermostat.set_langevin(kT=temp, gamma=1.0)
     system.integrator.run(warm_steps)
     temp += 0.1
