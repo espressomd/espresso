@@ -26,14 +26,19 @@ from matplotlib import pyplot
 from threading import Thread
 from traits.api import HasTraits, Any, Range, List, Enum, Float
 from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor
-import sys
 import time
+import argparse
 
-use_opengl = "opengl" in sys.argv
-use_mayavi = "mayavi" in sys.argv
-if not use_opengl and not use_mayavi:
-    use_mayavi = True
-assert use_opengl != use_mayavi
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--mayavi", action="store_const", dest="visualizer",
+                   const="mayavi", help="MayaVi visualizer", default="mayavi")
+group.add_argument("--opengl", action="store_const", dest="visualizer",
+                   const="opengl", help="OpenGL visualizer")
+args = parser.parse_args()
+
+use_opengl = args.visualizer == "opengl"
+use_mayavi = args.visualizer == "mayavi"
 
 if use_mayavi:
     from espressomd.visualization_mayavi import mlab

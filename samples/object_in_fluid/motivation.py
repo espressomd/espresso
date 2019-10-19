@@ -30,17 +30,20 @@ from espressomd import shapes
 
 import numpy as np
 import os
-import sys
+import argparse
 import warnings
 
 import object_in_fluid as oif
 from object_in_fluid.oif_utils import output_vtk_rhomboid, output_vtk_cylinder
 
-assert len(sys.argv) == 2, "please provide a number for the simulation"
-simNo = sys.argv[1]
-output_path = "output/sim" + str(simNo)
+parser = argparse.ArgumentParser()
+parser.add_argument("sim", metavar="N", type=int, help="simulation identifier")
+args = parser.parse_args()
+
+output_path = "output/sim" + str(args.sim)
 if not os.path.isdir(output_path):
     os.makedirs(output_path)
+    print('Saving data to ' + output_path)
 else:
     warnings.warn("Folder {} already exists, files will be overwritten"
                   .format(output_path))

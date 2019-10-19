@@ -27,6 +27,19 @@ espressomd.assert_features(required_features)
 from espressomd import lb, shapes, lbboundaries
 import numpy as np
 from espressomd.virtual_sites import VirtualSitesInertialessTracers
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--no-volcons", action="store_const", dest="volcons",
+    const=False, help="Disable volume conservation", default=True)
+parser.add_argument(
+    "--no-bending", action="store_const", dest="bending",
+    const=False, help="Disable bending", default=True)
+args = parser.parse_args()
+if args.volcons and not args.bending:
+    print('Note: removing bending will also remove volume conservation')
+    args.volcons = False
 
 # System setup
 boxZ = 20
@@ -43,19 +56,21 @@ k2 = 1
 AddSoft(system, 10, 10, 10, k1, k2)
 
 # case without bending and volCons
-#outputDir = "outputPure"
+outputDir = "outputPure"
 
 # case with bending
-from addBending import AddBending
-kb = 1
-AddBending(system, kb)
-#outputDir = "outputBendPara"
+if args.bending:
+    from addBending import AddBending
+    kb = 1
+    AddBending(system, kb)
+    outputDir = "outputBendPara"
 
 # case with bending and volCons
-from addVolCons import AddVolCons
-kV = 10
-AddVolCons(system, kV)
-outputDir = "outputVolParaCUDA"
+if args.volcons:
+    from addVolCons import AddVolCons
+    kV = 10
+    AddVolCons(system, kV)
+    outputDir = "outputVolParaCUDA"
 
 # Add LB Fluid
 lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step, ext_force_density=[
@@ -76,6 +91,7 @@ for wall in walls:
 # make directory
 import os
 os.makedirs(outputDir)
+print('Saving data to ' + outputDir)
 
 # Perform integration
 from writeVTK import WriteVTK

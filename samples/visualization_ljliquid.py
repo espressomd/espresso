@@ -27,10 +27,18 @@ from matplotlib import pyplot
 from threading import Thread
 import espressomd
 from espressomd import visualization
+import argparse
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--opengl", action="store_const", dest="visualizer",
+                   const="opengl", help="OpenGL visualizer", default="opengl")
+group.add_argument("--mayavi", action="store_const", dest="visualizer",
+                   const="mayavi", help="MayaVi visualizer")
+args = parser.parse_args()
 
 print("""
 =======================================================
@@ -110,9 +118,11 @@ print("Start with minimal distance {}".format(act_min_dist))
 
 system.cell_system.max_num_cells = 14**3
 
-# Switch between openGl/Mayavi
-#visualizer = visualization.mayaviLive(system)
-visualizer = visualization.openGLLive(system)
+# Select visualizer
+if args.visualizer == "mayavi":
+    visualizer = visualization.mayaviLive(system)
+else:
+    visualizer = visualization.openGLLive(system)
 
 #############################################################
 #  Warmup Integration                                       #

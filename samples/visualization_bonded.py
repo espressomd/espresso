@@ -23,9 +23,18 @@ import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
 import numpy as np
+import argparse
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
+
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--mayavi", action="store_const", dest="visualizer",
+                   const="mayavi", help="MayaVi visualizer", default="mayavi")
+group.add_argument("--opengl", action="store_const", dest="visualizer",
+                   const="opengl", help="OpenGL visualizer")
+args = parser.parse_args()
 
 box_l = 50
 n_part = 200
@@ -50,8 +59,11 @@ for i in range(n_part):
 for i in range(n_part - 1):
     system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
 
-#visualizer = visualization.mayaviLive(system)
-visualizer = visualization.openGLLive(system, bond_type_radius=[0.3])
+# Select visualizer
+if args.visualizer == "mayavi":
+    visualizer = visualization.mayaviLive(system)
+else:
+    visualizer = visualization.openGLLive(system, bond_type_radius=[0.3])
 
 system.minimize_energy.init(
     f_max=10, gamma=50.0, max_steps=1000, max_displacement=0.2)

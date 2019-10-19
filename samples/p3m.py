@@ -24,6 +24,18 @@ espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
+import argparse
+
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--cpu", action="store_const", dest="mode",
+                   const="cpu", help="P3M on CPU", default="cpu")
+group.add_argument("--gpu", action="store_const", dest="mode",
+                   const="gpu", help="P3M on GPU")
+group.add_argument("--elc", action="store_const", dest="mode",
+                   const="elc", help="P3M and ELC on CPU")
+args = parser.parse_args()
+
 
 print("""
 =======================================================
@@ -114,8 +126,10 @@ for i in range(n_part // 2 - 1):
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
-#p3m = electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
-p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+if args.mode == "gpu":
+    p3m = electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
+else:
+    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)
@@ -133,8 +147,10 @@ p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
-# elc=electrostatic_extensions.ELC(maxPWerror=1.0,gap_size=1.0)
-# system.actors.add(elc)
+if args.mode == "elc":
+    elc = electrostatic_extensions.ELC(maxPWerror=1.0, gap_size=1.0)
+    system.actors.add(elc)
+
 print(system.actors)
 
 #############################################################
