@@ -16,6 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+Simulate a Lennard-Jones fluid in different thermodynamic ensembles (NVT, NpT).
+Sliders from a MIDI controller can change system variables such as temperature
+and volume. Some thermodynamic observables are analyzed and plotted live.
+"""
 import matplotlib
 matplotlib.use('WXAgg')
 import espressomd
@@ -29,7 +34,7 @@ from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor
 import time
 import argparse
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--mayavi", action="store_const", dest="visualizer",
                    const="mayavi", help="MayaVi visualizer", default="mayavi")
@@ -79,7 +84,7 @@ NPTInitPistonMass = NPTMinPistonMass
 box_l = 7.5395
 density = 0.7
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
 lj_eps = 1.0

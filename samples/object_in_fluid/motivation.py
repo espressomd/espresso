@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample loads model red blood cells and simulates its motion
-in a complex geometry.
+Simulate the motion of flexible red blood cells in a lattice-Boltzmann fluid
+with solid obstacles. For more details, see :ref:`Object-in-fluid`.
 """
 
 import espressomd

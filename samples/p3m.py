@@ -16,6 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+Simulate a Lennard-Jones liquid with charges. The P3M method is used to
+calculate electrostatic interactions. The ELC method can be optionally
+added to subtract the electrostatic contribution from the *z*-direction.
+For more details, see :ref:`Electrostatic Layer Correction (ELC)`.
+"""
 import numpy as np
 import espressomd
 
@@ -50,7 +56,7 @@ print("""
 box_l = 10
 density = 0.3
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
 wca_eps = 10.0
@@ -103,7 +109,7 @@ for i in range(n_part):
 
 system.analysis.dist_to(0)
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
+print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()

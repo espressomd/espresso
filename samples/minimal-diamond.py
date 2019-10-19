@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample sets up a diamond-structured polymer network.
+Set up a diamond-structured polymer network.
 """
 import espressomd
 espressomd.assert_features(["WCA"])

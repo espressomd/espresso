@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample illustrates how particles of interest can be accessed via slicing.
+Illustrate how particles of interest can be accessed via slicing.
 """
 import espressomd
 import numpy as np

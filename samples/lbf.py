@@ -17,14 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This samples sets up a Lattice-Boltzmann fluid and applies an external force
-density on it.
+Set up a Lattice-Boltzmann fluid and apply an external force density on it.
 """
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--cpu', action='store_true')
 group.add_argument('--gpu', action='store_true')

@@ -17,10 +17,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample illustrates how to use either the reaction ensemble or the constant pH ensemble. You can choose
-in which ensemble you want to simulate via either providing --reaction_ensemble or --constant_pH_ensemble as command line argument to the script.
-Be aware that in the case of the reaction ensemble the dissociation constant gamma is not the thermodynamic reaction constant K, but rather K*1mol/l and therefore carries a unit!.
-In the case of the of the constant pH method gamma is the thermodynamic reaction constant!
+Guide for the reaction ensemble and the constant pH ensemble.
+"""
+epilog = """You can choose in which ensemble you want to simulate via either
+providing --reaction_ensemble or --constant_pH_ensemble as command line
+argument to the script. Be aware that in the case of the reaction ensemble,
+the dissociation constant gamma is not the thermodynamic reaction constant K,
+but rather K*1mol/l and therefore carries a unit! In the case of the of the
+constant pH method, gamma is the thermodynamic reaction constant!
 """
 import numpy as np
 import argparse
@@ -28,7 +32,7 @@ import argparse
 import espressomd
 from espressomd import reaction_ensemble
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__ + epilog)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--reaction_ensemble', action='store_const', dest='mode',
                    const='reaction_ensemble')

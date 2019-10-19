@@ -15,7 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This example shows how to integrate MDAnalysis in ESPResSo
+Show how to expose configuration to ``MDAnalysis`` at run time. The
+functions of ``MDAnalysis`` can be used to perform some analysis or
+convert the frame to other formats (CHARMM, GROMACS, ...). For more
+details, see :ref:`Writing various formats using MDAnalysis`.
 """
 import espressomd
 from espressomd import MDA_ESP

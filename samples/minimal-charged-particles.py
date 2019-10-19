@@ -17,9 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample simulates equal number of positively and negatively charged
-particles using the P3M solver. The system is maintained at a constant
-temperature using a Langevin thermostat.
+Simulate an equal number of positively and negatively charged particles
+using the P3M solver. The system is maintained at a constant temperature
+using a Langevin thermostat.
 """
 import espressomd
 

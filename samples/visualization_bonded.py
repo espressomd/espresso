@@ -15,8 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization sample for bonds. Simulates a large chain of particles connected
-via harmonic bonds.
+Visualize the simulation of a linear polymer.
 """
 
 import espressomd
@@ -28,7 +27,7 @@ import argparse
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--mayavi", action="store_const", dest="visualizer",
                    const="mayavi", help="MayaVi visualizer", default="mayavi")

@@ -15,7 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample demonstrates how to checkpoint a simulation.
+Basic usage of the checkpointing feature. Show how to write the state of:
+
+* custom user variables
+* non-bonded interactions
+* particles
+* P3M parameters
+* thermostat
 """
 
 import espressomd

@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-ESPResSo 8Ball billiard game.
+ESPResSo 8Ball billiards game.
 """
 
 import numpy as np
@@ -30,7 +30,7 @@ import espressomd.shapes
 required_features = ["WCA", "MASS", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-print('''8Ball BILLIARD - An ESPResSo Visualizer Demo
+print('''8Ball BILLIARDS - An ESPResSo Visualizer Demo
 Controls:
   Numpad 4/6: Adjust Angle
   Numpad 2/8: Adjust Impulse

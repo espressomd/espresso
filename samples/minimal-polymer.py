@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample sets up a polymer.
+Set up a linear polymer.
 """
 import espressomd
 espressomd.assert_features(["WCA"])

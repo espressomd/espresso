@@ -17,16 +17,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This example script performs a grand canonical simulation of a system in contact
+Perform a grand canonical simulation of a system in contact
 with a salt reservoir and ensures constant chemical potential.
-It takes two command line arguments as input: 1) the reservoir salt concentration
-in units of 1/sigma^3 and 2) the excess chemical potential of the reservoir in
-units of kT.
-The excess chemical potential of the reservoir needs to be determined prior to
-running the grand canonical simulation using the script called widom_insertion.py
-which simulates a part of the reservoir at the prescribed salt concentration.
-Be aware that the reservoir excess chemical potential depends on all interactions
-in the reservoir system.
+"""
+epilog = """
+Takes two command line arguments as input: 1) the reservoir salt
+concentration in units of 1/sigma^3 and 2) the excess chemical
+potential of the reservoir in units of kT.
+
+The excess chemical potential of the reservoir needs to be determined
+prior to running the grand canonical simulation using the script called
+widom_insertion.py which simulates a part of the reservoir at the
+prescribed salt concentration. Be aware that the reservoir excess
+chemical potential depends on all interactions in the reservoir system.
 """
 import numpy as np
 import argparse
@@ -38,7 +41,7 @@ from espressomd import electrostatics
 required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
-parser = argparse.ArgumentParser(epilog=__doc__)
+parser = argparse.ArgumentParser(epilog=__doc__ + epilog)
 parser.add_argument('cs_bulk', type=float,
                     help="bulk salt concentration [1/sigma^3]")
 parser.add_argument('excess_chemical_potential', type=float,

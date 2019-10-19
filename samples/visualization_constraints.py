@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization of shape-based constraints with test particles.
+Visualize shape-based constraints interacting with a Lennard-Jones gas.
 """
 
 import numpy as np
@@ -25,7 +25,7 @@ import espressomd
 import espressomd.shapes
 import espressomd.visualization_opengl
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")

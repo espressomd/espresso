@@ -16,6 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+Set up a Lennard-Jones fluid maintained at a fixed temperature by a
+Langevin thermostat. The particles in the system are of two types:
+Type 0 and Type 1. Type 0 particles interact with each other via a
+repulsive WCA interaction. Type 1 particles neither interact with
+themselves nor with Type 0 particles. The spherically averaged
+structure factor of particles of Type 0 and Type 1 is calculated
+with :meth:`~espressomd.analyze.Analysis.structure_factor()`.
+See :ref:`Structure factor`.
+"""
 import numpy as np
 import espressomd
 
@@ -35,7 +45,7 @@ print("""
 box_l = 10.7437
 density = 0.7
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
 lj_eps = 1.0
@@ -108,7 +118,7 @@ for i in range(n_part):
 
 system.analysis.dist_to(0)
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
+print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()

@@ -17,10 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This example script measures the excess chemical potential of a charged WCA
-fluid via Widom's insertion method.
-As input this script requires you to provide particle number density in units
-of 1/sigma^3.
+Measure the excess chemical potential of a charged WCA fluid via Widom's
+insertion method.
 """
 import numpy as np
 import argparse

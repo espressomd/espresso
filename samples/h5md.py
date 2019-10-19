@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Sample for the usage of H5MD trajectory writing in ESPResSo.
+Write ESPResSo trajectories in the H5MD format. See :ref:`Writing H5MD-files`.
 """
 
 import espressomd

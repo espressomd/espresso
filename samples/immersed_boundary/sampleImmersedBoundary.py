@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample simulates planar Poiseuille flow in Espresso. A spherical RBC-like
-particle is added and advected with and without volume conservation.
+Simulate the motion of a spherical red blood cell-like particle advected
+in a planar Poiseuille flow, with or without volume conservation. For more
+details, see :ref:`Immersed Boundary Method for soft elastic objects`.
 """
 import espressomd
 

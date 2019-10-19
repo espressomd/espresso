@@ -15,8 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization samples with keyboard control and particle repositioning via
-timed callback.
+Visualize a simulation box where the particles can be repositioned via the
+mouse and timed callbacks, and the temperature of the thermostat changed
+via the keyboard.
 """
 
 import espressomd

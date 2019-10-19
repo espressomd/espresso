@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 Demonstrates the construction of a rigid object by means of the
-VIRTUAL_SITES_RELATIVE feature.
+``VIRTUAL_SITES_RELATIVE`` feature.
 """
 
 import espressomd

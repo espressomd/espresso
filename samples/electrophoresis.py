@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample simulates electrophoresis using P3M solver.
+Simulate electrophoresis of a linear polymer using the P3M solver.
 """
 import espressomd
 

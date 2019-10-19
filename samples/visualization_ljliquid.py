@@ -17,8 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Visualization sample for a Lennard-Jones liquid with live plotting via
-matplotlib.
+Visualize a Lennard-Jones liquid with live plotting via matplotlib.
 """
 
 import numpy as np
@@ -31,7 +30,7 @@ import argparse
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--opengl", action="store_const", dest="visualizer",
                    const="opengl", help="OpenGL visualizer", default="opengl")
@@ -52,7 +51,7 @@ print("""
 box_l = 10.7437
 density = 0.7
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
 lj_eps = 1.0
@@ -107,7 +106,7 @@ for i in range(n_part):
 
 system.analysis.dist_to(0)
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
+print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()

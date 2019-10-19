@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization sample of a simple plate capacitor with applied potential
-difference and charged particles.
+Visualize charged particles trapped in a simple plate capacitor with an
+applied potential difference.
 """
 
 import numpy as np

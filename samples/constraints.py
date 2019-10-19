@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample checks if particles or a polymer added to the system obey(s)
-constraints.
+Confine a polymer between two slabs and check that it cannot escape
+them during the entire simulation.
 """
 
 import espressomd

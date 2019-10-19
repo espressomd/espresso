@@ -15,9 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This script compares the diffusion coefficient of a single thermalized particle
-obtained from the particle's mean square displacement and the auto correlation
-function of its velocity to the expected value. It uses the
+Compare the diffusion coefficient of a single thermalized particle obtained
+from the particle's mean square displacement and the auto correlation
+function of its velocity to the expected value. Uses the
 Observables/Correlators framework.
 """
 
