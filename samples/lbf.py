@@ -50,9 +50,6 @@ import espressomd
 espressomd.assert_features(required_features)
 import espressomd.lb
 
-print("\nProgram Information:")
-print(espressomd.features())
-
 
 box_l = 50
 system = espressomd.System(box_l=[box_l] * 3)

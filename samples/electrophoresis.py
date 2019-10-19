@@ -33,8 +33,6 @@ except ImportError:
     import pickle
 import os
 
-print(espressomd.features())
-
 # System parameters
 #############################################################
 
