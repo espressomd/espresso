@@ -45,8 +45,7 @@ for i in range(100):
     system.part.add(pos=box * np.random.random(3))
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=100.0, sigma=1.0,
-    cutoff=3.0, shift="auto")
+    epsilon=100.0, sigma=1.0, cutoff=3.0, shift="auto")
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total = {}".format(energy['total']))

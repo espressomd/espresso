@@ -74,7 +74,8 @@ print("Ratio of measured and expected diffusion coefficients from Green-Kubo:",
 msd = c_pos.result()
 
 
-def expected_msd(x): return 2. * kT / gamma * x
+def expected_msd(x):
+    return 2. * kT / gamma * x
 
 
 print("Ratio of expected and measured msd")

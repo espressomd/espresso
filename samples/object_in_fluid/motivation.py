@@ -22,7 +22,8 @@ in a complex geometry.
 import espressomd
 
 required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES", "SOFT_SPHERE",
-                     "MEMBRANE_COLLISION", "OIF_GLOBAL_FORCES", "OIF_LOCAL_FORCES", "MASS"]
+                     "MEMBRANE_COLLISION", "OIF_GLOBAL_FORCES",
+                     "OIF_LOCAL_FORCES", "MASS"]
 espressomd.assert_features(required_features)
 
 from espressomd import lbboundaries
@@ -80,8 +81,8 @@ system.non_bonded_inter[0, 1].membrane_collision.set_params(
 
 
 # fluid
-lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5,
-                            tau=0.1, ext_force_density=[0.002, 0.0, 0.0])
+lbf = espressomd.lb.LBFluid(agrid=1, dens=1.0, visc=1.5, tau=0.1,
+                            ext_force_density=[0.002, 0.0, 0.0])
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 
@@ -93,50 +94,51 @@ system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 boundaries = []
 
 # bottom of the channel
-bottom_shape = shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[
-                               boxX, 0.0, 0.0], b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0], direction=1)
+bottom_shape = shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[boxX, 0.0, 0.0],
+                               b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0],
+                               direction=1)
 boundaries.append(bottom_shape)
 output_vtk_rhomboid(
     bottom_shape, out_file=output_path + "/wallBottom.vtk")
 
 # top of the channel
-top_shape = shapes.Rhomboid(corner=[0.0, 0.0, boxZ - 1], a=[
-                            boxX, 0.0, 0.0], b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0], direction=1)
+top_shape = shapes.Rhomboid(corner=[0.0, 0.0, boxZ - 1], a=[boxX, 0.0, 0.0],
+                            b=[0.0, boxY, 0.0], c=[0.0, 0.0, 1.0], direction=1)
 boundaries.append(top_shape)
 output_vtk_rhomboid(
     top_shape, out_file=output_path + "/wallTop.vtk")
 
 # front wall of the channel
-front_shape = shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[
-                              boxX, 0.0, 0.0], b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
+front_shape = shapes.Rhomboid(corner=[0.0, 0.0, 0.0], a=[boxX, 0.0, 0.0],
+                              b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
 boundaries.append(front_shape)
 output_vtk_rhomboid(
     front_shape, out_file=output_path + "/wallFront.vtk")
 
 # back wall of the channel
-back_shape = shapes.Rhomboid(corner=[0.0, boxY - 1.0, 0.0], a=[
-                             boxX, 0.0, 0.0], b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
+back_shape = shapes.Rhomboid(corner=[0.0, boxY - 1.0, 0.0], a=[boxX, 0.0, 0.0],
+                             b=[0.0, 1.0, 0.0], c=[0.0, 0.0, boxZ], direction=1)
 boundaries.append(back_shape)
 output_vtk_rhomboid(
     back_shape, out_file=output_path + "/wallBack.vtk")
 
 # obstacle - cylinder A
-cylA_shape = shapes.Cylinder(center=[11.0, 2.0, 7.0], axis=[
-                             0.0, 0.0, 1.0], length=7.0, radius=2.0, direction=1)
+cylA_shape = shapes.Cylinder(center=[11.0, 2.0, 7.0], axis=[0.0, 0.0, 1.0],
+                             length=7.0, radius=2.0, direction=1)
 boundaries.append(cylA_shape)
 output_vtk_cylinder(
     cylA_shape, n=20, out_file=output_path + "/cylinderA.vtk")
 
 # obstacle - cylinder B
-cylB_shape = shapes.Cylinder(center=[16.0, 8.0, 7.0], axis=[
-                             0.0, 0.0, 1.0], length=7.0, radius=2.0, direction=1)
+cylB_shape = shapes.Cylinder(center=[16.0, 8.0, 7.0], axis=[0.0, 0.0, 1.0],
+                             length=7.0, radius=2.0, direction=1)
 boundaries.append(cylB_shape)
 output_vtk_cylinder(
     cylB_shape, n=20, out_file=output_path + "/cylinderB.vtk")
 
 # obstacle - cylinder C
-cylC_shape = shapes.Cylinder(center=[11.0, 12.0, 7.0], axis=[
-                             0.0, 0.0, 1.0], length=7.0, radius=2.0, direction=1)
+cylC_shape = shapes.Cylinder(center=[11.0, 12.0, 7.0], axis=[0.0, 0.0, 1.0],
+                             length=7.0, radius=2.0, direction=1)
 boundaries.append(cylC_shape)
 output_vtk_cylinder(
     cylC_shape, n=20, out_file=output_path + "/cylinderC.vtk")

@@ -94,8 +94,6 @@ distr_values = np.zeros(distr_r_bins)
 
 # Interaction setup
 #############################################################
-
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")

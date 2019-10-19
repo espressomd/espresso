@@ -40,8 +40,7 @@ system.time_step = 0.0005
 system.cell_system.skin = 0.1
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=2, sigma=1,
-    cutoff=3, shift="auto")
+    epsilon=2, sigma=1, cutoff=3, shift="auto")
 
 system.bonded_inter[0] = HarmonicBond(k=5.0, r_0=1.0)
 

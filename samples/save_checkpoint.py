@@ -59,8 +59,7 @@ wca_eps = 1.0
 wca_sig = 1.0
 wca_cap = 20
 
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=wca_eps, sigma=wca_sig)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps, sigma=wca_sig)
 system.force_cap = wca_cap
 
 # test for "system.part"

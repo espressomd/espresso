@@ -44,8 +44,7 @@ system.cell_system.skin = 10.0
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 
 num_part = 30
 wall_offset = 0.1
@@ -104,7 +103,7 @@ while (act_min_dist < min_dist or c1.min_dist()
     for j in range(warm_steps + wca_cap):
         print(j)
         system.integrator.run(1)
-#    system.integrator.run(warm_steps + wca_cap)
+    # system.integrator.run(warm_steps + wca_cap)
     # Warmup criterion
     act_min_dist = system.analysis.min_dist()
     i += 1

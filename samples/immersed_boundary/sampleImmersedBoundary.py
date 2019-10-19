@@ -73,8 +73,8 @@ if args.volcons:
     outputDir = "outputVolParaCUDA"
 
 # Add LB Fluid
-lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step, ext_force_density=[
-                 force, 0, 0])
+lbf = lb.LBFluid(agrid=1, dens=1, visc=1, tau=system.time_step,
+                 ext_force_density=[force, 0, 0])
 system.actors.add(lbf)
 
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.0, act_on_virtual=False)
@@ -86,7 +86,6 @@ walls[1].set_params(shape=shapes.Wall(normal=[0, 0, -1], dist=-boxZ + 0.5))
 
 for wall in walls:
     system.lbboundaries.add(wall)
-
 
 # make directory
 import os
@@ -101,7 +100,6 @@ stepSize = 1000
 numSteps = 20
 
 for i in range(numSteps):
-
     system.integrator.run(stepSize)
     WriteVTK(system, str(outputDir + "/cell_" + str(i + 1) + ".vtk"))
     print("Done " + str(i + 1) + " out of " + str(numSteps) + " steps.")

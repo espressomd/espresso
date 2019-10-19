@@ -39,14 +39,9 @@ system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=1, sigma=1)
-
-system.non_bonded_inter[0, 1].wca.set_params(
-    epsilon=1, sigma=1)
-
-system.non_bonded_inter[1, 1].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
+system.non_bonded_inter[0, 1].wca.set_params(epsilon=1, sigma=1)
+system.non_bonded_inter[1, 1].wca.set_params(epsilon=1, sigma=1)
 
 fene = interactions.FeneBond(k=30, d_r_max=1.5)
 system.bonded_inter.add(fene)

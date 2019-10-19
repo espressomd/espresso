@@ -54,20 +54,16 @@ system.cell_system.max_num_cells = 14**3
 # Non-bonded interactions
 ###############################################################
 # WCA between monomers
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 
 # WCA counterions - polymer
-system.non_bonded_inter[0, 1].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[0, 1].wca.set_params(epsilon=1, sigma=1)
 
 # WCA ions - polymer
-system.non_bonded_inter[0, 2].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[0, 2].wca.set_params(epsilon=1, sigma=1)
 
 # WCA between ions
-system.non_bonded_inter[1, 2].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[1, 2].wca.set_params(epsilon=1, sigma=1)
 
 
 # Bonded interactions
