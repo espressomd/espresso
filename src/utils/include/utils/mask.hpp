@@ -3,8 +3,8 @@
 
 #include <utils/Array.hpp>
 #include <utils/get.hpp>
+#include <utils/type_traits.hpp>
 
-#include <type_traits>
 #include <utility>
 
 namespace Utils {
@@ -36,7 +36,8 @@ auto mask_impl(Integral mask, T t, std::index_sequence<I...>) {
 template <class T, class Integral>
 auto mask(Integral mask, T t)
     -> std::enable_if_t<std::is_unsigned<Integral>::value &&
-                            (8 * sizeof(Integral) >= tuple_size<T>::value),
+                            (size_in_bits<Integral>::value >=
+                             tuple_size<T>::value),
                         T> {
   return detail::mask_impl(mask, t,
                            std::make_index_sequence<tuple_size<T>::value>{});
