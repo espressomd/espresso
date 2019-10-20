@@ -261,7 +261,7 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
    \xi_i\f$.
     The same friction coefficient \f$\gamma\f$ is used as that for translation.
 */
-inline void friction_thermo_langevin_rotation(Particle &p) {
+inline Utils::Vector3d friction_thermo_langevin_rotation(const Particle &p) {
   extern Thermostat::GammaType langevin_pref2_rotation;
   Thermostat::GammaType langevin_pref_friction_buf, langevin_pref_noise_buf;
 
@@ -297,28 +297,15 @@ inline void friction_thermo_langevin_rotation(Particle &p) {
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  // Rotational degrees of virtual sites are thermostatted,
-  // so no switching here
-
   // Here the thermostats happens
-  Utils::Vector3d noise = v_noise(p.p.identity);
-  for (int j = 0; j < 3; j++) {
+  auto const noise = v_noise(p.p.identity);
 #ifdef PARTICLE_ANISOTROPY
-    if (langevin_pref_noise_buf[j] > 0.0) {
-      p.f.torque[j] = -langevin_pref_friction_buf[j] * p.m.omega[j] +
-                      langevin_pref_noise_buf[j] * noise[j];
-    } else {
-      p.f.torque[j] = -langevin_pref_friction_buf[j] * p.m.omega[j];
-    }
+  return -hadamard_product(langevin_pref_friction_buf, p.m.omega) +
+         hadamard_product(langevin_pref_noise_buf, noise);
 #else
-    if (langevin_pref_noise_buf > 0.0) {
-      p.f.torque[j] = -langevin_pref_friction_buf * p.m.omega[j] +
-                      langevin_pref_noise_buf * noise[j];
-    } else {
-      p.f.torque[j] = -langevin_pref_friction_buf * p.m.omega[j];
-    }
+  return -langevin_pref_friction_buf * p.m.omega +
+         langevin_pref_noise_buf * noise;
 #endif
-  }
 }
 
 #endif // ROTATION
