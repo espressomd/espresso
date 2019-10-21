@@ -147,7 +147,7 @@ struct ParticleProperties {
            <li> 5 apply external torque \ref ParticleProperties::ext_torque
       </ul>
   */
-  int ext_flag = 0;
+  uint8_t ext_flag = 0;
   /** External force, apply if \ref ParticleProperties::ext_flag == 1. */
   Utils::Vector3d ext_force = {0, 0, 0};
 

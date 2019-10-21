@@ -85,31 +85,17 @@ inline ParticleForce init_local_particle_force(Particle const &part) {
                                              : ParticleForce{};
 
 #ifdef EXTERNAL_FORCES
-  // If individual coordinates are fixed, set force to 0.
-  for (int j = 0; j < 3; j++)
-    if (part.p.ext_flag & COORD_FIXED(j))
-      f.f[j] = 0;
-  // Add external force
-  if (part.p.ext_flag & PARTICLE_EXT_FORCE)
-    f.f += part.p.ext_force;
-#endif
-
+  f.f += part.p.ext_force;
 #ifdef ROTATION
-  {
-
-#ifdef EXTERNAL_FORCES
-    if (part.p.ext_flag & PARTICLE_EXT_TORQUE) {
-      f.torque += part.p.ext_torque;
-    }
+  f.torque += part.p.ext_torque;
+#endif
 #endif
 
 #ifdef ENGINE
-    // apply a swimming force in the direction of
-    // the particle's orientation axis
-    if (part.swim.swimming) {
-      f.f += part.swim.f_swim * part.r.calc_director();
-    }
-#endif
+  // apply a swimming force in the direction of
+  // the particle's orientation axis
+  if (part.swim.swimming) {
+    f.f += part.swim.f_swim * part.r.calc_director();
   }
 #endif
 
