@@ -10,7 +10,7 @@ Analysis
   calculation and data accumulation performed in the core.
 - :ref:`Observables and correlators`: This provides a more flexible concept of
   in-core analysis, where a certain observable (:ref:`Available observables`),
-  a rule for data accumulation (ref Accumulators) and/or correlation (:ref:`Correlations`) can be defined.
+  a rule for data accumulation (:ref:`Accumulators`) and/or correlation (:ref:`Correlations`) can be defined.
 
 
 .. _Direct analysis routines:
@@ -147,7 +147,7 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     ~~~~~~~~~~~~~~~~~~
     .. todo:: This feature is not implemented
 
-    analyze radial\_density\_map
+    analyze radial_density_map
 
     Returns the radial density of particles around a given axis. Parameters
     are:
@@ -231,7 +231,7 @@ index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_ra
 0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0
 =============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
 
-As one can see the columns `density`, `v_radial` and `v_axial` appear twice.
+As one can see the columns **density**, **v_radial** and **v_axial** appear twice.
 The order of appearance corresponds to the order of the types in the argument ``types``.
 For example if was set to ``types=[0, 1]`` then the first triple is associated to type 0 and
 the second triple to type 1.
@@ -288,8 +288,8 @@ Structure factor
 Calculate the structure factor for given types.
 
 Returns the spherically averaged structure factor :math:`S(q)` of
-particles specified in . :math:`S(q)` is calculated for all possible
-wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}` `order`.
+particles specified in ``sf_types``. :math:`S(q)` is calculated for all possible
+wave vectors :math:`\frac{2\pi}{L} \leq q \leq \frac{2\pi}{L}` up to ``sf_order``.
 
 ..
     .. _Van-Hove autocorrelation function:
@@ -415,7 +415,7 @@ electrostatic interactions in P3M, the :math:`k`-space contribution is implement
 The implementation of the Coulomb P3M pressure is tested against LAMMPS.
 
 Four-body dihedral potentials are not included. Except of
-VIRTUAL\_SITES\_RELATIVE constraints all other
+``VIRTUAL_SITES_RELATIVE`` constraints all other
 constraints of any kind are not currently accounted for in the pressure
 calculations. The pressure is no longer correct, e.g., when particles
 are confined to a plane.
@@ -713,8 +713,8 @@ all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.BondDihedrals`: Dihedral angles between bond triples on a polymer chain.
 
-   - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The `i`-th value in the result vector corresponds to the cosine of the angle between
-     bonds that are separated by `i` bonds. This observable might be useful for measuring the persistence length of a polymer.
+   - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The ``i``-th value in the result vector corresponds to the cosine of the angle between
+     bonds that are separated by ``i`` bonds. This observable might be useful for measuring the persistence length of a polymer.
 
 - Profile observables sampling the spatial profile of various quantities:
 
@@ -761,8 +761,8 @@ are of the form
 
 .. math::
 
-   C(\tau) = \left<A\left(t\right) \otimes B\left(t+\tau\right)\right>\,,
-   \label{eq:corr.def}
+   C(\tau) = \left<A\left(t\right) \otimes B\left(t+\tau\right)\right>
+
 
 where :math:`t` is time, :math:`\tau` is the lag time (time difference)
 between the measurements of (vector) observables :math:`A` and
@@ -841,6 +841,8 @@ found its way to the Fluorescence Correlation Spectroscopy
 Smit :cite:`frenkel02b` describes its application for the
 special case of the velocity autocorrelation function.
 
+.. _fig_correlator_scheme:
+
 .. figure:: figures/correlator_scheme.png
    :scale: 50 %
    :alt: Schematic representation of buffers in the correlator.
@@ -848,17 +850,17 @@ special case of the velocity autocorrelation function.
    Schematic representation of buffers in the correlator.
 
 Let us consider a set of :math:`N` observable values as schematically
-shown in figure [fig:dataSet], where a value of index :math:`i` was
-measured in time :math:`i\delta t`. We are interested in computing the
-correlation function according to equation  for a range lag times
-:math:`\tau = (i-j)\delta t` between the measurements :math:`i` and
-:math:`j`. To simplify the notation, we further drop :math:`\delta t`
-when referring to observables and lag times.
+shown in the figure above, where a value of index :math:`i` was
+measured at times :math:`i\delta t`. We are interested in computing the
+correlation function for a range 
+of lag times :math:`\tau = (i-j)\delta t` between the measurements 
+:math:`i` and :math:`j`. To simplify the notation, we drop
+:math:`\delta t` when referring to observables and lag times.
 
 The trivial implementation takes all possible pairs of values
 corresponding to lag times
 :math:`\tau \in [{\tau_{\mathrm{min}}}:{\tau_{\mathrm{max}}}]`. Without
-loss of generality, let us further consider
+loss of generality, we consider
 :math:`{\tau_{\mathrm{min}}}=0`. The computational effort for such an
 algorithm scales as
 :math:`{\cal O} \bigl({\tau_{\mathrm{max}}}^2\bigr)`. As a rule of
@@ -866,8 +868,10 @@ thumb, this is feasible if :math:`{\tau_{\mathrm{max}}}< 10^3`. The
 multiple tau correlator provides a solution to compute the correlation
 functions for arbitrary range of the lag times by coarse-graining the
 high :math:`\tau` values. It applies the naive algorithm to a relatively
-small range of lag times :math:`\tau \in [0:p-1]`. This we refer to as
-compression level 0. To compute the correlations for lag times
+small range of lag times :math:`\tau \in [0:p-1]` 
+(:math:`p` corresponds to parameter ``tau_lin``). 
+This we refer to as compression level 0. 
+To compute the correlations for lag times
 :math:`\tau \in [p:2(p-1)]`, the original data are first coarse-grained,
 so that :math:`m` values of the original data are compressed to produce
 a single data point in the higher compression level. Thus the lag time

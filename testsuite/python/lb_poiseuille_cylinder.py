@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -49,7 +49,7 @@ OBS_PARAMS = {'n_r_bins': 25,
               'min_r': 0.0,
               'min_phi': -np.pi,
               'min_z': 0.0,
-              'max_r': BOX_L / 2.0 - 1.0,
+              'max_r': BOX_L / 2.0 - 1,
               'max_phi': np.pi,
               'max_z': BOX_L,
               'sampling_density': 1.0}
@@ -104,7 +104,7 @@ class LBPoiseuilleCommon:
         mid_indices = 3 * [int((BOX_L / AGRID) / 2)]
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
-        while diff > 0.001:
+        while diff > 0.0001:
             self.system.integrator.run(1)
             new_val = self.lbf[mid_indices].velocity[
                 np.nonzero(self.params['axis'])[0]]
@@ -130,14 +130,13 @@ class LBPoiseuilleCommon:
             velocities[y] = np.mean(np.array(v_tmp))
             positions[y] = (y + 0.5) * AGRID
 
-        v_measured = velocities[1:-1]
+        v_measured = velocities[2:-2]
         v_expected = poiseuille_flow(
-            positions[1:-1] - 0.5 * BOX_L,
+            positions[2:-2] - 0.5 * BOX_L,
             BOX_L / 2.0 - 1.0,
             EXT_FORCE,
             VISC * DENS)
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+        np.testing.assert_allclose(v_measured, v_expected,atol=1E-2)
 
     def prepare_obs(self):
         if self.params['axis'] == [1, 0, 0]:
@@ -174,8 +173,7 @@ class LBPoiseuilleCommon:
             EXT_FORCE,
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.004 * AGRID / TIME_STEP)
+        np.testing.assert_allclose(v_measured, v_expected,atol=3.6E-3)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]
@@ -214,6 +212,19 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU
+
+    def tearDown(self):
+        self.system.actors.clear()
+        self.system.lbboundaries.clear()
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+
+    """Test for the Walberla implementation of the LB."""
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidWalberla
 
     def tearDown(self):
         self.system.actors.clear()

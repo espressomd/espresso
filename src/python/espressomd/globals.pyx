@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 
 cimport grid
@@ -26,7 +42,7 @@ cdef class Globals:
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            return make_array_locked( < Vector3d > grid.box_geo.length())
+            return make_array_locked(< Vector3d > grid.box_geo.length())
 
     property time_step:
         def __set__(self, time_step):
@@ -58,7 +74,7 @@ cdef class Globals:
 
             for i in range(3):
                 periodicity[i] = grid.box_geo.periodic(i)
-                
+
             return array_locked(periodicity)
 
     property time:

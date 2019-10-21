@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,9 +26,10 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 @utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS'])
 class VirtualSitesTracers(ut.TestCase, VirtualSitesTracersCommon):
-    
+
     def setUp(self):
         self.LBClass = lb.LBFluid
+
 
 if __name__ == "__main__":
     ut.main()

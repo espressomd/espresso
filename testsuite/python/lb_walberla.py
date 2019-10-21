@@ -42,7 +42,6 @@ class LbWalberlaTest(ut.TestCase):
         for i in range(int(max_ind[0])):
             for j in range(int(max_ind[1])):
                 for k in range(int(max_ind[2])):
-                    print(i, j, k)
                     np.testing.assert_allclose(
                         lbf[i, j, k].velocity, [0, 0, 0], atol=1E-15)
                     v = np.array((i * .5, j * 1.5, k * 2.5))

@@ -97,7 +97,7 @@ class MPIIOTest(ut.TestCase):
             self.s.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:
                 self.s.part[p.id].add_bond(b)
-    
+
     def tearDown(self):
         clean_files()
 
@@ -125,7 +125,7 @@ class MPIIOTest(ut.TestCase):
     def test_mpiio(self):
         espressomd.io.mpiio.mpiio.write(
             filename, types=True, positions=True, velocities=True, bonds=True)
-        
+
         self.check_files_exist()
 
         self.s.part.clear()  # Clear to be on the safe side

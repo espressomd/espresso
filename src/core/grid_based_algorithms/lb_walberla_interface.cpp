@@ -26,8 +26,7 @@ boost::optional<double> get_node_density(Utils::Vector3i ind) {
 REGISTER_CALLBACK_ONE_RANK(get_node_density)
 
 boost::optional<bool> get_node_is_boundary(Utils::Vector3i ind) {
-  auto res = lb_walberla()->get_node_is_boundary(ind);
-  return res;
+  return lb_walberla()->get_node_is_boundary(ind);
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_node_is_boundary)

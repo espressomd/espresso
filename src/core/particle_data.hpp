@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _PARTICLE_DATA_H
 #define _PARTICLE_DATA_H
 /** \file
@@ -66,9 +66,6 @@ enum {
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-/** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether all of
- *  the coordinates are fixed. */
-#define COORDS_ALL_FIXED (COORD_FIXED(0) & COORD_FIXED(1) & COORD_FIXED(2))
 
 #ifdef ROTATION
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
@@ -110,11 +107,6 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-#ifdef AFFINITY
-  /** parameters for affinity mechanisms */
-  Utils::Vector3d bond_site = {-1., -1., -1.};
-#endif
-
 #ifdef MEMBRANE_COLLISION
   /** parameters for membrane collision mechanisms */
   Utils::Vector3d out_direction = {0., 0., 0.};
@@ -142,10 +134,8 @@ struct ParticleProperties {
 #endif
 
 #ifdef VIRTUAL_SITES
-  /** is particle virtual
-      0 = real particle
-      else = virtual particle */
-  int is_virtual = 0;
+  /** is particle virtual */
+  bool is_virtual = false;
 #ifdef VIRTUAL_SITES_RELATIVE
   /** In case, the "relative" implementation of virtual sites is enabled, the
   following properties define, with respect to which real particle a virtual
@@ -171,7 +161,7 @@ struct ParticleProperties {
 
 #endif
 #else  /* VIRTUAL_SITES */
-  static constexpr const int is_virtual = 0;
+  static constexpr const bool is_virtual = false;
 #endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -221,7 +211,7 @@ struct ParticlePosition {
   /** quaternions to define particle orientation */
   Utils::Vector4d quat = {1., 0., 0., 0.};
   /** unit director calculated from the quaternions */
-  inline const Utils::Vector3d calc_director() const {
+  Utils::Vector3d calc_director() const {
     return {2 * (quat[1] * quat[3] + quat[0] * quat[2]),
             2 * (quat[2] * quat[3] - quat[0] * quat[1]),
             quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
@@ -354,9 +344,7 @@ struct Particle {
   ///
   ParticlePosition r;
 #ifdef DIPOLES
-  inline const Utils::Vector3d calc_dip() const {
-    return r.calc_director() * p.dipm;
-  }
+  Utils::Vector3d calc_dip() const { return r.calc_director() * p.dipm; }
 #endif
   ///
   ParticleMomentum m;
@@ -404,38 +392,6 @@ struct Particle {
 #endif
 };
 
-/**
- * These functions cause a compile time error if
- * Particles are copied by memmove or memcpy,
- * which do not keep class invariants.
- *
- * These are templates so that the error is caused
- * at the place they are used.
- */
-template <typename Size> void memmove(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memmove(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size> void memcpy(Particle *, Particle *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-template <typename Size> void memcpy(Particle *, Particle const *, Size) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
-template <typename Size, typename... Ts>
-void MPI_Send(Particle const *, Size, Ts...) {
-  static_assert(sizeof(Size) == 0, "Particles can not be copied like this.");
-}
-
 /** List of particles. The particle array is resized using a sophisticated
  *  (we hope) algorithm to avoid unnecessary resizes.
  *  Access using \ref realloc_particlelist, ...
@@ -448,6 +404,8 @@ struct ParticleList {
   int n;
   /** Number of particles that fit in until a resize is needed */
   int max;
+
+  Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
 };
 
 /************************************************
@@ -483,10 +441,6 @@ void free_particle(Particle *part);
 
 /*    Functions acting on Particle Lists        */
 /************************************************/
-
-/** Initialize a particle list.
- *  Use with care and ONLY for initialization! */
-void init_particlelist(ParticleList *pList);
 
 /** Allocate storage for local particles and ghosts. This version
     does \em not care for the bond information to be freed if necessary.
@@ -638,14 +592,6 @@ void set_particle_rotation(int part, int rot);
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
 
-#ifdef AFFINITY
-/** Call only on the master node: set particle affinity.
- *  @param part the particle.
- *  @param bond_site its new site of the affinity bond.
- */
-void set_particle_affinity(int part, double *bond_site);
-#endif
-
 #ifdef MEMBRANE_COLLISION
 /** Call only on the master node: set particle out_direction.
  *  @param part the particle.
@@ -723,11 +669,11 @@ void set_particle_dipm(int part, double dipm);
 #endif
 
 #ifdef VIRTUAL_SITES
-/** Call only on the master node: set particle dipole moment (absolute value).
+/** Call only on the master node: set particle virtual flag.
  *  @param part the particle.
- *  @param is_virtual its new is_virtual.
+ *  @param is_virtual new @ref ParticleProperties::is_virtual "is_virtual" flag.
  */
-void set_particle_virtual(int part, int is_virtual);
+void set_particle_virtual(int part, bool is_virtual);
 #endif
 #ifdef VIRTUAL_SITES_RELATIVE
 void set_particle_vs_quat(int part, double *vs_relative_quat);
@@ -852,7 +798,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 void added_particle(int part);
 
 /** Used for example by \ref mpi_send_exclusion.
- *  Locally add a exclusion to a particle.
+ *  Locally add an exclusion to a particle.
  *  @param part1 the identity of the first exclusion partner
  *  @param part2 the identity of the second exclusion partner
  *  @param _delete if true, delete the exclusion instead of add
@@ -901,11 +847,11 @@ void recv_particles(ParticleList *particles, int node);
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
  *  calculated.
  */
-inline bool do_nonbonded(Particle const *p1, Particle const *p2) {
+inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
      symmetric, so this is sufficient. */
-  return std::none_of(p1->el.begin(), p1->el.end(),
-                      [p2](int id) { return p2->p.identity == id; });
+  return std::none_of(p1.el.begin(), p1.el.end(),
+                      [&p2](int id) { return p2.p.identity == id; });
 }
 #endif
 
@@ -930,7 +876,7 @@ void auto_exclusions(int distance);
 void init_type_map(int type);
 
 /* find a particle of given type and return its id */
-int get_random_p_id(int type);
+int get_random_p_id(int type, int random_index_in_type_map);
 int number_of_particles_with_type(int type);
 
 // The following functions are used by the python interface to obtain
@@ -950,7 +896,7 @@ void pointer_to_quat(Particle const *p, double const *&res);
 void pointer_to_q(Particle const *p, double const *&res);
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res);
+void pointer_to_virtual(Particle const *p, bool const *&res);
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -989,9 +935,6 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
-#endif
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res);
 #endif
 
 #ifdef MEMBRANE_COLLISION

@@ -49,7 +49,7 @@ public:
       : m_pdf_field_id(pdf_field_id), m_force_field_id(force_field_id),
         m_force_field_from_md_id(force_field_from_md_id),
         m_boundary_handling_id(boundary_handling_id),
-        m_ext_force(walberla::Vector3<walberla::real_t>{0, 0, 0}) {}
+        m_ext_force(walberla::Vector3<walberla::real_t>{0, 0, 0}) {};
 
   void set_ext_force(const Utils::Vector3d &ext_force) {
     m_ext_force = to_vector3(ext_force);
@@ -215,6 +215,7 @@ public:
 
   double get_grid_spacing() { return m_agrid; }
   double get_tau() { return m_tau; }
+  double get_kT() { return 0.; };
 
   bool node_in_local_domain(const Utils::Vector3i &node) const;
   bool pos_in_local_domain(const Utils::Vector3d &pos) const;

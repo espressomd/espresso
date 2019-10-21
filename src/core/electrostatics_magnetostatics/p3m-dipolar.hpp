@@ -1,27 +1,27 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _P3M_MAGNETOSTATICS_H
 #define _P3M_MAGNETOSTATICS_H
 /** \file
- * P3M algorithm for long range magnetic dipole-dipole interaction.
+ *  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in
@@ -194,8 +194,8 @@ int dp3m_adaptive_tune(char **log);
 /** Compute the k-space part of forces and energies for the magnetic
  *  dipole-dipole interaction
  */
-double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
-                               const ParticleRange &particles);
+double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
+                               ParticleRange const &particles);
 
 /** Calculate number of magnetic particles, the sum of the squared
  *  charges and the squared sum of the charges.
@@ -221,15 +221,16 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
  */
-inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
-                                  Utils::Vector3d const &d, double dist2,
-                                  double dist, Utils::Vector3d &force) {
-  if ((p1->p.dipm == 0.) || (p2->p.dipm == 0.))
-    return 0.;
+inline std::tuple<double, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+dp3m_pair_force(Particle const &p1, Particle const &p2,
+                Utils::Vector3d const &d, double dist2, double dist) {
+  if ((p1.p.dipm == 0.) || (p2.p.dipm == 0.))
+    return std::make_tuple(0.0, Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{});
 
   if (dist < dp3m.params.r_cut && dist > 0) {
-    auto const dip1 = p1->calc_dip();
-    auto const dip2 = p2->calc_dip();
+    auto const dip1 = p1.calc_dip();
+    auto const dip2 = p2.calc_dip();
     auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
     auto const adist = dp3m.params.alpha * dist;
 #if USE_ERFC_APPROXIMATION
@@ -258,8 +259,9 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
     D_r = (5 * C_r + 4 * coeff * alpsq * alpsq * exp_adist2) * dist2i;
 
     // Calculate real-space forces
-    force += dipole.prefactor *
-             ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
+    auto const force =
+        dipole.prefactor *
+        ((mimj * d + dip1 * mjr + dip2 * mir) * C_r - mir * mjr * D_r * d);
 
 #ifdef ROTATION
     // Calculate vector multiplications for vectors mi, mj, rij
@@ -268,28 +270,31 @@ inline double dp3m_add_pair_force(Particle *p1, Particle *p2,
     auto const mjxr = vector_product(dip2, d);
 
     // Calculate real-space torques
-    p1->f.torque += dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
-    p2->f.torque += dipole.prefactor * (mixmj * B_r + mjxr * (mir * C_r));
+    auto const torque1 = dipole.prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
+    auto const torque2 = dipole.prefactor * (mixmj * B_r + mjxr * (mir * C_r));
 #endif
 #ifdef NPT
 #if USE_ERFC_APPROXIMATION
-    auto const fac = dipole.prefactor * p1->p.dipm * p2->p.dipm * exp_adist2;
+    auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm * exp_adist2;
 #else
-    auto const fac = dipole.prefactor * p1->p.dipm * p2->p.dipm;
+    auto const fac = dipole.prefactor * p1.p.dipm * p2.p.dipm;
 #endif
-    return fac * (mimj * B_r - mir * mjr * C_r);
+    auto const _energy = fac * (mimj * B_r - mir * mjr * C_r);
+#else
+    auto const _energy = 0.0;
 #endif
+    return std::make_tuple(_energy, force, torque1, torque2);
   }
-  return 0.0;
+  return std::make_tuple(0.0, Utils::Vector3d{}, Utils::Vector3d{},
+                         Utils::Vector3d{});
 }
 
 /** Calculate real space contribution of dipolar pair energy. */
-inline double dp3m_pair_energy(Particle const *const p1,
-                               Particle const *const p2,
+inline double dp3m_pair_energy(Particle const &p1, Particle const &p2,
                                Utils::Vector3d const &d, double dist2,
                                double dist) {
-  auto const dip1 = p1->calc_dip();
-  auto const dip2 = p2->calc_dip();
+  auto const dip1 = p1.calc_dip();
+  auto const dip2 = p2.calc_dip();
 
   if (dist < dp3m.params.r_cut && dist > 0) {
     auto const alpsq = dp3m.params.alpha * dp3m.params.alpha;
@@ -298,11 +303,11 @@ inline double dp3m_pair_energy(Particle const *const p1,
 
 #if USE_ERFC_APPROXIMATION
     auto const erfc_part_ri = Utils::AS_erfc_part(adist) / dist;
-    /*  fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm; IT WAS WRONG */
+    /*  fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm; IT WAS WRONG */
     /* *exp(-adist*adist); */
 #else
     auto const erfc_part_ri = erfc(adist) / dist;
-    /* fac1 = dipole.prefactor * p1->p.dipm*p2->p.dipm;  IT WAS WRONG*/
+    /* fac1 = dipole.prefactor * p1.p.dipm*p2.p.dipm;  IT WAS WRONG*/
 #endif
 
     // Calculate scalar multiplications for vectors mi, mj, rij
@@ -324,7 +329,7 @@ inline double dp3m_pair_energy(Particle const *const p1,
 
     /*
       printf("(%4i %4i) pair energy = %f (B_r=%15.12f C_r=%15.12f)\n",
-      p1->p.identity,p2->p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
+      p1.p.identity,p2.p.identity,fac1*(mimj*B_r-mir*mjr*C_r),B_r,C_r);
     */
 
     /* old line return fac1 * ( mimj*B_r - mir*mjr * C_r );*/

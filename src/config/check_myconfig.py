@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -38,12 +38,12 @@ def damerau_levenshtein_distance(s1, s2):
                 cost = 1
             d[(i, j)] = min(
                 d[(i - 1, j)] + 1,  # deletion
-                           d[(i, j - 1)] + 1,  # insertion
-                           d[(i - 1, j - 1)] + cost,  # substitution
+                d[(i, j - 1)] + 1,  # insertion
+                d[(i - 1, j - 1)] + cost,  # substitution
             )
             if i and j and s1[i] == s2[j - 1] and s1[i - 1] == s2[j]:
+                # transposition
                 d[(i, j)] = min(d[(i, j)], d[i - 2, j - 2] + cost)
-                   # transposition
 
     return d[lenstr1 - 1, lenstr2 - 1]
 
@@ -54,7 +54,7 @@ def handle_unknown(f, all_features):
     for d in all_features:
         dist = damerau_levenshtein_distance(f, d)
         if dist < max_dist:
-            min_dist = dist
+            max_dist = dist
             match = d
 
     if match:
@@ -112,6 +112,7 @@ def check_myconfig(compiler, feature_file, myconfig, pre_header=None):
         raise FeatureError("There were errors in '{}'".format(sys.argv[3]))
     else:
         return
+
 
 if __name__ == "__main__":
     if len(sys.argv) > 4:

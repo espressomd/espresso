@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _INTERACTION_DATA_H
 #define _INTERACTION_DATA_H
 /** \file
@@ -135,17 +135,6 @@ struct SoftSphere_Parameters {
   double offset = 0.0;
 };
 
-/** affinity potential */
-struct Affinity_Parameters {
-  int type = -1;
-  double kappa = INACTIVE_CUTOFF;
-  double r0 = INACTIVE_CUTOFF;
-  double Kon = INACTIVE_CUTOFF;
-  double Koff = INACTIVE_CUTOFF;
-  double maxBond = INACTIVE_CUTOFF;
-  double cut = INACTIVE_CUTOFF;
-};
-
 /** membrane collision potential */
 struct Membrane_Parameters {
   double a = 0.0;
@@ -252,10 +241,6 @@ struct IA_parameters {
   SoftSphere_Parameters soft_sphere;
 #endif
 
-#ifdef AFFINITY
-  Affinity_Parameters affinity;
-#endif
-
 #ifdef MEMBRANE_COLLISION
   Membrane_Parameters membrane;
 #endif
@@ -329,8 +314,8 @@ extern double min_global_cut;
  * This is symmetric, e.g. it holds that get_ia_param(i, j) and
  * get_ia_param(j, i) point to the same data.
  *
- * @param i First type, has to be be smaller than @ref max_seen_particle_type.
- * @param j Second type, has to be be smaller than @ref max_seen_particle_type.
+ * @param i First type, has to be smaller than @ref max_seen_particle_type.
+ * @param j Second type, has to be smaller than @ref max_seen_particle_type.
  *
  * @return Pointer to interaction parameters for the type pair.
  * */
@@ -386,8 +371,8 @@ void reset_ia_params();
 int interactions_sanity_checks();
 
 /**  check if a non bonded interaction is defined */
-inline int checkIfInteraction(const IA_parameters *data) {
-  return data->max_cut != INACTIVE_CUTOFF;
+inline bool checkIfInteraction(IA_parameters const &data) {
+  return data.max_cut != INACTIVE_CUTOFF;
 }
 
 /** Returns true if the particles are to be considered for short range

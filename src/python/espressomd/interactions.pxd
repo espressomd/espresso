@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,7 +26,7 @@ from libc cimport stdint
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
-#force include of config.hpp
+# force include of config.hpp
 cdef extern from "config.hpp":
     pass
 
@@ -123,15 +123,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double cut
         double offset
 
-    cdef struct Affinity_Parameters:
-        int type
-        double kappa
-        double r0
-        double Kon
-        double Koff
-        double maxBond
-        double cut
-
     cdef struct Membrane_Parameters:
         double a
         double n
@@ -177,8 +168,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         LJcos2_Parameters ljcos2
 
         LJGen_Parameters ljgen
-
-        Affinity_Parameters affinity
 
         Membrane_Parameters membrane
 
@@ -324,11 +313,6 @@ IF SOFT_SPHERE:
                                         double a, double n,
                                         double cut, double offset)
 
-IF AFFINITY:
-    cdef extern from "object-in-fluid/affinity.hpp":
-        cdef int affinity_set_params(int part_type_a, int part_type_b,
-                                     int afftype, double kappa, double r0,
-                                     double Kon, double Koff, double maxBond, double cut)
 IF TABULATED:
     cdef extern from "nonbonded_interactions/nonbonded_tab.hpp":
         int tabulated_set_params(int part_type_a, int part_type_b,
@@ -337,7 +321,7 @@ IF TABULATED:
                                  vector[double] force)
 IF ROTATION:
     cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
-    #* Parameters for the harmonic dumbbell bond potential */
+        #* Parameters for the harmonic dumbbell bond potential */
         cdef struct Harmonic_dumbbell_bond_parameters:
             double k1
             double k2

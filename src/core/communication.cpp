@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -48,8 +48,8 @@
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "io/mpiio/mpiio.hpp"
-#include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
@@ -120,34 +120,18 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_update_particle_slave)                                                \
-  CB(mpi_bcast_lb_particle_coupling_slave)                                     \
-  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)
+  CB(mpi_update_particle_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
+#ifndef DOXYGEN
+/* this conditional on DOXYGEN prevents an interaction in Doxygen between
+ * CALLBACK_LIST and whatever follows next, e.g. a function "int foo();"
+ * would otherwise become "CALLBACK_LIST int foo();" */
 CALLBACK_LIST
-
-#undef CB
-
-#ifdef DOXYGEN
-    (void); /* this line prevents an interaction in Doxygen between
-               CALLBACK_LIST and the anonymous namespace that follows */
 #endif
 
-namespace {
-#ifdef COMM_DEBUG
-// create the list of names
-#define CB(name) #name,
-
-/** List of callback names for debugging. */
-std::vector<std::string> names{CALLBACK_LIST};
 #undef CB
-#endif
-} // namespace
-
-/** Forward declarations */
 
 int mpi_check_runtime_errors();
 
@@ -410,11 +394,6 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
                   (double *)result_t_nb, 1);
     break;
-  case 4:
-    mpi_call(mpi_gather_stats_slave, -1, 4);
-    predict_momentum_particles((double *)result,
-                               cell_structure.local_cells().particles());
-    break;
   case 6:
     mpi_call(mpi_gather_stats_slave, -1, 6);
     lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
@@ -451,10 +430,6 @@ void mpi_gather_stats_slave(int, int job) {
     /* calculate and reduce (sum up) virials, revert velocities half a timestep
      * for 'analyze p_inst' */
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
-    break;
-  case 4:
-    predict_momentum_particles(nullptr,
-                               cell_structure.local_cells().particles());
     break;
   case 6:
     lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
@@ -572,13 +547,6 @@ void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
 }
 
-/******************* REQ_BCAST_LBPAR ********************/
-
-void mpi_bcast_lb_particle_coupling() {
-  mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
-}
-
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
 
 void mpi_bcast_cuda_global_part_vars() {
@@ -618,6 +586,7 @@ void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
 #ifdef ELECTROSTATICS
   iccp3m_cfg = iccp3m_cfg_;
 
+  on_particle_charge_change();
   check_runtime_errors(comm_cart);
 #endif
 }
@@ -628,34 +597,13 @@ int mpi_iccp3m_init() {
 #ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
 
+  on_particle_charge_change();
   return check_runtime_errors(comm_cart);
 #else
   return 0;
 #endif
 }
 #endif
-
-Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
-                                                  Utils::Vector3d const &pos) {
-  if (this_node == 0) {
-    comm_cart.send(node, SOME_TAG, pos);
-    mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
-    Utils::Vector3d interpolated_u{};
-    comm_cart.recv(node, SOME_TAG, interpolated_u);
-    return interpolated_u;
-  }
-  return {};
-}
-
-void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
-  if (node == this_node) {
-    Utils::Vector3d pos{};
-    comm_cart.recv(0, SOME_TAG, pos);
-    auto const interpolated_u =
-        lb_lbinterpolation_get_interpolated_velocity(pos);
-    comm_cart.send(0, SOME_TAG, interpolated_u);
-  }
-}
 
 /****************************************************/
 

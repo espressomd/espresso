@@ -22,12 +22,13 @@ import numpy as np
 import sys
 
 # Define the LB Parameters
-TIME_STEP = 0.01
+TIME_STEP = 0.008
 AGRID = 1.0 
-KVISC = 7 
+KVISC = 5
 DENS = 1 
 BOX_SIZE = 6 * AGRID
 F = 1. / BOX_SIZE**3
+GAMMA = 15
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -43,11 +44,10 @@ class Momentum(object):
     system.cell_system.skin = 0.01
 
     def test(self):
-        print(self.system.cell_system.get_state())
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=3, seed=1)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
 
         applied_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
@@ -59,8 +59,9 @@ class Momentum(object):
         v_final = np.copy(p.v)
         momentum = self.system.analysis.linear_momentum()
 
-        for i in range(3):
-            self.system.integrator.run(100)
+        for i in range(10):
+            self.system.integrator.run(50)
+            print(i,p.v)
             # check that momentum stays constant
             np.testing.assert_allclose(
                 self.system.analysis.linear_momentum(), momentum, atol=4E-4)

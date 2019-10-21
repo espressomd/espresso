@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from espressomd.utils import to_char_pointer, to_str, handle_errors
 import numpy as np
 from espressomd.utils import is_valid_type, array_locked
@@ -85,7 +101,7 @@ cdef class PScriptInterface:
         try:
             ptr = get_instance(oid).lock()
             self.set_sip(ptr)
-        except:
+        except BaseException:
             raise Exception("Could not get sip for given_id")
 
     def id(self):
@@ -338,13 +354,14 @@ class ScriptObjectRegistry(ScriptInterfaceHelper):
 
     def __len__(self):
         return self.call_method("size")
-    
+
     def __reduce__(self):
         res = []
         for item in self.__iter__():
             res.append(item)
 
-        return (_unpickle_script_object_registry, (self._so_name, self.get_params(), res))
+        return (_unpickle_script_object_registry,
+                (self._so_name, self.get_params(), res))
 
 
 def _unpickle_script_object_registry(so_name, params, items):

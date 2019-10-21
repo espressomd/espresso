@@ -31,7 +31,7 @@ Utils::Vector3d LBBoundary::get_force() const {
     boost::mpi::all_reduce(comm_cart, force, std::plus<Utils::Vector3d>());
     return force;
   } else {
-    return lbboundary_get_force(this);
+    return lbboundary_get_force(this) /lb_lbfluid_get_density();
   }
 #else
   throw std::runtime_error("Needs LB_BOUNDARIES or LB_BOUNDARIES_GPU.");

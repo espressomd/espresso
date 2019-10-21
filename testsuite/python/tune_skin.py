@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -47,6 +47,7 @@ class TuneSkin(ut.TestCase):
             tol=0.05,
             int_steps=3,
             adjust_max_skin=True)
+
 
 if __name__ == "__main__":
     ut.main()

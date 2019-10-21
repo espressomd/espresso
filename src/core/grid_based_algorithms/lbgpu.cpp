@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2010-2018 The ESPResSo project
-
-   This file is part of ESPResSo.
-
-   ESPResSo is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ESPResSo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  %Lattice Boltzmann on GPUs.
  *
@@ -29,24 +29,19 @@
 
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "debug.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "partCfg_global.hpp"
 #include "particle_data.hpp"
 #include "statistics.hpp"
 
 #include <utils/constants.hpp>
 
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <ctime>
 #include <random>
 
 LB_particle_allocation_state lb_reinit_particles_gpu;
@@ -104,17 +99,8 @@ LB_parameters_gpu lbpar_gpu = {
 /** this is the array that stores the hydrodynamic fields for the output */
 std::vector<LB_rho_v_pi_gpu> host_values(0);
 
-static int max_ran = 1000000;
-// static double tau;
-
 /** measures the MD time since the last fluid update */
-static int fluidstep = 0;
 
-// clock_t start, end;
-int i;
-
-int n_extern_node_force_densities = 0;
-std::vector<LB_extern_nodeforcedensity_gpu> host_extern_node_force_densities;
 bool ek_initialized = false;
 
 /*-----------------------------------------------------------*/
@@ -124,15 +110,7 @@ bool ek_initialized = false;
 /** %Lattice Boltzmann update gpu called from integrate.cpp */
 void lattice_boltzmann_update_gpu() {
 
-  auto factor = (int)round(lbpar_gpu.tau / time_step);
-
-  fluidstep += 1;
-
-  if (fluidstep >= factor) {
-
-    fluidstep = 0;
-    lb_integrate_GPU();
-  }
+  lb_integrate_GPU();
 }
 
 /** (Re-)allocation of the memory needed for the particles (CPU part) */

@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  code for calculating the MDLC (magnetic dipolar layer correction).
  *  Purpose:   get the corrections for dipolar 3D algorithms
@@ -38,7 +38,6 @@
 #if defined(DIPOLES) && defined(DP3M)
 #include "cells.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "electrostatics_magnetostatics/p3m-dipolar.hpp"
 #include "errorhandling.hpp"
@@ -347,7 +346,7 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 }
 
 /** Compute and add the terms needed to correct the 3D dipolar
- *  methods when we have an slab geometry
+ *  methods when we have a slab geometry
  */
 void add_mdlc_force_corrections(const ParticleRange &particles) {
   int dip_DLC_kcut = dlc_params.far_cut;
@@ -368,7 +367,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   // First the DLC correction
   get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f, dip_DLC_t, particles);
 
-  // Now we compute the the correction like Yeh and Klapp to take into account
+  // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
   // summation.
@@ -410,7 +409,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 }
 
 /** Compute and add the terms needed to correct the energy of
- *  3D dipolar methods when we have an slab geometry
+ *  3D dipolar methods when we have a slab geometry
  */
 double add_mdlc_energy_corrections(const ParticleRange &particles) {
   double dip_DLC_energy = 0.0;
@@ -430,7 +429,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   //           printf("Energy DLC                                  = %20.15le
   //           \n",dip_DLC_energy);
 
-  // Now we compute the the correction like Yeh and Klapp to take into account
+  // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a
   // 3D PBC method which uses spherical summation instead of slab-wise
   // summation.
@@ -530,7 +529,7 @@ int mdlc_tune(double error) {
   if (flag == 0) {
     fprintf(stderr, "tune DLC dipolar: Sorry, unable to find a proper cut-off "
                     "for such system and accuracy.\n");
-    fprintf(stderr, "Try modifiying the variable limitkc in the c-code: "
+    fprintf(stderr, "Try modifying the variable limitkc in the c-code: "
                     "dlc_correction.cpp  ... \n");
     return ES_ERROR;
   }

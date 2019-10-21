@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -92,6 +92,7 @@ class LBEHGPU(LBEHTest, ut.TestCase):
 
     def setUp(self):
         self.LBClass = lb.LBFluidGPU
+
 
 
 if __name__ == "__main__":

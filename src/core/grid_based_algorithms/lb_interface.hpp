@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_LB_INTERFACE
 #define CORE_LB_INTERFACE
 
@@ -77,12 +95,12 @@ void check_tau_time_step_consistency(double tau, double time_s);
 void lb_lbfluid_set_density(double p_dens);
 
 /**
- * @brief Set the global LB vicosity.
+ * @brief Set the global LB viscosity.
  */
 void lb_lbfluid_set_viscosity(double p_visc);
 
 /**
- * @brief Set the global LB bulk vicosity.
+ * @brief Set the global LB bulk viscosity.
  */
 void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc);
 
@@ -195,7 +213,7 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
 const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind);
 
 /** calculates the average stress of all nodes by iterating
- * over all nodes and deviding by the number_of_nodes.
+ * over all nodes and dividing by the number_of_nodes.
  */
 const Utils::Vector6d lb_lbfluid_get_stress();
 
@@ -231,8 +249,14 @@ bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
  */
 Utils::Vector3i lb_lbfluid_get_shape();
 
-void lb_lbfluid_on_lb_params_change(LBParam field);
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
+
+/**
+ * @brief Calculates the interpolated fluid velocity on the master process.
+ * @param pos Position at which the velocity is to be calculated.
+ * @retval interpolated fluid velocity.
+ */
+const Utils::Vector3d
+lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 
 #endif

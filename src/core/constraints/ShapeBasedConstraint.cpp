@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <boost/mpi/collectives.hpp>
 
 #include "ShapeBasedConstraint.hpp"
@@ -41,8 +41,8 @@ double ShapeBasedConstraint::min_dist(const ParticleRange &particles) {
       particles.begin(), particles.end(),
       std::numeric_limits<double>::infinity(),
       [this](double min, Particle const &p) {
-        IA_parameters *ia_params;
-        ia_params = get_ia_param(p.p.type, part_rep.p.type);
+        IA_parameters const &ia_params =
+            *get_ia_param(p.p.type, part_rep.p.type);
         if (checkIfInteraction(ia_params)) {
           double dist;
           Utils::Vector3d vec;
@@ -63,34 +63,31 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
   double dist = 0.;
   Utils::Vector3d dist_vec, force1{}, torque1{}, torque2{}, outer_normal_vec;
 
-  IA_parameters const *const ia_params =
-      get_ia_param(p.p.type, part_rep.p.type);
+  IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 
   if (checkIfInteraction(ia_params)) {
     m_shape->calculate_dist(folded_pos, dist, dist_vec);
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
-      auto const dist2 = dist * dist;
-      calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec, dist,
-                                 force1, &torque1, &torque2);
+      force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
+                                          dist, &torque1, &torque2);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
         force1 +=
-            dpd_pair_force(&p, &part_rep, ia_params, dist_vec, dist, dist2);
+            dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
         // Additional use of DPD here requires counter increase
         dpd_rng_counter_increment();
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
-        auto const dist2 = dist * dist;
-        calc_non_bonded_pair_force(&p, &part_rep, ia_params, dist_vec, -dist,
-                                   force1, &torque1, &torque2);
+        force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
+                                            -dist, &torque1, &torque2);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-          force1 +=
-              dpd_pair_force(&p, &part_rep, ia_params, dist_vec, dist, dist2);
+          force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
+                                   dist * dist);
           // Additional use of DPD here requires counter increase
           dpd_rng_counter_increment();
         }
@@ -118,10 +115,9 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
                                       const Utils::Vector3d &folded_pos,
                                       double t, Observable_stat &energy) const {
   double dist;
-  IA_parameters *ia_params;
   double nonbonded_en = 0.0;
 
-  ia_params = get_ia_param(p.p.type, part_rep.p.type);
+  IA_parameters const &ia_params = *get_ia_param(p.p.type, part_rep.p.type);
 
   dist = 0.;
   if (checkIfInteraction(ia_params)) {
@@ -129,11 +125,11 @@ void ShapeBasedConstraint::add_energy(const Particle &p,
     m_shape->calculate_dist(folded_pos, dist, vec);
     if (dist > 0) {
       nonbonded_en =
-          calc_non_bonded_pair_energy(&p, &part_rep, ia_params, vec, dist);
+          calc_non_bonded_pair_energy(p, part_rep, ia_params, vec, dist);
     } else if ((dist <= 0) && m_penetrable) {
       if (!m_only_positive && (dist < 0)) {
-        nonbonded_en = calc_non_bonded_pair_energy(&p, &part_rep, ia_params,
-                                                   vec, -1.0 * dist);
+        nonbonded_en = calc_non_bonded_pair_energy(p, part_rep, ia_params, vec,
+                                                   -1.0 * dist);
       }
     } else {
       runtimeErrorMsg() << "Constraint violated by particle " << p.p.identity;

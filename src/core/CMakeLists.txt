@@ -21,9 +21,10 @@ set(EspressoCore_SRC
   immersed_boundaries.cpp
   event.cpp
   integrate.cpp
+  integrators/velocity_verlet_npt.cpp
   layered.cpp
   metadynamics.cpp
-  minimize_energy.cpp
+  integrators/steepest_descent.cpp
   npt.cpp
   nsquare.cpp
   partCfg_global.cpp
@@ -51,8 +52,6 @@ set(EspressoCore_SRC
   actor/ActorList.cpp
   actor/DipolarBarnesHut.cpp
   actor/DipolarDirectSum.cpp
-  actor/HarmonicOrientationWell.cpp
-  actor/HarmonicWell.cpp
   actor/Mmm1dgpuForce.cpp
   bonded_interactions/angle_cosine.cpp
   bonded_interactions/angle_cossquare.cpp
@@ -92,6 +91,7 @@ set(EspressoCore_SRC
   grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lb_boundaries.cpp
   grid_based_algorithms/lbboundaries/LBBoundary.cpp
+  grid_based_algorithms/lb_collective_interface.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/LbWalberla.cpp
   grid_based_algorithms/lb_walberla_instance.cpp
@@ -119,7 +119,6 @@ set(EspressoCore_SRC
   nonbonded_interactions/smooth_step.cpp
   nonbonded_interactions/thole.cpp
   nonbonded_interactions/wca.cpp
-  object-in-fluid/affinity.cpp
   object-in-fluid/membrane_collision.cpp
   object-in-fluid/oif_global_forces.cpp
   object-in-fluid/oif_local_forces.cpp
@@ -145,8 +144,6 @@ if(CUDA)
     EspressoSystemInterface_cuda.cu
     actor/DipolarBarnesHut_cuda.cu
     actor/DipolarDirectSum_cuda.cu
-    actor/HarmonicOrientationWell_cuda.cu
-    actor/HarmonicWell_cuda.cu
     actor/Mmm1dgpuForce_cuda.cu
     electrostatics_magnetostatics/p3m_gpu_cuda.cu
     electrostatics_magnetostatics/p3m_gpu_error_cuda.cu

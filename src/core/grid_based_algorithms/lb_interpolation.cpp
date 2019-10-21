@@ -1,16 +1,33 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <boost/mpi/collectives.hpp>
 
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include <utils/Vector.hpp>
 
 #include "lb.hpp"
-#include "lb_interface.hpp"
-#include "lb_walberla_instance.hpp"
-#include "lb_walberla_interface.hpp"
 #include "lbgpu.hpp"
 
 namespace {
@@ -18,15 +35,15 @@ namespace {
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
 }
 
-void mpi_set_interpolation_order_slave(int, int) {
-  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
+void mpi_set_interpolation_order(InterpolationOrder const &order) {
+  interpolation_order = order;
 }
+
+REGISTER_CALLBACK(mpi_set_interpolation_order)
 
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &order) {
-  interpolation_order = order;
-  mpi_call(mpi_set_interpolation_order_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, interpolation_order, 0);
+  mpi_call_all(mpi_set_interpolation_order, order);
 }
 
 InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
@@ -70,16 +87,16 @@ Utils::Vector3d node_u(Lattice::index_t index) {
 
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
-  if (lattice_switch == ActiveLB::CPU) {
-    Utils::Vector3d interpolated_u{};
+  Utils::Vector3d interpolated_u{};
 
-    /* calculate fluid velocity at particle's position
-       this is done by linear interpolation
-       (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-    lattice_interpolation(lblattice, pos,
-                          [&interpolated_u](Lattice::index_t index, double w) {
-                            interpolated_u += w * node_u(index);
-                          });
+  /* calculate fluid velocity at particle's position
+     this is done by linear interpolation
+     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  if (lattice_switch == ActiveLB::CPU) {
+  lattice_interpolation(lblattice, pos,
+                        [&interpolated_u](Lattice::index_t index, double w) {
+                          interpolated_u += w * node_u(index);
+                        });
 
     return interpolated_u;
   } else if (lattice_switch == ActiveLB::WALBERLA) {
@@ -103,54 +120,6 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
     return *res;
   } else
     throw std::runtime_error("No LB active.");
-
-  return {};
-}
-
-const Utils::Vector3d lb_lbinterpolation_get_interpolated_velocity_global(
-    const Utils::Vector3d &pos) {
-  auto const folded_pos = folded_position(pos, box_geo);
-  if (lattice_switch == ActiveLB::GPU) {
-#ifdef CUDA
-    Utils::Vector3d interpolated_u{};
-    switch (interpolation_order) {
-    case (InterpolationOrder::linear):
-      lb_get_interpolated_velocity_gpu<8>(folded_pos.data(),
-                                          interpolated_u.data(), 1);
-      break;
-    case (InterpolationOrder::quadratic):
-      lb_get_interpolated_velocity_gpu<27>(folded_pos.data(),
-                                           interpolated_u.data(), 1);
-      break;
-    }
-    return interpolated_u;
-#endif
-  }
-  if (lattice_switch == ActiveLB::CPU) {
-    switch (interpolation_order) {
-    case (InterpolationOrder::quadratic):
-      throw std::runtime_error("The non-linear interpolation scheme is not "
-                               "implemented for the CPU LB.");
-    case (InterpolationOrder::linear):
-      auto const node = map_position_node_array(folded_pos);
-      if (node == 0) {
-        return lb_lbinterpolation_get_interpolated_velocity(folded_pos);
-      }
-      return mpi_recv_lb_interpolated_velocity(node, folded_pos);
-    }
-  }
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    switch (interpolation_order) {
-    case (InterpolationOrder::quadratic):
-      throw std::runtime_error("The non-linear interpolation scheme is not "
-                               "implemented for the CPU LB.");
-    case (InterpolationOrder::linear):
-      return Communication::mpiCallbacks().call(Communication::Result::one_rank,
-                                                Walberla::get_velocity_at_pos,
-                                                pos / lb_lbfluid_get_agrid());
-    }
-  }
-  return {};
 }
 
 void lb_lbinterpolation_add_force_density(

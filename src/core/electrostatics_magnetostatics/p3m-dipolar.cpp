@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  P3M algorithm for long range magnetic dipole-dipole interaction.
  *
@@ -38,7 +38,6 @@
 
 #include "cells.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "global.hpp"
@@ -64,13 +63,15 @@ using Utils::sinc;
  * DEFINES
  ************************************************/
 
-/* MPI tags for the dipole-dipole p3m communications: */
+/** @name MPI tags for the dipole-dipole p3m communications */
+/*@{*/
 /** Tag for communication in dp3m_init() -> dp3m_calc_send_mesh(). */
 #define REQ_P3M_INIT_D 2001
 /** Tag for communication in dp3m_gather_fft_grid(). */
 #define REQ_P3M_GATHER_D 2011
 /** Tag for communication in dp3m_spread_force_grid(). */
 #define REQ_P3M_SPREAD_D 2021
+/*@}*/
 
 /************************************************
  * variables
@@ -79,7 +80,6 @@ using Utils::sinc;
 dp3m_data_struct dp3m;
 
 /** \name Private Functions */
-/************************************************************/
 /*@{*/
 
 /** Calculate for magnetic dipoles the properties of the send/recv sub-meshes
@@ -181,8 +181,8 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
 /*@}*/
 
 /** Compute the dipolar surface terms */
-static double calc_surface_term(int force_flag, int energy_flag,
-                                const ParticleRange &particles);
+static double calc_surface_term(bool force_flag, bool energy_flag,
+                                ParticleRange const &particles);
 
 /** \name P3M Tuning Functions */
 /************************************************************/
@@ -329,25 +329,13 @@ void dp3m_init() {
   int n;
 
   if (dipole.prefactor <= 0.0) {
+    // dipolar prefactor is zero: magnetostatics switched off
     dp3m.params.r_cut = 0.0;
     dp3m.params.r_cut_iL = 0.0;
-    if (this_node == 0) {
-      P3M_TRACE(
-          fprintf(stderr, "0: dp3m_init: dipolar prefactor is zero.\n");
-          fprintf(stderr, "   Magnetostatics of dipoles switched off!\n"));
-    }
   } else {
-    P3M_TRACE(fprintf(stderr, "%d: dp3m_init:\n", this_node));
-
     if (dp3m_sanity_checks(node_grid))
       return;
 
-    P3M_TRACE(fprintf(stderr, "%d: dp3m_init: starting\n", this_node));
-
-    P3M_TRACE(fprintf(stderr, "%d: mesh=%d, cao=%d, mesh_off=(%f,%f,%f)\n",
-                      this_node, dp3m.params.mesh[0], dp3m.params.cao,
-                      dp3m.params.mesh_off[0], dp3m.params.mesh_off[1],
-                      dp3m.params.mesh_off[2]));
     dp3m.params.cao3 = dp3m.params.cao * dp3m.params.cao * dp3m.params.cao;
 
     /* initializes the (inverse) mesh constant dp3m.params.a (dp3m.params.ai)
@@ -365,15 +353,6 @@ void dp3m_init() {
     dp3m_calc_local_ca_mesh();
 
     dp3m_calc_send_mesh();
-    P3M_TRACE(p3m_p3m_print_local_mesh(dp3m.local_mesh));
-
-    /* DEBUG */
-    for (n = 0; n < n_nodes; n++) {
-      /* MPI_Barrier(comm_cart); */
-      if (n == this_node) {
-        P3M_TRACE(p3m_p3m_print_send_mesh(dp3m.sm));
-      }
-    }
 
     dp3m.send_grid =
         Utils::realloc(dp3m.send_grid, sizeof(double) * dp3m.sm.max);
@@ -388,12 +367,6 @@ void dp3m_init() {
 
     dp3m.pos_shift =
         std::floor((dp3m.params.cao - 1) / 2.0) - (dp3m.params.cao % 2) / 2.0;
-    P3M_TRACE(fprintf(stderr, "%d: dipolar pos_shift = %f\n", this_node,
-                      dp3m.pos_shift));
-
-    /* FFT */
-    P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh ADR=%p\n", this_node,
-                      (void *)dp3m.rs_mesh));
 
     int ca_mesh_size =
         fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
@@ -405,13 +378,6 @@ void dp3m_init() {
       dp3m.rs_mesh_dip[n] =
           Utils::realloc(dp3m.rs_mesh_dip[n], ca_mesh_size * sizeof(double));
 
-    P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[0] ADR=%p\n", this_node,
-                      (void *)dp3m.rs_mesh_dip[0]));
-    P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[1] ADR=%p\n", this_node,
-                      (void *)dp3m.rs_mesh_dip[1]));
-    P3M_TRACE(fprintf(stderr, "%d: dp3m.rs_mesh_dip[2] ADR=%p\n", this_node,
-                      (void *)dp3m.rs_mesh_dip[2]));
-
     /* k-space part: */
 
     dp3m_calc_differential_operator();
@@ -420,8 +386,6 @@ void dp3m_init() {
     dp3m_calc_influence_function_energy();
 
     dp3m_count_magnetic_particles();
-
-    P3M_TRACE(fprintf(stderr, "%d: p3m initialized\n", this_node));
   }
 }
 
@@ -507,7 +471,7 @@ double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]) {
 }
 
 /******************
- * functions related to the parsing&tuning of the dipolar parameters
+ * functions related to the parsing & tuning of the dipolar parameters
  ******************/
 
 void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
@@ -617,11 +581,6 @@ void dp3m_interpolate_dipole_assignment_function() {
 
   if (dp3m.params.inter == 0)
     return;
-
-  P3M_TRACE(fprintf(stderr,
-                    "dipolar %d - interpolating (%d) the order-%d "
-                    "charge assignment function\n",
-                    this_node, dp3m.params.inter, dp3m.params.cao));
 
   dp3m.params.inter2 = 2 * dp3m.params.inter + 1;
 
@@ -761,7 +720,7 @@ void dp3m_shrink_wrap_dipole_grid(int n_dipoles) {
 }
 
 #ifdef ROTATION
-/* Assign the torques obtained from k-space */
+/** Assign the torques obtained from k-space */
 static void P3M_assign_torques(double prefac, int d_rs,
                                const ParticleRange &particles) {
   /* particle counter, charge fraction counter */
@@ -822,7 +781,7 @@ static void P3M_assign_torques(double prefac, int d_rs,
 }
 #endif
 
-/* Assign the dipolar forces obtained from k-space */
+/** Assign the dipolar forces obtained from k-space */
 static void dp3m_assign_forces_dip(double prefac, int d_rs,
                                    const ParticleRange &particles) {
   /* particle counter, charge fraction counter */
@@ -861,18 +820,14 @@ static void dp3m_assign_forces_dip(double prefac, int d_rs,
 
 /*****************************************************************************/
 
-double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
+double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                                const ParticleRange &particles) {
   int i, d, d_rs, ind, j[3];
-  /**************************************************************/
   /* k-space energy */
   double dipole_prefac;
   double surface_term = 0.0;
   double k_space_energy_dip = 0.0, node_k_space_energy_dip = 0.0;
   double tmp0, tmp1;
-
-  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_perform(%d,%d):\n", this_node,
-                    force_flag, energy_flag));
 
   dipole_prefac =
       dipole.prefactor /
@@ -892,7 +847,6 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
   }
 
   /* === k-space calculations === */
-  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_perform: k-space\n", this_node));
 
   /* === k-space energy calculation  === */
   if (energy_flag) {
@@ -900,10 +854,6 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
        Dipolar energy
     **********************/
     if (dp3m.sum_mu2 > 0) {
-      P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m start energy calculation: k-space\n",
-                        this_node));
-
       /* i*k differentiation for dipolar gradients:
        * |(\Fourier{\vect{mu}}(k)\cdot \vect{k})|^2 */
       ind = 0;
@@ -937,16 +887,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
 
       dp3m_compute_constants_energy_dipolar();
 
-      P3M_TRACE(fprintf(stderr, "%d: dp3m.params.epsilon=%lf\n", this_node,
-                        dp3m.params.epsilon));
-
       if (this_node == 0) {
         /* self energy correction */
-        P3M_TRACE(fprintf(stderr, "%d: *dp3m.energy_correction=%20.15lf\n",
-                          this_node, dp3m.energy_correction));
-#ifdef P3M_DEBUG
-        double a = k_space_energy_dip;
-#endif
         k_space_energy_dip -=
             dipole.prefactor *
             (dp3m.sum_mu2 * 2 *
@@ -958,14 +900,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
         k_space_energy_dip += dipole.prefactor * dp3m.energy_correction /
                               volume; /* add the dipolar energy correction due
                                          to systematic Madelung-Self effects */
-
-        P3M_TRACE(fprintf(stderr, "%d: energy correction: %lf\n", this_node,
-                          k_space_energy_dip - a));
       }
-
-      P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m end energy calculation: k-space\n",
-                        this_node));
     }
   } // if (energy_flag)
 
@@ -976,10 +911,6 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
      ****************************/
     if (dp3m.sum_mu2 > 0) {
 #ifdef ROTATION
-      P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m start torques calculation: k-space\n",
-                        this_node));
-
       /* fill in ks_mesh array for torque calculation */
       ind = 0;
       i = 0;
@@ -1042,15 +973,11 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
                                (2 * Utils::pi() / box_geo.length()[0]),
                            d_rs, particles);
       }
-      P3M_TRACE(fprintf(stderr, "%d: done torque calculation.\n", this_node));
-#endif /*if def ROTATION */
+#endif /*ifdef ROTATION */
 
       /***************************
          DIPOLAR FORCES (k-space)
       ****************************/
-      P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m start forces calculation: k-space\n",
-                        this_node));
 
       // Compute forces after torques because the algorithm below overwrites the
       // grids dp3m.rs_mesh_dip !
@@ -1129,13 +1056,8 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
             dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2), d_rs,
             particles);
       }
-
-      P3M_TRACE(fprintf(stderr,
-                        "%d: dipolar p3m end forces calculation: k-space\n",
-                        this_node));
-
-    } /* of if (dp3m.sum_mu2>0 */
-  }   /* of if(force_flag) */
+    } /* if (dp3m.sum_mu2 > 0) */
+  }   /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
     surface_term = calc_surface_term(force_flag, energy_flag, particles);
@@ -1148,7 +1070,7 @@ double dp3m_calc_kspace_forces(int force_flag, int energy_flag,
 
 /************************************************************/
 
-double calc_surface_term(int force_flag, int energy_flag,
+double calc_surface_term(bool force_flag, bool energy_flag,
                          const ParticleRange &particles) {
   const double pref = dipole.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
                       (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
@@ -1230,8 +1152,6 @@ void dp3m_gather_fft_grid(double *themesh) {
   MPI_Status status;
   double *tmp_ptr;
 
-  P3M_TRACE(fprintf(stderr, "%d: dp3m_gather_fft_grid:\n", this_node));
-
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
 
@@ -1279,7 +1199,6 @@ void dp3m_spread_force_grid(double *themesh) {
   int s_dir, r_dir, evenodd;
   MPI_Status status;
   double *tmp_ptr;
-  P3M_TRACE(fprintf(stderr, "%d: dipolar p3m_spread_force_grid:\n", this_node));
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
@@ -1330,10 +1249,6 @@ void dp3m_realloc_ca_fields(int newsize) {
   if (newsize < CA_INCREMENT)
     newsize = CA_INCREMENT;
 
-  P3M_TRACE(fprintf(
-      stderr,
-      "%d: p3m_realloc_ca_fields: dipolar,  old_size=%d -> new_size=%d\n",
-      this_node, dp3m.ca_num, newsize));
   dp3m.ca_num = newsize;
   dp3m.ca_frac = Utils::realloc(dp3m.ca_frac, dp3m.params.cao3 * dp3m.ca_num *
                                                   sizeof(double));
@@ -1571,8 +1486,6 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
                          double *_rs_err, double *_ks_err) {
   double rs_err, ks_err;
   double alpha_L;
-  P3M_TRACE(fprintf(stderr, "dp3m_get_accuracy: mesh %d, cao %d, r_cut %f ",
-                    mesh, cao, r_cut_iL));
 
   /* calc maximal real space error for setting */
 
@@ -1608,8 +1521,6 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
 
   *_rs_err = rs_err;
   *_ks_err = ks_err;
-  P3M_TRACE(fprintf(stderr, "dipolar tuning resulting: %f -> %f %f\n", alpha_L,
-                    rs_err, ks_err));
   return sqrt(Utils::sqr(rs_err) + Utils::sqr(ks_err));
 }
 
@@ -1706,8 +1617,6 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   }
 
   for (;;) {
-    P3M_TRACE(fprintf(stderr, "dp3m_mc_time: interval [%f,%f]\n", r_cut_iL_min,
-                      r_cut_iL_max));
     r_cut_iL = 0.5 * (r_cut_iL_min + r_cut_iL_max);
 
     if (r_cut_iL_max - r_cut_iL_min < P3M_RCUT_PREC)
@@ -1737,9 +1646,6 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
     n_cells *= (int)(floor(local_geo.length()[i] /
                            (r_cut_iL * box_geo.length()[0] + skin)));
   if (n_cells < min_num_cells) {
-    P3M_TRACE(fprintf(
-        stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f reject n_cells %d\n",
-        mesh, cao, r_cut_iL, n_cells));
     /* print result */
     sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e radius dangerously high\n\n",
             mesh, cao, r_cut_iL_max, *_alpha_L, *_accuracy, rs_err, ks_err);
@@ -1756,8 +1662,6 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   *_accuracy =
       dp3m_get_accuracy(mesh, cao, r_cut_iL, _alpha_L, &rs_err, &ks_err);
 
-  P3M_TRACE(fprintf(stderr, "dp3m_mc_time: mesh %d cao %d r_cut %f time %f\n",
-                    mesh, cao, r_cut_iL, int_time));
   /* print result */
   sprintf(b, "%-4d %-3d %.5e %.5e %.5e %.3e %.3e %-8d\n", mesh, cao, r_cut_iL,
           *_alpha_L, *_accuracy, rs_err, ks_err, (int)int_time);
@@ -1798,10 +1702,6 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
   int final_dir = 0;
   int cao = *_cao;
 
-  P3M_TRACE(fprintf(
-      stderr,
-      "dp3m_m_time: Dmesh=%d, Dcao_min=%d, Dcao_max=%d, Drmin=%f, Drmax=%f\n",
-      mesh, cao_min, cao_max, r_cut_iL_min, r_cut_iL_max));
   /* the initial step sets a timing mark. If there is no valid r_cut, we can
      only try
      to increase cao to increase the obtainable precision of the far formula. */
@@ -1815,7 +1715,6 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     /* cao is too large for this grid, but still the accuracy cannot be
      * achieved, give up */
     if (tmp_time == -P3M_TUNE_CAO_TOO_LARGE) {
-      P3M_TRACE(fprintf(stderr, "dp3m_m_time: no possible cao found\n"));
       return tmp_time;
     }
     /* we have a valid time, start optimising from there */
@@ -1827,11 +1726,7 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
       *_cao = cao;
       break;
     }
-    /* the required accuracy could not be obtained, try higher caos. Therefore
-       optimisation can only be
-       obtained with even higher caos, but not lower ones */
-    P3M_TRACE(fprintf(stderr, "dp3m_m_time: "
-                              "doesn't give precision, step up\n"));
+    /* the required accuracy could not be obtained, try higher caos */
     cao++;
     final_dir = 1;
   } while (cao <= cao_max);
@@ -1845,9 +1740,6 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     final_dir = 1;
   else if (cao == cao_max)
     final_dir = -1;
-
-  P3M_TRACE(
-      fprintf(stderr, "dp3m_m_time: final constraints dir %d\n", final_dir));
 
   if (final_dir == 0) {
     /* check in which direction we can optimise. Both directions are possible */
@@ -1892,9 +1784,6 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
         final_dir = 1;
       else {
         /* really no chance for optimisation */
-        P3M_TRACE(fprintf(stderr,
-                          "dp3m_m_time: Dmesh=%d final Dcao=%d time=%f\n", mesh,
-                          cao, best_time));
         return best_time;
       }
     }
@@ -1905,9 +1794,6 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
      * itself */
     cao += final_dir;
   }
-
-  P3M_TRACE(
-      fprintf(stderr, "dp3m_m_time: optimise in direction %d\n", final_dir));
 
   /* move cao into the optimisation direction until we do not gain anymore. */
   for (; cao >= cao_min && cao <= cao_max; cao += final_dir) {
@@ -1931,10 +1817,6 @@ static double dp3m_m_time(char **log, int mesh, int cao_min, int cao_max,
     else if (tmp_time > best_time + P3M_TIME_GRAN)
       break;
   }
-  P3M_TRACE(fprintf(stderr,
-                    "dp3m_m_time: "
-                    "Dmesh=%d final Dcao=%d Dr_cut=%f time=%f\n",
-                    mesh, *_cao, *_r_cut_iL, best_time));
   return best_time;
 }
 
@@ -1964,8 +1846,6 @@ int dp3m_adaptive_tune(char **logger) {
   double accuracy = -1, tmp_accuracy = 0.0;
   double time_best = 1e20, tmp_time;
   char b[3 * ES_INTEGER_SPACE + 3 * ES_DOUBLE_SPACE + 128];
-
-  P3M_TRACE(fprintf(stderr, "%d: dp3m_adaptive_tune\n", this_node));
 
   /* preparation */
   mpi_call(dp3m_count_magnetic_particles);
@@ -2066,7 +1946,6 @@ int dp3m_adaptive_tune(char **logger) {
       break;
   }
 
-  P3M_TRACE(fprintf(stderr, "finished tuning\n"));
   if (time_best == 1e20) {
     *logger = strcat_alloc(
         *logger,
@@ -2090,22 +1969,6 @@ int dp3m_adaptive_tune(char **logger) {
           mesh, cao, r_cut_iL, alpha_L, accuracy, time_best);
   *logger = strcat_alloc(*logger, b);
   return ES_OK;
-}
-
-/*****************************************************************************/
-
-void p3m_print_dp3m_struct(P3MParameters ps) {
-  fprintf(stderr, "%d: dipolar P3MParameters:\n", this_node);
-  fprintf(stderr, "   alpha_L=%f, r_cut_iL=%f\n", ps.alpha_L, ps.r_cut_iL);
-  fprintf(stderr, "   mesh=(%d,%d,%d), mesh_off=(%.4f,%.4f,%.4f)\n", ps.mesh[0],
-          ps.mesh[1], ps.mesh[2], ps.mesh_off[0], ps.mesh_off[1],
-          ps.mesh_off[2]);
-  fprintf(stderr, "   Dcao=%d, Dinter=%d, Depsilon=%f\n", ps.cao, ps.inter,
-          ps.epsilon);
-  fprintf(stderr, "   Dcao_cut=(%f,%f,%f)\n", ps.cao_cut[0], ps.cao_cut[1],
-          ps.cao_cut[2]);
-  fprintf(stderr, "   Da=(%f,%f,%f), Dai=(%f,%f,%f)\n", ps.a[0], ps.a[1],
-          ps.a[2], ps.ai[0], ps.ai[1], ps.ai[2]);
 }
 
 /*****************************************************************************/
@@ -2325,7 +2188,7 @@ void dp3m_calc_local_ca_mesh() {
     dp3m.local_mesh.in_ur[i] = (int)floor(
         local_geo.my_right()[i] * dp3m.params.ai[i] - dp3m.params.mesh_off[i]);
 
-  /* correct roundof errors at boundary */
+  /* correct roundoff errors at boundary */
   for (i = 0; i < 3; i++) {
     if ((local_geo.my_right()[i] * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -
@@ -2359,7 +2222,7 @@ void dp3m_calc_local_ca_mesh() {
     ind[i] = (int)floor((local_geo.my_right()[i] + full_skin[i]) *
                             dp3m.params.ai[i] -
                         dp3m.params.mesh_off[i]);
-  /* correct roundof errors at up right boundary */
+  /* correct roundoff errors at up right boundary */
   for (i = 0; i < 3; i++)
     if (((local_geo.my_right()[i] + full_skin[i]) * dp3m.params.ai[i] -
          dp3m.params.mesh_off[i]) -
@@ -2583,17 +2446,11 @@ void dp3m_compute_constants_energy_dipolar() {
   if (dp3m.energy_correction != 0.0)
     return;
 
-  P3M_TRACE(fprintf(stderr, "%d: dp3m_compute_constants_energy_dipolar().\n",
-                    this_node));
-
   double volume =
       box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
   Ukp3m = dp3m_average_dipolar_self_energy(box_geo.length()[0],
                                            dp3m.params.mesh[0]) *
           volume;
-
-  P3M_TRACE(
-      fprintf(stderr, "%d: Average Dipolar Energy = %lf.\n", this_node, Ukp3m));
 
   Eself = -(2 * pow(dp3m.params.alpha_L, 3) * Utils::sqrt_pi_i() / 3.0);
 

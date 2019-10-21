@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from copy import copy
 import itertools
 import unittest as ut
 import unittest_decorators as utx
@@ -51,7 +52,7 @@ class TestLB:
               'friction': 2.0,
               'temp': 1.5,
               'gamma': 1.5,
-              'skin': 0.2,
+              'skin': 1.0,
               'temp_confidence': 10}
 
     dof = 3.
@@ -66,9 +67,12 @@ class TestLB:
     lbf = None
     interpolation = False
 
-    def test_mass_momentum_thermostat(self):
+    def tearDown(self):
         self.system.actors.clear()
         self.system.part.clear()
+        self.system.thermostat.turn_off()
+
+    def test_mass_momentum_thermostat(self):
         self.n_col_part = 100
         self.system.part.add(pos=np.random.random(
             (self.n_col_part, 3)) * self.params["box_l"])
@@ -130,8 +134,13 @@ class TestLB:
                                    delta=self.params["mass_prec_per_node"])
 
             # check momentum conservation
+            # NOTE: this particle momentum prediction is due to the missing f/2 part in the
+            #       LB fluid.
+            particle_momentum = np.sum(
+                [p.mass * p.v + 0.5 * p.f * self.system.time_step for p in self.system.part], axis=0)
+            fluid_momentum = self.system.analysis.linear_momentum(False, True)
             np.testing.assert_allclose(
-                self.system.analysis.linear_momentum(), self.tot_mom,
+                particle_momentum + fluid_momentum, self.tot_mom,
                 atol=self.params['mom_prec'])
 
             # Calc particle temperature
@@ -155,16 +164,41 @@ class TestLB:
         self.assertAlmostEqual(
             np.mean(all_temp_particle), self.params["temp"], delta=temp_prec_particle)
 
-    def test_stress_tensor(self):
+    def test_properties(self):
+        self.lbf = self.lb_class(
+            kT=1.0, seed=42, visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step)
+        self.system.actors.add(self.lbf)
+        with self.assertRaises(ValueError):
+            self.lbf.viscosity = -0.1
+        self.lbf.seed = 56
+        self.system.integrator.run(1)
+        self.assertEqual(self.lbf.seed, 57)
+        self.lbf.tau = 0.2
+        self.assertAlmostEqual(self.lbf.tau, 0.2)
+
+    def test_raise_if_not_active(self):
+        lbf = self.lb_class(visc=1.0, dens=1.0, agrid=1.0, tau=0.1)
+        with self.assertRaises(RuntimeError):
+            lbf.viscosity = 0.2
+        with self.assertRaises(RuntimeError):
+            lbf.bulk_viscosity = 0.2
+        with self.assertRaises(RuntimeError):
+            lbf.density = 0.2
+        with self.assertRaises(RuntimeError):
+            lbf.seed = 2
+        with self.assertRaises(RuntimeError):
+            lbf.agrid = 0.2
+
+    def test_stress_tensor_observable(self):
         """
         Checks agreement between the LBFluidStress observable and per-node
         stress summed up over the entire fluid.
 
         """
-
         system = self.system
-        system.actors.clear()
-        system.part.clear()
         self.n_col_part = 1000
         system.part.add(pos=np.random.random(
             (self.n_col_part, 3)) * self.params["box_l"], v=np.random.random((self.n_col_part, 3)))
@@ -192,9 +226,12 @@ class TestLB:
                                [obs_stress[1], obs_stress[2], obs_stress[4]],
                                [obs_stress[3], obs_stress[4], obs_stress[5]]])
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
+        np.testing.assert_allclose(
+            np.copy(self.lbf.stress),
+            obs_stress,
+            atol=1E-10)
 
     def test_lb_node_set_get(self):
-        self.system.actors.clear()
         self.lbf = self.lb_class(
             kT=0.0,
             visc=self.params['viscosity'],
@@ -210,10 +247,10 @@ class TestLB:
             self.params['dens'],
             delta=1e-4)
 
-        self.assertEqual(self.lbf.shape,
+        self.assertEqual(self.lbf.shape, 
                          (
-                         int(self.system.box_l[0] / self.params["agrid"]),
-                         int(self.system.box_l[1] / self.params["agrid"]),
+                             int(self.system.box_l[0] / self.params["agrid"]),
+                             int(self.system.box_l[1] / self.params["agrid"]),
                              int(self.system.box_l[2] / self.params["agrid"])))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
@@ -226,8 +263,8 @@ class TestLB:
 
         self.assertEqual(self.lbf[3, 2, 1].index, (3, 2, 1))
         ext_force_density = [0.1, 0.2, 1.2]
-        self.lbf[1, 2, 3].velocity = v_fluid
         self.lbf.ext_force_density = ext_force_density
+        self.lbf[1, 2, 3].velocity = v_fluid
         np.testing.assert_allclose(
             np.copy(self.lbf[1, 2, 3].velocity),
             v_fluid,
@@ -238,7 +275,6 @@ class TestLB:
             atol=1e-4)
 
     def test_parameter_change_without_seed(self):
-        self.system.actors.clear()
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -252,7 +288,6 @@ class TestLB:
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=3.0)
 
     def test_grid_index(self):
-        self.system.actors.clear()
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -275,7 +310,6 @@ class TestLB:
         LB lattice initialization must raise an exception when either box_l or
         local_box_l aren't integer multiples of agrid.
         """
-        self.system.actors.clear()
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -291,7 +325,6 @@ class TestLB:
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
-        self.system.cell_system.skin = .01
         self.system.thermostat.turn_off()
         self.system.actors.clear()
         self.system.part.clear()
@@ -321,11 +354,7 @@ class TestLB:
             np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-    def test_a_ext_force_density(self):
-        self.system.thermostat.turn_off()
-        self.system.cell_system.skin = 0.4 * self.params['agrid']
-        self.system.actors.clear()
-        self.system.part.clear()
+    def test_ext_force_density(self):
         ext_force_density = [2.3, 1.2, 0.1]
         self.lbf = self.lb_class(
             visc=self.params['viscosity'],
@@ -336,36 +365,38 @@ class TestLB:
         self.system.actors.add(self.lbf)
         n_time_steps = 1
         self.system.integrator.run(n_time_steps)
-        # ext_force_density is a force density, therefore v = ext_force_density / dens * tau * (n_time_steps - 0.5)
-        # (force is applied only to the second half of the first integration step)
-        # velocity includes half of the forces applied in the prev.
-        # integration step
+        # ext_force_density is a force density, therefore v = ext_force_density
+        # / dens * tau * (n_time_steps + 0.5)
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps + 0.5) / self.params['dens']
-        for n in list(itertools.combinations(range(int(self.system.box_l[0] / self.params['agrid'])), 3)):
+        for n in self.lbf.nodes():
             np.testing.assert_allclose(
-                np.copy(n.velocity), fluid_velocity, atol=1E-6)
-    
+                np.copy(n.velocity), fluid_velocity, atol=1E-6, err_msg="Fluid node velocity not as expected on node {}".format(n.index))
+
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_unequal_time_step(self):
         """
-        Checks that LB tau can only be a integer multiple of the MD time_step
+        Checks that LB tau can only be an integer multiple of the MD time_step
         and that different time steps don't affect the physics of a system
-        where particles don't move
+        where particles don't move.
+
         """
-        
-        self.system.thermostat.turn_off()
-        self.system.actors.clear()
-        self.system.part.clear()
         self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
-        ext_force_density = [2.3, 1.2, 0.1]
-        lbf = self.lb_class(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.params['time_step'],
-            ext_force_density=ext_force_density,
-            kT=0.)
+        base_params = {}
+        base_params.update(
+          ext_force_density = [2.3, 1.2, 0.1],
+          visc=self.params['viscosity'],
+          dens=self.params['dens'],
+          agrid=self.params['agrid'])
+
+        def params_with_tau(tau):
+            params = copy(base_params)
+            params.update(tau=tau)
+            return params
+
+          
+        
+        lbf = self.lb_class(**params_with_tau(self.system.time_step))
         sim_time = 100 * self.params['time_step']
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
@@ -375,25 +406,24 @@ class TestLB:
         v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
         f1 = np.copy(self.system.part[0].f)
         self.system.actors.clear()
-        #get fresh LBfluid and change time steps
-        lbf = self.lb_class(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.params['time_step'],
-            ext_force_density=ext_force_density)
-        self.system.actors.add(lbf)
-        self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
-        #illegal time_step/ tau combinations
+        # get fresh LBfluid and change time steps
         with self.assertRaises(ValueError):
-            lbf.set_params(tau=0.5 * self.system.time_step)
+            self.system.actors.add(
+                self.lb_class(**params_with_tau(0.5 * self.system.time_step)))
         with self.assertRaises(ValueError):
-            lbf.set_params(tau=1.1 * self.system.time_step)
+            self.system.actors.add(
+                self.lb_class(params_with_tau(1.1 * self.system.time_step)))
+        
+        self.system.actors.clear()
+        self.system.actors.add(
+            self.lb_class(**params_with_tau(self.system.time_step)))
+        
         with self.assertRaises(ValueError):
             self.system.time_step = 2. * lbf.get_params()["tau"]
+            self.system.integrator.run(1)
+
         with self.assertRaises(ValueError):
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
-        lbf.set_params(tau=self.params['time_step'])
         self.system.time_step = 0.5 * self.params['time_step']
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
@@ -460,7 +490,13 @@ class TestLBWalberla(TestLB, ut.TestCase):
 
     def test_parameter_change_without_seed(self):
         print("Thermalization not implemented for Walberla. skipping test")
+    def test_raise_if_not_active(self):
+        print("Not supported by Walberla ")
 
+    def test_properties(self):
+        print("LB Walberla ont thermliized." )
 
+    def test_stress_tensor_observable(self):
+        print("Not supported by Walberla")
 if __name__ == "__main__":
     ut.main()

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -30,9 +30,9 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         c = ShapeBasedConstraint()
         w = Wall(normal=[-1, 0, 0])
         c.shape = w
-        # Does the shape parameter return the correct lcass
+        # Does the shape parameter return the correct class
         self.assertEqual(c.shape.__class__, Wall)
-        # Do the sciprt object match
+        # Does the script object match
         self.assertEqual(c.shape, w)
 
         # Different shape
@@ -43,6 +43,7 @@ class ScriptInterfaceObjectParams(ut.TestCase):
         self.assertAlmostEqual(c.shape.radius, 1, places=8)
         with self.assertRaises(RuntimeError):
             c.shape = Wall(thisparameterdoesnotexist=0)
+
 
 if __name__ == "__main__":
     ut.main()

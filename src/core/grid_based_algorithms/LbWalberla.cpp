@@ -56,8 +56,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
-    if (fabs((box_dimensions[i] / agrid) * agrid - box_dimensions[i]) >
-        2 * std::numeric_limits<double>::epsilon()) {
+    if (fabs(round(box_dimensions[i] / agrid) * agrid - box_dimensions[i])/box_dimensions[i] >
+        std::numeric_limits<double>::epsilon()) {
       throw std::runtime_error(
           "Box length not commensurate with agrid in direction " +
           std::to_string(i));
@@ -71,9 +71,6 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
     }
   }
   m_grid_dimensions = grid_dimensions;
-  printf("grid: %d %d %d, node: %d %d %d\n", grid_dimensions[0],
-         grid_dimensions[1], grid_dimensions[2], node_grid[0], node_grid[1],
-         node_grid[2]);
 
   m_blocks = blockforest::createUniformBlockGrid(
       uint_c(node_grid[0]), // blocks in x direction
@@ -199,7 +196,7 @@ LbWalberla::get_block_and_cell(const Utils::Vector3i &node,
   if (consider_ghost_layers and !block) {
     // Try to find a block which has the cell as ghost layer
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      if (b->getAABB().getExtended(m_skin / m_agrid + 1).contains(real_c(node[0]),
+      if (b->getAABB().getExtended(n_ghost_layers()).contains(real_c(node[0]),
                                                real_c(node[1]), real_c(node[2]))) {
         block = &(*b);
         break;
@@ -224,12 +221,8 @@ IBlock *LbWalberla::get_block(const Utils::Vector3d &pos,
     // Try to find a block which has the cell as ghost layer
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       auto ab = b->getAABB().getExtended(1.0 * n_ghost_layers());
-      printf("%d: %g %g %g, %g %g %g\n", this_node, ab.min()[0], ab.min()[1],
-             ab.min()[2], ab.max()[0], ab.max()[1], ab.max()[2]);
-      printf("%d: pos %g %g %g\n", this_node, pos[0], pos[1], pos[2]);
       if (ab.contains(pos[0], pos[1], pos[2])) {
         block = &(*b);
-        printf("%d: block selected\n", this_node);
         break;
       }
     }
@@ -336,8 +329,14 @@ LbWalberla::get_node_boundary_force(const Utils::Vector3i node) const {
   auto const &bh =
       (*bc).block->getData<Boundary_handling_t>(m_boundary_handling_id);
   auto const &ff = (*bc).block->getData<Flag_field_t>(m_flag_field_id);
-  if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
+  try {
+    if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
+      return {boost::none};
+  }
+  catch(std::exception e)
+  {
     return {boost::none};
+  }
 
   auto const uid = bh->getBoundaryUID(UBB_flag);
   auto const &ubb = bh->getBoundaryCondition<UBB_t>(uid);

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,8 @@ class ThereCanOnlyBeOne(BaseException):
         self._cls = cls
 
     def __str__(self):
-        return "There can only be one instance of '{}' at any time.".format(self._cls)
+        return "There can only be one instance of '{}' at any time.".format(
+            self._cls)
 
 
 def highlander(klass):

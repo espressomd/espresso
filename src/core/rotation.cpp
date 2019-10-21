@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Molecular dynamics integrator for rotational motion.
  *
@@ -34,18 +34,11 @@
 
 #include "rotation.hpp"
 
-/****************************************************
- *                     DEFINES
- ***************************************************/
-/**************** local variables  *******************/
-
 #ifdef ROTATION
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
-#include "event.hpp"
 #include "forces.hpp"
-#include "ghosts.hpp"
 #include "global.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
@@ -56,37 +49,32 @@
 #include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
 
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
+/** Calculate the derivatives of the quaternion and angular acceleration
+ *  for a given particle
+ *  @param[in]  p    %Particle
+ *  @param[out] Qd   First derivative of the particle quaternion
+ *  @param[out] Qdd  Second derivative of the particle quaternion
+ *  @param[out] S    Function of @p Qd and @p Qdd, used to evaluate the
+ *                   Lagrange parameter lambda
+ *  @param[out] Wd   Angular acceleration of the particle
+ */
+static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
+                       double S[3], double Wd[3]);
 
-/** define first and second time derivatives of a quaternion, as well
-    as the angular acceleration. */
-static void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
-                       double Wd[3]);
-
-/*@}*/
-
-/** convert quaternions to the director */
 /** Convert director to quaternions */
 int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
-  double d_xy, dm;
   double theta2, phi2;
 
   // Calculate magnitude of the given vector
-  dm = sqrt(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+  auto const dm = d.norm();
 
   // The vector needs to be != 0 to be converted into a quaternion
   if (dm < ROUND_ERROR_PREC) {
     return 1;
   }
   // Calculate angles
-  d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
+  auto const d_xy = sqrt(d[0] * d[0] + d[1] * d[1]);
   // If dipole points along z axis:
   if (d_xy == 0) {
     // We need to distinguish between (0,0,d_z) and (0,0,d_z)
@@ -107,52 +95,54 @@ int convert_director_to_quat(const Utils::Vector3d &d, Utils::Vector4d &quat) {
   }
 
   // Calculate the quaternion from the angles
-  quat[0] = cos(theta2) * cos(phi2);
-  quat[1] = -sin(theta2) * cos(phi2);
-  quat[2] = -sin(theta2) * sin(phi2);
-  quat[3] = cos(theta2) * sin(phi2);
+  auto const cos_theta2 = cos(theta2);
+  auto const sin_theta2 = sin(theta2);
+  auto const cos_phi2 = cos(phi2);
+  auto const sin_phi2 = sin(phi2);
+  quat[0] = cos_theta2 * cos_phi2;
+  quat[1] = -sin_theta2 * cos_phi2;
+  quat[2] = -sin_theta2 * sin_phi2;
+  quat[3] = cos_theta2 * sin_phi2;
 
   return 0;
 }
 
-/** calculate the second derivative of the quaternion of a given particle
-    as well as Wd vector which is the angular acceleration of this particle */
-void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
+void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
                 double Wd[3]) {
   /* calculate the first derivative of the quaternion */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
-  Qd[0] = 0.5 * (-p->r.quat[1] * p->m.omega[0] - p->r.quat[2] * p->m.omega[1] -
-                 p->r.quat[3] * p->m.omega[2]);
+  Qd[0] = 0.5 * (-p.r.quat[1] * p.m.omega[0] - p.r.quat[2] * p.m.omega[1] -
+                 p.r.quat[3] * p.m.omega[2]);
 
-  Qd[1] = 0.5 * (p->r.quat[0] * p->m.omega[0] - p->r.quat[3] * p->m.omega[1] +
-                 p->r.quat[2] * p->m.omega[2]);
+  Qd[1] = 0.5 * (p.r.quat[0] * p.m.omega[0] - p.r.quat[3] * p.m.omega[1] +
+                 p.r.quat[2] * p.m.omega[2]);
 
-  Qd[2] = 0.5 * (p->r.quat[3] * p->m.omega[0] + p->r.quat[0] * p->m.omega[1] -
-                 p->r.quat[1] * p->m.omega[2]);
+  Qd[2] = 0.5 * (p.r.quat[3] * p.m.omega[0] + p.r.quat[0] * p.m.omega[1] -
+                 p.r.quat[1] * p.m.omega[2]);
 
-  Qd[3] = 0.5 * (-p->r.quat[2] * p->m.omega[0] + p->r.quat[1] * p->m.omega[1] +
-                 p->r.quat[0] * p->m.omega[2]);
+  Qd[3] = 0.5 * (-p.r.quat[2] * p.m.omega[0] + p.r.quat[1] * p.m.omega[1] +
+                 p.r.quat[0] * p.m.omega[2]);
 
   /* Calculate the angular acceleration. */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
-  if (p->p.rotation & ROTATION_X)
-    Wd[0] = (p->f.torque[0] + p->m.omega[1] * p->m.omega[2] *
-                                  (p->p.rinertia[1] - p->p.rinertia[2])) /
-            p->p.rinertia[0];
+  if (p.p.rotation & ROTATION_X)
+    Wd[0] = (p.f.torque[0] + p.m.omega[1] * p.m.omega[2] *
+                                 (p.p.rinertia[1] - p.p.rinertia[2])) /
+            p.p.rinertia[0];
   else
     Wd[0] = 0.0;
-  if (p->p.rotation & ROTATION_Y)
-    Wd[1] = (p->f.torque[1] + p->m.omega[2] * p->m.omega[0] *
-                                  (p->p.rinertia[2] - p->p.rinertia[0])) /
-            p->p.rinertia[1];
+  if (p.p.rotation & ROTATION_Y)
+    Wd[1] = (p.f.torque[1] + p.m.omega[2] * p.m.omega[0] *
+                                 (p.p.rinertia[2] - p.p.rinertia[0])) /
+            p.p.rinertia[1];
   else
     Wd[1] = 0.0;
-  if (p->p.rotation & ROTATION_Z)
-    Wd[2] = (p->f.torque[2] + p->m.omega[0] * p->m.omega[1] *
-                                  (p->p.rinertia[0] - p->p.rinertia[1])) /
-            p->p.rinertia[2];
+  if (p.p.rotation & ROTATION_Z)
+    Wd[2] = (p.f.torque[2] + p.m.omega[0] * p.m.omega[1] *
+                                 (p.p.rinertia[0] - p.p.rinertia[1])) /
+            p.p.rinertia[2];
   else
     Wd[2] = 0.0;
 
@@ -161,86 +151,82 @@ void define_Qdd(Particle *p, double Qd[4], double Qdd[4], double S[3],
   /* Calculate the second derivative of the quaternion. */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 8.*/
-  Qdd[0] = 0.5 * (-p->r.quat[1] * Wd[0] - p->r.quat[2] * Wd[1] -
-                  p->r.quat[3] * Wd[2]) -
-           p->r.quat[0] * S1;
+  Qdd[0] =
+      0.5 * (-p.r.quat[1] * Wd[0] - p.r.quat[2] * Wd[1] - p.r.quat[3] * Wd[2]) -
+      p.r.quat[0] * S1;
 
-  Qdd[1] = 0.5 * (p->r.quat[0] * Wd[0] - p->r.quat[3] * Wd[1] +
-                  p->r.quat[2] * Wd[2]) -
-           p->r.quat[1] * S1;
+  Qdd[1] =
+      0.5 * (p.r.quat[0] * Wd[0] - p.r.quat[3] * Wd[1] + p.r.quat[2] * Wd[2]) -
+      p.r.quat[1] * S1;
 
-  Qdd[2] = 0.5 * (p->r.quat[3] * Wd[0] + p->r.quat[0] * Wd[1] -
-                  p->r.quat[1] * Wd[2]) -
-           p->r.quat[2] * S1;
+  Qdd[2] =
+      0.5 * (p.r.quat[3] * Wd[0] + p.r.quat[0] * Wd[1] - p.r.quat[1] * Wd[2]) -
+      p.r.quat[2] * S1;
 
-  Qdd[3] = 0.5 * (-p->r.quat[2] * Wd[0] + p->r.quat[1] * Wd[1] +
-                  p->r.quat[0] * Wd[2]) -
-           p->r.quat[3] * S1;
+  Qdd[3] =
+      0.5 * (-p.r.quat[2] * Wd[0] + p.r.quat[1] * Wd[1] + p.r.quat[0] * Wd[2]) -
+      p.r.quat[3] * S1;
 
   S[0] = S1;
   S[1] = Qd[0] * Qdd[0] + Qd[1] * Qdd[1] + Qd[2] * Qdd[2] + Qd[3] * Qdd[3];
   S[2] = Qdd[0] * Qdd[0] + Qdd[1] * Qdd[1] + Qdd[2] * Qdd[2] + Qdd[3] * Qdd[3];
 }
 
-/** propagate angular velocities and quaternions \todo implement for
-       fixed_coord_flag */
-void propagate_omega_quat_particle(Particle *p) {
-  double lambda;
+/** propagate angular velocities and quaternions
+ * \todo implement for fixed_coord_flag
+ */
+void propagate_omega_quat_particle(Particle &p) {
 
-  double Qd[4], Qdd[4], S[3], Wd[3];
   // If rotation for the particle is disabled entirely, return early.
-  if (!p->p.rotation)
+  if (!p.p.rotation)
     return;
 
-  // Clear rotational velocity for blocked rotation axes.
-  if (!(p->p.rotation & ROTATION_X))
-    p->m.omega[0] = 0;
-  if (!(p->p.rotation & ROTATION_Y))
-    p->m.omega[1] = 0;
-  if (!(p->p.rotation & ROTATION_Z))
-    p->m.omega[2] = 0;
+  Utils::Vector4d Qd{}, Qdd{};
+  Utils::Vector3d S{}, Wd{};
 
-  define_Qdd(p, Qd, Qdd, S, Wd);
+  // Clear rotational velocity for blocked rotation axes.
+  if (!(p.p.rotation & ROTATION_X))
+    p.m.omega[0] = 0;
+  if (!(p.p.rotation & ROTATION_Y))
+    p.m.omega[1] = 0;
+  if (!(p.p.rotation & ROTATION_Z))
+    p.m.omega[2] = 0;
+
+  define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
   /* Taken from "On the numerical integration of motion for rigid polyatomics:
    * The modified quaternion approach", Omeylan, Igor (1998), Eq. 12.*/
-  lambda = 1 - S[0] * time_step_squared_half -
-           sqrt(1 - time_step_squared *
-                        (S[0] + time_step * (S[1] + time_step_half / 2. *
-                                                        (S[2] - S[0] * S[0]))));
+  auto const lambda =
+      1 - S[0] * time_step_squared_half -
+      sqrt(1 - time_step_squared *
+                   (S[0] + time_step * (S[1] + time_step_half / 2. *
+                                                   (S[2] - S[0] * S[0]))));
 
   for (int j = 0; j < 3; j++) {
-    p->m.omega[j] += time_step_half * Wd[j];
+    p.m.omega[j] += time_step_half * Wd[j];
   }
 
-  p->r.quat[0] +=
-      time_step * (Qd[0] + time_step_half * Qdd[0]) - lambda * p->r.quat[0];
-  p->r.quat[1] +=
-      time_step * (Qd[1] + time_step_half * Qdd[1]) - lambda * p->r.quat[1];
-  p->r.quat[2] +=
-      time_step * (Qd[2] + time_step_half * Qdd[2]) - lambda * p->r.quat[2];
-  p->r.quat[3] +=
-      time_step * (Qd[3] + time_step_half * Qdd[3]) - lambda * p->r.quat[3];
+  p.r.quat += time_step * (Qd + time_step_half * Qdd) - lambda * p.r.quat;
 
   /* and rescale quaternion, so it is exactly of unit length */
-  auto const scale = p->r.quat.norm();
+  auto const scale = p.r.quat.norm();
   if (scale == 0) {
-    p->r.quat[0] = 1;
+    p.r.quat[0] = 1;
   } else {
-    p->r.quat /= scale;
+    p.r.quat /= scale;
   }
 }
 
 inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
   auto const t = convert_vector_space_to_body(p, p.f.torque);
-  p.f.torque = Utils::Vector3d{{0, 0, 0}};
+  p.f.torque = Utils::Vector3d{};
 
   if (thermo_switch & THERMO_LANGEVIN) {
 #if defined(VIRTUAL_SITES) && defined(THERMOSTAT_IGNORE_NON_VIRTUAL)
     if (!p.p.is_virtual)
 #endif
     {
-      friction_thermo_langevin_rotation(&p);
+      friction_thermo_langevin_rotation(p);
 
       p.f.torque += t;
     }
@@ -278,6 +264,11 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
 
 #if defined(ENGINE)
     if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
+      if (lb_lbfluid_get_lattice_switch() == ActiveLB::CPU && n_nodes > 1 &&
+          p.swim.rotational_friction != 0.) {
+        runtimeErrorMsg() << "ENGINE rotational_friction feature with CPU-LB "
+                             "only implemented for one CPU core";
+      }
 
       auto const dip = p.swim.dipole_length * p.r.calc_director();
 
@@ -300,9 +291,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
 #endif
 
     // Propagation of angular velocities
-    p.m.omega[0] += time_step_half * p.f.torque[0] / p.p.rinertia[0];
-    p.m.omega[1] += time_step_half * p.f.torque[1] / p.p.rinertia[1];
-    p.m.omega[2] += time_step_half * p.f.torque[2] / p.p.rinertia[2];
+    p.m.omega += hadamard_division(time_step_half * p.f.torque, p.p.rinertia);
 
     // zeroth estimate of omega
     Utils::Vector3d omega_0 = p.m.omega;

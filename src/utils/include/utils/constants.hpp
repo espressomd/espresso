@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef UTILS_CONSTANTS_HPP
 #define UTILS_CONSTANTS_HPP
 
@@ -48,13 +48,11 @@ template <class T = double> DEVICE_QUALIFIER constexpr T sqrt_pi_i() {
 /// error code if an error occurred
 #define ES_ERROR 1
 
-/** space necessary for an (64-bit) integer with sprintf.
-    Analog to Tcl
-*/
+/** space necessary for an (64-bit) integer with sprintf. */
 #define ES_INTEGER_SPACE 24
-/** space necessary for an double with sprintf. Precision
+/** space necessary for a double with sprintf. Precision
     is 17 digits, plus sign, dot, e, sign of exponent and
-    3 digits exponent etc. Analog to Tcl
+    3 digits exponent etc.
 */
 #define ES_DOUBLE_SPACE 27
 

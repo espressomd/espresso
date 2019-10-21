@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -57,7 +57,7 @@ system.cell_system.skin = 0.2
 # creating the template for RBCs
 cell_type = oif.OifCellType(
     nodes_file="input/rbc374nodes.dat", triangles_file="input/rbc374triangles.dat",
-                            system=system, ks=0.04, kb=0.016, kal=0.02, kag=0.9, kv=1.0, check_orientation=False, resize=(2.0, 2.0, 2.0))
+    system=system, ks=0.04, kb=0.016, kal=0.02, kag=0.9, kv=1.0, check_orientation=False, resize=(2.0, 2.0, 2.0))
 
 # creating the RBCs
 cell0 = oif.OifCell(cell_type=cell_type,

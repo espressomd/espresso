@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group,
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group,
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *
  * Boundary conditions for lattice Boltzmann fluid dynamics.
@@ -85,7 +85,7 @@ void lb_init_boundaries() {
     std::vector<ekfloat> host_wallcharge_species_density;
     float node_wallcharge = 0.0f;
     int wallcharge_species = -1, charged_boundaries = 0;
-    int node_charged = 0;
+    bool node_charged = false;
 
     for (auto &lbboundarie : lbboundaries) {
       (*lbboundarie).set_net_charge(0.0);
@@ -128,7 +128,7 @@ void lb_init_boundaries() {
 
 #ifdef EK_BOUNDARIES
           if (ek_initialized) {
-            node_charged = 0;
+            node_charged = false;
             node_wallcharge = 0.0f;
           }
 #endif
@@ -145,7 +145,7 @@ void lb_init_boundaries() {
 #ifdef EK_BOUNDARIES
             if (ek_initialized) {
               if (dist_tmp <= 0 && (**lbb).charge_density() != 0.0f) {
-                node_charged = 1;
+                node_charged = true;
                 node_wallcharge += (**lbb).charge_density() *
                                    ek_parameters.agrid * ek_parameters.agrid *
                                    ek_parameters.agrid;
@@ -258,6 +258,7 @@ void lb_init_boundaries() {
 
           if (dist <= 0 && the_boundary >= 0 &&
               not LBBoundaries::lbboundaries.empty()) {
+//        printf("%d %d %d, %g %g %g: %g %g %g: %g\n",x,y,z,pos[0],pos[1],pos[2],dist_vec[0],dist_vec[1],dist_vec[2],dist);
             auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
             auto &node = lbfields[index];
             node.boundary = the_boundary + 1;
@@ -275,8 +276,6 @@ void lb_init_boundaries() {
   } else if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
 #if defined(LB_BOUNDARIES)
-    Utils::Vector3i offset;
-    int the_boundary = -1;
 
     lb_walberla()->clear_boundaries();
 
@@ -287,13 +286,13 @@ void lb_init_boundaries() {
       auto const index = index_and_pos.first;
       auto const pos = index_and_pos.second * agrid;
 
-      int n = 0;
       for (auto it = lbboundaries.begin(); it != lbboundaries.end();
-           ++it, ++n) {
+           ++it) {
         double dist;
         Utils::Vector3d tmp;
-        (**it).calc_dist(pos, &dist, tmp.data());
+        (**it).calc_dist(pos, dist, tmp);
 
+//        printf("%d %d %d, %g %g %g: %g %g %g: %g\n",index[0],index[1],index[2],pos[0],pos[1],pos[2],tmp[0],tmp[1],tmp[2],dist);
         if (dist <= 0) {
 
           // Set boundaries on the ghost layers

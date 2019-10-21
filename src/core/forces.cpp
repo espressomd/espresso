@@ -1,24 +1,24 @@
 
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Force calculation.
  *
@@ -54,9 +54,7 @@ void init_forces(const ParticleRange &particles) {
      thermodynamic ensemble */
 
 #ifdef NPT
-  /* reset virial part of instantaneous pressure */
-  if (integ_switch == INTEG_METHOD_NPT_ISO)
-    nptiso.p_vir[0] = nptiso.p_vir[1] = nptiso.p_vir[2] = 0.0;
+  npt_reset_instantaneous_virials();
 #endif
 
   /* initialize forces with Langevin thermostat forces
@@ -64,20 +62,20 @@ void init_forces(const ParticleRange &particles) {
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : particles) {
-    p.f = init_local_particle_force(&p);
+    p.f = init_local_particle_force(p);
   }
 
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
   for (auto &p : ghost_cells.particles()) {
-    p.f = init_ghost_force(&p);
+    p.f = init_ghost_force(p);
   }
 }
 
 void init_forces_ghosts(const ParticleRange &particles) {
   for (auto &p : particles) {
-    p.f = init_ghost_force(&p);
+    p.f = init_ghost_force(p);
   }
 }
 
@@ -91,6 +89,7 @@ void force_calc(CellStructure &cell_structure) {
 #endif
 
   auto particles = cell_structure.local_cells().particles();
+  auto ghost_particles = cell_structure.ghost_cells().particles();
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles, cell_structure.ghost_cells().particles());
 #endif
@@ -117,18 +116,17 @@ void force_calc(CellStructure &cell_structure) {
   auto const dipole_cutoff = INACTIVE_CUTOFF;
 #endif
 
-  short_range_loop([](Particle &p) { add_single_particle_force(&p); },
-                   [](Particle &p1, Particle &p2, Distance &d) {
-                     add_non_bonded_pair_force(&(p1), &(p2), d.vec21,
-                                               sqrt(d.dist2), d.dist2);
+  short_range_loop(
+      [](Particle &p) { add_single_particle_force(p); },
+      [](Particle &p1, Particle &p2, Distance &d) {
+        add_non_bonded_pair_force(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
 #ifdef COLLISION_DETECTION
-                     if (collision_params.mode != COLLISION_MODE_OFF)
-                       detect_collision(&p1, &p2, d.dist2);
+        if (collision_params.mode != COLLISION_MODE_OFF)
+          detect_collision(p1, p2, d.dist2);
 #endif
-                   },
-                   VerletCriterion{skin, cell_structure.min_range,
-                                   coulomb_cutoff, dipole_cutoff,
-                                   collision_detection_cutoff()});
+      },
+      VerletCriterion{skin, cell_structure.min_range, coulomb_cutoff,
+                      dipole_cutoff, collision_detection_cutoff()});
 
   Constraints::constraints.add_forces(particles, sim_time);
 
@@ -151,7 +149,10 @@ void force_calc(CellStructure &cell_structure) {
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation();
 
-  lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles);
+  if (lattice_switch != ActiveLB::NONE) {
+    lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
+                                         ghost_particles);
+  }
 
 #ifdef METADYNAMICS
   /* Metadynamics main function */
@@ -164,17 +165,12 @@ void force_calc(CellStructure &cell_structure) {
 
 // VIRTUAL_SITES distribute forces
 #ifdef VIRTUAL_SITES
-  if (virtual_sites()->is_relative()) {
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    init_forces_ghosts(cell_structure.ghost_cells().particles());
-  }
   virtual_sites()->back_transfer_forces_and_torques();
 #endif
 
   // Communication Step: ghost forces
   ghost_communicator(&cell_structure.collect_ghost_force_comm);
 
-  particles = cell_structure.local_cells().particles();
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, particles);
 
@@ -182,7 +178,7 @@ void force_calc(CellStructure &cell_structure) {
   forcecap_cap(particles);
 
   // mark that forces are now up-to-date
-  recalc_forces = 0;
+  recalc_forces = false;
 }
 
 void calc_long_range_forces(const ParticleRange &particles) {

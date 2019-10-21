@@ -1,26 +1,26 @@
 /*
-  Copyright (C) 2012-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2012-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
 #define _OBJECT_IN_FLUID_OIF_LOCAL_FORCES_H
 
 /** \file
- *  Routines to calculate the OIF_LOCAL_FORCES
+ *  Routines to calculate the OIF local forces
  *  for a particle quadruple (two neighboring triangles with common edge).
  * (Dupin2007) \ref forces.cpp
  */
@@ -31,7 +31,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/triangle_functions.hpp>
 
-/** Set parameters for local forces */
+/** Set parameters for OIF local forces */
 int oif_local_forces_set_params(int bond_type, double r0, double ks,
                                 double kslin, double phi0, double kb,
                                 double A01, double A02, double kal,
@@ -43,74 +43,64 @@ inline double KS(double lambda) { // Defined by (19) from Dupin2007
   return res;
 }
 
-/** Compute the local forces (Dupin2007) and adds them
- *  to the particle forces.
- *  @param p1           %Particle of triangle 1.
- *  @param p2 , p3      Particles common to triangle 1 and triangle 2.
+/** Compute the OIF local forces (Dupin2007).
+ *  @param p2           %Particle of triangle 1.
+ *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
  *  @param iaparams     Bonded parameters for the OIF interaction.
- *  @param force1       Force on @p p1.
- *  @param force2       Force on @p p2.
- *  @param force3       Force on @p p3.
- *  @param force4       Force on @p p4.
- *  @return false
+ *  @return forces on @p p1, @p p2, @p p3, @p p4
  */
-inline bool
-calc_oif_local(Particle const *const p2, Particle const *const p1,
-               Particle const *const p3, Particle const *const p4,
-               Bonded_ia_parameters const *const iaparams,
-               Utils::Vector3d &force1, Utils::Vector3d &force2,
-               Utils::Vector3d &force3,
-               Utils::Vector3d &force4) { // first-fold-then-the-same approach
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d,
+                  Utils::Vector3d>
+calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
+               Particle const &p4, Bonded_ia_parameters const &iaparams) {
 
-  auto const fp2 = unfolded_position(p2->r.p, p2->l.i, box_geo.length());
-  auto const fp1 = fp2 + get_mi_vector(p1->r.p, fp2, box_geo);
-  auto const fp3 = fp2 + get_mi_vector(p3->r.p, fp2, box_geo);
-  auto const fp4 = fp2 + get_mi_vector(p4->r.p, fp2, box_geo);
+  // first-fold-then-the-same approach
+  auto const fp2 = unfolded_position(p2.r.p, p2.l.i, box_geo.length());
+  auto const fp1 = fp2 + get_mi_vector(p1.r.p, fp2, box_geo);
+  auto const fp3 = fp2 + get_mi_vector(p3.r.p, fp2, box_geo);
+  auto const fp4 = fp2 + get_mi_vector(p4.r.p, fp2, box_geo);
 
-  force1 = {};
-  force2 = {};
-  force3 = {};
-  force4 = {};
+  Utils::Vector3d force1{}, force2{}, force3{}, force4{};
 
   // non-linear stretching
-  if (iaparams->p.oif_local_forces.ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (iaparams.p.oif_local_forces.ks > TINY_OIF_ELASTICITY_COEFFICIENT) {
     auto const dx = fp2 - fp3;
     auto const len = dx.norm();
-    auto const dr = len - iaparams->p.oif_local_forces.r0;
-    auto const lambda = 1.0 * len / iaparams->p.oif_local_forces.r0;
+    auto const dr = len - iaparams.p.oif_local_forces.r0;
+    auto const lambda = 1.0 * len / iaparams.p.oif_local_forces.r0;
     auto const fac =
-        -iaparams->p.oif_local_forces.ks * KS(lambda) * dr; // no normalization
+        -iaparams.p.oif_local_forces.ks * KS(lambda) * dr; // no normalization
     auto const f = (fac / len) * dx;
     force2 += f;
     force3 -= f;
   }
 
   // linear stretching
-  if (iaparams->p.oif_local_forces.kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (iaparams.p.oif_local_forces.kslin > TINY_OIF_ELASTICITY_COEFFICIENT) {
     auto const dx = fp2 - fp3;
     auto const len = dx.norm();
-    auto const dr = len - iaparams->p.oif_local_forces.r0;
+    auto const dr = len - iaparams.p.oif_local_forces.r0;
     auto const fac =
-        -iaparams->p.oif_local_forces.kslin * dr; // no normalization
+        -iaparams.p.oif_local_forces.kslin * dr; // no normalization
     auto const f = (fac / len) * dx;
     force2 += f;
     force3 -= f;
   }
 
   // viscous force
-  if (iaparams->p.oif_local_forces.kvisc >
+  if (iaparams.p.oif_local_forces.kvisc >
       TINY_OIF_ELASTICITY_COEFFICIENT) { // to be implemented....
     auto const dx = fp2 - fp3;
     auto const len2 = dx.norm2();
-    auto const v_ij = p3->m.v - p2->m.v;
+    auto const v_ij = p3.m.v - p2.m.v;
 
     // Variant A
     // Here the force is in the direction of relative velocity btw points
 
     // Code:
-    // force2 += iaparams->p.oif_local_forces.kvisc * v;
-    // force3 -= iaparams->p.oif_local_forces.kvisc * v;
+    // force2 += iaparams.p.oif_local_forces.kvisc * v;
+    // force3 -= iaparams.p.oif_local_forces.kvisc * v;
 
     // Variant B
     // Here the force is the projection of relative velocity btw points onto
@@ -119,7 +109,7 @@ calc_oif_local(Particle const *const p2, Particle const *const p1,
     // denote p vector between p2 and p3
     // denote v the velocity difference between the points p2 and p3
     // denote alpha the angle between p and v
-    // denote x the projevted v onto p
+    // denote x the projected v onto p
     // cos alpha = |x|/|v|
     // cos alpha = (v,p)/(|v||p|)
     // together we get |x|=(v,p)/|p|
@@ -129,7 +119,7 @@ calc_oif_local(Particle const *const p2, Particle const *const p1,
     // |p|^2 is stored in len2
 
     // Code:
-    auto const fac = iaparams->p.oif_local_forces.kvisc * (dx * v_ij) / len2;
+    auto const fac = iaparams.p.oif_local_forces.kvisc * (dx * v_ij) / len2;
     auto const f = fac * dx;
     force2 += f;
     force3 -= f;
@@ -139,15 +129,15 @@ calc_oif_local(Particle const *const p2, Particle const *const p1,
      forceT1 is restoring force for triangle p1,p2,p3 and force2T restoring
      force for triangle p2,p3,p4 p1 += forceT1; p2 -= 0.5*forceT1+0.5*forceT2;
      p3 -= 0.5*forceT1+0.5*forceT2; p4 += forceT2; */
-  if (iaparams->p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (iaparams.p.oif_local_forces.kb > TINY_OIF_ELASTICITY_COEFFICIENT) {
     auto const n1 = Utils::get_n_triangle(fp2, fp1, fp3).normalize();
     auto const n2 = Utils::get_n_triangle(fp2, fp3, fp4).normalize();
 
     auto const phi = Utils::angle_btw_triangles(fp1, fp2, fp3, fp4);
-    auto const aa = (phi - iaparams->p.oif_local_forces
+    auto const aa = (phi - iaparams.p.oif_local_forces
                                .phi0); // no renormalization by phi0, to be
                                        // consistent with Krueger and Fedosov
-    auto const fac = iaparams->p.oif_local_forces.kb * aa;
+    auto const fac = iaparams.p.oif_local_forces.kb * aa;
     auto const f = 0.5 * fac * n1 + 0.5 * fac * n2;
 
     force1 += fac * n1;
@@ -167,7 +157,7 @@ calc_oif_local(Particle const *const p2, Particle const *const p1,
      Methods in Biomedical Engineering, DOI: 10.1002/cnm.2757
 
   */
-  if (iaparams->p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
+  if (iaparams.p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
 
     auto handle_triangle = [](double kal, double A0, Utils::Vector3d const &fp1,
                               Utils::Vector3d const &fp2,
@@ -195,14 +185,14 @@ calc_oif_local(Particle const *const p2, Particle const *const p1,
       force3 += (fac / 3.0) * m3;
     };
 
-    handle_triangle(iaparams->p.oif_local_forces.kal,
-                    iaparams->p.oif_local_forces.A01, fp1, fp2, fp3, force1,
+    handle_triangle(iaparams.p.oif_local_forces.kal,
+                    iaparams.p.oif_local_forces.A01, fp1, fp2, fp3, force1,
                     force2, force3);
-    handle_triangle(iaparams->p.oif_local_forces.kal,
-                    iaparams->p.oif_local_forces.A02, fp2, fp3, fp4, force2,
+    handle_triangle(iaparams.p.oif_local_forces.kal,
+                    iaparams.p.oif_local_forces.A02, fp2, fp3, fp4, force2,
                     force3, force4);
   }
-  return false;
+  return std::make_tuple(force2, force1, force3, force4);
 }
 
 #endif

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -124,10 +124,6 @@ cdef extern from "particle_data.hpp":
         void set_particle_out_direction(int part, double out_direction[3])
         void pointer_to_out_direction(particle * p, double * & res)
 
-    IF AFFINITY:
-        void set_particle_affinity(int part, double bond_site[3])
-        void pointer_to_bond_site(particle * p, double * & res)
-
     IF MASS:
         void pointer_to_mass(particle * p, double * & res)
 
@@ -139,7 +135,7 @@ cdef extern from "particle_data.hpp":
 
     IF VIRTUAL_SITES:
         void set_particle_virtual(int part, int isVirtual)
-        void pointer_to_virtual(const particle * P, const int * & res)
+        void pointer_to_virtual(const particle * P, const bint * & res)
 
     IF LANGEVIN_PER_PARTICLE:
         void set_particle_temperature(int part, double T)

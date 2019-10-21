@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -43,7 +43,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
         v_boundary = [0.03, 0.02, 0.01]
 
-        wall_shape = espressomd.shapes.Wall(normal=[1, 2, 3], dist=0.5)
+        wall_shape = espressomd.shapes.Wall(normal=[-1, -2, -3], dist=0)
         wall = espressomd.lbboundaries.LBBoundary(
             shape=wall_shape, velocity=v_boundary)
         system.lbboundaries.add(wall)
@@ -51,9 +51,13 @@ class LBBoundaryVelocityTest(ut.TestCase):
         system.integrator.run(2000)
 
         v_fluid = lb_fluid[1, 0, 0].velocity
+        for n in ((1,2,3),(2,2,2)):
+          print(n,lb_fluid[n[0],n[1],n[2]].velocity)
+
         self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)
         self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)
         self.assertAlmostEqual(v_fluid[2], v_boundary[2], places=3)
+
 
 if __name__ == "__main__":
     ut.main()

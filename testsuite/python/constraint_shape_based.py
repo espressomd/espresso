@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -661,7 +661,8 @@ class ShapeBasedConstraintTest(ut.TestCase):
 
                     if outside:
                         for i in range(3):
-                            if pos[i] < (self.box_l + length[i] - abs(length[i])) / 2.0:
+                            if pos[i] < (self.box_l + length[i] -
+                                         abs(length[i])) / 2.0:
                                 dist_vec[i] = pos[i] - (
                                     self.box_l + length[i] - abs(length[i])) / 2.0
                             elif pos[i] > (self.box_l + length[i] + abs(length[i])) / 2.0:

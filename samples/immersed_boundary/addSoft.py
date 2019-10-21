@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -31,8 +31,7 @@ def AddSoft(system, comX, comY, comZ, k1, k2):
             X = float(line[0]) + comX
             Y = float(line[1]) + comY
             Z = float(line[2]) + comZ
-#            print X, Y, Z
-            system.part.add(id=i, pos=[X, Y, Z], virtual=1)
+            system.part.add(id=i, pos=[X, Y, Z], virtual=True)
 
     # triangles
     from espressomd.interactions import IBM_Triel

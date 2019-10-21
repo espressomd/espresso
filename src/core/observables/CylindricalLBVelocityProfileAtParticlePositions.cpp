@@ -1,25 +1,23 @@
 /*
-  Copyright (C) 2016-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2016-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lb_interpolation.hpp"
 #include <boost/range/algorithm/transform.hpp>
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
@@ -43,11 +41,11 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   });
 
   std::vector<Utils::Vector3d> velocities(ids().size());
-  boost::transform(
-      folded_positions, velocities.begin(), [](const Utils::Vector3d &pos) {
-        return lb_lbinterpolation_get_interpolated_velocity_global(pos) *
-               lb_lbfluid_get_lattice_speed();
-      });
+  boost::transform(folded_positions, velocities.begin(),
+                   [](const Utils::Vector3d &pos) {
+                     return lb_lbfluid_get_interpolated_velocity(pos) *
+                            lb_lbfluid_get_lattice_speed();
+                   });
   for (auto &p : folded_positions)
     p -= center;
   for (int ind = 0; ind < ids().size(); ++ind) {

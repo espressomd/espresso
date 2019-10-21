@@ -109,5 +109,6 @@ class ek_fluctuations(ut.TestCase):
                         "Density distribution accuracy not achieved, allowed "
                         "deviation: 5.0e-03, measured: {}".format(max_diff))
 
+
 if __name__ == "__main__":
     ut.main()

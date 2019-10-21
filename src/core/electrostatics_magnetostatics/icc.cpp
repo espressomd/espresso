@@ -1,22 +1,22 @@
 /*
-   Copyright (C) 2010-2018 The ESPResSo project
-   Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-   Max-Planck-Institute for Polymer Research, Theory Group
-
-   This file is part of ESPResSo.
-
-   ESPResSo is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ESPResSo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 /** \file
@@ -30,9 +30,7 @@
 
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 
@@ -69,14 +67,17 @@ void force_calc_iccp3m(const ParticleRange &particles,
 
 /** Variant of add_non_bonded_pair_force where only Coulomb
  *  contributions are calculated   */
-inline void add_non_bonded_pair_force_iccp3m(Particle *p1, Particle *p2,
+inline void add_non_bonded_pair_force_iccp3m(Particle &p1, Particle &p2,
                                              Utils::Vector3d const &d,
                                              double dist, double dist2) {
-  Utils::Vector3d force{};
-  Coulomb::calc_pair_force(p1, p2, d, dist, force);
+  auto forces = Coulomb::pair_force(p1, p2, d, dist);
 
-  p1->f.f += force;
-  p2->f.f -= force;
+  p1.f.f += std::get<0>(forces);
+  p2.f.f -= std::get<0>(forces);
+#ifdef P3M
+  p1.f.f += std::get<1>(forces);
+  p2.f.f += std::get<2>(forces);
+#endif
 }
 
 void iccp3m_alloc_lists() {
@@ -157,7 +158,7 @@ int iccp3m_iteration(const ParticleRange &particles,
 
         /* check if the charge now is more than 1e6, to determine if ICC still
          * leads to reasonable results */
-        /* this is kind a arbitrary measure but, does a good job spotting
+        /* this is kind of an arbitrary measure but does a good job spotting
          * divergence !*/
         if (std::abs(p.p.q) > 1e6) {
           runtimeErrorMsg()
@@ -197,8 +198,7 @@ void force_calc_iccp3m(const ParticleRange &particles,
 
   short_range_loop(Utils::NoOp{}, [](Particle &p1, Particle &p2, Distance &d) {
     /* calc non bonded interactions */
-    add_non_bonded_pair_force_iccp3m(&(p1), &(p2), d.vec21, sqrt(d.dist2),
-                                     d.dist2);
+    add_non_bonded_pair_force_iccp3m(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
   });
 
   Coulomb::calc_long_range_force(particles);

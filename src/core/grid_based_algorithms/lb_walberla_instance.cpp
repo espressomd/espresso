@@ -45,6 +45,7 @@ void init_lb_walberla(double viscosity, double density, double agrid,
         viscosity, density, agrid, tau, box_dimensions, node_grid, skin});
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
+    lb_walberla_instance.reset(nullptr);
   }
 }
 REGISTER_CALLBACK(init_lb_walberla)
@@ -57,12 +58,15 @@ void mpi_init_lb_walberla(double viscosity, double density, double agrid,
   Communication::mpiCallbacks().call_all(init_lb_walberla, viscosity,
                                          density * pow(agrid, 3), agrid, tau,
                                          box_geo.length(), node_grid, skin);
-  lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
+  if (lb_walberla_instance) {
+    lb_lbfluid_set_lattice_switch(ActiveLB::WALBERLA);
+     lb_lbfluid_sanity_checks();
+  }
 }
 
 void mpi_destruct_lb_walberla() {
-  Communication::mpiCallbacks().call_all(destruct_lb_walberla);
   lb_lbfluid_set_lattice_switch(ActiveLB::NONE);
+  Communication::mpiCallbacks().call_all(destruct_lb_walberla);
 }
 #endif
 #endif

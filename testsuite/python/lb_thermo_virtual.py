@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -45,7 +45,7 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     def check_virtual(self, fluid_class):
         s = self.system
         lb_fluid = fluid_class(
-            agrid=1.0, dens=1.0, visc=1.0, tau=1.0, kT=0.0)
+            agrid=1.0, dens=1.0, visc=1.0, tau=1.0)
         s.actors.add(lb_fluid)
 
         virtual = s.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
@@ -88,6 +88,11 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     @utx.skipIfMissingGPU()
     def test_lb_gpu(self):
         self.check_virtual(espressomd.lb.LBFluidGPU)
+    
+    @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+    def test_lb_walberla(self):
+        self.check_virtual(espressomd.lb.LBFluidWalberla)
+
 
 if __name__ == "__main__":
     ut.main()

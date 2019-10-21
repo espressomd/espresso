@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -34,7 +34,7 @@ AGRID = .25
 EXT_FORCE = .1
 VISC = 2.7
 DENS = 1.7
-TIME_STEP = 0.1
+TIME_STEP = 0.07
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': VISC,
@@ -65,7 +65,7 @@ class LBPoiseuilleCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None
-    system = espressomd.System(box_l=[9.0, 3.0, 3.0])
+    system = espressomd.System(box_l=[10, 3.0, 3.0])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
@@ -92,7 +92,7 @@ class LBPoiseuilleCommon:
         diff = float("inf")
         old_val = self.lbf[mid_indices].velocity[2]
         while diff > 0.005:
-            self.system.integrator.run(100)
+            self.system.integrator.run(200)
             new_val = self.lbf[mid_indices].velocity[2]
             diff = abs(new_val - old_val)
             old_val = new_val
@@ -120,9 +120,7 @@ class LBPoiseuilleCommon:
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
                                      VISC * DENS)
-        rmsd = np.sqrt(np.sum(np.square(v_expected - v_measured)))
-        self.assertLess(rmsd, 0.015 * AGRID / TIME_STEP)
-
+        np.testing.assert_allclose(v_measured, v_expected, atol=4E-3)
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
@@ -141,6 +139,13 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+
+class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
+
+    """Test for the Walberla implementation of the LB."""
+
+    def setUp(self):
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 @utx.skipIfMissingGPU()
@@ -161,8 +166,8 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
         self.prepare()
         velocities = np.zeros((50, 2))
         x_values = np.linspace(
-            2.0 * AGRID,
-            self.system.box_l[0] - 2.0 * AGRID,
+            3 * AGRID,
+            self.system.box_l[0] - 3 * AGRID,
             50)
 
         cnt = 0
@@ -179,9 +184,7 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
         v_expected = poiseuille_flow(x_values - 0.5 * self.system.box_l[0],
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
-                                     VISC * DENS)
-        rmsd = np.sqrt(np.sum(np.square(v_expected - velocities[:, 1])))
-        self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
-
+                                             VISC * DENS)
+        np.testing.assert_allclose(velocities[:,1], v_expected,atol=3E-3)
 if __name__ == '__main__':
     ut.main()

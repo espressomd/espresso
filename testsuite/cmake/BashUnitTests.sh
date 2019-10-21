@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2018 The ESPResSo project
+# Copyright (C) 2018-2019 The ESPResSo project
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -15,7 +15,7 @@
 ##    @code{.sh}
 ##    #!/bin/bash
 ##    # load Unit Testing library
-##    source /work/jgrad/espresso-fork/benchmarks/BashUnitTests.sh
+##    source /path/to/espresso/testsuite/cmake/BashUnitTests.sh
 ##
 ##    # setup
 ##    function set_up() {

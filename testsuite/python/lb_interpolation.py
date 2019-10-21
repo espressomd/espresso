@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -36,7 +36,7 @@ LB_PARAMETERS = {
     'dens': DENS,
     'tau': TAU
 }
-V_BOUNDARY = 0.6
+V_BOUNDARY = 0.2
 
 
 def velocity_profile(x):
@@ -76,7 +76,10 @@ class LBInterpolation:
         # for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #     np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
         # Bulk
-        for pos in itertools.product(np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
+        for pos in itertools.product(
+                np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID),
+                np.arange(0.5 * AGRID, BOX_L, AGRID)):
             np.testing.assert_almost_equal(
                 self.lbf.get_interpolated_velocity(pos)[2], velocity_profile(pos[0]), decimal=4)
         # Shear plane for boundary 2
@@ -113,6 +116,16 @@ class LBInterpolationGPU(ut.TestCase, LBInterpolation):
         self.system.lbboundaries.clear()
         self.system.actors.clear()
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMETERS)
+        self.system.actors.add(self.lbf)
+
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA'])
+class LBInterpolationWalberla(ut.TestCase, LBInterpolation):
+
+    def setUp(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.clear()
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMETERS)
         self.system.actors.add(self.lbf)
 
 

@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _GB_HPP
 #define _GB_HPP
 
@@ -38,26 +38,24 @@ int gay_berne_set_params(int part_type_a, int part_type_b, double eps,
                          double mu, double nu);
 
 /** Calculate Gay-Berne force and torques */
-inline void add_gb_pair_force(Utils::Vector3d const &ui,
-                              Utils::Vector3d const &uj,
-                              IA_parameters const *const ia_params,
-                              Utils::Vector3d const &d, double dist,
-                              Utils::Vector3d &force,
-                              Utils::Vector3d *const torque1,
-                              Utils::Vector3d *const torque2) {
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+gb_pair_force(Utils::Vector3d const &ui, Utils::Vector3d const &uj,
+              IA_parameters const &ia_params, Utils::Vector3d const &d,
+              double dist, bool calc_torque1, bool calc_torque2) {
   using Utils::int_pow;
   using Utils::sqr;
 
-  if (dist >= ia_params->gay_berne.cut) {
-    return;
+  if (dist >= ia_params.gay_berne.cut) {
+    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{});
   }
 
-  auto const e0 = ia_params->gay_berne.eps;
-  auto const s0 = ia_params->gay_berne.sig;
-  auto const chi1 = ia_params->gay_berne.chi1;
-  auto const chi2 = ia_params->gay_berne.chi2;
-  auto const mu = ia_params->gay_berne.mu;
-  auto const nu = ia_params->gay_berne.nu;
+  auto const e0 = ia_params.gay_berne.eps;
+  auto const s0 = ia_params.gay_berne.sig;
+  auto const chi1 = ia_params.gay_berne.chi1;
+  auto const chi2 = ia_params.gay_berne.chi2;
+  auto const mu = ia_params.gay_berne.mu;
+  auto const nu = ia_params.gay_berne.nu;
   auto const r = Utils::Vector3d(d).normalize();
   auto const dui = d * ui;
   auto const duj = d * uj;
@@ -84,8 +82,10 @@ inline void add_gb_pair_force(Utils::Vector3d const &ui,
   auto Koef1 = mu / e2;
   auto Koef2 = int_pow<3>(s1) * 0.5;
 
+  Utils::Vector3d force, torque1, torque2;
+
   auto const X = s0 / (dist - s + s0);
-  auto const Xcut = s0 / (ia_params->gay_berne.cut - s + s0);
+  auto const Xcut = s0 / (ia_params.gay_berne.cut - s + s0);
 
   auto const X6 = int_pow<6>(X);
   auto const Xcut6 = int_pow<6>(Xcut);
@@ -116,39 +116,40 @@ inline void add_gb_pair_force(Utils::Vector3d const &ui,
 
   /*--------------------------------------------------------------------*/
 
-  force -= dU_dr * d + dU_da * ui + dU_db * uj;
+  force = -dU_dr * d - dU_da * ui - dU_db * uj;
 
-  if (torque1 != nullptr) {
-    /* calculate torque:  torque = u_1 x G   */
+  if (calc_torque1) {
+    /* calculate torque:  torque = u_i x G   */
     auto const G2 = -dU_da * d - dU_dc * uj;
-    *torque1 += vector_product(ui, G2);
+    torque1 = vector_product(ui, G2);
 
-    if (torque2 != nullptr) {
-      /* calculate torque:  torque = u_2 x G     */
+    if (calc_torque2) {
+      /* calculate torque:  torque = u_j x G     */
       auto const G1 = -dU_db * d - dU_dc * ui;
-      *torque2 += vector_product(uj, G1);
+      torque2 = vector_product(uj, G1);
     }
   }
+  return std::make_tuple(force, torque1, torque2);
 }
 
 /** Calculate Gay-Berne energy */
 inline double gb_pair_energy(Utils::Vector3d const &ui,
                              Utils::Vector3d const &uj,
-                             IA_parameters const *const ia_params,
+                             IA_parameters const &ia_params,
                              Utils::Vector3d const &d, double dist) {
   using Utils::int_pow;
   using Utils::sqr;
 
-  if (dist >= ia_params->gay_berne.cut) {
+  if (dist >= ia_params.gay_berne.cut) {
     return 0.0;
   }
 
-  auto const e0 = ia_params->gay_berne.eps;
-  auto const s0 = ia_params->gay_berne.sig;
-  auto const chi1 = ia_params->gay_berne.chi1;
-  auto const chi2 = ia_params->gay_berne.chi2;
-  auto const mu = ia_params->gay_berne.mu;
-  auto const nu = ia_params->gay_berne.nu;
+  auto const e0 = ia_params.gay_berne.eps;
+  auto const s0 = ia_params.gay_berne.sig;
+  auto const chi1 = ia_params.gay_berne.chi1;
+  auto const chi2 = ia_params.gay_berne.chi2;
+  auto const mu = ia_params.gay_berne.mu;
+  auto const nu = ia_params.gay_berne.nu;
   auto const r = Utils::Vector3d(d).normalize();
 
   auto const uij = ui * uj;
@@ -172,7 +173,7 @@ inline double gb_pair_energy(Utils::Vector3d const &ui,
     return 4. * e * (int_pow<12>(1. / r) - int_pow<6>(1. / r));
   };
 
-  return E(r_eff(dist)) - E(r_eff(ia_params->gay_berne.cut));
+  return E(r_eff(dist)) - E(r_eff(ia_params.gay_berne.cut));
 }
 
 #endif

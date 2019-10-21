@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -35,7 +35,7 @@ import numpy as np
 # Define the LB Parameters
 TIME_STEP = 0.4
 AGRID = 0.6 
-KVISC = 6 
+KVISC = 4 
 DENS = 2.3 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -92,11 +92,12 @@ class Stokes:
 
         last_force = -1000.
         stokes_force = 6 * np.pi * KVISC * radius * size(v)
-        self.system.integrator.run(35)
+        self.system.integrator.run(int(self.system.box_l[0]/2))
         while True:
             self.system.integrator.run(10)
             force = np.linalg.norm(sphere.get_force())
-            if np.abs(last_force - force) < 0.01 * stokes_force:
+            print(self.system.time,force)
+            if np.abs(last_force - force) < 0.000001 * stokes_force:
                 break
             last_force = force
 

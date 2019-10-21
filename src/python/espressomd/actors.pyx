@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
@@ -194,7 +210,7 @@ class Actors:
             Actor to add to this container.
 
         """
-        if not actor in Actors.active_actors:
+        if actor not in Actors.active_actors:
             self.active_actors.append(actor)
             actor._activate()
         else:
@@ -208,7 +224,7 @@ class Actors:
             Actor to remove from this container.
 
         """
-        if not actor in self.active_actors:
+        if actor not in self.active_actors:
             raise Exception("Actor is not active")
         actor._deactivate()
         self.active_actors.remove(actor)

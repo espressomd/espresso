@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -138,6 +138,25 @@ class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
     def tearDown(self):
         self.system.lbboundaries.clear()
         self.system.actors.remove(self.lbf)
+
+@utx.skipIfMissingFeatures(["LB_WALBERLA"])
+class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):
+    lbf = None
+
+    def setUp(self):
+        if not self.lbf:
+            self.lbf = espressomd.lb.LBFluidWalberla(
+                visc=1.0,
+                dens=1.0,
+                agrid=0.5,
+                tau=1.0)
+
+        self.system.actors.add(self.lbf)
+
+    def tearDown(self):
+        self.system.lbboundaries.clear()
+        self.system.actors.remove(self.lbf)
+
 
 if __name__ == "__main__":
     ut.main()

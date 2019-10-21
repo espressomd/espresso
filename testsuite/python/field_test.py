@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -60,6 +60,14 @@ class FieldTest(ut.TestCase):
 
         np.testing.assert_almost_equal(g_const, np.copy(p.f) / p.mass)
         self.assertAlmostEqual(self.system.analysis.energy()['total'], 0.)
+
+        # Virtual sites don't feel gravity
+        if espressomd.has_features("VIRTUAL_SITES"):
+            self.system.part[0].virtual = True
+            self.system.integrator.run(0)
+            np.testing.assert_allclose(
+                np.zeros(3),
+                np.copy(self.system.part[0].f))
 
     @utx.skipIfMissingFeatures("ELECTROSTATICS")
     def test_linear_electric_potential(self):

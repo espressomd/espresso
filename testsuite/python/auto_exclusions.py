@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -75,6 +75,7 @@ class AutoExclusions(ut.TestCase):
             for i in range(1, 3):
                 self.assertTrue((p - i) % 10 in excl)
                 self.assertTrue((p + i) % 10 in excl)
+
 
 if __name__ == "__main__":
     ut.main()

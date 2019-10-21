@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "virtual_sites.hpp"
 
@@ -40,7 +40,7 @@ const std::shared_ptr<VirtualSites> &virtual_sites() { return m_virtual_sites; }
 
 void set_virtual_sites(std::shared_ptr<VirtualSites> const &v) {
   m_virtual_sites = v;
-  recalc_forces = 1;
+  recalc_forces = true;
   invalidate_obs();
   on_ghost_flags_change();
 }
@@ -72,7 +72,7 @@ void calculate_vs_relate_to_params(const Particle &p_current,
   // (paritlce_we_relate_to - this_particle)
   // The vs_relative implementation later obtains the director by multiplying
   // the quaternions representing the orientation of the real particle
-  // with those in the virtual particle. The re quulting quaternion is then
+  // with those in the virtual particle. The resulting quaternion is then
   // converted to a director.
   // We have quat_(real particle) *quat_(virtual particle)
   // = quat_(obtained from desired director)
@@ -163,7 +163,7 @@ int vs_relate_to(int part_num, int relate_to) {
   // Set the particle id of the particle we want to relate to, the distance
   // and the relative orientation
   set_particle_vs_relative(part_num, relate_to, l, quat.data());
-  set_particle_virtual(part_num, 1);
+  set_particle_virtual(part_num, true);
 
   return ES_OK;
 }

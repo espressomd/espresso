@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -29,6 +29,8 @@ class ComForce(Observable):
 
     """Calculates the total force on particles with given ids.
 
+    Note that virtual sites are not included since they do not have a meaningful mass.
+
     Output format: :math:`\\left(\\sum_i f^x_i, \\sum_i f^y_i, \\sum_i f^z_i\\right)`
 
     Parameters
@@ -45,6 +47,8 @@ class ComPosition(Observable):
 
     """Calculates the center of mass for particles with given ids.
 
+    Note that virtual sites are not included since they do not have a meaningful mass.
+
     Output format: :math:`\\frac{1}{\\sum_i m_i} \\left( \\sum_i m_i r^x_i, \\sum_i m_i r^y_i, \\sum_i m_i r^z_i\\right)`
 
     Parameters
@@ -60,6 +64,8 @@ class ComPosition(Observable):
 class ComVelocity(Observable):
 
     """Calculates the center of mass velocity for particles with given ids.
+
+    Note that virtual sites are not included since they do not have a meaningful mass.
 
     Output format: :math:`\\frac{1}{\\sum_i m_i} \\left( \\sum_i m_i v^x_i, \\sum_i m_i v^y_i, \\sum_i m_i v^z_i\\right)`
 
@@ -246,7 +252,7 @@ class LBVelocityProfile(Observable):
     sampling_offset_z : :obj:`float`, default=0.0
         Offset for the sampling grid in ``z``-direction.
     allow_empty_bins : :obj:`bool`, default=False
-        Wether or not to allow bins that will not be sampled at all.
+        Whether or not to allow bins that will not be sampled at all.
 
     """
     _so_name = "Observables::LBVelocityProfile"

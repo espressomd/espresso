@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *
  */
@@ -58,10 +58,13 @@ std::pair<Utils::Vector3d, double> local_system_CMS() {
   return boost::accumulate(
       local_cells.particles(), std::pair<Utils::Vector3d, double>{},
       [](auto sum, const Particle &p) {
-        return std::pair<Utils::Vector3d, double>{
-            sum.first +
-                p.p.mass * unfolded_position(p.r.p, p.l.i, box_geo.length()),
-            sum.second + p.p.mass};
+        if (not p.p.is_virtual) {
+          return std::pair<Utils::Vector3d, double>{
+              sum.first +
+                  p.p.mass * unfolded_position(p.r.p, p.l.i, box_geo.length()),
+              sum.second + p.p.mass};
+        }
+        return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
       });
 }
 
@@ -69,8 +72,11 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
   return boost::accumulate(
       local_cells.particles(), std::pair<Utils::Vector3d, double>{},
       [](auto sum, const Particle &p) {
-        return std::pair<Utils::Vector3d, double>{sum.first + p.p.mass * p.m.v,
-                                                  sum.second + p.p.mass};
+        if (not p.p.is_virtual) {
+          return std::pair<Utils::Vector3d, double>{
+              sum.first + p.p.mass * p.m.v, sum.second + p.p.mass};
+        }
+        return std::pair<Utils::Vector3d, double>{sum.first, sum.second};
       });
 }
 

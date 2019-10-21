@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -59,9 +59,9 @@ class CheckpointTest(ut.TestCase):
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
-        nx = int(np.round(system.box_l[0] / lbf.get_params()["agrid"]))
-        ny = int(np.round(system.box_l[1] / lbf.get_params()["agrid"]))
-        nz = int(np.round(system.box_l[2] / lbf.get_params()["agrid"]))
+        nx = lbf.shape[0] 
+        ny = lbf.shape[1] 
+        nz = lbf.shape[2] 
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
             (nx, ny, nz), dtype=float)
@@ -70,13 +70,13 @@ class CheckpointTest(ut.TestCase):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
                         np.copy(lbf[i, j, k].population),
-                                grid_3D[i, j, k] * np.arange(1, 20),
-                                decimal=precision)
+                        grid_3D[i, j, k] * np.arange(1, 20),
+                        decimal=precision)
         state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
         for key, val in reference.items():
             self.assertTrue(key in state)
-            self.assertAlmostEqual(reference[key], state[key], delta=1E-9)
+            self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
     @utx.skipIfMissingFeatures('ELECTROKINETICS')
     @ut.skipIf(not EK, "Skipping test due to missing mode.")
@@ -185,7 +185,7 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertEqual(system.part[1].virtual, 1)
+        self.assertEqual(system.part[1].virtual, True)
         self.assertTrue(
             isinstance(
                 system.virtual_sites,
@@ -223,7 +223,8 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(tests_common.lists_contain_same_elements(
             system.part[2].exclusions, [0, 1]))
 
-    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
+                                    or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
     def test_lb_boundaries(self):
         self.assertEqual(len(system.lbboundaries), 1)
         np.testing.assert_allclose(
@@ -231,16 +232,56 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(type(system.lbboundaries[0].shape), Wall)
 
     def test_constraints(self):
-        self.assertEqual(len(system.constraints), 2)
-        c0 = system.constraints[0]
-        c1 = system.constraints[1]
-        self.assertEqual(type(c0.shape), Sphere)
-        self.assertAlmostEqual(c0.shape.radius, 0.1, delta=1E-10)
-        self.assertEqual(c0.particle_type, 17)
-        
-        self.assertEqual(type(c1.shape), Wall)
-        np.testing.assert_allclose(np.copy(c1.shape.normal),
+        from espressomd import constraints
+        self.assertEqual(len(system.constraints),
+                         8 - int(not espressomd.has_features("ELECTROSTATICS")))
+        c = system.constraints
+
+        self.assertEqual(type(c[0].shape), Sphere)
+        self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
+        self.assertEqual(c[0].particle_type, 17)
+
+        self.assertEqual(type(c[1].shape), Wall)
+        np.testing.assert_allclose(np.copy(c[1].shape.normal),
                                    [1. / np.sqrt(3)] * 3)
+
+        self.assertEqual(type(c[2]), constraints.Gravity)
+        np.testing.assert_allclose(np.copy(c[2].g), [1., 2., 3.])
+
+        self.assertEqual(type(c[3]), constraints.HomogeneousMagneticField)
+        np.testing.assert_allclose(np.copy(c[3].H), [1., 2., 3.])
+
+        self.assertEqual(type(c[4]), constraints.HomogeneousFlowField)
+        np.testing.assert_allclose(np.copy(c[4].u), [1., 2., 3.])
+        self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
+
+        self.assertEqual(type(c[5]), constraints.PotentialField)
+        self.assertEqual(c[5].field.shape, (14, 16, 18, 1))
+        self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
+        np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
+        np.testing.assert_allclose(np.copy(c[5].grid_spacing), np.ones(3))
+        ref_pot = constraints.PotentialField(
+            field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6)
+        np.testing.assert_allclose(np.copy(c[5].field), np.copy(ref_pot.field),
+                                   atol=1e-10)
+
+        self.assertEqual(type(c[6]), constraints.ForceField)
+        self.assertEqual(c[6].field.shape, (14, 16, 18, 3))
+        self.assertAlmostEqual(c[6].default_scale, 1.4, delta=1E-10)
+        np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
+        np.testing.assert_allclose(np.copy(c[6].grid_spacing), np.ones(3))
+        ref_vec = constraints.ForceField(
+            field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4)
+        np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
+                                   atol=1e-10)
+
+        if espressomd.has_features("ELECTROSTATICS"):
+            self.assertEqual(type(c[7]), constraints.ElectricPlaneWave)
+            np.testing.assert_allclose(np.copy(c[7].E0), [1., -2., 3.])
+            np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
+            self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)
+            self.assertAlmostEqual(c[7].phi, 1.4, delta=1E-10)
+
 
 if __name__ == '__main__':
     ut.main()

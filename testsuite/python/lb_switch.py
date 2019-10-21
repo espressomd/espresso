@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -29,7 +29,7 @@ class LBSwitchActor(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.1
 
-    def switch_test(self, GPU=False):
+    def switch_test(self, lb_class):
         system = self.system
         system.actors.clear()
         system.part.add(pos=[1., 1., 1.], v=[1., 0, 0], fix=[1, 1, 1])
@@ -39,12 +39,8 @@ class LBSwitchActor(ut.TestCase):
         friction_1 = 1.5
         friction_2 = 4.0
 
-        if GPU:
-            lb_fluid_1 = espressomd.lb.LBFluidGPU(**lb_fluid_params)
-            lb_fluid_2 = espressomd.lb.LBFluidGPU(**lb_fluid_params)
-        else:
-            lb_fluid_1 = espressomd.lb.LBFluid(**lb_fluid_params)
-            lb_fluid_2 = espressomd.lb.LBFluid(**lb_fluid_params)
+        lb_fluid_1 = lb_class(**lb_fluid_params)
+        lb_fluid_2 = lb_class(**lb_fluid_params)
 
         system.actors.add(lb_fluid_1)
         system.thermostat.set_lb(LB_fluid=lb_fluid_1, gamma=friction_1)
@@ -80,11 +76,15 @@ class LBSwitchActor(ut.TestCase):
             np.copy(system.part[0].f), [-friction_2, 0.0, 0.0])
 
     def test_CPU_LB(self):
-        self.switch_test()
+        self.switch_test(espressomd.lb.LBFluid)
 
     @utx.skipIfMissingGPU()
     def test_GPU_LB(self):
-        self.switch_test(GPU=True)
+        self.switch_test(espressomd.lb.LBFluidGPU)
+    
+    @utx.skipIfMissingFeatures(["LB_WALBERLA"])
+    def test_walberla(self):
+        self.switch_test(espressomd.lb.LBFluidWalberla)
 
 
 if __name__ == "__main__":

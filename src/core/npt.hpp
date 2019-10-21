@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Exports for the NPT code, which otherwise is really spread all over...
  */
@@ -25,6 +25,7 @@
 #ifndef NPT_H
 #define NPT_H
 
+#include "BoxGeometry.hpp"
 /************************************************
  * data types
  ************************************************/
@@ -54,10 +55,10 @@ typedef struct {
   double p_vir[3];
   /** ideal gas components of \ref p_inst, derived from the velocities */
   double p_vel[3];
-  /** flag which indicates if \ref p_vel may (0) or may not (1) be used
+  /** flag which indicates if \ref p_vel may (false) or may not (true) be used
    *  in offline pressure calculations such as 'analyze p_inst'
    */
-  int invalidate_p_vel;
+  bool invalidate_p_vel;
   /** geometry information for the npt integrator. Holds the vector
    *  <dir, dir ,dir> where a positive value for dir indicates that
    *  box movement is allowed in that direction. To check whether a
@@ -88,4 +89,14 @@ extern nptiso_struct nptiso;
 #define NPTGEOM_YDIR 2
 #define NPTGEOM_ZDIR 4
 
+/** @brief Synchronizes npt state such as instantaneous and average pressure
+ *   @param n_steps Number of integration steps since the last sync
+ */
+void synchronize_npt_state(int n_steps);
+void npt_ensemble_init(const BoxGeometry &box);
+void integrator_npt_sanity_checks();
+void npt_update_instantaneous_pressure();
+void npt_reset_instantaneous_virials();
+void npt_add_virial_contribution(const Utils::Vector3d &force,
+                                 const Utils::Vector3d &d);
 #endif
