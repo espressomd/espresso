@@ -101,5 +101,4 @@ for t in range(t_steps):
     print("step {} of {}".format(t, t_steps))
     system.integrator.run(warm_steps)
     vtf.writevcf(system, outfile)
-
 outfile.close()

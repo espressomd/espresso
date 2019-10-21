@@ -56,10 +56,8 @@ system.constraints.add(shape=espressomd.shapes.Wall(
     dist=-box_l, normal=[0, 0, -1]), particle_type=1)
 
 WCA_cut = 2.**(1. / 6.)
-system.non_bonded_inter[0, 1].wca.set_params(
-    epsilon=1.0, sigma=1.0)
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=1.0, sigma=1.0)
+system.non_bonded_inter[0, 1].wca.set_params(epsilon=1.0, sigma=1.0)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1.0, sigma=1.0)
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total=", energy['total'])

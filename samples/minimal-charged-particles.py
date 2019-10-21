@@ -66,8 +66,7 @@ int_n_times = 10
 # Non-Bonded Interaction setup
 #############################################################
 
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=wca_eps, sigma=wca_sig)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps, sigma=wca_sig)
 system.force_cap = wca_cap
 
 # Particle setup

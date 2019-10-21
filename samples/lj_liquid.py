@@ -62,6 +62,7 @@ system = espressomd.System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.random.seed(seed=system.seed)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
@@ -86,8 +87,7 @@ int_n_times = 5
 # Interaction setup
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig,
-    cutoff=lj_cut, shift="auto")
+    epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 system.force_cap = lj_cap
 
 print("LJ-parameters:")
@@ -158,6 +158,7 @@ pprint.pprint(state)
 set_file = open("pylj_liquid.set", "w")
 set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
                (box_l, system.time_step, system.cell_system.skin))
+
 
 #############################################################
 #      Integration                                          #

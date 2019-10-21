@@ -116,12 +116,10 @@ for i in range(100):
     system.part.add(pos=rpos, type=1)
 
 system.non_bonded_inter[1, 1].lennard_jones.set_params(
-    epsilon=1.0, sigma=5.0,
-    cutoff=15.0, shift="auto")
+    epsilon=1.0, sigma=5.0, cutoff=15.0, shift="auto")
 
 system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=200.0, sigma=5.0,
-    cutoff=20.0, shift="auto")
+    epsilon=200.0, sigma=5.0, cutoff=20.0, shift="auto")
 
 system.force_cap = 1000.0
 

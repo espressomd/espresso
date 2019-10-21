@@ -103,8 +103,7 @@ while i < warm_n_times:
 # remove force capping
 system.force_cap = 0
 
-RE = reaction_ensemble.WidomInsertion(
-    temperature=temperature, seed=77)
+RE = reaction_ensemble.WidomInsertion(temperature=temperature, seed=77)
 
 # add insertion reaction
 insertion_reaction_id = 0

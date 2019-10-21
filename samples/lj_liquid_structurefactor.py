@@ -94,8 +94,7 @@ structurefactor_Sk = np.zeros(structurefactor_bins)
 # Interaction setup
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig,
-    cutoff=lj_cut, shift="auto")
+    epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 system.force_cap = lj_cap
 
 print("LJ-parameters:")
@@ -109,11 +108,9 @@ n_part = int(volume * density)
 
 for i in range(n_part):
     if i < n_part / 2.0:
-        system.part.add(
-            type=0, id=i, pos=np.random.random(3) * system.box_l)
+        system.part.add(type=0, id=i, pos=np.random.random(3) * system.box_l)
     else:
-        system.part.add(
-            type=1, id=i, pos=np.random.random(3) * system.box_l)
+        system.part.add(type=1, id=i, pos=np.random.random(3) * system.box_l)
 
 
 system.analysis.dist_to(0)
