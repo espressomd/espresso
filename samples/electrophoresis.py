@@ -47,7 +47,6 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.periodicity = [True, True, True]
-system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # system.cell_system.set_n_square(use_verlet_lists=False)
 
 # Non-bonded interactions
@@ -130,17 +129,26 @@ print("Q_tot:", np.sum(system.part[:].q))
 #      Warmup                                               #
 #############################################################
 
-system.force_cap = 10
+# warmup integration (steepest descent)
+warm_steps = 20
+warm_n_times = 20
+min_dist = 0.9
 
-for i in range(1000):
-    if i % 100 == 0:
-        print("\rWarmup: %03i" % i, end='', flush=True)
-    system.integrator.run(steps=1)
-    system.force_cap = 10 * i
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=0.01)
+i = 0
+while system.analysis.min_dist() < min_dist and i < warm_n_times:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(warm_steps)
+    i += 1
 
-system.force_cap = 0
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
 
-print("\nWarmup finished!\n")
+# activate thermostat
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 #############################################################
 #      Sampling                                             #

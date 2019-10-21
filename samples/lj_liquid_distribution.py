@@ -50,7 +50,6 @@ density = 0.7
 lj_eps = 1.0
 lj_sig = 1.0
 lj_cut = 2.5 * lj_sig
-lj_cap = 20
 
 # Integration parameters
 #############################################################
@@ -61,13 +60,12 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-# warmup integration (with capped LJ potential)
-warm_steps = 100
-warm_n_times = 30
-# do the warmup until the particles have at least the distance min_dist
-min_dist = 0.9
+# warmup integration (steepest descent)
+warm_steps = 20
+warm_n_times = 10
+# convergence criterion (particles are separated by at least 90% sigma)
+min_dist = 0.9 * lj_sig
 
 # integration
 int_steps = 1000
@@ -98,7 +96,6 @@ distr_values = np.zeros(distr_r_bins)
 #############################################################
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
-system.force_cap = lj_cap
 
 print("LJ-parameters:")
 print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
@@ -139,22 +136,23 @@ Start warmup integration:
 At maximum {} times {} steps
 Stop if minimal distance is larger than {}
 """.strip().format(warm_n_times, warm_steps, min_dist))
-
-# set LJ cap
-lj_cap = 20
-system.force_cap = lj_cap
 print(system.non_bonded_inter[0, 0].lennard_jones)
 
-# Warmup Integration Loop
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=lj_sig / 100)
 i = 0
-while i < warm_n_times and act_min_dist < min_dist:
+while i < warm_n_times and system.analysis.min_dist() < min_dist:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
     system.integrator.run(warm_steps)
-    # Warmup criterion
-    act_min_dist = system.analysis.min_dist()
     i += 1
-    # Increase LJ cap
-    lj_cap = lj_cap + 10
-    system.force_cap = lj_cap
+
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
+
+# activate thermostat
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # Just to see what else we may get from the C++ core
 import pprint
@@ -175,11 +173,6 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
 #############################################################
 print("\nStart integration: run {} times {} steps"
       .format(int_n_times, int_steps))
-
-# remove force capping
-lj_cap = 0
-system.force_cap = lj_cap
-print(system.non_bonded_inter[0, 0].lennard_jones)
 
 # print initial energies
 energies = system.analysis.energy()

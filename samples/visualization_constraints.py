@@ -109,8 +109,6 @@ if args.shape == "HollowCone":
         particle_type=0, penetrable=True)
 
 
-system.thermostat.set_langevin(kT=10.0, gamma=10, seed=42)
-
 for i in range(100):
     rpos = np.random.random(3) * box_l
     system.part.add(pos=rpos, type=1)
@@ -119,7 +117,14 @@ system.non_bonded_inter[1, 1].lennard_jones.set_params(
     epsilon=1.0, sigma=5.0, cutoff=15.0, shift="auto")
 
 system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=200.0, sigma=5.0, cutoff=20.0, shift="auto")
+    epsilon=20.0, sigma=5.0, cutoff=20.0, shift="auto")
+
+
+system.integrator.set_steepest_descent(f_max=10, gamma=1e-3,
+                                       max_displacement=0.05)
+system.integrator.run(500)
+system.integrator.set_vv()
+system.thermostat.set_langevin(kT=10.0, gamma=10, seed=42)
 
 system.force_cap = 1000.0
 

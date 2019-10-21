@@ -36,13 +36,13 @@ system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 np.seed = system.seed
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
 system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 system.non_bonded_inter[0, 1].wca.set_params(epsilon=1, sigma=1)
 system.non_bonded_inter[1, 1].wca.set_params(epsilon=1, sigma=1)
 
+# create stiff FENE bonds
 fene = interactions.FeneBond(k=30, d_r_max=1.5)
 system.bonded_inter.add(fene)
 
@@ -74,30 +74,19 @@ diamond.Diamond(a=a, bond_length=bond_length, MPC=MPC)
 #      Warmup                                               #
 #############################################################
 
-print("Warming up...")
-warm_steps = 10
-wca_cap = 1
-system.force_cap = wca_cap
-act_min_dist = system.analysis.min_dist()
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=0.01)
+while system.analysis.min_dist() < 0.9:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(20)
 
-# warmup with zero temperature to remove overlaps
-system.thermostat.set_langevin(kT=0.0, gamma=1.0)
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
 
-# slowly ramp up the cap
-while wca_cap < 5:
-    system.integrator.run(warm_steps)
-    system.part[:].v = [0, 0, 0]
-    wca_cap *= 1.1
-    system.force_cap = wca_cap
-
-# remove force cap
-system.force_cap = 0
-system.integrator.run(warm_steps * 10)
-
-# restore simulation temperature
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-system.integrator.run(warm_steps * 10)
-print("Finished warmup")
+# activate thermostat
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 
 #############################################################
@@ -126,3 +115,4 @@ for t in range(t_steps):
     system.integrator.run(sim_steps)
     vtf.writevcf(system, outfile)
 outfile.close()
+print()

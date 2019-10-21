@@ -66,7 +66,6 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature = 1.0
-system.thermostat.set_langevin(kT=temperature, gamma=.5, seed=42)
 
 
 #############################################################
@@ -112,24 +111,26 @@ for key, value in p3m_params.items():
 
 # Warmup
 #############################################################
-# warmup integration (with capped WCA potential)
-warm_steps = 1000
+# warmup integration (steepest descent)
+warm_steps = 20
 warm_n_times = 20
-# set WCA cap
-system.force_cap = 20
+min_dist = 0.9 * wca_sig
 
-# Warmup Integration Loop
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=0.01)
 i = 0
-while i < warm_n_times:
-    print(i, "warmup")
-    RE.reaction(100)
-    system.integrator.run(steps=warm_steps)
+while system.analysis.min_dist() < min_dist and i < warm_n_times:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(warm_steps)
     i += 1
-    # increase WCA cap
-    system.force_cap += 10
 
-# remove force capping
-system.force_cap = 0
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
+
+# activate thermostat
+system.thermostat.set_langevin(kT=temperature, gamma=.5, seed=42)
 
 # MC warmup
 RE.reaction(1000)
