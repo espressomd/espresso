@@ -62,20 +62,10 @@ enum {
 /** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
  *  an external force
  */
-#define PARTICLE_EXT_FORCE 1
-/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
- *  coord. */
 #define COORD_FIXED(coord) (2L << (coord))
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-
-#ifdef ROTATION
-/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
- *  an external torque. */
-#define PARTICLE_EXT_TORQUE 16
-#endif
-
 #endif
 
 /************************************************

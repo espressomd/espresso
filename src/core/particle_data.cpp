@@ -93,32 +93,6 @@ using UpdateMomentum = UpdateParticle<ParticleMomentum, &Particle::m, T, m>;
 template <typename T, T ParticleForce ::*m>
 using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 
-#ifdef EXTERNAL_FORCES
-/**
- * @brief Special updater for the external flags.
- *
- * These need to be treated specially as they are
- * updated masked and not overwritten.
- */
-struct UpdateExternalFlag {
-  /* The bits to update */
-  int mask;
-  /* The actual values for the update */
-  int flag;
-  void operator()(Particle &p) const {
-    /* mask out old flags */
-    p.p.ext_flag &= ~mask;
-    /* set new values */
-    p.p.ext_flag |= (mask & flag);
-  }
-
-  template <class Archive> void serialize(Archive &ar, long int) {
-    ar &mask;
-    ar &flag;
-  }
-};
-#endif
-
 using Prop = ParticleProperties;
 
 // clang-format off
@@ -172,7 +146,7 @@ using UpdatePropertyMessage = boost::variant
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-        , UpdateExternalFlag
+        , UpdateProperty<int, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
 #ifdef ROTATION
         , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
@@ -1019,33 +993,18 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
-  // No lint because clang-tidy 6 wrongly detects this as size check.
-  auto const flag =
-      (torque != Utils::Vector3d{}) ? PARTICLE_EXT_TORQUE : 0; // NOLINT
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_torque>(part, torque);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_TORQUE, flag}));
+  mpi_update_particle_property<Utils::Vector3d,
+                               &ParticleProperties::ext_torque>(part, torque);
 }
 #endif
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
-  // No lint because clang-tidy 6 wrongly detects this as size check.
-  auto const flag =
-      (force != Utils::Vector3d{}) ? PARTICLE_EXT_FORCE : 0; // NOLINT
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_force>(part, force);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_FORCE, flag}));
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::ext_force>(
+      part, force);
 }
 
 void set_particle_fix(int part, int flag) {
-  mpi_send_update_message(
-      part, UpdatePropertyMessage(UpdateExternalFlag{COORDS_FIX_MASK, flag}));
+  mpi_update_particle_property<int, &ParticleProperties::ext_flag>(part, flag);
 }
 #endif
 
