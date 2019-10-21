@@ -118,11 +118,7 @@ inline ParticleForce thermostat_force(Particle const &p) {
 
 /** Initialize the forces for a real particle */
 inline ParticleForce init_local_particle_force(Particle const &part) {
-  auto f = ParticleForce{};
-  f += thermostat_force(part);
-  f += external_force(part);
-
-  return f;
+  return thermostat_force(part) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
