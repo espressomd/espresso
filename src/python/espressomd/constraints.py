@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptObjectRegistry, ScriptInterfaceHelper, script_interface_register
-from espressomd.utils import is_valid_type
 import numpy as np
 from itertools import product
 

@@ -40,11 +40,10 @@ class ek_charged_plate(ut.TestCase):
         box_x = 20
         box_y = 20
         box_z = 20
-        system.box_l = box_l = [box_x, box_y, box_z]
+        system.box_l = [box_x, box_y, box_z]
         system.cell_system.skin = 0.2
         system.time_step = 0.1
         system.periodicity = [1, 1, 1]
-        coulomb_accuracy = 1.0e-4
         bjerrum_length = 2.13569
         agrid = 0.5
 

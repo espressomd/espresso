@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -170,7 +169,6 @@ class InteractionsBondedTest(ut.TestCase):
         N = 111
         d_phi = 2 * np.pi / N
         # tabulated values for the range [0, 2*pi]
-        tab_phi = [i * d_phi for i in range(N + 1)]
         tab_energy = [np.cos(i * d_phi) for i in range(N + 1)]
         tab_force = [np.cos(i * d_phi) for i in range(N + 1)]
 

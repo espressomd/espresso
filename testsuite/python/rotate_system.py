@@ -23,7 +23,7 @@ Testmodule for System.rotate_system()
 """
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 
 
 class RotateSystemTest(ut.TestCase):

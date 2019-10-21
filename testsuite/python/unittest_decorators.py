@@ -16,8 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import sys
 import unittest
-import espressomd  # pylint: disable=import-error
-from espressomd.utils import to_str
+import espressomd
 
 
 def _id(x):
@@ -30,7 +29,7 @@ def skipIfMissingFeatures(*args):
     if not espressomd.has_features(*args):
         missing_features = espressomd.missing_features(*args)
         return unittest.skip("Skipping test: missing feature{} {}".format(
-            's' if len(missing_features) else '', ', '.join(missing_features)))
+            's' if missing_features else '', ', '.join(missing_features)))
     return _id
 
 
@@ -45,7 +44,7 @@ def skipIfMissingModules(*args):
     missing_modules = set(args) - set(sys.modules.keys())
     if missing_modules:
         return unittest.skip("Skipping test: missing python module{} {}".format(
-            's' if len(missing_modules) else '', ', '.join(missing_modules)))
+            's' if missing_modules else '', ', '.join(missing_modules)))
     return _id
 
 
@@ -54,6 +53,4 @@ def skipIfMissingGPU():
 
     if not espressomd.gpu_available():
         return unittest.skip("Skipping test: no GPU available")
-    devices = espressomd.cuda_init.CudaInitHandle().device_list
-    current_device_id = espressomd.cuda_init.CudaInitHandle().device
     return _id

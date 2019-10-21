@@ -38,7 +38,7 @@ class DomainDecomposition(ut.TestCase):
 
         # And now change their positions
         for i in range(n_part):
-            self.system.part[i].pos = pos = np.random.random(3)
+            self.system.part[i].pos = np.random.random(3)
 
         # Distribute the particles on the nodes
         part_dist = self.system.cell_system.resort()
