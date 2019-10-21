@@ -252,18 +252,6 @@ void convert_initial_torques(const ParticleRange &particles) {
     convert_torque_to_body_frame_apply_fix(p);
   }
 }
-// Frame conversion routines
-
-Utils::Vector3d convert_vector_body_to_space(const Particle &p,
-                                             const Utils::Vector3d &vec) {
-  auto const A = rotation_matrix(p.r.quat);
-  return transpose(A) * vec;
-}
-
-Utils::Vector3d convert_vector_space_to_body(const Particle &p,
-                                             const Utils::Vector3d &v) {
-  return rotation_matrix(p.r.quat) * v;
-}
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
