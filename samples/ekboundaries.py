@@ -23,10 +23,10 @@ import espressomd
 required_features = ["ELECTROKINETICS", "EK_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
-from espressomd import shapes, electrokinetics, ekboundaries
+from espressomd import System, shapes, electrokinetics, ekboundaries
 import os
 
-system = espressomd.System(box_l=[10, 10, 10])
+system = System(box_l=[10, 10, 10])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 

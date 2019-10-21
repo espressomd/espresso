@@ -58,7 +58,6 @@ system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
-system.cell_system.max_num_cells = 14**3
 
 
 #############################################################

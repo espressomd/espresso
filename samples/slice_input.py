@@ -44,8 +44,6 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 
-system.cell_system.max_num_cells = 14**3
-
 
 #############################################################
 #  Setup System                                             #

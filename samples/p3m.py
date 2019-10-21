@@ -52,7 +52,6 @@ print("""
 # System parameters
 #############################################################
 
-# 10 000  Particles
 box_l = 10
 density = 0.3
 
@@ -114,8 +113,6 @@ print("Simulate {} particles in a cubic box {} at density {}."
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
-
-system.cell_system.max_num_cells = 14**3
 
 
 # Assign charges to particles
@@ -201,7 +198,8 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
 #############################################################
 #      Integration                                          #
 #############################################################
-print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
+print("\nStart integration: run {} times {} steps"
+      .format(int_n_times, int_steps))
 
 # remove force capping
 system.force_cap = 0
@@ -212,7 +210,7 @@ energies = system.analysis.energy()
 print(energies)
 
 for i in range(int_n_times):
-    print("run %d at time=%f " % (i, system.time))
+    print("run {} at time={:.2f}".format(i, system.time))
 
     system.integrator.run(int_steps)
 
@@ -227,7 +225,7 @@ end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l))
 end_file.write("{ particles {id pos type} }")
 for i in range(n_part):
     end_file.write("%s\n" % system.part[i].pos)
-
+    # id & type not working yet
 
 obs_file.close()
 set_file.close()

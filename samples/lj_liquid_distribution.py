@@ -41,7 +41,6 @@ print("""
 # System parameters
 #############################################################
 
-# 10 000  Particles
 box_l = 10.7437
 density = 0.7
 
@@ -123,7 +122,6 @@ print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
-system.cell_system.max_num_cells = 14**3
 
 #############################################################
 #  Warmup Integration                                       #
@@ -175,7 +173,8 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
 #############################################################
 #      Integration                                          #
 #############################################################
-print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
+print("\nStart integration: run {} times {} steps"
+      .format(int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0
@@ -205,17 +204,6 @@ for i in range(int_n_times):
     linear_momentum = system.analysis.linear_momentum()
     print(linear_momentum)
 
-#   write observables
-#    set energies [analyze energy]
-#    puts $obs_file "{ time [setmd time] } $energies"
-#    puts -nonewline "temp = [expr [lindex $energies 1 1]/(([degrees_of_freedom]/2.0)*[setmd n_part])]\r"
-#    flush stdout
-
-#   write intermediate configuration
-#    if { $i%10==0 } {
-#	polyBlockWrite "$name$ident.[format %04d $j]" {time box_l} {id pos type}
-#	incr j
-#    }
 
 # rescale distribution values and write out data
 distr_values /= int_n_times

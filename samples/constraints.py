@@ -66,13 +66,12 @@ ceil = shapes.Wall(normal=[0, 0, -1], dist=-(box_l - wall_offset))
 c2 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=ceil)
 
-
-# polymer.positions will avoid violating the constraints
-
 fene = interactions.FeneBond(k=30, d_r_max=2)
 system.bonded_inter.add(fene)
 # start it next to the wall to test it!
 start = np.array([1, 1, 1 + wall_offset])
+
+# polymer.positions will avoid violating the constraints
 
 positions = polymer.positions(n_polymers=1, beads_per_chain=50,
                               bond_length=1.0, seed=1234,
@@ -122,6 +121,9 @@ while temp < 1.0:
     temp += 0.1
 system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.integrator.run(warm_steps)
+
+# Integration
+#############################################################
 
 int_n_times = 300
 int_steps = 1000

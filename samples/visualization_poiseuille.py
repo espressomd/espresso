@@ -19,7 +19,7 @@ Visualize the Poiseuille flow in a lattice-Boltzmann fluid with an
 external force applied.
 """
 
-from espressomd import lb, shapes, lbboundaries
+from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
 import espressomd.visualization_opengl
 
@@ -28,7 +28,7 @@ espressomd.assert_features(required_features)
 
 # System setup
 box_l = 16
-system = espressomd.System(box_l=[box_l] * 3)
+system = System(box_l=[box_l] * 3)
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 

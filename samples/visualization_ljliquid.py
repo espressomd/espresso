@@ -112,8 +112,6 @@ print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
-system.cell_system.max_num_cells = 14**3
-
 # Select visualizer
 if args.visualizer == "mayavi":
     visualizer = visualization.mayaviLive(system)
@@ -170,7 +168,7 @@ pyplot.show(block=False)
 
 def main_loop():
     global energies
-    print("run at time=%f " % system.time)
+    print("run at time={:.2f}".format(system.time))
 
     system.integrator.run(int_steps)
     visualizer.update()

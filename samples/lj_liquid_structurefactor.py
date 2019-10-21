@@ -41,7 +41,6 @@ print("""
 # System parameters
 #############################################################
 
-# 10 000  Particles
 box_l = 10.7437
 density = 0.7
 
@@ -121,7 +120,6 @@ print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
-system.cell_system.max_num_cells = 14**3
 
 #############################################################
 #  Warmup Integration                                       #
@@ -169,7 +167,8 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
 #############################################################
 #      Integration                                          #
 #############################################################
-print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
+print("\nStart integration: run {} times {} steps"
+      .format(int_n_times, int_steps))
 
 # remove force capping
 lj_cap = 0

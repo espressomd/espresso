@@ -49,7 +49,6 @@ system.cell_system.skin = 0.4
 system.periodicity = [True, True, True]
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 # system.cell_system.set_n_square(use_verlet_lists=False)
-system.cell_system.max_num_cells = 14**3
 
 # Non-bonded interactions
 ###############################################################

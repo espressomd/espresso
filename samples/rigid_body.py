@@ -28,7 +28,7 @@ import numpy as np
 
 
 box_l = 100
-system = espressomd.System(box_l=3 * [box_l])
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.set_random_state_PRNG()
 system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 

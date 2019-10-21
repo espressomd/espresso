@@ -94,7 +94,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(3 * [box_l])
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -136,7 +136,6 @@ for i in range(n_part):
 system.analysis.dist_to(0)
 
 act_min_dist = system.analysis.min_dist()
-system.cell_system.max_num_cells = 14**3
 
 if use_mayavi:
     vis = visualization.mayaviLive(system)
