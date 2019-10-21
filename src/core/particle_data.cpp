@@ -146,7 +146,7 @@ using UpdatePropertyMessage = boost::variant
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-        , UpdateProperty<int, &Prop::ext_flag>
+        , UpdateProperty<uint8_t, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
 #ifdef ROTATION
         , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
@@ -1003,8 +1003,9 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force) {
       part, force);
 }
 
-void set_particle_fix(int part, int flag) {
-  mpi_update_particle_property<int, &ParticleProperties::ext_flag>(part, flag);
+void set_particle_fix(int part, uint8_t flag) {
+  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
+                                                                       flag);
 }
 #endif
 
@@ -1471,19 +1472,15 @@ void pointer_to_dipm(Particle const *p, double const *&res) {
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1,
-                          double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_force(Particle const *p, double const *&res2) {
   res2 = p->p.ext_force.data();
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1,
-                           double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_torque(Particle const *p, double const *&res2) {
   res2 = p->p.ext_torque.data();
 }
 #endif
-void pointer_to_fix(Particle const *p, int const *&res) {
+void pointer_to_fix(Particle const *p, const uint8_t *&res) {
   res = &(p->p.ext_flag);
 }
 #endif

@@ -171,13 +171,13 @@ cdef extern from "particle_data.hpp":
     IF EXTERNAL_FORCES:
         IF ROTATION:
             void set_particle_ext_torque(int part, const Vector3d & torque)
-            void pointer_to_ext_torque(const particle * P, const int * & res1, const double * & res2)
+            void pointer_to_ext_torque(const particle * P, const double * & res2)
 
         void set_particle_ext_force(int part, const Vector3d & force)
-        void pointer_to_ext_force(const particle * P, const int * & res1, const double * & res2)
+        void pointer_to_ext_force(const particle * P, const double * & res2)
 
-        void set_particle_fix(int part, int flag)
-        void pointer_to_fix(const particle * P, const int * & res)
+        void set_particle_fix(int part, stdint.uint8_t flag)
+        void pointer_to_fix(const particle * P, const stdint.uint8_t * & res)
 
     void delete_particle_bond(int part, Span[const int] bond)
     void delete_particle_bonds(int part)

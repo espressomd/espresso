@@ -813,8 +813,7 @@ cdef class ParticleHandle:
                 self.update_particle_data()
 
                 cdef const double * ext_f = NULL
-                cdef const int * ext_flag = NULL
-                pointer_to_ext_force(self.particle_data, ext_flag, ext_f)
+                pointer_to_ext_force(self.particle_data, ext_f)
                 return array_locked([ext_f[0], ext_f[1], ext_f[2]])
 
         property fix:
@@ -837,7 +836,7 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _fixed_coord_flag):
-                cdef int ext_flag = 0
+                cdef stdint.uint8_t ext_flag = 0
                 check_type_or_throw_except(
                     _fixed_coord_flag, 3, int, "Fix has to be 3 ints.")
                 for i in map(long, range(3)):
@@ -848,7 +847,7 @@ cdef class ParticleHandle:
             def __get__(self):
                 self.update_particle_data()
                 fixed_coord_flag = np.array([0, 0, 0], dtype=int)
-                cdef const int * ext_flag = NULL
+                cdef const stdint.uint8_t * ext_flag = NULL
                 pointer_to_fix(self.particle_data, ext_flag)
                 for i in map(long, range(3)):
                     if ext_flag[0] & _COORD_FIXED(i):
@@ -880,9 +879,8 @@ cdef class ParticleHandle:
                 def __get__(self):
                     self.update_particle_data()
                     cdef const double * ext_t = NULL
-                    cdef const int * ext_flag = NULL
                     pointer_to_ext_torque(
-                        self.particle_data, ext_flag, ext_t)
+                        self.particle_data, ext_t)
                     return array_locked([ext_t[0], ext_t[1], ext_t[2]])
 
     IF LANGEVIN_PER_PARTICLE:
