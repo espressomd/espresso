@@ -39,12 +39,12 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "errorhandling.hpp"
 #include "forces.hpp"
 #include "global.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "thermostat.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/math/quaternion.hpp>
@@ -167,12 +167,8 @@ void propagate_omega_quat_particle(Particle &p) {
   }
 }
 
-inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
-  auto const torque = (thermo_switch & THERMO_LANGEVIN)
-                          ? friction_thermo_langevin_rotation(p) +
-                                convert_vector_space_to_body(p, p.f.torque)
-                          : convert_vector_space_to_body(p, p.f.torque);
-
+inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
+  auto const torque = convert_vector_space_to_body(p, p.f.torque);
   p.f.torque = mask(p.p.rotation, torque);
 }
 
@@ -192,7 +188,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
     if (!p.p.rotation)
       continue;
 
-    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
+    convert_torque_to_body_frame_apply_fix(p);
 
 #if defined(ENGINE)
     if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
@@ -253,20 +249,8 @@ void convert_initial_torques(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (!p.p.rotation)
       continue;
-    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
+    convert_torque_to_body_frame_apply_fix(p);
   }
-}
-// Frame conversion routines
-
-Utils::Vector3d convert_vector_body_to_space(const Particle &p,
-                                             const Utils::Vector3d &vec) {
-  auto const A = rotation_matrix(p.r.quat);
-  return transpose(A) * vec;
-}
-
-Utils::Vector3d convert_vector_space_to_body(const Particle &p,
-                                             const Utils::Vector3d &v) {
-  return rotation_matrix(p.r.quat) * v;
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi

@@ -61,6 +61,7 @@
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
 #include "particle_data.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 
 #ifdef DIPOLES
@@ -79,27 +80,45 @@
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
 
-/** Initialize the forces for a real particle */
-inline ParticleForce init_local_particle_force(Particle const &part) {
-  auto f = (thermo_switch & THERMO_LANGEVIN) ? friction_thermo_langevin(part)
-                                             : ParticleForce{};
+/** External particle forces */
+inline ParticleForce external_force(Particle const &p) {
+  ParticleForce f = {};
 
 #ifdef EXTERNAL_FORCES
-  f.f += part.p.ext_force;
+  f.f += p.p.ext_force;
 #ifdef ROTATION
-  f.torque += part.p.ext_torque;
+  f.torque += p.p.ext_torque;
 #endif
 #endif
 
 #ifdef ENGINE
   // apply a swimming force in the direction of
   // the particle's orientation axis
-  if (part.swim.swimming) {
-    f.f += part.swim.f_swim * part.r.calc_director();
+  if (p.swim.swimming) {
+    f.f += p.swim.f_swim * p.r.calc_director();
   }
 #endif
 
   return f;
+}
+
+inline ParticleForce thermostat_force(Particle const &p) {
+  if (!(thermo_switch & THERMO_LANGEVIN)) {
+    return {};
+  }
+
+#ifdef ROTATION
+  return {
+      friction_thermo_langevin(p),
+      convert_vector_body_to_space(p, friction_thermo_langevin_rotation(p))};
+#else
+  return friction_thermo_langevin(p);
+#endif
+}
+
+/** Initialize the forces for a real particle */
+inline ParticleForce init_local_particle_force(Particle const &part) {
+  return thermostat_force(part) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
