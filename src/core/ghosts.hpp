@@ -158,12 +158,12 @@ struct GhostCommunication {
   int node;
 
   /** Pointer array to particle lists to communicate. */
-  std::vector<Cell *> part_lists;
+  std::vector<Cell *> part_lists = {};
 
   /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
      this is the shift vector. Normally this is an integer multiple of the box
      length. The shift is done on the sender side */
-  Utils::Vector3d shift;
+  Utils::Vector3d shift = {};
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */

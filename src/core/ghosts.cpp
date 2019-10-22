@@ -220,13 +220,11 @@ static void prepare_send_buffer(CommBuf &send_buffer,
             bond_archiver << Utils::make_const_span(part.bl);
           }
         }
-        if (data_parts & GHOSTTRANS_POSSHFTD) {
+        if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
           auto pp = part.r;
           pp.p += ghost_comm.shift;
           archiver << pp;
-        } else if (data_parts & GHOSTTRANS_POSITION) {
-          archiver << part.r;
         }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           archiver << part.m;
@@ -359,12 +357,11 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm, int data_parts) {
             part2.bl = part1.bl;
           }
         }
-        if (data_parts & GHOSTTRANS_POSSHFTD) {
+        if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
           part2.r = part1.r;
           part2.r.p += ghost_comm.shift;
-        } else if (data_parts & GHOSTTRANS_POSITION)
-          part2.r = part1.r;
+        }
         if (data_parts & GHOSTTRANS_MOMENTUM) {
           part2.m = part1.m;
         }
