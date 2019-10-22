@@ -164,8 +164,6 @@ struct CellStructure {
   /** returns the global ghost_cells */
   CellPList ghost_cells() const;
 
-  /** Communicator to exchange ghost cell information. */
-  GhostCommunicator ghost_cells_comm;
   /** Communicator to exchange ghost particles. */
   GhostCommunicator exchange_ghosts_comm;
   /** Communicator to update ghost positions. */

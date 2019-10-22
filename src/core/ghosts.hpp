@@ -152,7 +152,6 @@ further details.
 /*@{*/
 
 struct GhostCommunication {
-
   /** Communication type. */
   int type;
   /** Node to communicate with (to use with all MPI operations). */
