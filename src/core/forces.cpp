@@ -167,7 +167,8 @@ void force_calc(CellStructure &cell_structure) {
 #endif
 
   // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                     GHOSTTRANS_FORCE);
 
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, particles);

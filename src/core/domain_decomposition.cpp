@@ -38,6 +38,7 @@ using Utils::get_linear_index;
 #include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/range/algorithm/reverse.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
@@ -344,28 +345,18 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
  *  communication types GHOST_SEND <-> GHOST_RECV.
  */
 void dd_revert_comm_order(GhostCommunicator *comm) {
-  int i, j, nlist2;
-  GhostCommunication tmp;
 
   /* revert order */
-  for (i = 0; i < (comm->num / 2); i++) {
-    tmp = comm->comm[i];
-    comm->comm[i] = comm->comm[comm->num - i - 1];
-    comm->comm[comm->num - i - 1] = tmp;
-  }
+  boost::reverse(comm->comm);
+
   /* exchange SEND/RECV */
-  for (i = 0; i < comm->num; i++) {
-    if (comm->comm[i].type == GHOST_SEND)
-      comm->comm[i].type = GHOST_RECV;
-    else if (comm->comm[i].type == GHOST_RECV)
-      comm->comm[i].type = GHOST_SEND;
-    else if (comm->comm[i].type == GHOST_LOCL) {
-      nlist2 = comm->comm[i].part_lists.size() / 2;
-      for (j = 0; j < nlist2; j++) {
-        auto tmplist = comm->comm[i].part_lists[j];
-        comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j + nlist2];
-        comm->comm[i].part_lists[j + nlist2] = tmplist;
-      }
+  for (auto &c : comm->comm) {
+    if (c.type == GHOST_SEND)
+      c.type = GHOST_RECV;
+    else if (c.type == GHOST_RECV)
+      c.type = GHOST_SEND;
+    else if (c.type == GHOST_LOCL) {
+      boost::reverse(c.part_lists);
     }
   }
 }
@@ -374,22 +365,18 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
  *  poststore
  */
 void dd_assign_prefetches(GhostCommunicator *comm) {
-  int cnt;
-
-  for (cnt = 0; cnt < comm->num; cnt += 2) {
-    if (comm->comm[cnt].type == GHOST_RECV &&
-        comm->comm[cnt + 1].type == GHOST_SEND) {
-      comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+  for (auto it = comm->comm.begin(); it != comm->comm.end(); it += 2) {
+    auto next = std::next(it);
+    if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
+      it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      next->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
     }
   }
 }
 
 /** update the 'shift' member of those GhostCommunicators, which use
  *  that value to speed up the folding process of its ghost members
- *  (see \ref dd_prepare_comm for the original), i.e. all which have
- *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
- *  dd_prepare_comm.
+ *  (see \ref dd_prepare_comm for the original).
  */
 void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   int cnt = 0;

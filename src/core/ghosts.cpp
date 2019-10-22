@@ -150,7 +150,6 @@ bool ghosts_have_bonds = false;
 
 void prepare_comm(GhostCommunicator *gcr, int num) {
   assert(gcr);
-  gcr->num = num;
   gcr->comm.resize(num);
   for (auto &ghost_comm : gcr->comm)
     ghost_comm.shift.fill(0.0);
@@ -409,8 +408,8 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
 
-  for (int n = 0; n < gcr->num; n++) {
-    GhostCommunication &ghost_comm = gcr->comm[n];
+  for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
+    GhostCommunication &ghost_comm = *it;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
     if (comm_type == GHOST_LOCL) {
@@ -434,8 +433,7 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
       auto prefetch_ghost_comm =
-          std::find_if(std::next(gcr->comm.begin(), n + 1), gcr->comm.end(),
-                       is_prefetchable);
+          std::find_if(std::next(it), gcr->comm.end(), is_prefetchable);
       if (prefetch_ghost_comm != gcr->comm.end())
         prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
     }
@@ -498,8 +496,7 @@ void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
       auto poststore_ghost_comm = std::find_if(
-          std::make_reverse_iterator(std::next(gcr->comm.begin(), n)),
-          gcr->comm.rend(), is_poststorable);
+          std::make_reverse_iterator(it), gcr->comm.rend(), is_poststorable);
 
       if (poststore_ghost_comm != gcr->comm.rend()) {
         assert(recv_buffer.size() ==

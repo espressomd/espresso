@@ -403,7 +403,8 @@ void cells_resort_particles(int global_flag) {
   }
 
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PARTNUM);
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
 
   /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */
