@@ -227,9 +227,6 @@ folder :file:`/tmp`:
 Depending on the chosen output, not all of these files might be created.
 To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
 :meth:`espressomd.io.mpiio.Mpiio.write`.
-There exists a legacy python script in the :file:`tools` directory which can convert
-MPI-IO data to the now unsupported blockfile format. Check it out if you want
-to post-process the data without ESPResSo.
 
 *WARNING*: Do not attempt to read these binary files on a machine with a different
 architecture!

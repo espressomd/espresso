@@ -27,11 +27,6 @@ espressomd.assert_features(required_features)
 from espressomd import interactions
 from espressomd import electrostatics
 import numpy as np
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
-import os
 
 # System parameters
 #############################################################
@@ -154,23 +149,12 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 #      Sampling                                             #
 #############################################################
 #
-# Activate electrostatic with checkpoint example
+# Activate electrostatic
 #############################################################
-read_checkpoint = False
-# Load checkpointed p3m class
-if os.path.isfile("p3m_checkpoint.pkl") and read_checkpoint is True:
-    print("reading p3m from file")
-    with open("p3m_checkpoint.pkl", "rb") as fp:
-        p3m = pickle.load(fp)
-else:
-    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
-    print("Tuning P3M")
+p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+print("Tuning P3M")
 
 system.actors.add(p3m)
-
-# Checkpoint AFTER tuning (adding method to actors)
-with open("p3m_checkpoint.pkl", "wb") as fp:
-    pickle.dump(p3m, fp, -1)
 
 print("P3M parameter:\n")
 p3m_params = p3m.get_params()
@@ -186,12 +170,6 @@ system.part[:].ext_force = np.dstack(
     (system.part[:].q * np.ones(n_part), np.zeros(n_part), np.zeros(n_part)))[0]
 
 # print(system.part[:].ext_force)
-
-
-# Activate LB
-############################################################
-# lbf = lb.LBF(dens=1, tau=0.01, visc=1, fric=1, agrid=1)
-# system.actors.add(lbf)
 
 # Data arrays
 v_list = []
