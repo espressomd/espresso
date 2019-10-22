@@ -152,10 +152,6 @@ print(system.actors)
 #  Warmup Integration                                       #
 #############################################################
 
-# open Observable file
-obs_file = open("pylj_liquid.obs", "w")
-obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
-
 print("""
 Start warmup integration:
 At maximum {} times {} steps
@@ -185,20 +181,11 @@ pprint.pprint(system.cell_system.get_state(), width=1)
 pprint.pprint(system.__getstate__())
 
 
-# write parameter file
-set_file = open("pylj_liquid.set", "w")
-set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
-               (box_l, system.time_step, system.cell_system.skin))
-
 #############################################################
 #      Integration                                          #
 #############################################################
 print("\nStart integration: run {} times {} steps"
       .format(int_n_times, int_steps))
-
-# print initial energies
-energies = system.analysis.energy()
-print(energies)
 
 for i in range(int_n_times):
     print("run {} at time={:.2f}".format(i, system.time))
@@ -206,21 +193,8 @@ for i in range(int_n_times):
     system.integrator.run(int_steps)
 
     energies = system.analysis.energy()
-    print(energies)
-    obs_file.write('{ time %s } %s\n' % (system.time, energies))
+    print(energies['total'])
 
-
-# write end configuration
-end_file = open("pylj_liquid.end", "w")
-end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l))
-end_file.write("{ particles {id pos type} }")
-for i in range(n_part):
-    end_file.write("%s\n" % system.part[i].pos)
-    # id & type not working yet
-
-obs_file.close()
-set_file.close()
-end_file.close()
 
 # terminate program
 print("\nFinished.")

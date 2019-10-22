@@ -82,12 +82,8 @@ distr_type_list_b = [1]
 distr_r_min = 0.1
 distr_r_max = box_l / 2.0
 distr_r_bins = 200
-distr_log_flag = 0
-distr_int_flag = 1
-
-
-distr_file = open("pylj_liquid_distribution.dat", "w")
-distr_file.write("# r\tdistribution\n")
+distr_log_flag = False
+distr_int_flag = True
 distr_r = np.zeros(distr_r_bins)
 distr_values = np.zeros(distr_r_bins)
 
@@ -124,13 +120,6 @@ print("Start with minimal distance {}".format(act_min_dist))
 #  Warmup Integration                                       #
 #############################################################
 
-# open Observable file
-obs_file = open("pylj_liquid.obs", "w")
-obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
-# set obs_file [open "$name$ident.obs" "w"]
-# puts $obs_file "\# System: $name$ident"
-# puts $obs_file "\# Time\tE_tot\tE_kin\t..."
-
 print("""
 Start warmup integration:
 At maximum {} times {} steps
@@ -160,13 +149,6 @@ pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
 pprint.pprint(system.__getstate__())
 
-# write parameter file
-
-# polyBlockWrite "$name$ident.set" {box_l time_step skin} ""
-set_file = open("pylj_liquid.set", "w")
-set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
-               (box_l, system.time_step, system.cell_system.skin))
-
 
 #############################################################
 #      Integration                                          #
@@ -174,13 +156,8 @@ set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
 print("\nStart integration: run {} times {} steps"
       .format(int_n_times, int_steps))
 
-# print initial energies
-energies = system.analysis.energy()
-print(energies)
-
-j = 0
 for i in range(int_n_times):
-    print("run %d at time=%f " % (i, system.time))
+    print("run {} at time={:.2f}".format(i, system.time))
 
     system.integrator.run(int_steps)
 
@@ -192,30 +169,17 @@ for i in range(int_n_times):
     distr_values += dist
 
     energies = system.analysis.energy()
-    print(energies)
-    obs_file.write('{ time %s } %s\n' % (system.time, energies))
+    print(energies['total'])
     linear_momentum = system.analysis.linear_momentum()
     print(linear_momentum)
 
 
 # rescale distribution values and write out data
 distr_values /= int_n_times
-
-for i in range(distr_r_bins):
-    distr_file.write("{0}\t{1}\n".format(distr_r[i], distr_values[i]))
-distr_file.close()
-
-# write end configuration
-end_file = open("pylj_liquid.end", "w")
-end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l))
-end_file.write("{ particles {id pos type} }")
-for i in range(n_part):
-    end_file.write("%s\n" % system.part[i].pos)
-    # id & type not working yet
-
-obs_file.close()
-set_file.close()
-end_file.close()
+table = np.column_stack([distr_r, distr_values])
+np.savetxt("pylj_liquid_distribution.tsv", table, delimiter='\t',
+           fmt='%.5e', header="r,distribution")
+# reload: distr_r, distr_values = np.loadtxt("pylj_liquid_distribution.tsv").T
 
 # terminate program
 print("\nFinished.")
