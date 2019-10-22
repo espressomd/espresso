@@ -192,13 +192,17 @@ struct ParticleForce {
       : f(f), torque(torque) {}
 #endif
 
-  ParticleForce &operator+=(ParticleForce const &rhs) {
-    f += rhs.f;
+  friend ParticleForce operator+(ParticleForce const &lhs,
+                                 ParticleForce const &rhs) {
 #ifdef ROTATION
-    torque += rhs.torque;
+    return {lhs.f + rhs.f, lhs.torque + rhs.torque};
+#else
+    return lhs.f + rhs.f;
 #endif
+  }
 
-    return *this;
+  ParticleForce &operator+=(ParticleForce const &rhs) {
+    return *this = *this + rhs;
   }
 
   /** force. */
