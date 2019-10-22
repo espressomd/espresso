@@ -1838,7 +1838,7 @@ Wang-Landau Reaction Ensemble
 
 An example script can be found here:
 
-* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
+* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
 
 Combination of the Reaction Ensemble with the Wang-Landau algorithm
 :cite:`wang01a`
@@ -1849,7 +1849,7 @@ variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 
 .. _Constant pH simulation using the Reaction Ensemble:
 
