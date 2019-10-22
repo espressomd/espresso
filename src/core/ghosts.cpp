@@ -148,9 +148,8 @@ public:
 bool ghosts_have_v = false;
 bool ghosts_have_bonds = false;
 
-void prepare_comm(GhostCommunicator *gcr, int data_parts, int num) {
+void prepare_comm(GhostCommunicator *gcr, int num) {
   assert(gcr);
-  gcr->data_parts = data_parts;
   gcr->num = num;
   gcr->comm.resize(num);
   for (auto &ghost_comm : gcr->comm)
@@ -400,10 +399,6 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
   int const poststore = ghost_comm.type & GHOST_PSTSTORE;
   int const node = ghost_comm.node;
   return is_recv_op(comm_type, node) && poststore;
-}
-
-void ghost_communicator(GhostCommunicator *gcr) {
-  ghost_communicator(gcr, gcr->data_parts);
 }
 
 void ghost_communicator(GhostCommunicator *gcr, int data_parts) {

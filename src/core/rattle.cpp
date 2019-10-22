@@ -170,7 +170,7 @@ void correct_pos_shake(ParticleRange const &particles) {
     init_correction_vector(cell_structure.local_cells().particles());
     repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
     app_pos_correction(cell_structure.local_cells().particles());
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
@@ -291,7 +291,7 @@ void correct_vel_shake() {
     init_correction_vector(particles);
     repeat_ = 0;
     compute_vel_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
     apply_vel_corr(particles);
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_POSITION);

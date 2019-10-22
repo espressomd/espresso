@@ -254,7 +254,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   }
 
   /* prepare communicator */
-  prepare_comm(comm, data_parts, num);
+  prepare_comm(comm, num);
 
   /* number of cells to communicate in a direction */
   n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];
