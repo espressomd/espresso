@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -57,9 +56,9 @@ class CheckpointTest(ut.TestCase):
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
-        nx = lbf.shape[0] 
-        ny = lbf.shape[1] 
-        nz = lbf.shape[2] 
+        nx = lbf.shape[0]
+        ny = lbf.shape[1]
+        nz = lbf.shape[2]
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
             (nx, ny, nz), dtype=float)
@@ -72,7 +71,7 @@ class CheckpointTest(ut.TestCase):
                         decimal=precision)
         state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
-        for key, val in reference.items():
+        for key in reference:
             self.assertTrue(key in state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
@@ -102,12 +101,12 @@ class CheckpointTest(ut.TestCase):
         reference = {'agrid': 0.5, 'lb_density': 26.15,
                      'viscosity': 1.7, 'friction': 0.0,
                      'T': 1.1, 'prefactor': 0.88, 'stencil': "linkcentered"}
-        for key, val in reference.items():
+        for key in reference:
             self.assertTrue(key in state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-5)
         state_species = ek_species.get_params()
         reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3}
-        for key, val in reference_species.items():
+        for key in reference_species:
             self.assertTrue(key in state_species)
             self.assertAlmostEqual(
                 reference_species[key],
@@ -224,13 +223,13 @@ class CheckpointTest(ut.TestCase):
     def test_bonded_inter(self):
         state = system.part[1].bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0}
-        for key in reference.keys():
+        for key in reference:
             self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
         if 'THERM.LB' not in modes:
             state = system.part[1].bonds[1][0].params
             reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
                          'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
-            for key in reference.keys():
+            for key in reference:
                 self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])

@@ -34,7 +34,6 @@
 #define MPICH_SKIP_MPICXX
 
 #include "config-features.hpp"
-#include "version.hpp"
 
 /** P3M: Default for number of interpolation points of the charge
     assignment function. */

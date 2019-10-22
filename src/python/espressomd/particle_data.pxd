@@ -23,6 +23,7 @@ from espressomd.utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
+from libc cimport stdint
 
 include "myconfig.pxi"
 
@@ -30,6 +31,9 @@ include "myconfig.pxi"
 
 cdef extern from "particle_data.hpp":
     # DATA STRUCTURES
+    stdint.uint8_t ROTATION_X
+    stdint.uint8_t ROTATION_Y
+    stdint.uint8_t ROTATION_Z
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
@@ -40,6 +44,7 @@ cdef extern from "particle_data.hpp":
         int    mol_id
         int    type
         double mass
+        stdint.uint8_t rotation
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
@@ -98,7 +103,6 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION:
         void set_particle_rotation(int part, int rot)
-        void pointer_to_rotation(const particle * p, const int * & res)
 
     void set_particle_q(int part, double q)
 
@@ -167,13 +171,13 @@ cdef extern from "particle_data.hpp":
     IF EXTERNAL_FORCES:
         IF ROTATION:
             void set_particle_ext_torque(int part, const Vector3d & torque)
-            void pointer_to_ext_torque(const particle * P, const int * & res1, const double * & res2)
+            void pointer_to_ext_torque(const particle * P, const double * & res2)
 
         void set_particle_ext_force(int part, const Vector3d & force)
-        void pointer_to_ext_force(const particle * P, const int * & res1, const double * & res2)
+        void pointer_to_ext_force(const particle * P, const double * & res2)
 
-        void set_particle_fix(int part, int flag)
-        void pointer_to_fix(const particle * P, const int * & res)
+        void set_particle_fix(int part, stdint.uint8_t flag)
+        void pointer_to_fix(const particle * P, const stdint.uint8_t * & res)
 
     void delete_particle_bond(int part, Span[const int] bond)
     void delete_particle_bonds(int part)

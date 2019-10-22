@@ -93,32 +93,6 @@ using UpdateMomentum = UpdateParticle<ParticleMomentum, &Particle::m, T, m>;
 template <typename T, T ParticleForce ::*m>
 using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 
-#ifdef EXTERNAL_FORCES
-/**
- * @brief Special updater for the external flags.
- *
- * These need to be treated specially as they are
- * updated masked and not overwritten.
- */
-struct UpdateExternalFlag {
-  /* The bits to update */
-  int mask;
-  /* The actual values for the update */
-  int flag;
-  void operator()(Particle &p) const {
-    /* mask out old flags */
-    p.p.ext_flag &= ~mask;
-    /* set new values */
-    p.p.ext_flag |= (mask & flag);
-  }
-
-  template <class Archive> void serialize(Archive &ar, long int) {
-    ar &mask;
-    ar &flag;
-  }
-};
-#endif
-
 using Prop = ParticleProperties;
 
 // clang-format off
@@ -137,7 +111,9 @@ using UpdatePropertyMessage = boost::variant
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
-        , UpdateProperty<int, &Prop::rotation>
+#ifdef ROTATION
+        , UpdateProperty<uint8_t, &Prop::rotation>
+#endif
 #ifdef ELECTROSTATICS
         , UpdateProperty<double, &Prop::q>
 #endif
@@ -166,11 +142,11 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::gamma_rot>
 #else
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-        , UpdateExternalFlag
+        , UpdateProperty<uint8_t, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
 #ifdef ROTATION
         , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
@@ -842,7 +818,8 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<int, &ParticleProperties::rotation>(part, rot);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
+                                                                       rot);
 }
 #endif
 #ifdef ROTATION
@@ -1016,33 +993,19 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
-  // No lint because clang-tidy 6 wrongly detects this as size check.
-  auto const flag =
-      (torque != Utils::Vector3d{}) ? PARTICLE_EXT_TORQUE : 0; // NOLINT
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_torque>(part, torque);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_TORQUE, flag}));
+  mpi_update_particle_property<Utils::Vector3d,
+                               &ParticleProperties::ext_torque>(part, torque);
 }
 #endif
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
-  // No lint because clang-tidy 6 wrongly detects this as size check.
-  auto const flag =
-      (force != Utils::Vector3d{}) ? PARTICLE_EXT_FORCE : 0; // NOLINT
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_force>(part, force);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_FORCE, flag}));
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::ext_force>(
+      part, force);
 }
 
-void set_particle_fix(int part, int flag) {
-  mpi_send_update_message(
-      part, UpdatePropertyMessage(UpdateExternalFlag{COORDS_FIX_MASK, flag}));
+void set_particle_fix(int part, uint8_t flag) {
+  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
+                                                                       flag);
 }
 #endif
 
@@ -1509,19 +1472,15 @@ void pointer_to_dipm(Particle const *p, double const *&res) {
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1,
-                          double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_force(Particle const *p, double const *&res2) {
   res2 = p->p.ext_force.data();
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1,
-                           double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_torque(Particle const *p, double const *&res2) {
   res2 = p->p.ext_torque.data();
 }
 #endif
-void pointer_to_fix(Particle const *p, int const *&res) {
+void pointer_to_fix(Particle const *p, const uint8_t *&res) {
   res = &(p->p.ext_flag);
 }
 #endif
@@ -1549,10 +1508,6 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
   res = &(p->p.T);
 }
 #endif // LANGEVIN_PER_PARTICLE
-
-void pointer_to_rotation(Particle const *p, int const *&res) {
-  res = &(p->p.rotation);
-}
 
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,

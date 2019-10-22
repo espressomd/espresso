@@ -38,10 +38,13 @@ add_dependencies(EspressoConfig myconfig check_myconfig generate_config_features
 install(TARGETS EspressoConfig LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 target_include_directories(EspressoConfig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
+find_package(Git)
 # Parse repository info from git if available
-include(version)
-
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/version.hpp.in
-  ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
-  )
+# Run this at build time to avoid rebuilds
+add_custom_target(version COMMAND ${CMAKE_COMMAND}
+  -DPROJECT_SOURCE_DIR=${PROJECT_SOURCE_DIR}
+  -DPROJECT_VERSION=${PROJECT_VERSION}
+  -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
+  -P ${PROJECT_SOURCE_DIR}/cmake/version.cmake)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES version.hpp version.hpp.tmp)
+add_dependencies(EspressoConfig version)

@@ -21,7 +21,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd
-from espressomd import electrostatics
+import espressomd.electrostatics
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])

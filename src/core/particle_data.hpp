@@ -59,23 +59,14 @@ enum {
 };
 
 #ifdef EXTERNAL_FORCES
-/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
- *  an external force
+/**
+ *   \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
+ *  coord.
  */
-#define PARTICLE_EXT_FORCE 1
-/** \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
- *  coord. */
-#define COORD_FIXED(coord) (2L << (coord))
+#define COORD_FIXED(coord) (2u << (coord))
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
-
-#ifdef ROTATION
-/** \ref ParticleProperties::ext_flag "ext_flag" value for particle subject to
- *  an external torque. */
-#define PARTICLE_EXT_TORQUE 16
-#endif
-
 #endif
 
 /************************************************
@@ -386,7 +377,7 @@ void set_particle_ext_force(int part, const Utils::Vector3d &force);
  *  @param part  the particle.
  *  @param flag new value for flagged coordinate axes to be fixed
  */
-void set_particle_fix(int part, int flag);
+void set_particle_fix(int part, uint8_t flag);
 #endif
 
 /** Call only on the master node: remove bond from particle.
@@ -570,13 +561,11 @@ void pointer_to_vs_relative(Particle const *p, int const *&res1,
 void pointer_to_dipm(Particle const *P, double const *&res);
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1,
-                          double const *&res2);
+void pointer_to_ext_force(Particle const *p, double const *&res2);
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1,
-                           double const *&res2);
+void pointer_to_ext_torque(Particle const *p, double const *&res2);
 #endif
-void pointer_to_fix(Particle const *p, int const *&res);
+void pointer_to_fix(Particle const *p, const uint8_t *&res);
 #endif
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -587,7 +576,6 @@ void pointer_to_gamma_rot(Particle const *p, double const *&res);
 #endif
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef ROTATION
-void pointer_to_rotation(Particle const *p, int const *&res);
 #endif
 
 #ifdef ENGINE

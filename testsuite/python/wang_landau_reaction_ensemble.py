@@ -24,7 +24,6 @@ import unittest as ut
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd import reaction_ensemble
-from espressomd import system
 import numpy.testing as npt
 
 
@@ -103,7 +102,7 @@ class ReactionEnsembleTest(ut.TestCase):
         while True:
             try:
                 self.WLRE.reaction()
-                for i in range(2):
+                for _ in range(2):
                     self.WLRE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break

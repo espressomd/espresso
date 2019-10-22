@@ -103,3 +103,13 @@ BOOST_AUTO_TEST_CASE(zero_size) {
   Array<int, 0> const a{};
   BOOST_CHECK(a.empty());
 }
+
+BOOST_AUTO_TEST_CASE(tuple_protocol) {
+  using A = Utils::Array<int, 4>;
+
+  static_assert(std::is_same<Utils::tuple_element_t<0, A>, int>::value, "");
+  static_assert(std::is_same<Utils::tuple_element_t<1, A>, int>::value, "");
+  static_assert(A{}.size() == Utils::tuple_size<A>::value, "");
+
+  BOOST_CHECK_EQUAL(Utils::get<1>(A{1, 2, 3, 4}), 2);
+}
