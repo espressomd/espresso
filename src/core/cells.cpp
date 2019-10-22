@@ -461,7 +461,8 @@ void cells_update_ghosts() {
 
   } else
     /* Communication step: ghost information */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
 }
 
 Cell *find_current_cell(const Particle &p) {

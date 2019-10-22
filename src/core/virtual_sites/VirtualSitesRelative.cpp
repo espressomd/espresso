@@ -35,7 +35,8 @@ void VirtualSitesRelative::update(bool recalc_positions) const {
   // Ghost update logic
   if (n_nodes > 0) {
     if (recalc_positions or get_have_velocity()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
+      ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                         GHOSTTRANS_POSITION);
     }
   }
   for (auto &p : local_cells.particles()) {
