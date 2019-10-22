@@ -613,9 +613,8 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   dd_mark_cells();
 
   /* create communicators */
-  exchange_data =
-      (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
-  update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
+  exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
+  update_data = (GHOSTTRANS_POSITION);
 
   dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
   dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data, grid);

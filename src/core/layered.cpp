@@ -146,7 +146,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* if periodic and bottom or top, send shifted */
           comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
           if ((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift[2] = box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
@@ -188,7 +187,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
           /* if periodic and bottom or top, send shifted */
           comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
           if ((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
             comm->comm[c].shift[2] = -box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
@@ -236,7 +234,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       } else {
         comm->comm[c].part_lists[0] = &cells[1];
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
-        comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
         comm->comm[c].shift[2] = box_geo.length()[2];
       }
@@ -250,7 +247,6 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
       } else {
         comm->comm[c].part_lists[0] = &cells[n_layers];
         comm->comm[c].part_lists[1] = &cells[0];
-        comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
         comm->comm[c].shift[2] = -box_geo.length()[2];
       }
