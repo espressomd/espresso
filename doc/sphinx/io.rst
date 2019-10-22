@@ -190,7 +190,7 @@ all positions stored in the file called "h5mdfile.h5" can be read using:
 
 Furthermore, the files can be inspected with the GUI tool hdfview.
 
-For other examples, see :file:`/samples/5hmd.py`
+For other examples, see :file:`/samples/h5md.py`
 
 
 .. _Writing MPI-IO binary files:
@@ -200,8 +200,8 @@ Writing MPI-IO binary files
 
 This method outputs binary data in parallel and is, thus, also suitable for
 large-scale simulations. Generally, H5MD is the preferred method because the
-data is easier accessible. In contrast to H5MD, the MPI-IO functionality
-outputs data in a *machine-dependent format* but has write and read
+data is easily accessible. In contrast to H5MD, the MPI-IO functionality
+outputs data in a *machine-dependent format*, but has write and read
 capabilities. The usage is quite simple:
 
 .. code:: python
