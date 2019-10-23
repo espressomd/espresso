@@ -129,10 +129,6 @@ further details.
 #define GHOSTTRANS_PROPRTS 1
 /// transfer \ref ParticlePosition
 #define GHOSTTRANS_POSITION 2
-/** flag for \ref GHOSTTRANS_POSITION, shift the positions by \ref
-   GhostCommunication::shift. Must be or'd together with \ref
-   GHOSTTRANS_POSITION */
-#define GHOSTTRANS_POSSHFTD 4
 /// transfer \ref ParticleMomentum
 #define GHOSTTRANS_MOMENTUM 8
 /// transfer \ref ParticleForce
@@ -152,30 +148,21 @@ further details.
 /*@{*/
 
 struct GhostCommunication {
-
   /** Communication type. */
   int type;
   /** Node to communicate with (to use with all MPI operations). */
   int node;
 
   /** Pointer array to particle lists to communicate. */
-  std::vector<Cell *> part_lists;
+  std::vector<Cell *> part_lists = {};
 
-  /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
-     this is the shift vector. Normally this is an integer multiple of the box
-     length. The shift is done on the sender side */
-  Utils::Vector3d shift;
+  /** Position shift for ghost particles. The shift is done on the sender side.
+   */
+  Utils::Vector3d shift = {};
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
-
-  /** Particle data parts to transfer */
-  int data_parts;
-
-  /** number of communication steps. */
-  int num;
-
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
 };
@@ -187,16 +174,10 @@ struct GhostCommunicator {
 /*@{*/
 
 /** Initialize a communicator. */
-void prepare_comm(GhostCommunicator *gcr, int data_parts, int num);
+void prepare_comm(GhostCommunicator *gcr, int num);
 
 /** Free a communicator. */
 void free_comm(GhostCommunicator *gcr);
-
-/**
- * @brief do a ghost communication with the data parts specified
- *        in the communicator.
- */
-void ghost_communicator(GhostCommunicator *gcr);
 
 /**
  * @brief Do a ghost communication with caller specified data parts.
