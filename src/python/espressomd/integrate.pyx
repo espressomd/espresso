@@ -50,6 +50,8 @@ cdef class Integrator:
         self._method = state['_method']
         if self._method == "STEEPEST_DESCENT":
             self.set_steepest_descent(state['_steepest_descent_params'])
+        elif self._method == "VV":
+            self.set_vv()
         elif self._method == "NVT":
             self.set_nvt()
         elif self._method == "NPT":
@@ -118,6 +120,7 @@ cdef class Integrator:
         Set the integration method to Velocity Verlet.
 
         """
+        integrate_set_nvt()
         self._method = "VV"
 
     def set_nvt(self):
