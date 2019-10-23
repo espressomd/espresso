@@ -1697,9 +1697,9 @@ Reaction Ensemble
 .. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
-An Example script can be found here:
+An example script can be found here:
 
-* `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
@@ -1836,9 +1836,9 @@ Wang-Landau Reaction Ensemble
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
 
-An Example script can be found here:
+An example script can be found here:
 
-* `Wang Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
+* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
 
 Combination of the Reaction Ensemble with the Wang-Landau algorithm
 :cite:`wang01a`
@@ -1849,7 +1849,7 @@ variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 
 .. _Constant pH simulation using the Reaction Ensemble:
 
@@ -1858,9 +1858,9 @@ Constant pH simulation using the Reaction Ensemble
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
-An Example script can be found here:
+An example script can be found here:
 
-* `Reaction ensemble/ constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 In the constant pH method due to Reed and Reed
 :cite:`reed92a` it is possible to set the chemical potential
@@ -1882,7 +1882,7 @@ constant :math:`K_c` for the following reaction:
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
 For an example of how to setup
-a Constant pH simulation, see the file in the testsuite directory.
+a constant pH simulation, see the file in the testsuite directory.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:

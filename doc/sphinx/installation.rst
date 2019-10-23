@@ -458,7 +458,7 @@ General features
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
 
-   .. seealso:: :ref:`Writing H5MD-Files`
+   .. seealso:: :ref:`Writing H5MD-files`
 
 In addition, there are switches that enable additional features in the
 integrator or thermostat:

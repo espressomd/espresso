@@ -61,7 +61,7 @@ z = box_l * 0.5
 # note that we do not make the particles virtual at this point.
 # The script uses center of mass an moment of inertia analysis routines
 # to obtain the position and inertia moments of the central particle.
-# Once a particle is made virtual, it will no longer contribute to 
+# Once a particle is made virtual, it will no longer contribute to
 # observables involving mass. Virtual sites are not integrated via
 # Newton's equation of motion and therefore do not have a meaningful mass.
 
@@ -104,7 +104,7 @@ p_center = system.part.add(
 # Relate the particles that make up the rigid body to the central particle.
 # This will also mark them as `virtual = True`
 for p in system.part:
-    if p != p_center: 
+    if p != p_center:
         p.vs_auto_relate_to(p_center.id)
 
 for frame in range(200):

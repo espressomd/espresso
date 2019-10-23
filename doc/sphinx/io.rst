@@ -114,7 +114,7 @@ Be aware of the following limitations:
 
 For additional methods of the checkpointing class, see :class:`espressomd.checkpointing.Checkpoint`.
 
-.. _Writing H5MD-Files:
+.. _Writing H5MD-files:
 
 Writing H5MD-files
 ------------------
@@ -136,14 +136,15 @@ respective hdf5-file. This may, for example, look like:
     # ... add particles here
     h5 = h5md.H5md(filename="trajectory.h5", write_pos=True, write_vel=True)
 
-If a file with the given filename exists and has a valid H5MD structures
-it will be backed up to a file with suffix ".bak". This file will be
-removed by the ``close()`` method of the class which has to be called at the
-end of the simulation to close the file. The current implementation
-allows to write the following properties: positions, velocities, forces,
-species (|es| types), and masses of the particles. In order to write any property, you
-have to set the respective boolean flag as an option to the :class:`~espressomd.io.writer.h5md.H5md` class.
-Currently available:
+If a file with the given filename exists and has a valid H5MD structures,
+it will be backed up to a file with suffix ".bak". This backup file will be
+deleted when the new file is closed at the end of the simulation with
+``h5.close()``.
+
+The current implementation allows to write the following properties: positions,
+velocities, forces, species (|es| types), and masses of the particles. In order
+to write any property, you have to set the respective boolean flag as an option
+to the :class:`~espressomd.io.writer.h5md.H5md` class. Currently available:
 
     - ``write_pos``: particle positions
 
@@ -158,27 +159,28 @@ Currently available:
     - ``write_ordered``: if particles should be written ordered according to their
       id (implies serial write).
 
-
-
 In simulations with varying numbers of particles (MC or reactions), the
 size of the dataset will be adapted if the maximum number of particles
 increases but will not be decreased. Instead a negative fill value will
 be written to the trajectory for the id. If you have a parallel
-simulation please keep in mind that the sequence of particles in general
+simulation, please keep in mind that the sequence of particles in general
 changes from timestep to timestep. Therefore you have to always use the
 dataset for the ids to track which position/velocity/force/type/mass
 entry belongs to which particle. To write data to the hdf5 file, simply
-call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method without any arguments.
+call the H5md object :meth:`~espressomd.io.writer.h5md.H5md.write` method without any arguments.
 
 .. code:: python
 
     h5.write()
 
 
-After the last write call, you have to call the ``close()`` method to remove
-the backup file and to close the datasets etc.
+After the last write call, you have to call the
+:meth:`~espressomd.io.writer.h5md.H5md.close` method to remove
+the backup file, close the datasets, etc.
 
-H5MD files can be read and modified with the python module h5py (for documentation see `h5py <https://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
+H5MD files can be read and modified with the python module h5py (for
+documentation see `h5py <https://docs.h5py.org/en/stable/>`_). For example,
+all positions stored in the file called "h5mdfile.h5" can be read using:
 
 .. code:: python
     
@@ -186,7 +188,10 @@ H5MD files can be read and modified with the python module h5py (for documentati
     h5file = h5py.File("h5mdfile.h5", 'r')
     positions = h5file['particles/atoms/position/value']
 
-Further the files can be inspected with the GUI tool hdfview.
+Furthermore, the files can be inspected with the GUI tool hdfview.
+
+For other examples, see :file:`/samples/h5md.py`
+
 
 .. _Writing MPI-IO binary files:
 
@@ -195,8 +200,8 @@ Writing MPI-IO binary files
 
 This method outputs binary data in parallel and is, thus, also suitable for
 large-scale simulations. Generally, H5MD is the preferred method because the
-data is easier accessible. In contrast to H5MD, the MPI-IO functionality
-outputs data in a *machine-dependent format* but has write and read
+data is easily accessible. In contrast to H5MD, the MPI-IO functionality
+outputs data in a *machine-dependent format*, but has write and read
 capabilities. The usage is quite simple:
 
 .. code:: python
@@ -222,9 +227,6 @@ folder :file:`/tmp`:
 Depending on the chosen output, not all of these files might be created.
 To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`. It has the same signature as
 :meth:`espressomd.io.mpiio.Mpiio.write`.
-There exists a legacy python script in the :file:`tools` directory which can convert
-MPI-IO data to the now unsupported blockfile format. Check it out if you want
-to post-process the data without ESPResSo.
 
 *WARNING*: Do not attempt to read these binary files on a machine with a different
 architecture!
