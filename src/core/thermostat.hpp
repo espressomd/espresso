@@ -224,8 +224,8 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
 
   // Get velocity effective in the thermostatting
 #ifdef ENGINE
-  auto const velocity = (p.swim.v_swim != 0)
-                            ? p.m.v - p.swim.v_swim * p.r.calc_director()
+  auto const velocity = (p.p.swim.v_swim != 0)
+                            ? p.m.v - p.p.swim.v_swim * p.r.calc_director()
                             : p.m.v;
 #else
   auto const &velocity = p.m.v;

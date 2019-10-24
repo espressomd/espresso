@@ -183,10 +183,6 @@ static int calc_transmit_size(GhostCommunication &ghost_comm,
     if (data_parts & GHOSTTRANS_FORCE)
       n_buffer_new += sizeof(ParticleForce);
 
-#ifdef ENGINE
-    if (data_parts & GHOSTTRANS_SWIMMING)
-      n_buffer_new += sizeof(ParticleParametersSwimming);
-#endif
     int count = 0;
     for (auto const &pl : ghost_comm.part_lists)
       count += pl->n;
@@ -231,12 +227,6 @@ static void prepare_send_buffer(CommBuf &send_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver << part.f;
         }
-
-#ifdef ENGINE
-        if (data_parts & GHOSTTRANS_SWIMMING) {
-          archiver << part.swim;
-        }
-#endif
       }
     }
   }
@@ -311,12 +301,6 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver >> part.f;
         }
-
-#ifdef ENGINE
-        if (data_parts & GHOSTTRANS_SWIMMING) {
-          archiver >> part.swim;
-        }
-#endif
       }
     }
   }
@@ -368,11 +352,6 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
         }
         if (data_parts & GHOSTTRANS_FORCE)
           part2.f += part1.f;
-
-#ifdef ENGINE
-        if (data_parts & GHOSTTRANS_SWIMMING)
-          part2.swim = part1.swim;
-#endif
       }
     }
   }

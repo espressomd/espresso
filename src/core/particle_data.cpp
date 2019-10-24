@@ -120,6 +120,9 @@ using UpdatePropertyMessage = boost::variant
 #ifdef LB_ELECTROHYDRODYNAMICS
         , UpdateProperty<Utils::Vector3d, &Prop::mu_E>
 #endif
+#ifdef ENGINE
+        , UpdateProperty<ParticleParametersSwimming, &Prop::swim>
+#endif
 #ifdef DIPOLES
         , UpdateProperty<double, &Prop::dipm>
 #endif
@@ -224,21 +227,6 @@ using UpdateBondMessage = boost::variant
         , AddBond
         >;
 
-#ifdef ENGINE
-struct UpdateSwim {
-    ParticleParametersSwimming swim;
-
-    void operator()(Particle &p) const {
-      p.swim = swim;
-    }
-
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-      ar & swim;
-    }
-};
-#endif
-
 #ifdef ROTATION
 struct UpdateOrientation {
     Utils::Vector3d axis;
@@ -273,9 +261,6 @@ using UpdateMessage = boost::variant
         , UpdateMomentumMessage
         , UpdateForceMessage
         , UpdateBondMessage
-#ifdef ENGINE
-        , UpdateSwim
-#endif
 #ifdef ROTATION
         , UpdateOrientation
 #endif
@@ -791,7 +776,7 @@ void set_particle_v(int part, double *v) {
 
 #ifdef ENGINE
 void set_particle_swimming(int part, ParticleParametersSwimming swim) {
-  mpi_send_update_message(part, UpdateSwim{swim});
+  mpi_update_particle_property<ParticleParametersSwimming, &ParticleProperties::swim>(part, swim);
 }
 #endif
 
@@ -1512,7 +1497,7 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim) {
-  swim = &(p->swim);
+  swim = &(p->p.swim);
 }
 #endif
 
