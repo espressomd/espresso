@@ -82,7 +82,8 @@ static void pack_particles(ParticleRange particles,
     buffer[i].swim.director = buffer[i].director;
 
     buffer[i].swim.push_pull = part.p.swim.push_pull;
-    buffer[i].swim.dipole_length = static_cast<float>(part.p.swim.dipole_length);
+    buffer[i].swim.dipole_length =
+        static_cast<float>(part.p.swim.dipole_length);
     buffer[i].swim.swimming = part.p.swim.swimming;
 #endif
     i++;

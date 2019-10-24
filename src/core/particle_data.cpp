@@ -776,7 +776,8 @@ void set_particle_v(int part, double *v) {
 
 #ifdef ENGINE
 void set_particle_swimming(int part, ParticleParametersSwimming swim) {
-  mpi_update_particle_property<ParticleParametersSwimming, &ParticleProperties::swim>(part, swim);
+  mpi_update_particle_property<ParticleParametersSwimming,
+                               &ParticleProperties::swim>(part, swim);
 }
 #endif
 

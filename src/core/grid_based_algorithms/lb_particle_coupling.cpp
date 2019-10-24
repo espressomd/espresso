@@ -224,7 +224,8 @@ bool in_local_halo(Vector3d const &pos) {
 void add_swimmer_force(Particle &p) {
   if (p.p.swim.swimming) {
     // calculate source position
-    const double direction = double(p.p.swim.push_pull) * p.p.swim.dipole_length;
+    const double direction =
+        double(p.p.swim.push_pull) * p.p.swim.dipole_length;
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
 
