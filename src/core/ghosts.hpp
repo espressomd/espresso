@@ -125,22 +125,21 @@ further details.
 /** \name Transfer data classes, for \ref GhostCommunication::type */
 /************************************************************/
 /*@{*/
-/// transfer \ref ParticleProperties
-#define GHOSTTRANS_PROPRTS 1
-/// transfer \ref ParticlePosition
-#define GHOSTTRANS_POSITION 2
-/// transfer \ref ParticleMomentum
-#define GHOSTTRANS_MOMENTUM 8
-/// transfer \ref ParticleForce
-#define GHOSTTRANS_FORCE 16
-
-/// resize the receiver particle arrays to the size of the senders
-#define GHOSTTRANS_PARTNUM 64
-
-#ifdef ENGINE
-/// transfer \ref ParticleParametersSwimming
-#define GHOSTTRANS_SWIMMING 128
-#endif
+enum : unsigned {
+  GHOSTTRANS_NONE = 0u,
+  /// transfer \ref ParticleProperties
+  GHOSTTRANS_PROPRTS = 1u,
+  /// transfer \ref ParticlePosition
+  GHOSTTRANS_POSITION = 2u,
+  /// transfer \ref ParticleMomentum
+  GHOSTTRANS_MOMENTUM = 8u,
+  /// transfer \ref ParticleForce
+  GHOSTTRANS_FORCE = 16u,
+  /// resize the receiver particle arrays to the size of the senders
+  GHOSTTRANS_PARTNUM = 64u,
+  /// transfer \ref ParticleParametersSwimming
+  GHOSTTRANS_SWIMMING = 128u
+};
 /*@}*/
 
 /** \name Data Types */
@@ -182,7 +181,7 @@ void free_comm(GhostCommunicator *gcr);
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator *gcr, int data_parts);
+void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts);
 
 /*@}*/
 

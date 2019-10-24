@@ -35,9 +35,9 @@ void VirtualSitesRelative::update(bool recalc_positions) const {
   // Ghost update logic
   if (n_nodes > 1) {
     auto const data_parts =
-        (recalc_positions ? GHOSTTRANS_POSITION : 0) |
+        (recalc_positions ? GHOSTTRANS_POSITION : GHOSTTRANS_NONE) |
         (get_have_velocity() ? (GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM)
-                             : 0);
+                             : GHOSTTRANS_NONE);
 
     if (recalc_positions or get_have_velocity()) {
       ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
