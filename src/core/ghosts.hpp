@@ -122,9 +122,7 @@ further details.
 #define GHOST_PSTSTORE 32
 /*@}*/
 
-/** \name Transfer data classes, for \ref GhostCommunication::type */
-/************************************************************/
-/*@{*/
+/** Transfer data classes, for \ref ghost_communicator */
 enum : unsigned {
   GHOSTTRANS_NONE = 0u,
   /// transfer \ref ParticleProperties
@@ -140,7 +138,6 @@ enum : unsigned {
   /// transfer \ref ParticleParametersSwimming
   GHOSTTRANS_SWIMMING = 128u
 };
-/*@}*/
 
 /** \name Data Types */
 /************************************************************/
