@@ -446,12 +446,6 @@ void on_ghost_flags_change() {
 #endif
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = true;
-#ifdef VIRTUAL_SITES
-  // If they have velocities, VIRTUAL_SITES need v to update v of virtual sites
-  if (virtual_sites()->get_have_velocity()) {
-    ghosts_have_v = true;
-  };
-#endif
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds) {
     ghosts_have_v = true;
