@@ -35,23 +35,12 @@
 #include "rotation.hpp"
 
 #ifdef ROTATION
-#include "Particle.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
-#include "cuda_interface.hpp"
-#include "errorhandling.hpp"
-#include "forces.hpp"
-#include "global.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
-#include <utils/math/quaternion.hpp>
-#include <utils/math/rotation_matrix.hpp>
+#include <utils/mask.hpp>
 
 #include <cmath>
-#include <utils/mask.hpp>
 
 /** Calculate the derivatives of the quaternion and angular acceleration
  *  for a given particle
@@ -63,10 +52,7 @@
  *  @param[out] Wd   Angular acceleration of the particle
  */
 static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
-                       double S[3], double Wd[3]);
-
-void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
-                double Wd[3]) {
+                       double S[3], double Wd[3]) {
   /* calculate the first derivative of the quaternion */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
