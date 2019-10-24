@@ -4,7 +4,7 @@ set -e;
 
 # Gather coverage data (always has to be done for CodeCov)
 lcov --directory . --capture --output-file coverage.info;
-lcov --remove coverage.info '/usr/*' --output-file coverage.info;
+lcov --remove coverage.info '/usr/*' '*/examples/*' --output-file coverage.info;
 
 if [ "${TRAVIS_PULL_REQUEST}" != "false" ]; then
     echo "INFO: This is a PR.";

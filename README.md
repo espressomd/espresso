@@ -4,11 +4,15 @@
 [![AppVeyor build status][appveyor-svg]][appveyor-link]
 [![Code coverage report][codecov-svg]][codecov-link]
 [Documentation][doxygen-link]
+[Coverage][coverage-link]
 
-This header-only C++11 libary uses
-[Boost.Spirit](http://www.boost.org/libs/spirit/index.html) and
-[Boost.Phoenix](http://www.boost.org/libs/phoenix/index.html) to parse
-and evaluate mathematical expressions.
+This library uses [Boost.Spirit](http://www.boost.org/libs/spirit/index.html)
+(QI for C++98 and X3 for C++14) and
+[Boost.Fusion](http://www.boost.org/libs/fusion/index.html) (and
+[Boost.Phoenix](http://www.boost.org/libs/phoenix/index.html) with C++98) to
+parse and evaluate mathematical expressions.
+
+The examples below use the X3 variant of Boost Matheval.
 
 ### Motivating example 1
 
@@ -16,9 +20,8 @@ and evaluate mathematical expressions.
 #include <iostream>
 #include "matheval.hpp"
 
-int main()
-{
-    std::cout << matheval::parse<double>("1+1",{}) << '\n';
+int main() {
+    std::cout << matheval::parse("1+1") << '\n';
 }
 ```
 Outputs
@@ -33,12 +36,11 @@ Outputs
 #include <map>
 #include "matheval.hpp"
 
-int main()
-{
+int main() {
     std::map<std::string,double> symtab;
     symtab.emplace(std::make_pair("x",  2));
     symtab.emplace(std::make_pair("y", -1));
-    std::cout << matheval::parse<double>("cbrt(x/2 + sqrt(x**2/4 + y**3/24))",symtab) << '\n';
+    std::cout << matheval::parse("cbrt(x/2 + sqrt(x**2/4 + y**3/24))",symtab) << '\n';
 }
 ```
 Outputs
@@ -55,9 +57,8 @@ cost of parsing again.
 #include <map>
 #include "matheval.hpp"
 
-int main()
-{
-    matheval::Parser<double> parser;
+int main() {
+    matheval::Parser parser;
     parser.parse("x + 1");
     std::cout << parser.evaluate({std::make_pair("x",1)}) << ' '
               << parser.evaluate({std::make_pair("x",2)}) << '\n';
@@ -70,14 +71,12 @@ Outputs
 
 ### Build instructions
 
-Since Boost Matheval is header-only you can simply copy `matheval.hpp`
-into your project and start using it.  If you want to build the
-examples or run the tests, you can build them using CMake.
+To build Boost Matheval, just follow the usual CMake workflow.
 ```bash
 mkdir build
 cd build
 cmake ..
-make         # build the examples
+make         # build the library and the examples
 make check   # build and run the tests
 ```
 
@@ -85,7 +84,7 @@ make check   # build and run the tests
 
 General:
 
-* C++11 compatible compiler, i.e. GCC >= 4.8, Clang, Visual Studio 2015.
+* C++14 compatible compiler, i.e. GCC >= 4.8, Clang, Visual Studio 2015.
 * Boost.Spirit, Boost.Phoenix, and Boost.MathConstants.
 * No support for ternary functions (e.g. `if`).
 * No support for complex numbers.
@@ -94,9 +93,7 @@ General:
 
 * [GNU libmatheval](https://www.gnu.org/software/libmatheval/) is a C
   library built using the parser generator YACC with about the same
-  scope as Boost Matheval.  It is a not header-only and does not have
-  a C++ interface at the moment, but it is much faster in terms of
-  compilation time.
+  scope as Boost Matheval.
 * [ExprTk](http://www.partow.net/programming/exprtk/) is a true
   monster with almost 40000 lines in a single header file.  It
   implements a complete state machine including things like logical
@@ -113,4 +110,5 @@ Distributed under the [Boost Software License, Version 1.0](http://boost.org/LIC
 [appveyor-link]: https://ci.appveyor.com/project/hmenke/boost-matheval/branch/master
 [codecov-svg]: https://codecov.io/gh/hmenke/boost_matheval/branch/master/graph/badge.svg
 [codecov-link]: https://codecov.io/gh/hmenke/boost_matheval
-[doxygen-link]: https://hmenke.github.io/boost_matheval
+[doxygen-link]: https://hmenke.github.io/boost_matheval/doxygen/html/
+[coverage-link]: https://hmenke.github.io/boost_matheval/coverage/html/

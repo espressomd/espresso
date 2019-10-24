@@ -2,23 +2,21 @@
 
 @tableofcontents
 
-Boost Matheval is a header-only C++11 libary built on top of
-Boost.Spirit and Boost.Phoenix to parse and evaluate mathematical
-expressions.
+Boost Matheval is a libary built on top of Boost.Spirit, Boost.Fusion,
+and Boost.Phoenix to parse and evaluate mathematical expressions.
 
 The interface consists of the class matheval::Parser and the
 convenience function matheval::parse function which both skip all
 whitespace in the input sequence, i.e. `x+y` is equivalent to `x
 +\ty\n`.  The required type for the symbol table is
-`std::map<std::string, real_t>`, where `real_t` is the
-floating point type which you templated the parser on.
+`std::map<std::string, double>`.
 
 If you want to parse a user provided or otherwise non-constant
 expression, you probably want to use the convenience function
 @code
 std::string expression = "...";
 std::map<std::string, double> symbol_table = { ... };
-matheval::parse<double>(expression, symbol_table);
+matheval::parse(expression, symbol_table);
 @endcode
 
 If, however, you can reuse the expression and only want to evaluate
@@ -28,15 +26,14 @@ actually calling matheval::Parser::parse.
 @code
 std::string expression = "...";
 std::map<std::string, double> symbol_table = { ... };
-matheval::Parser<double> parser;
+matheval::Parser parser;
 parser.parse(expression);
 double result = parser.evaluate(symbol_table);
 @endcode
 
-
-The underlying grammar and the abstract syntax tree can be accessed
-through the matheval::detail namespace, in case the user wants to
-manipulate the AST or repurpose the grammar.
+Because the templates of Boost.Spirit take quite some time to
+instantiate the implementation is hidden behind an opaque pointer, so
+that you only have to compile all these templates once.
 
 @section arithmetic Supported arithmetic operations
 
@@ -51,41 +48,41 @@ Commonly known arithmetic operations are supported:
 
 @section unary_op Supported unary functions
 
-Most functions of the C++11 standard math header `<cmath>` are
-supported.  On top of that, Boost Matheval defines the mathematical
-sign function `sgn`.
+Most functions of the standard math header `<cmath>` are supported.
+On top of that, Boost Matheval defines the mathematical sign function
+`sgn`.
 
 - `abs`
 - `acos`
-- `acosh`
+- `acosh` (X3 only)
 - `asin`
-- `asinh`
+- `asinh` (X3 only)
 - `atan`
-- `atanh`
-- `cbrt`
+- `atanh` (X3 only)
+- `cbrt` (X3 only)
 - `ceil`
 - `cos`
 - `cosh`
 - `deg`
-- `erf`
-- `erfc`
+- `erf` (X3 only)
+- `erfc` (X3 only)
 - `exp`
-- `exp2`
+- `exp2` (X3 only)
 - `floor`
 - `isinf`
 - `isnan`
 - `log`
-- `log2`
+- `log2` (X3 only)
 - `log10`
 - `rad`
-- `round`
+- `round` (X3 only)
 - `sgn`
 - `sin`
 - `sinh`
 - `sqrt`
 - `tan`
 - `tanh`
-- `tgamma`
+- `tgamma` (X3 only)
 
 @section binary_op Supported binary functions
 
@@ -93,8 +90,8 @@ Binary functions are rather uncommon in mathematics.  Nevertheless
 there exist some:
 
 - `atan2`
-- `max`
-- `min`
+- `max` (X3 only)
+- `min` (X3 only)
 - `pow`
 
 @section constants Known constants
@@ -115,7 +112,7 @@ other words, variables cannot start with a digit or an underscore.
 @warning Constants always have higher priority than variables.  That
 is to say, that
 @code
-matheval::parse<double>("e",{std::make_pair("e", 1)});
+matheval::parse("e",{std::make_pair("e", 1)});
 @endcode
 will evaluate to `2.71828` (Euler's number) regardsless.
 
