@@ -105,7 +105,7 @@ void layered_topology_release() {
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
-static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
+static void layered_prepare_comm(GhostCommunicator *comm, int reverse) {
   int c, n;
 
   if (n_nodes > 1) {
@@ -137,7 +137,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c == 1)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[0];
         } else {
           comm->comm[c].part_lists[0] = &cells[1];
@@ -159,7 +159,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c == 0)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[n_layers];
         } else {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
@@ -178,7 +178,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c % 2 == 1)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
         } else {
           comm->comm[c].part_lists[0] = &cells[n_layers];
@@ -201,7 +201,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c % 2 == 0)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[1];
         } else {
           comm->comm[c].part_lists[0] = &cells[0];
@@ -227,7 +227,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
       /* downwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
+      if (reverse) {
         comm->comm[c].part_lists[0] = &cells[0];
         comm->comm[c].part_lists[1] = &cells[n_layers];
       } else {
@@ -240,7 +240,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
       /* upwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
+      if (reverse) {
         comm->comm[c].part_lists[0] = &cells[n_layers + 1];
         comm->comm[c].part_lists[1] = &cells[1];
       } else {
@@ -329,10 +329,8 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
   ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
-  layered_prepare_comm(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
-                       GHOSTTRANS_FORCE);
+  layered_prepare_comm(&cell_structure.exchange_ghosts_comm, false);
+  layered_prepare_comm(&cell_structure.collect_ghost_force_comm, true);
 
   /* copy particles */
   for (int c = 0; c < old->n; c++) {

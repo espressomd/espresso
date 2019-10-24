@@ -161,7 +161,8 @@ void free_comm(GhostCommunicator *gcr) {
     ghost_comm.part_lists.clear();
 }
 
-static int calc_transmit_size(GhostCommunication &ghost_comm, int data_parts) {
+static int calc_transmit_size(GhostCommunication &ghost_comm,
+                              unsigned int data_parts) {
   int n_buffer_new;
 
   if (data_parts & GHOSTTRANS_PARTNUM)
@@ -196,7 +197,7 @@ static int calc_transmit_size(GhostCommunication &ghost_comm, int data_parts) {
 
 static void prepare_send_buffer(CommBuf &send_buffer,
                                 GhostCommunication &ghost_comm,
-                                int data_parts) {
+                                unsigned int data_parts) {
   /* reallocate send buffer */
   send_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
   send_buffer.bonds().clear();
@@ -270,13 +271,14 @@ static void prepare_ghost_cell(Cell *cell, int size) {
 
 static void prepare_recv_buffer(CommBuf &recv_buffer,
                                 GhostCommunication &ghost_comm,
-                                int data_parts) {
+                                unsigned int data_parts) {
   /* reallocate recv buffer */
   recv_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
 }
 
 static void put_recv_buffer(CommBuf &recv_buffer,
-                            GhostCommunication &ghost_comm, int data_parts) {
+                            GhostCommunication &ghost_comm,
+                            unsigned int data_parts) {
   /* put back data */
   auto archiver = Archiver{Utils::make_span(recv_buffer)};
   auto bond_archiver = BondArchiver{recv_buffer.bonds()};
@@ -335,7 +337,8 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
   }
 }
 
-static void cell_cell_transfer(GhostCommunication &ghost_comm, int data_parts) {
+static void cell_cell_transfer(GhostCommunication &ghost_comm,
+                               unsigned int data_parts) {
   /* transfer data */
   int const offset = ghost_comm.part_lists.size() / 2;
   for (int pl = 0; pl < offset; pl++) {
@@ -400,10 +403,10 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
   return is_recv_op(comm_type, node) && poststore;
 }
 
-void ghost_communicator(GhostCommunicator *gcr, int data_parts) {
+void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
-  /* if ghosts should have uptodate velocities, they have to be updated like
+  /* if ghosts should have up-to-date velocities, they have to be updated like
    * positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;

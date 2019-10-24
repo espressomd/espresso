@@ -232,8 +232,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
 /** Create communicators for cell structure domain decomposition. (see \ref
  *  GhostCommunicator)
  */
-void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
-                     const Utils::Vector3i &grid) {
+void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
@@ -595,11 +594,8 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   dd_mark_cells();
 
   /* create communicators */
-  const int exchange_data = (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
-  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
-                  grid);
+  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, grid);
+  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, grid);
 
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
