@@ -42,57 +42,10 @@ if(WITH_CLANG_TIDY)
   endif()
 endif()
 
-# Libraries
+# Subdirectories
 
-add_library(matheval_qi
-  src/qi/ast_adapted.hpp
-  src/qi/ast.hpp
-  src/qi/evaluator.cpp
-  src/qi/evaluator.hpp
-  src/qi/matheval.cpp
-  src/qi/math.hpp
-  src/qi/parser.cpp
-  src/qi/parser_def.hpp
-  src/qi/parser.hpp
-  )
-target_include_directories(matheval_qi
-  PUBLIC include/qi
-  PRIVATE src/qi
-  )
-set_target_properties(matheval_qi
-  PROPERTIES CXX_STANDARD 98
-  )
-
-add_library(matheval_x3
-  src/x3/ast_adapted.hpp
-  src/x3/ast.hpp
-  src/x3/evaluator.cpp
-  src/x3/evaluator.hpp
-  src/x3/matheval.cpp
-  src/x3/math.hpp
-  src/x3/parser.cpp
-  src/x3/parser_def.hpp
-  src/x3/parser.hpp
-  )
-target_include_directories(matheval_x3
-  PUBLIC include/x3
-  PRIVATE src/x3
-  )
-set_target_properties(matheval_x3
-  PROPERTIES CXX_STANDARD 14
-  )
-
-# Custom test command
-enable_testing()
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C ${CMAKE_BUILD_TYPE})
-
-# Find Boost
-find_package(Boost REQUIRED COMPONENTS unit_test_framework)
-include_directories(${Boost_INCLUDE_DIRS})
-
-add_subdirectory(doc/doxygen)
-add_subdirectory(examples)
-add_subdirectory(tests)
-
-include(FeatureSummary)
-feature_summary(WHAT ALL)
+add_subdirectory(src/qi EXCLUDE_FROM_ALL)
+add_subdirectory(src/x3 EXCLUDE_FROM_ALL)
+add_subdirectory(doc/doxygen EXCLUDE_FROM_ALL)
+add_subdirectory(examples EXCLUDE_FROM_ALL)
+add_subdirectory(tests EXCLUDE_FROM_ALL)

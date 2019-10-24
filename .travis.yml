@@ -7,7 +7,7 @@ script:
   - mkdir build
   - cd build
   - cmake -DWITH_COVERAGE=ON -DWITH_CLANG_TIDY=ON ..
-  - make -k -j 2 all
+  - make -k -j 2 examples
   - make -k -j 2 check
   - curl -s https://codecov.io/bash | bash -
 
@@ -46,7 +46,7 @@ matrix:
         - cd build
         - bash ../doc/prepare_documentation.sh
         - cmake -DWITH_COVERAGE=ON ..
-        - make -k -j 2 all
+        - make -k -j 2 examples
         - make -k -j 2 check
         - bash ../doc/update_documentation.sh
         - curl -s https://codecov.io/bash | bash -s - -X gcov
