@@ -42,7 +42,7 @@ void nsq_topology_release() {
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
-static void nsq_prepare_comm(GhostCommunicator *comm, int data_parts) {
+static void nsq_prepare_comm(GhostCommunicator *comm) {
   int n;
   /* no need for comm for only 1 node */
   if (n_nodes == 1) {
@@ -109,9 +109,8 @@ void nsq_topology_init(CellPList *old) {
   local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 
   /* create communicators */
-  nsq_prepare_comm(&cell_structure.exchange_ghosts_comm,
-                   GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  nsq_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+  nsq_prepare_comm(&cell_structure.exchange_ghosts_comm);
+  nsq_prepare_comm(&cell_structure.collect_ghost_force_comm);
 
   /* here we just decide what to transfer where */
   if (n_nodes > 1) {
