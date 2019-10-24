@@ -90,7 +90,7 @@ add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C ${
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 include_directories(${Boost_INCLUDE_DIRS})
 
-add_subdirectory(doc)
+add_subdirectory(doc/doxygen)
 add_subdirectory(examples)
 add_subdirectory(tests)
 
