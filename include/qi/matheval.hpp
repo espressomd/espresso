@@ -44,7 +44,8 @@ public:
     /// @brief Evaluate the abstract syntax tree for a given symbol table
     ///
     /// @param[in] st The symbol table
-    double evaluate(std::map<std::string, double> const &st);
+    double evaluate(std::map<std::string, double> const &st =
+                        std::map<std::string, double>());
 };
 
 /// @brief Convenience function
@@ -54,8 +55,9 @@ public:
 ///
 /// @param[in] expr  mathematical expression
 /// @param[in] st    the symbol table for variables
-inline double parse(std::string const &expr,
-                    std::map<std::string, double> const &st) {
+inline double parse(
+    std::string const &expr,
+    std::map<std::string, double> const &st = std::map<std::string, double>()) {
     Parser parser;
     parser.parse(expr);
     return parser.evaluate(st);

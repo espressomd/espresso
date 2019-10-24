@@ -86,9 +86,6 @@ set_target_properties(matheval_x3
 enable_testing()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure -C ${CMAKE_BUILD_TYPE})
 
-include_directories(include/x3)
-link_libraries(matheval_x3)
-
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 include_directories(${Boost_INCLUDE_DIRS})
