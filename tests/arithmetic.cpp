@@ -1,6 +1,5 @@
 #define BOOST_TEST_MODULE arithmetic
-#define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 #include "exprtest.hpp"
 
 EXPRTEST(basicop1, " 2 +\t3\n",  5)       // Whitespace ignored

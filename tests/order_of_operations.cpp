@@ -1,6 +1,5 @@
 #define BOOST_TEST_MODULE order_of_operations
-#define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 #include "exprtest.hpp"
 
 EXPRTEST(pemdas1, "2*3+4*5",   2*3+4*5)

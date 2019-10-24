@@ -1,6 +1,5 @@
 #define BOOST_TEST_MODULE variables
-#define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 #include "exprtest.hpp"
 
 double const x = 1;

@@ -10,11 +10,10 @@ function(UNIT_TEST)
   cmake_parse_arguments(UT "" "TARGET" "SOURCE" ${ARGN} )
   # Add target for test and link with libraries
   add_executable(${UT_TARGET} ${UT_SOURCE})
-  set_target_properties(${UT_TARGET} PROPERTIES CXX_CLANG_TIDY "")
+  set_target_properties(${UT_TARGET} PROPERTIES CXX_CLANG_TIDY "" CXX_STANDARD 14)
   if(MSVC)
     set_property(SOURCE ${UT_SOURCE} PROPERTY COMPILE_FLAGS "/DNOMINMAX")
   endif()
-  target_link_libraries(${UT_TARGET} ${LIBRARIES} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
   # Tests are executed in the root directory
   add_test(NAME ${UT_TARGET} COMMAND ${UT_TARGET})
   add_dependencies(check ${UT_TARGET})
