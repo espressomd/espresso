@@ -23,7 +23,7 @@ public:
 
         boost::spirit::ascii::space_type space;
         bool r = qi::phrase_parse(
-            first, last, parser::grammar<std::string::const_iterator>(), space,
+            first, last, grammar(), space,
             ast_);
 
         if (!r || first != last) {

@@ -1,7 +1,11 @@
 #define BOOST_TEST_MODULE empty node
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-#include "matheval.hpp"
+
+#define MATHEVAL_IMPLEMENTATION
+
+#include "ast.hpp"
+#include "evaluator.hpp"
 
 BOOST_AUTO_TEST_CASE(empty_node)
 {

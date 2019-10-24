@@ -8,6 +8,7 @@ function(EXAMPLE)
   else()
     set_source_files_properties(${EX_SOURCE} PROPERTIES COMPILE_FLAGS "-Wall -Wextra -Wpedantic")
   endif()
+  set_target_properties(${EX_TARGET} PROPERTIES CXX_STANDARD 14)
 endfunction(EXAMPLE)
 
 EXAMPLE(TARGET calculator SOURCE calculator.cpp)

@@ -71,4 +71,6 @@ struct grammar : qi::grammar<Iterator, ast::expression(), ascii::space_type> {
 
 } // namespace parser
 
+typedef parser::grammar<std::string::const_iterator> grammar;
+
 } // namespace matheval

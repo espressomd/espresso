@@ -4,7 +4,6 @@
 
 namespace matheval {
 
-typedef std::string::const_iterator iterator_type;
-template struct parser::grammar<iterator_type>;
+template struct parser::grammar<std::string::const_iterator>;
 
 } // namespace matheval
