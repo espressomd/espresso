@@ -12,7 +12,7 @@ add_library(matheval.qi
 target_include_directories(matheval.qi
   PUBLIC ../../include/matheval/qi
   )
-set_target_properties(matheval.qi
-    PROPERTIES CXX_STANDARD 98
+target_compile_features(matheval.qi
+  PUBLIC cxx_std_98
   )
 add_library(matheval::qi ALIAS matheval.qi)

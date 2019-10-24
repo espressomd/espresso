@@ -12,7 +12,7 @@ add_library(matheval.x3
 target_include_directories(matheval.x3
   PUBLIC ../../include/matheval/x3
   )
-set_target_properties(matheval.x3
-    PROPERTIES CXX_STANDARD 14
+target_compile_features(matheval.x3
+  PUBLIC cxx_std_14
   )
 add_library(matheval::x3 ALIAS matheval.x3)
