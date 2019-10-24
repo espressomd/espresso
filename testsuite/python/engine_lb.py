@@ -54,19 +54,19 @@ class SwimmerTest():
         system.part.add(pos=pos0, quat=minus_y, fix=3 * [fix],
                         mass=0.9, rinertia=3 * [7], rotation=3 * [rotation],
                         swimming={"mode": "pusher", "f_swim": 0.10,
-                                  "dipole_length": 0.5, "rotational_friction": 0.3})
+                                  "dipole_length": 0.5})
         system.part.add(pos=pos1, quat=plus_x, fix=3 * [fix],
                         mass=1.9, rinertia=3 * [8], rotation=3 * [rotation],
                         swimming={"mode": "pusher", "v_swim": 0.02,
-                                  "dipole_length": 0.6, "rotational_friction": 0.4})
+                                  "dipole_length": 0.6})
         system.part.add(pos=pos2, quat=plus_z, fix=3 * [fix],
                         mass=2.9, rinertia=3 * [9], rotation=3 * [rotation],
                         swimming={"mode": "puller", "f_swim": 0.08,
-                                  "dipole_length": 0.7, "rotational_friction": 0.8})
+                                  "dipole_length": 0.7})
         system.part.add(pos=pos3, quat=plus_y, fix=3 * [fix],
                         mass=3.9, rinertia=3 * [10], rotation=3 * [rotation],
                         swimming={"mode": "puller", "v_swim": 0.05,
-                                  "dipole_length": 0.8, "rotational_friction": 0.3})
+                                  "dipole_length": 0.8})
 
     def tearDown(self):
         self.system.part.clear()

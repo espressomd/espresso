@@ -248,15 +248,11 @@ struct ParticleParametersSwimming {
   double v_swim = 0.;
   int push_pull = 0;
   double dipole_length = 0.;
-  Utils::Vector3d v_center;
-  Utils::Vector3d v_source;
-  double rotational_friction = 0.;
 #endif
 
   template <typename Archive> void serialize(Archive &ar, long int) {
 #ifdef ENGINE
-    ar &swimming &f_swim &v_swim &push_pull &dipole_length &v_center &v_source
-        &rotational_friction;
+    ar &swimming &f_swim &v_swim &push_pull &dipole_length;
 #endif
   }
 };

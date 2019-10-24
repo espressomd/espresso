@@ -223,13 +223,6 @@ bool in_local_halo(Vector3d const &pos) {
 #ifdef ENGINE
 void add_swimmer_force(Particle &p) {
   if (p.swim.swimming) {
-    if (in_local_domain(p.r.p, local_geo)) {
-      p.swim.v_center = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
-                        lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_center = {};
-    }
-
     // calculate source position
     const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
     auto const director = p.r.calc_director();
@@ -237,14 +230,6 @@ void add_swimmer_force(Particle &p) {
 
     if (not in_local_halo(source_position)) {
       return;
-    }
-
-    if (in_local_domain(source_position, local_geo)) {
-      p.swim.v_source =
-          lb_lbinterpolation_get_interpolated_velocity(source_position) *
-          lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_source = {};
     }
 
     add_md_force(source_position, p.swim.f_swim * director);
