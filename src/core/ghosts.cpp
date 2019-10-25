@@ -232,10 +232,6 @@ static void prepare_send_buffer(CommBuf &send_buffer,
       for (Particle const &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver << part.p;
-          if (ghosts_have_bonds) {
-            archiver << static_cast<int>(part.bl.n);
-            bond_archiver << Utils::make_const_span(part.bl);
-          }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
@@ -248,6 +244,10 @@ static void prepare_send_buffer(CommBuf &send_buffer,
         }
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver << part.f;
+        }
+        if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS)) {
+          archiver << static_cast<int>(part.bl.n);
+          bond_archiver << Utils::make_const_span(part.bl);
         }
       }
     }
@@ -304,12 +304,6 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (ghosts_have_bonds) {
-            int n_bonds;
-            archiver >> n_bonds;
-            part.bl.resize(n_bonds);
-            bond_archiver >> Utils::make_span(part.bl);
-          }
           if (local_particles[part.p.identity] == nullptr) {
             local_particles[part.p.identity] = &part;
           }
@@ -322,6 +316,12 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         }
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver >> part.f;
+        }
+        if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS)) {
+          int n_bonds;
+          archiver >> n_bonds;
+          part.bl.resize(n_bonds);
+          bond_archiver >> Utils::make_span(part.bl);
         }
       }
     }
