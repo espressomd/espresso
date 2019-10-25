@@ -517,8 +517,10 @@ void realloc_local_particles(int part) {
   constexpr auto INCREMENT = 8;
 
   if (part >= local_particles.size()) {
-    /* increase vector size by round up part + 1 in granularity INCREMENT and set new memory to nullptr */
-    local_particles.resize(INCREMENT * ((part + INCREMENT) / INCREMENT), nullptr);
+    /* increase vector size by round up part + 1 in granularity INCREMENT and
+     * set new memory to nullptr */
+    local_particles.resize(INCREMENT * ((part + INCREMENT) / INCREMENT),
+                           nullptr);
   }
 }
 

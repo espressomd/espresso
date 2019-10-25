@@ -53,12 +53,12 @@ public:
       return {make_indirect_iterator(begin), make_indirect_iterator(begin)};
     }
 
-    auto begin =
-        skip_it(local_particles.data(), local_particles.data() + max_seen_particle + 1,
-                SkipIfNullOrGhost());
-    auto end =
-        skip_it(local_particles.data() + max_seen_particle + 1,
-                local_particles.data() + max_seen_particle + 1, SkipIfNullOrGhost());
+    auto begin = skip_it(local_particles.data(),
+                         local_particles.data() + max_seen_particle + 1,
+                         SkipIfNullOrGhost());
+    auto end = skip_it(local_particles.data() + max_seen_particle + 1,
+                       local_particles.data() + max_seen_particle + 1,
+                       SkipIfNullOrGhost());
 
     return {make_indirect_iterator(begin), make_indirect_iterator(end)};
   }

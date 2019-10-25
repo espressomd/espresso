@@ -356,7 +356,7 @@ void dp3m_init() {
                  dp3m.fft, node_grid, comm_cart);
     dp3m.ks_mesh.resize(ca_mesh_size);
 
-    for (auto &val: dp3m.rs_mesh_dip) {
+    for (auto &val : dp3m.rs_mesh_dip) {
       val.resize(ca_mesh_size);
     }
 
@@ -1025,9 +1025,12 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
           }
         }
         /* Back FFT force component mesh */
-        fft_perform_back(dp3m.rs_mesh_dip[0].data(), false, dp3m.fft, comm_cart);
-        fft_perform_back(dp3m.rs_mesh_dip[1].data(), false, dp3m.fft, comm_cart);
-        fft_perform_back(dp3m.rs_mesh_dip[2].data(), false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[0].data(), false, dp3m.fft,
+                         comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[1].data(), false, dp3m.fft,
+                         comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[2].data(), false, dp3m.fft,
+                         comm_cart);
         /* redistribute force component mesh */
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[0].data());
         dp3m_spread_force_grid(dp3m.rs_mesh_dip[1].data());

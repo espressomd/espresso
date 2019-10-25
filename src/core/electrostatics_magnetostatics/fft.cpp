@@ -376,9 +376,10 @@ void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
                        plan.element);
 
     if (plan.group[i] != comm.rank()) {
-      MPI_Sendrecv(fft.send_buf.data(), plan.send_size[i], MPI_DOUBLE, plan.group[i],
-                   REQ_FFT_FORW, fft.recv_buf.data(), plan.recv_size[i], MPI_DOUBLE,
-                   plan.group[i], REQ_FFT_FORW, comm, MPI_STATUS_IGNORE);
+      MPI_Sendrecv(fft.send_buf.data(), plan.send_size[i], MPI_DOUBLE,
+                   plan.group[i], REQ_FFT_FORW, fft.recv_buf.data(),
+                   plan.recv_size[i], MPI_DOUBLE, plan.group[i], REQ_FFT_FORW,
+                   comm, MPI_STATUS_IGNORE);
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
@@ -546,10 +547,10 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
 
   for (i = 1; i < 4; i++) {
-    auto group =
-        find_comm_groups({n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-                         {n_grid[i][0], n_grid[i][1], n_grid[i][2]},
-                         n_id[i - 1].data(), n_id[i].data(), n_pos[i].data(), my_pos[i], comm);
+    auto group = find_comm_groups(
+        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1].data(),
+        n_id[i].data(), n_pos[i].data(), my_pos[i], comm);
     if (not group) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
@@ -559,8 +560,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
       group = find_comm_groups(
           {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1].data(), n_id[i].data(),
-          n_pos[i].data(), my_pos[i], comm);
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1].data(),
+          n_id[i].data(), n_pos[i].data(), my_pos[i], comm);
 
       if (not group) {
         throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
