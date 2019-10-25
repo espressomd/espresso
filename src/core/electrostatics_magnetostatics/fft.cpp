@@ -371,18 +371,18 @@ void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
                     fft_data_struct &fft,
                     const boost::mpi::communicator &comm) {
   for (int i = 0; i < plan.group.size(); i++) {
-    plan.pack_function(in, fft.send_buf, &(plan.send_block[6 * i]),
+    plan.pack_function(in, fft.send_buf.data(), &(plan.send_block[6 * i]),
                        &(plan.send_block[6 * i + 3]), plan.old_mesh,
                        plan.element);
 
     if (plan.group[i] != comm.rank()) {
-      MPI_Sendrecv(fft.send_buf, plan.send_size[i], MPI_DOUBLE, plan.group[i],
-                   REQ_FFT_FORW, fft.recv_buf, plan.recv_size[i], MPI_DOUBLE,
+      MPI_Sendrecv(fft.send_buf.data(), plan.send_size[i], MPI_DOUBLE, plan.group[i],
+                   REQ_FFT_FORW, fft.recv_buf.data(), plan.recv_size[i], MPI_DOUBLE,
                    plan.group[i], REQ_FFT_FORW, comm, MPI_STATUS_IGNORE);
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
-    fft_unpack_block(fft.recv_buf, out, &(plan.recv_block[6 * i]),
+    fft_unpack_block(fft.recv_buf.data(), out, &(plan.recv_block[6 * i]),
                      &(plan.recv_block[6 * i + 3]), plan.new_mesh,
                      plan.element);
   }
@@ -404,19 +404,19 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
      versa. Attention then also new_mesh and old_mesh are exchanged */
 
   for (int i = 0; i < plan_f.group.size(); i++) {
-    plan_b.pack_function(in, fft.send_buf, &(plan_f.recv_block[6 * i]),
+    plan_b.pack_function(in, fft.send_buf.data(), &(plan_f.recv_block[6 * i]),
                          &(plan_f.recv_block[6 * i + 3]), plan_f.new_mesh,
                          plan_f.element);
 
     if (plan_f.group[i] != comm.rank()) { /* send first, receive second */
-      MPI_Sendrecv(fft.send_buf, plan_f.recv_size[i], MPI_DOUBLE,
-                   plan_f.group[i], REQ_FFT_BACK, fft.recv_buf,
+      MPI_Sendrecv(fft.send_buf.data(), plan_f.recv_size[i], MPI_DOUBLE,
+                   plan_f.group[i], REQ_FFT_BACK, fft.recv_buf.data(),
                    plan_f.send_size[i], MPI_DOUBLE, plan_f.group[i],
                    REQ_FFT_BACK, comm, MPI_STATUS_IGNORE);
     } else { /* Self communication... */
       std::swap(fft.send_buf, fft.recv_buf);
     }
-    fft_unpack_block(fft.recv_buf, out, &(plan_f.send_block[6 * i]),
+    fft_unpack_block(fft.recv_buf.data(), out, &(plan_f.send_block[6 * i]),
                      &(plan_f.send_block[6 * i + 3]), plan_f.old_mesh,
                      plan_f.element);
   }
@@ -500,18 +500,17 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
   int n_grid[4][3]; /* The four node grids. */
   int my_pos[4][3]; /* The position of comm.rank() in the node grids. */
-  int *n_id[4];     /* linear node identity lists for the node grids. */
-  int *n_pos[4];    /* positions of nodes in the node grids. */
 
   int node_pos[3];
   MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
 
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
-  for (i = 0; i < 4; i++) {
-    n_id[i] = (int *)Utils::malloc(1 * comm.size() * sizeof(int));
-    n_pos[i] = (int *)Utils::malloc(3 * comm.size() * sizeof(int));
-  }
+
+  /* linear node identity lists for the node grids. */
+  std::vector<std::vector<int>> n_id(4, std::vector<int>(comm.size()));
+  /* positions of nodes in the node grids. */
+  std::vector<std::vector<int>> n_pos(4, std::vector<int>(3 * comm.size()));
 
   /* === node grids === */
   /* real space node grid (n_grid[0]) */
@@ -550,7 +549,7 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     auto group =
         find_comm_groups({n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
                          {n_grid[i][0], n_grid[i][1], n_grid[i][2]},
-                         n_id[i - 1], n_id[i], n_pos[i], my_pos[i], comm);
+                         n_id[i - 1].data(), n_id[i].data(), n_pos[i].data(), my_pos[i], comm);
     if (not group) {
       /* try permutation */
       j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
@@ -560,8 +559,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
       group = find_comm_groups(
           {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-          n_pos[i], my_pos[i], comm);
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1].data(), n_id[i].data(),
+          n_pos[i].data(), my_pos[i], comm);
 
       if (not group) {
         throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
@@ -570,14 +569,10 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
     fft.plan[i].group = *group;
 
-    fft.plan[i].send_block = Utils::realloc(
-        fft.plan[i].send_block, 6 * fft.plan[i].group.size() * sizeof(int));
-    fft.plan[i].send_size = Utils::realloc(
-        fft.plan[i].send_size, 1 * fft.plan[i].group.size() * sizeof(int));
-    fft.plan[i].recv_block = Utils::realloc(
-        fft.plan[i].recv_block, 6 * fft.plan[i].group.size() * sizeof(int));
-    fft.plan[i].recv_size = Utils::realloc(
-        fft.plan[i].recv_size, 1 * fft.plan[i].group.size() * sizeof(int));
+    fft.plan[i].send_block.resize(6 * fft.plan[i].group.size());
+    fft.plan[i].send_size.resize(fft.plan[i].group.size());
+    fft.plan[i].recv_block.resize(6 * fft.plan[i].group.size());
+    fft.plan[i].recv_size.resize(fft.plan[i].group.size());
 
     fft.plan[i].new_size =
         calc_local_mesh(my_pos[i], n_grid[i], global_mesh_dim, global_mesh_off,
@@ -652,10 +647,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
 
   /* Factor 2 for complex numbers */
-  fft.send_buf =
-      Utils::realloc(fft.send_buf, fft.max_comm_size * sizeof(double));
-  fft.recv_buf =
-      Utils::realloc(fft.recv_buf, fft.max_comm_size * sizeof(double));
+  fft.send_buf.resize(fft.max_comm_size);
+  fft.recv_buf.resize(fft.max_comm_size);
   if (*data)
     fftw_free(*data);
   (*data) = (double *)fftw_malloc(fft.max_mesh_size * sizeof(double));
@@ -704,11 +697,6 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
 
   fft.init_tag = true;
-  /* free(data); */
-  for (i = 0; i < 4; i++) {
-    free(n_id[i]);
-    free(n_pos[i]);
-  }
   return fft.max_mesh_size;
 }
 
