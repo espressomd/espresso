@@ -90,6 +90,10 @@ class SwimmerTest():
         self.system.integrator.run(20, reuse_forces=True)
         tot_mom = self.system.analysis.linear_momentum(include_particles=True,
                                                        include_lbfluid=True)
+        # compensate half-step offset between force calculation and LB-update
+        for part in self.system.part:
+            tot_mom += part.f * self.system.time_step / 2.
+
         np.testing.assert_allclose(tot_mom, 3 * [0.], atol=self.tol)
 
     def test_particle_forces(self):
@@ -114,7 +118,7 @@ class SwimmerTest():
                 f_swim * director + self.gamma * v_swim * director
 
             self.system.integrator.run(1, reuse_forces=True)
-            np.testing.assert_allclose(swimmer.f, force, atol=self.tol)
+            np.testing.assert_allclose(np.copy(swimmer.f), force, atol=self.tol)
 
     def check_fluid_force(self, swimmer):
         pass
@@ -208,7 +212,4 @@ class SwimmerTestGPU(SwimmerTest, ut.TestCase):
 
 
 if __name__ == "__main__":
-    suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(SwimmerTestGPU))
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(SwimmerTestCPU))
-    result = ut.TextTestRunner(verbosity=4).run(suite)
+    ut.main()
