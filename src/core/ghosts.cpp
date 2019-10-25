@@ -193,10 +193,9 @@ static int calc_transmit_size(GhostCommunication &ghost_comm,
     n_buffer_new = 0;
     if (data_parts & GHOSTTRANS_PROPRTS) {
       n_buffer_new += sizeof(ParticleProperties);
-      // sending size of bond lists
-      if (ghosts_have_bonds) {
-        n_buffer_new += sizeof(int);
-      }
+    }
+    if (data_parts & GHOSTTRANS_BONDS) {
+      n_buffer_new += sizeof(int);
     }
     if (data_parts & GHOSTTRANS_POSITION)
       n_buffer_new += sizeof(ParticlePosition);
@@ -245,7 +244,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver << part.f;
         }
-        if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS)) {
+        if (data_parts & GHOSTTRANS_BONDS) {
           archiver << static_cast<int>(part.bl.n);
           bond_archiver << Utils::make_const_span(part.bl);
         }
@@ -317,7 +316,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver >> part.f;
         }
-        if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS)) {
+        if (data_parts & GHOSTTRANS_BONDS) {
           int n_bonds;
           archiver >> n_bonds;
           part.bl.resize(n_bonds);
@@ -360,9 +359,9 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
         Particle &part2 = dst_list->part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
           part2.p = part1.p;
-          if (ghosts_have_bonds) {
-            part2.bl = part1.bl;
-          }
+        }
+        if (data_parts & GHOSTTRANS_BONDS) {
+          part2.bl = part1.bl;
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
@@ -411,6 +410,9 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
    * positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
+
+  if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
+    data_parts |= GHOSTTRANS_BONDS;
 
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
     GhostCommunication &ghost_comm = *it;
