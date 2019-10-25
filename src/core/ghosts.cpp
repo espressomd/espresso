@@ -81,14 +81,37 @@ private:
  * Note: The underlying buffer (span) must be large enough. This class
  * does *not* resize the buffer.
  */
-struct Archiver {
+struct LoadArchiver {
 private:
   Utils::Span<char> buf;
   char *insert;
 
 public:
-  explicit Archiver(Utils::Span<char> buf) : buf(buf), insert(buf.data()) {}
-  ~Archiver() { assert(insert - buf.data() == buf.size()); }
+  explicit LoadArchiver(Utils::Span<char> buf) : buf(buf), insert(buf.data()) {}
+  ~LoadArchiver() { assert(insert - buf.data() == buf.size()); }
+
+  template <typename T, typename = typename std::enable_if<
+                            std::is_trivially_copyable<T>::value>::type>
+  void operator>>(T &value) {
+    std::memcpy(&value, insert, sizeof(T));
+    insert += sizeof(T);
+  }
+
+  template <class T> auto operator&(T &value) {
+    operator>>(value);
+
+    return *this;
+  }
+};
+
+struct SaveArchiver {
+private:
+  Utils::Span<char> buf;
+  char *insert;
+
+public:
+  explicit SaveArchiver(Utils::Span<char> buf) : buf(buf), insert(buf.data()) {}
+  ~SaveArchiver() { assert(insert - buf.data() == buf.size()); }
 
   template <typename T, typename = typename std::enable_if<
                             std::is_trivially_copyable<T>::value>::type>
@@ -97,11 +120,10 @@ public:
     insert += sizeof(T);
   }
 
-  template <typename T, typename = typename std::enable_if<
-                            std::is_trivially_copyable<T>::value>::type>
-  void operator>>(T &value) {
-    std::memcpy(&value, insert, sizeof(T));
-    insert += sizeof(T);
+  template <class T> auto operator&(const T &value) {
+    operator<<(value);
+
+    return *this;
   }
 };
 
@@ -198,7 +220,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   send_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
   send_buffer.bonds().clear();
 
-  auto archiver = Archiver{Utils::make_span(send_buffer)};
+  auto archiver = SaveArchiver{Utils::make_span(send_buffer)};
   auto bond_archiver = BondArchiver{send_buffer.bonds()};
 
   /* put in data */
@@ -270,7 +292,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
                             GhostCommunication &ghost_comm,
                             unsigned int data_parts) {
   /* put back data */
-  auto archiver = Archiver{Utils::make_span(recv_buffer)};
+  auto archiver = LoadArchiver{Utils::make_span(recv_buffer)};
   auto bond_archiver = BondArchiver{recv_buffer.bonds()};
 
   for (auto part_list : ghost_comm.part_lists) {
@@ -311,7 +333,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
                                         GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Archiver{Utils::make_span(recv_buffer)};
+  auto archiver = LoadArchiver{Utils::make_span(recv_buffer)};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : part_list->particles()) {
       ParticleForce pf;
