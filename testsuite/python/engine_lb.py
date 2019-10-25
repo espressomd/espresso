@@ -90,6 +90,10 @@ class SwimmerTest():
         self.system.integrator.run(20, reuse_forces=True)
         tot_mom = self.system.analysis.linear_momentum(include_particles=True,
                                                        include_lbfluid=True)
+        # compensate half-step offset between force calculation and LB-update
+        for part in self.system.part:
+            tot_mom += part.f * self.system.time_step / 2.
+
         np.testing.assert_allclose(tot_mom, 3 * [0.], atol=self.tol)
 
     def test_particle_forces(self):
@@ -114,15 +118,14 @@ class SwimmerTest():
                 f_swim * director + self.gamma * v_swim * director
 
             self.system.integrator.run(1, reuse_forces=True)
-            np.testing.assert_allclose(swimmer.f, force, atol=self.tol)
+            np.testing.assert_allclose(
+                np.copy(swimmer.f), force, atol=self.tol)
 
     def check_fluid_force(self, swimmer):
         pass
         # forces on particles are checked
         # total force on the fluid matches (momentum conservation)
         # TODO: only thing left to check is the location of the fluid force.
-        # There is no counter torque when using the rotational_friction-feature
-        # so there is nothing to be tested
 
 
 @utx.skipIfMissingFeatures(["ENGINE", "ROTATION", "MASS"])
@@ -133,22 +136,6 @@ class SwimmerTestCPU(SwimmerTest, ut.TestCase):
         self.lbf = lb.LBFluid(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
-
-    def test_rotfric_exception(self):
-        """rotational_friction feature is disabled on CPU for more than one core
-        """
-        if self.system.cell_system.get_state()["n_nodes"] > 1:
-            # swimming without rot_fric is fine
-            self.system.part.add(pos=[0, 0, 0], rotation=3 * [True],
-                                 swimming={"f_swim": 0.1, "mode": "pusher"})
-            self.system.integrator.run(3)
-            # with rot_fric it is not
-            with self.assertRaises(Exception):
-                self.system.part.add(pos=[0, 0, 0], rotation=3 * [True],
-                                     swimming={"f_swim": 0.1,
-                                               "mode": "pusher",
-                                               "rotational_friction": 0.3})
-                self.system.integrator.run(3)
 
 
 @utx.skipIfMissingGPU()
@@ -161,54 +148,6 @@ class SwimmerTestGPU(SwimmerTest, ut.TestCase):
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 
-    def test_particle_torques(self):
-        """setup shear flow and check if resulting torques match
-        the formulae in the core
-        """
-
-        bottom = shapes.Wall(normal=[0, 0, 1],
-                             dist=self.LB_params['agrid'])
-        top = shapes.Wall(normal=[0, 0, -1],
-                          dist=-self.system.box_l[2] + self.LB_params['agrid'])
-        self.system.lbboundaries.add(lbboundaries.LBBoundary(shape=bottom))
-        self.system.lbboundaries.add(
-            lbboundaries.LBBoundary(shape=top, velocity=[1e-3, 1e-3, 0]))
-        self.system.integrator.run(100)
-
-        # fix the particles so inaccuracies from position updates
-        # before torque calculation don't matter
-        self.add_all_types_of_swimmers(fix=True, rotation=True,
-                                       put_in_corners=False)
-
-        self.system.integrator.run(20)
-        for swimmer in self.system.part:
-
-            director = swimmer.director
-            dip_len = swimmer.swimming["dipole_length"]
-            mode_fac = 1. if swimmer.swimming["mode"] == "puller" else -1.
-            source_pos = swimmer.pos + mode_fac * dip_len * director
-
-            v_center = self.lbf.get_interpolated_velocity(swimmer.pos)
-            v_source = self.lbf.get_interpolated_velocity(source_pos)
-            diff = v_center - v_source
-            cross = np.cross(diff, director)
-            # half-step omega with isotropic rinertia
-            omega_part = swimmer.omega_lab + 0.5 * self.system.time_step * \
-                swimmer.torque_lab / swimmer.rinertia[0]
-            omega_swim = cross / np.linalg.norm(cross) * \
-                np.linalg.norm(diff) / dip_len
-            torque = swimmer.swimming["rotational_friction"] * \
-                (omega_swim - omega_part)
-
-            self.system.integrator.run(1, reuse_forces=True)
-            np.testing.assert_allclose(
-                swimmer.torque_lab,
-                torque,
-                atol=self.tol)
-
 
 if __name__ == "__main__":
-    suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(SwimmerTestGPU))
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(SwimmerTestCPU))
-    result = ut.TextTestRunner(verbosity=4).run(suite)
+    ut.main()
