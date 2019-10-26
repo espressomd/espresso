@@ -20,7 +20,6 @@ import numpy as np
 from numpy.random import uniform
 import espressomd
 import math
-import random
 
 
 @utx.skipIfMissingFeatures(["MASS", "PARTICLE_ANISOTROPY",
@@ -33,7 +32,7 @@ class ThermoTest(ut.TestCase):
     kT = 0.0
     gamma_global = np.zeros((3))
     gamma_global_rot = np.zeros((3))
-    # Test ranges    
+    # Test ranges
     gamma_min = 5.
     gamma_max = 10.
 
@@ -320,8 +319,9 @@ class ThermoTest(ut.TestCase):
             Number of particles of the each type. There are 2 types.
 
         """
-        tol = 1.21E-3
-        for step in range(100):
+
+        tol = 1.2E-3
+        for _ in range(100):
             self.system.integrator.run(2)
             for i in range(n):
                 for k in range(2):

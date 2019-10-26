@@ -495,7 +495,7 @@ inline void brownian_dynamics_propagator(const ParticleRange &particles) {
 #ifdef ROTATION
     if (!p.p.rotation)
       continue;
-    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
+    convert_torque_to_body_frame_apply_fix(p);
     bd_drag_rot(p, time_step);
     bd_drag_vel_rot(p, time_step);
     bd_random_walk_rot(p, time_step);

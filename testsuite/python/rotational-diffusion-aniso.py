@@ -31,8 +31,6 @@ class RotDiffAniso(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 5.0
     system.seed = range(system.cell_system.get_state()["n_nodes"])
-    # to be defined
-    box = 0.0
 
     # The NVT thermostat parameters
     kT = 0.0
@@ -162,7 +160,6 @@ class RotDiffAniso(ut.TestCase):
         """
         # Global diffusivity tensor in the body frame:
         D = self.kT / self.gamma_global
-        #dt0 = self.J / self.gamma_global
 
         # Thermalizing...
         therm_steps = 100
@@ -195,7 +192,7 @@ class RotDiffAniso(ut.TestCase):
         self.system.time = 0.0
         int_steps = 20
         loops = 100
-        for step in range(loops):
+        for _ in range(loops):
             self.system.integrator.run(steps=int_steps)
             dcosjj = np.zeros((3))
             dcosjj2 = np.zeros((3))

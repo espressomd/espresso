@@ -184,7 +184,7 @@ class InteractionsBondedTest(ut.TestCase):
         if test_breakage:
             self.system.part[1].pos = self.system.part[0].pos \
                 + self.axis * cutoff * (1.01)
-            with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
+            with self.assertRaisesRegex(Exception, "Encountered errors during integrate"):
                 self.system.integrator.run(recalc_forces=True, steps=0)
 
 

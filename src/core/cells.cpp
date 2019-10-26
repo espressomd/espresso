@@ -402,8 +402,9 @@ void cells_resort_particles(int global_flag) {
 #endif
   }
 
-  ghost_communicator(&cell_structure.ghost_cells_comm);
-  ghost_communicator(&cell_structure.exchange_ghosts_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PARTNUM);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
 
   /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */
@@ -461,7 +462,8 @@ void cells_update_ghosts() {
 
   } else
     /* Communication step: ghost information */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
 }
 
 Cell *find_current_cell(const Particle &p) {

@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import string
 import re
 import os
 
@@ -52,14 +51,14 @@ for line in fin:
         continue
 
     # Match the author line and extract the part we want
-    m = re.match('^Author:\s*(.*)\s*$', line)
+    m = re.match(r'^Author:\s*(.*)\s*$', line)
     if m is not None:
         author = m.group(1)
         authorFound = True
         continue
 
     # Match the date line
-    m = re.match('^Date:\s*(.*)\s*$', line)
+    m = re.match(r'^Date:\s*(.*)\s*$', line)
     if m is not None:
         date = m.group(1)
         dateFound = True
@@ -92,7 +91,7 @@ for line in fin:
         continue
     # Collect the files for this commit. FIXME: Still need to add +/- to files
     elif authorFound & dateFound & messageFound:
-        fileList = re.split(' \| ', line, 2)
+        fileList = re.split(r' \| ', line, 2)
         if len(fileList) > 1:
             if files:
                 files = files + ", " + fileList[0].strip()

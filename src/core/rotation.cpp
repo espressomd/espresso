@@ -39,12 +39,12 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "cuda_interface.hpp"
+#include "errorhandling.hpp"
 #include "forces.hpp"
 #include "global.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "particle_data.hpp"
-#include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -52,6 +52,7 @@
 #include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
+#include <utils/mask.hpp>
 
 /** Calculate the derivatives of the quaternion and angular acceleration
  *  for a given particle
@@ -136,19 +137,14 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
 void propagate_omega_quat_particle(Particle &p) {
 
   // If rotation for the particle is disabled entirely, return early.
-  if (!p.p.rotation)
+  if (p.p.rotation == ROTATION_FIXED)
     return;
 
   Utils::Vector4d Qd{}, Qdd{};
   Utils::Vector3d S{}, Wd{};
 
   // Clear rotational velocity for blocked rotation axes.
-  if (!(p.p.rotation & ROTATION_X))
-    p.m.omega[0] = 0;
-  if (!(p.p.rotation & ROTATION_Y))
-    p.m.omega[1] = 0;
-  if (!(p.p.rotation & ROTATION_Z))
-    p.m.omega[2] = 0;
+  p.m.omega = Utils::mask(p.p.rotation, p.m.omega);
 
   define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
@@ -188,7 +184,7 @@ void convert_torques_propagate_omega(const ParticleRange &particles) {
     if (!p.p.rotation)
       continue;
 
-    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
+    convert_torque_to_body_frame_apply_fix(p);
 
 #if defined(ENGINE)
     if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
@@ -249,20 +245,8 @@ void convert_initial_torques(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (!p.p.rotation)
       continue;
-    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
+    convert_torque_to_body_frame_apply_fix(p);
   }
-}
-// Frame conversion routines
-
-Utils::Vector3d convert_vector_body_to_space(const Particle &p,
-                                             const Utils::Vector3d &vec) {
-  auto const A = rotation_matrix(p.r.quat);
-  return transpose(A) * vec;
-}
-
-Utils::Vector3d convert_vector_space_to_body(const Particle &p,
-                                             const Utils::Vector3d &v) {
-  return rotation_matrix(p.r.quat) * v;
 }
 
 #endif // ROTATION

@@ -30,8 +30,11 @@
 
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
+#include <utils/math/rotation_matrix.hpp>
+#include <utils/mask.hpp>
 
 /** Propagate angular velocities and update quaternions on a particle */
 void propagate_omega_quat_particle(Particle &p);
@@ -44,10 +47,17 @@ void convert_torques_propagate_omega(const ParticleRange &particles);
     the integration loop */
 void convert_initial_torques(const ParticleRange &particles);
 
-Utils::Vector3d convert_vector_body_to_space(const Particle &p,
-                                             const Utils::Vector3d &v);
-Utils::Vector3d convert_vector_space_to_body(const Particle &p,
-                                             const Utils::Vector3d &v);
+// Frame conversion routines
+inline Utils::Vector3d
+convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
+  auto const A = rotation_matrix(p.r.quat);
+  return transpose(A) * vec;
+}
+
+inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                                    const Utils::Vector3d &v) {
+  return rotation_matrix(p.r.quat) * v;
+}
 
 #ifdef DIPOLES
 
@@ -78,25 +88,21 @@ inline void rotation_fix(Particle &p, Utils::Vector3d &rot_vector) {
 inline void local_rotate_particle_body(Particle &p,
                                 const Utils::Vector3d &axis_body_frame,
                                 const double phi) {
-  Utils::Vector3d axis = axis_body_frame;
+  auto axis = axis_body_frame;
 
   // Rotation turned off entirely?
   if (!p.p.rotation)
     return;
 
-  // Per coordinate fixing
-  rotation_fix(p, axis);
-  // Re-normalize rotation axis
-  double l = axis.norm();
-  // Check, if the rotation axis is nonzero
-  if (l < std::numeric_limits<double>::epsilon())
-    return;
+  // Convert rotation axis to body-fixed frame
+  axis =
+      mask(p.p.rotation, axis)
+          .normalize();
 
-  axis /= l;
-
-  double s = sin(phi / 2);
-  Utils::Vector4d q = {cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]};
-  q.normalize();
+  auto const s = std::sin(phi / 2);
+  auto const q =
+      Utils::Vector4d{cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]}
+          .normalize();
 
   // Rotate the particle
   p.r.quat = Utils::multiply_quaternions(p.r.quat, q);
@@ -109,6 +115,11 @@ inline void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space
   // Convert rotation axis to body-fixed frame
   Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
   local_rotate_particle_body(p, axis, phi);
+}
+
+inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
+  auto const torque = convert_vector_space_to_body(p, p.f.torque);
+  p.f.torque = mask(p.p.rotation, torque);
 }
 
 #endif // ROTATION

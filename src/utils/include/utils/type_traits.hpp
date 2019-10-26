@@ -19,6 +19,7 @@
 #ifndef UTILS_TYPE_TRAITS_HPP
 #define UTILS_TYPE_TRAITS_HPP
 
+#include <climits>
 #include <type_traits>
 
 namespace Utils {
@@ -44,6 +45,13 @@ template <class B1, class... Bn>
 struct conjunction<B1, Bn...>
     : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
 
+/**
+ * @brief Size of a type in bits.
+ *
+ * On posix plattforms this is 8 * sizeof(T).
+ */
+template <class T>
+struct size_in_bits : std::integral_constant<size_t, CHAR_BIT * sizeof(T)> {};
 } // namespace Utils
 
 #endif
