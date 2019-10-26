@@ -11,7 +11,7 @@ is tested and known to run on a number of platforms.
 Alternatively, people that want to use the newest features of |es| or that
 want to start contributing to the software can instead obtain the
 current development code via the version control system software  [2]_
-from |es| 's project page at Github  [3]_. This code might be not as well
+from |es|'s project page at Github  [3]_. This code might be not as well
 tested and documented as the release code; it is recommended to use this
 code only if you have already gained some experience in using |es|.
 
@@ -34,7 +34,7 @@ Requirements
 ------------
 
 The following tools libraries, including header files, are required to be able
-to compile and use ESPResSo:
+to compile and use |es|:
 
 CMake
     The build system is based on CMake
@@ -43,44 +43,38 @@ C++ Compiler
     C++14 capable C++ compiler (e.g., gcc 5 or later)
 
 Boost
-    A number of advanced C++ features used by ESPResSo is provided by Boost.
+    A number of advanced C++ features used by |es| are provided by Boost.
     We strongly recommend to use at least boost 1.67.
 
 FFTW
-    For some algorithms (P\ :math:`^3`\ M), ESPResSo needs the FFTW library
+    For some algorithms (P\ :math:`^3`\ M), |es| needs the FFTW library
     version 3 or later  [5]_ for Fourier transforms, including header
     files.
 
 MPI
-    Because ESPResSo is parallelized with MPI, you need a working MPI
+    Because |es| is parallelized with MPI, you need a working MPI
     environment that implements the MPI standard version 1.2.
 
 Python
-    ESPResSo's main user interface is via the Python scripting interface.
-    We strongly recommend Python 3. Python 2 support is about to be removed.
+    |es|'s main user interface is via the Python 3 scripting interface.
 
 Cython
     Cython is used for connecting the C++ core to Python.
     At least version 0.23 is required.
 
 
-.. _Installing Requirements on Ubuntu Linux:
+.. _Installing requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu Linux
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-These instructions pertain to Python 3. If you need to use the deprecated
-Python 2 support, leave out the `3` in the Python package names.
-I.e., use `python-numpy` rather than `python3-numpy`.
+Installing requirements on Ubuntu Linux
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-To make ESPResSo run on 18.04 LTS, its dependencies can be
-installed with:
+To make |es| run on 18.04 LTS, its dependencies can be installed with:
 
 .. code-block:: bash
 
     sudo apt install build-essential cmake cython3 python3-numpy \
-    libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
-    doxygen python3-opengl python3-sphinx python3-pip libgsl-dev
+      libboost-all-dev openmpi-common fftw3-dev libhdf5-dev libhdf5-openmpi-dev \
+      python3-opengl libgsl-dev
 
 
 Optionally the ccmake utility can be installed for easier configuration:
@@ -94,7 +88,8 @@ are required:
 
 .. code-block:: bash
 
-    pip3 install --upgrade jupyter scipy matplotlib sphinxcontrib-bibtex numpydoc
+    sudo apt install python3-matplotlib python3-scipy \
+      ipython3 jupyter-notebook
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
@@ -118,18 +113,84 @@ ROCm SDK to make use of GPU computation:
     wget -qO - http://repo.radeon.com/rocm/apt/debian/rocm.gpg.key | sudo apt-key add -
     echo 'deb [arch=amd64] http://repo.radeon.com/rocm/apt/debian/ xenial main' | sudo tee /etc/apt/sources.list.d/rocm.list
     sudo apt update
-    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand hip-thrust
+    sudo apt install libnuma-dev rocm-dkms rocblas rocfft rocrand rocthrust
 
-.. _Installing Requirements on Mac OS X:
+After installing the ROCm SDK, please reboot your computer.
 
-Installing Requirements on Mac OS X
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To make |es| run on Mac OS X 10.9 or higher, its dependencies can be
-installed using MacPorts. First, download the installer package
-appropriate for your Mac OS X version from
-https://www.macports.org/install.php and install it. Then, run the
+.. _Installing requirements on other Linux distributions:
+
+Installing requirements on other Linux distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please refer to the following Dockerfiles to find the minimum set of packages
+required to compile |es| on other Linux distributions:
+
+* `CentOS 7 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-7>`_
+* `Fedora 30 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-next>`_
+* `Debian 10 <https://github.com/espressomd/docker/blob/master/docker/debian-python3/Dockerfile-10>`_
+* `OpenSUSE Leap 15.1 <https://github.com/espressomd/docker/blob/master/docker/opensuse/Dockerfile-15.1>`_
+
+
+.. _Installing requirements on Mac OS X:
+
+Installing requirements on Mac OS X
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Preparation
+"""""""""""
+
+To make |es| run on Mac OS X 10.9 or higher, you need to install its
+dependencies. There are two possibilities for this, MacPorts and Homebrew.
+We recommend MacPorts, but if you already have Homebrew installed, you can use
+that too. To check whether you already have one or the other installed, run the
 following commands:
+
+.. code-block:: bash
+
+    test -e /opt/local/bin/port && echo "MacPorts is installed"
+    test -e /usr/local/bin/brew && echo "Homebrew is installed"
+
+If both are installed, you need to remove one of the two. To do that, run one
+of the following two commands:
+
+.. code-block:: bash
+
+    sudo port -f uninstall installed && rm -r /opt/local
+    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+
+If Homebrew is already installed, you should resolve any problems reported by
+the command
+
+.. code-block:: bash
+
+    brew doctor
+
+If Anaconda Python or the Python from www.python.org are installed, you
+will likely not be able to run |es|. Therefore, please uninstall them
+using the following commands:
+
+.. code-block:: bash
+
+    sudo rm -r ~/anaconda[23]
+    sudo rm -r /Library/Python
+
+If you want to install MacPorts, download the installer package
+appropriate for your Mac OS X version from
+https://www.macports.org/install.php and install it.
+
+If you want to install Homebrew, use the following commands.
+
+.. code-block:: bash
+
+    sudo xcode-select --install
+    sudo xcodebuild -license accept
+    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+Installing packages using MacPorts
+""""""""""""""""""""""""""""""""""
+
+Run the following commands:
 
 .. code-block:: bash
 
@@ -138,71 +199,39 @@ following commands:
     sudo port selfupdate
     sudo port install cmake python37 py37-cython py37-numpy \
       openmpi-default fftw-3 +openmpi boost +openmpi +python37 \
-      doxygen py37-opengl py37-sphinx py37-pip gsl hdf5 +openmpi
+      doxygen py37-opengl py37-sphinx gsl hdf5 +openmpi \
+      py37-matplotlib py37-ipython py37-jupyter
     sudo port select --set cython cython37
     sudo port select --set python3 python37
-    sudo port select --set pip pip37
-    sudo port select --set mpi openmpi-mp-fortran
+    sudo port select --set mpi openmpi-mp
 
-Alternatively, you can use Homebrew.
 
-.. code-block:: bash
-
-    sudo xcode-select --install
-    sudo xcodebuild -license accept
-    /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-    brew install cmake python@3 cython boost boost-mpi fftw \
-      doxygen gsl
-    brew install hdf5 --with-mpi
-    brew install numpy --without-python@2
-    ln -s /usr/local/bin/python2 /usr/local/bin/python
-    pip install --user PyOpenGL
-
-Note: If both MacPorts and Homebrew are installed, you will not be able to
-run |es|. Therefore, if you have both installed, please uninstall one
-or the other by running one of the following two commands:
+Installing packages using Homebrew
+""""""""""""""""""""""""""""""""""
 
 .. code-block:: bash
 
-    sudo port -f uninstall installed && rm -r /opt/local
-    ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/uninstall)"
+    brew install cmake python cython boost boost-mpi fftw \
+      doxygen gsl numpy ipython jupyter
+    brew install hdf5
+    brew link --force cython
+    pip install PyOpenGL matplotlib
+
+Installing CUDA
+"""""""""""""""
 
 If your Mac has an Nvidia graphics card, you should also download and install the
 CUDA SDK [6]_ to make use of GPU computation.
-
-.. _Installing python dependencies:
-
-Installing python dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-There are a few python packages needed to e.g. build the documentation.
-To install the required packages as a non-root user execute the following
-command in |es| 's source directory:
-
-.. code-block:: bash
-
-    pip3 install -r requirements.txt --user --upgrade
-
-Please note that on some systems, ``pip3`` has to be replaced by ``pip`` or ``pip2`` to install Python 2 versions of the packages.
 
 .. _Quick installation:
 
 Quick installation
 ------------------
 
-If you have installed the requirements (see section :ref:`Requirements
-<requirements>` ) in standard locations, to compile, it is usually enough to
-create a build directory and call ``cmake`` and ``make`` (optional steps
-which modify the build process are commented out).
-To chose the correct Python version, run
-
-.. code-block:: bash
-
-    python -V
-    python3 -V
-
-This shows which Python version the binaries are for. Then pass the one you'd like to use in the cmake command line, below.
-
+If you have installed the requirements (see section :ref:`Requirements`) in
+standard locations, compiling |es| is usually only a matter of creating a build
+directory and calling ``cmake`` and ``make`` in it. See for example the command
+lines below (optional steps which modify the build process are commented out):
 
 .. code-block:: bash
 
@@ -210,12 +239,12 @@ This shows which Python version the binaries are for. Then pass the one you'd li
     cd build
     #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
     #nano myconfig.hpp                    # edit to add/remove features as desired
-    cmake -DPYTHON_EXECUTABLE=`which python3` ..
+    cmake ..
     #ccmake . // in order to add/remove features like SCAFACOS or CUDA
     make
 
 This will build |es| with a default feature set, namely
-:file:`src/core/myconfig-default.hpp`. This file is a ``c++`` header file,
+:file:`src/config/myconfig-default.hpp`. This file is a C++ header file,
 which defines the features that should be compiled in.
 You may want to adjust the feature set to your needs. This can be easily done
 by copying the :file:`myconfig-sample.hpp` which has been created in the :file:`build`
@@ -243,7 +272,7 @@ command:
 
     ./pypresso <SCRIPT>
 
-where is ``<SCRIPT>`` is a ``python`` script which has to
+where ``<SCRIPT>`` is a ``python`` script which has to
 be written by the user. You can find some examples in the :file:`samples`
 folder of the source code directory. If you want to run in parallel, you should
 have compiled with *Open MPI*, and need to tell MPI to run in parallel. The actual
@@ -265,23 +294,21 @@ Configuring
 .. _myconfig.hpp\: Activating and deactivating features:
 
 :file:`myconfig.hpp`: Activating and deactivating features
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 |es| has a large number of features that can be compiled into the binary.
 However, it is not recommended to actually compile in all possible
-features, as this will slow down significantly. Instead, compile in only
+features, as this will slow down |es| significantly. Instead, compile in only
 the features that are actually required. A strong gain in speed can be
-achieved, by disabling all non-bonded interactions except for a single
-one, e.g. . For the developers, it is also possible to turn on or off a
+achieved by disabling all non-bonded interactions except for a single
+one, e.g. ``LENNARD_JONES``. For developers, it is also possible to turn on or off a
 number of debugging messages. The features and debug messages can be
 controlled via a configuration header file that contains C-preprocessor
-declarations. Appendix lists and describes all available features. The
-file :file:`myconfig-sample.hpp` that configure will generate in the build
-directory contains a list of all possible features that can be copied
-into your own configuration file. When no configuration header is
-provided by the user, a default header, found in
-:file:`src/core/myconfig-default.hpp`, will be used that turns on the
-default features.
+declarations. Subsection :ref:`Features` describes all available features. If a
+file named :file:`myconfig.hpp` is present in the build directory when ``cmake``
+is run, all features defined in it will be compiled in. If no such file exists,
+the configuration file :file:`src/config/myconfig-default.hpp` will be used
+instead, which turns on the default features.
 
 When you distinguish between the build and the source directory, the
 configuration header can be put in either of these. Note, however, that
@@ -300,7 +327,7 @@ different configuration headers:
   .. code-block:: c++
 
     #define ELECTROSTATICS
-    #define LENNARD-JONES
+    #define LENNARD_JONES
 
 *  :file:`$builddir2/myconfig.hpp`:
 
@@ -308,7 +335,7 @@ different configuration headers:
 
     #define LJCOS
 
-Then you can simply compile two different versions of via:
+Then you can simply compile two different versions of |es| via:
 
 .. code-block:: bash
 
@@ -320,7 +347,7 @@ Then you can simply compile two different versions of via:
     cmake ..
     make
 
-To see, what features were activated in :file:`myconfig.hpp`, run:
+To see what features were activated in :file:`myconfig.hpp`, run:
 
 .. code-block:: bash
 
@@ -336,11 +363,11 @@ and then in the Python interpreter:
 .. _Features:
 
 Features
-~~~~~~~~
+--------
 
 This chapter describes the features that can be activated in |es|. Even if
 possible, it is not recommended to activate all features, because this
-will negatively effect |es| 's performance.
+will negatively effect |es|'s performance.
 
 Features can be activated in the configuration header :file:`myconfig.hpp` (see
 section :ref:`myconfig.hpp\: Activating and deactivating features`). To
@@ -406,18 +433,8 @@ General features
 
 -  ``COMFIXED`` Allows to fix the center of mass of all particles of a certain type.
 
--  ``MOLFORCES`` (EXPERIMENTAL)
-
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
-
--  ``VIRTUAL_SITES_COM`` Virtual sites are particles, the position and velocity of which is
-   not obtained by integrating equations of motion. Rather, they are
-   placed using the position (and orientation) of other particles. The
-   feature allows to place a virtual particle into the center of mass of
-   a set of other particles.
-
-   .. seealso:: :ref:`Virtual sites`
 
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
@@ -464,8 +481,6 @@ Fluid dynamics and fluid structure interaction
 -  ``LB_BOUNDARIES``
 
 -  ``LB_BOUNDARIES_GPU``
-
--  ``AFFINITY``
 
 -  ``LB_ELECTROHYDRODYNAMICS`` Enables the implicit calculation of electro-hydrodynamics for charged
    particles and salt ions in an electric field.
@@ -538,52 +553,24 @@ Some of the short-range interactions have additional features:
 Debug messages
 ^^^^^^^^^^^^^^
 
-Finally, there are a number of flags for debugging. The most important
-one are
+Finally, there is a flag for debugging:
 
--  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect inconsistencies
-   especially in the cell systems. These checks are however too slow to
-   be enabled in production runs.
+-  ``ADDITIONAL_CHECKS`` Enables numerous additional checks which can detect
+   inconsistencies especially in the cell systems. These checks are however
+   too slow to be enabled in production runs.
 
-The following flags control the debug output of various sections of
-|es|. You will however understand the output very often only by
-looking directly at the code.
-
--  ``COMM_DEBUG`` Output from the asynchronous communication code.
-
--  ``EVENT_DEBUG`` Notifications for event calls, i.e. the ``on_...`` functions in
-   ``initialize.c``. Useful if some module does not correctly respond to
-   changes of e.g. global variables.
-
--  ``CELL_DEBUG`` Cellsystem output.
-
--  ``GHOST_DEBUG`` Cellsystem output specific to the handling of ghost cells and the
-   ghost cell communication.
-
--  ``HALO_DEBUG``
-
--  ``P3M_DEBUG``
-
--  ``THERMO_DEBUG`` Output from the thermostats.
-
--  ``VIRTUAL_SITES_DEBUG``
-
--  ``ASYNC_BARRIER`` Introduce a barrier after each asynchronous command completion. Helps
-   in the detection of mismatching communication.
-
--  ``FORCE_CORE`` Causes |es| to try to provoke a core dump when exiting unexpectedly.
-
--  ``MPI_CORE`` Causes |es| to try this even with MPI errors.
-
--  ``CUDA_DEBUG``
-
--  ``H5MD_DEBUG``
-
+   .. note::
+      Because of a bug in OpenMPI versions 2.0-2.1, 3.0.0-3.0.2 and 3.1.0-3.1.2
+      that causes a segmentation fault when running the |es| OpenGL visualizer
+      with feature ``ADDITIONAL_CHECKS`` enabled together with either
+      ``ELECTROSTATICS`` or ``DIPOLES``, the subset of additional checks for
+      those two features are disabled if an unpatched version of OpenMPI is
+      detected during compilation.
 
 
 
 Features marked as experimental
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
@@ -591,7 +578,7 @@ Some of the above features are marked as EXPERIMENTAL. Activating these features
 .. _cmake:
 
 cmake
-~~~~~
+^^^^^
 
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
@@ -618,22 +605,20 @@ are ever modified by the build process.
     cmake ..
     make
 
-Afterwards Espresso can be run via calling :file:`./pypresso` from the command
-line.
+Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
 
 .. _ccmake:
 
 ccmake
-~~~~~~
+^^^^^^
 
 Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
 
 **Example:**
 
-Alternatively to the previous example, instead of cmake, the ccmake executable is
-called in the build directory to configure ESPResSo,
-followed by a call to make:
+Alternatively to the previous example, instead of cmake, the ccmake executable
+is called in the build directory to configure |es|, followed by a call to make:
 
 .. code-block:: bash
 
@@ -691,7 +676,7 @@ build directory and create a new one.
 .. _make\: Compiling, testing and installing:
 
 ``make``: Compiling, testing and installing
---------------------------------------------
+-------------------------------------------
 
 The command ``make`` is mainly used to compile the source code, but it
 can do a number of other things. The generic syntax of the ``make``
@@ -716,16 +701,19 @@ targets are available:
     Deletes all files that were created during the compilation.
 
 ``install``
-    Install |es|.
-    Use ``make DESTDIR=/home/john install`` to install to a
-    specific directory.
+    Install |es| in the path specified by the CMake variable
+    ``CMAKE_INSTALL_PREFIX``. The path can be changed by calling CMake
+    with ``cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/espresso``. Do not use
+    ``make DESTDIR=/path/to/espresso install`` to install to a specific path,
+    this will cause issues with the runtime path (RPATH) and will conflict
+    with the CMake variable ``CMAKE_INSTALL_PREFIX`` if it has been set.
 
 ``doxygen``
     Creates the Doxygen code documentation in the :file:`doc/doxygen`
     subdirectory.
 
 ``sphinx``
-    Creates the `sphinx` code documentation in the :file:`doc/sphinx`
+    Creates the ``sphinx`` code documentation in the :file:`doc/sphinx`
     subdirectory.
 
 ``tutorials``
@@ -748,13 +736,13 @@ Running |es|
 ------------
 
 |es| is implemented as a Python module. This means that you need to write a
-python script for any task you want to perform with . In this chapter,
+python script for any task you want to perform with |es|. In this chapter,
 the basic structure of the interface will be explained. For a practical
 introduction, see the tutorials, which are also part of the
-distribution. To use , you need to import the espressomd module in your
+distribution. To use |es|, you need to import the espressomd module in your
 Python script. To this end, the folder containing the python module
 needs to be in the Python search path. The module is located in the
-src/python folder under the build directory. A convenient way to run
+:file:`src/python` folder under the build directory. A convenient way to run
 python with the correct path is to use the pypresso script located in
 the build directory.
 
@@ -762,11 +750,58 @@ the build directory.
 
     ./pypresso simulation.py
 
-The ``pypresso`` script is just a wrapper in order to expose our
-self built python modules to the systems python interpreter by
-modifying the  ``$PYTHONPATH``.
-Please see the following chapters describing how to actually write
-a simulation script for |es|.
+The ``pypresso`` script is just a wrapper in order to expose the |es| python
+module to the system's python interpreter by modifying the ``$PYTHONPATH``.
+Please see the following chapter :ref:`Setting up the system` describing how
+to actually write a simulation script for |es|.
+
+Running the Jupyter interpreter requires using the ``ipypresso`` script, which
+is also located in the build directory (its name comes from the IPython
+interpreter, today known as Jupyter). To run the tutorials, you will need
+to start the Jupyter interpreter in notebook mode:
+
+.. code-block:: bash
+
+    cd doc/tutorials
+    ../../ipypresso notebook
+
+You may then browse through the different tutorial folders. Files whose name
+ends with extension .ipynb can be opened in the browser. Click on the Run
+button to execute the current block, or use the keyboard shortcut Shift+Enter.
+If the current block is a code block, the ``In [ ]`` label to the left will
+change to ``In [*]`` while the code is being executed, and become ``In [1]``
+once the execution has completed. The number increments itself every time a
+code cell is executed. This bookkeeping is extremely useful when modifying
+previous code cells, as it shows which cells are out-of-date. It's also
+possible to run all cells by clicking on the "Run" drop-down menu, then on
+"Run All Below". This will change all labels to ``In [*]`` to show that the
+first one is running, while the subsequent ones are awaiting execution.
+You'll also see that many cells generate an output. When the output becomes
+very long, Jupyter will automatically put it in a box with a vertical scrollbar.
+The output may also contain static plots, dynamic plots and videos. It is also
+possible to start a 3D visualizer in a new window, however closing the window
+will exit the Python interpreter and Jupyter will notify you that the current
+Python kernel stopped. If a cell takes too long to execute, you may interrupt
+it with the stop button.
+
+To close the Jupyter notebook, go to the terminal where it was started and use
+the keyboard shortcut Ctrl+C twice.
+
+When starting the Jupyter interpreter in notebook mode, you may see the
+following warning in the terminal:
+
+.. code-block:: none
+
+    [TerminalIPythonApp] WARNING | Subcommand `ipython notebook` is deprecated and will be removed in future versions.
+    [TerminalIPythonApp] WARNING | You likely want to use `jupyter notebook` in the future
+
+This only means |es| was compiled with IPython instead of Jupyter. If Jupyter
+is installed on your system, the notebook will automatically close IPython and
+start Jupyter. To recompile |es| with Jupyter, provide ``cmake`` with the flag
+``-DIPYTHON_EXECUTABLE=$(which jupyter)``.
+
+You can find the official Jupyter documentation at
+https://jupyter.readthedocs.io/en/latest/running.html
 
 .. _Debugging es:
 
@@ -774,7 +809,7 @@ Debugging |es|
 --------------
 
 Exceptional situations occur in every program.  If |es| crashes with a
-segmentation fault that means that there was a memory fault in the
+segmentation fault, that means that there was a memory fault in the
 simulation core which requires running the program in a debugger.  The
 ``pypresso`` executable file is actually not a program but a script
 which sets the Python path appropriately and starts the Python

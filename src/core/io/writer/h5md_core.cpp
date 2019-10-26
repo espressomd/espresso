@@ -1,29 +1,30 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "h5md_core.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "version.hpp"
 
 #include <vector>
 
@@ -31,9 +32,6 @@ namespace Writer {
 namespace H5md {
 
 static void backup_file(const std::string &from, const std::string &to) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   if (this_node == 0) {
     /*
      * If the file itself *and* a backup file exists something must
@@ -50,9 +48,6 @@ static void backup_file(const std::string &from, const std::string &to) {
 }
 
 static std::vector<hsize_t> create_dims(hsize_t dim, hsize_t size) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   if (dim == 3)
     return std::vector<hsize_t>{size, size, dim};
   if (dim == 2)
@@ -61,15 +56,12 @@ static std::vector<hsize_t> create_dims(hsize_t dim, hsize_t size) {
     return std::vector<hsize_t>{size};
 
   throw std::runtime_error(
-      "H5MD Error: datastets with this dimension are not implemented\n");
+      "H5MD Error: datasets with this dimension are not implemented\n");
 }
 
 // Correct Chunking is important for the IO performance!
 std::vector<hsize_t> File::create_chunk_dims(hsize_t dim, hsize_t size,
                                              hsize_t chunk_size) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   if (dim == 3)
     return std::vector<hsize_t>{chunk_size, size, dim};
   if (dim == 2)
@@ -78,12 +70,9 @@ std::vector<hsize_t> File::create_chunk_dims(hsize_t dim, hsize_t size,
     return std::vector<hsize_t>{size};
 
   throw std::runtime_error(
-      "H5MD Error: datastets with this dimension are not implemented\n");
+      "H5MD Error: datasets with this dimension are not implemented\n");
 }
 static std::vector<hsize_t> create_maxdims(hsize_t dim) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   if (dim == 3)
     return std::vector<hsize_t>{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED};
   if (dim == 2)
@@ -92,15 +81,11 @@ static std::vector<hsize_t> create_maxdims(hsize_t dim) {
     return std::vector<hsize_t>{H5S_UNLIMITED};
 
   throw std::runtime_error(
-      "H5MD Error: datastets with this dimension are not implemented\n");
+      "H5MD Error: datasets with this dimension are not implemented\n");
 }
 
 /* Initialize the file related variables after parameters have been set. */
 void File::InitFile() {
-#ifdef H5MD_DEBUG
-  H5Eset_auto(H5E_DEFAULT, (H5E_auto_t)H5Eprint, stderr);
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   m_backup_filename = m_filename + ".bak";
   // use a separate mpi communicator if we want to write out ordered data. This
   // is in order to avoid  blocking by collective functions
@@ -151,9 +136,6 @@ void File::InitFile() {
 }
 
 void File::init_filestructure() {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   group_names = {"particles",
                  "particles/atoms",
                  "particles/atoms/box",
@@ -188,9 +170,6 @@ void File::init_filestructure() {
 }
 
 void File::create_datasets(bool only_load) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   for (const auto &descr : dataset_descriptors) {
     const std::string &path = descr.path;
 
@@ -264,23 +243,13 @@ void File::create_links_for_time_and_step_datasets() {
 }
 
 void File::load_file(const std::string &filename) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   m_h5md_file =
       h5xx::file(filename, m_hdf5_comm, MPI_INFO_NULL, h5xx::file::out);
-#ifdef H5MD_DEBUG
-  std::cout << "Finished opening the h5 file on node " << this_node
-            << std::endl;
-#endif
   bool only_load = true;
   create_datasets(only_load);
 }
 
 void File::create_new_file(const std::string &filename) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   if (this_node == 0)
     this->WriteScript(filename);
   MPI_Barrier(m_hdf5_comm);
@@ -315,9 +284,6 @@ void File::create_new_file(const std::string &filename) {
 }
 
 void File::Close() {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   if (this_node == 0)
     boost::filesystem::remove(m_backup_filename);
 }
@@ -327,10 +293,6 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
     double_array_3d &mass, double_array_3d &pos, int_array_3d &image,
     double_array_3d &vel, double_array_3d &f, double_array_3d &charge,
     Particle const &current_particle, int write_dat, int_array_3d &bond) {
-#ifdef H5MD_DEBUG
-  /* Turn on hdf5 error messages */
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   bool write_species = write_dat & W_TYPE;
   bool write_pos = write_dat & W_POS;
   bool write_vel = write_dat & W_V;
@@ -394,9 +356,6 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
 void File::Write(int write_dat, PartCfg &partCfg,
                  const ParticleRange &particles) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   int num_particles_to_be_written = 0;
   if (m_write_ordered && this_node == 0)
     num_particles_to_be_written = n_part;
@@ -566,12 +525,6 @@ template <typename T>
 void File::WriteDataset(T &data, const std::string &path,
                         const std::vector<int> &change_extent, hsize_t *offset,
                         hsize_t *count) {
-#ifdef H5MD_DEBUG
-  /* Turn on hdf5 error messages */
-  H5Eset_auto(H5E_DEFAULT, (H5E_auto_t)H5Eprint, stderr);
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-  std::cout << "Dataset: " << path << std::endl;
-#endif
   ExtendDataset(path, change_extent);
   auto &dataset = datasets[path];
   hid_t ds = H5Dget_space(dataset.hid());
@@ -591,9 +544,6 @@ void File::WriteDataset(T &data, const std::string &path,
 }
 
 void File::WriteScript(std::string const &filename) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   /* First get the number of lines of the script. */
   hsize_t dims[1] = {1};
   std::ifstream scriptfile(m_absolute_script_path.string());
@@ -639,9 +589,6 @@ void File::Flush() {
 }
 
 bool File::check_for_H5MD_structure(std::string const &filename) {
-#ifdef H5MD_DEBUG
-  std::cout << "Called " << __func__ << " on node " << this_node << std::endl;
-#endif
   h5xx::file h5mdfile(filename, h5xx::file::in);
 
   for (const auto &gnam : group_names)

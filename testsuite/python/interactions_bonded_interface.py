@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,7 @@ import espressomd
 
 
 class ParticleProperties(ut.TestCase):
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
     # Particle id to work on
     pid = 17
@@ -140,7 +140,9 @@ class ParticleProperties(ut.TestCase):
     test_harmonic2 = generateTestForBondParams(
         0, espressomd.interactions.HarmonicBond, {"r_0": 1.1, "k": 5.2, "r_cut": 1.3})
 
-    if espressomd.has_features(["ROTATION"]):
+    # HarmonicDumbbell has only interface tests, so it is marked as
+    # experimental
+    if espressomd.has_features(["ROTATION", "EXPERIMENTAL_FEATURES"]):
         test_harmonic_dumbbell = generateTestForBondParams(
             0, espressomd.interactions.HarmonicDumbbellBond, {"k1": 1.1, "k2": 2.2, "r_0": 1.5})
         test_harmonic_dumbbell2 = generateTestForBondParams(
@@ -170,6 +172,7 @@ class ParticleProperties(ut.TestCase):
     test_tabulated = generateTestForBondParams(
         0, espressomd.interactions.TabulatedDihedral, {"energy": [1., 2., 3.],
                                                        "force": [3., 4., 5.]})
+
 
 if __name__ == "__main__":
     ut.main()

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -120,7 +120,6 @@ cdef extern from "npt.hpp":
     ctypedef struct nptiso_struct:
         double p_ext
         double p_inst
-        double p_inst_av
         double p_diff
         double piston
     extern nptiso_struct nptiso

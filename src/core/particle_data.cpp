@@ -1,32 +1,32 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Particles and particle lists.
  *
  *  The corresponding header file is particle_data.hpp.
  */
-
 #include "particle_data.hpp"
 
 #include "PartCfg.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -52,16 +52,11 @@
 #include <boost/variant.hpp>
 
 #include <cmath>
-#include <cstdlib>
-#include <cstring>
 #include <unordered_map>
 #include <unordered_set>
 /************************************************
  * defines
  ************************************************/
-
-/** granularity of the particle buffers in particles */
-#define PART_INCREMENT 8
 
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
@@ -70,7 +65,7 @@ namespace {
 /**
  * @brief A generic particle update.
  *
- * Here the sub-struct struture of Particle is
+ * Here the sub-struct structure of Particle is
  * used: the specification of the data member to update
  * consists of two parts, the pointer to the substruct @p s
  * and a pointer to a member of that substruct @p m.
@@ -102,7 +97,7 @@ using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 /**
  * @brief Special updater for the external flags.
  *
- * These need to be treated specialy as they are
+ * These need to be treated specially as they are
  * updated masked and not overwritten.
  */
 struct UpdateExternalFlag {
@@ -139,13 +134,12 @@ using UpdatePropertyMessage = boost::variant
 #ifdef ROTATIONAL_INERTIA
         , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
-#ifdef AFFINITY
-        , UpdateProperty<Utils::Vector3d, &Prop::bond_site>
-#endif
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
-        , UpdateProperty<int, &Prop::rotation>
+#ifdef ROTATION
+        , UpdateProperty<uint8_t, &Prop::rotation>
+#endif
 #ifdef ELECTROSTATICS
         , UpdateProperty<double, &Prop::q>
 #endif
@@ -158,7 +152,7 @@ using UpdatePropertyMessage = boost::variant
 #ifdef VIRTUAL_SITES
         , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
-        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
+        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameters,
                          &Prop::vs_relative>
 #endif
 #endif
@@ -174,7 +168,7 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::gamma_rot>
 #else
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
@@ -293,11 +287,11 @@ struct UpdateOrientation {
  * A message is either updates a property,
  * or a position, or ...
  * New messages can be added here, if they
- * fullfill the type requirements, namely:
+ * fulfill the type requirements, namely:
  * They either have an integer member id indicating
  * the particle that should be updated an operator()(const Particle&)
  * that is called with the particle, or a tree of
- * variants with leafs that have such a operator() and member.
+ * variants with leafs that have such an operator() and member.
  */
 using UpdateMessage = boost::variant
         < UpdatePropertyMessage
@@ -343,7 +337,7 @@ using message_type_t = typename message_type<S, s>::type;
  * @brief Visitor for message evaluation.
  *
  * This visitor either recurses into the active type
- * if it is a variant type, or otherwise callse
+ * if it is a variant type, or otherwise calls
  * operator()(Particle&) on the active type with
  * the particle that ought to be updated. This construction
  * allows to nest message variants to allow for sub-
@@ -547,10 +541,11 @@ void clear_particle_node() { particle_node.clear(); }
     \param part the highest existing particle
 */
 void realloc_local_particles(int part) {
+  constexpr auto INCREMENT = 8;
+
   if (part >= max_local_particles) {
-    /* round up part + 1 in granularity PART_INCREMENT */
-    max_local_particles =
-        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
+    /* round up part + 1 in granularity INCREMENT */
+    max_local_particles = INCREMENT * ((part + INCREMENT) / INCREMENT);
     local_particles = Utils::realloc(local_particles,
                                      sizeof(Particle *) * max_local_particles);
 
@@ -558,34 +553,6 @@ void realloc_local_particles(int part) {
     for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
       local_particles[i] = nullptr;
   }
-}
-
-void init_particlelist(ParticleList *pList) {
-  pList->n = 0;
-  pList->max = 0;
-  pList->part = nullptr;
-}
-
-int realloc_particlelist(ParticleList *l, int size) {
-  assert(size >= 0);
-  int old_max = l->max;
-  Particle *old_start = l->part;
-
-  if (size < l->max) {
-    if (size == 0)
-      /* to be able to free an array again */
-      l->max = 0;
-    else
-      /* shrink not as fast, just lose half, rounded up */
-      l->max =
-          PART_INCREMENT *
-          (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
-  } else
-    /* round up */
-    l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
-  if (l->max != old_max)
-    l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
-  return l->part != old_start;
 }
 
 void update_local_particles(ParticleList *pl) {
@@ -596,12 +563,12 @@ void update_local_particles(ParticleList *pl) {
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  realloc_particlelist(l, ++l->n);
+  l->resize(l->n + 1);
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
 Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = realloc_particlelist(l, ++l->n);
+  auto const re = l->resize(l->n + 1);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
   assert(p->p.identity <= max_seen_particle);
@@ -617,7 +584,7 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
 
-  realloc_particlelist(dl, ++dl->n);
+  dl->resize(dl->n + 1);
   auto dst = &dl->part[dl->n - 1];
   auto src = &sl->part[i];
   auto end = &sl->part[sl->n - 1];
@@ -627,14 +594,14 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  realloc_particlelist(sl, --sl->n);
+  sl->resize(sl->n - 1);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
-  int re = realloc_particlelist(dl, ++dl->n);
+  int re = dl->resize(dl->n + 1);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
@@ -652,7 +619,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -687,7 +654,7 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -877,19 +844,13 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<int, &ParticleProperties::rotation>(part, rot);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
+                                                                       rot);
 }
 #endif
 #ifdef ROTATION
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
-}
-#endif
-
-#ifdef AFFINITY
-void set_particle_affinity(int part, double *bond_site) {
-  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::bond_site>(
-      part, Utils::Vector3d(bond_site, bond_site + 3));
 }
 #endif
 
@@ -926,24 +887,24 @@ void set_particle_virtual(int part, bool is_virtual) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_relative_quat) {
+void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Utils::Vector4d(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = vs_relative_quat;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              double *rel_ori) {
-  ParticleProperties::VirtualSitesRelativeParameteres vs_relative;
+                              Utils::Vector4d const &rel_ori) {
+  ParticleProperties::VirtualSitesRelativeParameters vs_relative;
   vs_relative.distance = vs_distance;
   vs_relative.to_particle_id = vs_relative_to;
-  vs_relative.rel_orientation = {rel_ori, rel_ori + 4};
+  vs_relative.rel_orientation = rel_ori;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 #endif
@@ -1367,7 +1328,7 @@ void send_particles(ParticleList *particles, int node) {
     free_particle(&particles->part[pc]);
   }
 
-  realloc_particlelist(particles, particles->n = 0);
+  particles->clear();
 }
 
 void recv_particles(ParticleList *particles, int node) {
@@ -1406,10 +1367,9 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
-  Bonded_ia_parameters *ia_params;
 
   /* partners is a list containing the currently found excluded particles for
-     each particle, and their distance, as a interleaved list */
+     each particle, and their distance, as an interleaved list */
   std::unordered_map<int, IntList> partners;
 
   /* We need bond information */
@@ -1419,8 +1379,8 @@ void auto_exclusions(int distance) {
   for (auto const &part1 : partCfg()) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
-      ia_params = &bonded_ia_params[part1.bl.e[i++]];
-      if (ia_params->num == 1) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[part1.bl.e[i++]];
+      if (ia_params.num == 1) {
         p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
@@ -1429,7 +1389,7 @@ void auto_exclusions(int distance) {
           add_partner(&partners[p2], p2, p1, 1);
         }
       } else
-        i += ia_params->num;
+        i += ia_params.num;
     }
   }
 
@@ -1491,11 +1451,11 @@ void remove_id_from_map(int part_id, int type) {
     particle_type_map.at(type).erase(part_id);
 }
 
-int get_random_p_id(int type) {
-  if (particle_type_map.at(type).empty())
-    throw std::runtime_error("No particles of given type could be found");
-  int rand_index = i_random(particle_type_map.at(type).size());
-  return *std::next(particle_type_map[type].begin(), rand_index);
+int get_random_p_id(int type, int random_index_in_type_map) {
+  if (random_index_in_type_map + 1 > particle_type_map.at(type).size())
+    throw std::runtime_error("The provided index exceeds the number of "
+                             "particles listed in the type_map");
+  return *std::next(particle_type_map[type].begin(), random_index_in_type_map);
 }
 
 void add_id_to_type_map(int part_id, int type) {
@@ -1593,10 +1553,6 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
 }
 #endif // LANGEVIN_PER_PARTICLE
 
-void pointer_to_rotation(Particle const *p, int const *&res) {
-  res = &(p->p.rotation);
-}
-
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim) {
@@ -1607,12 +1563,6 @@ void pointer_to_swimming(Particle const *p,
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia.data();
-}
-#endif
-
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res) {
-  res = p->p.bond_site.data();
 }
 #endif
 

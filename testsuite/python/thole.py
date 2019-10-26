@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -69,7 +69,7 @@ class TestThole(ut.TestCase):
             F_calc = COULOMB_PREFACTOR * self.q1 * self.q2 / x**2 * \
                 0.5 * (2.0 - (np.exp(-sd) * (sd * (sd + 2.0) + 2.0)))
             # Energy is slightly off due to self-energy.
-            # Error is approximated with ercf for given system parameters
+            # Error is approximated with erfc for given system parameters
             E_calc = COULOMB_PREFACTOR * self.q1 * self.q2 / x * \
                 (1.0 - np.exp(-sd) * (1.0 + sd / 2.0)) - \
                 0.250088 * math.erfc(0.741426 * x)

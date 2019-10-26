@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Energy calculation.
  */
@@ -92,9 +92,9 @@ void energy_calc(double *result, const double time) {
   on_observable_calc();
 
   short_range_loop(
-      [](Particle const &p) { add_single_particle_energy(&p); },
+      [](Particle const &p) { add_single_particle_energy(p); },
       [](Particle const &p1, Particle const &p2, Distance const &d) {
-        add_non_bonded_pair_energy(&p1, &p2, d.vec21, sqrt(d.dist2), d.dist2);
+        add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
       });
 
   calc_long_range_energies(local_cells.particles());

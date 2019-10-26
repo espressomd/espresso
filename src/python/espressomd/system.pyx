@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -363,8 +363,8 @@ cdef class System:
                 states = string_vec(n_nodes)
                 for i in range(n_nodes):
                     states[i] = (" ".join(map(str,
-                                 rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
-                    )).encode('utf-8')
+                                              rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
+                                          )).encode('utf-8')
                 mpi_random_set_stat(states)
             else:
                 raise ValueError(
@@ -483,7 +483,9 @@ cdef class System:
             auto_exclusions(distance)
 
     def _is_valid_type(self, current_type):
-        return (not (isinstance(current_type, int) or current_type < 0 or current_type > globals.max_seen_particle_type))
+        return not (isinstance(current_type, int)
+                    or current_type < 0
+                    or current_type > globals.max_seen_particle_type)
 
     def check_valid_type(self, current_type):
         if self._is_valid_type(current_type):
@@ -522,13 +524,3 @@ cdef class System:
         self.check_valid_type(type)
         number = number_of_particles_with_type(type)
         return int(number)
-
-    def find_particle(self, type=None):
-        """
-        The command will return a randomly chosen particle id, for a particle of
-        the given type.
-
-        """
-        self.check_valid_type(type)
-        pid = get_random_p_id(type)
-        return int(pid)

@@ -47,9 +47,9 @@ Checkpointing is implemented by the :class:`espressomd.checkpointing.Checkpoint`
     from espressomd import checkpointing
     checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path=".")
 
-Here, `checkpoint_id` denotes the identifier for a checkpoint. Legal characters for an id
+Here, ``checkpoint_id`` denotes the identifier for a checkpoint. Legal characters for an id
 are "0-9", "a-zA-Z", "-", "_".
-The parameter `checkpoint_path`, specifies the relative or absolute path where the checkpoints are
+The parameter ``checkpoint_path``, specifies the relative or absolute path where the checkpoints are
 stored. The current working directory is assumed, when this parameter is skipped.
 
 After the simulation system and user variables are set up, they can be
@@ -66,7 +66,7 @@ To give an example::
     checkpoint.register("my_var")
     # ...
 
-will register the user variable `my_var` and the instance of the simulation system. The checkpoint can be saved via::
+will register the user variable ``my_var`` and the instance of the simulation system. The checkpoint can be saved via::
 
 
     checkpoint.save()
@@ -96,15 +96,15 @@ The checkpointing instance itself will also be restored. I.e., the same variable
 
 Be aware of the following limitations: 
 
-  * Checkpointing makes use of the `pickle` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, `numpy` arrays and many other objects. Still, pickling support cannot be taken for granted.
+  * Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
 
   * Pickling support of the Espresso system instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms then can be tested.
 
-  * The active actors, i.e., the content of `system.actors`, are checkpointed. For lattice Boltzmann fluids, this only includes the parameters such as the lattice constant (`agrid`). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
+  * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
     and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint
 
-  * References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer afect the other.
+  * References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer affect the other.
       
   * The state of the cell system as well as the MPI node grid are checkpointed. Therefore, checkpoints can only be loaded, when the script runs on the same number of MPI ranks.
 
@@ -125,7 +125,7 @@ details). Currently |es| supports some basic functions for writing simulation
 data to H5MD files. The implementation is MPI-parallelized and is capable
 of dealing with varying numbers of particles.
 
-To write data in a hdf5-file according to the H5MD proposal (http://nongnu.org/h5md/), first an object of the class
+To write data in a hdf5-file according to the H5MD proposal (https://nongnu.org/h5md/), first an object of the class
 :class:`espressomd.io.writer.h5md.H5md` has to be created and linked to the
 respective hdf5-file. This may, for example, look like:
 
@@ -178,7 +178,7 @@ call the H5md objects :meth:`espressomd.io.writer.h5md.H5md.write` method withou
 After the last write call, you have to call the ``close()`` method to remove
 the backup file and to close the datasets etc.
 
-H5MD files can be read and modified with the python module h5py (for documentation see `h5py <http://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
+H5MD files can be read and modified with the python module h5py (for documentation see `h5py <https://docs.h5py.org/en/stable/>`_). For example all positions stored in the file called "h5mdfile.h5" can be read using
 
 .. code:: python
     
@@ -226,7 +226,7 @@ There exists a legacy python script in the :file:`tools` directory which can con
 MPI-IO data to the now unsupported blockfile format. Check it out if you want
 to post-process the data without ESPResSo.
 
-*WARNING* Do not attempt to read these binary files on a machine with a different
+*WARNING*: Do not attempt to read these binary files on a machine with a different
 architecture!
 
 .. _Writing VTF files:
@@ -366,10 +366,10 @@ Note that the |es| particles are ordered in increasing order, thus ``id=3`` corr
 Writing various formats using MDAnalysis
 ----------------------------------------
 
-If the MDAnalysis package (http://mdanalysis.org) is installed, it
+If the MDAnalysis package (https://mdanalysis.org) is installed, it
 is possible to use it to convert frames to any of the supported
 configuration/trajectory formats, including PDB, GROMACS, GROMOS,
-CHARMM/NAMD, AMBER, LAMMPS, ...)
+CHARMM/NAMD, AMBER, LAMMPS, ...
 
 To use MDAnalysis to write in any of these formats, one has first to prepare a stream from
 the |es| particle data using the class :class:`espressomd.MDA_ESP`, and then read from it
@@ -396,11 +396,40 @@ using MDAnalysis. A simple example is the following:
         u.load_new(eos.trajectory)  # load the frame to the MDA universe
         W.write_next_timestep(u.trajectory.ts)  # append it to the trajectory
 
-For other examples see samples/python/MDAnalysisIntegration.py
+For other examples, see :file:`/samples/MDAnalysisIntegration.py`
 
-.. _Parsing PDB Files:
+.. _Reading various formats using MDAnalysis:
 
-Parsing PDB Files
------------------
+Reading various formats using MDAnalysis
+----------------------------------------
 
-The feature allows the user to parse simple PDB files, a file format introduced by the protein database to encode molecular structures. Together with a topology file (here ) the structure gets interpolated to the grid. For the input you will need to prepare a PDB file with a force field to generate the topology file. Normally the PDB file extension is :file:`.pdb`, the topology file extension is :file:`.itp`. Obviously the PDB file is placed instead of and the topology file instead of .
+MDAnalysis can read various formats, including MD topologies and trajectories.
+To read a PDB file containing a single frame::
+
+    import MDAnalysis
+    import numpy as np
+    import espressomd
+    from espressomd.interactions import HarmonicBond
+
+    # parse protein structure
+    universe = MDAnalysis.Universe("protein.pdb")
+    # extract only the C-alpha atoms of chain A
+    chainA = universe.select_atoms("name CA and segid A")
+    # use the unit cell as box
+    box_l = np.ceil(universe.dimensions[0:3])
+    # setup system
+    system = espressomd.System(box_l=box_l)
+    system.time_step = 0.001
+    system.cell_system.skin = 0.4
+    # configure sphere size sigma and create a harmonic bond
+    system.non_bonded_inter[0, 0].lennard_jones.set_params(
+        epsilon=1, sigma=1.5, cutoff=2, shift="auto")
+    system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.5)
+    # create particles and add bonds between them
+    system.part.add(pos=np.array(chainA.positions, dtype=float))
+    for i in range(0, len(chainA) - 1):
+        system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
+    # visualize protein in 3D
+    from espressomd import visualization
+    visualizer = visualization.openGLLive(system, bond_type_radius=[0.2])
+    visualizer.run(0)

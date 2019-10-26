@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef UTILS_INDEX_HPP
 #define UTILS_INDEX_HPP
 
@@ -21,7 +39,7 @@ inline size_t ravel_index(const T &unravelled_indices, const U &dimensions) {
   const auto n_dims = unravelled_indices.size();
   if (n_dims != dimensions.size()) {
     throw std::invalid_argument(
-        "Index vector and dimenions vector must have same dimensions.");
+        "Index vector and dimensions vector must have same dimensions.");
   }
   std::size_t res = unravelled_indices.back();
   std::size_t temp_prod = 1;
@@ -97,7 +115,7 @@ get_linear_index(const Vector3i &ind, const Vector3i &adim,
 }
 
 /**
- * @brief Linear index into a upper triangular matrix.
+ * @brief Linear index into an upper triangular matrix.
  *
  * This is row-major.
  *

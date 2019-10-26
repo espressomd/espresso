@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef UTILS_SAMPLING_HPP
 #define UTILS_SAMPLING_HPP
 
@@ -32,7 +50,7 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   auto const delta_phi = (phi_limits.second - phi_limits.first) / n_phi_bins;
 
   // For the smallest bin we chose samples along the z-direction for a single
-  // azimuthal angle per bin such that we fullfill the sampling density
+  // azimuthal angle per bin such that we fulfill the sampling density
   // requirement.
   auto const smallest_bin_volume =
       pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());

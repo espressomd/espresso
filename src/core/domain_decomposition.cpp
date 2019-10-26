@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *
  *  Implementation of domain_decomposition.hpp.
@@ -26,9 +26,9 @@
 #include "domain_decomposition.hpp"
 
 #include "communication.hpp"
-#include "debug.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
@@ -281,9 +281,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           comm->comm[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists =
-              (Cell **)Utils::malloc(2 * n_comm_cells[dir] * sizeof(Cell *));
-          comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
+          comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
           if ((data_parts & GHOSTTRANS_POSSHFTD) &&
               local_geo.boundary()[2 * dir + lr] != 0) {
@@ -294,7 +292,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
@@ -313,9 +311,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
               if ((data_parts & GHOSTTRANS_POSSHFTD) &&
                   local_geo.boundary()[2 * dir + lr] != 0) {
@@ -325,13 +321,8 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-
-              CELL_TRACE(fprintf(stderr,
-                                 "%d: prep_comm %d send to   node %d "
-                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
-                                 this_node, cnt, comm->comm[cnt].node, lc[0],
-                                 lc[1], lc[2], hc[0], hc[1], hc[2]));
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
@@ -339,18 +330,12 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
-              CELL_TRACE(fprintf(stderr,
-                                 "%d: prep_comm %d recv from node %d "
-                                 "grid (%d,%d,%d)-(%d,%d,%d)\n",
-                                 this_node, cnt, comm->comm[cnt].node, lc[0],
-                                 lc[1], lc[2], hc[0], hc[1], hc[2]));
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
         }
@@ -368,9 +353,6 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
   int i, j, nlist2;
   GhostCommunication tmp;
 
-  CELL_TRACE(fprintf(stderr, "%d: dd_revert_comm_order: anz comm: %d\n",
-                     this_node, comm->num));
-
   /* revert order */
   for (i = 0; i < (comm->num / 2); i++) {
     tmp = comm->comm[i];
@@ -384,7 +366,7 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
     else if (comm->comm[i].type == GHOST_RECV)
       comm->comm[i].type = GHOST_SEND;
     else if (comm->comm[i].type == GHOST_LOCL) {
-      nlist2 = comm->comm[i].n_part_lists / 2;
+      nlist2 = comm->comm[i].part_lists.size() / 2;
       for (j = 0; j < nlist2; j++) {
         auto tmplist = comm->comm[i].part_lists[j];
         comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j + nlist2];
@@ -533,7 +515,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
        nonperiodic boundary. We also accept the particle if we are at
        the box boundary, and the particle is within the box. In this case
        the particle belongs here and could otherwise potentially be dismissed
-       due to rouding errors. */
+       due to rounding errors. */
     if (cpos[i] < 1) {
       if ((!box_geo.periodic(i) or (pos[i] >= box_geo.length()[i])) &&
           local_geo.boundary()[2 * i])
@@ -570,12 +552,8 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
     }
 
   /* A full resorting is necessary if the grid has changed. We simply
-     don't have anything fast for this case. Probably also not
-     necessary. */
+   * don't have anything fast for this case. Probably also not necessary. */
   if (flags & CELL_FLAG_GRIDCHANGED) {
-    CELL_TRACE(
-        fprintf(stderr, "%d: dd_on_geometry_change full redo\n", this_node));
-
     /* Reset min num cells to default */
     min_num_cells = calc_processor_min_num_cells(grid);
 
@@ -627,7 +605,7 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   int exchange_data, update_data;
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
-    but may be set to a larger value by the user for performance reasons. */
+   * but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
@@ -678,14 +656,10 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   for (c = 0; c < local_cells.n; c++) {
     update_local_particles(local_cells.cell[c]);
   }
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_init: done\n", this_node));
 }
 
 /************************************************************/
 void dd_topology_release() {
-  CELL_TRACE(fprintf(stderr, "%d: dd_topology_release:\n", this_node));
-  /* release cell interactions */
-
   /* free ghost cell pointer list */
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
   /* free ghost communicators */
@@ -722,7 +696,7 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     }
   }
 
-  realloc_particlelist(&src, src.n = 0);
+  src.resize(0);
 }
 
 /**
@@ -783,7 +757,7 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
                            node_neighbors[2 * dir], 0, recv_buf);
 
-      realloc_particlelist(&send_buf, 0);
+      send_buf.clear();
 
       move_if_local(recv_buf, *pl);
     } else {
@@ -806,8 +780,8 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       move_if_local(recv_buf_l, *pl);
       move_if_local(recv_buf_r, *pl);
 
-      realloc_particlelist(&send_buf_l, 0);
-      realloc_particlelist(&send_buf_r, 0);
+      send_buf_l.clear();
+      send_buf_r.clear();
     }
   }
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -39,6 +39,7 @@ cdef class Integrator:
         self._steepest_descent_params = {}
         self._isotropic_npt_params = {}
 
+    # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         state = {}
         state['_method'] = self._method
@@ -47,15 +48,20 @@ cdef class Integrator:
         return state
 
     def __setstate__(self, state):
+        self.__init__()
         self._method = state['_method']
         if self._method == "STEEPEST_DESCENT":
-            self.set_steepest_descent(state['_steepest_descent_params'])
+            self.set_steepest_descent(**state['_steepest_descent_params'])
         elif self._method == "NVT":
             self.set_nvt()
+        elif self._method == "BD":
+            self.set_brownian_dynamics()
         elif self._method == "NPT":
-            npt_params = state['_isotropic_npt_params']
-            self.set_isotropic_npt(npt_params['ext_pressure'], npt_params[
-                                   'piston'], direction=npt_params['direction'], cubic_box=npt_params['cubic_box'])
+            self.set_isotropic_npt(**state['_isotropic_npt_params'])
+
+    def get_state(self):
+        """Returns the integrator status."""
+        return self.__getstate__()
 
     def run(self, steps=1, recalc_forces=False, reuse_forces=False):
         """
@@ -71,7 +77,7 @@ cdef class Integrator:
             Reuse the forces from previous time step.
 
         """
-        if self._method == "VV" or self._method == "NVT" or self._method == "NPT":
+        if self._method in ["VV", "NVT", "NPT", "BD"]:
             check_type_or_throw_except(
                 steps, 1, int, "Integrate requires a positive integer for the number of steps")
             check_type_or_throw_except(
@@ -107,7 +113,7 @@ cdef class Integrator:
         """
         req = ["f_max", "gamma", "max_displacement"]
         for key in kwargs:
-            if not key in req:
+            if key not in req:
                 raise Exception("Set required parameter %s first." % key)
 
         self._steepest_descent_params.update(kwargs)
@@ -128,8 +134,17 @@ cdef class Integrator:
         self._method = "NVT"
         integrate_set_nvt()
 
-    def set_isotropic_npt(self, ext_pressure, piston, direction=[0, 0, 0],
-                          cubic_box=False):
+    IF BROWNIAN_DYNAMICS:
+        def set_brownian_dynamics(self):
+            """
+            Set the integration method to BD.
+
+            """
+            self._method = "BD"
+            integrate_set_bd()
+    
+    def set_isotropic_npt(self, ext_pressure, piston,
+                          direction=(True, True, True), cubic_box=False):
         """
         Set the integration method to NPT.
 
@@ -139,24 +154,34 @@ cdef class Integrator:
             The external pressure.
         piston : :obj:`float`
             The mass of the applied piston.
-        direction : (3,) array_like of :obj:`int`, optional
-            Set the box geometry for non-cubic boxes.
+        direction : (3,) array_like of :obj:`bool`, optional
+            Select which dimensions are allowed to fluctuate by assigning
+            them to ``True``.
         cubic_box : :obj:`bool`, optional
-            If this optional parameter is true, a cubic box is assumed.
+            If ``True``, a cubic box is assumed and the value of ``direction``
+            will be ignored when rescaling the box. This is required e.g. for
+            electrostatics and magnetostatics.
 
         """
-        self._method = "NPT"
-        self._isotropic_npt_params['ext_pressure'] = ext_pressure
-        self._isotropic_npt_params['piston'] = piston
-        self._isotropic_npt_params['direction'] = direction
-        self._isotropic_npt_params['cubic_box'] = cubic_box
-        if "NPT" not in espressomd.code_info.features():
-            raise Exception("NPT is not compiled in")
-        check_type_or_throw_except(
-            ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")
-        check_type_or_throw_except(
-            piston, 1, float, "NPT parameter piston must be a float")
-        check_type_or_throw_except(
-            direction, 3, int, "NPT parameter direction must be an array-like of three ints")
-        if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0], direction[1], direction[2], cubic_box)):
-            handle_errors("Encountered errors setting up the NPT integrator")
+        IF NPT:
+            self._method = "NPT"
+            if isinstance(direction, np.ndarray):
+                direction = list(map(int, direction))
+            self._isotropic_npt_params['ext_pressure'] = ext_pressure
+            self._isotropic_npt_params['piston'] = piston
+            self._isotropic_npt_params['direction'] = direction
+            self._isotropic_npt_params['cubic_box'] = cubic_box
+            check_type_or_throw_except(
+                ext_pressure, 1, float, "NPT parameter ext_pressure must be a float")
+            check_type_or_throw_except(
+                piston, 1, float, "NPT parameter piston must be a float")
+            check_type_or_throw_except(
+                direction, 3, int, "NPT parameter direction must be an array-like of three bools")
+            check_type_or_throw_except(
+                cubic_box, 1, int, "NPT parameter cubic_box must be a bool")
+            if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0],
+                                            direction[1], direction[2], cubic_box)):
+                handle_errors(
+                    "Encountered errors setting up the NPT integrator")
+        ELSE:
+            raise Exception("NPT not compiled in.")

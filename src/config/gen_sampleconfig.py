@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2013,2014 The ESPResSo project
+# Copyright (C) 2013,2014,2018-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -37,11 +37,11 @@ if len(sys.argv) != 2:
 
 deffilename = sys.argv[1]
 
-#print "Reading definitions from " + deffilename + "..."
+# print "Reading definitions from " + deffilename + "..."
 defs = featuredefs.defs(deffilename)
-#print "Done."
+# print "Done."
 
-#print "Writing " + hfilename + "..."
+# print "Writing " + hfilename + "..."
 featuresdone = set()
 
 for line in fileinput.input(deffilename):

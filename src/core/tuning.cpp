@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
     Implementation of tuning.hpp .
 */
@@ -106,7 +106,8 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
   double time_a, time_b;
   double min_cell_size =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
-  double const max_permissible_skin = min_cell_size - max_cut;
+  double const max_permissible_skin =
+      std::nextafter(min_cell_size - max_cut, 0.);
 
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;

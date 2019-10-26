@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -89,7 +89,7 @@ system = espressomd.System(box_l=3 * (box_l,))
 #############################################################
 system.random_number_generator_state = list(range(
     n_proc * (system._get_PRNG_state_size() + 1)))
-#np.random.seed(1)
+# np.random.seed(1)
 # Integration parameters
 #############################################################
 system.time_step = 0.01
@@ -202,7 +202,7 @@ else:
         while True:
             system.integrator.run(1)
             visualizer.update()
-            sleep(1 / 60.)  # limit framerate to at most 60 FPS
+            sleep(1 / 60.)  # limit frame rate to at most 60 FPS
 
     t = Thread(target=main_thread)
     t.daemon = True

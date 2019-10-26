@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2018 The ESPResSo project
+# Copyright (C) 2009-2019 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -20,6 +20,7 @@
 
 cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
+include(GNUInstallDirs)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
 if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
@@ -28,15 +29,7 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.1-dev")
-string(REGEX
-       REPLACE "^([1-9]+)\\.[0-9]+.*$"
-               "\\1"
-               SOVERSION
-               "${PROJECT_VERSION}")
-if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
-  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
-endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
+set(PROJECT_VERSION "4.2-dev")
 
 #
 # CMake internal vars
@@ -190,6 +183,7 @@ if(WITH_CUDA)
       find_package(HIP MODULE)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
+      set(HIP 1)
       list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
@@ -248,7 +242,7 @@ if(WITH_PYTHON)
     execute_process(
       COMMAND
         ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
+        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
@@ -335,7 +329,7 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 # MPI
 #
 
-find_package(MPI REQUIRED)
+find_package(MPI 3.0 REQUIRED)
 
 # CMake < 3.9
 if(NOT TARGET MPI::MPI_CXX)
@@ -404,10 +398,6 @@ endif()
 #
 # Paths
 #
-
-if(NOT DEFINED BINDIR)
-  set(BINDIR "bin")
-endif(NOT DEFINED BINDIR)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 
@@ -544,7 +534,6 @@ endif(WITH_BENCHMARKS)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(libs)
-add_subdirectory(config)
 #
 # Feature summary
 #

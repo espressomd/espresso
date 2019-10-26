@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -62,6 +62,7 @@ class TimeSeriesTest(ut.TestCase):
 
         time_series.clear()
         self.assertEqual(len(time_series.time_series()), 0)
+
 
 if __name__ == "__main__":
     ut.main()

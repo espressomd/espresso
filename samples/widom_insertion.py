@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -32,7 +32,7 @@ from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
-required_features = ["LENNARD_JONES", "P3M"]
+required_features = ["WCA", "P3M"]
 espressomd.assert_features(required_features)
 
 parser = argparse.ArgumentParser(epilog=__doc__)
@@ -74,14 +74,13 @@ for i in range(N0):
 for i in range(N0, 2 * N0):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l, type=2, q=1)
 
-lj_eps = 1.0
-lj_sig = 1.0
-lj_cut = 2**(1.0 / 6)
+wca_eps = 1.0
+wca_sig = 1.0
 types = [0, 1, 2]
 for type_1 in types:
     for type_2 in types:
-        system.non_bonded_inter[type_1, type_2].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+        system.non_bonded_inter[type_1, type_2].wca.set_params(
+            epsilon=wca_eps, sigma=wca_sig)
 
 p3m = electrostatics.P3M(prefactor=2.0, accuracy=1e-3)
 system.actors.add(p3m)
@@ -91,10 +90,10 @@ for key, value in p3m_params.items():
 
 # Warmup
 #############################################################
-# warmup integration (with capped LJ potential)
+# warmup integration (with capped WCA potential)
 warm_steps = 1000
 warm_n_times = 20
-# set LJ cap
+# set WCA cap
 system.force_cap = 20
 
 # Warmup Integration Loop
@@ -103,7 +102,7 @@ while i < warm_n_times:
     print(i, "warmup")
     system.integrator.run(steps=warm_steps)
     i += 1
-    # increase LJ cap
+    # increase WCA cap
     system.force_cap += 10
 
 # remove force capping

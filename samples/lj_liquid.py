@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -50,7 +50,7 @@ density = 0.7
 
 lj_eps = 1.0
 lj_sig = 1.0
-lj_cut = 1.12246
+lj_cut = 2.5 * lj_sig
 lj_cap = 20
 
 # Integration parameters

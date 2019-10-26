@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -44,7 +44,7 @@ class ElectrostaticInteractionsTests:
     num_particles = pid_target.shape[0]
 
     allowed_error = 1e-4
-    
+
     def setUp(self):
         for i in range(self.num_particles):
             self.system.part.add(
@@ -70,7 +70,7 @@ class ElectrostaticInteractionsTests:
                                 self.allowed_error,
                                 msg="Measured force has a deviation of {} which is too big for "
                                     "particle {} in component {}".format(abs_deviation, i, comp))
-            
+
     def test_energy(self):
         measured_el_energy = self.system.analysis.energy()["total"] \
             - self.system.analysis.energy()["kinetic"]
@@ -83,13 +83,13 @@ class ElectrostaticInteractionsTests:
         self.system.part.clear()
         self.system.part.add(pos=[0, 0, 0], q=1)
         self.system.part.add(pos=[0, 0, 1], q=1)
-        
+
         self.system.integrator.run(steps=0)
         f_measured = self.system.part[0].f
         energy_measured = self.system.analysis.energy()["total"]
         target_energy_config = 1.00242505606 * prefactor
         target_force_z_config = -0.99510759 * prefactor
-        
+
         self.assertLess(
             abs(f_measured[0] - 0),
             self.allowed_error,
@@ -115,7 +115,7 @@ class ElectrostaticInteractionsTests:
         mmm1d = self.MMM1D(prefactor=prefactor, maxPWerror=1e-20)
         self.system.actors.add(mmm1d)  
         self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)            
-                
+
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
 class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
@@ -125,6 +125,7 @@ class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
     from espressomd.electrostatics import MMM1D
+
 
 if __name__ == "__main__":
     ut.main()

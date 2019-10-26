@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -111,24 +111,24 @@ def positions(**kwargs):
 
     params = default_params
 
-    # use bond_angle if set via kwarg
+    # use bond_angle if set via kwargs
     params["use_bond_angle"] = "bond_angle" in kwargs
 
     valid_keys = [
         "n_polymers",
         "beads_per_chain",
-     "bond_length",
-     "start_positions",
-     "min_distance",
-     "max_tries",
-     "bond_angle",
-     "respect_constraints",
-     "seed"]
+        "bond_length",
+        "start_positions",
+        "min_distance",
+        "max_tries",
+        "bond_angle",
+        "respect_constraints",
+        "seed"]
 
     required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
 
     for k in kwargs:
-        if not k in valid_keys:
+        if k not in valid_keys:
             raise ValueError("Unknown parameter '%s'" % k)
         params[k] = kwargs[k]
 
@@ -149,15 +149,15 @@ def positions(**kwargs):
     data = draw_polymer_positions(
         partCfg(),
         params["n_polymers"],
-     params["beads_per_chain"],
-     params["bond_length"],
-     start_positions,
-     params["min_distance"],
-     params["max_tries"],
-     int(params["use_bond_angle"]),
-     params["bond_angle"],
-     int(params["respect_constraints"]),
-     params["seed"])
+        params["beads_per_chain"],
+        params["bond_length"],
+        start_positions,
+        params["min_distance"],
+        params["max_tries"],
+        int(params["use_bond_angle"]),
+        params["bond_angle"],
+        int(params["respect_constraints"]),
+        params["seed"])
     positions = []
     for polymer in data:
         p = []

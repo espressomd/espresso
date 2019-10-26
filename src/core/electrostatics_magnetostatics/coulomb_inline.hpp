@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ESPRESSO_COULOMB_INLINE_HPP
 #define ESPRESSO_COULOMB_INLINE_HPP
 
@@ -52,30 +70,34 @@ inline Utils::Vector3d central_force(double const q1q2,
   return coulomb.prefactor * f;
 }
 
-inline void calc_pair_force(Particle *p1, Particle *p2,
-                            Utils::Vector3d const &d, double dist,
-                            Utils::Vector3d &force) {
-  auto const q1q2 = p1->p.q * p2->p.q;
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+pair_force(Particle const &p1, Particle const &p2, Utils::Vector3d const &d,
+           double dist) {
+  auto const q1q2 = p1.p.q * p2.p.q;
 
-  if (q1q2 == 0)
-    return;
+  if (q1q2 == 0) {
+    return std::make_tuple(Utils::Vector3d{}, Utils::Vector3d{},
+                           Utils::Vector3d{});
+  }
 
-  force += central_force(q1q2, d, dist);
+  auto const force = central_force(q1q2, d, dist);
+  Utils::Vector3d f1{};
+  Utils::Vector3d f2{};
 
 #ifdef P3M
   if ((coulomb.method == COULOMB_ELC_P3M) &&
       (elc_params.dielectric_contrast_on)) {
     // forces from the virtual charges
     // they go directly onto the particles, since they are not pairwise forces
-    Utils::Vector3d f1{};
-    Utils::Vector3d f2{};
 
     ELC_P3M_dielectric_layers_force_contribution(p1, p2, f1, f2);
 
-    p1->f.f += coulomb.prefactor * f1;
-    p2->f.f += coulomb.prefactor * f2;
+    f1 *= coulomb.prefactor;
+    f2 *= coulomb.prefactor;
   }
 #endif
+
+  return std::make_tuple(force, f1, f2);
 }
 
 /**
@@ -90,8 +112,8 @@ inline void calc_pair_force(Particle *p1, Particle *p2,
  * @param dist |d|
  * @return Contribution to the pressure tensor.
  */
-inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
-                                                       Particle const *const p2,
+inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const &p1,
+                                                       Particle const &p2,
                                                        Utils::Vector3d const &d,
                                                        double dist) {
   switch (coulomb.method) {
@@ -104,7 +126,7 @@ inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
   case COULOMB_MMM1D:
   case COULOMB_DH:
   case COULOMB_RF: {
-    auto const force = central_force(p1->p.q * p2->p.q, d, dist);
+    auto const force = central_force(p1.p.q * p2.p.q, d, dist);
 
     return Utils::tensor_product(force, d);
   }
@@ -118,7 +140,7 @@ inline Utils::Vector<Utils::Vector3d, 3> pair_pressure(Particle const *const p1,
 }
 
 // energy_inline
-inline double pair_energy(Particle const *const p1, Particle const *const p2,
+inline double pair_energy(Particle const &p1, Particle const &p2,
                           double const q1q2, Utils::Vector3d const &d,
                           double dist, double dist2) {
   /* real space Coulomb */

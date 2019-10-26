@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef LATTICE_INTERPOLATION_HPP
 #define LATTICE_INTERPOLATION_HPP
 
@@ -13,7 +31,6 @@ enum class InterpolationOrder { linear, quadratic };
  */
 void lb_lbinterpolation_set_interpolation_order(
     InterpolationOrder const &interpolation_order);
-void mpi_set_interpolation_order_slave(int order, int);
 
 InterpolationOrder lb_lbinterpolation_get_interpolation_order();
 /**
@@ -23,14 +40,6 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order();
  * position is not within the local lattice. */
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &p);
-
-/**
- * @brief Calculates the interpolated fluid velocity on the master process.
- * @param pos Position at which the velocity is to be calculated.
- * @retval interpolated fluid velocity.
- */
-const Utils::Vector3d
-lb_lbinterpolation_get_interpolated_velocity_global(const Utils::Vector3d &pos);
 
 /**
  * @brief Add a force density to the fluid at the given position.

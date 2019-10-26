@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "cuda_wrapper.hpp"
 
 // TODO: throw exceptions upon errors initialization
@@ -5,6 +23,7 @@
 #include "cuda_utils.hpp"
 #include "cufft_wrapper.hpp"
 #include "grid_based_algorithms/fd-electrostatics.cuh"
+#include <stdexcept>
 #include <string>
 //#include <cuda_interface.hpp>
 #include <cstdio>
@@ -75,7 +94,7 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
                                parameters.dim_y * (parameters.dim_x / 2 + 1)));
 
   if (cudaGetLastError() != cudaSuccess) {
-    throw "Failed to allocate\n";
+    throw std::runtime_error("Failed to allocate");
   }
 
   cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(fde_parameters_gpu), &parameters,
@@ -94,20 +113,20 @@ FdElectrostatics::FdElectrostatics(InputParameters inputParameters,
 
   if (cufftPlan3d(&plan_fft, parameters.dim_z, parameters.dim_y,
                   parameters.dim_x, CUFFT_R2C) != CUFFT_SUCCESS) {
-    throw std::string("Unable to create fft plan");
+    throw std::runtime_error("Unable to create fft plan");
   }
 
   if (cufftSetStream(plan_fft, cuda_stream) != CUFFT_SUCCESS) {
-    throw std::string("Unable to assign FFT to cuda stream");
+    throw std::runtime_error("Unable to assign FFT to cuda stream");
   }
 
   if (cufftPlan3d(&plan_ifft, parameters.dim_z, parameters.dim_y,
                   parameters.dim_x, CUFFT_C2R) != CUFFT_SUCCESS) {
-    throw std::string("Unable to create ifft plan");
+    throw std::runtime_error("Unable to create ifft plan");
   }
 
   if (cufftSetStream(plan_ifft, cuda_stream) != CUFFT_SUCCESS) {
-    throw std::string("Unable to assign FFT to cuda stream");
+    throw std::runtime_error("Unable to assign FFT to cuda stream");
   }
 
   initialized = true;

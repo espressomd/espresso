@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -38,6 +38,8 @@ args = parser.parse_args()
 
 
 required_features = ["LENNARD_JONES"]
+if args.shape == "Stomatocyte":
+    required_features.append("EXPERIMENTAL_FEATURES")
 espressomd.assert_features(required_features)
 
 box_l = 50.0

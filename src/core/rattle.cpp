@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "rattle.hpp"
 
@@ -25,6 +25,7 @@ int n_rigidbonds = 0;
 
 #ifdef BOND_CONSTRAINT
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -39,8 +40,6 @@ int n_rigidbonds = 0;
 
 #include <cmath>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <mpi.h>
 
 /** \name Private functions */
@@ -75,10 +74,6 @@ void apply_vel_corr(const ParticleRange &particles);
  * f.f*/
 void revert_force(const ParticleRange &particles,
                   const ParticleRange &ghost_particles);
-
-/**For debugging purpose--prints the bond lengths between particles that have
-rigid_bonds*/
-void print_bond_len();
 
 /*@}*/
 
@@ -115,45 +110,41 @@ void init_correction_vector(const ParticleRange &particles) {
 
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
-  Bonded_ia_parameters *ia_params;
-  int j, k, cnt = -1;
-  Particle *p1, *p2;
 
-  for (auto &p : particles) {
-    p1 = &p;
-    k = 0;
-    while (k < p1->bl.n) {
-      ia_params = &bonded_ia_params[p1->bl.e[k++]];
-      if (ia_params->type == BONDED_IA_RIGID_BOND) {
-        cnt++;
-        p2 = local_particles[p1->bl.e[k++]];
-        if (!p2) {
+  for (auto &p1 : particles) {
+    int k = 0;
+    while (k < p1.bl.n) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
+      if (ia_params.type == BONDED_IA_RIGID_BOND) {
+        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
+                            << p1.p.identity << " and " << p1.bl.e[k - 1]
                             << " (particles not stored on the same node)";
           return;
         }
+        Particle &p2 = *pp2;
 
-        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+        auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
         auto const r_ij2 = r_ij.norm2();
 
-        if (fabs(1.0 - r_ij2 / ia_params->p.rigid_bond.d2) >
-            ia_params->p.rigid_bond.p_tol) {
-          auto const r_ij_t = get_mi_vector(p1->r.p_old, p2->r.p_old, box_geo);
+        if (fabs(1.0 - r_ij2 / ia_params.p.rigid_bond.d2) >
+            ia_params.p.rigid_bond.p_tol) {
+          auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
           auto const r_ij_dot = r_ij_t * r_ij;
-          auto const G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) /
-                         r_ij_dot / (p1->p.mass + p2->p.mass);
+          auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) / r_ij_dot /
+                         (p1.p.mass + p2.p.mass);
 
           auto const pos_corr = G * r_ij_t;
-          p1->f.f += pos_corr * p2->p.mass;
-          p2->f.f -= pos_corr * p1->p.mass;
+          p1.f.f += pos_corr * p2.p.mass;
+          p2.f.f -= pos_corr * p1.p.mass;
 
           /*Increase the 'repeat' flag by one */
           *repeat_ = *repeat_ + 1;
         }
       } else
         /* skip bond partners of nonrigid bond */
-        k += ia_params->num;
+        k += ia_params.num;
     } // while loop
   }   // for i loop
 }
@@ -170,7 +161,8 @@ void app_pos_correction(const ParticleRange &particles) {
   } // for i loop
 }
 
-void correct_pos_shake(const ParticleRange &particles) {
+void correct_pos_shake(ParticleRange const &particles) {
+  cells_update_ghosts();
   int repeat_, cnt = 0;
   int repeat = 1;
 
@@ -179,7 +171,7 @@ void correct_pos_shake(const ParticleRange &particles) {
     repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
     ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    app_pos_correction(particles);
+    app_pos_correction(cell_structure.local_cells().particles());
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.update_ghost_pos_comm);
     if (this_node == 0)
@@ -221,41 +213,38 @@ void transfer_force_init_vel(const ParticleRange &particles,
 
 /** Velocity correction vectors are computed*/
 void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
-  Bonded_ia_parameters *ia_params;
-  int j, k;
-  Particle *p1, *p2;
 
-  for (auto &p : particles) {
-    p1 = &p;
-    k = 0;
-    while (k < p1->bl.n) {
-      ia_params = &bonded_ia_params[p1->bl.e[k++]];
-      if (ia_params->type == BONDED_IA_RIGID_BOND) {
-        p2 = local_particles[p1->bl.e[k++]];
-        if (!p2) {
+  for (auto &p1 : particles) {
+    int k = 0;
+    while (k < p1.bl.n) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
+      if (ia_params.type == BONDED_IA_RIGID_BOND) {
+        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
+                            << p1.p.identity << " and " << p1.bl.e[k - 1]
                             << " (particles not stored on the same node)";
           return;
         }
+        Particle &p2 = *pp2;
 
-        auto const v_ij = p1->m.v - p2->m.v;
-        auto const r_ij = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+        auto const v_ij = p1.m.v - p2.m.v;
+        auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
         auto const v_proj = v_ij * r_ij;
-        if (std::abs(v_proj) > ia_params->p.rigid_bond.v_tol) {
+        if (std::abs(v_proj) > ia_params.p.rigid_bond.v_tol) {
           auto const K =
-              v_proj / ia_params->p.rigid_bond.d2 / (p1->p.mass + p2->p.mass);
+              v_proj / ia_params.p.rigid_bond.d2 / (p1.p.mass + p2.p.mass);
 
           auto const vel_corr = K * r_ij;
 
-          p1->f.f -= vel_corr * p2->p.mass;
-          p2->f.f += vel_corr * p1->p.mass;
+          p1.f.f -= vel_corr * p2.p.mass;
+          p2.f.f += vel_corr * p1.p.mass;
 
           *repeat_ = *repeat_ + 1;
         }
       } else
-        k += ia_params->num;
+        k += ia_params.num;
     } // while loop
   }   // for i loop
 }
@@ -286,7 +275,9 @@ void revert_force(const ParticleRange &particles,
     revert(p);
 }
 
-void correct_vel_shake(CellStructure &cell_structure) {
+void correct_vel_shake() {
+  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle

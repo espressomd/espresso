@@ -26,7 +26,7 @@ with open('doc/doxygen/warnings.log') as f:
 
 raw_warnings = re.findall(
     r'(?:^|\n)doxygen:(.+?):(\d+): warning: (.+?)(?=\n\S|\n*$)',
-     content, re.DOTALL)
+    content, re.DOTALL)
 
 # collect list of empty @param and @tparam blocks
 with open('doc/doxygen/empty-params.log') as f:
@@ -61,13 +61,15 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
         # defined in another group in the .cpp file; this is usually caused by
         # the "Private functions" and "Exported functions" groups in .hpp files
         continue
-    if re.search('^documented symbol `\S+\' was not declared or defined\.$', warning):
+    if re.search(
+            '^documented symbol `\S+\' was not declared or defined\.$', warning):
         # known bug, fixed in 1.8.16
         continue
     if re.search('^no uniquely matching class member found for $', warning):
         # known bug, not fixed yet
         continue
-    if re.search('^The following parameters of .+ are not documented:$', warning):
+    if re.search(
+            '^The following parameters of .+ are not documented:$', warning):
         # non-critical warning, enforcing it would encourage bad behavior, i.e.
         # inserting "@param argument" without a description to silence the
         # warning, when in reality the warning is silenced because the text on

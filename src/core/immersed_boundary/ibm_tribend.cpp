@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "immersed_boundary/ibm_tribend.hpp"
 
@@ -26,18 +26,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <utils/constants.hpp>
 
-void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
-                           Particle *p4,
-                           Bonded_ia_parameters const *const iaparams) {
-  assert(p1);
-  assert(p2);
-  assert(p3);
-  assert(p4);
+std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
+                      Particle const &p3, Particle const &p4,
+                      Bonded_ia_parameters const &iaparams) {
 
   // Get vectors making up the two triangles
-  auto const dx1 = get_mi_vector(p1->r.p, p3->r.p, box_geo);
-  auto const dx2 = get_mi_vector(p2->r.p, p3->r.p, box_geo);
-  auto const dx3 = get_mi_vector(p4->r.p, p3->r.p, box_geo);
+  auto const dx1 = get_mi_vector(p1.r.p, p3.r.p, box_geo);
+  auto const dx2 = get_mi_vector(p2.r.p, p3.r.p, box_geo);
+  auto const dx3 = get_mi_vector(p4.r.p, p3.r.p, box_geo);
 
   // Get normals on triangle; pointing outwards by definition of indices
   // sequence
@@ -66,9 +63,9 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   if (desc < 0)
     theta *= -1;
 
-  auto const DTh = theta - iaparams->p.ibm_tribend.theta0;
+  auto const DTh = theta - iaparams.p.ibm_tribend.theta0;
 
-  auto Pre = iaparams->p.ibm_tribend.kb * DTh;
+  auto Pre = iaparams.p.ibm_tribend.kb * DTh;
   // Correct version with linearized sin
   if (theta < 0)
     Pre *= -1;
@@ -76,23 +73,18 @@ void IBM_Tribend_CalcForce(Particle *p1, Particle *p2, Particle *p3,
   auto const v1 = (n2 - sc * n1).normalize();
   auto const v2 = (n1 - sc * n2).normalize();
 
-  // Force for particle 1:
-  p1->f.f +=
-      Pre * (vector_product(get_mi_vector(p2->r.p, p3->r.p, box_geo), v1) / Ai +
-             vector_product(get_mi_vector(p3->r.p, p4->r.p, box_geo), v2) / Aj);
-
-  // Force for particle 2:
-  p2->f.f +=
-      Pre * (vector_product(get_mi_vector(p3->r.p, p1->r.p, box_geo), v1) / Ai);
-
-  // Force for particle 3:
-  p3->f.f +=
-      Pre * (vector_product(get_mi_vector(p1->r.p, p2->r.p, box_geo), v1) / Ai +
-             vector_product(get_mi_vector(p4->r.p, p1->r.p, box_geo), v2) / Aj);
-
-  // Force for particle 4:
-  p4->f.f +=
-      Pre * (vector_product(get_mi_vector(p1->r.p, p3->r.p, box_geo), v2) / Aj);
+  // Force on particles
+  auto const force1 =
+      Pre * (vector_product(get_mi_vector(p2.r.p, p3.r.p, box_geo), v1) / Ai +
+             vector_product(get_mi_vector(p3.r.p, p4.r.p, box_geo), v2) / Aj);
+  auto const force2 =
+      Pre * (vector_product(get_mi_vector(p3.r.p, p1.r.p, box_geo), v1) / Ai);
+  auto const force3 =
+      Pre * (vector_product(get_mi_vector(p1.r.p, p2.r.p, box_geo), v1) / Ai +
+             vector_product(get_mi_vector(p4.r.p, p1.r.p, box_geo), v2) / Aj);
+  auto const force4 =
+      Pre * (vector_product(get_mi_vector(p1.r.p, p3.r.p, box_geo), v2) / Aj);
+  return std::make_tuple(force1, force2, force3, force4);
 }
 
 int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,

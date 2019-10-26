@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -100,6 +100,16 @@ class test_icc(ut.TestCase):
 
         # Result
         self.assertAlmostEqual(1, induced_dipole / testcharge_dipole, places=4)
+
+        # Test applying changes
+        enegry_pre_change = S.analysis.energy()['total']
+        pressure_pre_change = S.analysis.pressure()['total']
+        icc.set_params(sigmas=[2.0] * nicc_tot)
+        icc.set_params(epsilons=[20.0] * nicc_tot)
+        enegry_post_change = S.analysis.energy()['total']
+        pressure_post_change = S.analysis.pressure()['total']
+        self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)
+        self.assertNotAlmostEqual(pressure_pre_change, pressure_post_change)
 
 
 if __name__ == "__main__":

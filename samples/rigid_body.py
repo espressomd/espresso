@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,15 +20,13 @@ VIRTUAL_SITES_RELATIVE feature.
 """
 
 import espressomd
-espressomd.assert_features(["VIRTUAL_SITES_RELATIVE"])
+required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
+espressomd.assert_features(required_features)
 from espressomd import thermostat
 from espressomd import integrate
 from espressomd.virtual_sites import VirtualSitesRelative
 
 import numpy as np
-
-required_features = ["VIRTUAL_SITES_RELATIVE", "MASS", "ROTATIONAL_INERTIA"]
-espressomd.assert_features(required_features)
 
 
 box_l = 100
@@ -41,7 +39,7 @@ skin = 10.0
 system.cell_system.skin = skin
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
-### Particle types
+# Particle types
 type_centre = 0
 type_A = 1
 
@@ -60,10 +58,17 @@ y = box_l * 0.5
 z = box_l * 0.5
 
 # place six branches, pointing +/-x +/-y and +/-z
+# note that we do not make the particles virtual at this point.
+# The script uses center of mass an moment of inertia analysis routines
+# to obtain the position and inertia moments of the central particle.
+# Once a particle is made virtual, it will no longer contribute to 
+# observables involving mass. Virtual sites are not integrated via
+# Newton's equation of motion and therefore do not have a meaningful mass.
+
 for direction in np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]):
     for n in range(branch_len):
         system.part.add(pos=[x, y, z] + (n + 1) * direction,
-                        type=type_A, virtual=True)
+                        type=type_A)
         system.part.add(pos=[x, y, z] - (n + 1) * direction,
                         type=type_A, virtual=True)
 
@@ -75,7 +80,7 @@ com = system.analysis.center_of_mass(p_type=type_A)
 print("center of mass is:", com)
 
 # if using multiple nodes, we need to change min_global_cut to the largest
-# deparation
+# separation
 if system.cell_system.get_state()['n_nodes'] > 1:
     max_dist = 0
     for p in system.part:
@@ -87,18 +92,19 @@ if system.cell_system.get_state()['n_nodes'] > 1:
     system.min_global_cut = max_dist
 
 mat_I = system.analysis.moment_of_inertia_matrix(p_type=type_A)
-#in this simple case, the cluster has principal axes aligned with the box
+# in this simple case, the cluster has principal axes aligned with the box
 momI = [mat_I[0, 0], mat_I[1, 1], mat_I[2, 2]]
-print("moment of intertia is", momI)
+print("moment of inertia is", momI)
 
-#place center bead
+# place center bead
 p_center = system.part.add(
     pos=com, mass=branch_len * 6 + 1, rinertia=momI,
     rotation=[1, 1, 1], type=type_centre)
 
-# The virtual particles relate to the center one
+# Relate the particles that make up the rigid body to the central particle.
+# This will also mark them as `virtual = True`
 for p in system.part:
-    if p.virtual:
+    if p != p_center: 
         p.vs_auto_relate_to(p_center.id)
 
 for frame in range(200):
