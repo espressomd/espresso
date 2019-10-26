@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
+from .utils import requires_experimental_features
 
 
 class Shape:
@@ -190,6 +191,7 @@ class SpheroCylinder(Shape, ScriptInterfaceHelper):
 
 
 @script_interface_register
+@requires_experimental_features("No test coverage")
 class Stomatocyte(Shape, ScriptInterfaceHelper):
 
     """
@@ -219,6 +221,7 @@ class Torus(Shape, ScriptInterfaceHelper):
 
     """
     A torus shape.
+
     Attributes
     ----------
     center : (3,) array_like of :obj:`float`
@@ -264,11 +267,11 @@ class SimplePore(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    radius: float
+    radius: :obj:`float`
         The radius of the pore.
-    length: float
+    length: :obj:`float`
         The distance between the planes.
-    smoothing_radius: float
+    smoothing_radius: :obj:`float`
         Radius of the torus segments
     axis: (3,) array_like of :obj:`float`
         Axis of the cylinder and normal of the planes

@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ANGLE_COSINE_H
 #define ANGLE_COSINE_H
 /** \file
@@ -45,22 +45,22 @@ int angle_cosine_set_params(int bond_type, double bend, double phi0);
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
-                               Utils::Vector3d const &r_left,
-                               Utils::Vector3d const &r_right,
-                               Bonded_ia_parameters const *const iaparams) {
+angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
+                          Utils::Vector3d const &r_left,
+                          Utils::Vector3d const &r_right,
+                          Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
-    auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
-    auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
-    auto const k = iaparams->p.angle_cosine.bend;
+    auto const cos_phi0 = iaparams.p.angle_cosine.cos_phi0;
+    auto const sin_phi0 = iaparams.p.angle_cosine.sin_phi0;
+    auto const k = iaparams.p.angle_cosine.bend;
     // angle force term: K(phi) = -k * sin(phi - phi0) / sin(phi)
     // trig identity: sin(a - b) = sin(a)cos(b) - cos(a)sin(b)
     return -k * (sin_phi * cos_phi0 - cos_phi * sin_phi0) / sin_phi;
   };
 
-  return calc_angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
+  return angle_generic_force(r_mid, r_left, r_right, forceFactor, false);
 }
 
 /** Compute the three-body angle interaction force.
@@ -68,18 +68,13 @@ calc_angle_cosine_3body_forces(Utils::Vector3d const &r_mid,
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] f_mid     Force on @p p_mid.
- *  @param[out] f_left    Force on @p p_left.
- *  @param[out] f_right   Force on @p p_right.
- *  @retval false
+ *  @return the forces on the second, first and third particles.
  */
-inline bool calc_angle_cosine_force(
-    Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-    Utils::Vector3d const &r_right, Bonded_ia_parameters const *const iaparams,
-    Utils::Vector3d &f_mid, Utils::Vector3d &f_left, Utils::Vector3d &f_right) {
-  std::tie(f_mid, f_left, f_right) =
-      calc_angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
-  return false;
+inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
+angle_cosine_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                   Utils::Vector3d const &r_right,
+                   Bonded_ia_parameters const &iaparams) {
+  return angle_cosine_3body_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Computes the three-body angle interaction energy.
@@ -87,24 +82,20 @@ inline bool calc_angle_cosine_force(
  *  @param[in]  r_left    Position of first/left particle.
  *  @param[in]  r_right   Position of third/right particle.
  *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @param[out] _energy   Energy.
- *  @retval false
  */
-inline bool angle_cosine_energy(Utils::Vector3d const &r_mid,
-                                Utils::Vector3d const &r_left,
-                                Utils::Vector3d const &r_right,
-                                Bonded_ia_parameters const *const iaparams,
-                                double *_energy) {
+inline double angle_cosine_energy(Utils::Vector3d const &r_mid,
+                                  Utils::Vector3d const &r_left,
+                                  Utils::Vector3d const &r_right,
+                                  Bonded_ia_parameters const &iaparams) {
   auto const vectors = calc_vectors_and_cosine(r_mid, r_left, r_right, true);
   auto const cos_phi = std::get<4>(vectors);
   auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
-  auto const cos_phi0 = iaparams->p.angle_cosine.cos_phi0;
-  auto const sin_phi0 = iaparams->p.angle_cosine.sin_phi0;
-  auto const k = iaparams->p.angle_cosine.bend;
+  auto const cos_phi0 = iaparams.p.angle_cosine.cos_phi0;
+  auto const sin_phi0 = iaparams.p.angle_cosine.sin_phi0;
+  auto const k = iaparams.p.angle_cosine.bend;
   // potential: U(phi) = k * [1 - cos(phi - phi0)]
   // trig identity: cos(phi - phi0) = cos(phi)cos(phi0) + sin(phi)sin(phi0)
-  *_energy = k * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
-  return false;
+  return k * (1 - (cos_phi * cos_phi0 + sin_phi * sin_phi0));
 }
 
 #endif /* ANGLE_COSINE_H */

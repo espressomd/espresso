@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -94,7 +94,8 @@ cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:
         pass
     cppclass Vector4d:
-        pass
+        double & operator[](int i)
+        double * data()
 
     cppclass Vector3i:
         int & operator[](int i)

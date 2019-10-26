@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,12 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import espressomd
 import numpy as np
-from .oif_utils import *
-from espressomd.interactions import OifLocalForces
-from espressomd.interactions import OifGlobalForces
-from espressomd.interactions import OifOutDirection
+import espressomd
+from espressomd.interactions import OifLocalForces, OifGlobalForces, OifOutDirection
+from .oif_utils import (
+    large_number, small_epsilon, discard_epsilon, custom_str, norm,
+    vec_distance, get_triangle_normal, area_triangle, angle_btw_triangles,
+    oif_calc_stretching_force, oif_calc_bending_force,
+    oif_calc_local_area_force, oif_calc_global_area_force, oif_calc_volume_force
+)
 
 
 class FixedPoint:
@@ -32,7 +35,8 @@ class FixedPoint:
     def __init__(self, pos, id):
         if not isinstance(id, int):
             raise TypeError("Id must be integer.")
-        if not ((len(pos) == 3) and isinstance(pos[0], float) and isinstance(pos[1], float) and isinstance(pos[2], float)):
+        if not ((len(pos) == 3) and isinstance(pos[0], float) and isinstance(
+                pos[1], float) and isinstance(pos[2], float)):
             raise TypeError("Pos must be a list of three floats.")
 
         self.x = pos[0]
@@ -54,8 +58,11 @@ class PartPoint:
 
     """
 
-    def __init__(self, part, id, part_id):  # part is physical ESPResSo particle corresponding to that particular point
-        if not (isinstance(part, espressomd.particle_data.ParticleHandle) and isinstance(id, int) and isinstance(part_id, int)):
+    # part is physical ESPResSo particle corresponding to that particular point
+
+    def __init__(self, part, id, part_id):
+        if not (isinstance(part, espressomd.particle_data.ParticleHandle)
+                and isinstance(id, int) and isinstance(part_id, int)):
             raise TypeError("Arguments to PartPoint are incorrect.")
         self.part = part
         self.part_id = part_id  # because in adding bonds to the particles in OifCell
@@ -101,7 +108,7 @@ class Edge:
     """
 
     def __init__(self, A, B):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B]):
             TypeError("Arguments to Edge must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -118,7 +125,7 @@ class Triangle:
     """
 
     def __init__(self, A, B, C):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B, C]):
             TypeError("Arguments to Triangle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -138,10 +145,8 @@ class Angle:
     """
 
     def __init__(self, A, B, C, D):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) \
-                and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) \
-                and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))) \
-                and (isinstance(D, PartPoint) or (isinstance(D, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint))
+                   for x in [A, B, C, D]):
             TypeError("Arguments to Angle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -162,9 +167,7 @@ class ThreeNeighbors:
     """
 
     def __init__(self, A, B, C):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) \
-                and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) \
-                and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B, C]):
             TypeError(
                 "Arguments to ThreeNeighbors must be FixedPoint or PartPoint.")
         self.A = A
@@ -185,8 +188,8 @@ class Mesh:
     """
 
     def __init__(
-        self, nodes_file=None, triangles_file=None, system=None, resize=(1.0, 1.0, 1.0),
-                 particle_type=-1, particle_mass=1.0, normal=False, check_orientation=True):
+            self, nodes_file=None, triangles_file=None, system=None, resize=(1.0, 1.0, 1.0),
+            particle_type=-1, particle_mass=1.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system, espressomd.System)):
             raise Exception(
                 "Mesh: No system provided or wrong type given. Quitting.")
@@ -204,9 +207,11 @@ class Mesh:
         self.ids_extremal_points = [0, 0, 0, 0, 0, 0, 0]
 
         if not ((nodes_file is None) or (triangles_file is None)):
-            if not (isinstance(nodes_file, str) and isinstance(triangles_file, str)):
+            if not (isinstance(nodes_file, str)
+                    and isinstance(triangles_file, str)):
                 raise TypeError("Mesh: Filenames must be strings.")
-            if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(resize[1], float) and isinstance(resize[2], float)):
+            if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(
+                    resize[1], float) and isinstance(resize[2], float)):
                 raise TypeError("Mesh: Pos must be a list of three floats.")
             if not isinstance(particle_type, int):
                 raise TypeError("Mesh: particle_type must be integer.")
@@ -222,8 +227,7 @@ class Mesh:
             in_file.close()
             # removes a blank line at the end of the file if there is any:
             nodes_coord = filter(None, nodes_coord)
-                                 # here we have list of lines with triplets of
-                                 # strings
+            # here we have list of lines with triplets of strings
             for line in nodes_coord:  # extracts coordinates from the string line
                 line = np.array([float(x) for x in line.split()])
                 coords = np.array(resize) * line
@@ -282,11 +286,14 @@ class Mesh:
                 pa = triangle.A.id
                 pb = triangle.B.id
                 pc = triangle.C.id
-                if ([pa, pb] not in tmp_edge_incidences) and ([pb, pa] not in tmp_edge_incidences):
+                if ([pa, pb] not in tmp_edge_incidences) and (
+                        [pb, pa] not in tmp_edge_incidences):
                     tmp_edge_incidences.append([pa, pb])
-                if ([pb, pc] not in tmp_edge_incidences) and ([pc, pb] not in tmp_edge_incidences):
+                if ([pb, pc] not in tmp_edge_incidences) and (
+                        [pc, pb] not in tmp_edge_incidences):
                     tmp_edge_incidences.append([pb, pc])
-                if ([pa, pc] not in tmp_edge_incidences) and ([pc, pa] not in tmp_edge_incidences):
+                if ([pa, pc] not in tmp_edge_incidences) and (
+                        [pc, pa] not in tmp_edge_incidences):
                     tmp_edge_incidences.append([pa, pc])
             for tmp_incid in tmp_edge_incidences:
                 tmp_edge = Edge(
@@ -420,14 +427,14 @@ class Mesh:
                         if triangle.A.id == point.id or triangle.B.id == point.id or triangle.C.id == point.id:
                             tmp_normal_triangle = get_triangle_normal(
                                 triangle.A.get_pos(), triangle.B.get_pos(),
-                                                                      triangle.C.get_pos())
+                                triangle.C.get_pos())
                             break
                     # properly orient selected neighbors and save them to the
                     # list of neighbors
                     tmp_normal_neighbors = get_triangle_normal(
                         best_neighbors[
                             0].get_pos(), best_neighbors[1].get_pos(),
-                                                               best_neighbors[2].get_pos())
+                        best_neighbors[2].get_pos())
                     tmp_length_normal_triangle = norm(tmp_normal_triangle)
                     tmp_length_normal_neighbors = norm(tmp_normal_neighbors)
                     tmp_product = np.dot(tmp_normal_triangle, tmp_normal_neighbors) / \
@@ -451,8 +458,8 @@ class Mesh:
         mesh = Mesh(system=self.system)
         mesh.ids_extremal_points = self.ids_extremal_points
         rotation = np.array([[1.0, 0.0, 0.0],
-                            [0.0, 1.0, 0.0],
-                            [0.0, 0.0, 1.0]])
+                             [0.0, 1.0, 0.0],
+                             [0.0, 0.0, 1.0]])
 
         if rotate is not None:
             # variables for rotation
@@ -479,9 +486,8 @@ class Mesh:
                     tmp_pos[1]), discard_epsilon(tmp_pos[2])]
             if origin is not None:
                 tmp_pos += np.array(origin)
+            # to remember the global id of the ESPResSo particle
             new_part_id = len(self.system.part)
-                              # to remember the global id of the ESPResSo
-                              # particle
             self.system.part.add(
                 pos=tmp_pos, type=particle_type, mass=particle_mass, mol_id=particle_type)
             new_part = self.system.part[new_part_id]
@@ -498,12 +504,12 @@ class Mesh:
             new_angle = Angle(
                 mesh.points[angle.A.id], mesh.points[
                     angle.B.id], mesh.points[angle.C.id],
-                              mesh.points[angle.D.id])
+                mesh.points[angle.D.id])
             mesh.angles.append(new_angle)
         for neighbors in self.neighbors:
             new_neighbors = ThreeNeighbors(
                 mesh.points[neighbors.A.id], mesh.points[neighbors.B.id],
-                                           mesh.points[neighbors.C.id])
+                mesh.points[neighbors.C.id])
             mesh.neighbors.append(new_neighbors)
         return mesh
 
@@ -562,7 +568,7 @@ class Mesh:
                                             t_ok = False  # this is situation 123 and 314
                                             corrected_triangle = Triangle(
                                                 tmp_triangle.A, tmp_triangle.C,
-                                                                          tmp_triangle.B)
+                                                tmp_triangle.B)
                                         else:
                                             are_neighbors = False
                         else:
@@ -582,7 +588,7 @@ class Mesh:
                                                 t_ok = False  # this is situation 123 and 431
                                                 corrected_triangle = Triangle(
                                                     tmp_triangle.A, tmp_triangle.C,
-                                                                              tmp_triangle.B)
+                                                    tmp_triangle.B)
                                             else:
                                                 are_neighbors = False
                             else:
@@ -602,7 +608,7 @@ class Mesh:
                                             t_ok = False  # this is situation 123 and 423
                                             corrected_triangle = Triangle(
                                                 tmp_triangle.A, tmp_triangle.C,
-                                                                          tmp_triangle.B)
+                                                tmp_triangle.B)
                                         else:
                                             if tmp_triangle.C.id == correct_triangle.A.id:
                                                 t_ok = True  # this is situation 123 and 324
@@ -614,7 +620,7 @@ class Mesh:
                                                 t_ok = False  # this is situation 123 and 342
                                                 corrected_triangle = Triangle(
                                                     tmp_triangle.A, tmp_triangle.C,
-                                                                              tmp_triangle.B)
+                                                    tmp_triangle.B)
                                             else:
                                                 if tmp_triangle.C.id == correct_triangle.B.id:
                                                     t_ok = True  # this is situation 123 and 432
@@ -662,10 +668,10 @@ class Mesh:
                 triangle.A.get_pos(), triangle.B.get_pos(), triangle.C.get_pos())
             tmp_normal_length = norm(tmp_normal)
             tmp_sum_z_coords = 1.0 / 3.0 * \
-                (triangle.A.get_pos()[2] + triangle.B.get_pos()[
-                 2] + triangle.C.get_pos()[2])
-            volume -= triangle.area() * tmp_normal[
-                2] / tmp_normal_length * tmp_sum_z_coords
+                (triangle.A.get_pos()[2] + triangle.B.get_pos()[2] +
+                 triangle.C.get_pos()[2])
+            volume -= (triangle.area() * tmp_normal[2] / tmp_normal_length *
+                       tmp_sum_z_coords)
         return volume
 
     def get_n_nodes(self):
@@ -695,7 +701,8 @@ class Mesh:
         if out_file_name == "":
             raise Exception(
                 "Cell.Mirror: output meshnodes file for new mesh is missing. Quitting.")
-        if (mirror_x != 0 and mirror_x != 1) or (mirror_y != 0 and mirror_y != 1) or (mirror_z != 0 and mirror_z != 1):
+        if mirror_x not in (0, 1) or mirror_y not in (
+                0, 1) or mirror_z not in (0, 1):
             raise Exception(
                 "Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting.")
         if mirror_x + mirror_y + mirror_z > 1:
@@ -725,20 +732,23 @@ class OifCellType:  # analogous to oif_template
     """
 
     def __init__(
-        self, nodes_file="", triangles_file="", system=None, resize=(1.0, 1.0, 1.0), ks=0.0, kslin=0.0,
-                 kb=0.0, kal=0.0, kag=0.0, kv=0.0, kvisc=0.0, normal=False, check_orientation=True):
+            self, nodes_file="", triangles_file="", system=None, resize=(1.0, 1.0, 1.0), ks=0.0, kslin=0.0,
+            kb=0.0, kal=0.0, kag=0.0, kv=0.0, kvisc=0.0, normal=False, check_orientation=True):
         if (system is None) or (not isinstance(system, espressomd.System)):
             raise Exception(
                 "OifCellType: No system provided or wrong type. Quitting.")
         if (nodes_file == "") or (triangles_file == ""):
             raise Exception(
                 "OifCellType: One of nodesfile or trianglesfile is missing. Quitting.")
-        if not (isinstance(nodes_file, str) and isinstance(triangles_file, str)):
+        if not (isinstance(nodes_file, str)
+                and isinstance(triangles_file, str)):
             raise TypeError("OifCellType: Filenames must be strings.")
-        if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(resize[1], float) and isinstance(resize[2], float)):
+        if not ((len(resize) == 3) and isinstance(resize[0], float) and isinstance(
+                resize[1], float) and isinstance(resize[2], float)):
             raise TypeError(
                 "OifCellType: Resize must be a list of three floats.")
-        if not (isinstance(ks, float) and isinstance(ks, float) and isinstance(kb, float) and isinstance(kal, float) and isinstance(kag, float) and isinstance(kv, float) and isinstance(kvisc, float)):
+        if not (isinstance(ks, float) and isinstance(kslin, float) and isinstance(kb, float) and isinstance(
+                kal, float) and isinstance(kag, float) and isinstance(kv, float) and isinstance(kvisc, float)):
             raise TypeError("OifCellType: Elastic parameters must be floats.")
         if not isinstance(normal, bool):
             raise TypeError("OifCellType: normal must be bool.")
@@ -750,7 +760,7 @@ class OifCellType:  # analogous to oif_template
         self.system = system
         self.mesh = Mesh(
             nodes_file=nodes_file, triangles_file=triangles_file, system=system, resize=resize,
-                         normal=normal, check_orientation=check_orientation)
+            normal=normal, check_orientation=check_orientation)
         self.local_force_interactions = []
         self.resize = resize
         self.ks = ks
@@ -772,7 +782,7 @@ class OifCellType:  # analogous to oif_template
                     angle.D.get_pos(), angle.B.get_pos(), angle.C.get_pos())
                 tmp_local_force_inter = OifLocalForces(
                     r0=r0, ks=ks, kslin=kslin, phi0=phi, kb=kb, A01=area1, A02=area2,
-                                                       kal=kal, kvisc=kvisc)
+                    kal=kal, kvisc=kvisc)
                 self.local_force_interactions.append(
                     [tmp_local_force_inter, [angle.A, angle.B, angle.C, angle.D]])
                 self.system.bonded_inter.add(tmp_local_force_inter)
@@ -822,7 +832,8 @@ class OifCell:
                 "OifCell: No particle_type specified or wrong type. Quitting.")
         if not isinstance(particle_mass, float):
             raise Exception("OifCell: particle mass must be float.")
-        if (rotate is not None) and not ((len(rotate) == 3) and isinstance(rotate[0], float) and isinstance(rotate[1], float) and isinstance(rotate[2], float)):
+        if (rotate is not None) and not ((len(rotate) == 3) and isinstance(
+                rotate[0], float) and isinstance(rotate[1], float) and isinstance(rotate[2], float)):
             raise TypeError("Rotate must be list of three floats.")
 
         self.cell_type = cell_type
@@ -1035,7 +1046,7 @@ class OifCell:
             raise Exception("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be "
                             "appended for this file. Quitting.")
         n_points = self.get_n_nodes()
-        if (len(data) != n_points):
+        if len(data) != n_points:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points. Quitting.")
         output_file = open(file_name, "a")
@@ -1055,7 +1066,7 @@ class OifCell:
             raise Exception(
                 "OifCell: output_raw_data: No data provided. Quitting.")
         n_points = self.get_n_nodes()
-        if (len(data) != n_points):
+        if len(data) != n_points:
             raise Exception(
                 "OifCell: output_raw_data: Number of data points does not match number of mesh points. Quitting.")
         output_file = open(file_name, "w")
@@ -1087,8 +1098,7 @@ class OifCell:
         in_file.close()
         # removes a blank line at the end of the file if there is any:
         nodes_coord = filter(None, nodes_coord)
-                             # here we have list of lines with triplets of
-                             # strings
+        # here we have list of lines with triplets of strings
         if len(nodes_coord) != n_points:
             raise Exception("OifCell: Mesh nodes not set to new positions: "
                             "number of lines in the file does not equal number of Cell nodes. Quitting.")
@@ -1109,8 +1119,8 @@ class OifCell:
             self.origin[1]) + " " + str(self.origin[2]))
 
     def elastic_forces(
-        self, el_forces=(0, 0, 0, 0, 0, 0), f_metric=(0, 0, 0, 0, 0, 0), vtk_file=None,
-                       raw_data_file=None):
+            self, el_forces=(0, 0, 0, 0, 0, 0), f_metric=(0, 0, 0, 0, 0, 0), vtk_file=None,
+            raw_data_file=None):
         # the order of parameters in elastic_forces and in f_metric is as follows (ks, kb, kal, kag, kv, total)
         # vtk_file means that a vtk file for visualisation of elastic forces will be written
         # raw_data_file means that just the elastic forces will be written into
@@ -1146,7 +1156,8 @@ class OifCell:
                                 "specifying which f_metric will be calculated. The order in the sixtuple is (ks, kb, kal, "
                                 "kag, kv, total)")
         # calculation of stretching forces and f_metric
-        if (el_forces[0] == 1) or (el_forces[5] == 1) or (f_metric[0] == 1) or (f_metric[5] == 1):
+        if (el_forces[0] == 1) or (el_forces[5] == 1) or (
+                f_metric[0] == 1) or (f_metric[5] == 1):
             # initialize list
             stretching_forces_list = []
             for p in self.mesh.points:
@@ -1161,7 +1172,7 @@ class OifCell:
                 orig_dist = vec_distance(a_orig_pos, b_orig_pos)
                 tmp_stretching_force = oif_calc_stretching_force(
                     self.cell_type.ks, a_current_pos, b_current_pos,
-                                                             orig_dist, current_dist)
+                    orig_dist, current_dist)
                 stretching_forces_list[e.A.id] += tmp_stretching_force
                 stretching_forces_list[e.B.id] -= tmp_stretching_force
             # calculation of stretching f_metric, if needed
@@ -1171,7 +1182,8 @@ class OifCell:
                     ks_f_metric += norm(stretching_forces_list[p.id])
 
         # calculation of bending forces and f_metric
-        if (el_forces[1] == 1) or (el_forces[5] == 1) or (f_metric[1] == 1) or (f_metric[5] == 1):
+        if (el_forces[1] == 1) or (el_forces[5] == 1) or (
+                f_metric[1] == 1) or (f_metric[5] == 1):
             # initialize list
             bending_forces_list = []
             for p in self.mesh.points:
@@ -1192,7 +1204,7 @@ class OifCell:
                     a_orig_pos, b_orig_pos, c_orig_pos, d_orig_pos)
                 tmp_bending_forces = oif_calc_bending_force(
                     self.cell_type.kb, a_current_pos, b_current_pos, c_current_pos,
-                                                        d_current_pos, orig_angle, current_angle)
+                    d_current_pos, orig_angle, current_angle)
                 tmp_bending_force1 = np.array(
                     [tmp_bending_forces[0], tmp_bending_forces[1], tmp_bending_forces[2]])
                 tmp_bending_force2 = np.array(
@@ -1210,7 +1222,8 @@ class OifCell:
                     kb_f_metric += norm(bending_forces_list[p.id])
 
         # calculation of local area forces and f_metric
-        if (el_forces[2] == 1) or (el_forces[5] == 1) or (f_metric[2] == 1) or (f_metric[5] == 1):
+        if (el_forces[2] == 1) or (el_forces[5] == 1) or (
+                f_metric[2] == 1) or (f_metric[5] == 1):
             # initialize list
             local_area_forces_list = []
             for p in self.mesh.points:
@@ -1227,7 +1240,7 @@ class OifCell:
                 orig_area = area_triangle(a_orig_pos, b_orig_pos, c_orig_pos)
                 tmp_local_area_forces = oif_calc_local_area_force(
                     self.cell_type.kal, a_current_pos, b_current_pos,
-                                                              c_current_pos, orig_area, current_area)
+                    c_current_pos, orig_area, current_area)
                 local_area_forces_list[t.A.id] += np.array(
                     [tmp_local_area_forces[0], tmp_local_area_forces[1],
                      tmp_local_area_forces[2]])
@@ -1245,7 +1258,8 @@ class OifCell:
                     kal_f_metric += norm(local_area_forces_list[p.id])
 
         # calculation of global area forces and f_metric
-        if (el_forces[3] == 1) or (el_forces[5] == 1) or (f_metric[3] == 1) or (f_metric[5] == 1):
+        if (el_forces[3] == 1) or (el_forces[5] == 1) or (
+                f_metric[3] == 1) or (f_metric[5] == 1):
             # initialize list
             global_area_forces_list = []
             for p in self.mesh.points:
@@ -1259,7 +1273,7 @@ class OifCell:
                 orig_surface = self.cell_type.mesh.surface()
                 tmp_global_area_forces = oif_calc_global_area_force(
                     self.cell_type.kag, a_current_pos, b_current_pos,
-                                                                c_current_pos, orig_surface, current_surface)
+                    c_current_pos, orig_surface, current_surface)
                 global_area_forces_list[t.A.id] += np.array(
                     [tmp_global_area_forces[0], tmp_global_area_forces[1],
                      tmp_global_area_forces[2]])
@@ -1276,7 +1290,8 @@ class OifCell:
                     kag_f_metric += norm(global_area_forces_list[p.id])
 
         # calculation of volume forces and f_metric
-        if (el_forces[4] == 1) or (el_forces[5] == 1) or (f_metric[4] == 1) or (f_metric[5] == 1):
+        if (el_forces[4] == 1) or (el_forces[5] == 1) or (
+                f_metric[4] == 1) or (f_metric[5] == 1):
             # initialize list
             volume_forces_list = []
             for p in self.mesh.points:
@@ -1290,7 +1305,7 @@ class OifCell:
                 orig_volume = self.cell_type.mesh.volume()
                 tmp_volume_force = oif_calc_volume_force(
                     self.cell_type.kv, a_current_pos, b_current_pos, c_current_pos,
-                                                     orig_volume, current_volume)
+                    orig_volume, current_volume)
                 volume_forces_list[t.A.id] += tmp_volume_force
                 volume_forces_list[t.B.id] += tmp_volume_force
                 volume_forces_list[t.C.id] += tmp_volume_force
@@ -1306,7 +1321,7 @@ class OifCell:
             for p in self.mesh.points:
                 total_elastic_forces = stretching_forces_list[p.id] + bending_forces_list[p.id] + \
                     local_area_forces_list[p.id] + global_area_forces_list[p.id] + \
-                                       volume_forces_list[p.id]
+                    volume_forces_list[p.id]
                 elastic_forces_list.append(total_elastic_forces)
             # calculation of total f_metric, if needed
             if f_metric[5] == 1:
@@ -1315,7 +1330,7 @@ class OifCell:
                     total_f_metric += norm(elastic_forces_list[p.id])
 
         # calculate norms of resulting forces
-        if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 0:
+        if sum(el_forces) != 0:
             if el_forces[0] == 1:
                 stretching_forces_norms_list = []
                 for p in self.mesh.points:
@@ -1357,37 +1372,37 @@ class OifCell:
             if el_forces[0] == 1:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="ks_f_metric",
-                                              data=stretching_forces_norms_list, first_append=first)
+                    data=stretching_forces_norms_list, first_append=first)
                 first = False
             if el_forces[1] == 1:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="kb_f_metric",
-                                              data=bending_forces_norms_list, first_append=first)
+                    data=bending_forces_norms_list, first_append=first)
                 first = False
             if el_forces[2] == 1:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="kal_f_metric",
-                                              data=local_area_forces_norms_list, first_append=first)
+                    data=local_area_forces_norms_list, first_append=first)
                 first = False
             if el_forces[3] == 1:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="kag_f_metric",
-                                              data=global_area_forces_norms_list, first_append=first)
+                    data=global_area_forces_norms_list, first_append=first)
                 first = False
             if el_forces[4] == 1:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="kav_f_metric",
-                                              data=volume_forces_norms_list, first_append=first)
+                    data=volume_forces_norms_list, first_append=first)
                 first = False
             if el_forces[5] == 1:
                 self.append_point_data_to_vtk(
                     file_name=vtk_file, data_name="total_f_metric",
-                                              data=elastic_forces_norms_list, first_append=first)
+                    data=elastic_forces_norms_list, first_append=first)
                 first = False
 
         # output raw data
         if raw_data_file is not None:
-            if (el_forces[0] + el_forces[1] + el_forces[2] + el_forces[3] + el_forces[4] + el_forces[5]) != 1:
+            if sum(el_forces) != 1:
                 raise Exception("OifCell: elastic_forces: Only one type of elastic forces can be written into one "
                                 "raw_data_file. If you need several, please call OifCell.elastic_forces multiple times - "
                                 "once per elastic force.")
@@ -1411,7 +1426,8 @@ class OifCell:
                     file_name=raw_data_file, data=elastic_forces_list)
 
         # return f_metric
-        if f_metric[0] + f_metric[1] + f_metric[2] + f_metric[3] + f_metric[4] + f_metric[5] > 0:
+        if f_metric[0] + f_metric[1] + f_metric[2] + \
+                f_metric[3] + f_metric[4] + f_metric[5] > 0:
             results = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
             if f_metric[0] == 1:
                 results[0] = ks_f_metric

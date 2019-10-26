@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -73,7 +73,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(self.s.collision_detection.mode, "off")
 
     def test_bind_centers(self):
-        # Check that it leaves particles alone, wehn off
+        # Check that it leaves particles alone, when off
         self.s.collision_detection.set_params(mode="off")
 
         self.s.part.clear()
@@ -146,9 +146,6 @@ class CollisionDetection(ut.TestCase):
         # At the end of test, this list should be empty
         parts_not_accounted_for = list(range(expected_np))
 
-        # Collect pairs of non-virtual-particles found
-        non_virtual_pairs = []
-
         # We traverse particles. We look for a vs with a bond to find the other vs.
         # From the two vs we find the two non-virtual particles
         for p in self.s.part:
@@ -187,7 +184,7 @@ class CollisionDetection(ut.TestCase):
         self.assertTrue(p1.bonds == bond_p1 or p2.bonds == bond_p2)
 
         # Check for presence of vs
-        # Check for bond betwen vs
+        # Check for bond between vs
         bond_vs1 = ((self.s.bonded_inter[1], vs2.id),)
         bond_vs2 = ((self.s.bonded_inter[1], vs1.id),)
         self.assertTrue(vs1.bonds == bond_vs1 or vs2.bonds == bond_vs2)
@@ -203,7 +200,7 @@ class CollisionDetection(ut.TestCase):
             rel_to = r[0]
             dist = r[1]
             # Vs is related to one of the particles
-            self.assertTrue(rel_to == p1.id or rel_to == p2.id)
+            self.assertTrue(rel_to in (p1.id, p2.id))
             # The two vs relate to two different particles
             self.assertNotIn(rel_to, seen)
             seen.append(rel_to)
@@ -330,18 +327,18 @@ class CollisionDetection(ut.TestCase):
         # Place particle which should not take part in collisions
         # In this case, it is skipped, because it is of the wrong type,
         # even if it is within range for a collision
-        p = self.s.part.add(pos=positions[0], type=self.other_type)
+        self.s.part.add(pos=positions[0], type=self.other_type)
         for pos in positions:
             # Since this is non-symmetric, we randomize order
             if np.random.random() > .5:
-                p1 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
-                p2 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0.1, 0, 0), type=self.part_type_to_be_glued)
             else:
-                p2 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0.1, 0, 0), type=self.part_type_to_be_glued)
-                p1 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
 
         # 2 non-virtual + 1 virtual + one that doesn't take part
@@ -371,7 +368,7 @@ class CollisionDetection(ut.TestCase):
         parts_not_accounted_for = list(range(expected_np))
 
         # We traverse particles. We look for a vs, get base particle from there
-        # and prtner particle via bonds
+        # and partner particle via bonds
         for p in self.s.part:
             # Skip non-virtual
             if not p.virtual:
@@ -488,7 +485,7 @@ class CollisionDetection(ut.TestCase):
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=0.1, cutoff=2**(1. / 6) * 0.1, shift="auto")
 
-        # Remove overalp between particles
+        # Remove overlap between particles
         self.s.integrator.set_steepest_descent(
             f_max=0,
             gamma=1,
@@ -508,7 +505,6 @@ class CollisionDetection(ut.TestCase):
         # Analysis
         virtual_sites = self.s.part.select(virtual=True)
         non_virtual = self.s.part.select(virtual=False)
-        to_be_glued = self.s.part.select(type=self.part_type_to_be_glued)
         after_glueing = self.s.part.select(type=self.part_type_after_glueing)
 
         # One virtual site per glued particle?
@@ -583,7 +579,6 @@ class CollisionDetection(ut.TestCase):
         self.s.part.clear()
         dx = np.array((1, 0, 0))
         dy = np.array((0, 1, 0))
-        dz = np.array((0, 0, 1))
         a = np.array((0.499, 0.499, 0.499))
         b = a + 0.1 * dx
         c = a + 0.03 * dx + 0.03 * dy
@@ -604,9 +599,9 @@ class CollisionDetection(ut.TestCase):
         cutoff = 0.11
         self.s.collision_detection.set_params(
             mode="bind_three_particles", bond_centers=self.H,
-                                              bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
+            bond_three_particles=2, three_particle_binding_angle_resolution=res, distance=cutoff)
         self.get_state_set_state_consistency()
-        
+
         self.s.time_step = 1E-6
         self.s.integrator.run(1, recalc_forces=True)
         self.verify_triangle_binding(cutoff, self.s.bonded_inter[2], res)
@@ -664,18 +659,21 @@ class CollisionDetection(ut.TestCase):
                     d_ik /= np.sqrt(np.sum(d_ik**2))
                     d_jk /= np.sqrt(np.sum(d_jk**2))
 
-                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(p_i, p_k) <= distance:
+                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(
+                            p_i, p_k) <= distance:
                         id_i = first_bond._bond_id + \
                             int(np.round(
                                 np.arccos(np.dot(d_ij, d_ik)) * angle_res / np.pi))
                         expected_angle_bonds.append((i, id_i, j, k))
 
-                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(p_j, p_k) <= distance:
+                    if self.s.distance(p_i, p_j) <= distance and self.s.distance(
+                            p_j, p_k) <= distance:
                         id_j = first_bond._bond_id + \
                             int(np.round(
                                 np.arccos(np.dot(-d_ij, d_jk)) * angle_res / np.pi))
                         expected_angle_bonds.append((j, id_j, i, k))
-                    if self.s.distance(p_i, p_k) <= distance and self.s.distance(p_j, p_k) <= distance:
+                    if self.s.distance(p_i, p_k) <= distance and self.s.distance(
+                            p_j, p_k) <= distance:
                         id_k = first_bond._bond_id + \
                             int(np.round(
                                 np.arccos(np.dot(-d_ik, -d_jk)) * angle_res / np.pi))

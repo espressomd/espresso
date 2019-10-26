@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -86,8 +86,10 @@ class ObservableProfileLBCommon:
                 for z in range(obs_data.shape[2]):
                     self.assertAlmostEqual(
                         obs_data[x, y, z, 0], float(x), places=5)
-        self.assertEqual(obs.n_values(), LB_VELOCITY_PROFILE_PARAMS[
-                         'n_x_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] * LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
+        self.assertEqual(obs.n_values(),
+                         LB_VELOCITY_PROFILE_PARAMS['n_x_bins'] *
+                         LB_VELOCITY_PROFILE_PARAMS['n_y_bins'] *
+                         LB_VELOCITY_PROFILE_PARAMS['n_z_bins'] * 3)
 
     def test_error_sampling_delta_of_0(self):
         lb_velocity_params_local = copy.copy(LB_VELOCITY_PROFILE_PARAMS)
@@ -95,7 +97,7 @@ class ObservableProfileLBCommon:
         lb_velocity_params_local['sampling_delta_y'] = 0.0
         lb_velocity_params_local['sampling_delta_z'] = 0.0
         with self.assertRaises(RuntimeError):
-            obs2 = espressomd.observables.LBVelocityProfile(
+            _ = espressomd.observables.LBVelocityProfile(
                 **lb_velocity_params_local)
 
     def test_error_if_no_LB(self):

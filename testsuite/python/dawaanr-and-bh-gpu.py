@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -130,27 +130,28 @@ class BHGPUTest(ut.TestCase):
                         ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])),
                     msg='Torques on particle do not match. i={0} dawaanr_t={1} '
                         'ratio_dawaanr_bh_gpu*bhgpu_t={2}'.format(
-                        i, np.array(dawaanr_t[i]),
-                        ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])))
+                            i, np.array(dawaanr_t[i]),
+                            ratio_dawaanr_bh_gpu * np.array(bhgpu_t[i])))
                 self.assertTrue(
                     self.vectorsTheSame(
                         np.array(dawaanr_f[i]),
                         ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])),
                     msg='Forces on particle do not match: i={0} dawaanr_f={1} '
                         'ratio_dawaanr_bh_gpu*bhgpu_f={2}'.format(
-                        i, np.array(dawaanr_f[i]),
-                        ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
+                            i, np.array(dawaanr_f[i]),
+                            ratio_dawaanr_bh_gpu * np.array(bhgpu_f[i])))
             self.assertLessEqual(
                 abs(dawaanr_e - bhgpu_e * ratio_dawaanr_bh_gpu),
                 abs(1E-3 * dawaanr_e),
                 msg='Energies for dawaanr {0} and bh_gpu {1} do not match.'
-                    .format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
+                .format(dawaanr_e, ratio_dawaanr_bh_gpu * bhgpu_e))
 
             self.system.integrator.run(steps=0, recalc_forces=True)
 
             del bh_gpu
             self.system.actors.clear()
             self.system.part.clear()
+
 
 if __name__ == '__main__':
     ut.main()

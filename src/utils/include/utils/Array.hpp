@@ -1,7 +1,26 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef UTILS_ARRAY_HPP
 #define UTILS_ARRAY_HPP
 
 #include "device_qualifier.hpp"
+#include "get.hpp"
 
 #include <boost/serialization/access.hpp>
 
@@ -140,5 +159,19 @@ private:
     ar &m_storage;
   }
 };
+
+template <std::size_t I, class T, std::size_t N>
+struct tuple_element<I, Array<T, N>> {
+  using type = T;
+};
+
+template <class T, std::size_t N>
+struct tuple_size<Array<T, N>> : std::integral_constant<std::size_t, N> {};
+
+template <std::size_t I, class T, std::size_t N>
+auto get(Array<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
+  return a[I];
+}
+
 } // namespace Utils
 #endif

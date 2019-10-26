@@ -1,30 +1,30 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /** @file */
 
 #include "reaction_ensemble.hpp"
+#include "Particle.hpp"
 #include "energy.hpp"
 #include "global.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 #include <utils/index.hpp>
@@ -251,7 +251,8 @@ bool ReactionAlgorithm::all_reactant_particles_exist(int reaction_id) {
  */
 void ReactionAlgorithm::append_particle_property_of_random_particle(
     int type, std::vector<StoredParticleProperty> &list_of_particles) {
-  int p_id = get_random_p_id(type);
+  int random_index_in_type_map = i_random(number_of_particles_with_type(type));
+  int p_id = get_random_p_id(type, random_index_in_type_map);
   StoredParticleProperty property_of_part = {p_id, charges_of_types[type],
                                              type};
   list_of_particles.push_back(property_of_part);
@@ -631,17 +632,8 @@ Utils::Vector3d ReactionAlgorithm::get_random_position_in_box() {
         std::sqrt(m_uniform_real_distribution(
             m_generator)); // for uniform disk point picking in cylinder
     double phi = 2.0 * Utils::pi() * m_uniform_real_distribution(m_generator);
-    out_pos[0] = random_radius * cos(phi);
-    out_pos[1] = random_radius * sin(phi);
-    while (std::pow(out_pos[0], 2) + std::pow(out_pos[1], 2) <=
-           std::pow(exclusion_radius, 2)) {
-      random_radius =
-          cyl_radius * std::sqrt(m_uniform_real_distribution(m_generator));
-      out_pos[0] = random_radius * cos(phi);
-      out_pos[1] = random_radius * sin(phi);
-    }
-    out_pos[0] += cyl_x;
-    out_pos[1] += cyl_y;
+    out_pos[0] = cyl_x + random_radius * cos(phi);
+    out_pos[1] = cyl_y + random_radius * sin(phi);
     out_pos[2] = box_geo.length()[2] * m_uniform_real_distribution(m_generator);
   } else if (box_has_wall_constraints) {
     out_pos[0] = box_geo.length()[0] * m_uniform_real_distribution(m_generator);
@@ -791,12 +783,15 @@ bool ReactionAlgorithm::do_global_mc_move_for_particles_of_type(
   std::vector<int> p_id_s_changed_particles;
 
   // save old_position
-  int p_id = get_random_p_id(type);
+  int random_index_in_type_map = i_random(number_of_particles_with_type(type));
+  int p_id = get_random_p_id(type, random_index_in_type_map);
   for (int i = 0; i < particle_number_of_type_to_be_changed; i++) {
     // determine a p_id you have not touched yet
     while (is_in_list(p_id, p_id_s_changed_particles)) {
+      random_index_in_type_map = i_random(number_of_particles_with_type(type));
       p_id = get_random_p_id(
-          type); // check whether you already touched this p_id, then reassign
+          type, random_index_in_type_map); // check whether you already touched
+                                           // this p_id, then reassign
     }
 
     auto part = get_particle_data(p_id);
@@ -1255,7 +1250,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
  *  no-energy-reweighting case, or with the functions
  *  do_global_mc_move_for_particles_of_type
  *
- *  perform additional Monte Carlo moves to to sample configurational
+ *  perform additional Monte Carlo moves to sample configurational
  *  partition function according to "Density-of-states Monte Carlo method
  *  for simulation of fluids"
  *

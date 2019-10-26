@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -90,7 +90,7 @@ class VirialPressureConsistency(ut.TestCase):
         num_part = 40
         mass = 1
 
-        for i in range(num_part):
+        for _ in range(num_part):
             self.system.part.add(
                 pos=np.random.random(3) * self.system.box_l, q=1,
                 v=np.sqrt(self.kT / mass) * np.random.normal(loc=[0, 0, 0]))
@@ -117,7 +117,6 @@ class VirialPressureConsistency(ut.TestCase):
 
     def test_p3m_pressure(self):
         pressures_via_virial = []
-        pressures_via_volume_scaling = []
         p3m = electrostatics.P3M(
             prefactor=2.0,
             accuracy=1e-3,
@@ -131,7 +130,7 @@ class VirialPressureConsistency(ut.TestCase):
         num_samples = 100
         pressure_via_volume_scaling = pressureViaVolumeScaling(
             self.system, self.kT)
-        for i in range(num_samples):
+        for _ in range(num_samples):
             self.system.integrator.run(100)
             pressures_via_virial.append(
                 self.system.analysis.pressure()['total'])

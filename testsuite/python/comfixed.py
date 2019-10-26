@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -64,6 +64,7 @@ class ComFixed(ut.TestCase):
                 self.assertAlmostEqual(com_0[j], com_i[j], places=10)
 
             s.integrator.run(10)
+
 
 if __name__ == "__main__":
     ut.main()

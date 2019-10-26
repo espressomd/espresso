@@ -32,11 +32,11 @@ for further calculations, you should explicitly make a copy e.g. via
 * :py:attr:`~espressomd.system.System.periodicity`
 
     (int[3]) Specifies periodicity for the three directions. |es| can be instructed
-    to treat some dimensions as non-periodic. Per default espresso assumes periodicity in
-    all directions which equals setting this variable to [1,1,1]. A
-    dimension is specified as non-periodic via setting the periodicity
-    variable for this dimension to 0. E.g. Periodicity only in z-direction
-    is obtained by [0,0,1]. Caveat: Be aware of the fact that making a
+    to treat some dimensions as non-periodic. By default |es| assumes periodicity in
+    all directions which equals setting this variable to ``[True, True, True]``.
+    A dimension is specified as non-periodic via setting the periodicity
+    variable for this dimension to ``False``. E.g. Periodicity only in z-direction
+    is obtained by ``[False, False, True]``. Caveat: Be aware of the fact that making a
     dimension non-periodic does not hinder particles from leaving the box in
     this direction. In this case for keeping particles in the simulation box
     a constraint has to be set.
@@ -52,9 +52,9 @@ for further calculations, you should explicitly make a copy e.g. via
 * :py:attr:`~espressomd.system.System.min_global_cut`
 
     (float) Minimal total cutoff for real space. Effectively, this plus the
-    :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible cell size. Espresso typically determines
-    this value automatically, but some algorithms, virtual sites, require
-    you to specify it manually.
+    :py:attr:`~espressomd.cellsystem.CellSystem.skin` is the minimally possible
+    cell size. |es| typically determines this value automatically, but some
+    algorithms, virtual sites, require you to specify it manually.
 
 * :py:attr:`~espressomd.system.System.max_cut_bonded`
 
@@ -105,7 +105,7 @@ The properties of the cell system can be accessed by
     * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
 
     (int) Maximal number of cells for the link cell algorithm. Reasonable
-    values are between 125 and 1000, or for some problems :math:`n_part / nnodes`.
+    values are between 125 and 1000, or for some problems ``n_part / nnodes``.
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
 
@@ -182,7 +182,7 @@ In a multiple processor environment, the nsquared cellsystem uses a
 simple particle balancing scheme to have a nearly equal number of
 particles per CPU, :math:`n` nodes have :math:`m` particles, and
 :math:`p-n` nodes have :math:`m+1` particles, such that
-:math:`n*m+(p-n)*(m+1)=N`, the total number of particles. Therefore the
+:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles. Therefore the
 computational load should be balanced fairly equal among the nodes, with
 one exception: This code always uses one CPU for the interaction between
 two different nodes. For an odd number of nodes, this is fine, because
@@ -280,7 +280,7 @@ at temperature :math:`T` and satisfies
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
 This reduces the accuracy of the Velocity Verlet integrator
-by one order in :math:`dt` because forces are now velocity dependent.
+by one order in :math:`dt` because forces are now velocity-dependent.
 
 The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
 :math:`\overline{\eta}` for each component of all the particle forces. 
@@ -330,14 +330,14 @@ To preserve momentum, an equal and opposite friction force and random force act 
 Numerically the fluid velocity is determined from the Lattice Boltzmann node velocities 
 by interpolating as described in :ref:`Interpolating velocities`.
 The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes. 
-Detailes for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
+Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
 
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
 Temperature is set via the ``kT`` argument of the LB fluid. 
 
 Furthermore a ``seed`` has to be given for the
-thermalization of the particle coupling. The magnitude of the fricitional coupling can be adjusted by
+thermalization of the particle coupling. The magnitude of the frictional coupling can be adjusted by
 the parameter ``gamma``.
 To enable the LB thermostat, use::
 
@@ -380,7 +380,7 @@ The friction coefficients and cutoff are controlled via the
 see there.
 
 The friction (dissipative) and noise (random) term are coupled via the
-fluctuation- dissipation theorem. The friction term is a function of the
+fluctuation-dissipation theorem. The friction term is a function of the
 relative velocity of particle pairs. The DPD thermostat is better for
 dynamics than the Langevin thermostat, since it mimics hydrodynamics in
 the system.
@@ -412,17 +412,7 @@ Isotropic NPT thermostat
 This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
-and set the following parameters:
-
-    * ``kT``:     (float) Thermal energy of the heat bath
-    * ``gamma0``: (float) Friction coefficient of the bath
-    * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
-
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
-and the parameters:
-
-    * ``ext_pressure``:  (float) The external pressure as float variable.
-    * ``piston``:        (float) The mass of the applied piston as float variable.
+and setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`.
 
 For example::
 
@@ -432,7 +422,7 @@ For example::
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
-For an explanation of the algorithm involved, see :ref:`Isotropic NPT thermostat`
+For an explanation of the algorithm involved, see :ref:`Isotropic NPT integrator`.
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
@@ -444,16 +434,26 @@ Brownian thermostat
 ~~~~~~~~~~~~~~~~~~~
 
 Brownian thermostat is a formal name of a thermostat enabling the
-Brownian Dynamics feature (see :cite:`schlick2010`).
+Brownian Dynamics feature (see :cite:`schlick2010`) which implies
+a propagation scheme involving systematic and thermal parts of the
+classical Ermak-McCammom's (see :cite:`ermak1978brownian`)
+Brownian Dynamics. Currently it is implemented without
+hydrodynamic interactions, i.e.
+with a diagonal diffusion tensor.
+The hydrodynamic interactions feature will be available later
+as a part of the present Brownian Dynamics or
+implemented separately within the Stokesian Dynamics.
 
 In order to activate the Brownian thermostat the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_brownian` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
+The system integrator should be also changed.
 Best explained in an example::
     
     import espressomd
     system = espressomd.System()
     system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=41)
+    system.integrator.set_brownian_dynamics()
 
 where ``gamma`` (hereinafter :math:`\gamma`) is a viscous friction coefficient.
 In terms of the Python interface and setup, Brownian thermostat derives most 
@@ -498,9 +498,7 @@ component:
 
 Note, that the velocity random walk is propagated from zero at each step.
 
-A rotational motion is implemented similarly. The Velocity Verlet quaternion
-based rotational method implementation is still used, however, had been modified
-for the larger :math:`\Delta t` case to be consistent and still the Velocity Verlet-compliant.
+A rotational motion is implemented similarly.
 Note: the rotational Brownian dynamics implementation is compatible with particles which have
 the isotropic moment of inertia tensor only. Otherwise, the viscous terminal angular velocity
 is not defined, i.e. it has no constant direction over the time.
@@ -562,15 +560,14 @@ you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g.,
     print(system.cuda_init_handle.device_list)
 
 This attribute is read only and will return a dictionary containing
-the device id as key and the device name as its' value.
+the device id as key and the device name as its value.
 
 .. _Selection of CUDA device:
 
 Selection of CUDA device
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-When you start ``pypresso`` your first GPU should
-be selected.
+When you start ``pypresso`` your first GPU should be selected.
 If you wanted to use the second GPU, this can be done
 by setting :attr:`espressomd.cuda_init.CudaInitHandle.device` as follows::
 

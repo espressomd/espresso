@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from libcpp.vector cimport vector
 from libcpp.string cimport string
@@ -35,6 +51,8 @@ cdef class ReactionAlgorithm:
         each other. The Boltzmann factor :math:`\\exp(-\\beta E)` gives these
         configurations a small contribution to the partition function,
         therefore they can be neglected.
+    seed : :obj:`int`
+        Initial counter value (or seed) of the Mersenne Twister RNG.
     """
     cdef object _params
     cdef CReactionAlgorithm * RE
@@ -169,10 +187,10 @@ cdef class ReactionAlgorithm:
         product_coefficients : list of :obj:`int`
             List of stoichiometric coefficients of products of the reaction in
             the same order as the list of their types
-        default_charges : dictionary
+        default_charges : :obj:`dict`
             A dictionary of default charges for types that occur in the provided reaction.
         check_for_electroneutrality : :obj:`bool`
-            Check for electroneutrality of the given reaction if True.
+            Check for electroneutrality of the given reaction if ``True``.
 
         """
         self._params["check_for_electroneutrality"] = True
@@ -185,7 +203,7 @@ cdef class ReactionAlgorithm:
         for k in self._valid_keys_add():
             try:
                 self._params[k] = kwargs[k]
-            except:
+            except BaseException:
                 pass
         self._check_lengths_of_arrays()
         self._validate_params_default_charge()
@@ -195,7 +213,8 @@ cdef class ReactionAlgorithm:
         return "gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["gamma", "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
+        return ["gamma", "reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges"]
 
     def _check_lengths_of_arrays(self):
         if(len(self._params["reactant_types"]) != len(self._params["reactant_coefficients"])):
@@ -234,7 +253,7 @@ cdef class ReactionAlgorithm:
         if(isinstance(self._params["default_charges"], dict) == False):
             raise ValueError(
                 "No dictionary for relation between types and default charges provided.")
-        #check electroneutrality of the provided reaction
+        # check electroneutrality of the provided reaction
         if(self._params["check_for_electroneutrality"]):
             charges = np.array(list(self._params["default_charges"].values()))
             if(np.count_nonzero(charges) == 0):
@@ -297,20 +316,24 @@ cdef class ReactionAlgorithm:
         reactions = []
         for single_reaction_i in range(deref(self.RE).reactions.size()):
             reactant_types = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
                 reactant_types.append(
                     deref(self.RE).reactions[single_reaction_i].reactant_types[i])
             reactant_coefficients = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].reactant_types.size()):
                 reactant_coefficients.append(
                     deref(self.RE).reactions[single_reaction_i].reactant_coefficients[i])
 
             product_types = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].product_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].product_types.size()):
                 product_types.append(
                     deref(self.RE).reactions[single_reaction_i].product_types[i])
             product_coefficients = []
-            for i in range(deref(self.RE).reactions[single_reaction_i].product_types.size()):
+            for i in range(
+                    deref(self.RE).reactions[single_reaction_i].product_types.size()):
                 product_coefficients.append(
                     deref(self.RE).reactions[single_reaction_i].product_coefficients[i])
             reaction = {"reactant_coefficients": reactant_coefficients,
@@ -321,7 +344,8 @@ cdef class ReactionAlgorithm:
                         "gamma": deref(self.RE).reactions[single_reaction_i].gamma}
             reactions.append(reaction)
 
-        return {"reactions": reactions, "temperature": deref(self.RE).temperature, "exclusion_radius": deref(self.RE).exclusion_radius}
+        return {"reactions": reactions, "temperature": deref(
+            self.RE).temperature, "exclusion_radius": deref(self.RE).exclusion_radius}
 
     def delete_particle(self, p_id):
         """
@@ -351,7 +375,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
 
         self.REptr.reset(new CReactionEnsemble(int(self._params["seed"])))
         self.RE = <CReactionAlgorithm * > self.REptr.get()
-        
+
         for k in kwargs:
             if k in self._valid_keys():
                 self._params[k] = kwargs[k]
@@ -386,7 +410,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
     def add_reaction(self, *args, **kwargs):
         if(len(kwargs["product_types"]) != 2 or len(kwargs["reactant_types"]) != 1):
             raise ValueError(
-                "The constant pH method is only implemented for reactionw with two product types and one educt type.")
+                "The constant pH method is only implemented for reactions with two product types and one adduct type.")
         if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
             raise ValueError(
                 "All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
@@ -445,8 +469,8 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         status_wang_landau = deref(
             self.WLRptr).do_reaction(int(reaction_steps))
         if(status_wang_landau < 0):
-                raise WangLandauHasConverged(
-                    "The Wang-Landau algorithm has converged.")
+            raise WangLandauHasConverged(
+                "The Wang-Landau algorithm has converged.")
 
     def add_collective_variable_degree_of_association(self, *args, **kwargs):
         """
@@ -669,7 +693,8 @@ cdef class WidomInsertion(ReactionAlgorithm):
         return "reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges", "check_for_electroneutrality"
 
     def _required_keys_add(self):
-        return ["reactant_types", "reactant_coefficients", "product_types", "product_coefficients", "default_charges"]
+        return ["reactant_types", "reactant_coefficients",
+                "product_types", "product_coefficients", "default_charges"]
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1}

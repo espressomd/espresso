@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -186,7 +186,7 @@ class Timestep(base.Timestep):
         x = self._unitcell[self._ts_order_x]
         y = self._unitcell[self._ts_order_y]
         z = self._unitcell[self._ts_order_z]
-            # this ordering is correct! (checked it, OB)
+        # this ordering is correct! (checked it, OB)
         return triclinic_box(x, y, z)
 
     @dimensions.setter
@@ -210,9 +210,9 @@ class ESPReader(SingleFrameReaderBase):
         with util.openany(self.filename, 'rt') as espfile:
             n_atoms = 1
             for pos, line in enumerate(espfile, start=-3):
-                if (pos == -3):
+                if pos == -3:
                     time = float(line[1:-1])
-                elif(pos == -2):
+                elif pos == -2:
                     n_atoms = int(line)
                     self.n_atoms = n_atoms
                     positions = np.zeros(
@@ -224,13 +224,13 @@ class ESPReader(SingleFrameReaderBase):
                     self.ts = ts = self._Timestep(
                         self.n_atoms, **self._ts_kwargs)
                     self.ts.time = time
-                elif(pos == -1):
+                elif pos == -1:
                     self.ts._unitcell[:3] = np.array(
                         list(map(float, line[1:-2].split())))
-                elif(pos < n_atoms):
+                elif pos < n_atoms:
                     positions[pos] = np.array(
                         list(map(float, line[1:-2].split())))
-                elif(pos < 2 * n_atoms):
+                elif pos < 2 * n_atoms:
                     velocities[pos - n_atoms] = np.array(
                         list(map(float, line[1:-2].split())))
                 else:

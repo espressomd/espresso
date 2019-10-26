@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,6 +24,7 @@ from espressomd.accumulators import Correlator
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 from tests_common import single_component_maxwell
 
+
 class LangevinThermostat(ut.TestCase):
 
     """Tests the velocity distribution created by the Langevin thermostat
@@ -38,6 +39,12 @@ class LangevinThermostat(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         np.random.seed(42)
+    
+    def setUp(self):
+        if "BROWNIAN_DYNAMICS" in espressomd.features():
+            self.system.thermostat.turn_off()
+            # the default integrator is supposed implicitly
+            self.system.integrator.set_nvt()
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in velocity against a
@@ -46,7 +53,7 @@ class LangevinThermostat(ut.TestCase):
            analytical result for kT."""
         for i in range(3):
             hist = np.histogram(
-                vel[:, i], range=(-minmax, minmax), bins=n_bins, normed=False)
+                vel[:, i], range=(-minmax, minmax), bins=n_bins, density=False)
             data = hist[0] / float(vel.shape[0])
             bins = hist[1]
             for j in range(n_bins):
@@ -73,13 +80,14 @@ class LangevinThermostat(ut.TestCase):
         system = self.system
         
         # Sampling
+        loops = 150
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
             system.integrator.run(1)
-            v_stored[i * N:(i + 1) * N,:] = system.part[:].v
+            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
             if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N,:] = system.part[:].omega_body
+                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
 
         v_minmax = 5
         bins = 4
@@ -96,39 +104,39 @@ class LangevinThermostat(ut.TestCase):
         system.time_step = 0.01
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
-        
+
         kT = 1.1
         gamma = 3.5
 
-        #No seed should throw exception
+        # No seed should throw exception
         with self.assertRaises(ValueError):
             system.thermostat.set_langevin(kT=kT, gamma=gamma)
 
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
-        
-        #'integrate 0' does not increase the philoc counter and should give the same force
+
+        #'integrate 0' does not increase the philox counter and should give the same force
         system.integrator.run(0)
         force0 = np.copy(system.part[0].f)
         system.integrator.run(0)
         force1 = np.copy(system.part[0].f)
         np.testing.assert_almost_equal(force0, force1)
-        
-        #'integrate 1' shoud give a different force
+
+        #'integrate 1' should give a different force
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.integrator.run(1)
         force2 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.any(np.not_equal(force1, force2)), True)
-        
-        #Different seed shoud give a different force
+
+        # Different seed should give a different force
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
         force3 = np.copy(system.part[0].f)
         np.testing.assert_equal(np.any(np.not_equal(force2, force3)), True)
-        
-        #Same seed shoud give the same force
+
+        # Same seed should give the same force
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
@@ -161,17 +169,19 @@ class LangevinThermostat(ut.TestCase):
             system.thermostat.set_langevin(kT=0, gamma=gamma_t_i, seed=41)
 
         system.time = 0
-        for i in range(100):
+        for _ in range(100):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
                     np.copy(system.part[0].v),
-                    v0 * np.exp(-gamma_t_a / system.part[0].mass * system.time),
+                    v0 * np.exp(-gamma_t_a /
+                                system.part[0].mass * system.time),
                     atol=4E-4)
             else:
                 np.testing.assert_allclose(
                     np.copy(system.part[0].v),
-                    v0 * np.exp(-gamma_t_i / system.part[0].mass * system.time),
+                    v0 * np.exp(-gamma_t_i /
+                                system.part[0].mass * system.time),
                     atol=45E-4)
 
     @utx.skipIfMissingFeatures("ROTATION")
@@ -186,7 +196,7 @@ class LangevinThermostat(ut.TestCase):
         gamma_r_a = np.array((1.5, 0.7, 1.2))
         o0 = np.array((5., 5., 5.))
 
-        system.time_step = 0.0005
+        system.time_step = 0.0001
         system.part.clear()
         system.part.add(pos=(0, 0, 0), omega_body=o0, rotation=(1, 1, 1))
         if espressomd.has_features("ROTATIONAL_INERTIA"):
@@ -203,7 +213,7 @@ class LangevinThermostat(ut.TestCase):
             rinertia = np.copy(system.part[0].rinertia)
         else:
             rinertia = np.array((1, 1, 1))
-        for i in range(100):
+        for _ in range(100):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
@@ -244,6 +254,7 @@ class LangevinThermostat(ut.TestCase):
             system.part[:].omega_body = np.zeros((3))
             system.thermostat.turn_off()
             system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
+            system.integrator.set_brownian_dynamics()
             # Warmup
             # The BD does not require so the warmup. Only 1 step is enough.
             # More steps are taken just to be sure that they will not lead
@@ -275,7 +286,7 @@ class LangevinThermostat(ut.TestCase):
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         # Set different kT on 2nd half of particles
         system.part[int(N / 2):].temp = kT2
-        # Set different gamma on half of the partiles (overlap over both kTs)
+        # Set different gamma on half of the particles (overlap over both kTs)
         if espressomd.has_features("PARTICLE_ANISOTROPY"):
             system.part[int(N / 4):int(3 * N / 4)].gamma = 3 * [gamma2]
         else:
@@ -299,9 +310,9 @@ class LangevinThermostat(ut.TestCase):
                   :] = system.part[int(N / 2):].v
 
             if espressomd.has_features("ROTATION"):
-                omega_kT[int(i * N / 2):int((i + 1) * N / 2),:] = \
+                omega_kT[int(i * N / 2):int((i + 1) * N / 2), :] = \
                     system.part[:int(N / 2)].omega_body
-                omega_kT2[int(i * N / 2):int((i + 1) * N / 2),:] = \
+                omega_kT2[int(i * N / 2):int((i + 1) * N / 2), :] = \
                     system.part[int(N / 2):].omega_body
         v_minmax = 5
         bins = 4
@@ -444,14 +455,14 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("LANGEVIN_PER_PARTICLE"):
             self.verify_diffusion(p_gamma, corr_vel, kT, per_part_gamma)
             self.verify_diffusion(p_kT, corr_vel, per_part_kT, gamma)
-            self.verify_diffusion(p_both, corr_vel, per_part_kT, per_part_gamma)
+            self.verify_diffusion(
+                p_both, corr_vel, per_part_kT, per_part_gamma)
 
         # Rotation
         if espressomd.has_features("ROTATION"):
             # Decide on effective gamma rotation, since for rotation it is
             # direction dependent
             eff_gamma_rot = None
-            per_part_eff_gamma_rot = None
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 eff_gamma_rot = gamma_rot_a
                 eff_per_part_gamma_rot = per_part_gamma_rot_a
@@ -481,7 +492,7 @@ class LangevinThermostat(ut.TestCase):
         acf = c.result()[:, [0, 2 + 3 * i, 2 + 3 * i + 1, 2 + 3 * i + 2]]
         np.savetxt("acf.dat", acf)
 
-        # Integrate w. trapez rule
+        # Integrate with trapezoidal rule
         for coord in [1, 2, 3]:
             I = np.trapz(acf[:, coord], acf[:, 0])
             ratio = I / (kT / gamma[coord - 1])

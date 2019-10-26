@@ -1,5 +1,5 @@
-# Copyright (C) 2012-2018 The ESPResSo project
-# Copyright 2009,2010 Christoph Junghans
+# Copyright (C) 2012-2019 The ESPResSo project
+# Copyright (C) 2009,2010 Christoph Junghans
 #
 # This file is part of ESPResSo.
 #
@@ -14,8 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see
-# <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 BuildRequires: fftw3-devel tcl-devel make gcc
 

@@ -131,10 +131,9 @@ optional parameter, set to :math:`0` by default.
 
 A special case of the Lennard-Jones potential is the
 Weeks-Chandler-Andersen (WCA) potential, which one obtains by putting
-the cutoff into the minimum, choosing
-:math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma`. The WCA
-potential is purely repulsive, and is often used to mimic hard sphere
-repulsion.
+the cutoff into the minimum and shifting the potential to be continuous, choosing
+:math:`r_\mathrm{cut}=2^\frac{1}{6}\sigma` and :math:`c_\mathrm{shift}=` ``'auto'``. The WCA
+potential is purely repulsive, and is often used to mimic hard sphere repulsion.
 
 .. _Generic Lennard-Jones interaction:
 
@@ -582,7 +581,7 @@ only has an effect if the DPD thermostat is activated.
 The interaction consists of a friction force :math:`\vec{F}_{ij}^{D}` and
 a random force :math:`\vec{F}_{ij}^R` added to the other interactions
 between particles :math:`i` and :math:`j`. It is decomposed into a component
-parallel and perpendicular to the distance vector :math:`\vec{r}_{ij}` of the particle pair .
+parallel and perpendicular to the distance vector :math:`\vec{r}_{ij}` of the particle pair.
 The friction force contributions of the parallel part are
 
 .. math:: \vec{F}_{ij}^{D} = -\gamma_\parallel w_\parallel (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
@@ -687,7 +686,7 @@ setting up the Drude particles, so the simple call::
 
 given the :class:`espressomd.System() <espressomd.system.System>` object, uses this information to create all
 necessary Thole interactions. The method calculates the mixed scaling
-coefficient `s` and creates the non-bonded Thole interactions between the
+coefficient ``s`` and creates the non-bonded Thole interactions between the
 collected types to cover all the Drude-Drude, Drude-core and core-core
 combinations. No further calls of :meth:`~espressomd.drude_helpers.add_drude_particle_to_core` should
 follow. Set ``verbose`` to ``True`` to print out the coefficients, charge factors

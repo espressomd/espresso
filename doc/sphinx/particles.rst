@@ -195,19 +195,17 @@ Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to have polymers in your system, you can use the function
-`espressomd.polymer.positions()` to determine suitable postitions.
-See :attr:`espressomd.polymer.positions()` for a detailed list of
-arguments.
+:func:`espressomd.polymer.positions()` to determine suitable positions.
 
 Required arguments are the desired number of polymers ``n_polymers``, the
 number of monomers per polymer chain ``beads_per_chain``, and the parameter
 ``bond_length``, which determines the distance between adjacent monomers
 within the polymer chains.
 Determining suitable particle positions pseudo-randomly requires the use of
-a pseudo-random number genererator, which has to be seeded. This ``seed``
+a pseudo-random number generator, which has to be seeded. This ``seed``
 is therefore also a mandatory parameter.
 
-The function :attr:`espressomd.polymer.positions()` returns a
+The function :func:`espressomd.polymer.positions()` returns a
 three-dimensional numpy array, namely a list of polymers containing the
 positions of monomers (x, y, z). A quick example of how to set up polymers::
 
@@ -230,14 +228,14 @@ into account when creating the polymer positions, you can set the optional
 boolean parameter ``respect_constraint=True``.
 To simulate excluded volume while drawing the polymer positions, a minimum
 distance between all particles can be set via ``min_distance``. This will
-also resprect already existing particles in the system.
+also respect already existing particles in the system.
 Both when setting ``respect_constraints`` and choosing a ``min_distance``
 trial positions are pseudo-randomly chosen and only accepted if the
-requested requirement is fulfilled. Otherwise, a new attepmt will be made,
+requested requirement is fulfilled. Otherwise, a new attempt will be made,
 up to ``max_tries`` times per monomer and if this fails ``max_tries`` per
 polymer. The default value is ``max_tries=1000``. Depending on the total
 number of beads and constraints, this value may need to be adapted. If
-detemining suitable polymer positions whithin this limit fails, a runtime
+determining suitable polymer positions within this limit fails, a runtime
 error is thrown.
 
 Note that the distance between adjacent monomers
@@ -284,9 +282,7 @@ See :class:`espressomd.diamond.Diamond` for more details. For simulating compres
     Cross-linking polymers
     ~~~~~~~~~~~~~~~~~~~~~~
 
-            :todo: `This is not implemented in Python`
-
-    crosslink
+    .. todo:: This is not implemented in Python
 
     Attempts to end-crosslink the current configuration of equally long
     polymers with monomers each, returning how many ends are successfully
@@ -369,8 +365,10 @@ site is placed at a fixed distance from the non-virtual particle. When
 the non-virtual particle rotates, the virtual sites rotates on an orbit
 around the non-virtual particles center.
 
-To use this implementation of virtual sites, activate the feature ``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of :class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the active virtual sites scheme (see above).
-To set up a virtual site,
+To use this implementation of virtual sites, activate the feature
+``VIRTUAL_SITES_RELATIVE``. Furthermore, an instance of
+:class:`espressomd.virtual_sites.VirtualSitesRelative` has to be set as the
+active virtual sites scheme (see above). To set up a virtual site,
 
 #. Place the particle to which the virtual site should be related. It
    needs to be in the center of mass of the rigid arrangement of
@@ -382,13 +380,15 @@ To set up a virtual site,
        p = system.part.add(pos=(1, 2, 3))
        p.vs_auto_relate_to(<ID>)
 
-   where <ID> is the id of the central particle. This will also set the :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on the particle to 1.
+   where <ID> is the id of the central particle. This will also set the
+   :attr:`espressomd.particle_data.ParticleHandle.virtual` attribute on
+   the particle to ``True``.
 
 #. Repeat the previous step with more virtual sites, if desired.
 
-#. To update the positions of all virtual sites, call
+#. To update the positions of all virtual sites, call::
 
-   system.integrator.run(0,recalc_forces=True)
+      system.integrator.run(0, recalc_forces=True)
 
 Please note:
 
@@ -396,7 +396,7 @@ Please note:
    from the non-virtual particle, the id of the non-virtual particle and
    a quaternion which defines the vector from non-virtual particle to
    virtual site in the non-virtual particles body-fixed frame. This
-   information is saved in the virtual site's `espressomd.particle_data.ParticleHandle.vs_relative` attribute.
+   information is saved in the virtual site's :attr:`espressomd.particle_data.ParticleHandle.vs_relative` attribute.
    Take care, not to overwrite it after using ``vs_auto_relate``.
 
 -  Virtual sites can not be placed relative to other virtual sites, as
@@ -404,14 +404,15 @@ Please note:
    guaranteed. Always relate a virtual site to a non-virtual particle
    placed in the center of mass of the rigid arrangement of particles.
 
--  In case you know the correct quaternions, you can also setup a
-   virtual site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative` and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
+-  In case you know the correct quaternions, you can also setup a virtual
+   site using its :attr:`espressomd.particle_data.ParticleHandle.vs_relative`
+   and :attr:`espressomd.particle_data.ParticleHandle.virtual` attributes.
 
 -  In a simulation on more than one CPU, the effective cell size needs
    to be larger than the largest distance between a non-virtual particle
    and its associated virtual sites. To this aim, when running on more than one core,
-   you need to set the
-   system's :attr:`espressomd.system.System.min_global_cut` attribute to this largest distance.
+   you need to set the system's :attr:`espressomd.system.System.min_global_cut`
+   attribute to this largest distance.
    An error is generated when this requirement is not met.
 
 -  If the virtual sites represent actual particles carrying a mass, the
@@ -428,9 +429,13 @@ Inertialess lattice Boltzmann tracers
 
 :class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
 
-When this implementation is selected, the virtual sites follow the motion of a lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating their position using the fluid velocity at the virtual sites' position.
-Forces acting on the virtual sites are directly transferred as force density onto the lattice Boltzmann fluid, making the coupling free of inertia.
-The feature stems from the implementation of the :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
+When this implementation is selected, the virtual sites follow the motion of a
+lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating
+their position using the fluid velocity at the virtual sites' position.
+Forces acting on the virtual sites are directly transferred as force density
+onto the lattice Boltzmann fluid, making the coupling free of inertia.
+The feature stems from the implementation of the
+:ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
 
 For correct results, the LB thermostat has to be deactivated for virtual sites::
 
@@ -438,84 +443,6 @@ For correct results, the LB thermostat has to be deactivated for virtual sites::
 
 Please note that the velocity attribute of the virtual particles does not carry valid information for this virtual sites scheme.
 
-
-..
-    .. _Virtual sites in the center of mass of a molecule:
-
-    Virtual sites in the center of mass of a molecule
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    :todo: `This is not implemented in Python, yet`
-
-    To activate this implementation, enable the feature ``VIRTUAL_SITES_COM`` in :file:`myconfig.hpp`. Virtual sites are then placed in the center of mass of
-    a set of particles (as defined below). Their velocity will also be that
-    of the center of mass. Forces accumulating on the virtual sites are
-    distributed back to the particles which form the molecule. To place a
-    virtual site at the center of a molecule, perform the following steps in
-    that order
-
-    #. Create a particle of the desired type for each molecule. It should be
-       placed at least roughly in the center of the molecule to make sure,
-       its on the same node as the other particles forming the molecule, in
-       a simulation with more than one CPU.
-
-    #. Make it a virtual site using
-
-       part virtual 1
-
-    #. Declare the list of molecules and the particles they consist of:
-
-       analyze set { ...} ...
-
-       The lists of particles in a molecule comprise the non-virtual
-       particles as well as the virtual site. The id of this molecule is its
-       index in this list. For example,
-
-       analyze set {0 1 2 3 4} {0 5 6 7 8} {1 9 10 11}
-
-       declares three molecules, of which the first two consist of three
-       particles and a virtual site each (particles 14 and 58,
-       respectively). The third molecule has type 1 and consists of two
-       particles and a virtual site. The virtual sites were determined
-       before by setting the flag. You can choose freely one out of each
-       molecule, for example particles 1, 5, and 9.
-
-    #. Assign to all particles that belong to the same molecule the
-       molecules id
-
-       part mol
-
-       The molid is the index of the particle in the above list, so you
-       would assign 0 to particles 1-4, 1 to particles 5-8 and 2 to
-       particles 9-11. Alternatively, you can call
-
-       analyze set topo\_part\_sync
-
-       to set the s from the molecule declarations.
-
-    #. Update the position of all virtual particles (optional)
-
-       integrate 0
-
-    The type of the molecule you can choose freely, it is only used in
-    certain analysis functions, namely ``energy_kinetic_mol``,
-    ``pressure_mol`` and ``dipmom_mol``, which compute kinetic energy,
-    pressure and dipole moment per molecule type, respectively.
-
-    .. _Additional features:
-
-    Additional features
-    ~~~~~~~~~~~~~~~~~~~
-
-    The behavior of virtual sites can be fine-tuned with the following
-    switches in :file:`myconfig.hpp`.
-
-    - ``VIRTUAL_SITES_NO_VELOCITY`` specifies that the velocity of virtual sites is not computed
-
-    - ``VIRTUAL_SITES_THERMOSTAT`` specifies that the Langevin thermostat should also act on virtual
-       sites
-
-    - ``THERMOSTAT_IGNORE_NON_VIRTUAL`` specifies that the thermostat does not act on non-virtual particles
 
 .. _Particle number counting feature:
 
@@ -529,16 +456,13 @@ Particle number counting feature
 
 
 
-Knowing the number of particles of a certain type in simulations in the grand canonical ensemble,
-or other purposes, when particles of certain types are created and
-deleted frequently is often of interest. Particle ids can be stored in a map for each
-individual type and so random ids of particles of a certain type can be
-drawn.  ::
+Knowing the number of particles of a certain type in simulations where particle numbers can fluctuate is of interest.
+Particle ids can be stored in a map for each
+individual type::
 
     import espressomd
     system = espressomd.System()
     system.setup_type_map([_type])
-    system.find_particle(_type)
     system.number_of_particles(_type)
 
 If you want to keep track of particle ids of a certain type you have to
@@ -547,9 +471,7 @@ initialize the method by calling  ::
     system.setup_type_map([_type])
 
 After that will keep track of particle ids of that type. Keeping track of particles of a given type is not enabled by default since it requires memory.
-When using the
-keyword ``find_particle`` and a particle type, the command will return a randomly
-chosen particle id, for a particle of the given type. The keyword
+The keyword
 ``number_of_particles`` as argument will return the number of
 particles which have the given type. For counting the number of particles of a given type you could also use :meth:`espressomd.particle_data.ParticleList.select` ::
 
@@ -558,7 +480,7 @@ particles which have the given type. For counting the number of particles of a g
     ...
     number_of_particles = len(system.part.select(type=type))
 
-However calling ``select(type=type)`` results in looping over all particles. Therefore calling ``select()`` is slow compared to using :meth:`espressomd.system.System.number_of_particles` which directly can return the number of particles with that type.
+However calling ``select(type=type)`` results in looping over all particles which is slow. In contrast, :meth:`espressomd.system.System.number_of_particles` directly can return the number of particles with that type.
 
 .. _Self-propelled swimmers:
 

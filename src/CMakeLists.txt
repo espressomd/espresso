@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2018 The ESPResSo project
+# Copyright (C) 2009-2019 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -31,7 +31,6 @@ add_subdirectory(config)
 add_subdirectory(utils)
 
 add_subdirectory(profiler)
-add_subdirectory(pdbparser)
 
 if(SCAFACOS)
   add_subdirectory(scafacos)

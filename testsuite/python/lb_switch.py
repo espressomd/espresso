@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -33,7 +33,6 @@ class LBSwitchActor(ut.TestCase):
         system = self.system
         system.actors.clear()
         system.part.add(pos=[1., 1., 1.], v=[1., 0, 0], fix=[1, 1, 1])
-        ext_force_density = [0.2, 0.3, 0.15]
 
         lb_fluid_params = {'agrid': 2.0, 'dens': 1.0, 'visc': 1.0, 'tau': 0.03}
         friction_1 = 1.5

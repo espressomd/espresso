@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,7 @@ import unittest as ut
 import numpy as np
 import espressomd
 from espressomd import polymer
-from espressomd.shapes import Wall
+import espressomd.shapes
 
 
 class PolymerPositions(ut.TestCase):
@@ -87,7 +87,7 @@ class PolymerPositions(ut.TestCase):
         for bond_length in bond_lengths:
             positions = polymer.positions(
                 n_polymers=num_poly, beads_per_chain=num_mono,
-                    bond_length=bond_length, seed=self.seed)
+                bond_length=bond_length, seed=self.seed)
 
             self.assertShape(positions, num_poly, num_mono)
             self.assertBondLength(positions, bond_length)
@@ -166,7 +166,7 @@ class PolymerPositions(ut.TestCase):
 
         w = espressomd.shapes.Wall(normal=[0., 0., 1.], dist=0.5 * self.box_l)
         wall_constraint = espressomd.constraints.ShapeBasedConstraint(shape=w)
-        c = self.system.constraints.add(wall_constraint)
+        self.system.constraints.add(wall_constraint)
 
         positions = polymer.positions(
             n_polymers=num_poly, beads_per_chain=num_mono,

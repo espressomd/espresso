@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -226,7 +226,7 @@ class ParticleProperties(ut.TestCase):
         res = s.part.select(pos=(0.2, 0.3, 0.4), q=0)
         self.assertEqual(tuple(res.id), (0,))
 
-        # Emtpy result
+        # Empty result
         res = s.part.select(q=17)
         self.assertEqual(tuple(res.id), ())
         # User-specified criterion
@@ -269,7 +269,7 @@ class ParticleProperties(ut.TestCase):
             except AttributeError:
                 print("Skipping read-only", p)
             # Cause a different mpi callback to uncover deadlock immediately
-            x = getattr(s.part[:], p)
+            _ = getattr(s.part[:], p)
 
     def test_zz_remove_all(self):
         for id in self.system.part[:].id:

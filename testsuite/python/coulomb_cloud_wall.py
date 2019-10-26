@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -132,19 +131,19 @@ class CoulombCloudWall(ut.TestCase):
         self.S.integrator.run(0)
         self.compare("p3m", energy=True, prefactor=3)
 
-    @utx.skipIfMissingGPU(skip_ci_amd=True)
+    @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
-            self.S.actors.add(
-                espressomd.electrostatics.P3MGPU(
-                    prefactor=2.2,
-                    r_cut=1.001,
-                    accuracy=1e-3,
-                    mesh=64,
-                    cao=7,
-                    alpha=2.70746,
-                    tune=False))
-            self.S.integrator.run(0)
-            self.compare("p3m_gpu", energy=False, prefactor=2.2)
+        self.S.actors.add(
+            espressomd.electrostatics.P3MGPU(
+                prefactor=2.2,
+                r_cut=1.001,
+                accuracy=1e-3,
+                mesh=64,
+                cao=7,
+                alpha=2.70746,
+                tune=False))
+        self.S.integrator.run(0)
+        self.compare("p3m_gpu", energy=False, prefactor=2.2)
 
     @ut.skipIf(not espressomd.has_features(["SCAFACOS"])
                or 'p3m' not in scafacos.available_methods(),
@@ -180,6 +179,7 @@ class CoulombCloudWall(ut.TestCase):
         self.S.integrator.run(0, recalc_forces=True)
         for p in self.S.part:
             self.assertAlmostEqual(np.linalg.norm(p.f), 0, places=11)
+
 
 if __name__ == "__main__":
     ut.main()
