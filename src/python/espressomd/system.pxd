@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -47,5 +47,4 @@ cdef bool skin_set
 
 cdef extern from "particle_data.hpp":
     int init_type_map(int type) except +
-    int get_random_p_id(int type) except +
     int number_of_particles_with_type(int type) except +

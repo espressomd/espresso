@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -20,11 +20,10 @@
 # This module parses the feature definition file features.def
 #
 import fileinput
-import string
 import re
 
 
-class SyntaxError:
+class SyntaxError(Exception):
 
     def __init__(self, message, instead):
         self.message = message
@@ -68,9 +67,8 @@ class defs:
         for line in fileinput.input(filename):
             line = line.strip()
             # Ignore empty and comment lines
-            if not line or line.startswith('#') \
-                    or line.startswith('//') or line.startswith('/*'):
-                    continue
+            if not line or line.startswith(('#', '//', '/*')):
+                continue
 
             # Tokenify line
             tokens = line.split(None, 2)
@@ -156,14 +154,14 @@ class defs:
         """
         newset = activated.copy()
 
-#        print "Verifying: " + str(activated) + "..."
+        # print "Verifying: " + str(activated) + "..."
 
         # handle implications
         for feature, implied in self.implications:
-#            print feature, ' -> ', implied
-            if feature in newset and not implied in newset:
+            # print feature, ' -> ', implied
+            if feature in newset and implied not in newset:
                 newset.add(implied)
-#        print 'Implied set: ' + str(newset)
+        # print 'Implied set: ' + str(newset)
 
         # handle requirements
         featurevars = dict()
@@ -172,13 +170,13 @@ class defs:
         for feature in allfeatures:
             featurevars[feature] = feature in newset
 
-        for feature, expr, undef in self.requirements:
-#            print 'Requirement: ', feature, ' -> ', expr
+        for feature, expr, _ in self.requirements:
+            # print 'Requirement: ', feature, ' -> ', expr
             if feature in newset:
                 if not eval(expr, featurevars):
                     return None
 
-#        print 'Resulting set: ' + str(newset)
+        # print 'Resulting set: ' + str(newset)
         return newset
 
 # Test whether all implied features or features in an expression are defined

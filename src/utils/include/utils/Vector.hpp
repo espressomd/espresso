@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef VECTOR_HPP
 #define VECTOR_HPP
@@ -346,6 +346,18 @@ auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
   return ret;
 }
 
+template <class T, class U, size_t N>
+auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret;
+  std::transform(a.cbegin(), a.cend(), b.cbegin(), ret.begin(),
+                 [](auto ai, auto bi) { return ai / bi; });
+
+  return ret;
+}
+
 /**
  * @brief Meta function to turns a Vector<1, T> into T.
  */
@@ -356,5 +368,17 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
 
 template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
 
+template <std::size_t I, class T, std::size_t N>
+struct tuple_element<I, Vector<T, N>> {
+  using type = T;
+};
+
+template <class T, std::size_t N>
+struct tuple_size<Vector<T, N>> : std::integral_constant<std::size_t, N> {};
+
+template <std::size_t I, class T, std::size_t N>
+auto get(Vector<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
+  return a[I];
+}
 } // namespace Utils
 #endif

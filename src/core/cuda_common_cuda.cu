@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2010-2018 The ESPResSo project
-
-   This file is part of ESPResSo.
-
-   ESPResSo is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ESPResSo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_wrapper.hpp"
 
@@ -27,6 +27,7 @@
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 
@@ -74,7 +75,7 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
     if (CU_err != cudaSuccess) {
       fprintf(stderr,
               "Error found during memory operation. Possibly however "
-              "from an failed operation before. %s:%u.\n",
+              "from a failed operation before. %s:%u.\n",
               file, line);
       printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
       if (CU_err == cudaErrorInvalidValue)
@@ -89,12 +90,6 @@ void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
                         const char *function, const char *file,
                         unsigned int line) {
-/** If debugging is enabled, wait for Kernels to terminate before checking for
- * errors. This removes parallelism between host and device and should only be
- * enabled while debugging. */
-#ifdef CUDA_DEBUG
-  cudaDeviceSynchronize();
-#endif
   CU_err = cudaGetLastError();
   if (CU_err != cudaSuccess) {
     fprintf(stderr,
@@ -208,7 +203,7 @@ void gpu_change_number_of_part_to_comm() {
 
     if (global_part_vars_host.number_of_particles) {
 
-      /**pinned memory mode - use special function to get OS-pinned memory*/
+      /* pinned memory mode - use special function to get OS-pinned memory*/
       cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
                                   global_part_vars_host.number_of_particles *
                                       sizeof(CUDA_particle_data),
@@ -236,7 +231,7 @@ void gpu_change_number_of_part_to_comm() {
                                global_part_vars_host.number_of_particles *
                                    sizeof(CUDA_particle_data)));
 
-      /** values for the particle kernel */
+      /* values for the particle kernel */
       int threads_per_block_particles = 64;
       int blocks_per_grid_particles_y = 4;
       int blocks_per_grid_particles_x =
@@ -280,7 +275,7 @@ void gpu_init_particle_comm() {
                "by default. Espresso has detected a CUDA capable card but it "
                "is not the one used by ESPResSo by default. Please set the "
                "GPU to use by setting System.cuda_init_handle.device. A list "
-               "of avalable GPUs is available through "
+               "of available GPUs is available through "
                "System.cuda_init_handle.device_list.";
       }
     }
@@ -305,7 +300,7 @@ void copy_part_data_to_gpu(ParticleRange particles) {
       global_part_vars_host.number_of_particles) {
     cuda_mpi_get_particles(particles, particle_data_host);
 
-    /** get espresso md particle values*/
+    /* get espresso md particle values*/
     if (this_node == 0)
       cudaMemcpyAsync(particle_data_device, particle_data_host,
                       global_part_vars_host.number_of_particles *
@@ -321,7 +316,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
 
-    /** Copy result from device memory to host memory*/
+    /* Copy result from device memory to host memory*/
     if (this_node == 0) {
       cuda_safe_mem(cudaMemcpy(
           &(particle_forces_host[0]), particle_forces_device,
@@ -334,7 +329,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
           cudaMemcpyDeviceToHost));
 #endif
 
-      /** values for the particle kernel */
+      /* values for the particle kernel */
       int threads_per_block_particles = 64;
       int blocks_per_grid_particles_y = 4;
       int blocks_per_grid_particles_x =
@@ -344,7 +339,7 @@ void copy_forces_from_GPU(ParticleRange particles) {
       dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x,
                                            blocks_per_grid_particles_y, 1);
 
-      /** reset part forces with zero*/
+      /* reset part forces with zero*/
 
       KERNELCALL(reset_particle_force, dim_grid_particles,
                  threads_per_block_particles, particle_forces_device,
@@ -392,8 +387,8 @@ void copy_energy_from_GPU() {
   copy_CUDA_energy_to_energy(energy_host);
 }
 
-/** Generic copy functions from an to device **/
-
+/** @name Generic copy functions from and to device */
+/*@{*/
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n) {
   cuda_safe_mem(cudaMemcpy(host_data, device_data, n, cudaMemcpyHostToDevice));
 }
@@ -402,3 +397,4 @@ void cuda_copy_to_host(void *host_device, void *device_host, size_t n) {
   cuda_safe_mem(
       cudaMemcpy(host_device, device_host, n, cudaMemcpyDeviceToHost));
 }
+/*@}*/

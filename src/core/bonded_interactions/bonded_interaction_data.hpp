@@ -1,8 +1,28 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _BONDED_INTERACTION_DATA_HPP
 #define _BONDED_INTERACTION_DATA_HPP
 
+#include <boost/optional.hpp>
+
+#include "Particle.hpp"
 #include "TabulatedPotential.hpp"
-#include "particle_data.hpp"
 #include <utils/Counter.hpp>
 
 /** @file
@@ -360,15 +380,15 @@ void make_bond_type_exist(int type);
  * @param partner    bond partner
  * @param bond_type  numerical bond type
  */
-inline bool pair_bond_exists_on(Particle const *const p,
-                                Particle const *const partner, int bond_type) {
+inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
+                                int bond_type) {
   // First check the bonds of p1
-  if (p->bl.e) {
+  if (p.bl.e) {
     int i = 0;
-    while (i < p->bl.n) {
-      int size = bonded_ia_params[p->bl.e[i]].num;
+    while (i < p.bl.n) {
+      int size = bonded_ia_params[p.bl.e[i]].num;
 
-      if (p->bl.e[i] == bond_type && p->bl.e[i + 1] == partner->p.identity) {
+      if (p.bl.e[i] == bond_type && p.bl.e[i + 1] == partner.p.identity) {
         // There's a bond, already. Nothing to do for these particles
         return true;
       }
@@ -384,8 +404,8 @@ inline bool pair_bond_exists_on(Particle const *const p,
  *  @param p_partner   bond partner
  *  @param bond        enum bond type
  */
-inline bool pair_bond_enum_exists_on(Particle const *const p_bond,
-                                     Particle const *const p_partner,
+inline bool pair_bond_enum_exists_on(Particle const &p_bond,
+                                     Particle const &p_partner,
                                      BondedInteraction bond) {
 #ifdef ADDITIONAL_CHECKS
   extern bool ghosts_have_bonds;
@@ -393,14 +413,14 @@ inline bool pair_bond_enum_exists_on(Particle const *const p_bond,
 #endif
 
   int i = 0;
-  while (i < p_bond->bl.n) {
-    int type_num = p_bond->bl.e[i];
-    Bonded_ia_parameters const *const iaparams = &bonded_ia_params[type_num];
-    if (iaparams->type == (int)bond &&
-        p_bond->bl.e[i + 1] == p_partner->p.identity) {
+  while (i < p_bond.bl.n) {
+    int type_num = p_bond.bl.e[i];
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+    if (iaparams.type == (int)bond &&
+        p_bond.bl.e[i + 1] == p_partner.p.identity) {
       return true;
     }
-    i += iaparams->num + 1;
+    i += iaparams.num + 1;
   }
   return false;
 }
@@ -411,17 +431,17 @@ inline bool pair_bond_enum_exists_on(Particle const *const p_bond,
  *  @param p2     particle on which the bond may be stored
  *  @param bond   numerical bond type
  */
-inline bool pair_bond_enum_exists_between(Particle const *const p1,
-                                          Particle const *const p2,
+inline bool pair_bond_enum_exists_between(Particle const &p1,
+                                          Particle const &p2,
                                           BondedInteraction bond) {
-  if (p1 == p2)
+  if (&p1 == &p2)
     return false;
 
   // Check if particles have bonds (bl.n > 0) and search for the bond of
   // interest with are_bonded(). Could be saved on both sides (and both could
   // have other bonds), so we need to check both.
-  return (p1->bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
-         (p2->bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
+  return (p1.bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
+         (p2.bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
 }
 
 /** Calculate the maximal cutoff of bonded interactions, required to

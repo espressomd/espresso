@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -32,8 +32,8 @@ class TestLBGetUAtPos(ut.TestCase):
 
     """
     @classmethod
-    def setUpClass(self):
-        self.params = {
+    def setUpClass(cls):
+        cls.params = {
             'tau': 0.01,
             'agrid': 0.5,
             'box_l': [12.0, 12.0, 12.0],
@@ -42,31 +42,31 @@ class TestLBGetUAtPos(ut.TestCase):
             'friction': 2.0,
             'gamma': 1.5
         }
-        self.system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        self.system.box_l = self.params['box_l']
-        self.system.cell_system.skin = 0.4
-        self.system.time_step = 0.01
-        self.n_nodes_per_dim = int(self.system.box_l[0] / self.params['agrid'])
-        for p in range(self.n_nodes_per_dim):
+        cls.system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+        cls.system.box_l = cls.params['box_l']
+        cls.system.cell_system.skin = 0.4
+        cls.system.time_step = 0.01
+        cls.n_nodes_per_dim = int(cls.system.box_l[0] / cls.params['agrid'])
+        for p in range(cls.n_nodes_per_dim):
             # Set particles exactly between two LB nodes in x direction.
-            self.system.part.add(id=p,
-                                 pos=[(p + 1) * self.params['agrid'],
-                                      0.5 * self.params['agrid'],
-                                      0.5 * self.params['agrid']])
-        self.lb_fluid = lb.LBFluidGPU(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.params['tau'],
+            cls.system.part.add(id=p,
+                                pos=[(p + 1) * cls.params['agrid'],
+                                     0.5 * cls.params['agrid'],
+                                     0.5 * cls.params['agrid']])
+        cls.lb_fluid = lb.LBFluidGPU(
+            visc=cls.params['viscosity'],
+            dens=cls.params['dens'],
+            agrid=cls.params['agrid'],
+            tau=cls.params['tau'],
         )
-        self.system.actors.add(self.lb_fluid)
-        self.vels = np.zeros((self.n_nodes_per_dim, 3))
-        self.vels[:, 0] = np.arange(self.n_nodes_per_dim, dtype=float)
-        self.interpolated_vels = self.vels.copy()
-        self.interpolated_vels[:, 0] += 0.5
-        for n in range(self.n_nodes_per_dim):
-            self.lb_fluid[n, 0, 0].velocity = self.vels[n, :]
-        self.system.integrator.run(0)
+        cls.system.actors.add(cls.lb_fluid)
+        cls.vels = np.zeros((cls.n_nodes_per_dim, 3))
+        cls.vels[:, 0] = np.arange(cls.n_nodes_per_dim, dtype=float)
+        cls.interpolated_vels = cls.vels.copy()
+        cls.interpolated_vels[:, 0] += 0.5
+        for n in range(cls.n_nodes_per_dim):
+            cls.lb_fluid[n, 0, 0].velocity = cls.vels[n, :]
+        cls.system.integrator.run(0)
 
     def test_get_u_at_pos(self):
         """

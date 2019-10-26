@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -42,7 +42,7 @@ class NSquare(ut.TestCase):
         # Check that we did not lose particles
         self.assertEqual(sum(part_dist), n_part)
 
-        # Check that the particules are evenly distributed
+        # Check that the particles are evenly distributed
         for node_parts in part_dist:
             self.assertLess(abs(node_parts - n_part_avg), 2)
 

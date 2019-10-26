@@ -382,27 +382,25 @@ three-dimensionally periodic systems with spherical summation order for
 two-dimensional periodicity. The basic idea is to expand the two
 dimensional slab system of height h in the non-periodic z-coordinate to
 a system with periodicity in all three dimensions, with a period of
-:math:`\lambda_z>h`, which leaves an empty gap of height
-:math:`\delta=\lambda_z -
-h` above the particles in the simulation box.
+:math:`\lambda_z > h`, which leaves an empty gap of height
+:math:`\delta = \lambda_z - h` above the particles in the simulation box.
 
 Since the electrostatic potential is only finite if the total system is
 charge neutral, the additional image layers (those layers above or below
 the original slab system) are charge neutral, too. Now let us consider
 the n-th image layer which has an offset of :math:`n\lambda_z` to the
 original layer. If :math:`n\lambda_z` is large enough, each particle of
-charge :math:`q\_j` at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
+charge :math:`q_j` at position :math:`(x_j,y_j,z_j+n\lambda_z)` and its
 replicas in the xy-plane can be viewed as constituting a homogeneous
 charged sheet of charge density
 :math:`\sigma_j = \frac{q_j}{\lambda_x\lambda_y}`. The potential of such
-a charged sheet at distance z is :math:`2\pi \sigma_j
-|z|`. Now we consider the contribution from a pair of image layers
-located at :math:`\pm n\lambda_z`, n>0 to the energy of a charge q\_i at
+a charged sheet at distance :math:`z` is :math:`2\pi \sigma_j |z|`.
+Now we consider the contribution from a pair of image layers
+located at :math:`\pm n\lambda_z`, n>0 to the energy of a charge :math:`q_i` at
 position :math:`(x_i,y_i,z_i)` in the central layer. Since
-:math:`|z_j - z_i| <
-n\lambda_z`, we have
-:math:`|z_j - z_i + n\lambda_z| = n\lambda_z + z_j -
-z_i` and :math:`|z_j - z_i - n\lambda_z|= n\lambda_z - z_j + z_i`, and
+:math:`|z_j - z_i| < n\lambda_z`, we have
+:math:`|z_j - z_i + n\lambda_z| = n\lambda_z + z_j - z_i`
+and :math:`|z_j - z_i - n\lambda_z|= n\lambda_z - z_j + z_i`, and
 hence the interaction energy from those two image layers with the charge
 :math:`q_i` vanishes by charge neutrality:
 
@@ -464,7 +462,7 @@ Errors
 
 Common to all algorithms of the MMM family is that accuracy is cheap
 with respect to computation time. More precisely, the maximal pairwise
-error, i.e. the maximal error of the :math:`\psi` expression, decreases
+error, i.e. the maximal error of the :math:`\psi` expression decreases
 exponentially with the cutoffs. In turn, the computation time grows
 logarithmically with the accuracy. This is quite in contrast to the
 Ewald methods, for which decreasing the error bound can lead to
@@ -483,10 +481,12 @@ additional error source.
 
 .. figure:: figures/elc-errordist.pdf
    :alt: Error distribution of the ELC method.
+   :align: center
+   :height: 6.00000cm
 
    Error distribution of the ELC method.
 
-Figure [fig:ELC-error] shows the error distribution of the ELC method
+The figure shows the error distribution of the ELC method
 for a gap size of :math:`10\%` of the total system height. For MMM2D and
 MMM1D the error distribution is less homogeneous, however, also here it
 is always better to have some extra precision, especially since it is

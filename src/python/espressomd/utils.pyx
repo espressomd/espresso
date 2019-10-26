@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,6 +20,8 @@ cimport numpy as np
 cimport cython
 import numpy as np
 from libcpp.vector cimport vector
+include "myconfig.pxi"
+
 
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
     """
@@ -66,8 +68,8 @@ cpdef check_type_or_throw_except(x, n, t, msg):
             for i in range(len(x)):
                 if not isinstance(x[i], t):
                     if not ((t == float and is_valid_type(x[i], int))
-                      or (t == float and issubclass(type(x[i]), np.integer))) \
-                      and not (t == int and issubclass(type(x[i]), np.integer)):
+                            or (t == float and issubclass(type(x[i]), np.integer))) \
+                            and not (t == int and issubclass(type(x[i]), np.integer)):
                         raise ValueError(
                             msg + " -- Item " + str(i) + " was of type " + type(x[i]).__name__)
         else:
@@ -77,7 +79,8 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     else:
         # N=1 and a single value
         if not isinstance(x, t):
-            if not (t == float and is_valid_type(x, int)) and not (t == int and issubclass(type(x), np.integer)):
+            if not (t == float and is_valid_type(x, int)) and not (
+                    t == int and issubclass(type(x), np.integer)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
 
@@ -131,7 +134,7 @@ def to_char_pointer(s):
 
     """
     if isinstance(s, unicode):
-        s = (< unicode > s).encode('utf8')
+        s = ( < unicode > s).encode('utf8')
     return s
 
 
@@ -147,7 +150,7 @@ def to_str(s):
     if isinstance(s, unicode):
         return < unicode > s
     elif isinstance(s, bytes):
-        return (< bytes > s).decode('ascii')
+        return ( < bytes > s).decode('ascii')
     else:
         raise ValueError('Unknown string type {}'.format(type(s)))
 
@@ -290,7 +293,30 @@ def is_valid_type(value, t):
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
         if hasattr(np, 'float128'):
-            return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
-        return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
+            return isinstance(
+                value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        return isinstance(
+            value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)
+
+
+def requires_experimental_features(reason):
+    """Class decorator which makes instantiation conditional on EXPERIMENTAL_FEATURES being defined in myconfig.hpp."""
+
+    def exception_raiser(self, *args, **kwargs):
+        raise Exception(
+            "Class " +
+            self.__class__.__name__ +
+            " is experimental. Define EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\nReason: " +
+            reason)
+
+    def modifier(cls):
+        cls.__init__ = exception_raiser
+        return cls
+
+    IF not EXPERIMENTAL_FEATURES:
+        return modifier
+    ELSE: 
+        # Return original class
+        return lambda x: x

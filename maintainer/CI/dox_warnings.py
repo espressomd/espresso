@@ -26,7 +26,7 @@ with open('doc/doxygen/warnings.log') as f:
 
 raw_warnings = re.findall(
     r'(?:^|\n)doxygen:(.+?):(\d+): warning: (.+?)(?=\n\S|\n*$)',
-     content, re.DOTALL)
+    content, re.DOTALL)
 
 # collect list of empty @param and @tparam blocks
 with open('doc/doxygen/empty-params.log') as f:
@@ -55,25 +55,27 @@ n_unique_raw = len(raw_warnings)
 # filter out non-critical warnings
 warnings = {}
 for (filepath, lineno, warning), warning_list in raw_warnings.items():
-    if re.search('^member \S+ belongs to two different groups\. '
-                 'The second one found here will be ignored\.$', warning):
+    if re.search(r'^member \S+ belongs to two different groups\. '
+                 r'The second one found here will be ignored\.$', warning):
         # happens when a function is declared in a group in the .hpp file but
         # defined in another group in the .cpp file; this is usually caused by
         # the "Private functions" and "Exported functions" groups in .hpp files
         continue
-    if re.search('^documented symbol `\S+\' was not declared or defined\.$', warning):
+    if re.search(r'^documented symbol `\S+\' was not declared or defined\.$',
+                 warning):
         # known bug, fixed in 1.8.16
         continue
     if re.search('^no uniquely matching class member found for $', warning):
         # known bug, not fixed yet
         continue
-    if re.search('^The following parameters of .+ are not documented:$', warning):
+    if re.search(
+            '^The following parameters of .+ are not documented:$', warning):
         # non-critical warning, enforcing it would encourage bad behavior, i.e.
         # inserting "@param argument" without a description to silence the
         # warning, when in reality the warning is silenced because the text on
         # the following line is captured and becomes the argument description
         continue
-    filepath = re.sub('^.*(?=src/)', '', filepath)
+    filepath = re.sub(r'^.*(?=src/)', '', filepath)
     if filepath not in warnings:
         warnings[filepath] = {}
     warnings[filepath][(lineno, warning)] = warning_list
@@ -92,7 +94,7 @@ with open('dox_warnings.log', 'w') as f:
         f.write(filepath + ':\n')
         for (lineno, warning) in sorted(warnings[filepath].keys()):
             warning_list = warnings[filepath][(lineno, warning)]
-            s = re.sub('\(.*\)', '()', warning)
+            s = re.sub(r'\(.*\)', '()', warning)
             if warning_list:
                 s += ': ' + ', '.join(x.strip() for x in warning_list)
             f.write('  line {}: {}\n'.format(lineno, s))

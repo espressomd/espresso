@@ -22,7 +22,7 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/06-active_matter/SOLUTIONS/rectification_simulation.py",
-    cmd_arguments=[6.0], prod_steps=100, prod_length=150)
+    cmd_arguments=[6.0], PROD_STEPS=100, PROD_LENGTH=150)
 
 
 @skipIfMissingFeatures
@@ -31,9 +31,9 @@ class Tutorial(ut.TestCase):
 
     def test_rectification(self):
         x = tutorial.system.part[:].pos[:, 0]
-        left_chamber = np.sum(x < tutorial.length / 2.0)
-        right_chamber = np.sum(x > tutorial.length / 2.0)
-        excess = (right_chamber - left_chamber) * 100. / tutorial.npart
+        left_chamber = np.sum(x < tutorial.LENGTH / 2.0)
+        right_chamber = np.sum(x > tutorial.LENGTH / 2.0)
+        excess = (right_chamber - left_chamber) * 100. / tutorial.N_PART
         # expecting at least 5% excess due to rectification
         self.assertGreater(excess, 5.0)
 

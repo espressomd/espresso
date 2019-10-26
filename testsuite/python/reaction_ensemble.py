@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,7 @@
 """
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import reaction_ensemble
 
 
@@ -31,7 +31,7 @@ class ReactionEnsembleTest(ut.TestCase):
 
     # The reaction ensemble follows the ideal titration curve only if N>>1,
     # Ideal curve is derived in the grandcanonical ensemble and for low N
-    # there are systematic devations caused by differences between the
+    # there are systematic deviations caused by differences between the
     # ensembles. This is not an error but a fundamental difference (various
     # ensembles are equivalent only in the thermodynamic limit N \to \infty)
     N0 = 40
@@ -86,12 +86,9 @@ class ReactionEnsembleTest(ut.TestCase):
         type_A = ReactionEnsembleTest.type_A
         type_H = ReactionEnsembleTest.type_H
         type_HA = ReactionEnsembleTest.type_HA
-        box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         gamma = ReactionEnsembleTest.gamma
-        nubar = ReactionEnsembleTest.nubar
 
-        volume = ReactionEnsembleTest.volume
         RE = ReactionEnsembleTest.RE
         target_alpha = ReactionEnsembleTest.target_alpha
 
@@ -103,7 +100,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 1000
-        for i in range(num_samples):
+        for _ in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
             average_NHA += system.number_of_particles(type=type_HA)

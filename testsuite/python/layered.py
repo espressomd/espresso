@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -38,7 +38,7 @@ class Layered(ut.TestCase):
 
         # And now change their positions
         for i in range(n_part):
-            self.S.part[i].pos = pos = np.random.random(3)
+            self.S.part[i].pos = np.random.random(3)
 
         # Distribute the particles on the nodes
         part_dist = self.S.cell_system.resort()

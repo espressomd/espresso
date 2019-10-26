@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_EVENT_HPP
 #define CORE_EVENT_HPP
 /** \file
@@ -53,7 +53,7 @@
 void on_program_start();
 
 /** called every time the simulation is continued/started, i.e.
- *  when switching from Tcl to the simulation core.
+ *  when switching from the script interface to the simulation core.
  */
 void on_integration_start();
 
@@ -63,7 +63,8 @@ void on_integration_start();
  */
 void on_observable_calc();
 
-/** called every time a particle property is changed via Tcl. */
+/** called every time a particle property is changed via the script interface.
+ */
 void on_particle_change();
 
 /** called every time the charge of a particle has changed. */
@@ -103,7 +104,7 @@ void on_temperature_change();
 void on_parameter_change(int parameter);
 
 /** call this if you want to change ghost flags, e.g. whether ghosts
- *  have velocities or not. This is a opt-in process, i.e. all
+ *  have velocities or not. This is an opt-in process, i.e. all
  *  features are turned off and have to be reactivated if necessary
  *  inside this procedure.
  */
@@ -111,6 +112,11 @@ void on_ghost_flags_change();
 
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();
+
+/** @brief Update particles with properties depending on other particles
+ *   e.g., virtual sites, ICC charges
+ */
+void update_dependent_particles();
 
 /*@}*/
 

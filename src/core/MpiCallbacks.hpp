@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef COMMUNICATION_MPI_CALLBACKS
 #define COMMUNICATION_MPI_CALLBACKS
@@ -77,7 +77,7 @@ using are_allowed_arguments =
  * @brief Invoke a callable with arguments from an mpi buffer.
  *
  * @tparam F A Callable that can be called with Args as parameters.
- * @tparam Args Pack of arguments for @type F
+ * @tparam Args Pack of arguments for @p F
  *
  * @param f Functor to be called
  * @param ia Buffer to extract the parameters from
@@ -95,7 +95,7 @@ auto invoke(F f, boost::mpi::packed_iarchive &ia) {
   std::tuple<std::remove_const_t<std::remove_reference_t<Args>>...> params;
   Utils::for_each([&ia](auto &e) { ia >> e; }, params);
 
-  /* We add const here, so that parameters can only by by value
+  /* We add const here, so that parameters can only be by value
      or const reference. Output parameters on callbacks are not
      sensible because the changes are not propagated back, so
      we make sure this does not compile. */
@@ -239,7 +239,7 @@ template <typename F> auto make_model(F &&f) {
 /**
  * @brief Make a @ref callback_model_t for a function pointer.
  *
- * This instantiates a implementation of a callback for a function
+ * This instantiates an implementation of a callback for a function
  * pointer. The main task here is to transfer the signature from
  * the pointer to the callback_model_t by template argument type
  * deduction.
@@ -406,7 +406,7 @@ public:
    * Add a new callback to the system. This is a collective
    * function that must be run on all nodes.
    * Tag is one of the tag types from @namespace Communication::Result,
-   * which indicates what to to with the return values.
+   * which indicates what to do with the return values.
    *
    * @param tag Tag type indicating return operation
    * @param tag_args Argument for the return operation, if any.

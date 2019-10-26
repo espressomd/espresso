@@ -31,5 +31,6 @@ class Features(ut.TestCase):
         with self.assertRaises(RuntimeError) as _:
             has_features("NotAFeature")
 
+
 if __name__ == '__main__':
     ut.main()

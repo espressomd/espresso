@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,7 +20,6 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
-from espressomd import thermostat
 import tests_common
 
 

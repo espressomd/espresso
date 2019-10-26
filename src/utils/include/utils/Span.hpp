@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef UTILS_SPAN_HPP
 #define UTILS_SPAN_HPP
 
@@ -29,7 +29,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace Utils {
 namespace detail {
-
 template <class T, class C>
 using has_data =
     std::is_convertible<std::decay_t<decltype(std::declval<C>().data())> *,
@@ -118,11 +117,20 @@ DEVICE_QUALIFIER constexpr Span<T> make_span(T *p, size_t N) {
   return Span<T>(p, N);
 }
 
+template <class C> DEVICE_QUALIFIER constexpr auto make_span(C &c) {
+  return make_span(c.data(), c.size());
+}
+
 template <typename T>
 DEVICE_QUALIFIER constexpr Span<std::add_const_t<T>> make_const_span(T *p,
                                                                      size_t N) {
   return Span<std::add_const_t<T>>(p, N);
 }
+
+template <class C> DEVICE_QUALIFIER constexpr auto make_const_span(C &c) {
+  return make_const_span(c.data(), c.size());
+}
+
 } // namespace Utils
 
 #endif

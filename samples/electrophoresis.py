@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,7 @@ This sample simulates electrophoresis using P3M solver.
 """
 import espressomd
 
-required_features = ["P3M", "EXTERNAL_FORCES", "LENNARD_JONES"]
+required_features = ["P3M", "EXTERNAL_FORCES", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import thermostat
@@ -58,24 +58,20 @@ system.cell_system.max_num_cells = 2744
 # Non-bonded interactions
 ###############################################################
 # WCA between monomers
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 0].wca.set_params(
+    epsilon=1, sigma=1)
 
 # WCA counterions - polymer
-system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 1].wca.set_params(
+    epsilon=1, sigma=1)
 
 # WCA ions - polymer
-system.non_bonded_inter[0, 2].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 2].wca.set_params(
+    epsilon=1, sigma=1)
 
 # WCA between ions
-system.non_bonded_inter[1, 2].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[1, 2].wca.set_params(
+    epsilon=1, sigma=1)
 
 
 # Bonded interactions
@@ -89,7 +85,7 @@ system.bonded_inter.add(harmonicangle)
 
 
 # Create Monomer beads and bonds
-#########################################################################################
+##########################################################################
 n_monomers = 20
 
 init_polymer_pos = np.dstack(
@@ -102,14 +98,15 @@ system.part.add(pos=init_polymer_pos)
 
 
 # system.part[:-1].add_bond((harmonic, np.arange(n_monomers)[1:]))
-# system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2], np.arange(n_monomers)[2:]))
+# system.part[1:-1].add_bond((harmonicangle, np.arange(n_monomers)[:-2],
+# np.arange(n_monomers)[2:]))
 
 # Particle creation with loops:
 for i in range(n_monomers):
     if i > 0:
         system.part[i].add_bond((harmonic, i - 1))
 
-for i in range(1, n_monomers-1):
+for i in range(1, n_monomers - 1):
     system.part[i].add_bond((harmonicangle, i - 1, i + 1))
 
 system.part[:n_monomers].q = -np.ones(n_monomers)
@@ -149,7 +146,7 @@ for i in range(1000):
         sys.stdout.write("\rWarmup: %03i" % i)
         sys.stdout.flush()
     system.integrator.run(steps=1)
-    system.force_cap = 10*i
+    system.force_cap = 10 * i
 
 system.force_cap = 0
 
@@ -239,7 +236,7 @@ if tuple(map(int, np.__version__.split("."))) >= (1, 10):
     from numpy.linalg import norm
 
     # First get bond vectors
-    bond_vec = pos_list[:, 1:,:] - pos_list[:, :-1,:]
+    bond_vec = pos_list[:, 1:, :] - pos_list[:, :-1, :]
     bond_abs = norm(bond_vec, axis=2, keepdims=True)
     bond_abs_avg = bond_abs.mean(axis=0)[:, 0]
 
@@ -251,7 +248,7 @@ if tuple(map(int, np.__version__.split("."))) >= (1, 10):
 
     bv_zero = np.empty_like(bv_norm)
     for i in range(bv_zero.shape[1]):
-        bv_zero[:, i,:] = bv_norm[:, 0,:]
+        bv_zero[:, i, :] = bv_norm[:, 0, :]
 
     # Calculate <cos(theta)>
     cos_theta = (bv_zero * bv_norm).sum(axis=2).mean(axis=0)

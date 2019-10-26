@@ -1,5 +1,5 @@
 /*
-  Copyright (C) 2018 The ESPResSo project
+  Copyright (C) 2018-2019 The ESPResSo project
 
   ESPResSo is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 
 namespace Utils {
 /**
- * @brief Unifomly map unsigned integer to double.
+ * @brief Uniformly map unsigned integer to double.
  */
 constexpr inline double uniform(uint64_t in) {
   auto constexpr const max = std::numeric_limits<uint64_t>::max();

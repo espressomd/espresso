@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -321,6 +321,7 @@ class ArrayPropertyTest(ut.TestCase):
         # Check if copy is settable
         # System
         self.set_copy(self.system.periodicity)
+
 
 if __name__ == "__main__":
     ut.main()

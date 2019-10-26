@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2018 The ESPResSo project
+# Copyright (C) 2011-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -51,7 +51,7 @@ params_base = DynamicDict([
     ('valency', 1.0)])
 
 
-def bisection(params):
+def bisection():
     # initial parameters for bisection scheme
     size = math.pi / (2.0 * params_base['width'])
     pnt0 = 0.0
@@ -60,7 +60,7 @@ def bisection(params):
 
     # the bisection scheme
     tol = 1.0e-08
-    while (size > tol):
+    while size > tol:
         val0 = ek_common.solve(
             pnt0,
             params_base['width'],
@@ -81,7 +81,7 @@ def bisection(params):
             params_base['valency'])
 
         if (val0 < 0.0 and val1 > 0.0):
-            if (valm < 0.0):
+            if valm < 0.0:
                 pnt0 = pntm
                 size = size / 2.0
                 pntm = pnt0 + size
@@ -90,7 +90,7 @@ def bisection(params):
                 size = size / 2.0
                 pntm = pnt1 - size
         elif (val0 > 0.0 and val1 < 0.0):
-            if (valm < 0.0):
+            if valm < 0.0:
                 pnt1 = pntm
                 size = size / 2.0
                 pntm = pnt1 - size
@@ -109,7 +109,7 @@ def bisection(params):
 class ek_eof_one_species(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-    xi = bisection(params_base)
+    xi = bisection()
 
     def run_test(self, params):
         system = self.system
@@ -173,7 +173,6 @@ class ek_eof_one_species(ut.TestCase):
                 params_base['agrid'] >= params_base['padding'] and i *
                 params_base['agrid'] < system.box_l[params['non_periodic_dir']] -
                     params_base['padding']):
-                xvalue = i * params_base['agrid'] - params_base['padding']
                 position = i * params_base['agrid'] - params_base['padding'] - \
                     params_base['width'] / 2.0 + params_base['agrid'] / 2.0
 

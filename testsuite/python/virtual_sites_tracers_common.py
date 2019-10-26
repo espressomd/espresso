@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import unittest_decorators as utx
 import espressomd
 from espressomd import lb, shapes, lbboundaries
 import numpy as np
@@ -33,10 +32,8 @@ class VirtualSitesTracersCommon:
     system = espressomd.System(box_l=(box_lw, box_lw, box_height))
     system.time_step = 0.05
     system.cell_system.skin = 0.1
-    
-    def reset_lb(self, ext_force_density=[0, 0, 0]):
-        box_height = 10 
-        box_lw = 8
+
+    def reset_lb(self, ext_force_density=(0, 0, 0)):
         self.system.actors.clear()
         self.system.lbboundaries.clear()
         self.lbf = self.LBClass(
@@ -52,7 +49,7 @@ class VirtualSitesTracersCommon:
         walls = [lbboundaries.LBBoundary() for k in range(2)]
         walls[0].set_params(shape=shapes.Wall(normal=[0, 0, 1], dist=0.5))
         walls[1].set_params(shape=shapes.Wall(normal=[0, 0, -1],
-                                              dist=-box_height - 0.5))
+                                              dist=-self.box_height - 0.5))
 
         for wall in walls:
             self.system.lbboundaries.add(wall)
@@ -73,8 +70,6 @@ class VirtualSitesTracersCommon:
         self.reset_lb(ext_force_density=[0.1, 0, 0])
         # System setup
         system = self.system
-        box_lw = self.box_lw
-        box_height = self.box_height
 
         system.virtual_sites = VirtualSitesInertialessTracers()
 
@@ -86,7 +81,7 @@ class VirtualSitesTracersCommon:
         system.time = 0
 
         # Perform integration
-        for i in range(3):
+        for _ in range(3):
             system.integrator.run(100)
             # compute expected position
             X = self.lbf.get_interpolated_velocity(
@@ -156,7 +151,7 @@ class VirtualSitesTracersCommon:
 
         # Perform integration
         last_angle = self.compute_angle()
-        for i in range(6):
+        for _ in range(6):
             system.integrator.run(430)
             angle = self.compute_angle()
             self.assertLess(angle, last_angle)
@@ -207,7 +202,7 @@ class VirtualSitesTracersCommon:
                 np.testing.assert_allclose(
                     np.copy(p.v), np.copy(
                         self.lbf.get_interpolated_velocity(p.pos)),
-                   atol=2E-2)
+                    atol=2E-2)
         # get new shapes
         dist1non = np.linalg.norm(
             np.array(system.part[1].pos - system.part[0].pos))
@@ -236,14 +231,14 @@ class VirtualSitesTracersCommon:
         # strongly-bonded should basically not stretch
         self.assertGreater(dist1non, 1.5)
         self.assertAlmostEqual(dist1weak, 1, delta=0.2)
-        self.assertAlmostEqual(dist1strong, 1, delta=0.03)
+        self.assertAlmostEqual(dist1strong, 1, delta=0.04)
 
         self.assertGreater(dist2non, 2)
         self.assertAlmostEqual(dist2weak, np.sqrt(2), delta=0.3)
         self.assertAlmostEqual(dist2strong, np.sqrt(2), delta=0.1)
 
     def test_zz_without_lb(self):
-        """Check behaviour without lb. Ignore non-virtual particles, complain on 
+        """Check behaviour without lb. Ignore non-virtual particles, complain on
         virtual ones.
 
         """
@@ -255,5 +250,5 @@ class VirtualSitesTracersCommon:
         p = system.part.add(pos=(0, 0, 0))
         system.integrator.run(1)
         p.virtual = True
-        with(self.assertRaises(Exception)):
+        with self.assertRaises(Exception):
             system.integrator.run(1)

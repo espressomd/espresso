@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -79,6 +79,7 @@ class LennardJonesTest(ut.TestCase):
         # Calc is from VLs
         self.system.integrator.run(recalc_forces=True, steps=0)
         self.check()
+
 
 if __name__ == '__main__':
     ut.main()

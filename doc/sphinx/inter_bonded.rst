@@ -147,10 +147,10 @@ A pairwise Coulomb interaction can be instantiated via
     system.bonded_inter.add(bonded_coulomb)
     system.part[0].add_bond((bonded_coulomb, 1))
 
-This creates a bond with a Coulomb pair potential between particles `0` and `1`.
+This creates a bond with a Coulomb pair potential between particles ``0`` and ``1``.
 It is given by
 
-.. math:: V(r) = \frac{\alpha q_1 q_2}{r},
+.. math:: V(r) = \alpha \frac{q_1 q_2}{r},
 
 where :math:`q_1` and :math:`q_2` are the charges of the bound particles and :math:`\alpha` is the
 Coulomb prefactor. This interaction has no cutoff and acts independently of other
@@ -451,8 +451,11 @@ For details of the interpolation, see :ref:`Tabulated interaction`.
 Object-in-fluid interactions
 ----------------------------
 
-Please cite :cite:`Cimrak2014` when using the interactions in this section in order to
-simulate extended objects embedded in a LB fluid. For more details we encourage the dedicated OIF documentation available at http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso.
+Please cite :cite:`Cimrak2014` when using the interactions in this section in
+order to simulate extended objects embedded in a LB fluid. For more details
+please consult the dedicated OIF documentation available at
+`http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
+<https://web.archive.org/web/20180719231829/http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso>`_.
 
 The following interactions are implemented in order to mimic the
 mechanics of elastic or rigid objects immersed in the LB fluid flow.

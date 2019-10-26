@@ -1,7 +1,22 @@
-#include <Random123/philox.h>
-#include <boost/mpi.hpp>
-#include <profiler/profiler.hpp>
-
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "lb_particle_coupling.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
@@ -11,24 +26,32 @@
 #include "integrate.hpp"
 #include "lb_interface.hpp"
 #include "lb_interpolation.hpp"
-#include "lb_particle_coupling.hpp"
 #include "lbgpu.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
 
-#include "utils/u32_to_u64.hpp"
+#include <profiler/profiler.hpp>
 #include <utils/Counter.hpp>
+#include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
+
+#include <Random123/philox.h>
+#include <boost/mpi.hpp>
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_bcast_lb_particle_coupling_slave(int, int) {
+void mpi_bcast_lb_particle_coupling_slave() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-void lb_lbcoupling_activate() {
-  lb_particle_coupling.couple_to_md = true;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
+REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_slave)
+
+void mpi_bcast_lb_particle_coupling() {
+  mpi_call(mpi_bcast_lb_particle_coupling_slave);
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
+
+void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
   if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
@@ -40,7 +63,6 @@ void lb_lbcoupling_deactivate() {
   }
 
   lb_particle_coupling.couple_to_md = false;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_set_gamma(double gamma) {
@@ -108,82 +130,133 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
  *
  *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
- * @param[in,out] p         The coupled particle.
+ * @param[in] p             The coupled particle.
  * @param[in]     f_random  Additional force to be included.
  *
  * @return The viscous coupling force plus f_random.
  */
-Utils::Vector3d lb_viscous_coupling(Particle *p,
+Utils::Vector3d lb_viscous_coupling(Particle const &p,
                                     Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   auto const interpolated_u =
-      lb_lbinterpolation_get_interpolated_velocity(p->r.p) *
+      lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
       lb_lbfluid_get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
-  if (p->swim.swimming) {
-    v_drift += p->swim.v_swim * p->r.calc_director();
-    p->swim.v_center[0] = interpolated_u[0];
-    p->swim.v_center[1] = interpolated_u[1];
-    p->swim.v_center[2] = interpolated_u[2];
+  if (p.swim.swimming) {
+    v_drift += p.swim.v_swim * p.r.calc_director();
   }
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-  v_drift += p->p.mu_E;
+  v_drift += p.p.mu_E;
 #endif
 
   /* calculate viscous force
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
    * */
-  auto const force = -lb_lbcoupling_get_gamma() * (p->m.v - v_drift) + f_random;
+  auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
 
-  add_md_force(p->r.p, force);
+  add_md_force(p.r.p, force);
 
   return force;
 }
 
 namespace {
-bool in_local_domain(Utils::Vector3d const &pos) {
-  auto const lblattice = lb_lbfluid_get_lattice();
-  auto const my_left = local_geo.my_left();
-  auto const my_right = local_geo.my_right();
+using Utils::Vector;
+using Utils::Vector3d;
 
-  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid &&
-          pos[0] < my_right[0] + 0.5 * lblattice.agrid &&
-          pos[1] >= my_left[1] - 0.5 * lblattice.agrid &&
-          pos[1] < my_right[1] + 0.5 * lblattice.agrid &&
-          pos[2] >= my_left[2] - 0.5 * lblattice.agrid &&
-          pos[2] < my_right[2] + 0.5 * lblattice.agrid);
+template <class T, size_t N> using Box = std::pair<Vector<T, N>, Vector<T, N>>;
+
+/**
+ * @brief Check if a position is in a box.
+ *
+ * The left boundary belong to the box, the
+ * right one does not. Periodic boundaries are
+ * not considered.
+ *
+ * @param pos Position to check
+ * @param box Box to check
+ *
+ * @return True iff the point is inside of the box.
+ */
+template <class T, size_t N>
+bool in_box(Vector<T, N> const &pos, Box<T, N> const &box) {
+  return (pos >= box.first) and (pos < box.second);
+}
+
+/**
+ * @brief Check if a position is within the local box + halo.
+ *
+ * @param pos Position to check
+ * @param local_box Geometry to check
+ * @param halo Halo
+ *
+ * @return True iff the point is inside of the box up to halo.
+ */
+template <class T>
+bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
+                     T const &halo = {}) {
+  auto const halo_vec = Vector<T, 3>::broadcast(halo);
+
+  return in_box(
+      pos, {local_geo.my_left() - halo_vec, local_geo.my_right() + halo_vec});
+}
+
+/**
+ * @brief Check if a position is within the local LB domain
+ *       plus halo.
+ *
+ * @param pos Position to check
+ *
+ * @return True iff the point is inside of the domain.
+ */
+bool in_local_halo(Vector3d const &pos) {
+  auto const halo = 0.5 * lb_lbfluid_get_agrid();
+
+  return in_local_domain(pos, local_geo, halo);
 }
 
 #ifdef ENGINE
 void add_swimmer_force(Particle &p) {
   if (p.swim.swimming) {
+    if (in_local_domain(p.r.p, local_geo)) {
+      p.swim.v_center = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
+                        lb_lbfluid_get_lattice_speed();
+    } else {
+      p.swim.v_center = {};
+    }
+
     // calculate source position
     const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
 
-    if (not in_local_domain(source_position)) {
+    if (not in_local_halo(source_position)) {
       return;
     }
 
-    p.swim.v_source =
-        lb_lbinterpolation_get_interpolated_velocity(source_position) *
-        lb_lbfluid_get_lattice_speed();
+    if (in_local_domain(source_position, local_geo)) {
+      p.swim.v_source =
+          lb_lbinterpolation_get_interpolated_velocity(source_position) *
+          lb_lbfluid_get_lattice_speed();
+    } else {
+      p.swim.v_source = {};
+    }
 
     add_md_force(source_position, p.swim.f_swim * director);
   }
 }
 #endif
+
 } // namespace
 
-void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
-                                            const ParticleRange &particles) {
+void lb_lbcoupling_calc_particle_lattice_ia(
+    bool couple_virtual, const ParticleRange &particles,
+    const ParticleRange &more_particles) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
@@ -211,12 +284,19 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
         ghost_communicator(&cell_structure.exchange_ghosts_comm,
                            GHOSTTRANS_SWIMMING);
 #endif
+
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
 
         ctr_type c;
-        if (lb_lbfluid_get_kT() > 0.0) {
+        auto const kT = lb_lbfluid_get_kT();
+        auto const noise_amplitude =
+            (kT > 0.) ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT /
+                                  time_step)
+                      : 0.0;
+
+        if (noise_amplitude > 0.0) {
           c = ctr_type{{lb_particle_coupling.rng_counter_coupling->value(),
                         static_cast<uint64_t>(RNGSalt::PARTICLES)}};
         } else {
@@ -228,48 +308,53 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
          * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
          * time_step comes from the discretization.
          */
-        auto const noise_amplitude = sqrt(12. * 2. * lb_lbcoupling_get_gamma() *
-                                          lb_lbfluid_get_kT() / time_step);
-        auto f_random = [&c](int id) -> Utils::Vector3d {
-          if (lb_lbfluid_get_kT() > 0.0) {
+        auto f_random = [&c, noise_amplitude](int id) -> Utils::Vector3d {
+          if (noise_amplitude > 0.0) {
             key_type k{{static_cast<uint32_t>(id)}};
 
             auto const noise = rng_type{}(c, k);
 
             using Utils::uniform;
-            return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
-                                   uniform(noise[2])} -
-                   Utils::Vector3d::broadcast(0.5);
+            using Utils::Vector3d;
+            return Vector3d{uniform(noise[0]), uniform(noise[1]),
+                            uniform(noise[2])} -
+                   Vector3d::broadcast(0.5);
           }
-          return Utils::Vector3d{};
+          return {};
         };
 
-        /* local cells */
-        for (auto &p : particles) {
-          if (!p.p.is_virtual or couple_virtual) {
+        auto couple_particle = [&](Particle &p) -> void {
+          if (p.p.is_virtual and !couple_virtual)
+            return;
+
+          /* Particle is in our LB volume, so this node
+           * is responsible to adding its force */
+          if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
-                &p, noise_amplitude * f_random(p.identity()));
+                p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
             p.f.f += force;
-#ifdef ENGINE
-            add_swimmer_force(p);
-#endif
+            /* Particle is not in our domain, but adds to the force
+             * density in our domain, only calculate contribution to
+             * the LB force density. */
+          } else if (in_local_halo(p.r.p)) {
+            lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()));
           }
+
+#ifdef ENGINE
+          add_swimmer_force(p);
+#endif
+        };
+
+        /* Couple particles ranges */
+        for (auto &p : particles) {
+          couple_particle(p);
         }
 
-        /* ghost cells */
-        for (auto &p : ghost_cells.particles()) {
-          /* for ghost particles we have to check if they lie
-           * in the range of the local lattice nodes */
-          if (in_local_domain(p.r.p)) {
-            if (!p.p.is_virtual || couple_virtual) {
-              lb_viscous_coupling(&p, noise_amplitude * f_random(p.identity()));
-#ifdef ENGINE
-              add_swimmer_force(p);
-#endif
-            }
-          }
+        for (auto &p : more_particles) {
+          couple_particle(p);
         }
+
         break;
       }
       }
@@ -278,13 +363,15 @@ void lb_lbcoupling_calc_particle_lattice_ia(bool couple_virtual,
 }
 
 void lb_lbcoupling_propagate() {
-  if (lb_lbfluid_get_kT() > 0.0) {
-    if (lattice_switch == ActiveLB::CPU) {
-      lb_particle_coupling.rng_counter_coupling->increment();
-    } else if (lattice_switch == ActiveLB::GPU) {
+  if (lattice_switch != ActiveLB::NONE) {
+    if (lb_lbfluid_get_kT() > 0.0) {
+      if (lattice_switch == ActiveLB::CPU) {
+        lb_particle_coupling.rng_counter_coupling->increment();
+      } else if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-      rng_counter_coupling_gpu->increment();
+        rng_counter_coupling_gpu->increment();
 #endif
+      }
     }
   }
 }

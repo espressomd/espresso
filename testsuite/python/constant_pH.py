@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,7 @@
 """
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import reaction_ensemble
 
 
@@ -73,23 +73,20 @@ class ReactionEnsembleTest(ut.TestCase):
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
-        temperature = ReactionEnsembleTest.temperature
         type_A = ReactionEnsembleTest.type_A
         type_H = ReactionEnsembleTest.type_H
         type_HA = ReactionEnsembleTest.type_HA
-        box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         RE = ReactionEnsembleTest.RE
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
         RE.reaction(40 * N0)
 
-        volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 1000
-        for i in range(num_samples):
+        for _ in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
             average_NHA += system.number_of_particles(type=type_HA)

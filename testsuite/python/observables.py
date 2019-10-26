@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,16 +19,21 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-from numpy.random import random
+from numpy.random import random, randint
 import espressomd.observables
 
 
 def calc_com_x(system, x):
-    if espressomd.has_features(["MASS"]):
-        com_x = np.average(
-            getattr(system.part[:], x), weights=system.part[:].mass, axis=0)
-    else:
-        com_x = np.average(getattr(system.part[:], x), axis=0)
+    masses = system.part[:].mass
+
+    # Virtual sites are excluded since they do not have meaningful mass
+    if espressomd.has_features("VIRTUAL_SITES"):
+        for i, p in enumerate(system.part):
+            if p.virtual:
+                masses[i] = 0.
+
+    com_x = np.average(
+        getattr(system.part[:], x), weights=masses, axis=0)
     return com_x
 
 
@@ -51,6 +56,9 @@ class Observables(ut.TestCase):
                 if espressomd.has_features("ELECTROSTATICS"):
                     self.system.part[i].q = (1 if i % 2 == 0 else -1)
 
+        if espressomd.has_features("VIRTUAL_SITES"):
+            self.system.part[randint(self.N_PART)].virtual = True
+
     def generate_test_for_pid_observable(
             _obs_name, _pprop_name, _agg_type=None):
         """Generates test cases for observables working on particle id lists.
@@ -69,11 +77,11 @@ class Observables(ut.TestCase):
             part_data = getattr(self.system.part[id_list], pprop_name)
             # Reshape and aggregate to linear array
             if len(part_data.shape) > 1:
-                if (agg_type == "average"):
-                    part_data = average(part_data, 0)
-                if (agg_type == "sum"):
-                    part_data = sum(part_data, 0)
-                if (agg_type == 'com'):
+                if agg_type == "average":
+                    part_data = np.average(part_data, 0)
+                if agg_type == "sum":
+                    part_data = np.sum(part_data, 0)
+                if agg_type == 'com':
                     part_data = calc_com_x(self.system, pprop_name)
                 part_data = part_data.flatten()
 
@@ -119,7 +127,7 @@ class Observables(ut.TestCase):
             ids=range(self.N_PART))
         obs_data = obs.calculate()
         part_data = np.array([p.convert_vector_space_to_body(p.v)
-                             for p in self.system.part])
+                              for p in self.system.part])
         np.testing.assert_array_almost_equal(part_data.flatten(), obs_data,
                                              err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
                                              decimal=9)
