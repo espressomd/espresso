@@ -15,4 +15,8 @@ target_include_directories(matheval.x3
 target_compile_features(matheval.x3
   PUBLIC cxx_std_14
   )
+find_package(Boost 1.65.1 REQUIRED)
+target_link_libraries(matheval.x3
+  PRIVATE Boost::boost
+  )
 add_library(matheval::x3 ALIAS matheval.x3)

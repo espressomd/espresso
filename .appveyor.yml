@@ -12,7 +12,7 @@ build_script:
   - mkdir build
   - cd build
   - cmake -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" -DBOOST_ROOT="%BOOST_ROOT%" ..
-  - cmake --build . --target examples --config "%CONFIG%"
+  - cmake --build "./examples" --target "examples" --config "%CONFIG%"
 
 test_script:
-  - cmake --build . --target check --config "%CONFIG%"
+  - cmake --build "./tests" --target "check" --config "%CONFIG%"
