@@ -41,6 +41,7 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <boost/range/numeric.hpp>
 #include <cstdio>
 #include <cstring>
 #include <type_traits>
@@ -138,33 +139,34 @@ void free_comm(GhostCommunicator *gcr) {
     ghost_comm.part_lists.clear();
 }
 
-static int calc_transmit_size(GhostCommunication &ghost_comm,
-                              unsigned int data_parts) {
-  int n_buffer_new;
-
-  if (data_parts & GHOSTTRANS_PARTNUM)
-    n_buffer_new = sizeof(int) * ghost_comm.part_lists.size();
-  else {
-    n_buffer_new = 0;
-    if (data_parts & GHOSTTRANS_PROPRTS) {
-      n_buffer_new += Utils::MemcpyOArchive::packing_size<ParticleProperties>();
-    }
-    if (data_parts & GHOSTTRANS_BONDS) {
-      n_buffer_new += sizeof(int);
-    }
-    if (data_parts & GHOSTTRANS_POSITION)
-      n_buffer_new += sizeof(ParticlePosition);
-    if (data_parts & GHOSTTRANS_MOMENTUM)
-      n_buffer_new += sizeof(ParticleMomentum);
-    if (data_parts & GHOSTTRANS_FORCE)
-      n_buffer_new += sizeof(ParticleForce);
-
-    int count = 0;
-    for (auto const &pl : ghost_comm.part_lists)
-      count += pl->n;
-    n_buffer_new *= count;
+static size_t calc_transmit_size(unsigned data_parts) {
+  size_t size = {};
+  if (data_parts & GHOSTTRANS_PROPRTS) {
+    size += Utils::MemcpyOArchive::packing_size<ParticleProperties>();
   }
-  return n_buffer_new;
+  if (data_parts & GHOSTTRANS_BONDS) {
+    size += sizeof(int);
+  }
+  if (data_parts & GHOSTTRANS_POSITION)
+    size += sizeof(ParticlePosition);
+  if (data_parts & GHOSTTRANS_MOMENTUM)
+    size += sizeof(ParticleMomentum);
+  if (data_parts & GHOSTTRANS_FORCE)
+    size += sizeof(ParticleForce);
+
+  return size;
+}
+
+static size_t calc_transmit_size(GhostCommunication &ghost_comm,
+                              unsigned int data_parts) {
+  if (data_parts & GHOSTTRANS_PARTNUM)
+    return sizeof(int) * ghost_comm.part_lists.size();
+  else {
+    auto const n_part = boost::accumulate(
+        ghost_comm.part_lists, 0ul,
+        [](size_t sum, auto part_list) { return sum + part_list->n; });
+    return n_part * calc_transmit_size(data_parts);
+  }
 }
 
 static void prepare_send_buffer(CommBuf &send_buffer,
@@ -283,9 +285,8 @@ static void put_recv_buffer(CommBuf &recv_buffer,
     }
   }
 
-  if (archiver.bytes_read() != recv_buffer.size()) {
-    throw std::runtime_error("packing size mismatch receiver");
-  }
+  assert(archiver.bytes_read() == recv_buffer.size());
+
   recv_buffer.bonds().clear();
 }
 
