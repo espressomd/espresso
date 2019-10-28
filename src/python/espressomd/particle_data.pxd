@@ -76,9 +76,6 @@ cdef extern from "particle_data.hpp":
             double v_swim
             int push_pull
             double dipole_length
-            double v_center[3]
-            double v_source[3]
-            double rotational_friction
 
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)

@@ -34,6 +34,18 @@ enum : uint8_t {
   ROTATION_Z = 4u
 };
 
+struct ParticleParametersSwimming {
+  bool swimming = false;
+  double f_swim = 0.;
+  double v_swim = 0.;
+  int push_pull = 0;
+  double dipole_length = 0.;
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar &swimming &f_swim &v_swim &push_pull &dipole_length;
+  }
+};
+
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
  *  for all ghosts. Ghosts are particles which are
@@ -156,6 +168,10 @@ struct ParticleProperties {
   Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
 #endif
+
+#ifdef ENGINE
+  ParticleParametersSwimming swim;
+#endif
 };
 
 /** Positional information on a particle. Information that is
@@ -240,27 +256,6 @@ struct ParticleLocal {
   Utils::Vector3i i = {0, 0, 0};
 };
 
-struct ParticleParametersSwimming {
-// ifdef inside because we need this type for some MPI prototypes
-#ifdef ENGINE
-  bool swimming = false;
-  double f_swim = 0.;
-  double v_swim = 0.;
-  int push_pull = 0;
-  double dipole_length = 0.;
-  Utils::Vector3d v_center;
-  Utils::Vector3d v_source;
-  double rotational_friction = 0.;
-#endif
-
-  template <typename Archive> void serialize(Archive &ar, long int) {
-#ifdef ENGINE
-    ar &swimming &f_swim &v_swim &push_pull &dipole_length &v_center &v_source
-        &rotational_friction;
-#endif
-  }
-};
-
 /** Struct holding all information for one particle. */
 struct Particle {
   int &identity() { return p.identity; }
@@ -292,9 +287,6 @@ struct Particle {
     ret.m = m;
     ret.f = f;
     ret.l = l;
-#ifdef ENGINE
-    ret.swim = swim;
-#endif
 
     return ret;
   }
@@ -345,10 +337,6 @@ struct Particle {
    *  interactions
    */
   IntList el;
-#endif
-
-#ifdef ENGINE
-  ParticleParametersSwimming swim;
 #endif
 };
 

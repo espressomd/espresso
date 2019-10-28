@@ -35,23 +35,12 @@
 #include "rotation.hpp"
 
 #ifdef ROTATION
-#include "Particle.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
-#include "cuda_interface.hpp"
-#include "errorhandling.hpp"
-#include "forces.hpp"
-#include "global.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
-#include <utils/math/quaternion.hpp>
-#include <utils/math/rotation_matrix.hpp>
+#include <utils/mask.hpp>
 
 #include <cmath>
-#include <utils/mask.hpp>
 
 /** Calculate the derivatives of the quaternion and angular acceleration
  *  for a given particle
@@ -63,10 +52,7 @@
  *  @param[out] Wd   Angular acceleration of the particle
  */
 static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
-                       double S[3], double Wd[3]);
-
-void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
-                double Wd[3]) {
+                       double S[3], double Wd[3]) {
   /* calculate the first derivative of the quaternion */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
@@ -175,48 +161,12 @@ inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
 void convert_torques_propagate_omega(const ParticleRange &particles) {
-
-#if defined(CUDA) && defined(ENGINE)
-  if ((lb_lbfluid_get_lattice_switch() == ActiveLB::GPU) &&
-      swimming_particles_exist) {
-    copy_v_cs_from_GPU(particles);
-  }
-#endif
-
   for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
 
     convert_torque_to_body_frame_apply_fix(p);
-
-#if defined(ENGINE)
-    if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
-      if (lb_lbfluid_get_lattice_switch() == ActiveLB::CPU && n_nodes > 1 &&
-          p.swim.rotational_friction != 0.) {
-        runtimeErrorMsg() << "ENGINE rotational_friction feature with CPU-LB "
-                             "only implemented for one CPU core";
-      }
-
-      auto const dip = p.swim.dipole_length * p.r.calc_director();
-
-      auto const diff = p.swim.v_center - p.swim.v_source;
-
-      const Utils::Vector3d cross = vector_product(diff, dip);
-      const double l_diff = diff.norm();
-      const double l_cross = cross.norm();
-
-      if (l_cross > 0 && p.swim.dipole_length > 0) {
-        auto const omega_swim =
-            l_diff / (l_cross * p.swim.dipole_length) * cross;
-
-        auto const omega_swim_body =
-            convert_vector_space_to_body(p, omega_swim);
-        p.f.torque +=
-            p.swim.rotational_friction * (omega_swim_body - p.m.omega);
-      }
-    }
-#endif
 
     // Propagation of angular velocities
     p.m.omega += hadamard_division(time_step_half * p.f.torque, p.p.rinertia);
