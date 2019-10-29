@@ -1954,19 +1954,11 @@ For this one has to provide the following reaction to the Widom method:
     widom.measure_excess_chemical_potential(0)
 
 
-The call of ``add_reaction`` registers the "forward reaction"/ insertion :math:`\mathrm{\emptyset \to type_B` (which is the 0th registered reaction) and the "reverse reaction"/deletion :math:`\mathrm{type_B \to \emptyset ` (which is the 1st registered reaction). 
-Multiple reactions for the insertions for different types can be added to the same ``WidomInsertion`` instance.
-Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
+The call of ``add_reaction`` registers the insertion :math:`\mathrm{\emptyset \to type_B` (which is the 0th registered reaction). 
+Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance. 
+Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``. 
+The next insertion reaction can then be adressed with ``widom.measure_excess_chemical_potential(1)``. 
 Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NPT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
-
-The current implementation can also use the inverse Widom method, where one deletes a particle from a NVT simulation. The deletion method is, however, only experimental at the moment. Use with care and consult your preferred source of literature before using it.
-For making use of the inverse Widom scheme one has to provide the same reaction as above to the Widom method but call the measurement function differently:
-
-.. code-block:: python
-
-    widom.measure_excess_chemical_potential(1)
-
-Here you call the method ``measure_excess_chemical_potential`` with argument 1 because you want to perform the deletion reaction. The deletion is rejected if there is no particle which can be removed from the system.
 
 The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
 

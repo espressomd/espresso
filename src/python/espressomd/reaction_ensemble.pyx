@@ -769,13 +769,14 @@ cdef class WidomInsertion(ReactionAlgorithm):
 
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system.
+        Measures the excess chemical potential in a homogeneous system for the provided reaction_id.
+        Please register the insertion moves first via :meth:`add_reaction` (with only product types specified).
         Returns the excess chemical potential and the standard error for the
-        excess chemical potential. It assumes that your samples are
-        uncorrelated in estimating the standard error.
+        excess chemical potential. The error estimate assumes that your samples are
+        uncorrelated.
 
         """
-        if(reaction_id < 0 or reaction_id > deref(self.WidomInsertionPtr).reactions.size() - 1):
+        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1)/2): #make inverse widom scheme (deletion of particles) inaccessible
             raise ValueError("This reaction is not present")
         return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
-            int(reaction_id))
+            int(2*reaction_id)) #make inverse widom scheme (deletion of particles) inaccessible. The deletion reactions are the odd reaction_ids
