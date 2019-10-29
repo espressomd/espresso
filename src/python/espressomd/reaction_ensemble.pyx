@@ -638,11 +638,11 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a valid key" % k)
 
-        self.WLRptr.get().final_wang_landau_parameter = self._params[
+        deref(self.WLRptr).final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]
-        self.WLRptr.get().output_filename = self._params[
+        deref(self.WLRptr).output_filename = self._params[
             "full_path_to_output_filename"].encode("utf-8")
-        self.WLRptr.get().do_not_sample_reaction_partition_function = self._params[
+        deref(self.WLRptr).do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 
     def _valid_keys_set_wang_landau_parameters(self):
@@ -654,7 +654,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
-        self.WLRptr.get().load_wang_landau_checkpoint(checkpoint_name)
+        deref(self.WLRptr).load_wang_landau_checkpoint(checkpoint_name)
 
     def write_wang_landau_checkpoint(self):
         """
@@ -664,7 +664,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
-        self.WLRptr.get().write_wang_landau_checkpoint(checkpoint_name)
+        deref(self.WLRptr).write_wang_landau_checkpoint(checkpoint_name)
 
     def update_maximum_and_minimum_energies_at_current_state(self):
         """
@@ -689,7 +689,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         filename = "preliminary_energy_run_results".encode("utf-8")
-        self.WLRptr.get().write_out_preliminary_energy_run_results(filename)
+        deref(self.WLRptr).write_out_preliminary_energy_run_results(filename)
 
     def write_wang_landau_results_to_file(self, filename):
         """
@@ -697,7 +697,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         collective variables.
 
         """
-        self.WLRptr.get().write_wang_landau_results_to_file(
+        deref(self.WLRptr).write_wang_landau_results_to_file(
             filename.encode("utf-8"))
 
     def displacement_mc_move_for_particles_of_type(self, type_mc,
@@ -718,7 +718,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         use_wang_landau = True
-        self.WLRptr.get().do_global_mc_move_for_particles_of_type(
+        deref(self.WLRptr).do_global_mc_move_for_particles_of_type(
             type_mc, particle_number_to_be_changed, use_wang_landau)
 
 
@@ -775,4 +775,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
         uncorrelated in estimating the standard error.
 
         """
-        return self.WidomInsertionPtr.get().measure_excess_chemical_potential(int(reaction_id))
+        if(reaction_id < 0 or reaction_id > deref(self.WidomInsertionPtr).reactions.size() - 1):
+            raise ValueError("This reaction is not present")
+        return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
+            int(reaction_id))
