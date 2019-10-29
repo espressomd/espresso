@@ -770,7 +770,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
         Measures the excess chemical potential in a homogeneous system for the provided reaction_id.
-        Please register the insertion moves first via :meth:`add_reaction` (with only product types specified).
+        Please register the insertion moves first via calling the method add_reaction (with only product types specified).
         Returns the excess chemical potential and the standard error for the
         excess chemical potential. The error estimate assumes that your samples are
         uncorrelated.
