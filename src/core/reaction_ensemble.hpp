@@ -195,6 +195,7 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
+  bool all_reactant_particles_exist(int reaction_id);
 
 private:
   std::seed_seq m_seeder;
@@ -212,7 +213,6 @@ private:
       -10000; // this is the default charge which is assigned to a type which
               // occurs in a reaction. this charge has to be overwritten. if it
               // is not overwritten the reaction ensemble will complain.
-  bool all_reactant_particles_exist(int reaction_id);
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
   void hide_particle(int p_id, int previous_type);
