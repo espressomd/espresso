@@ -108,10 +108,7 @@ bool ek_initialized = false;
 /*-----------------------------------------------------------*/
 
 /** %Lattice Boltzmann update gpu called from integrate.cpp */
-void lattice_boltzmann_update_gpu() {
-
-  lb_integrate_GPU();
-}
+void lattice_boltzmann_update_gpu() { lb_integrate_GPU(); }
 
 /** (Re-)allocation of the memory needed for the particles (CPU part) */
 void lb_realloc_particles_gpu() {

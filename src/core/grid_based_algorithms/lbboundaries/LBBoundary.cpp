@@ -28,7 +28,9 @@ Utils::Vector3d LBBoundary::get_force() const {
               }
             } // Loop over cells
     }         // loop over lb cells
-    return boost::mpi::all_reduce(comm_cart, force_density, std::plus<Utils::Vector3d>()) *lb_lbfluid_get_density();
+    return boost::mpi::all_reduce(comm_cart, force_density,
+                                  std::plus<Utils::Vector3d>()) *
+           lb_lbfluid_get_density();
   } else {
     if (this_node == 0) {
       return lbboundary_get_force(this);

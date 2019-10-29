@@ -336,8 +336,8 @@ IF LB_WALBERLA:
         """
 
         def _set_params_in_es_core(self):
-          pass
-        
+            pass
+
         def valid_keys(self):
             return "agrid", "tau", "dens", "visc", "kT", "ext_force_density"
 
@@ -353,9 +353,9 @@ IF LB_WALBERLA:
                     "dens": -1.0,
                     "ext_force_density": [0.0, 0.0, 0.0],
                     "visc": -1.0,
-#                    "bulk_visc": -1.0,
+                    #                    "bulk_visc": -1.0,
                     "tau": -1.0,
-#                    "seed": None,
+                    #                    "seed": None,
                     "kT": 0.}
 
         def _set_lattice_switch(self):
@@ -370,7 +370,6 @@ IF LB_WALBERLA:
 
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()
-
 
 
 IF CUDA:
@@ -421,9 +420,9 @@ IF CUDA:
             length = positions.shape[0]
             velocities = np.empty_like(positions)
             if three_point:
-                quadratic_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             else:
-                linear_velocity_interpolation( < double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
+                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
             return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:

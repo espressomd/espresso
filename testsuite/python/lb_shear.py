@@ -99,7 +99,7 @@ class LBShearCommon:
         self.system.actors.clear()
         try: 
             del self.lbf
-        except:
+        except BaseException:
             pass
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
@@ -168,7 +168,7 @@ class LBShearCommon:
             np.copy(wall1.get_force()),
             -np.copy(wall2.get_force()),
             atol=1E-4)
-        np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()),shear_direction),
+        np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()), shear_direction),
                                    SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
 
     def test(self):
@@ -209,6 +209,7 @@ class LBWalberlaShear(ut.TestCase, LBShearCommon):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidWalberla
+
 
 if __name__ == '__main__':
     ut.main()

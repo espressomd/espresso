@@ -384,18 +384,16 @@ class TestLB:
         self.system.part.add(pos=[0.1, 0.2, 0.3], fix=[1, 1, 1])
         base_params = {}
         base_params.update(
-          ext_force_density = [2.3, 1.2, 0.1],
-          visc=self.params['viscosity'],
-          dens=self.params['dens'],
-          agrid=self.params['agrid'])
+            ext_force_density=[2.3, 1.2, 0.1],
+            visc=self.params['viscosity'],
+            dens=self.params['dens'],
+            agrid=self.params['agrid'])
 
         def params_with_tau(tau):
             params = copy(base_params)
             params.update(tau=tau)
             return params
 
-          
-        
         lbf = self.lb_class(**params_with_tau(self.system.time_step))
         sim_time = 100 * self.params['time_step']
         self.system.actors.add(lbf)
@@ -413,11 +411,11 @@ class TestLB:
         with self.assertRaises(ValueError):
             self.system.actors.add(
                 self.lb_class(params_with_tau(1.1 * self.system.time_step)))
-        
+
         self.system.actors.clear()
         self.system.actors.add(
             self.lb_class(**params_with_tau(self.system.time_step)))
-        
+
         with self.assertRaises(ValueError):
             self.system.time_step = 2. * lbf.get_params()["tau"]
             self.system.integrator.run(1)
@@ -490,13 +488,16 @@ class TestLBWalberla(TestLB, ut.TestCase):
 
     def test_parameter_change_without_seed(self):
         print("Thermalization not implemented for Walberla. skipping test")
+
     def test_raise_if_not_active(self):
         print("Not supported by Walberla ")
 
     def test_properties(self):
-        print("LB Walberla ont thermliized." )
+        print("LB Walberla ont thermliized.")
 
     def test_stress_tensor_observable(self):
         print("Not supported by Walberla")
+
+
 if __name__ == "__main__":
     ut.main()

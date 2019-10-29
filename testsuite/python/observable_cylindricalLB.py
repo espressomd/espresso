@@ -254,7 +254,9 @@ class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
         self.system.actors.remove(self.lbf)
         self.system.part.clear()
 
-class CylindricalLBObservableWalberla(ut.TestCase, CylindricalLBObservableCommon):
+
+class CylindricalLBObservableWalberla(
+        ut.TestCase, CylindricalLBObservableCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)

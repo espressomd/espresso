@@ -12,9 +12,9 @@
 #include "boost/tuple/tuple.hpp"
 #include "boundary/BoundaryHandling.h"
 #include "core/mpi/Environment.h"
-#include "field/adaptors/GhostLayerFieldAdaptor.h"
 #include "field/FlagField.h"
 #include "field/GhostLayerField.h"
+#include "field/adaptors/GhostLayerFieldAdaptor.h"
 #include "field/distributors/KernelDistributor.h"
 #include "field/interpolators/TrilinearFieldInterpolator.h"
 #include "lbm/boundary/UBB.h"
@@ -49,7 +49,7 @@ public:
       : m_pdf_field_id(pdf_field_id), m_force_field_id(force_field_id),
         m_force_field_from_md_id(force_field_from_md_id),
         m_boundary_handling_id(boundary_handling_id),
-        m_ext_force(walberla::Vector3<walberla::real_t>{0, 0, 0}) {};
+        m_ext_force(walberla::Vector3<walberla::real_t>{0, 0, 0}){};
 
   void set_ext_force(const Utils::Vector3d &ext_force) {
     m_ext_force = to_vector3(ext_force);
@@ -269,31 +269,28 @@ private:
   using VelocityAdaptor =
       walberla::lbm::Adaptor<Lattice_model_t>::VelocityVector;
 
-  template< typename vector_field_t >
-  class force_vector_adaptor_function
-  {
+  template <typename vector_field_t> class force_vector_adaptor_function {
   public:
-     typedef vector_field_t                             basefield_t;
-     typedef typename basefield_t::const_base_iterator  basefield_iterator;
-     typedef walberla::Vector3<walberla::real_t>        value_type;
+    typedef vector_field_t basefield_t;
+    typedef typename basefield_t::const_base_iterator basefield_iterator;
+    typedef walberla::Vector3<walberla::real_t> value_type;
 
-     static const walberla::uint_t F_SIZE = 1u;
+    static const walberla::uint_t F_SIZE = 1u;
 
-     value_type operator() ( const basefield_t & baseField,
-                             walberla::cell_idx_t x, walberla::cell_idx_t y, walberla::cell_idx_t z, walberla::cell_idx_t /*f*/ = 0 ) const
-     {
-        return baseField.get(x,y,z);
-     }
+    value_type operator()(const basefield_t &baseField, walberla::cell_idx_t x,
+                          walberla::cell_idx_t y, walberla::cell_idx_t z,
+                          walberla::cell_idx_t /*f*/ = 0) const {
+      return baseField.get(x, y, z);
+    }
 
-     value_type operator() ( const basefield_iterator & it ) const
-     {
-        const basefield_t * baseFieldPtr = dynamic_cast<const basefield_t *>( it.getField() );
-        return baseFieldPtr->get( it );
-     }
+    value_type operator()(const basefield_iterator &it) const {
+      const basefield_t *baseFieldPtr =
+          dynamic_cast<const basefield_t *>(it.getField());
+      return baseFieldPtr->get(it);
+    }
   };
 
-  using ForceAdaptor = 
-      walberla::field::GhostLayerFieldAdaptor<
+  using ForceAdaptor = walberla::field::GhostLayerFieldAdaptor<
       force_vector_adaptor_function<vector_field_t>, 0>;
 
   using Vector_field_distributor_t =
@@ -302,11 +299,9 @@ private:
       walberla::field::TrilinearFieldInterpolator<VelocityAdaptor,
                                                   Flag_field_t>;
   using ForceFieldAdaptorInterpolator =
-      walberla::field::TrilinearFieldInterpolator<ForceAdaptor,
-                                                  Flag_field_t>;
+      walberla::field::TrilinearFieldInterpolator<ForceAdaptor, Flag_field_t>;
   using ScalarFieldAdaptorInterpolator =
-      walberla::field::TrilinearFieldInterpolator<DensityAdaptor,
-                                                  Flag_field_t>;
+      walberla::field::TrilinearFieldInterpolator<DensityAdaptor, Flag_field_t>;
 
 public:
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>

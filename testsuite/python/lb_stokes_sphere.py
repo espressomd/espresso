@@ -86,12 +86,13 @@ class Stokes:
 
         last_force = -1000.
         dynamic_viscosity = self.lbf.viscosity * self.lbf.density
-        stokes_force = 6 * np.pi * dynamic_viscosity * radius * np.linalg.norm(v)
+        stokes_force = 6 * np.pi * dynamic_viscosity * \
+            radius * np.linalg.norm(v)
         self.system.integrator.run(int(self.system.box_l[0]))
         while True:
             self.system.integrator.run(5)
             force = np.linalg.norm(sphere.get_force())
-            print(self.system.time,force)
+            print(self.system.time, force)
             if np.abs(last_force - force) < 0.001 * stokes_force:
                 break
             last_force = force

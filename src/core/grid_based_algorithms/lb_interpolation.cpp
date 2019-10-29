@@ -21,8 +21,8 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lattice.hpp"
+#include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include <utils/Vector.hpp>
@@ -93,10 +93,10 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   if (lattice_switch == ActiveLB::CPU) {
-  lattice_interpolation(lblattice, pos,
-                        [&interpolated_u](Lattice::index_t index, double w) {
-                          interpolated_u += w * node_u(index);
-                        });
+    lattice_interpolation(lblattice, pos,
+                          [&interpolated_u](Lattice::index_t index, double w) {
+                            interpolated_u += w * node_u(index);
+                          });
 
     return interpolated_u;
   } else if (lattice_switch == ActiveLB::WALBERLA) {

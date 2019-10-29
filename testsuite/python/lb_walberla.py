@@ -24,7 +24,8 @@ if espressomd.has_features("LB_WALBERLA"):
 import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features("LB_WALBERLA"), "Skipping for LACK of LB_WALBERLA")
+@ut.skipIf(not espressomd.has_features("LB_WALBERLA"),
+           "Skipping for LACK of LB_WALBERLA")
 class LbWalberlaTest(ut.TestCase):
 
     def test(self):

@@ -56,7 +56,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   Utils::Vector3i grid_dimensions;
   for (int i = 0; i < 3; i++) {
-    if (fabs(round(box_dimensions[i] / agrid) * agrid - box_dimensions[i])/box_dimensions[i] >
+    if (fabs(round(box_dimensions[i] / agrid) * agrid - box_dimensions[i]) /
+            box_dimensions[i] >
         std::numeric_limits<double>::epsilon()) {
       throw std::runtime_error(
           "Box length not commensurate with agrid in direction " +
@@ -102,9 +103,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       m_blocks, "pdf field", *m_lattice_model, to_vector3(m_velocity),
       (real_t)m_density, n_ghost_layers());
 
-  m_flag_field_id =
-      field::addFlagFieldToStorage<Flag_field_t>(m_blocks, "flag field",
-      n_ghost_layers());
+  m_flag_field_id = field::addFlagFieldToStorage<Flag_field_t>(
+      m_blocks, "flag field", n_ghost_layers());
 
   m_boundary_handling_id = m_blocks->addBlockData<Boundary_handling_t>(
       LB_boundary_handling(m_flag_field_id, m_pdf_field_id),
@@ -196,8 +196,9 @@ LbWalberla::get_block_and_cell(const Utils::Vector3i &node,
   if (consider_ghost_layers and !block) {
     // Try to find a block which has the cell as ghost layer
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      if (b->getAABB().getExtended(n_ghost_layers()).contains(real_c(node[0]),
-                                               real_c(node[1]), real_c(node[2]))) {
+      if (b->getAABB()
+              .getExtended(n_ghost_layers())
+              .contains(real_c(node[0]), real_c(node[1]), real_c(node[2]))) {
         block = &(*b);
         break;
       }
@@ -313,8 +314,8 @@ LbWalberla::get_force_at_pos(const Utils::Vector3d &pos) const {
   if (!block)
     return {boost::none};
 
-  auto *force_interpolator = block->getData<ForceFieldAdaptorInterpolator>(
-      m_force_interpolator_id);
+  auto *force_interpolator =
+      block->getData<ForceFieldAdaptorInterpolator>(m_force_interpolator_id);
   Vector3<real_t> f;
   force_interpolator->get(to_vector3(f_pos), &f);
   return {to_vector3d(f)};
@@ -332,9 +333,7 @@ LbWalberla::get_node_boundary_force(const Utils::Vector3i node) const {
   try {
     if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
       return {boost::none};
-  }
-  catch(std::exception e)
-  {
+  } catch (std::exception e) {
     return {boost::none};
   }
 
@@ -386,15 +385,15 @@ bool LbWalberla::set_node_velocity(const Utils::Vector3i &node,
 }
 
 boost::optional<double>
-LbWalberla::get_density_at_pos(const Utils::Vector3d &pos){
+LbWalberla::get_density_at_pos(const Utils::Vector3d &pos) {
   const auto f_pos = folded_position(pos, box_geo);
 
   auto block = get_block(f_pos, true);
   if (!block)
     return {boost::none};
 
-  auto *density_interpolator = block->getData<ScalarFieldAdaptorInterpolator>(
-      m_density_interpolator_id);
+  auto *density_interpolator =
+      block->getData<ScalarFieldAdaptorInterpolator>(m_density_interpolator_id);
   double dens;
   density_interpolator->get(to_vector3(f_pos), &dens);
   return {dens};

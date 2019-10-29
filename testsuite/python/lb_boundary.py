@@ -139,6 +139,7 @@ class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
         self.system.lbboundaries.clear()
         self.system.actors.remove(self.lbf)
 
+
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):
     lbf = None

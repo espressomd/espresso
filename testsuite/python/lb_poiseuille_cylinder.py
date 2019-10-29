@@ -136,7 +136,7 @@ class LBPoiseuilleCommon:
             BOX_L / 2.0 - 1.0,
             EXT_FORCE,
             VISC * DENS)
-        np.testing.assert_allclose(v_measured, v_expected,atol=1E-2)
+        np.testing.assert_allclose(v_measured, v_expected, atol=1E-2)
 
     def prepare_obs(self):
         if self.params['axis'] == [1, 0, 0]:
@@ -173,7 +173,7 @@ class LBPoiseuilleCommon:
             EXT_FORCE,
             VISC * DENS)
         v_measured = obs_result[:, 0, 0, 2]
-        np.testing.assert_allclose(v_measured, v_expected,atol=3.6E-3)
+        np.testing.assert_allclose(v_measured, v_expected, atol=3.6E-3)
 
     def test_x(self):
         self.params['axis'] = [1, 0, 0]

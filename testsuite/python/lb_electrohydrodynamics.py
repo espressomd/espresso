@@ -94,6 +94,5 @@ class LBEHGPU(LBEHTest, ut.TestCase):
         self.LBClass = lb.LBFluidGPU
 
 
-
 if __name__ == "__main__":
     ut.main()

@@ -88,7 +88,7 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
     @utx.skipIfMissingGPU()
     def test_lb_gpu(self):
         self.check_virtual(espressomd.lb.LBFluidGPU)
-    
+
     @utx.skipIfMissingFeatures(["LB_WALBERLA"])
     def test_lb_walberla(self):
         self.check_virtual(espressomd.lb.LBFluidWalberla)

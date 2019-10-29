@@ -51,8 +51,8 @@ class LBBoundaryVelocityTest(ut.TestCase):
         system.integrator.run(2000)
 
         v_fluid = lb_fluid[1, 0, 0].velocity
-        for n in ((1,2,3),(2,2,2)):
-          print(n,lb_fluid[n[0],n[1],n[2]].velocity)
+        for n in ((1, 2, 3), (2, 2, 2)):
+            print(n, lb_fluid[n[0], n[1], n[2]].velocity)
 
         self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)
         self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)

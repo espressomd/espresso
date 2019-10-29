@@ -180,7 +180,6 @@ std::vector<LB_FluidNode> lbfields;
 
 HaloCommunicator update_halo_comm = HaloCommunicator(0);
 
-
 /********************** The Main LB Part *************************************/
 
 /**
@@ -1035,9 +1034,7 @@ inline void lb_collide_stream() {
  *  for the lattice dynamics can be coarser than the MD time step, we
  *  monitor the time since the last lattice update.
  */
-void lattice_boltzmann_update() {
-  lb_collide_stream();
-}
+void lattice_boltzmann_update() { lb_collide_stream(); }
 
 /***********************************************************************/
 /** \name Coupling part */

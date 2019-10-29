@@ -122,6 +122,7 @@ class LBPoiseuilleCommon:
                                      VISC * DENS)
         np.testing.assert_allclose(v_measured, v_expected, atol=4E-3)
 
+
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
@@ -139,6 +140,7 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+
 
 class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
@@ -184,7 +186,9 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
         v_expected = poiseuille_flow(x_values - 0.5 * self.system.box_l[0],
                                      self.system.box_l[0] - 2.0 * AGRID,
                                      EXT_FORCE,
-                                             VISC * DENS)
-        np.testing.assert_allclose(velocities[:,1], v_expected,atol=3E-3)
+                                     VISC * DENS)
+        np.testing.assert_allclose(velocities[:, 1], v_expected, atol=3E-3)
+
+
 if __name__ == '__main__':
     ut.main()

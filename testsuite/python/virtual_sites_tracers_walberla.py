@@ -24,7 +24,8 @@ from espressomd import lb
 from virtual_sites_tracers_common import VirtualSitesTracersCommon
 
 
-@utx.skipIfMissingFeatures(['VIRTUAL_SITES_INERTIALESS_TRACERS',"LB_WALBERLA"])
+@utx.skipIfMissingFeatures(
+    ['VIRTUAL_SITES_INERTIALESS_TRACERS', "LB_WALBERLA"])
 class VirtualSitesTracersWalberla(ut.TestCase, VirtualSitesTracersCommon):
 
     def setUp(self):

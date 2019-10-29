@@ -324,16 +324,15 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         };
 
         auto couple_particle = [&](Particle &p) -> void {
-          if (lattice_switch == ActiveLB::WALBERLA and
-                p.l.ghost and
-                !local_particles[p.p.identity]->l.ghost)
-              return;
+          if (lattice_switch == ActiveLB::WALBERLA and p.l.ghost and
+              !local_particles[p.p.identity]->l.ghost)
+            return;
           if (p.p.is_virtual and !couple_virtual)
             return;
 
           Utils::Vector3d pos = p.r.p;
           if (lattice_switch == ActiveLB::WALBERLA) {
-            pos =folded_position(pos,box_geo);
+            pos = folded_position(pos, box_geo);
           }
           /* Particle is in our LB volume, so this node
            * is responsible to adding its force */

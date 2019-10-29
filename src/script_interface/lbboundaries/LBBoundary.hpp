@@ -68,8 +68,7 @@ public:
       const auto rho = lb_lbfluid_get_density();
       const auto agrid = lb_lbfluid_get_agrid();
       const auto tau = lb_lbfluid_get_tau();
-      const double unit_conversion =
-          agrid / tau / tau;
+      const double unit_conversion = agrid / tau / tau;
       return m_lbboundary->get_force() * unit_conversion;
     }
     return none;

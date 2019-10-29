@@ -47,7 +47,7 @@ bool IsHalo(int indexCheck);
 void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, double *v,
                                 double *forceAdded);
 void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &p, double *v,
-                                double *forceAdded);
+                                        double *forceAdded);
 
 // ***** Internal variables ******
 
@@ -127,8 +127,7 @@ Interpolates LB velocity at the particle positions and propagates the particles
 
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
-  if (lattice_switch == ActiveLB::CPU ||
-      lattice_switch == ActiveLB::WALBERLA)
+  if (lattice_switch == ActiveLB::CPU || lattice_switch == ActiveLB::WALBERLA)
     ParticleVelocitiesFromLB_CPU();
 #ifdef CUDA
   if (lattice_switch == ActiveLB::GPU)
@@ -322,7 +321,7 @@ that we add the f/2 contribution - only for Walberla
 *******************/
 
 void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &pos, double *v,
-                                double *forceAdded) {
+                                        double *forceAdded) {
 
   Utils::Vector3d force = *(lb_walberla()->get_force_at_pos(pos));
   forceAdded[0] = force[0] / 2.0;
@@ -344,7 +343,6 @@ void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &pos, double *v,
   v[1] *= lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
   v[2] *= lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
 }
-
 
 /************
    IsHalo

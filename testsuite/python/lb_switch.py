@@ -81,7 +81,7 @@ class LBSwitchActor(ut.TestCase):
     @utx.skipIfMissingGPU()
     def test_GPU_LB(self):
         self.switch_test(espressomd.lb.LBFluidGPU)
-    
+
     @utx.skipIfMissingFeatures(["LB_WALBERLA"])
     def test_walberla(self):
         self.switch_test(espressomd.lb.LBFluidWalberla)

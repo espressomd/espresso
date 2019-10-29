@@ -26,10 +26,10 @@
 #include "integrate.hpp"
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
-#include "lb_walberla_instance.hpp"
-#include "lb_walberla_interface.hpp"
 #include "lb_collective_interface.hpp"
 #include "lb_interpolation.hpp"
+#include "lb_walberla_instance.hpp"
+#include "lb_walberla_interface.hpp"
 #include "lbgpu.hpp"
 
 #include <utils/index.hpp>
@@ -70,12 +70,12 @@ void lb_lbfluid_update() {
 static double fluidstep = 0.0;
 
 void lb_lbfluid_propagate() {
- if (lattice_switch == ActiveLB::NONE)
-   return;
+  if (lattice_switch == ActiveLB::NONE)
+    return;
 
- // LBGpu interface does not work on non-head-node
- if (lattice_switch == ActiveLB::GPU and this_node !=0)
-   return;
+  // LBGpu interface does not work on non-head-node
+  if (lattice_switch == ActiveLB::GPU and this_node != 0)
+    return;
 
   auto const factor = static_cast<int>(round(lb_lbfluid_get_tau() / time_step));
 
@@ -93,7 +93,6 @@ void lb_lbfluid_propagate() {
       }
     }
   }
-  
 }
 
 /**
@@ -118,7 +117,7 @@ void lb_boundary_mach_check() {
 void lb_lbfluid_sanity_checks() {
   if (lattice_switch == ActiveLB::NONE)
     return;
-  
+
   // LB GPU interface functions only work on the head node.
   if (lattice_switch == ActiveLB::GPU and this_node != 0)
     return;
@@ -126,8 +125,8 @@ void lb_lbfluid_sanity_checks() {
   extern double time_step;
   lb_boundary_mach_check();
   if (time_step > 0.)
-      check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
-  
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
+
   if (lattice_switch == ActiveLB::GPU && this_node == 0) {
 #ifdef CUDA
     lb_GPU_sanity_checks();
@@ -1385,12 +1384,16 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
         ::Communication::Result::one_rank, Walberla::get_node_pressure_tensor,
         ind);
 
-    //subtract offset of the diagonals to get the neq tensor
-    auto const p0 = (lb_lbfluid_get_density()-1.0) * D3Q19::c_sound_sq<double>;
-    //reverts the correction done by walberla
-    auto const revert_factor = lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0/6.0);
-    //uses a factor which gets us the correct results
-    auto const factor = lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() - 1.0/6.0) * lb_lbfluid_get_density();
+    // subtract offset of the diagonals to get the neq tensor
+    auto const p0 =
+        (lb_lbfluid_get_density() - 1.0) * D3Q19::c_sound_sq<double>;
+    // reverts the correction done by walberla
+    auto const revert_factor =
+        lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0 / 6.0);
+    // uses a factor which gets us the correct results
+    auto const factor = lb_lbfluid_get_viscosity() /
+                        (lb_lbfluid_get_viscosity() - 1.0 / 6.0) *
+                        lb_lbfluid_get_density();
 
     stress[1] /= revert_factor / factor;
     stress[3] /= revert_factor / factor;
@@ -1514,8 +1517,7 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
     auto const host_density = static_cast<float>(p_density);
     lb_set_node_rho_GPU(single_nodeindex, host_density);
 #endif //  CUDA
-  }
-  else if (lattice_switch == ActiveLB::CPU) {
+  } else if (lattice_switch == ActiveLB::CPU) {
     auto const stress = lb_lbnode_get_stress(ind);
     auto const momentum_density =
         lb_lbnode_get_velocity(ind) * lb_lbnode_get_density(ind);

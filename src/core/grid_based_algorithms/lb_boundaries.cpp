@@ -258,7 +258,8 @@ void lb_init_boundaries() {
 
           if (dist <= 0 && the_boundary >= 0 &&
               not LBBoundaries::lbboundaries.empty()) {
-//        printf("%d %d %d, %g %g %g: %g %g %g: %g\n",x,y,z,pos[0],pos[1],pos[2],dist_vec[0],dist_vec[1],dist_vec[2],dist);
+            //        printf("%d %d %d, %g %g %g: %g %g %g:
+            //        %g\n",x,y,z,pos[0],pos[1],pos[2],dist_vec[0],dist_vec[1],dist_vec[2],dist);
             auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
             auto &node = lbfields[index];
             node.boundary = the_boundary + 1;
@@ -286,13 +287,13 @@ void lb_init_boundaries() {
       auto const index = index_and_pos.first;
       auto const pos = index_and_pos.second * agrid;
 
-      for (auto it = lbboundaries.begin(); it != lbboundaries.end();
-           ++it) {
+      for (auto it = lbboundaries.begin(); it != lbboundaries.end(); ++it) {
         double dist;
         Utils::Vector3d tmp;
         (**it).calc_dist(pos, dist, tmp);
 
-//        printf("%d %d %d, %g %g %g: %g %g %g: %g\n",index[0],index[1],index[2],pos[0],pos[1],pos[2],tmp[0],tmp[1],tmp[2],dist);
+        //        printf("%d %d %d, %g %g %g: %g %g %g:
+        //        %g\n",index[0],index[1],index[2],pos[0],pos[1],pos[2],tmp[0],tmp[1],tmp[2],dist);
         if (dist <= 0) {
 
           // Set boundaries on the ghost layers

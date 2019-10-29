@@ -61,7 +61,7 @@ class Momentum(object):
 
         for i in range(10):
             self.system.integrator.run(50)
-            print(i,p.v)
+            print(i, p.v)
             # check that momentum stays constant
             np.testing.assert_allclose(
                 self.system.analysis.linear_momentum(), momentum, atol=4E-4)

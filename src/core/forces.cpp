@@ -151,7 +151,7 @@ void force_calc(CellStructure &cell_structure) {
 
   if (lattice_switch != ActiveLB::NONE) {
     lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
-                                         ghost_particles);
+                                           ghost_particles);
   }
 
 #ifdef METADYNAMICS
