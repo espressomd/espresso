@@ -776,7 +776,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
         uncorrelated.
 
         """
-        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1)/2): #make inverse widom scheme (deletion of particles) inaccessible
+        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):  # make inverse widom scheme (deletion of particles) inaccessible
             raise ValueError("This reaction is not present")
         return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
-            int(2*reaction_id)) #make inverse widom scheme (deletion of particles) inaccessible. The deletion reactions are the odd reaction_ids
+            int(2 * reaction_id))  # make inverse widom scheme (deletion of particles) inaccessible. The deletion reactions are the odd reaction_ids
