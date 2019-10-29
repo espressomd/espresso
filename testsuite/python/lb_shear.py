@@ -169,7 +169,7 @@ class LBShearCommon:
             -np.copy(wall2.get_force()),
             atol=1E-4)
         np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()),shear_direction),
-                                   SHEAR_VELOCITY / H * W**2 * VISC, atol=2E-4)
+                                   SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
 
     def test(self):
         x = np.array((1, 0, 0), dtype=float)
