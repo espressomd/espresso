@@ -1737,7 +1737,8 @@ double ConstantpHEnsemble::calculate_acceptance_probability(
 std::pair<double, double>
 WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
   if (!all_reactant_particles_exist(reaction_id))
-    throw std::runtime_error("Trying to remove some non-existing particles from the system via the inverse Widom scheme.");
+    throw std::runtime_error("Trying to remove some non-existing particles "
+                             "from the system via the inverse Widom scheme.");
 
   SingleReaction &current_reaction = reactions[reaction_id];
   const double E_pot_old = calculate_current_potential_energy_of_system();

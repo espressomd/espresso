@@ -775,6 +775,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
         uncorrelated in estimating the standard error.
 
         """
-        if(reaction_id<0 or reaction_id>deref(self.WidomInsertionPtr).reactions.size()-1):
+        if(reaction_id < 0 or reaction_id > deref(self.WidomInsertionPtr).reactions.size() - 1):
             raise ValueError("This reaction is not present")
-        return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(int(reaction_id))
+        return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
+            int(reaction_id))
