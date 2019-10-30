@@ -24,7 +24,7 @@ Testmodule for the observable accumulator.
 import sys
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 import espressomd.observables
 import espressomd.accumulators
 

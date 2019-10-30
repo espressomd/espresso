@@ -35,20 +35,10 @@
 #include "rotation.hpp"
 
 #ifdef ROTATION
-#include "Particle.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
-#include "cuda_interface.hpp"
-#include "forces.hpp"
-#include "global.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
-#include "thermostat.hpp"
 
 #include <utils/constants.hpp>
-#include <utils/math/quaternion.hpp>
-#include <utils/math/rotation_matrix.hpp>
+#include <utils/mask.hpp>
 
 #include <cmath>
 
@@ -62,10 +52,7 @@
  *  @param[out] Wd   Angular acceleration of the particle
  */
 static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
-                       double S[3], double Wd[3]);
-
-void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
-                double Wd[3]) {
+                       double S[3], double Wd[3]) {
   /* calculate the first derivative of the quaternion */
   /* Taken from "An improved algorithm for molecular dynamics simulation of
    * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
@@ -135,19 +122,14 @@ void define_Qdd(Particle const &p, double Qd[4], double Qdd[4], double S[3],
 void propagate_omega_quat_particle(Particle &p) {
 
   // If rotation for the particle is disabled entirely, return early.
-  if (!p.p.rotation)
+  if (p.p.rotation == ROTATION_FIXED)
     return;
 
   Utils::Vector4d Qd{}, Qdd{};
   Utils::Vector3d S{}, Wd{};
 
   // Clear rotational velocity for blocked rotation axes.
-  if (!(p.p.rotation & ROTATION_X))
-    p.m.omega[0] = 0;
-  if (!(p.p.rotation & ROTATION_Y))
-    p.m.omega[1] = 0;
-  if (!(p.p.rotation & ROTATION_Z))
-    p.m.omega[2] = 0;
+  p.m.omega = Utils::mask(p.p.rotation, p.m.omega);
 
   define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
@@ -171,73 +153,20 @@ void propagate_omega_quat_particle(Particle &p) {
   }
 }
 
-inline void convert_torque_to_body_frame_apply_fix_and_thermostat(Particle &p) {
-  auto const t = convert_vector_space_to_body(p, p.f.torque);
-  p.f.torque = Utils::Vector3d{};
-
-  if (thermo_switch & THERMO_LANGEVIN) {
-    friction_thermo_langevin_rotation(p);
-
-    p.f.torque += t;
-  } else {
-    p.f.torque = t;
-  }
-
-  if (!(p.p.rotation & ROTATION_X))
-    p.f.torque[0] = 0;
-
-  if (!(p.p.rotation & ROTATION_Y))
-    p.f.torque[1] = 0;
-
-  if (!(p.p.rotation & ROTATION_Z))
-    p.f.torque[2] = 0;
+inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
+  auto const torque = convert_vector_space_to_body(p, p.f.torque);
+  p.f.torque = mask(p.p.rotation, torque);
 }
 
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
 void convert_torques_propagate_omega(const ParticleRange &particles) {
-
-#if defined(CUDA) && defined(ENGINE)
-  if ((lb_lbfluid_get_lattice_switch() == ActiveLB::GPU) &&
-      swimming_particles_exist) {
-    copy_v_cs_from_GPU(particles);
-  }
-#endif
-
   for (auto &p : particles) {
     // Skip particle if rotation is turned off entirely for it.
     if (!p.p.rotation)
       continue;
 
-    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
-
-#if defined(ENGINE)
-    if (p.swim.swimming && lb_lbfluid_get_lattice_switch() != ActiveLB::NONE) {
-      if (lb_lbfluid_get_lattice_switch() == ActiveLB::CPU && n_nodes > 1 &&
-          p.swim.rotational_friction != 0.) {
-        runtimeErrorMsg() << "ENGINE rotational_friction feature with CPU-LB "
-                             "only implemented for one CPU core";
-      }
-
-      auto const dip = p.swim.dipole_length * p.r.calc_director();
-
-      auto const diff = p.swim.v_center - p.swim.v_source;
-
-      const Utils::Vector3d cross = vector_product(diff, dip);
-      const double l_diff = diff.norm();
-      const double l_cross = cross.norm();
-
-      if (l_cross > 0 && p.swim.dipole_length > 0) {
-        auto const omega_swim =
-            l_diff / (l_cross * p.swim.dipole_length) * cross;
-
-        auto const omega_swim_body =
-            convert_vector_space_to_body(p, omega_swim);
-        p.f.torque +=
-            p.swim.rotational_friction * (omega_swim_body - p.m.omega);
-      }
-    }
-#endif
+    convert_torque_to_body_frame_apply_fix(p);
 
     // Propagation of angular velocities
     p.m.omega += hadamard_division(time_step_half * p.f.torque, p.p.rinertia);
@@ -270,51 +199,27 @@ void convert_initial_torques(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (!p.p.rotation)
       continue;
-    convert_torque_to_body_frame_apply_fix_and_thermostat(p);
+    convert_torque_to_body_frame_apply_fix(p);
   }
-}
-// Frame conversion routines
-
-Utils::Vector3d convert_vector_body_to_space(const Particle &p,
-                                             const Utils::Vector3d &vec) {
-  auto const A = rotation_matrix(p.r.quat);
-  return transpose(A) * vec;
-}
-
-Utils::Vector3d convert_vector_space_to_body(const Particle &p,
-                                             const Utils::Vector3d &v) {
-  return rotation_matrix(p.r.quat) * v;
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
 void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
                            const double phi) {
-  // Convert rotation axis to body-fixed frame
-  Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
-
   // Rotation turned off entirely?
   if (!p.p.rotation)
     return;
 
-  // Per coordinate fixing
-  if (!(p.p.rotation & ROTATION_X))
-    axis[0] = 0;
-  if (!(p.p.rotation & ROTATION_Y))
-    axis[1] = 0;
-  if (!(p.p.rotation & ROTATION_Z))
-    axis[2] = 0;
-  // Re-normalize rotation axis
-  double l = axis.norm();
-  // Check, if the rotation axis is nonzero
-  if (l < std::numeric_limits<double>::epsilon())
-    return;
+  // Convert rotation axis to body-fixed frame
+  auto const axis =
+      mask(p.p.rotation, convert_vector_space_to_body(p, axis_space_frame))
+          .normalize();
 
-  axis /= l;
-
-  double s = sin(phi / 2);
-  Utils::Vector4d q = {cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]};
-  q.normalize();
+  auto const s = std::sin(phi / 2);
+  auto const q =
+      Utils::Vector4d{cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]}
+          .normalize();
 
   // Rotate the particle
   p.r.quat = Utils::multiply_quaternions(p.r.quat, q);

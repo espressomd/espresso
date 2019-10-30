@@ -368,5 +368,17 @@ template <typename T, size_t N> struct decay_to_scalar<Vector<T, N>> {
 
 template <typename T> struct decay_to_scalar<Vector<T, 1>> { using type = T; };
 
+template <std::size_t I, class T, std::size_t N>
+struct tuple_element<I, Vector<T, N>> {
+  using type = T;
+};
+
+template <class T, std::size_t N>
+struct tuple_size<Vector<T, N>> : std::integral_constant<std::size_t, N> {};
+
+template <std::size_t I, class T, std::size_t N>
+auto get(Vector<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
+  return a[I];
+}
 } // namespace Utils
 #endif

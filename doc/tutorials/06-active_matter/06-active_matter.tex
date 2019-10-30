@@ -230,13 +230,7 @@ essentially a point particle, there is no rotation caused by the fluid
 flow,~\textit{e.g.}, a swimmer in a Posseuille flow. If the thermostat is
 switched on, the rotational degrees of freedom will also be thermalized, but
 there is still no contribution of rotation due to `external' flow fields. A
-rather unsatisfying solution to this problem is offered by the
-\codees{rotational_friction} option, which allows one to include the effect of
-fluid flow on the rotation. The algorithm computes the difference in fluid flow
-velocity between the center of the particle and the coupling point, and takes
-the cross product of that with the dipole length. This quantity is then
-converted into a torque using the \codees{rotational_friction}. It is
-recommended to use an alternative means of obtaining rotations in your LB
+It is recommended to use an alternative means of obtaining rotations in your LB
 swimming simulations. For example, by constructing a raspberry
 particle~\cite{lobaskin04,chatterji05,fischer15,degraaf15,degraaf16b}.
 

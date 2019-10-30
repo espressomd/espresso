@@ -535,7 +535,7 @@ Lattice Boltzmann (LB) swimmers
     system = espressomd.System()
 
     system.part.add(id=1, pos=[2, 0, 0], rotation=[1, 1, 1], swimming={
-        'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0, 'rotational_friction': 20})
+        'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})
 
 For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
 item. In lattice Boltzmann self-propulsion is less trivial than for regular MD,
@@ -549,11 +549,7 @@ nature of the particle's flow field by using one of the modes: ``pusher`` or
 ``puller``. You will also need to specify a ``dipole_length`` which determines
 the distance of the source of propulsion from the particle's center. Note that
 you should not put this distance to zero; |es| (currently) does not support
-mathematical dipole flow fields. The key ``rotational_friction`` can be used to
-set the friction that causes the orientation of the particle to change in shear
-flow. The torque on the particle is determined by taking the cross product of
-the difference between the fluid velocity at the center of the particle and at
-the source point and the vector connecting the center and source.
+mathematical dipole flow fields.
 
 You may ask: "Why are there two methods ``v_swim`` and ``f_swim`` for the
 self-propulsion using the lattice Boltzmann algorithm?" The answer is
@@ -566,10 +562,3 @@ reaches a constant speed (given by ``v_swim``) this monopolar moment is gone
 and the flow field is zero! In contrast, ``f_swim`` always, i.e., while
 accelerating *and* while swimming at constant force possesses a dipolar flow
 field.
-
-.. warning::
-
-    Please note that even though swimming is interoperable with the
-    CPU version of LB it is only supported on *one* MPI
-    rank, i.e. ``n_nodes`` = 1.
-

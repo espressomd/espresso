@@ -23,7 +23,7 @@ Testmodule for the observable recorder.
 """
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd.observables import ParticlePositions
 from espressomd.accumulators import TimeSeries
 

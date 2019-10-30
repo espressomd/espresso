@@ -200,8 +200,10 @@ void integrate_vv(int n_steps, int reuse_forces) {
     thermo_cool_down();
 
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
-    if (n_part > 0)
-      lb_lbcoupling_activate();
+  }
+
+  if (n_part > 0) {
+    lb_lbcoupling_activate();
   }
 
   if (check_runtime_errors(comm_cart))

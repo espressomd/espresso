@@ -20,6 +20,7 @@
 #define UTILS_ARRAY_HPP
 
 #include "device_qualifier.hpp"
+#include "get.hpp"
 
 #include <boost/serialization/access.hpp>
 
@@ -158,5 +159,19 @@ private:
     ar &m_storage;
   }
 };
+
+template <std::size_t I, class T, std::size_t N>
+struct tuple_element<I, Array<T, N>> {
+  using type = T;
+};
+
+template <class T, std::size_t N>
+struct tuple_size<Array<T, N>> : std::integral_constant<std::size_t, N> {};
+
+template <std::size_t I, class T, std::size_t N>
+auto get(Array<T, N> const &a) -> std::enable_if_t<(I < N), const T &> {
+  return a[I];
+}
+
 } // namespace Utils
 #endif

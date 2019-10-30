@@ -145,8 +145,7 @@ def configure_and_import(filepath,
 
 
 def set_cmd(code, filepath, cmd_arguments):
-    assert isinstance(cmd_arguments, list) \
-        or isinstance(cmd_arguments, tuple)
+    assert isinstance(cmd_arguments, (list, tuple))
     sys_argv = list(map(str, cmd_arguments))
     sys_argv.insert(0, os.path.basename(filepath))
     re_import_sys = re.compile("^import[\t\ ]+sys[\t\ ]*$", re.M)
