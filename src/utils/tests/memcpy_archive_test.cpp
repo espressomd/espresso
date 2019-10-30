@@ -21,10 +21,14 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "utils/serialization/memcpy_archive.hpp"
+#include <utils/serialization/memcpy_archive.hpp>
+
+#include <utils/Vector.hpp>
+#include <utils/type_traits.hpp>
 
 #include <boost/optional.hpp>
-#include <utils/Vector.hpp>
+#include <boost/serialization/optional.hpp>
+#include <boost/variant.hpp>
 
 #include <vector>
 
@@ -38,6 +42,14 @@ using OpVec = boost::optional<Utils::Vector3d>;
 
 namespace Utils {
 template <> struct is_statically_serializable<NonTrivial> : std::true_type {};
+
+template <class T>
+struct is_statically_serializable<boost::optional<T>>
+    : is_statically_serializable<T> {};
+
+template <class... T>
+struct is_statically_serializable<boost::variant<T...>>
+    : Utils::conjunction<is_statically_serializable<T>...> {};
 } // namespace Utils
 
 BOOST_AUTO_TEST_CASE(packing_size_test) {
@@ -49,7 +61,40 @@ BOOST_AUTO_TEST_CASE(packing_size_test) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(optional_packing) {
+BOOST_AUTO_TEST_CASE(type_traits) {
+  static_assert(Utils::is_statically_serializable<OpVec>::value, "");
+  static_assert(not Utils::detail::use_memcpy<OpVec>::value, "");
+  static_assert(Utils::detail::use_serialize<OpVec>::value, "");
+}
+
+BOOST_AUTO_TEST_CASE(skiping_and_position) {
+  std::vector<char> buf(10);
+
+  auto ar = Utils::MemcpyOArchive(Utils::make_span(buf));
+
+  BOOST_CHECK_EQUAL(0, ar.bytes_processed());
+  ar.skip(5);
+  BOOST_CHECK_EQUAL(5, ar.bytes_processed());
+}
+
+BOOST_AUTO_TEST_CASE(memcpy_processing) {
+  std::vector<char> buf(10);
+
+  auto const test_number = 5;
+  auto oa = Utils::MemcpyOArchive(Utils::make_span(buf));
+  oa << test_number;
+  BOOST_CHECK_EQUAL(oa.bytes_written(), sizeof(test_number));
+
+  {
+    auto ia = Utils::MemcpyIArchive(Utils::make_span(buf));
+    int out;
+    ia >> out;
+    BOOST_CHECK_EQUAL(out, test_number);
+    BOOST_CHECK_EQUAL(ia.bytes_read(), sizeof(test_number));
+  }
+}
+
+BOOST_AUTO_TEST_CASE(serializaton_processing) {
   std::vector<char> buf(2 * Utils::MemcpyOArchive::packing_size<OpVec>());
 
   const OpVec active = Utils::Vector3d{1., 2., 3.};
@@ -74,36 +119,5 @@ BOOST_AUTO_TEST_CASE(optional_packing) {
 
     BOOST_CHECK(out1 == active);
     BOOST_CHECK(out2 == inactive);
-  }
-}
-
-BOOST_AUTO_TEST_CASE(non_trivial_packing) {
-  static_assert(not std::is_trivially_copyable<NonTrivial>::value, "");
-
-  std::vector<char> buf(2 * Utils::MemcpyOArchive::packing_size<NonTrivial>());
-
-  auto const active = NonTrivial{Utils::Vector3d{1., 2., 3.}};
-  auto const inactive = NonTrivial{boost::none};
-
-  {
-    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
-    auto in1 = active;
-    auto in2 = inactive;
-    oa << in1;
-    oa << in2;
-
-    BOOST_CHECK_EQUAL(oa.bytes_written(), buf.size());
-  }
-
-  {
-    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
-    NonTrivial out1, out2;
-    ia >> out1;
-    ia >> out2;
-
-    BOOST_CHECK_EQUAL(ia.bytes_read(), buf.size());
-
-    BOOST_CHECK(out1.ov == active.ov);
-    BOOST_CHECK(out2.ov == inactive.ov);
   }
 }
