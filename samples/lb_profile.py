@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Simulate the flow of a Lattice-Boltzmann fluid past a cylinder,
+Simulate the flow of a lattice-Boltzmann fluid past a cylinder,
 obtain the velocity profile in polar coordinates and compare it
 to the analytical solution.
 """

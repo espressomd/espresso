@@ -149,7 +149,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 #      Sampling                                             #
 #############################################################
 #
-# Activate electrostatic
+# Activate electrostatics
 #############################################################
 p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 print("Tuning P3M")

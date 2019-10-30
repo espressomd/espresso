@@ -16,8 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 Visualize a simulation box where the particles can be repositioned via the
-mouse and timed callbacks, and the temperature of the thermostat changed
-via the keyboard.
+mouse and timed callbacks, and the temperature of the thermostat can be
+changed via the keyboard.
 """
 
 import espressomd

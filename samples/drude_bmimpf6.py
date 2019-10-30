@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Particle polarization with cold Drude oscillators on a coarse grained
+Particle polarization with cold Drude oscillators on a coarse-grained
 simulation of the ionic liquid BMIM PF6.
 """
 

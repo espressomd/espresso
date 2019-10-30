@@ -22,12 +22,12 @@ by a Langevin thermostat. Shows the basic features of how to:
 
 * set up system parameters, particles and interactions.
 * warm up and integrate.
-* write parameters, configurations and observables to files
+* write parameters, configurations and observables to files.
 
-The particles in the system are of two types: Type 0 and Type 1.
+The particles in the system are of two types: type 0 and type 1.
 Type 0 particles interact with each other via a repulsive WCA
 interaction. Type 1 particles neither interact with themselves
-nor with Type 0 particles.
+nor with type 0 particles.
 """
 import numpy as np
 import espressomd

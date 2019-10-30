@@ -19,10 +19,10 @@
 """
 Set up a Lennard-Jones fluid maintained at a fixed temperature by a
 Langevin thermostat. The particles in the system are of two types:
-Type 0 and Type 1. Type 0 particles interact with each other via a
+type 0 and type 1. Type 0 particles interact with each other via a
 repulsive WCA interaction. Type 1 particles neither interact with
-themselves nor with Type 0 particles. The spherically averaged
-structure factor of particles of Type 0 and Type 1 is calculated
+themselves nor with type 0 particles. The spherically averaged
+structure factor of particles of type 0 and type 1 is calculated
 with :meth:`~espressomd.analyze.Analysis.structure_factor()`.
 See :ref:`Structure factor`.
 """

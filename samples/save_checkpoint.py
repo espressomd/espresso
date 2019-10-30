@@ -17,11 +17,11 @@
 """
 Basic usage of the checkpointing feature. Show how to write the state of:
 
-* custom user variables
-* non-bonded interactions
-* particles
-* P3M parameters
-* thermostat
+* custom user variables.
+* non-bonded interactions.
+* particles.
+* P3M parameters.
+* thermostat.
 """
 
 import espressomd

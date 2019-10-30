@@ -23,7 +23,7 @@ epilog = """You can choose in which ensemble you want to simulate via either
 providing --reaction_ensemble or --constant_pH_ensemble as command line
 argument to the script. Be aware that in the case of the reaction ensemble,
 the dissociation constant gamma is not the thermodynamic reaction constant K,
-but rather K*1mol/l and therefore carries a unit! In the case of the of the
+but rather K * 1 mol/l and therefore carries a unit! In the case of the of the
 constant pH method, gamma is the thermodynamic reaction constant!
 """
 import numpy as np

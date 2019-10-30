@@ -18,7 +18,7 @@
 #
 """
 Perform a grand canonical simulation of a system in contact
-with a salt reservoir and ensures constant chemical potential.
+with a salt reservoir while maintaining a constant chemical potential.
 """
 epilog = """
 Takes two command line arguments as input: 1) the reservoir salt

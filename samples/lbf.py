@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-Set up a Lattice-Boltzmann fluid and apply an external force density on it.
+Set up a lattice-Boltzmann fluid and apply an external force density on it.
 """
 import matplotlib.pyplot as plt
 import numpy as np
@@ -32,7 +32,7 @@ args = parser.parse_args()
 
 print("""
 =======================================================
-=         Lattice Boltzmann fluid example             =
+=         lattice-Boltzmann fluid example             =
 =======================================================
 """)
 
