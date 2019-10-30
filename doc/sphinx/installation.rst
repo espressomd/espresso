@@ -89,7 +89,7 @@ are required:
 .. code-block:: bash
 
     sudo apt install python3-matplotlib python3-scipy ipython3 jupyter-notebook
-    sudo pip3 install pint>=0.9
+    sudo pip3 install 'pint>=0.9'
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:

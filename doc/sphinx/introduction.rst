@@ -11,7 +11,7 @@ performing simulations using models with different levels of coarse-graining.
 It also includes modern and efficient algorithms for treatment of
 :ref:`electrostatics` (P3M, MMM-type algorithms, constant potential
 simulations, dielectric interfaces, …), hydrodynamic interactions
-(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice Boltzmann`),
+(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice-Boltzmann`),
 and :ref:`magnetic interactions<Magnetostatics / Dipolar interactions>`, only
 to name a few.  It is designed to exploit the capabilities of parallel
 computational environments.  The program is being continuously extended to keep
@@ -292,8 +292,8 @@ Currently, the following tutorials are available:
 
 * :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
 * :file:`02-charged_system`: Modelling of charged systems such as ionic crystals.
-* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice Boltzmann method.
-* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice Boltzmann fluid, raspberry particles.
+* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method.
+* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice-Boltzmann fluid, raspberry particles.
 * :file:`06-active_matter`: Modelling of self-propelling particles.
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`08-visualization`: Using the online visualizers of |es|.
@@ -466,9 +466,9 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 |                         **Hydrodynamic Interaction**                                    |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice Boltzmann              | Core                   | Core             | Yes        |
+| Lattice-Boltzmann              | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice Boltzmann on GPU       | Group                  | Core             | Yes        |
+| Lattice-Boltzmann on GPU       | Group                  | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                              **Input/Output**                                           |
 +--------------------------------+------------------------+------------------+------------+

@@ -422,18 +422,18 @@ Please note:
 -  The presence of rigid bodies constructed by means of virtual sites
    adds a contribution to the pressure and stress tensor.
 
-.. _Inertialess lattice Boltzmann tracers:
+.. _Inertialess lattice-Boltzmann tracers:
 
-Inertialess lattice Boltzmann tracers
+Inertialess lattice-Boltzmann tracers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 :class:`espressomd.virtual_sites.VirtualSitesInertialessTracers`
 
 When this implementation is selected, the virtual sites follow the motion of a
-lattice Boltzmann fluid (both, CPU and GPU). This is achieved by integrating
+lattice-Boltzmann fluid (both, CPU and GPU). This is achieved by integrating
 their position using the fluid velocity at the virtual sites' position.
 Forces acting on the virtual sites are directly transferred as force density
-onto the lattice Boltzmann fluid, making the coupling free of inertia.
+onto the lattice-Boltzmann fluid, making the coupling free of inertia.
 The feature stems from the implementation of the
 :ref:`Immersed Boundary Method for soft elastic objects`, but can be used independently.
 
@@ -523,9 +523,9 @@ same time. Note that there is no real difference between ``v_swim`` and
 ``f_swim``, since the latter may always be chosen such that the same terminal
 velocity is achieved for a given friction coefficient.
 
-.. _Lattice Boltzmann (LB) swimmers:
+.. _Lattice-Boltzmann (LB) swimmers:
 
-Lattice Boltzmann (LB) swimmers
+Lattice-Boltzmann (LB) swimmers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
@@ -538,7 +538,7 @@ Lattice Boltzmann (LB) swimmers
         'f_swim': 0.01, 'mode': 'pusher', 'dipole_length': 2.0})
 
 For an explanation of the parameters ``v_swim`` and ``f_swim`` see the previous
-item. In lattice Boltzmann self-propulsion is less trivial than for regular MD,
+item. In lattice-Boltzmann self-propulsion is less trivial than for regular MD,
 because the self-propulsion is achieved by a force-free mechanism, which has
 strong implications for the far-field hydrodynamic flow field induced by the
 self-propelled particle. In |es| only the dipolar component of the flow field
@@ -552,7 +552,7 @@ you should not put this distance to zero; |es| (currently) does not support
 mathematical dipole flow fields.
 
 You may ask: "Why are there two methods ``v_swim`` and ``f_swim`` for the
-self-propulsion using the lattice Boltzmann algorithm?" The answer is
+self-propulsion using the lattice-Boltzmann algorithm?" The answer is
 straightforward. When a particle is accelerating, it has a monopolar flow-field
 contribution which vanishes when it reaches its terminal velocity (for which
 there will only be a dipolar flow field). The major difference between the

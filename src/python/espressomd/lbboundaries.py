@@ -23,7 +23,7 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     class LBBoundaries(ScriptObjectRegistry):
 
         """
-        Creates a set of lattice Boltzmann boundaries.
+        Creates a set of lattice-Boltzmann boundaries.
 
         """
 
