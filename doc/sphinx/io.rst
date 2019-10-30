@@ -100,7 +100,7 @@ Be aware of the following limitations:
 
   * Pickling support of the Espresso system instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms then can be tested.
 
-  * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
+  * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
     and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint
 

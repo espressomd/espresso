@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization sample for Lattice Boltzmann boundary nodes.
+Visualization sample for lattice-Boltzmann boundary nodes.
 """
 
 import espressomd

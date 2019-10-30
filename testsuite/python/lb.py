@@ -28,7 +28,7 @@ import sys
 class TestLB:
 
     """
-    Basic tests of the Lattice Boltzmann implementation
+    Basic tests of the lattice-Boltzmann implementation
 
     * mass and momentum conservation
     * temperature

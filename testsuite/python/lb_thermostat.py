@@ -22,7 +22,7 @@ import espressomd.lb
 from tests_common import single_component_maxwell
 
 """
-Check the Lattice Boltzmann thermostat with respect to the particle velocity
+Check the lattice-Boltzmann thermostat with respect to the particle velocity
 distribution.
 
 
