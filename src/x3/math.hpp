@@ -78,6 +78,60 @@ T divides(T x, T y) {
     return x / y;
 }
 
+/// @brief unary not
+template <typename T>
+T unary_not(T x) {
+    return !x;
+}
+
+/// @brief logical and
+template <typename T>
+T logical_and(T x, T y) {
+    return x && y;
+}
+
+/// @brief logical or
+template <typename T>
+T logical_or(T x, T y) {
+    return x || y;
+}
+
+/// @brief less
+template <typename T>
+T less(T x, T y) {
+    return x < y;
+}
+
+/// @brief less equals
+template <typename T>
+T less_equals(T x, T y) {
+    return x <= y;
+}
+
+/// @brief greater
+template <typename T>
+T greater(T x, T y) {
+    return x > y;
+}
+
+/// @brief greater equals
+template <typename T>
+T greater_equals(T x, T y) {
+    return x >= y;
+}
+
+/// @brief equals
+template <typename T>
+T equals(T x, T y) {
+    return x == y;
+}
+
+/// @brief not equals
+template <typename T>
+T not_equals(T x, T y) {
+    return x != y;
+}
+
 } // namespace math
 
 } // namespace matheval

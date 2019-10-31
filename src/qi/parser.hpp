@@ -37,9 +37,8 @@ struct expectation_handler {
 template <typename Iterator>
 struct grammar : qi::grammar<Iterator, ast::expression(), ascii::space_type> {
     expectation_handler err_handler;
-    qi::rule<Iterator, ast::expression(), ascii::space_type> expression;
-    qi::rule<Iterator, ast::expression(), ascii::space_type> term;
-    qi::rule<Iterator, ast::expression(), ascii::space_type> factor;
+    qi::rule<Iterator, ast::expression(), ascii::space_type> expression,
+        logical, equality, relational, additive, multiplicative, factor;
     qi::rule<Iterator, ast::operand(), ascii::space_type> primary;
     qi::rule<Iterator, ast::unary_op(), ascii::space_type> unary;
     qi::rule<Iterator, ast::binary_op(), ascii::space_type> binary;
@@ -49,22 +48,10 @@ struct grammar : qi::grammar<Iterator, ast::expression(), ascii::space_type> {
         constant;
     qi::symbols<typename std::iterator_traits<Iterator>::value_type,
                 double (*)(double)>
-        ufunc;
+        ufunc, unary_op;
     qi::symbols<typename std::iterator_traits<Iterator>::value_type,
                 double (*)(double, double)>
-        bfunc;
-    qi::symbols<typename std::iterator_traits<Iterator>::value_type,
-                double (*)(double)>
-        plusminus;
-    qi::symbols<typename std::iterator_traits<Iterator>::value_type,
-                double (*)(double, double)>
-        addsub;
-    qi::symbols<typename std::iterator_traits<Iterator>::value_type,
-                double (*)(double, double)>
-        muldiv;
-    qi::symbols<typename std::iterator_traits<Iterator>::value_type,
-                double (*)(double, double)>
-        power;
+        bfunc, additive_op, multiplicative_op, logical_op, relational_op, equality_op, power;
 
     grammar();
 };

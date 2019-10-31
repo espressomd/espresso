@@ -79,27 +79,51 @@ struct bfunc_ : x3::symbols<double (*)(double, double)> {
     }
 } bfunc;
 
-struct plusminus_ : x3::symbols<double (*)(double)> {
-    plusminus_() {
+struct unary_op_ : x3::symbols<double (*)(double)> {
+    unary_op_() {
         add("+", static_cast<double (*)(double)>(&math::plus))(
-            "-", static_cast<double (*)(double)>(&math::minus));
+            "-", static_cast<double (*)(double)>(&math::minus))(
+            "!", static_cast<double (*)(double)>(&math::unary_not));
     }
-} plusminus;
+} unary_op;
 
-struct addsub_ : x3::symbols<double (*)(double, double)> {
-    addsub_() {
+struct additive_op_ : x3::symbols<double (*)(double, double)> {
+    additive_op_() {
         add("+", static_cast<double (*)(double, double)>(&math::plus))(
             "-", static_cast<double (*)(double, double)>(&math::minus));
     }
-} addsub;
+} additive_op;
 
-struct muldiv_ : x3::symbols<double (*)(double, double)> {
-    muldiv_() {
+struct multiplicative_op_ : x3::symbols<double (*)(double, double)> {
+    multiplicative_op_() {
         add("*", static_cast<double (*)(double, double)>(&math::multiplies))(
             "/", static_cast<double (*)(double, double)>(&math::divides))(
             "%", static_cast<double (*)(double, double)>(&std::fmod));
     }
-} muldiv;
+} multiplicative_op;
+
+struct logical_op_ : x3::symbols<double (*)(double, double)> {
+    logical_op_() {
+        add("&&", static_cast<double (*)(double, double)>(&math::logical_and))(
+            "||", static_cast<double (*)(double, double)>(&math::logical_or));
+    }
+} logical_op;
+
+struct relational_op_ : x3::symbols<double (*)(double, double)> {
+    relational_op_() {
+        add("<", static_cast<double (*)(double, double)>(&math::less))(
+            "<=", static_cast<double (*)(double, double)>(&math::less_equals))(
+            ">", static_cast<double (*)(double, double)>(&math::greater))(
+            ">=", static_cast<double (*)(double, double)>(&math::greater_equals));
+    }
+} relational_op;
+
+struct equality_op_ : x3::symbols<double (*)(double, double)> {
+    equality_op_() {
+        add("==", static_cast<double (*)(double, double)>(&math::equals))(
+            "!=", static_cast<double (*)(double, double)>(&math::not_equals));
+    }
+} equality_op;
 
 struct power_ : x3::symbols<double (*)(double, double)> {
     power_() { add("**", static_cast<double (*)(double, double)>(&std::pow)); }
@@ -108,7 +132,11 @@ struct power_ : x3::symbols<double (*)(double, double)> {
 // ADL markers
 
 struct expression_class;
-struct term_class;
+struct logical_class;
+struct equality_class;
+struct relational_class;
+struct additive_class;
+struct multiplicative_class;
 struct factor_class;
 struct primary_class;
 struct unary_class;
@@ -117,29 +145,50 @@ struct variable_class;
 
 // Rule declarations
 
-auto const expression =
-    x3::rule<expression_class, ast::expression>{"expression"};
-auto const term = x3::rule<term_class, ast::expression>{"term"};
-auto const factor = x3::rule<factor_class, ast::expression>{"factor"};
-auto const primary = x3::rule<primary_class, ast::operand>{"primary"};
-auto const unary = x3::rule<unary_class, ast::unary_op>{"unary"};
-auto const binary = x3::rule<binary_class, ast::binary_op>{"binary"};
-auto const variable = x3::rule<variable_class, std::string>{"variable"};
+// clang-format off
+auto const expression     = x3::rule<expression_class    , ast::expression>{"expression"};
+auto const logical        = x3::rule<logical_class       , ast::expression>{"logical"};
+auto const equality       = x3::rule<equality_class      , ast::expression>{"equality"};
+auto const relational     = x3::rule<relational_class    , ast::expression>{"relational"};
+auto const additive       = x3::rule<additive_class      , ast::expression>{"additive"};
+auto const multiplicative = x3::rule<multiplicative_class, ast::expression>{"multiplicative"};
+auto const factor         = x3::rule<factor_class        , ast::expression>{"factor"};
+auto const primary        = x3::rule<primary_class       , ast::operand   >{"primary"};
+auto const unary          = x3::rule<unary_class         , ast::unary_op  >{"unary"};
+auto const binary         = x3::rule<binary_class        , ast::binary_op >{"binary"};
+auto const variable       = x3::rule<variable_class      , std::string    >{"variable"};
+// clang-format on
 
 // Rule defintions
 
 // clang-format off
 
 auto const expression_def =
-    term > *(addsub > term)
+    logical
     ;
 
-auto const term_def =
-    factor > *(muldiv > factor)
+auto const logical_def =
+    equality >> *(logical_op > equality)
+    ;
+
+auto const equality_def =
+    relational >> *(equality_op > relational)
+    ;
+
+auto const relational_def =
+    additive >> *(relational_op > additive)
+    ;
+
+auto const additive_def =
+    multiplicative >> *(additive_op > multiplicative)
+    ;
+
+auto const multiplicative_def =
+    factor >> *(multiplicative_op > factor)
     ;
 
 auto const factor_def =
-    primary > *( power > factor )
+    primary >> *( power > factor )
     ;
 
 auto const unary_def =
@@ -157,7 +206,7 @@ auto const variable_def =
 auto const primary_def =
       x3::double_
     | ('(' > expression > ')')
-    | (plusminus > primary)
+    | (unary_op > primary)
     | binary
     | unary
     | constant
@@ -166,7 +215,19 @@ auto const primary_def =
 
 // clang-format on
 
-BOOST_SPIRIT_DEFINE(expression, term, factor, primary, unary, binary, variable)
+BOOST_SPIRIT_DEFINE(
+    expression,
+    logical,
+    equality,
+    relational,
+    additive,
+    multiplicative,
+    factor,
+    primary,
+    unary,
+    binary,
+    variable
+)
 
 struct expression_class {
     template <typename Iterator, typename Exception, typename Context>

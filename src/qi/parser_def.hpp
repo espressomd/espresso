@@ -53,27 +53,53 @@ grammar<Iterator>::grammar() : grammar::base_type(expression) {
         "tanh", static_cast<double (*)(double)>(&std::tanh));
     bfunc.add("atan2", static_cast<double (*)(double, double)>(&std::atan2))(
         "pow", static_cast<double (*)(double, double)>(&std::pow));
-    plusminus.add("+", static_cast<double (*)(double)>(&math::plus))(
-        "-", static_cast<double (*)(double)>(&math::minus));
-    addsub.add("+", static_cast<double (*)(double, double)>(&math::plus))(
+    unary_op.add("+", static_cast<double (*)(double)>(&math::plus))(
+        "-", static_cast<double (*)(double)>(&math::minus))(
+        "!", static_cast<double (*)(double)>(&math::unary_not));
+    additive_op.add("+", static_cast<double (*)(double, double)>(&math::plus))(
         "-", static_cast<double (*)(double, double)>(&math::minus));
-    muldiv.add("*", static_cast<double (*)(double, double)>(&math::multiplies))(
+    multiplicative_op.add("*", static_cast<double (*)(double, double)>(&math::multiplies))(
         "/", static_cast<double (*)(double, double)>(&math::divides))(
         "%", static_cast<double (*)(double, double)>(&std::fmod));
+    logical_op.add("&&",
+              static_cast<double (*)(double, double)>(&math::logical_and))(
+        "||", static_cast<double (*)(double, double)>(&math::logical_or));
+    relational_op.add("<", static_cast<double (*)(double, double)>(&math::less))(
+        "<=", static_cast<double (*)(double, double)>(&math::less_equals))(
+        ">", static_cast<double (*)(double, double)>(&math::greater))(
+        ">=", static_cast<double (*)(double, double)>(&math::greater_equals));
+    equality_op.add("==", static_cast<double (*)(double, double)>(&math::equals))(
+        "!=", static_cast<double (*)(double, double)>(&math::not_equals));
     power.add("**", static_cast<double (*)(double, double)>(&std::pow));
 
     // clang-format off
 
     expression =
-        term > *(addsub > term)
+        logical.alias()
         ;
 
-    term =
-        factor > *(muldiv > factor)
+    logical =
+        equality >> *(logical_op > equality)
+        ;
+
+    equality =
+        relational >> *(equality_op > relational)
+        ;
+
+    relational =
+        additive >> *(relational_op > additive)
+        ;
+
+    additive =
+        multiplicative >> *(additive_op > multiplicative)
+        ;
+
+    multiplicative =
+        factor >> *(multiplicative_op > factor)
         ;
     
     factor =
-        primary > *( power > factor )
+        primary >> *( power > factor )
         ;
     
     unary =
@@ -91,7 +117,7 @@ grammar<Iterator>::grammar() : grammar::base_type(expression) {
     primary =
           qi::double_
         | ('(' > expression > ')')
-        | (plusminus > primary)
+        | (unary_op > primary)
         | binary
         | unary
         | constant
@@ -101,7 +127,11 @@ grammar<Iterator>::grammar() : grammar::base_type(expression) {
     // clang-format on
 
     expression.name("expression");
-    term.name("term");
+    logical.name("logical");
+    equality.name("equality");
+    relational.name("relational");
+    additive.name("additive");
+    multiplicative.name("multiplicative");
     factor.name("factor");
     variable.name("variable");
     primary.name("primary");
