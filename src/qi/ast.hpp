@@ -4,15 +4,12 @@
 
 #pragma once
 
-#include <boost/spirit/include/qi.hpp>
 #include <boost/variant.hpp>
 
 #include <list>
 #include <string>
 
 namespace matheval {
-
-namespace qi = boost::spirit::qi;
 
 namespace ast {
 

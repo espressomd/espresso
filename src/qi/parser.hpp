@@ -6,6 +6,7 @@
 
 #include "ast.hpp"
 
+#define BOOST_SPIRIT_NO_PREDEFINED_TERMINALS
 #include <boost/spirit/include/qi.hpp>
 
 #include <iostream>

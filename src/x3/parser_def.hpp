@@ -27,106 +27,148 @@ namespace parser {
 
 struct constant_ : x3::symbols<double> {
     constant_() {
-        add("e", boost::math::constants::e<double>())(
-            "epsilon", std::numeric_limits<double>::epsilon())(
-            "phi", boost::math::constants::phi<double>())(
-            "pi", boost::math::constants::pi<double>());
+        // clang-format off
+        add
+            ("e"      , boost::math::constants::e<double>())
+            ("epsilon", std::numeric_limits<double>::epsilon())
+            ("phi"    , boost::math::constants::phi<double>())
+            ("pi"     , boost::math::constants::pi<double>())
+            ;
+        // clang-format on
     }
 } constant;
 
 struct ufunc_ : x3::symbols<double (*)(double)> {
     ufunc_() {
-        add("abs", static_cast<double (*)(double)>(&std::abs))(
-            "acos", static_cast<double (*)(double)>(&std::acos))(
-            "acosh", static_cast<double (*)(double)>(&std::acosh))(
-            "asin", static_cast<double (*)(double)>(&std::asin))(
-            "asinh", static_cast<double (*)(double)>(&std::asinh))(
-            "atan", static_cast<double (*)(double)>(&std::atan))(
-            "atanh", static_cast<double (*)(double)>(&std::atanh))(
-            "cbrt", static_cast<double (*)(double)>(&std::cbrt))(
-            "ceil", static_cast<double (*)(double)>(&std::ceil))(
-            "cos", static_cast<double (*)(double)>(&std::cos))(
-            "cosh", static_cast<double (*)(double)>(&std::cosh))(
-            "deg", static_cast<double (*)(double)>(&math::deg))(
-            "erf", static_cast<double (*)(double)>(&std::erf))(
-            "erfc", static_cast<double (*)(double)>(&std::erfc))(
-            "exp", static_cast<double (*)(double)>(&std::exp))(
-            "exp2", static_cast<double (*)(double)>(&std::exp2))(
-            "floor", static_cast<double (*)(double)>(&std::floor))(
-            "isinf", static_cast<double (*)(double)>(&math::isinf))(
-            "isnan", static_cast<double (*)(double)>(&math::isnan))(
-            "log", static_cast<double (*)(double)>(&std::log))(
-            "log2", static_cast<double (*)(double)>(&std::log2))(
-            "log10", static_cast<double (*)(double)>(&std::log10))(
-            "rad", static_cast<double (*)(double)>(&math::rad))(
-            "round", static_cast<double (*)(double)>(&std::round))(
-            "sgn", static_cast<double (*)(double)>(&math::sgn))(
-            "sin", static_cast<double (*)(double)>(&std::sin))(
-            "sinh", static_cast<double (*)(double)>(&std::sinh))(
-            "sqrt", static_cast<double (*)(double)>(&std::sqrt))(
-            "tan", static_cast<double (*)(double)>(&std::tan))(
-            "tanh", static_cast<double (*)(double)>(&std::tanh))(
-            "tgamma", static_cast<double (*)(double)>(&std::tgamma));
+        // clang-format off
+        add
+            ("abs"   , static_cast<double (*)(double)>(&std::abs))
+            ("acos"  , static_cast<double (*)(double)>(&std::acos))
+            ("acosh" , static_cast<double (*)(double)>(&std::acosh))
+            ("asin"  , static_cast<double (*)(double)>(&std::asin))
+            ("asinh" , static_cast<double (*)(double)>(&std::asinh))
+            ("atan"  , static_cast<double (*)(double)>(&std::atan))
+            ("atanh" , static_cast<double (*)(double)>(&std::atanh))
+            ("cbrt"  , static_cast<double (*)(double)>(&std::cbrt))
+            ("ceil"  , static_cast<double (*)(double)>(&std::ceil))
+            ("cos"   , static_cast<double (*)(double)>(&std::cos))
+            ("cosh"  , static_cast<double (*)(double)>(&std::cosh))
+            ("deg"   , static_cast<double (*)(double)>(&math::deg))
+            ("erf"   , static_cast<double (*)(double)>(&std::erf))
+            ("erfc"  , static_cast<double (*)(double)>(&std::erfc))
+            ("exp"   , static_cast<double (*)(double)>(&std::exp))
+            ("exp2"  , static_cast<double (*)(double)>(&std::exp2))
+            ("floor" , static_cast<double (*)(double)>(&std::floor))
+            ("isinf" , static_cast<double (*)(double)>(&math::isinf))
+            ("isnan" , static_cast<double (*)(double)>(&math::isnan))
+            ("log"   , static_cast<double (*)(double)>(&std::log))
+            ("log2"  , static_cast<double (*)(double)>(&std::log2))
+            ("log10" , static_cast<double (*)(double)>(&std::log10))
+            ("rad"   , static_cast<double (*)(double)>(&math::rad))
+            ("round" , static_cast<double (*)(double)>(&std::round))
+            ("sgn"   , static_cast<double (*)(double)>(&math::sgn))
+            ("sin"   , static_cast<double (*)(double)>(&std::sin))
+            ("sinh"  , static_cast<double (*)(double)>(&std::sinh))
+            ("sqrt"  , static_cast<double (*)(double)>(&std::sqrt))
+            ("tan"   , static_cast<double (*)(double)>(&std::tan))
+            ("tanh"  , static_cast<double (*)(double)>(&std::tanh))
+            ("tgamma", static_cast<double (*)(double)>(&std::tgamma))
+            ;
+        // clang-format on
     }
 } ufunc;
 
 struct bfunc_ : x3::symbols<double (*)(double, double)> {
     bfunc_() {
-        add("atan2", static_cast<double (*)(double, double)>(&std::atan2))(
-            "max", static_cast<double (*)(double, double)>(&std::fmax))(
-            "min", static_cast<double (*)(double, double)>(&std::fmin))(
-            "pow", static_cast<double (*)(double, double)>(&std::pow));
+        // clang-format off
+        add
+            ("atan2", static_cast<double (*)(double, double)>(&std::atan2))
+            ("max"  , static_cast<double (*)(double, double)>(&std::fmax))
+            ("min"  , static_cast<double (*)(double, double)>(&std::fmin))
+            ("pow"  , static_cast<double (*)(double, double)>(&std::pow))
+            ;
+        // clang-format on
     }
 } bfunc;
 
 struct unary_op_ : x3::symbols<double (*)(double)> {
     unary_op_() {
-        add("+", static_cast<double (*)(double)>(&math::plus))(
-            "-", static_cast<double (*)(double)>(&math::minus))(
-            "!", static_cast<double (*)(double)>(&math::unary_not));
+        // clang-format off
+        add
+            ("+", static_cast<double (*)(double)>(&math::plus))
+            ("-", static_cast<double (*)(double)>(&math::minus))
+            ("!", static_cast<double (*)(double)>(&math::unary_not))
+            ;
+        // clang-format on
     }
 } unary_op;
 
 struct additive_op_ : x3::symbols<double (*)(double, double)> {
     additive_op_() {
-        add("+", static_cast<double (*)(double, double)>(&math::plus))(
-            "-", static_cast<double (*)(double, double)>(&math::minus));
+        // clang-format off
+        add
+            ("+", static_cast<double (*)(double, double)>(&math::plus))
+            ("-", static_cast<double (*)(double, double)>(&math::minus))
+            ;
+        // clang-format on
     }
 } additive_op;
 
 struct multiplicative_op_ : x3::symbols<double (*)(double, double)> {
     multiplicative_op_() {
-        add("*", static_cast<double (*)(double, double)>(&math::multiplies))(
-            "/", static_cast<double (*)(double, double)>(&math::divides))(
-            "%", static_cast<double (*)(double, double)>(&std::fmod));
+        // clang-format off
+        add
+            ("*", static_cast<double (*)(double, double)>(&math::multiplies))
+            ("/", static_cast<double (*)(double, double)>(&math::divides))
+            ("%", static_cast<double (*)(double, double)>(&std::fmod))
+            ;
+        // clang-format on
     }
 } multiplicative_op;
 
 struct logical_op_ : x3::symbols<double (*)(double, double)> {
     logical_op_() {
-        add("&&", static_cast<double (*)(double, double)>(&math::logical_and))(
-            "||", static_cast<double (*)(double, double)>(&math::logical_or));
+        // clang-format off
+        add
+            ("&&", static_cast<double (*)(double, double)>(&math::logical_and))
+            ("||", static_cast<double (*)(double, double)>(&math::logical_or))
+            ;
+        // clang-format on
     }
 } logical_op;
 
 struct relational_op_ : x3::symbols<double (*)(double, double)> {
     relational_op_() {
-        add("<", static_cast<double (*)(double, double)>(&math::less))(
-            "<=", static_cast<double (*)(double, double)>(&math::less_equals))(
-            ">", static_cast<double (*)(double, double)>(&math::greater))(
-            ">=", static_cast<double (*)(double, double)>(&math::greater_equals));
+        // clang-format off
+        add
+            ("<" , static_cast<double (*)(double, double)>(&math::less))
+            ("<=", static_cast<double (*)(double, double)>(&math::less_equals))
+            (">" , static_cast<double (*)(double, double)>(&math::greater))
+            (">=", static_cast<double (*)(double, double)>(&math::greater_equals))
+            ;
+        // clang-format on
     }
 } relational_op;
 
 struct equality_op_ : x3::symbols<double (*)(double, double)> {
     equality_op_() {
-        add("==", static_cast<double (*)(double, double)>(&math::equals))(
-            "!=", static_cast<double (*)(double, double)>(&math::not_equals));
+        // clang-format off
+        add
+            ("==", static_cast<double (*)(double, double)>(&math::equals))
+            ("!=", static_cast<double (*)(double, double)>(&math::not_equals))
+            ;
+        // clang-format on
     }
 } equality_op;
 
 struct power_ : x3::symbols<double (*)(double, double)> {
-    power_() { add("**", static_cast<double (*)(double, double)>(&std::pow)); }
+    power_() {
+        // clang-format off
+        add
+            ("**", static_cast<double (*)(double, double)>(&std::pow))
+            ;
+        // clang-format on
+    }
 } power;
 
 // ADL markers
@@ -143,9 +185,10 @@ struct unary_class;
 struct binary_class;
 struct variable_class;
 
+// clang-format off
+
 // Rule declarations
 
-// clang-format off
 auto const expression     = x3::rule<expression_class    , ast::expression>{"expression"};
 auto const logical        = x3::rule<logical_class       , ast::expression>{"logical"};
 auto const equality       = x3::rule<equality_class      , ast::expression>{"equality"};
@@ -157,11 +200,8 @@ auto const primary        = x3::rule<primary_class       , ast::operand   >{"pri
 auto const unary          = x3::rule<unary_class         , ast::unary_op  >{"unary"};
 auto const binary         = x3::rule<binary_class        , ast::binary_op >{"binary"};
 auto const variable       = x3::rule<variable_class      , std::string    >{"variable"};
-// clang-format on
 
 // Rule defintions
-
-// clang-format off
 
 auto const expression_def =
     logical
@@ -213,8 +253,6 @@ auto const primary_def =
     | variable
     ;
 
-// clang-format on
-
 BOOST_SPIRIT_DEFINE(
     expression,
     logical,
@@ -228,6 +266,8 @@ BOOST_SPIRIT_DEFINE(
     binary,
     variable
 )
+
+// clang-format on
 
 struct expression_class {
     template <typename Iterator, typename Exception, typename Context>
