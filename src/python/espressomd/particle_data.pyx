@@ -1983,7 +1983,7 @@ Set quat and scalar dipole moment (dipm) instead.")
 
         n = 0
         for p in self:
-            if p.type in types or types == 'all':
+            if types == 'all' or p.type in types:
                 n += 1
 
         with open(fname, "w") as vtk:
@@ -1993,14 +1993,14 @@ Set quat and scalar dipole moment (dipm) instead.")
             vtk.write("DATASET UNSTRUCTURED_GRID\n")
             vtk.write("POINTS {} floats\n".format(n))
             for p in self:
-                if p.type in types or types == 'all':
+                if types == 'all' or p.type in types:
                     vtk.write("{} {} {}\n".format(*(p.pos_folded)))
 
             vtk.write("POINT_DATA {}\n".format(n))
             vtk.write("SCALARS velocity float 3\n")
             vtk.write("LOOKUP_TABLE default\n")
             for p in self:
-                if p.type in types or types == 'all':
+                if types == 'all' or p.type in types:
                     vtk.write("{} {} {}\n".format(*p.v))
 
     property highest_particle_id:
