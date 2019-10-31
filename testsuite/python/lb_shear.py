@@ -97,10 +97,6 @@ class LBShearCommon:
         """
         self.system.lbboundaries.clear()
         self.system.actors.clear()
-        try: 
-            del self.lbf
-        except BaseException:
-            pass
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
 
