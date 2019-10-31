@@ -22,13 +22,13 @@ import numpy as np
 import sys
 
 # Define the LB Parameters
-TIME_STEP = 0.01
-AGRID = 0.5 
-KVISC = 6 
-DENS = 0.5
-
-F = 0.013
-BOX_SIZE = 10 * AGRID
+TIME_STEP = 0.1
+AGRID = 1.0 
+KVISC = 5
+DENS = 1 
+BOX_SIZE = 6 * AGRID
+F = 1. / BOX_SIZE**3
+GAMMA = 15
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -38,6 +38,12 @@ LB_PARAMS = {'agrid': AGRID,
 
 
 class Momentum(object):
+    """
+    Tests momentum conservatoin for an LB coupled to a particle, where opposing
+    forces are applied to LB and particle. The test should uncover issues
+    with boundary and ghost layer handling.
+
+    """
     lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
@@ -47,36 +53,38 @@ class Momentum(object):
         self.system.actors.clear()
         self.system.part.clear()
         self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=1, seed=1)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
 
         applied_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
-        p = self.system.part.add(pos=(0, 0, 0), ext_force=-applied_force)
+        p = self.system.part.add(
+            pos=(0, 0, 0), ext_force=-applied_force, v=[.1, .2, .3])
 
         # Reach steady state
-        self.system.integrator.run(700)
+        self.system.integrator.run(500)
         v_final = np.copy(p.v)
+        momentum = self.system.analysis.linear_momentum()
 
-        for i in range(3):
-            self.system.integrator.run(100)
-
-            # Check that particle momentum =-fluid momenum
-            # up to the momentum trnasferred in 1/2 time step
+        for i in range(10):
+            self.system.integrator.run(50)
+            # check that momentum stays constant
             np.testing.assert_allclose(
-                p.v * p.mass, -
-                    np.array(
-                        self.system.analysis.analyze_linear_momentum(
-                            include_particles=False)),
-                atol=np.linalg.norm(applied_force) * TIME_STEP * 0.55)
+                self.system.analysis.linear_momentum(), momentum, atol=2E-4)
 
             # Check that particle velocity is stationary
             # up to the acceleration of 1/2 time step
-            np.testing.assert_allclose(np.copy(p.v), v_final, 
-                                       atol=np.linalg.norm(applied_force) / p.mass * TIME_STEP * 0.55)
-           
+            np.testing.assert_allclose(np.copy(p.v), v_final, atol=2.2E-3)
+
+        # Make sure, the particle has crossed the periodic boundaries
+        self.assertGreater(
+            np.amax(
+                np.abs(v_final) *
+                self.system.time),
+            BOX_SIZE)
+
 
 @ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBGPUMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
@@ -84,7 +92,7 @@ class LBGPUMomentum(ut.TestCase, Momentum):
 
 
 @ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
 class LBCPUMomentum(ut.TestCase, Momentum):
 
     def setUp(self):

@@ -19,7 +19,9 @@ import espressomd
 from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
 import numpy as np
-import sys
+import unittest_decorators as utx
+
+from tests_common import count_fluid_nodes
 
 # Define the LB Parameters
 TIME_STEP = 0.01
@@ -27,7 +29,7 @@ AGRID = 0.5
 KVISC = 6 
 DENS = 2
 G = 0.08
-BOX_SIZE = 27 * AGRID
+BOX_SIZE = 24 * AGRID
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -35,10 +37,15 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP,
              'ext_force_density': [0, DENS * G, 0]}
 # System setup
-radius = 8 * AGRID 
+RADIUS = 8 * AGRID 
 
 
 class Buoyancy(object):
+    """
+    Tests buoyancy force on a sphere in a closed box of lb fluid and 
+    the overall force balance
+
+    """
     lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
@@ -59,22 +66,23 @@ class Buoyancy(object):
 
             self.system.lbboundaries.add(lbboundaries.LBBoundary(
                                          shape=shapes.Wall(
-                                         normal=n, dist=AGRID)))
-        
+                                             normal=n, dist=AGRID)))
+
         # setup sphere without slip in the middle
         sphere = lbboundaries.LBBoundary(shape=shapes.Sphere(
-            radius=radius, center=self.system.box_l / 2, direction=1))
+            radius=RADIUS, center=self.system.box_l / 2, direction=1))
 
         self.system.lbboundaries.add(sphere)
 
-        expected_force = np.array(
-            [0, -4. / 3. * np.pi * radius**3 * DENS * G, 0])
+        sphere_volume = 4. / 3. * np.pi * RADIUS**3
+
+        # Equilibration
         last_force = -999999
-        self.system.integrator.run(100)
+        self.system.integrator.run(10)
         while True:
             self.system.integrator.run(10)
             force = np.linalg.norm(sphere.get_force())
-            
+
             if np.linalg.norm(force - last_force) < 0.01:
                 break
             last_force = force
@@ -83,30 +91,33 @@ class Buoyancy(object):
         boundary_force = np.zeros(3)
         for b in self.system.lbboundaries:
             boundary_force += b.get_force()
-        applied_force = ((BOX_SIZE - AGRID)**3 - 4. / 3. * np.pi * radius**3) * \
-            np.array(LB_PARAMS['ext_force_density'])
+
+        fluid_nodes = count_fluid_nodes(self.lbf) 
+        fluid_volume = fluid_nodes * AGRID**3
+        applied_force = fluid_volume * np.array(LB_PARAMS['ext_force_density'])
+
         np.testing.assert_allclose(
             boundary_force,
             applied_force,
-            rtol=6E-2,
             atol=0.08 * np.linalg.norm(applied_force))
-        force = np.copy(sphere.get_force())
+
+        # Check buoyancy force on the sphere
+        expected_force = np.array(
+            [0, -sphere_volume * DENS * G, 0])
         np.testing.assert_allclose(
-            force, expected_force,
-            rtol=0.03,
-            atol=np.linalg.norm(expected_force) * 0.03)
+            sphere.get_force(), expected_force,
+            atol=np.linalg.norm(expected_force) * 0.02)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU", "EXTERNAL_FORCES"])
 class LBGPUBuoyancy(ut.TestCase, Buoyancy):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "EXTERNAL_FORCES"])
 class LBCPUBuoyancy(ut.TestCase, Buoyancy):
 
     def setUp(self):
