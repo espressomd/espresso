@@ -65,7 +65,7 @@ Momentum of the System
 :meth:`espressomd.analyze.Analysis.linear_momentum`
 
 This command returns the total linear momentum of the particles and the
-lattice Boltzmann (LB) fluid, if one exists. Giving the optional
+lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
 parameters either causes the command to ignore the contribution of LB or
 of the particles.
 
@@ -374,7 +374,7 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	.. todo:: This feature is not implemented
 
-	This command returns the temperature of the lattice Boltzmann (LB)
+	This command returns the temperature of the lattice-Boltzmann (LB)
 	fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
 	or are compiled in and boundaries are defined, only the available fluid
 	volume is taken into account.
