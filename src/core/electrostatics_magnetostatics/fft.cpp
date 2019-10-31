@@ -553,10 +553,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
         n_id[i].data(), n_pos[i].data(), my_pos[i], comm);
     if (not group) {
       /* try permutation */
-      j = n_grid[i][(fft.plan[i].row_dir + 1) % 3];
-      n_grid[i][(fft.plan[i].row_dir + 1) % 3] =
-          n_grid[i][(fft.plan[i].row_dir + 2) % 3];
-      n_grid[i][(fft.plan[i].row_dir + 2) % 3] = j;
+      std::swap(n_grid[i][(fft.plan[i].row_dir + 1) % 3],
+                n_grid[i][(fft.plan[i].row_dir + 2) % 3]);
 
       group = find_comm_groups(
           {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
@@ -734,7 +732,6 @@ void fft_perform_forw(double *data, fft_data_struct &fft,
 
 void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
                       const boost::mpi::communicator &comm) {
-  int i;
 
   auto *c_data = (fftw_complex *)data;
   auto *c_data_buf = (fftw_complex *)fft.data_buf;
@@ -756,7 +753,7 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
   /* perform FFT (in is data) */
   fftw_execute_dft(fft.back[1].our_fftw_plan, c_data, c_data);
   /* throw away the (hopefully) empty complex component (in is data)*/
-  for (i = 0; i < fft.plan[1].new_size; i++) {
+  for (int i = 0; i < fft.plan[1].new_size; i++) {
     fft.data_buf[i] = data[2 * i]; /* real value */
     // Vincent:
     if (check_complex && (data[2 * i + 1] > 1e-5)) {
