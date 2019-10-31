@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,6 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Build the ESPResSo logo with particles.
+"""
 import math
 import numpy as np
 
@@ -48,7 +51,7 @@ for i in range(cup_height):
 # cup bottom
 rad = cup_bot_circ / (2.0 * np.pi)
 posy = yoff
-while (rad > 1.0):
+while rad > 1.0:
     rad -= 0.9
     circ = 2.0 * np.pi * rad
     alpha = 2.0 * np.pi / int(circ)
@@ -200,5 +203,6 @@ def rotate():
     visualizer.camera.rotateSystemXL()
 
 # visualizer.registerCallback(rotate, interval = 16)
+
 
 visualizer.run(1)

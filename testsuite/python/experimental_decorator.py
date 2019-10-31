@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -34,10 +34,10 @@ class RequireExperimental(ut.TestCase):
     def test(self):
 
         if espressomd.has_features("EXPERIMENTAL_FEATURES"):
-            x = A(1, 3.0)
+            _ = A(1, 3.0)
         else:
-            with self.assertRaisesRegexp(Exception, "because"):
-                x = A(1, 3.0)
+            with self.assertRaisesRegex(Exception, "because"):
+                _ = A(1, 3.0)
 
 
 if __name__ == "__main__":

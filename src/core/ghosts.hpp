@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _GHOSTS_H
 #define _GHOSTS_H
 /** \file
@@ -122,69 +122,44 @@ further details.
 #define GHOST_PSTSTORE 32
 /*@}*/
 
-/** \name Transfer data classes, for \ref GhostCommunication::type */
-/************************************************************/
-/*@{*/
-/// transfer \ref ParticleProperties
-#define GHOSTTRANS_PROPRTS 1
-/// transfer \ref ParticlePosition
-#define GHOSTTRANS_POSITION 2
-/** flag for \ref GHOSTTRANS_POSITION, shift the positions by \ref
-   GhostCommunication::shift. Must be or'd together with \ref
-   GHOSTTRANS_POSITION */
-#define GHOSTTRANS_POSSHFTD 4
-/// transfer \ref ParticleMomentum
-#define GHOSTTRANS_MOMENTUM 8
-/// transfer \ref ParticleForce
-#define GHOSTTRANS_FORCE 16
-
-/// resize the receiver particle arrays to the size of the senders
-#define GHOSTTRANS_PARTNUM 64
-
-#ifdef ENGINE
-/// transfer \ref ParticleParametersSwimming
-#define GHOSTTRANS_SWIMMING 128
-#endif
-/*@}*/
+/** Transfer data classes, for \ref ghost_communicator */
+enum : unsigned {
+  GHOSTTRANS_NONE = 0u,
+  /// transfer \ref ParticleProperties
+  GHOSTTRANS_PROPRTS = 1u,
+  /// transfer \ref ParticlePosition
+  GHOSTTRANS_POSITION = 2u,
+  /// transfer \ref ParticleMomentum
+  GHOSTTRANS_MOMENTUM = 8u,
+  /// transfer \ref ParticleForce
+  GHOSTTRANS_FORCE = 16u,
+  /// resize the receiver particle arrays to the size of the senders
+  GHOSTTRANS_PARTNUM = 64u
+};
 
 /** \name Data Types */
 /************************************************************/
 /*@{*/
 
-typedef struct {
-
+struct GhostCommunication {
   /** Communication type. */
   int type;
   /** Node to communicate with (to use with all MPI operations). */
   int node;
-  /** MPI communicator handle (to use with GHOST_BCST, GHOST_GATH, GHOST_RDCE).
-   */
-  MPI_Comm mpi_comm;
 
-  /** Number of particle lists to communicate. */
-  int n_part_lists;
   /** Pointer array to particle lists to communicate. */
-  Cell **part_lists;
+  std::vector<Cell *> part_lists = {};
 
-  /** if \ref GhostCommunicator::data_parts has \ref GHOSTTRANS_POSSHFTD, then
-     this is the shift vector. Normally this is an integer multiple of the box
-     length. The shift is done on the sender side */
-  Utils::Vector3d shift;
-} GhostCommunication;
+  /** Position shift for ghost particles. The shift is done on the sender side.
+   */
+  Utils::Vector3d shift = {};
+};
 
 /** Properties for a ghost communication. A ghost communication is defined */
-typedef struct {
-
-  /** Particle data parts to transfer */
-  int data_parts;
-
-  /** number of communication steps. */
-  int num;
-
+struct GhostCommunicator {
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
-
-} GhostCommunicator;
+};
 
 /*@}*/
 
@@ -193,21 +168,15 @@ typedef struct {
 /*@{*/
 
 /** Initialize a communicator. */
-void prepare_comm(GhostCommunicator *comm, int data_parts, int num);
+void prepare_comm(GhostCommunicator *gcr, int num);
 
 /** Free a communicator. */
-void free_comm(GhostCommunicator *comm);
-
-/**
- * @brief do a ghost communication with the data parts specified
- *        in the communicator.
- */
-void ghost_communicator(GhostCommunicator *gc);
+void free_comm(GhostCommunicator *gcr);
 
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator *gc, int data_parts);
+void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts);
 
 /*@}*/
 

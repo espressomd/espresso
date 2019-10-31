@@ -22,7 +22,6 @@ import re
 import os
 import sys
 import requests
-import subprocess
 
 if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
     exit(0)
@@ -39,7 +38,8 @@ prefix = {'sphinx': 'doc', 'doxygen': 'dox'}[doc_type]
 # Delete all existing comments
 comments = requests.get(URL)
 for comment in comments.json():
-    if comment['user']['login'] == 'espresso-ci' and prefix + '_warnings.sh' in comment['body']:
+    if comment['user']['login'] == 'espresso-ci' and prefix + \
+            '_warnings.sh' in comment['body']:
         requests.delete(comment['url'] + '?access_token=' +
                         os.environ['GITHUB_TOKEN'])
 

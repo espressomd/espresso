@@ -11,7 +11,7 @@ performing simulations using models with different levels of coarse-graining.
 It also includes modern and efficient algorithms for treatment of
 :ref:`electrostatics` (P3M, MMM-type algorithms, constant potential
 simulations, dielectric interfaces, …), hydrodynamic interactions
-(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice Boltzmann`),
+(:ref:`DPD<Dissipative Particle Dynamics (DPD)>`, :ref:`Lattice-Boltzmann`),
 and :ref:`magnetic interactions<Magnetostatics / Dipolar interactions>`, only
 to name a few.  It is designed to exploit the capabilities of parallel
 computational environments.  The program is being continuously extended to keep
@@ -259,7 +259,7 @@ and then adding it to the system: ::
 .. rubric:: Integration
 
 So far we just *added* particles and interactions, but did not propagate the
-system. This is done by the `integrator`.  It uses by default the velocity
+system. This is done by the *integrator*.  It uses by default the velocity
 Verlet algorithm and is already created by the system class. To perform an
 integration step, just execute::
 
@@ -292,14 +292,13 @@ Currently, the following tutorials are available:
 
 * :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid.
 * :file:`02-charged_system`: Modelling of charged systems such as ionic crystals.
-* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice Boltzmann method.
-* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice Boltzmann fluid, raspberry particles.
+* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method.
+* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice-Boltzmann fluid, raspberry particles.
 * :file:`06-active_matter`: Modelling of self-propelling particles.
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`08-visualization`: Using the online visualizers of |es|.
-* :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble.
 * :file:`11-ferrofluid`: Modelling a colloidal suspension of magnetic particles.
-* :file:`12-constant_pH`: Modelling an acid dissociation curve using the constant pH method
+* :file:`12-constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
 .. _Sample scripts:
 
@@ -309,126 +308,8 @@ Sample scripts
 Several scripts that can serve as usage examples can be found in the directory :file:`/samples`,
 or in the `git repository <https://github.com/espressomd/espresso/blob/python/samples/>`_.
 
-* :file:`billiard.py`
-    A simple billiard game, needs the Python ``pypopengl`` module
+.. include:: samples.rst
 
-* :file:`bonds-tst.py`
-   Test script that manually creates and deletes different bonds between particles (see :ref:`Bonded interactions`). This script performs:
-
-   * print defined bonded interactions
-   * print bonds on a particle
-   * delete bonds by index or name
-   * save/load a bond to/from a variable
-
-* :file:`cellsystem_test.py`
-    Test script that changes the skin depth parameter.  This should not be seen as a benchmark, but rather as a rough estimate of the effect of the cellsystem.
-
-    ..
-        .. todo:: implement the older [tune_cells] call
-        .. todo:: add save/load optimal cell parameters from tune_skin()
-
-* :file:`chamber_game.py`
-    Lennard-Jones gas used for demonstration purposes to showcase |es|. The
-    game is based on the Maxwell's demon thought experiment. The snake is
-    controlled by a gamepad or the keyboard to move particles between chambers
-    against a pressure gradient.
-
-* :file:`debye_hueckel.py`
-    Charged beads with a WCA interaction are simulated using the screened Debye-Hückel potential. See :ref:`Debye-Hückel potential`.
-
-* :file:`ekboundaries.py`
-
-* :file:`electrophoresis.py`
-
-* :file:`h5md.py`
-
-* :file:`lbf.py`
-
-* :file:`lj-demo.py`
-    Lennard-Jones liquid used for demonstration purposes to showcase |es|.
-    Sliders from a MIDI controller can change system variables such as
-    temperature and volume. Some thermodynamic observables are analyzed and
-    plotted live.
-
-* :file:`lj_liquid_distribution.py`
-    Uses :meth:`~espressomd.analyze.Analysis.distribution` to analyze a simple
-    Lennard-Jones liquid. See :ref:`Particle distribution`.
-
-* :file:`lj_liquid.py`
-    Simple Lennard-Jones particle liquid. Shows the basic features of how to:
-
-    * set up system parameters, particles and interactions.
-    * warm up and integrate.
-    * write parameters, configurations and observables to files
-
-* :file:`lj_liquid_structurefactor.py`
-    Uses :meth:`~espressomd.analyze.Analysis.structure_factor()` to analyze a
-    simple Lennard-Jones liquid. See :ref:`Structure factor`.
-
-* :file:`load_bonds.py`, :file:`store_bonds.py`
-    Uses the Python ``pickle`` module to store and load bond information.
-
-* :file:`load_checkpoint.py`,  :file:`save_checkpoint.py`
-   Basing usage of the checkpointing feature. Shows how to write/load the state of:
-
-   * custom user variables
-   * non bonded interactions
-   * particles
-   * P3M parameters
-   * thermostat
-
-* :file:`load_properties.py`, :file:`store_properties.py`
-    Uses the Python ``pickle`` module to store and load system information.
-
-* :file:`MDAnalysisIntegration.py`
-    Shows how to expose configuration to ``MDAnalysis`` at run time. The
-    functions of ``MDAnalysis`` can be used to perform some analysis or
-    convert the frame to other formats (CHARMM, GROMACS, ...)
-
-* :file:`minimal-charged-particles.py`
-   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions.
-
-* :file:`minimal-diamond.py`
-
-* :file:`minimal-polymer.py`
-   Sets up a single dilute bead-spring polymer. Shows the basic usage of :meth:`~espressomd.polymer.positions`.
-
-* :file:`minimal_random_number_generator.py`
-
-* :file:`observables_correlators.py`
-
-* :file:`p3m.py`
-   Simple Lennard-Jones particle liquid where the particles are assigned charges. The P3M method is used to calculate electrostatic interactions.
-
-* :file:`slice_input.py`
-    Uses python array slicing to set and extract various particle properties.
-
-* :file:`visualization.py`
-    A visualization for Mayavi/OpenGL of the LJ-liquid with interactive plotting.
-
-* :file:`visualization_bonded.py`
-    OpenGL visualization for bonds.
-
-* :file:`visualization_interactive.py`
-    Sample for an interactive OpenGL visualization with user-defined keyboard- and timed callbacks.
-
-* :file:`visualization_npt.py`
-    Simple test visualization for the NPT ensemble.
-
-* :file:`visualization_poisseuille.py`
-    Visualization for Poiseuille flow with lattice Boltzmann.
-
-* :file:`visualization_constraints.py`
-    Constraint visualization with OpenGL (shape selection via the command line). See :ref:`Shaped-based constraints`.
-
-* :file:`visualization_mmm2d.py`
-    A visual sample for a constant potential plate capacitor simulated with MMM2D.
-
-* :file:`visualization_charged.py`
-    Molten NaCl and larger, charged particles simulated with P3M.
-
-* :file:`visualization_cellsystem.py`
-    Node grid and cell grid visualization. Run in parallel for particle coloring by node.
 
 .. _On units:
 
@@ -585,9 +466,9 @@ report so to the developers.
 +--------------------------------+------------------------+------------------+------------+
 |                         **Hydrodynamic Interaction**                                    |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice Boltzmann              | Core                   | Core             | Yes        |
+| Lattice-Boltzmann              | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice Boltzmann on GPU       | Group                  | Core             | Yes        |
+| Lattice-Boltzmann on GPU       | Group                  | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                              **Input/Output**                                           |
 +--------------------------------+------------------------+------------------+------------+

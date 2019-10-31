@@ -2,6 +2,285 @@
 = ESPRESSO NEWS =
 =================
 
+Espresso 4.1
+============
+
+This is a feature release, i.e., new functionality is added to Espresso.
+An additional focus of this release is quality assurance and
+modernization. The testing of Espresso's functionality has been extended
+considerably. Also, sample and tutorial scripts are now automatically
+tested. Moreover, a large effort was put into modernizing the C++
+simulation core. Work has been done, e.g., on particle sorting, the MPI
+communication infrastructure, and the lattice-Boltzmann implementations.
+Electrostatic and magnetostatic methods now have a clear and common
+interface. These changes will facilitate future extensions of Espresso
+and make the code more understandable to new developers.
+
+We recommend that this release be used for all production simulations.
+No further bug fix releases will be provided for the 4.0 line, and not
+all fixes are present in Espresso 4.0.2.
+
+Please carefully read the detailed list of changes below before using
+this release. Issues can be reported at
+https://github.com/espressomd/espresso.
+
+
+Changed requirements
+--------------------
+
+* Python 2 support has been dropped. Espresso now requires Python 3.
+  For additional information, please see
+  https://github.com/espressomd/espresso/wiki/python_2_3_transition.
+
+* Espresso now needs a C++14-capable compiler, such as GCC 4.9 and later
+  or Clang 4 and later.
+
+* It is discouraged to use Espresso with Boost versions below 1.67.
+
+
+Added functionality and documentation
+-------------------------------------
+
+* The distance between a shape (such as sphere) and a position can now
+  be queried via ``shape.calc_distance()``.
+
+* The lattice nodes of a lattice-Boltzmann fluid can now be iterated
+  using ``LBFluid.nodes()``.
+
+* A tutorial on magnetic fluids has been added.
+
+* The stress created by the dissipative particle dynamics interaction
+  (DPD) can now be obtained via the ``DPDStress`` observable.
+
+* The stress of a lattice-Boltzmann fluid can now be obtained via the
+  ``LBFluidStress`` observable.
+
+* A torus shape has been added.
+
+* Two new accumulators for observables have been added:
+  ``MeanVarianceCalculator`` and ``TimeSeries``.
+
+* An ``ElectricPlaneWave`` constraint was added.
+
+* Experimental support for AMD GPUs via HIP. The future of this feature
+  is unclear. Please do not base hardware buying decisions on its
+  presence.
+
+* Visualization of slit pores in the OpenGL visualizer.
+
+* A Weeks-Chandler-Anderson short-range potential has been added
+  (``WCA``).
+
+* The external force density applied to a lattice-Boltzmann fluid
+  can now be changed during the simulation.
+
+* Sanity checks for Mach limits and unequal MD and lattice-Boltzmann
+  time steps have been added.
+
+* The ``system.cell_system.tune_skin()`` method now has a keyword
+  argument ``adjust_max_skin``. If set to ``True``, the maximum skin
+  to be tested will be reduced such that it is compatible with the local
+  box size.
+
+* For the CPU lattice-Boltzmann implementation, the limit on the Verlet
+  list skin (<0.5 agrid) has been lifted.
+
+* A new observable ``CosPersistenceAngles`` has been added for the bond
+  angles of a polymer (needed, e.g., for determining the persistence
+  length).
+
+
+Feature configuration at compile time
+-------------------------------------
+
+* The number of features which need to be defined at compile time in
+  myconfig.hpp has been reduced. Features without performance impact
+  are now always present. These are:
+
+  * ``PARTIAL_PERIODIC``
+  * ``LB``
+  * ``LB_GPU`` (for builds with CUDA)
+  * ``IMMERSED_BOUNDARY``
+  * ``BOND_ANGLE``
+
+* For most compilers, it is checked that only known features are
+  declared in myconfig.hpp.
+
+* The default feature configuration applied when no myconfig.hpp is
+  present has been extended significantly. In particular, all tutorials
+  can now be run with the default feature configuration. For production
+  simulations, it is still recommended to use a custom myconfig.hpp
+  containing only necessary features. This is true in particular, if
+  particle rotation is not needed.
+
+* Features that do not have automated tests now require
+  ``EXPERIMENTAL_FEATURES`` to be defined in myconfig.hpp.
+
+
+Interface changes
+-----------------
+
+* Several parts of Espresso now use a method-specific seed for random
+  number generation. For the following individual methods a random
+  number seed has to be passed using the keyword argument ``seed``:
+
+   * [Langevin thermostat](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.thermostat.Thermostat.set_langevin)
+   * [DPD thermostat](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.thermostat.Thermostat.set_dpd)
+   * [LB Thermostat](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.thermostat.Thermostat.set_lb)
+   * [Thermalized bond](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.interactions.ThermalizedBond)
+   * [Wang-Landau reaction ensemble](http://espressomd.org/html/doc4.1.0/espressomd.html?#module-espressomd.reaction_ensemble)
+   * [Constant pH ensemble](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.reaction_ensemble.ConstantpHEnsemble)
+   * [Widom insertion method](http://espressomd.org/html/doc4.1.0/espressomd.html?#espressomd.reaction_ensemble.WidomInsertion)
+
+* Changes in the lattice-Boltzmann (LB) interface:
+
+   * By default the LB fluid is not thermalized. A temperature can be
+     set using the ``LBFluid``'s keyword parameter ``kT``. If
+     ``kT > 0``, an additional ``seed`` keyword parameter has to be
+     provided.
+   * The LB thermostat gets its temperature from the LB fluid.
+   * The frictional coupling coefficient ``gamma`` is now a keyword
+     parameter of the LB thermostat.
+
+  For more detailed information on how to set up a LB fluid and
+  thermostat, please see http://espressomd.org/html/doc4.1.0/lb.html.
+
+* The method for polymer creation has been replaced. Now
+  ``espressomd.polymer.positions()`` can be used to obtain particle
+  positions for one or more polymer chains. Based on these positions,
+  polymers can be created. For an example please see
+  http://espressomd.org/html/doc4.1.0/particles.html#setting-up-polymer-chains.
+
+
+Changed and removed functionality
+---------------------------------
+
+* The ``remove_total_momentum()`` method for lattice-Boltzmann fluids
+  has been removed. The overall velocity of a fluid can be changed
+  using the ``lb_fluid.nodes()`` iterator.
+
+* The ``CATALYTIC_REACTIONS`` feature has been removed.
+
+* The method for creating a polymer has been replaced.
+  ``espressomd.polymer.positions()`` can now be used to obtain particle
+  positions for one or more polymer chains.
+
+* Checkpointing has been added for the electrokinetics method.
+
+* The global random number seed has been partly replaced by
+  method-specific ones. These are specified when activating the relevant
+  feature such as the Langevin, DPD and lattice-Boltzmann thermostats
+  via a ``seed`` keyword argument.
+
+* The random number generator has been switched to Philox for most
+  algorithms requiring random numbers.
+
+* Limitations on the exclusion radius have been relaxed in the reaction
+  ensemble method.
+
+* A new observable ``CosPersistenceAngles`` has been added for the bond
+  angles of a polymer (needed, e.g., for determining the persistence
+  length).
+
+* ELC has been disabled for non-neutral systems with constant potential.
+
+* The calculation of the linear particle momentum included the forces of
+  the last time step. The function ``system.analysis.linear_momentum()``
+  now returns the sum of the product of mass and velocity of all
+  particles, if no lattice-Boltzmann fluid is coupled.
+
+
+Performance enhancements
+------------------------
+
+* Speedup in the short-range force calculation in situations where the
+  short-range cutoff varies strongly for different pairs of particles,
+  e.g., in a bidisperse fluid.
+
+* Speedup in particle resorting triggered when particles have moved by
+  more than a skin.
+
+* Significantly faster back-transfer of particle forces from GPU-based
+  methods such as the GPU implementations of lattice-Boltzmann and P3M.
+
+
+Bug fixes
+---------
+
+* Lattice-Boltzmann boundaries, constraints and auto_update_accumulators
+  are now included in checkpointing. (#2915)
+
+* Collision detection is now checkpointed. (#2342)
+
+* The rhomboid shape was fixed. (#2756)
+
+* Deadlocks on certain GPUs have been resolved for the dipolar
+  Barnes-Hut method. (#2719)
+
+* The visualization of dihedrals has been fixed. (#2677)
+
+* The ``ENGINE`` implementation for CPU LB has been fixed. (#3025)
+
+* The external force density in lattice-Boltzmann fluids is no longer
+  ignored in the first integration step after setting the force density.
+  (#3144)
+
+* The positions of virtual sites and the charges of ICC particles are
+  now updated before observable calculation. (#3128)
+
+* The forces and torques for the Gay-Berne potential have been
+  corrected. (#3091)
+
+* Remove undocumented behaviour in the case of using a cylindrical
+  sampling area in the reaction ensemble, constant pH ensemble,
+  Wang-Landau ensemble, Widom-Insertion method. (#3174)
+
+* The ELC tuning error calculation has been rearranged to produce
+  correct results for higher accuracies. (#3123)
+
+
+New tutorials
+-------------
+
+* Tutorials for simulating ferrofluids and for using the constant-pH
+  method have been added.
+
+
+Under the hood changes
+----------------------
+
+* Automated testing has been enhanced. It now also includes samples and
+  tutorials. The overall test coverage for the simulation core has
+  increased by ~12% since Espresso 4.0.2.
+
+* The CPU LB and LB-particle coupling have been refactored.
+
+* Particle resorting has been simplified and sped-up.
+
+* The MPI callback mechanism has been simplified. Furthermore, reduction
+  operations such as summing values from all MPI ranks can now be
+  performed.
+
+* Nearly all manual memory management and C-style arrays have been
+  removed.
+
+* The rotation-related code has been simplified.
+
+* Long-range electrostatic and magnetostatic methods now have a common
+  interface.
+
+* The kernels for short-range and bonded interactions have been
+  simplified.
+
+* The CMake build system has been refactored and dependencies between
+  different parts of the code have been made clear.
+
+* Python code formatting: the autopep8 version now matches the one in
+  Ubuntu 18.04 (autopep8 v1.3.4 with pycodestyle v2.3.1).
+
+
+
+
 ESPResSo 4.0.2
 ==============
 
@@ -89,7 +368,7 @@ Physics related corrections:
     module did not get assigned a random velocity. This was not a problem if you were looking at observables
     which do not depend on velocity.
 
-  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
+  * Particles which were created in the Reaction Ensemble module were assigned a random velocity which was not distributed according to the Maxwell-Boltzmann distribution. This was not a problem if you were looking at observables which do not depend on velocity. If you looked at velocity-dependent observables but used a thermostat for thermalization before taking a sample you are also fine.  (#2377).
 
   * Under some conditions, the torque on self-propelled particles
     in a lattice-Boltzmann fluid was incorrect due to a sign error in the

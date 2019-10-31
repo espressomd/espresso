@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_THERMOSTAT_HPP
 #define CORE_THERMOSTAT_HPP
 /** \file
@@ -25,8 +25,8 @@
 
 #include "config.hpp"
 
+#include "Particle.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
 
@@ -224,8 +224,8 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
 
   // Get velocity effective in the thermostatting
 #ifdef ENGINE
-  auto const velocity = (p.swim.v_swim != 0)
-                            ? p.m.v - p.swim.v_swim * p.r.calc_director()
+  auto const velocity = (p.p.swim.v_swim != 0)
+                            ? p.m.v - p.p.swim.v_swim * p.r.calc_director()
                             : p.m.v;
 #else
   auto const &velocity = p.m.v;
@@ -261,7 +261,7 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
    \xi_i\f$.
     The same friction coefficient \f$\gamma\f$ is used as that for translation.
 */
-inline void friction_thermo_langevin_rotation(Particle &p) {
+inline Utils::Vector3d friction_thermo_langevin_rotation(const Particle &p) {
   extern Thermostat::GammaType langevin_pref2_rotation;
   Thermostat::GammaType langevin_pref_friction_buf, langevin_pref_noise_buf;
 
@@ -297,28 +297,15 @@ inline void friction_thermo_langevin_rotation(Particle &p) {
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  // Rotational degrees of virtual sites are thermostatted,
-  // so no switching here
-
   // Here the thermostats happens
-  Utils::Vector3d noise = v_noise(p.p.identity);
-  for (int j = 0; j < 3; j++) {
+  auto const noise = v_noise(p.p.identity);
 #ifdef PARTICLE_ANISOTROPY
-    if (langevin_pref_noise_buf[j] > 0.0) {
-      p.f.torque[j] = -langevin_pref_friction_buf[j] * p.m.omega[j] +
-                      langevin_pref_noise_buf[j] * noise[j];
-    } else {
-      p.f.torque[j] = -langevin_pref_friction_buf[j] * p.m.omega[j];
-    }
+  return -hadamard_product(langevin_pref_friction_buf, p.m.omega) +
+         hadamard_product(langevin_pref_noise_buf, noise);
 #else
-    if (langevin_pref_noise_buf > 0.0) {
-      p.f.torque[j] = -langevin_pref_friction_buf * p.m.omega[j] +
-                      langevin_pref_noise_buf * noise[j];
-    } else {
-      p.f.torque[j] = -langevin_pref_friction_buf * p.m.omega[j];
-    }
+  return -langevin_pref_friction_buf * p.m.omega +
+         langevin_pref_noise_buf * noise;
 #endif
-  }
 }
 
 #endif // ROTATION

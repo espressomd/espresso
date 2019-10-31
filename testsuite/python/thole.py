@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -57,7 +57,6 @@ class TestThole(ut.TestCase):
     def test(self):
         res_dForce = []
         res_dEnergy = []
-        Es = []
         ns = 100
         for i in range(1, ns):
             x = 20.0 * i / ns

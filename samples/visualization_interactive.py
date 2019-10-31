@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,15 +15,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization samples with keyboard control and particle repositioning via
-timed callback.
+Visualize a simulation box where the particles can be repositioned via the
+mouse and timed callbacks, and the temperature of the thermostat can be
+changed via the keyboard.
 """
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 import numpy as np
-from threading import Thread
 from espressomd import visualization_opengl
 
 required_features = []
@@ -94,5 +92,5 @@ visualizer.keyboardManager.register_button(
 # Set initial position
 spin()
 
-# Start the visualizer and run the integration thread
+# Start the visualizer
 visualizer.run(1)

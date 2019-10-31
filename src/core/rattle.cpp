@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "rattle.hpp"
 
@@ -25,6 +25,7 @@ int n_rigidbonds = 0;
 
 #ifdef BOND_CONSTRAINT
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -160,7 +161,8 @@ void app_pos_correction(const ParticleRange &particles) {
   } // for i loop
 }
 
-void correct_pos_shake(const ParticleRange &particles) {
+void correct_pos_shake(ParticleRange const &particles) {
+  cells_update_ghosts();
   int repeat_, cnt = 0;
   int repeat = 1;
 
@@ -168,10 +170,12 @@ void correct_pos_shake(const ParticleRange &particles) {
     init_correction_vector(cell_structure.local_cells().particles());
     repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    app_pos_correction(particles);
+    ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                       GHOSTTRANS_FORCE);
+    app_pos_correction(cell_structure.local_cells().particles());
     /**Ghost Positions Update*/
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
@@ -273,7 +277,9 @@ void revert_force(const ParticleRange &particles,
     revert(p);
 }
 
-void correct_vel_shake(CellStructure &cell_structure) {
+void correct_vel_shake() {
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
+
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle
@@ -286,9 +292,11 @@ void correct_vel_shake(CellStructure &cell_structure) {
     init_correction_vector(particles);
     repeat_ = 0;
     compute_vel_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                       GHOSTTRANS_FORCE);
     apply_vel_corr(particles);
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else

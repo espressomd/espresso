@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_LB_INTERFACE
 #define CORE_LB_INTERFACE
 
@@ -231,8 +249,14 @@ bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
  */
 Utils::Vector3i lb_lbfluid_get_shape();
 
-void lb_lbfluid_on_lb_params_change(LBParam field);
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
+
+/**
+ * @brief Calculates the interpolated fluid velocity on the master process.
+ * @param pos Position at which the velocity is to be calculated.
+ * @retval interpolated fluid velocity.
+ */
+const Utils::Vector3d
+lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 
 #endif

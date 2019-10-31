@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <algorithm>
 #include <functional>
 #include <iostream>
@@ -46,8 +46,8 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
     c.m_neighbors = Neighbors<Cell *>(neighbors, {});
 
-    c.part = new Particle[n_part_per_cell];
-    c.n = c.max = n_part_per_cell;
+    c.resize(n_part_per_cell);
+    std::uninitialized_fill(c.part, c.part + c.n, Particle());
 
     for (unsigned i = 0; i < n_part_per_cell; ++i) {
       c.part[i].p.identity = id++;
@@ -86,8 +86,4 @@ BOOST_AUTO_TEST_CASE(link_cell) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
-
-  for (auto &c : cells) {
-    delete[] c.part;
-  }
 }

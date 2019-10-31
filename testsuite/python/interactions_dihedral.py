@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
-import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -170,7 +169,6 @@ class InteractionsBondedTest(ut.TestCase):
         N = 111
         d_phi = 2 * np.pi / N
         # tabulated values for the range [0, 2*pi]
-        tab_phi = [i * d_phi for i in range(N + 1)]
         tab_energy = [np.cos(i * d_phi) for i in range(N + 1)]
         tab_force = [np.cos(i * d_phi) for i in range(N + 1)]
 
@@ -209,6 +207,7 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
+
 
 if __name__ == '__main__':
     ut.main()

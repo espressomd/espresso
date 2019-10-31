@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -43,9 +43,10 @@ class MagnetostaticsInteractionsTests(ut.TestCase):
     if espressomd.has_features(["DIPOLAR_DIRECT_SUM"]):
         test_DdsCpu = generate_test_for_class(
             system, magnetostatics.DipolarDirectSumCpu, dict(prefactor=3.4))
-        test_DdsRCpu = generate_test_for_class(
-            system, magnetostatics.DipolarDirectSumWithReplicaCpu,
-            dict(prefactor=3.4, n_replica=2))
+        if espressomd.has_features("EXPERIMENTAL_FEATURES"):
+            test_DdsRCpu = generate_test_for_class(
+                system, magnetostatics.DipolarDirectSumWithReplicaCpu,
+                dict(prefactor=3.4, n_replica=2))
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -166,6 +166,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             res.append(m)
 
         return res
+
 
 if __name__ == "__main__":
     ut.main()

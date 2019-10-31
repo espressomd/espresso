@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,7 +22,7 @@ import espressomd.lb
 from tests_common import single_component_maxwell
 
 """
-Check the Lattice Boltzmann thermostat with respect to the particle velocity
+Check the lattice-Boltzmann thermostat with respect to the particle velocity
 distribution.
 
 
@@ -50,7 +50,6 @@ class LBThermostatCommon:
     system.cell_system.skin = 0.4 * AGRID
 
     def prepare(self):
-        self.system.set_random_state_PRNG()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
         self.system.part.add(

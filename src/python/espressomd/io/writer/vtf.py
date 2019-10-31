@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -40,7 +40,7 @@ def vtf_pid_map(system, types='all'):
     id_to_write = []
     for p in system.part:
         for t in types:
-            if p.type == t or t == "all":
+            if t in (p.type, "all"):
                 id_to_write.append(p.id)
     return dict(zip(id_to_write, range(len(id_to_write))))
 
@@ -70,7 +70,7 @@ def writevsf(system, fp, types='all'):
                                                               system.part[pid].type))
     for pid, vtf_id, in vtf_index.items():
         for b in system.part[pid].bonds:
-            if (system.part[b[1]].id in vtf_index):
+            if system.part[b[1]].id in vtf_index:
                 fp.write("bond {}:{}\n".format(
                     vtf_id, vtf_index[system.part[b[1]].id]))
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,8 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 import math
-from espressomd.shapes import Rhomboid
-from espressomd.shapes import Cylinder
 
 small_epsilon = 0.000000001
 large_number = 10000000.0
@@ -58,8 +56,7 @@ def norm(vect):
           Input vector
 
     """
-    v = np.array(vect)
-    return np.sqrt(np.dot(v, v))
+    return np.linalg.norm(vect)
 
 
 def vec_distance(a, b):
@@ -149,7 +146,7 @@ def discard_epsilon(x):
           real number
 
     """
-    if (x > -small_epsilon and x < small_epsilon):
+    if abs(x) < small_epsilon:
         res = 0.0
     else:
         res = x
@@ -569,8 +566,8 @@ def output_vtk_lines(lines, out_file):
 
 
 def output_vtk_pore(
-    axis, length, outer_rad_left, outer_rad_right, pos, rad_left, rad_right,
-                    smoothing_radius, m, out_file):
+        axis, length, outer_rad_left, outer_rad_right, pos, rad_left, rad_right,
+        smoothing_radius, m, out_file):
     """
     Outputs the VTK files for visualisation of a pore in e.g. Paraview.
 

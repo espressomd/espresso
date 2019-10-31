@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2018 The ESPResSo project
+# Copyright (C) 2009-2019 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -76,7 +76,6 @@ add_subdirectory(05-raspberry_electrophoresis)
 add_subdirectory(06-active_matter)
 add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
-add_subdirectory(10-reaction_ensemble)
 add_subdirectory(11-ferrofluid)
 add_subdirectory(12-constant_pH)
 
@@ -90,7 +89,6 @@ add_custom_target(tutorials DEPENDS
   tutorials_06
   tutorials_07
   tutorials_08
-  tutorials_10
   tutorials_11
   tutorials_12
   )
@@ -105,6 +103,7 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_04_3_html
   tutorials_04_4_html
   tutorials_05_html
+  tutorials_07_html
   tutorials_08_html
   tutorials_11_1_html
   tutorials_11_2_html
@@ -121,6 +120,7 @@ add_custom_target(tutorials_python_only DEPENDS
   tutorials_04_3_python
   tutorials_04_4_python
   tutorials_05_python
+  tutorials_07_python
   tutorials_08_python
   tutorials_11_1_python
   tutorials_11_2_python

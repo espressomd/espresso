@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,10 +19,11 @@
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, Vector3i, List, Span
+from espressomd.utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
+from libc cimport stdint
 
 include "myconfig.pxi"
 
@@ -30,6 +31,9 @@ include "myconfig.pxi"
 
 cdef extern from "particle_data.hpp":
     # DATA STRUCTURES
+    stdint.uint8_t ROTATION_X
+    stdint.uint8_t ROTATION_Y
+    stdint.uint8_t ROTATION_Z
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
@@ -40,6 +44,7 @@ cdef extern from "particle_data.hpp":
         int    mol_id
         int    type
         double mass
+        stdint.uint8_t rotation
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
@@ -71,9 +76,6 @@ cdef extern from "particle_data.hpp":
             double v_swim
             int push_pull
             double dipole_length
-            double v_center[3]
-            double v_source[3]
-            double rotational_friction
 
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
@@ -98,7 +100,6 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION:
         void set_particle_rotation(int part, int rot)
-        void pointer_to_rotation(const particle * p, const int * & res)
 
     void set_particle_q(int part, double q)
 
@@ -123,10 +124,6 @@ cdef extern from "particle_data.hpp":
     IF MEMBRANE_COLLISION:
         void set_particle_out_direction(int part, double out_direction[3])
         void pointer_to_out_direction(particle * p, double * & res)
-
-    IF AFFINITY:
-        void set_particle_affinity(int part, double bond_site[3])
-        void pointer_to_bond_site(particle * p, double * & res)
 
     IF MASS:
         void pointer_to_mass(particle * p, double * & res)
@@ -163,21 +160,21 @@ cdef extern from "particle_data.hpp":
     IF VIRTUAL_SITES_RELATIVE:
         void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3)
         void pointer_to_vs_quat(const particle * P, const double * & res)
-        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * rel_ori)
-        void set_particle_vs_quat(int part, double * vs_quat)
+        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, Vector4d rel_ori)
+        void set_particle_vs_quat(int part, Vector4d vs_quat)
 
     void pointer_to_q(const particle * P, const double * & res)
 
     IF EXTERNAL_FORCES:
         IF ROTATION:
             void set_particle_ext_torque(int part, const Vector3d & torque)
-            void pointer_to_ext_torque(const particle * P, const int * & res1, const double * & res2)
+            void pointer_to_ext_torque(const particle * P, const double * & res2)
 
         void set_particle_ext_force(int part, const Vector3d & force)
-        void pointer_to_ext_force(const particle * P, const int * & res1, const double * & res2)
+        void pointer_to_ext_force(const particle * P, const double * & res2)
 
-        void set_particle_fix(int part, int flag)
-        void pointer_to_fix(const particle * P, const int * & res)
+        void set_particle_fix(int part, stdint.uint8_t flag)
+        void pointer_to_fix(const particle * P, const stdint.uint8_t * & res)
 
     void delete_particle_bond(int part, Span[const int] bond)
     void delete_particle_bonds(int part)
@@ -213,7 +210,7 @@ cdef inline const particle * get_particle_data_ptr(const particle & p):
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
-        int vs_relate_to(int part_num, int relate_to)
+        void vs_relate_to(int part_num, int relate_to)
 
 cdef extern from "rotation.hpp":
     Vector3d convert_vector_body_to_space(const particle & p, const Vector3d & v)

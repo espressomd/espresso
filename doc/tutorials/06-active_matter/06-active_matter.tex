@@ -230,13 +230,7 @@ essentially a point particle, there is no rotation caused by the fluid
 flow,~\textit{e.g.}, a swimmer in a Posseuille flow. If the thermostat is
 switched on, the rotational degrees of freedom will also be thermalized, but
 there is still no contribution of rotation due to `external' flow fields. A
-rather unsatisfying solution to this problem is offered by the
-\codees{rotational_friction} option, which allows one to include the effect of
-fluid flow on the rotation. The algorithm computes the difference in fluid flow
-velocity between the center of the particle and the coupling point, and takes
-the cross product of that with the dipole length. This quantity is then
-converted into a torque using the \codees{rotational_friction}. It is
-recommended to use an alternative means of obtaining rotations in your LB
+It is recommended to use an alternative means of obtaining rotations in your LB
 swimming simulations. For example, by constructing a raspberry
 particle~\cite{lobaskin04,chatterji05,fischer15,degraaf15,degraaf16b}.
 
@@ -360,8 +354,8 @@ system.auto_update_accumulators.add(msd)
 
 # Integrate
 
-for i in range(sampsteps):
-    system.integrator.run(samplength)
+for i in range(SAMP_STEPS):
+    system.integrator.run(SAMP_LENGTH)
 
 # Finalize the correlator and write to disk
 
@@ -416,9 +410,9 @@ the angular velocity, and the brackets $\langle \rangle_{\tau}$ indicate time
 averaging over $\tau$. The first task is to get the script up and running. Once
 you have done this, you will find that you can output a single measurement of
 the MSD and (A)VACF for a passive system (\codees{vel=0.0}) or an active on
-(e.g., \codees{vel=5.0}). You can plot these using GNUplot, for instance. For
-the MSD there are three data entries, as the MSD is calculated in each
-direction (x, y, and z).
+(e.g., \codees{vel=5.0}). You can visualize these using 
+\codees{matplotlib.pyplot}, for instance. To plot the total MSD, 
+you need to sum up the contributions from the different components (x, y and z).
 
 \begin{figure}[!htb]
 \begin{center}

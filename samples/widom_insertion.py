@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,18 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This example script measures the excess chemical potential of a charged WCA
-fluid via Widom's insertion method.
-As input this script requires you to provide particle number density in units
-of 1/sigma^3.
+Measure the excess chemical potential of a charged WCA fluid via Widom's
+insertion method.
 """
 import numpy as np
 import argparse
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd import electrostatics
 
@@ -55,8 +50,6 @@ np.random.seed(seed=system.seed)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 temperature = 1.0
-system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
-system.cell_system.max_num_cells = 14**3
 
 
 #############################################################
@@ -90,26 +83,28 @@ for key, value in p3m_params.items():
 
 # Warmup
 #############################################################
-# warmup integration (with capped WCA potential)
-warm_steps = 1000
+# warmup integration (steepest descent)
+warm_steps = 20
 warm_n_times = 20
-# set WCA cap
-system.force_cap = 20
+min_dist = 0.9 * wca_sig
 
-# Warmup Integration Loop
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=0.01)
 i = 0
-while i < warm_n_times:
-    print(i, "warmup")
-    system.integrator.run(steps=warm_steps)
+while system.analysis.min_dist() < min_dist and i < warm_n_times:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(warm_steps)
     i += 1
-    # increase WCA cap
-    system.force_cap += 10
 
-# remove force capping
-system.force_cap = 0
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
 
-RE = reaction_ensemble.WidomInsertion(
-    temperature=temperature, seed=77)
+# activate thermostat
+system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
+
+RE = reaction_ensemble.WidomInsertion(temperature=temperature, seed=77)
 
 # add insertion reaction
 insertion_reaction_id = 0

@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _FORCES_INLINE_HPP
 #define _FORCES_INLINE_HPP
 
@@ -56,11 +56,12 @@
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
-#include "object-in-fluid/affinity.hpp"
 #include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
 #include "object-in-fluid/out_direction.hpp"
+#include "particle_data.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 
 #ifdef DIPOLES
@@ -79,41 +80,45 @@
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
 
-/** Initialize the forces for a real particle */
-inline ParticleForce init_local_particle_force(Particle const &part) {
-  auto f = (thermo_switch & THERMO_LANGEVIN) ? friction_thermo_langevin(part)
-                                             : ParticleForce{};
+/** External particle forces */
+inline ParticleForce external_force(Particle const &p) {
+  ParticleForce f = {};
 
 #ifdef EXTERNAL_FORCES
-  // If individual coordinates are fixed, set force to 0.
-  for (int j = 0; j < 3; j++)
-    if (part.p.ext_flag & COORD_FIXED(j))
-      f.f[j] = 0;
-  // Add external force
-  if (part.p.ext_flag & PARTICLE_EXT_FORCE)
-    f.f += part.p.ext_force;
-#endif
-
+  f.f += p.p.ext_force;
 #ifdef ROTATION
-  {
-
-#ifdef EXTERNAL_FORCES
-    if (part.p.ext_flag & PARTICLE_EXT_TORQUE) {
-      f.torque += part.p.ext_torque;
-    }
+  f.torque += p.p.ext_torque;
+#endif
 #endif
 
 #ifdef ENGINE
-    // apply a swimming force in the direction of
-    // the particle's orientation axis
-    if (part.swim.swimming) {
-      f.f += part.swim.f_swim * part.r.calc_director();
-    }
-#endif
+  // apply a swimming force in the direction of
+  // the particle's orientation axis
+  if (p.p.swim.swimming) {
+    f.f += p.p.swim.f_swim * p.r.calc_director();
   }
 #endif
 
   return f;
+}
+
+inline ParticleForce thermostat_force(Particle const &p) {
+  if (!(thermo_switch & THERMO_LANGEVIN)) {
+    return {};
+  }
+
+#ifdef ROTATION
+  return {
+      friction_thermo_langevin(p),
+      convert_vector_body_to_space(p, friction_thermo_langevin_rotation(p))};
+#else
+  return friction_thermo_langevin(p);
+#endif
+}
+
+/** Initialize the forces for a real particle */
+inline ParticleForce init_local_particle_force(Particle const &part) {
+  return thermostat_force(part) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
@@ -249,18 +254,6 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
 #endif
 
   /***********************************************/
-  /* bond creation and breaking                  */
-  /***********************************************/
-
-#ifdef AFFINITY
-  /* affinity potential */
-  // Prevent jump to non-inlined function
-  if (dist < ia_params.affinity.cut) {
-    force += affinity_pair_force(p1, p2, ia_params, d, dist);
-  }
-#endif
-
-  /***********************************************/
   /* non-bonded pair potentials                  */
   /***********************************************/
 
@@ -293,11 +286,7 @@ inline void add_non_bonded_pair_force(Particle &p1, Particle &p2,
   /* but nothing afterwards                                            */
   /*********************************************************************/
 #ifdef NPT
-  if (integ_switch == INTEG_METHOD_NPT_ISO) {
-    for (int j = 0; j < 3; j++) {
-      nptiso.p_vir[j] += force[j] * d[j];
-    }
-  }
+  npt_add_virial_contribution(force, d);
 #endif
 
   /***********************************************/
@@ -470,10 +459,7 @@ inline void add_bonded_force(Particle *const p1) {
       }
 
 #ifdef NPT
-      if (integ_switch == INTEG_METHOD_NPT_ISO) {
-        for (int j = 0; j < 3; j++)
-          nptiso.p_vir[j] += force1[j] * dx[j];
-      }
+      npt_add_virial_contribution(force1, dx);
 #endif
 
       switch (type) {

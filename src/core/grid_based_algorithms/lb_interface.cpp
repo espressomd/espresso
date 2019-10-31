@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "lb_interface.hpp"
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
@@ -7,6 +25,8 @@
 #include "grid.hpp"
 #include "lb-d3q19.hpp"
 #include "lb.hpp"
+#include "lb_collective_interface.hpp"
+#include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
 
 #include <utils/index.hpp>
@@ -19,124 +39,6 @@ ActiveLB lattice_switch = ActiveLB::NONE;
 struct NoLBActive : public std::exception {
   const char *what() const noexcept override { return "LB not activated"; }
 };
-
-/* LB CPU callback interface */
-namespace {
-
-template <typename Kernel>
-void lb_set(Utils::Vector3i const &index, Kernel kernel) {
-  if (lblattice.is_local(index)) {
-    kernel(index);
-  }
-}
-
-template <typename Kernel>
-auto lb_calc(Utils::Vector3i const &index, Kernel kernel) {
-  using R = decltype(kernel(index));
-  if (lblattice.is_local(index)) {
-    return boost::optional<R>(kernel(index));
-  }
-  return boost::optional<R>();
-}
-
-template <class Kernel>
-auto lb_calc_fluid_kernel(Utils::Vector3i const &index, Kernel kernel) {
-  return lb_calc(index, [&](auto index) {
-    auto const linear_index =
-        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    auto const force_density = lbfields[linear_index].force_density;
-    auto const modes = lb_calc_modes(linear_index, lbfluid);
-    return kernel(modes, force_density);
-  });
-}
-
-auto mpi_lb_get_density(Utils::Vector3i const &index) {
-  return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_density(modes, lbpar);
-  });
-}
-
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_density)
-
-auto mpi_lb_get_populations(Utils::Vector3i const &index) {
-  return lb_calc(index, [&](auto index) {
-    auto const linear_index =
-        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    return lb_get_population(linear_index);
-  });
-}
-
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_populations)
-
-auto mpi_lb_get_boundary_flag(Utils::Vector3i const &index) {
-  return lb_calc(index, [&](auto index) {
-#ifdef LB_BOUNDARIES
-    auto const linear_index =
-        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    return lbfields[linear_index].boundary;
-#else
-    return false;
-#endif
-  });
-}
-
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_boundary_flag)
-
-void mpi_lb_set_population(Utils::Vector3i const &index,
-                           Utils::Vector19d const &population) {
-  lb_set(index, [&](auto index) {
-    auto const linear_index =
-        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    lb_set_population(linear_index, population);
-  });
-}
-
-REGISTER_CALLBACK(mpi_lb_set_population)
-
-void mpi_lb_set_force_density(Utils::Vector3i const &index,
-                              Utils::Vector3d const &force_density) {
-  lb_set(index, [&](auto index) {
-    auto const linear_index =
-        get_linear_index(lblattice.local_index(index), lblattice.halo_grid);
-    lbfields[linear_index].force_density = force_density;
-  });
-}
-
-REGISTER_CALLBACK(mpi_lb_set_force_density)
-
-auto mpi_lb_get_momentum_density(Utils::Vector3i const &index) {
-  return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_momentum_density(modes, force_density);
-  });
-}
-
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_momentum_density)
-
-auto mpi_lb_get_stress(Utils::Vector3i const &index) {
-  return lb_calc_fluid_kernel(index, [&](auto modes, auto force_density) {
-    return lb_calc_stress(modes, force_density, lbpar);
-  });
-}
-
-REGISTER_CALLBACK_ONE_RANK(mpi_lb_get_stress)
-
-void mpi_bcast_lb_params_slave(LBParam field, LB_Parameters const &params) {
-  lbpar = params;
-  lb_lbfluid_on_lb_params_change(field);
-}
-
-REGISTER_CALLBACK(mpi_bcast_lb_params_slave)
-
-/** @brief Broadcast a parameter for lattice Boltzmann.
- *  @param[in] field  References the parameter field to be broadcasted.
- *                    The references are defined in lb.hpp
- */
-void mpi_bcast_lb_params(LBParam field) {
-  mpi_call(mpi_bcast_lb_params_slave, field, lbpar);
-  lb_lbfluid_on_lb_params_change(field);
-}
-
-} // namespace
 
 void lb_lbfluid_update() {
   if (lattice_switch == ActiveLB::CPU) {
@@ -299,7 +201,8 @@ void lb_lbfluid_set_density(double density) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.rho = static_cast<float>(density);
-    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
+    lb_lbfluid_reinit_fluid();
+    lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.density = density;
@@ -329,7 +232,7 @@ void lb_lbfluid_set_viscosity(double viscosity) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.viscosity = static_cast<float>(viscosity);
-    lb_lbfluid_on_lb_params_change(LBParam::VISCOSITY);
+    lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.viscosity = viscosity;
@@ -361,7 +264,7 @@ void lb_lbfluid_set_bulk_viscosity(double bulk_viscosity) {
 #ifdef CUDA
     lbpar_gpu.bulk_viscosity = static_cast<float>(bulk_viscosity);
     lbpar_gpu.is_TRT = false;
-    lb_lbfluid_on_lb_params_change(LBParam::BULKVISC);
+    lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.bulk_viscosity = bulk_viscosity;
@@ -393,7 +296,7 @@ void lb_lbfluid_set_gamma_odd(double gamma_odd) {
 #ifdef CUDA
     lbpar_gpu.gamma_odd = static_cast<float>(gamma_odd);
     lbpar_gpu.is_TRT = false;
-    lb_lbfluid_on_lb_params_change(LBParam::DENSITY);
+    lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.gamma_odd = gamma_odd;
@@ -425,7 +328,7 @@ void lb_lbfluid_set_gamma_even(double gamma_even) {
 #ifdef CUDA
     lbpar_gpu.gamma_even = static_cast<float>(gamma_even);
     lbpar_gpu.is_TRT = false;
-    lb_lbfluid_on_lb_params_change(LBParam::GAMMA_EVEN);
+    lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.gamma_even = gamma_even;
@@ -454,7 +357,10 @@ void lb_lbfluid_set_agrid(double agrid) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lb_set_agrid_gpu(agrid);
-    lb_lbfluid_on_lb_params_change(LBParam::AGRID);
+    lb_init_gpu();
+#if defined(LB_BOUNDARIES_GPU)
+    LBBoundaries::lb_init_boundaries();
+#endif
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.agrid = agrid;
@@ -518,7 +424,7 @@ void lb_lbfluid_set_tau(double tau) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     lbpar_gpu.tau = static_cast<float>(tau);
-    lb_lbfluid_on_lb_params_change(LBParam::TAU);
+    lb_lbfluid_reinit_parameters();
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.tau = tau;
@@ -1328,35 +1234,6 @@ const Lattice &lb_lbfluid_get_lattice() { return lblattice; }
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
-void lb_lbfluid_on_lb_params_change(LBParam field) {
-  switch (field) {
-  case LBParam::AGRID:
-    if (lattice_switch == ActiveLB::CPU)
-      lb_init(lbpar);
-#ifdef CUDA
-    if (lattice_switch == ActiveLB::GPU && this_node == 0)
-      lb_init_gpu();
-#endif
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-    LBBoundaries::lb_init_boundaries();
-#endif
-    break;
-  case LBParam::DENSITY:
-    lb_lbfluid_reinit_fluid();
-    break;
-  case LBParam::VISCOSITY:
-  case LBParam::EXT_FORCE_DENSITY:
-    lb_initialize_fields(lbfields, lbpar, lblattice);
-  case LBParam::BULKVISC:
-  case LBParam::KT:
-  case LBParam::GAMMA_ODD:
-  case LBParam::GAMMA_EVEN:
-  case LBParam::TAU:
-    break;
-  }
-  lb_lbfluid_reinit_parameters();
-}
-
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   Utils::Vector3d fluid_momentum{};
   if (lattice_switch == ActiveLB::GPU) {
@@ -1367,4 +1244,37 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
     mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
   }
   return fluid_momentum;
+}
+
+const Utils::Vector3d
+lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
+  auto const folded_pos = folded_position(pos, box_geo);
+  auto const interpolation_order = lb_lbinterpolation_get_interpolation_order();
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    Utils::Vector3d interpolated_u{};
+    switch (interpolation_order) {
+    case (InterpolationOrder::linear):
+      lb_get_interpolated_velocity_gpu<8>(folded_pos.data(),
+                                          interpolated_u.data(), 1);
+      break;
+    case (InterpolationOrder::quadratic):
+      lb_get_interpolated_velocity_gpu<27>(folded_pos.data(),
+                                           interpolated_u.data(), 1);
+      break;
+    }
+    return interpolated_u;
+#endif
+  }
+  if (lattice_switch == ActiveLB::CPU) {
+    switch (interpolation_order) {
+    case (InterpolationOrder::quadratic):
+      throw std::runtime_error("The non-linear interpolation scheme is not "
+                               "implemented for the CPU LB.");
+    case (InterpolationOrder::linear):
+      return mpi_call(::Communication::Result::one_rank,
+                      mpi_lb_get_interpolated_velocity, folded_pos);
+    }
+  }
+  throw NoLBActive();
 }

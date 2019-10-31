@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -76,7 +76,7 @@ cdef class GalileiTransform:
         """
         Remove the center of mass velocity of the system. Assumes equal unit
         mass if the mass feature is not used. This is often used when switching
-        from Langevin Dynamics to Lattice Boltzmann. This is due to the random
+        from Langevin Dynamics to lattice-Boltzmann. This is due to the random
         nature of LD that yield a non-zero net system momentum at any given
         time.
 

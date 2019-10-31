@@ -10,7 +10,7 @@ Analysis
   calculation and data accumulation performed in the core.
 - :ref:`Observables and correlators`: This provides a more flexible concept of
   in-core analysis, where a certain observable (:ref:`Available observables`),
-  a rule for data accumulation (ref Accumulators) and/or correlation (:ref:`Correlations`) can be defined.
+  a rule for data accumulation (:ref:`Accumulators`) and/or correlation (:ref:`Correlations`) can be defined.
 
 
 .. _Direct analysis routines:
@@ -65,7 +65,7 @@ Momentum of the System
 :meth:`espressomd.analyze.Analysis.linear_momentum`
 
 This command returns the total linear momentum of the particles and the
-lattice Boltzmann (LB) fluid, if one exists. Giving the optional
+lattice-Boltzmann (LB) fluid, if one exists. Giving the optional
 parameters either causes the command to ignore the contribution of LB or
 of the particles.
 
@@ -147,7 +147,7 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     ~~~~~~~~~~~~~~~~~~
     .. todo:: This feature is not implemented
 
-    analyze radial\_density\_map
+    analyze radial_density_map
 
     Returns the radial density of particles around a given axis. Parameters
     are:
@@ -231,7 +231,7 @@ index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_ra
 0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0
 =============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
 
-As one can see the columns `density`, `v_radial` and `v_axial` appear twice.
+As one can see the columns **density**, **v_radial** and **v_axial** appear twice.
 The order of appearance corresponds to the order of the types in the argument ``types``.
 For example if was set to ``types=[0, 1]`` then the first triple is associated to type 0 and
 the second triple to type 1.
@@ -288,8 +288,8 @@ Structure factor
 Calculate the structure factor for given types.
 
 Returns the spherically averaged structure factor :math:`S(q)` of
-particles specified in . :math:`S(q)` is calculated for all possible
-wave vectors, :math:`\frac{2\pi}{L} <= q <= \frac{2\pi}{L}` `order`.
+particles specified in ``sf_types``. :math:`S(q)` is calculated for all possible
+wave vectors :math:`\frac{2\pi}{L} \leq q \leq \frac{2\pi}{L}` up to ``sf_order``.
 
 ..
     .. _Van-Hove autocorrelation function:
@@ -374,7 +374,7 @@ Analyze the gyration tensor of particles of a given type, or of all particles in
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	.. todo:: This feature is not implemented
 
-	This command returns the temperature of the lattice Boltzmann (LB)
+	This command returns the temperature of the lattice-Boltzmann (LB)
 	fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
 	or are compiled in and boundaries are defined, only the available fluid
 	volume is taken into account.
@@ -394,16 +394,16 @@ The instantaneous pressure is calculated (if there are no electrostatic interact
 by the volume averaged, direction averaged instantaneous virial pressure
 
 .. math::
-     p = \frac{2E_{kinetic}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
+     p = \frac{2E_{\text{kinetic}}}{Vf} + \frac{\sum_{j>i} {F_{ij}r_{ij}}}{3V}
      :label: eqptens
 
 where :math:`f=3` is the number of translational degrees of freedom of
 each particle, :math:`V` is the volume of the system,
-:math:`E_{kinetic}` is the kinetic energy, :math:`F_{ij}` the force
+:math:`E_{\text{kinetic}}` is the kinetic energy, :math:`F_{ij}` the force
 between particles i and j, and :math:`r_{ij}` is the distance between
 them. The kinetic energy divided by the degrees of freedom is
 
-.. math:: \frac{2E_{kinetic}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
+.. math:: \frac{2E_{\text{kinetic}}}{f} = \frac{1}{3}\sum_{i} {m_{i}v_{i}^{2}}.
 
 Note that Equation :eq:`eqptens` can only be applied to pair potentials and
 central forces. Description of how contributions from other interactions
@@ -415,7 +415,7 @@ electrostatic interactions in P3M, the :math:`k`-space contribution is implement
 The implementation of the Coulomb P3M pressure is tested against LAMMPS.
 
 Four-body dihedral potentials are not included. Except of
-VIRTUAL\_SITES\_RELATIVE constraints all other
+``VIRTUAL_SITES_RELATIVE`` constraints all other
 constraints of any kind are not currently accounted for in the pressure
 calculations. The pressure is no longer correct, e.g., when particles
 are confined to a plane.
@@ -669,7 +669,7 @@ which the observable should take into account.
 
 The current value of an observable can be obtained using its calculate()-method::
 
-    print(par_pos.calculate())
+    print(part_pos.calculate())
 
 .. _Available observables:
 
@@ -713,8 +713,8 @@ all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.BondDihedrals`: Dihedral angles between bond triples on a polymer chain.
 
-   - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The `i`-th value in the result vector corresponds to the cosine of the angle between
-     bonds that are separated by `i` bonds. This observable might be useful for measuring the persistence length of a polymer.
+   - :class:`~espressomd.observables.CosPersistenceAngles`: Cosine of angles between bonds. The ``i``-th value in the result vector corresponds to the cosine of the angle between
+     bonds that are separated by ``i`` bonds. This observable might be useful for measuring the persistence length of a polymer.
 
 - Profile observables sampling the spatial profile of various quantities:
 

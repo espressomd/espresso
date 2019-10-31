@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,20 +15,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization sample for bonds. Simulates a large chain of particles connected
-via harmonic bonds.
+Visualize the simulation of a linear polymer.
 """
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 from espressomd.interactions import HarmonicBond
 from espressomd import visualization
 import numpy as np
-from threading import Thread
+import argparse
 
 required_features = ["LENNARD_JONES"]
 espressomd.assert_features(required_features)
+
+parser = argparse.ArgumentParser(epilog=__doc__)
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--mayavi", action="store_const", dest="visualizer",
+                   const="mayavi", help="MayaVi visualizer", default="mayavi")
+group.add_argument("--opengl", action="store_const", dest="visualizer",
+                   const="opengl", help="OpenGL visualizer")
+args = parser.parse_args()
 
 box_l = 50
 n_part = 200
@@ -41,10 +46,8 @@ system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.thermostat.set_langevin(kT=0.1, gamma=20.0, seed=42)
 
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=0, sigma=1,
-    cutoff=2, shift="auto")
+    epsilon=0, sigma=1, cutoff=2, shift="auto")
 system.bonded_inter[0] = HarmonicBond(k=0.5, r_0=1.0)
 
 for i in range(n_part):
@@ -53,8 +56,11 @@ for i in range(n_part):
 for i in range(n_part - 1):
     system.part[i].add_bond((system.bonded_inter[0], system.part[i + 1].id))
 
-#visualizer = visualization.mayaviLive(system)
-visualizer = visualization.openGLLive(system, bond_type_radius=[0.3])
+# Select visualizer
+if args.visualizer == "mayavi":
+    visualizer = visualization.mayaviLive(system)
+else:
+    visualizer = visualization.openGLLive(system, bond_type_radius=[0.3])
 
 system.minimize_energy.init(
     f_max=10, gamma=50.0, max_steps=1000, max_displacement=0.2)

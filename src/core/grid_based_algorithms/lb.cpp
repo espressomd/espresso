@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  %Lattice Boltzmann algorithm for hydrodynamic degrees of freedom.
  *
@@ -106,6 +106,27 @@ extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
      {{1, 0, 1, -1, 1, -1, -1, 0, 0, -1, 0, 1, -1, 0, -1, 1, 1, -1, -1}},
      {{1, 0, -1, 1, 1, -1, -1, 0, 0, -1, 0, -1, 1, 0, 1, -1, 1, -1, -1}}}};
 } // namespace
+
+void lb_on_param_change(LBParam param) {
+  switch (param) {
+  case LBParam::AGRID:
+    lb_init(lbpar);
+    break;
+  case LBParam::DENSITY:
+    lb_reinit_fluid(lbfields, lblattice, lbpar);
+    break;
+  case LBParam::VISCOSITY:
+  case LBParam::EXT_FORCE_DENSITY:
+    lb_initialize_fields(lbfields, lbpar, lblattice);
+  case LBParam::BULKVISC:
+  case LBParam::KT:
+  case LBParam::GAMMA_ODD:
+  case LBParam::GAMMA_EVEN:
+  case LBParam::TAU:
+    break;
+  }
+  lb_reinit_parameters(lbpar);
+}
 
 #ifdef ADDITIONAL_CHECKS
 static void lb_check_halo_regions(const LB_Fluid &lbfluid,

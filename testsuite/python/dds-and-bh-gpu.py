@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -149,6 +149,7 @@ class BH_DDS_gpu_multCPU_test(ut.TestCase):
             del bh_gpu
             self.system.actors.clear()
             self.system.part.clear()
+
 
 if __name__ == '__main__':
     ut.main()

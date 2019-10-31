@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,15 +17,28 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This example script simulates two reacting monomers which are bonded via a harmonic potential.
-The script aborts as soon as the abortion criterion in the Wang-Landau algorithm is met.
-The Wang-Landau simulation runs until the Wang-Landau potential is converged and then raises a Warning that it has converged, effectively aborting the simulation.
-With the setup of the Wang-Landau algorithm in this script you sample the density of states of a three dimensional reacting harmonic oscillator 
-as a function of the two collective variables 1) degree of association and 2) potential energy.
-The recorded Wang-Landau potential (which is updated during the simulation) is written to the file WL_potential_out.dat 
-In this simulation setup the Wang-Landau potential is the density of states. You can view the converged Wang-Landau potential e.g. via plotting with gnuplot: splot "WL_potential_out.dat". 
-As expected the three dimensional harmonic oscilltor has a density of states which goes like sqrt(E_pot).
-For a scientific description and different ways to use the algorithm please consult https://pubs.acs.org/doi/full/10.1021/acs.jctc.6b00791 
+Simulate two reacting monomers which are bonded via a harmonic potential.
+The script aborts as soon as the abortion criterion in the Wang-Landau
+algorithm is met: the Wang-Landau simulation runs until the Wang-Landau
+potential has converged and then raises a Warning that it has converged,
+effectively aborting the simulation.
+
+With the setup of the Wang-Landau algorithm in this script, you sample the
+density of states of a three-dimensional reacting harmonic oscillator as
+a function of the two collective variables 1) degree of association and
+2) potential energy.
+
+The recorded Wang-Landau potential (which is updated during the simulation)
+is written to the file :file:`WL_potential_out.dat`.
+
+In this simulation setup the Wang-Landau potential is the density of states.
+You can view the converged Wang-Landau potential e.g. via plotting with
+gnuplot: ``splot "WL_potential_out.dat"``. As expected the three-dimensional
+harmonic oscillator has a density of states which goes like
+:math:`\\sqrt{E_{\\text{pot}}}`.
+
+For a scientific description and different ways to use the algorithm please
+consult https://pubs.acs.org/doi/full/10.1021/acs.jctc.6b00791
 """
 import numpy as np
 
@@ -45,7 +58,6 @@ system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
-system.cell_system.max_num_cells = 2744
 
 
 #############################################################

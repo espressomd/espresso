@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,7 @@ import sys
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 import h5py  # h5py has to be imported *after* espressomd (MPI)
 from espressomd.interactions import Virtual
 
@@ -130,7 +130,7 @@ class H5mdTestOrdered(CommonTests):
     @classmethod
     def setUpClass(cls):
         write_ordered = True
-        from espressomd.io.writer import h5md  # pylint: disable=import-error
+        from espressomd.io.writer import h5md
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
@@ -170,7 +170,7 @@ class H5mdTestUnordered(CommonTests):
     @classmethod
     def setUpClass(cls):
         write_ordered = False
-        from espressomd.io.writer import h5md  # pylint: disable=import-error
+        from espressomd.io.writer import h5md
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,

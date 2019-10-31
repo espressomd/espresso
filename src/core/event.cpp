@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Hook procedures.
  *
@@ -25,6 +25,7 @@
  */
 #include "event.hpp"
 
+#include "Particle.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -45,7 +46,6 @@
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
@@ -151,8 +151,9 @@ void on_integration_start() {
     recalc_forces = true;
   }
 
-  /* Ensemble preparation: NVT or NPT */
-  integrate_ensemble_init();
+#ifdef NPT
+  npt_ensemble_init(box_geo);
+#endif
 
   /* Update particle and observable information for routines in statistics.cpp
    */
@@ -190,15 +191,7 @@ void on_observable_calc() {
    * information */
 
   cells_update_ghosts();
-  if (recalc_forces) {
-#ifdef VIRTUAL_SITES
-    if (virtual_sites()->is_relative()) {
-      ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    }
-    virtual_sites()->update();
-#endif
-    cells_update_ghosts();
-  }
+  update_dependent_particles();
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
     Coulomb::on_observable_calc();
@@ -453,12 +446,6 @@ void on_ghost_flags_change() {
 #endif
   if (thermo_switch & THERMO_DPD)
     ghosts_have_v = true;
-#ifdef VIRTUAL_SITES
-  // If they have velocities, VIRTUAL_SITES need v to update v of virtual sites
-  if (virtual_sites()->get_have_velocity()) {
-    ghosts_have_v = true;
-  };
-#endif
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds) {
     ghosts_have_v = true;
@@ -468,5 +455,16 @@ void on_ghost_flags_change() {
   if (collision_params.mode) {
     ghosts_have_bonds = true;
   }
+#endif
+}
+
+void update_dependent_particles() {
+#ifdef VIRTUAL_SITES
+  virtual_sites()->update(true);
+#endif
+  cells_update_ghosts();
+
+#ifdef ELECTROSTATICS
+  Coulomb::update_dependent_particles();
 #endif
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -48,7 +48,9 @@ density_counterions = -2.0 * sigma / width
 
 def solve(xi=None, d=None, bjerrum_length=None, sigma=None, valency=None):
     el_char = 1.0
-    return xi * np.tan(xi * d / 2.0) + 2.0 * np.pi * bjerrum_length * sigma / (valency * el_char)
+    return xi * np.tan(xi * d / 2.0) + 2.0 * np.pi * \
+        bjerrum_length * sigma / (valency * el_char)
+
 
 size = np.pi / (2.0 * width)
 
@@ -105,7 +107,8 @@ def density(x=None, xi=None, bjerrum_length=None):
 
 def velocity(x=None, xi=None, d=None, bjerrum_length=None, force=None,
              viscosity_kinematic=None, density_water=None):
-    return force * np.log(np.cos(xi * x) / np.cos(xi * d / 2.0)) / (2.0 * np.pi * bjerrum_length * viscosity_kinematic * density_water)
+    return force * np.log(np.cos(xi * x) / np.cos(xi * d / 2.0)) / \
+        (2.0 * np.pi * bjerrum_length * viscosity_kinematic * density_water)
 
 # function to calculate the nonzero component of the pressure tensor
 
@@ -127,10 +130,11 @@ def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None,
                          tensor_entry=None):
     return 0.0
 
+
 position_list = []
 density_list = []
 velocity_list = []
-pressure_xz_list = []
+pressure_xy_list = []
 
 for i in range(int(box_z / agrid)):
     if (i * agrid >= padding) and (i * agrid < box_z - padding):
@@ -147,10 +151,10 @@ for i in range(int(box_z / agrid)):
                                       force=force, viscosity_kinematic=viscosity_kinematic,
                                       density_water=density_water))
         # xz component pressure tensor
-        pressure_xz_list.append(pressure_tensor_offdiagonal(x=position, xi=xi,
+        pressure_xy_list.append(pressure_tensor_offdiagonal(x=position, xi=xi,
                                                             bjerrum_length=bjerrum_length, force=force))
 
 np.savetxt(
     "eof_analytical.dat", np.column_stack(
-        (position_list, density_list, velocity_list, pressure_xz_list)),
-           header="#position calculated_density calculated_velocity calculated_pressure_xz")
+        (position_list, density_list, velocity_list, pressure_xy_list)),
+    header="#position calculated_density calculated_velocity calculated_pressure_xy")

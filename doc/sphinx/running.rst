@@ -10,7 +10,7 @@ To run the integrator call the method
 
 where ``number_of_steps`` is the number of time steps the integrator
 should perform. The two main integration schemes of |es| are the Velocity Verlet algorithm 
-and an adaption of the Velocity Verlet algorithms to simulate an NPT ensemble.
+and an adaption of the Velocity Verlet algorithm to simulate an NPT ensemble.
 A steepest descent implementation is also available.
 
 .. _Velocity Verlet Algorithm:
@@ -54,7 +54,7 @@ step after setting up, there are no forces present yet. Therefore, |es| has
 to compute them before the first time step. That has two consequences:
 first, random forces are redrawn, resulting in a narrower distribution
 of the random forces, which we compensate by stretching. Second,
-coupling forces of e.g. the lattice Boltzmann fluid cannot be computed
+coupling forces of e.g. the lattice-Boltzmann fluid cannot be computed
 and are therefore lacking in the first half time step. In order to
 minimize these effects, |es| has a quite conservative heuristics to decide
 whether a change makes it necessary to recompute forces before the first
@@ -77,9 +77,9 @@ would like to recompute the forces, despite the fact that they are
 already correctly calculated. To this aim, the option ``recalc_forces`` can be used to
 enforce force recalculation.
 
-.. _Isotropic NPT thermostat integrator:
+.. _Isotropic NPT integrator:
 
-Isotropic NPT thermostat
+Isotropic NPT integrator
 ------------------------
 
 :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
@@ -90,16 +90,16 @@ discussed here and only a brief summary is given in :ref:`Thermostats`.
 To activate the NPT integrator, use :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
 with parameters:
 
-    * ``ext_pressure``:  (float) The external pressure as float variable.
-    * ``piston``:        (float) The mass of the applied piston as float variable.
-    * ``direction``:     [int, int, int] Flags to enable/disable box dimensions to be subject to fluctuations. By default, all directions are enabled.
+    * ``ext_pressure``: The external pressure
+    * ``piston``: The mass of the applied piston
+    * ``direction``: Flags to enable/disable box dimensions to be subject to fluctuations. By default, all directions are enabled.
 
 Additionally, a NPT thermostat has to be set by :py:func:`~espressomd.thermostat.Thermostat.set_npt()`
 with parameters:
 
-    * ``kT``:     (float) Thermal energy of the heat bath
-    * ``gamma0``: (float) Friction coefficient of the bath
-    * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
+    * ``kT``: Thermal energy of the heat bath
+    * ``gamma0``: Friction coefficient of the bath
+    * ``gammav``: Artificial friction coefficient for the volume fluctuations.
 
 A code snippet would look like::
 
@@ -129,7 +129,7 @@ where
 Here :math:`\mathcal{P}` is the instantaneous pressure, :math:`d` the dimension of the system (number of flags set by ``direction``), :math:`f_{ij}` the short range interaction force between particles :math:`i` and :math:`j` and :math:`x_{ij}= x_j - x_i`.
 
 In addition to this deterministic force, a friction :math:`-\frac{\gamma^V}{Q}\Pi(t)` and noise :math:`\sqrt{k_B T \gamma^V} \eta(t)` are added for the box
-volume dynamics and the particle dynamics. . This introduces three new parameters:
+volume dynamics and the particle dynamics. This introduces three new parameters:
 The friction coefficient for the box :math:`\gamma^V` (parameter ``gammav``), the friction coefficient of the particles :math:`\gamma^0` (parameter ``gamma0``) and the thermal energy :math:`k_BT` (parameter ``kT``).
 For a discussion of these terms and their discretisation, see :ref:`Langevin thermostat`, which uses the same approach, but only for particles.
 As a result of box geometry changes, the particle positions and velocities have to be rescaled 
@@ -172,7 +172,7 @@ Notes:
 
 * The NPT algorithm is only tested for all 3 directions enabled for scaling. Usage of ``direction`` is considered an experimental feature.
 * In step 4, only those coordinates are scaled for which ``direction`` is set.
-* The for the instantaneous pressure the same limitations of applicability hold as described in :ref:`Pressure`.
+* For the instantaneous pressure, the same limitations of applicability hold as described in :ref:`Pressure`.
 * The particle forces :math:`F` include interactions as well as a friction and noise term analogous to the terms in the :ref:`Langevin thermostat`.
 * The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 
@@ -192,7 +192,7 @@ Whether or not rotational degrees of freedom are propagated, is controlled on a 
 It is important to note that starting from version 4.0 and unlike in earlier versions of |es|, the particles' rotation is disabled by default.
 In this way, just compiling in the ``ROTATION`` feature no longer changes the physics of the system.
 
-The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation on the x axis enabled::
+The rotation of a particle is controlled via the :attr:`espressomd.particle_data.ParticleHandle.rotation` property. E.g., the following code adds a particle with rotation enabled on the x axis::
 
     import espressomd
     s = espressomd.System()
@@ -235,9 +235,7 @@ A common application is removing overlap between randomly placed particles.
 Please note that the behavior is undefined if a thermostat is activated.
 It runs a simple steepest descent algorithm:
 
-Iterate
-
-.. math:: p_i = p_i + \min(\texttt{gamma} \times F_i, \texttt{max_displacement}),
+.. math:: \vec{r}_{i+1} = \vec{r}_i + \min(\gamma \vec{F}_i, \vec{r}_{\text{max_displacement}}),
 
 while the maximal force is bigger than ``f_max`` or for at most ``max_steps`` times. The energy
 is relaxed by ``gamma``, while the change per coordinate per step is limited to ``max_displacement``.

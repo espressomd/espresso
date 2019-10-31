@@ -21,9 +21,10 @@ set(EspressoCore_SRC
   immersed_boundaries.cpp
   event.cpp
   integrate.cpp
+  integrators/velocity_verlet_npt.cpp
   layered.cpp
   metadynamics.cpp
-  minimize_energy.cpp
+  integrators/steepest_descent.cpp
   npt.cpp
   nsquare.cpp
   partCfg_global.cpp
@@ -89,6 +90,7 @@ set(EspressoCore_SRC
   grid_based_algorithms/halo.cpp
   grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lb_boundaries.cpp
+  grid_based_algorithms/lb_collective_interface.cpp
   grid_based_algorithms/lb.cpp
   grid_based_algorithms/lb_interface.cpp
   grid_based_algorithms/lb_interpolation.cpp
@@ -113,7 +115,6 @@ set(EspressoCore_SRC
   nonbonded_interactions/smooth_step.cpp
   nonbonded_interactions/thole.cpp
   nonbonded_interactions/wca.cpp
-  object-in-fluid/affinity.cpp
   object-in-fluid/membrane_collision.cpp
   object-in-fluid/oif_global_forces.cpp
   object-in-fluid/oif_local_forces.cpp
@@ -124,11 +125,10 @@ set(EspressoCore_SRC
   observables/LBVelocityProfile.cpp
   virtual_sites/lb_inertialess_tracers.cpp
   virtual_sites/lb_inertialess_tracers_cuda_interface.cpp
-  virtual_sites/virtual_sites_com.cpp
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
   accumulators/TimeSeries.cpp
-        observables/PidObservable.cpp)
+  observables/PidObservable.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -156,7 +156,6 @@ else(CUDA)
 endif(CUDA)
 
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
-set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WITH_COVERAGE)
   target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-g>")
@@ -174,7 +173,6 @@ endif()
 target_link_libraries(EspressoCore PUBLIC EspressoConfig utils)
 target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
 target_link_libraries(EspressoCore PRIVATE Profiler)
-target_link_libraries(EspressoCore PRIVATE pdbparser)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})

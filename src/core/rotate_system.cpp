@@ -1,25 +1,25 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 
 #include <utils/math/vec_rotate.hpp>
@@ -35,10 +35,10 @@ void local_rotate_system(double phi, double theta, double alpha,
   double local_mass = 0.0;
 
   for (auto const &p : particles) {
-    for (int j = 0; j < 3; j++) {
-      local_com[j] += p.p.mass * p.r.p[j];
+    if (not p.p.is_virtual) {
+      local_com += p.p.mass * p.r.p;
+      local_mass += p.p.mass;
     }
-    local_mass += p.p.mass;
   }
 
   auto const total_mass = mpi::all_reduce(comm_cart, local_mass, std::plus<>());
@@ -66,6 +66,7 @@ void local_rotate_system(double phi, double theta, double alpha,
 
   set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
+  update_dependent_particles();
 }
 
 void mpi_rotate_system_slave(int, int) {

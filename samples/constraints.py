@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,22 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample checks if particles or a polymer added to the system obey(s)
-constraints.
+Confine a polymer between two slabs and check that it cannot escape
+them during the entire simulation.
 """
 
 import espressomd
-
-# Check if necessary features have been compiled
-#############################################################
-
-required_features = ["WCA"]
-espressomd.assert_features(required_features)
-
-from espressomd import thermostat
 from espressomd import interactions
 from espressomd import shapes
 from espressomd import polymer
+
+required_features = ["WCA"]
+espressomd.assert_features(required_features)
 
 import numpy as np
 
@@ -46,11 +41,9 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 10.0
-system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 
 num_part = 30
 wall_offset = 0.1
@@ -72,13 +65,13 @@ ceil = shapes.Wall(normal=[0, 0, -1], dist=-(box_l - wall_offset))
 c2 = system.constraints.add(
     particle_type=0, penetrable=False, only_positive=False, shape=ceil)
 
-
-# polymer.positions will avoid violating the constraints
-
+# create stiff FENE bonds
 fene = interactions.FeneBond(k=30, d_r_max=2)
 system.bonded_inter.add(fene)
 # start it next to the wall to test it!
 start = np.array([1, 1, 1 + wall_offset])
+
+# polymer.positions will avoid violating the constraints
 
 positions = polymer.positions(n_polymers=1, beads_per_chain=50,
                               bond_length=1.0, seed=1234,
@@ -93,40 +86,30 @@ for i, pos in enumerate(positions[0]):
 # Warmup
 #############################################################
 
-warm_steps = 200
-warm_n_times = 100
+minimize_steps = 20
+minimize_n_times = 10
 min_dist = 0.9
 
-wca_cap = 5
-system.force_cap = wca_cap
-i = 0
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=0.01)
 act_min_dist = system.analysis.min_dist()
-system.thermostat.set_langevin(kT=0.0, gamma=1.0)
-
-# warmup with zero temperature to remove overlaps
-while (act_min_dist < min_dist or c1.min_dist() < min_dist or c2.min_dist() < min_dist):
-    for j in range(warm_steps + wca_cap):
-        print(j)
-        system.integrator.run(1)
-#    system.integrator.run(warm_steps + wca_cap)
-    # Warmup criterion
-    act_min_dist = system.analysis.min_dist()
+i = 0
+while (system.analysis.min_dist() < min_dist or c1.min_dist()
+       < min_dist or c2.min_dist() < min_dist) and i < minimize_n_times:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(minimize_steps)
     i += 1
-    wca_cap = wca_cap + 1
-    system.force_cap = wca_cap
 
-wca_cap = 0
-system.force_cap = wca_cap
-system.integrator.run(warm_steps)
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
 
-# ramp up to simulation temperature
-temp = 0
-while (temp < 1.0):
-    system.thermostat.set_langevin(kT=temp, gamma=1.0)
-    system.integrator.run(warm_steps)
-    temp += 0.1
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-system.integrator.run(warm_steps)
+# activate thermostat
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
+
+# Integration
+#############################################################
 
 int_n_times = 300
 int_steps = 1000

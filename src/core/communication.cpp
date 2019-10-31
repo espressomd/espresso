@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -33,6 +33,7 @@
 #include "errorhandling.hpp"
 
 #include "EspressoSystemInterface.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "cells.hpp"
 #include "collision.hpp"
@@ -48,12 +49,11 @@
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "integrate.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "io/mpiio/mpiio.hpp"
-#include "minimize_energy.hpp"
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
@@ -67,7 +67,6 @@
 
 #include "serialization/IA_parameters.hpp"
 #include "serialization/Particle.hpp"
-#include "serialization/ParticleParametersSwimming.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/u32_to_u64.hpp>
@@ -120,10 +119,7 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_update_particle_slave)                                                \
-  CB(mpi_bcast_lb_particle_coupling_slave)                                     \
-  CB(mpi_recv_lb_interpolated_velocity_slave)                                  \
-  CB(mpi_set_interpolation_order_slave)
+  CB(mpi_update_particle_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -540,15 +536,8 @@ void mpi_bcast_nptiso_geom() {
 void mpi_bcast_nptiso_geom_slave(int, int) {
   MPI_Bcast(&nptiso.geometry, 1, MPI_INT, 0, comm_cart);
   MPI_Bcast(&nptiso.dimension, 1, MPI_INT, 0, comm_cart);
-  MPI_Bcast(&nptiso.cubic_box, 1, MPI_INT, 0, comm_cart);
+  MPI_Bcast(&nptiso.cubic_box, 1, MPI_LOGICAL, 0, comm_cart);
   MPI_Bcast(&nptiso.non_const_dim, 1, MPI_INT, 0, comm_cart);
-}
-
-/******************* REQ_BCAST_LBPAR ********************/
-
-void mpi_bcast_lb_particle_coupling() {
-  mpi_call(mpi_bcast_lb_particle_coupling_slave, 0, 0);
-  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
 /******************* REQ_BCAST_CUDA_GLOBAL_PART_VARS ********************/
@@ -608,28 +597,6 @@ int mpi_iccp3m_init() {
 #endif
 }
 #endif
-
-Utils::Vector3d mpi_recv_lb_interpolated_velocity(int node,
-                                                  Utils::Vector3d const &pos) {
-  if (this_node == 0) {
-    comm_cart.send(node, SOME_TAG, pos);
-    mpi_call(mpi_recv_lb_interpolated_velocity_slave, node, 0);
-    Utils::Vector3d interpolated_u{};
-    comm_cart.recv(node, SOME_TAG, interpolated_u);
-    return interpolated_u;
-  }
-  return {};
-}
-
-void mpi_recv_lb_interpolated_velocity_slave(int node, int) {
-  if (node == this_node) {
-    Utils::Vector3d pos{};
-    comm_cart.recv(0, SOME_TAG, pos);
-    auto const interpolated_u =
-        lb_lbinterpolation_get_interpolated_velocity(pos);
-    comm_cart.send(0, SOME_TAG, interpolated_u);
-  }
-}
 
 /****************************************************/
 

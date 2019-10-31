@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,12 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization sample for Poiseuille flow with Lattice Boltzmann.
+Visualize the Poiseuille flow in a lattice-Boltzmann fluid with an
+external force applied.
 """
 
 from espressomd import System, lb, shapes, lbboundaries
 import numpy as np
-from threading import Thread
 import espressomd.visualization_opengl
 
 required_features = ["LB_BOUNDARIES", "EXTERNAL_FORCES"]
@@ -49,8 +49,8 @@ visualizer = espressomd.visualization_opengl.openGLLive(
     velocity_arrows_type_radii=[0.1],
     velocity_arrows_type_colors=[[0, 1, 0]])
 
-lbf = lb.LBFluid(kT=0, agrid=1.0, dens=1.0,
-                 visc=1.0, tau=0.1, ext_force_density=[0, 0.003, 0])
+lbf = lb.LBFluid(kT=0, agrid=1.0, dens=1.0, visc=1.0, tau=0.1,
+                 ext_force_density=[0, 0.003, 0])
 system.actors.add(lbf)
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 

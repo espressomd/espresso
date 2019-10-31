@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Implementation of layered.hpp.
  */
@@ -101,13 +101,11 @@ Cell *layered_position_to_cell(const Utils::Vector3d &pos) {
 }
 
 void layered_topology_release() {
-  free_comm(&cell_structure.ghost_cells_comm);
   free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
-static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
+static void layered_prepare_comm(GhostCommunicator *comm, int reverse) {
   int c, n;
 
   if (n_nodes > 1) {
@@ -121,13 +119,11 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
     if (!LAYERED_BTM_NEIGHBOR)
       n -= 2;
 
-    prepare_comm(comm, data_parts, n);
+    prepare_comm(comm, n);
 
     /* always sending/receiving 1 cell per time step */
     for (c = 0; c < n; c++) {
-      comm->comm[c].part_lists = (Cell **)Utils::malloc(sizeof(Cell *));
-      comm->comm[c].n_part_lists = 1;
-      comm->comm[c].mpi_comm = comm_cart;
+      comm->comm[c].part_lists.resize(1);
     }
 
     c = 0;
@@ -141,16 +137,14 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c == 1)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[0];
         } else {
           comm->comm[c].part_lists[0] = &cells[1];
 
           /* if periodic and bottom or top, send shifted */
           comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-          if (((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) &&
-              (data_parts & GHOSTTRANS_POSITION)) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
+          if ((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) {
             comm->comm[c].shift[2] = box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
@@ -165,7 +159,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c == 0)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[n_layers];
         } else {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
@@ -184,16 +178,14 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c % 2 == 1)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = top;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[n_layers + 1];
         } else {
           comm->comm[c].part_lists[0] = &cells[n_layers];
 
           /* if periodic and bottom or top, send shifted */
           comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-          if (((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) &&
-              (data_parts & GHOSTTRANS_POSITION)) {
-            comm->data_parts |= GHOSTTRANS_POSSHFTD;
+          if ((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) {
             comm->comm[c].shift[2] = -box_geo.length()[2];
           } else
             comm->comm[c].shift[2] = 0;
@@ -209,7 +201,7 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
         if (c % 2 == 0)
           comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
         comm->comm[c].node = btm;
-        if (data_parts == GHOSTTRANS_FORCE) {
+        if (reverse) {
           comm->comm[c].part_lists[0] = &cells[1];
         } else {
           comm->comm[c].part_lists[0] = &cells[0];
@@ -222,14 +214,12 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
     n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
 
-    prepare_comm(comm, data_parts, n);
+    prepare_comm(comm, n);
 
     if (n != 0) {
       /* two cells: from and to */
       for (c = 0; c < n; c++) {
-        comm->comm[c].part_lists = (Cell **)Utils::malloc(2 * sizeof(Cell *));
-        comm->comm[c].n_part_lists = 2;
-        comm->comm[c].mpi_comm = comm_cart;
+        comm->comm[c].part_lists.resize(2);
         comm->comm[c].node = this_node;
       }
 
@@ -237,15 +227,12 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
       /* downwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
+      if (reverse) {
         comm->comm[c].part_lists[0] = &cells[0];
         comm->comm[c].part_lists[1] = &cells[n_layers];
       } else {
         comm->comm[c].part_lists[0] = &cells[1];
         comm->comm[c].part_lists[1] = &cells[n_layers + 1];
-        /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION)
-          comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
         comm->comm[c].shift[2] = box_geo.length()[2];
       }
@@ -253,15 +240,12 @@ static void layered_prepare_comm(GhostCommunicator *comm, int data_parts) {
 
       /* upwards */
       comm->comm[c].type = GHOST_LOCL;
-      if (data_parts == GHOSTTRANS_FORCE) {
+      if (reverse) {
         comm->comm[c].part_lists[0] = &cells[n_layers + 1];
         comm->comm[c].part_lists[1] = &cells[1];
       } else {
         comm->comm[c].part_lists[0] = &cells[n_layers];
         comm->comm[c].part_lists[1] = &cells[0];
-        /* here it is periodic */
-        if (data_parts & GHOSTTRANS_POSITION)
-          comm->data_parts |= GHOSTTRANS_POSSHFTD;
         comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
         comm->comm[c].shift[2] = -box_geo.length()[2];
       }
@@ -345,13 +329,8 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
   ghost_cells.cell[1] = &cells.back();
 
   /* create communicators */
-  layered_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM);
-  layered_prepare_comm(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION);
-  layered_prepare_comm(&cell_structure.update_ghost_pos_comm,
-                       GHOSTTRANS_POSITION);
-  layered_prepare_comm(&cell_structure.collect_ghost_force_comm,
-                       GHOSTTRANS_FORCE);
+  layered_prepare_comm(&cell_structure.exchange_ghosts_comm, false);
+  layered_prepare_comm(&cell_structure.collect_ghost_force_comm, true);
 
   /* copy particles */
   for (int c = 0; c < old->n; c++) {
@@ -482,6 +461,6 @@ void layered_exchange_and_sort_particles(int global_flag,
     }
   }
 
-  realloc_particlelist(&recv_buf_up, 0);
-  realloc_particlelist(&recv_buf_dn, 0);
+  recv_buf_up.clear();
+  recv_buf_dn.clear();
 }

@@ -182,7 +182,7 @@ In a multiple processor environment, the nsquared cellsystem uses a
 simple particle balancing scheme to have a nearly equal number of
 particles per CPU, :math:`n` nodes have :math:`m` particles, and
 :math:`p-n` nodes have :math:`m+1` particles, such that
-:math:`n*m+(p-n)*(m+1)=N`, the total number of particles. Therefore the
+:math:`n \cdot m + (p - n) \cdot (m + 1) = N`, the total number of particles. Therefore the
 computational load should be balanced fairly equal among the nodes, with
 one exception: This code always uses one CPU for the interaction between
 two different nodes. For an odd number of nodes, this is fine, because
@@ -280,7 +280,7 @@ at temperature :math:`T` and satisfies
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
 This reduces the accuracy of the Velocity Verlet integrator
-by one order in :math:`dt` because forces are now velocity dependent.
+by one order in :math:`dt` because forces are now velocity-dependent.
 
 The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
 :math:`\overline{\eta}` for each component of all the particle forces. 
@@ -317,17 +317,17 @@ friction coefficient for every particle individually via the feature
 
 .. _LB thermostat:
 
-Lattice Boltzmann thermostat
+Lattice-Boltzmann thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :ref:`Lattice Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
+The :ref:`Lattice-Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
 
 .. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma (v_i(t)-u(x_i(t),t)) + \sqrt{2\gamma k_B T} \eta_i(t).
 
 where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`. 
 To preserve momentum, an equal and opposite friction force and random force act on the fluid. 
 
-Numerically the fluid velocity is determined from the Lattice Boltzmann node velocities 
+Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities 
 by interpolating as described in :ref:`Interpolating velocities`.
 The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes. 
 Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
@@ -380,7 +380,7 @@ The friction coefficients and cutoff are controlled via the
 see there.
 
 The friction (dissipative) and noise (random) term are coupled via the
-fluctuation- dissipation theorem. The friction term is a function of the
+fluctuation-dissipation theorem. The friction term is a function of the
 relative velocity of particle pairs. The DPD thermostat is better for
 dynamics than the Langevin thermostat, since it mimics hydrodynamics in
 the system.
@@ -412,17 +412,7 @@ Isotropic NPT thermostat
 This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
 Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
-and set the following parameters:
-
-    * ``kT``:     (float) Thermal energy of the heat bath
-    * ``gamma0``: (float) Friction coefficient of the bath
-    * ``gammav``: (float) Artificial friction coefficient for the volume fluctuations.
-
-Also, setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`
-and the parameters:
-
-    * ``ext_pressure``:  (float) The external pressure as float variable.
-    * ``piston``:        (float) The mass of the applied piston as float variable.
+and setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`.
 
 For example::
 
@@ -432,7 +422,7 @@ For example::
     system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
-For an explanation of the algorithm involved, see :ref:`Isotropic NPT thermostat`
+For an explanation of the algorithm involved, see :ref:`Isotropic NPT integrator`.
 
 Be aware that this feature is neither properly examined for all systems
 nor is it maintained regularly. If you use it and notice strange
@@ -489,7 +479,7 @@ you should access :attr:`espressomd.cuda_init.CudaInitHandle.device_list`, e.g.,
     print(system.cuda_init_handle.device_list)
 
 This attribute is read only and will return a dictionary containing
-the device id as key and the device name as its' value.
+the device id as key and the device name as its value.
 
 .. _Selection of CUDA device:
 

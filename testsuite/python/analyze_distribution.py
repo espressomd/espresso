@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -45,7 +45,7 @@ class AnalyzeDistributions(ut.TestCase):
         hist = np.histogram(dist, bins=bins, density=False)[0]
         return hist
 
-    def calc_min_distribution(self, bins, type_list_a):
+    def calc_min_distribution(self, bins):
         dist = []
         for i in range(self.num_part):
             dist.append(self.system.analysis.dist_to(id=i))
@@ -122,8 +122,6 @@ class AnalyzeDistributions(ut.TestCase):
         r_max = 100.0
         r_bins = 100
         bins = np.linspace(r_min, r_max, num=r_bins + 1, endpoint=True)
-        bin_volume = 4. / 3. * np.pi * (bins[1:]**3 - bins[:-1]**3)
-        box_volume = np.prod(self.system.box_l)
         # no int flag
         core_rdf = self.system.analysis.distribution(type_list_a=[0],
                                                      type_list_b=[0],
@@ -137,7 +135,7 @@ class AnalyzeDistributions(ut.TestCase):
 
         # rdf
         self.assertTrue(np.allclose(core_rdf[1],
-                                    self.calc_min_distribution(bins, type_list_a=[0])))
+                                    self.calc_min_distribution(bins)))
         # with int flag
         core_rdf = self.system.analysis.distribution(type_list_a=[0],
                                                      type_list_b=[0],
@@ -147,7 +145,8 @@ class AnalyzeDistributions(ut.TestCase):
                                                      log_flag=0,
                                                      int_flag=1)
         self.assertTrue(np.allclose(core_rdf[1],
-                                    np.cumsum(self.calc_min_distribution(bins, type_list_a=[0]))))
+                                    np.cumsum(self.calc_min_distribution(bins))))
+
 
 if __name__ == "__main__":
     ut.main()

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copyright (C) 2018 The ESPResSo project
+# Copyright (C) 2018-2019 The ESPResSo project
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -15,7 +15,7 @@
 ##    @code{.sh}
 ##    #!/bin/bash
 ##    # load Unit Testing library
-##    source /work/jgrad/espresso-fork/benchmarks/BashUnitTests.sh
+##    source /path/to/espresso/testsuite/cmake/BashUnitTests.sh
 ##
 ##    # setup
 ##    function set_up() {
@@ -24,13 +24,14 @@
 ##      #define ELECTROSTATICS
 ##      #define EXTERNAL_FORCES
 ##    EOF
+##      cmake .. -DCMAKE_INSTALL_PREFIX=/tmp/espresso
 ##      make
-##      make install DESTDIR="install"
+##      make install
 ##    }
 ##
 ##    # cleanup
 ##    function tear_down() {
-##      rm -rf install
+##      rm -rf /tmp/espresso
 ##      make dist-clean
 ##    }
 ##
@@ -352,7 +353,27 @@ function assert_file_exists() {
   fi
 }
 
-## @brief Check if two variables are identical
+## @brief Check if two strings are identical
+## @param $1 Obtained result
+## @param $2 Expected result
+## @param $3 Message on failure (optional)
+function assert_string_equal() {
+  local -r result=$1
+  local -r expected=$2
+  local message=$3
+  if [ -z "${message}" ]
+  then
+    message="${result} != ${expected}"
+  fi
+  if [ "${result}" = "${expected}" ]
+  then
+    log_success
+  else
+    log_failure "${message}"
+  fi
+}
+
+## @brief Check if two integers are identical
 ## @param $1 Obtained result
 ## @param $2 Expected result
 ## @param $3 Message on failure (optional)

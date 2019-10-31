@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,7 +24,7 @@ import tests_common
 import espressomd
 
 
-if(not espressomd.has_features(("ELECTROSTATICS"))):
+if not espressomd.has_features("ELECTROSTATICS"):
     sys.exit()
 
 
@@ -102,7 +102,7 @@ class ElectrostaticInteractionsTests:
             abs(f_measured[2] - target_force_z_config),
             accuracy,
             msg="Measured force in z has a deviation which is too big compared to analytical result "
-                + str(abs(f_measured[2] - target_force_z_config)))
+            + str(abs(f_measured[2] - target_force_z_config)))
         self.assertLess(
             abs(energy_measured - target_energy_config),
             self.allowed_error,
@@ -110,11 +110,11 @@ class ElectrostaticInteractionsTests:
 
     def test_bjerrum_length_change(self):
         self.system.part.clear()
-        self.system.actors.clear()  # tear down previous actors  
+        self.system.actors.clear()  # tear down previous actors
         prefactor = 2
         mmm1d = self.MMM1D(prefactor=prefactor, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)  
-        self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)            
+        self.system.actors.add(mmm1d)
+        self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])
@@ -125,6 +125,7 @@ class MMM1D_GPU_Test(ElectrostaticInteractionsTests, ut.TestCase):
 @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
 class MMM1D_Test(ElectrostaticInteractionsTests, ut.TestCase):
     from espressomd.electrostatics import MMM1D
+
 
 if __name__ == "__main__":
     ut.main()

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -69,10 +69,8 @@ class LBBoundariesBase:
     def test_clear(self):
         lbb = self.system.lbboundaries
 
-        b1 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
-        b2 = lbb.add(
-            espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
 
         lbb.clear()
 
@@ -138,6 +136,7 @@ class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
     def tearDown(self):
         self.system.lbboundaries.clear()
         self.system.actors.remove(self.lbf)
+
 
 if __name__ == "__main__":
     ut.main()

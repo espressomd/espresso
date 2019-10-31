@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,7 @@ import espressomd
 import espressomd.lb
 
 """
-Check the Lattice Boltzmann mass conservation.
+Check the lattice-Boltzmann mass conservation.
 """
 
 KT = 2.25

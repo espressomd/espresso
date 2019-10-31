@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import itertools
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -28,7 +27,7 @@ import sys
 class TestLB:
 
     """
-    Basic tests of the Lattice Boltzmann implementation
+    Basic tests of the lattice-Boltzmann implementation
 
     * mass and momentum conservation
     * temperature
@@ -110,7 +109,7 @@ class TestLB:
         all_temp_fluid = []
 
         # Integration
-        for i in range(self.params['int_times']):
+        for _ in range(self.params['int_times']):
             self.system.integrator.run(self.params['int_steps'])
 
             # Summation vars
@@ -166,9 +165,9 @@ class TestLB:
     def test_properties(self):
         self.lbf = self.lb_class(
             kT=1.0, seed=42, visc=self.params['viscosity'],
-          dens=self.params['dens'],
-          agrid=self.params['agrid'],
-          tau=self.system.time_step)
+            dens=self.params['dens'],
+            agrid=self.params['agrid'],
+            tau=self.system.time_step)
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
             self.lbf.density = -0.1
@@ -245,10 +244,10 @@ class TestLB:
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
 
-        self.assertEqual(self.lbf.shape, 
+        self.assertEqual(self.lbf.shape,
                          (
-                         int(self.system.box_l[0] / self.params["agrid"]),
-                         int(self.system.box_l[1] / self.params["agrid"]),
+                             int(self.system.box_l[0] / self.params["agrid"]),
+                             int(self.system.box_l[1] / self.params["agrid"]),
                              int(self.system.box_l[2] / self.params["agrid"])))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
@@ -294,13 +293,13 @@ class TestLB:
             ext_force_density=[0, 0, 0])
         self.system.actors.add(self.lbf)
         with self.assertRaises(ValueError):
-            v = self.lbf[
+            _ = self.lbf[
                 int(self.params['box_l'] / self.params['agrid']) + 1, 0, 0].velocity
         with self.assertRaises(ValueError):
-            v = self.lbf[
+            _ = self.lbf[
                 0, int(self.params['box_l'] / self.params['agrid']) + 1, 0].velocity
         with self.assertRaises(ValueError):
-            v = self.lbf[
+            _ = self.lbf[
                 0, 0, int(self.params['box_l'] / self.params['agrid']) + 1].velocity
 
     def test_incompatible_agrid(self):
@@ -394,7 +393,7 @@ class TestLB:
         v1 = np.copy(lbf.get_interpolated_velocity(probe_pos))
         f1 = np.copy(self.system.part[0].f)
         self.system.actors.clear()
-        #get fresh LBfluid and change time steps
+        # get fresh LBfluid and change time steps
         lbf = self.lb_class(
             visc=self.params['viscosity'],
             dens=self.params['dens'],
@@ -403,7 +402,7 @@ class TestLB:
             ext_force_density=ext_force_density)
         self.system.actors.add(lbf)
         self.system.thermostat.set_lb(LB_fluid=lbf, gamma=0.1)
-        #illegal time_step/ tau combinations
+        # illegal time_step/ tau combinations
         with self.assertRaises(ValueError):
             lbf.tau = 0.5 * self.system.time_step
         with self.assertRaises(ValueError):

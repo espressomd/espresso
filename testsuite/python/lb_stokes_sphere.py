@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -27,25 +27,25 @@
 # boundaries, where the velocity is fixed to $v.
 #
 import espressomd
-from espressomd import lb, lbboundaries, shapes, has_features
+from espressomd import lbboundaries, shapes
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
 # Define the LB Parameters
 TIME_STEP = 0.4
-AGRID = 0.6 
-KVISC = 6 
-DENS = 2.3 
+AGRID = 0.6
+KVISC = 6
+DENS = 2.3
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP}
 # System setup
-radius = 8 * AGRID 
-box_width = 62 * AGRID
+radius = 7 * AGRID
+box_width = 52 * AGRID
 real_width = box_width + 2 * AGRID
-box_length = 62 * AGRID
+box_length = 54 * AGRID
 c_s = np.sqrt(1. / 3. * AGRID**2 / TIME_STEP**2)
 v = [0, 0, 0.2 * c_s]  # The boundary slip
 
@@ -91,10 +91,11 @@ class Stokes:
             return np.sqrt(tmp)
 
         last_force = -1000.
-        stokes_force = 6 * np.pi * KVISC * radius * size(v)
+        dynamic_viscosity = self.lbf.viscosity * self.lbf.density
+        stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
         self.system.integrator.run(35)
         while True:
-            self.system.integrator.run(10)
+            self.system.integrator.run(5)
             force = np.linalg.norm(sphere.get_force())
             if np.abs(last_force - force) < 0.01 * stokes_force:
                 break

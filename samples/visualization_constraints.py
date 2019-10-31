@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,10 +15,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization of shape-based constraints with test particles.
+Visualize shape-based constraints interacting with a Lennard-Jones gas.
 """
 
-from threading import Thread
 import numpy as np
 import argparse
 
@@ -26,7 +25,7 @@ import espressomd
 import espressomd.shapes
 import espressomd.visualization_opengl
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")
@@ -110,19 +109,22 @@ if args.shape == "HollowCone":
         particle_type=0, penetrable=True)
 
 
-system.thermostat.set_langevin(kT=10.0, gamma=10, seed=42)
-
 for i in range(100):
     rpos = np.random.random(3) * box_l
     system.part.add(pos=rpos, type=1)
 
 system.non_bonded_inter[1, 1].lennard_jones.set_params(
-    epsilon=1.0, sigma=5.0,
-    cutoff=15.0, shift="auto")
+    epsilon=1.0, sigma=5.0, cutoff=15.0, shift="auto")
 
 system.non_bonded_inter[0, 1].lennard_jones.set_params(
-    epsilon=200.0, sigma=5.0,
-    cutoff=20.0, shift="auto")
+    epsilon=20.0, sigma=5.0, cutoff=20.0, shift="auto")
+
+
+system.integrator.set_steepest_descent(f_max=10, gamma=1e-3,
+                                       max_displacement=0.05)
+system.integrator.run(500)
+system.integrator.set_vv()
+system.thermostat.set_langevin(kT=10.0, gamma=10, seed=42)
 
 system.force_cap = 1000.0
 

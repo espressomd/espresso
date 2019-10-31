@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -55,7 +55,6 @@ class OifVolumeConservation(ut.TestCase):
         print("initial diameter = " + str(diameter_init))
 
         # OIF object is being stretched by factor 1.5
-        maxCycle = 500
         system.part[:].pos = (system.part[:].pos - 5) * 1.5 + 5
 
         diameter_stretched = cell0.diameter()
@@ -63,7 +62,7 @@ class OifVolumeConservation(ut.TestCase):
 
         # main integration loop
         # OIF object is let to relax into relaxed shape of the sphere
-        for i in range(3):
+        for _ in range(3):
             system.integrator.run(steps=90)
             diameter_final = cell0.diameter()
             print("final diameter = " + str(diameter_final))

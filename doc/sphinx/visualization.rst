@@ -16,7 +16,7 @@ online-visualization:
 
 #. A direct rendering engine based on *pyopengl*. As it is developed for |es|,
    it supports the visualization of several specific features like
-   constraints, particle properties, the cell system, lattice Boltzmann and
+   constraints, particle properties, the cell system, lattice-Boltzmann and
    more. It can be adjusted with a large number of parameters to set colors,
    materials, camera and interactive features like assigning callbacks to user
    input.
@@ -205,7 +205,7 @@ used, which are indexed circularly by the numerical particle type::
     visualizer = visualization.openGLLive(system,
                                           particle_coloring='type',
                                           particle_type_colors=[[1, 1, 1], [0, 0, 1]],
-                                          particle_type_materials=[steel, bright])
+                                          particle_type_materials=["steel", "bright"])
 
 Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
 
@@ -333,5 +333,5 @@ distance of particle and mouse cursor).
 Visualization example scripts
 -----------------------------
 
-Various :ref:`Sample Scripts` can be found in :file:`samples/visualization*`
+Various :ref:`Sample Scripts` can be found in :file:`/samples/visualization_*.py`
 or in the :ref:`Tutorials` "Visualization" and "Charged Systems".

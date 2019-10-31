@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -54,7 +54,7 @@ class Exclusions(ut.TestCase):
 
         self.s.part[0].exclusions = [1, 2, 3]
 
-        for i in range(15):
+        for _ in range(15):
             self.s.integrator.run(100)
             self.assertTrue((self.s.part[0].exclusions == [1, 2, 3]).all())
 
@@ -152,6 +152,7 @@ class Exclusions(ut.TestCase):
                                pair_energy, places=7)
         self.assertAlmostEqual(self.s.analysis.pressure()[('coulomb', 0)],
                                pair_pressure, places=7)
+
 
 if __name__ == "__main__":
     ut.main()

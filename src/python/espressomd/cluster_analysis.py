@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -41,12 +41,20 @@ class Cluster(ScriptInterfaceHelper):
         Longest distance between any combination of two particles in the cluster
 
     fractal_dimension(dr=None):
-        estimates the cluster's fractal dimension by fitting the number of particles
-        :math:`n` in spheres of growing radius around the center of mass
-        to :math:`c*r_g^d`, where :math:`r_g` is the radius of gyration of the particles
-        within the sphere, and :math:`d` is the fractal dimension.
-        `dr`: Minimum increment for the radius of the spheres.
-        Return value: (fractal_dimension, mean_square_residual)
+        estimates the cluster's fractal dimension by fitting the number of
+        particles :math:`n` in spheres of growing radius around the center of mass
+        to :math:`c*r_g^d`, where :math:`r_g` is the radius of gyration of the
+        particles within the sphere, and :math:`d` is the fractal dimension.
+
+        Parameters
+        ----------
+        dr:
+            Minimum increment for the radius of the spheres.
+
+        Returns
+        -------
+        :obj:`tuple`:
+            Fractal_dimension, mean_square_residual.
     """
     _so_name = "ClusterAnalysis::Cluster"
     _so_bind_methods = ("particle_ids", "size", "longest_distance",
@@ -70,7 +78,7 @@ class ClusterStructure(ScriptInterfaceHelper):
 
     clusters: behaves like a read-only dictionary
         Access to individual clusters in the cluster structure either via
-        cluster[i], where i is a (non-consecutive) integer cluster id
+        ``cluster[i]``, where ``i`` is a (non-consecutive) integer cluster id
         or via iteration::
 
             for pair in clusters:

@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_interface.hpp"
 
@@ -77,13 +77,14 @@ static void pack_particles(ParticleRange particles,
 #endif
 
 #ifdef ENGINE
-    buffer[i].swim.v_swim = static_cast<float>(part.swim.v_swim);
-    buffer[i].swim.f_swim = static_cast<float>(part.swim.f_swim);
+    buffer[i].swim.v_swim = static_cast<float>(part.p.swim.v_swim);
+    buffer[i].swim.f_swim = static_cast<float>(part.p.swim.f_swim);
     buffer[i].swim.director = buffer[i].director;
 
-    buffer[i].swim.push_pull = part.swim.push_pull;
-    buffer[i].swim.dipole_length = static_cast<float>(part.swim.dipole_length);
-    buffer[i].swim.swimming = part.swim.swimming;
+    buffer[i].swim.push_pull = part.p.swim.push_pull;
+    buffer[i].swim.dipole_length =
+        static_cast<float>(part.p.swim.dipole_length);
+    buffer[i].swim.swimming = part.p.swim.swimming;
 #endif
     i++;
   }
@@ -161,38 +162,6 @@ void cuda_mpi_send_forces(ParticleRange particles,
     add_forces_and_torques(particles, host_forces, host_torques);
   }
 }
-
-#if defined(ENGINE) && defined(CUDA)
-namespace {
-void set_v_cs(ParticleRange particles, const std::vector<CUDA_v_cs> &v_cs) {
-  int ind = 0;
-  for (auto &p : particles) {
-    for (int i = 0; i < 3; i++) {
-      p.swim.v_center[i] = v_cs[ind].v_cs[0 + i];
-      p.swim.v_source[i] = v_cs[ind].v_cs[3 + i];
-    }
-    ind++;
-  }
-}
-} // namespace
-
-void cuda_mpi_send_v_cs(ParticleRange particles,
-                        std::vector<CUDA_v_cs> host_v_cs) {
-  // first collect number of particles on each node
-  auto const n_part = particles.size();
-
-  // call slave functions to provide the slave data
-  if (this_node > 0) {
-    std::vector<CUDA_v_cs> buffer(n_part);
-
-    Utils::Mpi::scatter_buffer(buffer.data(), n_part, comm_cart);
-    set_v_cs(particles, buffer);
-  } else {
-    Utils::Mpi::scatter_buffer(host_v_cs.data(), n_part, comm_cart);
-    set_v_cs(particles, host_v_cs);
-  }
-}
-#endif // ifdef ENGINE
 
 /** Takes a CUDA_energy struct and adds it to the core energy struct.
 This cannot be done from inside cuda_common_cuda.cu:copy_energy_from_GPU()

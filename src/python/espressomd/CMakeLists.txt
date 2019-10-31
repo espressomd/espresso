@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -38,9 +38,9 @@ add_custom_command(OUTPUT code_info.pyx
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/myconfig.pxi
         )
 
-file(GLOB cython_SRC *.pyx)
 # Make the cython_SRC, cython_HEADER and cython_AUX a cached variable to
 # be able to extend it in the subdirectories.
+file(GLOB cython_SRC *.pyx)
 SET(cython_SRC  "${cython_SRC}" CACHE INTERNAL "cython_SRC")
 file(GLOB cython_HEADER *.pxd)
 SET(cython_HEADER  "${cython_HEADER}" CACHE INTERNAL "cython_HEADER")
@@ -53,6 +53,7 @@ add_subdirectory(io)
 list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
 list(REMOVE_DUPLICATES cython_SRC)
 
+# Configure, compile and install Cython files
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
   file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${cython_file})
@@ -107,11 +108,13 @@ foreach(cython_file ${cython_SRC})
       target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface)
       target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
       add_dependencies(espressomd ${target})
+      install(TARGETS ${target} LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
   endif()
 endforeach()
 
 target_link_libraries(espressomd_profiler PRIVATE Profiler)
 
+# Configure Python files
 foreach(auxfile ${cython_AUX})
   get_filename_component(filename ${auxfile} NAME)
   file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${auxfile})
@@ -123,7 +126,6 @@ foreach(auxfile ${cython_AUX})
                     )
 endforeach(auxfile)
 
+# Install Python files
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${PYTHON_INSTDIR}
-	PATTERN "CMakeFiles" EXCLUDE PATTERN "*.cpp" EXCLUDE
-	PATTERN "*.cmake" EXCLUDE PATTERN "Makefile" EXCLUDE) 
-
+        FILES_MATCHING PATTERN "*.py" PATTERN "CMakeFiles" EXCLUDE)

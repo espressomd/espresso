@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <boost/mpi/collectives.hpp>
 
 #include "ShapeBasedConstraint.hpp"
@@ -70,25 +70,24 @@ ParticleForce ShapeBasedConstraint::force(Particle const &p,
 
     if (dist > 0) {
       outer_normal_vec = -dist_vec / dist;
-      auto const dist2 = dist * dist;
       force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
                                           dist, &torque1, &torque2);
 #ifdef DPD
       if (thermo_switch & THERMO_DPD) {
-        force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist2);
+        force1 +=
+            dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist * dist);
         // Additional use of DPD here requires counter increase
         dpd_rng_counter_increment();
       }
 #endif
     } else if (m_penetrable && (dist <= 0)) {
       if ((!m_only_positive) && (dist < 0)) {
-        auto const dist2 = dist * dist;
         force1 = calc_non_bonded_pair_force(p, part_rep, ia_params, dist_vec,
                                             -dist, &torque1, &torque2);
 #ifdef DPD
         if (thermo_switch & THERMO_DPD) {
-          force1 +=
-              dpd_pair_force(p, part_rep, ia_params, dist_vec, dist, dist2);
+          force1 += dpd_pair_force(p, part_rep, ia_params, dist_vec, dist,
+                                   dist * dist);
           // Additional use of DPD here requires counter increase
           dpd_rng_counter_increment();
         }

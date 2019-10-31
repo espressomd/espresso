@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -58,11 +58,9 @@ if not args.visualizer:
 
 
 import espressomd
-from espressomd import thermostat
 from espressomd import electrostatics
 if args.visualizer:
     from espressomd import visualization
-    from threading import Thread
 
 required_features = ["P3M", "LENNARD_JONES", "MASS"]
 espressomd.assert_features(required_features)
@@ -101,7 +99,7 @@ system.random_number_generator_state = list(range(
 # Integration parameters
 #############################################################
 system.time_step = 0.01
-system.cell_system.skin = .4 
+system.cell_system.skin = .4
 system.thermostat.turn_off()
 
 

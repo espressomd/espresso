@@ -26,7 +26,7 @@ module. This module provides classes for the different available shapes::
 
 Shapes define geometries which can be used in |es| either as
 constraints in particle interactions or as a boundary for a
-lattice Boltzmann fluid.
+lattice-Boltzmann fluid.
 
 To avoid unexpected behavior make sure all parts of your shape are
 within the central box since the distance to the shape is calculated only
@@ -150,7 +150,7 @@ Getting the minimal distance to a constraint
 
 Calculates the smallest distance to all interacting
 constraints that can be repulsive (wall, cylinder, sphere, rhomboid,
-maze, pore, slitpore). Negative distances mean that the position is
+pore, slitpore). Negative distances mean that the position is
 within the area that particles should not access. Helpful to find
 initial configurations.
 
@@ -268,8 +268,6 @@ Pictured is an example constraint with a ``Cylinder`` shape created with ::
 
 :class:`espressomd.shapes.Rhomboid`
     A rhomboid or parallelepiped.
-
-:todo: `This shape is currently broken. Please do not use.`
 
 The resulting surface is a rhomboid, defined by one corner located at ``corner``
 and three adjacent edges, defined by the three vectors connecting the
@@ -457,7 +455,7 @@ Pictured is an example constraint with a ``Hollowcone`` shape created with ::
     system.constraints.add(shape=hollowcone, particle_type=0, penetrable=True)
 
 
-For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``, ``maze``,
+For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
 ``pore`` and ``stomatocyte``, constraints are able to be penetrated if
 ``penetrable`` is set to ``True``. Otherwise, when the ``penetrable`` option is
 ignored or is set to ``False``, the constraint cannot be violated, i.e. no
@@ -541,21 +539,21 @@ the ``normal`` vector of the wall points in the direction that is considered to
 yield positive distances.  Outside its use in constraints, shapes can also be
 used as a way to define LB boundary nodes. In this case, negative distances
 define nodes which are part of a boundary, please refer to :ref:`Using shapes
-as lattice Boltzmann boundary`.
+as lattice-Boltzmann boundary`.
 
 
+..
+    .. _Creating a harmonic trap:
 
-.. _Creating a harmonic trap:
+    Creating a harmonic trap
+    ------------------------
 
-Creating a harmonic trap
-------------------------
+    .. todo:: This feature is not yet implemented.
 
-:todo: `This feature is not yet implemented.`
-
-Calculates a spring force for all particles, where the equilibrium
-position of the spring is at and its force constant is . A more
-flexible trap can be constructed with constraints, but this one runs on
-the GPU.
+    Calculates a spring force for all particles, where the equilibrium
+    position of the spring is at and its force constant is . A more
+    flexible trap can be constructed with constraints, but this one runs on
+    the GPU.
 
 .. _External Fields:
 
@@ -570,17 +568,17 @@ Constant fields
 ~~~~~~~~~~~~~~~
 
 These are fields that are constant in space or simple linear functions
-of the position.  The available fields are
+of the position.  The available fields are:
 
-:class:`espressomd.constraints.HomogeneousMagneticField`
-:class:`espressomd.constraints.ElectricPlaneWave`
-:class:`espressomd.constraints.LinearElectricPotential`
-:class:`espressomd.constraints.HomogeneousFlowField`
-:class:`espressomd.constraints.Gravity`
+* :class:`espressomd.constraints.HomogeneousMagneticField`
+* :class:`espressomd.constraints.ElectricPlaneWave`
+* :class:`espressomd.constraints.LinearElectricPotential`
+* :class:`espressomd.constraints.HomogeneousFlowField`
+* :class:`espressomd.constraints.Gravity`
 
-a detailed description can be found in the class documentation.
+A detailed description can be found in the class documentation.
 
-please be aware of the fact that a constant per particle force can be
+Please be aware of the fact that a constant per-particle force can be
 set via the ``ext_force`` property of the particles and is not provided
 here.
 
@@ -593,8 +591,8 @@ which has to be provided by the user. The fields differ by how
 they couple to particles, for a detailed description see their respective
 class documentation.
 
-:class:`espressomd.constraints.ForceField`
-:class:`espressomd.constraints.PotentialField`
-:class:`espressomd.constraints.ElectricPotential`
-:class:`espressomd.constraints.FlowField`
+* :class:`espressomd.constraints.ForceField`
+* :class:`espressomd.constraints.PotentialField`
+* :class:`espressomd.constraints.ElectricPotential`
+* :class:`espressomd.constraints.FlowField`
 

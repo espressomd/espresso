@@ -145,8 +145,7 @@ def configure_and_import(filepath,
 
 
 def set_cmd(code, filepath, cmd_arguments):
-    assert isinstance(cmd_arguments, list) \
-        or isinstance(cmd_arguments, tuple)
+    assert isinstance(cmd_arguments, (list, tuple))
     sys_argv = list(map(str, cmd_arguments))
     sys_argv.insert(0, os.path.basename(filepath))
     re_import_sys = re.compile("^import[\t\ ]+sys[\t\ ]*$", re.M)
@@ -217,15 +216,29 @@ def disable_matplotlib_gui(code):
         re.compile(r"^[\t\ ]*import[\t\ ]+(matplotlib)[\t\ ]*$", re.M),
         re.compile(r"^[\t\ ]*import[\t\ ]+matplotlib[\t\ ]+as[\t\ ]+([^\s;]+)",
                    re.M)]
-    aliases = set(x for re_mpl in re_mpl_aliases for x in re_mpl.findall(code))
+    aliases_mpl = set(x for re_m in re_mpl_aliases for x in re_m.findall(code))
+    # find under which name pyplot was imported
+    re_plt_aliases = [re.compile(pat, flags=re.M) for pat in [
+        r"^[\t\ ]*import[\t\ ]+(matplotlib\.pyplot)[\t\ ]*(?=$|#)",
+        r"^[\t\ ]*import[\t\ ]+matplotlib\.pyplot[\t\ ]+as[\t\ ]+([^\s;]+)[\t\ ]*(?=$|#)",
+        r"^[\t\ ]*from[\t\ ]+matplotlib[\t\ ]+import[\t\ ]+(pyplot)[\t\ ]*(?=$|#)",
+        r"^[\t\ ]*from[\t\ ]+matplotlib[\t\ ]+import[\t\ ]+pyplot"
+        r"[\t\ ]+as[\t\ ]+([^\s;]+)[\t\ ]*(?=$|#)"]]
+    aliases_plt = set(x for re_p in re_plt_aliases for x in re_p.findall(code))
     # remove any custom backend
-    for alias in aliases:
+    for alias in aliases_mpl:
         code = re.sub(r"^[\t\ ]*" + alias + r"\.use\(([\"']+).+?\1[\t\ ]*\)",
-                      "", code, 0, re.M)
+                      "", code, flags=re.M)
     # use the Agg backend
     code = re.sub(r"^([\t\ ]*)(?=(?:from|import)[\t\ ]+matplotlib[\.\s])",
                   r"\g<1>import matplotlib as _mpl;_mpl.use('Agg');",
                   code, 1, re.M)
+    # remove interactive mode
+    for alias in aliases_plt:
+        code = re.sub(r"((?:^[\t\ ]*|;)" + alias + r")\.ion\(",
+                      "\g<1>.ioff(", code, flags=re.M)
+    # remove magic function
+    code = re.sub(r"^get_ipython.*", "", code, flags=re.M)
     return code
 
 

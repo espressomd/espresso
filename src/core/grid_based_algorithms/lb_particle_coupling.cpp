@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "lb_particle_coupling.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -9,6 +27,7 @@
 #include "lb_interface.hpp"
 #include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
 
 #include <profiler/profiler.hpp>
@@ -21,14 +40,18 @@
 
 LB_Particle_Coupling lb_particle_coupling;
 
-void mpi_bcast_lb_particle_coupling_slave(int, int) {
+void mpi_bcast_lb_particle_coupling_slave() {
   boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
 
-void lb_lbcoupling_activate() {
-  lb_particle_coupling.couple_to_md = true;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
+REGISTER_CALLBACK(mpi_bcast_lb_particle_coupling_slave)
+
+void mpi_bcast_lb_particle_coupling() {
+  mpi_call(mpi_bcast_lb_particle_coupling_slave);
+  boost::mpi::broadcast(comm_cart, lb_particle_coupling, 0);
 }
+
+void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
   if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
@@ -40,7 +63,6 @@ void lb_lbcoupling_deactivate() {
   }
 
   lb_particle_coupling.couple_to_md = false;
-  mpi_bcast_lb_particle_coupling_slave(0, 0);
 }
 
 void lb_lbcoupling_set_gamma(double gamma) {
@@ -124,8 +146,8 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
 
   Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
-  if (p.swim.swimming) {
-    v_drift += p.swim.v_swim * p.r.calc_director();
+  if (p.p.swim.swimming) {
+    v_drift += p.p.swim.v_swim * p.r.calc_director();
   }
 #endif
 
@@ -200,16 +222,10 @@ bool in_local_halo(Vector3d const &pos) {
 
 #ifdef ENGINE
 void add_swimmer_force(Particle &p) {
-  if (p.swim.swimming) {
-    if (in_local_domain(p.r.p, local_geo)) {
-      p.swim.v_center = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
-                        lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_center = {};
-    }
-
+  if (p.p.swim.swimming) {
     // calculate source position
-    const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
+    const double direction =
+        double(p.p.swim.push_pull) * p.p.swim.dipole_length;
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
 
@@ -217,15 +233,7 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    if (in_local_domain(source_position, local_geo)) {
-      p.swim.v_source =
-          lb_lbinterpolation_get_interpolated_velocity(source_position) *
-          lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_source = {};
-    }
-
-    add_md_force(source_position, p.swim.f_swim * director);
+    add_md_force(source_position, p.p.swim.f_swim * director);
   }
 }
 #endif
@@ -258,11 +266,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         throw std::runtime_error("The non-linear interpolation scheme is not "
                                  "implemented for the CPU LB.");
       case (InterpolationOrder::linear): {
-#ifdef ENGINE
-        ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                           GHOSTTRANS_SWIMMING);
-#endif
-
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;
@@ -306,7 +309,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
             return;
 
           /* Particle is in our LB volume, so this node
-           * is resposible to adding its force */
+           * is responsible to adding its force */
           if (in_local_domain(p.r.p, local_geo)) {
             auto const force = lb_viscous_coupling(
                 p, noise_amplitude * f_random(p.identity()));

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,19 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample illustrates how particles of interest can be accessed via slicing.
+Illustrate how particles of interest can be accessed via slicing.
 """
 import espressomd
-from espressomd import thermostat
 import numpy as np
 
 print("""
 =======================================================
 =                   slice_input.py                    =
 =======================================================
-
-Program Information:""")
-print(espressomd.features())
+""")
 
 # System parameters
 #############################################################
@@ -46,8 +43,6 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-
-system.cell_system.max_num_cells = 2744
 
 
 #############################################################

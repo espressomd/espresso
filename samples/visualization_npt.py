@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,23 +15,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization sample for particle dumbbells in the constant-temperature,
-constant-pressure ensemble.
+Visualize particle dumbbells in the NpT ensemble (constant temperature,
+constant pressure, variable volume).
 """
 
 import numpy as np
 from threading import Thread
 
 import espressomd
-from espressomd import thermostat
 from espressomd.interactions import HarmonicBond
 import espressomd.visualization_opengl
 
 required_features = ["NPT", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
-box_l = 10
-system = espressomd.System(box_l=[box_l] * 3)
+system = espressomd.System(box_l=3 * [10])
 system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 
@@ -41,11 +39,8 @@ visualizer = espressomd.visualization_opengl.openGLLive(
 system.time_step = 0.0005
 system.cell_system.skin = 0.1
 
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=2, sigma=1,
-    cutoff=3, shift="auto")
+    epsilon=2, sigma=1, cutoff=3, shift="auto")
 
 system.bonded_inter[0] = HarmonicBond(k=5.0, r_0=1.0)
 
@@ -79,6 +74,7 @@ def main():
 
         visualizer.update()
         cnt += 1
+
 
 # Start simulation in separate thread
 t = Thread(target=main)

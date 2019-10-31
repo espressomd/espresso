@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *
  *  Implementation of domain_decomposition.hpp.
@@ -28,6 +28,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
@@ -37,6 +38,7 @@ using Utils::get_linear_index;
 #include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/range/algorithm/reverse.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
  *  position is in the nodes spatial domain otherwise a nullptr pointer.
@@ -230,8 +232,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
 /** Create communicators for cell structure domain decomposition. (see \ref
  *  GhostCommunicator)
  */
-void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
-                     const Utils::Vector3i &grid) {
+void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
@@ -253,7 +254,7 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
   }
 
   /* prepare communicator */
-  prepare_comm(comm, data_parts, num);
+  prepare_comm(comm, num);
 
   /* number of cells to communicate in a direction */
   n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];
@@ -280,20 +281,15 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
           comm->comm[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists =
-              (Cell **)Utils::malloc(2 * n_comm_cells[dir] * sizeof(Cell *));
-          comm->comm[cnt].n_part_lists = 2 * n_comm_cells[dir];
+          comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
-          if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-              local_geo.boundary()[2 * dir + lr] != 0) {
-            comm->comm[cnt].shift[dir] =
-                local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
-          }
+          comm->comm[cnt].shift[dir] =
+              local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
@@ -312,19 +308,15 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
             if ((node_pos[dir] + i) % 2 == 0) {
               comm->comm[cnt].type = GHOST_SEND;
               comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
-              if ((data_parts & GHOSTTRANS_POSSHFTD) &&
-                  local_geo.boundary()[2 * dir + lr] != 0) {
-                comm->comm[cnt].shift[dir] =
-                    local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
-              }
+              comm->comm[cnt].shift[dir] =
+                  local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
@@ -332,13 +324,12 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
               comm->comm[cnt].type = GHOST_RECV;
               comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists =
-                  (Cell **)Utils::malloc(n_comm_cells[dir] * sizeof(Cell *));
-              comm->comm[cnt].n_part_lists = n_comm_cells[dir];
+              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists, lc, hc);
+              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
+                                      hc);
               cnt++;
             }
         }
@@ -353,28 +344,18 @@ void dd_prepare_comm(GhostCommunicator *comm, int data_parts,
  *  communication types GHOST_SEND <-> GHOST_RECV.
  */
 void dd_revert_comm_order(GhostCommunicator *comm) {
-  int i, j, nlist2;
-  GhostCommunication tmp;
 
   /* revert order */
-  for (i = 0; i < (comm->num / 2); i++) {
-    tmp = comm->comm[i];
-    comm->comm[i] = comm->comm[comm->num - i - 1];
-    comm->comm[comm->num - i - 1] = tmp;
-  }
+  boost::reverse(comm->comm);
+
   /* exchange SEND/RECV */
-  for (i = 0; i < comm->num; i++) {
-    if (comm->comm[i].type == GHOST_SEND)
-      comm->comm[i].type = GHOST_RECV;
-    else if (comm->comm[i].type == GHOST_RECV)
-      comm->comm[i].type = GHOST_SEND;
-    else if (comm->comm[i].type == GHOST_LOCL) {
-      nlist2 = comm->comm[i].n_part_lists / 2;
-      for (j = 0; j < nlist2; j++) {
-        auto tmplist = comm->comm[i].part_lists[j];
-        comm->comm[i].part_lists[j] = comm->comm[i].part_lists[j + nlist2];
-        comm->comm[i].part_lists[j + nlist2] = tmplist;
-      }
+  for (auto &c : comm->comm) {
+    if (c.type == GHOST_SEND)
+      c.type = GHOST_RECV;
+    else if (c.type == GHOST_RECV)
+      c.type = GHOST_SEND;
+    else if (c.type == GHOST_LOCL) {
+      boost::reverse(c.part_lists);
     }
   }
 }
@@ -383,22 +364,18 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
  *  poststore
  */
 void dd_assign_prefetches(GhostCommunicator *comm) {
-  int cnt;
-
-  for (cnt = 0; cnt < comm->num; cnt += 2) {
-    if (comm->comm[cnt].type == GHOST_RECV &&
-        comm->comm[cnt + 1].type == GHOST_SEND) {
-      comm->comm[cnt].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      comm->comm[cnt + 1].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+  for (auto it = comm->comm.begin(); it != comm->comm.end(); it += 2) {
+    auto next = std::next(it);
+    if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
+      it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      next->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
     }
   }
 }
 
 /** update the 'shift' member of those GhostCommunicators, which use
  *  that value to speed up the folding process of its ghost members
- *  (see \ref dd_prepare_comm for the original), i.e. all which have
- *  GHOSTTRANS_POSSHFTD or'd into 'data_parts' upon execution of \ref
- *  dd_prepare_comm.
+ *  (see \ref dd_prepare_comm for the original).
  */
 void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
   int cnt = 0;
@@ -414,8 +391,6 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
           if (local_geo.boundary()[2 * dir + lr] != 0) {
             cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
-            cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
-                local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
           }
           cnt++;
         }
@@ -429,8 +404,6 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
               /* prepare folding of ghost positions */
               if (local_geo.boundary()[2 * dir + lr] != 0) {
                 cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
-                    local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
-                cell_structure.update_ghost_pos_comm.comm[cnt].shift[dir] =
                     local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
               }
               cnt++;
@@ -605,7 +578,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
 void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
                       const double range) {
   int c, p;
-  int exchange_data, update_data;
 
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
    * but may be set to a larger value by the user for performance reasons. */
@@ -622,23 +594,13 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   dd_mark_cells();
 
   /* create communicators */
-  dd_prepare_comm(&cell_structure.ghost_cells_comm, GHOSTTRANS_PARTNUM, grid);
-
-  exchange_data =
-      (GHOSTTRANS_PROPRTS | GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
-  update_data = (GHOSTTRANS_POSITION | GHOSTTRANS_POSSHFTD);
-
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, exchange_data, grid);
-  dd_prepare_comm(&cell_structure.update_ghost_pos_comm, update_data, grid);
-  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, GHOSTTRANS_FORCE,
-                  grid);
+  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, grid);
+  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, grid);
 
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
 
-  dd_assign_prefetches(&cell_structure.ghost_cells_comm);
   dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-  dd_assign_prefetches(&cell_structure.update_ghost_pos_comm);
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
   dd_init_cell_interactions(grid);
@@ -666,9 +628,7 @@ void dd_topology_release() {
   /* free ghost cell pointer list */
   realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
   /* free ghost communicators */
-  free_comm(&cell_structure.ghost_cells_comm);
   free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.update_ghost_pos_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
@@ -699,7 +659,7 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     }
   }
 
-  realloc_particlelist(&src, src.n = 0);
+  src.resize(0);
 }
 
 /**
@@ -760,7 +720,7 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
                            node_neighbors[2 * dir], 0, recv_buf);
 
-      realloc_particlelist(&send_buf, 0);
+      send_buf.clear();
 
       move_if_local(recv_buf, *pl);
     } else {
@@ -783,8 +743,8 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       move_if_local(recv_buf_l, *pl);
       move_if_local(recv_buf_r, *pl);
 
-      realloc_particlelist(&send_buf_l, 0);
-      realloc_particlelist(&send_buf_r, 0);
+      send_buf_l.clear();
+      send_buf_r.clear();
     }
   }
 }

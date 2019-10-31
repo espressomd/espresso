@@ -10,14 +10,13 @@ physical systems. Currently, the following tutorials are available:
 
 * :file:`01-lennard_jones`: Modelling of a single-component and a two-component Lennard-Jones liquid
 * :file:`02-charged_system`: Modelling of charged systems such as ionic crystals
-* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the Lattice-Boltzmann method
-* :file:`05-raspberry_electrophoresis`: Extended objects in a Lattice-Boltzmann fluid, raspberry particles
+* :file:`04-lattice_boltzmann`: Simulations including hydrodynamic interactions using the lattice-Boltzmann method
+* :file:`05-raspberry_electrophoresis`: Extended objects in a lattice-Boltzmann fluid, raspberry particles
 * :file:`06-active_matter`: Modelling of self-propelling particles
 * :file:`07-electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions
 * :file:`08-visualization`: Using the online visualizers of ESPResSo
-* :file:`10-reaction_ensemble`: Modelling chemical reactions by means of the reaction ensemble
 * :file:`11-ferrofluid`: Modelling a monolayer ferrofluid system
-* :file:`12-constant_pH`: Modelling an acid dissociation curve using the constant pH method
+* :file:`12-constant_pH`: Modelling the titration of a weak acid using the constant pH method
 
 Using the tutorials
 -------------------

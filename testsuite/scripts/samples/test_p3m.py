@@ -18,8 +18,10 @@
 import unittest as ut
 import importlib_wrapper
 
+gpu = "gpu" in "@TEST_LABELS@".split(";")
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/p3m.py", int_steps=100, int_n_times=5)
+    "@SAMPLES_DIR@/p3m.py", gpu=gpu, int_steps=100, int_n_times=5,
+    cmd_arguments=["--@TEST_SUFFIX@"], script_suffix="@TEST_SUFFIX@")
 
 
 @skipIfMissingFeatures

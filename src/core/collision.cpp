@@ -1,23 +1,26 @@
 /*
-  Copyright (C) 2011-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2011-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "collision.hpp"
+
+#ifdef COLLISION_DETECTION
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -36,8 +39,6 @@
 #include <boost/serialization/serialization.hpp>
 
 #include <vector>
-
-#ifdef COLLISION_DETECTION
 
 /// Data type holding the info about a single collision
 typedef struct {
@@ -368,7 +369,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   new_part.r.p = pos;
   auto p_vs = append_indexed_particle(local_cells.cell[0], std::move(new_part));
 
-  local_vs_relate_to(p_vs, &get_part(relate_to));
+  local_vs_relate_to(*p_vs, get_part(relate_to));
 
   p_vs->p.is_virtual = true;
   p_vs->p.type = collision_params.vs_particle_type;

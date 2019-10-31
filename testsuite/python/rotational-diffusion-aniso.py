@@ -29,7 +29,7 @@ class RotDiffAniso(ut.TestCase):
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 5.0
-    system.seed = range(system.cell_system.get_state()["n_nodes"]) 
+    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     # The NVT thermostat parameters
     kT = 0.0
@@ -118,7 +118,6 @@ class RotDiffAniso(ut.TestCase):
         """
         # Global diffusivity tensor in the body frame:
         D = self.kT / self.gamma_global
-        dt0 = self.J / self.gamma_global
 
         # Thermalizing...
         therm_steps = 100
@@ -151,7 +150,7 @@ class RotDiffAniso(ut.TestCase):
         self.system.time = 0.0
         int_steps = 20
         loops = 100
-        for step in range(loops):
+        for _ in range(loops):
             self.system.integrator.run(steps=int_steps)
             dcosjj = np.zeros((3))
             dcosjj2 = np.zeros((3))
@@ -169,10 +168,10 @@ class RotDiffAniso(ut.TestCase):
                     for i in range(3):
                         if i != j:
                             # the LHS of eq. (24) [Perrin1936].
-                            dcosijpp[i, j] += dir_cos[i, i] *  dir_cos[j, j] + \
+                            dcosijpp[i, j] += dir_cos[i, i] * dir_cos[j, j] + \
                                 dir_cos[i, j] * dir_cos[j, i]
                             # the LHS of eq. (25) [Perrin1936].
-                            dcosijnn[i, j] += dir_cos[i, i] *  dir_cos[j, j] - \
+                            dcosijnn[i, j] += dir_cos[i, i] * dir_cos[j, j] - \
                                 dir_cos[i, j] * dir_cos[j, i]
                             # the LHS of eq. (33) [Perrin1936].
                             dcosij2[i, j] += dir_cos[i, j]**2.0

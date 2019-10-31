@@ -1,10 +1,10 @@
-.. _Lattice Boltzmann:
+.. _Lattice-Boltzmann:
 
-Lattice Boltzmann
+Lattice-Boltzmann
 =================
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
-dynamics simulation to a lattice Boltzmann fluid. The Lattice Boltzmann Method (LBM) is a fast, lattice-based method that, in its
+dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann method (LBM) is a fast, lattice-based method that, in its
 "pure" form, allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
@@ -148,8 +148,7 @@ one of::
     lb.set_interpolation_order('quadratic')
     
 A note on boundaries:
-
-Both interpolation schemes don't take into account the physical location of the boundaries
+both interpolation schemes don't take into account the physical location of the boundaries
 (e.g. in the middle between two nodes for a planar wall) but will use the boundary node slip velocity 
 at the node position. This means that every interpolation involving at least one
 boundary node will introduce an error.
@@ -289,7 +288,7 @@ Electrohydrodynamics
         .. note::
            This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
 
-If the feature is activated, the Lattice Boltzmann Code can be
+If the feature is activated, the lattice-Boltzmann code can be
 used to implicitly model surrounding salt ions in an external electric
 field by having the charged particles create flow.
 
@@ -302,15 +301,15 @@ For more information on this method and how it works, read the
 publication :cite:`hickey10a`.
 
 
-.. _Using shapes as lattice Boltzmann boundary:
+.. _Using shapes as lattice-Boltzmann boundary:
 
-Using shapes as lattice Boltzmann boundary
+Using shapes as lattice-Boltzmann boundary
 ------------------------------------------
 
 .. note::
     Feature ``LB_BOUNDARIES`` required
 
-Lattice Boltzmann boundaries are implemented in the module
+Lattice-Boltzmann boundaries are implemented in the module
 :mod:`espressomd.lbboundaries`. You might want to take a look
 at the classes :class:`espressomd.lbboundaries.LBBoundary`
 and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
@@ -334,7 +333,7 @@ Minimal usage example
 
 .. note:: Feature ``LB_BOUNDARIES`` or ``LB_BOUNDARIES_GPU`` required
 
-In order to add a wall as boundary for a lattice Boltzmann fluid
+In order to add a wall as boundary for a lattice-Boltzmann fluid
 you could do the following::
 
     wall = espressomd.shapes.Wall(dist=5, normal=[1, 0, 0])
@@ -392,7 +391,7 @@ Intersecting boundaries are in principle possible but must be treated
 with care. In the current implementation, all nodes that are
 within at least one boundary are treated as boundary nodes.
 
-Currently, only the so called "link-bounce-back" algorithm for wall
+Currently, only the so-called "link-bounce-back" algorithm for wall
 nodes is available. This creates a boundary that is located
 approximately midway between the lattice nodes, so in the above example ``wall[0]``
 corresponds to a boundary at :math:`x=1.5`. Note that the

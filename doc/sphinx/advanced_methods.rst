@@ -21,7 +21,7 @@ The collision detection is controlled via the :attr:`espressomd.system.System.co
 
 Several modes are available for different types of binding.
 
-* ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction `stiff` enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
+* ``"bind_centers"``: adds a pair-bond between two particles at their first collision. By making the bonded interaction *stiff* enough, the particles can be held together after the collision. Note that the particles can still slide on each others' surface, as the pair bond is not directional. This mode is set up as follows::
 
     import espressomd
     from espressomd.interactions import HarmonicBond
@@ -64,13 +64,13 @@ Several modes are available for different types of binding.
     * ``part_type_vs`` is the particle type assigned to the virtual sites created on collision. In nearly all cases, no non-bonded interactions should be defined for this particle type.
     * ``vs_placement`` controls, where on the line connecting the centers of the colliding particles, the virtual sites are placed. A value of 0 means that the virtual sites are placed at the same position as the colliding particles on which they are based. A value of 0.5 will result in the virtual sites being placed ad the mid-point between the two colliding particles. A value of 1 will result the virtual site associated to the first colliding particle to be placed at the position of the second colliding particle. In most cases, 0.5, is a good choice. Then, the bond connecting the virtual sites should have an equilibrium length of zero.
 
-* ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them `inert`. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
+* ``"glue_to_surface"``: This mode is used to irreversibly attach small particles to the surface of a big particle. It is asymmetric in that several small particles can be bound to a big particle but not vice versa. The small particles can change type after collision to make them *inert*. On collision, a single virtual site is placed and related to the big particle. Then, a bond (``bond_centers``) connects the big and the small particle. A second bond (``bond_vs``) connects the virtual site and the small particle. Further required parameters are:
 
-  * ``part_type_to_attach_vs_to``: Type of the particle to which the virtual site is attached, i.e., the `big` particle.
-  * ``part_type_to_be_glued``: Type of the particle bound to the virtual site (the `small` particle).
-  * ``part_type_after_glueing``: The type assigned to the particle bound to the virtual site (`small` particle) after the collision.
+  * ``part_type_to_attach_vs_to``: Type of the particle to which the virtual site is attached, i.e., the *big* particle.
+  * ``part_type_to_be_glued``: Type of the particle bound to the virtual site (the *small* particle).
+  * ``part_type_after_glueing``: The type assigned to the particle bound to the virtual site (*small* particle) after the collision.
   * ``part_type_vs``: Particle type assigned to the virtual site created during the collision.
-  * ``distance_glued_particle_to_vs``: Distance of the virtual site to the particle being bound to it (`small` particle).
+  * ``distance_glued_particle_to_vs``: Distance of the virtual site to the particle being bound to it (*small* particle).
 
   Note: When the type of a particle is changed on collision, this makes the
   particle inert with regards to further collision. Should a particle  of
@@ -119,7 +119,7 @@ The following limitations currently apply for the collision detection:
 * The ``"bind at point of collision"`` approach cannot handle collisions
   between virtual sites
 
-..
+
 .. _Lees-Edwards boundary conditions:
 
 Lees-Edwards boundary conditions
@@ -141,7 +141,7 @@ thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesi
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
-lattice Boltzmann.
+lattice-Boltzmann.
 
 Numerically, the shell is discretized by a set of marker points
 connected by triangles. The marker points are advected with *exactly*
@@ -154,7 +154,7 @@ the local fluid velocity.
 
 The immersed boundary method consists of two components, which can be used independently:
 
-  * :ref:`Inertialess lattice Boltzmann tracers` implemented as virtual sites
+  * :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
 
   * Interactions providing the elastic forces for the particles forming the surface. These are described below.
 
@@ -196,7 +196,7 @@ The comma is needed to force Python to create a tuple containing a single item.
 For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
 This feature probably does not work with advanced LB features such electro kinetics.
 
-A sample script is provided in the :file:`samples/immersed_boundary` directory of the source distribution.
+A sample script is provided in the :file:`/samples/immersed_boundary/` directory of the source distribution.
 
 
 
@@ -206,26 +206,24 @@ A sample script is provided in the :file:`samples/immersed_boundary` directory o
 Object-in-fluid
 ---------------
 If you plan to use this feature, please contact the Cell-in-fluid Research Group at the
-University of Zilina:
+University of Zilina: ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-| ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
+When using this module, please cite :cite:`Cimrak2014` (BibTeX key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
 
-  If using this module, please cite :cite:`Cimrak2014` (Bibtex key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
+This documentation introduces the features of module Object-in-fluid (OIF).
+Even though ESPResSo was not primarily intended to work with closed
+objects, it is a flexible package and appears very suitable when one
+wants to model closed objects with elastic properties, especially if
+they are immersed in a moving fluid. Here we describe the module
+itself and offer some additional information to get you started with. Additionally, we
+provide a step by step tutorial that will show you how to use this
+module.
 
-| This documentation introduces the features of module Object-in-fluid
-  (OIF). Even though ESPResSo was not primarily intended to work with closed
-  objects, it is a flexible package and appears very suitable when one
-  wants to model closed objects with elastic properties, especially if
-  they are immersed in a moving fluid. Here we describe the module
-  itself and offer some additional information to get you started with. Additionally, we
-  provide a step by step tutorial that will show you how to use this
-  module.
-
-| The OIF module was developed for simulations of red blood cells
-  flowing through microfluidic devices and therefore the elasticity
-  features were designed with this application in mind. However, they
-  are completely tunable and can be modified easily to allow the user to
-  model any elastic object moving in fluid flow.
+The OIF module was developed for simulations of red blood cells
+flowing through microfluidic devices and therefore the elasticity
+features were designed with this application in mind. However, they
+are completely tunable and can be modified easily to allow the user to
+model any elastic object moving in fluid flow.
 
 
 
@@ -237,28 +235,29 @@ University of Zilina:
 Triangulations of elastic objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-| To create an elastic object, we need a triangulation of the surface of
-  this object. Sample triangulations are provided at
-  http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso. User
-  can create his/her own meshes, for example in gmsh, salome or any other meshing software. The
-  required format is as follows:
+To create an elastic object, we need a triangulation of the surface of
+this object. Sample triangulations are provided at
+`http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
+<https://web.archive.org/web/20180719231829/http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso>`_.
+Users can create their own meshes, for example in gmsh, salome or any other meshing software. The
+required format is as follows:
 
-| The file :file:`some_nodes.dat` should contain triplets of floats (one
-  triplet per line), where each triplet represents the :math:`x, y` and
-  :math:`z` coordinates of one node of the surface triangulation. No
-  additional information should be written in this file, so this means
-  that the number of lines equals to the number of surface nodes. The
-  coordinates of the nodes should be specified in such a way that the
-  approximate center of mass of the object corresponds to the origin
-  (0,0,0). This is for convenience when placing the objects at desired
-  locations later.
+The file :file:`some_nodes.dat` should contain triplets of floats (one
+triplet per line), where each triplet represents the :math:`x, y` and
+:math:`z` coordinates of one node of the surface triangulation. No
+additional information should be written in this file, so this means
+that the number of lines equals to the number of surface nodes. The
+coordinates of the nodes should be specified in such a way that the
+approximate center of mass of the object corresponds to the origin
+(0,0,0). This is for convenience when placing the objects at desired
+locations later.
 
-| The file :file:`some_triangles.dat` should also contain triplets of
-  numbers, this time integers. These integers refer to the IDs of the nodes in
-  the :file:`some_nodes.dat` file and specify which three nodes form a
-  triangle. Please, note that the nodes' IDs start at 0, i.e.
-  the node written in the first line of :file:`some_nodes.dat` has ID 0, the
-  node in the second line, has ID 1, etc.
+The file :file:`some_triangles.dat` should also contain triplets of
+numbers, this time integers. These integers refer to the IDs of the nodes in
+the :file:`some_nodes.dat` file and specify which three nodes form a
+triangle. Please, note that the nodes' IDs start at 0, i.e.
+the node written in the first line of :file:`some_nodes.dat` has ID 0, the
+node in the second line, has ID 1, etc.
 
 Description of sample script
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -272,7 +271,8 @@ Description of sample script
     ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
 
 The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at
-http://cell-in-fluid.kst.fri.uniza.sk/en/content/oif-espresso.
+`http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
+<https://web.archive.org/web/20180719231829/http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso>`_.
 
 In the first few lines, the script includes several imports related to
 the red blood cell model, fluid, boundaries and interactions. Then we
@@ -378,9 +378,9 @@ transfers specified momentum onto the fluid.
 Specification of boundaries
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-| To set up the geometry of the channels, we mostly use rhomboids and
-  cylinders, but there are also other boundary types available in |es|.
-  The usage is described elsewhere.
+To set up the geometry of the channels, we mostly use rhomboids and
+cylinders, but there are also other boundary types available in |es|.
+Their usage is described elsewhere.
 
 
 |image4| |image5| |image6|
@@ -437,12 +437,12 @@ visualisation:
                         n=20,
                         out_file="output/sim1/obstacle.vtk")
 
-| Note that the method for cylinder output also has an argument ``n``.
-  This specifies number of rectangular faces on the side.
+Note that the method for cylinder output also has an argument ``n``.
+This specifies number of rectangular faces on the side.
 
-| It is a good idea to output and visualize the boundaries and objects
-  just prior to running the actual simulation, to make sure that the
-  geometry is correct and no objects intersect with any boundaries.
+It is a good idea to output and visualize the boundaries and objects
+just prior to running the actual simulation, to make sure that the
+geometry is correct and no objects intersect with any boundaries.
 
 
 
@@ -496,7 +496,7 @@ end:
 
 This simulation runs for 100 cycles. In each cycle, 500 integration
 steps are performed and output is saved into files
-*output/sim1/cell_i.vtk*. Note that they differ only by the number
+:file:`output/sim1/cell_*.vtk`. Note that they differ only by the number
 before the *.vtk* extension (this variable changes due to the ``for``
 loop) and this will allow us to animate them in the visualisation
 software. ``str`` changes the type of ``i`` from integer to string, so
@@ -506,17 +506,19 @@ printed in the terminal window and when the integration is complete, we
 should get a message about it.
 
 
-| To sum up, the proper order of setting up individual simulation
-  parts is as follows:
-| - cell types
-| - cells
-| - fluid
-| - fluid boundaries
-| - interactions
-| If cell types and cells are specified after the fluid, the simulation
-  is slower. Also, interactions can only be defined once the objects
-  and boundaries both exist. Technically, the fluid boundaries can be
-  specified before fluid, but it is really not recommended.
+To sum up, the proper order of setting up individual simulation
+parts is as follows:
+
+- cell types
+- cells
+- fluid
+- fluid boundaries
+- interactions
+
+If cell types and cells are specified after the fluid, the simulation
+is slower. Also, interactions can only be defined once the objects
+and boundaries both exist. Technically, the fluid boundaries can be
+specified before fluid, but it is really not recommended.
 
 
 
@@ -557,27 +559,27 @@ or data files for further processing and analysis.
 Visualization in ParaView
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-| For visualization we suggest the free software ParaView. All .vtk
-  files (boundaries, fluid, objects at all time steps) can be loaded at
-  the same time. The loading is a two step process, because only after
-  pressing the Apply button, are the files actually imported. Using the
-  eye icon to the left of file names, one can turn on and off the
-  individual objects and/or boundaries.
+For visualization we suggest the free software ParaView. All .vtk
+files (boundaries, fluid, objects at all time steps) can be loaded at
+the same time. The loading is a two step process, because only after
+pressing the Apply button, are the files actually imported. Using the
+eye icon to the left of file names, one can turn on and off the
+individual objects and/or boundaries.
 
-| Fluid can be visualized using Filters/Alphabetical/Glyph (or other
-  options from this menu. Please, refer to the ParaView user's guide for
-  more details).
+Fluid can be visualized using Filters/Alphabetical/Glyph (or other
+options from this menu. Please, refer to the ParaView user's guide for
+more details).
 
-| Note, that ParaView does not automatically reload the data if they
-  have been changed in the input folder, but a useful thing to know is
-  that the created filters can be "recycled". Once you delete the old
-  data, load the new data and right-click on the existing filters, you
-  can re-attach them to the new data.
+Note, that ParaView does not automatically reload the data if they
+have been changed in the input folder, but a useful thing to know is
+that the created filters can be "recycled". Once you delete the old
+data, load the new data and right-click on the existing filters, you
+can re-attach them to the new data.
 
-| It is a good idea to output and visualize the boundaries and objects
-  just prior to running the actual simulation, to make sure that the
-  geometry is correct and no objects intersect with any boundaries. This
-  would cause "particle out of range" error and crash the simulation.
+It is a good idea to output and visualize the boundaries and objects
+just prior to running the actual simulation, to make sure that the
+geometry is correct and no objects intersect with any boundaries. This
+would cause "particle out of range" error and crash the simulation.
 
 File format
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -603,15 +605,15 @@ our cells we use the following format:
     ...
     3 p390 p391 p392
 
-| where the cell has 393 surface nodes (particles). After initial
-  specification, the list of points is present, with x, y, z coordinates for
-  each. Then we write the triangulation, since that is how our
-  surface is specified. We need to know the number of triangles
-  (``num_triang``) and the each line/triangle is specified by 4 numbers
-  (so we are telling ParaView to expect 4 *  ``num_triang``  numbers in
-  the following lines. Each line begins with 3 (which stands for a
-  triangle) and three point IDs that tell us which three points (from
-  the order above) form this specific triangle.
+where the cell has 393 surface nodes (particles). After initial
+specification, the list of points is present, with x, y, z coordinates for
+each. Then we write the triangulation, since that is how our
+surface is specified. We need to know the number of triangles
+(``num_triang``) and the each line/triangle is specified by 4 numbers
+(so we are telling ParaView to expect 4 *  ``num_triang``  numbers in
+the following lines. Each line begins with 3 (which stands for a
+triangle) and three point IDs that tell us which three points (from
+the order above) form this specific triangle.
 
 
 
@@ -633,12 +635,12 @@ following lines:
     ...
     value-at-p392
 
-| This says that data for each of 393 points are coming. Next line says
-  that the data are scalar in this case, one float for each point. To
-  color code the values in the visualization, a default (red-to-blue)
-  table will be used. It is also possible to specify your own lookup
-  table. As an example, we might want to see a force magnitude in each
-  surface node
+This says that data for each of 393 points are coming. Next line says
+that the data are scalar in this case, one float for each point. To
+color code the values in the visualization, a default (red-to-blue)
+table will be used. It is also possible to specify your own lookup
+table. As an example, we might want to see a force magnitude in each
+surface node
 
 |image7|
 
@@ -686,8 +688,7 @@ triangles is given instead of number of mesh points.
     0.5
     1.0
 
-| Note - it is also possible to save (and visualize) data corresponding
-  to edges.
+Note - it is also possible to save (and visualize) data corresponding to edges.
 
 
 
@@ -1203,7 +1204,7 @@ Electrokinetics
 
 The electrokinetics setup in |es| allows for the description of
 electro-hydrodynamic systems on the level of ion density distributions
-coupled to a Lattice Boltzmann (LB) fluid. The ion density distributions
+coupled to a lattice-Boltzmann (LB) fluid. The ion density distributions
 may also interact with explicit charged particles, which are
 interpolated on the LB grid. In the following paragraph we briefly
 explain the electrokinetic model implemented in |es|, before we come to the
@@ -1350,8 +1351,8 @@ Initialization
 .. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
 The above is a minimal example how to initialize the LB fluid, and
-it is very similar to the lattice Boltzmann command in set-up. We
-therefore refer the reader to Chapter :ref:`Lattice Boltzmann` for details on the
+it is very similar to the lattice-Boltzmann command in set-up. We
+therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
 implementation of LB in |es| and describe only the major differences here.
 
 The first major difference with the LB implementation is that the
@@ -1366,9 +1367,9 @@ To set up a proper LB fluid using this command one has to specify at
 least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
-lattice Boltzmann command, this parameter is instead taken directly from the value set for
-:attr:`espressomd.system.System.time_step`. The LB `mass density` is set independently from the
-electrokinetic `number densities`, since the LB fluid serves only as a
+lattice-Boltzmann command, this parameter is instead taken directly from the value set for
+:attr:`espressomd.system.System.time_step`. The LB *mass density* is set independently from the
+electrokinetic *number densities*, since the LB fluid serves only as a
 medium through which hydrodynamic interactions are propagated, as will
 be explained further in the next paragraph. If no ``lb_density`` is specified, then our
 algorithm assumes ``lb_density= 1.0``. The two 'new' parameters are the temperature ``T`` at
@@ -1508,8 +1509,8 @@ visualization software such as ParaView [5]_ and Mayavi2 [6]_.
     species.print_vtk_density(path)
 
 These commands are similar to the above. They enable the
-export of diffusive species properties, namely: `density` and `flux`, which specify the
-number density and flux of species `species`, respectively.
+export of diffusive species properties, namely: ``density`` and ``flux``, which specify the
+number density and flux of species ``species``, respectively.
 
 .. _Local Quantities:
 
@@ -1526,7 +1527,7 @@ A single node can be addressed using three integer values
 which run from 0 to ``dim_x/agrid``, ``dim_y/agrid``, and ``dim_z/agrid``, respectively. The
 velocity, electrostatic potential and the pressure of a LB fluid node can be obtained this way.
 
-The local `density` and `flux` of a species can be obtained in the same fashion:
+The local ``density`` and ``flux`` of a species can be obtained in the same fashion:
 
 ::
 
@@ -1534,7 +1535,7 @@ The local `density` and `flux` of a species can be obtained in the same fashion:
     species[0, 0, 0].flux
 
 .. [5]
-   http://www.paraview.org/
+   https://www.paraview.org/
 .. [6]
    http://code.enthought.com/projects/mayavi/
 
@@ -1696,9 +1697,9 @@ Reaction Ensemble
 .. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
-An Example script can be found here:
+An example script can be found here:
 
-* `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
@@ -1835,9 +1836,9 @@ Wang-Landau Reaction Ensemble
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
 
-An Example script can be found here:
+An example script can be found here:
 
-* `Wang Landau reaction ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
+* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
 
 Combination of the Reaction Ensemble with the Wang-Landau algorithm
 :cite:`wang01a`
@@ -1848,7 +1849,7 @@ variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
 does not suffer from systematic errors. Additionally to the above
 commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 
 .. _Constant pH simulation using the Reaction Ensemble:
 
@@ -1857,9 +1858,9 @@ Constant pH simulation using the Reaction Ensemble
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
-An Example script can be found here:
+An example script can be found here:
 
-* `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 In the constant pH method due to Reed and Reed
 :cite:`reed92a` it is possible to set the chemical potential
@@ -1881,8 +1882,8 @@ constant :math:`K_c` for the following reaction:
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
 For an example of how to setup
-a Constant pH simulation, see the file in the testsuite directory.
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+a constant pH simulation, see the file in the testsuite directory.
+For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
 
@@ -1914,51 +1915,52 @@ particles). There exists a one to one mapping of the expressions in the
 grand canonical transition probabilities and the expressions in the
 reaction ensemble transition probabilities.
 
-.. The text below is commented-out because it is still an open research question how it should be used correctly.
 ..
-.. This can be used to include water autoprotolysis in the implicit solvent simulation,
-.. by means of a reaction:
-..
-.. .. math::
-..
-..    \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
-..
-..
-.. add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
-.. nihilo). Ex nihilo means that the reaction has no reactants or products.
-.. Therefore, if :math:`\emptyset` is a product, particles vanish and if
-.. :math:`\emptyset` is a reactant, then particles are created ex nihilo:
-..
-.. .. math::
-..
-..    \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,,
-..
-.. with reaction constant K
-..
-.. .. math::
-..
-..    \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,,
-..
-.. with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
-.. constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
-.. :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
-.. :math:`\overline{\nu}=2` for the dissociation reaction and where x is
-.. the value of the apparent dissociation constant that is converted from
-.. :math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
-.. where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
-.. :math:`P^0` are provided in simulation units this will make :math:`K`
-.. dimensionless. As a test for the autodissociation of water a big
-.. simulation box can be set up and the autodissociation reaction can be
-.. performed. Then the box should fill with the correct number of protons
-.. and hydroxide ions (check for the number of protons and hydroxide ions
-.. in the given simulation volume and compare this to the expected value at
-.. pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
-.. case of an initial excess of acid or base in the simulation box. Note
-.. that this only works for big enough volumes.
+    The text below is commented-out because it is still an open research question how it should be used correctly.
+
+    This can be used to include water autoprotolysis in the implicit solvent simulation,
+    by means of a reaction:
+
+    .. math::
+
+       \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
+
+
+    add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
+    nihilo). Ex nihilo means that the reaction has no reactants or products.
+    Therefore, if :math:`\emptyset` is a product, particles vanish and if
+    :math:`\emptyset` is a reactant, then particles are created ex nihilo:
+
+    .. math::
+
+       \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,,
+
+    with reaction constant K
+
+    .. math::
+
+       \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,,
+
+    with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
+    constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
+    :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
+    :math:`\overline{\nu}=2` for the dissociation reaction and where x is
+    the value of the apparent dissociation constant that is converted from
+    :math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
+    where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
+    :math:`P^0` are provided in simulation units this will make :math:`K`
+    dimensionless. As a test for the autodissociation of water a big
+    simulation box can be set up and the autodissociation reaction can be
+    performed. Then the box should fill with the correct number of protons
+    and hydroxide ions (check for the number of protons and hydroxide ions
+    in the given simulation volume and compare this to the expected value at
+    pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
+    case of an initial excess of acid or base in the simulation box. Note
+    that this only works for big enough volumes.
 
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 An example script can be found here:
 
-* `Widom Insertion                    <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
+* `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_

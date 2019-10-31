@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,7 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -57,9 +56,9 @@ class CheckpointTest(ut.TestCase):
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
-        nx = lbf.shape[0] 
-        ny = lbf.shape[1] 
-        nz = lbf.shape[2] 
+        nx = lbf.shape[0]
+        ny = lbf.shape[1]
+        nz = lbf.shape[2]
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
             (nx, ny, nz), dtype=float)
@@ -68,11 +67,11 @@ class CheckpointTest(ut.TestCase):
                 for k in range(nz):
                     np.testing.assert_almost_equal(
                         np.copy(lbf[i, j, k].population),
-                                grid_3D[i, j, k] * np.arange(1, 20),
-                                decimal=precision)
+                        grid_3D[i, j, k] * np.arange(1, 20),
+                        decimal=precision)
         state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
-        for key, val in reference.items():
+        for key in reference:
             self.assertTrue(key in state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
@@ -102,12 +101,12 @@ class CheckpointTest(ut.TestCase):
         reference = {'agrid': 0.5, 'lb_density': 26.15,
                      'viscosity': 1.7, 'friction': 0.0,
                      'T': 1.1, 'prefactor': 0.88, 'stencil': "linkcentered"}
-        for key, val in reference.items():
+        for key in reference:
             self.assertTrue(key in state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-5)
         state_species = ek_species.get_params()
         reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3}
-        for key, val in reference_species.items():
+        for key in reference_species:
             self.assertTrue(key in state_species)
             self.assertAlmostEqual(
                 reference_species[key],
@@ -139,19 +138,71 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(np.copy(system.part[0].f), particle_force0)
         np.testing.assert_allclose(np.copy(system.part[1].f), particle_force1)
 
-    @ut.skipIf('LBTHERM' not in modes, 'LB thermostat not in modes')
-    def test_thermostat(self):
-        self.assertEqual(system.thermostat.get_state()[0]['type'], 'LB')
-        self.assertEqual(system.thermostat.get_state()[0]['seed'], 23)
-        self.assertEqual(system.thermostat.get_state()[0]['gamma'], 2.0)
+    @ut.skipIf('THERM.LB' not in modes, 'LB thermostat not in modes')
+    def test_thermostat_LB(self):
+        thmst = system.thermostat.get_state()[0]
+        if 'LB.GPU' in modes and not espressomd.gpu_available():
+            self.assertEqual(thmst['type'], 'OFF')
+        else:
+            self.assertEqual(thmst['type'], 'LB')
+            # rng_counter_fluid = seed, seed is 0 because kT=0
+            self.assertEqual(thmst['rng_counter_fluid'], 0)
+            self.assertEqual(thmst['gamma'], 2.0)
 
-    @ut.skipIf('LBTHERM' in modes, 'Langevin incompatible with LB thermostat')
-    def test_thermostat(self):
-        self.assertEqual(system.thermostat.get_state()[0]['type'], 'LANGEVIN')
-        self.assertEqual(system.thermostat.get_state()[0]['kT'], 1.0)
-        self.assertEqual(system.thermostat.get_state()[0]['seed'], 42)
-        np.testing.assert_array_equal(system.thermostat.get_state()[
-            0]['gamma'], np.array([2.0, 2.0, 2.0]))
+    @ut.skipIf('THERM.LANGEVIN' not in modes,
+               'Langevin thermostat not in modes')
+    def test_thermostat_Langevin(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'LANGEVIN')
+        self.assertEqual(thmst['kT'], 1.0)
+        self.assertEqual(thmst['seed'], 42)
+        np.testing.assert_array_equal(thmst['gamma'], np.array(3 * [2.0]))
+
+    @utx.skipIfMissingFeatures('DPD')
+    @ut.skipIf('THERM.DPD' not in modes, 'DPD thermostat not in modes')
+    def test_thermostat_DPD(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'DPD')
+        self.assertEqual(thmst['kT'], 1.0)
+        self.assertEqual(thmst['seed'], 42 + 6)
+
+    @utx.skipIfMissingFeatures('NPT')
+    @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')
+    def test_thermostat_NPT(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'NPT_ISO')
+        self.assertEqual(thmst['gamma0'], 2.0)
+        self.assertEqual(thmst['gammav'], 0.1)
+
+    @utx.skipIfMissingFeatures('NPT')
+    @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')
+    def test_integrator_NPT(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'NPT')
+        params = integ['_isotropic_npt_params']
+        self.assertEqual(params['ext_pressure'], 2.0)
+        self.assertEqual(params['piston'], 0.01)
+        self.assertEqual(params['direction'], [1, 0, 0])
+        self.assertEqual(params['cubic_box'], False)
+
+    @ut.skipIf('INT.SD' not in modes, 'SD integrator not in modes')
+    def test_integrator_SD(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'STEEPEST_DESCENT')
+        params = integ['_steepest_descent_params']
+        self.assertEqual(params['f_max'], 2.0)
+        self.assertEqual(params['gamma'], 0.1)
+        self.assertEqual(params['max_displacement'], 0.01)
+
+    @ut.skipIf('INT.NVT' not in modes, 'NVT integrator not in modes')
+    def test_integrator_VV(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'NVT')
+
+    @ut.skipIf('INT' in modes, 'VV integrator not the default')
+    def test_integrator_VV(self):
+        integ = system.integrator.get_state()
+        self.assertEqual(integ['_method'], 'VV')
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")
@@ -172,13 +223,13 @@ class CheckpointTest(ut.TestCase):
     def test_bonded_inter(self):
         state = system.part[1].bonds[0][0].params
         reference = {'r_0': 0.0, 'k': 1.0}
-        for key in reference.keys():
+        for key in reference:
             self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
-        if 'LBTHERM' not in modes:
+        if 'THERM.LB' not in modes:
             state = system.part[1].bonds[1][0].params
             reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
                          'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
-            for key in reference.keys():
+            for key in reference:
                 self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
@@ -221,7 +272,8 @@ class CheckpointTest(ut.TestCase):
         self.assertTrue(tests_common.lists_contain_same_elements(
             system.part[2].exclusions, [0, 1]))
 
-    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES") or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
+    @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
+                                    or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
     def test_lb_boundaries(self):
         self.assertEqual(len(system.lbboundaries), 1)
         np.testing.assert_allclose(
@@ -278,6 +330,7 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(np.copy(c[7].k), [-.1, .2, .3])
             self.assertAlmostEqual(c[7].omega, 5., delta=1E-10)
             self.assertAlmostEqual(c[7].phi, 1.4, delta=1E-10)
+
 
 if __name__ == '__main__':
     ut.main()
