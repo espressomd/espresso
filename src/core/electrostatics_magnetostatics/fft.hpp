@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _FFT_H
 #define _FFT_H
 /** \file
@@ -154,7 +154,7 @@ struct fft_data_struct {
  *  \param ks_pnum         Number of permutations in k-space.
  *  \param fft             FFT plan.
  *  \param grid            Number of nodes in each spatial dimension.
- *  \param comm            MPI communicator
+ *  \param comm            MPI communicator.
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
 int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
@@ -165,8 +165,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 /** Perform an in-place forward 3D FFT.
  *  \warning The content of \a data is overwritten.
  *  \param[in,out] data  Mesh.
- *  \param         fft   FFT plan.
- *  \param comm            MPI communicator
+ *  \param fft           FFT plan.
+ *  \param comm          MPI communicator
  */
 void fft_perform_forw(double *data, fft_data_struct &fft,
                       const boost::mpi::communicator &comm);
@@ -175,7 +175,8 @@ void fft_perform_forw(double *data, fft_data_struct &fft,
  *  \warning The content of \a data is overwritten.
  *  \param[in,out] data   Mesh.
  *  \param check_complex  Throw an error if the complex component is non-zero.
- *  \param         fft    FFT plan.
+ *  \param fft            FFT plan.
+ *  \param comm           MPI communicator.
  */
 void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
                       const boost::mpi::communicator &comm);
@@ -195,7 +196,6 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
  *  \param[in]  size    size of the block (=dimension of the out-grid).
  *  \param[in]  dim     size of the in-grid.
  *  \param[in]  element size of a grid element (e.g. 1 for Real, 2 for Complex).
- *  \param comm         MPI communicator
  */
 void fft_pack_block(double const *in, double *out, int const start[3],
                     int const size[3], int const dim[3], int element);

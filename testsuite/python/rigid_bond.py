@@ -1,6 +1,5 @@
-
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,16 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 from espressomd.interactions import RigidBond
 
 
-@ut.skipIf(not espressomd.has_features("BOND_CONSTRAINT"),
-           "Test requires BOND_CONSTRAINT feature")
+@utx.skipIfMissingFeatures("BOND_CONSTRAINT")
 class RigidBondTest(ut.TestCase):
 
     def test(self):
@@ -34,7 +31,7 @@ class RigidBondTest(ut.TestCase):
         tol = 1.2 * target_acc
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
         s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
-        s.box_l = 10, 10, 10
+        s.box_l = [10, 10, 10]
         s.cell_system.skin = 0.4
         s.time_step = 0.01
         s.thermostat.set_langevin(kT=1, gamma=1, seed=42)
@@ -56,5 +53,4 @@ class RigidBondTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

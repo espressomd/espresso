@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  MMM1D algorithm for long range Coulomb interaction.
  *
@@ -25,6 +25,8 @@
  */
 
 #include "electrostatics_magnetostatics/mmm1d.hpp"
+
+#ifdef ELECTROSTATICS
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -33,14 +35,13 @@
 #include "polynom.hpp"
 #include "specfunc.hpp"
 #include "tuning.hpp"
-#include "utils.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
 
-#include "utils/strcat_alloc.hpp"
+#include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
-
-#ifdef ELECTROSTATICS
+#include <utils/constants.hpp>
+#include <utils/math/sqr.hpp>
 
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000
@@ -70,7 +71,7 @@ static double uz, L2, uz2, prefuz2, prefL3_i;
 MMM1D_struct mmm1d_params = {0.05, 1e-5, 0};
 /** From which distance a certain Bessel cutoff is valid. Can't be part of the
     params since these get broadcasted. */
-static double *bessel_radii;
+static std::vector<double> bessel_radii;
 
 static double far_error(int P, double minrad) {
   // this uses an upper bound to all force components and the potential
@@ -82,9 +83,9 @@ static double far_error(int P, double minrad) {
 
 static double determine_minrad(double maxPWerror, int P) {
   // bisection to search for where the error is maxPWerror
-  double rgranularity = MIN_RAD * box_l[2];
+  double rgranularity = MIN_RAD * box_geo.length()[2];
   double rmin = rgranularity;
-  double rmax = std::min(box_l[0], box_l[1]);
+  double rmax = std::min(box_geo.length()[0], box_geo.length()[1]);
   double errmin = far_error(P, rmin);
   double errmax = far_error(P, rmax);
   if (errmin < maxPWerror) {
@@ -93,7 +94,7 @@ static double determine_minrad(double maxPWerror, int P) {
   }
   if (errmax > maxPWerror) {
     // make sure that this switching radius cannot be reached
-    return 2 * std::max(box_l[0], box_l[1]);
+    return 2 * std::max(box_geo.length()[0], box_geo.length()[1]);
   }
 
   while (rmax - rmin > rgranularity) {
@@ -109,7 +110,7 @@ static double determine_minrad(double maxPWerror, int P) {
 }
 
 static void determine_bessel_radii(double maxPWerror, int maxP) {
-  bessel_radii = Utils::realloc(bessel_radii, sizeof(double) * maxP);
+  bessel_radii.resize(maxP);
   for (int P = 1; P <= maxP; ++P) {
     bessel_radii[P - 1] = determine_minrad(maxPWerror, P);
     // printf("cutoff %d %f\n", P, bessel_radii[P-1]);
@@ -149,7 +150,7 @@ int MMM1D_set_params(double switch_rad, double maxPWerror) {
 
 int MMM1D_sanity_checks() {
   // char *errtxt;
-  if (PERIODIC(0) || PERIODIC(1) || !PERIODIC(2)) {
+  if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM1D requires periodicity 0 0 1";
     return 1;
   }
@@ -165,11 +166,11 @@ void MMM1D_init() {
   if (MMM1D_sanity_checks())
     return;
 
-  if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_l[2]))
-    mmm1d_params.far_switch_radius_2 = 0.8 * Utils::sqr(box_l[2]);
+  if (mmm1d_params.far_switch_radius_2 >= Utils::sqr(box_geo.length()[2]))
+    mmm1d_params.far_switch_radius_2 = 0.8 * Utils::sqr(box_geo.length()[2]);
 
-  uz = 1 / box_l[2];
-  L2 = box_l[2] * box_l[2];
+  uz = 1 / box_geo.length()[2];
+  L2 = box_geo.length()[2] * box_geo.length()[2];
   uz2 = uz * uz;
   prefuz2 = coulomb.prefactor * uz2;
   prefL3_i = prefuz2 * uz;
@@ -179,10 +180,10 @@ void MMM1D_init() {
                            mmm1d_params.far_switch_radius_2);
 }
 
-void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
-                                  double r, double force[3]) {
+void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
+                                  double r, Utils::Vector3d &force) {
   int dim;
-  double F[3];
+  Utils::Vector3d F;
   double rxy2, rxy2_d, z_d;
   double pref;
   double Fx, Fy, Fz;
@@ -223,12 +224,12 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
 
     /* real space parts */
 
-    pref = 1. / (r2 * r);
+    pref = 1. / (r * r * r);
     Fx += pref * d[0];
     Fy += pref * d[1];
     Fz += pref * d[2];
 
-    shift_z = d[2] + box_l[2];
+    shift_z = d[2] + box_geo.length()[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
     pref = 1. / (rt2 * rt);
@@ -236,7 +237,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
     Fy += pref * d[1];
     Fz += pref * shift_z;
 
-    shift_z = d[2] - box_l[2];
+    shift_z = d[2] - box_geo.length()[2];
     rt2 = rxy2 + shift_z * shift_z;
     rt = sqrt(rt2);
     pref = 1. / (rt2 * rt);
@@ -244,9 +245,7 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
     Fy += pref * d[1];
     Fz += pref * shift_z;
 
-    F[0] = Fx;
-    F[1] = Fy;
-    F[2] = Fz;
+    F = {Fx, Fy, Fz};
   } else {
     /* far range formula */
     double rxy = sqrt(rxy2);
@@ -271,18 +270,15 @@ void add_mmm1d_coulomb_pair_force(double chpref, double const d[3], double r2,
     sr *= uz2 * 4 * C_2PI;
     sz *= uz2 * 4 * C_2PI;
 
-    pref = 1. * (sr / rxy + 2 * uz / rxy2);
+    pref = sr / rxy + 2 * uz / rxy2;
 
-    F[0] = pref * d[0];
-    F[1] = pref * d[1];
-    F[2] = 1. * sz;
+    F = {pref * d[0], pref * d[1], sz};
   }
 
-  for (dim = 0; dim < 3; dim++)
-    force[dim] += chpref * F[dim];
+  force += chpref * F;
 }
 
-double mmm1d_coulomb_pair_energy(double const chpref, double const d[3],
+double mmm1d_coulomb_pair_energy(double const chpref, Utils::Vector3d const &d,
                                  double r2, double r) {
   double rxy2, rxy2_d, z_d;
   double E;
@@ -318,11 +314,11 @@ double mmm1d_coulomb_pair_energy(double const chpref, double const d[3],
 
     E += 1 / r;
 
-    shift_z = d[2] + box_l[2];
+    shift_z = d[2] + box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
     E += 1 / rt;
 
-    shift_z = d[2] - box_l[2];
+    shift_z = d[2] - box_geo.length()[2];
     rt = sqrt(rxy2 + shift_z * shift_z);
     E += 1 / rt;
   } else {
@@ -351,7 +347,8 @@ int mmm1d_tune(char **log) {
     return ES_ERROR;
   char buffer[32 + 2 * ES_DOUBLE_SPACE + ES_INTEGER_SPACE];
   double int_time, min_time = 1e200, min_rad = -1;
-  double maxrad = box_l[2]; /* N_psi = 2, theta=2/3 maximum for rho */
+  double maxrad =
+      box_geo.length()[2]; /* N_psi = 2, theta=2/3 maximum for rho */
   double switch_radius;
 
   if (mmm1d_params.far_switch_radius_2 < 0) {

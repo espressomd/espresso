@@ -1,22 +1,22 @@
 /*
-  Copyright (C) 2016-2018 The ESPResSo project
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2016-2019 The ESPResSo project
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 /** \file
  * Unit tests for the MpiCallbacks class.
@@ -32,10 +32,28 @@
 #include "../MpiCallbacks.hpp"
 
 #include <boost/mpi.hpp>
+#include <boost/optional.hpp>
 
 #include <string>
 
 static bool called = false;
+
+BOOST_AUTO_TEST_CASE(invoke_test) {
+  using Communication::detail::invoke;
+
+  auto f = [](int i, double d) { return i + d; };
+
+  boost::mpi::communicator world;
+  boost::mpi::packed_oarchive::buffer_type buff;
+
+  auto const i = 123;
+  auto const d = 3.1415;
+  boost::mpi::packed_oarchive(world, buff) << i << d;
+
+  boost::mpi::packed_iarchive ia(world, buff);
+
+  BOOST_CHECK_EQUAL(f(i, d), (invoke<decltype(f), int, double>(f, ia)));
+}
 
 /**
  * Test that the implementation of callback_model_t
@@ -68,7 +86,7 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
     auto cb = detail::make_model(fp);
 
     boost::mpi::packed_iarchive ia(world, buff);
-    cb->operator()(ia);
+    cb->operator()(world, ia);
 
     BOOST_CHECK(called);
   }
@@ -85,7 +103,7 @@ BOOST_AUTO_TEST_CASE(callback_model_t) {
     });
 
     boost::mpi::packed_iarchive ia(world, buff);
-    cb->operator()(ia);
+    cb->operator()(world, ia);
 
     BOOST_CHECK(called);
   }
@@ -155,6 +173,70 @@ BOOST_AUTO_TEST_CASE(CallbackHandle) {
     cbs.loop();
     BOOST_CHECK(called);
   }
+}
+
+BOOST_AUTO_TEST_CASE(reduce_callback) {
+  auto cb = []() -> int { return boost::mpi::communicator().rank(); };
+  Communication::MpiCallbacks::add_static(Communication::Result::Reduction{},
+                                          static_cast<int (*)()>(cb),
+                                          std::plus<int>());
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    auto const ret = cbs.call(Communication::Result::reduction,
+                              std::plus<int>(), static_cast<int (*)()>(cb));
+    auto const n = world.size();
+    BOOST_CHECK_EQUAL(ret, (n * (n - 1)) / 2);
+  } else {
+    cbs.loop();
+  }
+}
+
+BOOST_AUTO_TEST_CASE(one_rank_callback) {
+  auto cb = []() -> boost::optional<int> {
+    boost::mpi::communicator world;
+    if (world.rank() == (world.size() - 1)) {
+      return world.rank();
+    }
+
+    return {};
+  };
+
+  auto const fp = static_cast<boost::optional<int> (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(Communication::Result::one_rank, fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::one_rank, fp),
+                      world.size() - 1);
+  } else {
+    cbs.loop();
+  }
+}
+
+BOOST_AUTO_TEST_CASE(call_all) {
+  called = false;
+  auto cb = []() { called = true; };
+
+  auto const fp = static_cast<void (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    cbs.call_all(fp);
+  } else {
+    cbs.loop();
+  }
+
+  BOOST_CHECK(called);
 }
 
 int main(int argc, char **argv) {

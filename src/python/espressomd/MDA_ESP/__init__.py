@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,15 +14,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 """
 This modules allows to expose ESPREsSo's coordinates and particle attributes
 to MDAnalysis without need to save information to files.
 
-The main class is Stream(), which is used to initialize the stream of data
-to MDAnalysis' readers. These are the topology reader ESPParser(TopologyReaderBase)
-and the coordinates reader ESPReader(SingleFrameReaderBase).
+The main class is :class:`Stream`, which is used to initialize the stream of
+data to MDAnalysis' readers. These are the topology reader :class:`ESPParser`
+and the coordinates reader :class:`ESPReader`.
 
 A minimal working example is the following:
 
@@ -49,6 +47,7 @@ A minimal working example is the following:
 
 try:
     import cStringIO as StringIO
+    StringIO = StringIO.StringIO
 except ImportError:
     from io import StringIO
 
@@ -72,43 +71,35 @@ from MDAnalysis.core.topologyattrs import (
 )
 
 
-class Stream(object):
+class Stream:
+
+    """
+    Create an object that provides a MDAnalysis topology and a coordinate reader
+
+    >>> eos = MDA_ESP.Stream(system)
+    >>> u = mda.Universe(eos.topology,eos.trajectory)
+
+    Parameters
+    ----------
+
+    system : :obj:`espressomd.system.System`
+    """
 
     def __init__(self, system):
-        """
-            Create an object that provides a MDAnalysis topology and a coordinate reader
-
-            Parameters
-            ----------
-
-            system :  an instance of the espressomd.System() class
-
-            Returns
-            -------
-
-            a Stream class
-
-            Properties
-            ----------
-
-            trajectory: returns a named pipe with the information about the current frame
-            topology : a topology for MDAnalysis
-
-            >>> eos = MDA_ESP.Stream(system)
-            >>> u = mda.Universe(eos.topology,eos.trajectory)
-        """
         self.topology = ESPParser(None, espresso=system).parse()
         self.system = system
 
     @property
     def trajectory(self):
         """
-            Particles' coordinates at the current time
+        Particles' coordinates at the current time
 
-            Returns
-            -------
+        Returns
+        -------
 
-            A named stream in the format that can be parsed by ESPReader()
+        stream : :class:`MDAnalysis.lib.util.NamedStream`
+            A stream in the format that can be parsed by :class:`ESPReader`
+
         """
         # time
         _xyz = str(self.system.time) + '\n'
@@ -129,7 +120,7 @@ class Stream(object):
 class ESPParser(TopologyReaderBase):
 
     """
-        An MDAnalysis reader of espresso's topology
+    An MDAnalysis reader of espresso's topology
 
     """
     format = 'ESP'
@@ -139,12 +130,13 @@ class ESPParser(TopologyReaderBase):
 
     def parse(self):
         """
-            Access ESPResSo data and return the topology object
+        Access ESPResSo data and return the topology object
 
-            Returns
-            -------
+        Returns
+        -------
 
-            an MDAnalysis Topology object
+        top : :class:`MDAnalysis.core.topology.Topology`
+            a topology object
 
         """
         espresso = self.kwargs['espresso']
@@ -194,7 +186,7 @@ class Timestep(base.Timestep):
         x = self._unitcell[self._ts_order_x]
         y = self._unitcell[self._ts_order_y]
         z = self._unitcell[self._ts_order_z]
-            # this ordering is correct! (checked it, OB)
+        # this ordering is correct! (checked it, OB)
         return triclinic_box(x, y, z)
 
     @dimensions.setter
@@ -207,7 +199,7 @@ class Timestep(base.Timestep):
 class ESPReader(SingleFrameReaderBase):
 
     """
-        An MDAnalysis single frame reader for the stream provided by Stream()
+    An MDAnalysis single frame reader for the stream provided by Stream()
 
     """
     format = 'ESP'
@@ -218,9 +210,9 @@ class ESPReader(SingleFrameReaderBase):
         with util.openany(self.filename, 'rt') as espfile:
             n_atoms = 1
             for pos, line in enumerate(espfile, start=-3):
-                if (pos == -3):
+                if pos == -3:
                     time = float(line[1:-1])
-                elif(pos == -2):
+                elif pos == -2:
                     n_atoms = int(line)
                     self.n_atoms = n_atoms
                     positions = np.zeros(
@@ -232,13 +224,13 @@ class ESPReader(SingleFrameReaderBase):
                     self.ts = ts = self._Timestep(
                         self.n_atoms, **self._ts_kwargs)
                     self.ts.time = time
-                elif(pos == -1):
+                elif pos == -1:
                     self.ts._unitcell[:3] = np.array(
                         list(map(float, line[1:-2].split())))
-                elif(pos < n_atoms):
+                elif pos < n_atoms:
                     positions[pos] = np.array(
                         list(map(float, line[1:-2].split())))
-                elif(pos < 2 * n_atoms):
+                elif pos < 2 * n_atoms:
                     velocities[pos - n_atoms] = np.array(
                         list(map(float, line[1:-2].split())))
                 else:

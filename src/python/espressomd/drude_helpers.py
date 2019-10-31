@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import espressomd.interactions
 from espressomd import has_features
 
@@ -41,9 +40,9 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     harmonic_bond: This method adds this harmonic bond to between Drude particle and core
-    thermalized_bond: This method adds this thermalizerd_bond to between Drude particle and core
+    thermalized_bond: This method adds this thermalized_bond to between Drude particle and core
     p_core: The existing core particle
     id_drude: :obj:`int`
               This method creates the Drude particle and assigns this id.
@@ -76,7 +75,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     if verbose:
         print(
             "Adding to core", p_core.id, "drude id", id_drude, "  pol", alpha,
-              "  core charge", p_core.q, "->", p_core.q - q_drude, "   drude charge", q_drude)
+            "  core charge", p_core.q, "->", p_core.q - q_drude, "   drude charge", q_drude)
 
     p_core.q -= q_drude
     p_core.mass -= mass_drude
@@ -86,7 +85,8 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     p_core.temp = 0.0
     p_core.gamma = gamma_off
 
-    if type_drude in drude_dict and not (drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
+    if type_drude in drude_dict and not (
+            drude_dict[type_drude]["q"] == q_drude and drude_dict[type_drude]["thole_damping"] == thole_damping):
         raise Exception(
             "Drude particles with different drude charges have to have different types for THOLE")
 
@@ -94,7 +94,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
 
     # Add new Thole nonbonded interaction for D-D, D-C, C-C for all existing
     # Drude types if this type is seen for the first time
-    if not type_drude in drude_dict:
+    if type_drude not in drude_dict:
 
         # Bookkeeping of q, alphas and damping parameter
         drude_dict[type_drude] = {}
@@ -112,15 +112,15 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
         drude_dict[p_core.type]["drude_type"] = type_drude
 
     # Collect unique Drude types
-    if not type_drude in drude_type_list:
+    if type_drude not in drude_type_list:
         drude_type_list.append(type_drude)
 
     # Collect unique core types
-    if not p_core.type in core_type_list:
+    if p_core.type not in core_type_list:
         core_type_list.append(p_core.type)
 
     # Collect unique Drude ids
-    if not id_drude in drude_id_list:
+    if id_drude not in drude_id_list:
         drude_id_list.append(id_drude)
 
 
@@ -132,7 +132,7 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     t1 : :obj:`int`
         Type 1
     t2 : :obj:`int`
@@ -160,7 +160,7 @@ def add_all_thole(system, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     verbose : :obj:`bool`
              Turns on verbosity.
 
@@ -191,7 +191,7 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     verbose: :obj:`bool`
              Turns on verbosity.
 
@@ -232,7 +232,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     mol_drude_types : List of types of Drude particles within the molecule
     mol_core_types : List of types of core particles within the molecule
     mol_core_partial_charges : List of partial charges of core particles within the molecule
@@ -268,7 +268,7 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.System`
+    system : Instance of :attr:`espressomd.system.System`
     drude_ids : IDs of Drude particles within a molecule.
     core_ids : IDs of core particles within a molecule.
     verbose : :obj:`bool`

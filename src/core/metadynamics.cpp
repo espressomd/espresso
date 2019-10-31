@@ -1,28 +1,31 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "metadynamics.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+
+#include <cmath>
 
 /** \file
  *
@@ -75,8 +78,7 @@ void meta_init() {
   if (meta_switch == META_OFF)
     return;
 
-  /* Initialize arrays if they're empty. These get freed upon calling the Tcl
-   * parser */
+  /* Initialize arrays if they're empty. */
   if (meta_acc_force == nullptr || meta_acc_fprofile == nullptr) {
     meta_acc_force = (double *)calloc(meta_xi_num_bins * sizeof *meta_acc_force,
                                       sizeof *meta_acc_force);
@@ -100,33 +102,34 @@ void meta_init() {
  * - Update profile and biased force
  * - apply external force
  */
-void meta_perform() {
+void meta_perform(const ParticleRange &particles) {
   Utils::Vector3d ppos1, ppos2;
 
   if (meta_switch == META_OFF)
     return;
 
-  int img1[3], img2[3], flag1 = 0, flag2 = 0;
+  int img1[3], img2[3];
+  bool flag1 = false, flag2 = false;
   Particle *p1 = nullptr, *p2 = nullptr;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     if (p.p.identity == meta_pid1) {
-      flag1 = 1;
+      flag1 = true;
       p1 = &p;
-      ppos1 = unfolded_position(p);
+      ppos1 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
-      if (flag1 && flag2) {
+      if (flag1 & flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
         meta_cur_xi = ppos2 - ppos1;
         break;
       }
     }
     if (p.p.identity == meta_pid2) {
-      flag2 = 1;
+      flag2 = true;
       p2 = &p;
-      ppos2 = unfolded_position(p);
+      ppos2 = unfolded_position(p.r.p, p.l.i, box_geo.length());
 
-      if (flag1 && flag2) {
+      if (flag1 & flag2) {
         /* vector r2-r1 - Not a minimal image! Unfolded position */
         meta_cur_xi = ppos2 - ppos1;
         break;
@@ -134,7 +137,7 @@ void meta_perform() {
     }
   }
 
-  if (flag1 == 0 || flag2 == 0) {
+  if (!flag1 | !flag2) {
     runtimeErrorMsg() << "Metadynamics: can't find pid1 or pid2.\n";
     return;
   }
@@ -147,7 +150,7 @@ void meta_perform() {
   for (int i = 0; i < meta_xi_num_bins; ++i) {
     if (meta_switch == META_DIST) {
       // reaction coordinate value
-      meta_val_xi = sqrt(sqrlen(meta_cur_xi));
+      meta_val_xi = meta_cur_xi.norm();
       // Update free energy profile and biased force
       if (int(sim_time / time_step) % meta_num_relaxation_steps == 0) {
         meta_acc_fprofile[i] -=

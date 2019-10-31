@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,22 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
 import espressomd.electrostatics
 from espressomd import electrostatic_extensions
 
 
-@ut.skipIf(not espressomd.has_features(["ELECTROSTATICS", "PARTIAL_PERIODIC"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["P3M"])
 class ELC_vs_MMM2D_neutral(ut.TestCase):
     # Handle to espresso system
-
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    acc = 1e-6
-    elc_gap = 5.0
+    acc = 1e-7
+    elc_gap = 10.0
     box_l = 10.0
     bl2 = box_l * 0.5
     system.time_step = 0.01
@@ -37,7 +35,9 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 
     def test_elc_vs_mmm2d(self):
         elc_param_sets = {
-            "inert": {"gap_size": self.elc_gap, "maxPWerror": self.acc},
+            "inert": {
+                "gap_size": self.elc_gap,
+                "maxPWerror": self.acc},
             "dielectric": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
@@ -46,18 +46,24 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             "const_pot_0": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 0.0},
             "const_pot_1": {
                 "gap_size": self.elc_gap,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 1.0},
-            "const_pot_m1": {"gap_size": self.elc_gap, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0}
+            "const_pot_m1": {
+                "gap_size": self.elc_gap,
+                "maxPWerror": self.acc,
+                "const_pot": True,
+                "pot_diff": -1.0}
         }
 
         mmm2d_param_sets = {
-            "inert": {"prefactor": 1.0, "maxPWerror": self.acc},
+            "inert": {
+                "prefactor": 1.0,
+                "maxPWerror": self.acc},
             "dielectric": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
@@ -67,17 +73,21 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             "const_pot_0": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 0.0},
             "const_pot_1": {
                 "prefactor": 1.0,
                 "maxPWerror": self.acc,
-                "const_pot": 1,
+                "const_pot": True,
                 "pot_diff": 1.0},
-            "const_pot_m1": {"prefactor": 1.0, "maxPWerror": self.acc, "const_pot": 1, "pot_diff": -1.0}
+            "const_pot_m1": {
+                "prefactor": 1.0,
+                "maxPWerror": self.acc,
+                "const_pot": True,
+                "pot_diff": -1.0}
         }
 
-        self.system.box_l = [self.box_l, self.box_l, self.box_l]
+        self.system.box_l = 3 * [self.box_l]
         buf_node_grid = self.system.cell_system.node_grid
         self.system.cell_system.set_layered(
             n_layers=10, use_verlet_lists=False)
@@ -90,7 +100,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
         self.system.part.add(id=2, pos=(2.0, 5.0, 2.0), q=q / 3.0)
         self.system.part.add(id=3, pos=(5.0, 2.0, 7.0), q=q / 3.0)
 
-        #MMM2D
+        # MMM2D
         mmm2d = espressomd.electrostatics.MMM2D(**mmm2d_param_sets["inert"])
         self.system.actors.add(mmm2d)
         mmm2d_res = {}
@@ -110,14 +120,14 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 
         self.system.actors.remove(mmm2d)
 
-        #ELC
+        # ELC
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
         self.system.cell_system.set_domain_decomposition(
             use_verlet_lists=True)
         self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=self.acc,
-                                            mesh=[16, 16, 24], cao=6)
+                                            mesh=[24, 24, 32], cao=6)
         self.system.actors.add(p3m)
 
         elc = electrostatic_extensions.ELC(**elc_param_sets["inert"])
@@ -156,6 +166,7 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
             res.append(m)
 
         return res
+
 
 if __name__ == "__main__":
     ut.main()

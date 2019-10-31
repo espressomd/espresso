@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,12 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, division
 import unittest as ut
 import numpy as np
 
 import espressomd
-import tests_common
 
 # Dihedral interaction needs more rigorous tests.
 # The geometry checked here is rather simple and special.
@@ -57,8 +55,7 @@ def dihedral_force(k, n, phase, p1, p2, p3, p4):
     if l_v12Xv23 <= 1e-8 or l_v23Xv34 <= 1e-8:
         return 0, 0, 0
     else:
-        cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (
-            l_v12Xv23 * l_v23Xv34)
+        cosphi = np.abs(np.dot(v12Xv23, v23Xv34)) / (l_v12Xv23 * l_v23Xv34)
         phi = np.arccos(cosphi)
         f1 = (v23Xv34 - cosphi * v12Xv23) / l_v12Xv23
         f4 = (v12Xv23 - cosphi * v23Xv34) / l_v23Xv34
@@ -168,19 +165,15 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_almost_equal(f2_sim_copy, f2_ref)
 
     # Test Tabulated Dihedral Angle
-    @ut.skipIf(not espressomd.has_features(["TABULATED"]),
-               "TABULATED feature is not available, skipping tabulated test.")
     def test_tabulated_dihedral(self):
         N = 111
         d_phi = 2 * np.pi / N
         # tabulated values for the range [0, 2*pi]
-        tab_phi = [i * d_phi for i in range(N + 1)]
         tab_energy = [np.cos(i * d_phi) for i in range(N + 1)]
         tab_force = [np.cos(i * d_phi) for i in range(N + 1)]
 
-        dihedral_tabulated = espressomd.interactions.Tabulated(
-            type='dihedral', energy=tab_energy, force=tab_force, min=0.,
-            max=2 * np.pi)
+        dihedral_tabulated = espressomd.interactions.TabulatedDihedral(
+            energy=tab_energy, force=tab_force)
         self.system.bonded_inter.add(dihedral_tabulated)
         self.system.part[1].add_bond((dihedral_tabulated, 0, 2, 3))
         self.system.part[2].pos = self.system.part[1].pos + [1, 0, 0]
@@ -214,6 +207,7 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Check that energies match, ...
             np.testing.assert_almost_equal(E_sim, E_ref)
+
 
 if __name__ == '__main__':
     ut.main()

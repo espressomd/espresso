@@ -1,28 +1,25 @@
 /*
- Copyright (C) 2010-2018 The ESPResSo project
-
- This file is part of ESPResSo.
-
- ESPResSo is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- ESPResSo is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "Correlator.hpp"
 #include "integrate.hpp"
-#include "partCfg_global.hpp"
-#include "particle_data.hpp"
-#include "utils.hpp"
 
-#include "utils/serialization/multi_array.hpp"
+#include <utils/serialization/multi_array.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -301,8 +298,6 @@ void Correlator::initialize() {
     m_correlation_args[0] = m_correlation_args[0] * m_correlation_args[0];
     m_correlation_args[1] = m_correlation_args[1] * m_correlation_args[1];
     m_correlation_args[2] = m_correlation_args[2] * m_correlation_args[2];
-    fprintf(stderr, "args2: %f %f %f\n", m_correlation_args[0],
-            m_correlation_args[1], m_correlation_args[2]);
     if (dim_A % 3)
       throw std::runtime_error(init_errors[18]);
     m_dim_corr = dim_A / 3;
@@ -379,8 +374,8 @@ void Correlator::initialize() {
 
 void Correlator::update() {
   if (finalized) {
-    runtimeErrorMsg() << "No data can be added after finalize() was called.";
-    return;
+    throw std::runtime_error(
+        "No data can be added after finalize() was called.");
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new
@@ -428,9 +423,9 @@ void Correlator::update() {
   newest[0] = (newest[0] + 1) % (m_tau_lin + 1);
   n_vals[0]++;
 
-  A[0][newest[0]] = A_obs->operator()(partCfg());
+  A[0][newest[0]] = A_obs->operator()();
   if (A_obs != B_obs) {
-    B[0][newest[0]] = B_obs->operator()(partCfg());
+    B[0][newest[0]] = B_obs->operator()();
   } else {
     B[0][newest[0]] = A[0][newest[0]];
   }
@@ -482,8 +477,7 @@ void Correlator::update() {
 
 int Correlator::finalize() {
   if (finalized) {
-    runtimeErrorMsg() << "Correlator::finalize() can only be called once.";
-    return 0;
+    throw std::runtime_error("Correlator::finalize() can only be called once.");
   }
   // We must now go through the hierarchy and make sure there is space for the
   // new
@@ -517,7 +511,6 @@ int Correlator::finalize() {
       // Lets find out how far we have to go back in the hierarchy to make space
       // for the new value
       while (highest_level_to_compress > -1) {
-        // printf("test level %d for compression, n_vals=%d ... ",i,n_vals[i]);
         if (n_vals[i] % 2) {
           if (i < (hierarchy_depth - 1) && n_vals[i] > m_tau_lin) {
             highest_level_to_compress += 1;

@@ -1,25 +1,25 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /* * @File Header file for the correlation class
  *
  * This module allow to compute correlations (and other two time averages) on
- * the fly an from files.
+ * the fly and from files.
  *
  * The basic idea is that the user can write arbitrary function A and B that
  * can depend on e.g. particle coordinates or whatever state of the MD box.
@@ -120,7 +120,6 @@
 #include <boost/serialization/access.hpp>
 
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
 #include <map>
 #include <memory>
@@ -129,8 +128,7 @@
 #include "AccumulatorBase.hpp"
 #include "integrate.hpp"
 #include "observables/Observable.hpp"
-#include "utils.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 namespace Accumulators {
 
@@ -167,12 +165,15 @@ public:
    *     the linear compression method)
    * @param compress2_ how the B values should be compressed (usually
    *     the linear compression method)
+   * @param correlation_args_ optional arguments for the correlation function
+   *     (currently only used when @p corr_operation is "fcs_acf")
    *
    */
   Correlator(int tau_lin, double tau_max, int delta_N, std::string compress1_,
              std::string compress2_, std::string corr_operation, obs_ptr obs1,
-             obs_ptr obs2)
-      : AccumulatorBase(delta_N), finalized(0), t(0), m_tau_lin(tau_lin),
+             obs_ptr obs2, Utils::Vector3d correlation_args_ = {})
+      : AccumulatorBase(delta_N), finalized(0), t(0),
+        m_correlation_args(correlation_args_), m_tau_lin(tau_lin),
         m_dt(delta_N * time_step), m_tau_max(tau_max),
         compressA_name(std::move(compress1_)),
         compressB_name(std::move(compress2_)),
@@ -219,20 +220,6 @@ public:
    */
 
   int get_correlation_time(double *correlation_time);
-
-  /** The function to process a new datapoint of A and B
-   *
-   * First the function finds out if it necessary to make some space for the new
-   * entries of A and B.
-   * Then, if necessary, it compresses old Values of A and B to make for the new
-   * value. Finally
-   * The new values of A and B are stored in A[newest[0]] and B[newest[0]],
-   * where the newest indices
-   * have been increased before. Finally the correlation estimate is updated.
-   * TODO: Not all
-   * the correlation estimates have to be updated.
-   *
-   */
 
   /** Return correlation result */
   std::vector<double> get_correlation();

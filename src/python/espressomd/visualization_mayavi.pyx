@@ -1,3 +1,19 @@
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy
 cimport numpy
 import os
@@ -8,13 +24,12 @@ from .particle_data cimport *
 from .interactions cimport *
 from .system cimport *
 from .interactions import NonBondedInteractions
+from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
+from .grid cimport get_mi_vector, box_geo
 
 include "myconfig.pxi"
 
-cdef extern from "utils.hpp":
-    void get_mi_vector(double * res, double * a, double * b)
-
-if not "ETS_TOOLKIT" in os.environ:
+if "ETS_TOOLKIT" not in os.environ:
     os.environ["ETS_TOOLKIT"] = "wx"
 from mayavi import mlab
 from pyface.api import GUI
@@ -30,17 +45,18 @@ output = vtk.vtkFileOutputWindow()
 output.SetFileName("/dev/null")
 vtk.vtkOutputWindow().SetInstance(output)
 
-cdef class mayaviLive(object):
+cdef class mayaviLive:
     """
     This class provides live visualization using Enthought Mayavi.  Use the
     update method to push your current simulation state after integrating. If
     you run your integrate loop in a separate thread, you can call
-    run_gui_event_loop in your main thread to be able to interact with the GUI.
+    :meth:`start` in your main thread to be able to interact with the GUI.
 
     Parameters
     ----------
-    system : instance of espressomd.System
-    particle_sizes : (optional) function, list, or dict, which maps particle types to radii
+    system : :class:`espressomd.system.System`
+    particle_sizes : function, list, or dict (optional)
+        object which maps particle types to radii
 
     """
 
@@ -64,14 +80,15 @@ cdef class mayaviLive(object):
         self.particle_sizes = particle_sizes
 
         # objects drawn
-        self.points = mlab.quiver3d(
-            [], [], [], [], [], [], scalars=[], mode="sphere", scale_factor=1, name="Particles")
+        self.points = mlab.quiver3d([], [], [], [], [], [], scalars=[],
+                                    mode="sphere", scale_factor=1,
+                                    name="Particles")
         self.points.glyph.color_mode = 'color_by_scalar'
         self.points.glyph.glyph_source.glyph_source.center = [0, 0, 0]
-        self.box = mlab.outline(
-            extent=(0, 0, 0, 0, 0, 0), color=(1, 1, 1), name="Box")
-        self.arrows = mlab.quiver3d(
-            [], [], [], [], [], [], scalars=[], mode="2ddash", scale_factor=1, name="Bonds")
+        self.box = mlab.outline(extent=(0, 0, 0, 0, 0, 0), color=(1, 1, 1),
+                                name="Box")
+        self.arrows = mlab.quiver3d([], [], [], [], [], [], scalars=[],
+                                    mode="2ddash", scale_factor=1, name="Bonds")
         self.arrows.glyph.color_mode = 'color_by_scalar'
 
         # state
@@ -92,9 +109,15 @@ cdef class mayaviLive(object):
             radius = 0.
             IF LENNARD_JONES:
                 try:
-                    radius = 0.5 * get_ia_param(t, t).LJ_sig
-                except:
+                    radius = 0.5 * get_ia_param(t, t).lj.sig
+                except BaseException:
                     radius = 0.
+            IF WCA:
+                if radius == 0:
+                    try:
+                        radius = 0.5 * get_ia_param(t, t).wca.sig
+                    except BaseException:
+                        radius = 0.
 
             if radius == 0:
                 radius = 0.5  # fallback value
@@ -108,7 +131,7 @@ cdef class mayaviLive(object):
         else:
             try:
                 radius = self.particle_sizes[t]
-            except:
+            except BaseException:
                 radius = radius_from_lj(t)
         return radius
 
@@ -132,22 +155,29 @@ cdef class mayaviLive(object):
         if box_changed or not self.running:
             self.box.set(bounds=(0, boxl[0], 0, boxl[1], 0, boxl[2]))
         if not N_changed:
-            self.points.mlab_source.set(x=coords[:, 0] % boxl[0], y=coords[:, 1] % boxl[
-                                        1], z=coords[:, 2] % boxl[2], u=radii, v=radii, w=radii, scalars=types)
+            self.points.mlab_source.set(x=coords[:, 0] % boxl[0],
+                                        y=coords[:, 1] % boxl[1],
+                                        z=coords[:, 2] % boxl[2], u=radii,
+                                        v=radii, w=radii, scalars=types)
         else:
-            self.points.mlab_source.reset(x=coords[:, 0] % boxl[0], y=coords[:, 1] % boxl[
-                                          1], z=coords[:, 2] % boxl[2], u=radii, v=radii, w=radii, scalars=types)
+            self.points.mlab_source.reset(x=coords[:, 0] % boxl[0],
+                                          y=coords[:, 1] % boxl[1],
+                                          z=coords[:, 2] % boxl[2], u=radii,
+                                          v=radii, w=radii, scalars=types)
         if not self.running:
             f.scene.reset_zoom()
             self.running = True
 
         if not Nbonds_changed:
             if bonds.shape[0] > 0:
-                self.arrows.mlab_source.set(x=bonds[:, 0], y=bonds[:, 1], z=bonds[
-                                            :, 2], u=bonds[:, 3], v=bonds[:, 4], w=bonds[:, 5])
+                self.arrows.mlab_source.set(x=bonds[:, 0], y=bonds[:, 1],
+                                            z=bonds[:, 2], u=bonds[:, 3],
+                                            v=bonds[:, 4], w=bonds[:, 5])
         else:
-            self.arrows.mlab_source.reset(x=bonds[:, 0], y=bonds[:, 1], z=bonds[
-                                          :, 2], u=bonds[:, 3], v=bonds[:, 4], w=bonds[:, 5], scalars=bonds[:, 6])
+            self.arrows.mlab_source.reset(x=bonds[:, 0], y=bonds[:, 1],
+                                          z=bonds[:, 2], u=bonds[:, 3],
+                                          v=bonds[:, 4], w=bonds[:, 5],
+                                          scalars=bonds[:, 6])
 
     def update(self):
         """Pull the latest particle information from Espresso.
@@ -174,8 +204,8 @@ cdef class mayaviLive(object):
         cdef IA_parameters * ia
         cdef vector[int] bonds
 
-    # Using (additional) untyped variables and python constructs in the loop
-    # will slow it down considerably.
+        # Using (additional) untyped variables and python constructs in the loop
+        # will slow it down considerably.
         for i in range(N):
             p = get_particle_data_ptr(get_particle_data(i))
             if not p:
@@ -193,11 +223,23 @@ cdef class mayaviLive(object):
                 t = p.bl[k]
                 k += 1
                 # Iterate over bond partners and store each connection
-                for l in range(bonded_ia_params[t].num):
-                    bonds.push_back(i)
+                if bonded_ia_params[t].num == 3 and bonded_ia_params[t].type \
+                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL):
+                    for l in range(2):
+                        bonds.push_back(i)
+                        bonds.push_back(p.bl[k])
+                        bonds.push_back(t)
+                        k += 1
+                    bonds.push_back(p.bl[k - 1])
                     bonds.push_back(p.bl[k])
                     bonds.push_back(t)
                     k += 1
+                else:
+                    for l in range(bonded_ia_params[t].num):
+                        bonds.push_back(i)
+                        bonds.push_back(p.bl[k])
+                        bonds.push_back(t)
+                        k += 1
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size() // 3
@@ -207,7 +249,7 @@ cdef class mayaviLive(object):
         cdef int n
         cdef const particle * p1
         cdef const particle * p2
-        cdef double bond_vec[3]
+        cdef Vector3d bond_vec
         for n in range(Nbonds):
             i = bonds[3 * n]
             j = bonds[3 * n + 1]
@@ -215,8 +257,7 @@ cdef class mayaviLive(object):
             p1 = get_particle_data_ptr(get_particle_data(i))
             p2 = get_particle_data_ptr(get_particle_data(j))
             bond_coords[n, :3] = numpy.array([p1.r.p[0], p1.r.p[1], p1.r.p[2]])
-            get_mi_vector(bond_vec, p2.r.p.data(), p1.r.p.data())
-            bond_coords[n, 3:6] = bond_vec
+            bond_coords[n, 3:6] = make_array_locked( < const Vector3d > get_mi_vector(Vector3d(p2.r.p), Vector3d(p1.r.p), box_geo))
             bond_coords[n, 6] = t
 
         boxl = self.system.box_l
@@ -224,11 +265,11 @@ cdef class mayaviLive(object):
         if self.data is None:
             self.data = coords, types, radii, (self.last_N != N), \
                 bond_coords, (self.last_Nbonds != Nbonds), \
-                        boxl, (self.last_boxl != boxl).any()
+                boxl, (self.last_boxl != boxl).any()
         else:
             self.data = coords, types, radii, self.data[3] or (self.last_N != N), \
                 bond_coords, self.data[5] or (self.last_Nbonds != Nbonds), \
-                        boxl, self.data[7] or (self.last_boxl != boxl).any()
+                boxl, self.data[7] or (self.last_boxl != boxl).any()
         self.last_N = N
         self.last_Nbonds = Nbonds
         self.last_boxl = boxl
@@ -260,5 +301,26 @@ cdef class mayaviLive(object):
 
     def register_callback(self, cb, interval=1000):
         self.timers.append(Timer(interval, cb))
+
+    def run(self, integ_steps=1):
+        """Convenience method with a simple integration thread.
+        """
+
+        def main():
+            while True:
+
+                self.update()
+
+                try:
+                    self.system.integrator.run(integ_steps)
+                except Exception as e:
+                    print(e)
+                    os._exit(1)
+
+        t = threading.Thread(target=main)
+        t.daemon = True
+        t.start()
+
+        self.start()
 
 # TODO: constraints

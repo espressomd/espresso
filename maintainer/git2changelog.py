@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# Copyright (C) 2012-2018 The ESPResSo project
+#!/usr/bin/env python3
+# Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2011 Olaf Lenz
 # Copyright 2008 Marcus D. Hanwell <marcus@cryos.org>
 #
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
-import string
 import re
 import os
 
@@ -53,14 +51,14 @@ for line in fin:
         continue
 
     # Match the author line and extract the part we want
-    m = re.match('^Author:\s*(.*)\s*$', line)
+    m = re.match(r'^Author:\s*(.*)\s*$', line)
     if m is not None:
         author = m.group(1)
         authorFound = True
         continue
 
     # Match the date line
-    m = re.match('^Date:\s*(.*)\s*$', line)
+    m = re.match(r'^Date:\s*(.*)\s*$', line)
     if m is not None:
         date = m.group(1)
         dateFound = True
@@ -93,7 +91,7 @@ for line in fin:
         continue
     # Collect the files for this commit. FIXME: Still need to add +/- to files
     elif authorFound & dateFound & messageFound:
-        fileList = re.split(' \| ', line, 2)
+        fileList = re.split(r' \| ', line, 2)
         if len(fileList) > 1:
             if files:
                 files = files + ", " + fileList[0].strip()
@@ -132,7 +130,7 @@ for line in fin:
         # Write out the commit line
         print(commit)
 
-        #Now reset all the variables ready for a new commit block.
+        # Now reset all the variables ready for a new commit block.
         authorFound = False
         dateFound = False
         messageFound = False

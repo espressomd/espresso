@@ -3,6 +3,8 @@
 
 #cmakedefine CUDA
 
+#cmakedefine HIP
+
 #cmakedefine FFTW
 
 #cmakedefine H5MD

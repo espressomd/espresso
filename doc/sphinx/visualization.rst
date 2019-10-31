@@ -16,7 +16,7 @@ online-visualization:
 
 #. A direct rendering engine based on *pyopengl*. As it is developed for |es|,
    it supports the visualization of several specific features like
-   constraints, particle properties, the cell system, lattice Boltzmann and
+   constraints, particle properties, the cell system, lattice-Boltzmann and
    more. It can be adjusted with a large number of parameters to set colors,
    materials, camera and interactive features like assigning callbacks to user
    input.
@@ -175,10 +175,10 @@ screenshots without blocking the simulation script::
 
     for i in range(100):
         system.integrator.run(1)
-        visualizer.screenshot('screenshot_{}.jpg'.format(i))
+        visualizer.screenshot('screenshot_{:0>5}.png'.format(i))
 
     # You may consider creating a video with ffmpeg:
-    # ffmpeg -f image2 -framerate 30 -i 'screenshot_%d.jpg' output.mp4
+    # ffmpeg -f image2 -framerate 30 -i 'screenshot_%05d.png' output.mp4
 
 It is also possible to create a snapshot during online visualization.
 Simply press the *enter* key to create a snapshot of the current window,
@@ -205,9 +205,9 @@ used, which are indexed circularly by the numerical particle type::
     visualizer = visualization.openGLLive(system,
                                           particle_coloring='type',
                                           particle_type_colors=[[1, 1, 1], [0, 0, 1]],
-                                          particle_type_materials=[steel, bright])
+                                          particle_type_materials=["steel", "bright"])
 
-Materials are stored in :attr:`espressomd.visualization.openGLLive().materials`.
+Materials are stored in :attr:`espressomd.visualization_opengl.openGLLive.materials`.
 
 .. _Visualize vectorial properties:
 
@@ -228,7 +228,6 @@ following code snippet demonstrates the visualization of the director property
 and individual settings for two particle types (requires the ``ROTATION``
 feature)::
 
-    from __future__ import print_function
     import numpy
     from espressomd import *
     from espressomd.visualization_opengl import *
@@ -285,7 +284,7 @@ The camera can be controlled via mouse and keyboard:
 Additional input functionality for mouse and keyboard is possible by assigning
 callbacks to specified keyboard or mouse buttons. This may be useful for
 realtime adjustment of system parameters (temperature, interactions, particle
-properties etc) or for demonstration purposes. The callbacks can be triggered
+properties, etc.) or for demonstration purposes. The callbacks can be triggered
 by a timer or keyboard input::
 
     def foo():
@@ -318,7 +317,7 @@ by a timer or keyboard input::
     visualizer.keyboardManager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
     visualizer.keyboardManager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
-Further examples can be found in samples/python/billard.py or samples/python/visualization\_interactive.py.
+Further examples can be found in :file:`samples/billiard.py` or :file:`samples/visualization_interactive.py`.
 
 .. _Dragging particles:
 
@@ -334,5 +333,5 @@ distance of particle and mouse cursor).
 Visualization example scripts
 -----------------------------
 
-Various :ref:`Sample Scripts` can be found in :file:`samples/python/visualization*`
+Various :ref:`Sample Scripts` can be found in :file:`/samples/visualization_*.py`
 or in the :ref:`Tutorials` "Visualization" and "Charged Systems".

@@ -1,29 +1,29 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 #define CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
 #include <memory>
 
 #include "Constraint.hpp"
+#include "Particle.hpp"
 #include "energy.hpp"
-#include "particle_data.hpp"
 #include "shapes/NoWhere.hpp"
 #include "shapes/Shape.hpp"
 
@@ -46,10 +46,11 @@ public:
   bool fits_in_box(Utils::Vector3d const &) const override { return true; }
 
   /* finds the minimum distance to all particles */
-  double min_dist();
+  double min_dist(const ParticleRange &particles);
 
   /* Calculate distance from the constraint */
-  void calc_dist(const Utils::Vector3d &pos, double *dist, double *vec) const {
+  void calc_dist(const Utils::Vector3d &pos, double &dist,
+                 Utils::Vector3d &vec) const {
     m_shape->calculate_dist(pos, dist, vec);
   }
 

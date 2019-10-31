@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,15 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 import numpy as np
-from time import time
 
 
-@ut.skipIf(not espressomd.has_features("TABULATED"), "Skipped because feature is disabled")
 class TabulatedTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
@@ -61,6 +58,7 @@ class TabulatedTest(ut.TestCase):
             self.assertAlmostEqual(
                 self.s.analysis.energy()['total'], 5. - z * 2.3)
 
+    @utx.skipIfMissingFeatures("TABULATED")
     def test_non_bonded(self):
         self.s.non_bonded_inter[0, 0].tabulated.set_params(
             min=self.min_, max=self.max_, energy=self.energy, force=self.force)
@@ -80,11 +78,10 @@ class TabulatedTest(ut.TestCase):
             min=-1, max=-1, energy=[], force=[])
 
     def test_bonded(self):
-        from espressomd.interactions import Tabulated
+        from espressomd.interactions import TabulatedDistance
 
-        tb = Tabulated(
-            type='distance', min=self.min_, max=self.max_, energy=self.energy,
-                       force=self.force)
+        tb = TabulatedDistance(min=self.min_, max=self.max_,
+                               energy=self.energy, force=self.force)
         self.s.bonded_inter.add(tb)
 
         np.testing.assert_allclose(self.force, tb.params['force'])
@@ -97,6 +94,7 @@ class TabulatedTest(ut.TestCase):
         self.check()
 
         self.s.part[0].delete_bond((tb, 1))
+
 
 if __name__ == "__main__":
     ut.main()

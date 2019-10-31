@@ -1,9 +1,31 @@
-from __future__ import print_function, absolute_import
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
 from .utils import handle_errors
 
-cdef class Actor(object):
+cdef class Actor:
+
+    """
+    Abstract base class for interactions affecting particles in the system,
+    such as electrostatics, magnetostatics or LB fluids. Derived classes must
+    implement the interface to the relevant core objects and global variables.
+    """
+
     # Keys in active_list have to match the method name.
     active_list = dict(ElectrostaticInteraction=False,
                        MagnetostaticInteraction=False,
@@ -57,11 +79,14 @@ cdef class Actor(object):
         if inter in Actor.active_list:
             if not Actor.active_list[inter]:
                 raise Exception(
-                    "Class not registerd in Actor.active_list " + self.__class__.__bases__[0])
+                    "Class not registered in Actor.active_list " + self.__class__.__bases__[0])
             Actor.active_list[inter] = False
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso"""
+        """
+        Check if the data stored in this instance still matches the
+        corresponding data in the core.
+        """
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
             return False
@@ -71,8 +96,8 @@ cdef class Actor(object):
 
     def get_params(self):
         """Get interaction parameters"""
-        # If this instance refers to an actual interaction defined in the es core, load
-        # current parameters from there
+        # If this instance refers to an actual interaction defined in the es
+        # core, load current parameters from there
         if self.is_active():
             update = self._get_params_from_es_core()
             self._params.update(update)
@@ -80,7 +105,7 @@ cdef class Actor(object):
 
     def set_params(self, **p):
         """Update the given parameters."""
-        # Check, if any key was passed, which is not known
+        # Check if keys are valid
         for k in p.keys():
             if k not in self.valid_keys():
                 raise ValueError(
@@ -160,7 +185,12 @@ cdef class Actor(object):
             "Subclasses of %s must define the _deactivate_method() method." % self._get_interaction_type())
 
 
-class Actors(object):
+class Actors:
+
+    """
+    Container for :class:`Actor` objects.
+    """
+
     active_actors = []
 
     def __getstate__(self):
@@ -176,10 +206,11 @@ class Actors(object):
         """
         Parameters
         ----------
-        actor : instance of :class:`espressomd.actors.Actor`
+        actor : :class:`Actor`
+            Actor to add to this container.
 
         """
-        if not actor in Actors.active_actors:
+        if actor not in Actors.active_actors:
             self.active_actors.append(actor)
             actor._activate()
         else:
@@ -189,19 +220,17 @@ class Actors(object):
         """
         Parameters
         ----------
-        actor : instance of :class:`espressomd.actors.Actor`
+        actor : :class:`Actor`
+            Actor to remove from this container.
 
         """
-        if not actor in self.active_actors:
+        if actor not in self.active_actors:
             raise Exception("Actor is not active")
         actor._deactivate()
         self.active_actors.remove(actor)
 
     def clear(self):
-        """
-        Remove all actors.
-
-        """
+        """Remove all actors."""
         for a in self.active_actors:
             self.remove(a)
 

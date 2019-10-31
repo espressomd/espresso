@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,16 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This samples sets up a Lattice-Boltzmann fluid and applies an external force
-density on it.
+Set up a lattice-Boltzmann fluid and apply an external force density on it.
 """
-from __future__ import print_function
-
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--cpu', action='store_true')
 group.add_argument('--gpu', action='store_true')
@@ -35,25 +32,22 @@ args = parser.parse_args()
 
 print("""
 =======================================================
-=         Lattice Boltzmann fluid example             =
+=         lattice-Boltzmann fluid example             =
 =======================================================
 """)
 
+required_features = ["EXTERNAL_FORCES"]
 if args.gpu:
     print("Using GPU implementation")
-    required_features = ["LB_GPU"]
+    required_features.append("CUDA")
 else:
     print("Using CPU implementation")
-    required_features = ["LB"]
     if not args.cpu:
         print("(select the implementation with --cpu or --gpu)")
 
 import espressomd
 espressomd.assert_features(required_features)
 import espressomd.lb
-
-print("\nProgram Information:")
-print(espressomd.features())
 
 
 box_l = 50

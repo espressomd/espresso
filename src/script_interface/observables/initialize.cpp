@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2015-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2015-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "initialize.hpp"
 #include "CylindricalLBProfileObservable.hpp"
@@ -28,19 +28,25 @@
 #include "ScriptInterface.hpp"
 #include "config.hpp"
 
+#include "core/observables/BondAngles.hpp"
+#include "core/observables/BondDihedrals.hpp"
 #include "core/observables/ComForce.hpp"
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
+#include "core/observables/CosPersistenceAngles.hpp"
 #include "core/observables/Current.hpp"
+#include "core/observables/CylindricalDensityProfile.hpp"
+#include "core/observables/CylindricalFluxDensityProfile.hpp"
+#include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 #include "core/observables/CylindricalLBVelocityProfile.hpp"
+#include "core/observables/CylindricalLBVelocityProfileAtParticlePositions.hpp"
+#include "core/observables/CylindricalVelocityProfile.hpp"
 #include "core/observables/DipoleMoment.hpp"
 #include "core/observables/LBVelocityProfile.hpp"
 #include "core/observables/MagneticDipoleMoment.hpp"
-#include "core/observables/ParticleAngles.hpp"
 #include "core/observables/ParticleAngularVelocities.hpp"
 #include "core/observables/ParticleBodyAngularVelocities.hpp"
 #include "core/observables/ParticleBodyVelocities.hpp"
-#include "core/observables/ParticleDihedrals.hpp"
 #include "core/observables/ParticleDistances.hpp"
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
@@ -132,23 +138,25 @@ void initialize() {
   REGISTER_PID_OBS(ComVelocity);
   REGISTER_PID_OBS(ComForce);
   REGISTER_PID_OBS(ParticleDistances);
-  REGISTER_PID_OBS(ParticleAngles);
-  REGISTER_PID_OBS(ParticleDihedrals);
+  REGISTER_PID_OBS(BondAngles);
+  REGISTER_PID_OBS(BondDihedrals);
+  REGISTER_PID_OBS(CosPersistenceAngles);
   REGISTER_PID_PROFILE_OBS(DensityProfile);
   REGISTER_PID_PROFILE_OBS(ForceDensityProfile);
   REGISTER_PID_PROFILE_OBS(FluxDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalDensityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalVelocityProfile);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalFluxDensityProfile);
+#ifdef DPD
+  REGISTER(DPDStress)
+#endif
 
-#if (defined(LB) || defined(LB_GPU))
   REGISTER(LBFluidStress);
   REGISTER_CYLPID_PROFILE_OBS(
       CylindricalLBFluxDensityProfileAtParticlePositions);
   REGISTER_CYLPID_PROFILE_OBS(CylindricalLBVelocityProfileAtParticlePositions);
   REGISTER_CYLLB_OBS(CylindricalLBVelocityProfile);
   REGISTER_LB_OBS(LBVelocityProfile);
-#endif
 
 #undef REGISTER
 #undef REGISTER_PID_OBS

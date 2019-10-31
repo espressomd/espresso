@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
 import unittest as ut
 import espressomd
 from espressomd.utils import handle_errors
 import numpy as np
 from espressomd.interactions import FeneBond
-from espressomd.pair_criteria import *
+from espressomd.pair_criteria import DistanceCriterion, BondCriterion
 from espressomd.cluster_analysis import ClusterStructure
 
 
@@ -35,7 +34,7 @@ class ClusterAnalysis(ut.TestCase):
     f = FeneBond(k=1, d_r_max=0.05)
     es.bonded_inter.add(f)
 
-    # Firt cluster
+    # 1st cluster
     es.part.add(id=0, pos=(0, 0, 0))
     es.part.add(id=1, pos=(0.91, 0, 0), bonds=((0, 0),))
     es.part.add(id=2, pos=(0, 0.2, 0))
@@ -52,7 +51,7 @@ class ClusterAnalysis(ut.TestCase):
     handle_errors("")
 
     def test_00_fails_without_criterion_set(self):
-        with(self.assertRaises(Exception)):
+        with self.assertRaises(Exception):
             self.cs.run_for_all_pairs()
 
     def test_set_criterion(self):
@@ -128,14 +127,14 @@ class ClusterAnalysis(ut.TestCase):
             c = c[1]
 
             # Center of mass should be at origin
-            self.assertTrue(
-                np.sqrt(np.sum(np.array(c.center_of_mass())**2)) <= 1E-8)
+            self.assertLess(np.linalg.norm(c.center_of_mass()), 1E-8)
 
             # Longest distance
-            self.assertTrue(
+            self.assertLess(
                 abs(c.longest_distance()
-                    - self.es.distance(self.es.part[0], self.es.part[len(self.es.part) - 1]))
-                <= 1E-8)
+                    - self.es.distance(self.es.part[0],
+                                       self.es.part[len(self.es.part) - 1])),
+                1E-8)
 
             # Radius of gyration
             rg = 0.
@@ -159,7 +158,7 @@ class ClusterAnalysis(ut.TestCase):
             # Fractal dimension of a disk should be close to 2
             self.es.part.clear()
             center = np.array((0.1, .02, 0.15))
-            for i in range(3000):
+            for _ in range(3000):
                 r_inv, phi = np.random.random(2) * np.array((0.2, 2 * np.pi))
                 r = 1 / r_inv
                 self.es.part.add(
@@ -188,5 +187,4 @@ class ClusterAnalysis(ut.TestCase):
 
 
 if __name__ == "__main__":
-    #print("Features: ", espressomd.features())
     ut.main()

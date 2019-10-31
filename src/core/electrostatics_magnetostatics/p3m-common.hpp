@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _P3M_COMMON_H
 #define _P3M_COMMON_H
 /** \file
@@ -51,7 +51,6 @@
  *
  */
 #include "config.hpp"
-#include "utils.hpp"
 
 #if defined(P3M) || defined(DP3M)
 
@@ -125,7 +124,7 @@ typedef struct {
   int s_ur[6][3];
   /** sizes for send buffers. */
   int s_size[6];
-  /** dimensionof sub meshes to recv. */
+  /** dimension of sub meshes to recv. */
   int r_dim[6][3];
   /** left down corners of sub meshes to recv. */
   int r_ld[6][3];
@@ -167,10 +166,10 @@ typedef struct {
   double a[3] = {};
   /** inverse mesh constant. */
   double ai[3] = {};
-  /** unscaled @ref p3m_parameter_struct::alpha_L "alpha_L" for use with fast
+  /** unscaled @ref P3MParameters::alpha_L "alpha_L" for use with fast
    *  inline functions only */
   double alpha = 0.0;
-  /** unscaled @ref p3m_parameter_struct::r_cut_iL "r_cut_iL" for use with fast
+  /** unscaled @ref P3MParameters::r_cut_iL "r_cut_iL" for use with fast
    *  inline functions only */
   double r_cut = -1.;
   /** full size of the interpolated assignment function */
@@ -189,16 +188,6 @@ typedef struct {
   }
 
 } P3MParameters;
-
-/** Print local mesh content.
- *  \param l local mesh structure.
- */
-void p3m_p3m_print_local_mesh(p3m_local_mesh l);
-
-/** Print send mesh content.
- *  \param sm send mesh structure.
- */
-void p3m_p3m_print_send_mesh(p3m_send_mesh sm);
 
 /** Add values of a 3d-grid input block (size[3]) to values of 3d-grid
  *  output array with dimension dim[3] at start position start[3].

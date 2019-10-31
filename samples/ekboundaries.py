@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample sets up an electrokinetics (LB) fluid confined between charged walls.
+Set up an electrokinetics (LB) fluid confined between charged walls.
 """
 
 import espressomd
@@ -24,7 +24,6 @@ required_features = ["ELECTROKINETICS", "EK_BOUNDARIES", "EXTERNAL_FORCES"]
 espressomd.assert_features(required_features)
 
 from espressomd import System, shapes, electrokinetics, ekboundaries
-import sys
 import os
 
 system = System(box_l=[10, 10, 10])
@@ -67,8 +66,7 @@ if not os.path.isdir("ek"):
 n_int_cycles = 1000
 for i in range(n_int_cycles):
     system.integrator.run(100)
-    sys.stdout.write("\rIntegrating: %03i" % i)
-    sys.stdout.flush()
+    print("\rIntegrating: %03i" % i, end='', flush=True)
 
     pos.print_vtk_density("ek/pos_dens_%i.vtk" % i)
     neg.print_vtk_density("ek/neg_dens_%i.vtk" % i)

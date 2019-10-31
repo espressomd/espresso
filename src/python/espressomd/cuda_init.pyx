@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,11 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport cuda_init
 
-cdef class CudaInitHandle(object):
+cdef class CudaInitHandle:
     def __init__(self):
         IF CUDA != 1:
             raise Exception("CUDA is not compiled in")
@@ -29,9 +28,11 @@ cdef class CudaInitHandle(object):
         @property
         def device(self):
             """
+            Get device.
+
             Returns
             -------
-            :obj:`int`
+            :obj:`int` :
                 Id of current set device.
 
             """
@@ -47,8 +48,8 @@ cdef class CudaInitHandle(object):
 
             Parameters
             ----------
-            'dev' : :obj:`int`
-                    Set the device id of the graphics card to use.
+            dev : :obj:`int`
+                Set the device id of the graphics card to use.
 
             """
             cuda_set_device(_dev)
@@ -57,9 +58,11 @@ cdef class CudaInitHandle(object):
         @property
         def device_list(self):
             """
+            List devices.
+
             Returns
             -------
-            :obj:`list`
+            :obj:`list` :
                 List of available CUDA devices.
 
             """

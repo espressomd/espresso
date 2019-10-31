@@ -1,22 +1,22 @@
 /*
-  Copyright (C) 2016,2017,2018 The ESPResSo project
-  Copyright (C) 2012 Alexander (Polyakov) Peletskyi
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2016-2019 The ESPResSo project
+ * Copyright (C) 2012 Alexander (Polyakov) Peletskyi
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_wrapper.hpp"
 
@@ -130,7 +130,7 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
     smax[3 * i + l] = maxp[l];
   }
 
-  // Now it's time to (mix)maximize among all threads of the given block.
+  // Now it's time to (min)maximize among all threads of the given block.
   // Each mim/max operation will be applied between
   // the shared memory smin/smax and the given thread.
   // The "half-convolution" multi-thread reduction
@@ -280,7 +280,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
     __threadfence();
 
     // The child with the index higher than nbodiesd (number of particles) means
-    // that it is a octant cell, not a body.
+    // that it is an octant cell, not a body.
     // Actually, we need nnodesd == 8 * nbodiesd nodes for the cells storage.
     // Let's iterate this "while" loop before we will reach the particle
     // or an absence of a child:
@@ -305,7 +305,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
       locked = n * 8 + j;
       // Try to lock and iterate towards next body:
       if (ch == atomicCAS((int *)&bhpara->child[locked], ch, -2)) {
-        // If we are here then childd[locked] was equal to "ch" and now is
+        // If we are here then child[locked] was equal to "ch" and now is
         // assigned to -2, it is locked. We will not came here in a case if this
         // child will be already locked by other threads because other particle
         // could already do it in other thread. Several particles simultaneously
@@ -400,7 +400,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             }
 
             // pos[l] already contains the child cell coordinates.
-            // Let's assign "childd" then. First the octant should be selected:
+            // Let's assign "child" then. First the octant should be selected:
             j = 0;
             for (l = 0; l < 3; l++)
               if (pos[l] < bhpara->r[3 * ch + l])
@@ -426,7 +426,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // particle new octant:
             ch = bhpara->child[n * 8 + j];
             // Repeat until the two bodies will be different children.
-            // Hence, the current "childd" should have no children.
+            // Hence, the current "child" should have no children.
             // It is equivalent to an absence of other particles
             // in the i-th particle new smallest octant, otherwise we should
             // split octants further until these two particles will come to
@@ -771,7 +771,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     diff = threadIdx.x - sbase;
     // Make multiple copies to avoid index calculations later:
     if (diff < MAXDEPTH) {
-      // Each thread copy its own dq[] element to a part of
+      // Each thread copies its own dq[] element to a part of
       // dq array dedicated to the given warp:
       dq[diff + j] = dq[diff];
     }
@@ -832,7 +832,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
             // corresponding local maxdepth). Hence, such particles will have a
             // similar stack of the below execution from a perspective of other
             // Barnes-Hut tree branches distancing against them. Same global
-            // memory fragments (childd[]) will be loaded to the same warp
+            // memory fragments (child[]) will be loaded to the same warp
             // access and no corresponding threads' divergence will take place.
             // Only in this way, zero thread could control others: see "if
             // (sbase == threadIdx.x)" above and below.. and this control will
@@ -842,7 +842,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
 
             // Check if all threads agree that cell is far enough away (or is a
             // body, i.e. n < nbodiesd).
-#if CUDA_VERSION >= 9000
+#if defined(__CUDACC__) && CUDA_VERSION >= 9000
             if ((n < bhpara->nbodies) ||
                 __all_sync(__activemask(), tmp >= dq[depth])) {
 #else
@@ -997,7 +997,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
               dr[l] = -bhpara->r[3 * n + l] + bhpara->r[3 * i + l];
               tmp += dr[l] * dr[l];
             }
-#if CUDA_VERSION >= 9000
+#if defined(__CUDACC__) && CUDA_VERSION >= 9000
             if ((n < bhpara->nbodies) ||
                 __all_sync(
                     __activemask(),
@@ -1096,7 +1096,7 @@ void buildBoxBH(int blocks) {
   cuda_safe_mem(cudaDeviceSynchronize());
 }
 
-// Building Barnes-Hut tree in a linear childd array representation
+// Building Barnes-Hut tree in a linear child array representation
 // of octant cells and particles inside.
 void buildTreeBH(int blocks) {
   dim3 grid(1, 1, 1);

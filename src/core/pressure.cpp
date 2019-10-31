@@ -1,28 +1,29 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Implementation of pressure.hpp.
  */
 
 #include "cells.hpp"
+#include "communication.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
@@ -52,14 +53,13 @@ nptiso_struct nptiso = {0.0,
                         0.0,
                         0.0,
                         0.0,
-                        0.0,
                         {0.0, 0.0, 0.0},
                         {0.0, 0.0, 0.0},
-                        1,
+                        true,
                         0,
                         {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
                         0,
-                        0,
+                        false,
                         0};
 
 /************************************************************/
@@ -71,7 +71,7 @@ nptiso_struct nptiso = {0.0,
 /************************************************************/
 
 /** Calculate long range virials (P3M, MMM2d...). */
-void calc_long_range_virials();
+void calc_long_range_virials(const ParticleRange &particles);
 
 /** Initializes a virials Observable stat. */
 void init_virials(Observable_stat *stat);
@@ -97,15 +97,16 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /* Scalar and Tensorial Pressure */
 /*********************************/
 inline void add_single_particle_virials(int v_comp, Particle &p) {
-  add_kinetic_virials(&p, v_comp);
-  add_bonded_virials(&p);
-  add_three_body_bonded_stress(&p);
+  add_kinetic_virials(p, v_comp);
+  add_bonded_virials(p);
+  add_three_body_bonded_stress(p);
 }
 
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp) {
   int n, i;
-  double volume = box_l[0] * box_l[1] * box_l[2];
+  double volume =
+      box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
 
   if (!interactions_sanity_checks())
     return;
@@ -119,24 +120,17 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   init_p_tensor_non_bonded(&p_tensor_non_bonded);
 
   on_observable_calc();
-  // Run short-range loop if max cut >0
-  if (max_cut > 0) {
-    short_range_loop(
-        [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
-        [](Particle &p1, Particle &p2, Distance &d) {
-          add_non_bonded_pair_virials(&(p1), &(p2), d.vec21.data(),
-                                      sqrt(d.dist2), d.dist2);
-        });
-  } else {
-    // Only add single particle virials
-    for (auto &p : local_cells.particles()) {
-      add_single_particle_virials(v_comp, p);
-    }
-  }
+
+  short_range_loop(
+      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
+      [](Particle &p1, Particle &p2, Distance &d) {
+        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2));
+      });
+
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials();
+  calc_long_range_virials(local_cells.particles());
 
 #ifdef VIRTUAL_SITES
   virtual_sites()->pressure_and_stress_tensor_contribution(
@@ -173,10 +167,10 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
 /************************************************************/
 
-void calc_long_range_virials() {
+void calc_long_range_virials(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_pressure_long_range(virials, p_tensor);
+  Coulomb::calc_pressure_long_range(virials, p_tensor, particles);
 #endif /*ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES

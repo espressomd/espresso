@@ -1,5 +1,5 @@
 #!/bin/sh 
-# Copyright (C) 2012-2018 The ESPResSo project
+# Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2010,2011,2012 Olaf Lenz
 #  
 # This file is part of ESPResSo.
@@ -24,7 +24,7 @@ BIBINPUTS=.:$SRCDIR:
 export TEXINPUTS BIBINPUTS
 echo "TEXINPUTS=$TEXINPUTS"
 
-ESPRESSO_VERSION=`cd @abs_top_srcdir@; sh config/genversion.sh -rd`
+ESPRESSO_VERSION="@PROJECT_VERSION@"
 echo "ESPRESSO_VERSION=$ESPRESSO_VERSION"
 
 PDFLATEX="@PDFLATEX@ -halt-on-error -interaction=batchmode"
@@ -36,9 +36,9 @@ $PDFLATEX $LATEXLINE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 1 failed."
-    echo "These are the last 20 lines of $BASEFILENAME.log:"
+    echo "These are the last 30 lines of $BASEFILENAME.log:"
     echo "--------------------------------------------"
-    tail -n 20 $BASEFILENAME.log
+    tail -n 30 $BASEFILENAME.log
     echo "--------------------------------------------"
     test -f $BASEFILENAME.pdf && rm $BASEFILENAME.pdf
     exit $EC
@@ -53,9 +53,9 @@ $PDFLATEX $LATEXLINE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 2 failed."
-    echo "These are the last 20 lines of $BASEFILENAME.log:"
+    echo "These are the last 30 lines of $BASEFILENAME.log:"
     echo "--------------------------------------------"
-    tail -n 20 $BASEFILENAME.log
+    tail -n 30 $BASEFILENAME.log
     echo "--------------------------------------------"
     test -f $BASEFILENAME.pdf && rm $BASEFILENAME.pdf
     exit $EC
@@ -71,9 +71,9 @@ $PDFLATEX $LATEXLINE
 EC=$?
 if test $EC -ne 0; then
     echo "ERROR: LaTeX stage 3 failed."
-    echo "These are the last 20 lines of $BASEFILENAME.log:"
+    echo "These are the last 30 lines of $BASEFILENAME.log:"
     echo "--------------------------------------------"
-    tail -n 20 $BASEFILENAME.log
+    tail -n 30 $BASEFILENAME.log
     echo "--------------------------------------------"
     test -f $BASEFILENAME.pdf && rm $BASEFILENAME.pdf
     exit $EC

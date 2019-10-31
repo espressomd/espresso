@@ -1,25 +1,23 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
-
-#include <cstdio>
 
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
@@ -175,8 +173,6 @@ protected:
 #ifdef CUDA
   void enableParticleCommunication() {
     if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      ESIF_TRACE(puts("gpu communication not enabled;"));
-      ESIF_TRACE(puts("enableParticleCommunication"));
       gpu_init_particle_comm();
       cuda_bcast_global_part_params();
       reallocDeviceMemory(

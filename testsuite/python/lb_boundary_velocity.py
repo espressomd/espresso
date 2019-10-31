@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,22 +14,20 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 import unittest as ut
-import numpy as np
+import unittest_decorators as utx
 
 
-@ut.skipIf(not espressomd.has_features(["LB", "LB_BOUNDARIES"]),
-           "Features not available, skipping test.")
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 class LBBoundaryVelocityTest(ut.TestCase):
 
     """Test slip velocity of boundaries.
 
-       In this simple test add wall with a slip verlocity is
-       added and checkeckt if the fluid obtains the same velocity.
+       In this simple test, a wall with slip velocity is
+       added and the fluid is checked if it has the same velocity.
     """
 
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
@@ -56,6 +54,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)
         self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)
         self.assertAlmostEqual(v_fluid[2], v_boundary[2], places=3)
+
 
 if __name__ == "__main__":
     ut.main()

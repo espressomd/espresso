@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,14 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
-import numpy as np
 
 
-@ut.skipIf(not espressomd.has_features("EXCLUSIONS"),
-           "Skipped because of not EXCLUSIONS")
+@utx.skipIfMissingFeatures("EXCLUSIONS")
 class AutoExclusions(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
@@ -77,6 +75,7 @@ class AutoExclusions(ut.TestCase):
             for i in range(1, 3):
                 self.assertTrue((p - i) % 10 in excl)
                 self.assertTrue((p + i) % 10 in excl)
+
 
 if __name__ == "__main__":
     ut.main()

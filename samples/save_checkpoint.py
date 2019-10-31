@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,12 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample demonstrates how to checkpoint a simulation.
+Basic usage of the checkpointing feature. Show how to write the state of:
+
+* custom user variables.
+* non-bonded interactions.
+* particles.
+* P3M parameters.
+* thermostat.
 """
 
 import espressomd
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
@@ -55,15 +61,12 @@ checkpoint.register("system")
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 # test for "system.non_bonded_inter"
-lj_eps = 1.0
-lj_sig = 1.0
-lj_cut = 1.12246
-lj_cap = 20
+wca_eps = 1.0
+wca_sig = 1.0
+wca_cap = 20
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig,
-    cutoff=lj_cut, shift="auto")
-system.force_cap = lj_cap
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps, sigma=wca_sig)
+system.force_cap = wca_cap
 
 # test for "system.part"
 n_part = 10

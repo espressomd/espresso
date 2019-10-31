@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
@@ -26,16 +26,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
 
+#include "Particle.hpp"
 #include "communication.hpp"
-#include "debug.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "serialization/ibm_cuda_particle_velocities_input.hpp"
 #include "virtual_sites/lb_inertialess_tracers_cuda_interface.hpp"
 
-#include "utils/mpi/gather_buffer.hpp"
-#include "utils/mpi/scatter_buffer.hpp"
+#include <utils/mpi/gather_buffer.hpp>
+#include <utils/mpi/scatter_buffer.hpp>
 
 // Variables for communication
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;
@@ -56,7 +55,7 @@ void pack_particles(ParticleRange particles,
 
   int i = 0;
   for (auto const &part : particles) {
-    Utils::Vector3d pos = folded_position(part);
+    Utils::Vector3d pos = folded_position(part.r.p, box_geo);
 
     buffer[i].pos[0] = (float)pos[0];
     buffer[i].pos[1] = (float)pos[1];
@@ -78,8 +77,6 @@ void IBM_cuda_mpi_get_particles(ParticleRange particles) {
   auto const n_part = particles.size();
 
   if (this_node > 0) {
-    COMM_TRACE(fprintf(stderr, "%d: get_particles_slave, %d particles\n",
-                       this_node, n_part));
     static std::vector<IBM_CUDA_ParticleDataInput> buffer;
     buffer.resize(n_part);
     /* pack local parts into buffer */
@@ -92,8 +89,6 @@ void IBM_cuda_mpi_get_particles(ParticleRange particles) {
 
     Utils::Mpi::gather_buffer(IBM_ParticleDataInput_host, n_part, comm_cart);
   }
-
-  COMM_TRACE(fprintf(stderr, "%d: finished get\n", this_node));
 }
 
 /*****************

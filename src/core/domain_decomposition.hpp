@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _DOMAIN_DECOMPOSITION_H
 #define _DOMAIN_DECOMPOSITION_H
 
@@ -74,7 +74,7 @@ struct DomainDecomposition {
    *  Def: \verbatim cell_grid[i] = (int)(local_box_l[i]/max_range);
    * \endverbatim
    */
-  double cell_size[3];
+  Utils::Vector3d cell_size;
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
   bool fully_connected[3];
@@ -88,19 +88,11 @@ struct DomainDecomposition {
 /** Information about the domain decomposition. */
 extern DomainDecomposition dd;
 
-/** Maximal skin size. This is a global variable which can be read
- *  out by the user via the TCL command setmd in order to optimize the
- *  cell grid
- */
-extern double max_skin;
-
 /** Maximal number of cells per node. In order to avoid memory
  *  problems due to the cell grid one has to specify the maximal
  *  number of \ref cells::cells. If the number of cells is larger
  *  than max_num_cells the cell grid is reduced.
  *  max_num_cells has to be larger than 27, e.g. one inner cell.
- *  max_num_cells is initialized with the default value
- *  specified in \ref config.hpp as \ref CELLS_MAX_NUM_CELLS.
  */
 extern int max_num_cells;
 
@@ -124,8 +116,10 @@ extern int min_num_cells;
  *                CELL_FLAG_GRIDCHANGED, see documentation of \ref
  *                cells_on_geometry_change.
  *  @param grid   Number of nodes in each spatial dimension.
+ *  @param range Desired interaction range
  */
-void dd_on_geometry_change(int flags, const Utils::Vector3i &grid);
+void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
+                           double range);
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
@@ -133,11 +127,13 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid);
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.
- *  @param cl    List of cell pointers with particles to be stored in the
+ *  @param old    List of cell pointers with particles to be stored in the
  *               new cell system.
  *  @param grid  Number of nodes in each spatial dimension.
+ *  @param range Desired interaction range
  */
-void dd_topology_init(CellPList *cl, const Utils::Vector3i &grid);
+void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
+                      double range);
 
 /** Called when the current cell structure is invalidated because for
  *  example the box length has changed. This procedure may NOT destroy

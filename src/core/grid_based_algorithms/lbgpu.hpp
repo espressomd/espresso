@@ -1,37 +1,37 @@
 /*
-   Copyright (C) 2010-2018 The ESPResSo project
-
-   This file is part of ESPResSo.
-
-   ESPResSo is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ESPResSo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  %Lattice Boltzmann implementation on GPUs.
  *
  *  Implementation in lbgpu.cpp.
  */
 
-#ifndef LB_GPU_H
-#define LB_GPU_H
+#ifndef LBGPU_HPP
+#define LBGPU_HPP
 
 #include "config.hpp"
 
-#ifdef LB_GPU
+#ifdef CUDA
 #include <boost/optional.hpp>
 
-#include "utils.hpp"
-#include "utils/Counter.hpp"
+#include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
 
 /* For the D3Q19 model most functions have a separate implementation
  * where the coefficients and the velocity vectors are hardcoded
@@ -160,7 +160,7 @@ typedef struct {
 
 /** Switch indicating momentum exchange between particles and fluid */
 extern LB_parameters_gpu lbpar_gpu;
-extern LB_rho_v_pi_gpu *host_values;
+extern std::vector<LB_rho_v_pi_gpu> host_values;
 extern LB_particle_allocation_state lb_reinit_particles_gpu;
 #ifdef ELECTROKINETICS
 extern LB_node_force_density_gpu node_f;
@@ -213,10 +213,6 @@ void lb_init_boundaries_GPU(int n_lb_boundaries, int number_of_boundnodes,
                             int *host_boundary_index_list,
                             float *lb_bounday_velocity);
 #endif
-void lb_init_extern_nodeforcedensities_GPU(
-    int n_extern_node_force_densities,
-    LB_extern_nodeforcedensity_gpu *host_extern_node_force_densities,
-    LB_parameters_gpu *lbpar_gpu);
 
 void lb_set_agrid_gpu(double agrid);
 
@@ -238,12 +234,6 @@ void lb_gpu_get_boundary_forces(double *forces);
 void lb_save_checkpoint_GPU(float *host_checkpoint_vd);
 void lb_load_checkpoint_GPU(float const *host_checkpoint_vd);
 
-void lb_lbfluid_remove_total_momentum();
-void lb_lbfluid_fluid_add_momentum(float momentum[3]);
-void lb_lbfluid_calc_linear_momentum(float momentum[3], int include_particles,
-                                     int include_lbfluid);
-void lb_lbfluid_particles_add_momentum(float const velocity[3]);
-
 void lb_lbfluid_set_population(const Utils::Vector3i &, float[LBQ]);
 void lb_lbfluid_get_population(const Utils::Vector3i &, float[LBQ]);
 
@@ -262,6 +252,6 @@ void lb_coupling_set_rng_state_gpu(uint64_t counter);
 /*@}*/
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_fluid_gpu;
 extern boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling_gpu;
-#endif /* LB_GPU */
+#endif /*  CUDA */
 
-#endif /* LB_GPU_H */
+#endif /*  CUDA_H */

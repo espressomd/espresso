@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2018 The ESPResSo project
+# Copyright (C) 2009-2019 The ESPResSo project
 # Copyright (C) 2009,2010 
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -20,20 +20,16 @@
 
 cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
+include(GNUInstallDirs)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
+if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
+  cmake_policy(SET CMP0074 NEW)
+endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.1-dev")
-string(REGEX
-       REPLACE "^([1-9]+)\\.[0-9]+.*$"
-               "\\1"
-               SOVERSION
-               "${PROJECT_VERSION}")
-if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
-  message(FATAL_ERROR "Could not determind SOVERSION from ${PROJECT_VERSION}")
-endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
+set(PROJECT_VERSION "4.2-dev")
 
 #
 # CMake internal vars
@@ -53,8 +49,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 # User input options
 ######################################################################
 
-set(WITH_PYTHON yes)
-
+option(WITH_PYTHON "Build with Python bindings"  ON)
 option(WITH_GSL    "Build with GSL support"  ON)
 option(WITH_CUDA   "Build with GPU support"  ON)
 option(WITH_HDF5   "Build with HDF5 support" ON)
@@ -188,6 +183,7 @@ if(WITH_CUDA)
       find_package(HIP MODULE)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
+      set(HIP 1)
       list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
@@ -209,10 +205,10 @@ if(WITH_CUDA)
 
         set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
-        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g -G")
+        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
         set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
         set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
-        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -G -O2")
+        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -O2")
         set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
         list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
         SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
@@ -232,7 +228,7 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp REQUIRED)
+find_package(PythonInterp 3.3 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.23 REQUIRED)
@@ -246,40 +242,28 @@ if(WITH_PYTHON)
     execute_process(
       COMMAND
         ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
+        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    set(
-      CYTHON_FLAGS "-2"
+
+  set(CYTHON_FLAGS "-3"
       CACHE STRING "Flags used by the Cython compiler during all build types.")
-  else()
-    set(
-      CYTHON_FLAGS "-3"
-      CACHE STRING "Flags used by the Cython compiler during all build types.")
-  endif()
 
   if(WARNINGS_ARE_ERRORS)
     set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
   endif()
 
-  if(PYTHON_VERSION_MAJOR EQUAL 2)
-    find_program(IPYTHON_EXECUTABLE NAMES ipython2 ipython jupyter)
-  else()
-    find_program(IPYTHON_EXECUTABLE NAMES ipython3 ipython jupyter)
-  endif()
+  find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
 
 
 find_package(FFTW3)
 if(FFTW3_FOUND)
-  include_directories(SYSTEM ${FFTW3_INCLUDE_DIR})
-  list(APPEND LIBRARIES ${FFTW3_LIBRARIES})
   set(FFTW 3)
 endif(FFTW3_FOUND)
 
-# If we build either interface turn on script interface
+# If we build Python bindings, turn on script interface
 if(WITH_PYTHON)
   set(WITH_SCRIPT_INTERFACE ON)
 endif()
@@ -345,7 +329,7 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 # MPI
 #
 
-find_package(MPI REQUIRED)
+find_package(MPI 3.0 REQUIRED)
 
 # CMake < 3.9
 if(NOT TARGET MPI::MPI_CXX)
@@ -390,7 +374,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     set(BOOST_MINIMUM_VERSION "1.66.0")
   endif()
 else()
-  set(BOOST_MINIMUM_VERSION "1.53.0")
+  set(BOOST_MINIMUM_VERSION "1.55.0")
 endif()
 
 # old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
@@ -414,10 +398,6 @@ endif()
 #
 # Paths
 #
-
-if(NOT DEFINED BINDIR)
-  set(BINDIR "bin")
-endif(NOT DEFINED BINDIR)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 
@@ -537,7 +517,9 @@ if(WITH_TESTS)
     set(WITH_UNIT_TESTS ON)
   endif(Boost_UNIT_TEST_FRAMEWORK_FOUND)
   add_custom_target(check)
-  add_subdirectory(testsuite)
+  if(WITH_PYTHON)
+    add_subdirectory(testsuite)
+  endif(WITH_PYTHON)
 endif(WITH_TESTS)
 
 if(WITH_BENCHMARKS)
@@ -552,7 +534,6 @@ endif(WITH_BENCHMARKS)
 add_subdirectory(doc)
 add_subdirectory(src)
 add_subdirectory(libs)
-add_subdirectory(config)
 #
 # Feature summary
 #

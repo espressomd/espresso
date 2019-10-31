@@ -1,28 +1,29 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_wrapper.hpp"
 
 #include "cuda_init.hpp"
 #include "cuda_utils.hpp"
 #include "debug.hpp"
-#include "utils.hpp"
+
+#include <utils/constants.hpp>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -38,7 +39,21 @@ static const int computeCapabilityMinMinor = 0;
 
 const char *cuda_error;
 
-void cuda_init() { cudaStreamCreate(&stream[0]); }
+void cuda_init() {
+#if defined(__HIPCC__) and not defined(__CUDACC__) and                         \
+    HIP_VERSION_PATCH <= 19171 /* i.e. <= v2.4.0 */
+  // Catch an exception that causes `import espressomd` to crash in
+  // Python when no compatible GPU is available (fixed in HIP v2.5.0)
+  try {
+    cudaStreamCreate(&stream[0]);
+  } catch (std::exception &) {
+    // The ihipException is not part of the public HIP library,
+    // so we catch its parent class std::exception instead
+  }
+#else
+  cudaStreamCreate(&stream[0]);
+#endif
+}
 
 /// get the number of CUDA devices.
 int cuda_get_n_gpus() {

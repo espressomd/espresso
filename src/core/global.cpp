@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Implementation of \ref global.hpp "global.hpp".
  */
@@ -34,10 +34,12 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
+#include "particle_data.hpp"
 #include "rattle.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
-#include "utils/mpi/all_compare.hpp"
+
+#include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -51,7 +53,7 @@ namespace {
 /** Type describing global variables. These are accessible from the
     front end, and are distributed to all compute nodes. */
 typedef struct {
-  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2 };
+  enum class Type { INT = 0, DOUBLE = 1, BOOL = 2, UNSIGNED_LONG = 3 };
   /** Physical address of the variable. */
   void *data;
   /** Type of the variable. */
@@ -69,7 +71,7 @@ typedef struct {
 
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
-     {box_l.data(), Datafield::Type::DOUBLE, 3,
+     {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
       "box_l"}}, /* 0  from grid.cpp */
     {FIELD_CELLGRID,
      {dd.cell_grid, Datafield::Type::INT, 3,
@@ -116,9 +118,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_NPTISO_PINST,
      {&nptiso.p_inst, Datafield::Type::DOUBLE, 1,
       "npt_p_inst"}}, /* 24 from pressure.cpp */
-    {FIELD_NPTISO_PINSTAV,
-     {&nptiso.p_inst_av, Datafield::Type::DOUBLE, 1,
-      "npt_p_inst_av"}}, /* 25 from pressure.cpp */
     {FIELD_NPTISO_PDIFF,
      {&nptiso.p_diff, Datafield::Type::DOUBLE, 1,
       "npt_p_diff"}}, /* 26 from pressure.cpp */
@@ -126,8 +125,8 @@ const std::unordered_map<int, Datafield> fields{
      {&nptiso.piston, Datafield::Type::DOUBLE, 1,
       "npt_piston"}}, /* 27 from pressure.cpp */
     {FIELD_PERIODIC,
-     {&periodic, Datafield::Type::INT, 1,
-      "periodicity"}}, /* 28 from grid.cpp */
+     {&box_geo.m_periodic, Datafield::Type::UNSIGNED_LONG, 1,
+      "periodicity"}}, /* 28 from BoxGeometry.hpp */
     {FIELD_SKIN,
      {&skin, Datafield::Type::DOUBLE, 1, "skin"}}, /* 29 from integrate.cpp */
     {FIELD_TEMPERATURE,
@@ -179,6 +178,10 @@ std::size_t hash_value(Datafield const &field) {
     auto ptr = reinterpret_cast<int *>(field.data);
     return hash_range(ptr, ptr + field.dimension);
   }
+  case Datafield::Type::UNSIGNED_LONG: {
+    auto ptr = reinterpret_cast<unsigned long *>(field.data);
+    return hash_range(ptr, ptr + field.dimension);
+  }
   case Datafield::Type::BOOL: {
     auto ptr = reinterpret_cast<char *>(field.data);
     return hash_range(ptr, ptr + 1);
@@ -189,7 +192,7 @@ std::size_t hash_value(Datafield const &field) {
   }
   default:
     throw std::runtime_error("Unknown type.");
-  };
+  }
 }
 
 void common_bcast_parameter(int i) {
@@ -197,6 +200,10 @@ void common_bcast_parameter(int i) {
   case Datafield::Type::INT:
     MPI_Bcast((int *)fields.at(i).data, fields.at(i).dimension, MPI_INT, 0,
               comm_cart);
+    break;
+  case Datafield::Type::UNSIGNED_LONG:
+    MPI_Bcast((unsigned long *)fields.at(i).data, fields.at(i).dimension,
+              MPI_UNSIGNED_LONG, 0, comm_cart);
     break;
   case Datafield::Type::BOOL:
     static_assert(sizeof(bool) == sizeof(char),
@@ -209,7 +216,6 @@ void common_bcast_parameter(int i) {
     break;
   default:
     throw std::runtime_error("Unknown type.");
-    break;
   }
 
   on_parameter_change(i);
@@ -241,7 +247,7 @@ void check_global_consistency() {
 
 void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);
-  check_runtime_errors();
+  check_runtime_errors(comm_cart);
 }
 
 REGISTER_CALLBACK(mpi_bcast_parameter_slave)
@@ -251,5 +257,5 @@ int mpi_bcast_parameter(int i) {
 
   common_bcast_parameter(i);
 
-  return check_runtime_errors();
+  return check_runtime_errors(comm_cart);
 }

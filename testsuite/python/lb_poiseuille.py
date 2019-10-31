@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd.lb
@@ -23,9 +24,8 @@ import espressomd.shapes
 
 
 """
-Check the Lattice Boltzmann 'pressure' driven flow in a slab system
+Check the lattice-Boltzmann 'pressure' driven flow in a slab system
 by comparing to the analytical solution.
-
 
 """
 
@@ -61,7 +61,7 @@ def poiseuille_flow(z, H, ext_force_density, dyn_visc):
     return ext_force_density * 1. / (2 * dyn_visc) * (H**2.0 / 4.0 - z**2.0)
 
 
-class LBPoiseuilleCommon(object):
+class LBPoiseuilleCommon:
 
     """Base class of the test that holds the test logic."""
     lbf = None
@@ -124,8 +124,7 @@ class LBPoiseuilleCommon(object):
         self.assertLess(rmsd, 0.015 * AGRID / TIME_STEP)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB', 'LB_BOUNDARIES', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
 class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -134,8 +133,8 @@ class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
 class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the GPU implementation of the LB."""
@@ -144,8 +143,8 @@ class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['LB_GPU', 'LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES']), "Skipping test due to missing features or gpu.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
 class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
 
     """Test for the higher order interpolation scheme of the LB."""
@@ -183,6 +182,7 @@ class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
                                      VISC * DENS)
         rmsd = np.sqrt(np.sum(np.square(v_expected - velocities[:, 1])))
         self.assertLess(rmsd, 0.02 * AGRID / TIME_STEP)
+
 
 if __name__ == '__main__':
     ut.main()

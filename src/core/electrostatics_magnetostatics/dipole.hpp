@@ -1,15 +1,34 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ESPRESSO_DIPOLE_HPP
 #define ESPRESSO_DIPOLE_HPP
 
 #include "config.hpp"
-#include "utils/Vector.hpp"
 
 extern double dipolar_cutoff;
 
 #ifdef DIPOLES
-
 #include "Observable_stat.hpp"
 
+#include <utils/Vector.hpp>
+
+#include <ParticleRange.hpp>
 #include <boost/mpi/communicator.hpp>
 
 /** \name Compounds for Dipole interactions */
@@ -69,9 +88,10 @@ void on_coulomb_change();
 void on_boxl_change();
 void init();
 
-void calc_long_range_force();
+void calc_long_range_force(const ParticleRange &particles);
 
-void calc_energy_long_range(Observable_stat &energy);
+void calc_energy_long_range(Observable_stat &energy,
+                            const ParticleRange &particles);
 void energy_n(int &n_dipolar);
 
 int set_mesh();

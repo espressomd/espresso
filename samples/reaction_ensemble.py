@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,23 +17,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample simulates the reaction ensemble. It also illustrates how the
-constant pH method can be used.
+Guide for the reaction ensemble and the constant pH ensemble.
 """
-from __future__ import print_function
+epilog = """You can choose in which ensemble you want to simulate via either
+providing --reaction_ensemble or --constant_pH_ensemble as command line
+argument to the script. Be aware that in the case of the reaction ensemble,
+the dissociation constant gamma is not the thermodynamic reaction constant K,
+but rather K * 1 mol/l and therefore carries a unit! In the case of the of the
+constant pH method, gamma is the thermodynamic reaction constant!
+"""
 import numpy as np
 import argparse
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import reaction_ensemble
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__ + epilog)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--reaction_ensemble', action='store_const', dest='mode',
-                   const='reaction_ensemble', default='reaction_ensemble')
+                   const='reaction_ensemble')
 group.add_argument('--constant_pH_ensemble', action='store_const', dest='mode',
                    const='constant_pH_ensemble')
 args = parser.parse_args()
@@ -52,7 +54,6 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.02
 system.cell_system.skin = 0.4
-system.cell_system.max_num_cells = 2744
 
 # Particle setup
 #############################################################
@@ -70,11 +71,17 @@ for i in range(N0, 2 * N0):
 
 RE = None
 if args.mode == "reaction_ensemble":
-    RE = reaction_ensemble.ReactionEnsemble(temperature=1, exclusion_radius=1)
+    RE = reaction_ensemble.ReactionEnsemble(
+        temperature=1,
+        exclusion_radius=1,
+        seed=77)
 elif args.mode == "constant_pH_ensemble":
     RE = reaction_ensemble.ConstantpHEnsemble(
-        temperature=1, exclusion_radius=1)
+        temperature=1, exclusion_radius=1, seed=77)
     RE.constant_pH = 2
+else:
+    raise RuntimeError(
+        "Please provide either --reaction_ensemble or --constant_pH_ensemble as argument ")
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                 product_types=[1, 2], product_coefficients=[1, 1],
                 default_charges={0: 0, 1: -1, 2: +1})

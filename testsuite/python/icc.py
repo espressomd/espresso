@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,13 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
 import unittest as ut
+import unittest_decorators as utx
 import espressomd
 
 
-@ut.skipIf(not espressomd.has_features(["P3M", "EXTERNAL_FORCES"]),
-           "Features not available, skipping test!")
+@utx.skipIfMissingFeatures(["P3M", "EXTERNAL_FORCES"])
 class test_icc(ut.TestCase):
 
     def runTest(self):
@@ -77,10 +76,7 @@ class test_icc(ut.TestCase):
             n_icc=nicc_tot,
             convergence=1e-6,
             relaxation=0.75,
-            ext_field=[
-                0,
-                0,
-                0],
+            ext_field=[0, 0, 0],
             max_iterations=100,
             first_id=0,
             eps_out=1,
@@ -105,7 +101,16 @@ class test_icc(ut.TestCase):
         # Result
         self.assertAlmostEqual(1, induced_dipole / testcharge_dipole, places=4)
 
+        # Test applying changes
+        enegry_pre_change = S.analysis.energy()['total']
+        pressure_pre_change = S.analysis.pressure()['total']
+        icc.set_params(sigmas=[2.0] * nicc_tot)
+        icc.set_params(epsilons=[20.0] * nicc_tot)
+        enegry_post_change = S.analysis.energy()['total']
+        pressure_post_change = S.analysis.pressure()['total']
+        self.assertNotAlmostEqual(enegry_pre_change, enegry_post_change)
+        self.assertNotAlmostEqual(pressure_pre_change, pressure_post_change)
+
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

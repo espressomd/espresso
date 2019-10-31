@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,16 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
-import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 from espressomd.interactions import FeneBond
 from espressomd import polymer
 
 
-@ut.skipIf(not espressomd.has_features("LENNARD_JONES"), "Skipped because LENNARD_JONES turned off.")
+@utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(1234)
@@ -33,28 +32,34 @@ class AnalyzeChain(ut.TestCase):
     num_mono = 5
 
     @classmethod
-    def setUpClass(self):
+    def setUpClass(cls):
         box_l = 20.0
-        # start with a small bo
-        self.system.box_l = np.array([box_l, box_l, box_l])
-        self.system.cell_system.set_n_square(use_verlet_lists=False)
+        # start with a small box
+        cls.system.box_l = np.array([box_l, box_l, box_l])
+        cls.system.cell_system.set_n_square(use_verlet_lists=False)
         fene = FeneBond(k=30, d_r_max=2)
-        self.system.bonded_inter.add(fene)
-        polymer.create_polymer(start_pos=[0, 0, 0], N_P=self.num_poly,
-                               bond_length=0.9,
-                               MPC=self.num_mono,
-                               bond=fene)
+        cls.system.bonded_inter.add(fene)
+        positions = polymer.positions(n_polymers=cls.num_poly,
+                                      bond_length=0.9,
+                                      beads_per_chain=cls.num_mono,
+                                      seed=42)
+        for p in positions:
+            for ndx, m in enumerate(p):
+                part_id = len(cls.system.part)
+                cls.system.part.add(id=part_id, pos=m)
+                if ndx > 0:
+                    cls.system.part[part_id].add_bond((fene, part_id - 1))
         # bring two polymers to opposite corners:
-        # far in centre cell, but mirror images are close
+        # far in cell centre, but mirror images are close
         head_id = 0
-        tail_id = head_id + self.num_mono
-        cm = np.mean(self.system.part[head_id:tail_id].pos, axis=0)
-        self.system.part[head_id:tail_id].pos = self.system.part[
-            head_id:tail_id].pos - cm + self.system.box_l
-        head_id = self.num_mono + 1
-        tail_id = head_id + self.num_mono
-        cm = np.mean(self.system.part[head_id:tail_id].pos, axis=0)
-        self.system.part[head_id:tail_id].pos -= cm
+        tail_id = head_id + cls.num_mono
+        cm = np.mean(cls.system.part[head_id:tail_id].pos, axis=0)
+        cls.system.part[head_id:tail_id].pos = cls.system.part[
+            head_id:tail_id].pos - cm + cls.system.box_l
+        head_id = cls.num_mono + 1
+        tail_id = head_id + cls.num_mono
+        cm = np.mean(cls.system.part[head_id:tail_id].pos, axis=0)
+        cls.system.part[head_id:tail_id].pos -= cm
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -63,7 +68,8 @@ class AnalyzeChain(ut.TestCase):
         tail_id = head_id + self.num_mono - 1
         dist = self.system.part[head_id].pos - self.system.part[tail_id].pos
         dist = np.sum(dist**2, axis=-1)
-        return np.mean(np.sqrt(dist)), np.std(np.sqrt(dist)), np.mean(dist), np.std(dist)
+        return np.mean(np.sqrt(dist)), np.std(
+            np.sqrt(dist)), np.mean(dist), np.std(dist)
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -76,7 +82,8 @@ class AnalyzeChain(ut.TestCase):
                 np.var(self.system.part[head_id[p]:tail_id[p] + 1].pos, axis=0))
         rg2 = np.array(rg2)
         rg2 = np.sum(rg2, axis=1)
-        return np.mean(np.sqrt(rg2)), np.std(np.sqrt(rg2)), np.mean(rg2), np.std(rg2)
+        return np.mean(np.sqrt(rg2)), np.std(
+            np.sqrt(rg2)), np.mean(rg2), np.std(rg2)
 
     # python version of the espresso core function,
     # does not check mirror distances
@@ -90,7 +97,7 @@ class AnalyzeChain(ut.TestCase):
             ij = np.triu_indices(len(r), k=1)
             r_ij = r[ij[0]] - r[ij[1]]
             dist = np.sqrt(np.sum(r_ij**2, axis=1))
-            #rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
+            # rh.append(self.num_mono*self.num_mono*0.5/(np.sum(1./dist)))
             # the other way do it, with the proper prefactor of N(N-1)
             rh.append(1. / np.mean(1. / dist))
         rh = np.array(rh)
@@ -123,6 +130,6 @@ class AnalyzeChain(ut.TestCase):
         self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
 
+
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,20 +14,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#!/usr/bin/env python
-
-from __future__ import print_function
 
 import unittest as ut
+import unittest_decorators as utx
 
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd.interactions import FeneBond
-from espressomd import analyze
 from espressomd.observables import StressTensor
 
-import itertools
-from tests_common import fene_force, fene_potential, fene_force2
+from tests_common import fene_force2
 
 import numpy as np
 
@@ -37,13 +33,13 @@ tol = 1.0e-13
 # analytical result for convective stress
 
 
-def stress_kinetic(vel, box_l):
+def stress_kinetic(vel):
     return np.einsum('ij,ik->jk', vel, vel) / np.prod(system.box_l)
 
 # analytical result for stress originating from bond force
 
 
-def stress_bonded(pos, box_l):
+def stress_bonded(pos):
     stress = np.zeros([3, 3])
     for p1, p2 in zip(pos[0::2], pos[1::2]):
         r = p1 - p2
@@ -54,7 +50,7 @@ def stress_bonded(pos, box_l):
 # analytical result for stress originating from non-bonded force
 
 
-def stress_nonbonded(particle_pairs, box_l):
+def stress_nonbonded(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if (p1.type == 0 and p2.type == 0) or (p1.type == 1 and p2.type == 2):
@@ -66,7 +62,7 @@ def stress_nonbonded(particle_pairs, box_l):
     return stress
 
 
-def stress_nonbonded_inter(particle_pairs, box_l):
+def stress_nonbonded_inter(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 1 and p2.type == 2 and p1.mol_id != p2.mol_id:
@@ -78,7 +74,7 @@ def stress_nonbonded_inter(particle_pairs, box_l):
     return stress
 
 
-def stress_nonbonded_intra(particle_pairs, box_l):
+def stress_nonbonded_intra(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 0 and p2.type == 0 and p1.mol_id == p2.mol_id:
@@ -89,17 +85,16 @@ def stress_nonbonded_intra(particle_pairs, box_l):
             stress += np.einsum('i,j', f, r) / np.prod(system.box_l)
     return stress
 
+
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
-@ut.skipIf(not espressomd.has_features(['LENNARD_JONES']),
-           'Features not available, skipping test!')
+@utx.skipIfMissingFeatures(['LENNARD_JONES'])
 class Stress(ut.TestCase):
 
     def test(self):
         # system parameters
-        box_l = 10.0
-        system.box_l = [box_l, box_l, box_l]
+        system.box_l = 3 * [10.0]
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step
@@ -164,13 +159,13 @@ class Stress(ut.TestCase):
             'non_bonded_intra', 0, 0]
         sim_pressure_total = system.analysis.pressure()['total']
 
-        anal_stress_kinetic = stress_kinetic(vel, box_l)
-        anal_stress_bonded = stress_bonded(pos, box_l)
-        anal_stress_nonbonded = stress_nonbonded(system.part.pairs(), box_l)
+        anal_stress_kinetic = stress_kinetic(vel)
+        anal_stress_bonded = stress_bonded(pos)
+        anal_stress_nonbonded = stress_nonbonded(system.part.pairs())
         anal_stress_nonbonded_inter = stress_nonbonded_inter(
-            system.part.pairs(), box_l)
+            system.part.pairs())
         anal_stress_nonbonded_intra = stress_nonbonded_intra(
-            system.part.pairs(), box_l)
+            system.part.pairs())
         anal_stress_total = anal_stress_kinetic + \
             anal_stress_bonded + anal_stress_nonbonded
         anal_pressure_kinetic = np.einsum('ii', anal_stress_kinetic) / 3.0
@@ -218,7 +213,7 @@ class Stress(ut.TestCase):
         self.assertTrue(
             np.abs(sim_pressure_nonbonded_inter12 -
                    anal_pressure_nonbonded_inter) < tol,
-                        'non-bonded intermolecular pressure molecule 1 and 2 does not match analytical result')
+            'non-bonded intermolecular pressure molecule 1 and 2 does not match analytical result')
         self.assertTrue(np.abs(sim_pressure_nonbonded_intra - anal_pressure_nonbonded_intra)
                         < tol, 'non-bonded intramolecular pressure does not match analytical result')
         self.assertTrue(np.abs(sim_pressure_nonbonded_intra00 - anal_pressure_nonbonded_intra) <
@@ -231,12 +226,11 @@ class Stress(ut.TestCase):
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(
             StressTensor().calculate(),
-             system.analysis.stress_tensor()["total"].reshape(9),
+            system.analysis.stress_tensor()["total"].reshape(9),
             atol=1E-10)
 
 
-@ut.skipIf(not espressomd.has_features(['EXTERNAL_FORCES']),
-           'Features not available, skipping test!')
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class StressFENE(ut.TestCase):
 
     def get_anal_stress_fene(self, pos_1, pos_2, k, d_r_max, r_0):
@@ -248,8 +242,7 @@ class StressFENE(ut.TestCase):
 
     def test_fene(self):
         # system parameters
-        box_l = 10.0
-        system.box_l = [box_l, box_l, box_l]
+        system.box_l = 3 * [10.0]
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step

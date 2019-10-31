@@ -1,40 +1,40 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _HARMONIC_DUMBBELL_HPP
 #define _HARMONIC_DUMBBELL_HPP
 /** \file
- *  Routines to calculate the HARMONIC Energy or/and HARMONIC force
- *  for a particle pair.
- *  \ref forces.cpp
+ *  Routines to calculate the harmonic dumbbell bond potential between particle
+ *  pairs.
+ *
+ *  Implementation in \ref harmonic_dumbbell.cpp.
  */
 
-/************************************************************/
-
-#include "bonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "utils.hpp"
+#include "config.hpp"
 
 #ifdef ROTATION
+#include "bonded_interaction_data.hpp"
 
-/** set the parameters for the harmonic potential
+#include <utils/math/sqr.hpp>
+
+/** Set the parameters for the harmonic dumbbell bond potential
  *
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
@@ -42,84 +42,59 @@
 int harmonic_dumbbell_set_params(int bond_type, double k1, double k2, double r,
                                  double r_cut);
 
-/** Computes the harmonic dumbbell bond length force and update torque.
- *  @param[in,out]  p1        First particle, torque gets updated.
- *  @param[in]      p2        Second particle.
- *  @param[in]      iaparams  Bonded parameters for the pair interaction.
- *  @param[in]      dx        %Distance between the particles.
- *  @param[out]     force     Force.
- *  @retval 0
- */
-inline int
-calc_harmonic_dumbbell_pair_force(Particle *p1, Particle const *p2,
-                                  Bonded_ia_parameters const *iaparams,
-                                  double const dx[3], double force[3]) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
-
-  if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut))
-    return 1;
-
-  auto const dr = dist - iaparams->p.harmonic_dumbbell.r;
-  auto const normalizer = (dist > ROUND_ERROR_PREC) ? 1. / dist : 0.0;
-  auto const fac = -iaparams->p.harmonic_dumbbell.k1 * dr * normalizer;
-
-  for (int i = 0; i < 3; i++)
-    force[i] = fac * dx[i];
-
-  auto const dhat = Utils::Vector3d{dx[0], dx[1], dx[2]} * normalizer;
-  auto const da = vector_product(dhat, p1->r.calc_director());
-
-  p1->f.torque += iaparams->p.harmonic_dumbbell.k2 * da;
-  return 0;
-}
-
-/** Computes the harmonic dumbbell bond length energy.
- *  @param[in]  p1        First particle.
- *  @param[in]  p2        Second particle.
+/** Compute the harmonic dumbbell bond force and torque.
+ *  @param[in]  director  Director of the particle.
  *  @param[in]  iaparams  Bonded parameters for the pair interaction.
  *  @param[in]  dx        %Distance between the particles.
- *  @param[out] _energy   Energy.
- *  @retval 0
+ *  @return the force and torque
  */
-inline int harmonic_dumbbell_pair_energy(Particle const *p1, Particle const *p2,
-                                         Bonded_ia_parameters const *iaparams,
-                                         double const dx[3], double *_energy) {
-  double dist2 = sqrlen(dx);
-  double dist = sqrt(dist2);
+inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
+harmonic_dumbbell_pair_force(Utils::Vector3d const &director,
+                             Bonded_ia_parameters const &iaparams,
+                             Utils::Vector3d const &dx) {
+  auto const dist = dx.norm();
 
-  if ((iaparams->p.harmonic_dumbbell.r_cut > 0.0) &&
-      (dist > iaparams->p.harmonic_dumbbell.r_cut))
-    return 1;
+  if ((iaparams.p.harmonic_dumbbell.r_cut > 0.0) &&
+      (dist > iaparams.p.harmonic_dumbbell.r_cut)) {
+    return {};
+  }
 
-  double dhat[3];
-  dhat[0] = dx[0] / dist;
-  dhat[1] = dx[1] / dist;
-  dhat[2] = dx[2] / dist;
+  auto const dr = dist - iaparams.p.harmonic_dumbbell.r;
+  auto const normalizer = (dist > ROUND_ERROR_PREC) ? 1. / dist : 0.0;
+  auto const fac = -iaparams.p.harmonic_dumbbell.k1 * dr * normalizer;
+  auto const force = fac * dx;
 
-  double da[3];
-  const Utils::Vector3d director1 = p1->r.calc_director();
-  da[0] = dhat[1] * director1[2] - dhat[2] * director1[1];
-  da[1] = dhat[2] * director1[0] - dhat[0] * director1[2];
-  da[2] = dhat[0] * director1[1] - dhat[1] * director1[0];
+  auto const dhat = dx * normalizer;
+  auto const da = vector_product(dhat, director);
+  auto const torque = iaparams.p.harmonic_dumbbell.k2 * da;
 
-  double torque[3];
-  torque[0] = iaparams->p.harmonic_dumbbell.k2 * da[0];
-  torque[1] = iaparams->p.harmonic_dumbbell.k2 * da[1];
-  torque[2] = iaparams->p.harmonic_dumbbell.k2 * da[2];
+  return std::make_tuple(force, torque);
+}
 
-  double diff[3];
-  diff[0] = dhat[0] - director1[0];
-  diff[1] = dhat[1] - director1[1];
-  diff[2] = dhat[2] - director1[2];
+/** Compute the harmonic dumbbell bond energy.
+ *  @param[in]  director  Director of the particle.
+ *  @param[in]  iaparams  Bonded parameters for the pair interaction.
+ *  @param[in]  dx        %Distance between the particles.
+ */
+inline boost::optional<double>
+harmonic_dumbbell_pair_energy(Utils::Vector3d const &director,
+                              Bonded_ia_parameters const &iaparams,
+                              Utils::Vector3d const &dx) {
+  auto const dist = dx.norm();
 
-  *_energy =
-      0.5 * iaparams->p.harmonic_dumbbell.k1 *
-          Utils::sqr(dist - iaparams->p.harmonic.r) +
-      0.5 * iaparams->p.harmonic_dumbbell.k2 *
-          (torque[0] * diff[0] + torque[1] * diff[1] + torque[2] * diff[2]);
-  return 0;
+  if ((iaparams.p.harmonic_dumbbell.r_cut > 0.0) &&
+      (dist > iaparams.p.harmonic_dumbbell.r_cut)) {
+    return {};
+  }
+
+  auto const dhat = dx / dist;
+  auto const da = vector_product(dhat, director);
+  auto const torque = iaparams.p.harmonic_dumbbell.k2 * da;
+  auto const diff = dhat - director;
+
+  return 0.5 * iaparams.p.harmonic_dumbbell.k1 *
+             Utils::sqr(dist - iaparams.p.harmonic.r) +
+         0.5 * iaparams.p.harmonic_dumbbell.k2 * (torque * diff);
 }
 
 #endif // ROTATION

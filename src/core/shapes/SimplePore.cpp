@@ -1,21 +1,21 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "SimplePore.hpp"
 
@@ -68,8 +68,8 @@ std::pair<double, double> SimplePore::dist_half_pore(double r, double z) const {
   return {fac * dr, fac * dz};
 }
 
-void SimplePore::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                                double *vec) const {
+void SimplePore::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                Utils::Vector3d &vec) const {
   /* Coordinate transform to cylinder coords
      with origin at m_center. */
   Utils::Vector3d const c_dist = pos - m_center;
@@ -107,9 +107,7 @@ void SimplePore::calculate_dist(const Utils::Vector3d &pos, double *dist,
     dz *= -1;
   }
 
-  *dist = std::sqrt(dr * dr + dz * dz) * side;
-  for (int i = 0; i < 3; i++) {
-    vec[i] = -dr * e_r[i] + -dz * e_z[i];
-  }
+  dist = std::sqrt(dr * dr + dz * dz) * side;
+  vec = -dr * e_r - dz * e_z;
 }
 } // namespace Shapes

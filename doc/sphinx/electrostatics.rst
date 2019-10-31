@@ -66,8 +66,8 @@ installed on your system. In |es|, you can check if it is compiled in by
 checking for the feature ``FFTW`` with ``espressomd.features``.
 P3M requires full periodicity (1 1 1). Make sure that you know the relevance of the
 P3M parameters before using P3M! If you are not sure, read the following
-references
-:cite:`ewald21,hockney88,kolafa92,deserno98,deserno98a,deserno00,deserno00a,cerda08a`.
+references:
+:cite:`ewald21,hockney88,kolafa92,deserno98a,deserno98b,deserno00,deserno00a,cerda08d`.
 
 .. _Tuning Coulomb P3M:
 
@@ -81,11 +81,12 @@ This can be useful to speed up the tuning during testing or if the parameters
 are already known.
 
 To prevent the automatic tuning, set the ``tune`` parameter to ``False``.
-To manually tune or retune P3M, call :meth:`espresso.electrostatics.P3M.Tune`.
+To manually tune or retune P3M, call :meth:`espressomd.electrostatics.P3M.tune
+<espressomd.electrostatics.ElectrostaticInteraction.tune>`.
 Note, however, that this is a method the P3M object inherited from
 :attr:`espressomd.electrostatics.ElectrostaticInteraction`.
 All parameters passed to the method are fixed in the tuning routine. If not
-specified in the ``Tune()`` method, the parameters ``prefactor`` and
+specified in the ``tune()`` method, the parameters ``prefactor`` and
 ``accuracy`` are reused.
 
 It is not easy to calculate the various parameters of the P3M method
@@ -127,7 +128,8 @@ It uses the same parameters and interface functionality as the CPU version of
 the solver. It should be noted that this does not always provide significant
 increase in performance. Furthermore it computes the far field interactions
 with only single precision which limits the maximum precision. The algorithm
-does not work in combination with the electrostatic extensions :ref:`Dielectric interfaces with the ICC algorithm`
+does not work in combination with the electrostatic extensions
+:ref:`Dielectric interfaces with the ICC* algorithm <Dielectric interfaces with the ICC algorithm>`
 and :ref:`Electrostatic Layer Correction (ELC)`.
 
 .. _Debye-Hückel potential:
@@ -252,7 +254,7 @@ With each iteration, ICC has to solve electrostatics which can severely slow
 down the integration. The performance can be improved by using multiple cores,
 a minimal set of ICC particles and convergence and relaxation parameters that
 result in a minimal number of iterations. Also please make sure to read the
-corresponding articles, mainly :cite:`espresso2,tyagi10a,kesselheim11a` before
+corresponding articles, mainly :cite:`arnold13a,tyagi10a,kesselheim11a` before
 using it.
 
 .. _MMM2D:
@@ -261,11 +263,11 @@ MMM2D
 -----
 
 .. note::
-    Required features: ``ELECTROSTATICS``, ``PARTIAL_PERIODIC``.
+    Required features: ``ELECTROSTATICS``.
 
 MMM2D is an electrostatics solver for explicit 2D periodic systems.
 It can account for different dielectric jumps on both sides of the
-non-periodic direction. MMM2D Coulomb method needs periodicity 1 1 0 and the
+non-periodic direction. MMM2D Coulomb method needs periodicity (1 1 0) and the
 layered cell system. The performance of the method depends on the number of
 slices of the cell system, which has to be tuned manually. It is
 automatically ensured that the maximal pairwise error is smaller than
@@ -332,10 +334,10 @@ method in computational order N. Currently, it only supports P3M. This means,
 that you will first have to set up the P3M algorithm before using ELC. The
 algorithm is definitely faster than MMM2D for larger numbers of particles
 (:math:`>400` at reasonable accuracy requirements). The periodicity has to be
-set to ``1 1 1`` still, *ELC* cancels the electrostatic contribution of the
+set to (1 1 1) still, *ELC* cancels the electrostatic contribution of the
 periodic replica in **z-direction**. Make sure that you read the papers on ELC
-(:cite:`arnold02c,icelc`) before using it. ELC is an |es| actor and is used
-with::
+(:cite:`arnold02c,arnold02d,tyagi08a`) before using it. ELC is an |es| actor
+and is used with::
 
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
@@ -358,7 +360,7 @@ Parameters are:
     * ``delta_mid_top``/``delta_mid_bot``:
         *ELC* can also be used to simulate 2D periodic systems with image charges,
         specified by dielectric contrasts on the non-periodic boundaries
-        (:cite:`icelc`).  Similar to *MMM2D*, these can be set with the
+        (:cite:`tyagi08a`).  Similar to *MMM2D*, these can be set with the
         keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
         jump from the simulation region (*middle*) to *bottom* (at ``z<0``) and
         from *middle* to *top* (``z > box_l[2] - gap_size``). The fully metallic case
@@ -366,15 +368,15 @@ Parameters are:
         forces/energies in *ELC* and is therefore only possible with the
         ``const_pot`` option.
     * ``const_pot``:
-        As described, setting this to ``1`` leads to fully metallic boundaries and
+        As described, setting this to ``True`` leads to fully metallic boundaries and
         behaves just like the mmm2d parameter of the same name: It maintains a
         constant potential ``pot_diff`` by countering the total dipole moment of
         the system and adding a homogeneous electric field according to
         ``pot_diff``.
     * ``pot_diff``:
-        Used in conjunction with ``const_pot`` set to 1, this sets the potential difference
-        between the boundaries in the z-direction between ``z=0`` and
-        ``z = box_l[2] - gap_size``.
+        Used in conjunction with ``const_pot`` set to ``True``, this sets the
+        potential difference between the boundaries in the z-direction between
+        ``z=0`` and ``z = box_l[2] - gap_size``.
     * ``far_cut``:
         The setting of the far cutoff is only intended for testing and allows to
         directly set the cutoff. In this case, the maximal pairwise error is
@@ -402,7 +404,7 @@ MMM1D
 -----
 
 .. note::
-    Required features: ``ELECTROSTATICS``, ``PARTIAL_PERIODIC`` for MMM1D, the GPU version additionally needs
+    Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version additionally needs
     the features ``CUDA`` and ``MMM1D_GPU``.
 
 ::
@@ -423,7 +425,7 @@ parameters.
     mmm1d = MMM1D(prefactor=C, maxPWerror=err)
 
 where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
-MMM1D Coulomb method for systems with periodicity 0 0 1. Needs the
+MMM1D Coulomb method for systems with periodicity (0 0 1). Needs the
 nsquared cell system (see section :ref:`Cellsystems`). The first form sets parameters
 manually. The switch radius determines at which xy-distance the force
 calculation switches from the near to the far formula. The Bessel cutoff
@@ -459,9 +461,9 @@ Scafacos Electrostatics
 -----------------------
 
 Espresso can use the electrostatics methods from the SCAFACOS *Scalable
-fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :attr:`espressomd.scafacos.available_methods`
+fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :meth:`espressomd.scafacos.available_methods`
 
-To use SCAFACOS, create an instance of :attr:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+To use SCAFACOS, create an instance of :class:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
 
 * ``method_name``: name of the SCAFACOS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
@@ -474,10 +476,10 @@ To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for y
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
 
-  from espressomd.electrostatics import Scafacos
-  scafacos = Scafacos(prefactor=1, method_name="ewald",
-                      method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
-  system.actors.add(scafacos)
+   from espressomd.electrostatics import Scafacos
+   scafacos = Scafacos(prefactor=1, method_name="ewald",
+                       method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
+   system.actors.add(scafacos)
 
 
 For details of the various methods and their parameters please refer to

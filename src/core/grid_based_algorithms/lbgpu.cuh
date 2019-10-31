@@ -1,21 +1,21 @@
 /*
-   Copyright (C) 2010-2018 The ESPResSo project
-
-   This file is part of ESPResSo.
-
-   ESPResSo is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   ESPResSo is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  %Lattice Boltzmann on GPUs.
  *
@@ -30,19 +30,32 @@
 #ifdef CUDA
 #include "curand_wrapper.hpp"
 
-#ifdef LB_GPU
+#include <utils/Array.hpp>
+
+#ifdef CUDA
 /** Velocity densities for the lattice Boltzmann system. */
-typedef struct {
-
+struct LB_nodes_gpu {
   /** velocity density of the node */
-  float *vd;
-  /** flag indicating whether this site belongs to a boundary */
-  unsigned int *boundary;
+  float *vd = nullptr;
+  unsigned int *boundary = nullptr;
+  Utils::Array<float, 3> *boundary_velocity = nullptr;
+};
 
-} LB_nodes_gpu;
+struct LB_boundaries_gpu {
+  /** For each fluid node this array contains either
+   *  0 if the node is not a boundary, or the index of
+   *  the boundary in LBBoundaries::lbboundaries minus one.
+   */
+  unsigned int *index = nullptr;
+  /** If the node is a boundary node, this contains the
+   *  velocity of the boundary
+   */
+  Utils::Array<float, 3> *velocity = nullptr;
+};
 
-inline __device__ float4 random_wrapper_philox(unsigned int index, unsigned int mode,
-                                        uint64_t philox_counter){
+inline __device__ float4 random_wrapper_philox(unsigned int index,
+                                               unsigned int mode,
+                                               uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.
   uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
   uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
@@ -56,7 +69,7 @@ inline __device__ float4 random_wrapper_philox(unsigned int index, unsigned int 
   rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
   return rnd_floats;
 }
-#endif // LB_GPU
+#endif //  CUDA
 
 #endif // CUDA
 #endif

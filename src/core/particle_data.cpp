@@ -1,31 +1,32 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Particles and particle lists.
  *
  *  The corresponding header file is particle_data.hpp.
  */
-
 #include "particle_data.hpp"
+
 #include "PartCfg.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -41,9 +42,9 @@
 #include "serialization/ParticleList.hpp"
 #include "virtual_sites.hpp"
 
-#include "utils.hpp"
-#include "utils/Cache.hpp"
-#include "utils/mpi/gatherv.hpp"
+#include <utils/Cache.hpp>
+#include <utils/constants.hpp>
+#include <utils/mpi/gatherv.hpp>
 
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/variant.hpp>
@@ -51,16 +52,11 @@
 #include <boost/variant.hpp>
 
 #include <cmath>
-#include <cstdlib>
-#include <cstring>
 #include <unordered_map>
 #include <unordered_set>
 /************************************************
  * defines
  ************************************************/
-
-/** granularity of the particle buffers in particles */
-#define PART_INCREMENT 8
 
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
@@ -69,7 +65,7 @@ namespace {
 /**
  * @brief A generic particle update.
  *
- * Here the sub-struct struture of Particle is
+ * Here the sub-struct structure of Particle is
  * used: the specification of the data member to update
  * consists of two parts, the pointer to the substruct @p s
  * and a pointer to a member of that substruct @p m.
@@ -97,32 +93,6 @@ using UpdateMomentum = UpdateParticle<ParticleMomentum, &Particle::m, T, m>;
 template <typename T, T ParticleForce ::*m>
 using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 
-#ifdef EXTERNAL_FORCES
-/**
- * @brief Special updater for the external flags.
- *
- * These need to be treated specialy as they are
- * updated masked and not overwritten.
- */
-struct UpdateExternalFlag {
-  /* The bits to update */
-  int mask;
-  /* The actual values for the update */
-  int flag;
-  void operator()(Particle &p) const {
-    /* mask out old flags */
-    p.p.ext_flag &= ~mask;
-    /* set new values */
-    p.p.ext_flag |= (mask & flag);
-  }
-
-  template <class Archive> void serialize(Archive &ar, long int) {
-    ar &mask;
-    ar &flag;
-  }
-};
-#endif
-
 using Prop = ParticleProperties;
 
 // clang-format off
@@ -138,26 +108,28 @@ using UpdatePropertyMessage = boost::variant
 #ifdef ROTATIONAL_INERTIA
         , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
-#ifdef AFFINITY
-        , UpdateProperty<Utils::Vector3d, &Prop::bond_site>
-#endif
 #ifdef MEMBRANE_COLLISION
         , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
 #endif
-        , UpdateProperty<int, &Prop::rotation>
+#ifdef ROTATION
+        , UpdateProperty<uint8_t, &Prop::rotation>
+#endif
 #ifdef ELECTROSTATICS
         , UpdateProperty<double, &Prop::q>
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
         , UpdateProperty<Utils::Vector3d, &Prop::mu_E>
 #endif
+#ifdef ENGINE
+        , UpdateProperty<ParticleParametersSwimming, &Prop::swim>
+#endif
 #ifdef DIPOLES
         , UpdateProperty<double, &Prop::dipm>
 #endif
 #ifdef VIRTUAL_SITES
-        , UpdateProperty<int, &Prop::is_virtual>
+        , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
-        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
+        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameters,
                          &Prop::vs_relative>
 #endif
 #endif
@@ -173,11 +145,11 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::gamma_rot>
 #else
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-        , UpdateExternalFlag
+        , UpdateProperty<uint8_t, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
 #ifdef ROTATION
         , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
@@ -255,21 +227,6 @@ using UpdateBondMessage = boost::variant
         , AddBond
         >;
 
-#ifdef ENGINE
-struct UpdateSwim {
-    ParticleParametersSwimming swim;
-
-    void operator()(Particle &p) const {
-      p.swim = swim;
-    }
-
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-      ar & swim;
-    }
-};
-#endif
-
 #ifdef ROTATION
 struct UpdateOrientation {
     Utils::Vector3d axis;
@@ -292,11 +249,11 @@ struct UpdateOrientation {
  * A message is either updates a property,
  * or a position, or ...
  * New messages can be added here, if they
- * fullfill the type requirements, namely:
+ * fulfill the type requirements, namely:
  * They either have an integer member id indicating
  * the particle that should be updated an operator()(const Particle&)
  * that is called with the particle, or a tree of
- * variants with leafs that have such a operator() and member.
+ * variants with leafs that have such an operator() and member.
  */
 using UpdateMessage = boost::variant
         < UpdatePropertyMessage
@@ -304,9 +261,6 @@ using UpdateMessage = boost::variant
         , UpdateMomentumMessage
         , UpdateForceMessage
         , UpdateBondMessage
-#ifdef ENGINE
-        , UpdateSwim
-#endif
 #ifdef ROTATION
         , UpdateOrientation
 #endif
@@ -342,7 +296,7 @@ using message_type_t = typename message_type<S, s>::type;
  * @brief Visitor for message evaluation.
  *
  * This visitor either recurses into the active type
- * if it is a variant type, or otherwise callse
+ * if it is a variant type, or otherwise calls
  * operator()(Particle&) on the active type with
  * the particle that ought to be updated. This construction
  * allows to nest message variants to allow for sub-
@@ -465,7 +419,7 @@ void auto_exclusion(int distance);
 void free_particle(Particle *part) { part->~Particle(); }
 
 void mpi_who_has_slave(int, int) {
-  static int *sendbuf;
+  static std::vector<int> sendbuf;
   int n_part;
 
   n_part = cells_get_n_particles();
@@ -473,20 +427,19 @@ void mpi_who_has_slave(int, int) {
   if (n_part == 0)
     return;
 
-  sendbuf = Utils::realloc(sendbuf, sizeof(int) * n_part);
+  sendbuf.resize(n_part);
 
   auto end = std::transform(local_cells.particles().begin(),
-                            local_cells.particles().end(), sendbuf,
+                            local_cells.particles().end(), sendbuf.data(),
                             [](Particle const &p) { return p.p.identity; });
 
-  auto npart = std::distance(sendbuf, end);
-  MPI_Send(sendbuf, npart, MPI_INT, 0, SOME_TAG, comm_cart);
+  auto npart = std::distance(sendbuf.data(), end);
+  MPI_Send(sendbuf.data(), npart, MPI_INT, 0, SOME_TAG, comm_cart);
 }
 
-void mpi_who_has() {
+void mpi_who_has(const ParticleRange &particles) {
   static auto *sizes = new int[n_nodes];
-  int *pdata = nullptr;
-  int pdata_s = 0;
+  std::vector<int> pdata;
 
   mpi_call(mpi_who_has_slave, -1, 0);
 
@@ -496,30 +449,26 @@ void mpi_who_has() {
 
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
-    COMM_TRACE(
-        fprintf(stderr, "node %d reports %d particles\n", pnode, sizes[pnode]));
     if (pnode == this_node) {
-      for (auto const &p : local_cells.particles())
+      for (auto const &p : particles)
         particle_node[p.p.identity] = this_node;
 
     } else if (sizes[pnode] > 0) {
-      if (pdata_s < sizes[pnode]) {
-        pdata_s = sizes[pnode];
-        pdata = Utils::realloc(pdata, sizeof(int) * pdata_s);
+      if (pdata.size() < sizes[pnode]) {
+        pdata.resize(sizes[pnode]);
       }
-      MPI_Recv(pdata, sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
+      MPI_Recv(pdata.data(), sizes[pnode], MPI_INT, pnode, SOME_TAG, comm_cart,
                MPI_STATUS_IGNORE);
       for (int i = 0; i < sizes[pnode]; i++)
         particle_node[pdata[i]] = pnode;
     }
   }
-  free(pdata);
 }
 
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() { mpi_who_has(); }
+void build_particle_node() { mpi_who_has(local_cells.particles()); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
@@ -551,10 +500,11 @@ void clear_particle_node() { particle_node.clear(); }
     \param part the highest existing particle
 */
 void realloc_local_particles(int part) {
+  constexpr auto INCREMENT = 8;
+
   if (part >= max_local_particles) {
-    /* round up part + 1 in granularity PART_INCREMENT */
-    max_local_particles =
-        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
+    /* round up part + 1 in granularity INCREMENT */
+    max_local_particles = INCREMENT * ((part + INCREMENT) / INCREMENT);
     local_particles = Utils::realloc(local_particles,
                                      sizeof(Particle *) * max_local_particles);
 
@@ -562,37 +512,6 @@ void realloc_local_particles(int part) {
     for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
       local_particles[i] = nullptr;
   }
-}
-
-void init_particlelist(ParticleList *pList) {
-  pList->n = 0;
-  pList->max = 0;
-  pList->part = nullptr;
-}
-
-int realloc_particlelist(ParticleList *l, int size) {
-  assert(size >= 0);
-  int old_max = l->max;
-  Particle *old_start = l->part;
-
-  PART_TRACE(fprintf(stderr, "%d: realloc_particlelist %p: %d/%d->%d\n",
-                     this_node, (void *)l, l->n, l->max, size));
-
-  if (size < l->max) {
-    if (size == 0)
-      /* to be able to free an array again */
-      l->max = 0;
-    else
-      /* shrink not as fast, just lose half, rounded up */
-      l->max =
-          PART_INCREMENT *
-          (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
-  } else
-    /* round up */
-    l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
-  if (l->max != old_max)
-    l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
-  return l->part != old_start;
 }
 
 void update_local_particles(ParticleList *pl) {
@@ -603,12 +522,12 @@ void update_local_particles(ParticleList *pl) {
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  realloc_particlelist(l, ++l->n);
+  l->resize(l->n + 1);
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
 Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = realloc_particlelist(l, ++l->n);
+  auto const re = l->resize(l->n + 1);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
   assert(p->p.identity <= max_seen_particle);
@@ -624,7 +543,7 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
 
-  realloc_particlelist(dl, ++dl->n);
+  dl->resize(dl->n + 1);
   auto dst = &dl->part[dl->n - 1];
   auto src = &sl->part[i];
   auto end = &sl->part[sl->n - 1];
@@ -634,14 +553,14 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  realloc_particlelist(sl, --sl->n);
+  sl->resize(sl->n - 1);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
-  int re = realloc_particlelist(dl, ++dl->n);
+  int re = dl->resize(dl->n + 1);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
@@ -659,7 +578,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -694,7 +613,7 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -709,6 +628,18 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 } // namespace
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
+
+boost::optional<const Particle &> get_particle_data_local(int id) {
+  auto p = local_particles[id];
+
+  if (p and (not p->l.ghost)) {
+    return *p;
+  }
+
+  return {};
+}
+
+REGISTER_CALLBACK_ONE_RANK(get_particle_data_local)
 
 const Particle &get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
@@ -726,8 +657,9 @@ const Particle &get_particle_data(int part) {
 
   /* Cache miss, fetch the particle,
    * put it into the cache and return a pointer into the cache. */
-  auto const cache_ptr =
-      particle_fetch_cache.put(part, mpi_recv_part(pnode, part));
+  auto const cache_ptr = particle_fetch_cache.put(
+      part, Communication::mpiCallbacks().call(Communication::Result::one_rank,
+                                               get_particle_data_local, part));
   return *cache_ptr;
 }
 
@@ -824,26 +756,17 @@ void prefetch_particle_data(std::vector<int> ids) {
                            std::make_move_iterator(parts.begin()));
 }
 
-int place_particle(int part, double p[3]) {
-  int retcode = ES_PART_OK;
+int place_particle(int part, const double *pos) {
+  Utils::Vector3d p{pos[0], pos[1], pos[2]};
 
-  int pnode;
   if (particle_exists(part)) {
-    pnode = get_particle_node(part);
-    mpi_place_particle(pnode, part, p);
-  } else {
-    /* new particle, node by spatial position */
-    pnode = cell_structure.position_to_node(Utils::Vector3d{p, p + 3});
+    mpi_place_particle(get_particle_node(part), part, p);
 
-    /* master node specific stuff */
-    particle_node[part] = pnode;
-
-    retcode = ES_PART_CREATED;
-
-    mpi_place_new_particle(pnode, part, p);
+    return ES_PART_OK;
   }
+  particle_node[part] = mpi_place_new_particle(part, p);
 
-  return retcode;
+  return ES_PART_CREATED;
 }
 
 void set_particle_v(int part, double *v) {
@@ -853,7 +776,8 @@ void set_particle_v(int part, double *v) {
 
 #ifdef ENGINE
 void set_particle_swimming(int part, ParticleParametersSwimming swim) {
-  mpi_send_update_message(part, UpdateSwim{swim});
+  mpi_update_particle_property<ParticleParametersSwimming,
+                               &ParticleProperties::swim>(part, swim);
 }
 #endif
 
@@ -880,19 +804,13 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<int, &ParticleProperties::rotation>(part, rot);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
+                                                                       rot);
 }
 #endif
 #ifdef ROTATION
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
-}
-#endif
-
-#ifdef AFFINITY
-void set_particle_affinity(int part, double *bond_site) {
-  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::bond_site>(
-      part, Utils::Vector3d(bond_site, bond_site + 3));
 }
 #endif
 
@@ -922,31 +840,31 @@ void set_particle_dip(int part, double const *const dip) {
 #endif
 
 #ifdef VIRTUAL_SITES
-void set_particle_virtual(int part, int is_virtual) {
-  mpi_update_particle_property<int, &ParticleProperties::is_virtual>(
+void set_particle_virtual(int part, bool is_virtual) {
+  mpi_update_particle_property<bool, &ParticleProperties::is_virtual>(
       part, is_virtual);
 }
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_relative_quat) {
+void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Utils::Vector4d(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = vs_relative_quat;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              double *rel_ori) {
-  ParticleProperties::VirtualSitesRelativeParameteres vs_relative;
+                              Utils::Vector4d const &rel_ori) {
+  ParticleProperties::VirtualSitesRelativeParameters vs_relative;
   vs_relative.distance = vs_distance;
   vs_relative.to_particle_id = vs_relative_to;
-  vs_relative.rel_orientation = {rel_ori, rel_ori + 4};
+  vs_relative.rel_orientation = rel_ori;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 #endif
@@ -1061,29 +979,19 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
-  auto const flag = (!torque.empty()) ? PARTICLE_EXT_TORQUE : 0;
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_torque>(part, torque);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_TORQUE, flag}));
+  mpi_update_particle_property<Utils::Vector3d,
+                               &ParticleProperties::ext_torque>(part, torque);
 }
 #endif
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
-  auto const flag = (!force.empty()) ? PARTICLE_EXT_FORCE : 0;
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_force>(part, force);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_FORCE, flag}));
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::ext_force>(
+      part, force);
 }
 
-void set_particle_fix(int part, int flag) {
-  mpi_send_update_message(
-      part, UpdatePropertyMessage(UpdateExternalFlag{COORDS_FIX_MASK, flag}));
+void set_particle_fix(int part, uint8_t flag) {
+  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
+                                                                       flag);
 }
 #endif
 
@@ -1174,45 +1082,29 @@ void local_remove_particle(int part) {
   Particle p_destroy = extract_indexed_particle(cell, n);
 }
 
-Particle *local_place_particle(int part, const double p[3], int _new) {
-  Particle *pt;
-
-  Utils::Vector3i i{};
-  Utils::Vector3d pp = {p[0], p[1], p[2]};
-  fold_position(pp, i);
+Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
+  auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
+  auto i = Utils::Vector3i{};
+  fold_position(pp, i, box_geo);
 
   if (_new) {
+    Particle new_part;
+    new_part.p.identity = id;
+    new_part.r.p = pp;
+    new_part.l.i = i;
+
     /* allocate particle anew */
-    auto cell = cell_structure.position_to_cell(pp);
+    auto cell = cell_structure.particle_to_cell(new_part);
     if (!cell) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: particle %d at %f(%f) %f(%f) %f(%f) "
-              "does not belong on this node\n",
-              this_node, part, p[0], pp[0], p[1], pp[1], p[2], pp[2]);
-      errexit();
+      return nullptr;
     }
-    auto rl = realloc_particlelist(cell, ++cell->n);
-    pt = new (&cell->part[cell->n - 1]) Particle;
 
-    pt->p.identity = part;
-    if (rl)
-      update_local_particles(cell);
-    else
-      local_particles[pt->p.identity] = pt;
-  } else
-    pt = local_particles[part];
+    return append_indexed_particle(cell, std::move(new_part));
+  }
 
-  PART_TRACE(fprintf(
-      stderr, "%d: local_place_particle: got particle id=%d @ %f %f %f\n",
-      this_node, part, p[0], p[1], p[2]));
-
+  auto pt = local_particles[id];
   pt->r.p = pp;
   pt->l.i = i;
-#ifdef BOND_CONSTRAINT
-  pt->r.p_old = pp;
-#endif
-
-  assert(local_particles[part] == pt);
 
   return pt;
 }
@@ -1373,8 +1265,6 @@ void try_delete_exclusion(Particle *part, int part2) {
 #endif
 
 void send_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: send_particles %d to %d\n", this_node,
-                     particles->n, node));
 
   comm_cart.send(node, REQ_SNDRCV_PART, *particles);
 
@@ -1384,11 +1274,10 @@ void send_particles(ParticleList *particles, int node) {
     free_particle(&particles->part[pc]);
   }
 
-  realloc_particlelist(particles, particles->n = 0);
+  particles->clear();
 }
 
 void recv_particles(ParticleList *particles, int node) {
-  PART_TRACE(fprintf(stderr, "%d: recv_particles from %d\n", this_node, node));
   comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
 
   update_local_particles(particles);
@@ -1424,10 +1313,9 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
   int count, p, i, j, p1, p2, p3, dist1, dist2;
-  Bonded_ia_parameters *ia_params;
 
   /* partners is a list containing the currently found excluded particles for
-     each particle, and their distance, as a interleaved list */
+     each particle, and their distance, as an interleaved list */
   std::unordered_map<int, IntList> partners;
 
   /* We need bond information */
@@ -1437,8 +1325,8 @@ void auto_exclusions(int distance) {
   for (auto const &part1 : partCfg()) {
     p1 = part1.p.identity;
     for (i = 0; i < part1.bl.n;) {
-      ia_params = &bonded_ia_params[part1.bl.e[i++]];
-      if (ia_params->num == 1) {
+      Bonded_ia_parameters const &ia_params = bonded_ia_params[part1.bl.e[i++]];
+      if (ia_params.num == 1) {
         p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
@@ -1447,7 +1335,7 @@ void auto_exclusions(int distance) {
           add_partner(&partners[p2], p2, p1, 1);
         }
       } else
-        i += ia_params->num;
+        i += ia_params.num;
     }
   }
 
@@ -1509,11 +1397,11 @@ void remove_id_from_map(int part_id, int type) {
     particle_type_map.at(type).erase(part_id);
 }
 
-int get_random_p_id(int type) {
-  if (particle_type_map.at(type).empty())
-    throw std::runtime_error("No particles of given type could be found");
-  int rand_index = i_random(particle_type_map.at(type).size());
-  return *std::next(particle_type_map[type].begin(), rand_index);
+int get_random_p_id(int type, int random_index_in_type_map) {
+  if (random_index_in_type_map + 1 > particle_type_map.at(type).size())
+    throw std::runtime_error("The provided index exceeds the number of "
+                             "particles listed in the type_map");
+  return *std::next(particle_type_map[type].begin(), random_index_in_type_map);
 }
 
 void add_id_to_type_map(int part_id, int type) {
@@ -1544,7 +1432,7 @@ void pointer_to_quat(Particle const *p, double const *&res) {
 void pointer_to_q(Particle const *p, double const *&res) { res = &(p->p.q); }
 
 #ifdef VIRTUAL_SITES
-void pointer_to_virtual(Particle const *p, int const *&res) {
+void pointer_to_virtual(Particle const *p, bool const *&res) {
   res = &(p->p.is_virtual);
 }
 #endif
@@ -1570,19 +1458,15 @@ void pointer_to_dipm(Particle const *p, double const *&res) {
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1,
-                          double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_force(Particle const *p, double const *&res2) {
   res2 = p->p.ext_force.data();
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1,
-                           double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_torque(Particle const *p, double const *&res2) {
   res2 = p->p.ext_torque.data();
 }
 #endif
-void pointer_to_fix(Particle const *p, int const *&res) {
+void pointer_to_fix(Particle const *p, const uint8_t *&res) {
   res = &(p->p.ext_flag);
 }
 #endif
@@ -1611,26 +1495,16 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
 }
 #endif // LANGEVIN_PER_PARTICLE
 
-void pointer_to_rotation(Particle const *p, int const *&res) {
-  res = &(p->p.rotation);
-}
-
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim) {
-  swim = &(p->swim);
+  swim = &(p->p.swim);
 }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia.data();
-}
-#endif
-
-#ifdef AFFINITY
-void pointer_to_bond_site(Particle const *p, double const *&res) {
-  res = p->p.bond_site.data();
 }
 #endif
 

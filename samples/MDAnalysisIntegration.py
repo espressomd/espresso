@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,12 +14,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# -*- Mode: python; tab-width: 4; indent-tabs-mode:nil; coding: utf-8 -*-
-# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 """
-This example shows how to integrate MDAnalysis in ESPResSo
+Show how to expose configuration to ``MDAnalysis`` at run time. The
+functions of ``MDAnalysis`` can be used to perform some analysis or
+convert the frame to other formats (CHARMM, GROMACS, ...). For more
+details, see :ref:`Writing various formats using MDAnalysis`.
 """
-from __future__ import print_function
 import espressomd
 from espressomd import MDA_ESP
 import numpy as np

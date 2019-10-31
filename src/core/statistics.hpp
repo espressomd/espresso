@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef _STATISTICS_H
 #define _STATISTICS_H
 /** \file
@@ -28,9 +28,8 @@
 
 #include "Observable_stat.hpp"
 #include "PartCfg.hpp"
+#include "Particle.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "utils.hpp"
 
 #include <map>
 #include <string>
@@ -42,7 +41,7 @@
  */
 /************************************************************/
 /*@{*/
-extern double **configs;
+extern std::vector<std::vector<double>> configs;
 extern int n_configs;
 extern int n_part_conf;
 /*@}*/
@@ -67,8 +66,8 @@ double mindist(PartCfg &, IntList const &set1, IntList const &set2);
  *
  *  @return List of ids close to @p pos.
  */
-IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
-               int const planedims[3]);
+IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
+               const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
  *  @param pos  point
@@ -77,7 +76,7 @@ IntList nbhood(PartCfg &partCfg, double pos[3], double r_catch,
  *              position of a particle).
  *  @return the minimal distance of a particle to coordinates @p pos
  */
-double distto(PartCfg &, double pos[3], int pid);
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid);
 
 /** Append particles' positions in %p partCfg to #configs
  *  @param partCfg  @copybrief PartCfg
@@ -179,10 +178,9 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  @param p_types   list with types of particles to be analyzed
  *  @param n_types   length of @p p_types
  *  @param order     the maximum wave vector length in 2PI/L
- *  @param sf        array containing the result (size: 2*order^2).
  */
-void calc_structurefactor(PartCfg &, int const *p_types, int n_types, int order,
-                          double **sf);
+std::vector<double> calc_structurefactor(PartCfg &, int const *p_types,
+                                         int n_types, int order);
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);
@@ -194,9 +192,10 @@ int calc_cylindrical_average(
     std::map<std::string, std::vector<std::vector<std::vector<double>>>>
         &distribution);
 
-template <typename T1, typename T2>
-double min_distance2(T1 const pos1, T2 const pos2) {
-  return get_mi_vector(pos1, pos2).norm2();
+template <typename T>
+double min_distance2(Utils::Vector<T, 3> const &pos1,
+                     Utils::Vector<T, 3> const &pos2) {
+  return get_mi_vector(pos1, pos2, box_geo).norm2();
 }
 
 /** Calculate the center of mass of a special type of the current configuration.
@@ -207,9 +206,8 @@ Utils::Vector3d centerofmass(PartCfg &, int part_type);
 /** Calculate the angular momentum of a special type of the current
  *  configuration.
  *  \param type  type of the particle
- *  \param com   angular momentum vector
  */
-void angularmomentum(PartCfg &, int type, double *com);
+Utils::Vector3d angularmomentum(PartCfg &, int type);
 
 /** Calculate the center of mass of a special type of a saved configuration.
  *  \param partCfg     @copybrief PartCfg
@@ -217,11 +215,6 @@ void angularmomentum(PartCfg &, int type, double *com);
  *  \param MofImatrix  Center of mass
  */
 void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix);
-
-/** Calculate momentum of all particles in the simulation box.
- *  \param result Momentum of particles.
- */
-void predict_momentum_particles(double *result);
 
 /** Calculate total momentum of the system (particles & LB fluid).
  *  Inputs are bools to include particles and fluid in the linear momentum

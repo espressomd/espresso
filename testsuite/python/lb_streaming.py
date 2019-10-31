@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import itertools
 import numpy as np
 
@@ -61,19 +62,18 @@ LB_PARAMETERS = {
 }
 
 
-class LBStreamingCommon(object):
+class LBStreamingCommon:
 
     """
     Check the streaming step of the LB fluid implementation by setting all populations
-    to zero except one. Relaxation is supressed by choosing appropriate parameters.
+    to zero except one. Relaxation is suppressed by choosing appropriate parameters.
 
     """
     lbf = None
     system = espressomd.System(box_l=[3.0] * 3)
     system.cell_system.skin = 0.4 * AGRID
     system.time_step = TAU
-    grid = np.array([int(system.box_l[0] / AGRID),
-                     int(system.box_l[1] / AGRID), int(system.box_l[2] / AGRID)])
+    grid = np.array(system.box_l / AGRID, dtype=int)
 
     def prepare(self):
         self.system.actors.clear()
@@ -84,7 +84,8 @@ class LBStreamingCommon(object):
         """Set all populations to 0.0.
 
         """
-        for i in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
+        for i in itertools.product(range(self.grid[0]), range(
+                self.grid[1]), range(self.grid[2])):
             self.lbf[i].population = np.zeros(19)
 
     def set_fluid_populations(self, grid_index):
@@ -96,7 +97,8 @@ class LBStreamingCommon(object):
 
     def test_population_streaming(self):
         self.prepare()
-        for grid_index in itertools.product(range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
+        for grid_index in itertools.product(
+                range(self.grid[0]), range(self.grid[1]), range(self.grid[2])):
             self.set_fluid_populations(grid_index)
             self.system.integrator.run(1)
             for n_v in range(19):
@@ -107,9 +109,6 @@ class LBStreamingCommon(object):
                 self.lbf[target_node_index].population = np.zeros(19)
 
 
-@ut.skipIf(
-    not espressomd.has_features('LB'),
-          "Skipping test due to missing features.")
 class LBCPU(ut.TestCase, LBStreamingCommon):
 
     """Test for the CPU implementation of the LB."""
@@ -118,10 +117,7 @@ class LBCPU(ut.TestCase, LBStreamingCommon):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMETERS)
 
 
-@ut.skipIf(not espressomd.gpu_available() or 
-           not espressomd.has_features(
-    'LB_GPU'),
-    "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
 class LBGPU(ut.TestCase, LBStreamingCommon):
 
     """Test for the GPU implementation of the LB."""

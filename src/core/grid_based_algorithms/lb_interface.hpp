@@ -1,18 +1,34 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_LB_INTERFACE
 #define CORE_LB_INTERFACE
 
 #include "config.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
-#include "utils/Vector.hpp"
+#include <utils/Vector.hpp>
 
 /** @brief LB implementation currently active. */
 enum class ActiveLB { NONE, CPU, GPU };
 
 /** @brief Switch determining the type of lattice dynamics. */
 extern ActiveLB lattice_switch;
-
-#if defined(LB) || defined(LB_GPU)
 
 /**
  * @brief Propagate the LB fluid.
@@ -69,17 +85,22 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 void lb_lbfluid_set_tau(double p_tau);
 
 /**
+ * @brief Check if tau is an integer multiple of time_step, throws if not
+ */
+void check_tau_time_step_consistency(double tau, double time_s);
+
+/**
  * @brief Set the global LB density.
  */
 void lb_lbfluid_set_density(double p_dens);
 
 /**
- * @brief Set the global LB vicosity.
+ * @brief Set the global LB viscosity.
  */
 void lb_lbfluid_set_viscosity(double p_visc);
 
 /**
- * @brief Set the global LB bulk vicosity.
+ * @brief Set the global LB bulk viscosity.
  */
 void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc);
 
@@ -107,6 +128,11 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density);
  * @brief Set the LB fluid thermal energy.
  */
 void lb_lbfluid_set_kT(double kT);
+
+/**
+ * @brief Perform LB parameter and boundary velocity checks.
+ */
+void lb_lbfluid_sanity_checks();
 
 /**
  * @brief Invalidate the particle allocation on the GPU.
@@ -183,11 +209,11 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
  * @brief Get the LB fluid velocity for a single node.
  */
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
-const Utils::Vector6d lb_lbnode_get_pi(const Utils::Vector3i &ind);
-const Utils::Vector6d lb_lbnode_get_pi_neq(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
+const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind);
 
 /** calculates the average stress of all nodes by iterating
- * over all nodes and deviding by the number_of_nodes.
+ * over all nodes and dividing by the number_of_nodes.
  */
 const Utils::Vector6d lb_lbfluid_get_stress();
 
@@ -218,9 +244,19 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
  */
 bool lb_lbnode_is_index_valid(const Utils::Vector3i &ind);
 
-void lb_lbfluid_on_lb_params_change(LBParam field);
+/**
+ * @brief returns the shape of the LB fluid lattice
+ */
+Utils::Vector3i lb_lbfluid_get_shape();
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum();
-#endif
+
+/**
+ * @brief Calculates the interpolated fluid velocity on the master process.
+ * @param pos Position at which the velocity is to be calculated.
+ * @retval interpolated fluid velocity.
+ */
+const Utils::Vector3d
+lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos);
 
 #endif

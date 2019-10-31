@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,15 +17,32 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample simulates the Wang-Landau Reaction Ensemble for a harmonic bond.
+Simulate two reacting monomers which are bonded via a harmonic potential.
+The script aborts as soon as the abortion criterion in the Wang-Landau
+algorithm is met: the Wang-Landau simulation runs until the Wang-Landau
+potential has converged and then raises a Warning that it has converged,
+effectively aborting the simulation.
+
+With the setup of the Wang-Landau algorithm in this script, you sample the
+density of states of a three-dimensional reacting harmonic oscillator as
+a function of the two collective variables 1) degree of association and
+2) potential energy.
+
+The recorded Wang-Landau potential (which is updated during the simulation)
+is written to the file :file:`WL_potential_out.dat`.
+
+In this simulation setup the Wang-Landau potential is the density of states.
+You can view the converged Wang-Landau potential e.g. via plotting with
+gnuplot: ``splot "WL_potential_out.dat"``. As expected the three-dimensional
+harmonic oscillator has a density of states which goes like
+:math:`\\sqrt{E_{\\text{pot}}}`.
+
+For a scientific description and different ways to use the algorithm please
+consult https://pubs.acs.org/doi/full/10.1021/acs.jctc.6b00791
 """
-from __future__ import print_function
 import numpy as np
 
 import espressomd
-from espressomd import code_info
-from espressomd import analyze
-from espressomd import integrate
 from espressomd import reaction_ensemble
 from espressomd.interactions import HarmonicBond
 
@@ -41,7 +58,6 @@ system.set_random_state_PRNG()
 np.random.seed(seed=system.seed)
 system.time_step = 0.02
 system.cell_system.skin = 0.4
-system.cell_system.max_num_cells = 2744
 
 
 #############################################################
@@ -73,7 +89,7 @@ system.part[0].add_bond((h, 1))
 
 
 RE = reaction_ensemble.WangLandauReactionEnsemble(
-    temperature=1, exclusion_radius=0)
+    temperature=1, exclusion_radius=0, seed=77)
 RE.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
                 product_types=[1, 2], product_coefficients=[1, 1],
                 default_charges={0: 0, 1: -1, 2: +1})
@@ -83,7 +99,7 @@ system.setup_type_map([0, 1, 2, 3])
 
 # initialize wang_landau
 # generate preliminary_energy_run_results here, this should be done in a
-# seperate simulation without energy reweighting using the update energy
+# separate simulation without energy reweighting using the update energy
 # functions
 np.savetxt("energy_boundaries.dat", np.c_[[0, 1], [0, 0], [9, 9]],
            header="nbar E_min E_max")

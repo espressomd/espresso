@@ -2,17 +2,12 @@ Solutions:
 
 --- enhanced_diffusion.py ---
 
-E1. ESPResSo is C++-based where the maximum possible integer is
-    2^31-1.  If we naively used sys.maxint from Python we would obtain a
-    random number up to 2^63-1 (known as `long' in C++).  This does not
-    fit in an integer and will result in overflow which might crash your
-    simulation or have other unexpected side-effects.
-E2. To determine the bulk diffusive properties of a single particle that
+E1. To determine the bulk diffusive properties of a single particle that
     does not experience long-ranged interactions, one requires a box that
-    is at least larger than the short range interactions. In this case 
-    the box is still quite big.
+    is at least larger than the short range interactions. In this case there
+    are no interactions, so the box is still quite big.
+E2. See solution script
 E3. See solution script
-E4. See solution script
 
 --- rectification_geometry.py ---
 

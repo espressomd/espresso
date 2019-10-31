@@ -1,21 +1,21 @@
 /*
-  Copyright (C) 2014-2018 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "cuda_wrapper.hpp"
 
@@ -77,7 +77,7 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
   r[idx + 2] = p.p[2];
 }
 
-#ifdef LB_GPU
+#ifdef CUDA
 // Velocity
 __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
   int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -174,8 +174,6 @@ void EspressoSystemInterface::split_particle_struct() {
   if (n == 0)
     return;
 
-  ESIF_TRACE(printf("n = %d, m_gpu_npart = %d\n", n, m_gpu_npart));
-
   dim3 grid(n / 512 + 1, 1, 1);
   dim3 block(512, 1, 1);
 
@@ -189,7 +187,7 @@ void EspressoSystemInterface::split_particle_struct() {
   if (!m_needsQGpu && m_needsRGpu)
     hipLaunchKernelGGL(split_kernel_r, dim3(grid), dim3(block), 0, 0,
                        gpu_get_particle_pointer(), m_r_gpu_begin, n);
-#ifdef LB_GPU
+#ifdef CUDA
   if (m_needsVGpu)
     hipLaunchKernelGGL(split_kernel_v, dim3(grid), dim3(block), 0, 0,
                        gpu_get_particle_pointer(), m_v_gpu_begin, n);

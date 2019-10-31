@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,12 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 cimport numpy as np
 cimport cython
 import numpy as np
-from cpython.version cimport PY_MAJOR_VERSION
 from libcpp.vector cimport vector
+include "myconfig.pxi"
+
 
 cdef np.ndarray create_nparray_from_int_list(const List[int] & il):
     """
@@ -61,15 +61,15 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     checking is done on the elements, and all elements are checked. Integers
     are accepted when a float was asked for.
 
-     """
+    """
     # Check whether x is an array/list/tuple or a single value
     if n > 1:
         if hasattr(x, "__getitem__"):
             for i in range(len(x)):
                 if not isinstance(x[i], t):
                     if not ((t == float and is_valid_type(x[i], int))
-                      or (t == float and issubclass(type(x[i]), np.integer))) \
-                      and not (t == int and issubclass(type(x[i]), np.integer)):
+                            or (t == float and issubclass(type(x[i]), np.integer))) \
+                            and not (t == int and issubclass(type(x[i]), np.integer)):
                         raise ValueError(
                             msg + " -- Item " + str(i) + " was of type " + type(x[i]).__name__)
         else:
@@ -79,7 +79,8 @@ cpdef check_type_or_throw_except(x, n, t, msg):
     else:
         # N=1 and a single value
         if not isinstance(x, t):
-            if not (t == float and is_valid_type(x, int)) and not (t == int and issubclass(type(x), np.integer)):
+            if not (t == float and is_valid_type(x, int)) and not (
+                    t == int and issubclass(type(x), np.integer)):
                 raise ValueError(msg + " -- Got an " + type(x).__name__)
 
 
@@ -133,7 +134,7 @@ def to_char_pointer(s):
 
     """
     if isinstance(s, unicode):
-        s = (< unicode > s).encode('utf8')
+        s = ( < unicode > s).encode('utf8')
     return s
 
 
@@ -146,14 +147,12 @@ def to_str(s):
     s : char*
 
     """
-    if type(s) is unicode:
+    if isinstance(s, unicode):
         return < unicode > s
-    elif PY_MAJOR_VERSION >= 3 and isinstance(s, bytes):
-        return (< bytes > s).decode('ascii')
-    elif isinstance(s, unicode):
-        return unicode(s)
+    elif isinstance(s, bytes):
+        return ( < bytes > s).decode('ascii')
     else:
-        return s
+        raise ValueError('Unknown string type {}'.format(type(s)))
 
 
 class array_locked(np.ndarray):
@@ -231,6 +230,18 @@ Use numpy.copy(<ESPResSo array property>) to get a writable copy."
     def __ixor__(self, val):
         raise ValueError(array_locked.ERR_MSG)
 
+
+cdef make_array_locked(Vector3d v):
+    return array_locked([v[0], v[1], v[2]])
+
+
+cdef Vector3d make_Vector3d(a):
+    cdef Vector3d v
+    for i, ai in enumerate(a):
+        v[i] = ai
+    return v
+
+
 cpdef handle_errors(msg):
     """
     Gathers runtime errors.
@@ -242,13 +253,15 @@ cpdef handle_errors(msg):
 
     """
     errors = mpi_gather_runtime_errors()
+    # print all errors and warnings
     for err in errors:
         err.print()
 
+    # raise an exception with the first error
     for err in errors:
-    # Cast because cython does not support typed enums completely
-        if < int > err.level() == <int > ERROR:
-            raise Exception("{}: {}".format(msg, err.format()))
+        # Cast because cython does not support typed enums completely
+        if < int > err.level() == < int > ERROR:
+            raise Exception("{}: {}".format(msg, to_str(err.format())))
 
 
 def nesting_level(obj):
@@ -274,15 +287,36 @@ def is_valid_type(value, t):
     Extended checks for numpy int and float types.
 
     """
-
+    if value is None:
+        return False
     if t == int:
         return isinstance(value, (int, np.integer, np.long))
     elif t == float:
         if hasattr(np, 'float128'):
-            return isinstance(value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
-        return isinstance(value, (float, np.float16, np.float32, np.float64, np.longdouble))
+            return isinstance(
+                value, (float, np.float16, np.float32, np.float64, np.float128, np.longdouble))
+        return isinstance(
+            value, (float, np.float16, np.float32, np.float64, np.longdouble))
     else:
         return isinstance(value, t)
 
-cdef make_array_locked(const Vector3d & v):
-    return array_locked([v[0], v[1], v[2]])
+
+def requires_experimental_features(reason):
+    """Class decorator which makes instantiation conditional on EXPERIMENTAL_FEATURES being defined in myconfig.hpp."""
+
+    def exception_raiser(self, *args, **kwargs):
+        raise Exception(
+            "Class " +
+            self.__class__.__name__ +
+            " is experimental. Define EXPERIMENTAL_FEATURES in myconfig.hpp to use it.\nReason: " +
+            reason)
+
+    def modifier(cls):
+        cls.__init__ = exception_raiser
+        return cls
+
+    IF not EXPERIMENTAL_FEATURES:
+        return modifier
+    ELSE: 
+        # Return original class
+        return lambda x: x

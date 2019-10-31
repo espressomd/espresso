@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,11 +20,10 @@
 """
 Testmodule for the VTF file writing.
 """
-import os
 import sys
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import interactions
 from espressomd.io.writer import vtf
 import tempfile
@@ -42,7 +41,7 @@ class CommonTests(ut.TestCase):
     # positions are folded in the core when writing out and we cannot directly
     # compare positions in the dataset and where particles were set. One would
     # need to unfold the positions of the hdf5 file.
-    system.box_l = [npart, npart, npart]
+    system.box_l = 3 * [npart]
     system.cell_system.skin = 0.4
     system.time_step = 0.01
     written_pos = None
@@ -51,9 +50,7 @@ class CommonTests(ut.TestCase):
 
     types_to_write = None
     for i in range(npart):
-        system.part.add(id=i, pos=np.array([float(i),
-                                            float(i),
-                                            float(i)]),
+        system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
                         v=np.array([1.0, 2.0, 3.0]), type=1 + (-1)**i)
 
     system.bonded_inter.add(interactions.FeneBond(k=1., d_r_max=10.0))
@@ -68,7 +65,7 @@ class CommonTests(ut.TestCase):
         if self.types_to_write == 'all':
             simulation_pos = np.array(
                 [((i), float(i), float(i), float(i)) for i in range(npart)])
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             simulation_pos = np.array(
                 [((i * 2), float(i * 2), float(i * 2), float(i * 2)) for i in range(npart // 2)])
 
@@ -80,7 +77,7 @@ class CommonTests(ut.TestCase):
         """Test if bonds have been written properly: just look at number of bonds"""
         if self.types_to_write == 'all':
             simulation_bonds = np.array([1, 2, 3])  # the two bonded particles
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             types = [2]
             simulation_bonds = np.array(2)  # only this one is type 2
 
@@ -93,7 +90,7 @@ class CommonTests(ut.TestCase):
         if self.types_to_write == 'all':
             simulation_atoms = np.array(
                 [((i), (1 + (-1)**i)) for i in range(npart)])
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             simulation_atoms = np.array([((i * 2), 2)
                                          for i in range(npart // 2)])
 
@@ -164,13 +161,12 @@ class VCFTestType(CommonTests):
                 usecols=[1])  # just the second bonded member
             fp.seek(0)
             cls.written_atoms = np.loadtxt(
-                fp, skiprows=1, comments="b", usecols=[
-                    1, 7])  # just the part_ID and type_ID
+                fp, skiprows=1, comments="b",
+                usecols=[1, 7])  # just the part_ID and type_ID
 
 
 if __name__ == "__main__":
     suite = ut.TestLoader().loadTestsFromTestCase(VCFTestAll)
     suite.addTests(ut.TestLoader().loadTestsFromTestCase(VCFTestType))
-
     result = ut.TextTestRunner(verbosity=4).run(suite)
     sys.exit(not result.wasSuccessful())

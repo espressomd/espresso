@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Sample for the usage of H5MD trajectory writing in ESPResSo.
+Write ESPResSo trajectories in the H5MD format. See :ref:`Writing H5MD-files`.
 """
 
-import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd.io.writer import h5md  # pylint: disable=import-error
 from espressomd import polymer
 from espressomd import interactions
@@ -34,8 +33,17 @@ system.cell_system.skin = 0.4
 
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
-polymer.create_polymer(
-    N_P=5, bond_length=1.0, MPC=50, bond=fene, start_pos=[1., 1., 1.])
+
+positions = polymer.positions(n_polymers=5,
+                              beads_per_chain=50,
+                              bond_length=1.0,
+                              seed=1234)
+for polymer in positions:
+    for i, pos in enumerate(polymer):
+        id = len(system.part)
+        system.part.add(id=id, pos=pos)
+        if i > 0:
+            system.part[id].add_bond((fene, id - 1))
 
 system.integrator.run(steps=0)
 h5_file = h5md.H5md(filename="sample.h5", write_pos=True, write_vel=True,

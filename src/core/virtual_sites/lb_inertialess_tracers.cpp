@@ -1,48 +1,64 @@
 /*
-Copyright (C) 2010-2018 The ESPResSo project
-
-This file is part of ESPResSo.
-
-ESPResSo is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-ESPResSo is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /// \file
 /// \brief Main of the Bayreuth Immersed-Boundary implementation
 
-#include "config.hpp"
+#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
+#include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "grid_based_algorithms/lbboundaries.hpp"
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
-#include "particle_data.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
+
+#include <utils/math/sqr.hpp>
 
 // ****** Functions for internal use ********
 
 void CoupleIBMParticleToFluid(Particle *p);
 void ParticleVelocitiesFromLB_CPU();
 bool IsHalo(int indexCheck);
-void GetIBMInterpolatedVelocity(double const *p, double *v, double *forceAdded);
+void GetIBMInterpolatedVelocity(const Utils::Vector3d &p, double *v,
+                                double *forceAdded);
 
 // ***** Internal variables ******
 
 bool *isHaloCache = nullptr;
+
+namespace {
+bool in_local_domain(Utils::Vector3d const &pos) {
+  auto const lblattice = lb_lbfluid_get_lattice();
+  auto const my_left = local_geo.my_left();
+  auto const my_right = local_geo.my_right();
+
+  return (pos[0] >= my_left[0] - 0.5 * lblattice.agrid &&
+          pos[0] < my_right[0] + 0.5 * lblattice.agrid &&
+          pos[1] >= my_left[1] - 0.5 * lblattice.agrid &&
+          pos[1] < my_right[1] + 0.5 * lblattice.agrid &&
+          pos[2] >= my_left[2] - 0.5 * lblattice.agrid &&
+          pos[2] < my_right[2] + 0.5 * lblattice.agrid);
+}
+} // namespace
 
 /****************
   IBM_ForcesIntoFluid_CPU
@@ -77,36 +93,11 @@ void IBM_ForcesIntoFluid_CPU() {
     for (int i = 0; i < np; i++) {
       // for ghost particles we have to check if they lie
       // in the range of the local lattice nodes
-      if (p[i].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          p[i].r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          p[i].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          p[i].r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          p[i].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          p[i].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
-
+      if (in_local_domain(p[i].r.p)) {
         if (p[i].p.is_virtual)
           CoupleIBMParticleToFluid(&p[i]);
       }
     }
-  }
-}
-
-/***************
-  IBM_ResetLBForces_CPU
-Called from the integrate loop directly after the IBM particle update
-Usually the reset would be done by Espresso after the LB update. But we need to
-keep the forces till after the position update for the f/2 term
-****************/
-
-void IBM_ResetLBForces_CPU() {
-  for (int i = 0; i < lblattice.halo_grid_volume; ++i) {
-    // unit conversion: force density
-    lbfields[i].force_density[0] = lbpar.ext_force_density[0] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[1] = lbpar.ext_force_density[1] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
-    lbfields[i].force_density[2] = lbpar.ext_force_density[2] *
-                                   pow(lbpar.agrid, 2) * lbpar.tau * lbpar.tau;
   }
 }
 
@@ -120,7 +111,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
   if (lattice_switch == ActiveLB::CPU)
     ParticleVelocitiesFromLB_CPU();
-#ifdef LB_GPU
+#ifdef CUDA
   if (lattice_switch == ActiveLB::GPU)
     ParticleVelocitiesFromLB_GPU(particles);
 #endif
@@ -155,10 +146,6 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
         }
       }
   }
-
-  // This function spreads the resort_particles variable across the nodes
-  // If one node wants to resort, all nodes do it
-  announce_resort_particles();
 }
 
 /*************
@@ -177,8 +164,7 @@ void CoupleIBMParticleToFluid(Particle *p) {
   // Get indices and weights of affected nodes using discrete delta function
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(p->r.p, node_index, delta, my_left,
-                                    local_box_l);
+  lblattice.map_position_to_lattice(p->r.p, node_index, delta);
 
   // Loop over all affected nodes
   for (int z = 0; z < 2; z++) {
@@ -208,70 +194,43 @@ Very similar to the velocity interpolation done in standard Espresso, except
 that we add the f/2 contribution - only for CPU
 *******************/
 
-void GetIBMInterpolatedVelocity(double const *p, double *const v,
-                                double *const forceAdded) {
-  Lattice::index_t index;
-  double local_rho, local_j[3], interpolated_u[3];
-  double modes[19];
-  int x, y, z;
-
-  double lbboundary_mindist, distvec[3];
-  Utils::Vector3d pos;
-
-#ifdef LB_BOUNDARIES
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-
-#else
-  pos[0] = p[0];
-  pos[1] = p[1];
-  pos[2] = p[2];
-#endif
-
+void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
+                                double *forceAdded) {
   /* determine elementary lattice cell surrounding the particle
    and the relative position of the particle in this cell */
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
-  lblattice.map_position_to_lattice(pos, node_index, delta, my_left,
-                                    local_box_l);
+  lblattice.map_position_to_lattice(pos, node_index, delta);
 
   /* calculate fluid velocity at particle's position
    this is done by linear interpolation
    (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  interpolated_u[0] = interpolated_u[1] = interpolated_u[2] = 0.0;
+  Utils::Vector3d interpolated_u = {};
   // This for the f/2 contribution to the velocity
   forceAdded[0] = forceAdded[1] = forceAdded[2] = 0;
 
-  for (z = 0; z < 2; z++) {
-    for (y = 0; y < 2; y++) {
-      for (x = 0; x < 2; x++) {
-
-        index = node_index[(z * 2 + y) * 2 + x];
+  for (int z = 0; z < 2; z++) {
+    for (int y = 0; y < 2; y++) {
+      for (int x = 0; x < 2; x++) {
+        auto const index = node_index[(z * 2 + y) * 2 + x];
         const auto &f = lbfields[index].force_density_buf;
+
+        double local_density;
+        Utils::Vector3d local_j;
 
 // This can be done easier without copying the code twice
 // We probably can even set the boundary velocity directly
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
-          local_rho = lbpar.rho;
-          local_j[0] =
-              lbpar.rho *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[0];
-          local_j[1] =
-              lbpar.rho *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[1];
-          local_j[2] =
-              lbpar.rho *
-              (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
-                  .velocity()[2];
+          local_density = lbpar.density;
+          local_j = lbpar.density *
+                    (*LBBoundaries::lbboundaries[lbfields[index].boundary - 1])
+                        .velocity();
         } else
 #endif
         {
-          auto const modes = lb_calc_modes(index);
-          local_rho = lbpar.rho + modes[0];
+          auto const modes = lb_calc_modes(index, lbfluid);
+          local_density = lbpar.density + modes[0];
 
           // Add the +f/2 contribution!!
           // Guo et al. PRE 2002
@@ -293,34 +252,30 @@ void GetIBMInterpolatedVelocity(double const *p, double *const v,
 
           forceAdded[0] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[0] - fExt[0]) / 2 /
-                           (local_rho);
+                           (local_density);
           forceAdded[1] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[1] - fExt[1]) / 2 /
-                           (local_rho);
+                           (local_density);
           forceAdded[2] += delta[3 * x + 0] * delta[3 * y + 1] *
                            delta[3 * z + 2] * (f[2] - fExt[2]) / 2 /
-                           (local_rho);
+                           (local_density);
         }
 
         // Interpolate velocity
         interpolated_u[0] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[0] / (local_rho);
+                             delta[3 * z + 2] * local_j[0] / (local_density);
         interpolated_u[1] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[1] / (local_rho);
+                             delta[3 * z + 2] * local_j[1] / (local_density);
         interpolated_u[2] += delta[3 * x + 0] * delta[3 * y + 1] *
-                             delta[3 * z + 2] * local_j[2] / (local_rho);
+                             delta[3 * z + 2] * local_j[2] / (local_density);
       }
     }
   }
-#ifdef LB_BOUNDARIES
+
   v[0] = interpolated_u[0];
   v[1] = interpolated_u[1];
   v[2] = interpolated_u[2];
-#else
-  v[0] = interpolated_u[0];
-  v[1] = interpolated_u[1];
-  v[2] = interpolated_u[2];
-#endif
+
   v[0] *= lbpar.agrid / lbpar.tau;
   v[1] *= lbpar.agrid / lbpar.tau;
   v[2] *= lbpar.agrid / lbpar.tau;
@@ -376,7 +331,7 @@ void ParticleVelocitiesFromLB_CPU() {
         double dummy[3];
         // Get interpolated velocity and store in the force (!) field
         // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p.data(), p[j].f.f.data(), dummy);
+        GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f.data(), dummy);
       }
   }
 
@@ -389,17 +344,12 @@ void ParticleVelocitiesFromLB_CPU() {
       // This criterion include the halo on the left, but excludes the halo on
       // the right
       // Try if we have to use *1.5 on the right
-      if (p[j].r.p[0] >= my_left[0] - 0.5 * lblattice.agrid[0] &&
-          p[j].r.p[0] < my_right[0] + 0.5 * lblattice.agrid[0] &&
-          p[j].r.p[1] >= my_left[1] - 0.5 * lblattice.agrid[1] &&
-          p[j].r.p[1] < my_right[1] + 0.5 * lblattice.agrid[1] &&
-          p[j].r.p[2] >= my_left[2] - 0.5 * lblattice.agrid[2] &&
-          p[j].r.p[2] < my_right[2] + 0.5 * lblattice.agrid[2]) {
+      if (in_local_domain(p[j].r.p)) {
         if (p[j].p.is_virtual) {
           double dummy[3];
           double force[3] = {0, 0,
                              0}; // The force stemming from the ghost particle
-          GetIBMInterpolatedVelocity(p[j].r.p.data(), dummy, force);
+          GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
 
           // Rescale and store in the force field of the particle (for
           // communication, see below)
@@ -426,7 +376,8 @@ void ParticleVelocitiesFromLB_CPU() {
   // real particles
   // This could be solved by keeping a backup of the local forces before this
   // operation is attempted
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                     GHOSTTRANS_FORCE);
 
   // Transfer to velocity field
   for (int c = 0; c < local_cells.n; c++) {

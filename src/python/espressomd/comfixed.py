@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
@@ -32,8 +31,7 @@ class ComFixed(ScriptInterfaceHelper):
     Parameters
     ----------
     types : array_like
-        List of types of which the center of mass
-        should be fixed.
+        List of types for which the center of mass should be fixed.
     """
 
     _so_name = "ComFixed"

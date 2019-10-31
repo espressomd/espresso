@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,9 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
-
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 
 import espressomd
@@ -49,7 +48,6 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part.clear()
 
     # Test Harmonic Bond
-
     def test_harmonic(self):
         hb_k = 5
         hb_r_0 = 1.5
@@ -59,9 +57,9 @@ class InteractionsBondedTest(ut.TestCase):
             k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
         self.run_test(hb,
                       lambda r: tests_common.harmonic_force(
-                      scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
+                          scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
                       lambda r: tests_common.harmonic_potential(
-                      scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
+                          scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
                       0.01, hb_r_cut, True)
 
     # Test Fene Bond
@@ -74,13 +72,12 @@ class InteractionsBondedTest(ut.TestCase):
             k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0)
         self.run_test(fene,
                       lambda r: tests_common.fene_force(
-                      scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
+                          scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
                       lambda r: tests_common.fene_potential(
-                      scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
+                          scalar_r=r, k=fene_k, d_r_max=fene_d_r_max, r_0=fene_r_0),
                       0.01, fene_r_0 + fene_d_r_max, True)
 
-    @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
-               "ELECTROSTATICS feature is not available, skipping coulomb test.")
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb(self):
         coulomb_k = 1
         q1 = 1
@@ -92,9 +89,8 @@ class InteractionsBondedTest(ut.TestCase):
             lambda r: tests_common.coulomb_force(r, coulomb_k, q1, q2),
             lambda r: tests_common.coulomb_potential(r, coulomb_k, q1, q2),
             0.01, self.system.box_l[0] / 3)
-        
-    @ut.skipIf(not espressomd.has_features(["ELECTROSTATICS"]),
-               "ELECTROSTATICS feature is not available, skipping coulomb short range test.")
+
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_coulomb_sr(self):
         # with negated actual charges and only short range int: cancels out all
         # interactions
@@ -103,13 +99,13 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.part[0].q = q1
         self.system.part[1].q = q2
         r_cut = 2
-        
+
         sr_solver = espressomd.electrostatics.DH(
             prefactor=2, kappa=0.8, r_cut=r_cut)
         self.system.actors.add(sr_solver)
         coulomb_sr = espressomd.interactions.BondedCoulombSRBond(
             q1q2=- q1 * q2)
-        
+
         # no break test, bond can't break. it extends as far as the short range
         # part of the electrostatics actor
         self.run_test(
@@ -119,15 +115,16 @@ class InteractionsBondedTest(ut.TestCase):
             0.01,
             r_cut,
             test_breakage=False)
-            
+
     def test_quartic(self):
-        """Tests the Quartic bonded interaction by comparing the potential and force against the analytic values"""
-        
+        """Tests the Quartic bonded interaction by comparing the potential and
+           force against the analytic values"""
+
         quartic_k0 = 2.
         quartic_k1 = 5.
         quartic_r = 0.5
         quartic_r_cut = self.system.box_l[0] / 3.
-        
+
         quartic = espressomd.interactions.QuarticBond(k0=quartic_k0,
                                                       k1=quartic_k1,
                                                       r=quartic_r,
@@ -135,19 +132,13 @@ class InteractionsBondedTest(ut.TestCase):
 
         self.run_test(quartic,
                       lambda r: tests_common.quartic_force(
-                      k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
+                          k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
                       lambda r: tests_common.quartic_potential(
-                      k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
+                          k0=quartic_k0, k1=quartic_k1, r=quartic_r, r_cut=quartic_r_cut, scalar_r=r),
                       0.01, quartic_r_cut, True)
 
-    def run_test(
-        self,
-        bond_instance,
-     force_func,
-     energy_func,
-     min_dist,
-     cutoff,
-     test_breakage=False):
+    def run_test(self, bond_instance, force_func, energy_func, min_dist,
+                 cutoff, test_breakage=False):
         self.system.bonded_inter.add(bond_instance)
         self.system.part[0].bonds = ((bond_instance, 1),)
 
@@ -169,14 +160,14 @@ class InteractionsBondedTest(ut.TestCase):
 
             # Check that energies match, ...
             self.assertAlmostEqual(E_sim, E_ref)
-            # force equals minus the counter-force  ...
+            # force equals minus the counter-force ...
             np.testing.assert_allclose(f0_sim, -f1_sim, 1E-12)
             # and has correct value.
             np.testing.assert_almost_equal(f1_sim, f1_ref)
 
             # Pressure
-            # Isotropic pressure =1/3 Trace Stress tensor
-            # =1/(3V) sum_i f_i r_i
+            # Isotropic pressure = 1/3 Trace Stress tensor
+            # = 1/(3V) sum_i f_i r_i
             # where F is the force between the particles and r their distance
             p_expected = 1. / 3. * \
                 np.dot(f1_sim, self.axis * dist) / self.system.volume()
@@ -191,9 +182,9 @@ class InteractionsBondedTest(ut.TestCase):
             np.testing.assert_allclose(
                 p_tensor_sim, p_tensor_expected, atol=1E-12)
         if test_breakage:
-            self.system.part[1].pos = self.system.part[
-                0].pos + self.axis * cutoff * (1.01)
-            with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
+            self.system.part[1].pos = self.system.part[0].pos \
+                + self.axis * cutoff * (1.01)
+            with self.assertRaisesRegex(Exception, "Encountered errors during integrate"):
                 self.system.integrator.run(recalc_forces=True, steps=0)
 
 

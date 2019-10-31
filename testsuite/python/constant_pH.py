@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,11 +19,9 @@
 
 """Testmodule for the Reaction Ensemble.
 """
-import sys
-import os
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import reaction_ensemble
 
 
@@ -52,22 +50,21 @@ class ReactionEnsembleTest(ut.TestCase):
     system.time_step = 0.01
     RE = reaction_ensemble.ConstantpHEnsemble(
         temperature=1.0,
-        exclusion_radius=1)
+        exclusion_radius=1, seed=44)
 
     @classmethod
     def setUpClass(cls):
-        """Prepare a testsystem."""
         for i in range(0, 2 * cls.N0, 2):
-            cls.system.part.add(id=i, pos=np.random.random(
-                3) * cls.system.box_l, type=cls.type_A)
+            cls.system.part.add(id=i, pos=np.random.random(3) *
+                                cls.system.box_l, type=cls.type_A)
             cls.system.part.add(id=i + 1, pos=np.random.random(3) *
                                 cls.system.box_l, type=cls.type_H)
 
         cls.RE.add_reaction(
-            gamma=cls.Ka, reactant_types=[
-                cls.type_HA], reactant_coefficients=[1], product_types=[
-                cls.type_A, cls.type_H], product_coefficients=[
-                1, 1], default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
+            gamma=cls.Ka, reactant_types=[cls.type_HA],
+            reactant_coefficients=[1], product_types=[cls.type_A, cls.type_H],
+            product_coefficients=[1, 1],
+            default_charges={cls.type_HA: 0, cls.type_A: -1, cls.type_H: +1})
         cls.RE.constant_pH = cls.pH
 
     @classmethod
@@ -76,30 +73,27 @@ class ReactionEnsembleTest(ut.TestCase):
 
     def test_ideal_titration_curve(self):
         N0 = ReactionEnsembleTest.N0
-        temperature = ReactionEnsembleTest.temperature
         type_A = ReactionEnsembleTest.type_A
         type_H = ReactionEnsembleTest.type_H
         type_HA = ReactionEnsembleTest.type_HA
-        box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         RE = ReactionEnsembleTest.RE
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
-        RE.reaction(5 * N0)
+        RE.reaction(40 * N0)
 
-        volume = np.prod(self.system.box_l)  # cuboid box
         average_NH = 0.0
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 1000
-        for i in range(num_samples):
-            RE.reaction(2)
+        for _ in range(num_samples):
+            RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
             average_NHA += system.number_of_particles(type=type_HA)
             average_NA += system.number_of_particles(type=type_A)
-        average_NH /= num_samples
-        average_NA /= num_samples
-        average_NHA /= num_samples
+        average_NH /= float(num_samples)
+        average_NA /= float(num_samples)
+        average_NHA /= float(num_samples)
         average_alpha = average_NA / float(N0)
         # note you cannot calculate the pH via -log10(<NH>/volume) in the
         # constant pH ensemble, since the volume is totally arbitrary and does
@@ -112,7 +106,7 @@ class ReactionEnsembleTest(ut.TestCase):
         # relative error
         self.assertLess(
             rel_error_alpha,
-            0.07,
+            0.015,
             msg="\nDeviation from ideal titration curve is too big for the given input parameters.\n"
             + "  pH: " + str(pH)
             + "  pKa: " + str(pKa)
@@ -126,5 +120,4 @@ class ReactionEnsembleTest(ut.TestCase):
 
 
 if __name__ == "__main__":
-    print("Features: ", espressomd.features())
     ut.main()

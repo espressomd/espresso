@@ -1,82 +1,77 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "bonded_interaction_data.hpp"
-#include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
+
+#include <utils/constants.hpp>
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-/** calculate the maximal cutoff of bonded interactions, required to
-    determine the cell size for communication. */
-void recalc_maximal_cutoff_bonded() {
-  int i;
-  double max_cut_tmp;
+double recalc_maximal_cutoff_bonded() {
+  auto max_cut_bonded = -1.;
 
-  max_cut_bonded = 0.0;
-
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
+  for (auto const &bonded_ia_param : bonded_ia_params) {
+    switch (bonded_ia_param.type) {
     case BONDED_IA_FENE:
-      max_cut_tmp =
-          bonded_ia_params[i].p.fene.r0 + bonded_ia_params[i].p.fene.drmax;
-      if (max_cut_bonded < max_cut_tmp)
-        max_cut_bonded = max_cut_tmp;
+      max_cut_bonded =
+          std::max(max_cut_bonded,
+                   bonded_ia_param.p.fene.r0 + bonded_ia_param.p.fene.drmax);
       break;
     case BONDED_IA_HARMONIC:
-      if ((bonded_ia_params[i].p.harmonic.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.harmonic.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.harmonic.r_cut;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.harmonic.r_cut);
       break;
     case BONDED_IA_THERMALIZED_DIST:
-      if ((bonded_ia_params[i].p.thermalized_bond.r_cut > 0) &&
-          (max_cut_bonded < bonded_ia_params[i].p.thermalized_bond.r_cut))
-        max_cut_bonded = bonded_ia_params[i].p.thermalized_bond.r_cut;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.thermalized_bond.r_cut);
       break;
     case BONDED_IA_RIGID_BOND:
-      if (max_cut_bonded < sqrt(bonded_ia_params[i].p.rigid_bond.d2))
-        max_cut_bonded = sqrt(bonded_ia_params[i].p.rigid_bond.d2);
+      max_cut_bonded =
+          std::max(max_cut_bonded, std::sqrt(bonded_ia_param.p.rigid_bond.d2));
       break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_LENGTH &&
-          max_cut_bonded < bonded_ia_params[i].p.tab.pot->cutoff())
-        max_cut_bonded = bonded_ia_params[i].p.tab.pot->cutoff();
+    case BONDED_IA_TABULATED_DISTANCE:
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.tab.pot->cutoff());
       break;
-#endif
-#ifdef IMMERSED_BOUNDARY
     case BONDED_IA_IBM_TRIEL:
-      if (max_cut_bonded < bonded_ia_params[i].p.ibm_triel.maxDist)
-        max_cut_bonded = bonded_ia_params[i].p.ibm_triel.maxDist;
+      max_cut_bonded =
+          std::max(max_cut_bonded, bonded_ia_param.p.ibm_triel.maxDist);
       break;
-#endif
     default:
       break;
     }
   }
 
-  /* Bond angle and dihedral potentials do not contain a cutoff
-     intrinsically. The cutoff for these potentials depends on the
-     bond length potentials. For bond angle potentials nothing has to
-     be done (it is assumed, that particles participating in a bond
-     angle or dihedral potential are bound to each other by some bond
-     length potential (FENE, Harmonic or tabulated)). For dihedral
-     potentials (both normal and tabulated ones) it follows, that the
-     cutoff is TWO TIMES the maximal cutoff! That's what the following
-     lines assure. */
-  max_cut_tmp = 2.0 * max_cut_bonded;
-  for (i = 0; i < bonded_ia_params.size(); i++) {
-    switch (bonded_ia_params[i].type) {
+  /* dihedrals: the central particle is indirectly connected to the fourth
+   * particle via the third particle, so we have to double the cutoff */
+  for (auto const &bonded_ia_param : bonded_ia_params) {
+    switch (bonded_ia_param.type) {
     case BONDED_IA_DIHEDRAL:
-      max_cut_bonded = max_cut_tmp;
+    case BONDED_IA_TABULATED_DIHEDRAL:
+      max_cut_bonded *= 2;
       break;
-#ifdef TABULATED
-    case BONDED_IA_TABULATED:
-      if (bonded_ia_params[i].p.tab.type == TAB_BOND_DIHEDRAL)
-        max_cut_bonded = max_cut_tmp;
-      break;
-#endif
     default:
       break;
     }
   }
+
+  return max_cut_bonded;
 }
 
 void make_bond_type_exist(int type) {

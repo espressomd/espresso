@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *
  *  Routines, row decomposition, data structures and communication for the
@@ -29,9 +29,9 @@
 
 #if defined(P3M) || defined(DP3M)
 
-#include "utils/math/permute_ifield.hpp"
+#include <utils/math/permute_ifield.hpp>
 using Utils::permute_ifield;
-#include "utils/index.hpp"
+#include <utils/index.hpp>
 using Utils::get_linear_index;
 #include <utils/memory.hpp>
 
@@ -53,6 +53,7 @@ using Utils::get_linear_index;
 #define REQ_FFT_BACK 302
 /*@}*/
 
+namespace {
 /** This ugly function does the bookkeeping: which nodes have to
  *  communicate to each other, when you change the node grid.
  *  Changing the domain decomposition requires communication. This
@@ -68,21 +69,18 @@ using Utils::get_linear_index;
  *  other. see e.g. \ref calc_2d_grid in \ref grid.cpp for how to do
  *  this.).
  *
- * \param[in]  grid1       The node grid you start with.
- * \param[in]  grid2       The node grid you want to have.
- * \param[in]  node_list1  Linear node index list for grid1.
- * \param[out] node_list2  Linear node index list for grid2.
- * \param[out] group       Communication group (node identity list) for the
- *                         calling node.
- * \param[out] pos         Positions of the nodes in grid2
- * \param[out] my_pos      Position of comm.rank() in grid2.
- * \return Size of the communication group.
+ *  \param[in]  grid1       The node grid you start with.
+ *  \param[in]  grid2       The node grid you want to have.
+ *  \param[in]  node_list1  Linear node index list for grid1.
+ *  \param[out] node_list2  Linear node index list for grid2.
+ *  \param[out] pos         Positions of the nodes in grid2
+ *  \param[out] my_pos      Position of comm.rank() in grid2.
+ *  \return Size of the communication group.
  */
-namespace {
 boost::optional<std::vector<int>>
 find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
                  int const *node_list1, int *node_list2, int *pos, int *my_pos,
-                 const boost::mpi::communicator &comm) {
+                 boost::mpi::communicator const &comm) {
   int i;
   /* communication group cell size on grid1 and grid2 */
   int s1[3], s2[3];
@@ -363,10 +361,11 @@ void pack_block_permute2(double const *const in, double *const out,
 }
 
 /** Communicate the grid data according to the given forward FFT plan.
- * \param plan FFT communication plan.
- * \param in   input mesh.
- * \param out  output mesh.
- * \param fft    FFT communication plan.
+ *  \param plan   FFT communication plan.
+ *  \param in     input mesh.
+ *  \param out    output mesh.
+ *  \param fft    FFT communication plan.
+ *  \param comm   MPI communicator.
  */
 void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
                     fft_data_struct &fft,
@@ -390,11 +389,12 @@ void forw_grid_comm(fft_forw_plan plan, const double *in, double *out,
 }
 
 /** Communicate the grid data according to the given backward FFT plan.
- * \param plan_f Forward FFT plan.
- * \param plan_b Backward FFT plan.
- * \param in     input mesh.
- * \param out    output mesh.
- * \param fft    FFT communication plan.
+ *  \param plan_f Forward FFT plan.
+ *  \param plan_b Backward FFT plan.
+ *  \param in     input mesh.
+ *  \param out    output mesh.
+ *  \param fft    FFT communication plan.
+ *  \param comm   MPI communicator.
  */
 void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
                     const double *in, double *out, fft_data_struct &fft,
@@ -585,10 +585,6 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     permute_ifield(fft.plan[i].new_mesh, 3, -(fft.plan[i].n_permute));
     permute_ifield(fft.plan[i].start, 3, -(fft.plan[i].n_permute));
     fft.plan[i].n_ffts = fft.plan[i].new_mesh[0] * fft.plan[i].new_mesh[1];
-
-    /* FFT_TRACE( printf("%d: comm_group( ",comm.rank() )); */
-    /* FFT_TRACE( for(j=0; j< fft.plan[i].g_size; j++) printf("%d ")); */
-    /* FFT_TRACE( printf(")\n")); */
 
     /* === send/recv block specifications === */
     for (j = 0; j < fft.plan[i].group.size(); j++) {

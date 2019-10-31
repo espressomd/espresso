@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function, absolute_import
 from espressomd.system cimport *
 # Here we create something to handle particles
 cimport numpy as np
-from espressomd.utils cimport Vector3d, List, Span
+from espressomd.utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
 from libcpp.memory cimport unique_ptr
+from libc cimport stdint
 
 include "myconfig.pxi"
 
@@ -31,6 +31,9 @@ include "myconfig.pxi"
 
 cdef extern from "particle_data.hpp":
     # DATA STRUCTURES
+    stdint.uint8_t ROTATION_X
+    stdint.uint8_t ROTATION_Y
+    stdint.uint8_t ROTATION_Z
 
     # Note: Conditional compilation is not possible within ctypedef blocks.
     # Therefore, only member variables are imported here, which are always compiled into Espresso.
@@ -41,6 +44,7 @@ cdef extern from "particle_data.hpp":
         int    mol_id
         int    type
         double mass
+        stdint.uint8_t rotation
 
     ctypedef struct particle_position "ParticlePosition":
         Vector3d p
@@ -53,7 +57,7 @@ cdef extern from "particle_data.hpp":
         Vector3d v
 
     ctypedef struct particle_local "ParticleLocal":
-        int i[3]
+        Vector3i i
 
     ctypedef struct particle "Particle":
         particle_properties p
@@ -66,21 +70,12 @@ cdef extern from "particle_data.hpp":
         Vector3d calc_dip()
 
     IF ENGINE:
-        IF LB or LB_GPU:
-            ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
-                bool swimming
-                double f_swim
-                double v_swim
-                int push_pull
-                double dipole_length
-                double v_center[3]
-                double v_source[3]
-                double rotational_friction
-        ELSE:
-            ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
-                bool swimming
-                double f_swim
-                double v_swim
+        ctypedef struct particle_parameters_swimming "ParticleParametersSwimming":
+            bool swimming
+            double f_swim
+            double v_swim
+            int push_pull
+            double dipole_length
 
     # Setter/getter/modifier functions functions
     void prefetch_particle_data(vector[int] ids)
@@ -105,7 +100,6 @@ cdef extern from "particle_data.hpp":
 
     IF ROTATION:
         void set_particle_rotation(int part, int rot)
-        void pointer_to_rotation(const particle * p, const int * & res)
 
     void set_particle_q(int part, double q)
 
@@ -131,10 +125,6 @@ cdef extern from "particle_data.hpp":
         void set_particle_out_direction(int part, double out_direction[3])
         void pointer_to_out_direction(particle * p, double * & res)
 
-    IF AFFINITY:
-        void set_particle_affinity(int part, double bond_site[3])
-        void pointer_to_bond_site(particle * p, double * & res)
-
     IF MASS:
         void pointer_to_mass(particle * p, double * & res)
 
@@ -146,7 +136,7 @@ cdef extern from "particle_data.hpp":
 
     IF VIRTUAL_SITES:
         void set_particle_virtual(int part, int isVirtual)
-        void pointer_to_virtual(const particle * P, const int * & res)
+        void pointer_to_virtual(const particle * P, const bint * & res)
 
     IF LANGEVIN_PER_PARTICLE:
         void set_particle_temperature(int part, double T)
@@ -170,21 +160,21 @@ cdef extern from "particle_data.hpp":
     IF VIRTUAL_SITES_RELATIVE:
         void pointer_to_vs_relative(const particle * P, const int * & res1, const double * & res2, const double * & res3)
         void pointer_to_vs_quat(const particle * P, const double * & res)
-        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, double * rel_ori)
-        void set_particle_vs_quat(int part, double * vs_quat)
+        void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance, Vector4d rel_ori)
+        void set_particle_vs_quat(int part, Vector4d vs_quat)
 
     void pointer_to_q(const particle * P, const double * & res)
 
     IF EXTERNAL_FORCES:
         IF ROTATION:
             void set_particle_ext_torque(int part, const Vector3d & torque)
-            void pointer_to_ext_torque(const particle * P, const int * & res1, const double * & res2)
+            void pointer_to_ext_torque(const particle * P, const double * & res2)
 
         void set_particle_ext_force(int part, const Vector3d & force)
-        void pointer_to_ext_force(const particle * P, const int * & res1, const double * & res2)
+        void pointer_to_ext_force(const particle * P, const double * & res2)
 
-        void set_particle_fix(int part, int flag)
-        void pointer_to_fix(const particle * P, const int * & res)
+        void set_particle_fix(int part, stdint.uint8_t flag)
+        void pointer_to_fix(const particle * P, const stdint.uint8_t * & res)
 
     void delete_particle_bond(int part, Span[const int] bond)
     void delete_particle_bonds(int part)
@@ -220,14 +210,14 @@ cdef inline const particle * get_particle_data_ptr(const particle & p):
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
-        int vs_relate_to(int part_num, int relate_to)
+        void vs_relate_to(int part_num, int relate_to)
 
 cdef extern from "rotation.hpp":
     Vector3d convert_vector_body_to_space(const particle & p, const Vector3d & v)
     Vector3d convert_vector_space_to_body(const particle & p, const Vector3d & v)
     void rotate_particle(int id, Vector3d axis, double angle)
 
-cdef class ParticleHandle(object):
+cdef class ParticleHandle:
     cdef public int _id
     cdef const particle * particle_data
     cdef int update_particle_data(self) except -1
@@ -235,9 +225,3 @@ cdef class ParticleHandle(object):
 cdef class _ParticleSliceImpl:
     cdef public id_selection
     cdef int _chunk_size
-
-cdef extern from "grid.hpp":
-    Vector3d folded_position(const particle * )
-    Vector3d unfolded_position(const particle * )
-    cdef void fold_position(double * , int*)
-    void unfold_position(double pos[3], int image_box[3])

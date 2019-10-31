@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2014-2018 The ESPResSo project
+# Copyright (C) 2014-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,6 +22,5 @@
 # specific class.
 #
 
-from __future__ import print_function, absolute_import
 cdef extern from "communication.hpp":
     int mpi_bcast_parameter(int p)

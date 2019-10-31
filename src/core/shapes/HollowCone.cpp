@@ -1,23 +1,23 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "HollowCone.hpp"
 
@@ -27,8 +27,8 @@
 using namespace std;
 
 namespace Shapes {
-void HollowCone::calculate_dist(const Utils::Vector3d &pos, double *dist,
-                                double *vec) const {
+void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
+                                Utils::Vector3d &vec) const {
   int number = -1;
   double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
       time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, x, y, z, xp,
@@ -363,11 +363,9 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double *dist,
 
   // Pass the values we obtained to ESPResSo
 
-  for (int i = 0; i < 3; i++) {
-    vec[i] = normal_3D[i] * distance;
-  }
+  vec = normal_3D * distance;
 
-  *dist = distance * std::copysign(1.0, m_direction);
+  dist = distance * std::copysign(1.0, m_direction);
 
   // And we are done with the hollow cone
 }

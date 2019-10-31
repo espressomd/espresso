@@ -1,30 +1,32 @@
 /*
-  Copyright (C) 2010-2019 The ESPResSo project
-  Copyright (C) 2002-2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002-2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ANGLE_COMMON_H
 #define ANGLE_COMMON_H
 /** \file
  *  Common code for functions calculating angle forces.
  */
 
+#include "config.hpp"
 #include "grid.hpp"
+
 #include <tuple>
 
 /** Compute the cosine of the angle between three particles.
@@ -48,11 +50,11 @@ calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
                         Utils::Vector3d const &r_right,
                         bool sanitize_cosine = false) {
   /* normalized vector from p_mid to p_left */
-  auto vec1 = get_mi_vector(r_left, r_mid);
+  auto vec1 = get_mi_vector(r_left, r_mid, box_geo);
   auto const d1i = 1.0 / vec1.norm();
   vec1 *= d1i;
   /* normalized vector from p_mid to p_right */
-  auto vec2 = get_mi_vector(r_right, r_mid);
+  auto vec2 = get_mi_vector(r_right, r_mid, box_geo);
   auto const d2i = 1.0 / vec2.norm();
   vec2 *= d2i;
   /* cosine of the angle between vec1 and vec2 */
@@ -76,16 +78,15 @@ calc_vectors_and_cosine(Utils::Vector3d const &r_mid,
  *  @param[in]  r_right          Position of third/right particle.
  *  @param[in]  forceFactor      Angle force term.
  *  @param[in]  sanitize_cosine  Sanitize the cosine of the angle.
- *  tparam      ForceFactor      Function evaluating the angle force term
+ *  @tparam     ForceFactor      Function evaluating the angle force term
  *                               for a given angle.
  *  @return Forces on the second, first and third particles, in that order.
  */
 template <typename ForceFactor>
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-calc_angle_generic_force(Utils::Vector3d const &r_mid,
-                         Utils::Vector3d const &r_left,
-                         Utils::Vector3d const &r_right,
-                         ForceFactor forceFactor, bool sanitize_cosine) {
+angle_generic_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                    Utils::Vector3d const &r_right, ForceFactor forceFactor,
+                    bool sanitize_cosine) {
   Utils::Vector3d vec1, vec2;
   double d1i, d2i, cosine;
   std::tie(vec1, vec2, d1i, d2i, cosine) =

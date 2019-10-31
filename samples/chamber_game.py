@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,27 +15,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-ESPResSo as a game engine.
+Game based on Maxwell's demon, a thought experiment used to teach statistical
+thermodynamics. The user has to scoop particles from a chamber and guide them
+to another chamber through a channel with the help of a snake controlled by a
+gamepad or the keyboard. The particle imbalance between chambers creates
+a pressure gradient that makes it harder to move particles to the chamber
+with an excess of particles.
 """
 
-from __future__ import print_function
 from threading import Thread
 import numpy as np
+import time
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 import espressomd.shapes
-import espressomd.visualization_opengl
+from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
-required_features = ["LENNARD_JONES", "MASS",
+required_features = ["LENNARD_JONES", "WCA", "MASS",
                      "EXTERNAL_FORCES", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
 print("""THE CHAMBER GAME
 
 YOUR GOAL IS TO SCOOP ALL BLUE PARTICLES INTO THE RIGHT BOX.
-GREEN/RED SPHERES CAN BE PICKED UP AND INCREASE/DECREASE
+GREEN/RED SPHERES CAN BE PICKED UP TO INCREASE/DECREASE
 THE TEMPERATURE IN THE CHAMBER WHERE THEY ARE COLLECTED.""")
 
 try:
@@ -45,7 +48,7 @@ try:
           "\nMOVE: (JOYSTICK AXIS), (KEYBOARD i/j/k/l)"
           "\nACTION BUTTON: (JOYSTICK A), (KEYBOARD p)"
           "\nRESTART: (JOYSTICK START), (KEYBOARD b)")
-except:
+except BaseException:
     has_pygame = False
     print("\nCONTROLS:"
           "\nMOVE: (KEYBOARD i/j/k/l)"
@@ -95,7 +98,6 @@ pore_radius = snake_head_sigma * 1.3
 
 # CONTROL
 move_force = 70000.0
-
 expl_range = 200.0
 expl_force = 20000.0
 
@@ -116,7 +118,7 @@ dtemp = 1000.0
 # VISUALIZER
 zoom = 10
 
-visualizer = espressomd.visualization_opengl.openGLLive(
+visualizer = openGLLive(
     system,
     window_size=[800, 600],
     draw_axis=False,
@@ -198,31 +200,31 @@ for i in range(snake_n):
 
 WCA_cut = 2.0**(1. / 6.)
 
-system.non_bonded_inter[snake_head_type, snake_head_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=snake_head_sigma, cutoff=WCA_cut * snake_head_sigma, shift="auto")
+system.non_bonded_inter[snake_head_type, snake_head_type].wca.set_params(
+    epsilon=1.0, sigma=snake_head_sigma)
 
 sm = 0.5 * (snake_head_sigma + snake_bead_sigma)
-system.non_bonded_inter[snake_bead_type, snake_head_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_bead_type, snake_head_type].wca.set_params(
+    epsilon=1.0, sigma=sm)
 
-system.non_bonded_inter[snake_bead_type, snake_bead_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=snake_bead_sigma, cutoff=WCA_cut * snake_bead_sigma, shift="auto")
+system.non_bonded_inter[snake_bead_type, snake_bead_type].wca.set_params(
+    epsilon=1.0, sigma=snake_bead_sigma)
 
 sm = 0.5 * (snake_head_sigma + cylinder_sigma)
-system.non_bonded_inter[snake_head_type, cylinder_type].lennard_jones.set_params(
-    epsilon=10.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_head_type, cylinder_type].wca.set_params(
+    epsilon=10.0, sigma=sm)
 
 sm = 0.5 * (snake_bead_sigma + cylinder_sigma)
-system.non_bonded_inter[snake_bead_type, cylinder_type].lennard_jones.set_params(
-    epsilon=10.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_bead_type, cylinder_type].wca.set_params(
+    epsilon=10.0, sigma=sm)
 
 sm = 0.5 * (bubble_sigma + snake_bead_sigma)
-system.non_bonded_inter[snake_bead_type, bubble_type].lennard_jones.set_params(
-    epsilon=bubble_snake_eps, sigma=sm, cutoff=2.5 * sm, shift="auto")
+system.non_bonded_inter[snake_bead_type, bubble_type].wca.set_params(
+    epsilon=bubble_snake_eps, sigma=sm)
 
 sm = 0.5 * (bubble_sigma + snake_head_sigma)
-system.non_bonded_inter[snake_head_type, bubble_type].lennard_jones.set_params(
-    epsilon=1.0, sigma=sm, cutoff=WCA_cut * sm, shift="auto")
+system.non_bonded_inter[snake_head_type, bubble_type].wca.set_params(
+    epsilon=1.0, sigma=sm)
 
 sm = 0.5 * (bubble_sigma + cylinder_sigma)
 system.non_bonded_inter[bubble_type, cylinder_type].lennard_jones.set_params(
@@ -250,8 +252,7 @@ system.constraints.add(shape=espressomd.shapes.SimplePore(
 # BUBBLES
 n = 0
 
-# for i in range(bubbles_n):
-while (n < bubbles_n):
+while n < bubbles_n:
     # bpos = [pore_xr +  np.random.random() * (pore_xr - pore_xl -
     # snake_head_sigma*4) + snake_head_sigma * 2, np.random.random() * box[1],
     # box[2]*0.5]
@@ -377,48 +378,28 @@ def explode():
 
 # KEYBOARD CONTROLS
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'i', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
-        move_up_set))
+    KeyboardButtonEvent('i', KeyboardFireEvent.Pressed, move_up_set))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'k', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
-        move_down_set))
+    KeyboardButtonEvent('k', KeyboardFireEvent.Pressed, move_down_set))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'i', espressomd.visualization_opengl.KeyboardFireEvent.Released,
-        move_updown_reset))
+    KeyboardButtonEvent('i', KeyboardFireEvent.Released, move_updown_reset))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'k', espressomd.visualization_opengl.KeyboardFireEvent.Released,
-        move_updown_reset))
+    KeyboardButtonEvent('k', KeyboardFireEvent.Released, move_updown_reset))
 
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'j', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
-        move_left_set))
+    KeyboardButtonEvent('j', KeyboardFireEvent.Pressed, move_left_set))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'l', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
-        move_right_set))
+    KeyboardButtonEvent('l', KeyboardFireEvent.Pressed, move_right_set))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'j', espressomd.visualization_opengl.KeyboardFireEvent.Released,
-        move_leftright_reset))
+    KeyboardButtonEvent('j', KeyboardFireEvent.Released, move_leftright_reset))
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'l', espressomd.visualization_opengl.KeyboardFireEvent.Released,
-        move_leftright_reset))
+    KeyboardButtonEvent('l', KeyboardFireEvent.Released, move_leftright_reset))
 
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'p', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
-        explode))
+    KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
 
 visualizer.keyboardManager.register_button(
-    espressomd.visualization_opengl.KeyboardButtonEvent(
-        'b', espressomd.visualization_opengl.KeyboardFireEvent.Pressed,
-        restart))
+    KeyboardButtonEvent('b', KeyboardFireEvent.Pressed, restart))
 
 # MAIN LOOP
 

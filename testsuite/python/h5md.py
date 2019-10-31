@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,8 +23,9 @@ Testmodule for the H5MD interface.
 import os
 import sys
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 import h5py  # h5py has to be imported *after* espressomd (MPI)
 from espressomd.interactions import Virtual
 
@@ -47,9 +48,7 @@ class CommonTests(ut.TestCase):
     system.time_step = 0.01
 
     for i in range(npart):
-        system.part.add(id=i, pos=np.array([float(i),
-                                            float(i),
-                                            float(i)]),
+        system.part.add(id=i, pos=np.array(3 * [i], dtype=float),
                         v=np.array([1.0, 2.0, 3.0]), type=23)
         if espressomd.has_features(['MASS']):
             system.part[i].mass = 2.3
@@ -84,19 +83,9 @@ class CommonTests(ut.TestCase):
 
     def test_pos(self):
         """Test if positions have been written properly."""
-        self.assertTrue(
-            np.allclose(
-                np.array(
-                    [
-                        (float(i) %
-                         self.box_l, float(i) %
-                         self.box_l, float(i) %
-                         self.box_l) for i in range(npart)]), np.array(
-                    [
-                        x for (
-                            _, x) in sorted(
-                            zip(
-                                self.py_id, self.py_pos))])))
+        self.assertTrue(np.allclose(
+            np.array([3 * [float(i) % self.box_l] for i in range(npart)]),
+            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))])))
 
     def test_img(self):
         """Test if images have been written properly."""
@@ -113,10 +102,7 @@ class CommonTests(ut.TestCase):
             np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))])),
             msg="Velocities not written correctly by H5md!")
 
-    @ut.skipIf(
-        not espressomd.has_features(
-            ['EXTERNAL_FORCES']),
-        "EXTERNAL_FORCES not compiled in, can not check writing forces.")
+    @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
     def test_f(self):
         """Test if forces have been written properly."""
         self.assertTrue(np.allclose(
@@ -130,13 +116,11 @@ class CommonTests(ut.TestCase):
 
         for i in range(npart - 1):
             bond = [x for x in self.py_bonds if x[0] == i][0]
-
             self.assertEqual(bond[0], i + 0)
             self.assertEqual(bond[1], i + 1)
 
 
-@ut.skipIf(not espressomd.has_features(['H5MD']),
-           "H5MD not compiled in, can not check functionality.")
+@utx.skipIfMissingFeatures(['H5MD'])
 class H5mdTestOrdered(CommonTests):
 
     """
@@ -146,7 +130,7 @@ class H5mdTestOrdered(CommonTests):
     @classmethod
     def setUpClass(cls):
         write_ordered = True
-        from espressomd.io.writer import h5md  # pylint: disable=import-error
+        from espressomd.io.writer import h5md
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,
@@ -172,13 +156,11 @@ class H5mdTestOrdered(CommonTests):
 
     def test_ids(self):
         """Test if ids have been written properly."""
-        self.assertTrue(np.allclose(
-            np.array(range(npart)),
-            self.py_id), msg="ids correctly ordered and written by H5md!")
+        self.assertTrue(np.allclose(np.array(range(npart)), self.py_id),
+                        msg="ids incorrectly ordered and written by H5md!")
 
 
-@ut.skipIf(not espressomd.has_features(['H5MD']),
-           "H5MD not compiled in, can not check functionality.")
+@utx.skipIfMissingFeatures(['H5MD'])
 class H5mdTestUnordered(CommonTests):
 
     """
@@ -188,7 +170,7 @@ class H5mdTestUnordered(CommonTests):
     @classmethod
     def setUpClass(cls):
         write_ordered = False
-        from espressomd.io.writer import h5md  # pylint: disable=import-error
+        from espressomd.io.writer import h5md
         h5 = h5md.H5md(
             filename="test.h5",
             write_pos=True,

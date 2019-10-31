@@ -22,6 +22,11 @@ if(SPHINX_FOUND)
     # Copy the figure directory to the build dir
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/figures DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+    # Copy the _static directory to the build dir
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/_static DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+    configure_file(samples.py ${CMAKE_CURRENT_BINARY_DIR}/samples.py)
+
     # Files to be copied to the build directory
     set(FILE_LIST
         "${CMAKE_SOURCE_DIR}/doc/logo/logo_48x48.png"
@@ -30,7 +35,6 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/appendix.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/constraints.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/contributing.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/dg.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/electrostatics.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/index.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/installation.rst"
@@ -44,11 +48,11 @@ if(SPHINX_FOUND)
         "${CMAKE_CURRENT_SOURCE_DIR}/running.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/system_manipulation.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/system_setup.rst"
-        "${CMAKE_CURRENT_SOURCE_DIR}/testing.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/ug.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/under_the_hood.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/visualization.rst"
         "${CMAKE_CURRENT_SOURCE_DIR}/zrefs.bib"
+        "${CMAKE_CURRENT_SOURCE_DIR}/zreferences.rst"
         )
 
     foreach(file ${FILE_LIST})
@@ -67,6 +71,8 @@ if(SPHINX_FOUND)
     )
 
     add_custom_target(sphinx
+        ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
+        COMMAND
         ${SPHINX_API_DOC_EXE}
             -f
             -P

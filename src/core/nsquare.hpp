@@ -1,24 +1,24 @@
 /*
-
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ *
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef NSQUARE_H
 #define NSQUARE_H
 /** \file
@@ -43,17 +43,6 @@
  *  This means, that each communication cycle, 1 processor is idle, which is
  *  pretty ineffective.
  *
- *  The second main part of this cell system is a load balancer which
- *  at the beginning of the integration is called and balances the
- *  numbers of particles between the nodes. This means that the number
- *  of particles per node should be around \f$N/P\f$, so the goal is to
- *  let every processor have a number of particles which is one of the
- *  two integers closest to \f$N/P\f$. The algorithm is greedy, i. e. it
- *  searches for the node with most and least particles and transfers
- *  as much as possible particles between them so that at least one of
- *  them satisfies the constraints. Of course the algorithm terminates
- *  if both satisfy the condition without transfer.
- *
  *  The calculations themselves are just simple loops over all
  *  appropriate particle pairs.
  *
@@ -69,5 +58,5 @@ void nsq_topology_release();
 void nsq_topology_init(CellPList *local);
 
 /** implements the load balancing as described above. */
-void nsq_balance_particles(int global_flag);
+void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts);
 #endif

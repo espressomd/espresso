@@ -1,36 +1,35 @@
 /*
-  Copyright (C) 2010-2018 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 /** \file
  *  Energy calculation.
  */
 
 #include "EspressoSystemInterface.hpp"
+#include "communication.hpp"
 #include "constraints.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/magnetic_non_p3m_methods.hpp"
-#include "electrostatics_magnetostatics/mdlc_correction.hpp"
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
-#include <cassert>
 
 #include "short_range_loop.hpp"
 
@@ -74,7 +73,7 @@ void master_energy_calc() {
 
 /************************************************************/
 
-void energy_calc(double *result) {
+void energy_calc(double *result, const double time) {
   if (!interactions_sanity_checks())
     return;
 
@@ -92,23 +91,16 @@ void energy_calc(double *result) {
 
   on_observable_calc();
 
-  // Execute short range loop if the cutoff is >0
-  if (max_cut > 0) {
-    short_range_loop([](Particle &p) { add_single_particle_energy(&p); },
-                     [](Particle &p1, Particle &p2, Distance &d) {
-                       add_non_bonded_pair_energy(&p1, &p2, d.vec21.data(),
-                                                  sqrt(d.dist2), d.dist2);
-                     });
-  } else {
-    // Otherwise, only do the single-particle contribution
-    for (auto &p : local_cells.particles()) {
-      add_single_particle_energy(&p);
-    }
-  }
-  calc_long_range_energies();
+  short_range_loop(
+      [](Particle const &p) { add_single_particle_energy(p); },
+      [](Particle const &p1, Particle const &p2, Distance const &d) {
+        add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
+      });
+
+  calc_long_range_energies(local_cells.particles());
 
   auto local_parts = local_cells.particles();
-  Constraints::constraints.add_energy(local_parts, sim_time, energy);
+  Constraints::constraints.add_energy(local_parts, time, energy);
 
 #ifdef CUDA
   copy_energy_from_GPU();
@@ -121,14 +113,14 @@ void energy_calc(double *result) {
 
 /************************************************************/
 
-void calc_long_range_energies() {
+void calc_long_range_energies(const ParticleRange &particles) {
 #ifdef ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  Coulomb::calc_energy_long_range(energy);
+  Coulomb::calc_energy_long_range(energy, particles);
 #endif /* ifdef ELECTROSTATICS */
 
 #ifdef DIPOLES
-  Dipole::calc_energy_long_range(energy);
+  Dipole::calc_energy_long_range(energy, particles);
 #endif /* ifdef DIPOLES */
 }
 

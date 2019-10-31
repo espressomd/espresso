@@ -1,22 +1,22 @@
 /*
-  Copyright (C) 2016,2017,2018 The ESPResSo project
-  Copyright (C) 2012 Alexander (Polyakov) Peletskyi
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2016-2019 The ESPResSo project
+ * Copyright (C) 2012 Alexander (Polyakov) Peletskyi
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef DIPOLARBARNESHUT_CUH_
 #define DIPOLARBARNESHUT_CUH_
@@ -26,7 +26,6 @@
 #ifdef DIPOLAR_BARNES_HUT
 
 #include <cstdio>
-#include <ctime>
 #include <iostream>
 
 typedef float dds_float;
@@ -102,7 +101,7 @@ void initBHgpu(int blocks);
 // Building Barnes-Hut spatial min/max position box
 void buildBoxBH(int blocks);
 
-// Building Barnes-Hut tree in a linear childd array representation
+// Building Barnes-Hut tree in a linear child array representation
 // of octant cells and particles inside.
 void buildTreeBH(int blocks);
 
@@ -112,7 +111,7 @@ void buildTreeBH(int blocks);
 void summarizeBH(int blocks);
 
 // Sort particle indexes according to the BH tree representation.
-// Crucial for the per-warp perfomance tuning of forceCalculationKernel and
+// Crucial for the per-warp performance tuning of forceCalculationKernel and
 // energyCalculationKernel.
 void sortBH(int blocks);
 

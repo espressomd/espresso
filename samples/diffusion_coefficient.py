@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,13 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This script compares the diffusion coefficient of a single thermalized particle
-obtained from the particle's mean square displacement and the auto correlation
-function of its velocity to the expected value. It uses the
+Compare the diffusion coefficient of a single thermalized particle obtained
+from the particle's mean square displacement and the auto correlation
+function of its velocity to the expected value. Uses the
 Observables/Correlators framework.
 """
 
-from __future__ import division, print_function
 import espressomd
 from espressomd.accumulators import Correlator
 from espressomd.observables import ParticlePositions, ParticleVelocities
@@ -62,10 +61,10 @@ np.savetxt("msd.dat", c_pos.result())
 np.savetxt("vacf.dat", c_vel.result())
 
 # Integral of vacf via Green-Kubo
-#D= 1/3 int_0^infty <v(t_0)v(t_0+t)> dt
+# D= 1/3 int_0^infty <v(t_0)v(t_0+t)> dt
 
 vacf = c_vel.result()
-#Integrate with trapezoidal rule
+# Integrate with trapezoidal rule
 I = np.trapz(vacf[:, 2], vacf[:, 0])
 ratio = 1. / 3. * I / (kT / gamma)
 print("Ratio of measured and expected diffusion coefficients from Green-Kubo:",
@@ -74,7 +73,10 @@ print("Ratio of measured and expected diffusion coefficients from Green-Kubo:",
 # Check MSD
 msd = c_pos.result()
 
-expected_msd = lambda x: 2. * kT / gamma * x
+
+def expected_msd(x):
+    return 2. * kT / gamma * x
+
 
 print("Ratio of expected and measured msd")
 print("#time ratio_x ratio_y ratio_z")

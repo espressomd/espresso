@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2018 The ESPResSo project
+# Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Tests particle property setters/getters
-from __future__ import print_function
 import unittest as ut
 import espressomd
 import numpy as np
@@ -80,6 +78,7 @@ class RescaleTest(ut.TestCase):
 
     def test_z(self):
         self.dir_test(2)
+
 
 if __name__ == "__main__":
     ut.main()

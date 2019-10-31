@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,12 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample illustrates how various observables of interest can be checkpointed.
+Basic usage of the checkpointing feature. Show how to load the state of:
+
+* custom user variables.
+* non-bonded interactions.
+* particles.
+* P3M parameters.
+* thermostat.
 """
-from __future__ import print_function
 import espressomd
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import checkpointing
@@ -46,8 +51,8 @@ print("system.box_l = {}".format(system.box_l))
 
 # test "system.non_bonded_inter"
 print("\n### system.non_bonded_inter test ###")
-print("system.non_bonded_inter[0, 0].lennard_jones.get_params() = {}".format(
-    system.non_bonded_inter[0, 0].lennard_jones.get_params()))
+print("system.non_bonded_inter[0, 0].wca.get_params() = {}".format(
+    system.non_bonded_inter[0, 0].wca.get_params()))
 
 # test "system.part"
 print("\n### system.part test ###")

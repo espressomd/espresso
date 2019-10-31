@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -14,12 +14,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import print_function
+"""
+Build the ESPResSo logo with particles.
+"""
 import math
 import numpy as np
 
 import espressomd
-espressomd.assert_features(["MASS"])
+espressomd.assert_features(["WCA", "MASS"])
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive
 
@@ -49,7 +51,7 @@ for i in range(cup_height):
 # cup bottom
 rad = cup_bot_circ / (2.0 * np.pi)
 posy = yoff
-while (rad > 1.0):
+while rad > 1.0:
     rad -= 0.9
     circ = 2.0 * np.pi * rad
     alpha = 2.0 * np.pi / int(circ)
@@ -158,22 +160,19 @@ system.time_step = 0.00022
 system.cell_system.skin = 0.4
 
 system.thermostat.set_langevin(kT=0.0, gamma=0.02, seed=42)
-WCA_cut = 2.**(1. / 6.)
 
-lj_eps = 1.0
-lj_sig = 0.7
-lj_cut = WCA_cut * lj_sig
+wca_eps = 1.0
+wca_sig = 0.7
 for i in range(2):
     for j in range(i, 2):
-        system.non_bonded_inter[i, j].lennard_jones.set_params(
-            epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+        system.non_bonded_inter[i, j].wca.set_params(
+            epsilon=wca_eps, sigma=wca_sig)
 
-lj_eps = 1.0
-lj_sig = 1.0
-lj_cut = WCA_cut * lj_sig
+wca_eps = 1.0
+wca_sig = 1.0
 for i in range(3):
-    system.non_bonded_inter[i, 2].lennard_jones.set_params(
-        epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
+    system.non_bonded_inter[i, 2].wca.set_params(
+        epsilon=wca_eps, sigma=wca_sig)
 
 visualizer = openGLLive(
     system,
@@ -204,5 +203,6 @@ def rotate():
     visualizer.camera.rotateSystemXL()
 
 # visualizer.registerCallback(rotate, interval = 16)
+
 
 visualizer.run(1)

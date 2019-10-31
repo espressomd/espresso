@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2018 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,39 +16,50 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
+"""
+Simulate a Lennard-Jones liquid with charges. The P3M method is used to
+calculate electrostatic interactions. The ELC method can be optionally
+added to subtract the electrostatic contribution from the *z*-direction.
+For more details, see :ref:`Electrostatic Layer Correction (ELC)`.
+"""
 import numpy as np
 import espressomd
 
-required_features = ["ELECTROSTATICS", "LENNARD_JONES"]
+required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
-from espressomd import thermostat
 from espressomd import electrostatics
 from espressomd import electrostatic_extensions
+import argparse
+
+parser = argparse.ArgumentParser()
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--cpu", action="store_const", dest="mode",
+                   const="cpu", help="P3M on CPU", default="cpu")
+group.add_argument("--gpu", action="store_const", dest="mode",
+                   const="gpu", help="P3M on GPU")
+group.add_argument("--elc", action="store_const", dest="mode",
+                   const="elc", help="P3M and ELC on CPU")
+args = parser.parse_args()
+
 
 print("""
 =======================================================
 =                      p3m.py                         =
 =======================================================
-
-Program Information:""")
-print(espressomd.features())
+""")
 
 # System parameters
 #############################################################
 
-# 10 000  Particles
 box_l = 10
 density = 0.3
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
-lj_eps = 10.0
-lj_sig = 1.0
-lj_cut = 1.12246
-lj_cap = 20
+wca_eps = 10.0
+wca_sig = 1.0
 
 # Integration parameters
 #############################################################
@@ -59,13 +70,12 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-thermostat.Thermostat().set_langevin(1.0, 1.0, seed=42)
 
-# warmup integration (with capped LJ potential)
-warm_steps = 100
+# warmup integration (steepest descent)
+warm_steps = 20
 warm_n_times = 30
-# do the warmup until the particles have at least the distance min_dist
-min_dist = 0.7
+# convergence criterion (particles are separated by at least 90% sigma)
+min_dist = 0.9 * wca_sig
 
 # integration
 int_steps = 1000
@@ -79,20 +89,15 @@ int_n_times = 10
 # Interaction setup
 #############################################################
 
-
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=lj_eps, sigma=lj_sig,
-    cutoff=lj_cut, shift="auto")
-system.force_cap = lj_cap
-
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=wca_eps, sigma=wca_sig)
 
 print("LJ-parameters:")
-print(system.non_bonded_inter[0, 0].lennard_jones.get_params())
+print(system.non_bonded_inter[0, 0].wca.get_params())
 
 # Particle setup
 #############################################################
 
-volume = box_l * box_l * box_l
+volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
@@ -100,25 +105,26 @@ for i in range(n_part):
 
 system.analysis.dist_to(0)
 
-print("Simulate {} particles in a cubic simulation box {} at density {}."
+print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
 print("Interactions:\n")
 act_min_dist = system.analysis.min_dist()
 print("Start with minimal distance {}".format(act_min_dist))
 
-system.cell_system.max_num_cells = 2744
 
-
-# Assign charge to particles
+# Assign charges to particles
 for i in range(n_part // 2 - 1):
     system.part[2 * i].q = -1.0
     system.part[2 * i + 1].q = 1.0
-# P3M setup after charge assigned
+
+# P3M setup after charge assignment
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
-#p3m = electrostatics.P3M_GPU(prefactor=2.0, accuracy=1e-2)
-p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
+if args.mode == "gpu":
+    p3m = electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-2)
+else:
+    p3m = electrostatics.P3M(prefactor=1.0, accuracy=1e-2)
 
 print("\nSCRIPT--->Add actor\n")
 system.actors.add(p3m)
@@ -136,17 +142,15 @@ p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
-# elc=electrostatic_extensions.ELC(maxPWerror=1.0,gap_size=1.0)
-# system.actors.add(elc)
+if args.mode == "elc":
+    elc = electrostatic_extensions.ELC(maxPWerror=1.0, gap_size=1.0)
+    system.actors.add(elc)
+
 print(system.actors)
 
 #############################################################
 #  Warmup Integration                                       #
 #############################################################
-
-# open Observable file
-obs_file = open("pylj_liquid.obs", "w")
-obs_file.write("# Time\tE_tot\tE_kin\tE_pot\n")
 
 print("""
 Start warmup integration:
@@ -154,72 +158,43 @@ At maximum {} times {} steps
 Stop if minimal distance is larger than {}
 """.strip().format(warm_n_times, warm_steps, min_dist))
 
-# set LJ cap
-lj_cap = 20
-system.force_cap = lj_cap
-print(system.non_bonded_inter[0, 0].lennard_jones)
-
-# Warmup Integration Loop
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=wca_sig / 100)
 i = 0
-while (i < warm_n_times or act_min_dist < min_dist):
+while i < warm_n_times and system.analysis.min_dist() < min_dist:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
     system.integrator.run(warm_steps)
-    # Warmup criterion
-    act_min_dist = system.analysis.min_dist()
     i += 1
-    print("i =", i, "system.analysis.min_dist() = ",
-          system.analysis.min_dist(), "lj_cap = ", lj_cap)
-    # Increase LJ cap
-    lj_cap += 20
-    system.force_cap = lj_cap
 
-# Just to see what else we may get from the c code
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
+
+# activate thermostat
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
+
+# Just to see what else we may get from the C++ core
 import pprint
 pprint.pprint(system.cell_system.get_state(), width=1)
 # pprint.pprint(system.part.__getstate__(), width=1)
 pprint.pprint(system.__getstate__())
 
 
-# write parameter file
-set_file = open("pylj_liquid.set", "w")
-set_file.write("box_l %s\ntime_step %s\nskin %s\n" %
-               (box_l, system.time_step, system.cell_system.skin))
-
 #############################################################
 #      Integration                                          #
 #############################################################
-print("\nStart integration: run %d times %d steps" % (int_n_times, int_steps))
+print("\nStart integration: run {} times {} steps"
+      .format(int_n_times, int_steps))
 
-# remove force capping
-lj_cap = 0
-system.force_cap = lj_cap
-print(system.non_bonded_inter[0, 0].lennard_jones)
-
-# print(initial energies)
-energies = system.analysis.energy()
-print(energies)
-
-j = 0
 for i in range(int_n_times):
-    print("run %d at time=%f " % (i, system.time))
+    print("run {} at time={:.2f}".format(i, system.time))
 
     system.integrator.run(int_steps)
 
     energies = system.analysis.energy()
-    print(energies)
-    obs_file.write('{ time %s } %s\n' % (system.time, energies))
+    print(energies['total'])
 
-
-# write end configuration
-end_file = open("pylj_liquid.end", "w")
-end_file.write("{ time %f } \n { box_l %f }\n" % (system.time, box_l))
-end_file.write("{ particles {id pos type} }")
-for i in range(n_part):
-    end_file.write("%s\n" % system.part[i].pos)
-
-
-obs_file.close()
-set_file.close()
-end_file.close()
 
 # terminate program
 print("\nFinished.")
