@@ -105,7 +105,7 @@ class Buoyancy(object):
         expected_force = np.array(
             [0, -sphere_volume * DENS * G, 0])
         np.testing.assert_allclose(
-            sphere.get_force(), expected_force,
+            np.copy(sphere.get_force()), expected_force,
             atol=np.linalg.norm(expected_force) * 0.02)
 
 
