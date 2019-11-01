@@ -22,6 +22,8 @@ import espressomd.lb
 import espressomd.lbboundaries
 import espressomd.shapes
 
+from tests_common import count_fluid_nodes
+
 
 """
 Checks force on lb boundaries for a fluid with a uniform volume force
@@ -48,14 +50,6 @@ class LBBoundaryForceCommon:
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
-    def count_fluid_nodes(self):
-        # Count non-boundary nodes:
-        fluid_nodes = 0
-        for n in self.lbf.nodes():
-            if not n.boundary: 
-                fluid_nodes += 1
-        return fluid_nodes
-
     def test(self):
         """
         Integrate the LB fluid until steady state is reached within a certain
@@ -74,7 +68,7 @@ class LBBoundaryForceCommon:
 
         self.system.lbboundaries.add(wall1)
         self.system.lbboundaries.add(wall2)
-        fluid_nodes = self.count_fluid_nodes()
+        fluid_nodes = count_fluid_nodes(self.lbf)
 
         self.system.integrator.run(20)
         diff = float("inf")
