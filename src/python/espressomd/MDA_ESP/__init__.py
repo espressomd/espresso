@@ -191,7 +191,7 @@ class Timestep(base.Timestep):
 
     @dimensions.setter
     def dimensions(self, box):
-        x, y, z = triclinic_vectors(box)
+        x, y, _ = triclinic_vectors(box)
         np.put(self._unitcell, self._ts_order_x, x)
         np.put(self._unitcell, self._ts_order_y, y)
 

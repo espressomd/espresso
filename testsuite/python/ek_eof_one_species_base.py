@@ -208,9 +208,6 @@ class ek_eof_one_species(ut.TestCase):
                 measured_pressure_xx = ek[index].pressure[(0, 0)]
                 calculated_pressure_xx = ek_common.hydrostatic_pressure(
                     ek,
-                    position,
-                    self.xi,
-                    params_base['bjerrum_length'],
                     (0, 0),
                     system.box_l[params['periodic_dirs'][0]],
                     system.box_l[params['periodic_dirs'][1]],
@@ -219,9 +216,6 @@ class ek_eof_one_species(ut.TestCase):
                 measured_pressure_yy = ek[index].pressure[(1, 1)]
                 calculated_pressure_yy = ek_common.hydrostatic_pressure(
                     ek,
-                    position,
-                    self.xi,
-                    params_base['bjerrum_length'],
                     (1, 1),
                     system.box_l[params['periodic_dirs'][0]],
                     system.box_l[params['periodic_dirs'][1]],
@@ -230,9 +224,6 @@ class ek_eof_one_species(ut.TestCase):
                 measured_pressure_zz = ek[index].pressure[(2, 2)]
                 calculated_pressure_zz = ek_common.hydrostatic_pressure(
                     ek,
-                    position,
-                    self.xi,
-                    params_base['bjerrum_length'],
                     (2, 2),
                     system.box_l[params['periodic_dirs'][0]],
                     system.box_l[params['periodic_dirs'][1]],

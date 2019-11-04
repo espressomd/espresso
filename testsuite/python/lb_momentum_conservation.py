@@ -63,7 +63,7 @@ class Momentum(object):
         v_final = np.copy(p.v)
         momentum = self.system.analysis.linear_momentum()
 
-        for i in range(10):
+        for _ in range(10):
             self.system.integrator.run(50)
             # check that momentum stays constant
             np.testing.assert_allclose(

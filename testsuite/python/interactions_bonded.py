@@ -57,9 +57,9 @@ class InteractionsBondedTest(ut.TestCase):
             k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
         self.run_test(hb,
                       lambda r: tests_common.harmonic_force(
-                          scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
+                          scalar_r=r, k=hb_k, r_0=hb_r_0),
                       lambda r: tests_common.harmonic_potential(
-                          scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
+                          scalar_r=r, k=hb_k, r_0=hb_r_0),
                       0.01, hb_r_cut, True)
 
     # Test Fene Bond
