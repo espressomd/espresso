@@ -1808,7 +1808,7 @@ Converting tabulated reaction constants to internal units in Espresso
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The implementation in Espresso requires that the dimension of :math:`\Gamma`
-is consistent with the internal unit of volume, :math:`\sigma^3`.
+is consistent with the internal unit of volume, :math:`\sigma^3`. 
 The tabulated values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
 :math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration,
 and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`.  To be used with Espresso, the
@@ -1828,7 +1828,7 @@ be converted to :math:`K_c` as
    K_p(p^{\ominus}=1\,\mathrm{atm}) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) \biggl(\frac{c^{\ominus}RT}{p^{\ominus}}\biggr)^{\bar\nu},
 
 where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
-
+Consider using the python module pint for unit conversion.
 
 .. _Wang-Landau Reaction Ensemble:
 
@@ -1857,8 +1857,8 @@ For a description of the available methods see :mod:`espressomd.reaction_ensembl
 
 .. _Constant pH simulation using the Reaction Ensemble:
 
-Constant pH simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Constant pH simulation
+~~~~~~~~~~~~~~~~~~~~~~
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
@@ -1904,8 +1904,8 @@ For a description of the available methods see :mod:`espressomd.reaction_ensembl
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
 
-Grand canonical ensemble simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Grand canonical ensemble simulation 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 As a special case, all stoichiometric coefficients on one side of the chemical
 reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and
@@ -1935,11 +1935,12 @@ reaction ensemble transition probabilities.
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Widom insertion method measures the change in excess free energy , i.e. the excess chemical potential due to the insertion of a new particle:
+The Widom insertion method measures the change in excess free energy , i.e. the excess chemical potential due to the insertion of a new particle, or a group of particles:
 
 .. math::
 
-   \mu^\mathrm{ex}_B:=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)`
+   \mu^\mathrm{ex}_B & :=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)\\
+   &=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)
 
 For this one has to provide the following reaction to the Widom method:
 
@@ -1954,22 +1955,23 @@ For this one has to provide the following reaction to the Widom method:
     widom.measure_excess_chemical_potential(0)
 
 
-The call of ``add_reaction`` registers the insertion :math:`\mathrm{\emptyset \to type_B` (which is the 0th registered reaction). 
+The call of ``add_reaction`` define the insertion :math:`\mathrm{\emptyset \to type_B}` (which is the 0th defined reaction).
 Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance. 
 Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``. 
-The next insertion reaction can then be adressed with ``widom.measure_excess_chemical_potential(1)``. 
+If another particle isertion is defined, then the excess chemical potential for this insertion can be measured by calling ``widom.measure_excess_chemical_potential(1)``. 
 Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NPT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
 
 The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
 
 .. math::
 
-   \mu^\mathrm{ex, pair}:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right)=-\kT \ln \left( \frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_N\right),
+   \mu^\mathrm{ex, pair}&:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)\\
+   &=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right)
 
-Note that the measurement involves three averages: the ensemble average and the two volume averages. 
-Since the volume averages are obtained via brute force sampling of the insertion positions it can be beneficial to have multiple insertion tries on the same configuration.
+Note that the measurement involves three averages: the canonical ensemble average :math:`\langle \cdot \rangle_{N_1, N_2}` and the two averages over the position of particles :math:`N_1+1` and :math:`N_2+1`. 
+Since the averages over the position of the inserted particles are obtained via brute force sampling of the insertion positions it can be beneficial to have multiple insertion tries on the same configuration of the other particles.
 
-One can measure the change in excess free energy due to the simultaneous insertions of particles of type 1 and 2 and the simultaneous removal of a particle of type $3$:
+One can measure the change in excess free energy due to the simultaneous insertions of particles of type 1 and 2 and the simultaneous removal of a particle of type 3:
 
 .. math::
 
