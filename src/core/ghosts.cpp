@@ -34,11 +34,15 @@
 #include "errorhandling.hpp"
 #include "particle_data.hpp"
 
-#include <boost/serialization/vector.hpp>
 #include <mpi.h>
 #include <utils/Span.hpp>
+#include <utils/serialization/memcpy_archive.hpp>
+
+#include <boost/range/algorithm/copy.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <boost/range/numeric.hpp>
 #include <cstdio>
 #include <cstring>
 #include <type_traits>
@@ -76,71 +80,6 @@ private:
   std::vector<int> bondbuf; //< Buffer for bond lists
 };
 
-/**
- * Adapter to CommBuf that allows putting in and getting out data.
- * Note: The underlying buffer (span) must be large enough. This class
- * does *not* resize the buffer.
- */
-struct Archiver {
-private:
-  Utils::Span<char> buf;
-  char *insert;
-
-public:
-  explicit Archiver(Utils::Span<char> buf) : buf(buf), insert(buf.data()) {}
-  ~Archiver() { assert(insert - buf.data() == buf.size()); }
-
-  template <typename T, typename = typename std::enable_if<
-                            std::is_trivially_copyable<T>::value>::type>
-  void operator<<(const T &value) {
-    std::memcpy(insert, &value, sizeof(T));
-    insert += sizeof(T);
-  }
-
-  template <typename T, typename = typename std::enable_if<
-                            std::is_trivially_copyable<T>::value>::type>
-  void operator>>(T &value) {
-    std::memcpy(&value, insert, sizeof(T));
-    insert += sizeof(T);
-  }
-};
-
-/**
- * Adapter to CommBuf that allows putting in and getting back bond data.
- * Note, this class inserts the data handed to operator<< at the end
- * of the underlying buffer. It does resize the buffer.
- */
-struct BondArchiver {
-private:
-  /* underlying buffer type */
-  using buffer_type = std::vector<int>;
-  buffer_type &bondbuf;
-
-  /* iterator into the underlying buffer */
-  using const_iterator = buffer_type::const_iterator;
-  const_iterator bond_retrieve;
-
-  // Need to save these because send buffer will invalidate cb.bondbuffer.
-  const const_iterator initial_begin;
-  const size_t initial_size;
-
-public:
-  explicit BondArchiver(buffer_type &bondbuf)
-      : bondbuf(bondbuf), bond_retrieve(bondbuf.cbegin()),
-        initial_begin(bondbuf.cbegin()), initial_size(bondbuf.size()) {}
-
-  ~BondArchiver() { assert(bond_retrieve == initial_begin + initial_size); }
-
-  template <typename T> inline void operator<<(const Utils::Span<T> data) {
-    bondbuf.insert(bondbuf.end(), data.cbegin(), data.cend());
-  }
-
-  template <typename T> inline void operator>>(Utils::Span<T> data) {
-    std::copy_n(bond_retrieve, data.size(), data.begin());
-    bond_retrieve += data.size();
-  }
-};
-
 /** whether the ghosts should have velocity information, e.g. for DPD or RATTLE.
  *  You need this whenever you need the relative velocity of two particles.
  *  NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
@@ -161,34 +100,33 @@ void free_comm(GhostCommunicator *gcr) {
     ghost_comm.part_lists.clear();
 }
 
-static int calc_transmit_size(GhostCommunication &ghost_comm,
-                              unsigned int data_parts) {
-  int n_buffer_new;
-
-  if (data_parts & GHOSTTRANS_PARTNUM)
-    n_buffer_new = sizeof(int) * ghost_comm.part_lists.size();
-  else {
-    n_buffer_new = 0;
-    if (data_parts & GHOSTTRANS_PROPRTS) {
-      n_buffer_new += sizeof(ParticleProperties);
-      // sending size of bond lists
-      if (ghosts_have_bonds) {
-        n_buffer_new += sizeof(int);
-      }
-    }
-    if (data_parts & GHOSTTRANS_POSITION)
-      n_buffer_new += sizeof(ParticlePosition);
-    if (data_parts & GHOSTTRANS_MOMENTUM)
-      n_buffer_new += sizeof(ParticleMomentum);
-    if (data_parts & GHOSTTRANS_FORCE)
-      n_buffer_new += sizeof(ParticleForce);
-
-    int count = 0;
-    for (auto const &pl : ghost_comm.part_lists)
-      count += pl->n;
-    n_buffer_new *= count;
+static size_t calc_transmit_size(unsigned data_parts) {
+  size_t size = {};
+  if (data_parts & GHOSTTRANS_PROPRTS) {
+    size += Utils::MemcpyOArchive::packing_size<ParticleProperties>();
   }
-  return n_buffer_new;
+  if (data_parts & GHOSTTRANS_BONDS) {
+    size += Utils::MemcpyOArchive::packing_size<int>();
+  }
+  if (data_parts & GHOSTTRANS_POSITION)
+    size += Utils::MemcpyOArchive::packing_size<ParticlePosition>();
+  if (data_parts & GHOSTTRANS_MOMENTUM)
+    size += Utils::MemcpyOArchive::packing_size<ParticleMomentum>();
+  if (data_parts & GHOSTTRANS_FORCE)
+    size += Utils::MemcpyOArchive::packing_size<ParticleForce>();
+
+  return size;
+}
+
+static size_t calc_transmit_size(GhostCommunication &ghost_comm,
+                                 unsigned int data_parts) {
+  if (data_parts & GHOSTTRANS_PARTNUM)
+    return sizeof(int) * ghost_comm.part_lists.size();
+
+  auto const n_part = boost::accumulate(
+      ghost_comm.part_lists, 0ul,
+      [](size_t sum, auto part_list) { return sum + part_list->n; });
+  return n_part * calc_transmit_size(data_parts);
 }
 
 static void prepare_send_buffer(CommBuf &send_buffer,
@@ -198,8 +136,8 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   send_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
   send_buffer.bonds().clear();
 
-  auto archiver = Archiver{Utils::make_span(send_buffer)};
-  auto bond_archiver = BondArchiver{send_buffer.bonds()};
+  auto archiver = Utils::MemcpyOArchive{Utils::make_span(send_buffer)};
+  auto bond_buffer = std::back_inserter(send_buffer.bonds());
 
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
@@ -207,13 +145,9 @@ static void prepare_send_buffer(CommBuf &send_buffer,
       int np = part_list->n;
       archiver << np;
     } else {
-      for (Particle const &part : part_list->particles()) {
+      for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver << part.p;
-          if (ghosts_have_bonds) {
-            archiver << static_cast<int>(part.bl.n);
-            bond_archiver << Utils::make_const_span(part.bl);
-          }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
@@ -227,9 +161,15 @@ static void prepare_send_buffer(CommBuf &send_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver << part.f;
         }
+        if (data_parts & GHOSTTRANS_BONDS) {
+          archiver << part.bl.n;
+          boost::copy(part.bl, bond_buffer);
+        }
       }
     }
   }
+
+  assert(archiver.bytes_written() == send_buffer.size());
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
@@ -270,8 +210,8 @@ static void put_recv_buffer(CommBuf &recv_buffer,
                             GhostCommunication &ghost_comm,
                             unsigned int data_parts) {
   /* put back data */
-  auto archiver = Archiver{Utils::make_span(recv_buffer)};
-  auto bond_archiver = BondArchiver{recv_buffer.bonds()};
+  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto bond_buffer = recv_buffer.bonds().begin();
 
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
@@ -282,12 +222,6 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (ghosts_have_bonds) {
-            int n_bonds;
-            archiver >> n_bonds;
-            part.bl.resize(n_bonds);
-            bond_archiver >> Utils::make_span(part.bl);
-          }
           if (local_particles[part.p.identity] == nullptr) {
             local_particles[part.p.identity] = &part;
           }
@@ -301,9 +235,18 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver >> part.f;
         }
+        if (data_parts & GHOSTTRANS_BONDS) {
+          decltype(part.bl.n) n_bonds;
+          archiver >> n_bonds;
+          part.bl.resize(n_bonds);
+          std::copy_n(bond_buffer, n_bonds, part.bl.begin());
+          bond_buffer += n_bonds;
+        }
       }
     }
   }
+
+  assert(archiver.bytes_read() == recv_buffer.size());
 
   recv_buffer.bonds().clear();
 }
@@ -311,7 +254,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
 static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
                                         GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Archiver{Utils::make_span(recv_buffer)};
+  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
   for (auto &part_list : ghost_comm.part_lists) {
     for (Particle &part : part_list->particles()) {
       ParticleForce pf;
@@ -338,9 +281,9 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
         Particle &part2 = dst_list->part[p];
         if (data_parts & GHOSTTRANS_PROPRTS) {
           part2.p = part1.p;
-          if (ghosts_have_bonds) {
-            part2.bl = part1.bl;
-          }
+        }
+        if (data_parts & GHOSTTRANS_BONDS) {
+          part2.bl = part1.bl;
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */
@@ -389,6 +332,9 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
    * positions (except for shifting...) */
   if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
     data_parts |= GHOSTTRANS_MOMENTUM;
+
+  if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
+    data_parts |= GHOSTTRANS_BONDS;
 
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
     GhostCommunication &ghost_comm = *it;

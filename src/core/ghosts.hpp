@@ -134,7 +134,8 @@ enum : unsigned {
   /// transfer \ref ParticleForce
   GHOSTTRANS_FORCE = 16u,
   /// resize the receiver particle arrays to the size of the senders
-  GHOSTTRANS_PARTNUM = 64u
+  GHOSTTRANS_PARTNUM = 64u,
+  GHOSTTRANS_BONDS = 128u
 };
 
 /** \name Data Types */

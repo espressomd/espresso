@@ -40,6 +40,7 @@ unit_test(NAME quaternion_test SRC quaternion_test.cpp DEPENDS utils)
 unit_test(NAME mask_test SRC mask_test.cpp DEPENDS utils)
 unit_test(NAME type_traits_test SRC type_traits_test.cpp DEPENDS utils)
 unit_test(NAME uniform_test SRC uniform_test.cpp DEPENDS utils)
+unit_test(NAME memcpy_archive_test SRC memcpy_archive_test.cpp DEPENDS utils)
 
 unit_test(NAME gather_buffer_test SRC gather_buffer_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
 unit_test(NAME scatter_buffer_test SRC scatter_buffer_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX NUM_PROC 4)
