@@ -196,7 +196,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(params['max_displacement'], 0.01)
 
     @ut.skipIf('INT.NVT' not in modes, 'NVT integrator not in modes')
-    def test_integrator_VV(self):
+    def test_integrator_NVT(self):
         integ = system.integrator.get_state()
         self.assertEqual(integ['_method'], 'NVT')
 
