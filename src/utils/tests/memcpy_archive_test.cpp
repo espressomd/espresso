@@ -28,9 +28,8 @@
 
 #include <boost/optional.hpp>
 #include <boost/serialization/optional.hpp>
-#include <boost/variant.hpp>
 
-#include <vector>
+#include <array>
 
 struct NonTrivial {
   boost::optional<Utils::Vector3d> ov;
@@ -46,10 +45,6 @@ template <> struct is_statically_serializable<NonTrivial> : std::true_type {};
 template <class T>
 struct is_statically_serializable<boost::optional<T>>
     : is_statically_serializable<T> {};
-
-template <class... T>
-struct is_statically_serializable<boost::variant<T...>>
-    : Utils::conjunction<is_statically_serializable<T>...> {};
 } // namespace Utils
 
 BOOST_AUTO_TEST_CASE(packing_size_test) {
@@ -62,13 +57,17 @@ BOOST_AUTO_TEST_CASE(packing_size_test) {
 }
 
 BOOST_AUTO_TEST_CASE(type_traits) {
+  static_assert(Utils::is_statically_serializable<int>::value, "");
+  static_assert(Utils::detail::use_memcpy<int>::value, "");
+  static_assert(not Utils::detail::use_serialize<int>::value, "");
+
   static_assert(Utils::is_statically_serializable<OpVec>::value, "");
   static_assert(not Utils::detail::use_memcpy<OpVec>::value, "");
   static_assert(Utils::detail::use_serialize<OpVec>::value, "");
 }
 
 BOOST_AUTO_TEST_CASE(skiping_and_position) {
-  std::vector<char> buf(10);
+  std::array<char, 10> buf;
 
   auto ar = Utils::MemcpyOArchive(Utils::make_span(buf));
 
@@ -78,7 +77,7 @@ BOOST_AUTO_TEST_CASE(skiping_and_position) {
 }
 
 BOOST_AUTO_TEST_CASE(memcpy_processing) {
-  std::vector<char> buf(10);
+  std::array<char, 10> buf;
 
   auto const test_number = 5;
   auto oa = Utils::MemcpyOArchive(Utils::make_span(buf));
@@ -95,7 +94,7 @@ BOOST_AUTO_TEST_CASE(memcpy_processing) {
 }
 
 BOOST_AUTO_TEST_CASE(serializaton_processing) {
-  std::vector<char> buf(2 * Utils::MemcpyOArchive::packing_size<OpVec>());
+  std::array<char, 2 * sizeof(OpVec)> buf;
 
   const OpVec active = Utils::Vector3d{1., 2., 3.};
   const OpVec inactive = boost::none;
