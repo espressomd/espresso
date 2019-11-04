@@ -19,7 +19,7 @@ import unittest as ut
 import importlib_wrapper
 
 try:
-    import MDAnalysis
+    import MDAnalysis  # pylint: disable=unused-import
 except ImportError:
     sample = importlib_wrapper.MagicMock()
     skipIfMissingFeatures = ut.skip(

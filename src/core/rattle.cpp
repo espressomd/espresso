@@ -34,6 +34,7 @@ int n_rigidbonds = 0;
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 
@@ -169,10 +170,12 @@ void correct_pos_shake(ParticleRange const &particles) {
     init_correction_vector(cell_structure.local_cells().particles());
     repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                       GHOSTTRANS_FORCE);
     app_pos_correction(cell_structure.local_cells().particles());
     /**Ghost Positions Update*/
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
@@ -275,7 +278,7 @@ void revert_force(const ParticleRange &particles,
 }
 
 void correct_vel_shake() {
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
 
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
@@ -289,9 +292,11 @@ void correct_vel_shake() {
     init_correction_vector(particles);
     repeat_ = 0;
     compute_vel_corr_vec(&repeat_, cell_structure.local_cells().particles());
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
+    ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                       GHOSTTRANS_FORCE);
     apply_vel_corr(particles);
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else

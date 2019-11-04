@@ -24,7 +24,7 @@ import espressomd.lbboundaries
 import espressomd.shapes
 
 """
-Check the Lattice Boltzmann lid driven shear flow in a slab system
+Check the lattice-Boltzmann lid-driven shear flow in a slab system
 by comparing to the analytical solution.
 
 """
@@ -37,8 +37,8 @@ TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
 # The number of grid cells should be divisible by four and 3 in all directions
 # for testing on multiple mpi nodes.
-H = 12 * AGRID 
-W = 6 * AGRID  
+H = 12 * AGRID
+W = 6 * AGRID
 SHEAR_VELOCITY = 0.3
 
 LB_PARAMS = {'agrid': AGRID,
@@ -83,7 +83,6 @@ def shear_flow(x, t, nu, v, h, k_max):
 class LBShearCommon:
 
     """Base class of the test that holds the test logic."""
-    lbf = None
     system = espressomd.System(box_l=[H + 2. * AGRID,
                                       W,
                                       W])
@@ -101,6 +100,7 @@ class LBShearCommon:
         self.system.box_l = np.max(
             ((W, W, W), shear_plane_normal * (H + 2 * AGRID)), 0)
 
+        self.lbf = self.lb_class(**LB_PARAMS)
         self.system.actors.add(self.lbf)
 
         wall_shape1 = espressomd.shapes.Wall(
@@ -118,7 +118,7 @@ class LBShearCommon:
         t0 = self.system.time
         sample_points = int(H / AGRID - 1)
 
-        for i in range(9):
+        for _ in range(9):
             self.system.integrator.run(50)
 
             v_expected = shear_flow(
@@ -164,8 +164,8 @@ class LBShearCommon:
             np.copy(wall1.get_force()),
             -np.copy(wall2.get_force()),
             atol=1E-4)
-        np.testing.assert_allclose(np.copy(wall1.get_force()), 
-                                   shear_direction * SHEAR_VELOCITY / H * W**2 * VISC, atol=2E-4)
+        np.testing.assert_allclose(np.dot(np.copy(wall1.get_force()), shear_direction),
+                                   SHEAR_VELOCITY / H * W**2 * dynamic_viscosity, atol=2E-4)
 
     def test(self):
         x = np.array((1, 0, 0), dtype=float)
@@ -185,7 +185,7 @@ class LBCPUShear(ut.TestCase, LBShearCommon):
     """Test for the CPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.lb_class = espressomd.lb.LBFluid
 
 
 @utx.skipIfMissingGPU()
@@ -195,7 +195,7 @@ class LBGPUShear(ut.TestCase, LBShearCommon):
     """Test for the GPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.lb_class = espressomd.lb.LBFluidGPU
 
 
 if __name__ == '__main__':

@@ -22,9 +22,12 @@
 #include <utils/uniform.hpp>
 
 BOOST_AUTO_TEST_CASE(limits) {
+  /* 0 maps to epsilon */
   BOOST_CHECK_SMALL(Utils::uniform(0ul),
                     std::numeric_limits<double>::epsilon());
+  /* numeric_limits<>::max() maps to 1. */
   BOOST_CHECK_EQUAL(1., Utils::uniform(std::numeric_limits<uint64_t>::max()));
+  /* linearity */
   BOOST_CHECK_EQUAL(Utils::uniform(0ul) - Utils::uniform(5ul),
                     Utils::uniform(10000ul) - Utils::uniform(10005ul));
 }

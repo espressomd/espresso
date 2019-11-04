@@ -28,17 +28,6 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#ifdef ENGINE
-// velocities which need to be copied from the GPU to the CPU to calculate a
-// torque
-typedef struct {
-
-  // center and source velocity of the md part
-  float v_cs[6];
-
-} CUDA_v_cs;
-#endif
-
 // Parameters for swimmers
 #ifdef ENGINE
 struct CUDA_ParticleParametersSwimming {
@@ -156,13 +145,6 @@ void cuda_mpi_send_forces(ParticleRange particles,
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
-
-#ifdef ENGINE
-void copy_v_cs_from_GPU(ParticleRange particles);
-void cuda_mpi_send_v_cs(ParticleRange particles,
-                        std::vector<CUDA_v_cs> host_v_cs);
-#endif
-
 #endif /* ifdef CUDA */
 
 #endif /* ifdef CUDA_INTERFACE_HPP */

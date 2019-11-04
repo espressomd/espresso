@@ -29,6 +29,7 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
 
 void check_particle_consistency() {
   int n, c;

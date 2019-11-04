@@ -27,6 +27,7 @@
 #include "lb_interface.hpp"
 #include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
 
 #include <profiler/profiler.hpp>
@@ -145,8 +146,8 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
 
   Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
-  if (p.swim.swimming) {
-    v_drift += p.swim.v_swim * p.r.calc_director();
+  if (p.p.swim.swimming) {
+    v_drift += p.p.swim.v_swim * p.r.calc_director();
   }
 #endif
 
@@ -221,16 +222,10 @@ bool in_local_halo(Vector3d const &pos) {
 
 #ifdef ENGINE
 void add_swimmer_force(Particle &p) {
-  if (p.swim.swimming) {
-    if (in_local_domain(p.r.p, local_geo)) {
-      p.swim.v_center = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
-                        lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_center = {};
-    }
-
+  if (p.p.swim.swimming) {
     // calculate source position
-    const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
+    const double direction =
+        double(p.p.swim.push_pull) * p.p.swim.dipole_length;
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
 
@@ -238,15 +233,7 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    if (in_local_domain(source_position, local_geo)) {
-      p.swim.v_source =
-          lb_lbinterpolation_get_interpolated_velocity(source_position) *
-          lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_source = {};
-    }
-
-    add_md_force(source_position, p.swim.f_swim * director);
+    add_md_force(source_position, p.p.swim.f_swim * director);
   }
 }
 #endif
@@ -279,11 +266,6 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         throw std::runtime_error("The non-linear interpolation scheme is not "
                                  "implemented for the CPU LB.");
       case (InterpolationOrder::linear): {
-#ifdef ENGINE
-        ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                           GHOSTTRANS_SWIMMING);
-#endif
-
         using rng_type = r123::Philox4x64;
         using ctr_type = rng_type::ctr_type;
         using key_type = rng_type::key_type;

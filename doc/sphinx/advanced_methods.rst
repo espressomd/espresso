@@ -141,7 +141,7 @@ thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesi
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
-lattice Boltzmann.
+lattice-Boltzmann.
 
 Numerically, the shell is discretized by a set of marker points
 connected by triangles. The marker points are advected with *exactly*
@@ -154,7 +154,7 @@ the local fluid velocity.
 
 The immersed boundary method consists of two components, which can be used independently:
 
-  * :ref:`Inertialess lattice Boltzmann tracers` implemented as virtual sites
+  * :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
 
   * Interactions providing the elastic forces for the particles forming the surface. These are described below.
 
@@ -1204,7 +1204,7 @@ Electrokinetics
 
 The electrokinetics setup in |es| allows for the description of
 electro-hydrodynamic systems on the level of ion density distributions
-coupled to a Lattice Boltzmann (LB) fluid. The ion density distributions
+coupled to a lattice-Boltzmann (LB) fluid. The ion density distributions
 may also interact with explicit charged particles, which are
 interpolated on the LB grid. In the following paragraph we briefly
 explain the electrokinetic model implemented in |es|, before we come to the
@@ -1351,8 +1351,8 @@ Initialization
 .. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
 The above is a minimal example how to initialize the LB fluid, and
-it is very similar to the lattice Boltzmann command in set-up. We
-therefore refer the reader to Chapter :ref:`Lattice Boltzmann` for details on the
+it is very similar to the lattice-Boltzmann command in set-up. We
+therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
 implementation of LB in |es| and describe only the major differences here.
 
 The first major difference with the LB implementation is that the
@@ -1367,7 +1367,7 @@ To set up a proper LB fluid using this command one has to specify at
 least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
-lattice Boltzmann command, this parameter is instead taken directly from the value set for
+lattice-Boltzmann command, this parameter is instead taken directly from the value set for
 :attr:`espressomd.system.System.time_step`. The LB *mass density* is set independently from the
 electrokinetic *number densities*, since the LB fluid serves only as a
 medium through which hydrodynamic interactions are propagated, as will
@@ -1700,7 +1700,7 @@ For a description of the available methods see :mod:`espressomd.reaction_ensembl
 Multiple reactions can be added to the same instance of the reaction ensemble. 
 An Example script can be found here:
 
-* `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
@@ -1837,9 +1837,9 @@ Wang-Landau Reaction Ensemble
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
 
-An Example script can be found here:
+An example script can be found here:
 
-* `Wang Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
+* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
 
 Combination of the Reaction Ensemble with the Wang-Landau algorithm
 :cite:`wang01a`
@@ -1862,6 +1862,7 @@ Constant pH simulation
 
 .. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
 
+
 As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one ConstantpHEnsemble instance:
 
 .. code-block:: python
@@ -1876,7 +1877,7 @@ As before in the Reaction Ensemble one can define multiple reactions (e.g. for a
 
 An Example script can be found here:
 
-* `Reaction ensemble/ constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 In the constant pH method due to Reed and Reed
 :cite:`reed92a` it is possible to set the chemical potential
@@ -1898,7 +1899,7 @@ constant :math:`K_c` for the following reaction:
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
 For an example of how to setup
-a Constant pH simulation, see the file in the testsuite directory.
+a constant pH simulation, see the file in the testsuite directory.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 
 

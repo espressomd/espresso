@@ -19,7 +19,8 @@
 #ifndef CORE_CELL_HPP
 #define CORE_CELL_HPP
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
+#include "ParticleList.hpp"
 
 #include <utils/Span.hpp>
 
@@ -106,10 +107,6 @@ public:
    * @brief All neighbors of the cell.
    */
   neighbors_type &neighbors() { return m_neighbors; }
-
-  void resize(size_t size) {
-    realloc_particlelist(static_cast<ParticleList *>(this), this->n = size);
-  }
 };
 
 #endif

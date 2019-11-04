@@ -22,7 +22,6 @@ import re
 import os
 import sys
 import requests
-import subprocess
 
 if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
     exit(0)

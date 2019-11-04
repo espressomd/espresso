@@ -20,6 +20,7 @@
 
 cmake_minimum_required(VERSION 3.4)
 include(FeatureSummary)
+include(GNUInstallDirs)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
 if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
@@ -28,7 +29,7 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "5.0-dev")
+set(PROJECT_VERSION "4.2-dev")
 
 #
 # CMake internal vars
@@ -241,7 +242,7 @@ if(WITH_PYTHON)
     execute_process(
       COMMAND
         ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
+        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
@@ -397,10 +398,6 @@ endif()
 #
 # Paths
 #
-
-if(NOT DEFINED BINDIR)
-  set(BINDIR "bin")
-endif(NOT DEFINED BINDIR)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 

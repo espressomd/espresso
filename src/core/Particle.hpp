@@ -25,6 +25,27 @@
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
 
+#include <cstdint>
+
+enum : uint8_t {
+  ROTATION_FIXED = 0u,
+  ROTATION_X = 1u,
+  ROTATION_Y = 2u,
+  ROTATION_Z = 4u
+};
+
+struct ParticleParametersSwimming {
+  bool swimming = false;
+  double f_swim = 0.;
+  double v_swim = 0.;
+  int push_pull = 0;
+  double dipole_length = 0.;
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar &swimming &f_swim &v_swim &push_pull &dipole_length;
+  }
+};
+
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
  *  for all ghosts. Ghosts are particles which are
@@ -46,8 +67,8 @@ struct ParticleProperties {
   constexpr static double mass{1.0};
 #endif /* MASS */
 
-#ifdef ROTATIONAL_INERTIA
   /** rotational inertia */
+#ifdef ROTATIONAL_INERTIA
   Utils::Vector3d rinertia = {1., 1., 1.};
 #else
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
@@ -59,7 +80,11 @@ struct ParticleProperties {
 #endif
 
   /** bitfield for the particle axes of rotation */
-  int rotation = 0;
+#ifdef ROTATION
+  uint8_t rotation = ROTATION_FIXED;
+#else
+  static constexpr uint8_t rotation = ROTATION_FIXED;
+#endif
 
   /** charge. */
 #ifdef ELECTROSTATICS
@@ -105,7 +130,7 @@ struct ParticleProperties {
   } vs_relative;
 #endif
 #else  /* VIRTUAL_SITES */
-  static constexpr const bool is_virtual = false;
+  static constexpr bool is_virtual = false;
 #endif /* VIRTUAL_SITES */
 
 #ifdef LANGEVIN_PER_PARTICLE
@@ -134,7 +159,7 @@ struct ParticleProperties {
            <li> 5 apply external torque \ref ParticleProperties::ext_torque
       </ul>
   */
-  int ext_flag = 0;
+  uint8_t ext_flag = 0;
   /** External force, apply if \ref ParticleProperties::ext_flag == 1. */
   Utils::Vector3d ext_force = {0, 0, 0};
 
@@ -142,6 +167,10 @@ struct ParticleProperties {
   /** External torque, apply if \ref ParticleProperties::ext_flag == 16. */
   Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
+#endif
+
+#ifdef ENGINE
+  ParticleParametersSwimming swim;
 #endif
 };
 
@@ -179,13 +208,17 @@ struct ParticleForce {
       : f(f), torque(torque) {}
 #endif
 
-  ParticleForce &operator+=(ParticleForce const &rhs) {
-    f += rhs.f;
+  friend ParticleForce operator+(ParticleForce const &lhs,
+                                 ParticleForce const &rhs) {
 #ifdef ROTATION
-    torque += rhs.torque;
+    return {lhs.f + rhs.f, lhs.torque + rhs.torque};
+#else
+    return lhs.f + rhs.f;
 #endif
+  }
 
-    return *this;
+  ParticleForce &operator+=(ParticleForce const &rhs) {
+    return *this = *this + rhs;
   }
 
   /** force. */
@@ -223,27 +256,6 @@ struct ParticleLocal {
   Utils::Vector3i i = {0, 0, 0};
 };
 
-struct ParticleParametersSwimming {
-// ifdef inside because we need this type for some MPI prototypes
-#ifdef ENGINE
-  bool swimming = false;
-  double f_swim = 0.;
-  double v_swim = 0.;
-  int push_pull = 0;
-  double dipole_length = 0.;
-  Utils::Vector3d v_center;
-  Utils::Vector3d v_source;
-  double rotational_friction = 0.;
-#endif
-
-  template <typename Archive> void serialize(Archive &ar, long int) {
-#ifdef ENGINE
-    ar &swimming &f_swim &v_swim &push_pull &dipole_length &v_center &v_source
-        &rotational_friction;
-#endif
-  }
-};
-
 /** Struct holding all information for one particle. */
 struct Particle {
   int &identity() { return p.identity; }
@@ -275,9 +287,6 @@ struct Particle {
     ret.m = m;
     ret.f = f;
     ret.l = l;
-#ifdef ENGINE
-    ret.swim = swim;
-#endif
 
     return ret;
   }
@@ -328,10 +337,6 @@ struct Particle {
    *  interactions
    */
   IntList el;
-#endif
-
-#ifdef ENGINE
-  ParticleParametersSwimming swim;
 #endif
 };
 

@@ -41,6 +41,7 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "particle_data.hpp"
 #include "tuning.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
