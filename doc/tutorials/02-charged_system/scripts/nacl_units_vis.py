@@ -23,7 +23,6 @@ from espressomd import assert_features, electrostatics
 from espressomd import visualization_opengl
 import numpy
 from threading import Thread
-from time import sleep
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 

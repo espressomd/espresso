@@ -25,7 +25,6 @@
 from math import cos, pi, sin  # pylint: disable=unused-import
 import numpy as np
 import os
-import sys
 import argparse
 
 import espressomd

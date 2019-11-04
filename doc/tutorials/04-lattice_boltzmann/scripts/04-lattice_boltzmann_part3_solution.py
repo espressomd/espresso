@@ -18,8 +18,6 @@
 import logging
 import numpy as np
 logging.basicConfig(level=logging.INFO)
-import matplotlib.pyplot as plt
-import scipy
 
 import espressomd
 espressomd.assert_features(['LENNARD_JONES'])

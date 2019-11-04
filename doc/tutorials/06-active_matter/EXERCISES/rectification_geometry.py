@@ -25,7 +25,6 @@
 from math import cos, pi, sin
 import numpy as np
 import os
-import sys
 
 import espressomd
 espressomd.assert_features(["CUDA", "LB_BOUNDARIES_GPU"])

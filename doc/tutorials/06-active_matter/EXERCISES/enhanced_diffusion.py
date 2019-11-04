@@ -24,12 +24,9 @@
 
 import numpy as np
 import os
-import sys
 import argparse
-import time
 
 import espressomd
-from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities  # pylint: disable=unused-import
 from espressomd.accumulators import Correlator
 

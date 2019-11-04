@@ -24,12 +24,9 @@
 
 import numpy as np
 import os
-import sys
 import argparse
-import time
 
 import espressomd
-from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.accumulators import Correlator
 
@@ -115,8 +112,7 @@ for run in range(5):
     for i in range(SAMP_STEPS):
         if (i + 1) % 100 == 0:
             print('\rrun %i: %.0f%%' % (run + 1, (i + 1) * 100. / SAMP_STEPS),
-                  end='')
-            sys.stdout.flush()
+                  end='', flush=True)
         system.integrator.run(SAMP_LENGTH)
     print()
 
