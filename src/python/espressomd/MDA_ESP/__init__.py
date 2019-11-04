@@ -125,7 +125,7 @@ class ESPParser(TopologyReaderBase):
     """
     format = 'ESP'
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename, **kwargs):  # pylint: disable=unused-argument
         self.kwargs = kwargs
 
     def parse(self):
