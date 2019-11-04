@@ -38,8 +38,8 @@ from espressomd.shapes import Cylinder, Wall, HollowCone
 outdir = "./RESULTS_RECTIFICATION"
 os.makedirs(outdir, exist_ok=True)
 
-# Setup the box (we pad the diameter to ensure that the LB boundaries
-# and therefore the constraints, are away from the edge of the box)
+# Setup the box (we pad the geometry to make sure
+# the LB boundaries are away from the edges of the box)
 
 LENGTH = 100
 DIAMETER = 20

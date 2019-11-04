@@ -600,9 +600,8 @@ def output_vtk_pore(axis, length, outer_rad_left, outer_rad_right,  # pylint: di
     # should implement rotation
     # m is sufficient to be 10
 
-    if ".vtk" not in out_file:
-        print(
-            "output_vtk_pore warning: A file with vtk format will be written without .vtk extension.")
+    if not out_file.endswith(".vtk"):
+        print("output_vtk_pore warning: A file with vtk format will be written without .vtk extension.")
 
     # n must be even therefore:
     n = 2 * m

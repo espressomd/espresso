@@ -53,7 +53,7 @@ class LBBoundaryForceCommon:
     def test(self):
         """
         Integrate the LB fluid until steady state is reached within a certain
-        accuracy. Then compare the foce balance between force exerted on fluid
+        accuracy. Then compare the force balance between force exerted on fluid
         and forces acting on the boundaries.
 
         """

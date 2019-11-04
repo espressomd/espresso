@@ -28,6 +28,9 @@ import espressomd
 from espressomd import assert_features, lb
 
 
+assert_features(["ENGINE", "CUDA", "MASS", "ROTATION", "ROTATIONAL_INERTIA"])
+
+
 ## Exercise 1 ##
 # Create a routine to read in the hydrodynamic type
 # (pusher/puller) and position at which the particle

@@ -32,6 +32,9 @@ from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
 
+assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
+
+
 # Quaternion procedure
 
 def a2quat(phi, theta):

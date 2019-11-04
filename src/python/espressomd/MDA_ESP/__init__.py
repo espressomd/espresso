@@ -58,6 +58,7 @@ from distutils.version import LooseVersion
 
 from MDAnalysis.lib import util
 from MDAnalysis.coordinates.core import triclinic_box
+from MDAnalysis.coordinates.core import triclinic_vectors
 from MDAnalysis.lib.util import NamedStream
 from MDAnalysis.topology.base import TopologyReaderBase
 from MDAnalysis.coordinates import base
