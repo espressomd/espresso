@@ -71,3 +71,7 @@ if [ ${errors} != 0 ]; then
 else
   echo "pylint found no error"
 fi
+
+if [ "$CI" != "" ]; then
+    maintainer/gh_post_pylint.py ${errors} pylint.log
+fi
