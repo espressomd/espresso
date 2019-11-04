@@ -76,21 +76,30 @@ public:
     insert += bytes;
   }
 
+private:
+  void read(void *data, size_t bytes) {
+    /* check that there is enough space left in the buffer */
+    assert((insert + bytes) <= buf.end());
+    std::memcpy(data, insert, bytes);
+    insert += bytes;
+  }
+
+  void write(const void *data, size_t bytes) {
+    /* check that there is enough space left in the buffer */
+    assert((insert + bytes) <= buf.end());
+    std::memcpy(insert, data, bytes);
+    insert += bytes;
+  }
+
+public:
   template <typename T>
   auto operator>>(T &value) -> std::enable_if_t<use_memcpy<T>::value> {
-    /* check that there is enough space left in the buffer */
-    assert((insert + sizeof(T)) <= buf.end());
-
-    std::memcpy(&value, insert, sizeof(T));
-    insert += sizeof(T);
+    read(&value, sizeof(T));
   }
 
   template <typename T>
   auto operator<<(T const &value) -> std::enable_if_t<use_memcpy<T>::value> {
-    /* check that there is enough space left in the buffer */
-    assert((insert + sizeof(T)) <= buf.end());
-    std::memcpy(insert, &value, sizeof(T));
-    insert += sizeof(T);
+    write(&value, sizeof(T));
   }
 
 private:
