@@ -83,10 +83,10 @@ if [ "$CI" != "" ]; then
     maintainer/gh_post_pylint.py ${errors} pylint.log || exit 1
 fi
 if [ ${errors} != 0 ]; then
-  echo "pylint found ${errors} errors" >&2
+  echo "Failed pylint check: ${errors} errors" >&2
   exit 1
 else
-  echo "pylint found no error"
+  echo "Passed pylint check"
 fi
 
 exit 0
