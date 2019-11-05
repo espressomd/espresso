@@ -69,7 +69,7 @@ style:
 style_doxygen:
   <<: *global_job_definition
   stage: prepare
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   dependencies: []
   script:
     - mkdir build
