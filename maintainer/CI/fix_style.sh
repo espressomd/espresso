@@ -50,6 +50,18 @@ find . -type f -executable ! -name '*.sh' ! -name '*.py' ! -name '*.sh.in' ! -na
 
 if [ "$CI" != "" ]; then
     maintainer/gh_post_style_patch.py
+    git --no-pager diff > style.patch
+fi
+git diff-index --quiet HEAD --
+if [ $? = 1 ]; then
+    if [ "$CI" != "" ]; then
+        echo "Failed style check. Download $CI_JOB_URL/artifacts/raw/style.patch to see which changes are necessary." >&2
+    else
+        echo "Failed style check" >&2
+    fi
+    exit 1
+else
+    echo "Passed style check"
 fi
 
 pylint_command () {
@@ -60,18 +72,21 @@ pylint_command () {
     elif hash pylint-3 2> /dev/null; then
         pylint-3 "$@"
     else
-        echo "pylint not found";
+        echo "pylint not found" >&2
         exit 1
     fi
 }
 pylint_command --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
 errors=$(grep -P '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log  | wc -l)
-if [ ${errors} != 0 ]; then
-  echo "pylint found ${errors} errors"
-else
-  echo "pylint found no error"
-fi
 
 if [ "$CI" != "" ]; then
     maintainer/gh_post_pylint.py ${errors} pylint.log
 fi
+if [ ${errors} != 0 ]; then
+  echo "pylint found ${errors} errors" >&2
+  exit 1
+else
+  echo "pylint found no error"
+fi
+
+exit 0

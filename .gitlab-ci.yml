@@ -55,9 +55,6 @@ style:
     - git submodule deinit .
   script:
     - maintainer/CI/fix_style.sh
-    - git --no-pager diff > style.patch
-    - git diff-index --quiet HEAD -- || (echo "Failed style check. Download $CI_JOB_URL/artifacts/raw/style.patch to see which changes are necessary." && exit 1)
-    - echo "Passed style check"
   tags:
     - docker
     - linux
