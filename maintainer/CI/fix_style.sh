@@ -49,8 +49,8 @@ find . \( -name '*.py' -o -name '*.pyx' -o -name '*.pxd' \) -not -path './libs/*
 find . -type f -executable ! -name '*.sh' ! -name '*.py' ! -name '*.sh.in' ! -name pypresso.cmakein  -not -path './.git/*' | xargs -r -n 5 -P 8 chmod -x || exit 3
 
 if [ "$CI" != "" ]; then
-    maintainer/gh_post_style_patch.py
     git --no-pager diff > style.patch
+    maintainer/gh_post_style_patch.py || exit 1
 fi
 git diff-index --quiet HEAD --
 if [ $? = 1 ]; then
@@ -80,7 +80,7 @@ pylint_command --score=no --reports=no --output-format=text src doc maintainer t
 errors=$(grep -P '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log  | wc -l)
 
 if [ "$CI" != "" ]; then
-    maintainer/gh_post_pylint.py ${errors} pylint.log
+    maintainer/gh_post_pylint.py ${errors} pylint.log || exit 1
 fi
 if [ ${errors} != 0 ]; then
   echo "pylint found ${errors} errors" >&2

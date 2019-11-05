@@ -30,6 +30,7 @@ PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
       PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
 SIZELIMIT = 5000
+TOKEN_ESPRESSO_CI = 'Pylint summary'
 
 n_warnings, filepath_warnings = sys.argv[-2:]
 
@@ -37,7 +38,7 @@ n_warnings, filepath_warnings = sys.argv[-2:]
 comments = requests.get(URL)
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
-            'pylint' in comment['body']:
+            TOKEN_ESPRESSO_CI in comment['body']:
         requests.delete(comment['url'] + '?access_token=' +
                         os.environ['GITHUB_TOKEN'])
 
@@ -66,5 +67,6 @@ if n_warnings != '0':
         '\nYou can generate these warnings with `maintainer/CI/fix_style.sh`. '
         'This is the same command that I have executed to generate the log above.'
     )
+    assert TOKEN_ESPRESSO_CI in comment
 
     requests.post(URL, json={'body': comment})
