@@ -685,7 +685,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             advance_and_rotate_part(p2)
             self.system.integrator.run(recalc_forces=True, steps=0)
 
-            r = self.system.distance_vec(p1, p2)
+            r = self.system.distance_vec(p2, p1)
             director1 = p1.director
             director2 = p2.director
 
