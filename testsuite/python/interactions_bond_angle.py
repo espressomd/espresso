@@ -108,14 +108,14 @@ class InteractionsAngleBondTest(ut.TestCase):
             for p, sign in [[p1, -1], [p2, +1]]:
                 # Check that force is perpendicular
                 self.assertAlmostEqual(
-                    np.dot(p.f, self.system.distance_vec(p0, p)), 0,
+                    np.dot(p.f, self.system.distance_vec(p, p0)), 0,
                     delta=1E-12, msg="The force is not perpendicular")
                 # Check that force has correct magnitude
                 self.assertAlmostEqual(np.linalg.norm(p.f), np.abs(
                     f_ref) / self.system.distance(p0, p), delta=1E-11)
                 # Check that force decreases the quantity abs(phi - phi0)
                 if np.abs(phi_diff) > 1E-12:  # sign undefined for phi = phi0
-                    force_axis = np.cross(self.system.distance_vec(p, p0), p.f)
+                    force_axis = np.cross(self.system.distance_vec(p0, p), p.f)
                     self.assertEqual(
                         np.sign(phi_diff),
                         np.sign(sign * np.dot(force_axis, self.axis)),
@@ -139,8 +139,8 @@ class InteractionsAngleBondTest(ut.TestCase):
             # and r_p2 =r_p1 +r_{p1,p2} and r_p3 =r_p1 +r_{p1,p3}
             # P_ij =1/V (F_p2 r_{p1,p2} + F_p3 r_{p1,p3})
             p_tensor_expected = \
-                np.outer(p1.f, self.system.distance_vec(p0, p1)) \
-                + np.outer(p2.f, self.system.distance_vec(p0, p2))
+                np.outer(p1.f, self.system.distance_vec(p1, p0)) \
+                + np.outer(p2.f, self.system.distance_vec(p2, p0))
             p_tensor_expected /= self.system.volume()
             np.testing.assert_allclose(
                 self.system.analysis.stress_tensor()["bonded"],
