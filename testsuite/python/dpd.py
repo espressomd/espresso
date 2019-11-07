@@ -427,7 +427,7 @@ class DPDThermostat(ut.TestCase):
         stress = np.zeros([3, 3])
 
         for pair in pairs:
-            dist = s.distance_vec(pair[0], pair[1])
+            dist = s.distance_vec(pair[1], pair[0])
             if np.linalg.norm(dist) < r_cut:
                 vel_diff = pair[1].v - pair[0].v
                 stress += calc_stress(dist, vel_diff)
