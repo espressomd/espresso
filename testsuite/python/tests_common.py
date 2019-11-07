@@ -115,7 +115,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
             continue
 
         # Distance and distance vec
-        v_d = dist_vec(p0, p1)
+        v_d = dist_vec(p1, p0)
         d = norm(v_d)
 
         # calc and add expected lj force
