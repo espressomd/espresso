@@ -58,8 +58,8 @@ class VirtualSites(ut.TestCase):
         rel = self.system.part[vs_r[0]]
 
         # Distance
-        d = self.system.distance(rel, vs)
-        v_d = self.system.distance_vec(rel, vs)
+        d = self.system.distance(vs, rel)
+        v_d = self.system.distance_vec(vs, rel)
         # Check distance
         self.assertAlmostEqual(d, vs_r[1], places=6)
 
@@ -161,7 +161,7 @@ class VirtualSites(ut.TestCase):
             self.assertEqual(vs_r[0], 1)
             # distance
             self.assertAlmostEqual(vs_r[1], system.distance(
-                system.part[1], system.part[cur_id]), places=6)
+                system.part[cur_id], system.part[1]), places=6)
             cur_id += 1
 
         # Move central particle and Check vs placement
@@ -199,9 +199,9 @@ class VirtualSites(ut.TestCase):
             # Expected torque
             # Radial components of forces on a rigid body add to the torque
             t_exp = np.cross(system.distance_vec(
-                system.part[1], system.part[2]), f2)
+                system.part[2], system.part[1]), f2)
             t_exp += np.cross(system.distance_vec(
-                system.part[1], system.part[3]), f3)
+                system.part[3], system.part[1]), f3)
             # Check
             self.assertLessEqual(np.linalg.norm(t_exp - t), 1E-6)
 
@@ -346,8 +346,8 @@ class VirtualSites(ut.TestCase):
         # expected stress
         s_expected = 1. / system.volume() * (
             np.outer(system.part[1].ext_force, system.distance_vec(
-                system.part[1], system.part[0]))
-            + np.outer(system.part[2].ext_force, system.distance_vec(system.part[2], system.part[0])))
+                system.part[0], system.part[1]))
+            + np.outer(system.part[2].ext_force, system.distance_vec(system.part[0], system.part[2])))
         np.testing.assert_allclose(stress_total, s_expected, atol=1E-5)
         np.testing.assert_allclose(stress_vs, s_expected, atol=1E-5)
         np.testing.assert_allclose(stress_vs_total, s_expected, atol=1E-5)
