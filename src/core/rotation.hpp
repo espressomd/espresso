@@ -32,9 +32,9 @@
 #include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/mask.hpp>
 #include <utils/math/quaternion.hpp>
 #include <utils/math/rotation_matrix.hpp>
-#include <utils/mask.hpp>
 
 /** Propagate angular velocities and update quaternions on a particle */
 void propagate_omega_quat_particle(Particle &p);
@@ -86,8 +86,8 @@ inline void rotation_fix(Particle &p, Utils::Vector3d &rot_vector) {
  * aBodyFrame by amount phi
  */
 inline void local_rotate_particle_body(Particle &p,
-                                const Utils::Vector3d &axis_body_frame,
-                                const double phi) {
+                                       const Utils::Vector3d &axis_body_frame,
+                                       const double phi) {
   auto axis = axis_body_frame;
 
   // Rotation turned off entirely?
@@ -95,9 +95,7 @@ inline void local_rotate_particle_body(Particle &p,
     return;
 
   // Convert rotation axis to body-fixed frame
-  axis =
-      mask(p.p.rotation, axis)
-          .normalize();
+  axis = mask(p.p.rotation, axis).normalize();
 
   auto const s = std::sin(phi / 2);
   auto const q =
@@ -110,8 +108,9 @@ inline void local_rotate_particle_body(Particle &p,
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
  */
-inline void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
-                           const double phi) {
+inline void local_rotate_particle(Particle &p,
+                                  const Utils::Vector3d &axis_space_frame,
+                                  const double phi) {
   // Convert rotation axis to body-fixed frame
   Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
   local_rotate_particle_body(p, axis, phi);

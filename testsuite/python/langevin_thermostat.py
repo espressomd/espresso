@@ -39,7 +39,7 @@ class LangevinThermostat(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         np.random.seed(42)
-    
+
     def setUp(self):
         if "BROWNIAN_DYNAMICS" in espressomd.features():
             self.system.thermostat.turn_off()
@@ -78,7 +78,7 @@ class LangevinThermostat(ut.TestCase):
                   Number of integration steps to sample.
         """
         system = self.system
-        
+
         # Sampling
         loops = 150
         v_stored = np.zeros((N * loops, 3))

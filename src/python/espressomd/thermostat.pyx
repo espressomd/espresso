@@ -521,7 +521,7 @@ cdef class Thermostat:
                          act_on_virtual=False, seed=None):
             """Sets the Brownian Dynamics thermostat with required parameters 'kT' 'gamma'
             and optional parameter 'gamma_rotation'.
-    
+
             Parameters
             -----------
             kT : :obj:`float`
@@ -539,7 +539,7 @@ cdef class Thermostat:
             seed : :obj:`int`, required
                     Initial counter value (or seed) of the philox RNG.
                     Required on first activation of the langevin thermostat.
-    
+
             """
 
             self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)

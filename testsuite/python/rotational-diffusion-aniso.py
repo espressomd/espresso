@@ -60,7 +60,7 @@ class RotDiffAniso(ut.TestCase):
             Number of particles.
 
         """
-        
+
         for ind in range(n):
             part_pos = np.random.random(3) * self.box
             self.system.part.add(rotation=(1, 1, 1), id=ind,
@@ -138,7 +138,7 @@ class RotDiffAniso(ut.TestCase):
         self.box = 10.0
         self.system.box_l = 3 * [self.box]
         self.system.periodicity = [0, 0, 0]
-        
+
         # NVT thermostat
         # Just some temperature range to cover by the test:
         self.kT = np.random.uniform(1.5, 6.5)
@@ -284,7 +284,8 @@ class RotDiffAniso(ut.TestCase):
             D1D1 /= 6.0
             # Technical workaround of a digital arithmetic issue for isotropic
             # particle
-            if np.absolute((D0**2 - D1D1) / (D0**2 + D1D1)) < self.round_error_prec:
+            if np.absolute((D0**2 - D1D1) / (D0**2 + D1D1)
+                           ) < self.round_error_prec:
                 D1D1 *= (1.0 - 2.0 * self.round_error_prec)
             # Eq. (32) [Perrin1936].
             dcosjj2_validate = 1. / 3. + (1. / 3.) * (1. + (D - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
@@ -384,6 +385,7 @@ class RotDiffAniso(ut.TestCase):
             self.system.integrator.set_brownian_dynamics()
             # Actual integration and validation run
             self.check_rot_diffusion(n)
+
 
 if __name__ == '__main__':
     ut.main()

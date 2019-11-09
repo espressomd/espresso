@@ -142,7 +142,7 @@ cdef class Integrator:
             """
             self._method = "BD"
             integrate_set_bd()
-    
+
     def set_isotropic_npt(self, ext_pressure, piston,
                           direction=(True, True, True), cubic_box=False):
         """

@@ -76,7 +76,7 @@ class ThermoTest(ut.TestCase):
         if "BROWNIAN_DYNAMICS" in espressomd.features():
             self.system.thermostat.turn_off()
             self.system.integrator.set_nvt()
-    
+
     def set_initial_cond(self):
         """
         Set all the particles to zero coordinates and velocities; same for time.
@@ -182,7 +182,7 @@ class ThermoTest(ut.TestCase):
                     self.system.part[ind].omega_body = [1.0, 1.0, 1.0]
                 self.system.part[ind].mass = self.mass
                 self.system.part[ind].rinertia = self.J
-    
+
     def dissipation_viscous_drag_setup_bd(self):
         """
         Setup the specific parameters for the following dissipation
@@ -192,7 +192,7 @@ class ThermoTest(ut.TestCase):
         """
 
         system = self.system
-        ## Time
+        # Time
         # Large time_step is OK for the BD by its definition & its benefits
         self.system.time_step = 17.0
 
@@ -336,7 +336,7 @@ class ThermoTest(ut.TestCase):
                         if espressomd.has_features("ROTATION"):
                             self.assertLess(abs(
                                 self.system.part[ind].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * self.system.time / self.J[j])), tol)
-    
+
     # Note: the decelleration test is needed for the Langevin thermostat only. Brownian thermostat is defined
     # over a larger time-step by its concept.
     def check_dissipation_viscous_drag(self, n):
@@ -361,23 +361,23 @@ class ThermoTest(ut.TestCase):
                 for i in range(n):
                     ind = i + k * n
                     # Just some random forces
-                    f[ind,:] = uniform(-0.5, 500., 3)
-                    system.part[ind].ext_force = f[ind,:]
+                    f[ind, :] = uniform(-0.5, 500., 3)
+                    system.part[ind].ext_force = f[ind, :]
                     if "ROTATION" in espressomd.features():
                         # Just some random torques
-                        tor[ind,:] = uniform(-0.5, 500., 3)
-                        system.part[ind].ext_torque = tor[ind,:]
+                        tor[ind, :] = uniform(-0.5, 500., 3)
+                        system.part[ind].ext_torque = tor[ind, :]
                         # Let's set the dipole perpendicular to the torque
                         if "DIPOLES" in espressomd.features():
                             # 2 types of particles correspond to 2 different
                             # perpendicular vectors
                             if ind % 2 == 0:
-                                dip[ind,:] = 0.0, tor[ind, 2], -tor[ind, 1]
+                                dip[ind, :] = 0.0, tor[ind, 2], -tor[ind, 1]
                             else:
-                                dip[ind,:] = -tor[ind, 2], 0.0, tor[ind, 0]
-                            system.part[ind].dip = dip[ind,:]
+                                dip[ind, :] = -tor[ind, 2], 0.0, tor[ind, 0]
+                            system.part[ind].dip = dip[ind, :]
                             # 3rd dynamic axis
-                            tmp_axis[ind,:] = np.cross(tor[ind,:], dip[ind,:]) \
+                            tmp_axis[ind, :] = np.cross(tor[ind, :], dip[ind, :]) \
                                 / (np.linalg.norm(tor[ind]) * np.linalg.norm(dip[ind]))
             # Small number of steps is enough for the terminal velocity within the BD by its definition.
             # A simulation of the original saturation of the velocity.
@@ -388,7 +388,7 @@ class ThermoTest(ut.TestCase):
                     ind = i + k * n
                     system.part[ind].pos = np.zeros((3))
                     if "DIPOLES" in espressomd.features():
-                        system.part[ind].dip = dip[ind,:]
+                        system.part[ind].dip = dip[ind, :]
             for step in range(3):
                 # Small number of steps
                 system.integrator.run(2)
@@ -396,31 +396,38 @@ class ThermoTest(ut.TestCase):
                     ind = i + k * n
                     for j in range(3):
                         # Eq. (14.34) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010)
-                        # First (deterministic) term of the eq. (14.34) of Schlick2010 taking into account eq. (14.35).
+                        # First (deterministic) term of the eq. (14.34) of
+                        # Schlick2010 taking into account eq. (14.35).
                         self.assertLess(
-                            abs(system.part[ind].v[j] - f[ind, j] / \
+                            abs(system.part[ind].v[j] - f[ind, j] /
                                 self.gamma_tran_p_validate[k, j]), tol)
-                        # Second (deterministic) term of the Eq. (14.39) of Schlick2010.
+                        # Second (deterministic) term of the Eq. (14.39) of
+                        # Schlick2010.
                         self.assertLess(
-                            abs(system.part[ind].pos[j] - \
+                            abs(system.part[ind].pos[j] -
                                 system.time * f[ind, j] / self.gamma_tran_p_validate[k, j]), tol)
                         # Same, a rotational analogy.
                         if "ROTATION" in espressomd.features():
                             self.assertLess(abs(
-                                system.part[ind].omega_lab[j] - tor[ind, j] \
-                                    / self.gamma_rot_p_validate[k, j]), tol)
+                                system.part[ind].omega_lab[j] - tor[ind, j]
+                                / self.gamma_rot_p_validate[k, j]), tol)
                     if "ROTATION" in espressomd.features() and "DIPOLES" in espressomd.features():
                         # Same, a rotational analogy. One is implemented using a simple linear algebra;
-                        # the polar angles with a sign control just for a correct inverse trigonometric functions application.
-                        cos_alpha = np.dot(dip[ind,:], system.part[ind].dip[:]) / \
-                            (np.linalg.norm(dip[ind,:]) * system.part[ind].dipm)
-                        # Isoptropic particle for the BD. Single gamma equals to other components
-                        cos_alpha_test = np.cos(system.time * np.linalg.norm(tor[ind,:]) / \
-                            self.gamma_rot_p_validate[k, 0])
-                        # The sign instead of sin calc additionally (equivalent approach)
-                        sgn = np.sign(np.dot(system.part[ind].dip[:], tmp_axis[ind,:]))
-                        sgn_test = np.sign(np.sin(system.time * np.linalg.norm(tor[ind,:]) / \
-                            self.gamma_rot_p_validate[k, 0]))
+                        # the polar angles with a sign control just for a
+                        # correct inverse trigonometric functions application.
+                        cos_alpha = np.dot(dip[ind, :], system.part[ind].dip[:]) / \
+                            (np.linalg.norm(dip[ind, :])
+                             * system.part[ind].dipm)
+                        # Isoptropic particle for the BD. Single gamma equals
+                        # to other components
+                        cos_alpha_test = np.cos(system.time * np.linalg.norm(tor[ind, :]) /
+                                                self.gamma_rot_p_validate[k, 0])
+                        # The sign instead of sin calc additionally (equivalent
+                        # approach)
+                        sgn = np.sign(
+                            np.dot(system.part[ind].dip[:], tmp_axis[ind, :]))
+                        sgn_test = np.sign(np.sin(system.time * np.linalg.norm(tor[ind, :]) /
+                                                  self.gamma_rot_p_validate[k, 0]))
 
                         self.assertLess(abs(cos_alpha - cos_alpha_test), tol)
                         self.assertEqual(sgn, sgn_test)
@@ -642,7 +649,8 @@ class ThermoTest(ut.TestCase):
             # Large time-step is OK for BD.
             system.time_step = 10.0
             # Less number of loops are needed in case of BD because the velocity
-            # distribution is already as required. It is not a result of a real dynamics.
+            # distribution is already as required. It is not a result of a real
+            # dynamics.
             loops = 8
             # The BD does not require so the warmup. Only 1 step is enough.
             # More steps are taken just to be sure that they will not lead
@@ -914,6 +922,7 @@ class ThermoTest(ut.TestCase):
             system.integrator.set_brownian_dynamics()
             # Actual integration and validation run
             self.check_fluctuation_dissipation(n, therm_steps, loops)
+
 
 if __name__ == '__main__':
     ut.main()
