@@ -110,7 +110,7 @@ cdef class Thermostat:
                 self.set_npt(kT=thmst["kT"], gamma0=thmst["gamma0"],
                              gammav=thmst["gammav"])
             if thmst["type"] == "DPD":
-                self.set_dpd(kT=thmst["kT"])
+                self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
             IF BROWNIAN_DYNAMICS:
                 if thmst["type"] == "BROWNIAN":
                     self.set_brownian(kT=thmst["kT"], gamma=thmst[
@@ -538,7 +538,7 @@ cdef class Thermostat:
                     If true the thermostat will act on virtual sites, default is off.
             seed : :obj:`int`, required
                     Initial counter value (or seed) of the philox RNG.
-                    Required on first activation of the langevin thermostat.
+                    Required on first activation of the Brownian Dynamics thermostat.
 
             """
 
