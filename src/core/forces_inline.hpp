@@ -94,8 +94,8 @@ inline ParticleForce external_force(Particle const &p) {
 #ifdef ENGINE
   // apply a swimming force in the direction of
   // the particle's orientation axis
-  if (p.swim.swimming) {
-    f.f += p.swim.f_swim * p.r.calc_director();
+  if (p.p.swim.swimming) {
+    f.f += p.p.swim.f_swim * p.r.calc_director();
   }
 #endif
 

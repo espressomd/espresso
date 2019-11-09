@@ -67,7 +67,6 @@
 
 #include "serialization/IA_parameters.hpp"
 #include "serialization/Particle.hpp"
-#include "serialization/ParticleParametersSwimming.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/u32_to_u64.hpp>
@@ -281,10 +280,11 @@ void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
     n_part--;
 
-    if (pnode == this_node)
+    if (pnode == this_node) {
       local_remove_particle(part);
-
-    remove_all_bonds_to(part);
+    } else {
+      remove_all_bonds_to(part);
+    }
   } else
     local_remove_all_particles();
 

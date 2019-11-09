@@ -230,7 +230,7 @@ IF ELECTROKINETICS:
         def ek_init(self):
             """
             Initializes the electrokinetic system.
-            This automatically initializes the lattice Boltzmann method on the GPU.
+            This automatically initializes the lattice-Boltzmann method on the GPU.
 
             """
             err = ek_init()
@@ -274,7 +274,7 @@ IF ELECTROKINETICS:
 
         def print_vtk_velocity(self, path):
             """
-            Writes the lattice Boltzmann velocity information into a vtk-file.
+            Writes the lattice-Boltzmann velocity information into a vtk-file.
 
             Parameters
             ----------

@@ -15,7 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-ESPResSo as a game engine.
+Game based on Maxwell's demon, a thought experiment used to teach statistical
+thermodynamics. The user has to scoop particles from a chamber and guide them
+to another chamber through a channel with the help of a snake controlled by a
+gamepad or the keyboard. The particle imbalance between chambers creates
+a pressure gradient that makes it harder to move particles to the chamber
+with an excess of particles.
 """
 
 from threading import Thread
@@ -23,8 +28,6 @@ import numpy as np
 import time
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 import espressomd.shapes
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
@@ -249,8 +252,7 @@ system.constraints.add(shape=espressomd.shapes.SimplePore(
 # BUBBLES
 n = 0
 
-# for i in range(bubbles_n):
-while (n < bubbles_n):
+while n < bubbles_n:
     # bpos = [pore_xr +  np.random.random() * (pore_xr - pore_xl -
     # snake_head_sigma*4) + snake_head_sigma * 2, np.random.random() * box[1],
     # box[2]*0.5]

@@ -15,11 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Sample for the usage of H5MD trajectory writing in ESPResSo.
+Write ESPResSo trajectories in the H5MD format. See :ref:`Writing H5MD-files`.
 """
 
-import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd.io.writer import h5md  # pylint: disable=import-error
 from espressomd import polymer
 from espressomd import interactions

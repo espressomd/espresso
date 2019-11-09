@@ -1176,19 +1176,11 @@ cdef class ParticleHandle:
             dipole_length : :obj:`float`
                 This determines the distance of the source of
                 propulsion from the particle's center.
-            rotational_friction : :obj:`float`
-                This key can be used to set the friction that causes
-                the orientation of the particle to change in shear
-                flow. The torque on the particle is determined by
-                taking the cross product of the difference between the
-                fluid velocity at the center of the particle and at
-                the source point and the vector connecting the center
-                and source.
 
             Notes
             -----
             This needs the feature ``ENGINE``.  The keys ``'mode'``,
-            ``'dipole_length'``, and ``'rotational_friction'`` are only
+            and ``'dipole_length'`` are only
             available if ``ENGINE`` is used with LB or ``CUDA``.
 
             Examples
@@ -1202,7 +1194,7 @@ cdef class ParticleHandle:
             >>>
             >>> # Usage with LB
             >>> system.part.add(id=1, pos=[2,0,0], swimming={'f_swim': 0.01,
-            ...     'mode': 'pusher', 'dipole_length': 2.0, 'rotational_friction': 20})
+            ...     'mode': 'pusher', 'dipole_length': 2.0})
 
             """
 
@@ -1214,7 +1206,6 @@ cdef class ParticleHandle:
                 swim.f_swim = 0.0
                 swim.push_pull = 0
                 swim.dipole_length = 0.0
-                swim.rotational_friction = 0.0
 
                 if type(_params) == type(True):
                     if _params:
@@ -1252,12 +1243,6 @@ cdef class ParticleHandle:
                             _params['dipole_length'], 1, float, "dipole_length has to be a float.")
                         swim.dipole_length = _params['dipole_length']
 
-                    if 'rotational_friction' in _params:
-                        check_type_or_throw_except(
-                            _params['rotational_friction'], 1, float, "rotational_friction has to be a float.")
-                        swim.rotational_friction = _params[
-                            'rotational_friction']
-
                 if swim.f_swim != 0 or swim.v_swim != 0:
                     swimming_particles_exist = True
                     mpi_bcast_parameter(FIELD_SWIMMING_PARTICLES_EXIST)
@@ -1279,8 +1264,7 @@ cdef class ParticleHandle:
                     'v_swim': _swim.v_swim,
                     'f_swim': _swim.f_swim,
                     'mode': mode,
-                    'dipole_length': _swim.dipole_length,
-                    'rotational_friction': _swim.rotational_friction
+                    'dipole_length': _swim.dipole_length
                 }
 
                 return swim
@@ -1947,9 +1931,8 @@ Set quat and scalar dipole moment (dipm) instead.")
 
         n = 0
         for p in self:
-            for t in types:
-                if p.type == t or t == "all":
-                    n += 1
+            if types == 'all' or p.type in types:
+                n += 1
 
         with open(fname, "w") as vtk:
             vtk.write("# vtk DataFile Version 2.0\n")
@@ -1958,17 +1941,15 @@ Set quat and scalar dipole moment (dipm) instead.")
             vtk.write("DATASET UNSTRUCTURED_GRID\n")
             vtk.write("POINTS {} floats\n".format(n))
             for p in self:
-                for t in types:
-                    if p.type == t or t == "all":
-                        vtk.write("{} {} {}\n".format(*(p.pos_folded)))
+                if types == 'all' or p.type in types:
+                    vtk.write("{} {} {}\n".format(*(p.pos_folded)))
 
             vtk.write("POINT_DATA {}\n".format(n))
             vtk.write("SCALARS velocity float 3\n")
             vtk.write("LOOKUP_TABLE default\n")
             for p in self:
-                for t in types:
-                    if p.type == t or t == "all":
-                        vtk.write("{} {} {}\n".format(*p.v))
+                if types == 'all' or p.type in types:
+                    vtk.write("{} {} {}\n".format(*p.v))
 
     property highest_particle_id:
         """

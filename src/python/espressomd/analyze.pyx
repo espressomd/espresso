@@ -183,7 +183,7 @@ class Analysis:
             whether to include the particles contribution to the linear
             momentum.
         include_lbfluid : :obj:`bool`, optional
-            whether to include the Lattice Boltzmann fluid contribution
+            whether to include the lattice-Boltzmann fluid contribution
             to the linear momentum.
 
         Returns

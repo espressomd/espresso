@@ -17,11 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This sample sets up a polymer.
+Set up a linear polymer.
 """
 import espressomd
 espressomd.assert_features(["WCA"])
-from espressomd import thermostat
 from espressomd import interactions
 from espressomd import polymer
 from espressomd.io.writer import vtf  # pylint: disable=import-error
@@ -37,12 +36,10 @@ np.random.seed(seed=system.seed)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 system.cell_system.set_n_square(use_verlet_lists=False)
 outfile = open('polymer.vtf', 'w')
 
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=1, sigma=1)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
@@ -64,35 +61,19 @@ vtf.writevsf(system, outfile)
 #      Warmup                                               #
 #############################################################
 
-warm_steps = 10
-wca_cap = 1
-system.force_cap = wca_cap
-i = 0
-act_min_dist = system.analysis.min_dist()
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=0.01)
+while system.analysis.min_dist() < 0.95:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(20)
 
-# warmup with zero temperature to remove overlaps
-system.thermostat.set_langevin(kT=0.0, gamma=1.0)
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
 
-# slowly ramp un up the cap
-while (act_min_dist < 0.95):
-    vtf.writevcf(system, outfile)
-    print("min_dist: {} \t force cap: {}".format(act_min_dist, wca_cap))
-    system.integrator.run(warm_steps)
-    system.part[:].v = [0, 0, 0]
-    # Warmup criterion
-    act_min_dist = system.analysis.min_dist()
-    wca_cap = wca_cap * 1.01
-    system.force_cap = wca_cap
-
-# remove force cap
-wca_cap = 0
-system.force_cap = wca_cap
-system.integrator.run(warm_steps * 10)
-
-# restore simulation temperature
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
-system.integrator.run(warm_steps * 10)
-print("Finished warmup")
+# activate thermostat
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 
 #############################################################
@@ -102,8 +83,8 @@ print("Finished warmup")
 print("simulating...")
 t_steps = 1000
 for t in range(t_steps):
-    print("step {} of {}".format(t, t_steps))
-    system.integrator.run(warm_steps)
+    print("step {} of {}".format(t, t_steps), end='\r', flush=True)
+    system.integrator.run(10)
     vtf.writevcf(system, outfile)
-
 outfile.close()
+print()

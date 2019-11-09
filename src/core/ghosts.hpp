@@ -135,8 +135,7 @@ enum : unsigned {
   GHOSTTRANS_FORCE = 16u,
   /// resize the receiver particle arrays to the size of the senders
   GHOSTTRANS_PARTNUM = 64u,
-  /// transfer \ref ParticleParametersSwimming
-  GHOSTTRANS_SWIMMING = 128u
+  GHOSTTRANS_BONDS = 128u
 };
 
 /** \name Data Types */
