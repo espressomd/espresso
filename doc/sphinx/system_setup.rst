@@ -488,9 +488,8 @@ step :math:`\Delta r` are fully driven by conservative forces :math:`F`:
 A positional random walk variance of each coordinate :math:`\sigma_p^2`
 corresponds to a diffusion within the Wiener process:
 
-.. math:: \sigma_p^2 = 2 D \cdot \Delta t
+.. math:: \sigma_p^2 = 2 \frac{kT}{\gamma} \cdot \Delta t
 
-with the diffusion coefficient :math:`D` defined in the :ref:`Langevin thermostat` section.
 Each velocity component random walk variance :math:`\sigma_v^2` is defined by the heat
 component: 
 
