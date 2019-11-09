@@ -501,17 +501,18 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
   int n_grid[4][3]; /* The four node grids. */
   int my_pos[4][3]; /* The position of comm.rank() in the node grids. */
+  int *n_id[4];     /* linear node identity lists for the node grids. */
+  int *n_pos[4];    /* positions of nodes in the node grids. */
 
   int node_pos[3];
   MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
 
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
-
-  /* linear node identity lists for the node grids. */
-  std::vector<std::vector<int>> n_id(4, std::vector<int>(comm.size()));
-  /* positions of nodes in the node grids. */
-  std::vector<std::vector<int>> n_pos(4, std::vector<int>(3 * comm.size()));
+  for (i = 0; i < 4; i++) {
+    n_id[i] = (int *)Utils::malloc(1 * comm.size() * sizeof(int));
+    n_pos[i] = (int *)Utils::malloc(3 * comm.size() * sizeof(int));
+  }
 
   /* === node grids === */
   /* real space node grid (n_grid[0]) */
@@ -547,10 +548,10 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
 
   for (i = 1; i < 4; i++) {
-    auto group = find_comm_groups(
-        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1].data(),
-        n_id[i].data(), n_pos[i].data(), my_pos[i], comm);
+    auto group =
+        find_comm_groups({n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+                         {n_grid[i][0], n_grid[i][1], n_grid[i][2]},
+                         n_id[i - 1], n_id[i], n_pos[i], my_pos[i], comm);
     if (not group) {
       /* try permutation */
       std::swap(n_grid[i][(fft.plan[i].row_dir + 1) % 3],
@@ -558,8 +559,8 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
 
       group = find_comm_groups(
           {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1].data(),
-          n_id[i].data(), n_pos[i].data(), my_pos[i], comm);
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
+          n_pos[i], my_pos[i], comm);
 
       if (not group) {
         throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
@@ -696,6 +697,10 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
 
   fft.init_tag = true;
+  for (i = 0; i < 4; i++) {
+    free(n_id[i]);
+    free(n_pos[i]);
+  }
   return fft.max_mesh_size;
 }
 
