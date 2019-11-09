@@ -297,7 +297,7 @@ void bd_drag_rot(Particle &p, double dt) {
 #endif // ROTATIONAL_INERTIA
     }
   } // j
-  rotation_fix(p, dphi);
+  dphi = mask(p.p.rotation, dphi);
   double dphi_m = dphi.norm();
   if (dphi_m) {
     Utils::Vector3d dphi_u;
@@ -341,7 +341,7 @@ void bd_drag_vel_rot(Particle &p, double dt) {
 #endif // ROTATIONAL_INERTIA
     }
   }
-  rotation_fix(p, p.m.omega);
+  p.m.omega = mask(p.p.rotation, p.m.omega);
 }
 
 /** Propagate the quaternions: random walk part.*/
@@ -421,7 +421,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
 #endif // ROTATIONAL_INERTIA
     }
   }
-  rotation_fix(p, dphi);
+  dphi = mask(p.p.rotation, dphi);
   // making the algorithm to be independ on an order of the rotations
   double dphi_m = dphi.norm();
   if (dphi_m) {
@@ -468,7 +468,7 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
       domega[j] = brown_sigma_vel_temp * noise[j] / sqrt(p.p.rinertia[j]);
     }
   }
-  rotation_fix(p, domega);
+  domega = mask(p.p.rotation, domega);
   p.m.omega += domega;
 }
 #endif // ROTATION

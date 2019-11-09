@@ -70,18 +70,6 @@ convert_dip_to_quat(const Utils::Vector3d &dip) {
 
 #endif
 
-/** Fixing the per-particle per-axis rotations
- */
-inline void rotation_fix(Particle &p, Utils::Vector3d &rot_vector) {
-  // Per coordinate fixing
-  if (!(p.p.rotation & ROTATION_X))
-    rot_vector[0] = 0;
-  if (!(p.p.rotation & ROTATION_Y))
-    rot_vector[1] = 0;
-  if (!(p.p.rotation & ROTATION_Z))
-    rot_vector[2] = 0;
-}
-
 /** Rotate the particle p around the body-frame defined NORMALIZED axis
  * aBodyFrame by amount phi
  */
