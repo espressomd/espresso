@@ -317,17 +317,17 @@ friction coefficient for every particle individually via the feature
 
 .. _LB thermostat:
 
-Lattice Boltzmann thermostat
+Lattice-Boltzmann thermostat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The :ref:`Lattice Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
+The :ref:`Lattice-Boltzmann` thermostat acts similar to the :ref:`Langevin thermostat` in that the governing equation for particles is
 
 .. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma (v_i(t)-u(x_i(t),t)) + \sqrt{2\gamma k_B T} \eta_i(t).
 
 where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`. 
 To preserve momentum, an equal and opposite friction force and random force act on the fluid. 
 
-Numerically the fluid velocity is determined from the Lattice Boltzmann node velocities 
+Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities 
 by interpolating as described in :ref:`Interpolating velocities`.
 The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes. 
 Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.

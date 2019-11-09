@@ -25,6 +25,8 @@ if(SPHINX_FOUND)
     # Copy the _static directory to the build dir
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/_static DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+    configure_file(samples.py ${CMAKE_CURRENT_BINARY_DIR}/samples.py)
+
     # Files to be copied to the build directory
     set(FILE_LIST
         "${CMAKE_SOURCE_DIR}/doc/logo/logo_48x48.png"
@@ -69,6 +71,8 @@ if(SPHINX_FOUND)
     )
 
     add_custom_target(sphinx
+        ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_BINARY_DIR}/samples.py"
+        COMMAND
         ${SPHINX_API_DOC_EXE}
             -f
             -P

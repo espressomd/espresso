@@ -52,9 +52,6 @@ std::vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
 std::vector<float> particle_torques_host;
-#ifdef ENGINE
-std::vector<CUDA_v_cs> host_v_cs;
-#endif
 
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
@@ -187,9 +184,6 @@ void gpu_change_number_of_part_to_comm() {
       particle_data_device = nullptr;
     }
 
-#ifdef ENGINE
-    host_v_cs.clear();
-#endif
 #ifdef ROTATION
     particle_torques_host.clear();
 #endif
@@ -210,9 +204,6 @@ void gpu_change_number_of_part_to_comm() {
                                   cudaHostAllocWriteCombined));
       particle_forces_host.resize(3 *
                                   global_part_vars_host.number_of_particles);
-#ifdef ENGINE
-      host_v_cs.resize(global_part_vars_host.number_of_particles);
-#endif
 #if (defined DIPOLES || defined ROTATION)
       particle_torques_host.resize(3 *
                                    global_part_vars_host.number_of_particles);
@@ -351,23 +342,6 @@ void copy_forces_from_GPU(ParticleRange particles) {
                          particle_torques_host);
   }
 }
-
-#if defined(ENGINE) && defined(CUDA)
-// setup and call kernel to copy v_cs to host
-void copy_v_cs_from_GPU(ParticleRange particles) {
-  if (global_part_vars_host.communication_enabled == 1 &&
-      global_part_vars_host.number_of_particles) {
-    // Copy result from device memory to host memory
-    if (this_node == 0) {
-      cuda_safe_mem(cudaMemcpy2D(
-          host_v_cs.data(), sizeof(CUDA_v_cs), particle_data_device,
-          sizeof(CUDA_particle_data), sizeof(CUDA_v_cs),
-          global_part_vars_host.number_of_particles, cudaMemcpyDeviceToHost));
-    }
-    cuda_mpi_send_v_cs(particles, host_v_cs);
-  }
-}
-#endif
 
 void clear_energy_on_GPU() {
   if (!global_part_vars_host.communication_enabled)

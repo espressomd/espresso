@@ -15,17 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Particle polarization with cold Drude oscillators on a coarse grained
-ionic liquid BMIM PF6.
+Particle polarization with cold Drude oscillators on a coarse-grained
+simulation of the ionic liquid BMIM PF6.
 """
 
-import sys
 import time
 import os
 import numpy as np
 import argparse
-from threading import Thread
-from time import sleep
 
 import espressomd
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
@@ -40,11 +37,11 @@ from espressomd.virtual_sites import VirtualSitesRelative
 import espressomd.visualization_opengl
 
 
-print("""This script demonstrates particle polarization with cold Drude
-oscillators. It is a coarse grained simulation of the ionic liquid BMIM PF6.
+print(__doc__ + """
 The density and particle numbers are low for testing purposes. It writes the
 xyz trajectory and RDF to the specified output path. Run with --help to see
-available arguments (e.g. use --visual for visualization).""")
+available arguments (e.g. use --visual for visualization).
+""")
 
 parser = argparse.ArgumentParser(description='Drude LJ liquid')
 parser.add_argument("--epsilon_r", nargs='?', default=1.0, type=float)

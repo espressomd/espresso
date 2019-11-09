@@ -639,3 +639,14 @@ def single_component_maxwell(x1, x2, kT):
 
 def lists_contain_same_elements(list1, list2):
     return len(list1) == len(list2) and sorted(list1) == sorted(list2)
+
+
+def count_fluid_nodes(lbf):
+    """Counts the non-boundary nodes in the passed lb fluid instance."""
+
+    fluid_nodes = 0
+    for n in lbf.nodes():
+        if not n.boundary: 
+            fluid_nodes += 1
+
+    return fluid_nodes

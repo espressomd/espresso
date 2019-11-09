@@ -120,6 +120,9 @@ using UpdatePropertyMessage = boost::variant
 #ifdef LB_ELECTROHYDRODYNAMICS
         , UpdateProperty<Utils::Vector3d, &Prop::mu_E>
 #endif
+#ifdef ENGINE
+        , UpdateProperty<ParticleParametersSwimming, &Prop::swim>
+#endif
 #ifdef DIPOLES
         , UpdateProperty<double, &Prop::dipm>
 #endif
@@ -224,21 +227,6 @@ using UpdateBondMessage = boost::variant
         , AddBond
         >;
 
-#ifdef ENGINE
-struct UpdateSwim {
-    ParticleParametersSwimming swim;
-
-    void operator()(Particle &p) const {
-      p.swim = swim;
-    }
-
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-      ar & swim;
-    }
-};
-#endif
-
 #ifdef ROTATION
 struct UpdateOrientation {
     Utils::Vector3d axis;
@@ -273,9 +261,6 @@ using UpdateMessage = boost::variant
         , UpdateMomentumMessage
         , UpdateForceMessage
         , UpdateBondMessage
-#ifdef ENGINE
-        , UpdateSwim
-#endif
 #ifdef ROTATION
         , UpdateOrientation
 #endif
@@ -791,7 +776,8 @@ void set_particle_v(int part, double *v) {
 
 #ifdef ENGINE
 void set_particle_swimming(int part, ParticleParametersSwimming swim) {
-  mpi_send_update_message(part, UpdateSwim{swim});
+  mpi_update_particle_property<ParticleParametersSwimming,
+                               &ParticleProperties::swim>(part, swim);
 }
 #endif
 
@@ -1050,50 +1036,54 @@ int remove_particle(int p_id) {
   return ES_OK;
 }
 
-namespace {
-std::pair<Cell *, size_t> find_particle(Particle *p, Cell *c) {
-  for (int i = 0; i < c->n; ++i) {
-    if ((c->part + i) == p) {
-      return {c, i};
-    }
+/**
+ * @brief Remove all bonds on particle involing other particle.
+ *
+ * @param p Particle whose bond list is modified.
+ * @param id Bonds involving this id are removed.
+ */
+static void remove_all_bonds_to(Particle &p, int id) {
+  IntList *bl = &p.bl;
+  int i, j, partners;
+
+  for (i = 0; i < bl->n;) {
+    partners = bonded_ia_params[bl->e[i]].num;
+    for (j = 1; j <= partners; j++)
+      if (bl->e[i + j] == id)
+        break;
+    if (j <= partners) {
+      bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
+    } else
+      i += 1 + partners;
   }
-  return {nullptr, 0};
+  assert(i == bl->n);
 }
 
-std::pair<Cell *, size_t> find_particle(Particle *p, CellPList cells) {
-  for (auto &c : cells) {
-    auto res = find_particle(p, c);
-    if (res.first) {
-      return res;
-    }
+void remove_all_bonds_to(int identity) {
+  for (auto &p : local_cells.particles()) {
+    remove_all_bonds_to(p, identity);
   }
-
-  return {nullptr, 0};
 }
-} // namespace
 
 void local_remove_particle(int part) {
-  Particle *p = local_particles[part];
-  assert(p);
-  assert(not p->l.ghost);
-
-  /* If the particles are sorted we can use the
-   * cell system to find the cell containing the
-   * particle. Otherwise we do a brute force search
-   * of the cells. */
   Cell *cell = nullptr;
-  size_t n = 0;
-  if (Cells::RESORT_NONE == get_resort_particles()) {
-    std::tie(cell, n) = find_particle(p, find_current_cell(*p));
+  int position = -1;
+  for (auto c : local_cells) {
+    for (int i = 0; i < c->n; i++) {
+      auto &p = c->part[i];
+
+      if (p.identity() == part) {
+        cell = c;
+        position = i;
+      } else {
+        remove_all_bonds_to(p, i);
+      }
+    }
   }
 
-  if (not cell) {
-    std::tie(cell, n) = find_particle(p, local_cells);
-  }
+  assert(cell && (position >= 0));
 
-  assert(cell && cell->part && (n < cell->n) && ((cell->part + n) == p));
-
-  Particle p_destroy = extract_indexed_particle(cell, n);
+  extract_indexed_particle(cell, position);
 }
 
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
@@ -1205,31 +1195,6 @@ int try_delete_bond(Particle *part, const int *bond) {
     }
   }
   return ES_ERROR;
-}
-
-void remove_all_bonds_to(int identity) {
-  for (auto &p : local_cells.particles()) {
-    IntList *bl = &p.bl;
-    int i, j, partners;
-
-    for (i = 0; i < bl->n;) {
-      partners = bonded_ia_params[bl->e[i]].num;
-      for (j = 1; j <= partners; j++)
-        if (bl->e[i + j] == identity)
-          break;
-      if (j <= partners) {
-        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-      } else
-        i += 1 + partners;
-    }
-    if (i != bl->n) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: bond information corrupt for "
-              "particle %d, exiting...\n",
-              this_node, p.p.identity);
-      errexit();
-    }
-  }
 }
 
 #ifdef EXCLUSIONS
@@ -1512,7 +1477,7 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim) {
-  swim = &(p->swim);
+  swim = &(p->p.swim);
 }
 #endif
 
