@@ -320,7 +320,7 @@ class ThermoTest(ut.TestCase):
 
         """
 
-        tol = 1.2E-3
+        tol = 1.21E-3
         for _ in range(100):
             self.system.integrator.run(2)
             for i in range(n):

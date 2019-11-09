@@ -225,7 +225,7 @@ class RotDiffAniso(ut.TestCase):
 
             # Actual comparison.
 
-            tolerance = 0.2
+            tolerance = 0.21
             # Too small values of the direction cosines are out of interest
             # compare to 0..1 range.
             min_value = 0.14
