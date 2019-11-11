@@ -224,7 +224,7 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
 
   // Get velocity effective in the thermostatting
 #ifdef ENGINE
-  auto const velocity = (p.p.swim.v_swim != 0)
+  auto const &velocity = (p.p.swim.v_swim != 0)
                             ? p.m.v - p.p.swim.v_swim * p.r.calc_director()
                             : p.m.v;
 #else
@@ -234,26 +234,22 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
   // Particle frictional isotropy check
   auto const aniso_flag =
       (langevin_pref_friction_buf[0] != langevin_pref_friction_buf[1]) ||
-      (langevin_pref_friction_buf[1] != langevin_pref_friction_buf[2]) ||
-      (langevin_pref_noise_buf[0] != langevin_pref_noise_buf[1]) ||
-      (langevin_pref_noise_buf[1] != langevin_pref_noise_buf[2]);
+      (langevin_pref_friction_buf[1] != langevin_pref_friction_buf[2]);
 
   // In case of anisotropic particle: body-fixed reference frame. Otherwise:
   // lab-fixed reference frame.
-  auto const friction = aniso_flag ? [&]() {
-    auto const A = rotation_matrix(p.r.quat);
-
-    return transpose(A) *
-    hadamard_product(langevin_pref_friction_buf, A * velocity);
-  }()  : hadamard_product(langevin_pref_friction_buf, velocity);
-
-  return friction +
-         hadamard_product(langevin_pref_noise_buf, v_noise(p.p.identity));
+  auto const friction_op =
+      aniso_flag
+          ? convert_space_to_body(p, diag_matrix(langevin_pref_friction_buf))
+          : diag_matrix(langevin_pref_friction_buf);
+  auto const noise_op = diag_matrix(langevin_pref_noise_buf);
 #else
-  // Do the actual (isotropic) thermostatting
-  return langevin_pref_friction_buf * velocity +
-         langevin_pref_noise_buf * v_noise(p.p.identity);
+  auto const &friction_op = langevin_pref_friction_buf;
+  auto const &noise_op = langevin_pref_noise_buf;
 #endif // PARTICLE_ANISOTROPY
+
+  // Do the actual (isotropic) thermostatting
+  return friction_op * velocity + noise_op * v_noise(p.p.identity);
 }
 
 #ifdef ROTATION
