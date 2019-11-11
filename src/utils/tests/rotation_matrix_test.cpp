@@ -26,25 +26,6 @@
 
 using namespace Utils;
 
-BOOST_AUTO_TEST_CASE(transpose_test) {
-  // clang-format off
-  auto const A = Matrix<VectorXi<2>, 3, 3>{
-      {{0,0}, {0, 1}, {0, 2}},
-      {{1,0}, {1, 1}, {1, 2}},
-      {{2,0}, {2, 1}, {2, 2}}
-  };
-
-  auto const expected = Matrix<VectorXi<2>, 3, 3>{
-      {{0, 0}, {1, 0}, {2, 0}},
-      {{0, 1}, {1, 1}, {2, 1}},
-      {{0, 2}, {1, 2}, {2, 2}}
-  };
-  // clang-format on
-
-  auto const result = transpose(A);
-  BOOST_CHECK(result == expected);
-}
-
 BOOST_AUTO_TEST_CASE(rotation_matrix_test) {
   /* Check rotation matrix by comparing with vec_rotate
    * for given axis and angle. */

@@ -45,19 +45,6 @@ template <class T> Matrix<T, 3, 3> rotation_matrix(Vector<T, 4> const &q) {
          };
   // clang-format on
 }
-
-/**
- * @brief Transpose matrix
- * @param m Input matrix
- * @return Transposed matrix
- */
-template <class T> Matrix<T, 3, 3> transpose(Matrix<T, 3, 3> const &m) {
-  return {
-      {m[0][0], m[1][0], m[2][0]},
-      {m[0][1], m[1][1], m[2][1]},
-      {m[0][2], m[1][2], m[2][2]},
-  };
-}
 } // namespace Utils
 
 #endif // ESPRESSO_ROTATION_MATRIX_HPP
