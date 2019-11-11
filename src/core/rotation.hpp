@@ -57,6 +57,13 @@ inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
   return transpose(rotation_matrix(p.r.quat)) * v;
 }
 
+template <class T>
+auto convert_space_to_body(const Particle &p,
+                           const Utils::Matrix<T, 3, 3> &A) {
+  auto const O = rotation_matrix(p.r.quat);
+  return transpose(O) * A * O;
+}
+
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
