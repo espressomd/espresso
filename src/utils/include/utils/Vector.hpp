@@ -332,11 +332,18 @@ template <class T> Matrix<T, 3, 3> transpose(Matrix<T, 3, 3> const &m) {
 }
 
 /**
- * @brief Corresponding diagonal matrix.
+ * @brief Diagonal matrix with diagonal elements from vector.
  *
  * Diagonal matrix with vector entries as diagonal:
  *
- * D_{ij} = \delta_{ij} v_i
+ * \f[
+ *     D_{ij} = \delta_{ij} v_i
+ * \f]
+ *
+ * Only implemented for 3x3 matrices.
+ *
+ * @tparam T scalar type
+ * @param v Vector with diagonal elements
  */
 template <class T> Matrix<T, 3, 3> diag_matrix(Vector<T, 3> const &v) {
   return {{v[0], 0, 0}, {0, v[1], 0}, {0, 0, v[2]}};
@@ -347,9 +354,11 @@ template <class T> Matrix<T, 3, 3> diag_matrix(Vector<T, 3> const &v) {
  *
  * Matrix product C, where
  *
- * C_{ij} = \sum_k A_{ik} B_{kj}
+ * \f[
+ *     C_{ij} = \sum_k A_{ik} B_{kj}
+ * \f]
  *
- * only implemented for 3x3 matrices..
+ * Only implemented for 3x3 matrices.
  *
  * @tparam T scalar type
  * @param A Left-hand side
