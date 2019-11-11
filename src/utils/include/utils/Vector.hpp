@@ -332,6 +332,17 @@ template <class T> Matrix<T, 3, 3> transpose(Matrix<T, 3, 3> const &m) {
 }
 
 /**
+ * @brief Corresponding diagonal matrix.
+ *
+ * Diagonal matrix with vector entries as diagonal:
+ *
+ * D_{ij} = \delta_{ij} v_i
+ */
+template <class T> Matrix<T, 3, 3> diag_matrix(Vector<T, 3> const &v) {
+  return {{v[0], 0, 0}, {0, v[1], 0}, {0, 0, v[2]}};
+}
+
+/**
  * @brief Matrix product
  *
  * Matrix product C, where

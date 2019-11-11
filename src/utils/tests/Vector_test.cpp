@@ -342,3 +342,12 @@ BOOST_AUTO_TEST_CASE(hadamard_product_test) {
   BOOST_CHECK_EQUAL(res[0], v1[0] * v2[0]);
   BOOST_CHECK_EQUAL(res[1], v1[1] * v2[1]);
 }
+
+BOOST_AUTO_TEST_CASE(diag_matrix) {
+  auto const v = Utils::Vector3d{1, 2, 3};
+  auto const result = Utils::diag_matrix(v);
+
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      BOOST_CHECK_EQUAL(result[i][j], (i == j) ? v[i] : 0);
+}
