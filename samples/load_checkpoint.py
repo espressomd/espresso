@@ -23,6 +23,7 @@ Basic usage of the checkpointing feature. Show how to load the state of:
 * P3M parameters.
 * thermostat.
 """
+# pylint: disable=undefined-variable
 import espressomd
 
 required_features = ["P3M", "WCA"]

@@ -503,7 +503,7 @@ def midi_thread():
             if controls.midi_input is not None and controls.midi_input.poll():
                 events = controls.midi_input.read(1000)
                 for event in events:
-                    status, data1, data2, data3 = event[0]
+                    status, data1, data2, _ = event[0]
                     if status == controls.MIDI_NUM_TEMPERATURE:
                         temperature = data2 * \
                             (controls.max_temp - controls.min_temp) / \

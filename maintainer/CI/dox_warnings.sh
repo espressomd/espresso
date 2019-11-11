@@ -80,7 +80,7 @@ fi
 cat dox_warnings.log
 
 if [ "${CI}" != "" ]; then
-    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen ${n_warnings} dox_warnings.log
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen ${n_warnings} dox_warnings.log || exit 1
 fi
 
 if [ ${n_warnings} = "0" ]; then

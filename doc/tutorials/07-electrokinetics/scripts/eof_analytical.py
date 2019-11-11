@@ -99,7 +99,6 @@ xi = pntm
 
 
 def density(x=None, xi=None, bjerrum_length=None):
-    kb = 1.0
     return (xi**2) / (2.0 * np.pi * bjerrum_length * np.cos(xi * x)**2)
 
 # function to calculate the velocity
@@ -116,19 +115,6 @@ def velocity(x=None, xi=None, d=None, bjerrum_length=None, force=None,
 def pressure_tensor_offdiagonal(x=None, xi=None, bjerrum_length=None,
                                 force=None):
     return force * xi * np.tan(xi * x) / (2.0 * np.pi * bjerrum_length)
-
-# function to calculate the hydrostatic pressure
-
-# Technically, the LB simulates a compressible fluid, whose pressure
-# tensor contains an additional term on the diagonal, proportional to
-# the divergence of the velocity. We neglect this (small) contribution.
-# The LB pressure tensor also contains the convective acceleration, which
-# we neglect here.
-
-
-def hydrostatic_pressure(x=None, xi=None, bjerrum_length=None,
-                         tensor_entry=None):
-    return 0.0
 
 
 position_list = []

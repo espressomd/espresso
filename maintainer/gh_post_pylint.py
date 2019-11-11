@@ -30,13 +30,11 @@ PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
       PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
 SIZELIMIT = 5000
+TOKEN_ESPRESSO_CI = 'Pylint summary'
 
-doc_type, has_warnings, filepath_warnings = sys.argv[-3:]
-has_warnings = has_warnings != '0'
-prefix = {'sphinx': 'doc', 'doxygen': 'dox'}[doc_type]
-TOKEN_ESPRESSO_CI = prefix + '_warnings.sh'
+n_warnings, filepath_warnings = sys.argv[-2:]
 
-# Delete all existing comments
+# Delete older pylint messages
 comments = requests.get(URL)
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
@@ -44,19 +42,16 @@ for comment in comments.json():
         requests.delete(comment['url'] + '?access_token=' +
                         os.environ['GITHUB_TOKEN'])
 
-# If documentation raised warnings, post a new comment
-if has_warnings:
+# If pylint raised errors, post a new comment
+if n_warnings != '0':
     with open(filepath_warnings) as f:
         warnings = f.read().strip()
-    warnings = warnings.replace('@', '\\')
-    assert warnings.count('\n') >= 1, 'list of warnings is missing newlines'
     # the logfile must be guarded by backticks
     backticks = max(['``'] + re.findall('`+', warnings), key=len) + '`'
     assert len(backticks) < 12, 'cannot guard logfile warnings with backticks'
     # format message
-    summary, warnings = warnings.split('\n', 1)
-    comment = 'Your pull request does not meet our code documentation rules. '
-    comment += summary + '\n\n' + backticks + '\n'
+    comment = 'Your pull request does not meet our code style rules. '
+    comment += 'Pylint summary:\n' + backticks + '\n'
     if len(warnings) > SIZELIMIT:
         for line in warnings.split('\n'):
             if len(comment) + len(line) > SIZELIMIT - 200:
@@ -69,10 +64,9 @@ if has_warnings:
     else:
         comment += warnings.rstrip() + '\n' + backticks + '\n'
     comment += (
-        '\nYou can generate these warnings with `make -t; make {}; '
-        '../maintainer/CI/{}_warnings.sh` using the maxset config. This is '
-        'the same command that I have executed to generate the log above.'
-        .format(doc_type, prefix))
+        '\nYou can generate these warnings with `maintainer/CI/fix_style.sh`. '
+        'This is the same command that I have executed to generate the log above.'
+    )
     assert TOKEN_ESPRESSO_CI in comment
 
     requests.post(URL, json={'body': comment})

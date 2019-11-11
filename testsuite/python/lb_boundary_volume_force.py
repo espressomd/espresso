@@ -53,7 +53,7 @@ class LBBoundaryForceCommon:
     def test(self):
         """
         Integrate the LB fluid until steady state is reached within a certain
-        accuracy. Then compare the foce balance between force exerted on fluid
+        accuracy. Then compare the force balance between force exerted on fluid
         and forces acting on the boundaries.
 
         """
@@ -79,7 +79,6 @@ class LBBoundaryForceCommon:
             diff = abs(new_val - old_val)
             old_val = new_val
 
-        surface_area = self.system.box_l[1] * self.system.box_l[2]
         expected_force = fluid_nodes * AGRID**3 * \
             np.copy(self.lbf.ext_force_density)
         measured_force = np.array(wall1.get_force()) + \

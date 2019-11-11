@@ -17,7 +17,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-from espressomd import System, lb, shapes, lbboundaries
+from espressomd import System, lb
 
 
 class SwimmerTest():

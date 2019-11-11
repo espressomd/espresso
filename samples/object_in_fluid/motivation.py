@@ -29,7 +29,6 @@ espressomd.assert_features(required_features)
 from espressomd import lbboundaries
 from espressomd import shapes
 
-import numpy as np
 import os
 import argparse
 import warnings

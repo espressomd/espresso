@@ -286,30 +286,14 @@ dp3m_data_struct::dp3m_data_struct() {
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
   rs_mesh = nullptr;
-  rs_mesh_dip[0] = nullptr;
-  rs_mesh_dip[1] = nullptr;
-  rs_mesh_dip[2] = nullptr;
-  ks_mesh = nullptr;
 
   sum_dip_part = 0;
   sum_mu2 = 0.0;
 
-  for (auto &i : int_caf)
-    i = nullptr;
   pos_shift = 0.0;
-  meshift = nullptr;
-
-  d_op = nullptr;
-  g_force = nullptr;
-  g_energy = nullptr;
 
   ca_num = 0;
-  ca_frac = nullptr;
-  ca_fmp = nullptr;
   ks_pnum = 0;
-
-  send_grid = nullptr;
-  recv_grid = nullptr;
 
   energy_correction = 0.0;
 }
@@ -354,10 +338,8 @@ void dp3m_init() {
 
     dp3m_calc_send_mesh();
 
-    dp3m.send_grid =
-        Utils::realloc(dp3m.send_grid, sizeof(double) * dp3m.sm.max);
-    dp3m.recv_grid =
-        Utils::realloc(dp3m.recv_grid, sizeof(double) * dp3m.sm.max);
+    dp3m.send_grid.resize(dp3m.sm.max);
+    dp3m.recv_grid.resize(dp3m.sm.max);
 
     /* fix box length dependent constants */
     dp3m_scaleby_box_l();
@@ -372,11 +354,11 @@ void dp3m_init() {
         fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                  dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
                  dp3m.fft, node_grid, comm_cart);
-    dp3m.ks_mesh = Utils::realloc(dp3m.ks_mesh, ca_mesh_size * sizeof(double));
+    dp3m.ks_mesh.resize(ca_mesh_size);
 
-    for (n = 0; n < 3; n++)
-      dp3m.rs_mesh_dip[n] =
-          Utils::realloc(dp3m.rs_mesh_dip[n], ca_mesh_size * sizeof(double));
+    for (auto &val : dp3m.rs_mesh_dip) {
+      val.resize(ca_mesh_size);
+    }
 
     /* k-space part: */
 
@@ -391,13 +373,13 @@ void dp3m_init() {
 
 void dp3m_free_dipoles() {
   for (auto &i : dp3m.rs_mesh_dip)
-    free(i);
-  free(dp3m.ca_frac);
-  free(dp3m.ca_fmp);
-  free(dp3m.send_grid);
-  free(dp3m.recv_grid);
+    i.resize(0);
+  dp3m.ca_frac.resize(0);
+  dp3m.ca_fmp.resize(0);
+  dp3m.send_grid.resize(0);
+  dp3m.recv_grid.resize(0);
   free(dp3m.rs_mesh);
-  free(dp3m.ks_mesh);
+  dp3m.ks_mesh.resize(0);
 }
 
 double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
@@ -586,8 +568,7 @@ void dp3m_interpolate_dipole_assignment_function() {
 
   for (i = 0; i < dp3m.params.cao; i++) {
     /* allocate memory for interpolation array */
-    dp3m.int_caf[i] = Utils::realloc(
-        dp3m.int_caf[i], sizeof(double) * (2 * dp3m.params.inter + 1));
+    dp3m.int_caf[i].resize(2 * dp3m.params.inter + 1);
 
     /* loop over all interpolation points */
     for (j = -dp3m.params.inter; j <= dp3m.params.inter; j++)
@@ -641,7 +622,7 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
     dp3m_realloc_ca_fields(cp_cnt + 1);
   // do it here, since p3m_realloc_ca_fields may change the address of
   // dp3m.ca_frac
-  cur_ca_frac = dp3m.ca_frac + dp3m.params.cao3 * cp_cnt;
+  cur_ca_frac = dp3m.ca_frac.data() + dp3m.params.cao3 * cp_cnt;
 
   if (dp3m.params.inter == 0) {
     for (d = 0; d < 3; d++) {
@@ -836,12 +817,12 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
      * mesh) and Perform forward 3D FFT (Charge Assignment Mesh). */
-    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0]);
-    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1]);
-    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2]);
-    fft_perform_forw(dp3m.rs_mesh_dip[0], dp3m.fft, comm_cart);
-    fft_perform_forw(dp3m.rs_mesh_dip[1], dp3m.fft, comm_cart);
-    fft_perform_forw(dp3m.rs_mesh_dip[2], dp3m.fft, comm_cart);
+    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0].data());
+    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1].data());
+    dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2].data());
+    fft_perform_forw(dp3m.rs_mesh_dip[0].data(), dp3m.fft, comm_cart);
+    fft_perform_forw(dp3m.rs_mesh_dip[1].data(), dp3m.fft, comm_cart);
+    fft_perform_forw(dp3m.rs_mesh_dip[2].data(), dp3m.fft, comm_cart);
     // Note: after these calls, the grids are in the order yzx and not xyz
     // anymore!!!
   }
@@ -1044,13 +1025,16 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
           }
         }
         /* Back FFT force component mesh */
-        fft_perform_back(dp3m.rs_mesh_dip[0], false, dp3m.fft, comm_cart);
-        fft_perform_back(dp3m.rs_mesh_dip[1], false, dp3m.fft, comm_cart);
-        fft_perform_back(dp3m.rs_mesh_dip[2], false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[0].data(), false, dp3m.fft,
+                         comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[1].data(), false, dp3m.fft,
+                         comm_cart);
+        fft_perform_back(dp3m.rs_mesh_dip[2].data(), false, dp3m.fft,
+                         comm_cart);
         /* redistribute force component mesh */
-        dp3m_spread_force_grid(dp3m.rs_mesh_dip[0]);
-        dp3m_spread_force_grid(dp3m.rs_mesh_dip[1]);
-        dp3m_spread_force_grid(dp3m.rs_mesh_dip[2]);
+        dp3m_spread_force_grid(dp3m.rs_mesh_dip[0].data());
+        dp3m_spread_force_grid(dp3m.rs_mesh_dip[1].data());
+        dp3m_spread_force_grid(dp3m.rs_mesh_dip[2].data());
         /* Assign force component from mesh to particle */
         dp3m_assign_forces_dip(
             dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2), d_rs,
@@ -1150,7 +1134,6 @@ double calc_surface_term(bool force_flag, bool energy_flag,
 void dp3m_gather_fft_grid(double *themesh) {
   int s_dir, r_dir, evenodd;
   MPI_Status status;
-  double *tmp_ptr;
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
@@ -1163,7 +1146,7 @@ void dp3m_gather_fft_grid(double *themesh) {
       r_dir = s_dir - 1;
     /* pack send block */
     if (dp3m.sm.s_size[s_dir] > 0)
-      fft_pack_block(themesh, dp3m.send_grid, dp3m.sm.s_ld[s_dir],
+      fft_pack_block(themesh, dp3m.send_grid.data(), dp3m.sm.s_ld[s_dir],
                      dp3m.sm.s_dim[s_dir], dp3m.local_mesh.dim, 1);
 
     /* communication */
@@ -1171,23 +1154,21 @@ void dp3m_gather_fft_grid(double *themesh) {
       for (evenodd = 0; evenodd < 2; evenodd++) {
         if ((node_pos[s_dir / 2] + evenodd) % 2 == 0) {
           if (dp3m.sm.s_size[s_dir] > 0)
-            MPI_Send(dp3m.send_grid, dp3m.sm.s_size[s_dir], MPI_DOUBLE,
+            MPI_Send(dp3m.send_grid.data(), dp3m.sm.s_size[s_dir], MPI_DOUBLE,
                      node_neighbors[s_dir], REQ_P3M_GATHER_D, comm_cart);
         } else {
           if (dp3m.sm.r_size[r_dir] > 0)
-            MPI_Recv(dp3m.recv_grid, dp3m.sm.r_size[r_dir], MPI_DOUBLE,
+            MPI_Recv(dp3m.recv_grid.data(), dp3m.sm.r_size[r_dir], MPI_DOUBLE,
                      node_neighbors[r_dir], REQ_P3M_GATHER_D, comm_cart,
                      &status);
         }
       }
     } else {
-      tmp_ptr = dp3m.recv_grid;
-      dp3m.recv_grid = dp3m.send_grid;
-      dp3m.send_grid = tmp_ptr;
+      std::swap(dp3m.send_grid, dp3m.recv_grid);
     }
     /* add recv block */
     if (dp3m.sm.r_size[r_dir] > 0) {
-      p3m_add_block(dp3m.recv_grid, themesh, dp3m.sm.r_ld[r_dir],
+      p3m_add_block(dp3m.recv_grid.data(), themesh, dp3m.sm.r_ld[r_dir],
                     dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim);
     }
   }
@@ -1198,7 +1179,6 @@ void dp3m_gather_fft_grid(double *themesh) {
 void dp3m_spread_force_grid(double *themesh) {
   int s_dir, r_dir, evenodd;
   MPI_Status status;
-  double *tmp_ptr;
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
@@ -1211,30 +1191,28 @@ void dp3m_spread_force_grid(double *themesh) {
       r_dir = s_dir - 1;
     /* pack send block */
     if (dp3m.sm.s_size[s_dir] > 0)
-      fft_pack_block(themesh, dp3m.send_grid, dp3m.sm.r_ld[r_dir],
+      fft_pack_block(themesh, dp3m.send_grid.data(), dp3m.sm.r_ld[r_dir],
                      dp3m.sm.r_dim[r_dir], dp3m.local_mesh.dim, 1);
     /* communication */
     if (node_neighbors[r_dir] != this_node) {
       for (evenodd = 0; evenodd < 2; evenodd++) {
         if ((node_pos[r_dir / 2] + evenodd) % 2 == 0) {
           if (dp3m.sm.r_size[r_dir] > 0)
-            MPI_Send(dp3m.send_grid, dp3m.sm.r_size[r_dir], MPI_DOUBLE,
+            MPI_Send(dp3m.send_grid.data(), dp3m.sm.r_size[r_dir], MPI_DOUBLE,
                      node_neighbors[r_dir], REQ_P3M_SPREAD_D, comm_cart);
         } else {
           if (dp3m.sm.s_size[s_dir] > 0)
-            MPI_Recv(dp3m.recv_grid, dp3m.sm.s_size[s_dir], MPI_DOUBLE,
+            MPI_Recv(dp3m.recv_grid.data(), dp3m.sm.s_size[s_dir], MPI_DOUBLE,
                      node_neighbors[s_dir], REQ_P3M_SPREAD_D, comm_cart,
                      &status);
         }
       }
     } else {
-      tmp_ptr = dp3m.recv_grid;
-      dp3m.recv_grid = dp3m.send_grid;
-      dp3m.send_grid = tmp_ptr;
+      std::swap(dp3m.send_grid, dp3m.recv_grid);
     }
     /* un pack recv block */
     if (dp3m.sm.s_size[s_dir] > 0) {
-      fft_unpack_block(dp3m.recv_grid, themesh, dp3m.sm.s_ld[s_dir],
+      fft_unpack_block(dp3m.recv_grid.data(), themesh, dp3m.sm.s_ld[s_dir],
                        dp3m.sm.s_dim[s_dir], dp3m.local_mesh.dim, 1);
     }
   }
@@ -1250,9 +1228,8 @@ void dp3m_realloc_ca_fields(int newsize) {
     newsize = CA_INCREMENT;
 
   dp3m.ca_num = newsize;
-  dp3m.ca_frac = Utils::realloc(dp3m.ca_frac, dp3m.params.cao3 * dp3m.ca_num *
-                                                  sizeof(double));
-  dp3m.ca_fmp = Utils::realloc(dp3m.ca_fmp, dp3m.ca_num * sizeof(int));
+  dp3m.ca_frac.resize(dp3m.params.cao3 * dp3m.ca_num);
+  dp3m.ca_fmp.resize(dp3m.ca_num);
 }
 
 /*****************************************************************************/
@@ -1261,8 +1238,7 @@ void dp3m_calc_meshift() {
   int i;
   double dmesh;
   dmesh = (double)dp3m.params.mesh[0];
-  dp3m.meshift =
-      Utils::realloc(dp3m.meshift, dp3m.params.mesh[0] * sizeof(double));
+  dp3m.meshift.resize(dp3m.params.mesh[0]);
   for (i = 0; i < dp3m.params.mesh[0]; i++)
     dp3m.meshift[i] = i - std::round(i / dmesh) * dmesh;
 }
@@ -1274,7 +1250,7 @@ void dp3m_calc_differential_operator() {
   double dmesh;
 
   dmesh = (double)dp3m.params.mesh[0];
-  dp3m.d_op = Utils::realloc(dp3m.d_op, dp3m.params.mesh[0] * sizeof(double));
+  dp3m.d_op.resize(dp3m.params.mesh[0]);
 
   for (i = 0; i < dp3m.params.mesh[0]; i++)
     dp3m.d_op[i] = (double)i - std::round((double)i / dmesh) * dmesh;
@@ -1297,7 +1273,7 @@ void dp3m_calc_influence_function_force() {
     size *= dp3m.fft.plan[3].new_mesh[i];
     end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
-  dp3m.g_force = Utils::realloc(dp3m.g_force, size * sizeof(double));
+  dp3m.g_force.resize(size);
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
          (box_geo.length()[0] * box_geo.length()[0]);
 
@@ -1385,7 +1361,7 @@ void dp3m_calc_influence_function_energy() {
     size *= dp3m.fft.plan[3].new_mesh[i];
     end[i] = dp3m.fft.plan[3].start[i] + dp3m.fft.plan[3].new_mesh[i];
   }
-  dp3m.g_energy = Utils::realloc(dp3m.g_energy, size * sizeof(double));
+  dp3m.g_energy.resize(size);
   fak1 = dp3m.params.mesh[0] * dp3m.params.mesh[0] * dp3m.params.mesh[0] * 2.0 /
          (box_geo.length()[0] * box_geo.length()[0]);
 

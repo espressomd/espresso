@@ -18,8 +18,6 @@
 import logging
 import numpy as np
 logging.basicConfig(level=logging.INFO)
-import matplotlib.pyplot as plt
-import scipy
 
 import espressomd
 espressomd.assert_features(['LENNARD_JONES'])
@@ -123,4 +121,5 @@ for index, N in enumerate(N_MONOMERS):
     tau = corrdata[1:, 0]
     msd = corrdata[1:, 2] + corrdata[1:, 3] + corrdata[1:, 4]
     np.save('msd_{}'.format(N), np.c_[tau, msd])
+
 np.save('rh.npy', rh_results)

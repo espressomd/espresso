@@ -36,7 +36,7 @@ public:
   using const_iterator = typename container_type::const_iterator;
 
 private:
-  void reset_foces() const {
+  void reset_forces() const {
     for (auto const &c : *this) {
       c->reset_force();
     }
@@ -69,7 +69,7 @@ public:
     if (m_constraints.empty())
       return;
 
-    reset_foces();
+    reset_forces();
 
     for (auto &p : particles) {
       auto const pos = folded_position(p.r.p, box_geo);
