@@ -5,7 +5,7 @@ h5py>=2.6.0
 scipy>=0.17.0
 MDAnalysis>=0.16
 pint>=0.9
-# optional graphical packages
+# optional packages for graphics and external devices
 matplotlib>=1.5.1
 vtk>=7.1.1
 PyOpenGL>=3.1.0
