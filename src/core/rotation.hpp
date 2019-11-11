@@ -58,8 +58,7 @@ inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
 }
 
 template <class T>
-auto convert_space_to_body(const Particle &p,
-                           const Utils::Matrix<T, 3, 3> &A) {
+auto convert_space_to_body(const Particle &p, const Utils::Matrix<T, 3, 3> &A) {
   auto const O = rotation_matrix(p.r.quat);
   return transpose(O) * A * O;
 }
