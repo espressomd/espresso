@@ -242,21 +242,39 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
 }
 
 BOOST_AUTO_TEST_CASE(scalar_product) {
-  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}),
-                             double>::value,
-                "");
-  static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3i{}),
-                             double>::value,
-                "");
-  static_assert(std::is_same<decltype(Vector<std::complex<float>, 2>{} * 3.f),
-                             Vector<std::complex<float>, 2>>::value,
-                "");
+  /* Types */
+  {
+    static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}),
+                               double>::value,
+                  "");
+    static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3i{}),
+                               double>::value,
+                  "");
+    static_assert(std::is_same<decltype(Vector<std::complex<float>, 2>{} * 3.f),
+                               Vector<std::complex<float>, 2>>::value,
+                  "");
+  }
 
-  auto const v1 = Utils::Vector3d{1., 2., 3.};
-  auto const v2 = Utils::Vector3d{4.1, 5.2, 6.3};
-  auto const v3 = Utils::Vector3i{11, 12, 13};
-  BOOST_CHECK_EQUAL(v1 * v2, boost::inner_product(v1, v2, 0.));
-  BOOST_CHECK_EQUAL(v1 * v3, boost::inner_product(v1, v3, 0.));
+  /* Vector-Vector */
+  {
+    auto const v1 = Utils::Vector3d{1., 2., 3.};
+    auto const v2 = Utils::Vector3d{4.1, 5.2, 6.3};
+    auto const v3 = Utils::Vector3i{11, 12, 13};
+    BOOST_CHECK_EQUAL(v1 * v2, boost::inner_product(v1, v2, 0.));
+    BOOST_CHECK_EQUAL(v1 * v3, boost::inner_product(v1, v3, 0.));
+  }
+
+  /* Matrix-Vector */
+  {
+    auto const result =
+        (Utils::Matrix<int, 3, 3>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}}) *
+        Utils::Vector<int, 3>{3, 4, 5};
+    auto const expected = Utils::Vector<int, 3>{26, 62, 98};
+
+    BOOST_CHECK_EQUAL(result[0], expected[0]);
+    BOOST_CHECK_EQUAL(result[1], expected[1]);
+    BOOST_CHECK_EQUAL(result[2], expected[2]);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(conversion) {

@@ -49,13 +49,12 @@ void convert_initial_torques(const ParticleRange &particles);
 // Frame conversion routines
 inline Utils::Vector3d
 convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
-  auto const A = rotation_matrix(p.r.quat);
-  return transpose(A) * vec;
+  return rotation_matrix(p.r.quat) * vec;
 }
 
 inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
                                                     const Utils::Vector3d &v) {
-  return rotation_matrix(p.r.quat) * v;
+  return transpose(rotation_matrix(p.r.quat)) * v;
 }
 
 #ifdef DIPOLES

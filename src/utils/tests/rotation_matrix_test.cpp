@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(rotation_matrix_test) {
                           sin(angle / 2) * axis[1], sin(angle / 2) * axis[2]};
 
   auto const v = Vector3d{3., 2., 1.};
-  auto const expected = vec_rotate(axis, -angle, v);
+  auto const expected = vec_rotate(axis, angle, v);
   auto const result = rotation_matrix(q) * v;
   BOOST_CHECK_SMALL((expected - result).norm2(),
                     std::numeric_limits<double>::epsilon());
