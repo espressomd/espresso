@@ -7,6 +7,13 @@ MDAnalysis>=0.16
 pint>=0.9
 # optional graphical packages
 matplotlib>=1.5.1
+vtk>=7.1.1
+PyOpenGL>=3.1.0
+mayavi>=4.5.0
+pyface
+pygame>=1.9.6
+traits>=4.6.0
+traitsui>=4.5.1
 # CI-related
 requests>=2.9.1 # to post on GitHub as espresso-ci
 lxml>=3.5.0 # to deploy tutorials
