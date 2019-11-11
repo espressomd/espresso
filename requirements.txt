@@ -1,6 +1,15 @@
+# required scientific packages
+numpy>=1.11.0
+h5py>=2.6.0
 # optional scientific packages
+scipy>=0.17.0
 MDAnalysis>=0.16
 pint>=0.9
+# optional graphical packages
+matplotlib>=1.5.1
+# CI-related
+requests>=2.9.1 # to post on GitHub as espresso-ci
+lxml>=3.5.0 # to deploy tutorials
 # sphinx and its dependencies
 sphinx>=1.6.6,!=2.1.0
 sphinxcontrib-bibtex>=0.3.5
