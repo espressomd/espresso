@@ -294,13 +294,28 @@ Vector<T, N> &operator/=(Vector<T, N> &a, T const &b) {
   return a;
 }
 
+namespace detail {
+template <class T> struct is_vector : std::false_type {};
+template <class T, size_t N> struct is_vector<Vector<T, N>> : std::true_type {};
+} // namespace detail
+
 /* Scalar product */
-template <size_t N, typename T, class U>
+template <size_t N, typename T, class U,
+          class = std::enable_if_t<not(detail::is_vector<T>::value or
+                                       detail::is_vector<U>::value)>>
 auto operator*(Vector<T, N> const &a, Vector<U, N> const &b) {
   using std::declval;
   using R = decltype(declval<T>() * declval<U>());
 
   return std::inner_product(std::begin(a), std::end(a), std::begin(b), R{});
+}
+
+/* Matrix x Vector */
+template <class T>
+Vector<T, 3> operator*(Matrix<T, 3, 3> const &A, Vector<T, 3> const &v) {
+  return {v[0] * A[0][0] + v[1] * A[0][1] + v[2] * A[0][2],
+          v[0] * A[1][0] + v[1] * A[1][1] + v[2] * A[1][2],
+          v[0] * A[2][0] + v[1] * A[2][1] + v[2] * A[2][2]};
 }
 
 template <size_t N, typename T, class U,
