@@ -565,9 +565,8 @@ def output_vtk_lines(lines, out_file):
     return 0
 
 
-def output_vtk_pore(
-        axis, length, outer_rad_left, outer_rad_right, pos, rad_left, rad_right,
-        smoothing_radius, m, out_file):
+def output_vtk_pore(axis, length, outer_rad_left, outer_rad_right,  # pylint: disable=unused-argument
+                    pos, rad_left, rad_right, smoothing_radius, m, out_file):
     """
     Outputs the VTK files for visualisation of a pore in e.g. Paraview.
 
@@ -601,9 +600,8 @@ def output_vtk_pore(
     # should implement rotation
     # m is sufficient to be 10
 
-    if ".vtk" not in out_file:
-        print(
-            "output_vtk_pore warning: A file with vtk format will be written without .vtk extension.")
+    if not out_file.endswith(".vtk"):
+        print("output_vtk_pore warning: A file with vtk format will be written without .vtk extension.")
 
     # n must be even therefore:
     n = 2 * m

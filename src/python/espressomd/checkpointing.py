@@ -235,7 +235,7 @@ class Checkpoint:
                 self.calling_module, key, checkpoint_data[key])
             self.checkpoint_objects.append(key)
 
-    def __signal_handler(self, signum, frame):
+    def __signal_handler(self, signum, frame):  # pylint: disable=unused-argument
         """
         Will be called when a registered signal was sent.
 

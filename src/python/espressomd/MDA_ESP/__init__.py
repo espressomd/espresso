@@ -58,6 +58,7 @@ from distutils.version import LooseVersion
 
 from MDAnalysis.lib import util
 from MDAnalysis.coordinates.core import triclinic_box
+from MDAnalysis.coordinates.core import triclinic_vectors
 from MDAnalysis.lib.util import NamedStream
 from MDAnalysis.topology.base import TopologyReaderBase
 from MDAnalysis.coordinates import base
@@ -125,7 +126,7 @@ class ESPParser(TopologyReaderBase):
     """
     format = 'ESP'
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename, **kwargs):  # pylint: disable=unused-argument
         self.kwargs = kwargs
 
     def parse(self):
@@ -191,7 +192,7 @@ class Timestep(base.Timestep):
 
     @dimensions.setter
     def dimensions(self, box):
-        x, y, z = triclinic_vectors(box)
+        x, y, _ = triclinic_vectors(box)
         np.put(self._unitcell, self._ts_order_x, x)
         np.put(self._unitcell, self._ts_order_y, y)
 

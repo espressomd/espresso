@@ -308,11 +308,11 @@ def get_cylindrical_bin_volume(
 # Harmonic bond
 
 
-def harmonic_potential(scalar_r, k, r_0, r_cut):
+def harmonic_potential(scalar_r, k, r_0):
     return 0.5 * k * (scalar_r - r_0)**2
 
 
-def harmonic_force(scalar_r, k, r_0, r_cut):
+def harmonic_force(scalar_r, k, r_0):
     return -k * (scalar_r - r_0)
 
 # FENE bond

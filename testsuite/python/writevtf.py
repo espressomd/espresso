@@ -78,7 +78,6 @@ class CommonTests(ut.TestCase):
         if self.types_to_write == 'all':
             simulation_bonds = np.array([1, 2, 3])  # the two bonded particles
         elif 2 in self.types_to_write:
-            types = [2]
             simulation_bonds = np.array(2)  # only this one is type 2
 
         self.assertTrue(np.allclose(

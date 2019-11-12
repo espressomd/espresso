@@ -19,7 +19,6 @@
 #
 # This script generates the file doxy-features
 #
-import inspect
 import sys
 import os
 

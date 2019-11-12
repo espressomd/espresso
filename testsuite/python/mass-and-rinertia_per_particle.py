@@ -126,7 +126,6 @@ class ThermoTest(ut.TestCase):
 
         """
 
-        system = self.system
         # Time
         self.system.time_step = 0.007
 
@@ -389,7 +388,7 @@ class ThermoTest(ut.TestCase):
                     system.part[ind].pos = np.zeros((3))
                     if "DIPOLES" in espressomd.features():
                         system.part[ind].dip = dip[ind, :]
-            for step in range(3):
+            for _ in range(3):
                 # Small number of steps
                 system.integrator.run(2)
                 for k in range(2):

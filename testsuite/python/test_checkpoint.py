@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable=undefined-variable
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -195,7 +196,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(params['max_displacement'], 0.01)
 
     @ut.skipIf('INT.NVT' not in modes, 'NVT integrator not in modes')
-    def test_integrator_VV(self):
+    def test_integrator_NVT(self):
         integ = system.integrator.get_state()
         self.assertEqual(integ['_method'], 'NVT')
 
