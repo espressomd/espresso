@@ -170,7 +170,8 @@ inline Utils::Vector3d v_noise(int particle_id, RNGSalt salt) {
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
-  const ctr_type c{{langevin_rng_counter->value(), static_cast<uint64_t>(salt)}};
+  const ctr_type c{
+      {langevin_rng_counter->value(), static_cast<uint64_t>(salt)}};
 
   const key_type k{{static_cast<uint32_t>(particle_id)}};
 
@@ -310,7 +311,8 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
 #endif // PARTICLE_ANISOTROPY
 
   // Do the actual (isotropic) thermostatting
-  return friction_op * velocity + noise_op * v_noise(p.p.identity, RNGSalt::LANGEVIN);
+  return friction_op * velocity +
+         noise_op * v_noise(p.p.identity, RNGSalt::LANGEVIN);
 }
 
 #ifdef ROTATION
