@@ -241,7 +241,26 @@ BOOST_AUTO_TEST_CASE(vector_broadcast) {
   BOOST_CHECK_EQUAL(v[1], 1.4);
 }
 
-BOOST_AUTO_TEST_CASE(scalar_product) {
+BOOST_AUTO_TEST_CASE(transpose_test) {
+  // clang-format off
+  auto const A = Utils::Matrix<Utils::VectorXi<2>, 3, 3>{
+      {{0,0}, {0, 1}, {0, 2}},
+      {{1,0}, {1, 1}, {1, 2}},
+      {{2,0}, {2, 1}, {2, 2}}
+  };
+
+  auto const expected = Utils::Matrix<Utils::VectorXi<2>, 3, 3>{
+      {{0, 0}, {1, 0}, {2, 0}},
+      {{0, 1}, {1, 1}, {2, 1}},
+      {{0, 2}, {1, 2}, {2, 2}}
+  };
+  // clang-format on
+
+  auto const result = transpose(A);
+  BOOST_CHECK(result == expected);
+}
+
+BOOST_AUTO_TEST_CASE(products) {
   /* Types */
   {
     static_assert(std::is_same<decltype(Utils::Vector3d{} * Utils::Vector3d{}),
@@ -275,6 +294,23 @@ BOOST_AUTO_TEST_CASE(scalar_product) {
     BOOST_CHECK_EQUAL(result[1], expected[1]);
     BOOST_CHECK_EQUAL(result[2], expected[2]);
   }
+
+  /* Matrix-Matrix */
+  {
+    auto const A = Utils::Matrix<double, 3, 3>{{1, 2, 3}, {3, 2, 1}, {2, 1, 3}};
+    auto const Ai = Utils::Matrix<double, 3, 3>{{-5. / 12, 1. / 4, 1. / 3},
+                                                {7. / 12, 1. / 4, -2. / 3},
+                                                {1. / 12, -1. / 4, 1. / 3}};
+
+    auto const result = A * Ai;
+    auto const expected =
+        Utils::Matrix<double, 3, 3>{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+
+    for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 3; j++)
+        BOOST_CHECK_SMALL(result[i][j] - expected[i][j],
+                          std::numeric_limits<double>::epsilon());
+  }
 }
 
 BOOST_AUTO_TEST_CASE(conversion) {
@@ -305,4 +341,13 @@ BOOST_AUTO_TEST_CASE(hadamard_product_test) {
   auto res = Utils::hadamard_product(v1, v2);
   BOOST_CHECK_EQUAL(res[0], v1[0] * v2[0]);
   BOOST_CHECK_EQUAL(res[1], v1[1] * v2[1]);
+}
+
+BOOST_AUTO_TEST_CASE(diag_matrix) {
+  auto const v = Utils::Vector3d{1, 2, 3};
+  auto const result = Utils::diag_matrix(v);
+
+  for (int i = 0; i < 3; i++)
+    for (int j = 0; j < 3; j++)
+      BOOST_CHECK_EQUAL(result[i][j], (i == j) ? v[i] : 0);
 }

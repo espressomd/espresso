@@ -318,6 +318,62 @@ Vector<T, 3> operator*(Matrix<T, 3, 3> const &A, Vector<T, 3> const &v) {
           v[0] * A[2][0] + v[1] * A[2][1] + v[2] * A[2][2]};
 }
 
+/**
+ * @brief Transpose matrix
+ * @param m Input matrix
+ * @return Transposed matrix
+ */
+template <class T> Matrix<T, 3, 3> transpose(Matrix<T, 3, 3> const &m) {
+  return {
+      {m[0][0], m[1][0], m[2][0]},
+      {m[0][1], m[1][1], m[2][1]},
+      {m[0][2], m[1][2], m[2][2]},
+  };
+}
+
+/**
+ * @brief Diagonal matrix with diagonal elements from vector.
+ *
+ * Diagonal matrix with vector entries as diagonal:
+ *
+ * \f[
+ *     D_{ij} = \delta_{ij} v_i
+ * \f]
+ *
+ * Only implemented for 3x3 matrices.
+ *
+ * @tparam T scalar type
+ * @param v Vector with diagonal elements
+ */
+template <class T> Matrix<T, 3, 3> diag_matrix(Vector<T, 3> const &v) {
+  return {{v[0], 0, 0}, {0, v[1], 0}, {0, 0, v[2]}};
+}
+
+/**
+ * @brief Matrix product
+ *
+ * Matrix product C, where
+ *
+ * \f[
+ *     C_{ij} = \sum_k A_{ik} B_{kj}
+ * \f]
+ *
+ * Only implemented for 3x3 matrices.
+ *
+ * @tparam T scalar type
+ * @param A Left-hand side
+ * @param B Right-hand side
+ * @return Matrix product
+ */
+template <class T>
+Matrix<T, 3, 3> operator*(Matrix<T, 3, 3> const &A, Matrix<T, 3, 3> const &B) {
+  auto const Bt = transpose(B);
+
+  return {{A[0] * Bt[0], A[0] * Bt[1], A[0] * Bt[2]},
+          {A[1] * Bt[0], A[1] * Bt[1], A[1] * Bt[2]},
+          {A[2] * Bt[0], A[2] * Bt[1], A[2] * Bt[2]}};
+}
+
 template <size_t N, typename T, class U,
           class = std::enable_if_t<std::is_integral<T>::value &&
                                    std::is_integral<U>::value>>
