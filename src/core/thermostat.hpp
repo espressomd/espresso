@@ -226,7 +226,7 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
   // lab-fixed reference frame.
   auto const friction_op =
       aniso_flag
-          ? convert_space_to_body(p, diag_matrix(langevin_pref_friction_buf))
+          ? convert_body_to_space(p, diag_matrix(langevin_pref_friction_buf))
           : diag_matrix(langevin_pref_friction_buf);
   auto const noise_op = diag_matrix(langevin_pref_noise_buf);
 #else
