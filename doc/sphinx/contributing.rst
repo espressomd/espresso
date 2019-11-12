@@ -99,9 +99,9 @@ safely removed if you're planning on installing dependencies via ``pip``:
 
 .. code-block:: bash
 
-   pip install --upgrade --user -r requirements.txt
+   pip3 install --upgrade --user -r requirements.txt
 
-Note that some distributions now use ``pip`` for Python3 and ``pip2`` for
+Note that some distributions now use ``pip3`` for Python3 and ``pip2`` for
 Python2.
 
 
