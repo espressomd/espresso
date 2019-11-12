@@ -85,6 +85,7 @@ extern constexpr const std::array<std::array<int, 19>, 19> e_ki = {
      {{0, -1, -1, 1, 1, -0, -0, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1}},
      {{0, -1, -1, -1, -1, 2, 2, 2, 2, 2, 2, -1, -1, -1, -1, -1, -1, -1, -1}}}};
 
+/** Transposed version of @ref e_ki */
 extern constexpr const std::array<std::array<int, 19>, 19> e_ki_transposed = {
     {{{1, 0, 0, 0, -1, 0, -0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0}},
      {{1, 1, 0, 0, 0, 1, 1, 0, 0, 0, -2, 0, 0, -0, 0, 0, -2, -1, -1}},
@@ -1330,13 +1331,6 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
 }
 
 #ifdef LB_BOUNDARIES
-/** Bounce back boundary conditions.
- * The populations that have propagated into a boundary node
- * are bounced back to the node they came from. This results
- * in no slip boundary conditions.
- *
- * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
- */
 void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
                     const std::vector<LB_FluidNode> &lb_fields) {
   int k, i, l;

@@ -20,7 +20,7 @@
  */
 /** @file
  *
- *  The corresponding header file is p3m.hpp.
+ *  The corresponding header file is @ref p3m.hpp.
  */
 #include "p3m.hpp"
 
@@ -2236,14 +2236,14 @@ void p3m_scaleby_box_l() {
   p3m_calc_influence_function_energy();
 }
 
+/** @details Calculate the long range electrostatics part of the stress
+ *  tensor. This is part \f$\Pi_{\textrm{dir}, \alpha, \beta}\f$ eq. (2.6)
+ *  in the paper by Essmann et al "A smooth particle mesh Ewald method",
+ *  The Journal of Chemical Physics 103, 8577 (1995); doi: 10.1063/1.470117.
+ *  The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
+ *  eq. (2.8) is not present here since M is the empty set in our simulations.
+ */
 void p3m_calc_kspace_stress(double *stress) {
-  /**
-   * Calculates the long range electrostatics part of the stress tensor. This is
-   * part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle
-   * mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995);
-   * doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper
-   * is not present here since M is the empty set in our simulations.
-   */
   if (p3m.sum_q2 > 0) {
     std::vector<double> node_k_space_stress;
     std::vector<double> k_space_stress;

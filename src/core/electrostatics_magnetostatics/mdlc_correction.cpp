@@ -19,18 +19,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
- *  code for calculating the MDLC (magnetic dipolar layer correction).
- *  Purpose:   get the corrections for dipolar 3D algorithms
- *             when applied to a slab geometry and dipolar
- *             particles. DLC & co
- *  Article:   A. Brodka, Chemical Physics Letters 400, 62-67 (2004).
- *
- *             We also include a tuning function that returns the
- *             cut-off necessary to attend a certain accuracy.
- *
- *  Restrictions: the slab must be such that the z is the short
- *                direction. Otherwise we get trash.
- *
  */
 
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
@@ -76,7 +64,7 @@ inline double g2_DLC_dip(double g, double x) {
   return a;
 }
 
-/* Compute Mx, My, Mz and Mtotal */
+/** Compute Mx, My, Mz and Mtotal */
 double slab_dip_count_mu(double *mt, double *mx, double *my,
                          const ParticleRange &particles) {
   Utils::Vector3d node_sums{};
@@ -103,10 +91,9 @@ double slab_dip_count_mu(double *mt, double *mx, double *my,
   return Mz;
 }
 
-/**
-   Compute the dipolar DLC corrections for forces and torques.
-   Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
-   Lett. 400, 62-67, (2004).
+/** Compute the dipolar DLC corrections for forces and torques.
+ *  Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
+ *  Lett. 400, 62-67, (2004).
  */
 double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
                        std::vector<Utils::Vector3d> &ts,
@@ -264,10 +251,9 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   return energy;
 }
 
-/**
-   Compute the dipolar DLC corrections
-   Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
-   Lett. 400, 62-67, (2004).
+/** Compute the dipolar DLC corrections
+ *  Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
+ *  Lett. 400, 62-67, (2004).
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 
@@ -369,12 +355,10 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f, dip_DLC_t, particles);
 
   // Now we compute the correction like Yeh and Klapp to take into account
-  // the fact that you are using a
-  // 3D PBC method which uses spherical summation instead of slab-wise
-  // summation.
-  // Slab-wise summation is the one
-  // required to apply DLC correction.  This correction is often called SDC =
-  // Shape Dependent Correction.
+  // the fact that you are using a 3D PBC method which uses spherical
+  // summation instead of slab-wise summation.
+  // Slab-wise summation is the one required to apply DLC correction.
+  // This correction is often called SDC = Shape Dependent Correction.
   // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 
   mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
@@ -431,12 +415,10 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   //           \n",dip_DLC_energy);
 
   // Now we compute the correction like Yeh and Klapp to take into account
-  // the fact that you are using a
-  // 3D PBC method which uses spherical summation instead of slab-wise
-  // summation.
-  // Slab-wise summation is the one
-  // required to apply DLC correction.  This correction is often called SDC =
-  // Shape Dependent Correction.
+  // the fact that you are using a 3D PBC method which uses spherical
+  // summation instead of slab-wise summation.
+  // Slab-wise summation is the one required to apply DLC correction.
+  // This correction is often called SDC = Shape Dependent Correction.
   // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
 
   mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
@@ -465,21 +447,16 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   return 0.0;
 }
 
-/**
-   Subroutine to compute the cut-off (NCUT) necessary in the DLC dipolar part
-   to get a certain accuracy (acc). We assume particles to have all them a
-   same
-   value of the dipolar momentum modulus (mu_max). mu_max is taken as the
-   largest value of
-   mu inside the system. If we assume the gap has a width gap_size (within which
-   there is no particles)
-
-   Lz=h+gap_size
-
-   BE CAREFUL:  (1) We assume the short distance for the slab to be in the Z
-   direction
-   (2) You must also tune the other 3D method to the same accuracy, otherwise
-   it has no sense to have a good accurate result for DLC-dipolar.
+/** Compute the cut-off in the DLC dipolar part to get a certain accuracy.
+ *  We assume particles to have all the same value of the dipolar momentum
+ *  modulus (@ref mu_max). @ref mu_max is taken as the largest value of mu
+ *  inside the system. If we assume the gap has a width @c gap_size (within
+ *  which there is no particles): <tt>Lz = h + gap_size</tt>
+ *
+ *  BE CAREFUL:
+ *  1. We assume the short distance for the slab to be in the *z*-direction
+ *  2. You must also tune the other 3D method to the same accuracy, otherwise
+ *     it makes no sense to have an accurate result for DLC-dipolar.
  */
 int mdlc_tune(double error) {
   double de, n, gc, lz, lx, a, fa1, fa2, fa0, h;

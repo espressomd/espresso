@@ -21,11 +21,11 @@
 #ifndef REACTION_FIELD_H
 #define REACTION_FIELD_H
 /** \file
- *  Routines to calculate the Reaction Field Energy or/and force
+ *  Routines to calculate the Reaction Field energy or/and force
  *  for a particle pair.
  *  M. Neumann, J. Chem. Phys 82, 5663 (1985)
- *  \ref forces.cpp
  *
+ *  Implementation in \ref reaction_field.cpp
  */
 
 #include "config.hpp"
@@ -35,24 +35,20 @@
 
 /** Structure to hold Reaction Field Parameters. */
 typedef struct {
-  /** ionic strength . */
+  /** ionic strength. */
   double kappa;
-  /** epsilon1 (continuum dielectric constant inside) . */
+  /** epsilon1 (continuum dielectric constant inside). */
   double epsilon1;
-  /** epsilon2 (continuum dielectric constant outside) . */
+  /** epsilon2 (continuum dielectric constant outside). */
   double epsilon2;
   /** Cutoff for Reaction Field interaction. */
   double r_cut;
-  /** B important prefactor . */
+  /** B important prefactor. */
   double B;
 } Reaction_field_params;
 
 /** Structure containing the Reaction Field parameters. */
 extern Reaction_field_params rf_params;
-
-/** \name Functions */
-/************************************************************/
-/*@{*/
 
 int rf_set_params(double kappa, double epsilon1, double epsilon2, double r_cut);
 
@@ -67,8 +63,7 @@ inline void add_rf_coulomb_pair_force_no_cutoff(double const q1q2,
   force += fac * d;
 }
 
-/** Computes the Reaction Field pair force and adds this
- *  force to the particle forces.
+/** Compute the Reaction Field pair force.
  *  @param q1q2      Product of the charges on p1 and p2.
  *  @param d         Vector pointing from p1 to p2.
  *  @param dist      Distance between p1 and p2.
@@ -83,6 +78,10 @@ inline void add_rf_coulomb_pair_force(double const q1q2,
   }
 }
 
+/** Compute the Reaction Field pair energy.
+ *  @param q1q2      Product of the charges on p1 and p2.
+ *  @param dist      Distance between p1 and p2.
+ */
 inline double rf_coulomb_pair_energy_no_cutoff(double const q1q2,
                                                double const dist) {
   double fac;
@@ -102,7 +101,6 @@ inline double rf_coulomb_pair_energy(double const q1q2, double const dist) {
   return 0.0;
 }
 
-/*@}*/
 #endif
 
 #endif

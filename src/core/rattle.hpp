@@ -26,7 +26,7 @@
  * Shake Algorithm for Molecular Dynamics Calculations, H.C Andersen, J Comp
  * Phys, 52, 24-34, 1983)
  *
- *  For more information see \ref rattle.cpp "rattle.cpp".
+ *  For more information see \ref rattle.cpp.
  */
 
 /** number of rigid bonds */

@@ -27,7 +27,7 @@
  *      "charge" by "dipole". In this way one can recognize the similarity of
  *      the functions while avoiding nasty confusions in their use.
  *
- *       By default the magnetic epsilon is metallic = 0.
+ *  By default the magnetic epsilon is metallic = 0.
  *
  *  The corresponding header file is p3m-dipolar.hpp.
  */
@@ -198,8 +198,9 @@ static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
                                     double mesh_i, int cao, double alpha_L_i,
                                     double *alias1, double *alias2);
 
-// To compute the value of alpha through a bibisection method from the formula
-// 33 of JCP115,6351,(2001).
+/** Compute the value of alpha through a bisection method.
+ *  Based on eq. (33) of JCP115,6351,(2001).
+ */
 double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
                         double xacc, double tuned_accuracy);
@@ -531,10 +532,10 @@ int dp3m_set_mesh_offset(double x, double y, double z) {
   return ES_OK;
 }
 
-/* We left the handling of the epsilon, due to portability reasons in
-the future for the electrical dipoles, or if people wants to do
-electrical dipoles alone using the magnetic code .. */
-
+/** We left the handling of the epsilon, due to portability reasons in
+ *  the future for the electrical dipoles, or if people want to do
+ *  electrical dipoles alone using the magnetic code. Currently unused.
+ */
 int dp3m_set_eps(double eps) {
   dp3m.params.epsilon = eps;
 
@@ -1131,6 +1132,7 @@ double calc_surface_term(bool force_flag, bool energy_flag,
 }
 
 /************************************************************/
+
 void dp3m_gather_fft_grid(double *themesh) {
   int s_dir, r_dir, evenodd;
   MPI_Status status;
@@ -1435,15 +1437,7 @@ double dp3m_perform_aliasing_sums_energy(const int n[3], double nominator[1]) {
 
 /*****************************************************************************/
 
-/************************************************
- * Functions for dipolar P3M Parameter tuning
- * This tuning is based on the P3M tuning of the charges
- * which in turn is based on the P3M_tune by M. Deserno
- ************************************************/
-
 #define P3M_TUNE_MAX_CUTS 50
-
-/*****************************************************************************/
 
 /** @copybrief p3m_get_accuracy
  *
@@ -1500,8 +1494,6 @@ double dp3m_get_accuracy(int mesh, int cao, double r_cut_iL, double *_alpha_L,
   return sqrt(Utils::sqr(rs_err) + Utils::sqr(ks_err));
 }
 
-/*****************************************************************************/
-
 /** @copybrief p3m_mcr_time
  *
  *  @param[in]  mesh            @copybrief P3MParameters::mesh
@@ -1534,8 +1526,6 @@ static double dp3m_mcr_time(int mesh, int cao, double r_cut_iL,
   }
   return int_time;
 }
-
-/*****************************************************************************/
 
 /** @copybrief p3m_mc_time
  *
@@ -1644,8 +1634,6 @@ static double dp3m_mc_time(char **log, int mesh, int cao, double r_cut_iL_min,
   *log = strcat_alloc(*log, b);
   return int_time;
 }
-
-/*****************************************************************************/
 
 /** @copybrief p3m_m_time
  *
@@ -1947,8 +1935,6 @@ int dp3m_adaptive_tune(char **logger) {
   return ES_OK;
 }
 
-/*****************************************************************************/
-
 void dp3m_count_magnetic_particles() {
   double node_sums[2], tot_sums[2];
 
@@ -1971,18 +1957,7 @@ void dp3m_count_magnetic_particles() {
 
 REGISTER_CALLBACK(dp3m_count_magnetic_particles)
 
-/*****************************************************************************/
-
-/* Following are the two functions for computing the error in dipolar P3M and
-   tune the parameters to minimize the time with the desired accuracy.
-
-
-   This functions are called by the functions: dp3m_get_accuracy().
-
-*/
-
-/*****************************************************************************/
-
+/** Calculate the k-space error of dipolar-P3M */
 static double dp3m_k_space_error(double box_size, double prefac, int mesh,
                                  int cao, int n_c_part, double sum_q2,
                                  double alpha_L) {
@@ -2012,6 +1987,7 @@ static double dp3m_k_space_error(double box_size, double prefac, int mesh,
          (box_size * box_size * box_size * box_size);
 }
 
+/** Tuning dipolar-P3M */
 void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
                              int cao, double alpha_L_i, double *alias1,
                              double *alias2) {
@@ -2043,17 +2019,13 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
   }
 }
 
-//----------------------------------------------------------
-//  Function used to calculate the value of the errors
-//  for the REAL part of the force in terms of the splitting parameter alpha of
-//  Ewald
-//  based on the formulas 33, the paper of Zuowei-HolmJCP, 115,6351,(2001).
-
-//  Please, notice than in this more refined approach we don't use
-//  formulas 37, but 33 which maintains all the powers in alpha
-
-//------------------------------------------------------------
-
+/** Calculate the value of the errors for the REAL part of the force in terms
+ *  of the splitting parameter alpha of Ewald. Based on eq. (33) in
+ *  the paper of Zuowei-HolmJCP, 115,6351,(2001).
+ *
+ *  Please note that in this more refined approach we don't use
+ *  eq. (37), but eq. (33) which maintains all the powers in alpha.
+ */
 double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
                                     double r_cut_iL, int n_c_part,
                                     double sum_q2, double alpha_L) {
@@ -2082,12 +2054,10 @@ double P3M_DIPOLAR_real_space_error(double box_size, double prefac,
   return d_error_f;
 }
 
-/*****************************************************************************/
-
-// Using bisection find the root of a function "func-tuned_accuracy/sqrt(2.)"
-// known to lie between x1 and x2. The root, returned as rtbis, will be refined
-// until its accuracy is +-xacc.
-
+/** Using bisection, find the root of a function "func-tuned_accuracy/sqrt(2.)"
+ *  known to lie between x1 and x2. The root, returned as rtbis, will be
+ *  refined until its accuracy is \f$\pm\f$ @p xacc.
+ */
 double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
                         double xacc, double tuned_accuracy) {
@@ -2413,9 +2383,7 @@ void dp3m_scaleby_box_l() {
   dp3m_calc_influence_function_energy();
 }
 
-/*****************************************************************************/
-
-/** function to give the dipolar-P3M energy correction */
+/** Calculate the dipolar-P3M energy correction */
 void dp3m_compute_constants_energy_dipolar() {
   double Eself, Ukp3m;
 
@@ -2433,9 +2401,5 @@ void dp3m_compute_constants_energy_dipolar() {
   dp3m.energy_correction =
       -dp3m.sum_mu2 * (Ukp3m + Eself + 2. * Utils::pi() / 3.);
 }
-
-/*****************************************************************************/
-
-/*****************************************************************************/
 
 #endif /* DP3M */

@@ -275,100 +275,108 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
   return 0.0;
 }
 
-/** Calculate modes from the velocity densities (space-transform)
+/** Calculate modes from the velocity densities (space-transform).
  *  @param[in]  n_a     Local node residing in array a
  *  @param[in]  index   Node index / thread index
  *  @param[out] mode    Local register values mode
  */
 __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
                               Utils::Array<float, 19> &mode) {
-  // The following convention is used:
-  // The $\hat{c}_i$ form B. Duenweg's paper are given by:
-
-  /* c_0  = { 0, 0, 0}
-     c_1  = { 1, 0, 0}
-     c_2  = {-1, 0, 0}
-     c_3  = { 0, 1, 0}
-     c_4  = { 0,-1, 0}
-     c_5  = { 0, 0, 1}
-     c_6  = { 0, 0,-1}
-     c_7  = { 1, 1, 0}
-     c_8  = {-1,-1, 0}
-     c_9  = { 1,-1, 0}
-     c_10 = {-1, 1, 0}
-     c_11 = { 1, 0, 1}
-     c_12 = {-1, 0,-1}
-     c_13 = { 1, 0,-1}
-     c_14 = {-1, 0, 1}
-     c_15 = { 0, 1, 1}
-     c_16 = { 0,-1,-1}
-     c_17 = { 0, 1,-1}
-     c_18 = { 0,-1, 1} */
-
-  // The basis vectors (modes) are constructed as follows
-  // $m_k = \sum_{i} e_{ki} n_{i}$, where the $e_{ki}$ form a
-  // linear transformation (matrix) that is given by
-
-  /* $e{ 0,i} = 1$
-     $e{ 1,i} = c_{i,x}$
-     $e{ 2,i} = c_{i,y}$
-     $e{ 3,i} = c_{i,z}$
-     $e{ 4,i} = c_{i}^2 - 1$
-     $e{ 5,i} = c_{i,x}^2 - c_{i,y}^2$
-     $e{ 6,i} = c_{i}^2 - 3*c_{i,z}^2$
-     $e{ 7,i} = c_{i,x}*c_{i,y}$
-     $e{ 8,i} = c_{i,x}*c_{i,z}$
-     $e{ 9,i} = c_{i,y}*c_{i,z}$
-     $e{10,i} = (3*c_{i}^2 - 5)*c_{i,x}$
-     $e{11,i} = (3*c_{i}^2 - 5)*c_{i,y}$
-     $e{12,i} = (3*c_{i}^2 - 5)*c_{i,z}$
-     $e{13,i} = (c_{i,y}^2 - c_{i,z}^2)*c_{i,x}$
-     $e{14,i} = (c_{i,x}^2 - c_{i,z}^2)*c_{i,y}$
-     $e{15,i} = (c_{i,x}^2 - c_{i,y}^2)*c_{i,z}$
-     $e{16,i} = 3*c_{i}^2^2 - 6*c_{i}^2 + 1$
-     $e{17,i} = (2*c_{i}^2 - 3)*(c_{i,x}^2 - c_{i,y}^2)$
-     $e{18,i} = (2*c_{i}^2 - 3)*(c_{i}^2 - 3*c_{i,z}^2)$ */
-
-  // Such that the transformation matrix is given by
-
-  /* {{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-      { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
-      { 0, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
-      { 0, 0, 0, 0, 0, 1,-1, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
-      {-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-      { 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
-      { 0, 1, 1, 1, 1,-2,-2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1},
-      { 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0},
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0},
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1},
-      { 0,-2, 2, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
-      { 0, 0, 0,-2, 2, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
-      { 0, 0, 0, 0, 0,-2, 2, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
-      { 0, 0, 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1, 0, 0, 0, 0},
-      { 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0,-1, 1,-1, 1},
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1,-1, 1, 1,-1},
-      { 1,-2,-2,-2,-2,-2,-2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-      { 0,-1,-1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
-      { 0,-1,-1,-1,-1, 2, 2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1}} */
-
-  // With weights
-
-  /* q^{c_{i}} = { 1/3, 1/18, 1/18, 1/18,
-                  1/18, 1/18, 1/18, 1/36,
-                  1/36, 1/36, 1/36, 1/36,
-                  1/36, 1/36, 1/36, 1/36,
-                  1/36, 1/36, 1/36 } */
-
-  // Which makes the transformation satisfy the following
-  // orthogonality condition:
-  // \sum_{i} q^{c_{i}} e_{ki} e_{li} = w_{k} \delta_{kl},
-  // where the weights are:
-
-  /* w_{i} = {  1, 1/3, 1/3, 1/3,
-              2/3, 4/9, 4/3, 1/9,
-              1/9, 1/9, 2/3, 2/3,
-              2/3, 2/9, 2/9, 2/9,
-                2, 4/9, 4/3 } */
+  /**
+   * The following convention is used:
+   * The \f$\hat{c}_i\f$ from B. Duenweg's paper are given by:
+   *
+   * \f{align*}{
+   *   c_{ 0} &= ( 0, 0, 0) \\
+   *   c_{ 1} &= ( 1, 0, 0) \\
+   *   c_{ 2} &= (-1, 0, 0) \\
+   *   c_{ 3} &= ( 0, 1, 0) \\
+   *   c_{ 4} &= ( 0,-1, 0) \\
+   *   c_{ 5} &= ( 0, 0, 1) \\
+   *   c_{ 6} &= ( 0, 0,-1) \\
+   *   c_{ 7} &= ( 1, 1, 0) \\
+   *   c_{ 8} &= (-1,-1, 0) \\
+   *   c_{ 9} &= ( 1,-1, 0) \\
+   *   c_{10} &= (-1, 1, 0) \\
+   *   c_{11} &= ( 1, 0, 1) \\
+   *   c_{12} &= (-1, 0,-1) \\
+   *   c_{13} &= ( 1, 0,-1) \\
+   *   c_{14} &= (-1, 0, 1) \\
+   *   c_{15} &= ( 0, 1, 1) \\
+   *   c_{16} &= ( 0,-1,-1) \\
+   *   c_{17} &= ( 0, 1,-1) \\
+   *   c_{18} &= ( 0,-1, 1)
+   *  \f}
+   *
+   *  The basis vectors (modes) are constructed as follows (eq. 111):
+   *  \f[m_k = \sum_{i} e_{ki} n_{i}\f] where the \f$e_{ki}\f$ form a
+   *  linear transformation (matrix) that is given by (modified from Table 1):
+   *
+   *  \f{align*}{
+   *    e_{ 0,i} &= 1 \\
+   *    e_{ 1,i} &= \hat{c}_{i,x} \\
+   *    e_{ 2,i} &= \hat{c}_{i,y} \\
+   *    e_{ 3,i} &= \hat{c}_{i,z} \\
+   *    e_{ 4,i} &= \hat{c}_{i}^2 - 1 \\
+   *    e_{ 5,i} &= \hat{c}_{i,x}^2 - \hat{c}_{i,y}^2 \\
+   *    e_{ 6,i} &= \hat{c}_{i}^2 - 3 \hat{c}_{i,z}^2 \\
+   *    e_{ 7,i} &= \hat{c}_{i,x} \hat{c}_{i,y} \\
+   *    e_{ 8,i} &= \hat{c}_{i,x} \hat{c}_{i,z} \\
+   *    e_{ 9,i} &= \hat{c}_{i,y} \hat{c}_{i,z} \\
+   *    e_{10,i} &= (3 \hat{c}_{i}^2 - 5) \hat{c}_{i,x} \\
+   *    e_{11,i} &= (3 \hat{c}_{i}^2 - 5) \hat{c}_{i,y} \\
+   *    e_{12,i} &= (3 \hat{c}_{i}^2 - 5) \hat{c}_{i,z} \\
+   *    e_{13,i} &= (\hat{c}_{i,y}^2 - \hat{c}_{i,z}^2) \hat{c}_{i,x} \\
+   *    e_{14,i} &= (\hat{c}_{i,x}^2 - \hat{c}_{i,z}^2) \hat{c}_{i,y} \\
+   *    e_{15,i} &= (\hat{c}_{i,x}^2 - \hat{c}_{i,y}^2) \hat{c}_{i,z} \\
+   *    e_{16,i} &= 3 \hat{c}_{i}^4 - 6 \hat{c}_{i}^2 + 1 \\
+   *    e_{17,i} &= (2 \hat{c}_{i}^2 - 3) (\hat{c}_{i,x}^2 - \hat{c}_{i,y}^2) \\
+   *    e_{18,i} &= (2 \hat{c}_{i}^2 - 3) (\hat{c}_{i}^2 - 3 \hat{c}_{i,z}^2)
+   *  \f}
+   *
+   *  Such that the transformation matrix is given by:
+   *
+   *  \code{.cpp}
+   *   {{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+   *    { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
+   *    { 0, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
+   *    { 0, 0, 0, 0, 0, 1,-1, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
+   *    {-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+   *    { 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
+   *    { 0, 1, 1, 1, 1,-2,-2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1},
+   *    { 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0},
+   *    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0},
+   *    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1},
+   *    { 0,-2, 2, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
+   *    { 0, 0, 0,-2, 2, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
+   *    { 0, 0, 0, 0, 0,-2, 2, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
+   *    { 0, 0, 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1, 0, 0, 0, 0},
+   *    { 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0,-1, 1,-1, 1},
+   *    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1,-1, 1, 1,-1},
+   *    { 1,-2,-2,-2,-2,-2,-2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+   *    { 0,-1,-1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
+   *    { 0,-1,-1,-1,-1, 2, 2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1}}
+   *  \endcode
+   *
+   *  With weights
+   *
+   *  \f[q^{c_{i}} = ( 1/3, 1/18, 1/18, 1/18,
+   *                  1/18, 1/18, 1/18, 1/36,
+   *                  1/36, 1/36, 1/36, 1/36,
+   *                  1/36, 1/36, 1/36, 1/36,
+   *                  1/36, 1/36, 1/36 )\f]
+   *
+   *  Which makes the transformation satisfy the following
+   *  orthogonality condition (eq. 109):
+   *  \f[\sum_{i} q^{c_{i}} e_{ki} e_{li} = w_{k} \delta_{kl}\f]
+   *  where the weights are:
+   *
+   *  \f[w_{i} = (  1, 1/3, 1/3, 1/3,
+   *              2/3, 4/9, 4/3, 1/9,
+   *              1/9, 1/9, 2/3, 2/3,
+   *              2/3, 2/9, 2/9, 2/9,
+   *                2, 4/9, 4/3 )\f]
+   */
   for (int i = 0; i < 19; ++i) {
     mode[i] = calc_mode_x_from_n(n_a, index, i);
   }
@@ -1335,16 +1343,21 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
   }
 }
 
-/**
- * @param u Distance to grid point in units of agrid
- * @retval Value for the interpolation function.
- * see Duenweg and Ladd http://arxiv.org/abs/0803.2826
+/** Interpolation kernel.
+ *  see Duenweg and Ladd http://arxiv.org/abs/0803.2826
+ *  @param u Distance to grid point in units of agrid
+ *  @retval Value for the interpolation function.
  */
 __device__ __inline__ float
 three_point_polynomial_smallerequal_than_half(float u) {
   return 1.f / 3.f * (1.f + sqrtf(1.f - 3.f * u * u));
 }
 
+/** Interpolation kernel.
+ *  see Duenweg and Ladd http://arxiv.org/abs/0803.2826
+ *  @param u Distance to grid point in units of agrid
+ *  @retval Value for the interpolation function.
+ */
 __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
   return 1.f / 6.f *
          (5.f + -3 * fabsf(u) - sqrtf(-2.f + 6.f * fabsf(u) - 3.f * u * u));
@@ -1442,7 +1455,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   return interpolated_u;
 }
 
-/**
+/** Velocity interpolation.
  *  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  *  @param[in]  n_a                Local node residing in array a
  *  @param[in]  particle_position  Particle position
@@ -1456,7 +1469,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
                        Utils::Array<float, 8> &delta) {
   Utils::Array<int, 3> left_node_index;
   Utils::Array<float, 6> temp_delta;
-  // see ahlrichs + duenweg page 8227 equ (10) and (11)
+  // Eq. (10) and (11) in ahlrichs + duenweg page 8227
 #pragma unroll
   for (int i = 0; i < 3; ++i) {
     auto const scaledpos = particle_position[i] / para->agrid - 0.5f;
@@ -1507,7 +1520,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   return interpolated_u;
 }
 
-/**
+/** Calculate viscous force.
  *  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  *  @param[in]  n_a                Local node residing in array a
  *  @param[out] delta              Weighting of particle position
@@ -1521,7 +1534,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  friction           Friction constant for the particle coupling
  *  @tparam no_of_neighbours       The number of neighbours to consider for
- * interpolation
+ *                                 interpolation
  */
 template <std::size_t no_of_neighbours>
 __device__ void calc_viscous_force(
@@ -1591,8 +1604,7 @@ __device__ void calc_viscous_force(
       interpolated_u.z * para->agrid / para->tau;
 #endif
 
-  /** calculate viscous force
-   * take care to rescale velocities with time_step and transform to MD units
+  /* take care to rescale velocities with time_step and transform to MD units
    * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
 
   /* Viscous force */
@@ -1611,7 +1623,7 @@ __device__ void calc_viscous_force(
 #endif
 
   if (para->kT > 0.0) {
-    /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
+    /* add stochastic force of zero mean (eq. (15) Ahlrichs, Duenweg) */
     float4 random_floats = random_wrapper_philox(
         particle_data[part_index].identity, LBQ * 32, philox_counter);
     /* lb_coupl_pref is stored in MD units (force)
@@ -1626,7 +1638,7 @@ __device__ void calc_viscous_force(
     viscforce_density.y += lb_coupl_pref * (random_floats.x - 0.5f);
     viscforce_density.z += lb_coupl_pref * (random_floats.y - 0.5f);
   }
-  /** delta_j for transform momentum transfer to lattice units which is done
+  /* delta_j for transform momentum transfer to lattice units which is done
     in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
     (1999)) */
 
@@ -1658,14 +1670,14 @@ __device__ void calc_viscous_force(
 }
 
 /** Calculate the node force caused by the particles, with atomicAdd due to
- *  avoiding race conditions
+ *  avoiding race conditions.
  *  (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
  *  @param[in]  delta              Weighting of particle position
  *  @param[in]  delta_j            Weighting of particle momentum
  *  @param[in]  node_index         Node index around (8) particle
  *  @param[out] node_f             Node force
  *  @tparam no_of_neighbours       The number of neighbours to consider for
- * interpolation
+ *                                 interpolation
  */
 template <std::size_t no_of_neighbours>
 __device__ void

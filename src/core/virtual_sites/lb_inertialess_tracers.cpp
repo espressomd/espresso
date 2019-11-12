@@ -60,15 +60,10 @@ bool in_local_domain(Utils::Vector3d const &pos) {
 }
 } // namespace
 
-/****************
-  IBM_ForcesIntoFluid_CPU
-
- Puts the calculated force stored on the ibm particles into the fluid by
-updating the lbfields structure
- Calls couple_trace_to_fluid for each node
- Called from the integrate loop right after the forces have been calculated
-*****************/
-
+/** Put the calculated force stored on the ibm particles into the fluid by
+ *  updating the @ref lbfields structure.
+ *  Called from the integration loop right after the forces have been calculated.
+ */
 void IBM_ForcesIntoFluid_CPU() {
   // Update the forces on the ghost particles
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
@@ -101,12 +96,10 @@ void IBM_ForcesIntoFluid_CPU() {
   }
 }
 
-/*************
-  IBM_UpdateParticlePositions
-This function is called from the integrate right after the LB update
-Interpolates LB velocity at the particle positions and propagates the particles
-**************/
-
+/** Interpolate LB velocity at the particle positions and propagate the
+ *  particles.
+ *  Called from the integration loop right after the LB update.
+ */
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
   if (lattice_switch == ActiveLB::CPU)
@@ -148,12 +141,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
   }
 }
 
-/*************
-   CoupleIBMParticleToFluid
-This function puts the momentum of a given particle into the LB fluid - only for
-CPU
-**************/
-
+/** Put the momentum of a given particle into the LB fluid */
 void CoupleIBMParticleToFluid(Particle *p) {
   // Convert units from MD to LB
   double delta_j[3];
@@ -188,23 +176,20 @@ void CoupleIBMParticleToFluid(Particle *p) {
   }
 }
 
-/******************
-   GetIBMInterpolatedVelocity
-Very similar to the velocity interpolation done in standard Espresso, except
-that we add the f/2 contribution - only for CPU
-*******************/
-
+/** Calculate the LB fluid velocity at a particle position.
+ *  Very similar to the velocity interpolation done in standard Espresso,
+ *  except that we add the f/2 contribution, cf. Guo et al. PRE 2002.
+ *  The fluid velocity is obtained by linear interpolation,
+ *  cf. Eq. (11) in Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+ */
 void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
                                 double *forceAdded) {
   /* determine elementary lattice cell surrounding the particle
-   and the relative position of the particle in this cell */
+     and the relative position of the particle in this cell */
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(pos, node_index, delta);
 
-  /* calculate fluid velocity at particle's position
-   this is done by linear interpolation
-   (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   Utils::Vector3d interpolated_u = {};
   // This for the f/2 contribution to the velocity
   forceAdded[0] = forceAdded[1] = forceAdded[2] = 0;
@@ -218,8 +203,8 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
         double local_density;
         Utils::Vector3d local_j;
 
-// This can be done easier without copying the code twice
-// We probably can even set the boundary velocity directly
+        // This can be done more easily without copying the code twice.
+        // We probably can even set the boundary velocity directly.
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_density = lbpar.density;
@@ -233,7 +218,6 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
           local_density = lbpar.density + modes[0];
 
           // Add the +f/2 contribution!!
-          // Guo et al. PRE 2002
           local_j[0] = modes[1] + f[0] / 2;
           local_j[1] = modes[2] + f[1] / 2;
           local_j[2] = modes[3] + f[2] / 2;
@@ -281,13 +265,9 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
   v[2] *= lbpar.agrid / lbpar.tau;
 }
 
-/************
-   IsHalo
-Builds a cache structure which contains a flag for each LB node whether that
-node is a halo node or not
-Checks for halo - only for CPU
-*************/
-
+/** Build a cache structure which contains a flag for each LB node whether that
+ *  node is a halo node or not.
+ */
 bool IsHalo(const int indexCheck) {
   // First call --> build cache
   if (isHaloCache == nullptr) {
@@ -313,12 +293,9 @@ bool IsHalo(const int indexCheck) {
   return isHaloCache[indexCheck];
 }
 
-/****************
-   ParticleVelocitiesFromLB_CPU
-Get particle velocities from LB and set the velocity field in the particles data
-structure
-*****************/
-
+/** Get particle velocities from LB and set the velocity field in the particles
+ *  data structure
+ */
 void ParticleVelocitiesFromLB_CPU() {
   // Loop over particles in local cells
   // Here all contributions are included: velocity, external force and particle

@@ -130,10 +130,10 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
  *
  *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
  *
- * @param[in] p             The coupled particle.
- * @param[in]     f_random  Additional force to be included.
+ *  @param[in] p             The coupled particle.
+ *  @param[in]     f_random  Additional force to be included.
  *
- * @return The viscous coupling force plus f_random.
+ *  @return The viscous coupling force plus f_random.
  */
 Utils::Vector3d lb_viscous_coupling(Particle const &p,
                                     Utils::Vector3d const &f_random) {

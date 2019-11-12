@@ -116,7 +116,8 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
   return ES_OK;
 }
 
-/** Calculate partial volumes on all compute nodes and call MPI to sum up */
+/** Calculate partial volumes on all compute nodes and call MPI to sum up.
+ */
 void ImmersedBoundaries::calc_volumes() {
 
   // Partial volumes for each soft particle, to be summed up
