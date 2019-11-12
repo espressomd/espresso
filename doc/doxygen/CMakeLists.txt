@@ -7,13 +7,19 @@ if(DOXYGEN_FOUND)
     DEPENDS EspressoConfig
   )
 
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib
+    COMMAND sed -r
+     "'s/^ *doi *= *([^0-9]+)(10\\.[0-9]+)/url=\\1https:\\/\\/dx.doi.org\\/\\2/'"
+     ${CMAKE_CURRENT_SOURCE_DIR}/bibliography.bib >
+     ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bibliography.bib
+  )
+
   set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in)
   set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 
   configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/bibliography.bib
-                 ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib
-                 COPYONLY)
 
   add_custom_target(doxygen
     COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
