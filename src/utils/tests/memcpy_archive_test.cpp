@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(serializaton_processing) {
 
   {
     auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
-    OpVec out1, out2;
+    OpVec out1 = Utils::Vector3d{}, out2;
     ia >> out1;
     ia >> out2;
 
