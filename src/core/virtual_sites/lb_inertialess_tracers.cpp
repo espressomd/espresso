@@ -62,7 +62,8 @@ bool in_local_domain(Utils::Vector3d const &pos) {
 
 /** Put the calculated force stored on the ibm particles into the fluid by
  *  updating the @ref lbfields structure.
- *  Called from the integration loop right after the forces have been calculated.
+ *  Called from the integration loop right after the forces have been
+ *  calculated.
  */
 void IBM_ForcesIntoFluid_CPU() {
   // Update the forces on the ghost particles

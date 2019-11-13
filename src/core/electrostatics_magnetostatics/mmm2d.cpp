@@ -527,8 +527,8 @@ static void setup_z_force() {
   const double pref = coulomb.prefactor * C_2PI * ux * uy;
   constexpr int e_size = 1, size = 2;
 
-  /** there is NO contribution from images here, unlike claimed in @cite tyagi10a
-   *  Please refer to @cite arnold13c for details. */
+  /** there is NO contribution from images here, unlike claimed in
+   *  @cite tyagi10a. Please refer to @cite arnold13c for details. */
 
   if (this_node == 0) {
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);

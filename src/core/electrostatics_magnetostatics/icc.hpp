@@ -63,8 +63,8 @@ struct iccp3m_struct {
   std::vector<double> areas; /**< Array of area of the grid elements         */
   std::vector<double>
       ein; /**< Array of dielectric constants at each surface element */
-  std::vector<double> sigma; /**< Surface charge density */
-  double convergence = 1e-2; /**< Convergence criterion */
+  std::vector<double> sigma;             /**< Surface charge density */
+  double convergence = 1e-2;             /**< Convergence criterion */
   std::vector<Utils::Vector3d> normals;  /**< Surface normal vectors */
   Utils::Vector3d ext_field = {0, 0, 0}; /**< External field */
   double relax = 0.7; /**< relaxation parameter for iteration */
