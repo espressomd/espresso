@@ -25,8 +25,6 @@
 
 #include "thermostat.hpp"
 
-#ifdef BROWNIAN_DYNAMICS
-
 /** Propagate position: viscous drag driven by conservative forces.*/
 /*********************************************************/
 /** \name bd_drag */
@@ -504,7 +502,5 @@ inline void brownian_dynamics_propagator(const ParticleRange &particles) {
   }
   sim_time += time_step;
 }
-
-#endif // BROWNIAN_DYNAMICS
 
 #endif // BROWNIAN_INLINE_HPP

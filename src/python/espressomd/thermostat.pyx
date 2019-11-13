@@ -111,10 +111,9 @@ cdef class Thermostat:
                              gammav=thmst["gammav"])
             if thmst["type"] == "DPD":
                 self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
-            IF BROWNIAN_DYNAMICS:
-                if thmst["type"] == "BROWNIAN":
-                    self.set_brownian(kT=thmst["kT"], gamma=thmst[
-                                      "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
+            if thmst["type"] == "BROWNIAN":
+                self.set_brownian(kT=thmst["kT"], gamma=thmst[
+                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -149,32 +148,31 @@ cdef class Thermostat:
                 lang_dict["gamma_rotation"] = None
 
             thermo_list.append(lang_dict)
-        IF BROWNIAN_DYNAMICS:
-            if thermo_switch & THERMO_BROWNIAN:
-                lang_dict = {}
-                lang_dict["type"] = "BROWNIAN"
-                lang_dict["kT"] = temperature
-                lang_dict["act_on_virtual"] = thermo_virtual
-                lang_dict["seed"] = int(langevin_get_rng_state())
+        if thermo_switch & THERMO_BROWNIAN:
+            lang_dict = {}
+            lang_dict["type"] = "BROWNIAN"
+            lang_dict["kT"] = temperature
+            lang_dict["act_on_virtual"] = thermo_virtual
+            lang_dict["seed"] = int(langevin_get_rng_state())
+            IF PARTICLE_ANISOTROPY:
+                lang_dict["gamma"] = [langevin_gamma[0],
+                                      langevin_gamma[1],
+                                      langevin_gamma[2]]
+            ELSE:
+                lang_dict["gamma"] = langevin_gamma
+            IF ROTATION:
                 IF PARTICLE_ANISOTROPY:
-                    lang_dict["gamma"] = [langevin_gamma[0],
-                                          langevin_gamma[1],
-                                          langevin_gamma[2]]
+                    lang_dict[
+                        "gamma_rotation"] = [langevin_gamma_rotation[0],
+                                             langevin_gamma_rotation[
+                                             1],
+                                             langevin_gamma_rotation[2]]
                 ELSE:
-                    lang_dict["gamma"] = langevin_gamma
-                IF ROTATION:
-                    IF PARTICLE_ANISOTROPY:
-                        lang_dict[
-                            "gamma_rotation"] = [langevin_gamma_rotation[0],
-                                                 langevin_gamma_rotation[
-                                                 1],
-                                                 langevin_gamma_rotation[2]]
-                    ELSE:
-                        lang_dict["gamma_rotation"] = langevin_gamma_rotation
-                ELSE:
-                    lang_dict["gamma_rotation"] = None
+                    lang_dict["gamma_rotation"] = langevin_gamma_rotation
+            ELSE:
+                lang_dict["gamma_rotation"] = None
 
-                thermo_list.append(lang_dict)
+            thermo_list.append(lang_dict)
         if thermo_switch & THERMO_LB:
             lb_dict = {}
             lb_dict["LB_fluid"] = self._LB_fluid
@@ -515,38 +513,37 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
 
-    IF BROWNIAN_DYNAMICS:
-        @AssertThermostatType(THERMO_BROWNIAN)
-        def set_brownian(self, kT=None, gamma=None, gamma_rotation=None,
-                         act_on_virtual=False, seed=None):
-            """Sets the Brownian Dynamics thermostat with required parameters 'kT' 'gamma'
-            and optional parameter 'gamma_rotation'.
+    @AssertThermostatType(THERMO_BROWNIAN)
+    def set_brownian(self, kT=None, gamma=None, gamma_rotation=None,
+                     act_on_virtual=False, seed=None):
+        """Sets the Brownian Dynamics thermostat with required parameters 'kT' 'gamma'
+        and optional parameter 'gamma_rotation'.
 
-            Parameters
-            -----------
-            kT : :obj:`float`
-             Thermal energy of the simulated heat bath.
-            gamma : :obj:`float`
-                    Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
-                    is compiled in then 'gamma' can be a list of three positive floats, for the friction
-                    coefficient in each cardinal direction.
-            gamma_rotation : :obj:`float`, optional
-                             The same applies to 'gamma_rotation', which requires the feature
-                             'ROTATION' to work properly. But also accepts three floating point numbers
-                             if 'PARTICLE_ANISOTROPY' is also compiled in.
-            act_on_virtual : :obj:`bool`, optional
-                    If true the thermostat will act on virtual sites, default is off.
-            seed : :obj:`int`, required
-                    Initial counter value (or seed) of the philox RNG.
-                    Required on first activation of the Brownian Dynamics thermostat.
+        Parameters
+        -----------
+        kT : :obj:`float`
+         Thermal energy of the simulated heat bath.
+        gamma : :obj:`float`
+                Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
+                is compiled in then 'gamma' can be a list of three positive floats, for the friction
+                coefficient in each cardinal direction.
+        gamma_rotation : :obj:`float`, optional
+                         The same applies to 'gamma_rotation', which requires the feature
+                         'ROTATION' to work properly. But also accepts three floating point numbers
+                         if 'PARTICLE_ANISOTROPY' is also compiled in.
+        act_on_virtual : :obj:`bool`, optional
+                If true the thermostat will act on virtual sites, default is off.
+        seed : :obj:`int`, required
+                Initial counter value (or seed) of the philox RNG.
+                Required on first activation of the Brownian Dynamics thermostat.
 
-            """
+        """
 
-            self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)
-            global thermo_switch
-            # this is safe because this combination of thermostats is not
-            # allowed
-            thermo_switch = (thermo_switch & (~THERMO_LANGEVIN))
-            thermo_switch = (thermo_switch | THERMO_BROWNIAN)
-            mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-            return True
+        self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)
+        global thermo_switch
+        # this is safe because this combination of thermostats is not
+        # allowed
+        thermo_switch = (thermo_switch & (~THERMO_LANGEVIN))
+        thermo_switch = (thermo_switch | THERMO_BROWNIAN)
+        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        return True

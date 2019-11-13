@@ -138,12 +138,10 @@ bool integrator_step_1(ParticleRange &particles) {
     velocity_verlet_npt_step_1(particles);
     break;
 #endif
-#ifdef BROWNIAN_DYNAMICS
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
     // so, just skip here
     break;
-#endif
   default:
     throw std::runtime_error("Unknown value for integ_switch");
   }
@@ -164,12 +162,10 @@ void integrator_step_2(ParticleRange &particles) {
     velocity_verlet_npt_step_2(particles);
     break;
 #endif
-#ifdef BROWNIAN_DYNAMICS
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
     brownian_dynamics_propagator(particles);
     break;
-#endif
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
   }
@@ -406,12 +402,10 @@ void integrate_set_nvt() {
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 
-#ifdef BROWNIAN_DYNAMICS
 void integrate_set_bd() {
   integ_switch = INTEG_METHOD_BD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
-#endif
 
 #ifdef NPT
 int integrate_set_npt_isotropic(double ext_pressure, double piston,

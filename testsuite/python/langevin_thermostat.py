@@ -41,10 +41,9 @@ class LangevinThermostat(ut.TestCase):
         np.random.seed(42)
 
     def setUp(self):
-        if "BROWNIAN_DYNAMICS" in espressomd.features():
-            self.system.thermostat.turn_off()
-            # the default integrator is supposed implicitly
-            self.system.integrator.set_nvt()
+        self.system.thermostat.turn_off()
+        # the default integrator is supposed implicitly
+        self.system.integrator.set_nvt()
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in velocity against a
@@ -247,24 +246,23 @@ class LangevinThermostat(ut.TestCase):
 
         self.global_langevin_run_check(N, kT, 150)
 
-        if espressomd.has_features("BROWNIAN_DYNAMICS"):
-            # Large time-step is OK for BD.
-            system.time_step = 7.214
-            system.part[:].v = np.zeros((3))
-            system.part[:].omega_body = np.zeros((3))
-            system.thermostat.turn_off()
-            system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
-            system.integrator.set_brownian_dynamics()
-            # Warmup
-            # The BD does not require so the warmup. Only 1 step is enough.
-            # More steps are taken just to be sure that they will not lead
-            # to wrong results.
-            system.integrator.run(3)
-            # Less number of loops are needed in case of BD because the velocity
-            # distribution is already as required. It is not a result of a real
-            # dynamics.
-            self.global_langevin_run_check(N, kT, 70)
-            system.thermostat.turn_off()
+        # Large time-step is OK for BD.
+        system.time_step = 7.214
+        system.part[:].v = np.zeros((3))
+        system.part[:].omega_body = np.zeros((3))
+        system.thermostat.turn_off()
+        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
+        system.integrator.set_brownian_dynamics()
+        # Warmup
+        # The BD does not require so the warmup. Only 1 step is enough.
+        # More steps are taken just to be sure that they will not lead
+        # to wrong results.
+        system.integrator.run(3)
+        # Less number of loops are needed in case of BD because the velocity
+        # distribution is already as required. It is not a result of a real
+        # dynamics.
+        self.global_langevin_run_check(N, kT, 70)
+        system.thermostat.turn_off()
 
     @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
     def test_05__langevin_per_particle(self):

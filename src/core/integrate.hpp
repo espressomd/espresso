@@ -130,10 +130,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
 /** @brief Set the NVT integrator. */
 void integrate_set_nvt();
 
-#ifdef BROWNIAN_DYNAMICS
 /** @brief Set the Brownian Dynamics integrator. */
 void integrate_set_bd();
-#endif
 
 /** @brief Set the NpT isotropic integrator.
  *

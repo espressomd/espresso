@@ -134,14 +134,13 @@ cdef class Integrator:
         self._method = "NVT"
         integrate_set_nvt()
 
-    IF BROWNIAN_DYNAMICS:
-        def set_brownian_dynamics(self):
-            """
-            Set the integration method to BD.
+    def set_brownian_dynamics(self):
+        """
+        Set the integration method to BD.
 
-            """
-            self._method = "BD"
-            integrate_set_bd()
+        """
+        self._method = "BD"
+        integrate_set_bd()
 
     def set_isotropic_npt(self, ext_pressure, piston,
                           direction=(True, True, True), cubic_box=False):

@@ -67,14 +67,12 @@ GammaType langevin_gamma_rotation = sentinel(GammaType{});
 GammaType langevin_pref1;
 GammaType langevin_pref2;
 GammaType langevin_pref2_rotation;
-#ifdef BROWNIAN_DYNAMICS
 // Brownian position random walk standard deviation
 GammaType brown_sigma_pos_inv = sentinel(GammaType{});
 GammaType brown_sigma_pos_rotation_inv = sentinel(GammaType{});
 GammaType brown_gammatype_nan = set_nan(GammaType{});
 double brown_sigma_vel;
 double brown_sigma_vel_rotation;
-#endif // BROWNIAN_DYNAMICS
 
 /* NPT ISOTROPIC THERMOSTAT */
 double nptiso_gamma0 = 0.0;
@@ -152,7 +150,6 @@ void thermo_init_npt_isotropic() {
 }
 #endif
 
-#ifdef BROWNIAN_DYNAMICS
 // brown_sigma_vel determines here the heat velocity random walk dispersion
 // brown_sigma_pos determines here the BD position random walk dispersion
 // default particle mass is assumed to be unitary in this global parameters
@@ -194,7 +191,6 @@ void thermo_init_brownian() {
   }
 #endif // ROTATION
 }
-#endif // BROWNIAN_DYNAMICS
 
 void thermo_init() {
   // Init thermalized bond despite of thermostat
@@ -214,10 +210,8 @@ void thermo_init() {
   if (thermo_switch & THERMO_NPT_ISO)
     thermo_init_npt_isotropic();
 #endif
-#ifdef BROWNIAN_DYNAMICS
   if (thermo_switch & THERMO_BROWNIAN)
     thermo_init_brownian();
-#endif
 }
 
 void langevin_heat_up() {
