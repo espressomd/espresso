@@ -29,7 +29,7 @@ endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "4.1.0")
+set(PROJECT_VERSION "4.1.1")
 
 #
 # CMake internal vars
