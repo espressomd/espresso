@@ -22,8 +22,7 @@
 #define REACTION_FIELD_H
 /** \file
  *  Routines to calculate the Reaction Field energy or/and force
- *  for a particle pair.
- *  M. Neumann, J. Chem. Phys 82, 5663 (1985)
+ *  for a particle pair @cite neumann85b.
  *
  *  Implementation in \ref reaction_field.cpp
  */

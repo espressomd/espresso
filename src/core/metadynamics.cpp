@@ -99,7 +99,7 @@ void meta_init() {
 
 /** Metadynamics main function:
  * - Calculate reaction coordinate
- * - Update profile and biased force
+ * - Update profile and biased force @cite marsili10a
  * - apply external force
  */
 void meta_perform(const ParticleRange &particles) {
@@ -143,8 +143,7 @@ void meta_perform(const ParticleRange &particles) {
   }
 
   /* Now update free energy profile
-   * Here, we're following the functional form of
-   * Marsili et al., J Comp Chem, 31 (2009).
+   * Here, we're following the functional form of @cite marsili10a.
    * Instead of Gaussians, we use so-called Lucy's functions */
 
   for (int i = 0; i < meta_xi_num_bins; ++i) {

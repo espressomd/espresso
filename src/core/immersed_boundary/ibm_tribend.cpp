@@ -87,6 +87,7 @@ IBM_Tribend_CalcForce(Particle const &p1, Particle const &p2,
   return std::make_tuple(force1, force2, force3, force4);
 }
 
+/** @details See @cite gompper96a and @cite kruger12a. */
 int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
                           const int ind3, const int ind4, const double kb,
                           const bool flat) {
@@ -144,7 +145,7 @@ int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2,
     // NOTE: This is the bare bending modulus used by the program.
     // If triangle pairs appear only once, the total bending force should get a
     // factor 2. For the numerical model, a factor sqrt(3) should be added, see
-    // Gompper&Kroll J. Phys. 1996 and Krüger thesis. This is an approximation,
+    // @cite gompper96a and @cite kruger12a. This is an approximation,
     // it holds strictly only for a sphere
     bonded_ia_params[bond_type].p.ibm_tribend.kb = kb;
   }

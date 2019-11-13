@@ -25,13 +25,11 @@
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the dipolar Ewald summation. Details of the used method can be found in
- *  Hockney/Eastwood and Deserno/Holm. The file p3m contains only the
- *  Particle-Mesh part.
+ *  @cite hockney88a and @cite deserno98a @cite deserno98b. The file p3m
+ *  contains only the Particle-Mesh part.
  *
  *  Further reading:
- *  - J. J. Cerda,
- *    *P3M for dipolar interactions*,
- *    J. Chem. Phys (129) 234104, 2008
+ *  - @cite cerda08d
  *
  *  Implementation in p3m-dipolar.cpp.
  */
@@ -163,7 +161,7 @@ void dp3m_deactivate();
  *  These parameters are stored in the @ref dp3m object.
  *
  *  The function utilizes the analytic expression of the error estimate
- *  for the dipolar P3M method in the paper of J. J. Cerda et al., JCP 2008 in
+ *  for the dipolar P3M method in the paper of @cite cerda08d in
  *  order to obtain the rms error in the force for a system of N randomly
  *  distributed particles in a cubic box.
  *  For the real space error the estimate of Kolafa/Perram is used.

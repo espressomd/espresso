@@ -21,8 +21,7 @@
 #ifndef CORE_DPD_HPP
 #define CORE_DPD_HPP
 /** \file
- *  Routines to use dpd as thermostat or pair force
- *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
+ *  Routines to use dpd as thermostat or pair force @cite soddemann03a
  *
  *  Implementation in @ref dpd.cpp.
  */

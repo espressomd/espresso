@@ -284,7 +284,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
                               Utils::Array<float, 19> &mode) {
   /**
    * The following convention is used:
-   * The \f$\hat{c}_i\f$ from B. Duenweg's paper are given by:
+   * The \f$\hat{c}_i\f$ from @cite duenweg09a are given by:
    *
    * \f{align*}{
    *   c_{ 0} &= ( 0, 0, 0) \\
@@ -789,9 +789,8 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b,
  *
  *  The populations that have propagated into a boundary node
  *  are bounced back to the node they came from. This results
- *  in no slip boundary conditions.
+ *  in no slip boundary conditions, cf. @cite ladd01a.
  *
- *  [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  *  @param[in]  index   Node index / thread index
  *  @param[in]  n_curr  Local node receiving the current node field
  *  @param[in]  boundaries  Constant velocity at the boundary, set by the user
@@ -1151,8 +1150,8 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
 
     // Transform the stress tensor components according to the modes that
     // correspond to those used by U. Schiller. In terms of populations this
-    // expression then corresponds exactly to those in Eqs. 116 - 121 in the
-    // Duenweg and Ladd paper, when these are written out in populations.
+    // expression then corresponds exactly to those in Eqs. 116 - 121 in
+    // @cite dunweg07a, when these are written out in populations.
     // But to ensure this, the expression in Schiller's modes has to be
     // different!
 
@@ -1344,7 +1343,7 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
 }
 
 /** Interpolation kernel.
- *  see Duenweg and Ladd http://arxiv.org/abs/0803.2826
+ *  See @cite duenweg09a
  *  @param u Distance to grid point in units of agrid
  *  @retval Value for the interpolation function.
  */
@@ -1354,7 +1353,7 @@ three_point_polynomial_smallerequal_than_half(float u) {
 }
 
 /** Interpolation kernel.
- *  see Duenweg and Ladd http://arxiv.org/abs/0803.2826
+ *  See @cite duenweg09a
  *  @param u Distance to grid point in units of agrid
  *  @retval Value for the interpolation function.
  */
@@ -1456,7 +1455,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
 }
 
 /** Velocity interpolation.
- *  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+ *  (Eq. (12) @cite ahlrichs99a)
  *  @param[in]  n_a                Local node residing in array a
  *  @param[in]  particle_position  Particle position
  *  @param[out] node_index         Node index around (8) particle
@@ -1469,7 +1468,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
                        Utils::Array<float, 8> &delta) {
   Utils::Array<int, 3> left_node_index;
   Utils::Array<float, 6> temp_delta;
-  // Eq. (10) and (11) in ahlrichs + duenweg page 8227
+  // Eq. (10) and (11) in @cite ahlrichs99a page 8227
 #pragma unroll
   for (int i = 0; i < 3; ++i) {
     auto const scaledpos = particle_position[i] / para->agrid - 0.5f;
@@ -1521,7 +1520,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
 }
 
 /** Calculate viscous force.
- *  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+ *  (Eq. (12) @cite ahlrichs99a)
  *  @param[in]  n_a                Local node residing in array a
  *  @param[out] delta              Weighting of particle position
  *  @param[out] delta_j            Weighting of particle momentum
@@ -1605,7 +1604,7 @@ __device__ void calc_viscous_force(
 #endif
 
   /* take care to rescale velocities with time_step and transform to MD units
-   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+   * (Eq. (9) @cite ahlrichs99a) */
 
   /* Viscous force */
   float3 viscforce_density{0.0f, 0.0f, 0.0f};
@@ -1623,11 +1622,11 @@ __device__ void calc_viscous_force(
 #endif
 
   if (para->kT > 0.0) {
-    /* add stochastic force of zero mean (eq. (15) Ahlrichs, Duenweg) */
+    /* add stochastic force of zero mean (eq. (15) @cite ahlrichs99a) */
     float4 random_floats = random_wrapper_philox(
         particle_data[part_index].identity, LBQ * 32, philox_counter);
     /* lb_coupl_pref is stored in MD units (force)
-     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+     * Eq. (16) @cite ahlrichs99a.
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
@@ -1639,8 +1638,7 @@ __device__ void calc_viscous_force(
     viscforce_density.z += lb_coupl_pref * (random_floats.y - 0.5f);
   }
   /* delta_j for transform momentum transfer to lattice units which is done
-    in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
-    (1999)) */
+    in calc_node_force (Eq. (12) @cite ahlrichs99a) */
 
   // only add to particle_force for particle centre <=> (1-flag_cs) = 1
   particle_force[3 * part_index + 0] += (1 - flag_cs) * viscforce_density.x;
@@ -1671,7 +1669,7 @@ __device__ void calc_viscous_force(
 
 /** Calculate the node force caused by the particles, with atomicAdd due to
  *  avoiding race conditions.
- *  (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+ *  (Eq. (14) @cite ahlrichs99a)
  *  @param[in]  delta              Weighting of particle position
  *  @param[in]  delta_j            Weighting of particle momentum
  *  @param[in]  node_index         Node index around (8) particle
@@ -1701,8 +1699,8 @@ calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
 /** Kernel to calculate local populations from hydrodynamic fields.
  *  The mapping is given in terms of the equilibrium distribution.
  *
- *  Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
- *  Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
+ *  Eq. (2.15) @cite ladd94a
+ *  Eq. (4) in @cite usta05a
  *
  *  @param[out] n_a        %Lattice site
  *  @param[out] gpu_check  Additional check if GPU kernel are executed
@@ -1852,8 +1850,8 @@ __global__ void set_force_density(int single_nodeindex, float *force_density,
  *  from given flow field velocities. The mapping is given in terms of
  *  the equilibrium distribution.
  *
- *  Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
- *  Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
+ *  Eq. (2.15) @cite ladd94a
+ *  Eq. (4) in @cite usta05a
  *
  *  @param[out] n_a               Current nodes array (double buffering!)
  *  @param[in]  single_nodeindex  Single node index

@@ -358,7 +358,7 @@ private:
 };
 
 /**
- * Constant-pH Ensemble, for derivation see Reed and Reed 1992.
+ * Constant-pH Ensemble, for derivation see @cite reed92a.
  * For the constant pH reactions you need to provide the deprotonation and
  * afterwards the corresponding protonation reaction (in this order). If you
  * want to deal with multiple reactions do it multiple times. Note that there is

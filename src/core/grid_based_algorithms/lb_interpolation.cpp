@@ -89,7 +89,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+     (Eq. (11) @cite ahlrichs99a) */
   lattice_interpolation(lblattice, pos,
                         [&interpolated_u](Lattice::index_t index, double w) {
                           interpolated_u += w * node_u(index);

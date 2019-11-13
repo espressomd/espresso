@@ -92,8 +92,7 @@ double slab_dip_count_mu(double *mt, double *mx, double *my,
 }
 
 /** Compute the dipolar DLC corrections for forces and torques.
- *  Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
- *  Lett. 400, 62-67, (2004).
+ *  Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
                        std::vector<Utils::Vector3d> &ts,
@@ -252,8 +251,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 }
 
 /** Compute the dipolar DLC corrections
- *  Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
- *  Lett. 400, 62-67, (2004).
+ *  Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 
@@ -359,7 +357,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   // summation instead of slab-wise summation.
   // Slab-wise summation is the one required to apply DLC correction.
   // This correction is often called SDC = Shape Dependent Correction.
-  // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
+  // See @cite brodka04a.
 
   mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
 
@@ -419,7 +417,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   // summation instead of slab-wise summation.
   // Slab-wise summation is the one required to apply DLC correction.
   // This correction is often called SDC = Shape Dependent Correction.
-  // See Brodka, Chem. Phys. Lett. 400, 62, (2004).
+  // See @cite brodka04a.
 
   mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
 

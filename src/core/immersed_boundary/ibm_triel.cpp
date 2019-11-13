@@ -104,7 +104,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   const double b2 = iaparams.p.ibm_triel.b2;
   const double A0 = iaparams.p.ibm_triel.area0;
 
-  // Displacement gradient tensor D: Eq. (C.9) Krüger thesis
+  // Displacement gradient tensor D: Eq. (C.9) in @cite kruger12a
   const double Dxx = lp / lp0;
   const double Dxy = ((l / l0 * cosPhi) - (lp / lp0 * cosPhi0)) / sinPhi0;
   const double Dyx = 0.0;

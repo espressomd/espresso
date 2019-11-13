@@ -22,9 +22,7 @@
 #define RATTLE_H
 
 /** \file
- * RATTLE Algorithm (Rattle: A "Velocity" Version of the
- * Shake Algorithm for Molecular Dynamics Calculations, H.C Andersen, J Comp
- * Phys, 52, 24-34, 1983)
+ *  RATTLE Algorithm (@cite andersen83a)
  *
  *  For more information see \ref rattle.cpp.
  */

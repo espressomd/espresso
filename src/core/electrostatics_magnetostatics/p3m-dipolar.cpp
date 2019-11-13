@@ -133,8 +133,8 @@ static bool dp3m_sanity_checks_boxl();
 static void dp3m_calc_local_ca_mesh();
 
 /** Interpolate the P-th order charge assignment function from
- *  Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
- *  are also tabulated in Deserno/Holm.
+ *  @cite hockney88a 5-189 (or 8-61). The following charge fractions
+ *  are also tabulated in @cite deserno98a @cite deserno98b.
  */
 static void dp3m_interpolate_dipole_assignment_function();
 
@@ -199,7 +199,7 @@ static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
                                     double *alias1, double *alias2);
 
 /** Compute the value of alpha through a bisection method.
- *  Based on eq. (33) of JCP115,6351,(2001).
+ *  Based on eq. (33) @cite wang01a.
  */
 double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
@@ -2020,8 +2020,7 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
 }
 
 /** Calculate the value of the errors for the REAL part of the force in terms
- *  of the splitting parameter alpha of Ewald. Based on eq. (33) in
- *  the paper of Zuowei-HolmJCP, 115,6351,(2001).
+ *  of the splitting parameter alpha of Ewald. Based on eq. (33) @cite wang01a.
  *
  *  Please note that in this more refined approach we don't use
  *  eq. (37), but eq. (33) which maintains all the powers in alpha.

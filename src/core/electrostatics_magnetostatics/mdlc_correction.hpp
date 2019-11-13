@@ -27,7 +27,7 @@
  *             when applied to a slab geometry and dipolar
  *             particles. DLC & co
  *
- *  Article:   A. Brodka, Chemical Physics Letters 400, 62-67 (2004).
+ *  Article:   @cite brodka04a
  *
  *  We also include a tuning function that returns the
  *  cut-off necessary to attend a certain accuracy.

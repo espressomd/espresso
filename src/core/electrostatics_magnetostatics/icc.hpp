@@ -28,10 +28,7 @@
  *  density of the surface segments have to be determined
  *  self-consistently using an iterative scheme.  It can at presently -
  *  despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D. For
- *  details see: S. Tyagi, M. Suzen, M. Sega, M. Barbosa, S. S. Kantorovich,
- *  C. Holm: An iterative, fast, linear-scaling method for computing induced
- *  charges on arbitrary dielectric boundaries, J. Chem. Phys. 2010, 132,
- *  p. 154112, doi:10.1063/1.3376011
+ *  details see: @cite tyagi10a
  *
  *  To set up ICCP3M, first the dielectric boundary has to be modelled
  *  by espresso particles 0..n where n has to be passed as a parameter

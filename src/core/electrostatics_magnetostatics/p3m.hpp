@@ -25,28 +25,10 @@
  *
  *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
  *  Ewald summation. Details of the used method can be found in
- *  Hockney/Eastwood and Deserno/Holm.
+ *  @cite hockney88a and @cite deserno98a @cite deserno98b.
  *
- *  Further reading:
- *  - P. P. Ewald,
- *    *Die Berechnung optischer und elektrostatischer Gitterpotentiale*,
- *    Ann. Phys. (64) 253-287, 1921
- *  - R. W. Hockney and J. W. Eastwood,
- *    *Computer simulation using particles*,
- *    IOP, London, 1988
- *  - M. Deserno and C. Holm,
- *    *How to mesh up Ewald sums I + II*,
- *    J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
- *  - M. Deserno, C. Holm and H. J. Limbach,
- *    *How to mesh up Ewald sums*,
- *    in Molecular Dynamics on Parallel Computers,
- *    Ed. R. Esser et al., World Scientific, Singapore, 2000
- *  - M. Deserno,
- *    *Counterion condensation for rigid linear polyelectrolytes*,
- *    PhD Thesis, Universität Mainz, 2000
- *  - J. J. Cerda,
- *    *P3M for dipolar interactions*,
- *    J. Chem. Phys (129) 234104, 2008
+ *  Further reading: @cite ewald21a, @cite hockney88a, @cite deserno98a,
+ *  @cite deserno98b, @cite deserno00e, @cite deserno00b, @cite cerda08d.
  *
  *  Implementation in p3m.cpp.
  */

@@ -117,6 +117,7 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
 }
 
 /** Calculate partial volumes on all compute nodes and call MPI to sum up.
+ *  See @cite zhang01b, @cite dupin08a, @cite kruger12a.
  */
 void ImmersedBoundaries::calc_volumes() {
 
@@ -192,15 +193,14 @@ void ImmersedBoundaries::calc_volumes() {
             auto const x3 = x1 + get_mi_vector(p3->r.p, x1, box_geo);
 
             // Volume of this tetrahedron
-            // See Cha Zhang et.al. 2001, doi:10.1109/ICIP.2001.958278
-            // http://research.microsoft.com/en-us/um/people/chazhang/publications/icip01_ChaZhang.pdf
+            // See @cite zhang01b
             // The volume can be negative, but it is not necessarily the "signed
             // volume" in the above paper (the sign of the real "signed volume"
             // must be calculated using the normal vector; the result of the
             // calculation here is simply a term in the sum required to
             // calculate the volume of a particle). Again, see the paper. This
             // should be equivalent to the formulation using vector identities
-            // in Krüger thesis
+            // in @cite kruger12a
 
             const double v321 = x3[0] * x2[1] * x1[2];
             const double v231 = x2[0] * x3[1] * x1[2];
@@ -291,7 +291,7 @@ void ImmersedBoundaries::calc_volume_force() {
             auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
 
             // Now we have the true and good coordinates
-            // Compute force according to eq. C.46 Krüger thesis
+            // Compute force according to eq. (C.46) in @cite kruger12a
             // It is the same as deriving Achim's equation w.r.t x
             /*                        const double fact = kappaV * 1/6. *
             (IBMVolumesCurrent[softID] - volRef) / IBMVolumesCurrent[softID];
@@ -313,8 +313,8 @@ void ImmersedBoundaries::calc_volume_force() {
              vector_product(x2, x1, n);
              for (int k=0; k < 3; k++) p3.f.f[k] += fact*n[k];*/
 
-            // This is Dupin 2008. I guess the result will be very similar as
-            // the code above
+            // This is eq. (9) in @cite dupin08a. I guess the result will be
+            // very similar as the code above
             auto const n = vector_product(a12, a13);
             const double ln = n.norm();
             const double A = 0.5 * ln;

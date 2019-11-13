@@ -178,9 +178,9 @@ void CoupleIBMParticleToFluid(Particle *p) {
 
 /** Calculate the LB fluid velocity at a particle position.
  *  Very similar to the velocity interpolation done in standard Espresso,
- *  except that we add the f/2 contribution, cf. Guo et al. PRE 2002.
+ *  except that we add the f/2 contribution, cf. @cite guo02a.
  *  The fluid velocity is obtained by linear interpolation,
- *  cf. Eq. (11) in Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+ *  cf. Eq. (11) in @cite ahlrichs99a.
  */
 void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
                                 double *forceAdded) {
