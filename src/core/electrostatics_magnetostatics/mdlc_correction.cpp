@@ -466,8 +466,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
 /**
    Subroutine to compute the cut-off (NCUT) necessary in the DLC dipolar part
-   to get a certain accuracy (acc). We assume particles to have all them a
-   same
+   to get a certain accuracy (acc). We assume particles to have all the same
    value of the dipolar momentum modulus (mu_max). mu_max is taken as the
    largest value of
    mu inside the system. If we assume the gap has a width gap_size (within which
@@ -478,7 +477,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
    BE CAREFUL:  (1) We assume the short distance for the slab to be in the Z
    direction
    (2) You must also tune the other 3D method to the same accuracy, otherwise
-   it has no sense to have a good accurate result for DLC-dipolar.
+   it makes no sense to have a good accurate result for DLC-dipolar.
  */
 int mdlc_tune(double error) {
   double de, n, gc, lz, lx, a, fa1, fa2, fa0, h;

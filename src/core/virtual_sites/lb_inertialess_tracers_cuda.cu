@@ -68,7 +68,7 @@ extern LB_node_force_density_gpu node_f;
 extern LB_nodes_gpu *current_nodes;
 
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
-// here They are initialized in ForcesIntoFluid The pointers are on the host,
+// here. They are initialized in ForcesIntoFluid. The pointers are on the host,
 // but point into device memory
 LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
@@ -278,7 +278,7 @@ __device__ void Calc_m_from_n_IBM(const LB_nodes_gpu n_a,
 /**************
    ParticleVelocitiesFromLB_GPU
 Calls a kernel function to interpolate the velocity at each IBM particle's
-position Store velocity in the particle data structure
+position. Store velocity in the particle data structure.
 **************/
 
 void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {

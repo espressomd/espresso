@@ -24,7 +24,7 @@
  *  of arbitrarily shaped dielectric interfaces.  The dielectric
  *  properties of a dielectric medium in the bulk of the simulation
  *  box are taken into account by reproducing the jump in the electric
- *  field at the inface with charge surface segments. The charge
+ *  field at the interface with charge surface segments. The charge
  *  density of the surface segments have to be determined
  *  self-consistently using an iterative scheme.  It can at presently
  *  - despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D. For
@@ -58,19 +58,19 @@
 #include <ParticleRange.hpp>
 #include <utils/Vector.hpp>
 
-/* iccp3m data structures*/
+/* ICCP3M data structure*/
 struct iccp3m_struct {
-  int n_ic;                  /* Last induced id (can not be smaller then 2) */
+  int n_ic;                  /* Last induced id (cannot be smaller than 2) */
   int num_iteration = 30;    /* Number of max iterations                    */
   double eout = 1;           /* Dielectric constant of the bulk             */
   std::vector<double> areas; /* Array of area of the grid elements          */
   std::vector<double>
       ein; /* Array of dielectric constants at each surface element */
-  std::vector<double> sigma; /* Surface Charge density */
+  std::vector<double> sigma; /* Surface charge density */
   double convergence = 1e-2; /* Convergence criterion                       */
   std::vector<Utils::Vector3d> normals;  /* Surface normal vectors */
   Utils::Vector3d ext_field = {0, 0, 0}; /* External field */
-  double relax = 0.7; /* relaxation parameter for iterative */
+  double relax = 0.7; /* relaxation parameter for iteration */
   int citeration = 0; /* current number of iterations*/
   int first_id = 0;
 

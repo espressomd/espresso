@@ -66,7 +66,7 @@ bool in_local_domain(Utils::Vector3d const &pos) {
  Puts the calculated force stored on the ibm particles into the fluid by
 updating the lbfields structure
  Calls couple_trace_to_fluid for each node
- Called from the integrate loop right after the forces have been calculated
+ Called from the integration loop right after the forces have been calculated
 *****************/
 
 void IBM_ForcesIntoFluid_CPU() {
@@ -218,8 +218,8 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
         double local_density;
         Utils::Vector3d local_j;
 
-// This can be done easier without copying the code twice
-// We probably can even set the boundary velocity directly
+// This can be done more easily without copying the code twice.
+// We probably can even set the boundary velocity directly.
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_density = lbpar.density;

@@ -198,7 +198,7 @@ static void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh,
                                     double mesh_i, int cao, double alpha_L_i,
                                     double *alias1, double *alias2);
 
-// To compute the value of alpha through a bibisection method from the formula
+// To compute the value of alpha through a bisection method from the formula
 // 33 of JCP115,6351,(2001).
 double dp3m_rtbisection(double box_size, double prefac, double r_cut_iL,
                         int n_c_part, double sum_q2, double x1, double x2,
@@ -550,8 +550,8 @@ int dp3m_set_mesh_offset(double x, double y, double z) {
 }
 
 /* We left the handling of the epsilon, due to portability reasons in
-the future for the electrical dipoles, or if people wants to do
-electrical dipoles alone using the magnetic code .. */
+the future for the electrical dipoles, or if people want to do
+electrical dipoles alone using the magnetic code. */
 
 int dp3m_set_eps(double eps) {
   dp3m.params.epsilon = eps;
@@ -2073,7 +2073,7 @@ void dp3m_tune_aliasing_sums(int nx, int ny, int nz, int mesh, double mesh_i,
 //  Ewald
 //  based on the formulas 33, the paper of Zuowei-HolmJCP, 115,6351,(2001).
 
-//  Please, notice than in this more refined approach we don't use
+//  Please note that in this more refined approach we don't use
 //  formulas 37, but 33 which maintains all the powers in alpha
 
 //------------------------------------------------------------
@@ -2439,7 +2439,7 @@ void dp3m_scaleby_box_l() {
 
 /*****************************************************************************/
 
-/** function to give the dipolar-P3M energy correction */
+/** Calculate the dipolar-P3M energy correction */
 void dp3m_compute_constants_energy_dipolar() {
   double Eself, Ukp3m;
 

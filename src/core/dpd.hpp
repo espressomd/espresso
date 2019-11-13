@@ -24,7 +24,7 @@
  *  Routines to use dpd as thermostat or pair force
  *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
  *
- *  Implementation in forces.cpp.
+ *  Implementation in dpd.cpp.
  */
 
 #include "config.hpp"

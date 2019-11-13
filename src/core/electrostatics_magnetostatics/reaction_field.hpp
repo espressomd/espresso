@@ -24,7 +24,7 @@
  *  Routines to calculate the Reaction Field Energy or/and force
  *  for a particle pair.
  *  M. Neumann, J. Chem. Phys 82, 5663 (1985)
- *  \ref forces.cpp
+ *  \ref reaction_field.cpp
  *
  */
 
