@@ -7,10 +7,12 @@ if(DOXYGEN_FOUND)
     DEPENDS EspressoConfig
   )
 
+  # transform BibTeX DOI fields into URL fields (bibliographic
+  # styles available to Doxygen do not process the DOI field)
   add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib
     COMMAND sed -r
-     "'s/^ *doi *= *([^0-9]+)(10\\.[0-9]+)/url=\\1https:\\/\\/dx.doi.org\\/\\2/'"
+     "'s_^ *doi *= *([^0-9]+)(10\\.[0-9]+)_url=\\1https://dx.doi.org/\\2_'"
      ${CMAKE_CURRENT_SOURCE_DIR}/bibliography.bib >
      ${CMAKE_CURRENT_BINARY_DIR}/bibliography.bib
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/bibliography.bib
