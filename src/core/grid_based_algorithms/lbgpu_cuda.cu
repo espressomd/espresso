@@ -283,8 +283,8 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
 __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
                               Utils::Array<float, 19> &mode) {
   /**
-   * The following convention is used:
-   * The \f$\hat{c}_i\f$ from @cite duenweg09a are given by:
+   * The following convention and equations from @cite duenweg09a are used:
+   * The \f$\hat{c}_i\f$ are given by:
    *
    * \f{align*}{
    *   c_{ 0} &= ( 0, 0, 0) \\
@@ -308,9 +308,9 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
    *   c_{18} &= ( 0,-1, 1)
    *  \f}
    *
-   *  The basis vectors (modes) are constructed as follows (eq. 111):
+   *  The basis vectors (modes) are constructed as follows (eq. (111)):
    *  \f[m_k = \sum_{i} e_{ki} n_{i}\f] where the \f$e_{ki}\f$ form a
-   *  linear transformation (matrix) that is given by (modified from Table 1):
+   *  linear transformation (matrix) that is given by (modified from table 1):
    *
    *  \f{align*}{
    *    e_{ 0,i} &= 1 \\
@@ -358,7 +358,7 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
    *    { 0,-1,-1,-1,-1, 2, 2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1}}
    *  \endcode
    *
-   *  With weights
+   *  with weights
    *
    *  \f[q^{c_{i}} = ( 1/3, 1/18, 1/18, 1/18,
    *                  1/18, 1/18, 1/18, 1/36,
@@ -366,8 +366,8 @@ __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
    *                  1/36, 1/36, 1/36, 1/36,
    *                  1/36, 1/36, 1/36 )\f]
    *
-   *  Which makes the transformation satisfy the following
-   *  orthogonality condition (eq. 109):
+   *  which makes the transformation satisfy the following
+   *  orthogonality condition (eq. (109)):
    *  \f[\sum_{i} q^{c_{i}} e_{ki} e_{li} = w_{k} \delta_{kl}\f]
    *  where the weights are:
    *
@@ -1150,7 +1150,7 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
 
     // Transform the stress tensor components according to the modes that
     // correspond to those used by U. Schiller. In terms of populations this
-    // expression then corresponds exactly to those in Eqs. 116 - 121 in
+    // expression then corresponds exactly to those in eq. (116)-(121) in
     // @cite dunweg07a, when these are written out in populations.
     // But to ensure this, the expression in Schiller's modes has to be
     // different!
@@ -1455,7 +1455,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
 }
 
 /** Velocity interpolation.
- *  (Eq. (12) @cite ahlrichs99a)
+ *  Eq. (12) @cite ahlrichs99a.
  *  @param[in]  n_a                Local node residing in array a
  *  @param[in]  particle_position  Particle position
  *  @param[out] node_index         Node index around (8) particle
@@ -1520,7 +1520,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
 }
 
 /** Calculate viscous force.
- *  (Eq. (12) @cite ahlrichs99a)
+ *  Eq. (12) @cite ahlrichs99a.
  *  @param[in]  n_a                Local node residing in array a
  *  @param[out] delta              Weighting of particle position
  *  @param[out] delta_j            Weighting of particle momentum
@@ -1604,7 +1604,7 @@ __device__ void calc_viscous_force(
 #endif
 
   /* take care to rescale velocities with time_step and transform to MD units
-   * (Eq. (9) @cite ahlrichs99a) */
+   * (eq. (9) @cite ahlrichs99a) */
 
   /* Viscous force */
   float3 viscforce_density{0.0f, 0.0f, 0.0f};
@@ -1625,7 +1625,7 @@ __device__ void calc_viscous_force(
     /* add stochastic force of zero mean (eq. (15) @cite ahlrichs99a) */
     float4 random_floats = random_wrapper_philox(
         particle_data[part_index].identity, LBQ * 32, philox_counter);
-    /* lb_coupl_pref is stored in MD units (force)
+    /* lb_coupl_pref is stored in MD units (force).
      * Eq. (16) @cite ahlrichs99a.
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
@@ -1638,7 +1638,7 @@ __device__ void calc_viscous_force(
     viscforce_density.z += lb_coupl_pref * (random_floats.y - 0.5f);
   }
   /* delta_j for transform momentum transfer to lattice units which is done
-    in calc_node_force (Eq. (12) @cite ahlrichs99a) */
+     in calc_node_force (eq. (12) @cite ahlrichs99a) */
 
   // only add to particle_force for particle centre <=> (1-flag_cs) = 1
   particle_force[3 * part_index + 0] += (1 - flag_cs) * viscforce_density.x;
@@ -1669,7 +1669,7 @@ __device__ void calc_viscous_force(
 
 /** Calculate the node force caused by the particles, with atomicAdd due to
  *  avoiding race conditions.
- *  (Eq. (14) @cite ahlrichs99a)
+ *  Eq. (14) @cite ahlrichs99a.
  *  @param[in]  delta              Weighting of particle position
  *  @param[in]  delta_j            Weighting of particle momentum
  *  @param[in]  node_index         Node index around (8) particle
@@ -1699,8 +1699,8 @@ calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
 /** Kernel to calculate local populations from hydrodynamic fields.
  *  The mapping is given in terms of the equilibrium distribution.
  *
- *  Eq. (2.15) @cite ladd94a
- *  Eq. (4) in @cite usta05a
+ *  Eq. (2.15) @cite ladd94a.
+ *  Eq. (4) in @cite usta05a.
  *
  *  @param[out] n_a        %Lattice site
  *  @param[out] gpu_check  Additional check if GPU kernel are executed
@@ -1850,8 +1850,8 @@ __global__ void set_force_density(int single_nodeindex, float *force_density,
  *  from given flow field velocities. The mapping is given in terms of
  *  the equilibrium distribution.
  *
- *  Eq. (2.15) @cite ladd94a
- *  Eq. (4) in @cite usta05a
+ *  Eq. (2.15) @cite ladd94a.
+ *  Eq. (4) in @cite usta05a.
  *
  *  @param[out] n_a               Current nodes array (double buffering!)
  *  @param[in]  single_nodeindex  Single node index

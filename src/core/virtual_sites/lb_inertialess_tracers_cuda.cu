@@ -20,8 +20,8 @@
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
-// It should not be included by any main Espresso routines
-// Functions to be exported for Espresso are in ibm_main.hpp
+// It should not be included by any main ESPResSo routines
+// Functions to be exported for ESPResSo are in ibm_main.hpp
 
 #include "config.hpp"
 
@@ -69,11 +69,11 @@ extern LB_nodes_gpu *current_nodes;
 
 // ** These variables are static in lbgpu_cuda.cu, so we need to duplicate them
 // here. They are initialized in ForcesIntoFluid. The pointers are on the host,
-// but point into device memory
+// but point into device memory.
 LB_parameters_gpu *para_gpu = nullptr;
 float *lb_boundary_velocity_IBM = nullptr;
 
-/** Call a kernel to reset the forces on the LB nodes to the external force */
+/** Call a kernel to reset the forces on the LB nodes to the external force. */
 void IBM_ResetLBForces_GPU() {
   if (this_node == 0) {
     // Setup for kernel call
@@ -92,7 +92,7 @@ void IBM_ResetLBForces_GPU() {
 /** Transfer particle forces into the LB fluid.
  *  Called from @ref integrate_vv.
  *  This must be the first CUDA-IBM function to be called because it also does
- *  some initialization
+ *  some initialization.
  */
 void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
   // This function does

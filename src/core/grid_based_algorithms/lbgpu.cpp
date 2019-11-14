@@ -162,7 +162,7 @@ void lb_reinit_parameters_gpu() {
   // a TRT with ghost mode relaxation factors that minimize unphysical wall
   // slip at bounce-back boundaries. For the relation between the gammas
   // achieving this, consult @cite dhumieres09a.
-  // Note that the relaxation operator in Espresso is defined as
+  // Note that the relaxation operator in ESPResSo is defined as
   //  m* = m_eq + gamma * (m - m_eq)
   // as opposed to this reference, where
   //  m* = m + lambda * (m - m_eq)

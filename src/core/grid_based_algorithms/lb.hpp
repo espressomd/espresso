@@ -70,7 +70,7 @@ struct LB_FluidNode {
   Utils::Vector3d force_density;
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   // For particle update, we need the force on the nodes in LBM
-  // Yet, Espresso resets the force immediately after the LBM update
+  // Yet, ESPResSo resets the force immediately after the LBM update
   // Therefore we save it here
   Utils::Vector3d force_density_buf;
 #endif

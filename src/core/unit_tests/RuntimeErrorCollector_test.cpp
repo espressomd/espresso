@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(count) {
 
   Testing::reduce_and_check(world, rec.count() == 0);
 
-  /** MPI guarantees that size >= 1 and rank 0 exists. */
+  /* MPI guarantees that size >= 1 and rank 0 exists. */
   if (world.rank() == (world.size() - 1)) {
     rec.error("Test_error", "Test_functions", "Test_file", 42);
   }
@@ -78,10 +78,10 @@ BOOST_AUTO_TEST_CASE(count) {
 
   Testing::reduce_and_check(world, rec.count() == world.size() + 1);
 
-  /** There should now be one error and world.size() warnings */
+  /* There should now be one error and world.size() warnings */
   Testing::reduce_and_check(world,
                             rec.count(RuntimeError::ErrorLevel::ERROR) == 1);
-  /** All messages are at least WARNING or higher. */
+  /* All messages are at least WARNING or higher. */
   {
     /* Beware of the execution order */
     int total = rec.count();
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(count) {
   }
 }
 
-/**
+/*
  * Check the message gathering. Every node generates a runtime error
  * and a warning. Then we gather the messages
  * on the master and check if we got the correct messages. Then we
@@ -105,24 +105,24 @@ BOOST_AUTO_TEST_CASE(gather) {
   rec.warning("Test_error", "Test_functions", "Test_file", world.rank());
 
   if (world.rank() == 0) {
-    /** Gathered error messages */
+    /* Gathered error messages */
     auto results = rec.gather();
-    /** Track how many messages we have seen from which node. */
+    /* Track how many messages we have seen from which node. */
     std::vector<int> present(world.size());
 
     for (const auto &err : results) {
       present[err.who()]++;
     }
 
-    /** Check if we got 2 messages from every node. */
+    /* Check if we got 2 messages from every node. */
     BOOST_CHECK(std::all_of(present.begin(), present.end(),
                             [](int i) { return i == 2; }));
-    /** Count warnings, should be world.rank() many */
+    /* Count warnings, should be world.rank() many */
     BOOST_CHECK(std::count_if(
                     results.begin(), results.end(), [](const RuntimeError &e) {
                       return e.level() == RuntimeError::ErrorLevel::WARNING;
                     }) == world.size());
-    /** Count errors, should be world.rank() many */
+    /* Count errors, should be world.rank() many */
     BOOST_CHECK(std::count_if(
                     results.begin(), results.end(), [](const RuntimeError &e) {
                       return e.level() == RuntimeError::ErrorLevel::ERROR;

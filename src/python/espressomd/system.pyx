@@ -75,7 +75,7 @@ if OIF_GLOBAL_FORCES:
 cdef bool _system_created = False
 
 cdef class System:
-    """The espresso system class.
+    """The ESPResSo system class.
 
     .. note:: every attribute has to be declared at the class level.
               This means that methods cannot define an attribute by using
@@ -493,13 +493,13 @@ cdef class System:
 
     def setup_type_map(self, type_list=None):
         """
-        For using Espresso conveniently for simulations in the grand canonical
+        For using ESPResSo conveniently for simulations in the grand canonical
         ensemble, or other purposes, when particles of certain types are created
         and deleted frequently. Particle ids can be stored in lists for each
         individual type and so random ids of particles of a certain type can be
-        drawn. If you want Espresso to keep track of particle ids of a certain type
+        drawn. If you want ESPResSo to keep track of particle ids of a certain type
         you have to initialize the method by calling the setup function. After that
-        Espresso will keep track of particle ids of that type.
+        ESPResSo will keep track of particle ids of that type.
 
         """
         if not hasattr(type_list, "__iter__"):

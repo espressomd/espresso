@@ -28,9 +28,8 @@
 #include <mpi.h>
 #include <set>
 
-/** Helper class force device set
+/** Helper class force device set.
  */
-
 struct CompareDevices {
   bool operator()(const EspressoGpuDevice &a,
                   const EspressoGpuDevice &b) const {
@@ -43,12 +42,11 @@ struct CompareDevices {
   }
 };
 
-/** Gather list of CUDA devices on all nodes on the master node
-    It relies on MPI_Get_processor_name() to get a unique identifier of
-    the physical node, as opposed to the logical rank of which there can
-    be more than one on one node.
+/** Gather list of CUDA devices on all nodes on the master node.
+ *  It relies on MPI_Get_processor_name() to get a unique identifier of
+ *  the physical node, as opposed to the logical rank of which there can
+ *  be more than one on one node.
  */
-
 std::vector<EspressoGpuDevice> cuda_gather_gpus() {
   int n_gpus = cuda_get_n_gpus();
   char proc_name[MPI_MAX_PROCESSOR_NAME];

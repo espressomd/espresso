@@ -1312,7 +1312,7 @@ Utils::Vector6d lb_calc_stress(std::array<double, 19> const &modes,
 
   // Transform the stress tensor components according to the modes that
   // correspond to those used by U. Schiller. In terms of populations this
-  // expression then corresponds exactly to those in Eqs. 116 - 121 in
+  // expression then corresponds exactly to those in eq. (116)-(121) in
   // @cite dunweg07a, when these are written out in populations.
   // But to ensure this, the expression in Schiller's modes has to be different!
 

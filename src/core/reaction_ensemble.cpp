@@ -141,7 +141,7 @@ void ReactionAlgorithm::add_reaction(
   new_reaction.nu_bar = calculate_nu_bar(new_reaction.reactant_coefficients,
                                          new_reaction.product_coefficients);
 
-  // make espresso count the particle numbers which take part in the reactions
+  // make ESPResSo count the particle numbers which take part in the reactions
   for (int reactant_type : new_reaction.reactant_types)
     init_type_map(reactant_type);
   for (int product_type : new_reaction.product_types)

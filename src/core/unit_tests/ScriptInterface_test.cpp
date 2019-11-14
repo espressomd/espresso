@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(non_copyable) {
   static_assert(!std::is_copy_assignable<ScriptInterfaceBase>::value, "");
 }
 
-/**
+/*
  * We check the default implementations of set_parameters
  * and get_parameter of ScriptInterface (this is the only
  * logic in the class).

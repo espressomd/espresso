@@ -62,7 +62,7 @@ struct DLC_struct {
    */
   double gap_size;
 
-  /** Flag whether #far_cut was set by the user, or calculated by Espresso.
+  /** Flag whether #far_cut was set by the user, or calculated by ESPResSo.
    *  In the latter case, the cutoff will be adapted if important parameters,
    *  such as the box dimensions, change.
    */

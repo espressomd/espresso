@@ -32,7 +32,7 @@ namespace Utils {
 /**
  * @brief Calculates the sinc-function as sin(PI*x)/(PI*x).
  *
- * (same convention as in Hockney/Eastwood). In order to avoid
+ * (same convention as in @cite hockney88a). In order to avoid
  * divisions by 0, arguments, whose modulus is smaller than epsi, will
  * be evaluated by an 8th order Taylor expansion of the sinc
  * function. Note that the difference between sinc(x) and this

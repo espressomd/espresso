@@ -164,7 +164,7 @@ static void dp3m_compute_constants_energy_dipolar();
  *
  *  Calculates the aliasing sums in the nominator and denominator of
  *  the expression for the optimal influence function (see
- *  Hockney/Eastwood: 8-22, p. 275).
+ *  @cite hockney88a : 8-22, p. 275).
  *
  *  \param  n           n-vector for which the aliasing sum is to be performed
  *  \param  nominator   aliasing sums in the nominator

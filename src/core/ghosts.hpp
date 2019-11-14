@@ -49,7 +49,7 @@ exchange_ghosts and update_ghosts, i.e., sending is replaced by receiving and
 the other way round.
 </ul>
 The particle data that has to be transferred, and especially from where to
-where, heavily depends on the cell system. In Espresso, this is abstracted in
+where, heavily depends on the cell system. In ESPResSo, this is abstracted in
 form of ghost communicators (\ref GhostCommunicator) and ghost communications
 (\ref GhostCommunication). The ghost communicators represent the four
 communications above and consist of the data to transfer (which is determined by

@@ -26,15 +26,15 @@
  *  box are taken into account by reproducing the jump in the electric
  *  field at the interface with charge surface segments. The charge
  *  density of the surface segments have to be determined
- *  self-consistently using an iterative scheme.  It can at presently -
+ *  self-consistently using an iterative scheme.  It can at present -
  *  despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D. For
  *  details see: @cite tyagi10a
  *
- *  To set up ICCP3M, first the dielectric boundary has to be modelled
- *  by espresso particles 0..n where n has to be passed as a parameter
+ *  To set up ICCP3M, first the dielectric boundary has to be modeled
+ *  by ESPResSo particles 0..n where n has to be passed as a parameter
  *  to ICCP3M. This is still a bit inconvenient, as it forces the user
  *  to reserve the first n particle ids to wall charges, but as the
- *  other parts of espresso do not suffer from a limitation like this,
+ *  other parts of ESPResSo do not suffer from a limitation like this,
  *  it can be tolerated.
  *
  *  For the determination of the induced charges only the forces
@@ -61,10 +61,10 @@ struct iccp3m_struct {
   int num_iteration = 30;    /**< Number of max iterations                   */
   double eout = 1;           /**< Dielectric constant of the bulk            */
   std::vector<double> areas; /**< Array of area of the grid elements         */
-  std::vector<double>
-      ein; /**< Array of dielectric constants at each surface element */
-  std::vector<double> sigma;             /**< Surface charge density */
-  double convergence = 1e-2;             /**< Convergence criterion */
+  std::vector<double> ein;   /**< Array of dielectric constants at each surface
+                                  element */
+  std::vector<double> sigma; /**< Surface charge density */
+  double convergence = 1e-2; /**< Convergence criterion */
   std::vector<Utils::Vector3d> normals;  /**< Surface normal vectors */
   Utils::Vector3d ext_field = {0, 0, 0}; /**< External field */
   double relax = 0.7; /**< relaxation parameter for iteration */

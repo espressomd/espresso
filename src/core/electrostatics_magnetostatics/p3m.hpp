@@ -123,7 +123,7 @@ extern p3m_data_struct p3m;
  *  These parameters are stored in the @ref p3m object.
  *
  *  The function utilizes the analytic expression of the error estimate
- *  for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+ *  for the P3M method in @cite hockney88a (eq. (8.23)) in
  *  order to obtain the rms error in the force for a system of N randomly
  *  distributed particles in a cubic box.
  *  For the real space error the estimate of Kolafa/Perram is used.

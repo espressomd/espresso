@@ -188,8 +188,8 @@ void p3m_add_block(double const *in, double *out, int const start[3],
  *  most slowly, since it is not damped exponentially) can be
  *  calculated analytically. The result (which depends on the order of
  *  the spline interpolation) can be written as an even trigonometric
- *  polynomial. The results are tabulated here (The employed formula
- *  is Eqn. 7.66 in the book of Hockney and Eastwood).
+ *  polynomial. The results are tabulated here (the employed formula
+ *  is eq. (7.66) in @cite hockney88a).
  */
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 

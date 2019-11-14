@@ -120,7 +120,7 @@ namespace {
  */
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
   /* transform momentum transfer to lattice units
-     (Eq. (12) @cite ahlrichs99a) */
+     (eq. (12) @cite ahlrichs99a) */
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
@@ -138,7 +138,7 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
 Utils::Vector3d lb_viscous_coupling(Particle const &p,
                                     Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
-     this is done by linear interpolation (Eq. (11) @cite ahlrichs99a) */
+     this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
       lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
       lb_lbfluid_get_lattice_speed();
@@ -154,7 +154,7 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   v_drift += p.p.mu_E;
 #endif
 
-  /* calculate viscous force (Eq. (9) @cite ahlrichs99a) */
+  /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
   auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
 
   add_md_force(p.r.p, force);

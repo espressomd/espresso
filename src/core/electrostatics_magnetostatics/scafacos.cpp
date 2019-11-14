@@ -314,7 +314,7 @@ void tune() {
       return; // Tune on the master node will issue mpi calls
     }
   } else {
-    // Espresso is not affected by a short range cutoff. Tune in parallel
+    // ESPResSo is not affected by a short range cutoff. Tune in parallel
     scafacos->tune(particles.charges, particles.positions);
   }
 }

@@ -142,7 +142,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
   }
 }
 
-/** Put the momentum of a given particle into the LB fluid */
+/** Put the momentum of a given particle into the LB fluid. */
 void CoupleIBMParticleToFluid(Particle *p) {
   // Convert units from MD to LB
   double delta_j[3];
@@ -178,10 +178,10 @@ void CoupleIBMParticleToFluid(Particle *p) {
 }
 
 /** Calculate the LB fluid velocity at a particle position.
- *  Very similar to the velocity interpolation done in standard Espresso,
+ *  Very similar to the velocity interpolation done in standard ESPResSo,
  *  except that we add the f/2 contribution, cf. @cite guo02a.
  *  The fluid velocity is obtained by linear interpolation,
- *  cf. Eq. (11) in @cite ahlrichs99a.
+ *  cf. eq. (11) in @cite ahlrichs99a.
  */
 void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
                                 double *forceAdded) {
@@ -223,10 +223,10 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
           local_j[1] = modes[2] + f[1] / 2;
           local_j[2] = modes[3] + f[2] / 2;
 
-          // Keep track of the forces that we added to the fluid
+          // Keep track of the forces that we added to the fluid.
           // This is necessary for communication because this part is executed
-          // for real and ghost particles
-          // Later on we sum the real and ghost contributions
+          // for real and ghost particles.
+          // Later on we sum the real and ghost contributions.
           const double fExt[3] = {
               lbpar.ext_force_density[0] * pow(lbpar.agrid, 2) * lbpar.tau *
                   lbpar.tau,
@@ -295,12 +295,12 @@ bool IsHalo(const int indexCheck) {
 }
 
 /** Get particle velocities from LB and set the velocity field in the particles
- *  data structure
+ *  data structure.
  */
 void ParticleVelocitiesFromLB_CPU() {
-  // Loop over particles in local cells
+  // Loop over particles in local cells.
   // Here all contributions are included: velocity, external force and particle
-  // force
+  // force.
   for (int c = 0; c < local_cells.n; c++) {
     const Cell *const cell = local_cells.cell[c];
     Particle *const p = cell->part;
@@ -346,14 +346,14 @@ void ParticleVelocitiesFromLB_CPU() {
 
   // Now the local particles contain a velocity (stored in the force field) and
   // the ghosts contain the rest of the velocity in their respective force
-  // fields
+  // fields.
   // We need to add these. Since we have stored them in the force, not the
   // velocity fields, we can use the standard force communicator and then
-  // transfer to the velocity afterwards
+  // transfer to the velocity afterwards.
   // Note that this overwrites the actual force which would be a problem for
-  // real particles
+  // real particles.
   // This could be solved by keeping a backup of the local forces before this
-  // operation is attempted
+  // operation is attempted.
   ghost_communicator(&cell_structure.collect_ghost_force_comm,
                      GHOSTTRANS_FORCE);
 

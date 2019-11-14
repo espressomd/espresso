@@ -27,7 +27,7 @@
  * after the streaming step, in all wall nodes all populations are bounced
  * back from where they came from. Ulf Schiller spent a lot of time
  * working on more powerful alternatives, they are to be found in the
- * lb_testing branch of espresso until the end of 2010. Now we stripped
+ * lb_testing branch of ESPResSo until the end of 2010. Now we stripped
  * down the code to a minimum, as most of it was not sufficiently
  * understandable.
  *

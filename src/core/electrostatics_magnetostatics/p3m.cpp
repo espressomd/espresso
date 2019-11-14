@@ -163,7 +163,7 @@ static void p3m_calc_meshift();
  */
 static void p3m_calc_differential_operator();
 
-/** Calculate the optimal influence function of Hockney and Eastwood.
+/** Calculate the optimal influence function of @cite hockney88a.
  *  (optimised for force calculations)
  *
  *  Each node calculates only the values for its domain in k-space
@@ -184,7 +184,7 @@ static void p3m_calc_influence_function_energy();
  *
  *  Calculate the aliasing sums in the nominator and denominator of
  *  the expression for the optimal influence function (see
- *  Hockney/Eastwood: 8-22, p. 275).
+ *  @cite hockney88a : 8-22, p. 275).
  *
  *  \param  n           n-vector for which the aliasing sum is to be performed.
  *  \param  nominator   aliasing sums in the nominator.
@@ -211,7 +211,7 @@ static double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                                    double sum_q2, double alpha_L);
 
 /** Calculate the analytic expression of the error estimate for the
- *  P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+ *  P3M method in @cite hockney88a (eq. (8.23)) in
  *  order to obtain the rms error in the force for a system of N
  *  randomly distributed particles in a cubic box (k-space part).
  *  \param prefac   Prefactor of Coulomb interaction.

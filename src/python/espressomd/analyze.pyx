@@ -412,7 +412,7 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in espresso core if necessary
+        # Update in ESPResSo core if necessary
         if (analyze.total_pressure.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 
@@ -524,7 +524,7 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in espresso core if necessary
+        # Update in ESPResSo core if necessary
         if (analyze.total_p_tensor.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 

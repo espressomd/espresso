@@ -98,7 +98,7 @@ extern int max_num_cells;
 
 /** Minimal number of cells per node. This is mainly to avoid excessively large
  *  numbers of particles per cell, which will result in really large Verlet
- *  lists and eventually crash Espresso.
+ *  lists and eventually crash ESPResSo.
  */
 extern int min_num_cells;
 

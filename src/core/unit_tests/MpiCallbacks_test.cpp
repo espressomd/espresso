@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(invoke_test) {
   BOOST_CHECK_EQUAL(f(i, d), (invoke<decltype(f), int, double>(f, ia)));
 }
 
-/**
+/*
  * Test that the implementation of callback_model_t
  * correctly deserialize the parameters and call
  * the callback with them.

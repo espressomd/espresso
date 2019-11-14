@@ -74,7 +74,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
 
   // Calculate the current shape of the triangle (l,lp,cos(phi),sin(phi));
   // l = length between 1 and 3
-  // get_mi_vector is an Espresso function which considers PBC
+  // get_mi_vector is an ESPResSo function which considers PBC
   auto const vec2 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
   auto const l = vec2.norm();
 
@@ -104,7 +104,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   const double b2 = iaparams.p.ibm_triel.b2;
   const double A0 = iaparams.p.ibm_triel.area0;
 
-  // Displacement gradient tensor D: Eq. (C.9) in @cite kruger12a
+  // Displacement gradient tensor D: eq. (C.9) in @cite kruger12a
   const double Dxx = lp / lp0;
   const double Dxy = ((l / l0 * cosPhi) - (lp / lp0 * cosPhi0)) / sinPhi0;
   const double Dyx = 0.0;
@@ -120,7 +120,7 @@ IBM_Triel_CalcForce(Particle const &p1, Particle const &p2, Particle const &p3,
   const double i1 = (Gxx + Gyy) - 2;
   const double i2 = ((Gxx * Gyy) - (Gxy * Gyx)) - 1;
 
-  // Derivatives of energy density E used in chain rule below: Eq. (C.14)
+  // Derivatives of energy density E used in chain rule below: eq. (C.14)
   double dEdI1;
   double dEdI2;
   if (iaparams.p.ibm_triel.elasticLaw == tElasticLaw::NeoHookean) {

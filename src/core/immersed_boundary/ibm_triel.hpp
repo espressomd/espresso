@@ -24,7 +24,7 @@
 #include "config.hpp"
 
 /** Set the IBM Triel parameters.
- *  Also calculate and store the reference state
+ *  Also calculate and store the reference state.
  */
 int IBM_Triel_SetParams(int bond_type, int ind1, int ind2, int ind3,
                         double maxDist, tElasticLaw elasticLaw, double k1,
@@ -38,7 +38,7 @@ int IBM_Triel_SetParams(int bond_type, int ind1, int ind2, int ind3,
  */
 int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
 
-/** Calculate the forces
+/** Calculate the forces.
  *  @return the forces on @p p1, @p p2, @p p3
  */
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>

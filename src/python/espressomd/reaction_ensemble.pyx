@@ -413,7 +413,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
                 "The constant pH method is only implemented for reactions with two product types and one adduct type.")
         if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
             raise ValueError(
-                "All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
+                "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
         super().add_reaction(*args, **kwargs)
 
     property constant_pH:
@@ -665,7 +665,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         polymer configuration changing moves need to be implemented in the
         case of using Wang-Landau with energy reweighting and a polymer in the
         system. Polymer configuration changing moves had been implemented
-        before but were removed from espresso.
+        before but were removed from ESPResSo.
 
         """
         use_wang_landau = True
