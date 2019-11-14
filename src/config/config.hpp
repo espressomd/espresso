@@ -73,7 +73,7 @@
 #define P3M_MAX_MESH 128
 #endif
 
-/** Whether to use the approximation of Abramowitz/Stegun
+/** Whether to use the approximation of Abramowitz/Stegun @cite abramowitz65a
  *  AS_erfc_part() for \f$\exp(d^2) erfc(d)\f$, or the C function erfc
  *  in P3M and Ewald summation.
  */

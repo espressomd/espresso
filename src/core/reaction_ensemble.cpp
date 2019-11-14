@@ -1174,6 +1174,7 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
 
 /** Calculate the expression in the acceptance probability of the Wang-Landau
  *  reaction ensemble.
+ *  Modify Boltzmann factor according to Wang-Landau algorithm in @cite yan02b.
  */
 double WangLandauReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
@@ -1203,8 +1204,7 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   if (old_state_index >= 0 && new_state_index >= 0) {
     if (histogram[new_state_index] >= 0 && histogram[old_state_index] >= 0) {
       // Modify Boltzmann factor (bf) according to Wang-Landau algorithm
-      // in the grand canonical simulation paper "Density-of-states
-      // Monte Carlo method for simulation of fluids".
+      // @cite yan02b.
       // This makes the new state being accepted with the conditional
       // probability bf (bf is a transition probability = conditional
       // probability from the old state to move to the new state).
@@ -1238,14 +1238,12 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
 /** Perform a randomly selected reaction using the Wang-Landau algorithm.
  *
  *  Make sure to perform additional configuration changing steps, after the
- *  reaction step! Like in "Density-of-states Monte Carlo method for simulation
- *  of fluids" Yan, De Pablo. This can be done with MD in the case of the
- *  no-energy-reweighting case, or with the function
+ *  reaction step! Like in @cite yan02b. This can be done with MD in the case
+ *  of the no-energy-reweighting case, or with the function
  *  @ref ReactionAlgorithm::do_global_mc_move_for_particles_of_type.
  *
  *  Perform additional Monte Carlo moves to sample configurational
- *  partition function according to "Density-of-states Monte Carlo method
- *  for simulation of fluids". Do as many steps
+ *  partition function according to @cite yan02b. Do as many steps
  *  as needed to get to a new conformation.
  */
 int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
@@ -1531,8 +1529,7 @@ int WangLandauReactionEnsemble::
  *  Use with caution otherwise you produce unphysical results, do only use
  *  when you know what you want to do. This can make Wang-Landau converge on a
  *  reduced set gamma. Use this function e.g. in do_reaction_wang_landau(). For
- *  the diprotonic acid compare "Wang-Landau sampling with self-adaptive range"
- *  by Troester and Dellago.
+ *  the diprotonic acid compare with @cite troester05a.
  */
 void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
   int removed_bins = 0;
@@ -1770,6 +1767,8 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
 /**
  * Calculates the whole product of factorial expressions which occur in the
  * reaction ensemble acceptance probability.
+ *
+ * See @cite smith94c.
  */
 double
 calculate_factorial_expression(SingleReaction &current_reaction,
@@ -1781,7 +1780,7 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.reactant_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper)
+                             N_i0, nu_i); // zeta = 1 (see @cite smith94c)
                                           // since we only perform one reaction
                                           // at one call of the function
   }
@@ -1791,7 +1790,7 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.product_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper)
+                             N_i0, nu_i); // zeta = 1 (see @cite smith94c)
                                           // since we only perform one reaction
                                           // at one call of the function
   }

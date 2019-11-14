@@ -163,7 +163,7 @@ void dp3m_deactivate();
  *  for the dipolar P3M method in the paper of @cite cerda08d in
  *  order to obtain the rms error in the force for a system of N randomly
  *  distributed particles in a cubic box. For the real space error, the
- *  estimate of Kolafa/Perram is used.
+ *  estimate in @cite kolafa92a is used.
  *
  *  Parameter ranges if not given explicit values via dp3m_set_tune_params():
  *  - @p mesh is set up such that the number of mesh points is equal to the

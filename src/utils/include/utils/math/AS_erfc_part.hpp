@@ -24,8 +24,7 @@
 
 namespace Utils {
 /** Approximate \f$ \exp(d^2) \mathrm{erfc}(d)\f$ by applying a formula from
- *  Abramowitz/Stegun: Handbook of Mathematical Functions, Dover
- *  (9. ed.), chapter 7.
+ *  @cite abramowitz65a chapter 7.
  */
 template <typename T> constexpr T AS_erfc_part(T d) {
   T const constexpr a1 = 0.254829592;

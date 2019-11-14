@@ -239,7 +239,7 @@ private:
  *  Here both reactions have to be defined separately. The extent of the
  *  reaction is here chosen to be +1. If the reaction trial move for a
  *  dissociation of HA is accepted then there is one more dissociated ion
- *  pair H+ and A-. Implementation of smith94x.
+ *  pair H+ and A-. Implementation of @cite smith94c.
  */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:

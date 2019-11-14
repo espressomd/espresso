@@ -24,7 +24,7 @@
  *  polygamma expansions used for the near formulas of MMM1D and MMM2D.
  *
  *  The expansion of the polygamma functions is fairly easy and follows
- *  directly from Abramowitz and Stegun. For details, see @cite arnold02a.
+ *  directly from @cite abramowitz65a. For details, see @cite arnold02a.
  */
 
 #ifndef MMM_COMMON_H

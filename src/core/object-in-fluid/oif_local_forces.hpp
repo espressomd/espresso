@@ -22,7 +22,8 @@
 /** \file
  *  Routines to calculate the OIF local forces for a particle quadruple
  *  (two neighboring triangles with common edge).
- *  (Dupin2007)
+ *  See @cite dupin07a.
+ *
  *  Implementation in \ref oif_local_forces.cpp
  */
 
@@ -38,7 +39,7 @@ int oif_local_forces_set_params(int bond_type, double r0, double ks,
                                 double A01, double A02, double kal,
                                 double kvisc);
 
-/** @details see eq. (19) from Dupin2007 */
+/** @details see eq. (19) in @cite dupin07a */
 inline double KS(double lambda) {
   double res;
   res = (pow(lambda, 0.5) + pow(lambda, -2.5)) / (lambda + pow(lambda, -3.));
@@ -46,7 +47,7 @@ inline double KS(double lambda) {
 }
 
 /** Compute the OIF local forces.
- *  See Dupin2007.
+ *  See @cite dupin07a, @cite jancigova16a.
  *  @param p2           %Particle of triangle 1.
  *  @param p1 , p3      Particles common to triangle 1 and triangle 2.
  *  @param p4           %Particle of triangle 2.
@@ -152,10 +153,8 @@ calc_oif_local(Particle const &p2, Particle const &p1, Particle const &p3,
   /* local area
    * for both triangles, only 1/3 of calculated forces are added, because each
    * triangle will enter this calculation 3 times (one time per edge).
-   * Proportional distribution of forces, implemented according to the
-   * article I.Jancigova, I.Cimrak, Non-uniform force allocation for area
-   * preservation in spring network models, International Journal for Numerical
-   * Methods in Biomedical Engineering, DOI: 10.1002/cnm.2757
+   * Proportional distribution of forces, implemented according to
+   * @cite jancigova16a.
    */
   if (iaparams.p.oif_local_forces.kal > TINY_OIF_ELASTICITY_COEFFICIENT) {
 

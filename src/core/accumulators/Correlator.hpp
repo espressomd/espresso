@@ -38,8 +38,8 @@
  * discarded.
  *
  * To save memory, increase statistics and make the calculation possible for
- * many orders of magnitude in time, the blocking algorithm in Frenkels book
- * (p.91)
+ * many orders of magnitude in time, the blocking algorithm in
+ * @cite frenkel02b (algorithm 8, chapter 4.4.2)
  * is applied. Thus not all As and Bs of the whole "past" are stored but
  * some of them are blocked. In this implementation, a blocking based on 2 is
  * always applied: all As and Bs not older than a certain tau_lin are stored
