@@ -347,7 +347,7 @@ static double dipole_energy(const ParticleRange &particles) {
       // zero potential difference contribution
       eng += pref * height_inverse / uz * Utils::sqr(gblcblk[6]);
       // external potential shift contribution
-      eng -= elc_params.pot_diff * height_inverse * gblcblk[6];
+      eng -= 2 * elc_params.pot_diff * height_inverse * gblcblk[6];
     }
 
     /* counter the P3M homogeneous background contribution to the
