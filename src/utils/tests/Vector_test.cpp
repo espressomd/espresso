@@ -19,10 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the Utils::Vector class.
- *
- */
+/* Unit tests for the Utils::Vector class. */
 
 #define BOOST_TEST_MODULE Vector test
 #define BOOST_TEST_DYN_LINK
@@ -39,7 +36,7 @@
 #include "utils/Vector.hpp"
 using Utils::Vector;
 
-/** Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
+/* Number of nontrivial Baxter permutations of length 2n-1. (A001185) */
 #define TEST_NUMBERS                                                           \
   { 0, 1, 1, 7, 21, 112, 456, 2603, 13203 }
 #define TEST_NUMBERS_PARTIAL_NORM2                                             \

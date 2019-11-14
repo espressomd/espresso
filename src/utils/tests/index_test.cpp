@@ -15,9 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file int_pow_test.cpp Unit tests for the
- * Utils::ravel_index and Utils::unravel_index functions.
- */
+/* Unit tests for the Utils::ravel_index and Utils::unravel_index functions. */
 
 #define BOOST_TEST_MODULE Utils::ravel_index test
 #define BOOST_TEST_DYN_LINK

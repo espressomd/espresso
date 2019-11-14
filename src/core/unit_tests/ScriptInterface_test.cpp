@@ -35,9 +35,7 @@ using namespace ScriptInterface;
 
 namespace Testing {
 
-/**
- * @brief Mock to test ScriptInterface.
- */
+/* Mock to test ScriptInterface. */
 struct ScriptInterfaceTest : public ScriptInterface::ScriptInterfaceBase {
   VariantMap get_parameters() const override {
     VariantMap ret;

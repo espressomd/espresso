@@ -19,10 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the ErrorHandling::RuntimeError class.
- *
- */
+/* Unit tests for the ErrorHandling::RuntimeError class. */
 
 #include <sstream>
 #include <string>
