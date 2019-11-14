@@ -641,7 +641,7 @@ static double z_energy(const ParticleRange &particles) {
       // zero potential difference contribution
       eng += gbl_dm_z * gbl_dm_z * coulomb.prefactor * 2 * M_PI * ux * uy * uz;
       // external potential shift contribution
-      eng -= mmm2d_params.pot_diff * uz * gbl_dm_z;
+      eng -= 2. * mmm2d_params.pot_diff * uz * gbl_dm_z;
     }
   }
 
