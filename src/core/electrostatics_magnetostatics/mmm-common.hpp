@@ -35,7 +35,7 @@
 
 #include <vector>
 
-/** \name Math Constants */
+/** \name Math constants */
 /*@{*/
 #define C_2PI (2 * M_PI)
 #define C_GAMMA (0.57721566490153286060651209008)
@@ -43,21 +43,21 @@
 #define C_2PISQR (C_2PI * C_2PI)
 /*@}*/
 
-/** table of the Taylor expansions of the modified polygamma functions */
+/** Table of the Taylor expansions of the modified polygamma functions */
 extern std::vector<Polynom> modPsi;
 extern int n_modPsi;
 
-/** modified polygamma for even order 2*n, n >= 0 */
+/** Modified polygamma for even order 2*n, n >= 0 */
 inline double mod_psi_even(int n, double x) {
   return evaluateAsTaylorSeriesAt(&modPsi[2 * n], x * x);
 }
 
-/** modified polygamma for odd order 2*n+1, n>= 0 */
+/** Modified polygamma for odd order 2*n+1, n>= 0 */
 inline double mod_psi_odd(int n, double x) {
   return x * evaluateAsTaylorSeriesAt(&modPsi[2 * n + 1], x * x);
 }
 
-/** create the both the even and odd polygamma functions up to order 2*n */
+/** Create the both the even and odd polygamma functions up to order 2*n */
 void create_mod_psi_up_to(int n);
 
 #endif

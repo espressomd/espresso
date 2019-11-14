@@ -456,9 +456,9 @@ __device__ void update_rho_v(Utils::Array<float, 19> const &mode,
   u_tot[1] += mode[2];
   u_tot[2] += mode[3];
 
-  /** if forces are present, the momentum density is redefined to
-   * include one half-step of the force action.  See the
-   * Chapman-Enskog expansion in [Ladd & Verberg]. */
+  /** If forces are present, the momentum density is redefined to
+   *  include one half-step of the force action. See the
+   *  Chapman-Enskog expansion in [Ladd & Verberg]. */
 
   u_tot[0] += 0.5f * node_f.force_density[0 * para->number_of_nodes + index];
   u_tot[1] += 0.5f * node_f.force_density[1 * para->number_of_nodes + index];

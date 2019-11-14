@@ -229,6 +229,8 @@ void distribute(int size) {
 /* dipole terms */
 /*****************************************************************/
 
+/** Calculate the dipole force.
+ */
 static void add_dipole_force(const ParticleRange &particles) {
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * uz;
   int size = 3;
@@ -270,7 +272,7 @@ static void add_dipole_force(const ParticleRange &particles) {
 
   distribute(size);
 
-  // Yeh+Berkowitz dipole term
+  // Yeh + Berkowitz dipole term
   field_tot = gblcblk[0];
 
   // Const. potential contribution
@@ -290,6 +292,8 @@ static void add_dipole_force(const ParticleRange &particles) {
   }
 }
 
+/** Calculate the dipole energy.
+ */
 static double dipole_energy(const ParticleRange &particles) {
   double pref = coulomb.prefactor * 2 * M_PI * ux * uy * uz;
   int size = 7;

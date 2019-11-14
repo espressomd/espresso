@@ -25,7 +25,7 @@ namespace Utils {
 
 /**
  *  @brief Rotation matrix for quaternion.
- *  Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 eq. 4.47).
+ *  Taken from "Goldstein - Classical Mechanics" (Chapter 4.6 eq. (4.47)).
  *
  *  @param q Quaternion
  *  @return Corresponding rotation matrix
