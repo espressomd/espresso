@@ -283,7 +283,7 @@ static Polynom ai12_cs{ai12_data};
 /** Coefficients for Maclaurin summation in hzeta().
  *  B_{2j}/(2j)!
  */
-static double hzeta_c[15] = {
+static double const hzeta_c[15] = {
     1.00000000000000000000000000000,     0.083333333333333333333333333333,
     -0.00138888888888888888888888888889, 0.000033068783068783068783068783069,
     -8.2671957671957671957671957672e-07, 2.0876756987868098979210090321e-08,
@@ -295,9 +295,7 @@ static double hzeta_c[15] = {
 
 double hzeta(double s, double q) {
   double max_bits = 54.0;
-  int jmax = 12, kmax = 10;
-  int j, k;
-  double pmax, scp, pcp, ans;
+  int const jmax = 12, kmax = 10;
 
   if ((s > max_bits && q < 1.0) || (s > 0.5 * max_bits && q < 0.25))
     return pow(q, -s);
@@ -310,16 +308,16 @@ double hzeta(double s, double q) {
   /* Euler-Maclaurin summation formula
    * [Moshier, p. 400, with several typo corrections]
    */
-  pmax = pow(kmax + q, -s);
-  scp = s;
-  pcp = pmax / (kmax + q);
-  ans = pmax * ((kmax + q) / (s - 1.0) + 0.5);
+  auto const pmax = pow(kmax + q, -s);
+  auto scp = s;
+  auto pcp = pmax / (kmax + q);
+  auto ans = pmax * ((kmax + q) / (s - 1.0) + 0.5);
 
-  for (k = 0; k < kmax; k++)
+  for (int k = 0; k < kmax; k++)
     ans += pow(k + q, -s);
 
-  for (j = 0; j <= jmax; j++) {
-    double delta = hzeta_c[j + 1] * scp * pcp;
+  for (int j = 0; j <= jmax; j++) {
+    auto const delta = hzeta_c[j + 1] * scp * pcp;
     ans += delta;
     scp *= (s + 2 * j + 1) * (s + 2 * j + 2);
     pcp /= (kmax + q) * (kmax + q);
@@ -392,16 +390,16 @@ static int ak01_orders[] = {
 
 double LPK0(double x) {
   if (x >= 27.) {
-    double tmp = .5 * exp(-x) / sqrt(x);
+    auto const tmp = .5 * exp(-x) / sqrt(x);
     return tmp * ak0_data[0];
   }
   if (x >= 23.) {
-    double tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
+    auto const tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
     return tmp * (xx * ak0_data[1] + 0.5 * ak0_data[0]);
   }
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
-    double tmp, x2;
+    double x2;
     double dd0, d0;
     double *s0;
     if (x <= 8) {
@@ -414,18 +412,18 @@ double LPK0(double x) {
     dd0 = s0[j];
     d0 = x2 * dd0 + s0[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp0 = d0;
+      auto const tmp0 = d0;
       d0 = x2 * d0 - dd0 + s0[j];
       dd0 = tmp0;
     }
-    tmp = exp(-x) / sqrt(x);
+    auto const tmp = exp(-x) / sqrt(x);
     return tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
   }
   /* x <= 2 */
   {
     /* I0/1 series */
     int j = 10;
-    double ret, tmp, x2 = (2. / 4.5) * x * x - 2.;
+    double ret, x2 = (2. / 4.5) * x * x - 2.;
     double dd0, d0;
     dd0 = bi0_data[j];
     d0 = x2 * dd0 + bi0_data[j - 1];
@@ -434,7 +432,7 @@ double LPK0(double x) {
       d0 = x2 * d0 - dd0 + bi0_data[j];
       dd0 = tmp0;
     }
-    tmp = log(x) - M_LN2;
+    auto const tmp = log(x) - M_LN2;
     ret = -tmp * (0.5 * (bi0_data[0] + x2 * d0) - dd0);
 
     /* K0/K1 correction */
@@ -443,7 +441,7 @@ double LPK0(double x) {
     dd0 = bk0_data[j];
     d0 = x2 * dd0 + bk0_data[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp0 = d0;
+      auto const tmp0 = d0;
       d0 = x2 * d0 - dd0 + bk0_data[j];
       dd0 = tmp0;
     }
@@ -453,16 +451,16 @@ double LPK0(double x) {
 
 double LPK1(double x) {
   if (x >= 27.) {
-    double tmp = .5 * exp(-x) / sqrt(x);
+    auto const tmp = .5 * exp(-x) / sqrt(x);
     return tmp * ak1_data[0];
   }
   if (x >= 23.) {
-    double tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
+    auto const tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
     return tmp * (xx * ak1_data[1] + 0.5 * ak1_data[0]);
   }
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
-    double tmp, x2;
+    double x2;
     double dd1, d1;
     double *s1;
     if (x <= 8) {
@@ -475,27 +473,27 @@ double LPK1(double x) {
     dd1 = s1[j];
     d1 = x2 * dd1 + s1[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp1 = d1;
+      auto const tmp1 = d1;
       d1 = x2 * d1 - dd1 + s1[j];
       dd1 = tmp1;
     }
-    tmp = exp(-x) / sqrt(x);
+    auto const tmp = exp(-x) / sqrt(x);
     return tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
   }
   /* x <= 2 */
   {
     /* I0/1 series */
     int j = 10;
-    double ret, tmp, x2 = (2. / 4.5) * x * x - 2.;
+    double ret, x2 = (2. / 4.5) * x * x - 2.;
     double dd1, d1;
     dd1 = bi1_data[j];
     d1 = x2 * dd1 + bi1_data[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp1 = d1;
+      auto const tmp1 = d1;
       d1 = x2 * d1 - dd1 + bi1_data[j];
       dd1 = tmp1;
     }
-    tmp = log(x) - M_LN2;
+    auto const tmp = log(x) - M_LN2;
     ret = x * tmp * (0.5 * (bi1_data[0] + x2 * d1) - dd1);
 
     /* K0/K1 correction */
@@ -504,7 +502,7 @@ double LPK1(double x) {
     dd1 = bk1_data[j];
     d1 = x2 * dd1 + bk1_data[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp1 = d1;
+      auto const tmp1 = d1;
       d1 = x2 * d1 - dd1 + bk1_data[j];
       dd1 = tmp1;
     }
@@ -514,20 +512,20 @@ double LPK1(double x) {
 
 void LPK01(double x, double *K0, double *K1) {
   if (x >= 27.) {
-    double tmp = .5 * exp(-x) / sqrt(x);
+    auto const tmp = .5 * exp(-x) / sqrt(x);
     *K0 = tmp * ak0_data[0];
     *K1 = tmp * ak1_data[0];
     return;
   }
   if (x >= 23.) {
-    double tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
+    auto const tmp = exp(-x) / sqrt(x), xx = (16. / 3.) / x - 5. / 3.;
     *K0 = tmp * (xx * ak0_data[1] + 0.5 * ak0_data[0]);
     *K1 = tmp * (xx * ak1_data[1] + 0.5 * ak1_data[0]);
     return;
   }
   if (x > 2) {
     int j = ak01_orders[((int)x) - 2];
-    double tmp, x2;
+    double x2;
     double dd0, dd1, d0, d1;
     double *s0, *s1;
     if (x <= 8) {
@@ -544,13 +542,13 @@ void LPK01(double x, double *K0, double *K1) {
     d0 = x2 * dd0 + s0[j - 1];
     d1 = x2 * dd1 + s1[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp0 = d0, tmp1 = d1;
+      auto const tmp0 = d0, tmp1 = d1;
       d0 = x2 * d0 - dd0 + s0[j];
       d1 = x2 * d1 - dd1 + s1[j];
       dd0 = tmp0;
       dd1 = tmp1;
     }
-    tmp = exp(-x) / sqrt(x);
+    auto const tmp = exp(-x) / sqrt(x);
     *K0 = tmp * (0.5 * (s0[0] + x2 * d0) - dd0);
     *K1 = tmp * (0.5 * (s1[0] + x2 * d1) - dd1);
     return;
@@ -559,20 +557,20 @@ void LPK01(double x, double *K0, double *K1) {
   {
     /* I0/1 series */
     int j = 10;
-    double tmp, x2 = (2. / 4.5) * x * x - 2.;
+    double x2 = (2. / 4.5) * x * x - 2.;
     double dd0, dd1, d0, d1;
     dd0 = bi0_data[j];
     dd1 = bi1_data[j];
     d0 = x2 * dd0 + bi0_data[j - 1];
     d1 = x2 * dd1 + bi1_data[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp0 = d0, tmp1 = d1;
+      auto const tmp0 = d0, tmp1 = d1;
       d0 = x2 * d0 - dd0 + bi0_data[j];
       d1 = x2 * d1 - dd1 + bi1_data[j];
       dd0 = tmp0;
       dd1 = tmp1;
     }
-    tmp = log(x) - M_LN2;
+    auto const tmp = log(x) - M_LN2;
     *K0 = -tmp * (0.5 * (bi0_data[0] + x2 * d0) - dd0);
     *K1 = x * tmp * (0.5 * (bi1_data[0] + x2 * d1) - dd1);
 
@@ -584,7 +582,7 @@ void LPK01(double x, double *K0, double *K1) {
     d0 = x2 * dd0 + bk0_data[j - 1];
     d1 = x2 * dd1 + bk1_data[j - 1];
     for (j -= 2; j >= 1; j--) {
-      double tmp0 = d0, tmp1 = d1;
+      auto const tmp0 = d0, tmp1 = d1;
       d0 = x2 * d0 - dd0 + bk0_data[j];
       d1 = x2 * d1 - dd1 + bk1_data[j];
       dd0 = tmp0;

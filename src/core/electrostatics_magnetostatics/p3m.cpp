@@ -733,8 +733,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
       (2 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh)
-   */
-  /* and Perform forward 3D FFT (Charge Assignment Mesh). */
+   * and perform forward 3D FFT (Charge Assignment Mesh). */
   if (p3m.sum_q2 > 0) {
     p3m_gather_fft_grid(p3m.rs_mesh);
     fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
@@ -862,9 +861,8 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
 double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
                             const ParticleRange &particles) {
-  double pref = coulomb.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
-                (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
-                (2 * p3m.params.epsilon + 1);
+  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+                    (2 * p3m.params.epsilon + 1);
   double lcl_dm[3], gbl_dm[3];
   double en;
 

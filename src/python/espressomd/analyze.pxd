@@ -99,7 +99,7 @@ cdef extern from "statistics.hpp":
 
     void calc_part_distribution(
         PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
-        double r_min, double r_max, int r_bins, int log_flag, double * low,
+        double r_min, double r_max, int r_bins, bint log_flag, double * low,
         double * dist)
 
 cdef extern from "statistics_chain.hpp":

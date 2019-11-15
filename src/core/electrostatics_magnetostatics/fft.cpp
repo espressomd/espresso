@@ -184,9 +184,9 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
  */
 int calc_local_mesh(const int *n_pos, const int *n_grid, const int *mesh,
                     const double *mesh_off, int *loc_mesh, int *start) {
-  int i, last[3], size = 1;
+  int last[3], size = 1;
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     start[i] =
         (int)ceil((mesh[i] / (double)n_grid[i]) * n_pos[i] - mesh_off[i]);
     last[i] = (int)floor((mesh[i] / (double)n_grid[i]) * (n_pos[i] + 1) -
@@ -233,14 +233,14 @@ int calc_local_mesh(const int *n_pos, const int *n_grid, const int *mesh,
 int calc_send_block(const int *pos1, const int *grid1, const int *pos2,
                     const int *grid2, const int *mesh, const double *mesh_off,
                     int *block) {
-  int i, size = 1;
+  int size = 1;
   int mesh1[3], first1[3], last1[3];
   int mesh2[3], first2[3], last2[3];
 
   calc_local_mesh(pos1, grid1, mesh, mesh_off, mesh1, first1);
   calc_local_mesh(pos2, grid2, mesh, mesh_off, mesh2, first2);
 
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     last1[i] = first1[i] + mesh1[i] - 1;
     last2[i] = first2[i] + mesh2[i] - 1;
     block[i] = std::max(first1[i], first2[i]) - first1[i];
@@ -431,10 +431,10 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
  *  \return         index of the row direction [0,1,2].
  */
 int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
-  int i, row_dir = -1;
+  int row_dir = -1;
   /* trivial case */
   if (g3d[2] == 1) {
-    for (i = 0; i < 3; i++)
+    for (int i = 0; i < 3; i++)
       mult[i] = 1;
     return 2;
   }
@@ -449,9 +449,9 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
   } else if (g2d[0] % g3d[1] == 0) {
     if (g2d[1] % g3d[0] == 0) {
       row_dir = 2;
-      i = g2d[0];
+      int const tmp = g2d[0];
       g2d[0] = g2d[1];
-      g2d[1] = i;
+      g2d[1] = tmp;
     } else if (g2d[1] % g3d[2] == 0) {
       row_dir = 0;
       g2d[2] = g2d[1];
@@ -470,7 +470,7 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
       g2d[0] = 1;
     }
   }
-  for (i = 0; i < 3; i++)
+  for (int i = 0; i < 3; i++)
     mult[i] = g2d[i] / g3d[i];
   return row_dir;
 }

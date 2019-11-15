@@ -202,7 +202,7 @@ void ReactionAlgorithm::check_reaction_ensemble() {
  */
 void ReactionAlgorithm::set_cuboid_reaction_ensemble_volume() {
   if (volume < 0)
-    volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+    volume = box_geo.volume();
 }
 
 /**
