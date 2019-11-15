@@ -368,8 +368,6 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
 
   auto const volume = box_geo.volume();
 
-  auto const dip_DLC_kcut = dlc_params.far_cut;
-
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
