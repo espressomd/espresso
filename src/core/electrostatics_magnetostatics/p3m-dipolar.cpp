@@ -877,8 +877,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
              pow(dp3m.params.alpha_L * (1. / box_geo.length()[0]), 3) *
              Utils::sqrt_pi_i() / 3.0);
 
-        double volume =
-            box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+        double volume = box_geo.volume();
         k_space_energy_dip += dipole.prefactor * dp3m.energy_correction /
                               volume; /* add the dipolar energy correction due
                                          to systematic Madelung-Self effects */
@@ -1057,8 +1056,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
 double calc_surface_term(bool force_flag, bool energy_flag,
                          const ParticleRange &particles) {
-  const double pref = dipole.prefactor * 4 * M_PI * (1. / box_geo.length()[0]) *
-                      (1. / box_geo.length()[1]) * (1. / box_geo.length()[2]) /
+  const double pref = dipole.prefactor * 4 * M_PI / box_geo.volume() /
                       (2 * dp3m.params.epsilon + 1);
   double suma, a[3];
   double en;
@@ -2389,8 +2387,7 @@ void dp3m_compute_constants_energy_dipolar() {
   if (dp3m.energy_correction != 0.0)
     return;
 
-  double volume =
-      box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+  double volume = box_geo.volume();
   Ukp3m = dp3m_average_dipolar_self_energy(box_geo.length()[0],
                                            dp3m.params.mesh[0]) *
           volume;

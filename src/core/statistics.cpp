@@ -328,7 +328,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
     return;
 
   /* normalization */
-  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+  volume = box_geo.volume();
   for (i = 0; i < r_bins; i++) {
     r_in = i * bin_width + r_min;
     r_out = r_in + bin_width;
@@ -364,7 +364,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
 
   bin_width = (r_max - r_min) / (double)r_bins;
   inv_bin_width = 1.0 / bin_width;
-  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+  volume = box_geo.volume();
   for (int l = 0; l < r_bins; l++)
     rdf_tmp[l] = rdf[l] = 0.0;
 

@@ -339,7 +339,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
 
   n_local_particles = particles.size();
 
-  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+  volume = box_geo.volume();
 
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.
@@ -399,7 +399,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
   int dip_DLC_kcut;
 
-  volume = box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+  volume = box_geo.volume();
 
   dip_DLC_kcut = dlc_params.far_cut;
 
