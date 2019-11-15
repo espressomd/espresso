@@ -813,7 +813,7 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
   if (dp3m.sum_mu2 > 0) {
     /* Gather information for FFT grid inside the nodes domain (inner local
-     * mesh) and Perform forward 3D FFT (Charge Assignment Mesh). */
+     * mesh) and perform forward 3D FFT (Charge Assignment Mesh). */
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[0].data());
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[1].data());
     dp3m_gather_fft_grid(dp3m.rs_mesh_dip[2].data());

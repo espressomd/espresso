@@ -227,9 +227,6 @@ inline void realloc_cellplist(CellPList *cpl, int size) {
 
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
- *  @param global_flag if this is @ref CELLS_GLOBAL_EXCHANGE, particle positions
- *                     can have changed arbitrarily, otherwise the change should
- *                     have been smaller then skin.
  */
 void cells_resort_particles(int global_flag);
 
@@ -263,18 +260,12 @@ int cells_get_n_particles();
 /**
  * @brief Get pairs closer than @p distance from the cells.
  *
- * This is mostly for testing purposes and uses @ref link_cell
- * to get pairs out of the cellsystem by a simple distance
- * criterion.
- *
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 /**
  * @brief Increase the local resort level at least to @p level.
- *
- * The changed level has to be communicated via @ref annouce_resort_particles.
  */
 void set_resort_particles(Cells::Resort level);
 

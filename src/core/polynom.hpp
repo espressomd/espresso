@@ -19,11 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
-    Datatypes and functions for polynomials.
-    Evaluation possible both as Taylor and Chebychev series. Note that the
-   length of the double list is equal to the order of the polynomial plus 1, so
-   that Polynom->n does not give the order of the polynomial, but one more.
-*/
+ *  Datatypes and functions for polynomials.
+ *  Evaluation possible both as Taylor and Chebychev series. Note that the
+ *  length of the double list is equal to the order of the polynomial plus 1,
+ *  so that Polynom::n does not give the order of the polynomial, but one more.
+ */
 #ifndef POLYNOM_H
 #define POLYNOM_H
 
@@ -44,7 +44,8 @@ inline double evaluateAsTaylorSeriesAt(Polynom *series, double x) {
 }
 
 /** evaluate the polynomial interpreted as a Chebychev series. Requires a series
-   with at least three coefficients, i.e. no linear approximations! */
+ *  with at least three coefficients, i.e. no linear approximations!
+ */
 inline double evaluateAsChebychevSeriesAt(Polynom *series, double x) {
   double *c = series->e;
   double x2 = 2.0 * x;

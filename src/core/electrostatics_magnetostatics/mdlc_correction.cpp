@@ -211,12 +211,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   } // end of loops for gx,gy
 
   // Convert from the corrections to the Electrical field to the corrections
-  // for
-  // the torques ....
-
-  // printf("Electrical field: Ex %le, Ey %le, Ez
-  // %le",-tx[0]*M_PI/(box_l[0]*box_l[1]),-ty[0]*M_PI/(box_l[0]*box_l[1]),
-  //-tz[0]*M_PI/(box_l[0]*box_l[1])  );
+  // for the torques ....
 
   int ip = 0;
   for (auto const &p : particles) {
@@ -228,8 +223,6 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 
   // Multiply by the factors we have left during the loops
 
-  // printf("box_l: %le %le %le \n",box_l[0],box_l[1],box_l[2]);
-
   auto const piarea = M_PI / (box_geo.length()[0] * box_geo.length()[1]);
 
   for (int j = 0; j < n_local_particles; j++) {
@@ -238,10 +231,6 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   }
 
   energy *= (-piarea);
-
-  // fclose(FilePtr);
-
-  // printf("Energy0= %20.15le \n",energy);
 
   return energy;
 }
@@ -264,9 +253,8 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
         auto const gx = static_cast<double>(ix) * facux;
         auto const gy = static_cast<double>(iy) * facuy;
         auto const gr = sqrt(gx * gx + gy * gy);
-        auto const fa1 =
-            1. / (gr * (exp(gr * box_geo.length()[2]) -
-                        1.0)); // We assume short slab direction is z direction
+        // We assume short slab direction is z direction
+        auto const fa1 = 1. / (gr * (exp(gr * box_geo.length()[2]) - 1.0));
 
         // ... Compute S+,(S+)*,S-,(S-)*, and Spj,Smj for the current g
 
@@ -357,9 +345,8 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
       auto const dip = p.calc_dip();
       auto const correc = 4. * M_PI / volume;
       Utils::Vector3d d;
-      // in the Next lines: the second term (correc*...)is the SDC
-      // correction
-      // for the torques
+      // in the Next lines: the second term (correc*...) is the SDC
+      // correction for the torques
       if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
         d = {0.0, 0.0, -correc * mz};
       } else {
@@ -388,9 +375,6 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   // First the DLC correction
   double dip_DLC_energy =
       dipole.prefactor * get_DLC_energy_dipolar(dlc_params.far_cut, particles);
-
-  //           printf("Energy DLC                                  = %20.15le
-  //           \n",dip_DLC_energy);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical
