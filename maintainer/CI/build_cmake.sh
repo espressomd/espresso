@@ -55,12 +55,12 @@ function set_default_value {
         exit 1
     fi
     local -r value="${!varname}"
-    if [ "${default}" = true -o "${default}" = false ]; then
+    if [ "${default}" = true ] || [ "${default}" = false ]; then
         # cast boolean values to true/false
         local -r val=$(echo "${value}" | tr '[:upper:]' '[:lower:]')
-        if [ "${val}" = false -o "${val}" = "off" -o "${val}" = 0 -o "${val}" = "no" ]; then
+        if [ "${val}" = false ] || [ "${val}" = "off" ] || [ "${val}" = 0 ] || [ "${val}" = "no" ]; then
             eval "${varname}=false"
-        elif [ "${val}" = true -o "${val}" = "on" -o "${val}" = 1 -o "${val}" = "yes" ]; then
+        elif [ "${val}" = true ] || [ "${val}" = "on" ] || [ "${val}" = 1 ] || [ "${val}" = "yes" ]; then
             eval "${varname}=true"
         elif [ -z "${val}" ]; then
             eval "${varname}='${default}'"
@@ -101,7 +101,7 @@ set_default_value with_scafacos true
 set_default_value test_timeout 300
 set_default_value hide_gpu false
 
-if [ ${make_check} = true -o ${make_check_tutorials} = true -o ${make_check_samples} = true -o ${make_check_benchmarks} = true ]; then
+if [ ${make_check} = true ] || [ ${make_check_tutorials} = true ] || [ ${make_check_samples} = true ] || [ ${make_check_benchmarks} = true ]; then
     run_checks=true
 else
     run_checks=false
@@ -241,7 +241,7 @@ end "BUILD"
 
 # check for exit function, which should never be called from shared library
 # can't do this on CUDA though because nvcc creates a host function that just calls exit for each device function
-if [ ${with_cuda} = false -o "$(echo ${NVCC} | grep -o clang)" = "clang" ]; then
+if [ ${with_cuda} = false ] || [ "$(echo ${NVCC} | grep -o clang)" = "clang" ]; then
     if nm -o -C $(find . -name *.so) | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
