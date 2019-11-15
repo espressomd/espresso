@@ -123,7 +123,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
- *  particles might not belong to this node.  This procedure is used
+ *  particles might not belong to this node. This procedure is used
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.

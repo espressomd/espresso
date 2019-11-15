@@ -74,7 +74,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
     }
   }
 
-  /** Update n_gpus to number of usable devices */
+  /* Update n_gpus to number of usable devices */
   n_gpus = devices.size();
 
   if (this_node == 0) {

@@ -38,7 +38,7 @@ namespace Utils {
  * function. Note that the difference between sinc(x) and this
  * expansion is smaller than 0.235e-12, if x is smaller than 0.1. (The
  * next term in the expansion is the 10th order contribution
- * PI^10/39916800 * x^10 = 0.2346...*x^12).  This expansion should
+ * PI^10/39916800 * x^10 = 0.2346...*x^12). This expansion should
  * also save time, since it reduces the number of function calls to
  * sin().
  */

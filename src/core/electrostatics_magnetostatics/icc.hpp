@@ -21,12 +21,12 @@
 /** \file
  *
  *  ICCP3M is a method that allows to take into account the influence
- *  of arbitrarily shaped dielectric interfaces.  The dielectric
+ *  of arbitrarily shaped dielectric interfaces. The dielectric
  *  properties of a dielectric medium in the bulk of the simulation
  *  box are taken into account by reproducing the jump in the electric
  *  field at the interface with charge surface segments. The charge
  *  density of the surface segments have to be determined
- *  self-consistently using an iterative scheme.  It can at present -
+ *  self-consistently using an iterative scheme. It can at present -
  *  despite its name - be used with P3M, ELCP3M, MMM2D and MMM1D. For
  *  details see: @cite tyagi10a
  *
@@ -41,7 +41,7 @@
  *  acting on the induced charges has to be determined. As P3M and the
  *  other Coulomb solvers calculate all mutual forces, the force
  *  calculation was modified to avoid the calculation of the short
- *  range part of the source-source force calculation.  For different
+ *  range part of the source-source force calculation. For different
  *  particle data organisation schemes this is performed differently.
  */
 

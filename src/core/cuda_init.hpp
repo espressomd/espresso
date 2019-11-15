@@ -64,9 +64,9 @@ int cuda_get_n_gpus();
  *
  *  @param dev CUDA device number
  *  @return \ref ES_OK if and only if the GPU with the given id is
- *  usable for CUDA computations.  Only devices with compute
- *  capability of 1.1 or higher are ok, since atomic operations are
- *  required for CUDA-LB.
+ *          usable for CUDA computations. Only devices with compute
+ *          capability of 1.1 or higher are ok, since atomic operations are
+ *          required for CUDA-LB.
  */
 int cuda_check_gpu(int dev);
 

@@ -20,7 +20,7 @@
  */
 /** \file
  *  Common parts of the MMM family of methods for the electrostatic
- *  interaction, MMM1D, MMM2D and ELC.  This file contains the code for the
+ *  interaction, MMM1D, MMM2D and ELC. This file contains the code for the
  *  polygamma expansions used for the near formulas of MMM1D and MMM2D.
  *
  *  The expansion of the polygamma functions is fairly easy and follows

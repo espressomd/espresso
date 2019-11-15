@@ -22,80 +22,87 @@
 #define _GHOSTS_H
 /** \file
  *  Ghost particles and particle exchange.
-
-In this file you find everything concerning the exchange of
-particle data (particles, ghosts, positions and forces) for short
-range interactions between the spacial domains of neighbouring
-nodes.
-
-<h2> How does this work </h2>
-The ghost communication transfers data from cells on one node to cells on
-another node during the integration process. Note that data can only be
-transferred from one cell to one other, and the contents of the other cell will
-be overwritten. This communication is invoked by the integrator, at four
-different times in an integration step. These steps are reflected in \ref
-cell_structure structure, since they are treated differently by different cell
-systems: <ul> <li> ghost_cells are used to transfer the cell sizes, i.e., make
-sure that for all later transfers the target cell has the same size as the
-source cell. <li> exchange_ghosts sets up all information on the ghosts that is
-necessary. Normally transfers the (shifted) position and particle properties.
-<li> update_ghosts is used to update the particle properties if no particles
-have been moved between cells. Therefore only the positions are transferred,
-otherwise this normally looks pretty much like the exchange_ghosts. <li>
-collect_ghost_forces finally is used to transfer back forces that were exerted
-on a ghost particle. They are simply added again to the force of the real
-particle. The communication process is therefore inverted with respect to
-exchange_ghosts and update_ghosts, i.e., sending is replaced by receiving and
-the other way round.
-</ul>
-The particle data that has to be transferred, and especially from where to
-where, heavily depends on the cell system. In ESPResSo, this is abstracted in
-form of ghost communicators (\ref GhostCommunicator) and ghost communications
-(\ref GhostCommunication). The ghost communicators represent the four
-communications above and consist of the data to transfer (which is determined by
-their type) and a list of ghost communications. The data types are described by
-the particle data classes <ul> <li> GHOSTTRANS_PROPRTS transfers the \ref
-ParticleProperties <li> GHOSTTRANS_POSITION transfers the \ref ParticlePosition
-<li> GHOSTTRANS_POSSHFTD is no transfer class, but marks that an additional
-vector, the shift, has to be added to the positions. Can only be used together
-with GHOSTTRANS_POSITION. <li> GHOSTTRANS_MOMENTUM transfers the \ref
-ParticleMomentum <li> GHOSTTRANS_FORCE transfers the \ref ParticleForce <li>
-GHOSTTRANS_PARTNUM transfers the cell sizes
-</ul>
-Each ghost communication describes a single communication of the local with
-another node (or all other nodes). The data transferred can be any number of
-cells, there are five communication types: <ul> <li> GHOST_SEND sends data to
-one other node <li> GHOST_RECV recvs data from one other node. In the case of
-forces, they are added up, everything else is overwritten <li> GHOST_BCST sends
-data to all nodes <li> GHOST_RDCE recvs data from all nodes.  In the case of
-forces, they are added up, everything else is overwritten <li> GHOST_LOCL
-transfer data from a local cell to another local cell. In this case, the first
-half of the cells are the sending cells, the other half are the corresponding
-receivers.
-</ul>
-Note that for the first four communications you have to make sure that when one
-node sends to another, that the sender has GHOST_SEND and the receiver
-GHOST_RECV. In the case of GHOST_BCST rsp. GHOST_RDCE, all nodes have to have
-the same communication type and the same master sender/receiver (just like the
-MPI commands).
-
-A special topic are GHOST_PREFETCH and GHOST_PSTSTORE. For example, if all nodes
-broadcast to the other, the naive implementation will be that n_nodes times a
-GHOST_BCST is done with different master nodes. But this means that each time
-n_nodes-1 nodes wait for the master to construct its send buffer. Therefore
-there is the prefetch flag which can be set on a pair of recv/send operations.
-If the ghost communication reaches a recv operation with prefetch, the next send
-operation (which must have the prefetch set!!) is searched and the send buffer
-already created. When sending, this precreated send buffer is used. In the
-scenario above, all nodes create the send buffers simultaneously in the first
-communication step, thereby reducing the latency a little bit. The pststore is
-similar and postpones the write back of received data until a send operation
-(with a precreated send buffer) is finished.
-
-The ghost communicators are created in the init routines of the cell systems,
-therefore have a look at \ref dd_topology_init or \ref nsq_topology_init for
-further details.
-*/
+ *
+ *  In this file you find everything concerning the exchange of
+ *  particle data (particles, ghosts, positions and forces) for short
+ *  range interactions between the spacial domains of neighbouring
+ *  nodes.
+ *
+ *  <h2> How does this work </h2>
+ *  The ghost communication transfers data from cells on one node to cells on
+ *  another node during the integration process. Note that data can only be
+ *  transferred from one cell to one other, and the contents of the other cell
+ *  will be overwritten. This communication is invoked by the integrator, at
+ *  four different times in an integration step. These steps are reflected in
+ *  @ref cell_structure structure, since they are treated differently by
+ *  different cell systems:
+ *  - @ref ghost_cells are used to transfer the cell sizes, i.e., make sure
+ *    that for all later transfers the target cell has the same size as the
+ *    source cell.
+ *  - @ref CellStructure::exchange_ghosts_comm sets up all information on the
+ *    ghosts that is necessary. Normally transfers the (shifted) position and
+ *    particle properties.
+ *  - @ref cells_update_ghosts is used to update the particle properties if no
+ *    particles have been moved between cells. Therefore only the positions are
+ *    transferred, otherwise this normally looks pretty much like the
+ *    @ref CellStructure::exchange_ghosts_comm.
+ *  - @ref CellStructure::collect_ghost_force_comm finally is used to transfer
+ *    back forces that were exerted on a ghost particle. They are simply added
+ *    again to the force of the real particle. The communication process is
+ *    therefore inverted with respect to
+ *    @ref CellStructure::exchange_ghosts_comm and @ref cells_update_ghosts,
+ *    i.e., sending is replaced by receiving and the other way round.
+ *
+ *  The particle data that has to be transferred, and especially from where to
+ *  where, heavily depends on the cell system. In ESPResSo, this is abstracted
+ *  in form of ghost communicators (\ref GhostCommunicator) and ghost
+ *  communications (\ref GhostCommunication). The ghost communicators represent
+ *  the four communications above and consist of the data to transfer (which is
+ *  determined by their type) and a list of ghost communications. The data
+ *  types are described by the particle data classes:
+ *  - @ref GHOSTTRANS_PROPRTS transfers the @ref ParticleProperties
+ *  - @ref GHOSTTRANS_POSITION transfers the @ref ParticlePosition
+ *  - @ref GHOSTTRANS_MOMENTUM transfers the @ref ParticleMomentum
+ *  - @ref GHOSTTRANS_FORCE transfers the @ref ParticleForce
+ *  - @ref GHOSTTRANS_PARTNUM transfers the cell sizes
+ *
+ *  Each ghost communication describes a single communication of the local with
+ *  another node (or all other nodes). The data transferred can be any number
+ *  of cells, there are five communication types:
+ *  - @ref GHOST_SEND sends data to one other node
+ *  - @ref GHOST_RECV recvs data from one other node. In the case of
+ *    forces, they are added up, everything else is overwritten
+ *  - @ref GHOST_BCST sends data to all nodes
+ *  - @ref GHOST_RDCE recvs data from all nodes. In the case of
+ *    forces, they are added up, everything else is overwritten
+ *  - @ref GHOST_LOCL transfer data from a local cell to another local cell.
+ *    In this case, the first half of the cells are the sending cells, the
+ *    other half are the corresponding receivers.
+ *
+ *  Note that for the first four communications you have to make sure that
+ *  when one node sends to another, that the sender has @ref GHOST_SEND
+ *  and the receiver @ref GHOST_RECV. In the case of @ref GHOST_BCST resp.
+ *  @ref GHOST_RDCE, all nodes have to have the same communication type
+ *  and the same master sender/receiver (just like the MPI commands).
+ *
+ *  A special topic are @ref GHOST_PREFETCH and @ref GHOST_PSTSTORE. For
+ *  example, if all nodes broadcast to the other, the naive implementation will
+ *  be that @c n_nodes times a @ref GHOST_BCST is done with different master
+ *  nodes. But this means that each time <tt>n_nodes - 1</tt> nodes wait for
+ *  the master to construct its send buffer. Therefore there is the prefetch
+ *  flag which can be set on a pair of recv/send operations. If the ghost
+ *  communication reaches a recv operation with prefetch, the next send
+ *  operation (which must have the prefetch set!!) is searched and the send
+ *  buffer already created. When sending, this precreated send buffer is used.
+ *  In the scenario above, all nodes create the send buffers simultaneously in
+ *  the first communication step, thereby reducing the latency a little bit.
+ *  The pststore is similar and postpones the write back of received data
+ *  until a send operation (with a precreated send buffer) is finished.
+ *
+ *  The ghost communicators are created in the init routines of the cell
+ *  systems, therefore have a look at @ref dd_topology_init or
+ *  @ref nsq_topology_init for further details.
+ */
 #include "Cell.hpp"
 #include <mpi.h>
 

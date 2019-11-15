@@ -185,7 +185,7 @@ public:
    *  the new entries of A and B. Then, if necessary, it compresses old values
    *  of A and B to make room for the new value. Finally, the new values of A
    *  and B are stored in <tt>A[newest[0]]</tt> and <tt>B[newest[0]]</tt>,
-   *  where the <tt>newestt</tt> indices have been increased before. Finally,
+   *  where the <tt>newest</tt> indices have been increased before. Finally,
    *  the correlation estimate is updated.
    *  TODO: Not all the correlation estimates have to be updated.
    */

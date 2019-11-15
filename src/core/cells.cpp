@@ -457,7 +457,7 @@ void cells_update_ghosts() {
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
-    /* Communication step:  number of ghosts and ghost information */
+    /* Communication step: number of ghosts and ghost information */
     cells_resort_particles(global);
 
   } else

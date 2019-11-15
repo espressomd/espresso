@@ -357,7 +357,7 @@ static double dipole_energy(const ParticleRange &particles) {
     }
 
     /* counter the P3M homogeneous background contribution to the
-       boundaries.  We never need that, since a homogeneous background
+       boundaries. We never need that, since a homogeneous background
        spanning the artificial boundary layers is aphysical. */
     eng += pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
                    (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] *
