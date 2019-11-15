@@ -145,19 +145,15 @@ struct CellStructure {
 
   bool use_verlet_list = true;
 
-  /** Maximal pair range supported by current
-   * cell system.
-   */
+  /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range = {};
 
-  /**
-   * Minimum range that has to be supported.
-   */
+  /** Minimum range that has to be supported. */
   double min_range;
 
-  /** returns the global local_cells */
+  /** Return the global local_cells */
   CellPList local_cells() const;
-  /** returns the global ghost_cells */
+  /** Return the global ghost_cells */
   CellPList ghost_cells() const;
 
   /** Communicator to exchange ghost particles. */
@@ -168,7 +164,7 @@ struct CellStructure {
   /** Cell system dependent function to find the right cell for a
    *  particle.
    *  \param  p Particle.
-   *  \return pointer to cell  where to put the particle, nullptr
+   *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
   Cell *(*particle_to_cell)(const Particle &p) = nullptr;
@@ -184,18 +180,16 @@ struct CellStructure {
 /** list of all cells. */
 extern std::vector<Cell> cells;
 
-/** list of all cells containing particles physically on the local
-    node */
+/** list of all cells containing particles physically on the local node */
 extern CellPList local_cells;
 /** list of all cells containing ghosts */
 extern CellPList ghost_cells;
 
-/** Type of cell structure in use ( \ref Cell Structure ). */
+/** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
 /** If non-zero, cell systems should reset the position for checking
- *  the Verlet criterion. Moreover, the Verlet list has to be
- *  rebuilt.
+ *  the Verlet criterion. Moreover, the Verlet list has to be rebuilt.
  */
 extern bool rebuild_verletlist;
 
@@ -207,9 +201,9 @@ extern bool rebuild_verletlist;
 /*@{*/
 
 /** Reinitialize the cell structures.
- *  @param new_cs gives the new topology to use afterwards. May be set to
- *  \ref CELL_STRUCTURE_CURRENT for not changing it.
- *  @param range Desired interaction range
+ *  @param new_cs The new topology to use afterwards. May be set to
+ *                @ref CELL_STRUCTURE_CURRENT for not changing it.
+ *  @param range  Desired interaction range
  */
 void cells_re_init(int new_cs, double range);
 
@@ -233,8 +227,8 @@ inline void realloc_cellplist(CellPList *cpl, int size) {
 
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
- *  @param global_flag if this is CELLS_GLOBAL_EXCHANGE, particle positions can
- *                     have changed arbitrarily, otherwise the change should
+ *  @param global_flag if this is @ref CELLS_GLOBAL_EXCHANGE, particle positions
+ *                     can have changed arbitrarily, otherwise the change should
  *                     have been smaller then skin.
  */
 void cells_resort_particles(int global_flag);
@@ -244,22 +238,22 @@ void cells_resort_particles(int global_flag);
  *  It calculates the maximal interaction range, and as said reinitializes
  *  the cells structure if something significant has changed.
  *
- *  If bit CELL_FLAG_FAST is set, the routine should try to save time.
+ *  If bit @ref CELL_FLAG_FAST is set, the routine should try to save time.
  *  Currently this means that if the maximal range decreased, it does
  *  not reorganize the particles. This is used in the NpT algorithm to
  *  avoid frequent reorganization of particles.
  *
- *  If bit CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
+ *  If bit @ref CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
  *  has changed, i. e. the grid or periodicity. In this case a full
  *  reorganization is due.
  *
- *  @param flags a bitmask of CELL_FLAG_GRIDCHANGED,
- *  and/or CELL_FLAG_FAST, see above.
+ *  @param flags a bitmask of @ref CELL_FLAG_GRIDCHANGED,
+ *               and/or @ref CELL_FLAG_FAST, see above.
  */
 void cells_on_geometry_change(int flags);
 
-/** Update ghost information. If \ref resort_particles == 1,
- *  also a resorting of the particles takes place.
+/** Update ghost information. If @ref resort_particles is not
+ *  @ref Cells::RESORT_NONE, the particles are also resorted.
  */
 void cells_update_ghosts();
 
@@ -267,9 +261,9 @@ void cells_update_ghosts();
 int cells_get_n_particles();
 
 /**
- * @brief Get pairs closer than distance from the cells.
+ * @brief Get pairs closer than @p distance from the cells.
  *
- * This is mostly for testing purposes and uses link_cell
+ * This is mostly for testing purposes and uses @ref link_cell
  * to get pairs out of the cellsystem by a simple distance
  * criterion.
  *
@@ -278,9 +272,9 @@ int cells_get_n_particles();
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 /**
- * @brief Increase the local resort level at least to level.
+ * @brief Increase the local resort level at least to @p level.
  *
- * The changed level has to be communicated via annouce_resort_particles.
+ * The changed level has to be communicated via @ref annouce_resort_particles.
  */
 void set_resort_particles(Cells::Resort level);
 

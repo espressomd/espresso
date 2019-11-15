@@ -458,7 +458,7 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
  */
 int mdlc_tune(double error) {
   double de, n, gc, lz, lx, a, fa1, fa2, fa0, h;
-  int kc, limitkc = 200, flag;
+  int kc, limitkc = 200;
 
   n = (double)n_part;
   lz = box_geo.length()[2];
@@ -487,7 +487,7 @@ int mdlc_tune(double error) {
 
   lx = box_geo.length()[0];
 
-  flag = 0;
+  bool flag = false;
   for (kc = 1; kc < limitkc; kc++) {
     gc = kc * 2.0 * Utils::pi() / lx;
     fa0 = sqrt(9.0 * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
@@ -497,12 +497,12 @@ int mdlc_tune(double error) {
     fa2 = g2_DLC_dip(gc, lz);
     de = n * (mu_max * mu_max) / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
     if (de < error) {
-      flag = 1;
+      flag = true;
       break;
     }
   }
 
-  if (flag == 0) {
+  if (!flag) {
     fprintf(stderr, "tune DLC dipolar: Sorry, unable to find a proper cut-off "
                     "for such system and accuracy.\n");
     fprintf(stderr, "Try modifying the variable limitkc in the c-code: "

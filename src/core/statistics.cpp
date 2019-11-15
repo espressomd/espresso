@@ -210,8 +210,8 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
 
 void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
                             int const *p2_types, int n_p2, double r_min,
-                            double r_max, int r_bins, int log_flag, double *low,
-                            double *dist) {
+                            double r_max, int r_bins, bool log_flag,
+                            double *low, double *dist) {
   int t1, t2, ind, cnt = 0;
   double inv_bin_width = 0.0;
   double min_dist, min_dist2 = 0.0, start_dist2;
@@ -222,7 +222,7 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
   *low = 0.0;
   for (int i = 0; i < r_bins; i++)
     dist[i] = 0.0;
-  if (log_flag == 1)
+  if (log_flag)
     inv_bin_width = (double)r_bins / (log(r_max) - log(r_min));
   else
     inv_bin_width = (double)r_bins / (r_max - r_min);
@@ -250,7 +250,7 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
         if (min_dist <= r_max) {
           if (min_dist >= r_min) {
             /* calculate bin index */
-            if (log_flag == 1)
+            if (log_flag)
               ind = (int)((log(min_dist) - log(r_min)) * inv_bin_width);
             else
               ind = (int)((min_dist - r_min) * inv_bin_width);

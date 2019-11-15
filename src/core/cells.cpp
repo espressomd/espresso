@@ -62,7 +62,7 @@ CellPList ghost_cells = {nullptr, 0, 0};
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
-/** On of Cells::Resort, announces the level of resort needed.
+/** One of @ref Cells::Resort, announces the level of resort needed.
  */
 unsigned resort_particles = Cells::RESORT_NONE;
 bool rebuild_verletlist = true;
