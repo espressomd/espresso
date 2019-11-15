@@ -21,7 +21,7 @@ if( IPYTHON_EXECUTABLE )
 endif( )
 
 
-option(INSTALL_PYPRESSO "Install pypresso script, not needed when Espresso is installed in /usr" ON)
+option(INSTALL_PYPRESSO "Install pypresso script, not needed when ESPResSo is installed in /usr" ON)
 if(INSTALL_PYPRESSO)
   install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/pypresso
         DESTINATION ${CMAKE_INSTALL_BINDIR})

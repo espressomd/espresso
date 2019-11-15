@@ -232,14 +232,14 @@ private:
 
 ///////////////////////////// actual declaration of specific reaction algorithms
 
-/** Reaction ensemble method according to smith94x.
+/** Reaction ensemble method.
  *  Works for the reaction ensemble at constant volume and temperature. For the
- *  reaction ensemble at constant pressure additionally employ a barostat!
+ *  reaction ensemble at constant pressure, additionally employ a barostat!
  *  NOTE: a chemical reaction consists of a forward and backward reaction.
  *  Here both reactions have to be defined separately. The extent of the
  *  reaction is here chosen to be +1. If the reaction trial move for a
  *  dissociation of HA is accepted then there is one more dissociated ion
- *  pair H+ and A-
+ *  pair H+ and A-. Implementation of @cite smith94c.
  */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
@@ -358,7 +358,7 @@ private:
 };
 
 /**
- * Constant-pH Ensemble, for derivation see Reed and Reed 1992.
+ * Constant-pH Ensemble, for derivation see @cite reed92a.
  * For the constant pH reactions you need to provide the deprotonation and
  * afterwards the corresponding protonation reaction (in this order). If you
  * want to deal with multiple reactions do it multiple times. Note that there is

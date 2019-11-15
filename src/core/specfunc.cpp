@@ -18,12 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
-    Special functions, see \ref specfunc.hpp "specfunc.hpp"
-*/
-#include "specfunc.hpp"
-#include "polynom.hpp"
-#include <cmath>
 
 /* Original gsl header
  * specfunc/bessel_K0.cpp
@@ -45,36 +39,31 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* Original Author:  G. Jungman */
+/* Original Author: G. Jungman */
+
+/** \file
+ *  Implementation of \ref specfunc.hpp.
+ */
+#include "specfunc.hpp"
+#include "polynom.hpp"
+#include <cmath>
 
 /************************************************
  * chebychev expansions
  ************************************************/
 /* Note that the first coefficient already includes the constant offsets */
 
-/* based on SLATEC bk0(), bk0e() */
-
-/* chebyshev expansions
-
- series for bk0        on the interval  0.	    to  4.00000d+00
-                                        with weighted error   3.57e-19
-                                         log weighted error  18.45
-                               significant figures required  17.99
-                                    decimal places required  18.97
-
- series for ak0        on the interval  1.25000d-01 to  5.00000d-01
-                                        with weighted error   5.34e-17
-                                         log weighted error  16.27
-                               significant figures required  14.92
-                                    decimal places required  16.89
-
- series for ak02       on the interval  0.	    to  1.25000d-01
-                                        with weighted error   2.34e-17
-                                         log weighted error  16.63
-                               significant figures required  14.67
-                                    decimal places required  17.20
-*/
-
+/** @name Chebyshev expansions based on SLATEC bk0(), bk0e() */
+/*@{*/
+/** Series for @c bk0.
+ *  On the interval 0. to 4.00000d+00
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 3.57e-19 |
+ *  |           log weighted error | 18.45    |
+ *  | significant figures required | 17.99    |
+ *  |      decimal places required | 18.97    |
+ */
 static double bk0_data[11] = {
     -.5 - 0.03532739323390276872, 0.3442898999246284869,
     0.03597993651536150163,       0.00126461541144692592,
@@ -84,6 +73,15 @@ static double bk0_data[11] = {
     0.00000000000000000035};
 static Polynom bk0_cs{bk0_data};
 
+/** Series for @c ak0.
+ *  On the interval 1.25000d-01 to 5.00000d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 5.34e-17 |
+ *  |           log weighted error | 16.27    |
+ *  | significant figures required | 14.92    |
+ *  |      decimal places required | 16.89    |
+ */
 static double ak0_data[17] = {
     2.5 - 0.07643947903327941, -0.02235652605699819, 0.00077341811546938,
     -0.00004281006688886,      0.00000308170017386,  -0.00000026393672220,
@@ -93,6 +91,15 @@ static double ak0_data[17] = {
     -0.00000000000000033,      0.00000000000000005};
 static Polynom ak0_cs{ak0_data};
 
+/** Series for @c ak02.
+ *  On the interval 0. to 1.25000d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 2.34e-17 |
+ *  |           log weighted error | 16.63    |
+ *  | significant figures required | 14.67    |
+ *  |      decimal places required | 17.20    |
+ */
 static double ak02_data[14] = {
     2.5 - 0.01201869826307592, -0.00917485269102569, 0.00014445509317750,
     -0.00000401361417543,      0.00000015678318108,  -0.00000000777011043,
@@ -100,31 +107,19 @@ static double ak02_data[14] = {
     -0.00000000000020743,      0.00000000000001925,  -0.00000000000000192,
     0.00000000000000020,       -0.00000000000000002};
 static Polynom ak02_cs{ak02_data};
+/*@}*/
 
-/* based on SLATEC besi0 */
-
-/* chebyshev expansions
-
- series for bi0        on the interval  0.	    to  9.00000d+00
-                                        with weighted error   2.46e-18
-                                         log weighted error  17.61
-                               significant figures required  17.90
-                                    decimal places required  18.15
-
- series for ai0        on the interval  1.25000d-01 to  3.33333d-01
-                                        with weighted error   7.87e-17
-                                         log weighted error  16.10
-                               significant figures required  14.69
-                                    decimal places required  16.76
-
-
- series for ai02       on the interval  0.	    to  1.25000d-01
-                                        with weighted error   3.79e-17
-                                         log weighted error  16.42
-                               significant figures required  14.86
-                                    decimal places required  17.09
-*/
-
+/** @name Chebyshev expansions based on SLATEC besi0() */
+/*@{*/
+/** Series for @c bi0.
+ *  On the interval 0. to 9.00000d+00
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 2.46e-18 |
+ *  |           log weighted error | 17.61    |
+ *  | significant figures required | 17.90    |
+ *  |      decimal places required | 18.15    |
+ */
 static double bi0_data[12] = {
     5.5 - .07660547252839144951, 1.92733795399380827000, .22826445869203013390,
     .01304891466707290428,       .00043442709008164874,  .00000942265768600193,
@@ -132,6 +127,15 @@ static double bi0_data[12] = {
     .00000000000009579451,       .00000000000000053339,  .00000000000000000245};
 static Polynom bi0_cs{bi0_data};
 
+/** Series for @c ai0.
+ *  On the interval 1.25000d-01 to 3.33333d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 7.87e-17 |
+ *  |           log weighted error | 16.10    |
+ *  | significant figures required | 14.69    |
+ *  |      decimal places required | 16.76    |
+ */
 static double ai0_data[21] = {
     .75 + .07575994494023796, .00759138081082334,  .00041531313389237,
     .00001070076463439,       -.00000790117997921, -.00000078261435014,
@@ -142,6 +146,15 @@ static double ai0_data[21] = {
     .00000000000000314,       -.00000000000000071, .00000000000000007};
 static Polynom ai0_cs{ai0_data};
 
+/** Series for @c ai02.
+ *  On the interval 0. to 1.25000d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 3.79e-17 |
+ *  |           log weighted error | 16.42    |
+ *  | significant figures required | 14.86    |
+ *  |      decimal places required | 17.09    |
+ */
 static double ai02_data[22] = {
     .75 + .05449041101410882, .00336911647825569,  .00006889758346918,
     .00000289137052082,       .00000020489185893,  .00000002266668991,
@@ -152,30 +165,19 @@ static double ai02_data[22] = {
     .00000000000000176,       -.00000000000000034, -.00000000000000027,
     .00000000000000003};
 static Polynom ai02_cs{ai02_data};
+/*@}*/
 
-/* based on SLATEC besk1(), besk1e() */
-
-/* chebyshev expansions
-
- series for bk1        on the interval  0.	    to  4.00000d+00
-                                        with weighted error   7.02e-18
-                                         log weighted error  17.15
-                               significant figures required  16.73
-                                    decimal places required  17.67
-
- series for ak1        on the interval  1.25000d-01 to  5.00000d-01
-                                        with weighted error   6.06e-17
-                                         log weighted error  16.22
-                               significant figures required  15.41
-                                    decimal places required  16.83
-
- series for ak12       on the interval  0.	    to  1.25000d-01
-                                        with weighted error   2.58e-17
-                                         log weighted error  16.59
-                               significant figures required  15.22
-                                    decimal places required  17.16
-*/
-
+/** @name Chebyshev expansions based on SLATEC besk1(), besk1e() */
+/*@{*/
+/** Series for @c bk1.
+ *  On the interval 0. to 4.00000d+00
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 7.02e-18 |
+ *  |           log weighted error | 17.15    |
+ *  | significant figures required | 16.73    |
+ *  |      decimal places required | 17.67    |
+ */
 static double bk1_data[11] = {
     1.5 + 0.0253002273389477705, -0.3531559607765448760, -0.1226111808226571480,
     -0.0069757238596398643,      -0.0001730288957513052, -0.0000024334061415659,
@@ -184,6 +186,15 @@ static double bk1_data[11] = {
 
 static Polynom bk1_cs{bk1_data};
 
+/** Series for @c ak1.
+ *  On the interval 1.25000d-01 to 5.00000d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 6.06e-17 |
+ *  |           log weighted error | 16.22    |
+ *  | significant figures required | 15.41    |
+ *  |      decimal places required | 16.83    |
+ */
 static double ak1_data[17] = {
     2.5 + 0.27443134069738830, 0.07571989953199368,  -0.00144105155647540,
     0.00006650116955125,       -0.00000436998470952, 0.00000035402774997,
@@ -193,6 +204,15 @@ static double ak1_data[17] = {
     0.00000000000000038,       -0.00000000000000006};
 static Polynom ak1_cs{ak1_data};
 
+/** Series for @c ak12.
+ *  On the interval 0. to 1.25000d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 2.58e-17 |
+ *  |           log weighted error | 16.59    |
+ *  | significant figures required | 15.22    |
+ *  |      decimal places required | 17.16    |
+ */
 static double ak12_data[14] = {
     2.5 + 0.06379308343739001, 0.02832887813049721,  -0.00024753706739052,
     0.00000577197245160,       -0.00000020689392195, 0.00000000973998344,
@@ -200,30 +220,19 @@ static double ak12_data[14] = {
     0.00000000000023720,       -0.00000000000002176, 0.00000000000000215,
     -0.00000000000000022,      0.00000000000000002};
 static Polynom ak12_cs{ak12_data};
+/*@}*/
 
-/* based on SLATEC besi1(), besi1e() */
-
-/* chebyshev expansions
-
- series for bi1        on the interval  0.	    to  9.00000d+00
-                                        with weighted error   2.40e-17
-                                         log weighted error  16.62
-                               significant figures required  16.23
-                                    decimal places required  17.14
-
- series for ai1        on the interval  1.25000d-01 to  3.33333d-01
-                                        with weighted error   6.98e-17
-                                         log weighted error  16.16
-                               significant figures required  14.53
-                                    decimal places required  16.82
-
- series for ai12       on the interval  0.	    to  1.25000d-01
-                                       with weighted error   3.55e-17
-                                        log weighted error  16.45
-                              significant figures required  14.69
-                                   decimal places required  17.12
-*/
-
+/** @name Chebyshev expansions based on SLATEC besi1(), besi1e() */
+/*@{*/
+/** Series for @c bi1.
+ *  On the interval 0. to 9.00000d+00
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 2.40e-17 |
+ *  |           log weighted error | 16.62    |
+ *  | significant figures required | 16.23    |
+ *  |      decimal places required | 17.14    |
+ */
 static double bi1_data[11] = {
     1.75 - 0.001971713261099859, 0.407348876675464810, 0.034838994299959456,
     0.001545394556300123,        0.000041888521098377, 0.000000764902676483,
@@ -231,6 +240,15 @@ static double bi1_data[11] = {
     0.000000000000004741,        0.000000000000000024};
 static Polynom bi1_cs{bi1_data};
 
+/** Series for @c ai1.
+ *  On the interval 1.25000d-01 to 3.33333d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 6.98e-17 |
+ *  |           log weighted error | 16.16    |
+ *  | significant figures required | 14.53    |
+ *  |      decimal places required | 16.82    |
+ */
 static double ai1_data[21] = {
     .75 - 0.02846744181881479, -0.01922953231443221, -0.00061151858579437,
     -0.00002069971253350,      0.00000858561914581,  0.00000104949824671,
@@ -241,6 +259,15 @@ static double ai1_data[21] = {
     -0.00000000000000333,      0.00000000000000071,  -0.00000000000000006};
 static Polynom ai1_cs{ai1_data};
 
+/** Series for @c ai12.
+ *  On the interval 0. to 1.25000d-01
+ *  |             Label            |   Value  |
+ *  | ---------------------------: | :------- |
+ *  |          with weighted error | 3.55e-17 |
+ *  |           log weighted error | 16.45    |
+ *  | significant figures required | 14.69    |
+ *  |      decimal places required | 17.12    |
+ */
 static double ai12_data[22] = {
     .75 + 0.02857623501828014, -0.00976109749136147, -0.00011058893876263,
     -0.00000388256480887,      -0.00000025122362377, -0.00000002631468847,
@@ -251,13 +278,10 @@ static double ai12_data[22] = {
     -0.00000000000000186,      0.00000000000000033,  0.00000000000000028,
     -0.00000000000000003};
 static Polynom ai12_cs{ai12_data};
+/*@}*/
 
-/************************************************
- * chebychev expansions
- ************************************************/
-
-/* coefficients for Maclaurin summation in hzeta()
- * B_{2j}/(2j)!
+/** Coefficients for Maclaurin summation in hzeta().
+ *  B_{2j}/(2j)!
  */
 static double hzeta_c[15] = {
     1.00000000000000000000000000000,     0.083333333333333333333333333333,
@@ -268,10 +292,6 @@ static double hzeta_c[15] = {
     -2.1748686985580618730415164239e-16, 5.5090028283602295152026526089e-18,
     -1.3954464685812523340707686264e-19, 3.5347070396294674716932299778e-21,
     -8.9535174270375468504026113181e-23};
-
-/************************************************
- * functions
- ************************************************/
 
 double hzeta(double s, double q) {
   double max_bits = 54.0;
@@ -360,9 +380,10 @@ double K1(double x) {
  * optimized K0/1 implementations for 10^(-14) precision
  ***********************************************************/
 
-/** necessary orders for K0/1 from 2 up to 22 for 10^-14 precision. Note that at
-   8 the expansion changes. From 23 to 26 order 2 is used, above order 1. For
-   the latter cases separate implementations are necessary. */
+/** necessary orders for K0/1 from 2 up to 22 for 10^-14 precision. Note that
+ *  at 8 the expansion changes. From 23 to 26 order 2 is used, above order 1.
+ *  For the latter cases, separate implementations are necessary.
+ */
 static int ak01_orders[] = {
     /* 2 - 8 */
     11, 11, 10, 10, 9, 9,

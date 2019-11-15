@@ -120,7 +120,7 @@ namespace {
  */
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
   /* transform momentum transfer to lattice units
-     (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+     (eq. (12) @cite ahlrichs99a) */
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
@@ -128,18 +128,17 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
 
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
  *
- *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
+ *  Section II.C. @cite ahlrichs99a
  *
- * @param[in] p             The coupled particle.
- * @param[in]     f_random  Additional force to be included.
+ *  @param[in] p             The coupled particle.
+ *  @param[in]     f_random  Additional force to be included.
  *
- * @return The viscous coupling force plus f_random.
+ *  @return The viscous coupling force plus f_random.
  */
 Utils::Vector3d lb_viscous_coupling(Particle const &p,
                                     Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
-     this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+     this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
       lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
       lb_lbfluid_get_lattice_speed();
@@ -155,9 +154,7 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   v_drift += p.p.mu_E;
 #endif
 
-  /* calculate viscous force
-   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
-   * */
+  /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
   auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
 
   add_md_force(p.r.p, force);
@@ -284,7 +281,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
           c = ctr_type{{0, 0}};
         }
 
-        /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+        /* Eq. (16) @cite ahlrichs99a.
          * The factor 12 comes from the fact that we use random numbers
          * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
          * time_step comes from the discretization.

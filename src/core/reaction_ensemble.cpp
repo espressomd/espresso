@@ -141,7 +141,7 @@ void ReactionAlgorithm::add_reaction(
   new_reaction.nu_bar = calculate_nu_bar(new_reaction.reactant_coefficients,
                                          new_reaction.product_coefficients);
 
-  // make espresso count the particle numbers which take part in the reactions
+  // make ESPResSo count the particle numbers which take part in the reactions
   for (int reactant_type : new_reaction.reactant_types)
     init_type_map(reactant_type);
   for (int product_type : new_reaction.product_types)
@@ -1172,9 +1172,9 @@ int WangLandauReactionEnsemble::initialize_wang_landau() {
   return ES_OK;
 }
 
-/**
- * Calculates the expression in the acceptance probability of the Wang-Landau
- * reaction ensemble
+/** Calculate the expression in the acceptance probability of the Wang-Landau
+ *  reaction ensemble.
+ *  Modify Boltzmann factor according to Wang-Landau algorithm in @cite yan02b.
  */
 double WangLandauReactionEnsemble::calculate_acceptance_probability(
     SingleReaction &current_reaction, double E_pot_old, double E_pot_new,
@@ -1197,26 +1197,19 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   } else {
     // pass
   }
-  // look whether the proposed state lies in the reaction coordinate space gamma
-  // and add the Wang-Landau modification factor, this is a bit nasty due to the
-  // energy collective variable case (memory layout of storage array of the
-  // histogram and the wang_landau_potential values is "cuboid")
+  // Check whether the proposed state lies in the reaction coordinate space
+  // gamma and add the Wang-Landau modification factor, this is a bit nasty
+  // due to the energy collective variable case (memory layout of storage
+  // array of the histogram and the wang_landau_potential values is "cuboid").
   if (old_state_index >= 0 && new_state_index >= 0) {
     if (histogram[new_state_index] >= 0 && histogram[old_state_index] >= 0) {
-      bf = std::min(1.0,
-                    bf * exp(wang_landau_potential[old_state_index] -
-                             wang_landau_potential[new_state_index])); // modify
-      // Boltzmann
-      // factor
-      // according to Wang-Landau
-      // algorithm, according to
-      // grand canonical simulation
-      // paper "Density-of-states
-      // Monte Carlo method for
-      // simulation of fluids"
-      // this makes the new state being accepted with the conditional
+      // Modify Boltzmann factor (bf) according to Wang-Landau algorithm
+      // @cite yan02b.
+      // This makes the new state being accepted with the conditional
       // probability bf (bf is a transition probability = conditional
-      // probability from the old state to move to the new state)
+      // probability from the old state to move to the new state).
+      bf = std::min(1.0, bf * exp(wang_landau_potential[old_state_index] -
+                                  wang_landau_potential[new_state_index]));
     } else {
       if (histogram[new_state_index] >= 0 && histogram[old_state_index] < 0)
         bf = 10; // this makes the reaction get accepted, since we found a state
@@ -1242,21 +1235,16 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
   return bf;
 }
 
-/** Performs a randomly selected reaction using the Wang-Landau algorithm.
+/** Perform a randomly selected reaction using the Wang-Landau algorithm.
  *
- *  make sure to perform additional configuration changing steps, after the
- *  reaction step! like in Density-of-states Monte Carlo method for simulation
- *  of fluids Yan, De Pablo. this can be done with MD in the case of the
- *  no-energy-reweighting case, or with the functions
- *  do_global_mc_move_for_particles_of_type
+ *  Make sure to perform additional configuration changing steps, after the
+ *  reaction step! Like in @cite yan02b. This can be done with MD in the case
+ *  of the no-energy-reweighting case, or with the function
+ *  @ref ReactionAlgorithm::do_global_mc_move_for_particles_of_type.
  *
- *  perform additional Monte Carlo moves to sample configurational
- *  partition function according to "Density-of-states Monte Carlo method
- *  for simulation of fluids"
- *
- *  do as many steps as needed to get to a new conformation (compare
- *  Density-of-states Monte Carlo method for simulation of fluids Yan,
- *  De Pablo)
+ *  Perform additional Monte Carlo moves to sample configurational
+ *  partition function according to @cite yan02b. Do as many steps
+ *  as needed to get to a new conformation.
  */
 int WangLandauReactionEnsemble::do_reaction(int reaction_steps) {
   m_WL_tries += reaction_steps;
@@ -1536,13 +1524,12 @@ int WangLandauReactionEnsemble::
   return index;
 }
 
-/** remove bins from the range of to be sampled values if they have not been
+/** Remove bins from the range of to be sampled values if they have not been
  *  sampled.
- *  use with caution otherwise you produce unphysical results, do only use
+ *  Use with caution otherwise you produce unphysical results, do only use
  *  when you know what you want to do. This can make Wang-Landau converge on a
- *  reduced set gamma. use this function e.g. in do_reaction_wang_landau() for
- *  the diprotonic acid compare "Wang-Landau sampling with self-adaptive range"
- *  by Troester and Dellago
+ *  reduced set gamma. Use this function e.g. in do_reaction_wang_landau(). For
+ *  the diprotonic acid compare with @cite troester05a.
  */
 void WangLandauReactionEnsemble::remove_bins_that_have_not_been_sampled() {
   int removed_bins = 0;
@@ -1779,7 +1766,9 @@ WidomInsertion::measure_excess_chemical_potential(int reaction_id) {
 
 /**
  * Calculates the whole product of factorial expressions which occur in the
- * reaction ensemble acceptance probability
+ * reaction ensemble acceptance probability.
+ *
+ * See @cite smith94c.
  */
 double
 calculate_factorial_expression(SingleReaction &current_reaction,
@@ -1791,9 +1780,9 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.reactant_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since
-                                          // we only perform one reaction at
-                                          // one call of the function
+                             N_i0, nu_i); // zeta = 1 (see @cite smith94c)
+                                          // since we only perform one reaction
+                                          // at one call of the function
   }
   // factorial contribution of products
   for (int i = 0; i < current_reaction.product_types.size(); i++) {
@@ -1801,9 +1790,9 @@ calculate_factorial_expression(SingleReaction &current_reaction,
     int N_i0 = old_particle_numbers[current_reaction.product_types[i]];
     factorial_expr =
         factorial_expr * factorial_Ni0_divided_by_factorial_Ni0_plus_nu_i(
-                             N_i0, nu_i); // zeta = 1 (see smith paper) since
-                                          // we only perform one reaction at
-                                          // one call of the function
+                             N_i0, nu_i); // zeta = 1 (see @cite smith94c)
+                                          // since we only perform one reaction
+                                          // at one call of the function
   }
   return factorial_expr;
 }

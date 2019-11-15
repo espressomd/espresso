@@ -48,7 +48,8 @@
 #include <limits>
 
 /** Previous particle configurations (needed for offline analysis and
-    correlation analysis) */
+ *  correlation analysis)
+ */
 std::vector<std::vector<double>> configs;
 int n_configs = 0;
 int n_part_conf = 0;
@@ -64,9 +65,7 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
   auto mindist2 = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
-    /* check which sets particle j belongs to
-       bit 0: set1, bit1: set2
-    */
+    /* check which sets particle j belongs to (bit 0: set1, bit1: set2) */
     auto in_set = 0;
     if (set1.empty() || contains(set1, jt->p.type))
       in_set = 1;
@@ -228,12 +227,12 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
   else
     inv_bin_width = (double)r_bins / (r_max - r_min);
 
-  /* particle loop: p1_types*/
+  /* particle loop: p1_types */
   for (auto const &p1 : partCfg) {
     for (t1 = 0; t1 < n_p1; t1++) {
       if (p1.p.type == p1_types[t1]) {
         min_dist2 = start_dist2;
-        /* particle loop: p2_types*/
+        /* particle loop: p2_types */
         for (auto const &p2 : partCfg) {
           if (p1 != p2) {
             for (t2 = 0; t2 < n_p2; t2++) {
@@ -302,14 +301,14 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
   inv_bin_width = 1.0 / bin_width;
   for (i = 0; i < r_bins; i++)
     rdf[i] = 0.0;
-  /* particle loop: p1_types*/
+  /* particle loop: p1_types */
   for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
     for (t1 = 0; t1 < n_p1; t1++) {
       if (it->p.type == p1_types[t1]) {
         /* distinguish mixed and identical rdf's */
         auto jt = mixed_flag ? partCfg.begin() : std::next(it);
 
-        /* particle loop: p2_types*/
+        /* particle loop: p2_types */
         for (; jt != partCfg.end(); ++jt) {
           for (t2 = 0; t2 < n_p2; t2++) {
             if (jt->p.type == p2_types[t2]) {
@@ -597,7 +596,7 @@ int calc_cylindrical_average(
   }
 
   // Now we turn the counts into densities by dividing by one radial
-  // bin (binvolume).  We also divide the velocities by the counts.
+  // bin (binvolume). We also divide the velocities by the counts.
   double binvolume;
   for (unsigned int type_id = 0; type_id < types.size(); type_id++) {
     for (int index_radial = 0; index_radial < bins_radial; index_radial++) {

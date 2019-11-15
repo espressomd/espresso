@@ -20,7 +20,7 @@
  */
 /** @file
  *
- *  The corresponding header file is p3m.hpp.
+ *  The corresponding header file is @ref p3m.hpp.
  */
 #include "p3m.hpp"
 
@@ -149,8 +149,8 @@ static bool p3m_sanity_checks_boxl();
 static void p3m_calc_local_ca_mesh();
 
 /** Interpolate the P-th order charge assignment function from
- *  Hockney/Eastwood 5-189 (or 8-61). The following charge fractions
- *  are also tabulated in Deserno/Holm.
+ *  @cite hockney88a 5-189 (or 8-61). The following charge fractions
+ *  are also tabulated in @cite deserno98a @cite deserno98b.
  */
 static void p3m_interpolate_charge_assignment_function();
 
@@ -163,15 +163,15 @@ static void p3m_calc_meshift();
  */
 static void p3m_calc_differential_operator();
 
-/** Calculate the optimal influence function of Hockney and Eastwood.
+/** Calculate the optimal influence function of @cite hockney88a.
  *  (optimised for force calculations)
  *
  *  Each node calculates only the values for its domain in k-space
  *  (see fft.plan[3].mesh and fft.plan[3].start).
  *
- *  See also: Hockney/Eastwood 8-22 (p275). Note the somewhat
+ *  See also: @cite hockney88a 8-22 (p275). Note the somewhat
  *  different convention for the prefactors, which is described in
- *  Deserno/Holm.
+ *  @cite deserno98a @cite deserno98b.
  */
 static void p3m_calc_influence_function_force();
 
@@ -184,7 +184,7 @@ static void p3m_calc_influence_function_energy();
  *
  *  Calculate the aliasing sums in the nominator and denominator of
  *  the expression for the optimal influence function (see
- *  Hockney/Eastwood: 8-22, p. 275).
+ *  @cite hockney88a : 8-22, p. 275).
  *
  *  \param  n           n-vector for which the aliasing sum is to be performed.
  *  \param  nominator   aliasing sums in the nominator.
@@ -211,7 +211,7 @@ static double p3m_real_space_error(double prefac, double r_cut_iL, int n_c_part,
                                    double sum_q2, double alpha_L);
 
 /** Calculate the analytic expression of the error estimate for the
- *  P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+ *  P3M method in @cite hockney88a (eq. (8.23)) in
  *  order to obtain the rms error in the force for a system of N
  *  randomly distributed particles in a cubic box (k-space part).
  *  \param prefac   Prefactor of Coulomb interaction.
@@ -2236,14 +2236,12 @@ void p3m_scaleby_box_l() {
   p3m_calc_influence_function_energy();
 }
 
+/** @details Calculate the long range electrostatics part of the stress
+ *  tensor. This is part \f$\Pi_{\textrm{dir}, \alpha, \beta}\f$ eq. (2.6)
+ *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
+ *  eq. (2.8) is not present here since M is the empty set in our simulations.
+ */
 void p3m_calc_kspace_stress(double *stress) {
-  /**
-   * Calculates the long range electrostatics part of the stress tensor. This is
-   * part Pi_{dir, alpha,beta} in the paper by Essmann et al "A smooth particle
-   * mesh Ewald method", The Journal of Chemical Physics 103, 8577 (1995);
-   * doi: 10.1063/1.470117. The part Pi_{corr, alpha, beta} in the Essmann paper
-   * is not present here since M is the empty set in our simulations.
-   */
   if (p3m.sum_q2 > 0) {
     std::vector<double> node_k_space_stress;
     std::vector<double> k_space_stress;

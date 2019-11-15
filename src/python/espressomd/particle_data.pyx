@@ -441,7 +441,7 @@ cdef class ParticleHandle:
 
             def __set__(self, _q):
                 raise AttributeError(
-                    "Setting the director is not implemented in the C++-core of Espresso.")
+                    "Setting the director is not implemented in the C++-core of ESPResSo.")
 
             def __get__(self):
                 self.update_particle_data()
@@ -563,7 +563,7 @@ cdef class ParticleHandle:
                 return np.array(
                     [out_direction[0], out_direction[1], out_direction[2]])
 
-# Charge
+    # Charge
     property q:
         """
         Particle charge.
@@ -1293,7 +1293,7 @@ cdef class ParticleHandle:
         See Also
         --------
         add_bond : Delete an unverified bond held by the ``Particle``.
-        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
+        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
 
@@ -1324,7 +1324,7 @@ cdef class ParticleHandle:
         See Also
         --------
         delete_bond : Delete an unverified bond held by the ``Particle``.
-        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
+        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
 
@@ -1366,7 +1366,7 @@ cdef class ParticleHandle:
         # interactions
         if bond[0]._bond_id == -1:
             raise Exception(
-                "The bonded interaction has not yet been added to the list of active bonds in Espresso.")
+                "The bonded interaction has not yet been added to the list of active bonds in ESPResSo.")
 
         # Validity of the numeric id
         if bond[0]._bond_id >= bonded_ia_params.size():
@@ -1403,7 +1403,7 @@ cdef class ParticleHandle:
 
         See Also
         --------
-        bonds : ``Particle`` property containing a list of all current bonds help by ``Particle``.
+        bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         Examples
         --------
@@ -1492,7 +1492,7 @@ cdef class ParticleHandle:
         See Also
         ----------
         delete_bond : Delete an unverified bond held by the particle.
-        bonds : Particle property containing a list of all current bonds help by particle.
+        bonds : Particle property containing a list of all current bonds held by particle.
 
         """
 

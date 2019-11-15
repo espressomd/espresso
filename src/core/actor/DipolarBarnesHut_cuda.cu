@@ -17,6 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/** @file
+ *  The method concept is revealed within @cite burtscher11a
+ */
 
 #include "cuda_wrapper.hpp"
 
@@ -29,13 +32,6 @@
 typedef float dds_float;
 
 #ifdef DIPOLAR_BARNES_HUT
-
-////////////////////////////////////////////////////////////////////////////////
-// The method concept is revealed within: M. Burtscher, K. Pingali, in: GPU
-// Gems’11: GPU Computing Gems Emerald Edition, 2011. An Efficient CUDA
-// Implementation of the Tree-Based Barnes Hut n-Body Algorithm
-// http://iss.ices.utexas.edu/Publications/Papers/burtscher11.pdf
-////////////////////////////////////////////////////////////////////////////////
 
 #include "DipolarBarnesHut_cuda.cuh"
 

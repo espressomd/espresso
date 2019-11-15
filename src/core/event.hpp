@@ -22,7 +22,7 @@
 #define CORE_EVENT_HPP
 /** \file
  *  This file contains the hook procedures. These are the ones with names
- *  on_* and are called whenever something is changed in Espresso which
+ *  on_* and are called whenever something is changed in ESPResSo which
  *  might influence other parts. For example, the P3M code has to be
  *  reinitialized whenever the box size changes. The hooking mechanism
  *  allows to keep track of such changes.

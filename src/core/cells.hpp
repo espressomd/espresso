@@ -24,37 +24,33 @@
  *  This file contains everything related to the cell structure / cell
  *  system.
  *
- *  The cell system (\ref Cell Structure) describes how particles are
+ *  The cell system (\ref CellStructure) describes how particles are
  *  distributed on the cells and how particles of different cells
  *  (regardless if they reside on the same or different nodes)
  *  interact with each other. The following cell systems are implemented:
  *
- *  <ul>
- *    <li> domain decomposition: The simulation box is divided spatially
+ *  - domain decomposition: The simulation box is divided spatially
  *    into cells (see \ref domain_decomposition.hpp). This is suitable for
  *    short range interactions.
- *    <li> nsquare: The particles are distributed equally on all nodes
+ *  - nsquare: The particles are distributed equally on all nodes
  *    regardless their spatial position (see \ref nsquare.hpp). This is
- *    suitable for long range interactions that can not be treated by a
+ *    suitable for long range interactions that cannot be treated by a
  *    special method like P3M (see \ref p3m.hpp).
- *    <li> layered: in x and y directions, it uses a nsquared type of
+ *  - layered: in x and y directions, it uses a nsquared type of
  *    interaction calculation, but in z it has a domain decomposition
  *    into layers.
- *  </ul>
  *
  *  Some structures are common to all cell systems:
  *
- *  <ul>
- *    <li> All cells, real cells as well as ghost cells, are stored in the
+ *  - All cells, real cells as well as ghost cells, are stored in the
  *    vector \ref cells::cells whose size has to be changed with
  *    \ref realloc_cells.
- *    <li> There are two lists of cell pointers to access particles and
+ *  - There are two lists of cell pointers to access particles and
  *    ghost particles on a node: \ref local_cells contains pointers to
  *    all cells containing the particles physically residing on that
  *    node. \ref ghost_cells contains pointers to all cells containing
  *    the ghost particles of that node. The size of these lists has to be
  *    changed with \ref realloc_cellplist
- *  </ul>
  */
 
 #include <utility>

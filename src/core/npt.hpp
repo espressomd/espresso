@@ -33,7 +33,7 @@ typedef struct {
   double piston;
   /** inverse of \ref piston */
   double inv_piston;
-  /** isotropic volume.  Note that we use the term volume throughout,
+  /** isotropic volume. Note that we use the term volume throughout,
    *  although for a 2d or 1d system we mean Area and Length respectively
    */
   double volume;

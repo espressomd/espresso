@@ -24,8 +24,9 @@
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
-// This function is used to set the parameters
-// Also calculates and stores the reference state
+/** Set the IBM Tribend parameters.
+ *  Also calculate and store the reference state.
+ */
 int IBM_Tribend_SetParams(int bond_type, int ind1, int ind2, int ind3, int ind4,
                           double kb, bool flat);
 

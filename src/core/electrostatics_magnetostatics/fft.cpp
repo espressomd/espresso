@@ -21,7 +21,7 @@
 /** \file
  *
  *  Routines, row decomposition, data structures and communication for the
- * 3D-FFT.
+ *  3D-FFT.
  *
  */
 
@@ -169,12 +169,12 @@ find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
   return group;
 }
 
-/** Calculate the local fft mesh.  Calculate the local mesh (loc_mesh)
- *  of a node at position (n_pos) in a node grid (n_grid) for a global
- *  mesh of size (mesh) and a mesh offset (mesh_off (in mesh units))
- *  and store also the first point (start) of the local mesh.
+/** Calculate the local fft mesh. Calculate the local mesh (@p loc_mesh)
+ *  of a node at position (@p n_pos) in a node grid (@p n_grid) for a global
+ *  mesh of size (@p mesh) and a mesh offset (@p mesh_off (in mesh units))
+ *  and store also the first point (@p start) of the local mesh.
  *
- * \param[in]  n_pos    Position of the node in n_grid.
+ * \param[in]  n_pos    Position of the node in @p n_grid.
  * \param[in]  n_grid   node grid.
  * \param[in]  mesh     global mesh dimensions.
  * \param[in]  mesh_off global mesh offset (see \ref p3m_data_struct).
@@ -206,23 +206,24 @@ int calc_local_mesh(const int *n_pos, const int *n_grid, const int *mesh,
 }
 
 /** Calculate a send (or recv.) block for grid communication during a
- *  decomposition change.  Calculate the send block specification
+ *  decomposition change. Calculate the send block specification
  *  (block = lower left corner and upper right corner) which a node at
- *  position (pos1) in the actual node grid (grid1) has to send to
- *  another node at position (pos2) in the desired node grid
- *  (grid2). The global mesh, subject to communication, is specified
- *  via its size (mesh) and its mesh offset (mesh_off (in mesh
- *  units)).
+ *  position (@p pos1) in the actual node grid (@p grid1) has to send to
+ *  another node at position (@p pos2) in the desired node grid (@p grid2).
+ *  The global mesh, subject to communication, is specified via its size
+ *  (@p mesh) and its mesh offset (@p mesh_off (in mesh units)).
  *
  *  For the calculation of a receive block you have to change the arguments in
- * the following way: <br> pos1  - position of receiving node in the desired
- * node grid. <br> grid1 - desired node grid. <br> pos2  - position of the node
- * you intend to receive the data from in the actual node grid. <br> grid2 -
- * actual node grid.  <br>
+ *  the following way:
+ *  - @p pos1: position of receiving node in the desired node grid.
+ *  - @p grid1: desired node grid.
+ *  - @p pos2: position of the node you intend to receive the data from in the
+ *    actual node grid.
+ *  - @p grid2: actual node grid.
  *
- *  \param[in]  pos1     Position of send node in grid1.
+ *  \param[in]  pos1     Position of send node in @p grid1.
  *  \param[in]  grid1    node grid 1.
- *  \param[in]  pos2     Position of recv node in grid2.
+ *  \param[in]  pos2     Position of recv node in @p grid2.
  *  \param[in]  grid2    node grid 2.
  *  \param[in]  mesh     global mesh dimensions.
  *  \param[in]  mesh_off global mesh offset (see \ref p3m_data_struct).
@@ -249,24 +250,22 @@ int calc_send_block(const int *pos1, const int *grid1, const int *pos2,
   return size;
 }
 
-/** pack a block with dimensions (size[0] * size[1] * size[2]) starting
- *  at start[3] of an input 3d-grid with dimension dim[3] into an
- *  output 3d-grid with dimensions (size[2] * size[0] * size[1]) with
- *  a simultaneous one-fold permutation of the indices.
+/** Pack a block with dimensions <tt>size[0] * size[1] * size[2]</tt> starting
+ *  at @p start of an input 3D-grid with dimension @p dim into an output
+ *  3D-grid with dimensions <tt>size[2] * size[0] * size[1]</tt> with
+ *  a simultaneous one-fold permutation of the indices. The permutation is
+ *  defined as: slow_in -> fast_out, mid_in ->slow_out, fast_in -> mid_out.
  *
- * The permutation is defined as:
- * slow_in -> fast_out, mid_in ->slow_out, fast_in -> mid_out
+ *  An element <tt>(i0_in, i1_in, i2_in)</tt> is then
+ *  <tt>(i0_out = i1_in-start[1], i1_out = i2_in-start[2],
+ *  i2_out = i0_in-start[0])</tt> and for the linear indices we have:
+ *  - <tt>li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))</tt>
+ *  - <tt>li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out))</tt>
  *
- * An element (i0_in , i1_in , i2_in ) is then
- * (i0_out = i1_in-start[1], i1_out = i2_in-start[2], i2_out = i0_in-start[0])
- * and for the linear indices we have:                              <br> li_in =
- * i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br> li_out = i2_out +
- * size[0] * (i1_out + (size[2]*i0_out))
+ *  For index definition see \ref fft_pack_block.
  *
- * For index definition see \ref fft_pack_block.
- *
- *  \param[in]  in      pointer to input 3d-grid.
- *  \param[out] out     pointer to output 3d-grid (block).
+ *  \param[in]  in      input 3D-grid.
+ *  \param[out] out     output 3D-grid (block).
  *  \param[in]  start   start index of the block in the in-grid.
  *  \param[in]  size    size of the block (=dimension of the out-grid).
  *  \param[in]  dim     size of the in-grid.
@@ -275,7 +274,7 @@ int calc_send_block(const int *pos1, const int *grid1, const int *pos2,
 void pack_block_permute1(double const *const in, double *const out,
                          const int *start, const int *size, const int *dim,
                          int element) {
-  /* slow,mid and fast changing indices for input  grid */
+  /* slow, mid and fast changing indices for input grid */
   int s, m, f, e;
   /* linear index of in grid, linear index of out grid */
   int li_in, li_out = 0;
@@ -303,24 +302,22 @@ void pack_block_permute1(double const *const in, double *const out,
   }
 }
 
-/** pack a block with dimensions (size[0] * size[1] * size[2]) starting
- *  at start[3] of an input 3d-grid with dimension dim[3] into an
- *  output 3d-grid with dimensions (size[2] * size[0] * size[1]), this
- *  is a simultaneous two-fold permutation of the indices.
+/** Pack a block with dimensions <tt>size[0] * size[1] * size[2]</tt> starting
+ *  at @p start of an input 3D-grid with dimension @p dim into an output
+ *  3D-grid with dimensions <tt>size[2] * size[0] * size[1]</tt> with
+ *  a simultaneous two-fold permutation of the indices. The permutation is
+ *  defined as: slow_in -> mid_out, mid_in ->fast_out, fast_in -> slow_out.
  *
- * The permutation is defined as:
- * slow_in -> mid_out, mid_in ->fast_out, fast_in -> slow_out
+ *  An element <tt>(i0_in, i1_in, i2_in)</tt> is then
+ *  <tt>(i0_out = i2_in-start[2], i1_out = i0_in-start[0],
+ *  i2_out = i1_in-start[1])</tt> and for the linear indices we have:
+ *  - <tt>li_in = i2_in + size[2] * (i1_in + (size[1]*i0_in))</tt>
+ *  - <tt>li_out = i2_out + size[0] * (i1_out + (size[2]*i0_out))</tt>
  *
- * An element (i0_in , i1_in , i2_in ) is then
- * (i0_out = i2_in-start[2], i1_out = i0_in-start[0], i2_out = i1_in-start[1])
- * and for the linear indices we have:                              <br> li_in =
- * i2_in + size[2] * (i1_in + (size[1]*i0_in))          <br> li_out = i2_out +
- * size[0] * (i1_out + (size[2]*i0_out))
+ *  For index definition see \ref fft_pack_block.
  *
- * For index definition see \ref fft_pack_block.
- *
- *  \param[in]  in      pointer to input 3d-grid.
- *  \param[out] out     pointer to output 3d-grid (block).
+ *  \param[in]  in      input 3D-grid.
+ *  \param[out] out     output 3D-grid (block).
  *  \param[in]  start   start index of the block in the in-grid.
  *  \param[in]  size    size of the block (=dimension of the out-grid).
  *  \param[in]  dim     size of the in-grid.
@@ -329,7 +326,7 @@ void pack_block_permute1(double const *const in, double *const out,
 void pack_block_permute2(double const *const in, double *const out,
                          const int *start, const int *size, const int *dim,
                          int element) {
-  /* slow,mid and fast changing indices for input  grid */
+  /* slow, mid and fast changing indices for input grid */
   int s, m, f, e;
   /* linear index of in grid, linear index of out grid */
   int li_in, li_out = 0;
@@ -423,14 +420,14 @@ void back_grid_comm(fft_forw_plan plan_f, fft_back_plan plan_b,
   }
 }
 
-/** calculate 'best' mapping between a 2d and 3d grid.
- *  This we need for the communication from 3d domain decomposition
- *  to 2d row decomposition.
- *  The dimensions of the 2d grid are resorted, if necessary, in a way
- *  that they are multiples of the 3d grid dimensions.
- *  \param g3d      3d grid.
- *  \param g2d      2d grid.
- *  \param mult     factors between 3d and 2d grid dimensions
+/** Calculate 'best' mapping between a 2D and 3D grid.
+ *  Required for the communication from 3D domain decomposition
+ *  to 2D row decomposition.
+ *  The dimensions of the 2D grid are resorted, if necessary, in a way
+ *  that they are multiples of the 3D grid dimensions.
+ *  \param g3d      3D grid.
+ *  \param g2d      2D grid.
+ *  \param mult     factors between 3D and 2D grid dimensions
  *  \return         index of the row direction [0,1,2].
  */
 int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
@@ -478,7 +475,7 @@ int map_3don2d_grid(int const g3d[3], int g2d[3], int mult[3]) {
   return row_dir;
 }
 
-/** calculate most square 2d grid. */
+/** Calculate most square 2D grid. */
 void calc_2d_grid(int n, int grid[3]) {
   for (auto i = static_cast<int>(std::sqrt(n)); i >= 1; i--) {
     if (n % i == 0) {
