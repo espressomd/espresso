@@ -251,8 +251,9 @@ fi
 if [ ${run_checks} = true ]; then
     start "TEST"
 
-    # integration and unit tests
+    # unit tests and integration tests
     if [ ${make_check} = true ]; then
+        make -j${build_procs} check_unit_tests ${make_params} || exit 1
         if [ -z "${run_tests}" ]; then
             if [ ${check_odd_only} = true ]; then
                 make -j${build_procs} check_python_parallel_odd ${make_params} || exit 1
@@ -269,7 +270,6 @@ if [ ${run_checks} = true ]; then
                 ctest --timeout 60 --output-on-failure -R ${t} || exit 1
             done
         fi
-        make -j${build_procs} check_unit_tests ${make_params} || exit 1
     fi
 
     # tutorial tests
