@@ -49,18 +49,16 @@ void calc_mu_max() {
 }
 
 inline double g1_DLC_dip(double g, double x) {
-  double a, c, cc2, x3;
-  c = g / x;
-  cc2 = c * c;
-  x3 = x * x * x;
-  a = g * g * g / x + 1.5 * cc2 + 1.5 * g / x3 + 0.75 / (x3 * x);
+  auto const c = g / x;
+  auto const cc2 = c * c;
+  auto const x3 = x * x * x;
+  auto const a = g * g * g / x + 1.5 * cc2 + 1.5 * g / x3 + 0.75 / (x3 * x);
   return a;
 }
 
 inline double g2_DLC_dip(double g, double x) {
-  double a, x2;
-  x2 = x * x;
-  a = g * g / x + 2.0 * g / x2 + 2.0 / (x2 * x);
+  auto const x2 = x * x;
+  auto const a = g * g / x + 2.0 * g / x2 + 2.0 / (x2 * x);
   return a;
 }
 
@@ -98,8 +96,6 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
                        std::vector<Utils::Vector3d> &ts,
                        const ParticleRange &particles) {
 
-  int ip;
-
   std::vector<double> ReSjp(n_local_particles), ReSjm(n_local_particles);
   std::vector<double> ImSjp(n_local_particles), ImSjm(n_local_particles);
   std::vector<double> ReGrad_Mup(n_local_particles),
@@ -117,8 +113,8 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   for (int ix = -kcut; ix <= +kcut; ix++) {
     for (int iy = -kcut; iy <= +kcut; iy++) {
       if (!(ix == 0 && iy == 0)) {
-        auto const gx = (double)ix * facux;
-        auto const gy = (double)iy * facuy;
+        auto const gx = static_cast<double>(ix) * facux;
+        auto const gy = static_cast<double>(iy) * facuy;
 
         auto const gr = sqrt(gx * gx + gy * gy);
 
@@ -129,7 +125,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 
         double S[4] = {0.0, 0.0, 0.0, 0.0}; // S of Brodka method, or is S[4] =
                                             // {Re(S+), Im(S+), Re(S-), Im(S-)}
-        ip = 0;
+        int ip = 0;
 
         for (auto const &p : particles) {
           if (p.p.dipm > 0) {
@@ -222,7 +218,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
   // %le",-tx[0]*M_PI/(box_l[0]*box_l[1]),-ty[0]*M_PI/(box_l[0]*box_l[1]),
   //-tz[0]*M_PI/(box_l[0]*box_l[1])  );
 
-  ip = 0;
+  int ip = 0;
   for (auto const &p : particles) {
     if (p.p.dipm > 0) {
       ts[ip] = vector_product(p.calc_dip(), ts[ip]);
@@ -255,52 +251,39 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 
-  int ix, iy, ip;
-  double gx, gy, gr;
-
-  double S[4], global_S[4];
-  double a, b, c, d, er, ez, f, fa1;
-  double s1;
-  double energy, piarea, facux, facuy;
-
   n_local_particles = particles.size();
 
-  facux = 2.0 * M_PI / box_geo.length()[0];
-  facuy = 2.0 * M_PI / box_geo.length()[1];
+  auto const facux = 2.0 * M_PI / box_geo.length()[0];
+  auto const facuy = 2.0 * M_PI / box_geo.length()[1];
 
-  energy = 0.0;
-
-  for (ix = -kcut; ix <= +kcut; ix++) {
-    for (iy = -kcut; iy <= +kcut; iy++) {
+  double energy = 0.0;
+  for (int ix = -kcut; ix <= +kcut; ix++) {
+    for (int iy = -kcut; iy <= +kcut; iy++) {
 
       if (!(ix == 0 && iy == 0)) {
-        gx = (double)ix * facux;
-        gy = (double)iy * facuy;
-
-        gr = sqrt(gx * gx + gy * gy);
-
-        fa1 =
+        auto const gx = static_cast<double>(ix) * facux;
+        auto const gy = static_cast<double>(iy) * facuy;
+        auto const gr = sqrt(gx * gx + gy * gy);
+        auto const fa1 =
             1. / (gr * (exp(gr * box_geo.length()[2]) -
                         1.0)); // We assume short slab direction is z direction
 
         // ... Compute S+,(S+)*,S-,(S-)*, and Spj,Smj for the current g
 
-        S[0] = S[1] = S[2] = S[3] = 0.0;
-
-        ip = 0;
-
+        double S[4] = {0.0, 0.0, 0.0, 0.0};
+        int ip = 0;
         for (auto const &p : particles) {
           if (p.p.dipm > 0) {
             const Utils::Vector3d dip = p.calc_dip();
 
-            a = gx * dip[0] + gy * dip[1];
+            auto const a = gx * dip[0] + gy * dip[1];
             {
-              b = gr * dip[2];
-              er = gx * p.r.p[0] + gy * p.r.p[1];
-              ez = gr * p.r.p[2];
-              c = cos(er);
-              d = sin(er);
-              f = exp(ez);
+              auto const b = gr * dip[2];
+              auto const er = gx * p.r.p[0] + gy * p.r.p[1];
+              auto const ez = gr * p.r.p[2];
+              auto const c = cos(er);
+              auto const d = sin(er);
+              auto const f = exp(ez);
 
               S[0] += (b * c - a * d) * f;
               S[1] += (c * a + b * d) * f;
@@ -311,10 +294,11 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
           ip++;
         }
 
+        double global_S[4];
         MPI_Reduce(S, global_S, 4, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
 
         // We compute the contribution to the energy ............
-        s1 = (global_S[0] * global_S[2] + global_S[1] * global_S[3]);
+        auto const s1 = global_S[0] * global_S[2] + global_S[1] * global_S[3];
         // s2=(ReSm*ReSp+ImSm*ImSp); s2=s1!!!
 
         energy += fa1 * (s1 * 2.0);
@@ -325,7 +309,7 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
 
   // Multiply by the factors we have left during the loops
 
-  piarea = M_PI / (box_geo.length()[0] * box_geo.length()[1]);
+  auto const piarea = M_PI / (box_geo.length()[0] * box_geo.length()[1]);
   energy *= (-piarea);
   return (this_node == 0) ? energy : 0.0;
 }
@@ -334,12 +318,10 @@ double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
  *  methods when we have a slab geometry
  */
 void add_mdlc_force_corrections(const ParticleRange &particles) {
-  int dip_DLC_kcut = dlc_params.far_cut;
-  double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
 
   n_local_particles = particles.size();
 
-  volume = box_geo.volume();
+  auto const volume = box_geo.volume();
 
   // --- Create arrays that should contain the corrections to
   //     the forces and torques, and set them to zero.
@@ -350,7 +332,7 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  get_DLC_dipolar(dip_DLC_kcut, dip_DLC_f, dip_DLC_t, particles);
+  get_DLC_dipolar(dlc_params.far_cut, dip_DLC_f, dip_DLC_t, particles);
 
   // Now we compute the correction like Yeh and Klapp to take into account
   // the fact that you are using a 3D PBC method which uses spherical
@@ -359,7 +341,8 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
   // This correction is often called SDC = Shape Dependent Correction.
   // See @cite brodka04a.
 
-  mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
+  double mx = 0.0, my = 0.0, mtot = 0.0;
+  auto const mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
 
   // --- Transfer the computed corrections to the Forces, Energy and torques
   //     of the particles
@@ -395,19 +378,16 @@ void add_mdlc_force_corrections(const ParticleRange &particles) {
  *  3D dipolar methods when we have a slab geometry
  */
 double add_mdlc_energy_corrections(const ParticleRange &particles) {
-  double dip_DLC_energy = 0.0;
-  double mz = 0.0, mx = 0.0, my = 0.0, volume, mtot = 0.0;
-  int dip_DLC_kcut;
 
-  volume = box_geo.volume();
+  auto const volume = box_geo.volume();
 
-  dip_DLC_kcut = dlc_params.far_cut;
+  auto const dip_DLC_kcut = dlc_params.far_cut;
 
   //---- Compute the corrections ----------------------------------
 
   // First the DLC correction
-  dip_DLC_energy +=
-      dipole.prefactor * get_DLC_energy_dipolar(dip_DLC_kcut, particles);
+  double dip_DLC_energy =
+      dipole.prefactor * get_DLC_energy_dipolar(dlc_params.far_cut, particles);
 
   //           printf("Energy DLC                                  = %20.15le
   //           \n",dip_DLC_energy);
@@ -419,22 +399,24 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
   // This correction is often called SDC = Shape Dependent Correction.
   // See @cite brodka04a.
 
-  mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
+  double mx = 0.0, my = 0.0, mtot = 0.0;
+  auto const mz = slab_dip_count_mu(&mtot, &mx, &my, particles);
+  auto const mz2 = mz * mz;
 
   if (this_node == 0) {
 #ifdef DP3M
     if (dipole.method == DIPOLAR_MDLC_P3M) {
       if (dp3m.params.epsilon == P3M_EPSILON_METALLIC) {
-        dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * (mz * mz);
+        dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * mz2;
       } else {
         dip_DLC_energy +=
             dipole.prefactor * 2. * M_PI / volume *
-            (mz * mz - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
+            (mz2 - mtot * mtot / (2.0 * dp3m.params.epsilon + 1.0));
       }
     } else
 #endif
     {
-      dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * (mz * mz);
+      dip_DLC_energy += dipole.prefactor * 2. * M_PI / volume * mz2;
       fprintf(stderr, "You are not using the P3M method, therefore "
                       "dp3m.params.epsilon unknown, I assume metallic borders "
                       "\n");
@@ -457,18 +439,17 @@ double add_mdlc_energy_corrections(const ParticleRange &particles) {
  *     it makes no sense to have an accurate result for DLC-dipolar.
  */
 int mdlc_tune(double error) {
-  double de, n, gc, lz, lx, a, fa1, fa2, fa0, h;
-  int kc, limitkc = 200;
 
-  n = (double)n_part;
-  lz = box_geo.length()[2];
-
-  a = box_geo.length()[0] * box_geo.length()[1];
+  auto const n = (double)n_part;
+  auto const lx = box_geo.length()[0];
+  auto const ly = box_geo.length()[1];
+  auto const lz = box_geo.length()[2];
+  auto const a = lx * ly;
   mpi_bcast_max_mu(); /* we take the maximum dipole in the system, to be sure
                          that the errors in the other case
                          will be equal or less than for this one */
 
-  h = dlc_params.h;
+  auto const h = dlc_params.h;
   if (h < 0)
     return ES_ERROR;
 
@@ -485,17 +466,18 @@ int mdlc_tune(double error) {
     errexit();
   }
 
-  lx = box_geo.length()[0];
-
   bool flag = false;
+  int kc;
+  int const limitkc = 200;
   for (kc = 1; kc < limitkc; kc++) {
-    gc = kc * 2.0 * Utils::pi() / lx;
-    fa0 = sqrt(9.0 * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
-               22.0 * g1_DLC_dip(gc, lz) +
-               9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h));
-    fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * a)) * fa0;
-    fa2 = g2_DLC_dip(gc, lz);
-    de = n * (mu_max * mu_max) / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
+    auto const gc = kc * 2.0 * Utils::pi() / lx;
+    auto const fa0 = sqrt(9.0 * exp(+2. * gc * h) * g1_DLC_dip(gc, lz - h) +
+                          22.0 * g1_DLC_dip(gc, lz) +
+                          9.0 * exp(-2.0 * gc * h) * g1_DLC_dip(gc, lz + h));
+    auto const fa1 = 0.5 * sqrt(Utils::pi() / (2.0 * a)) * fa0;
+    auto const fa2 = g2_DLC_dip(gc, lz);
+    auto const de =
+        n * (mu_max * mu_max) / (4.0 * (exp(gc * lz) - 1.0)) * (fa1 + fa2);
     if (de < error) {
       flag = true;
       break;
@@ -506,7 +488,7 @@ int mdlc_tune(double error) {
     fprintf(stderr, "tune DLC dipolar: Sorry, unable to find a proper cut-off "
                     "for such system and accuracy.\n");
     fprintf(stderr, "Try modifying the variable limitkc in the c-code: "
-                    "dlc_correction.cpp  ... \n");
+                    "mdlc_correction.cpp  ... \n");
     return ES_ERROR;
   }
 

@@ -46,13 +46,12 @@ inline double evaluateAsTaylorSeriesAt(Polynom *series, double x) {
 /** evaluate the polynomial interpreted as a Chebychev series. Requires a series
    with at least three coefficients, i.e. no linear approximations! */
 inline double evaluateAsChebychevSeriesAt(Polynom *series, double x) {
-  int j;
   double *c = series->e;
   double x2 = 2.0 * x;
   double dd = c[series->n - 1];
   double d = x2 * dd + c[series->n - 2];
-  for (j = series->n - 3; j >= 1; j--) {
-    double tmp = d;
+  for (int j = series->n - 3; j >= 1; j--) {
+    auto const tmp = d;
     d = x2 * d - dd + c[j];
     dd = tmp;
   }
