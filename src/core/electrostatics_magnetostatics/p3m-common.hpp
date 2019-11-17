@@ -36,6 +36,8 @@
 
 #if defined(P3M) || defined(DP3M)
 
+#include "LocalBox.hpp"
+
 /** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR {
   /** force evaluation failed */
@@ -175,6 +177,23 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
  *  at value \a x.
  */
 double p3m_caf(int i, double x, int cao_value);
+
+/** Calculate properties of the local FFT mesh for the
+ *   charge assignment process.
+ */
+void p3m_calc_local_ca_mesh(p3m_local_mesh &local_mesh,
+                            const P3MParameters &params,
+                            const LocalBox<double> &local_geo, double skin);
+
+/** Calculate the spatial position of the left down mesh
+ *  point of the local mesh, to be stored in
+ *  @ref p3m_local_mesh::ld_pos "ld_pos".
+ *
+ *  Function called by @ref p3m_calc_local_ca_mesh() once and by
+ *  @ref p3m_scaleby_box_l() whenever the box size changes.
+ */
+void p3m_calc_lm_ld_pos(p3m_local_mesh &local_mesh,
+                        const P3MParameters &params);
 
 #endif /* P3M || DP3M */
 
