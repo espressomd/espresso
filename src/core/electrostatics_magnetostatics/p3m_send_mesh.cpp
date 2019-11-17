@@ -42,22 +42,15 @@ void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
   }
   /* communication */
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
-  auto const node_pos = Utils::Mpi::cart_coords<3>(comm, comm.rank());
 
   int r_margin[6];
   for (int i = 0; i < 6; i++) {
     auto const j = (i % 2 == 0) ? i + 1 : i - 1;
 
     if (node_neighbors[i] != comm.rank()) {
-      /* two step communication: first all even positions than all odd */
-      for (int evenodd = 0; evenodd < 2; evenodd++) {
-        if ((node_pos[i / 2] + evenodd) % 2 == 0)
-          MPI_Send(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
-                   REQ_P3M_INIT, comm);
-        else
-          MPI_Recv(&(r_margin[j]), 1, MPI_INT, node_neighbors[j], REQ_P3M_INIT,
-                   comm, MPI_STATUS_IGNORE);
-      }
+      MPI_Sendrecv(&(local_mesh.margin[i]), 1, MPI_INT, node_neighbors[i],
+                   REQ_P3M_INIT, &(r_margin[j]), 1, MPI_INT, node_neighbors[j],
+                   REQ_P3M_INIT, comm, MPI_STATUS_IGNORE);
     } else {
       r_margin[j] = local_mesh.margin[i];
     }
@@ -96,7 +89,6 @@ void p3m_send_mesh::gather_grid(double *themesh,
                                 const boost::mpi::communicator &comm,
                                 const int dim[3]) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
-  auto const node_pos = Utils::Mpi::cart_coords<3>(comm, comm.rank());
 
   /* direction loop */
   for (int s_dir = 0; s_dir < 6; s_dir++) {
@@ -109,18 +101,10 @@ void p3m_send_mesh::gather_grid(double *themesh,
 
     /* communication */
     if (node_neighbors[s_dir] != comm.rank()) {
-      for (int evenodd = 0; evenodd < 2; evenodd++) {
-        if ((node_pos[s_dir / 2] + evenodd) % 2 == 0) {
-          if (s_size[s_dir] > 0)
-            MPI_Send(send_grid.data(), s_size[s_dir], MPI_DOUBLE,
-                     node_neighbors[s_dir], REQ_P3M_GATHER, comm);
-        } else {
-          if (r_size[r_dir] > 0)
-            MPI_Recv(recv_grid.data(), r_size[r_dir], MPI_DOUBLE,
-                     node_neighbors[r_dir], REQ_P3M_GATHER, comm,
-                     MPI_STATUS_IGNORE);
-        }
-      }
+      MPI_Sendrecv(send_grid.data(), s_size[s_dir], MPI_DOUBLE,
+                   node_neighbors[s_dir], REQ_P3M_GATHER, recv_grid.data(),
+                   r_size[r_dir], MPI_DOUBLE, node_neighbors[r_dir],
+                   REQ_P3M_GATHER, comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }
@@ -135,7 +119,6 @@ void p3m_send_mesh::spread_grid(double *themesh,
                                 const boost::mpi::communicator &comm,
                                 const int dim[3]) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
-  auto const node_pos = Utils::Mpi::cart_coords<3>(comm, comm.rank());
 
   /* direction loop */
   for (int s_dir = 5; s_dir >= 0; s_dir--) {
@@ -147,18 +130,10 @@ void p3m_send_mesh::spread_grid(double *themesh,
                      1);
     /* communication */
     if (node_neighbors[r_dir] != comm.rank()) {
-      for (int evenodd = 0; evenodd < 2; evenodd++) {
-        if ((node_pos[r_dir / 2] + evenodd) % 2 == 0) {
-          if (r_size[r_dir] > 0)
-            MPI_Send(send_grid.data(), r_size[r_dir], MPI_DOUBLE,
-                     node_neighbors[r_dir], REQ_P3M_SPREAD, comm);
-        } else {
-          if (s_size[s_dir] > 0)
-            MPI_Recv(recv_grid.data(), s_size[s_dir], MPI_DOUBLE,
-                     node_neighbors[s_dir], REQ_P3M_SPREAD, comm,
-                     MPI_STATUS_IGNORE);
-        }
-      }
+      MPI_Sendrecv(send_grid.data(), r_size[r_dir], MPI_DOUBLE,
+                   node_neighbors[r_dir], REQ_P3M_SPREAD, recv_grid.data(),
+                   s_size[s_dir], MPI_DOUBLE, node_neighbors[s_dir],
+                   REQ_P3M_SPREAD, comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }
