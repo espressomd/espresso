@@ -40,6 +40,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
 #include <utils/constants.hpp>
