@@ -22,6 +22,9 @@
 #define ESPRESSO_P3M_SEND_MESH_HPP
 
 #include "p3m-common.hpp"
+
+#include <utils/Span.hpp>
+
 #include <boost/mpi/communicator.hpp>
 
 #include <vector>
@@ -60,10 +63,18 @@ class p3m_send_mesh {
 public:
   void resize(const boost::mpi::communicator &comm,
               const p3m_local_mesh &local_mesh);
-  void gather_grid(double *themesh, const boost::mpi::communicator &comm,
-                   const int dim[3]);
-  void spread_grid(double *themesh, const boost::mpi::communicator &comm,
-                   const int dim[3]);
+  void gather_grid(Utils::Span<double *> meshes,
+                   const boost::mpi::communicator &comm, const int *dim);
+  void gather_grid(double *mesh, const boost::mpi::communicator &comm,
+                   const int *dim) {
+    gather_grid(Utils::make_span(&mesh, 1), comm, dim);
+  }
+  void spread_grid(Utils::Span<double *> meshes,
+                   const boost::mpi::communicator &comm, const int *dim);
+  void spread_grid(double *mesh, const boost::mpi::communicator &comm,
+                   const int *dim) {
+    spread_grid(Utils::make_span(&mesh, 1), comm, dim);
+  }
 };
 
 #endif // ESPRESSO_P3M_SEND_MESH_HPP

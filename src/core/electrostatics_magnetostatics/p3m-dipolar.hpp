@@ -56,7 +56,7 @@ struct dp3m_data_struct {
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
   /** real space mesh (local) for CA/FFT of the dipolar field.*/
-  std::vector<std::vector<double>> rs_mesh_dip{3};
+  std::array<std::vector<double>, 3> rs_mesh_dip;
   /** k-space mesh (local) for k-space calculation and FFT.*/
   std::vector<double> ks_mesh;
 

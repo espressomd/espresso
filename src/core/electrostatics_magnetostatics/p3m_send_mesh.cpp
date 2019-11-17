@@ -96,15 +96,14 @@ void p3m_send_mesh::resize(const boost::mpi::communicator &comm,
     if (r_size[i] > max)
       max = r_size[i];
   }
-
-  send_grid.resize(max);
-  recv_grid.resize(max);
 }
 
-void p3m_send_mesh::gather_grid(double *themesh,
+void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
                                 const boost::mpi::communicator &comm,
-                                const int dim[3]) {
+                                const int *dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
+  send_grid.resize(max * meshes.size());
+  recv_grid.resize(max * meshes.size());
 
   /* direction loop */
   for (int s_dir = 0; s_dir < 6; s_dir++) {
@@ -112,51 +111,64 @@ void p3m_send_mesh::gather_grid(double *themesh,
 
     /* pack send block */
     if (s_size[s_dir] > 0)
-      fft_pack_block(themesh, send_grid.data(), s_ld[s_dir], s_dim[s_dir], dim,
-                     1);
+      for (size_t i = 0; i < meshes.size(); i++) {
+        fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
+                       s_ld[s_dir], s_dim[s_dir], dim, 1);
+      }
 
     /* communication */
     if (node_neighbors[s_dir] != comm.rank()) {
-      MPI_Sendrecv(send_grid.data(), s_size[s_dir], MPI_DOUBLE,
+      MPI_Sendrecv(send_grid.data(), meshes.size() * s_size[s_dir], MPI_DOUBLE,
                    node_neighbors[s_dir], REQ_P3M_GATHER, recv_grid.data(),
-                   r_size[r_dir], MPI_DOUBLE, node_neighbors[r_dir],
-                   REQ_P3M_GATHER, comm, MPI_STATUS_IGNORE);
+                   meshes.size() * r_size[r_dir], MPI_DOUBLE,
+                   node_neighbors[r_dir], REQ_P3M_GATHER, comm,
+                   MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }
     /* add recv block */
     if (r_size[r_dir] > 0) {
-      p3m_add_block(recv_grid.data(), themesh, r_ld[r_dir], r_dim[r_dir], dim);
+      for (size_t i = 0; i < meshes.size(); i++) {
+        p3m_add_block(recv_grid.data() + i * r_size[r_dir], meshes[i],
+                      r_ld[r_dir], r_dim[r_dir], dim);
+      }
     }
   }
 }
 
-void p3m_send_mesh::spread_grid(double *themesh,
+void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
                                 const boost::mpi::communicator &comm,
-                                const int dim[3]) {
+                                const int *dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
+  send_grid.resize(max * meshes.size());
+  recv_grid.resize(max * meshes.size());
 
   /* direction loop */
   for (int s_dir = 5; s_dir >= 0; s_dir--) {
     auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
 
     /* pack send block */
-    if (s_size[s_dir] > 0)
-      fft_pack_block(themesh, send_grid.data(), r_ld[r_dir], r_dim[r_dir], dim,
-                     1);
+    if (r_size[r_dir] > 0)
+      for (size_t i = 0; i < meshes.size(); i++) {
+        fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
+                       r_ld[r_dir], r_dim[r_dir], dim, 1);
+      }
     /* communication */
     if (node_neighbors[r_dir] != comm.rank()) {
-      MPI_Sendrecv(send_grid.data(), r_size[r_dir], MPI_DOUBLE,
+      MPI_Sendrecv(send_grid.data(), r_size[r_dir] * meshes.size(), MPI_DOUBLE,
                    node_neighbors[r_dir], REQ_P3M_SPREAD, recv_grid.data(),
-                   s_size[s_dir], MPI_DOUBLE, node_neighbors[s_dir],
-                   REQ_P3M_SPREAD, comm, MPI_STATUS_IGNORE);
+                   s_size[s_dir] * meshes.size(), MPI_DOUBLE,
+                   node_neighbors[s_dir], REQ_P3M_SPREAD, comm,
+                   MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }
     /* un pack recv block */
     if (s_size[s_dir] > 0) {
-      fft_unpack_block(recv_grid.data(), themesh, s_ld[s_dir], s_dim[s_dir],
-                       dim, 1);
+      for (size_t i = 0; i < meshes.size(); i++) {
+        fft_unpack_block(recv_grid.data() + i * r_size[s_dir], meshes[i],
+                         s_ld[s_dir], s_dim[s_dir], dim, 1);
+      }
     }
   }
 }
