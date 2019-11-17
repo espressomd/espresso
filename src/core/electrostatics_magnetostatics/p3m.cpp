@@ -63,16 +63,6 @@ using Utils::strcat_alloc;
  ************************************************/
 p3m_data_struct p3m;
 
-/** @name MPI tags for the charge-charge p3m communications */
-/*@{*/
-/** Tag for communication in p3m_init() -> p3m_calc_send_mesh(). */
-#define REQ_P3M_INIT 200
-/** Tag for communication in p3m_gather_fft_grid(). */
-#define REQ_P3M_GATHER 201
-/** Tag for communication in p3m_spread_force_grid(). */
-#define REQ_P3M_SPREAD 202
-/*@}*/
-
 /* @name Index helpers for direct and reciprocal space
  * After the FFT the data is in order YZX, which
  * means that Y is the slowest changing index.
