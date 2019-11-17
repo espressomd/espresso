@@ -305,7 +305,7 @@ class RotDiffAniso(ut.TestCase):
                                 .format(i, j, dcosij2_dev[i, j]))
 
     def test_case_00(self):
-        n = 800
+        n = 300
         self.rot_diffusion_param_setup(n)
         self.system.thermostat.set_langevin(
             kT=self.kT, gamma=self.gamma_global, seed=42)
