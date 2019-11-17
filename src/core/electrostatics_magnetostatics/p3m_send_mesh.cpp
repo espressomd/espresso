@@ -19,6 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "p3m_send_mesh.hpp"
+
+#ifdef P3M
 #include "fft.hpp"
 
 #include <utils/mpi/cart_comm.hpp>
@@ -172,3 +174,5 @@ void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
     }
   }
 }
+
+#endif

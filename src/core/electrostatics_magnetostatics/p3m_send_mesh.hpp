@@ -23,6 +23,8 @@
 
 #include "p3m-common.hpp"
 
+#ifdef P3M
+
 #include <utils/Span.hpp>
 
 #include <boost/mpi/communicator.hpp>
@@ -77,4 +79,5 @@ public:
   }
 };
 
+#endif
 #endif // ESPRESSO_P3M_SEND_MESH_HPP
