@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (C) 2016-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.

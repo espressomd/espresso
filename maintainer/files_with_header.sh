@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #

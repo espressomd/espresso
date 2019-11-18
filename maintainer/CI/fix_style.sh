@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env sh
 # Copyright (C) 2018-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -40,7 +40,8 @@ fi
 
 AUTOPEP8="$(which autopep8)"
 if ! "${AUTOPEP8}" --version 2>&1 | grep -qFo "autopep8 ${AUTOPEP8_VER} (pycodestyle: ${PYCODESTYLE_VER})"; then
-    echo -e "Could not find autopep8 ${AUTOPEP8_VER} with pycodestyle ${PYCODESTYLE_VER}\n${AUTOPEP8} is $(${AUTOPEP8} --version 2>&1)"
+    echo "Could not find autopep8 ${AUTOPEP8_VER} with pycodestyle ${PYCODESTYLE_VER}"
+    echo "${AUTOPEP8} is $(${AUTOPEP8} --version 2>&1)"
     exit 2
 fi
 
