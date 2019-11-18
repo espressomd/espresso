@@ -18,7 +18,7 @@
 #
 
 for T in *.py; do
-    if grep -q "${T}" CMakeLists.txt; then
+    if grep -qF " ${T}" CMakeLists.txt; then
         continue
     else
         GIT_STATUS=$(git status --porcelain -- "${T}")
