@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
@@ -20,7 +20,7 @@
 # check for missing GPL and copyright headers
 #
 
-files=$(sh maintainer/files_with_header.sh)
+files=$(maintainer/files_with_header.sh)
 num_files=$(echo ${files} | wc -w)
 current_year=$(date +%Y)
 

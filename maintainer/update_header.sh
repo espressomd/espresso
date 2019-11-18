@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # Copyright (C) 2018-2019 The ESPResSo project
 # Copyright (C) 2012,2013,2014 Olaf Lenz
 #
@@ -27,7 +28,7 @@
 #
 # To review the diff:
 # $> git diff --word-diff-regex=. -U0 | grep -Po 'Copyright.+' | sort | uniq
-files=$(sh maintainer/files_with_header.sh)
+files=$(maintainer/files_with_header.sh)
 num_files=$(echo ${files} | wc -w)
 current_year=$(date +%Y)
 

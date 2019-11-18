@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # Copyright (C) 2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
