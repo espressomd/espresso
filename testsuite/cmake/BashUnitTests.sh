@@ -117,11 +117,9 @@ function stderr() {
 ## If functions named `test_*` are already declared in the current environment,
 ## stop unit testing now. We don't want to run them and create side effects.
 function check_namespace() {
-  if [ ! -z "$(declare -F | sed -r 's/declare +-f +//' | grep -P '^test_')" ]
-  then
+  if [ ! -z "$(declare -F | sed -r 's/declare +-f +//' | grep -P '^test_')" ]; then
     stderr 'Functions named test_* already exist:'
-    for test in $(declare -F | sed -r 's/declare +-f +//' | grep -P "^test_")
-    do
+    for test in $(declare -F | sed -r 's/declare +-f +//' | grep -P "^test_"); do
       stderr "  ${test}"
     done
     exit 1
@@ -153,8 +151,7 @@ check_namespace
 function detect_open_mpi() {
   if [ -z "${OMPI_COMM_WORLD_SIZE}" ] && [ -z "${OMPI_COMM_WORLD_RANK}" ] \
   && [ -z "${OMPI_COMM_WORLD_LOCAL_RANK}" ] && [ -z "${OMPI_UNIVERSE_SIZE}" ] \
-  && [ -z "${OMPI_COMM_WORLD_LOCAL_SIZE}" ] && [ -z "${OMPI_COMM_WORLD_NODE_RANK}" ]
-  then
+  && [ -z "${OMPI_COMM_WORLD_LOCAL_SIZE}" ] && [ -z "${OMPI_COMM_WORLD_NODE_RANK}" ]; then
     return 0
   else
     error_log+=("Runtime error: cannot run this job from MPI, there is a conflict with")
@@ -211,8 +208,7 @@ function try_catch_capture_output() {
 ## @brief Run the set_up() function if it exists
 ## @returns Error code returned by setUp()
 function run_set_up() {
-  if [ "$(type -t set_up)" = "function" ]
-  then
+  if [ "$(type -t set_up)" = "function" ]; then
     try_catch set_up
     local -r retcode=${?}
     if [ "${retcode}" -ne "0" ]
@@ -228,12 +224,10 @@ function run_set_up() {
 ## @returns Error code returned by tear_down()
 function run_tear_down() {
   rm -f "${TMPNAME}"
-  if [ "$(type -t tear_down)" = "function" ]
-  then
+  if [ "$(type -t tear_down)" = "function" ]; then
     try_catch tear_down
     local retcode=${?}
-    if [ "${retcode}" -ne "0" ]
-    then
+    if [ "${retcode}" -ne "0" ]; then
       stderr "Failed to run tear_down()"
       exit ${retcode}
     fi
@@ -243,8 +237,7 @@ function run_tear_down() {
 
 ## @brief Run the tests
 function run_tests() {
-  for test in $(declare -F | sed -r 's/declare +-f +//' | grep -P "^test_")
-  do
+  for test in $(declare -F | sed -r 's/declare +-f +//' | grep -P "^test_"); do
     start_test_block "${test#test_}"
     ${test}
     end_test_block
@@ -282,8 +275,7 @@ function start_test_block() {
 ## Print a newline character and print all error messages in @ref error_log
 function end_test_block() {
   echo ""
-  for (( i=0; i<${#error_log[@]}; i++ ));
-  do
+  for (( i=0; i<${#error_log[@]}; i++ )); do
     stderr "    ${error_log[i]}"
   done
 }
@@ -319,8 +311,7 @@ function run_test_suite() {
   run_set_up
   run_tests
   run_tear_down
-  if [ "${error_counter}" -ne 0 ]
-  then
+  if [ "${error_counter}" -ne 0 ]; then
     stderr "Found ${error_counter} errors in ${total_tests} tests"
     exit 1
   else
@@ -341,12 +332,10 @@ function run_test_suite() {
 function assert_file_exists() {
   local -r filepath="${1}"
   local message="${2}"
-  if [ -z "${message}" ]
-  then
+  if [ -z "${message}" ]; then
     message="file not found: ${filepath}"
   fi
-  if [ -f "${filepath}" ]
-  then
+  if [ -f "${filepath}" ]; then
     log_success
   else
     log_failure "${message}"
@@ -361,12 +350,10 @@ function assert_string_equal() {
   local -r result="${1}"
   local -r expected="${2}"
   local message="${3}"
-  if [ -z "${message}" ]
-  then
+  if [ -z "${message}" ]; then
     message="${result} != ${expected}"
   fi
-  if [ "${result}" = "${expected}" ]
-  then
+  if [ "${result}" = "${expected}" ]; then
     log_success
   else
     log_failure "${message}"
@@ -381,12 +368,10 @@ function assert_equal() {
   local -r result="${1}"
   local -r expected="${2}"
   local message="${3}"
-  if [ -z "${message}" ]
-  then
+  if [ -z "${message}" ]; then
     message="${result} != ${expected}"
   fi
-  if [ "${result}" -eq "${expected}" ]
-  then
+  if [ "${result}" -eq "${expected}" ]; then
     log_success
   else
     log_failure "${message}"
@@ -399,12 +384,10 @@ function assert_equal() {
 function assert_non_zero() {
   local -r result="${1}"
   local message="${2}"
-  if [ -z "${message}" ]
-  then
+  if [ -z "${message}" ]; then
     message="${result} == 0"
   fi
-  if [ "${result}" -ne "0" ]
-  then
+  if [ "${result}" -ne "0" ]; then
     log_success
   else
     log_failure "${message}"
@@ -417,12 +400,10 @@ function assert_non_zero() {
 function assert_zero() {
   local -r result="${1}"
   local message="${2}"
-  if [ -z "${message}" ]
-  then
+  if [ -z "${message}" ]; then
     message="${result} != 0"
   fi
-  if [ "${result}" -eq "0" ]
-  then
+  if [ "${result}" -eq "0" ]; then
     log_success
   else
     log_failure "${message}"
@@ -436,8 +417,7 @@ function assert_zero() {
 function assert_return_code() {
   try_catch_capture_output "${@}"
   local -r retcode=${?}
-  if [ "${retcode}" -eq "0" ]
-  then
+  if [ "${retcode}" -eq "0" ]; then
     log_success
   else
     local message="non-zero return code (${retcode}) for command \`$*\`"

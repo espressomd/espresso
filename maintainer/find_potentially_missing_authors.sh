@@ -22,13 +22,11 @@
 
 # This has to be run from the root directory of the source tree
 
-git log|
-grep -i ^author|
-cut -f2- -d\ |
-sed -e 's/ <.*//'|
-sort -u|
-while read author
-do 
-  grep -i "${author}" AUTHORS >/dev/null || echo "Missing: ${author}"
-done
-
+git log |
+  grep -i ^author |
+  cut -f2- -d\  |
+  sed -e 's/ <.*//' |
+  sort -u |
+  while read author; do
+    grep -i "${author}" AUTHORS >/dev/null || echo "Missing: ${author}"
+  done

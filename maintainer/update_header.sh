@@ -66,4 +66,3 @@ for file in ${noproject_files}; do
     cat "${tmpfile}" > "${file}"
 done
 rm "${tmpfile}"
-
