@@ -47,7 +47,7 @@ def has_features(*args):
         raise RuntimeError(
             "'{}' is not a feature".format(','.join(check_set - all_features())))
 
-    return check_set < set(features())
+    return check_set <= set(features())
 
 
 def missing_features(*args):

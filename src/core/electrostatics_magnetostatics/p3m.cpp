@@ -90,14 +90,6 @@ p3m_data_struct p3m;
  */
 static void p3m_init_a_ai_cao_cut();
 
-/** Calculate the spatial position of the left down mesh point of the local
- *  mesh, to be stored in @ref p3m_local_mesh::ld_pos "ld_pos".
- *
- *  Function called by @ref p3m_calc_local_ca_mesh() once and by
- *  @ref p3m_scaleby_box_l() whenever the box length changes.
- */
-static void p3m_calc_lm_ld_pos();
-
 /** Calculates the dipole term */
 static double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
                                    const ParticleRange &particles);
@@ -113,11 +105,6 @@ static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
  *  necessary when the box length changes
  */
 static bool p3m_sanity_checks_boxl();
-
-/** Calculates properties of the local FFT mesh for the charge assignment
- *  process.
- */
-static void p3m_calc_local_ca_mesh();
 
 /** Interpolate the P-th order charge assignment function from
  *  @cite hockney88a 5-189 (or 8-61). The following charge fractions
@@ -250,7 +237,7 @@ void p3m_init() {
     p3m_realloc_ca_fields(CA_INCREMENT);
 #endif
 
-    p3m_calc_local_ca_mesh();
+    p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
 
     p3m.sm.resize(comm_cart, p3m.local_mesh);
 
@@ -1815,93 +1802,6 @@ void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
   }
 }
 
-void p3m_calc_local_ca_mesh() {
-  int i;
-  int ind[3];
-  /* total skin size */
-  double full_skin[3];
-
-  for (i = 0; i < 3; i++)
-    full_skin[i] = p3m.params.cao_cut[i] + skin + p3m.params.additional_mesh[i];
-
-  /* inner left down grid point (global index) */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ld[i] = (int)ceil(
-        local_geo.my_left()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
-  /* inner up right grid point (global index) */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ur[i] = (int)floor(
-        local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]);
-
-  /* correct roundoff errors at boundary */
-  for (i = 0; i < 3; i++) {
-    if ((local_geo.my_right()[i] * p3m.params.ai[i] - p3m.params.mesh_off[i]) -
-            p3m.local_mesh.in_ur[i] <
-        ROUND_ERROR_PREC)
-      p3m.local_mesh.in_ur[i]--;
-    if (1.0 +
-            (local_geo.my_left()[i] * p3m.params.ai[i] -
-             p3m.params.mesh_off[i]) -
-            p3m.local_mesh.in_ld[i] <
-        ROUND_ERROR_PREC)
-      p3m.local_mesh.in_ld[i]--;
-  }
-  /* inner grid dimensions */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.inner[i] =
-        p3m.local_mesh.in_ur[i] - p3m.local_mesh.in_ld[i] + 1;
-  /* index of left down grid point in global mesh */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.ld_ind[i] =
-        (int)ceil((local_geo.my_left()[i] - full_skin[i]) * p3m.params.ai[i] -
-                  p3m.params.mesh_off[i]);
-  /* left down margin */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.margin[i * 2] =
-        p3m.local_mesh.in_ld[i] - p3m.local_mesh.ld_ind[i];
-  /* up right grid point */
-  for (i = 0; i < 3; i++)
-    ind[i] =
-        (int)floor((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
-                   p3m.params.mesh_off[i]);
-  /* correct roundoff errors at up right boundary */
-  for (i = 0; i < 3; i++)
-    if (((local_geo.my_right()[i] + full_skin[i]) * p3m.params.ai[i] -
-         p3m.params.mesh_off[i]) -
-            ind[i] ==
-        0)
-      ind[i]--;
-  /* up right margin */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.margin[(i * 2) + 1] = ind[i] - p3m.local_mesh.in_ur[i];
-
-  /* grid dimension */
-  p3m.local_mesh.size = 1;
-  for (i = 0; i < 3; i++) {
-    p3m.local_mesh.dim[i] = ind[i] - p3m.local_mesh.ld_ind[i] + 1;
-    p3m.local_mesh.size *= p3m.local_mesh.dim[i];
-  }
-  /* reduce inner grid indices from global to local */
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ld[i] = p3m.local_mesh.margin[i * 2];
-  for (i = 0; i < 3; i++)
-    p3m.local_mesh.in_ur[i] =
-        p3m.local_mesh.margin[i * 2] + p3m.local_mesh.inner[i];
-
-  p3m.local_mesh.q_2_off = p3m.local_mesh.dim[2] - p3m.params.cao;
-  p3m.local_mesh.q_21_off =
-      p3m.local_mesh.dim[2] * (p3m.local_mesh.dim[1] - p3m.params.cao);
-}
-
-void p3m_calc_lm_ld_pos() {
-  int i;
-  /* spatial position of left down mesh point */
-  for (i = 0; i < 3; i++) {
-    p3m.local_mesh.ld_pos[i] =
-        (p3m.local_mesh.ld_ind[i] + p3m.params.mesh_off[i]) * p3m.params.a[i];
-  }
-}
-
 void p3m_init_a_ai_cao_cut() {
   int i;
   for (i = 0; i < 3; i++) {
@@ -2002,7 +1902,7 @@ void p3m_scaleby_box_l() {
   p3m.params.r_cut = p3m.params.r_cut_iL * box_geo.length()[0];
   p3m.params.alpha = p3m.params.alpha_L * (1. / box_geo.length()[0]);
   p3m_init_a_ai_cao_cut();
-  p3m_calc_lm_ld_pos();
+  p3m_calc_lm_ld_pos(p3m.local_mesh, p3m.params);
   p3m_sanity_checks_boxl();
   p3m_calc_influence_function_force();
   p3m_calc_influence_function_energy();
