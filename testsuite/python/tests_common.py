@@ -81,7 +81,7 @@ def lj_force_vector(v_d, d, lj_params):
     if d >= lj_params["cutoff"]:
         return np.zeros(3)
 
-    return 4. * lj_params["epsilon"] * v_d * (-12.0 * d**-14 + 6.0 * d**-8)
+    return 4. * lj_params["epsilon"] * v_d * (12.0 * d**-14 - 6.0 * d**-8)
 
 
 def verify_lj_forces(system, tolerance, ids_to_skip=()):
@@ -115,7 +115,7 @@ def verify_lj_forces(system, tolerance, ids_to_skip=()):
             continue
 
         # Distance and distance vec
-        v_d = dist_vec(p1, p0)
+        v_d = dist_vec(p0, p1)
         d = norm(v_d)
 
         # calc and add expected lj force
