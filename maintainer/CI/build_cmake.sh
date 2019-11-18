@@ -76,7 +76,7 @@ function set_default_value {
 
 # handle environment variables
 set_default_value insource false
-set_default_value srcdir $(pwd)
+set_default_value srcdir "$(pwd)"
 set_default_value cmake_params ""
 set_default_value with_fftw true
 set_default_value with_python_interface true
@@ -101,7 +101,7 @@ set_default_value with_scafacos true
 set_default_value test_timeout 300
 set_default_value hide_gpu false
 
-if [ ${make_check} = true ] || [ ${make_check_tutorials} = true ] || [ ${make_check_samples} = true ] || [ ${make_check_benchmarks} = true ]; then
+if [ "${make_check}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
 else
     run_checks=false
@@ -109,13 +109,13 @@ fi
 
 # If there are no user-provided flags, default
 # ones are added according to ${with_coverage}
-nvcc_flags=${cxx_flags}
+nvcc_flags="${cxx_flags}"
 if [ -z "${cxx_flags}" ]; then
-    if ${with_coverage}; then
+    if [ "${with_coverage}" = true ]; then
         cxx_flags="-Og"
         nvcc_flags="-O3"
     else
-        if [ ${run_checks} = true ]; then
+        if [ "${run_checks}" = true ]; then
             cxx_flags="-O3"
             nvcc_flags="-O3"
         else
@@ -125,7 +125,7 @@ if [ -z "${cxx_flags}" ]; then
     fi
 fi
 
-if [ ${with_coverage} = true ]; then
+if [ "${with_coverage}" = true ]; then
     bash <(curl -s https://codecov.io/env) &> /dev/null;
 fi
 
@@ -133,20 +133,20 @@ cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_N
 cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
-if [ ${with_ccache} = true ]; then
+if [ "${with_ccache}" = true ]; then
     cmake_params="${cmake_params} -DWITH_CCACHE=ON"
 fi
-if [ ${with_scafacos} = true ]; then
+if [ "${with_scafacos}" = true ]; then
     cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
 fi
 
 command -v nvidia-smi && nvidia-smi || true
-if [ ${hide_gpu} = true ]; then
+if [ "${hide_gpu}" = true ]; then
     echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
     export CUDA_VISIBLE_DEVICES=""
 fi
 
-if [ ${insource} = true ]; then
+if [ "${insource}" = true ]; then
     builddir="${srcdir}"
 elif [ -z "${builddir}" ]; then
     builddir="${srcdir}/build"
@@ -162,55 +162,55 @@ outp insource srcdir builddir \
     build_procs check_procs \
     with_cuda with_ccache
 
-if [ ${insource} = false ]; then
+if [ "${insource}" = false ]; then
     if [ ! -d "${builddir}" ]; then
         echo "Creating ${builddir}..."
         mkdir -p "${builddir}"
     fi
 fi
 
-if [ ${insource} = false ]; then
+if [ "${insource}" = false ]; then
     cd "${builddir}"
 fi
 
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
     grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
-    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do source ${f}; done && module load mpi
+    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do source "${f}"; done && module load mpi
 fi
 
 # CONFIGURE
 start "CONFIGURE"
 
-if [ ${with_fftw} = true ]; then
+if [ "${with_fftw}" = true ]; then
     :
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON ${cmake_params}"
 fi
 
-if [ ${with_python_interface} = true ]; then
+if [ "${with_python_interface}" = true ]; then
     cmake_params="-DWITH_PYTHON=ON ${cmake_params}"
 else
     cmake_params="-DWITH_PYTHON=OFF ${cmake_params}"
 fi
 
-if [ ${with_coverage} = true ]; then
+if [ "${with_coverage}" = true ]; then
     cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
 fi
 
-if [ ${with_asan} = true ]; then
+if [ "${with_asan}" = true ]; then
     cmake_params="-DWITH_ASAN=ON ${cmake_params}"
 fi
 
-if [ ${with_ubsan} = true ]; then
+if [ "${with_ubsan}" = true ]; then
     cmake_params="-DWITH_UBSAN=ON ${cmake_params}"
 fi
 
-if [ ${with_static_analysis} = true ]; then
+if [ "${with_static_analysis}" = true ]; then
     cmake_params="-DWITH_CLANG_TIDY=ON ${cmake_params}"
 fi
 
-if [ ${with_cuda} = true ]; then
+if [ "${with_cuda}" = true ]; then
     :
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
@@ -241,25 +241,25 @@ end "BUILD"
 
 # check for exit function, which should never be called from shared library
 # can't do this on CUDA though because nvcc creates a host function that just calls exit for each device function
-if [ ${with_cuda} = false ] || [ "$(echo ${NVCC} | grep -o clang)" = "clang" ]; then
+if [ "${with_cuda}" = false ] || [ "$(echo ${NVCC} | grep -o clang)" = "clang" ]; then
     if nm -o -C $(find . -name *.so) | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
     fi
 fi
 
-if [ ${run_checks} = true ]; then
+if [ "${run_checks}" = true ]; then
     start "TEST"
 
     # unit tests and integration tests
-    if [ ${make_check} = true ]; then
+    if [ "${make_check}" = true ]; then
         make -j${build_procs} check_unit_tests ${make_params} || exit 1
         if [ -z "${run_tests}" ]; then
-            if [ ${check_odd_only} = true ]; then
+            if [ "${check_odd_only}" = true ]; then
                 make -j${build_procs} check_python_parallel_odd ${make_params} || exit 1
-            elif [ ${check_gpu_only} = true ]; then
+            elif [ "${check_gpu_only}" = true ]; then
                 make -j${build_procs} check_python_gpu ${make_params} || exit 1
-            elif [ ${check_skip_long} = true ]; then
+            elif [ "${check_skip_long}" = true ]; then
                 make -j${build_procs} check_python_skip_long ${make_params} || exit 1
             else
                 make -j${build_procs} check_python ${make_params} || exit 1
@@ -267,23 +267,23 @@ if [ ${run_checks} = true ]; then
         else
             make python_tests ${make_params}
             for t in ${run_tests}; do
-                ctest --timeout 60 --output-on-failure -R ${t} || exit 1
+                ctest --timeout 60 --output-on-failure -R "${t}" || exit 1
             done
         fi
     fi
 
     # tutorial tests
-    if [ ${make_check_tutorials} = true ]; then
+    if [ "${make_check_tutorials}" = true ]; then
         make -j${build_procs} check_tutorials ${make_params} || exit 1
     fi
 
     # sample tests
-    if [ ${make_check_samples} = true ]; then
+    if [ "${make_check_samples}" = true ]; then
         make -j${build_procs} check_samples ${make_params} || exit 1
     fi
 
     # benchmark tests
-    if [ ${make_check_benchmarks} = true ]; then
+    if [ "${make_check_benchmarks}" = true ]; then
         make -j${build_procs} check_benchmarks ${make_params} || exit 1
     fi
 
@@ -301,7 +301,7 @@ else
     end "TEST"
 fi
 
-if [ ${with_coverage} = true ]; then
+if [ "${with_coverage}" = true ]; then
     cd "${builddir}"
     lcov -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
     lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system

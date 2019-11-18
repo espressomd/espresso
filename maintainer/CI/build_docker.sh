@@ -18,7 +18,7 @@
 
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
-cat > ${ENV_FILE} <<EOF
+cat > "${ENV_FILE}" <<EOF
 insource=${insource}
 cmake_params=${cmake_params}
 with_fftw=${with_fftw}
@@ -30,8 +30,8 @@ make_check=${make_check}
 EOF
 
 if [ -z "${image}" ]; then
-    image=ubuntu
+    image="ubuntu"
 fi
 
-image=espressomd/espresso-${image}:latest
-docker run -u espresso --env-file ${ENV_FILE} -v ${PWD}:/travis -it ${image} /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
+image="espressomd/espresso-${image}:latest"
+docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1

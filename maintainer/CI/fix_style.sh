@@ -32,20 +32,20 @@ fi
 CLANGFORMAT="$(which clang-format-${CLANG_FORMAT_VER})"
 if [ "${CLANGFORMAT}" = "" ]; then
     CLANGFORMAT="$(which clang-format)"
-    if ! ${CLANGFORMAT} --version | grep -qEo "version ${CLANG_FORMAT_VER}\.[0-9]+"; then
+    if ! "${CLANGFORMAT}" --version | grep -qEo "version ${CLANG_FORMAT_VER}\.[0-9]+"; then
         echo "Could not find clang-format ${CLANG_FORMAT_VER}. ${CLANGFORMAT} is $(${CLANGFORMAT} --version | grep -Eo '[0-9\.]{5}' | head -n 1)."
         exit 2
     fi
 fi
 
 AUTOPEP8="$(which autopep8)"
-if ! ${AUTOPEP8} --version 2>&1 | grep -qFo "autopep8 ${AUTOPEP8_VER} (pycodestyle: ${PYCODESTYLE_VER})"; then
+if ! "${AUTOPEP8}" --version 2>&1 | grep -qFo "autopep8 ${AUTOPEP8_VER} (pycodestyle: ${PYCODESTYLE_VER})"; then
     echo -e "Could not find autopep8 ${AUTOPEP8_VER} with pycodestyle ${PYCODESTYLE_VER}\n${AUTOPEP8} is $(${AUTOPEP8} --version 2>&1)"
     exit 2
 fi
 
-find . \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' -o -name '*.cuh' \) -not -path './libs/*' | xargs -r -n 5 -P 8 ${CLANGFORMAT} -i -style=file || exit 3
-find . \( -name '*.py' -o -name '*.pyx' -o -name '*.pxd' \) -not -path './libs/*' | xargs -r -n 5 -P 8 ${AUTOPEP8} --ignore=E266,W291,W293 --in-place --aggressive || exit 3
+find . \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' -o -name '*.cuh' \) -not -path './libs/*' | xargs -r -n 5 -P 8 "${CLANGFORMAT}" -i -style=file || exit 3
+find . \( -name '*.py' -o -name '*.pyx' -o -name '*.pxd' \) -not -path './libs/*' | xargs -r -n 5 -P 8 "${AUTOPEP8}" --ignore=E266,W291,W293 --in-place --aggressive || exit 3
 find . -type f -executable ! -name '*.sh' ! -name '*.py' ! -name '*.sh.in' ! -name pypresso.cmakein  -not -path './.git/*' | xargs -r -n 5 -P 8 chmod -x || exit 3
 
 if [ "${CI}" != "" ]; then
@@ -53,7 +53,7 @@ if [ "${CI}" != "" ]; then
     maintainer/gh_post_style_patch.py || exit 1
 fi
 git diff-index --quiet HEAD --
-if [ ${?} = 1 ]; then
+if [ "${?}" = 1 ]; then
     if [ "${CI}" != "" ]; then
         echo "Failed style check. Download ${CI_JOB_URL}/artifacts/raw/style.patch to see which changes are necessary." >&2
     else
