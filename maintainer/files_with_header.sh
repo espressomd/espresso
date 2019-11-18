@@ -18,10 +18,11 @@
 #
 
 git ls-files --exclude-standard |
-grep -vE '\.(blk|gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|vtk|svg|ico|eps)$' |
+grep -vE '\.(blk|gz|npz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|css|bib|vtf|vtk|svg|ico|eps|rst|ipynb)$' |
 grep -vE '^testsuite/configs/|^old/|^cmake/|^libs/' |
 grep -vE '(ChangeLog|AUTHORS|COPYING|NEWS|README|INSTALL)' |
-grep -vE '(\.gitignore)' |
+grep -vE '(\.gitmodules|\.github|\.gitignore|\.codecov\.yml|\.gitlab-ci\.yml|\.travis\.yml|bors\.toml)' |
+grep -vE '(\.clang-format|\.clang-tidy|\.pylintrc|tools/ubsan-suppressions\.txt)' |
 grep -vE '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk|doc/misc/homepage/palette\.html)' |
 grep -vE '(src/config/features\.def)' |
 grep -vE '(featurelist)' |
