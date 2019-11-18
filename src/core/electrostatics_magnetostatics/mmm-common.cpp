@@ -18,17 +18,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-/** \file
-    Common parts of the MMM family of methods for the
-    electrostatic interaction, MMM1D, MMM2D and ELC.  This file contains the
-   code for the polygamma expansions used for the near formulas of MMM1D and
-   MMM2D.
-
-    The expansion of the polygamma functions is fairly easy and follows directly
-   from Abramowitz and Stegun. For details, see Axel Arnold and Christian Holm,
-   "MMM2D: A fast and accurate summation method for electrostatic interactions
-   in 2D slab geometries", Comp. Phys. Comm., 148/3(2002),327-348.
-*/
 
 #include "config.hpp"
 

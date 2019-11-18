@@ -244,8 +244,7 @@ class Drude(ut.TestCase):
             E[dim] = Es
 
             setElectricField(E)
-            mux_pf6, mux_c1, mux_c2, mux_c3, mux_bmim = measure_dipole_moments(
-            )
+            mux_pf6, _, _, _, mux_bmim = measure_dipole_moments()
 
             return calc_pol(mu0_pf6[dim], mux_pf6[dim], Es), calc_pol(
                 mu0_bmim[dim], mux_bmim[dim], Es)

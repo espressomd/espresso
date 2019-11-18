@@ -60,7 +60,7 @@ enum {
 
 #ifdef EXTERNAL_FORCES
 /**
- *   \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
+ *  \ref ParticleProperties::ext_flag "ext_flag" value for fixed coordinate
  *  coord.
  */
 #define COORD_FIXED(coord) (2u << (coord))
@@ -74,11 +74,11 @@ enum {
  ************************************************/
 
 /** Highest particle number seen so far. If you leave out some
-    particle numbers, this number might be higher than the
-    true number of particles. On the other hand, if you start
-    your particle numbers at 0, the total number of particles
-    is larger by 1.
-*/
+ *  particle numbers, this number might be higher than the
+ *  true number of particles. On the other hand, if you start
+ *  your particle numbers at 0, the total number of particles
+ *  is larger by 1.
+ */
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
@@ -86,9 +86,9 @@ extern int n_part;
 extern bool swimming_particles_exist;
 
 /** id->particle mapping on all nodes. This is used to find partners
-    of bonded interactions. */
-extern Particle **local_particles;
-extern int max_local_particles;
+ *  of bonded interactions.
+ */
+extern std::vector<Particle *> local_particles;
 
 /************************************************
  * Functions
@@ -103,42 +103,43 @@ void free_particle(Particle *part);
 /*    Functions acting on Particle Lists        */
 /************************************************/
 
-/** Append a particle at the end of a particle List.
-    reallocates particles if necessary!
-    This procedure does not care for \ref local_particles.
-    \param l List to append the particle to.
-    \param part  Particle to append. */
+/** Append a particle at the end of a particle list.
+ *  Reallocate particles if necessary!
+ *  This procedure does not care for \ref local_particles.
+ *  \param l List to append the particle to.
+ *  \param part  Particle to append.
+ */
 void append_unindexed_particle(ParticleList *l, Particle &&part);
 
-/** Append a particle at the end of a particle List.
-    reallocates particles if necessary!
-    This procedure cares for \ref local_particles.
-    \param plist List to append the particle to.
-    \param part  Particle to append.
-    \return Pointer to new location of the particle. */
+/** Append a particle at the end of a particle list.
+ *  Reallocate particles if necessary!
+ *  This procedure cares for \ref local_particles.
+ *  \param plist List to append the particle to.
+ *  \param part  Particle to append.
+ *  \return Pointer to new location of the particle.
+ */
 Particle *append_indexed_particle(ParticleList *plist, Particle &&part);
 
-/** Remove a particle from one particle List and append it to another.
-    Refill the sourceList with last particle and update its entry in
-    local_particles. reallocates particles if necessary.  This
-    procedure does not care for \ref local_particles.
-    NOT IN USE AT THE MOMENT.
-    \param destList   List where the particle is appended.
-    \param sourceList List where the particle will be removed.
-    \param ind        Index of the particle in the sourceList.
-    \return Pointer to new location of the particle.
+/** Remove a particle from one particle list and append it to another.
+ *  Refill the @p sourceList with last particle and update its entry in
+ *  local_particles. Reallocate particles if necessary. This
+ *  procedure does not care for \ref local_particles.
+ *  \param destList   List where the particle is appended.
+ *  \param sourceList List where the particle will be removed.
+ *  \param ind        Index of the particle in the @p sourceList.
+ *  \return Pointer to new location of the particle.
  */
 Particle *move_unindexed_particle(ParticleList *destList,
                                   ParticleList *sourceList, int ind);
 
-/** Remove a particle from one particle List and append it to another.
-    Refill the sourceList with last particle and update its entry in
-    local_particles. Reallocates particles if necessary.  This
-    procedure cares for \ref local_particles.
-    \param destList   List where the particle is appended.
-    \param sourceList List where the particle will be removed.
-    \param ind        Index of the particle in the sourceList.
-    \return Pointer to new location of the particle.
+/** Remove a particle from one particle list and append it to another.
+ *  Refill the @p sourceList with last particle and update its entry in
+ *  local_particles. Reallocate particles if necessary. This
+ *  procedure cares for \ref local_particles.
+ *  \param destList   List where the particle is appended.
+ *  \param sourceList List where the particle will be removed.
+ *  \param ind        Index of the particle in the @p sourceList.
+ *  \return Pointer to new location of the particle.
  */
 Particle *move_indexed_particle(ParticleList *destList,
                                 ParticleList *sourceList, int ind);
@@ -166,7 +167,7 @@ void realloc_local_particles(int part);
  *
  *   @param part the identity of the particle to fetch
  *   @return Pointer to copy of particle if it exists,
- *          nullptr otherwise;
+ *           nullptr otherwise;
  */
 const Particle &get_particle_data(int part);
 
@@ -176,8 +177,7 @@ const Particle &get_particle_data(int part);
  * If the range is larger than the cache size, only
  * the particle that fit into the cache are fetched.
  *
- * @param ids Ids of the particles that should be
- *        fetched.
+ * @param ids Ids of the particles that should be fetched.
  */
 void prefetch_particle_data(std::vector<int> ids);
 
@@ -436,8 +436,8 @@ void remove_all_bonds_to(int part);
  *  Move a particle to a new position. If it does not exist, it is created.
  *  The position must be on the local node!
  *
- *  @param id the identity of the particle to move
- *  @param pos    its new position
+ *  @param id    the identity of the particle to move
+ *  @param pos   its new position
  *  @param _new  if true, the particle is allocated, else has to exists already
  *
  *  @return Pointer to the particle.
@@ -502,7 +502,7 @@ void recv_particles(ParticleList *particles, int node);
  */
 inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
   /* check for particle 2 in particle 1's exclusion list. The exclusion list is
-     symmetric, so this is sufficient. */
+   * symmetric, so this is sufficient. */
   return std::none_of(p1.el.begin(), p1.el.end(),
                       [&p2](int id) { return p2.p.identity == id; });
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,10 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import espressomd
-from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
 import numpy as np
-import sys
 
 # Define the LB Parameters
 TIME_STEP = 0.1
@@ -65,7 +63,7 @@ class Momentum(object):
         v_final = np.copy(p.v)
         momentum = self.system.analysis.linear_momentum()
 
-        for i in range(10):
+        for _ in range(10):
             self.system.integrator.run(50)
             # check that momentum stays constant
             np.testing.assert_allclose(

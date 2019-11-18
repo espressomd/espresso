@@ -19,10 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the Utils::NumeratedContainer class.
- *
- */
+/* Unit tests for the Utils::NumeratedContainer class. */
 
 #define BOOST_TEST_MODULE NumeratedContainerTest
 #define BOOST_TEST_DYN_LINK
@@ -61,14 +58,14 @@ BOOST_AUTO_TEST_CASE(index_handling) {
 
   int a = 18, b = 7, c = 3, d = 35325, e = 588;
 
-  /** Check adding elements */
+  /* Check adding elements */
   BOOST_CHECK(container.add(a) == 0);
   BOOST_CHECK(container.add(b) == 1);
   BOOST_CHECK(container.add(c) == 2);
   BOOST_CHECK(container.add(d) == 3);
   BOOST_CHECK(container.add(e) == 4);
 
-  /** Check removing and id reuse */
+  /* Check removing and id reuse */
   container.remove(1);
   BOOST_CHECK(container.add(b) == 1);
 
@@ -80,7 +77,7 @@ BOOST_AUTO_TEST_CASE(index_handling) {
   BOOST_CHECK(container.add(c) == 2);
   BOOST_CHECK(container.add(d) == 3);
 
-  /** Check out-of-order remove */
+  /* Check out-of-order remove */
   container.remove(3);
   container.remove(4);
   container.remove(2);
@@ -93,10 +90,10 @@ BOOST_AUTO_TEST_CASE(index_handling) {
   BOOST_CHECK(container.add(d) == 3);
   BOOST_CHECK(container.add(e) == 4);
 
-  /** Check values */
+  /* Check values */
   BOOST_CHECK(container[0] == a);
   BOOST_CHECK(container[4] == e);
 
-  /** Check that out-of-bounds check works */
+  /* Check that out-of-bounds check works */
   BOOST_CHECK_THROW(container[5], std::out_of_range);
 }

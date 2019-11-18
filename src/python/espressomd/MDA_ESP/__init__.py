@@ -15,8 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This modules allows to expose ESPREsSo's coordinates and particle attributes
-to MDAnalysis without need to save information to files.
+This modules exposes ESPResSo's coordinates and particle attributes
+to MDAnalysis without the need to save any information to files.
 
 The main class is :class:`Stream`, which is used to initialize the stream of
 data to MDAnalysis' readers. These are the topology reader :class:`ESPParser`
@@ -28,14 +28,12 @@ A minimal working example is the following:
 >>> import espressomd
 >>> from espressomd import MDA_ESP
 >>> import MDAnalysis as mda
-
 >>> # system setup
 >>> system = espressomd.System()
 >>> system.time_step = 1.
 >>> system.cell_system.skin = 1.
 >>> system.box_l = [10.,10.,10.]
 >>> system.part.add(id=0,pos=[1.,2.,3.])
-
 >>> # set up the stream
 >>> eos = MDA_ESP.Stream(system)
 >>> # feed Universe with a topology and with coordinates
@@ -58,6 +56,7 @@ from distutils.version import LooseVersion
 
 from MDAnalysis.lib import util
 from MDAnalysis.coordinates.core import triclinic_box
+from MDAnalysis.coordinates.core import triclinic_vectors
 from MDAnalysis.lib.util import NamedStream
 from MDAnalysis.topology.base import TopologyReaderBase
 from MDAnalysis.coordinates import base
@@ -120,17 +119,17 @@ class Stream:
 class ESPParser(TopologyReaderBase):
 
     """
-    An MDAnalysis reader of espresso's topology
+    An MDAnalysis reader of ESPResSo's topology.
 
     """
     format = 'ESP'
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, filename, **kwargs):  # pylint: disable=unused-argument
         self.kwargs = kwargs
 
     def parse(self):
         """
-        Access ESPResSo data and return the topology object
+        Access ESPResSo data and return the topology object.
 
         Returns
         -------
@@ -191,7 +190,7 @@ class Timestep(base.Timestep):
 
     @dimensions.setter
     def dimensions(self, box):
-        x, y, z = triclinic_vectors(box)
+        x, y, _ = triclinic_vectors(box)
         np.put(self._unitcell, self._ts_order_x, x)
         np.put(self._unitcell, self._ts_order_y, y)
 
@@ -199,7 +198,7 @@ class Timestep(base.Timestep):
 class ESPReader(SingleFrameReaderBase):
 
     """
-    An MDAnalysis single frame reader for the stream provided by Stream()
+    An MDAnalysis single frame reader for the stream provided by :class:`Stream`.
 
     """
     format = 'ESP'

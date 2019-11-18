@@ -18,10 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the MpiCallbacks class.
- *
- */
+/* Unit tests for the MpiCallbacks class. */
 
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE MpiCallbacks test
@@ -55,7 +52,7 @@ BOOST_AUTO_TEST_CASE(invoke_test) {
   BOOST_CHECK_EQUAL(f(i, d), (invoke<decltype(f), int, double>(f, ia)));
 }
 
-/**
+/*
  * Test that the implementation of callback_model_t
  * correctly deserialize the parameters and call
  * the callback with them.

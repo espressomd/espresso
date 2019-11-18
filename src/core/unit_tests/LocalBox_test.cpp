@@ -26,10 +26,7 @@
 
 #include <limits>
 
-/**
- * @brief Check that the box corners and side length
- *        agree.
- */
+/* Check that the box corners and side length agree. */
 template <class T> void check_length(LocalBox<T> box) {
   auto const expected = box.my_right() - box.my_left();
   auto const result = box.length();

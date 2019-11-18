@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 try:
-    import pint
+    import pint  # pylint: disable=unused-import
 except ImportError:
     tutorial = importlib_wrapper.MagicMock()
     skipIfMissingFeatures = ut.skip(

@@ -55,9 +55,6 @@ style:
     - git submodule deinit .
   script:
     - maintainer/CI/fix_style.sh
-    - git --no-pager diff > style.patch
-    - git diff-index --quiet HEAD -- || (echo "Failed style check. Download $CI_JOB_URL/artifacts/raw/style.patch to see which changes are necessary." && exit 1)
-    - echo "Passed style check"
   tags:
     - docker
     - linux
@@ -72,7 +69,7 @@ style:
 style_doxygen:
   <<: *global_job_definition
   stage: prepare
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   dependencies: []
   script:
     - mkdir build
@@ -475,9 +472,9 @@ run_tutorials:
 run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   needs:
-    - cuda9-maxset
+    - cuda10-maxset
   when: on_success
   only:
     - python

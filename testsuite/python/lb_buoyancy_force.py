@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import espressomd
-from espressomd import lb, lbboundaries, shapes, has_features
+from espressomd import lbboundaries, shapes
 import unittest as ut
 import numpy as np
 import unittest_decorators as utx

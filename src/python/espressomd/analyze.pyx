@@ -412,7 +412,7 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in espresso core if necessary
+        # Update in ESPResSo core if necessary
         if (analyze.total_pressure.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 
@@ -524,7 +524,7 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in espresso core if necessary
+        # Update in ESPResSo core if necessary
         if (analyze.total_p_tensor.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 
@@ -995,11 +995,11 @@ class Analysis:
             Maximum distance.
         r_bins : :obj:`int`
             Number of bins.
-        log_flag : :obj:`int`
-            When set to 0, the bins are linearly equidistant; when set to 1,
-            the bins are logarithmically equidistant.
-        int_flag : :obj:`int`
-            When set to 1, the result is an integrated distribution.
+        log_flag : :obj:`bool`
+            When set to ``False``, the bins are linearly equidistant; when set
+            to ``True``, the bins are logarithmically equidistant.
+        int_flag : :obj:`bool`
+            When set to ``True``, the result is an integrated distribution.
 
         Returns
         -------
@@ -1017,7 +1017,7 @@ class Analysis:
         if r_max is None:
             r_max = min_box_l / 2.0
 
-        if r_min < 0.0 or (log_flag == 1 and r_min == 0.0):
+        if r_min < 0.0 or (log_flag and r_min == 0.0):
             raise ValueError("r_min was chosen too small!")
         if r_max <= r_min:
             raise ValueError("r_max has to be greater than r_min!")
@@ -1033,7 +1033,7 @@ class Analysis:
 
         analyze.calc_part_distribution(
             analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-            r_min, r_max, r_bins, log_flag, & low, distribution.data())
+            r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
             distribution.data(), r_bins)

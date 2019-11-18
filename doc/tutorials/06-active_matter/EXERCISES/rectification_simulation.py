@@ -22,15 +22,17 @@
 #
 ##########################################################################
 
-from math import cos, pi, sin
+from math import cos, pi, sin  # pylint: disable=unused-import
 import numpy as np
 import os
-import sys
 import argparse
 
 import espressomd
 from espressomd import assert_features
 from espressomd.shapes import Cylinder, Wall, HollowCone
+
+
+assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
 
 
 # Quaternion procedure

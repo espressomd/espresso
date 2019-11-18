@@ -1702,7 +1702,7 @@ An Example script can be found here:
 
 * `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
-The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
+The reaction ensemble :cite:`smith94c,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
@@ -1767,7 +1767,7 @@ In the *forward* reaction, the appropriate number of reactants (given by
 products is inserted into the system. In the *backward* reaction,
 reactants and products exchange their roles. The acceptance probability
 :math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
-ensemble is given by the criterion :cite:`smith94a`
+ensemble is given by the criterion :cite:`smith94c`
 
 .. math::
 

@@ -76,7 +76,7 @@
 /// @subsection script_interface_example Example class
 ///
 /// As a first example we implement a hello world script object, that does not
-/// interact with the Espresso core. This class has one parameter, a single
+/// interact with the ESPResSo core. This class has one parameter, a single
 /// string @c m_name, and has one callable method: @c greet().
 ///
 /// @code{.cpp}

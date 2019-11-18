@@ -98,6 +98,29 @@ inline std::pair<int, int> cart_shift(boost::mpi::communicator const &comm,
 
   return {src, dst};
 }
+
+/**
+ * @brief Calculates the numbers of the nearest neighbors for a node.
+ *
+ * @tparam dim Dimension of the communicator
+ * @param comm Cartesian communicator
+ *
+ * @return Ranks of 2*dim neighbors
+ */
+template <size_t dim>
+Utils::Vector<int, 2 * dim>
+cart_neighbors(const boost::mpi::communicator &comm) {
+  using std::get;
+
+  Vector<int, 2 * dim> ret;
+
+  for (size_t i = 0; i < dim; i++) {
+    ret[2 * i + 0] = get<1>(cart_shift(comm, i, -1));
+    ret[2 * i + 1] = get<1>(cart_shift(comm, i, +1));
+  }
+
+  return ret;
+}
 } // namespace Mpi
 } // namespace Utils
 

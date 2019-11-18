@@ -17,10 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the Particle struct.
- *
- */
+/* Unit tests for the Particle struct. */
 
 #define BOOST_TEST_MODULE Particle test
 #define BOOST_TEST_DYN_LINK

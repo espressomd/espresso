@@ -26,7 +26,6 @@ required_features = ["LB_BOUNDARIES", "VIRTUAL_SITES_INERTIALESS_TRACERS",
 espressomd.assert_features(required_features)
 
 from espressomd import lb, shapes, lbboundaries
-import numpy as np
 from espressomd.virtual_sites import VirtualSitesInertialessTracers
 import argparse
 

@@ -64,9 +64,6 @@ def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
 
 def hydrostatic_pressure(
         ek,
-        x,
-        xi,
-        bjerrum_length,
         tensor_entry,
         box_x,
         box_y,

@@ -49,13 +49,35 @@ void convert_initial_torques(const ParticleRange &particles);
 // Frame conversion routines
 inline Utils::Vector3d
 convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
-  auto const A = rotation_matrix(p.r.quat);
-  return transpose(A) * vec;
+  return rotation_matrix(p.r.quat) * vec;
 }
 
 inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
                                                     const Utils::Vector3d &v) {
-  return rotation_matrix(p.r.quat) * v;
+  return transpose(rotation_matrix(p.r.quat)) * v;
+}
+
+/**
+ * @brief Transform matrix from body- to space-fixed frame.
+ *
+ * Given a linear map represented by \f$ A \in \mathbb{R}^{3 \times 3}\f$
+ * in the body-fixed frame, this returns the matrix \f$ A \in \mathbb{R}^{3
+ * \times 3}\f$ representing the map in the space-fixed frame. They are related
+ * by the map between the space-fixed and body-fixed frame \f$O\f$ like
+ *
+ * \f[
+ *     A' = O^T A O.
+ * \f]
+ *
+ * @tparam T Scalar type
+ * @param p Particle transforming from.
+ * @param A Matrix to transform
+ * @return Matrix representation in space-fixed coordinates.
+ */
+template <class T>
+auto convert_body_to_space(const Particle &p, const Utils::Matrix<T, 3, 3> &A) {
+  auto const O = rotation_matrix(p.r.quat);
+  return transpose(O) * A * O;
 }
 
 #ifdef DIPOLES
