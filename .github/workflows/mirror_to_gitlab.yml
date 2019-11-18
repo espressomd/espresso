@@ -1,0 +1,28 @@
+name: Mirror to gitlab
+
+on: [pull_request, push]
+
+jobs:
+  push_to_gitlab:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: Add gitlab remote
+      env:
+        access_token: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+      run: git remote add gitlab https://oauth2:${access_token}@gitlab.icp.uni-stuttgart.de/kai/espresso_mirror
+    - name: push to PR branch
+      if: github.event_name == 'pull_request'
+      run: |
+        git remote -v
+        pr_number=$(jq .pull_request.number ${GITHUB_EVENT_PATH})
+        git checkout -b PR-${pr_number}
+        git push -f gitlab
+    - name: push to non-PR branch
+      if: github.event_name == 'push'
+      run: |
+        branch_name=${GITHUB_REF##*/}
+        git checkout -b ${branch_name}
+        git push -f gitlab
