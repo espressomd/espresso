@@ -1,4 +1,4 @@
-#! /bin/bash -x
+#!/bin/bash
 # Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
@@ -51,7 +51,7 @@ echo "Missing GPL/simple header"
 echo "-------------------------"
 nolicense=$(grep -ILE "((ESPResSo|This program) is free software|Copying and distribution of this file)" ${files})
 if [ -n "${nolicense}" ]; then
-    echo ${nolicense}
+    ls -1 ${nolicense}
 else
     echo "NONE"
 fi
