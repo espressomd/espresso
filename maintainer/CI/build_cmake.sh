@@ -126,7 +126,7 @@ if [ -z "${cxx_flags}" ]; then
 fi
 
 if [ "${with_coverage}" = true ]; then
-    bash <(curl -s https://codecov.io/env) &> /dev/null;
+    bash <(curl -s https://codecov.io/env) &> /dev/null
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"

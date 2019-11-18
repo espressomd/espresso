@@ -42,10 +42,9 @@ if [ "${?}" = "0" ]; then
     rm -f doc_warnings.log~
     touch doc_warnings.log~
     found="false"
-    grep -rPno --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line
-    do
+    grep -rPno --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line; do
         # extract link target
-        reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed  's/()$//')
+        reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed 's/()$//')
         # skip if broken link refers to a standard Python type or to a
         # class/function from an imported module other than espressomd
         is_standard_type_or_module="false"
