@@ -16,7 +16,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+
 # Add current year to copyright header
 #
 # 1. Find files that do have copyright disclaimers
@@ -28,6 +29,7 @@
 #
 # To review the diff:
 # $> git diff --word-diff-regex=. -U0 | grep -Po 'Copyright.+' | sort | uniq
+
 files=$(maintainer/files_with_header.sh)
 num_files=$(echo ${files} | wc -w)
 current_year=$(date +%Y)
