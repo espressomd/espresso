@@ -96,28 +96,6 @@ typedef struct {
   int q_21_off;
 } p3m_local_mesh;
 
-/** Structure for send/recv meshes. */
-typedef struct {
-  /** dimension of sub meshes to send. */
-  int s_dim[6][3];
-  /** left down corners of sub meshes to send. */
-  int s_ld[6][3];
-  /** up right corners of sub meshes to send. */
-  int s_ur[6][3];
-  /** sizes for send buffers. */
-  int s_size[6];
-  /** dimension of sub meshes to recv. */
-  int r_dim[6][3];
-  /** left down corners of sub meshes to recv. */
-  int r_ld[6][3];
-  /** up right corners of sub meshes to recv. */
-  int r_ur[6][3];
-  /** sizes for recv buffers. */
-  int r_size[6];
-  /** maximal size for send/recv buffers. */
-  int max;
-} p3m_send_mesh;
-
 /** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
   /** tuning or production? */

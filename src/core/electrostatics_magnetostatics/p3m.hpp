@@ -39,6 +39,7 @@
 
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
 #include <utils/constants.hpp>
@@ -99,11 +100,6 @@ struct p3m_data_struct {
 
   /** send/recv mesh sizes */
   p3m_send_mesh sm;
-
-  /** vector to store grid points to send. */
-  std::vector<double> send_grid;
-  /** vector to store grid points to recv */
-  std::vector<double> recv_grid;
 
   fft_data_struct fft;
 };
@@ -282,9 +278,6 @@ inline double p3m_pair_energy(double chgfac, double dist) {
   }
   return 0.0;
 }
-
-/** Clean up P3M memory allocations. */
-void p3m_free();
 
 #endif /* of ifdef P3M */
 

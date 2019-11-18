@@ -40,6 +40,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
 #include <utils/constants.hpp>
@@ -55,7 +56,7 @@ struct dp3m_data_struct {
   /** real space mesh (local) for CA/FFT.*/
   double *rs_mesh;
   /** real space mesh (local) for CA/FFT of the dipolar field.*/
-  std::vector<std::vector<double>> rs_mesh_dip{3};
+  std::array<std::vector<double>, 3> rs_mesh_dip;
   /** k-space mesh (local) for k-space calculation and FFT.*/
   std::vector<double> ks_mesh;
 
@@ -92,11 +93,6 @@ struct dp3m_data_struct {
 
   /** send/recv mesh sizes */
   p3m_send_mesh sm;
-
-  /** Field to store grid points to send. */
-  std::vector<double> send_grid;
-  /** Field to store grid points to recv */
-  std::vector<double> recv_grid;
 
   /* Stores the value of the energy correction due to MS effects */
   double energy_correction;
