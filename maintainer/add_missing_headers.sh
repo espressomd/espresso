@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# This needs to be run from the top-level directory
+cd "$(git rev-parse --show-toplevel)"
 
 # Get files without headers
 all_files=$(maintainer/files_with_header.sh)

@@ -21,7 +21,7 @@
 # based on git commits. The output has to be checked manually, because
 # users have committed under different spellings and abbreviations.
 
-# This has to be run from the root directory of the source tree
+cd "$(git rev-parse --show-toplevel)"
 
 git log |
   grep -i ^author |
