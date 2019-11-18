@@ -27,12 +27,12 @@ current_year=$(date +%Y)
 echo "Examining ${num_files} files."
 echo
 
-missing_current_copyright=$(egrep -IL "Copyright.*${current_year}" ${files})
+missing_current_copyright=$(grep -ILE "Copyright.*${current_year}" ${files})
 
 echo "Copyright disclaimer missing the current year ${current_year}"
 echo "--------------------------------------------------"
 if [ -n "${missing_current_copyright}" ]; then
-    egrep -Il "Copyright" ${missing_current_copyright}
+    grep -IlE "Copyright" ${missing_current_copyright}
 else
     echo "NONE"
 fi
@@ -41,7 +41,7 @@ echo
 echo "Missing copyright disclaimer"
 echo "----------------------------"
 if [ -n "${missing_current_copyright}" ]; then
-    egrep -IL "Copyright" ${missing_current_copyright}
+    grep -ILE "Copyright" ${missing_current_copyright}
 else
     echo "NONE"
 fi
@@ -49,7 +49,7 @@ echo
 
 echo "Missing GPL/simple header"
 echo "-------------------------"
-nolicense=$(egrep -IL "((ESPResSo|This program) is free software|Copying and distribution of this file)" ${files})
+nolicense=$(grep -ILE "((ESPResSo|This program) is free software|Copying and distribution of this file)" ${files})
 if [ -n "${nolicense}" ]; then
     echo ${nolicense}
 else

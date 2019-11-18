@@ -18,12 +18,12 @@
 #
 
 git ls-files --exclude-standard |
-egrep -v '\.(blk|gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|vtk|svg|ico|eps)$' |
-egrep -v '^testsuite/configs/|^old/|^cmake/|^libs/' |
-egrep -v '(ChangeLog|AUTHORS|COPYING|NEWS|README|INSTALL)' |
-egrep -v '(\.gitignore|pkgIndex\.tcl)' |
-egrep -v '(config/config\.guess|config/config\.sub|config/install-sh)' |
-egrep -v '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk|doc/misc/homepage/palette\.html)' |
-egrep -v '(src/features\.def)' |
-egrep -v '(featurelist)' |
-egrep -v '(\.cproject|\.project|\.settings)'
+grep -vE '\.(blk|gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|vtk|svg|ico|eps)$' |
+grep -vE '^testsuite/configs/|^old/|^cmake/|^libs/' |
+grep -vE '(ChangeLog|AUTHORS|COPYING|NEWS|README|INSTALL)' |
+grep -vE '(\.gitignore|pkgIndex\.tcl)' |
+grep -vE '(config/config\.guess|config/config\.sub|config/install-sh)' |
+grep -vE '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk|doc/misc/homepage/palette\.html)' |
+grep -vE '(src/features\.def)' |
+grep -vE '(featurelist)' |
+grep -vE '(\.cproject|\.project|\.settings)'
