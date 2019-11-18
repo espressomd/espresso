@@ -28,24 +28,24 @@ cpp_files=$(echo ${files_to_check} | tr " " "\n" | grep -P '\.([c|h]pp|cuh?|dox)
 tmp=$(mktemp)
 # process python/cython/bash files
 for f in $(echo ${py_files}); do
-  head -n1 ${f} | grep -q '^#!'
-  if [ ${?} = 0 ]; then
+  head -n1 "${f}" | grep -q '^#!'
+  if [ "${?}" = 0 ]; then
     # preserve shebang on first line
-    (head -n1 ${f}
+    (head -n1 "${f}"
      sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'
-     tail -n+2 ${f}) > ${tmp}
+     tail -n+2 "${f}") > "${tmp}"
   else
-    (sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'; cat ${f}) > ${tmp}
+    (sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'; cat "${f}") > "${tmp}"
   fi
-  cp ${tmp} ${f}
+  cp "${tmp}" "${f}"
 done
 # process c++/cuda/doxygen files
 for f in $(echo ${cpp_files}); do
   (echo '/*'
    sed -e 's/^/ * /' maintainer/header_template.txt | sed 's/ $//'
    echo ' */'
-   cat ${f}) > ${tmp}
-  cp ${tmp} ${f}
+   cat "${f}") > "${tmp}"
+  cp "${tmp}" "${f}"
 done
-rm ${tmp}
+rm "${tmp}"
 

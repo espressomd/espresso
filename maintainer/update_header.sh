@@ -49,7 +49,7 @@ echo "  Adding current year to project copyright disclaimer..."
 echo "    \"${current_year}\""
 for file in ${noyear_files}; do
     echo "    ${file}"
-    sed -i -r -e "s/Copyright \(C\) ([0-9,]*)(-20[0-9][0-9])? .*The ESPR/Copyright (C) \1-${current_year} The ESPR/" ${file}
+    sed -i -r -e "s/Copyright \(C\) ([0-9,]*)(-20[0-9][0-9])? .*The ESPR/Copyright (C) \1-${current_year} The ESPR/" "${file}"
 done
 
 noproject_files=$(egrep -L "Copyright.*The ESPResSo project" ${files})
@@ -62,8 +62,8 @@ echo "    \"${disclaimer}\""
 tmpfile=$(mktemp)
 for file in ${noproject_files}; do
     echo "    ${file}"
-    perl -pe "if (!\$done) { s/^(.*)Copyright/\1${disclaimer}\n\1Copyright/ and \$done=1; }" ${file} > ${tmpfile}
-    cat ${tmpfile} > ${file}
+    perl -pe "if (!\$done) { s/^(.*)Copyright/\1${disclaimer}\n\1Copyright/ and \$done=1; }" "${file}" > "${tmpfile}"
+    cat "${tmpfile}" > "${file}"
 done
-rm ${tmpfile}
+rm "${tmpfile}"
 

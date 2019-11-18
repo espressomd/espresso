@@ -38,7 +38,7 @@ fi
 
 n_warnings=0
 grep -qrP --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/
-if [ ${?} = "0" ]; then
+if [ "${?}" = "0" ]; then
     rm -f doc_warnings.log~
     touch doc_warnings.log~
     found="false"
@@ -56,10 +56,10 @@ if [ ${?} = "0" ]; then
         grep -Pq "(^_|\._)" <<< "${reference}"
         [ "${?}" = "0" ] && is_private="true"
         # filter out false positives
-        if [ ${is_standard_type_or_module} = "true" ] || [ ${is_private} = "true" ]; then
+        if [ "${is_standard_type_or_module}" = "true" ] || [ "${is_private}" = "true" ]; then
             continue
         fi
-        if [ ${found} = "false" ]; then
+        if [ "${found}" = "false" ]; then
             echo "The Sphinx documentation contains broken links:"
         fi
         found="true"
@@ -70,16 +70,16 @@ if [ ${?} = "0" ]; then
         if [ -f "${filepath_rst}" ]; then
             # look for the reference
             grep -q -F "\`${reference}\`" "${filepath_rst}"
-            if [ ${?} = "0" ]; then
+            if [ "${?}" = "0" ]; then
                 grep --color -FnHo -m 1 "\`${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
                 continue
             fi
             # if not found, check if reference was shortened, for example
             # :class:`~espressomd.system.System` outputs a link named `System`
             grep -q -P "^[a-zA-Z0-9_]+$" <<< "${reference}"
-            if [ ${?} = "0" ]; then
+            if [ "${?}" = "0" ]; then
                 grep -q -P "\`~.+${reference}\`" "${filepath_rst}"
-                if [ ${?} = "0" ]; then
+                if [ "${?}" = "0" ]; then
                     grep --color -PnHo -m 1 "\`~.+${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
                     continue
                 fi
@@ -102,7 +102,7 @@ fi
 #    * incorrect numpydoc syntax, e.g. ":rtype:`float`"
 # They are difficult to predict, so we leave them to the user's discretion
 grep -qrP --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
-if [ ${?} = "0" ]; then
+if [ "${?}" = "0" ]; then
     echo "Possibly errors:"
     grep -rP --color --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
 fi
@@ -111,7 +111,7 @@ if [ "${CI}" != "" ]; then
     "${srcdir}/maintainer/gh_post_docs_warnings.py" sphinx ${n_warnings} doc_warnings.log || exit 1
 fi
 
-if [ ${n_warnings} = "0" ]; then
+if [ "${n_warnings}" = "0" ]; then
     echo "Found no broken link requiring fixing."
     exit 0
 else

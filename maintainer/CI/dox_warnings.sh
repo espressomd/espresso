@@ -69,8 +69,8 @@ grep -Prn '^[\ \t]*(?:\*?[\ \t]+)?[@\\]t?param(?:\[[in, out]+\])?[\ \t]+[a-zA-Z0
 rm -f dox_warnings.log
 
 # process warnings
-${srcdir}/maintainer/CI/dox_warnings.py
-n_warnings=${?}
+"${srcdir}/maintainer/CI/dox_warnings.py"
+n_warnings="${?}"
 
 if [ ! -f dox_warnings.log ]; then
     exit 1
@@ -80,10 +80,10 @@ fi
 cat dox_warnings.log
 
 if [ "${CI}" != "" ]; then
-    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen ${n_warnings} dox_warnings.log || exit 1
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen "${n_warnings}" dox_warnings.log || exit 1
 fi
 
-if [ ${n_warnings} = "0" ]; then
+if [ "${n_warnings}" = "0" ]; then
     echo "Found no warning requiring fixing."
     exit 0
 else
