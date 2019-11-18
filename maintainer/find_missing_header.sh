@@ -20,14 +20,14 @@
 # check for missing GPL and copyright headers
 #
 
-files=`sh maintainer/files_with_header.sh`
-num_files=`echo $files | wc -w`
-current_year=`date +%Y`
+files=$(sh maintainer/files_with_header.sh)
+num_files=$(echo $files | wc -w)
+current_year=$(date +%Y)
 
 echo "Examining $num_files files."
 echo
 
-missing_current_copyright=`egrep -IL "Copyright.*$current_year" $files`
+missing_current_copyright=$(egrep -IL "Copyright.*$current_year" $files)
 
 echo "Copyright disclaimer missing the current year $current_year"
 echo "--------------------------------------------------"
@@ -49,7 +49,7 @@ echo
 
 echo "Missing GPL/simple header"
 echo "-------------------------"
-nolicense=`egrep -IL "((ESPResSo|This program) is free software|Copying and distribution of this file)" $files`
+nolicense=$(egrep -IL "((ESPResSo|This program) is free software|Copying and distribution of this file)" $files)
 if [ -n "$nolicense" ]; then
     echo $nolicense
 else

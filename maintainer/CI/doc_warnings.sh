@@ -22,7 +22,7 @@
 # broken links are found in .rst files, the putative line numbers are
 # printed, otherwise the .html files are printed without line number.
 
-[ -z "${srcdir}" ] && srcdir=`realpath ..`
+[ -z "${srcdir}" ] && srcdir=$(realpath ..)
 
 # Pattern for :class:`foo` commands to non-existent 'foo' classes/functions.
 # They are formatted by Sphinx just like regular links to functions, but are
