@@ -87,10 +87,11 @@ set_default_value with_static_analysis false
 set_default_value myconfig "default"
 set_default_value build_procs 2
 set_default_value check_procs ${build_procs}
-set_default_value make_check true
 set_default_value check_odd_only false
 set_default_value check_gpu_only false
 set_default_value check_skip_long false
+set_default_value make_check_unit_tests true
+set_default_value make_check_python true
 set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
@@ -101,7 +102,7 @@ set_default_value with_scafacos true
 set_default_value test_timeout 300
 set_default_value hide_gpu false
 
-if [ "${make_check}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
+if [ "${make_check_unit_tests}" = true ] || [ "${make_check_python}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
 else
     run_checks=false
@@ -153,7 +154,7 @@ elif [ -z "${builddir}" ]; then
 fi
 
 outp insource srcdir builddir \
-    make_check make_check_tutorials make_check_samples make_check_benchmarks \
+    make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
     cmake_params with_fftw \
     with_python_interface with_coverage \
     with_ubsan with_asan \
@@ -251,9 +252,13 @@ fi
 if [ "${run_checks}" = true ]; then
     start "TEST"
 
-    # unit tests and integration tests
-    if [ "${make_check}" = true ]; then
+    # unit tests
+    if [ "${make_check_unit_tests}" = true ]; then
         make -j${build_procs} check_unit_tests ${make_params} || exit 1
+    fi
+
+    # integration tests
+    if [ "${make_check_python}" = true ]; then
         if [ -z "${run_tests}" ]; then
             if [ "${check_odd_only}" = true ]; then
                 make -j${build_procs} check_python_parallel_odd ${make_params} || exit 1
