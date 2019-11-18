@@ -15,7 +15,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+
+# Add copyright header to C++, CUDA, Doxygen, Python and shell files.
 
 cd "$(git rev-parse --show-toplevel)"
 

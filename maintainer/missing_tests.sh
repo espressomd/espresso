@@ -15,7 +15,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+
+# Detect python tests that are not included in CMakeLists.txt. Run this script
+# in the folders for python, sample, tutorial and benchmark testsuite folders.
 
 for T in *.py; do
     if grep -qF " ${T}" CMakeLists.txt; then

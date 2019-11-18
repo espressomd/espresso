@@ -16,7 +16,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+
+# List all files that are eligible for a copyright header.
 
 git ls-files --exclude-standard |
 grep -vE '\.(blk|gz|npz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|css|bib|vtf|vtk|svg|ico|eps|rst|ipynb)$' |

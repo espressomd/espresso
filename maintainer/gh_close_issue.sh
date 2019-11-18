@@ -15,7 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 ISSUE_NUMBER=$(curl -s -G https://api.github.com/search/issues \
      --data-urlencode "q=\"CI failed for merged PR\" org:espressomd repo:espresso is:open is:issue in:title" \

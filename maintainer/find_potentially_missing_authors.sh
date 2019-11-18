@@ -15,7 +15,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
 
 # This gets a tentative list of authors that are missing from the AUTHORS file
 # based on git commits. The output has to be checked manually, because
