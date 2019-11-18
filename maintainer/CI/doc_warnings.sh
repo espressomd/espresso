@@ -37,12 +37,12 @@ if [ ! -f doc/sphinx/html/index.html ]; then
 fi
 
 n_warnings=0
-grep -qrP --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/
+grep -qrP --include='*.html' --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/
 if [ "${?}" = "0" ]; then
     rm -f doc_warnings.log~
     touch doc_warnings.log~
     found="false"
-    grep -rPno --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line; do
+    grep -rPno --include='*.html' --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line; do
         # extract link target
         reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed 's/()$//')
         # skip if broken link refers to a standard Python type or to a
@@ -100,10 +100,10 @@ fi
 #    * incorrect syntax, e.g. "obj:float:"
 #    * incorrect numpydoc syntax, e.g. ":rtype:`float`"
 # They are difficult to predict, so we leave them to the user's discretion
-grep -qrP --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+grep -qrP --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
 if [ "${?}" = "0" ]; then
     echo "Possibly errors:"
-    grep -rP --color --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+    grep -rP --color --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
 fi
 
 if [ "${CI}" != "" ]; then
