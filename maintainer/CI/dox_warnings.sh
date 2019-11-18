@@ -70,7 +70,7 @@ rm -f dox_warnings.log
 
 # process warnings
 ${srcdir}/maintainer/CI/dox_warnings.py
-n_warnings=$?
+n_warnings=${?}
 
 if [ ! -f dox_warnings.log ]; then
     exit 1

@@ -21,7 +21,7 @@ set -e
 
 # output value of env variables
 function outp {
-    for p in $*; do
+    for p in ${*}; do
         echo "  ${p}=${!p}"
     done
 }
@@ -29,26 +29,26 @@ function outp {
 # start a block
 function start {
     echo "=================================================="
-    echo "START $1"
+    echo "START ${1}"
     echo "=================================================="
 }
 
 # end a block
 function end {
     echo "=================================================="
-    echo "END $1"
+    echo "END ${1}"
     echo "=================================================="
 }
 
 # set a default value to empty environment variables
 # cast boolean values to true/false
 function set_default_value {
-    if [ "$#" != 2 ]; then
-        echo "set_default_value() takes 2 arguments (varname, default), got $#"
+    if [ "${#}" != 2 ]; then
+        echo "set_default_value() takes 2 arguments (varname, default), got ${#}"
         exit 1
     fi
-    local -r varname="$1"
-    local -r default="$2"
+    local -r varname="${1}"
+    local -r default="${2}"
     local -r varname_alphabet=$(echo "${varname}" | tr -d '[:alnum:]_')
     if [ ! -z "${varname_alphabet}" ]; then
         echo "variable name '${varname}' contains unauthorized symbols"
@@ -235,7 +235,7 @@ end "CONFIGURE"
 # BUILD
 start "BUILD"
 
-make -k -j${build_procs} || make -k -j1 || exit $?
+make -k -j${build_procs} || make -k -j1 || exit ${?}
 
 end "BUILD"
 

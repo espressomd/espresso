@@ -38,7 +38,7 @@ fi
 
 n_warnings=0
 grep -qrP --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/
-if [ $? = "0" ]; then
+if [ ${?} = "0" ]; then
     rm -f doc_warnings.log~
     touch doc_warnings.log~
     found="false"
@@ -50,11 +50,11 @@ if [ $? = "0" ]; then
         # class/function from an imported module other than espressomd
         is_standard_type_or_module="false"
         grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
-        [ "$?" = "0" ] && is_standard_type_or_module="true"
+        [ "${?}" = "0" ] && is_standard_type_or_module="true"
         # private objects are not documented and cannot be linked
         is_private="false"
         grep -Pq "(^_|\._)" <<< "${reference}"
-        [ "$?" = "0" ] && is_private="true"
+        [ "${?}" = "0" ] && is_private="true"
         # filter out false positives
         if [ ${is_standard_type_or_module} = "true" ] || [ ${is_private} = "true" ]; then
             continue
@@ -70,16 +70,16 @@ if [ $? = "0" ]; then
         if [ -f "${filepath_rst}" ]; then
             # look for the reference
             grep -q -F "\`${reference}\`" "${filepath_rst}"
-            if [ $? = "0" ]; then
+            if [ ${?} = "0" ]; then
                 grep --color -FnHo -m 1 "\`${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
                 continue
             fi
             # if not found, check if reference was shortened, for example
             # :class:`~espressomd.system.System` outputs a link named `System`
             grep -q -P "^[a-zA-Z0-9_]+$" <<< "${reference}"
-            if [ $? = "0" ]; then
+            if [ ${?} = "0" ]; then
                 grep -q -P "\`~.+${reference}\`" "${filepath_rst}"
-                if [ $? = "0" ]; then
+                if [ ${?} = "0" ]; then
                     grep --color -PnHo -m 1 "\`~.+${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
                     continue
                 fi
@@ -102,7 +102,7 @@ fi
 #    * incorrect numpydoc syntax, e.g. ":rtype:`float`"
 # They are difficult to predict, so we leave them to the user's discretion
 grep -qrP --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
-if [ $? = "0" ]; then
+if [ ${?} = "0" ]; then
     echo "Possibly errors:"
     grep -rP --color --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
 fi
