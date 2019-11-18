@@ -420,8 +420,8 @@ function assert_return_code() {
   if [ "${retcode}" -eq "0" ]; then
     log_success
   else
-    local message="non-zero return code (${retcode}) for command \`$*\`"
-    local logfile=$(cat "${TMPNAME}" | sed 's/^/        /')
+    local -r message="non-zero return code (${retcode}) for command \`$*\`"
+    local -r logfile=$(sed 's/^/        /' < "${TMPNAME}")
     log_failure "${message}"$'\n'"${logfile}"
   fi
 }

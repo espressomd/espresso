@@ -88,7 +88,7 @@ if [ "${?}" = "0" ]; then
         echo "${filepath_html}:\`${reference}\`" | tee -a doc_warnings.log~
     done
     # generate log file
-    n_warnings=$(cat doc_warnings.log~ | wc -l)
+    n_warnings=$(wc -l < doc_warnings.log~)
     echo "The Sphinx documentation contains ${n_warnings} broken links:" > doc_warnings.log
     cat doc_warnings.log~ >> doc_warnings.log
     rm doc_warnings.log~

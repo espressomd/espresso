@@ -27,7 +27,7 @@ cpp_files=$(echo ${files_to_check} | tr " " "\n" | grep -P '\.([c|h]pp|cuh?|dox)
 
 tmp=$(mktemp)
 # process python/cython/bash files
-for f in $(echo ${py_files}); do
+for f in ${py_files}; do
   head -n1 "${f}" | grep -q '^#!'
   if [ "${?}" = 0 ]; then
     # preserve shebang on first line
@@ -40,7 +40,7 @@ for f in $(echo ${py_files}); do
   cp "${tmp}" "${f}"
 done
 # process c++/cuda/doxygen files
-for f in $(echo ${cpp_files}); do
+for f in ${cpp_files}; do
   (echo '/*'
    sed -e 's/^/ * /' maintainer/header_template.txt | sed 's/ $//'
    echo ' */'

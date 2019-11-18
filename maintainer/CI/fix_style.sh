@@ -78,7 +78,7 @@ pylint_command () {
     fi
 }
 pylint_command --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
-errors=$(grep -P '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log  | wc -l)
+errors=$(grep -Pc '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log)
 
 if [ "${CI}" != "" ]; then
     maintainer/gh_post_pylint.py "${errors}" pylint.log || exit 1
