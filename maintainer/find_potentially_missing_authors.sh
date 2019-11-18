@@ -29,6 +29,6 @@ sed -e 's/ <.*//'|
 sort -u|
 while read author
 do 
-  grep -i "$author" AUTHORS >/dev/null || echo Missing: $author
+  grep -i "${author}" AUTHORS >/dev/null || echo Missing: ${author}
 done
 
