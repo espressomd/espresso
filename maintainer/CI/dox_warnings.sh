@@ -19,13 +19,13 @@
 
 # This script generates a log of all Doxygen warnings that require fixing.
 
-dox_version=`doxygen --version`
+dox_version=$(doxygen --version)
 if [ "${dox_version}" != "1.8.13" ] && [ "${dox_version}" != "1.8.11" ]; then
     echo "Doxygen version ${dox_version} not supported"
     exit 1
 fi
 
-[ -z "${srcdir}" ] && srcdir=`realpath ..`
+[ -z "${srcdir}" ] && srcdir=$(realpath ..)
 
 # prepare Doxyfile for the XML version
 cp doc/doxygen/Doxyfile doc/doxygen/Doxyfile.bak
