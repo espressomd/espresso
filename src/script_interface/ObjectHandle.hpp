@@ -51,17 +51,13 @@ private:
   std::shared_ptr<Context> m_manager = {};
   boost::string_ref m_name;
 
-  boost::string_ref name() const {
-    return m_name;
-  }
+  boost::string_ref name() const { return m_name; }
 
 public:
   /**
    * @brief Responsible manager.
    */
-  Context *manager() const {
-    return assert(m_manager), m_manager.get();
-  }
+  Context *manager() const { return assert(m_manager), m_manager.get(); }
 
 public:
   /**
@@ -80,9 +76,7 @@ public:
    * @param params The parameters to the constructor. Only parameters that
    *               are valid for a default-constructed object are valid.
    */
-  void construct(VariantMap const &params) {
-    do_construct(params);
-  }
+  void construct(VariantMap const &params) { do_construct(params); }
 
 private:
   virtual void do_construct(VariantMap const &params) {

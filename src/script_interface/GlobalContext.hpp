@@ -23,7 +23,6 @@ private:
   Utils::Factory<ObjectHandle> m_factory;
 
 public:
-
   auto &factory() { return m_factory; }
 
   auto const &local_objects() const { return m_local_objects; }
@@ -46,7 +45,7 @@ private:
 
 public:
   GlobalContext(Communication::MpiCallbacks &callbacks,
-             Utils::Factory<ObjectHandle> factory)
+                Utils::Factory<ObjectHandle> factory)
       : m_factory(std::move(factory)),
         cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,

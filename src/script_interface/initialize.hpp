@@ -25,7 +25,6 @@
 
 #include <utils/Factory.hpp>
 
-
 namespace ScriptInterface {
 std::shared_ptr<Context> default_context(Communication::MpiCallbacks &,
                                          Utils::Factory<ObjectHandle>);

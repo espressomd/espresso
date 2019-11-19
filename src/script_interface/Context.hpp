@@ -89,8 +89,7 @@ public:
     std::unordered_map<ObjectId, ObjectRef> objects;
     boost::transform(state.objects, std::inserter(objects, objects.end()),
                      [this](auto const &kv) {
-                       return std::make_pair(kv.first,
-                                             deserialize(kv.second));
+                       return std::make_pair(kv.first, deserialize(kv.second));
                      });
 
     VariantMap params;
