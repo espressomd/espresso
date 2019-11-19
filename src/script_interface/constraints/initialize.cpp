@@ -56,6 +56,7 @@ using ElectricPlaneWave = ExternalField<Charge, PlaneWave<double, 3>>;
 
 constexpr auto class_names() {
   return std::make_tuple(
+      ClassName<Constraints>{"Constraints::Constraints"},
       ClassName<ShapeBasedConstraint>{"Constraints::ShapeBasedConstraint"},
       ClassName<HomogeneousMagneticField>{
           "Constraints::HomogeneousMagneticField"},
