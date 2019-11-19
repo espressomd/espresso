@@ -2,6 +2,7 @@
 #define ESPRESSO_SCRIPT_INTERFACE_OBJECTMANAGER_HPP
 
 #include "Context.hpp"
+#include "LocalContext.hpp"
 #include "MpiCallbacks.hpp"
 #include "ObjectHandle.hpp"
 #include "PackedVariant.hpp"
@@ -20,16 +21,7 @@ private:
    * head node. */
   std::unordered_map<ObjectId, ObjectRef> m_local_objects;
 
-  Utils::Factory<ObjectHandle> m_factory;
-
-public:
-  auto &factory() { return m_factory; }
-
-  auto const &local_objects() const { return m_local_objects; }
-
-  template <class T> void register_new(const char *name) {
-    m_factory.register_new<T>(name);
-  }
+  std::shared_ptr<LocalContext> m_node_local_context;
 
 private:
   Communication::CallbackHandle<ObjectId, const std::string &,
@@ -45,8 +37,8 @@ private:
 
 public:
   GlobalContext(Communication::MpiCallbacks &callbacks,
-                Utils::Factory<ObjectHandle> factory)
-      : m_factory(std::move(factory)),
+                std::shared_ptr<LocalContext> node_local_context)
+      : m_node_local_context(std::move(node_local_context)),
         cb_make_handle(&callbacks,
                        [this](ObjectId id, const std::string &name,
                               const PackedMap &parameters) {

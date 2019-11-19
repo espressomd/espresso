@@ -15,6 +15,8 @@ public:
   explicit LocalContext(Utils::Factory<ObjectHandle> factory)
       : m_factory(std::move(factory)) {}
 
+  const Utils::Factory<ObjectHandle> &factory() const { return m_factory; }
+
   void nofity_call_method(const ObjectHandle *, std::string const &,
                           VariantMap const &) override {}
   void notify_set_parameter(const ObjectHandle *, std::string const &,

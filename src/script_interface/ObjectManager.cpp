@@ -25,7 +25,16 @@ std::string ObjectManager::serialize(const ObjectHandle *o) const {
 }
 
 ObjectManager::ObjectManager(Communication::MpiCallbacks &callbacks,
-                             const Utils::Factory<ObjectHandle> &factory)
-    : m_local_context(std::make_shared<LocalContext>(factory)),
-      m_global_context(std::make_shared<GlobalContext>(callbacks, factory)) {}
+                             const Utils::Factory<ObjectHandle> &factory) {
+  auto local_context = std::make_shared<LocalContext>(factory);
+
+  /* If there is only one node, we can treat all objects as local, and thus
+   * never invoke any callback. */
+  m_global_context =
+      (callbacks.comm().size() > 1)
+          ? std::make_shared<GlobalContext>(callbacks, local_context)
+          : std::static_pointer_cast<Context>(local_context);
+
+  m_local_context  = std::move(local_context);
+}
 } // namespace ScriptInterface

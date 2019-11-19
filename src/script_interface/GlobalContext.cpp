@@ -8,9 +8,8 @@ namespace ScriptInterface {
 void GlobalContext::make_handle(ObjectId id, const std::string &name,
                                 const PackedMap &parameters) {
   try {
-    ObjectRef so = m_factory.make(name);
-
-    so->construct(unpack(parameters, m_local_objects));
+    ObjectRef so = m_node_local_context->make_shared(
+        name, unpack(parameters, m_local_objects));
 
     m_local_objects.emplace(std::make_pair(id, std::move(so)));
   } catch (std::runtime_error const &) {
@@ -58,9 +57,9 @@ void GlobalContext::nofity_call_method(const ObjectHandle *o,
 std::shared_ptr<ObjectHandle>
 GlobalContext::make_shared(std::string const &name,
                            const VariantMap &parameters) {
-  auto sp = m_factory.make(name);
+  auto sp = m_node_local_context->factory().make(name);
   set_manager(sp.get());
-  set_name(sp.get(), m_factory.stable_name(name));
+  set_name(sp.get(), m_node_local_context->factory().stable_name(name));
 
   auto const id = object_id(sp.get());
   remote_make_handle(id, name, parameters);
