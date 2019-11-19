@@ -7,8 +7,7 @@
 # notice and this notice are preserved.  This file is offered as-is,
 # without any warranty.
 
-abort()
-{
+abort() {
     echo "An error occurred. Exiting..." >&2
     echo "Command that failed: ${BASH_COMMAND}" >&2
     exit 1
@@ -20,21 +19,21 @@ set -e
 # HELPER FUNCTIONS
 
 # output value of env variables
-function outp {
+outp() {
     for p in ${*}; do
         echo "  ${p}=${!p}"
     done
 }
 
 # start a block
-function start {
+start() {
     echo "=================================================="
     echo "START ${1}"
     echo "=================================================="
 }
 
 # end a block
-function end {
+end() {
     echo "=================================================="
     echo "END ${1}"
     echo "=================================================="
@@ -42,7 +41,7 @@ function end {
 
 # set a default value to empty environment variables
 # cast boolean values to true/false
-function set_default_value {
+set_default_value() {
     if [ "${#}" != 2 ]; then
         echo "set_default_value() takes 2 arguments (varname, default), got ${#}"
         exit 1
@@ -127,7 +126,7 @@ if [ -z "${cxx_flags}" ]; then
 fi
 
 if [ "${with_coverage}" = true ]; then
-    bash <(curl -s https://codecov.io/env) &> /dev/null
+    bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"
@@ -176,8 +175,8 @@ fi
 
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
-    grep -q suse /etc/os-release && source /etc/profile.d/modules.sh && module load gnu-openmpi
-    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do source "${f}"; done && module load mpi
+    grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
+    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
 fi
 
 # CONFIGURE

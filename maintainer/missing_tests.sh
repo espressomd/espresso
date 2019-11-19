@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (C) 2017-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -18,14 +18,14 @@
 
 
 # Detect python tests that are not included in CMakeLists.txt. Run this script
-# in the folders for python, sample, tutorial and benchmark testsuite folders.
+# in the testsuite folders for python, sample, tutorial and benchmark tests.
 
 for T in *.py; do
     if grep -qF " ${T}" CMakeLists.txt; then
         continue
     else
-        GIT_STATUS=$(git status --porcelain -- "${T}")
-        if [[ ${GIT_STATUS} == ??* ]]; then
+        tracked_status=$(git ls-files -- "${T}")
+        if [ -z "${tracked_status}" ]; then
             echo "File '${T}' is not tracked."
             continue
         else
