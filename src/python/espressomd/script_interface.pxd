@@ -29,7 +29,7 @@ from boost cimport string_ref
 from utils cimport Span, Factory
 from communication cimport MpiCallbacks
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass Variant:
         Variant()
         Variant(const Variant & )
@@ -39,7 +39,6 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     bool is_none(const Variant &)
     ctypedef unordered_map[string, Variant] VariantMap
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
     Variant make_variant[T](const T & x)
 
     cdef cppclass ObjectHandle:
@@ -50,28 +49,27 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         Variant call_method(const string & name, const VariantMap & parameters) except +
         void set_state(map[string, Variant]) except +
         map[string, Variant] get_state() except +
+        string_ref name()
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::GlobalContext":
+cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface::ObjectManager":
     cdef cppclass CreationPolicy:
         pass
-    shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::GlobalContext::CreationPolicy":
+cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface::ObjectManager::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 
-cdef extern from "Context.hpp" namespace "ScriptInterface":
-    cppclass Context:
-        shared_ptr[ObjectHandle] make_shared(const string &, CreationPolicy, const VariantMap &) except +
-        string serialize(const ObjectHandle *) except +
-        shared_ptr[ObjectHandle] deserialize(const string & state) except +
-        string_ref name(const ObjectHandle *)
+cdef extern from "script_interface/ObjectManager.hpp" namespace "ScriptInterface":
+    cdef cppclass ObjectManager:
+        ObjectManager(MpiCallbacks &, const Factory[ObjectHandle] &)
+        shared_ptr[ObjectHandle] make_shared(CreationPolicy, const string &, const VariantMap)
+        shared_ptr[ObjectHandle] deserialize(const string &)
+        string serialize(const ObjectHandle *)
 
-cdef extern from "initialize.hpp" namespace "ScriptInterface":
+cdef extern from "script_interface/initialize.hpp" namespace "ScriptInterface":
     void initialize(Factory[ObjectHandle] *)
-    shared_ptr[Context] default_context(MpiCallbacks &, Factory[ObjectHandle])
 
-cdef extern from "get_value.hpp" namespace "ScriptInterface":
+cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
     T get_value[T](const Variant T)
 
 cdef void init(MpiCallbacks &)

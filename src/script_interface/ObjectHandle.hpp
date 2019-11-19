@@ -51,6 +51,7 @@ private:
   std::shared_ptr<Context> m_manager = {};
   boost::string_ref m_name;
 
+public:
   boost::string_ref name() const { return m_name; }
 
 public:

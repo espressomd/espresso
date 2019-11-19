@@ -21,7 +21,7 @@ from .utils cimport Vector3d, make_array_locked, handle_errors
 from libc.stdint cimport uintptr_t
 from libcpp.memory cimport make_shared
 
-cdef shared_ptr[Context] _om
+cdef shared_ptr[ObjectManager] _om
 
 cdef class PObjectRef(object):
     def __richcmp__(a, b, op):
@@ -86,7 +86,7 @@ cdef class PScriptInterface:
             self.sip = sip_.sip
         else:
             global _om
-            self.set_sip(_om.get().make_shared(to_char_pointer(name), policy_, self._sanitize_params(kwargs)))
+            self.set_sip(_om.get().make_shared(policy_, to_char_pointer(name), self._sanitize_params(kwargs)))
 
     def __richcmp__(a, b, op):
         if op == 2:
@@ -133,7 +133,7 @@ cdef class PScriptInterface:
 
     def name(self):
         """Return name of the core class."""
-        return to_str(_om.get().name(self.sip.get()).data())
+        return to_str(self.sip.get().name().data())
 
     def _serialize(self):
         global _om
@@ -226,7 +226,7 @@ cdef variant_to_python_object(const Variant & value) except +:
         ptr = get_value[shared_ptr[ObjectHandle]](value)
 
         if ptr:
-            so_name = to_str(_om.get().name(ptr.get()).data()) 
+            so_name = to_str(ptr.get().name().data())
             if not so_name:
                 raise Exception(
                     "Script object without name returned from the core")
@@ -376,10 +376,9 @@ def script_interface_register(c):
 
 cdef void init(MpiCallbacks &cb):
     cdef Factory[ObjectHandle] f
-    print("espressomd.script_interface.init()")
 
     initialize(&f)
 
     global _om
-    _om = default_context(cb, f)
+    _om = make_shared[ObjectManager](cb, f)
 

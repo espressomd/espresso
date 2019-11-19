@@ -1,6 +1,5 @@
 #include "GlobalContext.hpp"
 #include "ObjectHandle.hpp"
-#include "ObjectState.hpp"
 #include "PackedVariant.hpp"
 
 #include <utils/serialization/pack.hpp>
@@ -60,6 +59,8 @@ std::shared_ptr<ObjectHandle>
 GlobalContext::make_shared(std::string const &name,
                            const VariantMap &parameters) {
   auto sp = m_factory.make(name);
+  set_manager(sp.get());
+  set_name(sp.get(), m_factory.stable_name(name));
 
   auto const id = object_id(sp.get());
   remote_make_handle(id, name, parameters);

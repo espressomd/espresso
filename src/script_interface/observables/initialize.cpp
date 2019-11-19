@@ -112,7 +112,7 @@ namespace Observables {
       "Observables::" #name "");
 /*@}*/
 
-void initialize(ObjectManager *om) {
+void initialize(Utils::Factory<ObjectHandle> *om) {
   // Manual registration:
   //  om->register_new<ScriptInterface::Observables::ParticleVelocities>::
   //    register_new("Observables::ParticleVelocities");

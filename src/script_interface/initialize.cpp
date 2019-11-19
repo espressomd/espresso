@@ -59,12 +59,4 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   f->register_new<ComFixed>("ComFixed");
 }
 
-std::shared_ptr<Context> default_context(Communication::MpiCallbacks &cb,
-                                         Utils::Factory<ObjectHandle> factory) {
-  if (cb.comm().size() == 1) {
-    return std::make_shared<LocalContext>(std::move(factory));
-  } else {
-    return std::make_shared<GlobalContext>(cb, std::move(factory));
-  }
-}
 } /* namespace ScriptInterface */

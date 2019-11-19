@@ -24,8 +24,6 @@
 #include <script_interface/GlobalContext.hpp>
 #ifdef H5MD
 
-#include "GlobalContext.hpp"
-
 namespace ScriptInterface {
 namespace Writer {
 

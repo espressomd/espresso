@@ -4,7 +4,7 @@
 #include "Context.hpp"
 #include "Variant.hpp"
 
-#include "core/MpiCallbacks.hpp"
+#include "MpiCallbacks.hpp"
 
 #include <utils/Factory.hpp>
 
