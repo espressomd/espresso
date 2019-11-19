@@ -35,6 +35,6 @@ ObjectManager::ObjectManager(Communication::MpiCallbacks &callbacks,
           ? std::make_shared<GlobalContext>(callbacks, local_context)
           : std::static_pointer_cast<Context>(local_context);
 
-  m_local_context  = std::move(local_context);
+  m_local_context = std::move(local_context);
 }
 } // namespace ScriptInterface

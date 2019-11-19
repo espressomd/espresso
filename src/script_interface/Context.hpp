@@ -98,8 +98,7 @@ public:
           boost::apply_visitor(UnpackVisitor(objects), kv.second);
     }
 
-    auto o = make_shared(state.name, {});
-    o->construct(params);
+    auto o = make_shared(state.name, params);
     o->set_internal_state(state.internal_state);
 
     return o;

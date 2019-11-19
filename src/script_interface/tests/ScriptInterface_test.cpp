@@ -92,7 +92,6 @@ BOOST_AUTO_TEST_CASE(default_implementation) {
 BOOST_AUTO_TEST_CASE(set_parameter_test) {
   boost::mpi::communicator world;
   Communication::MpiCallbacks cb{world};
-  GlobalContext om(&cb);
 
   if (world.rank() == 0) {
   } else {
@@ -102,8 +101,6 @@ BOOST_AUTO_TEST_CASE(set_parameter_test) {
 
 int main(int argc, char **argv) {
   boost::mpi::environment mpi_env(argc, argv);
-
-  register_new<ScriptInterfaceTest>("TestClass");
 
   return boost::unit_test::unit_test_main(init_unit_test, argc, argv);
 }
