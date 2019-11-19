@@ -91,8 +91,10 @@ LB_node_force_density_gpu node_f = {
 #endif
 };
 
+#ifdef LB_BOUNDARIES_GPU
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
+#endif
 
 /** @name pointers for additional cuda check flag */
 /*@{*/
