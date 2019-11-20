@@ -64,7 +64,7 @@
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
- *  and stores values in MD units. It should not used
+ *  and stores values in MD units. It should not be used
  *  as an input for any LB calculations. TODO: in the future,
  *  one might want to have several structures for printing
  *  separately rho, v, pi without having to compute/store
@@ -91,8 +91,10 @@ LB_node_force_density_gpu node_f = {
 #endif
 };
 
+#ifdef LB_BOUNDARIES_GPU
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
+#endif
 
 /** @name pointers for additional cuda check flag */
 /*@{*/
@@ -526,8 +528,8 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
   mode[9] =
       modes_from_pi_eq[5] + para->gamma_shear * (mode[9] - modes_from_pi_eq[5]);
 
-  /** relax the ghost modes (project them out) */
-  /** ghost modes have no equilibrium part due to orthogonality */
+  /* relax the ghost modes (project them out) */
+  /* ghost modes have no equilibrium part due to orthogonality */
 
   mode[10] = para->gamma_odd * mode[10];
   mode[11] = para->gamma_odd * mode[11];
@@ -548,10 +550,8 @@ __device__ void thermalize_modes(Utils::Array<float, 19> &mode,
                                  unsigned int index, uint64_t philox_counter) {
   float Rho;
   float4 random_floats;
-  /** mass mode */
+  /* mass mode */
   Rho = mode[0] + para->rho;
-
-  /* momentum modes */
 
   /* stress modes */
   random_floats = random_wrapper_philox(index, 4, philox_counter);
@@ -613,7 +613,6 @@ __device__ void thermalize_modes(Utils::Array<float, 19> &mode,
               (random_floats.y - 0.5f) * sqrt12;
 }
 
-/*-------------------------------------------------------*/
 /** Normalization of the modes need before back-transformation into velocity
  *  space
  *  @param[in,out] mode  Local register values mode
@@ -641,7 +640,6 @@ __device__ void normalize_modes(Utils::Array<float, 19> &mode) {
   mode[18] *= 3.0f / 4.0f;
 }
 
-/*-------------------------------------------------------*/
 /** Back-transformation from modespace to densityspace and streaming with
  *  the push method using pbc
  *  @param[in]  index  Node index / thread index
@@ -816,7 +814,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     unsigned int y = xyz.y;
     unsigned int z = xyz.z;
 
-    /** store vd temporary in second lattice to avoid race conditions */
+    /* store vd temporary in second lattice to avoid race conditions */
 
     // TODO : PUT IN EQUILIBRIUM CONTRIBUTION TO THE BOUNCE-BACK DENSITY FOR THE
     // BOUNDARY FORCE
@@ -1133,8 +1131,8 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
     modes_from_pi_eq[5] = j[1] * j[2] / Rho;
 
     /* Now we must predict the outcome of the next collision */
-    /* We immediately average pre- and post-collision.  */
-    /* TODO: need a reference for this.   */
+    /* We immediately average pre- and post-collision. */
+    /* TODO: need a reference for this. */
 
     mode[4] = modes_from_pi_eq[0] + (0.5f + 0.5f * para->gamma_bulk) *
                                         (mode[4] - modes_from_pi_eq[0]);
@@ -2049,11 +2047,11 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
                         int single_nodeindex, float rho) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
-  /*Note: this sets the velocities to zero */
+  /* Note: this sets the velocities to zero */
   if (index == 0) {
     float local_rho;
 
-    /** default values for fields in lattice units */
+    /* default values for fields in lattice units */
     local_rho = (rho - para->rho);
     d_v[single_nodeindex].rho = rho;
 
@@ -2143,10 +2141,10 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
                           unsigned int philox_counter) {
-  /*every node is connected to a thread via the index*/
+  /* every node is connected to a thread via the index */
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
-  /*the 19 moments (modes) are only temporary register values */
+  /* the 19 moments (modes) are only temporary register values */
   Utils::Array<float, 19> mode;
 
   if (index < para->number_of_nodes) {
@@ -2167,10 +2165,10 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f) {
-  /*every node is connected to a thread via the index*/
+  /* every node is connected to a thread via the index */
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
-  /*the 19 moments (modes) are only temporary register values */
+  /* the 19 moments (modes) are only temporary register values */
   Utils::Array<float, 19> mode;
 
   if (index < para->number_of_nodes) {
@@ -2388,7 +2386,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   size_of_rho_v = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_gpu);
   size_of_rho_v_pi = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
 
-  /** Allocate structs in device memory*/
+  /* Allocate structs in device memory*/
   free_realloc_and_clear(device_rho_v, size_of_rho_v);
 
   /* TODO: this is almost a copy of device_rho_v; think about eliminating
@@ -2828,7 +2826,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
  *  @param lbpar_gpu   struct containing the parameters of the fluid
  */
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
-  /*write parameters in const memory*/
+  /* write parameters in const memory */
   cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(para), lbpar_gpu,
                                    sizeof(LB_parameters_gpu)));
 }
