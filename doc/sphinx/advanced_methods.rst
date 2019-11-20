@@ -1992,10 +1992,9 @@ For this one has to provide the following reaction to the Widom method:
     widom.add_reaction(reactant_types=[type_3],
     reactant_coefficients=[1], product_types=[type_1, type_2],
     product_coefficients=[1,1], default_charges={1: 0})
-    widom.measure_excess_chemical_potential(0) #for the forward reaction
-    widom.measure_excess_chemical_potential(1) #for the backward reaction
+    widom.measure_excess_chemical_potential(0)
 
-Be aware that in the current implementation for MC moves which add and remove particles the insertion of the new particle always takes place at the position where the last particle was remove. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core. 
+Be aware that in the current implementation for MC moves which add and remove particles, the insertion of the new particle always takes place at the position where the last particle was removed. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core. 
 
 An example script which demonstrates the useage for measuring the pair excess chemical potential for inserting an ion pair into a salt solution can be found here:
 
