@@ -1689,10 +1689,15 @@ bonded particles.
     to damp dipole-dipole interactions on short distances. It is available in |es|
     as a non-bonded interaction.
 
+.. _Monte Carlo Methods:
+
+Monte Carlo Methods
+-------------------
+
 .. _Reaction Ensemble:
 
 Reaction Ensemble
------------------
+~~~~~~~~~~~~~~~~~
 
 .. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
@@ -1805,7 +1810,7 @@ reaction.
 .. _Converting tabulated reaction constants to internal units in Espresso:
 
 Converting tabulated reaction constants to internal units in Espresso
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The implementation in Espresso requires that the dimension of :math:`\Gamma`
 is consistent with the internal unit of volume, :math:`\sigma^3`. 
@@ -1855,6 +1860,38 @@ Wang-Landau reaction ensemble.
 Multiple reactions and multiple collective variables can be set.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
 
+
+
+.. _Grand canonical ensemble simulation using the Reaction Ensemble:
+
+Grand canonical ensemble simulation 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As a special case, all stoichiometric coefficients on one side of the chemical
+reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and
+is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
+grandcanonical simulation. Formally, this can be expressed by the reaction
+
+.. math::
+
+    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,,
+
+where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
+However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
+equivalent to the grandcanonical only in the limit of large average number of species A in the box.
+If the reaction contains more than one product, then the reaction constant
+:math:`\Gamma` defines only the sum of their chemical potentials but not the
+chemical potential of each product alone.
+
+Since the Reaction Ensemble acceptance transition probability can be
+derived from the grand canonical acceptance transition probability we
+can use the reaction ensemble to implement grand canonical simulation
+moves. This is done via adding reactions that only have reactants (for the
+deletion of particles) or only have products (for the creation of
+particles). There exists a one to one mapping of the expressions in the
+grand canonical transition probabilities and the expressions in the
+reaction ensemble transition probabilities.
+
 .. _Constant pH simulation using the Reaction Ensemble:
 
 Constant pH simulation
@@ -1901,36 +1938,6 @@ For an example of how to setup
 a constant pH simulation, see the file in the testsuite directory.
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 
-
-.. _Grand canonical ensemble simulation using the Reaction Ensemble:
-
-Grand canonical ensemble simulation 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As a special case, all stoichiometric coefficients on one side of the chemical
-reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and
-is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
-grandcanonical simulation. Formally, this can be expressed by the reaction
-
-.. math::
-
-    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,,
-
-where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
-However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
-equivalent to the grandcanonical only in the limit of large average number of species A in the box.
-If the reaction contains more than one product, then the reaction constant
-:math:`\Gamma` defines only the sum of their chemical potentials but not the
-chemical potential of each product alone.
-
-Since the Reaction Ensemble acceptance transition probability can be
-derived from the grand canonical acceptance transition probability we
-can use the reaction ensemble to implement grand canonical simulation
-moves. This is done via adding reactions that only have reactants (for the
-deletion of particles) or only have products (for the creation of
-particles). There exists a one to one mapping of the expressions in the
-grand canonical transition probabilities and the expressions in the
-reaction ensemble transition probabilities.
 
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
