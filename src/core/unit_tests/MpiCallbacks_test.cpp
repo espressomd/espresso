@@ -38,18 +38,18 @@ static bool called = false;
 BOOST_AUTO_TEST_CASE(invoke_test) {
   using Communication::detail::invoke;
 
-  auto f = [](int i, double d) { return i + d; };
+  auto f = [](int i, unsigned j) { return i + j; };
 
   boost::mpi::communicator world;
   boost::mpi::packed_oarchive::buffer_type buff;
 
   auto const i = 123;
-  auto const d = 3.1415;
-  boost::mpi::packed_oarchive(world, buff) << i << d;
+  auto const j = 456u;
+  boost::mpi::packed_oarchive(world, buff) << i << j;
 
   boost::mpi::packed_iarchive ia(world, buff);
 
-  BOOST_CHECK_EQUAL(f(i, d), (invoke<decltype(f), int, double>(f, ia)));
+  BOOST_CHECK_EQUAL(f(i, j), (invoke<decltype(f), int, unsigned>(f, ia)));
 }
 
 /*
