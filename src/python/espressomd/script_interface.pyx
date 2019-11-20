@@ -18,7 +18,6 @@ import numpy as np
 from .utils import to_char_pointer, to_str
 from .utils cimport Vector3d, make_array_locked, handle_errors
 
-from libc.stdint cimport uintptr_t
 from libcpp.memory cimport make_shared
 
 cdef shared_ptr[ObjectManager] _om
@@ -109,17 +108,6 @@ cdef class PScriptInterface:
         self.sip = sip
 
     def call_method(self, method, **kwargs):
-        """
-        Call a method of the core class.
-
-        Parameters
-        ----------
-        method : Creation policy.
-            Name of the core method.
-        \*\*kwargs
-            Arguments for the method.
-
-        """
         cdef VariantMap parameters
 
         for name in kwargs:
@@ -132,7 +120,6 @@ cdef class PScriptInterface:
         return res
 
     def name(self):
-        """Return name of the core class."""
         return to_str(self.sip.get().name().data())
 
     def _serialize(self):
@@ -180,8 +167,9 @@ cdef Variant python_object_to_variant(value):
     if value is None:
         return Variant()
 
-    # The order is important, the object character should be preserved
-    # even if the PScriptInterface derived class is iterable.
+    # The order is important, the object character should
+    # be preserved even if the PScriptInterface derived class
+    # is iterable.
     if isinstance(value, PScriptInterface):
         oref = value.get_sip()
         return make_variant(oref.sip)
@@ -258,6 +246,7 @@ cdef variant_to_python_object(const Variant & value) except +:
 
 
 def _unpickle_so_class(so_name, state):
+    print("_unpickle_so_class", state)
     cdef PObjectRef so_ptr
     so_ptr = PObjectRef()
     global _om
@@ -270,12 +259,6 @@ def _unpickle_so_class(so_name, state):
 
 
 class ScriptInterfaceHelper(PScriptInterface):
-
-    """
-    Base class from which to derive most interfaces to core ScriptInterface
-    classes.
-    """
-
     _so_name = None
     _so_bind_methods = ()
     _so_creation_policy = "GLOBAL"
@@ -318,9 +301,7 @@ class ScriptInterfaceHelper(PScriptInterface):
         for method_name in self._so_bind_methods:
             setattr(self, method_name, self.generate_caller(method_name))
 
-
 class ScriptObjectRegistry(ScriptInterfaceHelper):
-
     """
     Base class for container-like classes such as
     :class:`~espressomd.constraints.Constraints` and
@@ -357,20 +338,17 @@ def _unpickle_script_object_registry(so_name, params, items):
         so.add(item)
     return so
 
-
-# Map from script object names to their corresponding python classes
+# Map from script object names to corresponding python classes
 _python_class_by_so_name = {}
 
-
 def script_interface_register(c):
-    """
-    Decorator used to register script interface classes.
-    This will store a name-to-class relationship in a registry, so that
-    parameters of type object can be instantiated as the correct python class
+    """Decorator used to register script interface classes
+       This will store a name<->class relationship in a registry, so that parameters
+       of type object can be instantiated as the correct python class
     """
     if not hasattr(c, "_so_name"):
-        raise Exception("Python classes representing a script object must "
-                        "define an _so_name attribute at class level")
+        raise Exception(
+            "Python classes representing a script object must define an _so_name attribute at class level")
     _python_class_by_so_name[c._so_name] = c
     return c
 

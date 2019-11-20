@@ -151,7 +151,6 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
 #ifdef DPD
   REGISTER(DPDStress)
 #endif
-
   REGISTER(LBFluidPressureTensor);
   REGISTER_CYLPID_PROFILE_OBS(
       CylindricalLBFluxDensityProfileAtParticlePositions);
