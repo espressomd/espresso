@@ -78,7 +78,7 @@ class ReactionEnsembleTest(ut.TestCase):
     # generate preliminary_energy_run_results here, this should be done in a
     # separate simulation without energy reweighting using the update energy
     # functions
-    np.savetxt("energy_boundaries.dat", np.c_[[0, 1], [0, 0], [9, 9]],
+    np.savetxt("energy_boundaries.dat", np.transpose([[0, 1], [0, 0], [9, 9]]),
                delimiter='\t', header="nbar   E_potmin   E_potmax")
 
     WLRE.add_collective_variable_degree_of_association(
