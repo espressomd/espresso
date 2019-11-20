@@ -1694,12 +1694,12 @@ bonded particles.
 Monte Carlo Methods
 -------------------
 
+.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation. Please also note that the Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids.
+
 .. _Reaction Ensemble:
 
 Reaction Ensemble
 ~~~~~~~~~~~~~~~~~
-
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
 
 For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
 Multiple reactions can be added to the same instance of the reaction ensemble. 
