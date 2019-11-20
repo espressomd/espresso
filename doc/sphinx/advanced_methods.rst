@@ -1694,18 +1694,12 @@ bonded particles.
 Monte Carlo Methods
 -------------------
 
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids.
+.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids and cause ``system.part`` to return particles slices with a different particle ordering after each reaction step.
 
 .. _Reaction Ensemble:
 
 Reaction Ensemble
 ~~~~~~~~~~~~~~~~~
-
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
-Multiple reactions can be added to the same instance of the reaction ensemble.
-An example script can be found here:
-
-* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
@@ -1807,6 +1801,14 @@ coefficients allow for it.  Corresponding means having the same position (index)
 the python lists of reactants and products which are used to set up the
 reaction.
 
+Multiple reactions can be added to the same instance of the reaction ensemble.
+
+An example script can be found here:
+
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
+
 .. _Converting tabulated reaction constants to internal units in ESPResSo:
 
 Converting tabulated reaction constants to internal units in ESPResSo
@@ -1840,24 +1842,21 @@ Consider using the python module pint for unit conversion.
 Wang-Landau Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
-
-An example script can be found here:
-
-* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
-
 Combination of the Reaction Ensemble with the Wang-Landau algorithm
 :cite:`wang01a`. Allows for enhanced sampling of the reacting system
 and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
 variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
-does not suffer from systematic errors. 
-Additionally to the above
-commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. 
+does not suffer from systematic errors.
+
 Multiple reactions and multiple collective variables can be set.
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+
+An example script can be found here:
+
+* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
+
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
 
 .. _Grand canonical ensemble simulation using the Reaction Ensemble:
 
@@ -1866,8 +1865,8 @@ Grand canonical ensemble simulation
 
 As a special case, all stoichiometric coefficients on one side of the chemical
 reaction can be set to zero. Such a reaction creates particles *ex nihilo*, and
-is equivalent to exchanging particles with a reservoir. Then the simulation
-in the reaction ensemble becomes equivalent to the grand canonical simulation.
+is equivalent to exchanging particles with a reservoir. This type of simulation
+in the reaction ensemble is equivalent to the grand canonical simulation.
 Formally, this can be expressed by the reaction
 
 .. math::
@@ -1895,9 +1894,7 @@ reaction ensemble transition probabilities.
 Constant pH simulation
 ~~~~~~~~~~~~~~~~~~~~~~
 
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
-
-As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one ConstantpHEnsemble instance:
+As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_ensemble.ConstantpHEnsemble` instance:
 
 .. code-block:: python
 
@@ -1932,9 +1929,7 @@ constant :math:`K_c` for the following reaction:
 
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
-For an example of how to setup
-a constant pH simulation, see the file in the testsuite directory.
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ConstantpHEnsemble`.
 
 
 Widom Insertion (for homogeneous systems)
@@ -1997,4 +1992,5 @@ An example script which demonstrates the usage for measuring the pair excess che
 
 * `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
 
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.WidomInsertion`.
 
