@@ -240,7 +240,7 @@ lines below (optional steps which modify the build process are commented out):
     #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
     #nano myconfig.hpp                    # edit to add/remove features as desired
     cmake ..
-    #ccmake . // in order to add/remove features like SCAFACOS or CUDA
+    #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
     make
 
 This will build |es| with a default feature set, namely
