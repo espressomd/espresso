@@ -1,3 +1,9 @@
+if(NOT DEFINED TEST_NP)
+  include(ProcessorCount)
+  ProcessorCount(NP)
+  math(EXPR TEST_NP "${NP}/2 + 1")
+endif()
+
 if(EXISTS ${MPIEXEC})
   # OpenMPI 3.0 and higher checks the number of processes against the number of CPUs
   execute_process(COMMAND ${MPIEXEC} --version RESULT_VARIABLE mpi_version_result OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
@@ -35,10 +41,8 @@ function(UNIT_TEST)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if( TEST_NUM_PROC )
-    if(DEFINED TEST_NP)
-      if(${TEST_NUM_PROC} GREATER ${TEST_NP})
-        set(TEST_NUM_PROC ${TEST_NP})
-      endif()
+    if(${TEST_NUM_PROC} GREATER ${TEST_NP})
+      set(TEST_NUM_PROC ${TEST_NP})
     endif()
 
     add_test(${TEST_NAME} ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME} ${MPIEXEC_POSTFLAGS})
