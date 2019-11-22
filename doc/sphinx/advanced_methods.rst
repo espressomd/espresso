@@ -1694,7 +1694,7 @@ bonded particles.
 Monte Carlo Methods
 -------------------
 
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids and cause ``system.part`` to return particles slices with a different particle ordering after each reaction step.
+.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids, in which case the particles are no longer numbered contiguously. Particle slices returned by ``system.part`` are still iterable, but the indices no longer match the particle ids.
 
 .. _Reaction Ensemble:
 
