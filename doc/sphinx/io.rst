@@ -188,7 +188,8 @@ all positions stored in the file called "h5mdfile.h5" can be read using:
     h5file = h5py.File("h5mdfile.h5", 'r')
     positions = h5file['particles/atoms/position/value']
 
-Furthermore, the files can be inspected with the GUI tool hdfview.
+Furthermore, the files can be inspected with the GUI tool hdfview or visually with the 
+H5MD VMD plugin (see `H5MD plugin <https://github.com/h5md/VMD-h5mdplugin>`_).
 
 For other examples, see :file:`/samples/h5md.py`
 
