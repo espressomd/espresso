@@ -178,8 +178,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
-    thermo_heat_up();
-
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
@@ -196,8 +194,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       convert_initial_torques(cell_structure.local_cells().particles());
 #endif
     }
-
-    thermo_cool_down();
 
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
