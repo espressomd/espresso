@@ -118,25 +118,6 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.compare("elc", energy=True)
         self.S.actors.remove(p3m)
 
-    def test_MMM2D(self):
-        self.S.box_l = (10, 10, 10)
-        self.S.cell_system.set_layered(n_layers=10, use_verlet_lists=False)
-        self.S.periodicity = [1, 1, 0]
-        mmm2d = electrostatics.MMM2D(prefactor=1, maxPWerror=1E-7)
-
-        self.S.actors.add(mmm2d)
-        self.S.integrator.run(0)
-        if self.generate_data:
-            n = len(self.S.part)
-            data = np.hstack((self.S.part[:].id.reshape((n, 1)),
-                              self.S.part[:].pos_folded,
-                              self.S.part[:].q.reshape((n, 1)),
-                              self.S.part[:].f))
-            np.savetxt(tests_common.abspath(
-                "data/coulomb_mixed_periodicity_system.data"), data)
-        self.compare("mmm2d (compared to stored data)", energy=True)
-        self.S.actors.remove(mmm2d)
-
     @ut.skipIf(not espressomd.has_features("SCAFACOS")
                or 'p2nfft' not in scafacos.available_methods(),
                'Skipping test: missing feature SCAFACOS or p2nfft method')
