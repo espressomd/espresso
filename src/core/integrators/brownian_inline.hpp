@@ -47,8 +47,8 @@ inline void bd_drag(Particle &p, double dt) {
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
-  aniso_flag = (local_gamma[0] != local_gamma[1]) ||
-               (local_gamma[1] != local_gamma[2]);
+  aniso_flag =
+      (local_gamma[0] != local_gamma[1]) || (local_gamma[1] != local_gamma[2]);
 #else
   aniso_flag = false;
 #endif
@@ -118,8 +118,8 @@ inline void bd_drag_vel(Particle &p, double dt) {
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
-  aniso_flag = (local_gamma[0] != local_gamma[1]) ||
-               (local_gamma[1] != local_gamma[2]);
+  aniso_flag =
+      (local_gamma[0] != local_gamma[1]) || (local_gamma[1] != local_gamma[2]);
 #else
   aniso_flag = false;
 #endif
