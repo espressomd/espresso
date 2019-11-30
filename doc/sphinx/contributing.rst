@@ -84,22 +84,26 @@ Required Development Tools
    distributed versioning control system git_ and a GitHub account to fork the
    `espressomd/espresso <https://github.com/espressomd/espresso>`_ repository
 
--  To build the sphinx documentation, you will need the Python packages listed
-   in :file:`requirements.txt` in the top-level source directory. To install
-   them, use:
-
-   .. code-block:: bash
-
-      pip install --upgrade --user -r requirements.txt
-
-   Note that some distributions now use ``pip`` for Python3 and ``pip2`` for
-   Python2.
+-  To build the user documentation, you will need Sphinx_.
 
 -  To build the tutorials, you will need LaTeX and Jupyter.
 
--  To compile the Doxygen code documentation, you will need the tool doxygen_.
+-  To build the core documentation, you will need Doxygen_.
 
 All of these tools should be easy to install on most Unix operating systems.
+
+You can find all Python dependencies of |es| in :file:`requirements.txt` in the
+top-level source directory. Several optional packages for graphics, external
+devices and continuous integration (CI) are not strictly essential and can be
+safely removed if you're planning on installing dependencies via ``pip``:
+
+.. code-block:: bash
+
+   pip3 install --upgrade --user -r requirements.txt
+
+Note that some distributions now use ``pip3`` for Python3 and ``pip2`` for
+Python2.
+
 
 .. _Building the User's guide:
 
@@ -117,4 +121,6 @@ in :ref:`Installation` and then the documentation with ``make sphinx``.
 
 .. _git: http://git-scm.com/
 
-.. _doxygen: http://www.doxygen.org/
+.. _Doxygen: http://www.doxygen.org/
+
+.. _Sphinx: https://www.sphinx-doc.org/en/master/

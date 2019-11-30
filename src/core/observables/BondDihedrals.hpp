@@ -32,10 +32,8 @@ namespace Observables {
  *  along the chain, in radians.
  *
  *  The sign of the dihedral angles follow the IUPAC nomenclature for the
- *  Newman projection, specifically section "Torsion Angle" pages 2220-2221 in
- *  G. P. Moss, *Basic Terminology of Stereochemistry* (IUPAC Recommendations
- *  1996), *Pure and Applied Chemistry* **1996**, *68*(12): 2193-2222,
- *  doi:[10.1351/pac199668122193](https://doi.org/10.1351%2Fpac199668122193)
+ *  Newman projection, specifically section "Torsion Angle" pages 2220-2221
+ *  in @cite moss96a.
  *
  */
 class BondDihedrals : public PidObservable {

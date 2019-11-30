@@ -115,6 +115,6 @@ cdef class Diamond:
             pass
         elif error_code == -3:
             raise Exception(
-                "Failed upon creating one of the monomers in Espresso!\nAborting...\n")
+                "Failed upon creating one of the monomers in ESPResSo!\nAborting...\n")
         else:
             raise Exception("Unknown error code: {}".format(error_code))

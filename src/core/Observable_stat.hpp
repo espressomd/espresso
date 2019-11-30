@@ -22,10 +22,11 @@
 #include <utils/List.hpp>
 
 struct Observable_stat {
-  /** Status flag for observable calculation.  For 'analyze energy': 0
-      re-initialize observable struct, else everything is fine,
-      calculation can start.  For 'analyze pressure' and 'analyze
-      p_inst': 0 or !(1+v_comp) re-initialize, else all OK. */
+  /** Status flag for observable calculation. For 'analyze energy': 0
+   *  re-initialize observable struct, else everything is fine,
+   *  calculation can start. For 'analyze pressure' and 'analyze p_inst':
+   *  0 or !(1+v_comp) re-initialize, else all OK.
+   */
   int init_status;
 
   /** Array for observables on each node. */

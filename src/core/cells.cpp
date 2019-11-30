@@ -62,7 +62,7 @@ CellPList ghost_cells = {nullptr, 0, 0};
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
-/** On of Cells::Resort, announces the level of resort needed.
+/** One of @ref Cells::Resort, announces the level of resort needed.
  */
 unsigned resort_particles = Cells::RESORT_NONE;
 bool rebuild_verletlist = true;
@@ -218,7 +218,6 @@ void topology_init(int cs, double range, CellPList *local) {
 bool topology_check_resort(int cs, bool local_resort) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
-    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
   case CELL_STRUCTURE_NSQUARE:
   case CELL_STRUCTURE_LAYERED:
     return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
@@ -457,7 +456,7 @@ void cells_update_ghosts() {
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
-    /* Communication step:  number of ghosts and ghost information */
+    /* Communication step: number of ghosts and ghost information */
     cells_resort_particles(global);
 
   } else

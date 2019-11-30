@@ -3609,7 +3609,7 @@ LOOKUP_TABLE default\n",
 
 int ek_print_vtk_lbforce_density(char *filename) {
 #if !defined(VIRTUAL_SITES_INERTIALESS_TRACERS) && !defined(EK_DEBUG)
-  throw std::runtime_error("Please rebuild Espresso with EK_DEBUG");
+  throw std::runtime_error("Please rebuild ESPResSo with EK_DEBUG");
 #else
 
   FILE *fp = fopen(filename, "w");

@@ -1428,7 +1428,7 @@ it is possible to choose parameters for which the LB is more stable. The species
 
     ek.add_species(species)
 
-One can also add the species during the initialization step of the 
+One can also add the species during the initialization step of the
 :class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
 
     ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
@@ -1689,19 +1689,19 @@ bonded particles.
     to damp dipole-dipole interactions on short distances. It is available in |es|
     as a non-bonded interaction.
 
+.. _Monte Carlo Methods:
+
+Monte Carlo Methods
+-------------------
+
+.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids, in which case the particles are no longer numbered contiguously. Particle slices returned by ``system.part`` are still iterable, but the indices no longer match the particle ids.
+
 .. _Reaction Ensemble:
 
 Reaction Ensemble
------------------
+~~~~~~~~~~~~~~~~~
 
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
-
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
-An example script can be found here:
-
-* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
-
-The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
+The reaction ensemble :cite:`smith94c,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
@@ -1766,7 +1766,7 @@ In the *forward* reaction, the appropriate number of reactants (given by
 products is inserted into the system. In the *backward* reaction,
 reactants and products exchange their roles. The acceptance probability
 :math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
-ensemble is given by the criterion :cite:`smith94a`
+ensemble is given by the criterion :cite:`smith94c`
 
 .. math::
 
@@ -1787,7 +1787,7 @@ The parameter :math:`\Gamma` proportional to the reaction constant. It is define
 
 where :math:`\left<N_i\right>/V` is the average number density of particles of type :math:`i`.
 Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
-units must be consistent with the units in which Espresso measures the box volume,
+units must be consistent with the units in which |es| measures the box volume,
 i.e. :math:`\sigma^3`.
 
 It is often convenient, and in some cases even necessary, that some particles
@@ -1801,16 +1801,24 @@ coefficients allow for it.  Corresponding means having the same position (index)
 the python lists of reactants and products which are used to set up the
 reaction.
 
-.. _Converting tabulated reaction constants to internal units in Espresso:
+Multiple reactions can be added to the same instance of the reaction ensemble.
 
-Converting tabulated reaction constants to internal units in Espresso
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An example script can be found here:
 
-The implementation in Espresso requires that the dimension of :math:`\Gamma`
-is consistent with the internal unit of volume, :math:`\sigma^3`.
-The tabulated values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
+
+.. _Converting tabulated reaction constants to internal units in ESPResSo:
+
+Converting tabulated reaction constants to internal units in ESPResSo
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The implementation in |es| requires that the dimension of :math:`\Gamma`
+is consistent with the internal unit of volume, :math:`\sigma^3`. The tabulated
+values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
 :math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration,
-and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`.  To be used with Espresso, the
+and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`. To be used with |es|, the
 value of :math:`K_c` has to be converted as
 
 .. math::
@@ -1827,36 +1835,76 @@ be converted to :math:`K_c` as
    K_p(p^{\ominus}=1\,\mathrm{atm}) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) \biggl(\frac{c^{\ominus}RT}{p^{\ominus}}\biggr)^{\bar\nu},
 
 where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
-
+Consider using the python module pint for unit conversion.
 
 .. _Wang-Landau Reaction Ensemble:
 
 Wang-Landau Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
+Combination of the Reaction Ensemble with the Wang-Landau algorithm
+:cite:`wang01a`. Allows for enhanced sampling of the reacting system
+and for the determination of the density of states with respect
+to the reaction coordinate or with respect to some other collective
+variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
+algorithm :cite:`belardinelli07a` is implemented since it
+does not suffer from systematic errors.
+
+Multiple reactions and multiple collective variables can be set.
 
 An example script can be found here:
 
 * `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
 
-Combination of the Reaction Ensemble with the Wang-Landau algorithm
-:cite:`wang01a`
-allows for enhanced sampling of the reacting system, and
-and for the determination of the density of states with respect
-to the reaction coordinate or with respect to some other collective
-variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
-algorithm :cite:`belardinelli07a` is implemented since it
-does not suffer from systematic errors. Additionally to the above
-commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
+
+.. _Grand canonical ensemble simulation using the Reaction Ensemble:
+
+Grand canonical ensemble simulation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As a special case, all stoichiometric coefficients on one side of the chemical
+reaction can be set to zero. Such a reaction creates particles *ex nihilo*, and
+is equivalent to exchanging particles with a reservoir. This type of simulation
+in the reaction ensemble is equivalent to the grand canonical simulation.
+Formally, this can be expressed by the reaction
+
+.. math::
+
+    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,,
+
+where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
+However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
+equivalent to the grand canonical only in the limit of large average number of species A in the box.
+If the reaction contains more than one product, then the reaction constant
+:math:`\Gamma` defines only the sum of their chemical potentials but not the
+chemical potential of each product alone.
+
+Since the Reaction Ensemble acceptance transition probability can be
+derived from the grand canonical acceptance transition probability, we
+can use the reaction ensemble to implement grand canonical simulation
+moves. This is done by adding reactions that only have reactants (for the
+deletion of particles) or only have products (for the creation of
+particles). There exists a one-to-one mapping of the expressions in the
+grand canonical transition probabilities and the expressions in the
+reaction ensemble transition probabilities.
 
 .. _Constant pH simulation using the Reaction Ensemble:
 
-Constant pH simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Constant pH simulation
+~~~~~~~~~~~~~~~~~~~~~~
 
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
+As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_ensemble.ConstantpHEnsemble` instance:
+
+.. code-block:: python
+
+    cpH=reaction_ensemble.ConstantpHEnsemble(
+        temperature=1, exclusion_radius=1, seed=77)
+    cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                    product_types=[1, 2], product_coefficients=[1, 1],
+                    default_charges={0: 0, 1: -1, 2: +1})
+    cpH.add_reaction(gamma=1/(10**-14/K_diss), reactant_types=[3], reactant_coefficients=[1], product_types=[0, 2], product_coefficients=[1, 1], default_charges={0:0, 2:1, 3:1} )
+
 
 An example script can be found here:
 
@@ -1881,86 +1929,68 @@ constant :math:`K_c` for the following reaction:
 
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
-For an example of how to setup
-a constant pH simulation, see the file in the testsuite directory.
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ConstantpHEnsemble`.
 
-.. _Grand canonical ensemble simulation using the Reaction Ensemble:
-
-Grand canonical ensemble simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As a special case, all stoichiometric coefficients on one side of the chemical
-reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and
-is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
-grandcanonical simulation. Formally, this can be expressed by the reaction
-
-.. math::
-
-    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,,
-
-where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
-However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
-equivalent to the grandcanonical only in the limit of large average number of species A in the box.
-If the reaction contains more than one product, then the reaction constant
-:math:`\Gamma` defines only the sum of their chemical potentials but not the
-chemical potential of each product alone.
-
-Since the Reaction Ensemble acceptance transition probability can be
-derived from the grand canonical acceptance transition probability we
-can use the reaction ensemble to implement grand canonical simulation
-moves. This is done via adding reactions that only have reactants (for the
-deletion of particles) or only have products (for the creation of
-particles). There exists a one to one mapping of the expressions in the
-grand canonical transition probabilities and the expressions in the
-reaction ensemble transition probabilities.
-
-..
-    The text below is commented-out because it is still an open research question how it should be used correctly.
-
-    This can be used to include water autoprotolysis in the implicit solvent simulation,
-    by means of a reaction:
-
-    .. math::
-
-       \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
-
-
-    add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
-    nihilo). Ex nihilo means that the reaction has no reactants or products.
-    Therefore, if :math:`\emptyset` is a product, particles vanish and if
-    :math:`\emptyset` is a reactant, then particles are created ex nihilo:
-
-    .. math::
-
-       \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,,
-
-    with reaction constant K
-
-    .. math::
-
-       \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,,
-
-    with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
-    constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
-    :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
-    :math:`\overline{\nu}=2` for the dissociation reaction and where x is
-    the value of the apparent dissociation constant that is converted from
-    :math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
-    where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
-    :math:`P^0` are provided in simulation units this will make :math:`K`
-    dimensionless. As a test for the autodissociation of water a big
-    simulation box can be set up and the autodissociation reaction can be
-    performed. Then the box should fill with the correct number of protons
-    and hydroxide ions (check for the number of protons and hydroxide ions
-    in the given simulation volume and compare this to the expected value at
-    pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
-    case of an initial excess of acid or base in the simulation box. Note
-    that this only works for big enough volumes.
 
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An example script can be found here:
+The Widom insertion method measures the change in excess free energy, i.e. the excess chemical potential due to the insertion of a new particle, or a group of particles:
+
+.. math::
+
+   \mu^\mathrm{ex}_B & :=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)\\
+   &=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)
+
+For this one has to provide the following reaction to the Widom method:
+
+.. code-block:: python
+
+    type_B=1
+    widom = reaction_ensemble.WidomInsertion(
+        temperature=temperature, seed=77)
+    widom.add_reaction(reactant_types=[],
+    reactant_coefficients=[], product_types=[type_B],
+    product_coefficients=[1], default_charges={1: 0})
+    widom.measure_excess_chemical_potential(0)
+
+
+The call of ``add_reaction`` define the insertion :math:`\mathrm{\emptyset \to type_B}` (which is the 0th defined reaction).
+Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance.
+Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
+If another particle isertion is defined, then the excess chemical potential for this insertion can be measured by calling ``widom.measure_excess_chemical_potential(1)``.
+Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NPT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
+
+The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
+
+.. math::
+
+   \mu^\mathrm{ex, pair}&:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)\\
+   &=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right)
+
+Note that the measurement involves three averages: the canonical ensemble average :math:`\langle \cdot \rangle_{N_1, N_2}` and the two averages over the position of particles :math:`N_1+1` and :math:`N_2+1`.
+Since the averages over the position of the inserted particles are obtained via brute force sampling of the insertion positions it can be beneficial to have multiple insertion tries on the same configuration of the other particles.
+
+One can measure the change in excess free energy due to the simultaneous insertions of particles of type 1 and 2 and the simultaneous removal of a particle of type 3:
+
+.. math::
+
+   \mu^\mathrm{ex}:=\Delta F^\mathrm{ex, }:= F^\mathrm{ex}(N_1+1, N_2+1, N_3-1,V,T)-F^\mathrm{ex}(N_1, N_2, N_3 ,V,T)
+
+For this one has to provide the following reaction to the Widom method:
+
+.. code-block:: python
+
+    widom.add_reaction(reactant_types=[type_3],
+    reactant_coefficients=[1], product_types=[type_1, type_2],
+    product_coefficients=[1,1], default_charges={1: 0})
+    widom.measure_excess_chemical_potential(0)
+
+Be aware that in the current implementation, for MC moves which add and remove particles, the insertion of the new particle always takes place at the position where the last particle was removed. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core.
+
+An example script which demonstrates the usage for measuring the pair excess chemical potential for inserting an ion pair into a salt solution can be found here:
 
 * `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
+
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.WidomInsertion`.
+

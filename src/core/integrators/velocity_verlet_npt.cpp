@@ -101,8 +101,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
           << "your choice of piston= " << nptiso.piston << ", dt= " << time_step
           << ", p_diff= " << nptiso.p_diff
           << " just caused the volume to become negative, decrease dt";
-      nptiso.volume =
-          box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+      nptiso.volume = box_geo.volume();
       scal[2] = 1;
     }
 

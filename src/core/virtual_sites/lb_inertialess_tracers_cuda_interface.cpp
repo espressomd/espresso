@@ -17,10 +17,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
-// It should not be included by any main Espresso routines
-// Functions to be exported for Espresso are in ibm_main.hpp
+// It should not be included by any main ESPResSo routines
+// Functions to be exported for ESPResSo are in ibm_main.hpp
 
 #include "config.hpp"
 
@@ -39,14 +38,6 @@
 // Variables for communication
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_host = nullptr;
 IBM_CUDA_ParticleDataOutput *IBM_ParticleDataOutput_host = nullptr;
-
-/*****************
-   IBM_cuda_mpi_get_particles
-Gather particle positions on the master node in order to communicate them to GPU
-We transfer all particles (real and virtual), but actually we would only need
-the virtual ones
-Room for improvement...
- *****************/
 
 namespace {
 void pack_particles(ParticleRange particles,
@@ -72,7 +63,11 @@ void pack_particles(ParticleRange particles,
 }
 } // namespace
 
-// Analogous to the usual cuda_mpi_get_particles function
+/** Gather particle positions on the master node in order to communicate them
+ *  to GPU. We transfer all particles (real and virtual), but actually we would
+ *  only need the virtual ones. Room for improvement...
+ *  Analogous to @ref cuda_mpi_get_particles.
+ */
 void IBM_cuda_mpi_get_particles(ParticleRange particles) {
   auto const n_part = particles.size();
 
@@ -91,12 +86,6 @@ void IBM_cuda_mpi_get_particles(ParticleRange particles) {
   }
 }
 
-/*****************
-   IBM_cuda_mpi_send_velocities
-Particle velocities have been communicated from GPU, now transmit to all nodes
- ******************/
-// Analogous to cuda_mpi_send_forces
-
 namespace {
 void set_velocities(ParticleRange particles,
                     IBM_CUDA_ParticleDataOutput *buffer) {
@@ -111,6 +100,9 @@ void set_velocities(ParticleRange particles,
 }
 } // namespace
 
+/** Particle velocities have been communicated from GPU, now transmit to all
+ *  nodes. Analogous to @ref cuda_mpi_send_forces.
+ */
 void IBM_cuda_mpi_send_velocities(ParticleRange particles) {
   auto const n_part = particles.size();
 

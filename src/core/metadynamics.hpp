@@ -27,7 +27,7 @@
 
 /** \file
  *
- *  This file contains routines to perform metadynamics.  Right now, the
+ *  This file contains routines to perform metadynamics. Right now, the
  *  reaction coordinate is defined between two particles. Note that these
  *  particles can be virtual sites, in order to handle molecules.
  *

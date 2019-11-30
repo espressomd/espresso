@@ -42,7 +42,7 @@ using Utils::sqr;
 #endif
 
 /** @todo Extend to higher order. This comes from some 1/sin expansion in
- *  Hockney/Eastwood
+ *  @cite hockney88a
  */
 
 template <int cao>

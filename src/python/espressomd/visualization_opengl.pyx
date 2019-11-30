@@ -226,7 +226,7 @@ class openGLLive:
         # DEFAULT PROPERTIES
         self.specs = {
             'window_size': [800, 800],
-            'name': 'Espresso Visualization',
+            'name': 'ESPResSo Visualization',
 
             'background_color': [0, 0, 0],
 
@@ -613,7 +613,7 @@ class openGLLive:
 
     def update(self):
         """Update method to be called after integration.
-        Changes of espresso system can only happen here.
+        Changes of ESPResSo system can only happen here.
 
         """
         if self.glutMainLoop_started:
