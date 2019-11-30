@@ -249,7 +249,8 @@ class LangevinThermostat(ut.TestCase):
         # Large time-step is OK for BD.
         system.time_step = 7.214
         system.part[:].v = np.zeros((3))
-        system.part[:].omega_body = np.zeros((3))
+        if espressomd.has_features("ROTATION"):
+            system.part[:].omega_body = np.zeros((3))
         system.thermostat.turn_off()
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         system.integrator.set_brownian_dynamics()

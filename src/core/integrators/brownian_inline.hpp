@@ -37,9 +37,12 @@ inline void bd_drag(Particle &p, double dt) {
   // The friction tensor Z from the Eq. (14.31) of Schlick2010:
   Thermostat::GammaType local_gamma;
 
+#ifdef LANGEVIN_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma;
-  } else {
+  } else
+#endif
+  {
     local_gamma = langevin_gamma;
   }
 
@@ -56,9 +59,11 @@ inline void bd_drag(Particle &p, double dt) {
   Utils::Vector3d force_body;
   Utils::Vector3d delta_pos_body, delta_pos_lab;
 
+#ifdef PARTICLE_ANISOTROPY
   if (aniso_flag) {
     force_body = convert_vector_space_to_body(p, p.f.f);
   }
+#endif
 
   for (int j = 0; j < 3; j++) {
     // Second (deterministic) term of the Eq. (14.39) of Schlick2010.
@@ -83,6 +88,7 @@ inline void bd_drag(Particle &p, double dt) {
     }
 #endif // PARTICLE_ANISOTROPY
   }
+#ifdef PARTICLE_ANISOTROPY
   if (aniso_flag) {
     delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
     for (int j = 0; j < 3; j++) {
@@ -94,6 +100,7 @@ inline void bd_drag(Particle &p, double dt) {
       }
     }
   }
+#endif // PARTICLE_ANISOTROPY
 }
 
 /** Set the terminal velocity driven by the conservative forces drag.*/
@@ -108,9 +115,12 @@ inline void bd_drag_vel(Particle &p, double dt) {
   // The friction tensor Z from the eq. (14.31) of Schlick2010:
   Thermostat::GammaType local_gamma;
 
+#ifdef LANGEVIN_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma;
-  } else {
+  } else
+#endif
+  {
     local_gamma = langevin_gamma;
   }
 
@@ -127,14 +137,16 @@ inline void bd_drag_vel(Particle &p, double dt) {
   Utils::Vector3d force_body;
   Utils::Vector3d vel_body, vel_lab;
 
+#ifdef PARTICLE_ANISOTROPY
   if (aniso_flag) {
     force_body = convert_vector_space_to_body(p, p.f.f);
   }
+#endif
 
   for (int j = 0; j < 3; j++) {
     // First (deterministic) term of the eq. (14.34) of Schlick2010 taking
     // into account eq. (14.35). Only conservative part of the force is used
-    // here NOTE: velocity is assigned here and propagated by thermal part
+    // here. NOTE: velocity is assigned here and propagated by thermal part
     // further on top of it
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
@@ -152,16 +164,17 @@ inline void bd_drag_vel(Particle &p, double dt) {
       }
 #endif
     }
-#else
+#else // PARTICLE_ANISOTROPY
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      p.r.p[j] += p.f.f[j] * dt / (local_gamma);
+      p.m.v[j] = p.f.f[j] / (local_gamma);
     }
 #endif // PARTICLE_ANISOTROPY
   }
 
+#ifdef PARTICLE_ANISOTROPY
   if (aniso_flag) {
     vel_lab = convert_vector_body_to_space(p, vel_body);
     for (int j = 0; j < 3; j++) {
@@ -178,6 +191,7 @@ inline void bd_drag_vel(Particle &p, double dt) {
 #endif
     }
   }
+#endif // PARTICLE_ANISOTROPY
 }
 
 /** Propagate the positions: random walk part.*/
@@ -201,7 +215,7 @@ void bd_random_walk(Particle &p, double dt) {
   // Just a NAN setter, technical variable:
   extern Thermostat::GammaType brown_gammatype_nan;
   // first, set defaults
-  Thermostat::GammaType brown_sigma_pos_temp_inv;
+  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -281,9 +295,11 @@ void bd_random_walk(Particle &p, double dt) {
     }
   }
 
+#ifdef PARTICLE_ANISOTROPY
   if (aniso_flag) {
     delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
   }
+#endif
 
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
@@ -312,7 +328,7 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
   // afterwards, Pottier2010
   extern double brown_sigma_vel;
   // first, set defaults
-  double brown_sigma_vel_temp;
+  double brown_sigma_vel_temp = brown_sigma_vel;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -358,9 +374,12 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
 void bd_drag_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
 
+#ifdef LANGEVIN_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma_rot;
-  } else {
+  } else
+#endif
+  {
     local_gamma = langevin_gamma_rotation;
   }
 
@@ -399,9 +418,12 @@ void bd_drag_rot(Particle &p, double dt) {
 void bd_drag_vel_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
 
+#ifdef LANGEVIN_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma_rot;
-  } else {
+  } else
+#endif
+  {
     local_gamma = langevin_gamma_rotation;
   }
 
@@ -438,7 +460,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
   extern Thermostat::GammaType brown_sigma_pos_rotation_inv;
   extern Thermostat::GammaType brown_gammatype_nan;
   // first, set defaults
-  Thermostat::GammaType brown_sigma_pos_temp_inv;
+  Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -524,7 +546,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
 void bd_random_walk_vel_rot(Particle &p, double dt) {
   extern double brown_sigma_vel_rotation;
   // first, set defaults
-  double brown_sigma_vel_temp;
+  double brown_sigma_vel_temp = brown_sigma_vel_rotation;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
