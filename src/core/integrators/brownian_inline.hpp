@@ -46,7 +46,7 @@ inline void bd_drag(Particle &p, double dt) {
     local_gamma = langevin_gamma;
   }
 
-  bool aniso_flag = true; // particle anisotropy flag
+  bool aniso_flag; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
@@ -124,7 +124,7 @@ inline void bd_drag_vel(Particle &p, double dt) {
     local_gamma = langevin_gamma;
   }
 
-  bool aniso_flag = true; // particle anisotropy flag
+  bool aniso_flag; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
@@ -257,7 +257,7 @@ void bd_random_walk(Particle &p, double dt) {
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  bool aniso_flag = true; // particle anisotropy flag
+  bool aniso_flag; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
