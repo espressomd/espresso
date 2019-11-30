@@ -74,7 +74,7 @@ bool TestClass::destructed = false;
 std::pair<std::string, VariantMap> TestClass::last_method_parameters;
 std::pair<std::string, Variant> TestClass::last_parameter;
 
-/**
+/*
  * Check that instances are created and correctly destroyed on
  * the slave nodes.
  */
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(ctor_dtor) {
   BOOST_CHECK(TestClass::destructed);
 }
 
-/**
+/*
  * Check that parameters are forwarded correctly.
  */
 BOOST_AUTO_TEST_CASE(set_parameter) {

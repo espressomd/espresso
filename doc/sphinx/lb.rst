@@ -259,7 +259,7 @@ Choosing between the GPU and CPU implementations
 
 .. note:: Feature ``CUDA`` required
 
-Espresso contains an implementation of the LBM for NVIDIA
+|es| contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``CUDA``. Within the
 Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based to GPU based execution. For further

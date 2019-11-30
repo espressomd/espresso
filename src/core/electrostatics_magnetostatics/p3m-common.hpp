@@ -25,34 +25,18 @@
  *
  *  We use here a P3M (Particle-Particle Particle-Mesh) method based
  *  on the Ewald summation. Details of the used method can be found in
- *  Hockney/Eastwood and Deserno/Holm. The file p3m contains only the
- *  Particle-Mesh part.
+ *  @cite hockney88a and @cite deserno98a @cite deserno98b. The file p3m
+ *  contains only the Particle-Mesh part.
  *
- *  Further reading:
- *  -    P. P. Ewald,
- *       *Die Berechnung optischer und elektrostatischer Gitterpotentiale*,
- *       Ann. Phys. (64) 253-287, 1921
- *  -    R. W. Hockney and J. W. Eastwood,
- *       *Computer simulation using particles*,
- *       IOP, London, 1988
- *  -    M. Deserno and C. Holm,
- *       *How to mesh up Ewald sums I + II*,
- *       J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
- *  -    M. Deserno, C. Holm and H. J. Limbach,
- *       *How to mesh up Ewald sums*,
- *       in Molecular Dynamics on Parallel Computers,
- *       Ed. R. Esser et al., World Scientific, Singapore, 2000
- *  -    M. Deserno,
- *       *Counterion condensation for rigid linear polyelectrolytes*,
- *       PhD Thesis, Universität Mainz, 2000
- *  -    J. J. Cerda,
- *       *P3M for dipolar interactions*,
- *       J. Chem. Phys (129) 234104, 2008
+ *  Further reading: @cite ewald21a, @cite hockney88a, @cite deserno98a,
+ *  @cite deserno98b, @cite deserno00e, @cite deserno00b, @cite cerda08d
  *
  */
 #include "config.hpp"
 
 #if defined(P3M) || defined(DP3M)
+
+#include "LocalBox.hpp"
 
 /** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR {
@@ -113,28 +97,6 @@ typedef struct {
   /** offset between mesh lines of the two last dimensions */
   int q_21_off;
 } p3m_local_mesh;
-
-/** Structure for send/recv meshes. */
-typedef struct {
-  /** dimension of sub meshes to send. */
-  int s_dim[6][3];
-  /** left down corners of sub meshes to send. */
-  int s_ld[6][3];
-  /** up right corners of sub meshes to send. */
-  int s_ur[6][3];
-  /** sizes for send buffers. */
-  int s_size[6];
-  /** dimension of sub meshes to recv. */
-  int r_dim[6][3];
-  /** left down corners of sub meshes to recv. */
-  int r_ld[6][3];
-  /** up right corners of sub meshes to recv. */
-  int r_ur[6][3];
-  /** sizes for recv buffers. */
-  int r_size[6];
-  /** maximal size for send/recv buffers. */
-  int max;
-} p3m_send_mesh;
 
 /** Structure to hold P3M parameters and some dependent variables. */
 typedef struct {
@@ -206,8 +168,8 @@ void p3m_add_block(double const *in, double *out, int const start[3],
  *  most slowly, since it is not damped exponentially) can be
  *  calculated analytically. The result (which depends on the order of
  *  the spline interpolation) can be written as an even trigonometric
- *  polynomial. The results are tabulated here (The employed formula
- *  is Eqn. 7.66 in the book of Hockney and Eastwood).
+ *  polynomial. The results are tabulated here (the employed formula
+ *  is eq. (7.66) in @cite hockney88a).
  */
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 
@@ -215,6 +177,23 @@ double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
  *  at value \a x.
  */
 double p3m_caf(int i, double x, int cao_value);
+
+/** Calculate properties of the local FFT mesh for the
+ *   charge assignment process.
+ */
+void p3m_calc_local_ca_mesh(p3m_local_mesh &local_mesh,
+                            const P3MParameters &params,
+                            const LocalBox<double> &local_geo, double skin);
+
+/** Calculate the spatial position of the left down mesh
+ *  point of the local mesh, to be stored in
+ *  @ref p3m_local_mesh::ld_pos "ld_pos".
+ *
+ *  Function called by @ref p3m_calc_local_ca_mesh() once and by
+ *  @ref p3m_scaleby_box_l() whenever the box size changes.
+ */
+void p3m_calc_lm_ld_pos(p3m_local_mesh &local_mesh,
+                        const P3MParameters &params);
 
 #endif /* P3M || DP3M */
 

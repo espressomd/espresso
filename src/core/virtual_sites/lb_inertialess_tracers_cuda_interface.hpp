@@ -19,8 +19,8 @@
 
 // *******
 // This is an internal file of the IMMERSED BOUNDARY implementation
-// It should not be included by any main Espresso routines
-// Functions to be exported for Espresso are in ibm_main.hpp
+// It should not be included by any main ESPResSo routines
+// Functions to be exported for ESPResSo are in ibm_main.hpp
 
 #ifndef IBM_CUDA_INTERFACE_HPP
 #define IBM_CUDA_INTERFACE_HPP

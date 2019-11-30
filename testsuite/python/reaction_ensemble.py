@@ -169,6 +169,43 @@ class ReactionEnsembleTest(ut.TestCase):
             places=9,
             msg="reaction ensemble volume not set correctly.")
 
+    def test_change_reaction_constant(self):
+        RE = ReactionEnsembleTest.RE
+        new_reaction_constant = 634.0
+        RE.change_reaction_constant(0, new_reaction_constant)
+        RE_status = RE.get_status()
+        forward_reaction = RE_status["reactions"][0]
+        backward_reaction = RE_status["reactions"][1]
+        print(forward_reaction)
+        self.assertEqual(
+            new_reaction_constant,
+            forward_reaction["gamma"],
+            msg="new reaction constant was not set correctly.")
+        self.assertEqual(
+            1.0 / new_reaction_constant,
+            backward_reaction["gamma"],
+            msg="new reaction constant was not set correctly.")
+        RE.change_reaction_constant(0, ReactionEnsembleTest.gamma)
+
+    def test_delete_reaction(self):
+        RE = ReactionEnsembleTest.RE
+        RE.add_reaction(
+            gamma=1,
+            reactant_types=[5], 
+            reactant_coefficients=[1],
+            product_types=[2, 3, 4],
+            product_coefficients=[1, 4, 3],
+            default_charges={5: 0, 2: 0, 3: 0, 4: 0}, check_for_electroneutrality=True)
+        nr_reactions_after_addition = len(RE.get_status()["reactions"])
+        RE.delete_reaction(1)
+        nr_reactions_after_deletion = len(RE.get_status()["reactions"])
+        self.assertEqual(
+            2,
+            nr_reactions_after_addition - nr_reactions_after_deletion, 
+            msg="the difference in single reactions does not match,\
+            deleting a full reaction (back and forward direction)\
+            should result in deleting two single reactions.")
+
 
 if __name__ == "__main__":
     ut.main()

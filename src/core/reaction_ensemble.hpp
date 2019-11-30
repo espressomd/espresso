@@ -153,6 +153,9 @@ public:
                     const std::vector<int> &_reactant_coefficients,
                     const std::vector<int> &_product_types,
                     const std::vector<int> &_product_coefficients);
+  void delete_reaction(int reaction_id) {
+    reactions.erase(reactions.begin() + reaction_id);
+  }
 
   bool do_global_mc_move_for_particles_of_type(int type,
                                                int particle_number_of_type,
@@ -192,6 +195,7 @@ protected:
     std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
     return uniform_int_dist(m_generator);
   }
+  bool all_reactant_particles_exist(int reaction_id);
 
 private:
   std::seed_seq m_seeder;
@@ -209,7 +213,6 @@ private:
       -10000; // this is the default charge which is assigned to a type which
               // occurs in a reaction. this charge has to be overwritten. if it
               // is not overwritten the reaction ensemble will complain.
-  bool all_reactant_particles_exist(int reaction_id);
   void replace_particle(int p_id, int desired_type);
   int create_particle(int desired_type);
   void hide_particle(int p_id, int previous_type);
@@ -232,14 +235,14 @@ private:
 
 ///////////////////////////// actual declaration of specific reaction algorithms
 
-/** Reaction ensemble method according to smith94x.
+/** Reaction ensemble method.
  *  Works for the reaction ensemble at constant volume and temperature. For the
- *  reaction ensemble at constant pressure additionally employ a barostat!
+ *  reaction ensemble at constant pressure, additionally employ a barostat!
  *  NOTE: a chemical reaction consists of a forward and backward reaction.
  *  Here both reactions have to be defined separately. The extent of the
  *  reaction is here chosen to be +1. If the reaction trial move for a
  *  dissociation of HA is accepted then there is one more dissociated ion
- *  pair H+ and A-
+ *  pair H+ and A-. Implementation of @cite smith94c.
  */
 class ReactionEnsemble : public ReactionAlgorithm {
 public:
@@ -358,7 +361,7 @@ private:
 };
 
 /**
- * Constant-pH Ensemble, for derivation see Reed and Reed 1992.
+ * Constant-pH Ensemble, for derivation see @cite reed92a.
  * For the constant pH reactions you need to provide the deprotonation and
  * afterwards the corresponding protonation reaction (in this order). If you
  * want to deal with multiple reactions do it multiple times. Note that there is

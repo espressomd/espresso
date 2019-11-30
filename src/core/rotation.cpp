@@ -44,7 +44,8 @@
 #include <cmath>
 
 /** Calculate the derivatives of the quaternion and angular acceleration
- *  for a given particle
+ *  for a given particle.
+ *  See @cite sonnenschein85a
  *  @param[in]  p    %Particle
  *  @param[out] Qd   First derivative of the particle quaternion
  *  @param[out] Qdd  Second derivative of the particle quaternion
@@ -55,8 +56,7 @@
 static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
                        double S[3], double Wd[3]) {
   /* calculate the first derivative of the quaternion */
-  /* Taken from "An improved algorithm for molecular dynamics simulation of
-   * rigid molecules", Sonnenschein, Roland (1985), Eq. 4.*/
+  /* Eq. (4) @cite sonnenschein85a */
   Qd[0] = 0.5 * (-p.r.quat[1] * p.m.omega[0] - p.r.quat[2] * p.m.omega[1] -
                  p.r.quat[3] * p.m.omega[2]);
 
@@ -70,8 +70,7 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
                  p.r.quat[0] * p.m.omega[2]);
 
   /* Calculate the angular acceleration. */
-  /* Taken from "An improved algorithm for molecular dynamics simulation of
-   * rigid molecules", Sonnenschein, Roland (1985), Eq. 5.*/
+  /* Eq. (5) @cite sonnenschein85a */
   if (p.p.rotation & ROTATION_X)
     Wd[0] = (p.f.torque[0] + p.m.omega[1] * p.m.omega[2] *
                                  (p.p.rinertia[1] - p.p.rinertia[2])) /
@@ -94,8 +93,7 @@ static void define_Qdd(Particle const &p, double Qd[4], double Qdd[4],
   auto const S1 = Qd[0] * Qd[0] + Qd[1] * Qd[1] + Qd[2] * Qd[2] + Qd[3] * Qd[3];
 
   /* Calculate the second derivative of the quaternion. */
-  /* Taken from "An improved algorithm for molecular dynamics simulation of
-   * rigid molecules", Sonnenschein, Roland (1985), Eq. 8.*/
+  /* Eq. (8) @cite sonnenschein85a */
   Qdd[0] =
       0.5 * (-p.r.quat[1] * Wd[0] - p.r.quat[2] * Wd[1] - p.r.quat[3] * Wd[2]) -
       p.r.quat[0] * S1;
@@ -134,8 +132,7 @@ void propagate_omega_quat_particle(Particle &p) {
 
   define_Qdd(p, Qd.data(), Qdd.data(), S.data(), Wd.data());
 
-  /* Taken from "On the numerical integration of motion for rigid polyatomics:
-   * The modified quaternion approach", Omeylan, Igor (1998), Eq. 12.*/
+  /* Eq. (12) @cite sonnenschein85a. */
   auto const lambda =
       1 - S[0] * time_step_squared_half -
       sqrt(1 - time_step_squared *

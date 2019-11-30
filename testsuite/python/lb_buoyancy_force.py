@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,10 +26,10 @@ from tests_common import count_fluid_nodes
 # Define the LB Parameters
 TIME_STEP = 0.01
 AGRID = 0.5 
-KVISC = 6 
+KVISC = 4 
 DENS = 2
 G = 0.08
-BOX_SIZE = 24 * AGRID
+BOX_SIZE = 18 * AGRID
 
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
@@ -37,7 +37,7 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP,
              'ext_force_density': [0, DENS * G, 0]}
 # System setup
-RADIUS = 8 * AGRID 
+RADIUS = 6 * AGRID 
 
 
 class Buoyancy(object):
@@ -78,11 +78,10 @@ class Buoyancy(object):
 
         # Equilibration
         last_force = -999999
-        self.system.integrator.run(10)
+        self.system.integrator.run(100)
         while True:
             self.system.integrator.run(10)
             force = np.linalg.norm(sphere.get_force())
-
             if np.linalg.norm(force - last_force) < 0.01:
                 break
             last_force = force

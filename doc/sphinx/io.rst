@@ -98,7 +98,7 @@ Be aware of the following limitations:
 
   * Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
 
-  * Pickling support of the Espresso system instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms then can be tested.
+  * Pickling support of the :class:`espressomd.system.System` instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms then can be tested.
 
   * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
@@ -188,7 +188,8 @@ all positions stored in the file called "h5mdfile.h5" can be read using:
     h5file = h5py.File("h5mdfile.h5", 'r')
     positions = h5file['particles/atoms/position/value']
 
-Furthermore, the files can be inspected with the GUI tool hdfview.
+Furthermore, the files can be inspected with the GUI tool hdfview or visually with the 
+H5MD VMD plugin (see `H5MD plugin <https://github.com/h5md/VMD-h5mdplugin>`_).
 
 For other examples, see :file:`/samples/h5md.py`
 

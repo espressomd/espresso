@@ -17,10 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the Utils::for_each_pair.
- *
- */
+/* Unit tests for the Utils::for_each_pair. */
 
 #define BOOST_TEST_MODULE for_each_pair test
 #define BOOST_TEST_DYN_LINK

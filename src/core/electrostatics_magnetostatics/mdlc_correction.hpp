@@ -22,13 +22,15 @@
  *  main header-file for MDLC (magnetic dipolar layer correction).
  *
  *  Developer: Joan J. Cerda.
+ *
  *  Purpose:   get the corrections for dipolar 3D algorithms
  *             when applied to a slab geometry and dipolar
  *             particles. DLC & co
- *  Article:   A. Brodka, Chemical Physics Letters 400, 62-67 (2004).
  *
- *             We also include a tuning function that returns the
- *             cut-off necessary to attend a certain accuracy.
+ *  Article:   @cite brodka04a
+ *
+ *  We also include a tuning function that returns the
+ *  cut-off necessary to attend a certain accuracy.
  *
  *  Restrictions: the slab must be such that the z is the short
  *                direction. Otherwise we get trash.
@@ -60,7 +62,7 @@ struct DLC_struct {
    */
   double gap_size;
 
-  /** Flag whether #far_cut was set by the user, or calculated by Espresso.
+  /** Flag whether #far_cut was set by the user, or calculated by ESPResSo.
    *  In the latter case, the cutoff will be adapted if important parameters,
    *  such as the box dimensions, change.
    */

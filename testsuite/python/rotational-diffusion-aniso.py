@@ -351,7 +351,7 @@ class RotDiffAniso(ut.TestCase):
 
     # Langevin Dynamics / Anisotropic
     def test_case_00(self):
-        n = 800
+        n = 300
         self.rot_diffusion_param_setup()
         self.set_anisotropic_param()
         self.add_particles_setup(n)
@@ -362,7 +362,7 @@ class RotDiffAniso(ut.TestCase):
 
     # Langevin Dynamics / Isotropic
     def test_case_01(self):
-        n = 800
+        n = 300
         self.rot_diffusion_param_setup()
         self.set_isotropic_param()
         self.add_particles_setup(n)
@@ -373,7 +373,7 @@ class RotDiffAniso(ut.TestCase):
 
     # Brownian Dynamics / Isotropic
     def test_case_10(self):
-        n = 800
+        n = 300
         self.system.thermostat.turn_off()
         self.rot_diffusion_param_setup()
         self.set_isotropic_param()
