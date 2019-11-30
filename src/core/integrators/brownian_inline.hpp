@@ -43,18 +43,55 @@ inline void bd_drag(Particle &p, double dt) {
     local_gamma = langevin_gamma;
   }
 
+  bool aniso_flag = true; // particle anisotropy flag
+
+#ifdef PARTICLE_ANISOTROPY
+  // Particle frictional isotropy check.
+  aniso_flag = (local_gamma[0] != local_gamma[1]) ||
+               (local_gamma[1] != local_gamma[2]);
+#else
+  aniso_flag = false;
+#endif
+
+  Utils::Vector3d force_body;
+  Utils::Vector3d delta_pos_body, delta_pos_lab;
+
+  if (aniso_flag) {
+    force_body = convert_vector_space_to_body(p, p.f.f);
+  }
+
   for (int j = 0; j < 3; j++) {
+    // Second (deterministic) term of the Eq. (14.39) of Schlick2010.
+    // Only a conservative part of the force is used here
+#ifdef PARTICLE_ANISOTROPY
+    if (aniso_flag) {
+      delta_pos_body[j] = force_body[j] * dt / (local_gamma[j]);
+    } else {
+#ifdef EXTERNAL_FORCES
+      if (!(p.p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+        p.r.p[j] += p.f.f[j] * dt / (local_gamma[j]);
+      }
+    }
+#else
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      // Second (deterministic) term of the Eq. (14.39) of Schlick2010.
-      // Only a conservative part of the force is used here
-#ifndef PARTICLE_ANISOTROPY
       p.r.p[j] += p.f.f[j] * dt / (local_gamma);
-#else
-      p.r.p[j] += p.f.f[j] * dt / (local_gamma[j]);
+    }
 #endif // PARTICLE_ANISOTROPY
+  }
+  if (aniso_flag) {
+    delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
+    for (int j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+      if (!(p.p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+        p.r.p[j] += delta_pos_lab[j];
+      }
     }
   }
 }
@@ -77,22 +114,68 @@ inline void bd_drag_vel(Particle &p, double dt) {
     local_gamma = langevin_gamma;
   }
 
+  bool aniso_flag = true; // particle anisotropy flag
+
+#ifdef PARTICLE_ANISOTROPY
+  // Particle frictional isotropy check.
+  aniso_flag = (local_gamma[0] != local_gamma[1]) ||
+               (local_gamma[1] != local_gamma[2]);
+#else
+  aniso_flag = false;
+#endif
+
+  Utils::Vector3d force_body;
+  Utils::Vector3d vel_body, vel_lab;
+
+  if (aniso_flag) {
+    force_body = convert_vector_space_to_body(p, p.f.f);
+  }
+
   for (int j = 0; j < 3; j++) {
+    // First (deterministic) term of the eq. (14.34) of Schlick2010 taking
+    // into account eq. (14.35). Only conservative part of the force is used
+    // here NOTE: velocity is assigned here and propagated by thermal part
+    // further on top of it
+#ifdef PARTICLE_ANISOTROPY
+    if (aniso_flag) {
+      vel_body[j] = force_body[j] * dt / (local_gamma[j]);
+    } else {
 #ifdef EXTERNAL_FORCES
-    if (p.p.ext_flag & COORD_FIXED(j)) {
-      p.m.v[j] = 0.0;
-    } else
+      if (!(p.p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+        p.m.v[j] = p.f.f[j] / (local_gamma[j]);
+      }
+#ifdef EXTERNAL_FORCES
+      else {
+        p.m.v[j] = 0.0;
+      }
+#endif
+    }
+#else
+#ifdef EXTERNAL_FORCES
+    if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      // First (deterministic) term of the eq. (14.34) of Schlick2010 taking
-      // into account eq. (14.35). Only conservative part of the force is used
-      // here NOTE: velocity is assigned here and propagated by thermal part
-      // further on top of it
-#ifndef PARTICLE_ANISOTROPY
-      p.m.v[j] = p.f.f[j] / (local_gamma);
-#else
-      p.m.v[j] = p.f.f[j] / (local_gamma[j]);
+      p.r.p[j] += p.f.f[j] * dt / (local_gamma);
+    }
 #endif // PARTICLE_ANISOTROPY
+  }
+
+  if (aniso_flag) {
+    vel_lab = convert_vector_body_to_space(p, vel_body);
+    for (int j = 0; j < 3; j++) {
+#ifdef EXTERNAL_FORCES
+      if (!(p.p.ext_flag & COORD_FIXED(j)))
+#endif
+      {
+        p.m.v[j] = vel_lab[j];
+      }
+#ifdef EXTERNAL_FORCES
+      else {
+        p.m.v[j] = 0.0;
+      }
+#endif
     }
   }
 }
@@ -166,11 +249,11 @@ void bd_random_walk(Particle &p, double dt) {
   // Particle frictional isotropy check.
   aniso_flag = (brown_sigma_pos_temp_inv[0] != brown_sigma_pos_temp_inv[1]) ||
                (brown_sigma_pos_temp_inv[1] != brown_sigma_pos_temp_inv[2]);
-#endif
+#else
+  aniso_flag = false;
+#endif // PARTICLE_ANISOTROPY
 
-#ifdef PARTICLE_ANISOTROPY
   Utils::Vector3d delta_pos_body, delta_pos_lab;
-#endif
 
   // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared
   // magnitude defined in the second eq. (14.38), Schlick2010.
