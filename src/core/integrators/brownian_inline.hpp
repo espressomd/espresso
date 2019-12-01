@@ -52,8 +52,6 @@ inline void bd_drag(Particle &p, double dt) {
   // Particle frictional isotropy check.
   aniso_flag =
       (local_gamma[0] != local_gamma[1]) || (local_gamma[1] != local_gamma[2]);
-#else
-  aniso_flag = false;
 #endif
 
   Utils::Vector3d force_body;
@@ -130,8 +128,6 @@ inline void bd_drag_vel(Particle &p, double dt) {
   // Particle frictional isotropy check.
   aniso_flag =
       (local_gamma[0] != local_gamma[1]) || (local_gamma[1] != local_gamma[2]);
-#else
-  aniso_flag = false;
 #endif
 
   Utils::Vector3d force_body;
@@ -327,8 +323,7 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
   // Just a square root of kT, see eq. (10.2.17) and comments in 2 paragraphs
   // afterwards, Pottier2010
   extern double brown_sigma_vel;
-  // first, set defaults
-  double brown_sigma_vel_temp = brown_sigma_vel;
+  double brown_sigma_vel_temp;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -339,6 +334,9 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
   } else {
     brown_sigma_vel_temp = brown_sigma_vel;
   }
+#else
+  // defaults
+  brown_sigma_vel_temp = brown_sigma_vel;
 #endif /* LANGEVIN_PER_PARTICLE */
 
   Utils::Vector3d noise = v_noise_g(p.p.identity, RNGSalt::BROWNIAN);
@@ -545,8 +543,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
  */
 void bd_random_walk_vel_rot(Particle &p, double dt) {
   extern double brown_sigma_vel_rotation;
-  // first, set defaults
-  double brown_sigma_vel_temp = brown_sigma_vel_rotation;
+  double brown_sigma_vel_temp;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef LANGEVIN_PER_PARTICLE
@@ -557,6 +554,9 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
   } else {
     brown_sigma_vel_temp = brown_sigma_vel_rotation;
   }
+#else
+  // set defaults
+  brown_sigma_vel_temp = brown_sigma_vel_rotation;
 #endif /* LANGEVIN_PER_PARTICLE */
 
   Utils::Vector3d domega;
