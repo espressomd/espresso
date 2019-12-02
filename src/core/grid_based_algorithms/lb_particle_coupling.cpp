@@ -284,40 +284,21 @@ void lb_lbcoupling_calc_particle_lattice_ia(
                            GHOSTTRANS_SWIMMING);
 #endif
 
-        using rng_type = r123::Philox4x64;
-        using ctr_type = rng_type::ctr_type;
-        using key_type = rng_type::key_type;
-
-        ctr_type c;
         auto const kT = lb_lbfluid_get_kT();
-        auto const noise_amplitude =
-            (kT > 0.) ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT /
-                                  time_step)
-                      : 0.0;
-
-        if (noise_amplitude > 0.0) {
-          c = ctr_type{{lb_particle_coupling.rng_counter_coupling->value(),
-                        static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-        } else {
-          c = ctr_type{{0, 0}};
-        }
-
         /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
          * The factor 12 comes from the fact that we use random numbers
          * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
          * time_step comes from the discretization.
          */
-        auto f_random = [&c, noise_amplitude](int id) -> Utils::Vector3d {
+        auto const noise_amplitude =
+            (kT > 0.) ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT /
+                                  time_step)
+                      : 0.0;
+
+        auto f_random = [noise_amplitude](int id) -> Utils::Vector3d {
           if (noise_amplitude > 0.0) {
-            key_type k{{static_cast<uint32_t>(id)}};
-
-            auto const noise = rng_type{}(c, k);
-
-            using Utils::uniform;
-            using Utils::Vector3d;
-            return Vector3d{uniform(noise[0]), uniform(noise[1]),
-                            uniform(noise[2])} -
-                   Vector3d::broadcast(0.5);
+            return Random::v_noise<RNGSalt::PARTICLES>(
+                lb_particle_coupling.rng_counter_coupling->value(), id);
           }
           return {};
         };

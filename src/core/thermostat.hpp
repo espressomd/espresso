@@ -30,15 +30,12 @@
 #include "random.hpp"
 #include "rotation.hpp"
 
-#include <utils/Vector.hpp>
-
-#include <Random123/philox.h>
 #include <utils/Counter.hpp>
-#include <utils/uniform.hpp>
+#include <utils/Vector.hpp>
+#include <utils/math/rotation_matrix.hpp>
 
 #include <cmath>
 #include <tuple>
-#include <utils/math/rotation_matrix.hpp>
 
 /** \name Thermostat switches */
 /************************************************************/
@@ -140,32 +137,6 @@ inline double friction_thermV_nptiso(double p_diff) {
 }
 #endif
 
-/** Return a random 3d vector with the philox thermostat.
-    Random numbers depend on
-    1. langevin_rng_counter (initialized by seed) which is increased on
-       integration
-    2. Salt (decorrelates different counter)
-    3. Particle ID (decorrelates particles, gets rid of seed-per-node)
-*/
-inline Utils::Vector3d v_noise(int particle_id) {
-
-  using rng_type = r123::Philox4x64;
-  using ctr_type = rng_type::ctr_type;
-  using key_type = rng_type::key_type;
-
-  ctr_type c{{langevin_rng_counter->value(),
-              static_cast<uint64_t>(RNGSalt::LANGEVIN)}};
-
-  key_type k{{static_cast<uint32_t>(particle_id)}};
-
-  auto const noise = rng_type{}(c, k);
-
-  using Utils::uniform;
-  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
-                         uniform(noise[2])} -
-         Utils::Vector3d::broadcast(0.5);
-}
-
 /** Langevin thermostat core function.
     Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
     Collects the langevin parameters kt, gamma (different for
@@ -218,6 +189,9 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
 #else
   auto const &velocity = p.m.v;
 #endif
+  using Random::v_noise;
+  auto const noise =
+      v_noise<RNGSalt::LANGEVIN>(langevin_rng_counter->value(), p.p.identity);
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check
   auto const aniso_flag =
@@ -235,12 +209,11 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
     hadamard_product(langevin_pref_friction_buf, A * velocity);
   }()  : hadamard_product(langevin_pref_friction_buf, velocity);
 
-  return friction +
-         hadamard_product(langevin_pref_noise_buf, v_noise(p.p.identity));
+  return friction + hadamard_product(langevin_pref_noise_buf, noise);
 #else
   // Do the actual (isotropic) thermostatting
   return langevin_pref_friction_buf * velocity +
-         langevin_pref_noise_buf * v_noise(p.p.identity);
+         langevin_pref_noise_buf * noise;
 #endif // PARTICLE_ANISOTROPY
 }
 
@@ -288,8 +261,11 @@ inline void friction_thermo_langevin_rotation(Particle &p) {
   // Rotational degrees of virtual sites are thermostatted,
   // so no switching here
 
+  using Random::v_noise;
+
   // Here the thermostats happens
-  Utils::Vector3d noise = v_noise(p.p.identity);
+  auto const noise =
+      v_noise<RNGSalt::LANGEVIN>(langevin_rng_counter->value(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef PARTICLE_ANISOTROPY
     if (langevin_pref_noise_buf[j] > 0.0) {

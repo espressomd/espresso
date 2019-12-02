@@ -462,7 +462,7 @@ class DPDThermostat(ut.TestCase):
         momentum = np.matmul(s.part[:].v.T, s.part[:].mass)
         for i in range(10):
             s.integrator.run(25)
-            np.testing.assert_array_less(np.zeros((3, 3)), np.abs(s.part[:].f))
+            np.testing.assert_almost_equal(np.zeros((3,)), np.sum(s.part[:].f))
             np.testing.assert_allclose(
                 np.matmul(s.part[:].v.T, s.part[:].mass), momentum, atol=1E-12)
 
