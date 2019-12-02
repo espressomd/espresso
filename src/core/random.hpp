@@ -29,6 +29,11 @@
 
 #include "errorhandling.hpp"
 
+#include <Random123/philox.h>
+#include <utils/Vector.hpp>
+#include <utils/u32_to_u64.hpp>
+#include <utils/uniform.hpp>
+
 #include <random>
 #include <stdexcept>
 #include <string>
@@ -41,9 +46,46 @@
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt { FLUID, PARTICLES, LANGEVIN, SALT_DPD, THERMALIZED_BOND };
+enum class RNGSalt : uint64_t {
+  FLUID = 0,
+  PARTICLES,
+  LANGEVIN,
+  SALT_DPD,
+  THERMALIZED_BOND
+};
 
 namespace Random {
+/**
+ * @brief 3d uniform vector noise.
+ *
+ * This uses the Philox PRNG, the state is controlled
+ * by the counter, the salt and two keys.
+ * If any of the keys and salt differ, the noise is
+ * not correlated between two calls along the same counter
+ * sequence.
+ *
+ */
+template <RNGSalt salt>
+Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
+
+  const ctr_type c{{counter, static_cast<uint64_t>(salt)}};
+
+  auto const id1 = static_cast<uint32_t>(key1);
+  auto const id2 = static_cast<uint32_t>(key2);
+  const key_type k{id1, id2};
+
+  auto const noise = rng_type{}(c, k);
+
+  using Utils::uniform;
+  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
+                         uniform(noise[2])} -
+         Utils::Vector3d::broadcast(0.5);
+}
+
 extern std::mt19937 generator;
 extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
