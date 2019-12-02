@@ -87,7 +87,6 @@ Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
 }
 
 extern std::mt19937 generator;
-extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 extern bool user_has_seeded;
 inline void unseeded_error() {
@@ -158,52 +157,6 @@ inline double d_random() {
   using namespace Random;
   check_user_has_seeded();
   return uniform_real_distribution(generator);
-}
-
-/**
- * @brief draws a random integer from the uniform distribution in the range
- * [0,maxint-1]
- *
- * @param maxint range.
- */
-inline int i_random(int maxint) {
-  using namespace Random;
-  check_user_has_seeded();
-  std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
-  return uniform_int_dist(generator);
-}
-
-/**
- * @brief draws a random number from the normal distribution with mean 0 and
- * variance 1.
- */
-inline double gaussian_random() {
-  using namespace Random;
-  check_user_has_seeded();
-  return normal_distribution(generator);
-}
-
-/**
- * @brief Generator for cutoff Gaussian random numbers.
- *
- * Generates a Gaussian random number and generates a number between -2 sigma
- * and 2 sigma in the form of a Gaussian with standard deviation
- * sigma=1.118591404 resulting in an actual standard deviation of 1.
- *
- * @return Gaussian random number.
- */
-inline double gaussian_random_cut() {
-  using namespace Random;
-  check_user_has_seeded();
-  const double random_number = 1.042267973 * normal_distribution(generator);
-
-  if (fabs(random_number) > 2 * 1.042267973) {
-    if (random_number > 0) {
-      return 2 * 1.042267973;
-    }
-    return -2 * 1.042267973;
-  }
-  return random_number;
 }
 
 #endif
