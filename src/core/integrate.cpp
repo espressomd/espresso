@@ -316,7 +316,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
-  } else if (thermo_switch & THERMO_DPD) {
+  }
+  if (thermo_switch & THERMO_DPD) {
 #ifdef DPD
     dpd_rng_counter_increment();
 #endif
