@@ -43,6 +43,7 @@ class DPDThermostat(ut.TestCase):
     def tearDown(self):
         s = self.s
         s.part.clear()
+        s.thermostat.turn_off()
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in velocity against a
@@ -72,7 +73,7 @@ class DPDThermostat(ut.TestCase):
 
     def single(self, with_langevin=False):
         """Test velocity distribution of a dpd fluid with a single type."""
-        N = 200
+        N = 250
         s = self.s
         s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
