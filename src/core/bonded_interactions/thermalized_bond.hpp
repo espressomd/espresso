@@ -36,10 +36,6 @@ extern int n_thermalized_bonds;
 #include "integrate.hpp"
 #include "random.hpp"
 
-#include <Random123/philox.h>
-#include <utils/u32_to_u64.hpp>
-#include <utils/uniform.hpp>
-
 extern std::unique_ptr<Utils::Counter<uint64_t>> thermalized_bond_rng_counter;
 
 /** Set the parameters of a thermalized bond
@@ -61,41 +57,6 @@ void thermalized_bond_set_rng_state(uint64_t counter);
 
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
-
-/** Return a random 3d vector with the philox thermostat.
-    Random numbers depend on
-    1. rng_counter (initialized by seed) which is increased on
-   integration
-    2. Salt (decorrelates different counter)
-    3. Particle ID, Partner ID
-*/
-inline Utils::Vector3d v_noise(int particle_id, int partner_id) {
-
-  using rng_type = r123::Philox4x64;
-  using ctr_type = rng_type::ctr_type;
-  using key_type = rng_type::key_type;
-
-  ctr_type c{{thermalized_bond_rng_counter->value(),
-              static_cast<uint64_t>(RNGSalt::THERMALIZED_BOND)}};
-
-  /** Bond is stored on particle_id, so concatenation with the
-      partner_id is unique. This will give the same RN for
-          multiple thermalized bonds on the same particle pair, which
-          should not be allowed.
-   */
-  uint64_t merged_ids;
-  auto const id1 = static_cast<uint32_t>(particle_id);
-  auto const id2 = static_cast<uint32_t>(partner_id);
-  merged_ids = Utils::u32_to_u64(id1, id2);
-  key_type k{merged_ids};
-
-  auto const noise = rng_type{}(c, k);
-
-  using Utils::uniform;
-  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
-                         uniform(noise[2])} -
-         Utils::Vector3d::broadcast(0.5);
-}
 
 /** Separately thermalizes the com and distance of a particle pair.
  *  @param[in]  p1        First particle.
@@ -123,7 +84,8 @@ thermalized_bond_forces(Particle const &p1, Particle const &p2,
 
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
-  Utils::Vector3d noise = v_noise(p1.p.identity, p2.p.identity);
+  auto const noise = Random::v_noise<RNGSalt::THERMALIZED_BOND>(
+      thermalized_bond_rng_counter->value(), p1.p.identity, p2.p.identity);
 
   for (int i = 0; i < 3; i++) {
     double force_lv_com, force_lv_dist;
