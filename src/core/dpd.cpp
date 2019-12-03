@@ -79,16 +79,6 @@ void dpd_set_rng_state(const uint64_t counter) {
 
 uint64_t dpd_get_rng_state() { return dpd_rng_counter->value(); }
 
-void dpd_heat_up() {
-  double pref_scale = sqrt(3);
-  dpd_update_params(pref_scale);
-}
-
-void dpd_cool_down() {
-  double pref_scale = 1.0 / sqrt(3);
-  dpd_update_params(pref_scale);
-}
-
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf) {
   IA_parameters &ia_params = *get_ia_param_safe(part_type_a, part_type_b);

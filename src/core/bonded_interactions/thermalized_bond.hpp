@@ -55,9 +55,6 @@ bool thermalized_bond_is_seed_required();
 uint64_t thermalized_bond_get_rng_state();
 void thermalized_bond_set_rng_state(uint64_t counter);
 
-/* Setup */
-void thermalized_bond_heat_up();
-void thermalized_bond_cool_down();
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
 

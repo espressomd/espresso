@@ -186,8 +186,16 @@ class LangevinThermostat(ut.TestCase):
                     np.copy(system.part[0].omega_body),
                     o0 * np.exp(-gamma_r_i / rinertia * system.time), atol=5E-4)
 
-    def test_04__global_langevin(self):
-        """Test for global Langevin parameters."""
+    def check_global_langevin(self, recalc_forces, loops):
+        """Test velocity distribution for global Langevin parameters.
+
+        Parameters
+        ----------
+        recalc_forces : :obj:`bool`
+            True if the forces should be recalculated after every step.
+        loops : :obj:`int`
+            Number of sampling loops
+        """
         N = 200
         system = self.system
         system.part.clear()
@@ -208,11 +216,10 @@ class LangevinThermostat(ut.TestCase):
         system.integrator.run(20)
 
         # Sampling
-        loops = 150
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            system.integrator.run(1)
+            system.integrator.run(1, recalc_forces=recalc_forces)
             v_stored[i * N:(i + 1) * N, :] = system.part[:].v
             if espressomd.has_features("ROTATION"):
                 omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
@@ -225,6 +232,16 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             self.check_velocity_distribution(
                 omega_stored, v_minmax, bins, error_tol, kT)
+
+    def test_global_langevin(self):
+        """Test velocity distribution for global Langevin parameters."""
+        self.check_global_langevin(False, loops=150)
+
+    def test_global_langevin_initial_forces(self):
+        """Test velocity distribution for global Langevin parameters,
+           when using the initial force calculation.
+        """
+        self.check_global_langevin(True, loops=170)
 
     @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
     def test_05__langevin_per_particle(self):
