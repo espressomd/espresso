@@ -12,7 +12,6 @@ autom4te.cache
 .deps/
 myconfig.h
 myconfig.hpp
-build/
 CMakeFiles
 cmake-build*
 compile_commands.json
