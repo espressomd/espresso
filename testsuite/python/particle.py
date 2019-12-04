@@ -271,6 +271,18 @@ class ParticleProperties(ut.TestCase):
             # Cause a different mpi callback to uncover deadlock immediately
             x = getattr(s.part[:], p)
 
+    def test_remove_particle(self):
+        """Tests that if a particle is removed,
+        it no longer exists and bonds to the removed particle are
+        also removed."""
+
+        p1 = self.system.part[self.pid]
+        p2 = self.system.part.add(pos=p1.pos, bonds=[(self.f1, p1.id)])
+
+        p1.remove()
+        self.assertFalse(self.system.part.exists(self.pid))
+        self.assertEqual(len(p2.bonds), 0)
+
     def test_zz_remove_all(self):
         for id in self.system.part[:].id:
             self.system.part[id].remove()
