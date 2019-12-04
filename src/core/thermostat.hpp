@@ -264,8 +264,8 @@ inline void friction_thermo_langevin_rotation(Particle &p) {
   using Random::v_noise;
 
   // Here the thermostats happens
-  auto const noise =
-      v_noise<RNGSalt::LANGEVIN>(langevin_rng_counter->value(), p.p.identity);
+  auto const noise = v_noise<RNGSalt::LANGEVIN_ROT>(
+      langevin_rng_counter->value(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef PARTICLE_ANISOTROPY
     if (langevin_pref_noise_buf[j] > 0.0) {
