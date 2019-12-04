@@ -20,7 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-from espressomd.accumulators import Correlator
+from espressomd.accumulators import Correlator, TimeSeries
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 from tests_common import single_component_maxwell
 
@@ -499,6 +499,54 @@ class LangevinThermostat(ut.TestCase):
 
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
+
+    def test_08__noise_correlation(self):
+        """Checks that the Langevin noise is uncorrelated"""
+
+        system = self.system
+        system.part.clear()
+        system.time_step = 0.01
+        system.cell_system.skin = 0.1
+        system.part.add(id=(1, 2), pos=np.zeros((2, 3)))
+        vel_obs = ParticleVelocities(ids=system.part[:].id)
+        vel_series = TimeSeries(obs=vel_obs)
+        system.auto_update_accumulators.add(vel_series)
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = (1, 1, 1)
+            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
+            omega_series = TimeSeries(obs=omega_obs)
+            system.auto_update_accumulators.add(omega_series)
+
+        kT = 3.2
+        system.thermostat.set_langevin(kT=kT, gamma=2.1, seed=17)
+        steps = int(1e6)
+        system.integrator.run(steps)
+
+        # test translational noise correlation
+        vel = np.array(vel_series.time_series())
+        for i in range(6):
+            for j in range(i, 6):
+                corrcoef = np.dot(vel[:, i], vel[:, j]) / steps / kT
+                if i == j:
+                    self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
+                else:
+                    self.assertLessEqual(np.abs(corrcoef), 0.04)
+
+        # test rotational noise correlation
+        if espressomd.has_features("ROTATION"):
+            omega = np.array(omega_series.time_series())
+            for i in range(6):
+                for j in range(6):
+                    corrcoef = np.dot(omega[:, i], omega[:, j]) / steps / kT
+                    if i == j:
+                        self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
+                    else:
+                        self.assertLessEqual(np.abs(corrcoef), 0.04)
+            # translational and angular velocities should be independent
+            for i in range(6):
+                for j in range(6):
+                    corrcoef = np.dot(vel[:, i], omega[:, j]) / steps / kT
+                    self.assertLessEqual(np.abs(corrcoef), 0.04)
 
 
 if __name__ == "__main__":
