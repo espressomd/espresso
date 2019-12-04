@@ -1070,7 +1070,6 @@ void local_remove_particle(int part) {
       if (p.identity() == part) {
         cell = c;
         position = i;
-      } else {
         remove_all_bonds_to(p, i);
       }
     }
