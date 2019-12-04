@@ -49,6 +49,7 @@ enum class RNGSalt : uint64_t {
   FLUID = 0,
   PARTICLES,
   LANGEVIN,
+  LANGEVIN_ROT,
   SALT_DPD,
   THERMALIZED_BOND
 };

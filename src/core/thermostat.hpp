@@ -235,8 +235,8 @@ inline Utils::Vector3d friction_thermo_langevin_rotation(const Particle &p) {
   using Random::v_noise;
 
   // Here the thermostats happens
-  auto const noise =
-      v_noise<RNGSalt::LANGEVIN>(langevin_rng_counter->value(), p.p.identity);
+  auto const noise = v_noise<RNGSalt::LANGEVIN_ROT>(
+      langevin_rng_counter->value(), p.p.identity);
 #ifdef PARTICLE_ANISOTROPY
   return hadamard_product(langevin_pref_friction_buf, p.m.omega) +
          hadamard_product(langevin_pref_noise_buf, noise);
