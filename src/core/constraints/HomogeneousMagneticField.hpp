@@ -20,7 +20,7 @@
 #define CONSTRAINTS_HOMOGENEOUSMAGNETICFIELD_HPP
 
 #include "Constraint.hpp"
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 namespace Constraints {
 

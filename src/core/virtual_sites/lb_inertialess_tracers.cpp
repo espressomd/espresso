@@ -22,6 +22,7 @@
 #include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
@@ -29,7 +30,6 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "integrate.hpp"
 #include "lb_inertialess_tracers_cuda_interface.hpp"
-#include "particle_data.hpp"
 
 #ifdef LB_WALBERLA
 #include "grid_based_algorithms/LbWalberla.hpp"
@@ -68,15 +68,11 @@ bool in_local_domain(Utils::Vector3d const &pos) {
 }
 } // namespace
 
-/****************
-  IBM_ForcesIntoFluid_CPU
-
- Puts the calculated force stored on the ibm particles into the fluid by
-updating the lbfields structure
- Calls couple_trace_to_fluid for each node
- Called from the integrate loop right after the forces have been calculated
-*****************/
-
+/** Put the calculated force stored on the ibm particles into the fluid by
+ *  updating the @ref lbfields structure.
+ *  Called from the integration loop right after the forces have been
+ *  calculated.
+ */
 void IBM_ForcesIntoFluid_CPU() {
   // Update the forces on the ghost particles
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
@@ -119,12 +115,10 @@ void IBM_ForcesIntoFluid_CPU() {
   }
 }
 
-/*************
-  IBM_UpdateParticlePositions
-This function is called from the integrate right after the LB update
-Interpolates LB velocity at the particle positions and propagates the particles
-**************/
-
+/** Interpolate LB velocity at the particle positions and propagate the
+ *  particles.
+ *  Called from the integration loop right after the LB update.
+ */
 void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Get velocities
   if (lattice_switch == ActiveLB::CPU || lattice_switch == ActiveLB::WALBERLA)
@@ -157,7 +151,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
 
         // Check if the particle might have crossed a box border (criterion see
         // e-mail Axel 28.8.2014)
-        // if possible resort_particles = 1
+        // if possible, use resort_particles = Cells::RESORT_LOCAL)
         const double dist2 = (p[j].r.p - p[j].l.p_old).norm2();
         if (dist2 > skin2) {
           set_resort_particles(Cells::RESORT_LOCAL);
@@ -166,12 +160,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
   }
 }
 
-/*************
-   CoupleIBMParticleToFluid
-This function puts the momentum of a given particle into the LB fluid - only for
-CPU
-**************/
-
+/** Put the momentum of a given particle into the LB fluid. */
 void CoupleIBMParticleToFluid(Particle *p) {
   // Convert units from MD to LB
   double delta_j[3];
@@ -212,6 +201,7 @@ This function puts the momentum of a given particle into the LB fluid - only for
 Walberla
 **************/
 
+#ifdef LB_WALBERLA
 void CoupleIBMParticleToFluidWalberla(Particle *p) {
   // Convert units from MD to LB
   Utils::Vector3d delta_j = p->f.f * lb_walberla()->get_tau() *
@@ -220,6 +210,7 @@ void CoupleIBMParticleToFluidWalberla(Particle *p) {
 
   lb_walberla()->add_force_at_pos(p->r.p / lb_lbfluid_get_agrid(), delta_j);
 }
+#endif
 
 /******************
    GetIBMInterpolatedVelocity
@@ -230,14 +221,11 @@ that we add the f/2 contribution - only for CPU
 void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
                                 double *forceAdded) {
   /* determine elementary lattice cell surrounding the particle
-   and the relative position of the particle in this cell */
+     and the relative position of the particle in this cell */
   Utils::Vector<std::size_t, 8> node_index{};
   Utils::Vector6d delta{};
   lblattice.map_position_to_lattice(pos, node_index, delta);
 
-  /* calculate fluid velocity at particle's position
-   this is done by linear interpolation
-   (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
   Utils::Vector3d interpolated_u = {};
   // This for the f/2 contribution to the velocity
   forceAdded[0] = forceAdded[1] = forceAdded[2] = 0;
@@ -251,8 +239,8 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
         double local_density;
         Utils::Vector3d local_j;
 
-// This can be done easier without copying the code twice
-// We probably can even set the boundary velocity directly
+        // This can be done more easily without copying the code twice.
+        // We probably can even set the boundary velocity directly.
 #ifdef LB_BOUNDARIES
         if (lbfields[index].boundary) {
           local_density = lbpar.density;
@@ -266,15 +254,14 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
           local_density = lbpar.density + modes[0];
 
           // Add the +f/2 contribution!!
-          // Guo et al. PRE 2002
           local_j[0] = modes[1] + f[0] / 2;
           local_j[1] = modes[2] + f[1] / 2;
           local_j[2] = modes[3] + f[2] / 2;
 
-          // Keep track of the forces that we added to the fluid
+          // Keep track of the forces that we added to the fluid.
           // This is necessary for communication because this part is executed
-          // for real and ghost particles
-          // Later on we sum the real and ghost contributions
+          // for real and ghost particles.
+          // Later on we sum the real and ghost contributions.
           const double fExt[3] = {
               lbpar.ext_force_density[0] * pow(lbpar.agrid, 2) * lbpar.tau *
                   lbpar.tau,
@@ -319,7 +306,7 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
 Very similar to the velocity interpolation done in standard Espresso, except
 that we add the f/2 contribution - only for Walberla
 *******************/
-
+#ifdef LB_WALBERLA
 void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &pos, double *v,
                                         double *forceAdded) {
   Utils::Vector3d force = *(lb_walberla()->get_force_at_pos(pos,true));
@@ -342,6 +329,7 @@ void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &pos, double *v,
   v[1] *= lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
   v[2] *= lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
 }
+#endif
 
 /************
    IsHalo
@@ -375,16 +363,13 @@ bool IsHalo(const int indexCheck) {
   return isHaloCache[indexCheck];
 }
 
-/****************
-   ParticleVelocitiesFromLB_CPU
-Get particle velocities from LB and set the velocity field in the particles data
-structure
-*****************/
-
+/** Get particle velocities from LB and set the velocity field in the particles
+ *  data structure.
+ */
 void ParticleVelocitiesFromLB_CPU() {
-  // Loop over particles in local cells
+  // Loop over particles in local cells.
   // Here all contributions are included: velocity, external force and particle
-  // force
+  // force.
   for (int c = 0; c < local_cells.n; c++) {
     const Cell *const cell = local_cells.cell[c];
     Particle *const p = cell->part;
@@ -440,15 +425,16 @@ void ParticleVelocitiesFromLB_CPU() {
 
   // Now the local particles contain a velocity (stored in the force field) and
   // the ghosts contain the rest of the velocity in their respective force
-  // fields
+  // fields.
   // We need to add these. Since we have stored them in the force, not the
   // velocity fields, we can use the standard force communicator and then
-  // transfer to the velocity afterwards
+  // transfer to the velocity afterwards.
   // Note that this overwrites the actual force which would be a problem for
-  // real particles
+  // real particles.
   // This could be solved by keeping a backup of the local forces before this
-  // operation is attempted
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  // operation is attempted.
+  ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                     GHOSTTRANS_FORCE);
 
   // Transfer to velocity field
   for (int c = 0; c < local_cells.n; c++) {

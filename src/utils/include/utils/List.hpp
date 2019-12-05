@@ -210,10 +210,11 @@ public:
 
   /** Dynamically allocated field. */
   T *e;
-  /** number of used elements in the field. */
+  /** Number of used elements in the field. */
   size_type n;
-  /** allocated size of the field. This value is ONLY changed
-      in the routines specified in list operations ! */
+  /** Allocated size of the field. This value is ONLY changed
+   *  in the routines specified in list operations!
+   */
   size_type max;
 };
 

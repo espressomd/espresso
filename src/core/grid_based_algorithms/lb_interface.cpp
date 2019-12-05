@@ -61,7 +61,9 @@ void lb_lbfluid_update() {
 #endif
     }
   } else if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     lb_walberla()->integrate();
+    #endif
   } else
     throw NoLBActive();
 }
@@ -136,6 +138,7 @@ void lb_lbfluid_sanity_checks() {
     lb_sanity_checks(lbpar);
   }
   if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     // Make sure, Walberla and Espresso agree on domain decomposition
     auto walberla_domain = lb_walberla()->get_local_domain();
     // Unit conversion
@@ -157,6 +160,7 @@ void lb_lbfluid_sanity_checks() {
       throw std::runtime_error(
           "Walberla and Espresso disagree about domain decomposition.");
     }
+  #endif
   }
 }
 
@@ -281,7 +285,9 @@ double lb_lbfluid_get_density() {
   }
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     return lb_walberla()->get_density();
+  #endif
   }
 #endif
   throw NoLBActive();
@@ -446,7 +452,9 @@ double lb_lbfluid_get_agrid() {
     return lbpar.agrid;
   }
   if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     return lb_walberla()->get_grid_spacing();
+  #endif
   }
   throw NoLBActive();
 }
@@ -471,8 +479,10 @@ void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
     lbpar.ext_force_density = force_density;
     mpi_bcast_lb_params(LBParam::EXT_FORCE_DENSITY);
   } else if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(Walberla::set_ext_force_density,
                                              force_density);
+  #endif
   } else {
     throw NoLBActive();
   }
@@ -583,7 +593,9 @@ double lb_lbfluid_get_kT() {
     return lbpar.kT;
   }
   if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     return lb_walberla()->get_kT();
+  #endif
   }
   throw NoLBActive();
 }
@@ -1538,8 +1550,9 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
   else if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind,
                                              p_density);
+  } 
 #endif
-  } else {
+  else {
     throw NoLBActive();
   }
 }
@@ -1614,10 +1627,12 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   } else if (lattice_switch == ActiveLB::CPU) {
     mpi_gather_stats(6, fluid_momentum.data(), nullptr, nullptr, nullptr);
   } else if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     fluid_momentum = ::Communication::mpiCallbacks().call(
                          ::Communication::Result::Reduction(), std::plus<>(),
                          Walberla::get_momentum) *
                      (lb_lbfluid_get_agrid() / lb_lbfluid_get_tau());
+  #endif
   } else
     throw NoLBActive();
 
@@ -1655,6 +1670,7 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
     }
   }
   if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
     switch (interpolation_order) {
     case (InterpolationOrder::quadratic):
       throw std::runtime_error("The non-linear interpolation scheme is not "
@@ -1663,6 +1679,7 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
       return mpi_call(::Communication::Result::one_rank,
                       Walberla::get_velocity_at_pos, folded_pos);
     }
+  #endif
   }
   throw NoLBActive();
 }

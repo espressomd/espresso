@@ -57,8 +57,7 @@ ScriptInterfaceBase::make_shared(std::string const &name,
   const auto id = sp->id();
 
   /* Now get a reference to the corresponding weak_ptr in ObjectId and update
-     it with our shared ptr, so that everybody uses the same ref count.
-  */
+   * it with our shared ptr, so that everybody uses the same ref count. */
   sp->get_instance(id) = sp;
 
   return sp;
@@ -75,7 +74,7 @@ ScriptInterfaceBase::get_instance(ObjectId id) {
  * @brief  Return a Variant representation of the state of the object.
  *
  * This should return the internal state of the instance, so that
- * the instance can be restored from this information.  The default
+ * the instance can be restored from this information. The default
  * implementation stores all the public parameters, including object
  * parameters that are captured by calling get_state on them.
  */

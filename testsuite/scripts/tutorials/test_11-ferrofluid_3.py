@@ -17,7 +17,6 @@
 
 import unittest as ut
 import importlib_wrapper
-import numpy as np
 
 
 # value of a reference simulation (10000 equilibration steps; 200000

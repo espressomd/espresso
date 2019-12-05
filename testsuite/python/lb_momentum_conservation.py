@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,13 +16,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import espressomd
-from espressomd import lb, lbboundaries, shapes, has_features
 import unittest as ut
+
+import unittest_decorators as utx
+
 import numpy as np
-import sys
 
 # Define the LB Parameters
-TIME_STEP = 0.008
+TIME_STEP = 0.1
 AGRID = 1.0 
 KVISC = 5
 DENS = 1 
@@ -38,6 +39,12 @@ LB_PARAMS = {'agrid': AGRID,
 
 
 class Momentum(object):
+    """
+    Tests momentum conservatoin for an LB coupled to a particle, where opposing
+    forces are applied to LB and particle. The test should uncover issues
+    with boundary and ghost layer handling.
+
+    """
     lbf = None
     system = espressomd.System(box_l=[BOX_SIZE] * 3)
     system.time_step = TIME_STEP
@@ -55,40 +62,45 @@ class Momentum(object):
             pos=(0, 0, 0), ext_force=-applied_force, v=[.1, .2, .3])
 
         # Reach steady state
-        self.system.integrator.run(1500)
+        self.system.integrator.run(500)
         v_final = np.copy(p.v)
         momentum = self.system.analysis.linear_momentum()
 
-        for i in range(10):
+        for _ in range(10):
             self.system.integrator.run(50)
-            print(i, p.v)
             # check that momentum stays constant
             np.testing.assert_allclose(
-                self.system.analysis.linear_momentum(), momentum, atol=4E-4)
+                self.system.analysis.linear_momentum(), momentum, atol=2E-4)
 
             # Check that particle velocity is stationary
             # up to the acceleration of 1/2 time step
-            np.testing.assert_allclose(np.copy(p.v), v_final, atol=3E-3)
+            np.testing.assert_allclose(np.copy(p.v), v_final, atol=2.2E-3)
+
+        # Make sure, the particle has crossed the periodic boundaries
+        self.assertGreater(
+            np.amax(
+                np.abs(v_final) *
+                self.system.time),
+            BOX_SIZE)
 
 
-@ut.skipIf(not espressomd.gpu_available() or not espressomd.has_features(
-    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class LBGPUMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['EXTERNAL_FORCES']), "Skipping test due to missing features.")
+@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
 class LBCPUMomentum(ut.TestCase, Momentum):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
 
-@ut.skipIf(not espressomd.has_features(
-    ['LB_WALBERLA', 'EXTERNAL_FORCES']), "Skipping test due to missing features.")
+
+@utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
 class LBWalberlaMomentum(ut.TestCase, Momentum):
 
     def setUp(self):

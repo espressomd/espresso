@@ -24,7 +24,7 @@ import espressomd.shapes
 import espressomd.lb
 
 AGRID = 1.5
-VISC = 1.2
+VISC = 4.2
 DENS = 1.3
 FRIC = 1.4
 TAU = 0.2
@@ -71,7 +71,7 @@ class LBInterpolation:
         node and first fluid node.
         """
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
-        self.system.integrator.run(1200)
+        self.system.integrator.run(250)
         # Shear plane for boundary 1
         # for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
         #     np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)

@@ -29,7 +29,8 @@
 #include "npt.hpp"
 #include "particle_data.hpp"
 #include "thermostat.hpp"
-#include "utils/math/sqr.hpp"
+
+#include <utils/math/sqr.hpp>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
@@ -44,12 +45,12 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #endif
-        if ((nptiso.geometry & nptiso.nptgeom_dir[j])) {
+        if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
                       friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
         } else
-          /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
+          // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 #ifdef EXTERNAL_FORCES
       }
@@ -58,7 +59,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   }
 }
 
-/** Scale and communicate instantaneous NPT pressure */
+/** Scale and communicate instantaneous NpT pressure */
 void velocity_verlet_npt_finalize_p_inst() {
   double p_tmp = 0.0;
   int i;
@@ -100,8 +101,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
           << "your choice of piston= " << nptiso.piston << ", dt= " << time_step
           << ", p_diff= " << nptiso.p_diff
           << " just caused the volume to become negative, decrease dt";
-      nptiso.volume =
-          box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+      nptiso.volume = box_geo.volume();
       scal[2] = 1;
     }
 
@@ -145,9 +145,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
     Utils::Vector3d new_box = box_geo.length();
 
     for (int i = 0; i < 3; i++) {
-      if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
-        new_box[i] = L_new;
-      } else if (nptiso.cubic_box) {
+      if (nptiso.geometry & nptiso.nptgeom_dir[i] || nptiso.cubic_box) {
         new_box[i] = L_new;
       }
     }
@@ -173,8 +171,8 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
     propagate_omega_quat_particle(p);
 #endif
 
-// Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
+    // Don't propagate translational degrees of freedom of vs
     if (p.p.is_virtual)
       continue;
 #endif
@@ -191,7 +189,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
-          /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t) */
+          // Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
       }
     }

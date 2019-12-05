@@ -100,6 +100,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
 
     return interpolated_u;
   } else if (lattice_switch == ActiveLB::WALBERLA) {
+  #ifdef LB_WALBERLA
 
     auto res = lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid(),true);
     if (!res) {
@@ -118,6 +119,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
     //      this_node, sim_time, folded_pos[0],folded_pos[1],folded_pos[2],
     //      (*res)[0], (*res)[1], (*res)[2]);
     return *res;
+  #endif
   } else
     throw std::runtime_error("No LB active.");
 }
@@ -136,8 +138,10 @@ void lb_lbinterpolation_add_force_density(
                               field.force_density += w * force_density;
                             });
     } else if (lattice_switch == ActiveLB::WALBERLA) {
+    #ifdef LB_WALBERLA
       lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
                                       force_density);
+      #endif
     }
     break;
   }

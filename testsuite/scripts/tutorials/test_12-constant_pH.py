@@ -19,9 +19,15 @@ import unittest as ut
 import importlib_wrapper
 import numpy as np
 
-
-tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/12-constant_pH/12-constant_pH.py")
+try:
+    import pint  # pylint: disable=unused-import
+except ImportError:
+    tutorial = importlib_wrapper.MagicMock()
+    skipIfMissingFeatures = ut.skip(
+        "Python module pint not available, skipping test!")
+else:
+    tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
+        "@TUTORIALS_DIR@/12-constant_pH/12-constant_pH.py")
 
 
 @skipIfMissingFeatures
@@ -29,15 +35,13 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test(self):
-        expected_values = tutorial.ideal_degree_of_dissociation(
-            tutorial.pHs, tutorial.pK)
-        simulated_values = tutorial.degrees_of_dissociation
-        simulated_values_error = tutorial.std_dev_degree_of_dissociation / \
-            np.sqrt(tutorial.num_samples)
-        # test alpha +/- 0.05 and standard error of alpha less than 0.10
+        expected_values = 1. / (1 + 10**(tutorial.pK - tutorial.pHs))
+        simulated_values = tutorial.av_alpha
+        simulated_values_error = tutorial.err_alpha
+        # test alpha +/- 0.05 and standard error of alpha less than 0.05
         np.testing.assert_allclose(expected_values, simulated_values, rtol=0,
                                    atol=0.05)
-        self.assertLess(np.max(simulated_values_error), 0.10)
+        self.assertLess(np.max(simulated_values_error), 0.05)
 
 
 if __name__ == "__main__":

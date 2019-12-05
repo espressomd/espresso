@@ -356,6 +356,55 @@ cdef class ReactionAlgorithm:
         """
         deref(self.RE).delete_particle(p_id)
 
+    def change_reaction_constant(self, reaction_id, gamma):
+        """
+        Changes the reaction constant of a given reaction 
+        (for the forward and backward reaction). 
+        The reaction_id which is assigned to a reaction
+        depends on the order in which add_reaction() was called.
+        The 0th reaction has reaction_id 0, 
+        the next added reaction needs to be adressed with reaction_id=1, etc.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            reaction_id
+        gamma : :obj:`float`
+            new reaction constant
+
+        """
+        reaction_id = int(reaction_id)
+        if(reaction_id > deref(self.RE).reactions.size() / 2 - 1 or reaction_id < 0):
+            raise ValueError(
+                "You provided an invalid reaction_id, please provide a valid reaction_id")
+        # for the forward reaction
+        deref(self.RE).reactions[2 * reaction_id].gamma = gamma
+        # for the backward reaction
+        deref(self.RE).reactions[2 * reaction_id + 1].gamma = 1.0 / gamma
+
+    def delete_reaction(self, reaction_id):
+        """
+        Delete a reaction from the set of used reactions 
+        (the forward and backward reaction). 
+        The reaction_id which is assigned to a reaction
+        depends on the order in which add_reaction() was called.
+        The 0th reaction has reaction_id 0, 
+        the next added reaction needs to be adressed with reaction_id=1, etc.
+        After the deletion of a reaction subsequent reactions 
+        take the reaction_id of the deleted reaction.
+
+        Parameters
+        ----------
+        reaction_id : :obj:`int`
+            reaction_id
+
+        """
+        reaction_id = int(reaction_id)
+        if(reaction_id > deref(self.RE).reactions.size() / 2 - 1 or reaction_id < 0):
+            raise ValueError(
+                "You provided an invalid reaction_id, please provide a valid reaction_id")
+        deref(self.RE).delete_reaction(2 * reaction_id + 1)
+        deref(self.RE).delete_reaction(2 * reaction_id)
 
 cdef class ReactionEnsemble(ReactionAlgorithm):
     """
@@ -413,7 +462,7 @@ cdef class ConstantpHEnsemble(ReactionAlgorithm):
                 "The constant pH method is only implemented for reactions with two product types and one adduct type.")
         if(kwargs["reactant_coefficients"][0] != 1 or kwargs["product_coefficients"][0] != 1 or kwargs["product_coefficients"][1] != 1):
             raise ValueError(
-                "All product and reactant coefficients must equal one in the constant pH method as implemented in Espresso.")
+                "All product and reactant coefficients must equal one in the constant pH method as implemented in ESPResSo.")
         super().add_reaction(*args, **kwargs)
 
     property constant_pH:
@@ -589,11 +638,11 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
             else:
                 raise KeyError("%s is not a valid key" % k)
 
-        self.WLRptr.get().final_wang_landau_parameter = self._params[
+        deref(self.WLRptr).final_wang_landau_parameter = self._params[
             "final_wang_landau_parameter"]
-        self.WLRptr.get().output_filename = self._params[
+        deref(self.WLRptr).output_filename = self._params[
             "full_path_to_output_filename"].encode("utf-8")
-        self.WLRptr.get().do_not_sample_reaction_partition_function = self._params[
+        deref(self.WLRptr).do_not_sample_reaction_partition_function = self._params[
             "do_not_sample_reaction_partition_function"]
 
     def _valid_keys_set_wang_landau_parameters(self):
@@ -605,7 +654,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
-        self.WLRptr.get().load_wang_landau_checkpoint(checkpoint_name)
+        deref(self.WLRptr).load_wang_landau_checkpoint(checkpoint_name)
 
     def write_wang_landau_checkpoint(self):
         """
@@ -615,7 +664,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         checkpoint_name = "checkpoint".encode("utf-8")
-        self.WLRptr.get().write_wang_landau_checkpoint(checkpoint_name)
+        deref(self.WLRptr).write_wang_landau_checkpoint(checkpoint_name)
 
     def update_maximum_and_minimum_energies_at_current_state(self):
         """
@@ -640,7 +689,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
 
         """
         filename = "preliminary_energy_run_results".encode("utf-8")
-        self.WLRptr.get().write_out_preliminary_energy_run_results(filename)
+        deref(self.WLRptr).write_out_preliminary_energy_run_results(filename)
 
     def write_wang_landau_results_to_file(self, filename):
         """
@@ -648,7 +697,7 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         collective variables.
 
         """
-        self.WLRptr.get().write_wang_landau_results_to_file(
+        deref(self.WLRptr).write_wang_landau_results_to_file(
             filename.encode("utf-8"))
 
     def displacement_mc_move_for_particles_of_type(self, type_mc,
@@ -665,11 +714,11 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         polymer configuration changing moves need to be implemented in the
         case of using Wang-Landau with energy reweighting and a polymer in the
         system. Polymer configuration changing moves had been implemented
-        before but were removed from espresso.
+        before but were removed from ESPResSo.
 
         """
         use_wang_landau = True
-        self.WLRptr.get().do_global_mc_move_for_particles_of_type(
+        deref(self.WLRptr).do_global_mc_move_for_particles_of_type(
             type_mc, particle_number_to_be_changed, use_wang_landau)
 
 
@@ -720,10 +769,14 @@ cdef class WidomInsertion(ReactionAlgorithm):
 
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system.
+        Measures the excess chemical potential in a homogeneous system for the provided reaction_id.
+        Please define the insertion moves first via calling the method add_reaction (with only product types specified).
         Returns the excess chemical potential and the standard error for the
-        excess chemical potential. It assumes that your samples are
-        uncorrelated in estimating the standard error.
+        excess chemical potential. The error estimate assumes that your samples are
+        uncorrelated.
 
         """
-        return self.WidomInsertionPtr.get().measure_excess_chemical_potential(int(reaction_id))
+        if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):  # make inverse widom scheme (deletion of particles) inaccessible
+            raise ValueError("This reaction is not present")
+        return deref(self.WidomInsertionPtr).measure_excess_chemical_potential(
+            int(2 * reaction_id))  # make inverse widom scheme (deletion of particles) inaccessible. The deletion reactions are the odd reaction_ids

@@ -19,10 +19,12 @@
 #ifndef CORE_PART_CFG_HPP
 #define CORE_PART_CFG_HPP
 
+#include "Particle.hpp"
 #include "ParticleCache.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
 #include "particle_data.hpp"
+
 #include "serialization/Particle.hpp"
 #include <utils/SkipIterator.hpp>
 
@@ -46,17 +48,17 @@ class GetLocalParts {
 
 public:
   Range operator()() const {
-    if (local_particles == nullptr) {
+    if (local_particles.empty()) {
       auto begin = skip_it(nullptr, nullptr, SkipIfNullOrGhost());
       return {make_indirect_iterator(begin), make_indirect_iterator(begin)};
     }
 
-    auto begin =
-        skip_it(local_particles, local_particles + max_seen_particle + 1,
-                SkipIfNullOrGhost());
-    auto end =
-        skip_it(local_particles + max_seen_particle + 1,
-                local_particles + max_seen_particle + 1, SkipIfNullOrGhost());
+    auto begin = skip_it(local_particles.data(),
+                         local_particles.data() + max_seen_particle + 1,
+                         SkipIfNullOrGhost());
+    auto end = skip_it(local_particles.data() + max_seen_particle + 1,
+                       local_particles.data() + max_seen_particle + 1,
+                       SkipIfNullOrGhost());
 
     return {make_indirect_iterator(begin), make_indirect_iterator(end)};
   }

@@ -312,9 +312,9 @@ void lb_init_boundaries() {
         } // if dist <=0
       }   // loop over boundaries
     }     // Loop over cells
+#endif
+#endif
   }       // lattice switch is WALBERLA
-#endif
-#endif
 }
 
 Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {

@@ -22,6 +22,7 @@
 #define _THOLE_H
 /** \file
  *  Routines to calculate the Thole damping potential between particle pairs.
+ *  See @cite thole81a.
  *
  *  Implementation in \ref thole.cpp.
  */
@@ -29,11 +30,11 @@
 #include "config.hpp"
 
 #ifdef THOLE
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 int thole_set_params(int part_type_a, int part_type_b, double scaling_coeff,
                      double q1q2);
@@ -47,7 +48,7 @@ inline Utils::Vector3d thole_pair_force(Particle const &p1, Particle const &p2,
 
   if (thole_s != 0 && thole_q1q2 != 0 &&
       !(pair_bond_enum_exists_between(p1, p2, BONDED_IA_THERMALIZED_DIST))) {
-    // Calc damping function (see doi.org/10.1016/0301-0104(81)85176-2)
+    // Calc damping function (see @cite thole81a)
     // S(r) = 1.0 - (1.0 + thole_s*r/2.0) * exp(-thole_s*r);
     // Calc F = - d/dr ( S(r)*q1q2/r) =
     // -(1/2)*(-2+(r^2*s^2+2*r*s+2)*exp(-s*r))*q1q2/r^2 Everything before

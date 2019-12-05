@@ -39,9 +39,9 @@
 #define COLLISION_MODE_BIND_THREE_PARTICLES 16
 /*@}*/
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "virtual_sites.hpp"
 
 class Collision_parameters {

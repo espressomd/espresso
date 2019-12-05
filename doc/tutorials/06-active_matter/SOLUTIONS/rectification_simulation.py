@@ -25,7 +25,6 @@
 from math import cos, pi, sin
 import numpy as np
 import os
-import sys
 import argparse
 
 import espressomd
@@ -35,8 +34,8 @@ from espressomd.shapes import Cylinder, Wall, HollowCone
 
 assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
 
-# Quaternion procedure
 
+# Quaternion procedure
 
 def a2quat(phi, theta):
 
@@ -192,8 +191,8 @@ with open("{}/CMS_{}.dat".format(outdir, vel), "w") as outfile:
     system.time = 0.
     for i in range(PROD_STEPS):
         if (i + 1) % 5 == 0:
-            print('\rprogress: %.0f%%' % ((i + 1) * 100. / PROD_STEPS), end='')
-            sys.stdout.flush()
+            print('\rprogress: %.0f%%' % ((i + 1) * 100. / PROD_STEPS),
+                  end='', flush=True)
 
         # We output the coordinate of the center of mass in
         # the direction of the long axis, here we consider

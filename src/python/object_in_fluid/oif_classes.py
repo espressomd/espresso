@@ -14,12 +14,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import espressomd
 import numpy as np
-from .oif_utils import *
-from espressomd.interactions import OifLocalForces
-from espressomd.interactions import OifGlobalForces
-from espressomd.interactions import OifOutDirection
+import espressomd
+from espressomd.interactions import OifLocalForces, OifGlobalForces, OifOutDirection
+from .oif_utils import (
+    large_number, small_epsilon, discard_epsilon, custom_str, norm,
+    vec_distance, get_triangle_normal, area_triangle, angle_btw_triangles,
+    oif_calc_stretching_force, oif_calc_bending_force,
+    oif_calc_local_area_force, oif_calc_global_area_force, oif_calc_volume_force
+)
 
 
 class FixedPoint:
@@ -105,8 +108,7 @@ class Edge:
     """
 
     def __init__(self, A, B):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (
-                isinstance(B, PartPoint) or (isinstance(B, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B]):
             TypeError("Arguments to Edge must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -123,8 +125,7 @@ class Triangle:
     """
 
     def __init__(self, A, B, C):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) and (isinstance(B, PartPoint) or (
-                isinstance(B, FixedPoint))) and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B, C]):
             TypeError("Arguments to Triangle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -144,10 +145,8 @@ class Angle:
     """
 
     def __init__(self, A, B, C, D):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) \
-                and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) \
-                and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))) \
-                and (isinstance(D, PartPoint) or (isinstance(D, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint))
+                   for x in [A, B, C, D]):
             TypeError("Arguments to Angle must be FixedPoint or PartPoint.")
         self.A = A
         self.B = B
@@ -168,9 +167,7 @@ class ThreeNeighbors:
     """
 
     def __init__(self, A, B, C):
-        if not (isinstance(A, PartPoint) or (isinstance(A, FixedPoint))) \
-                and (isinstance(B, PartPoint) or (isinstance(B, FixedPoint))) \
-                and (isinstance(C, PartPoint) or (isinstance(C, FixedPoint))):
+        if not all(isinstance(x, (PartPoint, FixedPoint)) for x in [A, B, C]):
             TypeError(
                 "Arguments to ThreeNeighbors must be FixedPoint or PartPoint.")
         self.A = A
@@ -671,10 +668,10 @@ class Mesh:
                 triangle.A.get_pos(), triangle.B.get_pos(), triangle.C.get_pos())
             tmp_normal_length = norm(tmp_normal)
             tmp_sum_z_coords = 1.0 / 3.0 * \
-                (triangle.A.get_pos()[2] + triangle.B.get_pos()[
-                 2] + triangle.C.get_pos()[2])
-            volume -= triangle.area() * tmp_normal[
-                2] / tmp_normal_length * tmp_sum_z_coords
+                (triangle.A.get_pos()[2] + triangle.B.get_pos()[2] +
+                 triangle.C.get_pos()[2])
+            volume -= (triangle.area() * tmp_normal[2] / tmp_normal_length *
+                       tmp_sum_z_coords)
         return volume
 
     def get_n_nodes(self):
@@ -704,9 +701,8 @@ class Mesh:
         if out_file_name == "":
             raise Exception(
                 "Cell.Mirror: output meshnodes file for new mesh is missing. Quitting.")
-        if (mirror_x != 0 and mirror_x != 1) or (
-                mirror_y != 0 and mirror_y != 1) or (
-                mirror_z != 0 and mirror_z != 1):
+        if mirror_x not in (0, 1) or mirror_y not in (
+                0, 1) or mirror_z not in (0, 1):
             raise Exception(
                 "Mesh.Mirror: for mirroring only values 0 or 1 are accepted. 1 indicates that the corresponding coordinate will be flipped.  Exiting.")
         if mirror_x + mirror_y + mirror_z > 1:
@@ -1050,7 +1046,7 @@ class OifCell:
             raise Exception("OifCell: append_point_data_to_vtk: Need to know whether this is the first data list to be "
                             "appended for this file. Quitting.")
         n_points = self.get_n_nodes()
-        if (len(data) != n_points):
+        if len(data) != n_points:
             raise Exception(
                 "OifCell: append_point_data_to_vtk: Number of data points does not match number of mesh points. Quitting.")
         output_file = open(file_name, "a")
@@ -1070,7 +1066,7 @@ class OifCell:
             raise Exception(
                 "OifCell: output_raw_data: No data provided. Quitting.")
         n_points = self.get_n_nodes()
-        if (len(data) != n_points):
+        if len(data) != n_points:
             raise Exception(
                 "OifCell: output_raw_data: Number of data points does not match number of mesh points. Quitting.")
         output_file = open(file_name, "w")

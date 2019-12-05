@@ -54,7 +54,7 @@ void VirtualSitesInertialessTracers::after_lb_propagation() {
   // We should update.
   // Actually we seem to get the same results whether we do this here or not,
   // but it is safer to do it
-  ghost_communicator(&cell_structure.update_ghost_pos_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
 
 #endif // VS inertialess tracers
 }

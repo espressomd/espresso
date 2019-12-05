@@ -24,14 +24,14 @@ import espressomd.lbboundaries
 import espressomd.shapes
 
 """
-Check the Lattice Boltzmann lid driven shear flow in a slab system
+Check the lattice-Boltzmann lid-driven shear flow in a slab system
 by comparing to the analytical solution.
 
 """
 
 
 AGRID = 0.6
-VISC = 3.2
+VISC = 5.2
 DENS = 2.3
 TIME_STEP = 0.02
 # Box size will be H +2 AGRID to make room for walls.
@@ -123,7 +123,7 @@ class LBShearCommon:
         sample_points = int(H / AGRID - 1)
 
         for _ in range(9):
-            self.system.integrator.run(50)
+            self.system.integrator.run(20)
 
             v_expected = shear_flow(
                 x=(np.arange(0, sample_points) + .5) * AGRID,
@@ -138,7 +138,7 @@ class LBShearCommon:
                 v_measured = self.lbf[ind[0], ind[1], ind[2]].velocity
                 np.testing.assert_allclose(
                     np.copy(v_measured),
-                    -np.copy(v_expected[j]) * shear_direction, atol=3E-3)
+                    -np.copy(v_expected[j]) * shear_direction, atol=8E-4)
 
         # speed of sound of the LB fluid in MD units (agrid/tau is due to
         # LB->MD unit conversion)
@@ -200,8 +200,6 @@ class LBGPUShear(ut.TestCase, LBShearCommon):
 
     def setUp(self):
         self.lb_class = espressomd.lb.LBFluidGPU
-
-
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
 class LBWalberlaShear(ut.TestCase, LBShearCommon):
 

@@ -21,7 +21,7 @@
 """
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import reaction_ensemble
 
 
@@ -86,12 +86,9 @@ class ReactionEnsembleTest(ut.TestCase):
         type_A = ReactionEnsembleTest.type_A
         type_H = ReactionEnsembleTest.type_H
         type_HA = ReactionEnsembleTest.type_HA
-        box_l = ReactionEnsembleTest.system.box_l
         system = ReactionEnsembleTest.system
         gamma = ReactionEnsembleTest.gamma
-        nubar = ReactionEnsembleTest.nubar
 
-        volume = ReactionEnsembleTest.volume
         RE = ReactionEnsembleTest.RE
         target_alpha = ReactionEnsembleTest.target_alpha
 
@@ -103,7 +100,7 @@ class ReactionEnsembleTest(ut.TestCase):
         average_NHA = 0.0
         average_NA = 0.0
         num_samples = 1000
-        for i in range(num_samples):
+        for _ in range(num_samples):
             RE.reaction(10)
             average_NH += system.number_of_particles(type=type_H)
             average_NHA += system.number_of_particles(type=type_HA)
@@ -171,6 +168,43 @@ class ReactionEnsembleTest(ut.TestCase):
             ReactionEnsembleTest.RE.get_volume(),
             places=9,
             msg="reaction ensemble volume not set correctly.")
+
+    def test_change_reaction_constant(self):
+        RE = ReactionEnsembleTest.RE
+        new_reaction_constant = 634.0
+        RE.change_reaction_constant(0, new_reaction_constant)
+        RE_status = RE.get_status()
+        forward_reaction = RE_status["reactions"][0]
+        backward_reaction = RE_status["reactions"][1]
+        print(forward_reaction)
+        self.assertEqual(
+            new_reaction_constant,
+            forward_reaction["gamma"],
+            msg="new reaction constant was not set correctly.")
+        self.assertEqual(
+            1.0 / new_reaction_constant,
+            backward_reaction["gamma"],
+            msg="new reaction constant was not set correctly.")
+        RE.change_reaction_constant(0, ReactionEnsembleTest.gamma)
+
+    def test_delete_reaction(self):
+        RE = ReactionEnsembleTest.RE
+        RE.add_reaction(
+            gamma=1,
+            reactant_types=[5], 
+            reactant_coefficients=[1],
+            product_types=[2, 3, 4],
+            product_coefficients=[1, 4, 3],
+            default_charges={5: 0, 2: 0, 3: 0, 4: 0}, check_for_electroneutrality=True)
+        nr_reactions_after_addition = len(RE.get_status()["reactions"])
+        RE.delete_reaction(1)
+        nr_reactions_after_deletion = len(RE.get_status()["reactions"])
+        self.assertEqual(
+            2,
+            nr_reactions_after_addition - nr_reactions_after_deletion, 
+            msg="the difference in single reactions does not match,\
+            deleting a full reaction (back and forward direction)\
+            should result in deleting two single reactions.")
 
 
 if __name__ == "__main__":

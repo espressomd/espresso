@@ -22,14 +22,12 @@
 #define RATTLE_H
 
 /** \file
- * RATTLE Algorithm (Rattle: A "Velocity" Version of the
- * Shake Algorithm for Molecular Dynamics Calculations, H.C Andersen, J Comp
- * Phys, 52, 24-34, 1983)
+ *  RATTLE algorithm (@cite andersen83a).
  *
- *  For more information see \ref rattle.cpp "rattle.cpp".
+ *  For more information see \ref rattle.cpp.
  */
 
-/** number of rigid bonds */
+/** Number of rigid bonds. */
 extern int n_rigidbonds;
 
 #include "cells.hpp"
@@ -43,13 +41,14 @@ void save_old_pos(const ParticleRange &particles,
                   const ParticleRange &ghost_particles);
 
 /** Propagate velocity and position while using SHAKE algorithm for bond
- * constraint.*/
+ *  constraint.
+ */
 void correct_pos_shake(const ParticleRange &particles);
 
-/** Correction of current velocities using RATTLE algorithm*/
+/** Correction of current velocities using RATTLE algorithm. */
 void correct_vel_shake();
 
-/** set the parameter for a rigid, aka RATTLE bond */
+/** Set the parameter for a rigid, aka RATTLE, bond. */
 int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol);
 
 #endif

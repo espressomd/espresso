@@ -34,9 +34,11 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
+#include "particle_data.hpp"
 #include "rattle.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
+
 #include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
@@ -116,9 +118,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_NPTISO_PINST,
      {&nptiso.p_inst, Datafield::Type::DOUBLE, 1,
       "npt_p_inst"}}, /* 24 from pressure.cpp */
-    {FIELD_NPTISO_PINSTAV,
-     {&nptiso.p_inst_av, Datafield::Type::DOUBLE, 1,
-      "npt_p_inst_av"}}, /* 25 from pressure.cpp */
     {FIELD_NPTISO_PDIFF,
      {&nptiso.p_diff, Datafield::Type::DOUBLE, 1,
       "npt_p_diff"}}, /* 26 from pressure.cpp */

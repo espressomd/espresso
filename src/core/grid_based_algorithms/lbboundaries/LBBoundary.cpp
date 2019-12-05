@@ -1,12 +1,14 @@
 #include "LBBoundary.hpp"
 #include "config.hpp"
 #ifdef LB_BOUNDARIES
+#include "communication.hpp" 
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 namespace LBBoundaries {
 Utils::Vector3d LBBoundary::get_force() const {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA  
     auto const grid = lb_walberla()->get_grid_dimensions();
     auto const agrid = lb_lbfluid_get_agrid();
     Utils::Vector3d force_density{0, 0, 0};
@@ -31,8 +33,9 @@ Utils::Vector3d LBBoundary::get_force() const {
     return boost::mpi::all_reduce(comm_cart, force_density,
                                   std::plus<Utils::Vector3d>()) *
            lb_lbfluid_get_density();
+#endif           
   } else {
-    if (this_node == 0) {
+    if (this_node==0) {
       return lbboundary_get_force(this);
     } else
       return {};

@@ -57,9 +57,9 @@ class InteractionsBondedTest(ut.TestCase):
             k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut)
         self.run_test(hb,
                       lambda r: tests_common.harmonic_force(
-                          scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
+                          scalar_r=r, k=hb_k, r_0=hb_r_0),
                       lambda r: tests_common.harmonic_potential(
-                          scalar_r=r, k=hb_k, r_0=hb_r_0, r_cut=hb_r_cut),
+                          scalar_r=r, k=hb_k, r_0=hb_r_0),
                       0.01, hb_r_cut, True)
 
     # Test Fene Bond
@@ -184,7 +184,7 @@ class InteractionsBondedTest(ut.TestCase):
         if test_breakage:
             self.system.part[1].pos = self.system.part[0].pos \
                 + self.axis * cutoff * (1.01)
-            with self.assertRaisesRegexp(Exception, "Encountered errors during integrate"):
+            with self.assertRaisesRegex(Exception, "Encountered errors during integrate"):
                 self.system.integrator.run(recalc_forces=True, steps=0)
 
 

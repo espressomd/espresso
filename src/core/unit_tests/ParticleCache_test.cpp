@@ -18,10 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the MpiCallbacks class.
- *
- */
+/* Unit tests for the MpiCallbacks class. */
 
 #include <random>
 #include <vector>

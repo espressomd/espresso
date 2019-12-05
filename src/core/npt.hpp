@@ -19,36 +19,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
- *  Exports for the NPT code, which otherwise is really spread all over...
+ *  Exports for the NpT code.
  */
 
 #ifndef NPT_H
 #define NPT_H
 
 #include "BoxGeometry.hpp"
-/************************************************
- * data types
- ************************************************/
 
-/** Structure to hold all variables related to the isotropic NpT-integration
- *  scheme.
- */
+/** Parameters of the isotropic NpT-integration scheme. */
 typedef struct {
   /** mass of a virtual piston representing the shaken box */
   double piston;
-  /** inverse of piston */
+  /** inverse of \ref piston */
   double inv_piston;
-  /** isotropic volume.  Note that we use the term volume throughout
+  /** isotropic volume. Note that we use the term volume throughout,
    *  although for a 2d or 1d system we mean Area and Length respectively
    */
   double volume;
-
   /** desired pressure to which the algorithm strives to */
   double p_ext;
   /** instantaneous pressure the system currently has */
   double p_inst;
-  /** instantaneous pressure averaged over current integration cycle */
-  double p_inst_av;
   /** difference between \ref p_ext and \ref p_inst */
   double p_diff;
   /** virial (short-range) components of \ref p_inst */
@@ -59,43 +51,46 @@ typedef struct {
    *  in offline pressure calculations such as 'analyze p_inst'
    */
   bool invalidate_p_vel;
-  /** geometry information for the npt integrator. Holds the vector
-   *  <dir, dir ,dir> where a positive value for dir indicates that
+  /** geometry information for the NpT integrator. Holds the vector
+   *  \< dir, dir, dir \> where a positive value for dir indicates that
    *  box movement is allowed in that direction. To check whether a
-   *  given direction is turned on use bitwise comparison with \ref
+   *  given direction is turned on, use bitwise comparison with \ref
    *  nptgeom_dir
    */
   int geometry;
-  /** bitwise comparison values corresponding to different directions*/
+  /** bitwise comparison values corresponding to different directions */
   int nptgeom_dir[3];
-  /** The number of dimensions in which npt boxlength motion is coupled to
-   * particles */
+  /** The number of dimensions in which NpT boxlength motion is coupled to
+   *  particles */
   int dimension;
   /** Set this flag if you want all box dimensions to be identical. Needed for
-   *  electrostatics and magnetostatics. If the value of dimension is less than
-   *  3 then box length motion in one or more directions will be decoupled from
-   *  the particle motion
+   *  electrostatics and magnetostatics. If the value of \ref dimension is
+   *  less than 3, then box length motion in one or more directions will
+   *  be decoupled from the particle motion
    */
-  int cubic_box;
-  /** An index to one of the non_constant dimensions. handy if you just want
+  bool cubic_box;
+  /** An index to one of the non-constant dimensions. Handy if you just want
    *  the variable box_l
    */
   int non_const_dim;
 } nptiso_struct;
 extern nptiso_struct nptiso;
 
-/** Allowable values for nptiso.geometry */
+/** @name NpT geometry bitmasks.
+ *  Allowed values for @ref nptiso_struct::geometry.
+ */
+/*@{*/
 #define NPTGEOM_XDIR 1
 #define NPTGEOM_YDIR 2
 #define NPTGEOM_ZDIR 4
+/*@}*/
 
-/** @brief Synchronizes npt state such as instantaneous and average pressure
- *   @param n_steps Number of integration steps since the last sync
+/** @brief Synchronizes NpT state such as instantaneous and average pressure
+ *  @param n_steps Number of integration steps since the last sync
  */
 void synchronize_npt_state(int n_steps);
 void npt_ensemble_init(const BoxGeometry &box);
 void integrator_npt_sanity_checks();
-void npt_update_instantaneous_pressure();
 void npt_reset_instantaneous_virials();
 void npt_add_virial_contribution(const Utils::Vector3d &force,
                                  const Utils::Vector3d &d);

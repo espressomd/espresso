@@ -27,27 +27,27 @@
 # boundaries, where the velocity is fixed to $v.
 #
 import espressomd
-from espressomd import lb, lbboundaries, shapes, has_features
+from espressomd import lbboundaries, shapes
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 
 # Define the LB Parameters
-TIME_STEP = 0.4
-AGRID = 0.6 
-KVISC = 3 
+TIME_STEP = 0.5
+AGRID = 0.6
+KVISC = 6 
 DENS = 2.3
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP}
 # System setup
-radius = 8 * AGRID 
-box_width = 62 * AGRID
+radius = 7 * AGRID
+box_width = 46 * AGRID
 real_width = box_width + 2 * AGRID
-box_length = 62 * AGRID
+box_length = 36 * AGRID
 c_s = np.sqrt(1. / 3. * AGRID**2 / TIME_STEP**2)
-v = [0, 0, 0.4 * c_s]  # The boundary slip
+v = [0, 0, 0.1 * c_s]  # The boundary slip
 
 
 class Stokes:
@@ -84,16 +84,20 @@ class Stokes:
 
         self.system.lbboundaries.add(sphere)
 
+        def size(vector):
+            tmp = 0
+            for k in vector:
+                tmp += k * k
+            return np.sqrt(tmp)
+
         last_force = -1000.
         dynamic_viscosity = self.lbf.viscosity * self.lbf.density
-        stokes_force = 6 * np.pi * dynamic_viscosity * \
-            radius * np.linalg.norm(v)
-        self.system.integrator.run(int(self.system.box_l[0]))
+        stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
+        self.system.integrator.run(50)
         while True:
-            self.system.integrator.run(5)
+            self.system.integrator.run(3)
             force = np.linalg.norm(sphere.get_force())
-            print(self.system.time, force)
-            if np.abs(last_force - force) < 0.001 * stokes_force:
+            if np.abs(last_force - force) < 0.01 * stokes_force:
                 break
             last_force = force
 
@@ -119,12 +123,12 @@ class LBCPUStokes(ut.TestCase, Stokes):
     def setUp(self):
         self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
 
-
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
 class LBWalberlaStokes(ut.TestCase, Stokes):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
+
 
 
 if __name__ == "__main__":

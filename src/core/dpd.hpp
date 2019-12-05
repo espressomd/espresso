@@ -21,16 +21,15 @@
 #ifndef CORE_DPD_HPP
 #define CORE_DPD_HPP
 /** \file
- *  Routines to use dpd as thermostat or pair force
- *  T. Soddemann, B. Duenweg and K. Kremer, Phys. Rev. E 68, 046702 (2003)
+ *  Routines to use dpd as thermostat or pair force @cite soddemann03a
  *
- *  Implementation in forces.cpp.
+ *  Implementation in @ref dpd.cpp.
  */
 
 #include "config.hpp"
 
 #ifdef DPD
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
@@ -44,8 +43,6 @@ struct DPDParameters {
   double pref = 0.0;
 };
 
-void dpd_heat_up();
-void dpd_cool_down();
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf);
 void dpd_init();

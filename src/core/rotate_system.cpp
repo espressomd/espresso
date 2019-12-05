@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "event.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 
 #include <utils/math/vec_rotate.hpp>

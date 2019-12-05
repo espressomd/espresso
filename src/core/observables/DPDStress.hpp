@@ -20,8 +20,8 @@
 #define OBSERVABLES_DPDSTRESS_HPP
 
 #include "Observable.hpp"
+#include "Particle.hpp"
 #include "dpd.hpp"
-#include "particle_data.hpp"
 #include <vector>
 
 namespace Observables {

@@ -26,8 +26,8 @@
 #include <vector>
 
 #include "Cluster.hpp"
+#include "Particle.hpp"
 #include "pair_criteria/pair_criteria.hpp"
-#include "particle_data.hpp"
 
 namespace ClusterAnalysis {
 

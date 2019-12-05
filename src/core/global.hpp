@@ -81,8 +81,6 @@ enum Fields {
   FIELD_NPTISO_PEXT,
   /** index of \ref nptiso_struct::p_inst */
   FIELD_NPTISO_PINST,
-  /** index of \ref nptiso_struct::p_inst_av */
-  FIELD_NPTISO_PINSTAV,
   /** index of \ref nptiso_struct::p_diff */
   FIELD_NPTISO_PDIFF,
   /** index of \ref nptiso_struct::piston */

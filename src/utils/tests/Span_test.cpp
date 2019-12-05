@@ -120,11 +120,20 @@ BOOST_AUTO_TEST_CASE(make_span_) {
                              Span<const int>>::value,
                 "");
 
+  /* From pointer and size */
   {
     const int p = 5;
     auto s = make_span(&p, 1);
     BOOST_CHECK_EQUAL(s.data(), &p);
     BOOST_CHECK_EQUAL(s.size(), 1);
+  }
+
+  /* From container */
+  {
+    std::vector<int> vec(5);
+    auto result = make_span(vec);
+    BOOST_CHECK_EQUAL(result.data(), vec.data());
+    BOOST_CHECK_EQUAL(result.size(), vec.size());
   }
 }
 
@@ -146,5 +155,12 @@ BOOST_AUTO_TEST_CASE(make_const_span_) {
     auto s = make_const_span(&p, 1);
     BOOST_CHECK_EQUAL(s.data(), &p);
     BOOST_CHECK_EQUAL(s.size(), 1);
+  }
+
+  {
+    std::vector<int> vec(5);
+    auto result = make_const_span(vec);
+    BOOST_CHECK_EQUAL(result.data(), vec.data());
+    BOOST_CHECK_EQUAL(result.size(), vec.size());
   }
 }

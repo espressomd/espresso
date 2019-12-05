@@ -103,7 +103,7 @@ class openGLLive:
         * ``'node'``: Color according to the node the particle is on.
     particle_type_colors : array_like :obj:`float`, optional
         Colors for particle types.
-    particle_type_materials : :obj:`str`, optional
+    particle_type_materials : array_like :obj:`str`, optional
         Materials of the particle types.
     particle_charge_colors : (2,) array_like of :obj:`float`, optional
         Two colors for min/max charged particles.
@@ -226,7 +226,7 @@ class openGLLive:
         # DEFAULT PROPERTIES
         self.specs = {
             'window_size': [800, 800],
-            'name': 'Espresso Visualization',
+            'name': 'ESPResSo Visualization',
 
             'background_color': [0, 0, 0],
 
@@ -613,7 +613,7 @@ class openGLLive:
 
     def update(self):
         """Update method to be called after integration.
-        Changes of espresso system can only happen here.
+        Changes of ESPResSo system can only happen here.
 
         """
         if self.glutMainLoop_started:

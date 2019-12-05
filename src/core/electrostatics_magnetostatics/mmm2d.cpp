@@ -27,6 +27,7 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 
 #ifdef ELECTROSTATICS
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -34,7 +35,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "mmm-common.hpp"
-#include "particle_data.hpp"
 #include "specfunc.hpp"
 
 #include <utils/constants.hpp>
@@ -527,9 +527,8 @@ static void setup_z_force() {
   const double pref = coulomb.prefactor * C_2PI * ux * uy;
   constexpr int e_size = 1, size = 2;
 
-  /* there is NO contribution from images here, unlike claimed in Tyagi et al.
-     Please refer to the Entropy
-     article of Arnold, Kesselheim, Breitsprecher et al, 2013, for details. */
+  /** there is NO contribution from images here, unlike claimed in
+   *  @cite tyagi10a. Please refer to @cite arnold13c for details. */
 
   if (this_node == 0) {
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
@@ -641,7 +640,7 @@ static double z_energy(const ParticleRange &particles) {
       // zero potential difference contribution
       eng += gbl_dm_z * gbl_dm_z * coulomb.prefactor * 2 * M_PI * ux * uy * uz;
       // external potential shift contribution
-      eng -= mmm2d_params.pot_diff * uz * gbl_dm_z;
+      eng -= 2. * mmm2d_params.pot_diff * uz * gbl_dm_z;
     }
   }
 

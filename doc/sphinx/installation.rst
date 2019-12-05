@@ -63,9 +63,9 @@ Cython
     At least version 0.23 is required.
 
 
-.. _Installing Requirements on Ubuntu Linux:
+.. _Installing requirements on Ubuntu Linux:
 
-Installing Requirements on Ubuntu Linux
+Installing requirements on Ubuntu Linux
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To make |es| run on 18.04 LTS, its dependencies can be installed with:
@@ -88,8 +88,8 @@ are required:
 
 .. code-block:: bash
 
-    sudo apt install python3-matplotlib python3-scipy \
-      ipython3 jupyter-notebook
+    sudo apt install python3-matplotlib python3-scipy ipython3 jupyter-notebook
+    sudo pip3 install 'pint>=0.9'
 
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
@@ -117,9 +117,24 @@ ROCm SDK to make use of GPU computation:
 
 After installing the ROCm SDK, please reboot your computer.
 
-.. _Installing Requirements on Mac OS X:
 
-Installing Requirements on Mac OS X
+.. _Installing requirements on other Linux distributions:
+
+Installing requirements on other Linux distributions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Please refer to the following Dockerfiles to find the minimum set of packages
+required to compile |es| on other Linux distributions:
+
+* `CentOS 7 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-7>`_
+* `Fedora 30 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-next>`_
+* `Debian 10 <https://github.com/espressomd/docker/blob/master/docker/debian-python3/Dockerfile-10>`_
+* `OpenSUSE Leap 15.1 <https://github.com/espressomd/docker/blob/master/docker/opensuse/Dockerfile-15.1>`_
+
+
+.. _Installing requirements on Mac OS X:
+
+Installing requirements on Mac OS X
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Preparation
@@ -172,9 +187,9 @@ If you want to install Homebrew, use the following commands.
     sudo xcodebuild -license accept
     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-Installing Packages using MacPorts
+Installing packages using MacPorts
 """"""""""""""""""""""""""""""""""
-    
+
 Run the following commands:
 
 .. code-block:: bash
@@ -191,7 +206,7 @@ Run the following commands:
     sudo port select --set mpi openmpi-mp
 
 
-Installing Packages using Homebrew
+Installing packages using Homebrew
 """"""""""""""""""""""""""""""""""
 
 .. code-block:: bash
@@ -225,7 +240,7 @@ lines below (optional steps which modify the build process are commented out):
     #cp myconfig-default.hpp myconfig.hpp # use the default configuration as template
     #nano myconfig.hpp                    # edit to add/remove features as desired
     cmake ..
-    #ccmake . // in order to add/remove features like SCAFACOS or CUDA
+    #ccmake . // in order to add/remove features like ScaFaCoS or CUDA
     make
 
 This will build |es| with a default feature set, namely
@@ -312,7 +327,7 @@ different configuration headers:
   .. code-block:: c++
 
     #define ELECTROSTATICS
-    #define LENNARD-JONES
+    #define LENNARD_JONES
 
 *  :file:`$builddir2/myconfig.hpp`:
 
@@ -421,14 +436,6 @@ General features
 -  ``BOND_CONSTRAINT`` Turns on the RATTLE integrator which allows for fixed lengths bonds
    between particles.
 
--  ``VIRTUAL_SITES_COM`` Virtual sites are particles, the position and velocity of which is
-   not obtained by integrating equations of motion. Rather, they are
-   placed using the position (and orientation) of other particles. The
-   feature allows to place a virtual particle into the center of mass of
-   a set of other particles.
-
-   .. seealso:: :ref:`Virtual sites`
-
 -  ``VIRTUAL_SITES_RELATIVE`` Virtual sites are particles, the position and velocity of which is
    not obtained by integrating equations of motion. Rather, they are
    placed using the position (and orientation) of other particles. The
@@ -443,7 +450,7 @@ General features
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
 
-   .. seealso:: :ref:`Writing H5MD-Files`
+   .. seealso:: :ref:`Writing H5MD-files`
 
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
@@ -669,7 +676,7 @@ build directory and create a new one.
 .. _make\: Compiling, testing and installing:
 
 ``make``: Compiling, testing and installing
---------------------------------------------
+-------------------------------------------
 
 The command ``make`` is mainly used to compile the source code, but it
 can do a number of other things. The generic syntax of the ``make``
@@ -694,9 +701,12 @@ targets are available:
     Deletes all files that were created during the compilation.
 
 ``install``
-    Install |es|.
-    Use ``make DESTDIR=/home/john install`` to install to a
-    specific directory.
+    Install |es| in the path specified by the CMake variable
+    ``CMAKE_INSTALL_PREFIX``. The path can be changed by calling CMake
+    with ``cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/espresso``. Do not use
+    ``make DESTDIR=/path/to/espresso install`` to install to a specific path,
+    this will cause issues with the runtime path (RPATH) and will conflict
+    with the CMake variable ``CMAKE_INSTALL_PREFIX`` if it has been set.
 
 ``doxygen``
     Creates the Doxygen code documentation in the :file:`doc/doxygen`

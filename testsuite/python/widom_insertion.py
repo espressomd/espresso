@@ -22,7 +22,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import reaction_ensemble
 from tests_common import lj_potential
 
@@ -55,7 +55,7 @@ class WidomInsertionTest(ut.TestCase):
                                          LJ_SIG,
                                          LJ_CUT,
                                          LJ_SHIFT) / TEMPERATURE),
-        x=radius)   
+        x=radius)
     # numerical solution for V_lj=0 => corresponds to the volume (as exp(0)=1)
     integreateRest = (BOX_L**3 - 4.0 / 3.0 * np.pi * LJ_CUT**3)
 
@@ -73,7 +73,7 @@ class WidomInsertionTest(ut.TestCase):
     volume = np.prod(system.box_l)  # cuboid box
 
     Widom = reaction_ensemble.WidomInsertion(
-        temperature=TEMPERATURE, seed=1)    
+        temperature=TEMPERATURE, seed=1)
 
     def setUp(self):
         self.system.part.add(id=0, pos=0.5 * self.system.box_l,
@@ -90,8 +90,7 @@ class WidomInsertionTest(ut.TestCase):
             product_coefficients=[1],
             default_charges={self.TYPE_HA: self.CHARGE_HA})
 
-    def test_widom_insertion(self):   
-        TYPE_HA = WidomInsertionTest.TYPE_HA
+    def test_widom_insertion(self):
         system = WidomInsertionTest.system
         Widom = WidomInsertionTest.Widom
         target_mu_ex = WidomInsertionTest.target_mu_ex
@@ -99,7 +98,7 @@ class WidomInsertionTest(ut.TestCase):
         system.seed = system.cell_system.get_state()[
             'n_nodes'] * [np.random.randint(5)]
         num_samples = 100000
-        for i in range(num_samples):
+        for _ in range(num_samples):
             # 0 for insertion reaction
             Widom.measure_excess_chemical_potential(0)
         mu_ex = Widom.measure_excess_chemical_potential(0)

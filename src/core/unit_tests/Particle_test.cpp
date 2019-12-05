@@ -17,10 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the Particle struct.
- *
- */
+/* Unit tests for the Particle struct. */
 
 #define BOOST_TEST_MODULE Particle test
 #define BOOST_TEST_DYN_LINK
@@ -29,6 +26,9 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+#include <utils/serialization/memcpy_archive.hpp>
+
+#include "Particle.hpp"
 #include "serialization/Particle.hpp"
 
 BOOST_AUTO_TEST_CASE(comparison) {
@@ -79,4 +79,38 @@ BOOST_AUTO_TEST_CASE(serialization) {
 #ifdef EXCLUSIONS
   BOOST_CHECK(q.el == el);
 #endif
+}
+
+namespace Utils {
+template <>
+struct is_statically_serializable<ParticleProperties> : std::true_type {};
+} // namespace Utils
+
+BOOST_AUTO_TEST_CASE(properties_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<ParticleProperties>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(ParticleProperties));
+
+  std::vector<char> buf(expected_size);
+
+  auto prop = ParticleProperties{};
+  prop.identity = 1234;
+
+  {
+    auto oa = Utils::MemcpyOArchive{Utils::make_span(buf)};
+
+    oa << prop;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{Utils::make_span(buf)};
+    ParticleProperties out;
+
+    ia >> out;
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    BOOST_CHECK_EQUAL(out.identity, prop.identity);
+  }
 }

@@ -20,7 +20,7 @@ import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@SAMPLES_DIR@/widom_insertion.py", cmd_arguments=["0.001"],
-    warm_n_times=5, warm_steps=100, n_iterations=20)
+    n_iterations=20)
 
 
 @skipIfMissingFeatures

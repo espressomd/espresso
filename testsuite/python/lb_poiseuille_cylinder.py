@@ -26,7 +26,7 @@ import espressomd.accumulators
 
 
 """
-Check the Lattice Boltzmann 'pressure' driven flow in a cylindrical constraint
+Check the lattice-Boltzmann 'pressure' driven flow in a cylindrical constraint
 by comparing to the analytical solution.
 
 """

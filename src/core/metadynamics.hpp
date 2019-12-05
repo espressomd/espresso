@@ -22,12 +22,12 @@
 #ifndef METADYNAMICS_H
 #define METADYNAMICS_H
 
+#include "Particle.hpp"
 #include "ParticleRange.hpp"
-#include "particle_data.hpp"
 
 /** \file
  *
- *  This file contains routines to perform metadynamics.  Right now, the
+ *  This file contains routines to perform metadynamics. Right now, the
  *  reaction coordinate is defined between two particles. Note that these
  *  particles can be virtual sites, in order to handle molecules.
  *

@@ -23,18 +23,22 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "config.hpp"
 
-// This function is used to set the parameters
-// Also calculates and stores the reference state
+/** Set the IBM Triel parameters.
+ *  Also calculate and store the reference state.
+ */
 int IBM_Triel_SetParams(int bond_type, int ind1, int ind2, int ind3,
                         double maxDist, tElasticLaw elasticLaw, double k1,
                         double k2);
-// For reading checkpoints.
-// Idea: * parameters are set in the run-continue script
-//       * also reference shape is recomputed there
-//       * only pass two values here to check consistency
+
+/** Update the IBM Triel parameters from a checkpoint.
+ *  Ideas:
+ *  - parameters are set in the run-continue script
+ *  - also reference shape is recomputed there
+ *  - only pass two values here to check consistency
+ */
 int IBM_Triel_ResetParams(int bond_type, double k1, double l0);
 
-/** Calculate the forces
+/** Calculate the forces.
  *  @return the forces on @p p1, @p p2, @p p3
  */
 boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>

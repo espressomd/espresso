@@ -31,7 +31,7 @@
 #include <list>
 #include <string>
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 namespace Scafacos {
 #if defined(SCAFACOS)
