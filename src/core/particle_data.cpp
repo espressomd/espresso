@@ -1071,7 +1071,7 @@ void local_remove_particle(int part) {
         cell = c;
         position = i;
       } else {
-        remove_all_bonds_to(p, i);
+        remove_all_bonds_to(p, part);
       }
     }
   }
