@@ -67,7 +67,7 @@ class RotDiffAniso(ut.TestCase):
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
-        self.kT = np.random.uniform(1.5, 6.5)
+        self.kT = np.random.uniform(1.0, 1.5)
         # Note: here & hereinafter specific variations in the random parameter
         # ranges are related to the test execution duration to achieve the
         # required statistical averages faster. The friction gamma_global should
