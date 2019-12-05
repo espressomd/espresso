@@ -322,14 +322,13 @@ that we add the f/2 contribution - only for Walberla
 
 void GetIBMInterpolatedVelocityWalberla(const Utils::Vector3d &pos, double *v,
                                         double *forceAdded) {
-
-  Utils::Vector3d force = *(lb_walberla()->get_force_at_pos(pos));
+  Utils::Vector3d force = *(lb_walberla()->get_force_at_pos(pos,true));
   forceAdded[0] = force[0] / 2.0;
   forceAdded[1] = force[1] / 2.0;
   forceAdded[2] = force[2] / 2.0;
 
-  Utils::Vector3d velocity = *(lb_walberla()->get_velocity_at_pos(pos));
-  double local_density = *(lb_walberla()->get_density_at_pos(pos));
+  Utils::Vector3d velocity = *(lb_walberla()->get_velocity_at_pos(pos,true));
+  double local_density = *(lb_walberla()->get_density_at_pos(pos,true));
   v[0] = velocity[0] + forceAdded[0] * local_density;
   v[1] = velocity[1] + forceAdded[1] * local_density;
   v[2] = velocity[2] + forceAdded[2] * local_density;

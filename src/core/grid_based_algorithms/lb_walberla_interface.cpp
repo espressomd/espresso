@@ -72,7 +72,7 @@ Utils::Vector3d get_momentum() { return lb_walberla()->get_momentum(); }
 REGISTER_CALLBACK_REDUCTION(get_momentum, std::plus<>())
 
 boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos) {
-  auto res = lb_walberla()->get_velocity_at_pos(pos);
+  auto res = lb_walberla()->get_velocity_at_pos(pos,false);
   return res;
 }
 
