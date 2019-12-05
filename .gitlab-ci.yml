@@ -221,7 +221,7 @@ tutorials-samples-maxset:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -234,7 +234,7 @@ tutorials-samples-default:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=default with_coverage=false make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -249,7 +249,7 @@ tutorials-samples-empty:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=empty with_coverage=false make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 with_scafacos=false
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -264,7 +264,7 @@ tutorials-samples-no-gpu:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
-    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 hide_gpu=true
+    - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 hide_gpu=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
