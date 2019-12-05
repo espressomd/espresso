@@ -23,9 +23,8 @@
 #define RANDOM_H
 
 /** \file
-
-    A random generator
-*/
+ *  Random number generation using Philox.
+ */
 
 #include "errorhandling.hpp"
 
@@ -50,6 +49,7 @@ enum class RNGSalt : uint64_t {
   FLUID = 0,
   PARTICLES,
   LANGEVIN,
+  LANGEVIN_ROT,
   SALT_DPD,
   THERMALIZED_BOND
 };
@@ -96,8 +96,7 @@ inline void unseeded_error() {
 
 /**
  * @brief checks the seeded state and throws error if unseeded
- *
- **/
+ */
 inline void check_user_has_seeded() {
   static bool unseeded_error_thrown = false;
   if (!user_has_seeded && !unseeded_error_thrown) {
@@ -111,12 +110,11 @@ inline void check_user_has_seeded() {
  *
  * @param cnt   Unused.
  * @param seeds A vector of seeds, must be at least n_nodes long.
- **/
+ */
 void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
 /**
- * @brief Gets a string representation of the state of all
- *        the nodes.
+ * @brief Gets a string representation of the state of all the nodes.
  */
 std::string mpi_random_get_stat();
 
@@ -124,13 +122,12 @@ std::string mpi_random_get_stat();
  * @brief Set the seeds on all the node to the state represented
  *        by the string.
  * The string representation must be one that was returned by
- * mpi_random_get_stat.
+ * @ref mpi_random_get_stat.
  */
 void mpi_random_set_stat(const std::vector<std::string> &stat);
 
 /**
- * @brief
- * Get the state size of the random number generator
+ * @brief Get the state size of the random number generator
  */
 int get_state_size_of_generator();
 
@@ -152,7 +149,6 @@ void init_random_seed(int seed);
  * @brief Draws a random real number from the uniform distribution in the range
  * [0,1)
  */
-
 inline double d_random() {
   using namespace Random;
   check_user_has_seeded();
