@@ -73,7 +73,7 @@ class DPDThermostat(ut.TestCase):
 
     def single(self, with_langevin=False):
         """Test velocity distribution of a dpd fluid with a single type."""
-        N = 250
+        N = 500
         s = self.s
         s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
@@ -95,7 +95,9 @@ class DPDThermostat(ut.TestCase):
         error_tol = 0.01
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
-        self.check_total_zero()
+
+        if not with_langevin:
+            self.check_total_zero()
 
     def test_single(self):
         self.single()
