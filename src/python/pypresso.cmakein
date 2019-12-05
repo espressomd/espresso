@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # Copyright (C) 2010-2019 The ESPResSo project
 # 
 # Copying and distribution of this file, with or without modification,
@@ -29,9 +29,9 @@ fi
 export LD_PRELOAD
 if [ "@WITH_UBSAN@" = "ON" ]; then
   if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
-    export UBSAN_OPTIONS="halt_on_error=1 print_stacktrace=1 suppressions=@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt $UBSAN_OPTIONS"
+    export UBSAN_OPTIONS="halt_on_error=1 print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt\" $UBSAN_OPTIONS"
   else
-    export UBSAN_OPTIONS="print_stacktrace=1 suppressions=@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt $UBSAN_OPTIONS"
+    export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt\" $UBSAN_OPTIONS"
   fi
 fi
 if [ "@WITH_ASAN@" = "ON" ]; then
@@ -51,55 +51,55 @@ if [ "@WITH_MSAN@" = "ON" ] && [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
   export MSAN_OPTIONS="halt_on_error=1 $MSAN_OPTIONS"
 fi
 
-case $1 in
+case "$1" in
     --gdb)
         shift
         [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" --args "@PYTHON_EXECUTABLE@" "$@"
-        exec gdb --args @PYTHON_FRONTEND@ "$@"
+        exec gdb --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --lldb)
         shift
-        exec lldb -- @PYTHON_FRONTEND@ "$@"
+        exec lldb -- "@PYTHON_FRONTEND@" "$@"
         ;;
     --valgrind)
         shift
-        exec valgrind --leak-check=full @PYTHON_FRONTEND@ "$@"
+        exec valgrind --leak-check=full "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-gdb)
         shift
-        exec cuda-gdb --args @PYTHON_FRONTEND@ "$@"
+        exec cuda-gdb --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-memcheck)
         shift
-        exec cuda-memcheck @PYTHON_FRONTEND@ "$@"
+        exec cuda-memcheck "@PYTHON_FRONTEND@" "$@"
         ;;
     --gdb=*)
         options="${1#*=}"
         shift
         [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" ${options} --args "@PYTHON_EXECUTABLE@" "$@"
-        exec gdb ${options} --args @PYTHON_FRONTEND@ "$@"
+        exec gdb ${options} --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --lldb=*)
         options="${1#*=}"
         shift
-        exec lldb ${options} -- @PYTHON_FRONTEND@ "$@"
+        exec lldb ${options} -- "@PYTHON_FRONTEND@" "$@"
         ;;
     --valgrind=*)
         options="${1#*=}"
         shift
-        exec valgrind ${options} @PYTHON_FRONTEND@ "$@"
+        exec valgrind ${options} "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-gdb=*)
         options="${1#*=}"
         shift
-        exec cuda-gdb ${options} --args @PYTHON_FRONTEND@ "$@"
+        exec cuda-gdb ${options} --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-memcheck=*)
         options="${1#*=}"
         shift
-        exec cuda-memcheck ${options} @PYTHON_FRONTEND@ "$@"
+        exec cuda-memcheck ${options} "@PYTHON_FRONTEND@" "$@"
         ;;
     *)
-        exec @PYTHON_FRONTEND@ "$@"
+        exec "@PYTHON_FRONTEND@" "$@"
         ;;
 esac

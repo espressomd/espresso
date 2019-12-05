@@ -132,7 +132,7 @@ debian:10:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian-python3:10
   script:
     - export with_cuda=false
-    - export myconfig=maxset make_check=false
+    - export myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -143,7 +143,7 @@ opensuse:15.1:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -154,7 +154,7 @@ centos:7:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:7
   script:
-    - export with_cuda=false myconfig=maxset make_check=true
+    - export with_cuda=false myconfig=maxset make_check_python=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -165,7 +165,7 @@ fedora:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:next
   script:
-    - export with_cuda=false myconfig=maxset make_check=false
+    - export with_cuda=false myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -217,7 +217,7 @@ tutorials-samples-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=maxset with_coverage=false make_check=false
+    - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -230,7 +230,7 @@ tutorials-samples-default:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=default with_coverage=false make_check=false
+    - export myconfig=default with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -245,7 +245,7 @@ tutorials-samples-empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=empty with_coverage=false make_check=false
+    - export myconfig=empty with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -260,7 +260,7 @@ tutorials-samples-no-gpu:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=maxset with_coverage=false make_check=false
+    - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=true test_timeout=1200 hide_gpu=true
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -274,7 +274,7 @@ installation:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=maxset with_coverage=false make_check=false
+    - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
     - export srcdir=${CI_PROJECT_DIR} test_timeout=1800
     - bash maintainer/CI/build_cmake.sh
     - cd build
@@ -317,7 +317,7 @@ ubuntu:wo-dependencies:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:wo-dependencies
   script:
-    - export myconfig=maxset make_check=false
+    - export myconfig=maxset make_check_unit_tests=false make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -388,7 +388,7 @@ osx-cuda:
   <<: *global_job_definition
   stage: build
   script:
-    - export with_ccache=false myconfig=maxset with_cuda=true make_check=false
+    - export with_ccache=false myconfig=maxset with_cuda=true make_check_unit_tests=false make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - mac
