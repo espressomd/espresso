@@ -175,12 +175,12 @@ public:
   bool add_force_at_pos(const Utils::Vector3d &position,
                         const Utils::Vector3d &force);
   boost::optional<Utils::Vector3d>
-  get_force_at_pos(const Utils::Vector3d &position, bool ghosts) const;
+  get_force_at_pos(const Utils::Vector3d &position) const;
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i node) const;
   boost::optional<Utils::Vector3d>
-  get_velocity_at_pos(const Utils::Vector3d &position, bool ghosts) const;
-  boost::optional<double> get_density_at_pos(const Utils::Vector3d &position, bool ghosts);
+  get_velocity_at_pos(const Utils::Vector3d &position) const;
+  boost::optional<double> get_density_at_pos(const Utils::Vector3d &position);
   //  Utils::Vector3d get_stress_at_pos(const Utils::Vector3d& position);
 
   boost::optional<double> get_node_density(const Utils::Vector3i node) const;
@@ -247,8 +247,6 @@ private:
                      bool consider_ghost_layers = false) const;
   walberla::IBlock *get_block(const Utils::Vector3d &pos,
                               bool consider_ghost_layers) const;
-  Utils::Vector3d get_shifted_pos_in_block(const Utils::Vector3d &pos,
-                                            const walberla::IBlock &block) const;
   walberla::BlockDataID m_pdf_field_id;
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_force_field_id;

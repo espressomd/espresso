@@ -795,17 +795,9 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
       for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
         for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
-          auto boundary = lb_lbnode_get_boundary(pos);
-          if(boundary)
-            fprintf(fp, "%i %i %i\n", 0, 0, 0);
-          else{
-            auto u = lb_lbnode_get_velocity(pos) *
-                     lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
-            if(u[0] != u[0])
-              fprintf(fp, "%f %f %f\n", 2.0, 2.0, 2.0);
-            else
-              fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
-          }
+          auto u = lb_lbnode_get_velocity(pos) *
+                   lb_walberla()->get_grid_spacing() / lb_walberla()->get_tau();
+          fprintf(fp, "%f %f %f\n", u[0], u[1], u[2]);
         }
   }
 #endif

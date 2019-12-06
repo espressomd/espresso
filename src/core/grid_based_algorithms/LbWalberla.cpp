@@ -118,8 +118,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   // sets up the communication
   blockforest::communication::UniformBufferedScheme<
-      walberla::lbm::D3Q27<walberla::lbm::collision_model::TRT, false,
-                           force_model_t>::CommunicationStencil>
+      Lattice_model_t::CommunicationStencil>
       communication(m_blocks);
   communication.addPackInfo(
       std::make_shared<field::communication::PackInfo<Pdf_field_t>>(
@@ -135,12 +134,13 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
                                         "boundary handling");
   m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                         "Reset force fields");
+  //  m_time_loop->add()
+  //      << timeloop::AfterFunction(communication, "communication")
   m_time_loop->add() << timeloop::Sweep(
       domain_decomposition::makeSharedSweep(
           lbm::makeCellwiseSweep<Lattice_model_t, Flag_field_t>(
               m_pdf_field_id, m_flag_field_id, Fluid_flag)),
-      "LB stream & collide")
-                     << timeloop::AfterFunction(communication, "communication");
+      "LB stream & collide");
 
   m_force_distributor_id =
       field::addDistributor<Vector_field_distributor_t, Flag_field_t>(
@@ -219,43 +219,17 @@ IBlock *LbWalberla::get_block(const Utils::Vector3d &pos,
   auto block =
       m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
   if (consider_ghost_layers and !block) {
-    // Define periodic shifed position
-    Utils::Vector3d shifted_pos = pos;
-    for (int i = 0; i < 3; i++){
-      if(pos[i] < m_agrid * n_ghost_layers())
-        shifted_pos[i] += m_grid_dimensions[i];
-      else if(pos[i] > m_grid_dimensions[i] - m_agrid * n_ghost_layers())
-        shifted_pos[i] -= m_grid_dimensions[i];
-    }
     // Try to find a block which has the cell as ghost layer
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       auto ab = b->getAABB().getExtended(1.0 * n_ghost_layers());
-      for (auto x : {pos[0], shifted_pos[0]})
-      for (auto y : {pos[1], shifted_pos[1]})
-      for (auto z : {pos[2], shifted_pos[2]})
-        if (ab.contains(x, y, z)) {
-          block = &(*b);
-          break;
-        }
+      if (ab.contains(pos[0], pos[1], pos[2])) {
+        block = &(*b);
+        break;
+      }
     }
   }
 
   return block;
-}
-
-// Returns the shifted position due to periodic boundaries, which are not handled by AABB.getExtended
-Utils::Vector3d LbWalberla::get_shifted_pos_in_block(const Utils::Vector3d &pos,
-                                                      const walberla::IBlock &block) const {
-  if(block.getAABB().getExtended(n_ghost_layers()).contains(pos[0],pos[1],pos[2]))
-    return pos;
-  Utils::Vector3d shifted_pos = pos;
-  for (int i = 0; i < 3; i++){
-    if(block.getAABB().minCorner()[i] - m_agrid * n_ghost_layers() > pos[i])
-      shifted_pos[i] += m_grid_dimensions[i];
-    if(block.getAABB().maxCorner()[i] + m_agrid * n_ghost_layers() < pos[i])
-      shifted_pos[i] -= m_grid_dimensions[i];
-  }
-  return shifted_pos;
 }
 
 bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
@@ -328,24 +302,22 @@ bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
   auto *force_distributor =
       block->getData<Vector_field_distributor_t>(m_force_distributor_id);
   auto f = to_vector3(force);
-  auto s_pos = get_shifted_pos_in_block(f_pos, *block);
-  force_distributor->distribute(to_vector3(s_pos), &f);
+  force_distributor->distribute(to_vector3(f_pos), &f);
   return true;
 }
 
 boost::optional<Utils::Vector3d>
-LbWalberla::get_force_at_pos(const Utils::Vector3d &pos, bool ghosts) const {
+LbWalberla::get_force_at_pos(const Utils::Vector3d &pos) const {
   const auto f_pos = folded_position(pos, box_geo);
 
-  auto block = get_block(f_pos, ghosts);
+  auto block = get_block(f_pos, true);
   if (!block)
     return {boost::none};
 
   auto *force_interpolator =
       block->getData<ForceFieldAdaptorInterpolator>(m_force_interpolator_id);
   Vector3<real_t> f;
-  auto s_pos = get_shifted_pos_in_block(f_pos, *block);
-  force_interpolator->get(to_vector3(s_pos), &f);
+  force_interpolator->get(to_vector3(f_pos), &f);
   return {to_vector3d(f)};
 }
 
@@ -384,17 +356,17 @@ LbWalberla::get_node_velocity(const Utils::Vector3i node) const {
 }
 
 boost::optional<Utils::Vector3d>
-LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos, bool ghosts) const {
+LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos) const {
   const auto f_pos = folded_position(pos, box_geo);
-  auto block = get_block(f_pos, ghosts);
+
+  auto block = get_block(f_pos, true);
   if (!block)
     return {boost::none};
 
   auto *velocity_interpolator = block->getData<VectorFieldAdaptorInterpolator>(
       m_velocity_interpolator_id);
   Vector3<real_t> v;
-  auto s_pos = get_shifted_pos_in_block(f_pos, *block);
-  velocity_interpolator->get(to_vector3(s_pos), &v);
+  velocity_interpolator->get(to_vector3(f_pos), &v);
   return {to_vector3d(v)};
 }
 
@@ -413,18 +385,17 @@ bool LbWalberla::set_node_velocity(const Utils::Vector3i &node,
 }
 
 boost::optional<double>
-LbWalberla::get_density_at_pos(const Utils::Vector3d &pos, bool ghosts) {
+LbWalberla::get_density_at_pos(const Utils::Vector3d &pos) {
   const auto f_pos = folded_position(pos, box_geo);
 
-  auto block = get_block(f_pos, ghosts);
+  auto block = get_block(f_pos, true);
   if (!block)
     return {boost::none};
 
   auto *density_interpolator =
       block->getData<ScalarFieldAdaptorInterpolator>(m_density_interpolator_id);
   double dens;
-  auto s_pos = get_shifted_pos_in_block(f_pos, *block);
-  density_interpolator->get(to_vector3(s_pos), &dens);
+  density_interpolator->get(to_vector3(f_pos), &dens);
   return {dens};
 }
 
