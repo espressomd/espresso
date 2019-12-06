@@ -29,6 +29,7 @@ endif(WITH_TESTS)
 add_subdirectory(core)
 add_subdirectory(config)
 add_subdirectory(utils)
+add_subdirectory(reaction_ensemble)
 
 add_subdirectory(profiler)
 

@@ -34,7 +34,6 @@ set(EspressoCore_SRC
   pressure.cpp
   random.cpp
   rattle.cpp
-  reaction_ensemble.cpp
   rotate_system.cpp
   rotation.cpp
   RuntimeErrorCollector.cpp

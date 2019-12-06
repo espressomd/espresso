@@ -113,6 +113,7 @@ foreach(cython_file ${cython_SRC})
 endforeach()
 
 target_link_libraries(espressomd_profiler PRIVATE Profiler)
+target_link_libraries(espressomd_reaction_ensemble PRIVATE ReactionEnsemble)
 
 # Configure Python files
 foreach(auxfile ${cython_AUX})

@@ -49,7 +49,6 @@
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
-#include "reaction_ensemble.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"

@@ -20,10 +20,13 @@
 #define REACTION_ENSEMBLE_H
 
 #include "energy.hpp"
+
+#include <utils/Accumulator.hpp>
+
 #include <map>
 #include <random>
 #include <string>
-#include <utils/Accumulator.hpp>
+#include <vector>
 
 namespace ReactionEnsemble {
 
