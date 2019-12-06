@@ -19,11 +19,11 @@
 #ifndef REACTION_ENSEMBLE_H
 #define REACTION_ENSEMBLE_H
 
-#include "energy.hpp"
-
 #include <utils/Accumulator.hpp>
+#include <utils/Vector.hpp>
 
 #include <map>
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -68,9 +68,7 @@ class WangLandauReactionEnsemble;
 
 struct EnergyCollectiveVariable : public CollectiveVariable {
   std::string energy_boundaries_filename;
-  double determine_current_state() override {
-    return calculate_current_potential_energy_of_system();
-  }
+  double determine_current_state() override;
   void
   load_CV_boundaries(WangLandauReactionEnsemble &m_current_wang_landau_system);
 };
@@ -88,25 +86,7 @@ private:
    * is needed since you may use multiple degrees of association as collective
    * variable for the Wang-Landau algorithm.
    */
-  double calculate_degree_of_association() {
-    int total_number_of_corresponding_acid = 0;
-    for (int corresponding_acid_type : corresponding_acid_types) {
-      int num_of_current_type =
-          number_of_particles_with_type(corresponding_acid_type);
-      total_number_of_corresponding_acid += num_of_current_type;
-    }
-    if (total_number_of_corresponding_acid == 0) {
-      throw std::runtime_error("Have you forgotten to specify all "
-                               "corresponding acid types? Total particle "
-                               "number of corresponding acid type is zero\n");
-    }
-    int num_of_associated_acid = number_of_particles_with_type(associated_type);
-    double degree_of_association =
-        static_cast<double>(num_of_associated_acid) /
-        total_number_of_corresponding_acid; // cast to double because otherwise
-                                            // any fractional part is lost
-    return degree_of_association;
-  }
+  double calculate_degree_of_association();
 };
 
 /** Base class for reaction ensemble methods */
