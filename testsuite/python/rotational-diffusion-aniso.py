@@ -22,7 +22,7 @@ import espressomd
 import tests_common
 
 
-@utx.skipIfMissingFeatures(["ROTATION", "PARTICLE_ANISOTROPY",
+@utx.skipIfMissingFeatures(["PARTICLE_ANISOTROPY",
                             "ROTATIONAL_INERTIA", "DIPOLES"])
 class RotDiffAniso(ut.TestCase):
     longMessage = True
@@ -67,7 +67,7 @@ class RotDiffAniso(ut.TestCase):
 
         # NVT thermostat
         # Just some temperature range to cover by the test:
-        self.kT = np.random.uniform(1.5, 6.5)
+        self.kT = np.random.uniform(1.0, 1.5)
         # Note: here & hereinafter specific variations in the random parameter
         # ranges are related to the test execution duration to achieve the
         # required statistical averages faster. The friction gamma_global should
@@ -98,8 +98,7 @@ class RotDiffAniso(ut.TestCase):
             part_pos = np.random.random(3) * box
             self.system.part.add(rotation=(1, 1, 1), id=ind, rinertia=self.J,
                                  pos=part_pos)
-            if espressomd.has_features("ROTATION"):
-                self.system.part[ind].omega_body = [0.0, 0.0, 0.0]
+            self.system.part[ind].omega_body = [0.0, 0.0, 0.0]
 
     def check_rot_diffusion(self, n):
         """

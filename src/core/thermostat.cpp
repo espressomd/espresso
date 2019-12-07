@@ -35,18 +35,14 @@
 #include <iostream>
 #include <unistd.h>
 
-/** thermostat switch */
 int thermo_switch = THERMO_OFF;
-/** Temperature */
 double temperature = 0.0;
-
-/** True if the thermostat should act on virtual particles. */
 bool thermo_virtual = true;
 
 using Thermostat::GammaType;
 
 namespace {
-/** @name Langevin parameters sentinel
+/** @name Langevin parameters sentinels.
  *  These functions return the sentinel value for the Langevin
  *  parameters, indicating that they have not been set yet.
  */
@@ -56,11 +52,7 @@ Utils::Vector3d sentinel(Utils::Vector3d) { return {-1.0, -1.0, -1.0}; }
 /*@}*/
 } // namespace
 
-/* LANGEVIN THERMOSTAT */
-
-/** Langevin friction coefficient gamma for translation. */
 GammaType langevin_gamma = sentinel(GammaType{});
-/** Friction coefficient gamma for rotation. */
 GammaType langevin_gamma_rotation = sentinel(GammaType{});
 GammaType langevin_pref1;
 GammaType langevin_pref2;
