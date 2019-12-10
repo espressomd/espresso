@@ -228,10 +228,10 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.3 REQUIRED)
+find_package(PythonInterp 3.5 REQUIRED)
 
 if(WITH_PYTHON)
-  find_package(Cython 0.23 REQUIRED)
+  find_package(Cython 0.26 REQUIRED)
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} -c
             "import distutils.sysconfig as cg; print(cg.get_python_inc())"
