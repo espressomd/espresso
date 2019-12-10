@@ -1591,15 +1591,57 @@ cdef class _ParticleSliceImpl:
     """
 
     def __cinit__(self, slice_, prefetch_chunk_size=10000):
+        # Chunk size for pre-fetch cache
         self._chunk_size = prefetch_chunk_size
 
-        id_list = np.arange(max_seen_particle + 1)
-        self.id_selection = id_list[slice_]
-        mask = np.empty(len(self.id_selection), dtype=np.bool)
-        cdef int i
-        for i in range(len(self.id_selection) - 1, -1, -1):
-            mask[i] = particle_exists(i)
-        self.id_selection = self.id_selection[mask]
+        # We distinguish two cases:
+        # * ranges and slices only specify lower and upper bounds for particle
+        #   ids and optionally a step. Gaps in the id range are tolerated.
+        # * Explicit list/tuple/ndarray containing particle ids. Here
+        #   all particles have to exist and the result maintains the order
+        #   specified in the list.
+        if isinstance(slice_, (slice, range)):
+            self.id_selection = self._id_selection_from_slice(slice_)
+        elif isinstance(slice_, (list, tuple, np.ndarray)):
+            self._validate_pid_list(slice_)
+            self.id_selection = np.array(slice_, dtype=int)
+        else:
+            raise TypeError(
+                "ParticleSlice must be initialized with an instance of slice or range, or with a list, tuple, or ndarray of ints, but got {} of type {}".format((str(slice_), str(type(slice_)))))
+
+    def _id_selection_from_slice(self, slice_):
+        """Returns an ndarray of particle ids to be included in the
+        ParticleSlice for a given range or slice object.
+        """
+        # Prevent negative bounds
+        if (not slice_.start is None and slice_.start < 0) or\
+           (not slice_.stop is None and slice_.stop < 0):
+            raise IndexError(
+                "Negative start and end ids are not supported on ParticleSlice")
+
+        # We start with a full list of possible particle ids and then 
+        # remove ids of non-existing particles
+        id_list = np.arange(max_seen_particle + 1, dtype=int)
+        id_list = id_list[slice_]
+
+        # Generate a mask which will remove ids of non-existing particles
+        mask = np.empty(len(id_list), dtype=np.bool)
+        mask[:] = True
+        for i, id in enumerate(id_list):
+            if not particle_exists(id):
+                mask[i] = False
+        # Return the id list filtered by the mask
+        return id_list[mask]
+
+    def _validate_pid_list(self, pid_list):
+        """Check that all entries are integers and the corresponding particles exist. Throw, otherwise."""
+        # Check that all entries are some flavor of integer
+        for pid in pid_list:
+            if not is_valid_type(pid, int):
+                raise TypeError(
+                    "Particle id must be an integer but got " + str(pid))
+            if not particle_exists(pid):
+                raise IndexError("Particle does not exist " + str(pid))
 
     def __iter__(self):
         return self._id_gen()
@@ -1718,19 +1760,12 @@ cdef class ParticleList:
     # Retrieve a particle
 
     def __getitem__(self, key):
-        if isinstance(key, slice):
+        # Single particle id results in a ParticleHandle, everything else
+        # in a ParticleSlice
+        if is_valid_type(key, int):
+            return ParticleHandle(key)
+        else:
             return ParticleSlice(key)
-
-        try:
-            if isinstance(key, range):
-                return ParticleSlice(key)
-        except BaseException:
-            pass
-
-        if isinstance(key, (tuple, list, np.ndarray)):
-            return ParticleSlice(np.array(key))
-
-        return ParticleHandle(key)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -2062,8 +2097,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # Ids of the selected particles
         ids = []
         # Did we get a function as argument?
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(
-                args[0], types.FunctionType):
+        if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
             # Go over all particles and pass them to the user-provided function
             for p in self:
                 if args[0](p):
@@ -2122,6 +2156,10 @@ def _add_particle_slice_properties():
         """
 
         N = len(particle_slice.id_selection)
+
+        if N == 0:
+            raise AttributeError(
+                "Cannot set properties of an empty ParticleSlice")
 
         # Special attributes
         if attribute == "bonds":

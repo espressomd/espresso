@@ -207,7 +207,7 @@ class ParticleProperties(ut.TestCase):
         for pos in positions:
             for q in charges:
                 s.part.add(pos=pos, q=q, id=i)
-                i += 1
+                i += 2
 
         # Scalar property
         res = s.part.select(q=0)
@@ -231,7 +231,7 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(tuple(res.id), ())
         # User-specified criterion
         res = s.part.select(lambda p: p.pos[0] < 0.5)
-        self.assertEqual(tuple(sorted(res.id)), (0, 1, 2, 3, 4, 5, 6, 7))
+        np.testing.assert_equal(sorted(res.id), np.arange(0, 16, 2, dtype=int))
 
     def test_image_box(self):
         s = self.system
@@ -328,6 +328,54 @@ class ParticleProperties(ut.TestCase):
             for i in range(3):
                 self.assertGreaterEqual(p.pos_folded[i], 0)
                 self.assertLess(p.pos_folded[i], system.box_l[i])
+
+    def test_particle_slice(self):
+        """Tests operations on slices of particles"""
+
+        system = self.system
+
+        # Empty slice
+        system.part.clear()
+        self.assertEqual(len(system.part[:]), 0)
+        self.assertEqual(len(system.part[:].pos), 0)
+        self.assertEqual(len(system.part[:].id), 0)
+        with self.assertRaises(AttributeError):
+            system.part[:].pos = ((1, 2, 3,),)
+
+        # Slice containing particles
+        ids = [1, 4, 6, 3, 8, 9]
+        pos = np.random.random((len(ids), 3))
+        system.part.add(id=ids, pos=pos)
+
+        # All particles
+        self.assertEqual(len(system.part[:]), len(ids))
+        np.testing.assert_equal(system.part[:].id, sorted(ids))
+        np.testing.assert_equal(system.part[:].pos, pos[np.argsort(ids)])
+
+        # Access via slicing
+        np.testing.assert_equal(system.part[4:9].id,
+                                [i for i in sorted(ids) if i >= 4 and i < 9])
+        np.testing.assert_equal(system.part[9:4:-1].id,
+                                [i for i in sorted(ids, key=lambda i:-i) if i > 4 and i <= 9])
+        # Check that negative start and end on slices are not accepted
+        with self.assertRaises(IndexError):
+            system.part[-1:]
+        with self.assertRaises(IndexError):
+            system.part[:-1]
+
+        # Setting particle properties on a slice
+        system.part[:5].pos = 0, 0, 0
+        np.testing.assert_equal(system.part[:].pos, 
+                                [pos[i] if ids[i] >= 5 else [0, 0, 0] for i in np.argsort(ids)])
+
+        # Slice access via explicit list of ids
+        np.testing.assert_equal(system.part[ids[1:4]].id, ids[1:4])
+        # Check that ids passed in an explicit list must exist
+        with self.assertRaises(IndexError):
+            system.part[99, 3]
+        # Check that wrong types are not accepted
+        with self.assertRaises(TypeError):
+            system.part[[ids[0], 1.2]]
 
 
 if __name__ == "__main__":
