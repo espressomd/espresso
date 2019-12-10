@@ -11,7 +11,7 @@ For understanding this chapter, it is helpful to be aware of the Python classes 
 
 * :class:`espressomd.particle_data.ParticleHandle` provides access to a single particle in the simulation.
 * :class:`espressomd.particle_data.ParticleList` provides access to all particles in the simulation
-* :class:`espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids.
+* :class:`espressomd.particle_data.ParticleSlice` provides access to a subset of particles in the simulation identified by a list of ids or an instance of :class:`slice` or :class:`range`.
 
 in almost no case have these classes to be instantiated explicitly by the user.
 Rather, access is provided via the :attr:`espressomd.system.System.part` attribute.
@@ -85,11 +85,18 @@ The :class:`espressomd.particle_data.ParticleList` support slicing similarly to 
     print(sysstem.part[:].pos)
     system.part[:].q = 0
 
-To access particles with indices ranging from 0 to 9, use::
+To access particles with ids ranging from 0 to 9, use::
 
     system.part[0:10].pos
 
 Note that, like in other cases in Python, the lower bound is inclusive and the upper bound is non-inclusive.
+It is also possible to get a slice containing particles of specific ids::
+
+    system.part[[1, 4, 3]]
+
+would contain the particles with ids 1, 4, and 3 in that specific order.
+
+
 Setting slices can be done by
 
 - supplying a *single value* that is assigned to each entry of the slice, e.g.::
