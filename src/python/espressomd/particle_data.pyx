@@ -1571,7 +1571,7 @@ cdef class _ParticleSliceImpl:
             self.id_selection = np.array(slice_, dtype=int)
         else:
             raise TypeError(
-                "ParticleSlice must be initialized with an instance of slice or range, or with a list, tuple, or ndarray of ints, but got {} of type {}".foormat((str(slice_), str(type(slice_)))))
+                "ParticleSlice must be initialized with an instance of slice or range, or with a list, tuple, or ndarray of ints, but got {} of type {}".format((str(slice_), str(type(slice_)))))
 
     def _id_selection_from_slice(self, slice_):
         """Returns an ndarray of particle ids to be included in the
