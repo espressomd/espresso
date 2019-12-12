@@ -65,7 +65,7 @@ class DomainDecomposition(ut.TestCase):
 
     def test_position_rounding(self):
         """This places a particle on the box boundary,
-           with parameteres that could cause problems with
+           with parameters that could cause problems with
            rounding."""
         self.system.box_l = [50.0, 50.0, 50.0]
         self.system.cell_system.skin = 0.4
