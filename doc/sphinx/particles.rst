@@ -264,7 +264,7 @@ Setting up diamond polymer networks
 
 Creates a diamond-structured polymer network with 8 tetra-functional nodes
 connected by :math:`2*8` polymer chains of length (MPC) in a unit cell
-of length :math:`a`. The diamond command creates 16*MPC+8 many particles 
+of length :math:`a`. The diamond command creates 16*MPC+8 many particles
 which are connected via the provided bond type (the term plus 8 stems from adding 8 nodes which are connecting the chains).
 Chain monomers are placed at a mutual distance along the
 vector connecting network nodes. The polymer is created starting from
@@ -280,7 +280,7 @@ interaction :math:`0` is taken which must be a two-particle bond.
 
    Diamond-like polymer network with MPC=15.
 
-See :class:`espressomd.diamond.Diamond` for more details. For simulating compressed or stretched gels the function 
+See :class:`espressomd.diamond.Diamond` for more details. For simulating compressed or stretched gels the function
 :meth:`espressomd.system.System.change_volume_and_rescale_particles` may be used.
 
 ..

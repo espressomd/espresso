@@ -25,8 +25,8 @@ from tests_common import count_fluid_nodes
 
 # Define the LB Parameters
 TIME_STEP = 0.01
-AGRID = 0.5 
-KVISC = 4 
+AGRID = 0.5
+KVISC = 4
 DENS = 2
 G = 0.08
 BOX_SIZE = 18 * AGRID
@@ -37,12 +37,12 @@ LB_PARAMS = {'agrid': AGRID,
              'tau': TIME_STEP,
              'ext_force_density': [0, DENS * G, 0]}
 # System setup
-RADIUS = 6 * AGRID 
+RADIUS = 6 * AGRID
 
 
 class Buoyancy(object):
     """
-    Tests buoyancy force on a sphere in a closed box of lb fluid and 
+    Tests buoyancy force on a sphere in a closed box of lb fluid and
     the overall force balance
 
     """
@@ -91,7 +91,7 @@ class Buoyancy(object):
         for b in self.system.lbboundaries:
             boundary_force += b.get_force()
 
-        fluid_nodes = count_fluid_nodes(self.lbf) 
+        fluid_nodes = count_fluid_nodes(self.lbf)
         fluid_volume = fluid_nodes * AGRID**3
         applied_force = fluid_volume * np.array(LB_PARAMS['ext_force_density'])
 

@@ -21,9 +21,9 @@ import numpy as np
 
 # Define the LB Parameters
 TIME_STEP = 0.1
-AGRID = 1.0 
+AGRID = 1.0
 KVISC = 5
-DENS = 1 
+DENS = 1
 BOX_SIZE = 6 * AGRID
 F = 1. / BOX_SIZE**3
 GAMMA = 15

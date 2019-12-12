@@ -22,7 +22,8 @@ from espressomd.galilei import GalileiTransform
 
 class AnalyzeMassRelated(ut.TestCase):
 
-    """Test analysis routines that involve particle mass. E.g., center of mass, inertia tensor, ...
+    """Test analysis routines that involve particle mass. E.g., center of mass,
+    inertia tensor, ...
     Checks that virtual sites (which do not have meaningful mass) are skipped.
 
     """

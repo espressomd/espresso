@@ -31,13 +31,13 @@ public:
   using PidObservable::PidObservable;
   std::vector<double> evaluate(PartCfg &partCfg) const override {
     std::vector<double> res(n_values());
-    for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
+    for (int i = 0; i < ids().size(); i++) {
       res[3 * i + 0] = partCfg[ids()[i]].m.omega[0];
       res[3 * i + 1] = partCfg[ids()[i]].m.omega[1];
       res[3 * i + 2] = partCfg[ids()[i]].m.omega[2];
-#endif
     }
+#endif
     return res;
   }
   int n_values() const override { return 3 * ids().size(); }

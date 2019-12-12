@@ -70,7 +70,7 @@ class DomainDecomposition(ut.TestCase):
         self.system.box_l = [50.0, 50.0, 50.0]
         self.system.cell_system.skin = 0.4
         self.system.min_global_cut = 12.0 / 4.25
-        self.system.part.add(pos=[25, 25, 0])  
+        self.system.part.add(pos=[25, 25, 0])
         self.assertEqual(1, len(self.system.part))
 
 
