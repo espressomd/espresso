@@ -1,9 +1,0 @@
-version = 1
-
-[merge]
-method = "merge"
-
-[merge.message]
-title = "pull_request_title"
-body = "pull_request_body"
-include_pr_number = true
