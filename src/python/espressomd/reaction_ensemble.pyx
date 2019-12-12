@@ -705,15 +705,15 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
         """
         Performs an MC (Monte Carlo) move for ``particle_number_to_be_changed``
         particle of type ``type_mc``. Positions for the particles are drawn
-        uniformly random within the box. The command takes into account the
+        uniformly and randomly within the box. The command takes into account the
         Wang-Landau terms in the acceptance probability.
         If there are multiple types, that need to be moved, make sure to move
         them in a random order to avoid artefacts. For the Wang-Landau algorithm
         in the case of energy reweighting you would also need to move the
         monomers of the polymer with special moves for the MC part. Those
-        polymer configuration changing moves need to be implemented in the
+        polymer configuration-changing moves need to be implemented in the
         case of using Wang-Landau with energy reweighting and a polymer in the
-        system. Polymer configuration changing moves had been implemented
+        system. Polymer configuration-changing moves had been implemented
         before but were removed from espresso.
 
         """
@@ -771,7 +771,7 @@ cdef class WidomInsertion(ReactionAlgorithm):
         """
         Measures the excess chemical potential in a homogeneous system for
         the provided ``reaction_id``. Please define the insertion moves
-        first via calling the method :meth:`~ReactionAlgorithm.add_reaction`
+        first by calling the method :meth:`~ReactionAlgorithm.add_reaction`
         (with only product types specified).
         Returns the excess chemical potential and the standard error for the
         excess chemical potential. The error estimate assumes that your samples are

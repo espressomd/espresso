@@ -390,7 +390,7 @@ void Correlator::update() {
 
   highest_level_to_compress = -1;
   i = 0;
-  // Lets find out how far we have to go back in the hierarchy to make space for
+  // Let's find out how far we have to go back in the hierarchy to make space for
   // the new value
   while (true) {
     if (((t - ((m_tau_lin + 1) * ((1 << (i + 1)) - 1) + 1)) % (1 << (i + 1)) ==
@@ -405,7 +405,7 @@ void Correlator::update() {
   }
 
   // Now we know we must make space on the levels 0..highest_level_to_compress
-  // Now lets compress the data level by level.
+  // Now let's compress the data level by level.
 
   for (i = highest_level_to_compress; i >= 0; i--) {
     // We increase the index indicating the newest on level i+1 by one (plus
@@ -508,7 +508,7 @@ int Correlator::finalize() {
       }
 
       i = ll + 1; // lowest level, for which we have to check for compression
-      // Lets find out how far we have to go back in the hierarchy to make space
+      // Let's find out how far we have to go back in the hierarchy to make space
       // for the new value
       while (highest_level_to_compress > -1) {
         if (n_vals[i] % 2) {
@@ -526,7 +526,7 @@ int Correlator::finalize() {
 
       // Now we know we must make space on the levels
       // 0..highest_level_to_compress
-      // Now lets compress the data level by level.
+      // Now let's compress the data level by level.
 
       for (i = highest_level_to_compress; i >= ll; i--) {
         // We increase the index indicating the newest on level i+1 by one (plus
