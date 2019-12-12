@@ -156,6 +156,8 @@ void dd_create_cell_grid(double range) {
     runtimeErrorMsg() << "no suitable cell grid found ";
   }
 
+  auto const node_pos = calc_node_pos(comm_cart);
+
   /* now set all dependent variables */
   new_cells = 1;
   for (i = 0; i < 3; i++) {
@@ -163,6 +165,7 @@ void dd_create_cell_grid(double range) {
     new_cells *= dd.ghost_cell_grid[i];
     dd.cell_size[i] = local_geo.length()[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
+    dd.cell_offset[i] = node_pos[i] * dd.cell_grid[i];
   }
   cell_structure.max_range = dd.cell_size;
 
@@ -511,8 +514,8 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   int cpos[3];
 
   for (int i = 0; i < 3; i++) {
-    auto const lpos = pos[i] - local_geo.my_left()[i];
-    cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
+    cpos[i] = static_cast<int>(std::floor(pos[i] * dd.inv_cell_size[i])) + 1 -
+              dd.cell_offset[i];
 
     /* particles outside our box. Still take them if
        nonperiodic boundary. We also accept the particle if we are at
