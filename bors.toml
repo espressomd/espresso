@@ -1,0 +1,5 @@
+status = [
+  "ICP GitLab CI"
+]
+timeout_sec = 14400
+required_approvals = 1
