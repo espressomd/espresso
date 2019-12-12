@@ -23,7 +23,7 @@
 # 1. Find files that do have copyright disclaimers
 # 1.1. Find files that do not have the current year in the disclaimer
 # 1.1.1. Find files that have "The ESPResSo project" in the line
-# 1.1.1.1. Append 2012 to the years
+# 1.1.1.1. Append <current_year> to the years
 # 1.1.2. Insert new line "Copyright (C) <current_year> The ESPResSo
 #        project" before the copyright disclaimer
 #
@@ -64,8 +64,10 @@ disclaimer="Copyright (C) ${current_year} The ESPResSo project"
 echo "    \"${disclaimer}\""
 tmpfile=$(mktemp)
 for file in ${noproject_files}; do
-    echo "    ${file}"
     perl -pe "if (!\$done) { s/^(.*)Copyright/\1${disclaimer}\n\1Copyright/ and \$done=1; }" "${file}" > "${tmpfile}"
-    cat "${tmpfile}" > "${file}"
+    if ! cmp --quiet "${file}" "${tmpfile}"; then
+        echo "${file}"
+        cp "${tmpfile}" "${file}"
+    fi
 done
 rm "${tmpfile}"
