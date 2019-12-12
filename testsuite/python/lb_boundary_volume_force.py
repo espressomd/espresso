@@ -30,10 +30,10 @@ Checks force on lb boundaries for a fluid with a uniform volume force
 """
 
 
-AGRID = 0.5 
+AGRID = 0.5
 EXT_FORCE = np.array([-.01, 0.02, 0.03])
 VISC = 3.5
-DENS = 1.5 
+DENS = 1.5
 TIME_STEP = 0.05
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,

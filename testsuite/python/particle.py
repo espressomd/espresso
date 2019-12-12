@@ -365,7 +365,7 @@ class ParticleProperties(ut.TestCase):
 
         # Setting particle properties on a slice
         system.part[:5].pos = 0, 0, 0
-        np.testing.assert_equal(system.part[:].pos, 
+        np.testing.assert_equal(system.part[:].pos,
                                 [pos[i] if ids[i] >= 5 else [0, 0, 0] for i in np.argsort(ids)])
 
         # Slice access via explicit list of ids

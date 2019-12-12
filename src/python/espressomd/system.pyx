@@ -194,7 +194,7 @@ cdef class System:
         odict['minimize_energy'] = System.__getattribute__(
             self, "minimize_energy")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
-        IF COLLISION_DETECTION: 
+        IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
         return odict

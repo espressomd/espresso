@@ -110,11 +110,11 @@ class ElectrostaticInteractionsTests:
 
     def test_bjerrum_length_change(self):
         self.system.part.clear()
-        self.system.actors.clear()  # tear down previous actors  
+        self.system.actors.clear()  # tear down previous actors
         prefactor = 2
         mmm1d = self.MMM1D(prefactor=prefactor, maxPWerror=1e-20)
-        self.system.actors.add(mmm1d)  
-        self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)            
+        self.system.actors.add(mmm1d)
+        self.test_with_analytical_result(prefactor=prefactor, accuracy=0.0017)
 
 
 @utx.skipIfMissingFeatures(["ELECTROSTATICS", "MMM1D_GPU"])

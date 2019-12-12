@@ -194,7 +194,7 @@ class ReactionEnsembleTest(ut.TestCase):
         RE = ReactionEnsembleTest.RE
         RE.add_reaction(
             gamma=1,
-            reactant_types=[5], 
+            reactant_types=[5],
             reactant_coefficients=[1],
             product_types=[2, 3, 4],
             product_coefficients=[1, 4, 3],
@@ -204,7 +204,7 @@ class ReactionEnsembleTest(ut.TestCase):
         nr_reactions_after_deletion = len(RE.get_status()["reactions"])
         self.assertEqual(
             2,
-            nr_reactions_after_addition - nr_reactions_after_deletion, 
+            nr_reactions_after_addition - nr_reactions_after_deletion,
             msg="the difference in single reactions does not match,\
             deleting a full reaction (back and forward direction)\
             should result in deleting two single reactions.")

@@ -57,9 +57,9 @@ class CheckpointTest(ut.TestCase):
         lbf.load_checkpoint(cpt_path.format(""), cpt_mode)
         precision = 9 if "LB.CPU" in modes else 5
         m = np.pi / 12
-        nx = lbf.shape[0] 
-        ny = lbf.shape[1] 
-        nz = lbf.shape[2] 
+        nx = lbf.shape[0]
+        ny = lbf.shape[1]
+        nz = lbf.shape[2]
         grid_3D = np.fromfunction(
             lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
             (nx, ny, nz), dtype=float)

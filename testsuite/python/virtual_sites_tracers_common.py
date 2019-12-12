@@ -35,7 +35,7 @@ class VirtualSitesTracersCommon:
     system.cell_system.skin = 0.1
 
     def reset_lb(self, ext_force_density=(0, 0, 0)):
-        box_height = 10 
+        box_height = 10
         box_lw = 8
         self.system.actors.clear()
         self.system.lbboundaries.clear()
@@ -243,7 +243,7 @@ class VirtualSitesTracersCommon:
         self.assertAlmostEqual(dist2strong, np.sqrt(2), delta=0.1)
 
     def test_zz_without_lb(self):
-        """Check behaviour without lb. Ignore non-virtual particles, complain on 
+        """Check behaviour without lb. Ignore non-virtual particles, complain on
         virtual ones.
 
         """

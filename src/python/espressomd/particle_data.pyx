@@ -561,7 +561,7 @@ cdef class ParticleHandle:
                     _out_direction, 3, float, "out_direction has to be 3 floats")
                 for i in range(3):
                     out_direction[i] = _out_direction[i]
-                set_particle_out_direction(self.id, out_direction) 
+                set_particle_out_direction(self.id, out_direction)
 
             def __get__(self):
                 self.update_particle_data()
@@ -580,7 +580,7 @@ cdef class ParticleHandle:
                     _bond_site, 3, float, "bond_site has to be 3 floats")
                 for i in range(3):
                     bond_site[i] = _bond_site[i]
-                set_particle_affinity(self.id, bond_site) 
+                set_particle_affinity(self.id, bond_site)
 
             def __get__(self):
                 self.update_particle_data()
@@ -606,7 +606,7 @@ cdef class ParticleHandle:
             check_type_or_throw_except(
                 _q, 1, float, "Charge has to be floats.")
             myq = _q
-            set_particle_q(self._id, myq) 
+            set_particle_q(self._id, myq)
 
         def __get__(self):
             self.update_particle_data()
@@ -785,7 +785,7 @@ cdef class ParticleHandle:
                     _q, 3, float, "Dipole moment vector has to be 3 floats.")
                 for i in range(3):
                     myq[i] = _q[i]
-                set_particle_dip(self._id, myq) 
+                set_particle_dip(self._id, myq)
 
             def __get__(self):
                 self.update_particle_data()
@@ -807,7 +807,7 @@ cdef class ParticleHandle:
             def __set__(self, _q):
                 check_type_or_throw_except(
                     _q, 1, float, "Magnitude of dipole moment has to be 1 float.")
-                set_particle_dipm(self._id, _q) 
+                set_particle_dipm(self._id, _q)
 
             def __get__(self):
                 self.update_particle_data()
@@ -834,7 +834,7 @@ cdef class ParticleHandle:
                 for i in range(3):
                     ext_f[i] = _ext_f[i]
 
-                set_particle_ext_force(self._id, ext_f) 
+                set_particle_ext_force(self._id, ext_f)
 
             def __get__(self):
                 self.update_particle_data()
@@ -873,7 +873,7 @@ cdef class ParticleHandle:
                 for i in map(long, range(3)):
                     if _fixed_coord_flag[i]:
                         ext_flag |= _COORD_FIXED(i)
-                set_particle_fix(self._id, ext_flag) 
+                set_particle_fix(self._id, ext_flag)
 
             def __get__(self):
                 self.update_particle_data()
@@ -905,7 +905,7 @@ cdef class ParticleHandle:
                     for i in range(3):
                         ext_t[i] = _ext_t[i]
 
-                    set_particle_ext_torque(self._id, ext_t) 
+                    set_particle_ext_torque(self._id, ext_t)
 
                 def __get__(self):
                     self.update_particle_data()
@@ -947,7 +947,7 @@ cdef class ParticleHandle:
                         _gamma, 3, float, "Friction has to be 3 floats.")
                     for i in range(3):
                         gamma[i] = _gamma[i]
-                    set_particle_gamma(self._id, gamma) 
+                    set_particle_gamma(self._id, gamma)
 
                 def __get__(self):
                     self.update_particle_data()
@@ -975,7 +975,7 @@ cdef class ParticleHandle:
                 def __set__(self, _gamma):
                     check_type_or_throw_except(
                         _gamma, 1, float, "Gamma has to be a float.")
-                    set_particle_gamma(self._id, _gamma) 
+                    set_particle_gamma(self._id, _gamma)
 
                 def __get__(self):
                     self.update_particle_data()
@@ -1005,7 +1005,7 @@ cdef class ParticleHandle:
                             _gamma_rot, 3, float, "Rotational friction has to be 3 floats.")
                         for i in range(3):
                             gamma_rot[i] = _gamma_rot[i]
-                        set_particle_gamma_rot(self._id, gamma_rot) 
+                        set_particle_gamma_rot(self._id, gamma_rot)
 
                     def __get__(self):
                         self.update_particle_data()
@@ -1026,7 +1026,7 @@ cdef class ParticleHandle:
                     def __set__(self, _gamma_rot):
                         check_type_or_throw_except(
                             _gamma_rot, 1, float, "gamma_rot has to be a float.")
-                        set_particle_gamma_rot(self._id, _gamma_rot) 
+                        set_particle_gamma_rot(self._id, _gamma_rot)
 
                     def __get__(self):
                         self.update_particle_data()
@@ -1049,7 +1049,7 @@ cdef class ParticleHandle:
             def __set__(self, _temp):
                 check_type_or_throw_except(
                     _temp, 1, float, "temp has to be a float.")
-                set_particle_temperature(self._id, _temp) 
+                set_particle_temperature(self._id, _temp)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1086,7 +1086,7 @@ cdef class ParticleHandle:
                     rot += ROT_Y
                 if _rot[2]:
                     rot += ROT_Z
-                set_particle_rotation(self._id, rot) 
+                set_particle_rotation(self._id, rot)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1283,7 +1283,7 @@ cdef class ParticleHandle:
                     swimming_particles_exist = True
                     mpi_bcast_parameter(FIELD_SWIMMING_PARTICLES_EXIST)
 
-                set_particle_swimming(self._id, swim) 
+                set_particle_swimming(self._id, swim)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1619,7 +1619,7 @@ cdef class _ParticleSliceImpl:
             raise IndexError(
                 "Negative start and end ids are not supported on ParticleSlice")
 
-        # We start with a full list of possible particle ids and then 
+        # We start with a full list of possible particle ids and then
         # remove ids of non-existing particles
         id_list = np.arange(max_seen_particle + 1, dtype=int)
         id_list = id_list[slice_]
