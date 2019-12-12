@@ -22,7 +22,7 @@ import numpy as np
 
 
 class DomainDecomposition(ut.TestCase):
-    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system = espressomd.System(box_l=[50.0, 50.0, 50.0])
 
     def setUp(self):
         self.system.part.clear()
@@ -38,7 +38,7 @@ class DomainDecomposition(ut.TestCase):
 
         # And now change their positions
         for i in range(n_part):
-            self.system.part[i].pos = np.random.random(3)
+            self.system.part[i].pos = self.system.box_l * np.random.random(3)
 
         # Distribute the particles on the nodes
         part_dist = self.system.cell_system.resort()
@@ -62,6 +62,16 @@ class DomainDecomposition(ut.TestCase):
         # Check that we have neither too few nor too many cells
         self.assertGreaterEqual(n_cells, cs.min_num_cells)
         self.assertLessEqual(n_cells, cs.max_num_cells)
+
+    def test_position_rounding(self):
+        """This places a particle on the box boundary,
+           with parameteres that could cause problems with
+           rounding."""
+        self.system.box_l = [50.0, 50.0, 50.0]
+        self.system.cell_system.skin = 0.4
+        self.system.min_global_cut = 12.0 / 4.25
+        self.system.part.add(pos=[25, 25, 0])  
+        self.assertEqual(1, len(self.system.part))
 
 
 if __name__ == "__main__":
