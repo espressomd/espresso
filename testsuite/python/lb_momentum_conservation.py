@@ -39,7 +39,7 @@ LB_PARAMS = {'agrid': AGRID,
 
 class Momentum(object):
     """
-    Tests momentum conservatoin for an LB coupled to a particle, where opposing
+    Tests momentum conservation for an LB coupled to a particle, where opposing
     forces are applied to LB and particle. The test should uncover issues
     with boundary and ghost layer handling.
 
