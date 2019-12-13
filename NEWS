@@ -5,7 +5,7 @@
 ESPResSo 4.1.2
 ==============
 
-This release provides a number of corrections for ESPResSo 4.1.
+This release provides a number of corrections for the ESPResSo 4.1 line.
 We recommend that this release be used for all production simulations.
 The interface has not been changed between ESPResSo 4.1.1 and 4.1.2.
 However, some bugs were discovered which can affect simulation results.
@@ -18,12 +18,13 @@ General corrections and improvements:
   noise in the Langevin thermostat (#3355)
 
 * Fix a bug that may cause the wrong temperature to be set by the
-  Langevin thermostat in the first time step after the system was
-  altered from the Python level, e.g., by changing particles or
+  Langevin and DPD thermostats in the first time step after the system
+  was altered from the Python level, e.g., by changing particles or
   interactions (#3341)
 
-* Fix a bug that caused the DPD thermostat to be inactive when used
-  together with the Langevin thermostat (#3352)
+* Fix a bug that caused the DPD thermostat to generate an incorrect
+  velocity distribution when used together with the Langevin thermostat
+  (#3352)
 
 * Fix a bug in MMM2D and ELC with potential boundary conditions, where
   one of the correction factors was over-counted resulting in wrong

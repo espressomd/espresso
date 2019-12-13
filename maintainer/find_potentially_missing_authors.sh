@@ -25,7 +25,7 @@ cd "$(git rev-parse --show-toplevel)"
 
 git shortlog -s |
   cut -f 2 |
-  sort -u |
+  sort |
   while read author; do
     grep -iF "${author}" AUTHORS >/dev/null || echo "Missing: ${author}"
   done
