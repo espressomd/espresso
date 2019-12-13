@@ -38,7 +38,7 @@ def calc_com_x(system, x, id_list):
 
 
 class Observables(ut.TestCase):
-    N_PART = 200 
+    N_PART = 200
     # Handle for espresso system
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.part.add(

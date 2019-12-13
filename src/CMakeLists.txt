@@ -1,5 +1,5 @@
 # Copyright (C) 2009-2019 The ESPResSo project
-# Copyright (C) 2009,2010 
+# Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.

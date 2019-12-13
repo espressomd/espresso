@@ -179,7 +179,7 @@ struct callback_one_rank_t final : public callback_concept_t {
  *
  * This is an implementation of a callback for a specific callable
  * @p F and a set of arguments to call it with, where the return
- * value if reduced over the communicator.
+ * value is reduced over the communicator.
  */
 template <class Op, class F, class... Args>
 struct callback_reduce_t final : public callback_concept_t {

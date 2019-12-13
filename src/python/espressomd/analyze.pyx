@@ -322,7 +322,7 @@ class Analysis:
         check_type_or_throw_except(
             length, 1, float, "length has to be a float")
         check_type_or_throw_except(
-            radius, 1, float, "radius has to be a floats")
+            radius, 1, float, "radius has to be a float")
         check_type_or_throw_except(
             bins_axial, 1, int, "bins_axial has to be an int")
         check_type_or_throw_except(
