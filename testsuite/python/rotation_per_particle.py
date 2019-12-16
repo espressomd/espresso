@@ -20,7 +20,6 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-from numpy import random
 
 
 @utx.skipIfMissingFeatures("ROTATION")

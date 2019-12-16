@@ -180,7 +180,7 @@ cdef class mayaviLive:
                                           scalars=bonds[:, 6])
 
     def update(self):
-        """Pull the latest particle information from Espresso.
+        """Pull the latest particle information from ESPResSo.
 
         This is the only function that should be called from the computation
         thread.  It does not call any Mayavi functions unless it is being
@@ -292,7 +292,7 @@ cdef class mayaviLive:
         """Start the GUI event loop.
 
         This function blocks until the Mayavi window is closed. So you should
-        only use it if your Espresso simulation's integrate loop is running in
+        only use it if your ESPResSo simulation's integrate loop is running in
         a secondary thread.
 
         """

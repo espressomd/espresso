@@ -24,7 +24,6 @@ import unittest as ut
 import espressomd
 from espressomd.interactions import HarmonicBond
 from espressomd import reaction_ensemble
-from espressomd import system
 import numpy.testing as npt
 
 
@@ -78,7 +77,7 @@ class ReactionEnsembleTest(ut.TestCase):
     # generate preliminary_energy_run_results here, this should be done in a
     # separate simulation without energy reweighting using the update energy
     # functions
-    np.savetxt("energy_boundaries.dat", np.c_[[0, 1], [0, 0], [9, 9]],
+    np.savetxt("energy_boundaries.dat", np.transpose([[0, 1], [0, 0], [9, 9]]),
                delimiter='\t', header="nbar   E_potmin   E_potmax")
 
     WLRE.add_collective_variable_degree_of_association(
@@ -103,7 +102,7 @@ class ReactionEnsembleTest(ut.TestCase):
         while True:
             try:
                 self.WLRE.reaction()
-                for i in range(2):
+                for _ in range(2):
                     self.WLRE.displacement_mc_move_for_particles_of_type(3)
             except reaction_ensemble.WangLandauHasConverged:  # only catch my exception
                 break

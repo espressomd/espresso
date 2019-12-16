@@ -25,7 +25,7 @@
  *  This file contains the code for a simple n^2 particle loop.
  *
  *  The nsquare cell system performs a full n^2 particle interaction
- *  calculation over the simulation box.  Therefore every node just
+ *  calculation over the simulation box. Therefore every node just
  *  has a single cell containing all local particles plus one ghost
  *  cell per other node. The communication is done via broadcasts
  *  (exchange_ghosts and update_ghosts) and reduce operations

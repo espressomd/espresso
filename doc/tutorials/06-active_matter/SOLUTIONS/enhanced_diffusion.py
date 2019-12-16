@@ -24,12 +24,9 @@
 
 import numpy as np
 import os
-import sys
 import argparse
-import time
 
 import espressomd
-from espressomd import assert_features
 from espressomd.observables import ParticlePositions, ParticleVelocities, ParticleAngularVelocities
 from espressomd.accumulators import Correlator
 
@@ -76,7 +73,7 @@ for run in range(5):
                                    seed=np.random.randint(0, 1000))
 
     # Place a single active particle that can rotate in all 3 dimensions.
-    # Set mass and rotational inertia to separate the timescales for 
+    # Set mass and rotational inertia to separate the timescales for
     # translational and rotational diffusion.
     system.part.add(pos=[5.0, 5.0, 5.0], swimming={'v_swim': vel},
                     mass=0.1, rotation=3 * [True], rinertia=3 * [1.])
@@ -115,8 +112,7 @@ for run in range(5):
     for i in range(SAMP_STEPS):
         if (i + 1) % 100 == 0:
             print('\rrun %i: %.0f%%' % (run + 1, (i + 1) * 100. / SAMP_STEPS),
-                  end='')
-            sys.stdout.flush()
+                  end='', flush=True)
         system.integrator.run(SAMP_LENGTH)
     print()
 

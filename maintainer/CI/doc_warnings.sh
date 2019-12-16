@@ -22,14 +22,14 @@
 # broken links are found in .rst files, the putative line numbers are
 # printed, otherwise the .html files are printed without line number.
 
-[ -z "${srcdir}" ] && srcdir=`realpath ..`
+[ -z "${srcdir}" ] && srcdir=$(realpath ..)
 
 # Pattern for :class:`foo` commands to non-existent 'foo' classes/functions.
 # They are formatted by Sphinx just like regular links to functions, but are
 # not enclosed within <a href="..."></a> tags. Sphinx doesn't use line
 # wrapping, so these broken links can be found via text search. The first
 # negative lookahead filters out common Python types (for performance reasons).
-regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|bool|str|object|list|tuple|dict|(?:numpy\.|np\.)?(?:nd)?array)<)[^<>]+?</span></code>(?!</a>)'
+regex_sphinx_broken_link='<code class=\"xref py py-[a-z]+ docutils literal notranslate\"><span class=\"pre\">(?!(int|float|complex|bool|str|bytes|array|bytearray|memoryview|object|list|tuple|range|slice|dict|set|frozenset|(?:numpy\.|np\.)?(?:nd)?array)<)[^<>]+?</span></code>(?!</a>)'
 
 if [ ! -f doc/sphinx/html/index.html ]; then
     echo "Please run Sphinx first."
@@ -37,29 +37,28 @@ if [ ! -f doc/sphinx/html/index.html ]; then
 fi
 
 n_warnings=0
-grep -qrP --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/
-if [ $? = "0" ]; then
+grep -qrP --include='*.html' --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/
+if [ "${?}" = "0" ]; then
     rm -f doc_warnings.log~
     touch doc_warnings.log~
     found="false"
-    grep -rPno --include \*.html --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line
-    do
+    grep -rPno --include='*.html' --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line; do
         # extract link target
-        reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed  's/()$//')
+        reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed 's/()$//')
         # skip if broken link refers to a standard Python type or to a
         # class/function from an imported module other than espressomd
         is_standard_type_or_module="false"
         grep -Pq '^([a-zA-Z0-9_]+Error|[a-zA-Z0-9_]*Exception|(?!espressomd\.)[a-zA-Z0-9_]+\.[a-zA-Z0-9_\.]+)$' <<< "${reference}"
-        [ "$?" = "0" ] && is_standard_type_or_module="true"
+        [ "${?}" = "0" ] && is_standard_type_or_module="true"
         # private objects are not documented and cannot be linked
         is_private="false"
         grep -Pq "(^_|\._)" <<< "${reference}"
-        [ "$?" = "0" ] && is_private="true"
+        [ "${?}" = "0" ] && is_private="true"
         # filter out false positives
-        if [ ${is_standard_type_or_module} = "true" ] || [ ${is_private} = "true" ]; then
+        if [ "${is_standard_type_or_module}" = "true" ] || [ "${is_private}" = "true" ]; then
             continue
         fi
-        if [ ${found} = "false" ]; then
+        if [ "${found}" = "false" ]; then
             echo "The Sphinx documentation contains broken links:"
         fi
         found="true"
@@ -70,16 +69,16 @@ if [ $? = "0" ]; then
         if [ -f "${filepath_rst}" ]; then
             # look for the reference
             grep -q -F "\`${reference}\`" "${filepath_rst}"
-            if [ $? = "0" ]; then
+            if [ "${?}" = "0" ]; then
                 grep --color -FnHo -m 1 "\`${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
                 continue
             fi
             # if not found, check if reference was shortened, for example
             # :class:`~espressomd.system.System` outputs a link named `System`
             grep -q -P "^[a-zA-Z0-9_]+$" <<< "${reference}"
-            if [ $? = "0" ]; then
+            if [ "${?}" = "0" ]; then
                 grep -q -P "\`~.+${reference}\`" "${filepath_rst}"
-                if [ $? = "0" ]; then
+                if [ "${?}" = "0" ]; then
                     grep --color -PnHo -m 1 "\`~.+${reference}\`" "${filepath_rst}" | tee -a doc_warnings.log~
                     continue
                 fi
@@ -89,7 +88,7 @@ if [ $? = "0" ]; then
         echo "${filepath_html}:\`${reference}\`" | tee -a doc_warnings.log~
     done
     # generate log file
-    n_warnings=$(cat doc_warnings.log~ | wc -l)
+    n_warnings=$(wc -l < doc_warnings.log~)
     echo "The Sphinx documentation contains ${n_warnings} broken links:" > doc_warnings.log
     cat doc_warnings.log~ >> doc_warnings.log
     rm doc_warnings.log~
@@ -101,17 +100,17 @@ fi
 #    * incorrect syntax, e.g. "obj:float:"
 #    * incorrect numpydoc syntax, e.g. ":rtype:`float`"
 # They are difficult to predict, so we leave them to the user's discretion
-grep -qrP --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
-if [ $? = "0" ]; then
+grep -qrP --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+if [ "${?}" = "0" ]; then
     echo "Possibly errors:"
-    grep -rP --color --include \*.html --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
+    grep -rP --color --include='*.html' --exclude-dir=_modules '(:py)?:[a-z]+:' doc/sphinx/html/
 fi
 
 if [ "${CI}" != "" ]; then
-    "${srcdir}/maintainer/gh_post_docs_warnings.py" sphinx ${n_warnings} doc_warnings.log
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" sphinx ${n_warnings} doc_warnings.log || exit 1
 fi
 
-if [ ${n_warnings} = "0" ]; then
+if [ "${n_warnings}" = "0" ]; then
     echo "Found no broken link requiring fixing."
     exit 0
 else

@@ -21,8 +21,8 @@
 
 #include <boost/optional.hpp>
 
+#include "Particle.hpp"
 #include "TabulatedPotential.hpp"
-#include "particle_data.hpp"
 #include <utils/Counter.hpp>
 
 /** @file

@@ -87,13 +87,13 @@ struct fft_forw_plan {
   void (*pack_function)(double const *const, double *const, int const *,
                         int const *, int const *, int);
   /** Send block specification. 6 integers for each node: start[3], size[3]. */
-  int *send_block = nullptr;
+  std::vector<int> send_block;
   /** Send block communication sizes. */
-  int *send_size = nullptr;
+  std::vector<int> send_size;
   /** Recv block specification. 6 integers for each node: start[3], size[3]. */
-  int *recv_block = nullptr;
+  std::vector<int> recv_block;
   /** Recv block communication sizes. */
-  int *recv_size = nullptr;
+  std::vector<int> recv_size;
   /** size of send block elements. */
   int element;
 };
@@ -133,9 +133,9 @@ struct fft_data_struct {
   int max_mesh_size = 0;
 
   /** send buffer. */
-  double *send_buf = nullptr;
+  std::vector<double> send_buf;
   /** receive buffer. */
-  double *recv_buf = nullptr;
+  std::vector<double> recv_buf;
   /** Buffer for receive data. */
   double *data_buf = nullptr;
 };

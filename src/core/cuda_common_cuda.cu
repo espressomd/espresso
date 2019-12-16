@@ -27,6 +27,7 @@
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 
@@ -51,9 +52,6 @@ std::vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
 std::vector<float> particle_torques_host;
-#ifdef ENGINE
-std::vector<CUDA_v_cs> host_v_cs;
-#endif
 
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
@@ -186,9 +184,6 @@ void gpu_change_number_of_part_to_comm() {
       particle_data_device = nullptr;
     }
 
-#ifdef ENGINE
-    host_v_cs.clear();
-#endif
 #ifdef ROTATION
     particle_torques_host.clear();
 #endif
@@ -209,9 +204,6 @@ void gpu_change_number_of_part_to_comm() {
                                   cudaHostAllocWriteCombined));
       particle_forces_host.resize(3 *
                                   global_part_vars_host.number_of_particles);
-#ifdef ENGINE
-      host_v_cs.resize(global_part_vars_host.number_of_particles);
-#endif
 #if (defined DIPOLES || defined ROTATION)
       particle_torques_host.resize(3 *
                                    global_part_vars_host.number_of_particles);
@@ -271,7 +263,7 @@ void gpu_init_particle_comm() {
       if (cuda_check_gpu(0) != ES_OK) {
         runtimeWarningMsg()
             << "CUDA device 0 is not capable of running ESPResSo but is used "
-               "by default. Espresso has detected a CUDA capable card but it "
+               "by default. ESPResSo has detected a CUDA capable card but it "
                "is not the one used by ESPResSo by default. Please set the "
                "GPU to use by setting System.cuda_init_handle.device. A list "
                "of available GPUs is available through "
@@ -299,7 +291,7 @@ void copy_part_data_to_gpu(ParticleRange particles) {
       global_part_vars_host.number_of_particles) {
     cuda_mpi_get_particles(particles, particle_data_host);
 
-    /* get espresso md particle values*/
+    /* get espressomd particle values */
     if (this_node == 0)
       cudaMemcpyAsync(particle_data_device, particle_data_host,
                       global_part_vars_host.number_of_particles *
@@ -350,23 +342,6 @@ void copy_forces_from_GPU(ParticleRange particles) {
                          particle_torques_host);
   }
 }
-
-#if defined(ENGINE) && defined(CUDA)
-// setup and call kernel to copy v_cs to host
-void copy_v_cs_from_GPU(ParticleRange particles) {
-  if (global_part_vars_host.communication_enabled == 1 &&
-      global_part_vars_host.number_of_particles) {
-    // Copy result from device memory to host memory
-    if (this_node == 0) {
-      cuda_safe_mem(cudaMemcpy2D(
-          host_v_cs.data(), sizeof(CUDA_v_cs), particle_data_device,
-          sizeof(CUDA_particle_data), sizeof(CUDA_v_cs),
-          global_part_vars_host.number_of_particles, cudaMemcpyDeviceToHost));
-    }
-    cuda_mpi_send_v_cs(particles, host_v_cs);
-  }
-}
-#endif
 
 void clear_energy_on_GPU() {
   if (!global_part_vars_host.communication_enabled)

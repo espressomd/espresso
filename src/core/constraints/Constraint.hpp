@@ -19,8 +19,8 @@
 #ifndef CONSTRAINTS_CONSTRAINT_HPP
 #define CONSTRAINTS_CONSTRAINT_HPP
 
+#include "Particle.hpp"
 #include "energy.hpp"
-#include "particle_data.hpp"
 
 namespace Constraints {
 class Constraint {

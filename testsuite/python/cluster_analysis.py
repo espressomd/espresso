@@ -51,7 +51,7 @@ class ClusterAnalysis(ut.TestCase):
     handle_errors("")
 
     def test_00_fails_without_criterion_set(self):
-        with(self.assertRaises(Exception)):
+        with self.assertRaises(Exception):
             self.cs.run_for_all_pairs()
 
     def test_set_criterion(self):
@@ -138,7 +138,7 @@ class ClusterAnalysis(ut.TestCase):
 
             # Radius of gyration
             rg = 0.
-            com_particle = self.es.part[len(self.es.part) / 2]
+            com_particle = self.es.part[len(self.es.part) // 2]
             for p in c.particles():
                 rg += self.es.distance(p, com_particle)**2
             rg /= len(self.es.part)
@@ -158,7 +158,7 @@ class ClusterAnalysis(ut.TestCase):
             # Fractal dimension of a disk should be close to 2
             self.es.part.clear()
             center = np.array((0.1, .02, 0.15))
-            for i in range(3000):
+            for _ in range(3000):
                 r_inv, phi = np.random.random(2) * np.array((0.2, 2 * np.pi))
                 r = 1 / r_inv
                 self.es.part.add(

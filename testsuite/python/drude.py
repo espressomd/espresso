@@ -61,7 +61,6 @@ class Drude(ut.TestCase):
         # TIMESTEP
         fs_to_md_time = 1.0e-2
         time_step_fs = 0.5
-        time_step_ns = time_step_fs * 1e-6
         dt = time_step_fs * fs_to_md_time
 
         # COM TEMPERATURE
@@ -214,7 +213,7 @@ class Drude(ut.TestCase):
 
             system.integrator.run(115)
 
-            for i in range(100):
+            for _ in range(100):
                 system.integrator.run(1)
 
                 dm_pf6.append(dipole_moment(0, 1))
@@ -245,8 +244,7 @@ class Drude(ut.TestCase):
             E[dim] = Es
 
             setElectricField(E)
-            mux_pf6, mux_c1, mux_c2, mux_c3, mux_bmim = measure_dipole_moments(
-            )
+            mux_pf6, _, _, _, mux_bmim = measure_dipole_moments()
 
             return calc_pol(mu0_pf6[dim], mux_pf6[dim], Es), calc_pol(
                 mu0_bmim[dim], mux_bmim[dim], Es)

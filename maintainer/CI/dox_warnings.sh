@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (C) 2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -19,13 +19,13 @@
 
 # This script generates a log of all Doxygen warnings that require fixing.
 
-dox_version=`doxygen --version`
+dox_version=$(doxygen --version)
 if [ "${dox_version}" != "1.8.13" ] && [ "${dox_version}" != "1.8.11" ]; then
     echo "Doxygen version ${dox_version} not supported"
     exit 1
 fi
 
-[ -z "${srcdir}" ] && srcdir=`realpath ..`
+[ -z "${srcdir}" ] && srcdir=$(realpath ..)
 
 # prepare Doxyfile for the XML version
 cp doc/doxygen/Doxyfile doc/doxygen/Doxyfile.bak
@@ -69,8 +69,8 @@ grep -Prn '^[\ \t]*(?:\*?[\ \t]+)?[@\\]t?param(?:\[[in, out]+\])?[\ \t]+[a-zA-Z0
 rm -f dox_warnings.log
 
 # process warnings
-${srcdir}/maintainer/CI/dox_warnings.py
-n_warnings=$?
+"${srcdir}/maintainer/CI/dox_warnings.py"
+n_warnings="${?}"
 
 if [ ! -f dox_warnings.log ]; then
     exit 1
@@ -80,10 +80,10 @@ fi
 cat dox_warnings.log
 
 if [ "${CI}" != "" ]; then
-    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen ${n_warnings} dox_warnings.log
+    "${srcdir}/maintainer/gh_post_docs_warnings.py" doxygen "${n_warnings}" dox_warnings.log || exit 1
 fi
 
-if [ ${n_warnings} = "0" ]; then
+if [ "${n_warnings}" = "0" ]; then
     echo "Found no warning requiring fixing."
     exit 0
 else

@@ -54,7 +54,7 @@ class Exclusions(ut.TestCase):
 
         self.s.part[0].exclusions = [1, 2, 3]
 
-        for i in range(15):
+        for _ in range(15):
             self.s.integrator.run(100)
             self.assertTrue((self.s.part[0].exclusions == [1, 2, 3]).all())
 

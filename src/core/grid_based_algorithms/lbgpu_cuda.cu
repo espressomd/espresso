@@ -64,7 +64,7 @@
 static LB_rho_v_gpu *device_rho_v = nullptr;
 
 /** print_rho_v_pi: struct for hydrodynamic fields: this is the interface
- *  and stores values in MD units. It should not used
+ *  and stores values in MD units. It should not be used
  *  as an input for any LB calculations. TODO: in the future,
  *  one might want to have several structures for printing
  *  separately rho, v, pi without having to compute/store
@@ -91,8 +91,10 @@ LB_node_force_density_gpu node_f = {
 #endif
 };
 
+#ifdef LB_BOUNDARIES_GPU
 /** @brief Force on the boundary nodes */
 static float *lb_boundary_force = nullptr;
+#endif
 
 /** @name pointers for additional cuda check flag */
 /*@{*/
@@ -275,100 +277,108 @@ __device__ __inline__ float calc_mode_x_from_n(LB_nodes_gpu n_a,
   return 0.0;
 }
 
-/** Calculate modes from the velocity densities (space-transform)
+/** Calculate modes from the velocity densities (space-transform).
  *  @param[in]  n_a     Local node residing in array a
  *  @param[in]  index   Node index / thread index
  *  @param[out] mode    Local register values mode
  */
 __device__ void calc_m_from_n(LB_nodes_gpu n_a, unsigned int index,
                               Utils::Array<float, 19> &mode) {
-  // The following convention is used:
-  // The $\hat{c}_i$ form B. Duenweg's paper are given by:
-
-  /* c_0  = { 0, 0, 0}
-     c_1  = { 1, 0, 0}
-     c_2  = {-1, 0, 0}
-     c_3  = { 0, 1, 0}
-     c_4  = { 0,-1, 0}
-     c_5  = { 0, 0, 1}
-     c_6  = { 0, 0,-1}
-     c_7  = { 1, 1, 0}
-     c_8  = {-1,-1, 0}
-     c_9  = { 1,-1, 0}
-     c_10 = {-1, 1, 0}
-     c_11 = { 1, 0, 1}
-     c_12 = {-1, 0,-1}
-     c_13 = { 1, 0,-1}
-     c_14 = {-1, 0, 1}
-     c_15 = { 0, 1, 1}
-     c_16 = { 0,-1,-1}
-     c_17 = { 0, 1,-1}
-     c_18 = { 0,-1, 1} */
-
-  // The basis vectors (modes) are constructed as follows
-  // $m_k = \sum_{i} e_{ki} n_{i}$, where the $e_{ki}$ form a
-  // linear transformation (matrix) that is given by
-
-  /* $e{ 0,i} = 1$
-     $e{ 1,i} = c_{i,x}$
-     $e{ 2,i} = c_{i,y}$
-     $e{ 3,i} = c_{i,z}$
-     $e{ 4,i} = c_{i}^2 - 1$
-     $e{ 5,i} = c_{i,x}^2 - c_{i,y}^2$
-     $e{ 6,i} = c_{i}^2 - 3*c_{i,z}^2$
-     $e{ 7,i} = c_{i,x}*c_{i,y}$
-     $e{ 8,i} = c_{i,x}*c_{i,z}$
-     $e{ 9,i} = c_{i,y}*c_{i,z}$
-     $e{10,i} = (3*c_{i}^2 - 5)*c_{i,x}$
-     $e{11,i} = (3*c_{i}^2 - 5)*c_{i,y}$
-     $e{12,i} = (3*c_{i}^2 - 5)*c_{i,z}$
-     $e{13,i} = (c_{i,y}^2 - c_{i,z}^2)*c_{i,x}$
-     $e{14,i} = (c_{i,x}^2 - c_{i,z}^2)*c_{i,y}$
-     $e{15,i} = (c_{i,x}^2 - c_{i,y}^2)*c_{i,z}$
-     $e{16,i} = 3*c_{i}^2^2 - 6*c_{i}^2 + 1$
-     $e{17,i} = (2*c_{i}^2 - 3)*(c_{i,x}^2 - c_{i,y}^2)$
-     $e{18,i} = (2*c_{i}^2 - 3)*(c_{i}^2 - 3*c_{i,z}^2)$ */
-
-  // Such that the transformation matrix is given by
-
-  /* {{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-      { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
-      { 0, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
-      { 0, 0, 0, 0, 0, 1,-1, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
-      {-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-      { 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
-      { 0, 1, 1, 1, 1,-2,-2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1},
-      { 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0},
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0},
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1},
-      { 0,-2, 2, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
-      { 0, 0, 0,-2, 2, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
-      { 0, 0, 0, 0, 0,-2, 2, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
-      { 0, 0, 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1, 0, 0, 0, 0},
-      { 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0,-1, 1,-1, 1},
-      { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1,-1, 1, 1,-1},
-      { 1,-2,-2,-2,-2,-2,-2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-      { 0,-1,-1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
-      { 0,-1,-1,-1,-1, 2, 2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1}} */
-
-  // With weights
-
-  /* q^{c_{i}} = { 1/3, 1/18, 1/18, 1/18,
-                  1/18, 1/18, 1/18, 1/36,
-                  1/36, 1/36, 1/36, 1/36,
-                  1/36, 1/36, 1/36, 1/36,
-                  1/36, 1/36, 1/36 } */
-
-  // Which makes the transformation satisfy the following
-  // orthogonality condition:
-  // \sum_{i} q^{c_{i}} e_{ki} e_{li} = w_{k} \delta_{kl},
-  // where the weights are:
-
-  /* w_{i} = {  1, 1/3, 1/3, 1/3,
-              2/3, 4/9, 4/3, 1/9,
-              1/9, 1/9, 2/3, 2/3,
-              2/3, 2/9, 2/9, 2/9,
-                2, 4/9, 4/3 } */
+  /**
+   * The following convention and equations from @cite duenweg09a are used:
+   * The \f$\hat{c}_i\f$ are given by:
+   *
+   * \f{align*}{
+   *   c_{ 0} &= ( 0, 0, 0) \\
+   *   c_{ 1} &= ( 1, 0, 0) \\
+   *   c_{ 2} &= (-1, 0, 0) \\
+   *   c_{ 3} &= ( 0, 1, 0) \\
+   *   c_{ 4} &= ( 0,-1, 0) \\
+   *   c_{ 5} &= ( 0, 0, 1) \\
+   *   c_{ 6} &= ( 0, 0,-1) \\
+   *   c_{ 7} &= ( 1, 1, 0) \\
+   *   c_{ 8} &= (-1,-1, 0) \\
+   *   c_{ 9} &= ( 1,-1, 0) \\
+   *   c_{10} &= (-1, 1, 0) \\
+   *   c_{11} &= ( 1, 0, 1) \\
+   *   c_{12} &= (-1, 0,-1) \\
+   *   c_{13} &= ( 1, 0,-1) \\
+   *   c_{14} &= (-1, 0, 1) \\
+   *   c_{15} &= ( 0, 1, 1) \\
+   *   c_{16} &= ( 0,-1,-1) \\
+   *   c_{17} &= ( 0, 1,-1) \\
+   *   c_{18} &= ( 0,-1, 1)
+   *  \f}
+   *
+   *  The basis vectors (modes) are constructed as follows (eq. (111)):
+   *  \f[m_k = \sum_{i} e_{ki} n_{i}\f] where the \f$e_{ki}\f$ form a
+   *  linear transformation (matrix) that is given by (modified from table 1):
+   *
+   *  \f{align*}{
+   *    e_{ 0,i} &= 1 \\
+   *    e_{ 1,i} &= \hat{c}_{i,x} \\
+   *    e_{ 2,i} &= \hat{c}_{i,y} \\
+   *    e_{ 3,i} &= \hat{c}_{i,z} \\
+   *    e_{ 4,i} &= \hat{c}_{i}^2 - 1 \\
+   *    e_{ 5,i} &= \hat{c}_{i,x}^2 - \hat{c}_{i,y}^2 \\
+   *    e_{ 6,i} &= \hat{c}_{i}^2 - 3 \hat{c}_{i,z}^2 \\
+   *    e_{ 7,i} &= \hat{c}_{i,x} \hat{c}_{i,y} \\
+   *    e_{ 8,i} &= \hat{c}_{i,x} \hat{c}_{i,z} \\
+   *    e_{ 9,i} &= \hat{c}_{i,y} \hat{c}_{i,z} \\
+   *    e_{10,i} &= (3 \hat{c}_{i}^2 - 5) \hat{c}_{i,x} \\
+   *    e_{11,i} &= (3 \hat{c}_{i}^2 - 5) \hat{c}_{i,y} \\
+   *    e_{12,i} &= (3 \hat{c}_{i}^2 - 5) \hat{c}_{i,z} \\
+   *    e_{13,i} &= (\hat{c}_{i,y}^2 - \hat{c}_{i,z}^2) \hat{c}_{i,x} \\
+   *    e_{14,i} &= (\hat{c}_{i,x}^2 - \hat{c}_{i,z}^2) \hat{c}_{i,y} \\
+   *    e_{15,i} &= (\hat{c}_{i,x}^2 - \hat{c}_{i,y}^2) \hat{c}_{i,z} \\
+   *    e_{16,i} &= 3 \hat{c}_{i}^4 - 6 \hat{c}_{i}^2 + 1 \\
+   *    e_{17,i} &= (2 \hat{c}_{i}^2 - 3) (\hat{c}_{i,x}^2 - \hat{c}_{i,y}^2) \\
+   *    e_{18,i} &= (2 \hat{c}_{i}^2 - 3) (\hat{c}_{i}^2 - 3 \hat{c}_{i,z}^2)
+   *  \f}
+   *
+   *  Such that the transformation matrix is given by:
+   *
+   *  \code{.cpp}
+   *   {{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+   *    { 0, 1,-1, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
+   *    { 0, 0, 0, 1,-1, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
+   *    { 0, 0, 0, 0, 0, 1,-1, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
+   *    {-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+   *    { 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
+   *    { 0, 1, 1, 1, 1,-2,-2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1},
+   *    { 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0, 0, 0, 0, 0},
+   *    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1, 0, 0, 0, 0},
+   *    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,-1,-1},
+   *    { 0,-2, 2, 0, 0, 0, 0, 1,-1, 1,-1, 1,-1, 1,-1, 0, 0, 0, 0},
+   *    { 0, 0, 0,-2, 2, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0, 1,-1, 1,-1},
+   *    { 0, 0, 0, 0, 0,-2, 2, 0, 0, 0, 0, 1,-1,-1, 1, 1,-1,-1, 1},
+   *    { 0, 0, 0, 0, 0, 0, 0, 1,-1, 1,-1,-1, 1,-1, 1, 0, 0, 0, 0},
+   *    { 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1, 0, 0, 0, 0,-1, 1,-1, 1},
+   *    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,-1,-1, 1,-1, 1, 1,-1},
+   *    { 1,-2,-2,-2,-2,-2,-2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+   *    { 0,-1,-1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,-1,-1,-1,-1},
+   *    { 0,-1,-1,-1,-1, 2, 2, 2, 2, 2, 2,-1,-1,-1,-1,-1,-1,-1,-1}}
+   *  \endcode
+   *
+   *  with weights
+   *
+   *  \f[q^{c_{i}} = ( 1/3, 1/18, 1/18, 1/18,
+   *                  1/18, 1/18, 1/18, 1/36,
+   *                  1/36, 1/36, 1/36, 1/36,
+   *                  1/36, 1/36, 1/36, 1/36,
+   *                  1/36, 1/36, 1/36 )\f]
+   *
+   *  which makes the transformation satisfy the following
+   *  orthogonality condition (eq. (109)):
+   *  \f[\sum_{i} q^{c_{i}} e_{ki} e_{li} = w_{k} \delta_{kl}\f]
+   *  where the weights are:
+   *
+   *  \f[w_{i} = (  1, 1/3, 1/3, 1/3,
+   *              2/3, 4/9, 4/3, 1/9,
+   *              1/9, 1/9, 2/3, 2/3,
+   *              2/3, 2/9, 2/9, 2/9,
+   *                2, 4/9, 4/3 )\f]
+   */
   for (int i = 0; i < 19; ++i) {
     mode[i] = calc_mode_x_from_n(n_a, index, i);
   }
@@ -448,9 +458,10 @@ __device__ void update_rho_v(Utils::Array<float, 19> const &mode,
   u_tot[1] += mode[2];
   u_tot[2] += mode[3];
 
-  /** if forces are present, the momentum density is redefined to
-   * include one half-step of the force action.  See the
-   * Chapman-Enskog expansion in [Ladd & Verberg]. */
+  /** If forces are present, the momentum density is redefined to
+   *  include one half-step of the force action. See the
+   *  Chapman-Enskog expansion in @cite ladd01a.
+   */
 
   u_tot[0] += 0.5f * node_f.force_density[0 * para->number_of_nodes + index];
   u_tot[1] += 0.5f * node_f.force_density[1 * para->number_of_nodes + index];
@@ -517,8 +528,8 @@ __device__ void relax_modes(Utils::Array<float, 19> &mode, unsigned int index,
   mode[9] =
       modes_from_pi_eq[5] + para->gamma_shear * (mode[9] - modes_from_pi_eq[5]);
 
-  /** relax the ghost modes (project them out) */
-  /** ghost modes have no equilibrium part due to orthogonality */
+  /* relax the ghost modes (project them out) */
+  /* ghost modes have no equilibrium part due to orthogonality */
 
   mode[10] = para->gamma_odd * mode[10];
   mode[11] = para->gamma_odd * mode[11];
@@ -539,10 +550,8 @@ __device__ void thermalize_modes(Utils::Array<float, 19> &mode,
                                  unsigned int index, uint64_t philox_counter) {
   float Rho;
   float4 random_floats;
-  /** mass mode */
+  /* mass mode */
   Rho = mode[0] + para->rho;
-
-  /* momentum modes */
 
   /* stress modes */
   random_floats = random_wrapper_philox(index, 4, philox_counter);
@@ -604,7 +613,6 @@ __device__ void thermalize_modes(Utils::Array<float, 19> &mode,
               (random_floats.y - 0.5f) * sqrt12;
 }
 
-/*-------------------------------------------------------*/
 /** Normalization of the modes need before back-transformation into velocity
  *  space
  *  @param[in,out] mode  Local register values mode
@@ -632,7 +640,6 @@ __device__ void normalize_modes(Utils::Array<float, 19> &mode) {
   mode[18] *= 3.0f / 4.0f;
 }
 
-/*-------------------------------------------------------*/
 /** Back-transformation from modespace to densityspace and streaming with
  *  the push method using pbc
  *  @param[in]  index  Node index / thread index
@@ -781,9 +788,8 @@ __device__ void calc_n_from_modes_push(LB_nodes_gpu n_b,
  *
  *  The populations that have propagated into a boundary node
  *  are bounced back to the node they came from. This results
- *  in no slip boundary conditions.
+ *  in no slip boundary conditions, cf. @cite ladd01a.
  *
- *  [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
  *  @param[in]  index   Node index / thread index
  *  @param[in]  n_curr  Local node receiving the current node field
  *  @param[in]  boundaries  Constant velocity at the boundary, set by the user
@@ -808,7 +814,7 @@ __device__ void bounce_back_boundaries(LB_nodes_gpu n_curr,
     unsigned int y = xyz.y;
     unsigned int z = xyz.z;
 
-    /** store vd temporary in second lattice to avoid race conditions */
+    /* store vd temporary in second lattice to avoid race conditions */
 
     // TODO : PUT IN EQUILIBRIUM CONTRIBUTION TO THE BOUNCE-BACK DENSITY FOR THE
     // BOUNDARY FORCE
@@ -1125,8 +1131,8 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
     modes_from_pi_eq[5] = j[1] * j[2] / Rho;
 
     /* Now we must predict the outcome of the next collision */
-    /* We immediately average pre- and post-collision.  */
-    /* TODO: need a reference for this.   */
+    /* We immediately average pre- and post-collision. */
+    /* TODO: need a reference for this. */
 
     mode[4] = modes_from_pi_eq[0] + (0.5f + 0.5f * para->gamma_bulk) *
                                         (mode[4] - modes_from_pi_eq[0]);
@@ -1143,8 +1149,8 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
 
     // Transform the stress tensor components according to the modes that
     // correspond to those used by U. Schiller. In terms of populations this
-    // expression then corresponds exactly to those in Eqs. 116 - 121 in the
-    // Duenweg and Ladd paper, when these are written out in populations.
+    // expression then corresponds exactly to those in eq. (116)-(121) in
+    // @cite dunweg07a, when these are written out in populations.
     // But to ensure this, the expression in Schiller's modes has to be
     // different!
 
@@ -1335,16 +1341,21 @@ __global__ void temperature(LB_nodes_gpu n_a, float *cpu_jsquared,
   }
 }
 
-/**
- * @param u Distance to grid point in units of agrid
- * @retval Value for the interpolation function.
- * see Duenweg and Ladd http://arxiv.org/abs/0803.2826
+/** Interpolation kernel.
+ *  See @cite duenweg09a
+ *  @param u Distance to grid point in units of agrid
+ *  @retval Value for the interpolation function.
  */
 __device__ __inline__ float
 three_point_polynomial_smallerequal_than_half(float u) {
   return 1.f / 3.f * (1.f + sqrtf(1.f - 3.f * u * u));
 }
 
+/** Interpolation kernel.
+ *  See @cite duenweg09a
+ *  @param u Distance to grid point in units of agrid
+ *  @retval Value for the interpolation function.
+ */
 __device__ __inline__ float three_point_polynomial_larger_than_half(float u) {
   return 1.f / 6.f *
          (5.f + -3 * fabsf(u) - sqrtf(-2.f + 6.f * fabsf(u) - 3.f * u * u));
@@ -1442,8 +1453,8 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   return interpolated_u;
 }
 
-/**
- *  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+/** Velocity interpolation.
+ *  Eq. (12) @cite ahlrichs99a.
  *  @param[in]  n_a                Local node residing in array a
  *  @param[in]  particle_position  Particle position
  *  @param[out] node_index         Node index around (8) particle
@@ -1456,7 +1467,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
                        Utils::Array<float, 8> &delta) {
   Utils::Array<int, 3> left_node_index;
   Utils::Array<float, 6> temp_delta;
-  // see ahlrichs + duenweg page 8227 equ (10) and (11)
+  // Eq. (10) and (11) in @cite ahlrichs99a page 8227
 #pragma unroll
   for (int i = 0; i < 3; ++i) {
     auto const scaledpos = particle_position[i] / para->agrid - 0.5f;
@@ -1507,8 +1518,8 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
   return interpolated_u;
 }
 
-/**
- *  (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+/** Calculate viscous force.
+ *  Eq. (12) @cite ahlrichs99a.
  *  @param[in]  n_a                Local node residing in array a
  *  @param[out] delta              Weighting of particle position
  *  @param[out] delta_j            Weighting of particle momentum
@@ -1521,7 +1532,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *                                 typical) or at the source (1, swimmer only)
  *  @param[in]  friction           Friction constant for the particle coupling
  *  @tparam no_of_neighbours       The number of neighbours to consider for
- * interpolation
+ *                                 interpolation
  */
 template <std::size_t no_of_neighbours>
 __device__ void calc_viscous_force(
@@ -1591,9 +1602,8 @@ __device__ void calc_viscous_force(
       interpolated_u.z * para->agrid / para->tau;
 #endif
 
-  /** calculate viscous force
-   * take care to rescale velocities with time_step and transform to MD units
-   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+  /* take care to rescale velocities with time_step and transform to MD units
+   * (eq. (9) @cite ahlrichs99a) */
 
   /* Viscous force */
   float3 viscforce_density{0.0f, 0.0f, 0.0f};
@@ -1611,11 +1621,11 @@ __device__ void calc_viscous_force(
 #endif
 
   if (para->kT > 0.0) {
-    /** add stochastic force of zero mean (Ahlrichs, Duenweg equ. 15)*/
+    /* add stochastic force of zero mean (eq. (15) @cite ahlrichs99a) */
     float4 random_floats = random_wrapper_philox(
         particle_data[part_index].identity, LBQ * 32, philox_counter);
-    /* lb_coupl_pref is stored in MD units (force)
-     * Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
+    /* lb_coupl_pref is stored in MD units (force).
+     * Eq. (16) @cite ahlrichs99a.
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
      * time_step comes from the discretization.
@@ -1626,9 +1636,8 @@ __device__ void calc_viscous_force(
     viscforce_density.y += lb_coupl_pref * (random_floats.x - 0.5f);
     viscforce_density.z += lb_coupl_pref * (random_floats.y - 0.5f);
   }
-  /** delta_j for transform momentum transfer to lattice units which is done
-    in calc_node_force (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225
-    (1999)) */
+  /* delta_j for transform momentum transfer to lattice units which is done
+     in calc_node_force (eq. (12) @cite ahlrichs99a) */
 
   // only add to particle_force for particle centre <=> (1-flag_cs) = 1
   particle_force[3 * part_index + 0] += (1 - flag_cs) * viscforce_density.x;
@@ -1658,14 +1667,14 @@ __device__ void calc_viscous_force(
 }
 
 /** Calculate the node force caused by the particles, with atomicAdd due to
- *  avoiding race conditions
- *  (Eq. (14) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
+ *  avoiding race conditions.
+ *  Eq. (14) @cite ahlrichs99a.
  *  @param[in]  delta              Weighting of particle position
  *  @param[in]  delta_j            Weighting of particle momentum
  *  @param[in]  node_index         Node index around (8) particle
  *  @param[out] node_f             Node force
  *  @tparam no_of_neighbours       The number of neighbours to consider for
- * interpolation
+ *                                 interpolation
  */
 template <std::size_t no_of_neighbours>
 __device__ void
@@ -1689,8 +1698,8 @@ calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
 /** Kernel to calculate local populations from hydrodynamic fields.
  *  The mapping is given in terms of the equilibrium distribution.
  *
- *  Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
- *  Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
+ *  Eq. (2.15) @cite ladd94a.
+ *  Eq. (4) in @cite usta05a.
  *
  *  @param[out] n_a        %Lattice site
  *  @param[out] gpu_check  Additional check if GPU kernel are executed
@@ -1840,8 +1849,8 @@ __global__ void set_force_density(int single_nodeindex, float *force_density,
  *  from given flow field velocities. The mapping is given in terms of
  *  the equilibrium distribution.
  *
- *  Eq. (2.15) Ladd, J. Fluid Mech. 271, 295-309 (1994)
- *  Eq. (4) in Berk Usta, Ladd and Butler, JCP 122, 094902 (2005)
+ *  Eq. (2.15) @cite ladd94a.
+ *  Eq. (4) in @cite usta05a.
  *
  *  @param[out] n_a               Current nodes array (double buffering!)
  *  @param[in]  single_nodeindex  Single node index
@@ -2038,11 +2047,11 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
                         int single_nodeindex, float rho) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
-  /*Note: this sets the velocities to zero */
+  /* Note: this sets the velocities to zero */
   if (index == 0) {
     float local_rho;
 
-    /** default values for fields in lattice units */
+    /* default values for fields in lattice units */
     local_rho = (rho - para->rho);
     d_v[single_nodeindex].rho = rho;
 
@@ -2132,10 +2141,10 @@ __global__ void reset_boundaries(LB_boundaries_gpu boundaries) {
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f,
                           unsigned int philox_counter) {
-  /*every node is connected to a thread via the index*/
+  /* every node is connected to a thread via the index */
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
-  /*the 19 moments (modes) are only temporary register values */
+  /* the 19 moments (modes) are only temporary register values */
   Utils::Array<float, 19> mode;
 
   if (index < para->number_of_nodes) {
@@ -2156,10 +2165,10 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  */
 __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
                           LB_node_force_density_gpu node_f) {
-  /*every node is connected to a thread via the index*/
+  /* every node is connected to a thread via the index */
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
-  /*the 19 moments (modes) are only temporary register values */
+  /* the 19 moments (modes) are only temporary register values */
   Utils::Array<float, 19> mode;
 
   if (index < para->number_of_nodes) {
@@ -2377,7 +2386,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   size_of_rho_v = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_gpu);
   size_of_rho_v_pi = lbpar_gpu->number_of_nodes * sizeof(LB_rho_v_pi_gpu);
 
-  /** Allocate structs in device memory*/
+  /* Allocate structs in device memory*/
   free_realloc_and_clear(device_rho_v, size_of_rho_v);
 
   /* TODO: this is almost a copy of device_rho_v; think about eliminating
@@ -2817,7 +2826,7 @@ void lb_set_node_velocity_GPU(int single_nodeindex, float *host_velocity) {
  *  @param lbpar_gpu   struct containing the parameters of the fluid
  */
 void reinit_parameters_GPU(LB_parameters_gpu *lbpar_gpu) {
-  /*write parameters in const memory*/
+  /* write parameters in const memory */
   cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(para), lbpar_gpu,
                                    sizeof(LB_parameters_gpu)));
 }

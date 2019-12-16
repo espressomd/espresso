@@ -25,7 +25,6 @@
 from math import cos, pi, sin
 import numpy as np
 import os
-import sys
 
 import espressomd
 espressomd.assert_features(["CUDA", "LB_BOUNDARIES_GPU"])
@@ -44,15 +43,15 @@ os.makedirs(outdir, exist_ok=True)
 
 LENGTH = 100
 DIAMETER = 20
-padding = 2
+PADDING = 2
 TIME_STEP = 0.01
 
 # Setup the MD parameters
 
 BOX_L = np.array(
-    [LENGTH + 2 * padding,
-     DIAMETER + 2 * padding,
-     DIAMETER + 2 * padding])
+    [LENGTH + 2 * PADDING,
+     DIAMETER + 2 * PADDING,
+     DIAMETER + 2 * PADDING])
 system = espressomd.System(box_l=BOX_L)
 system.cell_system.skin = 0.1
 system.time_step = TIME_STEP

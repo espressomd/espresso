@@ -22,7 +22,6 @@ import re
 import os
 import sys
 import requests
-import subprocess
 
 if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
     exit(0)
@@ -35,12 +34,13 @@ SIZELIMIT = 5000
 doc_type, has_warnings, filepath_warnings = sys.argv[-3:]
 has_warnings = has_warnings != '0'
 prefix = {'sphinx': 'doc', 'doxygen': 'dox'}[doc_type]
+TOKEN_ESPRESSO_CI = prefix + '_warnings.sh'
 
 # Delete all existing comments
 comments = requests.get(URL)
 for comment in comments.json():
-    if comment['user']['login'] == 'espresso-ci' and prefix + \
-            '_warnings.sh' in comment['body']:
+    if comment['user']['login'] == 'espresso-ci' and \
+            TOKEN_ESPRESSO_CI in comment['body']:
         requests.delete(comment['url'] + '?access_token=' +
                         os.environ['GITHUB_TOKEN'])
 
@@ -73,5 +73,6 @@ if has_warnings:
         '../maintainer/CI/{}_warnings.sh` using the maxset config. This is '
         'the same command that I have executed to generate the log above.'
         .format(doc_type, prefix))
+    assert TOKEN_ESPRESSO_CI in comment
 
     requests.post(URL, json={'body': comment})

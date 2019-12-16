@@ -25,7 +25,7 @@
 #include <valarray>
 #include <vector>
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 #include <tuple>
 
 namespace ClusterAnalysis {

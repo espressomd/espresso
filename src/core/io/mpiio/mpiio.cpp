@@ -50,6 +50,7 @@
 
 #include "config.hpp"
 
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
@@ -377,10 +378,8 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
   // Prepare ESPResSo data structures
-  local_particles =
-      Utils::realloc(local_particles, sizeof(Particle *) * nglobalpart);
-  for (int i = 0; i < nglobalpart; ++i)
-    local_particles[i] = nullptr;
+  local_particles.resize(nglobalpart);
+  std::fill(local_particles.begin(), local_particles.end(), nullptr);
   n_part = nglobalpart;
   max_seen_particle = nglobalpart;
 
@@ -448,7 +447,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
       int blen = boff[i + 1] - boff[i];
       auto &bl = local_particles[id[i]]->bl;
       bl.resize(blen);
-      std::copy_n(&bond[boff[i]], blen, bl.begin());
+      std::copy_n(bond.begin() + boff[i], blen, bl.begin());
     }
   }
 

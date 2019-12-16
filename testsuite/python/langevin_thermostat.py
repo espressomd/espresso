@@ -20,7 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-from espressomd.accumulators import Correlator
+from espressomd.accumulators import Correlator, TimeSeries
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 from tests_common import single_component_maxwell
 
@@ -131,7 +131,7 @@ class LangevinThermostat(ut.TestCase):
             system.thermostat.set_langevin(kT=0, gamma=gamma_t_i, seed=41)
 
         system.time = 0
-        for i in range(100):
+        for _ in range(100):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
@@ -175,7 +175,7 @@ class LangevinThermostat(ut.TestCase):
             rinertia = np.copy(system.part[0].rinertia)
         else:
             rinertia = np.array((1, 1, 1))
-        for i in range(100):
+        for _ in range(100):
             system.integrator.run(10)
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 np.testing.assert_allclose(
@@ -186,8 +186,16 @@ class LangevinThermostat(ut.TestCase):
                     np.copy(system.part[0].omega_body),
                     o0 * np.exp(-gamma_r_i / rinertia * system.time), atol=5E-4)
 
-    def test_04__global_langevin(self):
-        """Test for global Langevin parameters."""
+    def check_global_langevin(self, recalc_forces, loops):
+        """Test velocity distribution for global Langevin parameters.
+
+        Parameters
+        ----------
+        recalc_forces : :obj:`bool`
+            True if the forces should be recalculated after every step.
+        loops : :obj:`int`
+            Number of sampling loops
+        """
         N = 200
         system = self.system
         system.part.clear()
@@ -208,11 +216,10 @@ class LangevinThermostat(ut.TestCase):
         system.integrator.run(20)
 
         # Sampling
-        loops = 150
         v_stored = np.zeros((N * loops, 3))
         omega_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            system.integrator.run(1)
+            system.integrator.run(1, recalc_forces=recalc_forces)
             v_stored[i * N:(i + 1) * N, :] = system.part[:].v
             if espressomd.has_features("ROTATION"):
                 omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
@@ -225,6 +232,16 @@ class LangevinThermostat(ut.TestCase):
         if espressomd.has_features("ROTATION"):
             self.check_velocity_distribution(
                 omega_stored, v_minmax, bins, error_tol, kT)
+
+    def test_global_langevin(self):
+        """Test velocity distribution for global Langevin parameters."""
+        self.check_global_langevin(False, loops=150)
+
+    def test_global_langevin_initial_forces(self):
+        """Test velocity distribution for global Langevin parameters,
+           when using the initial force calculation.
+        """
+        self.check_global_langevin(True, loops=170)
 
     @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
     def test_05__langevin_per_particle(self):
@@ -423,7 +440,6 @@ class LangevinThermostat(ut.TestCase):
             # Decide on effective gamma rotation, since for rotation it is
             # direction dependent
             eff_gamma_rot = None
-            per_part_eff_gamma_rot = None
             if espressomd.has_features("PARTICLE_ANISOTROPY"):
                 eff_gamma_rot = gamma_rot_a
                 eff_per_part_gamma_rot = per_part_gamma_rot_a
@@ -482,6 +498,54 @@ class LangevinThermostat(ut.TestCase):
 
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
+
+    def test_08__noise_correlation(self):
+        """Checks that the Langevin noise is uncorrelated"""
+
+        system = self.system
+        system.part.clear()
+        system.time_step = 0.01
+        system.cell_system.skin = 0.1
+        system.part.add(id=(1, 2), pos=np.zeros((2, 3)))
+        vel_obs = ParticleVelocities(ids=system.part[:].id)
+        vel_series = TimeSeries(obs=vel_obs)
+        system.auto_update_accumulators.add(vel_series)
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = (1, 1, 1)
+            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
+            omega_series = TimeSeries(obs=omega_obs)
+            system.auto_update_accumulators.add(omega_series)
+
+        kT = 3.2
+        system.thermostat.set_langevin(kT=kT, gamma=2.1, seed=17)
+        steps = int(1e6)
+        system.integrator.run(steps)
+
+        # test translational noise correlation
+        vel = np.array(vel_series.time_series())
+        for i in range(6):
+            for j in range(i, 6):
+                corrcoef = np.dot(vel[:, i], vel[:, j]) / steps / kT
+                if i == j:
+                    self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
+                else:
+                    self.assertLessEqual(np.abs(corrcoef), 0.04)
+
+        # test rotational noise correlation
+        if espressomd.has_features("ROTATION"):
+            omega = np.array(omega_series.time_series())
+            for i in range(6):
+                for j in range(6):
+                    corrcoef = np.dot(omega[:, i], omega[:, j]) / steps / kT
+                    if i == j:
+                        self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
+                    else:
+                        self.assertLessEqual(np.abs(corrcoef), 0.04)
+            # translational and angular velocities should be independent
+            for i in range(6):
+                for j in range(6):
+                    corrcoef = np.dot(vel[:, i], omega[:, j]) / steps / kT
+                    self.assertLessEqual(np.abs(corrcoef), 0.04)
 
 
 if __name__ == "__main__":

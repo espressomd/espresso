@@ -24,45 +24,41 @@
  *  This file contains everything related to the cell structure / cell
  *  system.
  *
- *  The cell system (\ref Cell Structure) describes how particles are
+ *  The cell system (\ref CellStructure) describes how particles are
  *  distributed on the cells and how particles of different cells
  *  (regardless if they reside on the same or different nodes)
  *  interact with each other. The following cell systems are implemented:
  *
- *  <ul>
- *    <li> domain decomposition: The simulation box is divided spatially
+ *  - domain decomposition: The simulation box is divided spatially
  *    into cells (see \ref domain_decomposition.hpp). This is suitable for
  *    short range interactions.
- *    <li> nsquare: The particles are distributed equally on all nodes
+ *  - nsquare: The particles are distributed equally on all nodes
  *    regardless their spatial position (see \ref nsquare.hpp). This is
- *    suitable for long range interactions that can not be treated by a
+ *    suitable for long range interactions that cannot be treated by a
  *    special method like P3M (see \ref p3m.hpp).
- *    <li> layered: in x and y directions, it uses a nsquared type of
+ *  - layered: in x and y directions, it uses a nsquared type of
  *    interaction calculation, but in z it has a domain decomposition
  *    into layers.
- *  </ul>
  *
  *  Some structures are common to all cell systems:
  *
- *  <ul>
- *    <li> All cells, real cells as well as ghost cells, are stored in the
+ *  - All cells, real cells as well as ghost cells, are stored in the
  *    vector \ref cells::cells whose size has to be changed with
  *    \ref realloc_cells.
- *    <li> There are two lists of cell pointers to access particles and
+ *  - There are two lists of cell pointers to access particles and
  *    ghost particles on a node: \ref local_cells contains pointers to
  *    all cells containing the particles physically residing on that
  *    node. \ref ghost_cells contains pointers to all cells containing
  *    the ghost particles of that node. The size of these lists has to be
  *    changed with \ref realloc_cellplist
- *  </ul>
  */
 
 #include <utility>
 #include <vector>
 
+#include "Particle.hpp"
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
-#include "particle_data.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
@@ -149,34 +145,26 @@ struct CellStructure {
 
   bool use_verlet_list = true;
 
-  /** Maximal pair range supported by current
-   * cell system.
-   */
+  /** Maximal pair range supported by current cell system. */
   Utils::Vector3d max_range = {};
 
-  /**
-   * Minimum range that has to be supported.
-   */
+  /** Minimum range that has to be supported. */
   double min_range;
 
-  /** returns the global local_cells */
+  /** Return the global local_cells */
   CellPList local_cells() const;
-  /** returns the global ghost_cells */
+  /** Return the global ghost_cells */
   CellPList ghost_cells() const;
 
-  /** Communicator to exchange ghost cell information. */
-  GhostCommunicator ghost_cells_comm;
   /** Communicator to exchange ghost particles. */
   GhostCommunicator exchange_ghosts_comm;
-  /** Communicator to update ghost positions. */
-  GhostCommunicator update_ghost_pos_comm;
   /** Communicator to collect ghost forces. */
   GhostCommunicator collect_ghost_force_comm;
 
   /** Cell system dependent function to find the right cell for a
    *  particle.
    *  \param  p Particle.
-   *  \return pointer to cell  where to put the particle, nullptr
+   *  \return pointer to cell where to put the particle, nullptr
    *          if the particle does not belong on this node.
    */
   Cell *(*particle_to_cell)(const Particle &p) = nullptr;
@@ -192,18 +180,16 @@ struct CellStructure {
 /** list of all cells. */
 extern std::vector<Cell> cells;
 
-/** list of all cells containing particles physically on the local
-    node */
+/** list of all cells containing particles physically on the local node */
 extern CellPList local_cells;
 /** list of all cells containing ghosts */
 extern CellPList ghost_cells;
 
-/** Type of cell structure in use ( \ref Cell Structure ). */
+/** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
 /** If non-zero, cell systems should reset the position for checking
- *  the Verlet criterion. Moreover, the Verlet list has to be
- *  rebuilt.
+ *  the Verlet criterion. Moreover, the Verlet list has to be rebuilt.
  */
 extern bool rebuild_verletlist;
 
@@ -215,9 +201,9 @@ extern bool rebuild_verletlist;
 /*@{*/
 
 /** Reinitialize the cell structures.
- *  @param new_cs gives the new topology to use afterwards. May be set to
- *  \ref CELL_STRUCTURE_CURRENT for not changing it.
- *  @param range Desired interaction range
+ *  @param new_cs The new topology to use afterwards. May be set to
+ *                @ref CELL_STRUCTURE_CURRENT for not changing it.
+ *  @param range  Desired interaction range
  */
 void cells_re_init(int new_cs, double range);
 
@@ -241,9 +227,6 @@ inline void realloc_cellplist(CellPList *cpl, int size) {
 
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
- *  @param global_flag if this is CELLS_GLOBAL_EXCHANGE, particle positions can
- *                     have changed arbitrarily, otherwise the change should
- *                     have been smaller then skin.
  */
 void cells_resort_particles(int global_flag);
 
@@ -252,22 +235,22 @@ void cells_resort_particles(int global_flag);
  *  It calculates the maximal interaction range, and as said reinitializes
  *  the cells structure if something significant has changed.
  *
- *  If bit CELL_FLAG_FAST is set, the routine should try to save time.
+ *  If bit @ref CELL_FLAG_FAST is set, the routine should try to save time.
  *  Currently this means that if the maximal range decreased, it does
  *  not reorganize the particles. This is used in the NpT algorithm to
  *  avoid frequent reorganization of particles.
  *
- *  If bit CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
+ *  If bit @ref CELL_FLAG_GRIDCHANGED is set, it means the nodes' topology
  *  has changed, i. e. the grid or periodicity. In this case a full
  *  reorganization is due.
  *
- *  @param flags a bitmask of CELL_FLAG_GRIDCHANGED,
- *  and/or CELL_FLAG_FAST, see above.
+ *  @param flags a bitmask of @ref CELL_FLAG_GRIDCHANGED,
+ *               and/or @ref CELL_FLAG_FAST, see above.
  */
 void cells_on_geometry_change(int flags);
 
-/** Update ghost information. If \ref resort_particles == 1,
- *  also a resorting of the particles takes place.
+/** Update ghost information. If @ref resort_particles is not
+ *  @ref Cells::RESORT_NONE, the particles are also resorted.
  */
 void cells_update_ghosts();
 
@@ -275,20 +258,14 @@ void cells_update_ghosts();
 int cells_get_n_particles();
 
 /**
- * @brief Get pairs closer than distance from the cells.
- *
- * This is mostly for testing purposes and uses link_cell
- * to get pairs out of the cellsystem by a simple distance
- * criterion.
+ * @brief Get pairs closer than @p distance from the cells.
  *
  * Pairs are sorted so that first.id < second.id
  */
 std::vector<std::pair<int, int>> mpi_get_pairs(double distance);
 
 /**
- * @brief Increase the local resort level at least to level.
- *
- * The changed level has to be communicated via annouce_resort_particles.
+ * @brief Increase the local resort level at least to @p level.
  */
 void set_resort_particles(Cells::Resort level);
 

@@ -25,6 +25,7 @@
  *  Implementation of cells.hpp.
  */
 #include "cells.hpp"
+#include "Particle.hpp"
 #include "algorithm/link_cell.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
@@ -61,7 +62,7 @@ CellPList ghost_cells = {nullptr, 0, 0};
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
-/** On of Cells::Resort, announces the level of resort needed.
+/** One of @ref Cells::Resort, announces the level of resort needed.
  */
 unsigned resort_particles = Cells::RESORT_NONE;
 bool rebuild_verletlist = true;
@@ -217,7 +218,6 @@ void topology_init(int cs, double range, CellPList *local) {
 bool topology_check_resort(int cs, bool local_resort) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
-    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
   case CELL_STRUCTURE_NSQUARE:
   case CELL_STRUCTURE_LAYERED:
     return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
@@ -401,15 +401,16 @@ void cells_resort_particles(int global_flag) {
 #endif
   }
 
-  ghost_communicator(&cell_structure.ghost_cells_comm);
-  ghost_communicator(&cell_structure.exchange_ghosts_comm);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PARTNUM);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
 
   /* Particles are now sorted, but Verlet lists are invalid
      and p_old has to be reset. */
   resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = true;
 
-  realloc_particlelist(&displaced_parts, 0);
+  displaced_parts.clear();
 
   on_resort_particles(local_cells.particles());
 }
@@ -455,12 +456,13 @@ void cells_update_ghosts() {
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
-    /* Communication step:  number of ghosts and ghost information */
+    /* Communication step: number of ghosts and ghost information */
     cells_resort_particles(global);
 
   } else
     /* Communication step: ghost information */
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION);
 }
 
 Cell *find_current_cell(const Particle &p) {

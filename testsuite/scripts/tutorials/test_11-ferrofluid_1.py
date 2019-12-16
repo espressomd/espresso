@@ -30,8 +30,8 @@ class Tutorial(ut.TestCase):
     system = tutorial.system
 
     def test(self):
-        self.assertTrue(
-            int(np.sum(tutorial.n_clusters)) == len(tutorial.cluster_sizes))
+        self.assertEqual(
+            int(np.sum(tutorial.n_clusters)), len(tutorial.cluster_sizes))
         for i in range(8):
             self.assertLess(
                 tutorial.size_dist[0][i + 1],

@@ -22,18 +22,15 @@ import math
 
 
 def solve(xi, d, bjerrum_length, sigma, valency):
-    pi = math.pi
     el_char = 1.0
-    return xi * math.tan(xi * d / 2.0) + 2.0 * pi * \
+    return xi * math.tan(xi * d / 2.0) + 2.0 * math.pi * \
         bjerrum_length * sigma / (valency * el_char)
 
 # function to calculate the density
 
 
 def density(x, xi, bjerrum_length):
-    pi = math.pi
-    kb = 1.0
-    return (xi * xi) / (2.0 * pi * bjerrum_length *
+    return (xi * xi) / (2.0 * math.pi * bjerrum_length *
                         math.cos(xi * x) * math.cos(xi * x))
 
 # function to calculate the velocity
@@ -47,16 +44,14 @@ def velocity(
         force,
         viscosity_kinematic,
         density_water):
-    pi = math.pi
     return force * math.log(math.cos(xi * x) / math.cos(xi * d / 2.0)) / \
-        (2.0 * pi * bjerrum_length * viscosity_kinematic * density_water)
+        (2.0 * math.pi * bjerrum_length * viscosity_kinematic * density_water)
 
 # function to calculate the nonzero component of the pressure tensor
 
 
 def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
-    pi = math.pi
-    return force * xi * math.tan(xi * x) / (2.0 * pi * bjerrum_length)
+    return force * xi * math.tan(xi * x) / (2.0 * math.pi * bjerrum_length)
 
 # function to calculate the hydrostatic pressure
 
@@ -69,9 +64,6 @@ def pressure_tensor_offdiagonal(x, xi, bjerrum_length, force):
 
 def hydrostatic_pressure(
         ek,
-        x,
-        xi,
-        bjerrum_length,
         tensor_entry,
         box_x,
         box_y,

@@ -1,10 +1,10 @@
-.. _Lattice Boltzmann:
+.. _Lattice-Boltzmann:
 
-Lattice Boltzmann
+Lattice-Boltzmann
 =================
 
 For an implicit treatment of a solvent, |es| allows to couple the molecular
-dynamics simulation to a lattice Boltzmann fluid. The Lattice Boltzmann Method (LBM) is a fast, lattice-based method that, in its
+dynamics simulation to a lattice-Boltzmann fluid. The lattice-Boltzmann method (LBM) is a fast, lattice-based method that, in its
 "pure" form, allows to calculate fluid flow in different boundary
 conditions of arbitrarily complex geometries. Coupled to molecular
 dynamics, it allows for the computationally efficient inclusion of
@@ -259,7 +259,7 @@ Choosing between the GPU and CPU implementations
 
 .. note:: Feature ``CUDA`` required
 
-Espresso contains an implementation of the LBM for NVIDIA
+|es| contains an implementation of the LBM for NVIDIA
 GPUs using the CUDA framework. On CUDA-supporting machines this can be
 activated by compiling with the feature ``CUDA``. Within the
 Python script, the :class:`~espressomd.lb.LBFluid` object can be substituted with the :class:`~espressomd.lb.LBFluidGPU` object to switch from CPU based to GPU based execution. For further
@@ -288,7 +288,7 @@ Electrohydrodynamics
         .. note::
            This needs the feature ``LB_ELECTROHYDRODYNAMICS``.
 
-If the feature is activated, the Lattice Boltzmann Code can be
+If the feature is activated, the lattice-Boltzmann code can be
 used to implicitly model surrounding salt ions in an external electric
 field by having the charged particles create flow.
 
@@ -301,15 +301,15 @@ For more information on this method and how it works, read the
 publication :cite:`hickey10a`.
 
 
-.. _Using shapes as lattice Boltzmann boundary:
+.. _Using shapes as lattice-Boltzmann boundary:
 
-Using shapes as lattice Boltzmann boundary
+Using shapes as lattice-Boltzmann boundary
 ------------------------------------------
 
 .. note::
     Feature ``LB_BOUNDARIES`` required
 
-Lattice Boltzmann boundaries are implemented in the module
+Lattice-Boltzmann boundaries are implemented in the module
 :mod:`espressomd.lbboundaries`. You might want to take a look
 at the classes :class:`espressomd.lbboundaries.LBBoundary`
 and :class:`espressomd.lbboundaries.LBBoundaries` for more information.
@@ -333,7 +333,7 @@ Minimal usage example
 
 .. note:: Feature ``LB_BOUNDARIES`` or ``LB_BOUNDARIES_GPU`` required
 
-In order to add a wall as boundary for a lattice Boltzmann fluid
+In order to add a wall as boundary for a lattice-Boltzmann fluid
 you could do the following::
 
     wall = espressomd.shapes.Wall(dist=5, normal=[1, 0, 0])

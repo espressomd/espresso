@@ -334,7 +334,7 @@ void calc_long_range_force(const ParticleRange &particles) {
     if (this_node == 0) {
       p3m_gpu_add_farfield_force();
     }
-    /* there is no NPT handling here as long as we cannot compute energies.g
+    /* there is no NPT handling here as long as we cannot compute energies.
        This is checked in integrator_npt_sanity_checks() when integration
        starts. */
     break;

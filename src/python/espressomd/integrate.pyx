@@ -39,6 +39,7 @@ cdef class Integrator:
         self._steepest_descent_params = {}
         self._isotropic_npt_params = {}
 
+    # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         state = {}
         state['_method'] = self._method
@@ -47,17 +48,20 @@ cdef class Integrator:
         return state
 
     def __setstate__(self, state):
+        self.__init__()
         self._method = state['_method']
         if self._method == "STEEPEST_DESCENT":
-            self.set_steepest_descent(state['_steepest_descent_params'])
+            self.set_steepest_descent(**state['_steepest_descent_params'])
         elif self._method == "NVT":
             self.set_nvt()
         elif self._method == "SD":
             self.set_sd()
         elif self._method == "NPT":
-            npt_params = state['_isotropic_npt_params']
-            self.set_isotropic_npt(npt_params['ext_pressure'], npt_params[
-                                   'piston'], direction=npt_params['direction'], cubic_box=npt_params['cubic_box'])
+            self.set_isotropic_npt(**state['_isotropic_npt_params'])
+
+    def get_state(self):
+        """Returns the integrator status."""
+        return self.__getstate__()
 
     def run(self, steps=1, recalc_forces=False, reuse_forces=False):
         """
@@ -130,6 +134,7 @@ cdef class Integrator:
         self._method = "NVT"
         integrate_set_nvt()
 
+
     def set_sd(self):
         """
         Set the integration method to SD.
@@ -138,8 +143,8 @@ cdef class Integrator:
         self._method = "SD"
         integrate_set_sd()
 
-    def set_isotropic_npt(self, ext_pressure, piston, direction=[0, 0, 0],
-                          cubic_box=False):
+    def set_isotropic_npt(self, ext_pressure, piston,
+                          direction=(True, True, True), cubic_box=False):
         """
         Set the integration method to NPT.
 
@@ -149,14 +154,19 @@ cdef class Integrator:
             The external pressure.
         piston : :obj:`float`
             The mass of the applied piston.
-        direction : (3,) array_like of :obj:`int`, optional
-            Set the box geometry for non-cubic boxes.
+        direction : (3,) array_like of :obj:`bool`, optional
+            Select which dimensions are allowed to fluctuate by assigning
+            them to ``True``.
         cubic_box : :obj:`bool`, optional
-            If this optional parameter is true, a cubic box is assumed.
+            If ``True``, a cubic box is assumed and the value of ``direction``
+            will be ignored when rescaling the box. This is required e.g. for
+            electrostatics and magnetostatics.
 
         """
         IF NPT:
             self._method = "NPT"
+            if isinstance(direction, np.ndarray):
+                direction = list(map(int, direction))
             self._isotropic_npt_params['ext_pressure'] = ext_pressure
             self._isotropic_npt_params['piston'] = piston
             self._isotropic_npt_params['direction'] = direction
@@ -166,7 +176,9 @@ cdef class Integrator:
             check_type_or_throw_except(
                 piston, 1, float, "NPT parameter piston must be a float")
             check_type_or_throw_except(
-                direction, 3, int, "NPT parameter direction must be an array-like of three ints")
+                direction, 3, int, "NPT parameter direction must be an array-like of three bools")
+            check_type_or_throw_except(
+                cubic_box, 1, int, "NPT parameter cubic_box must be a bool")
             if (integrate_set_npt_isotropic(ext_pressure, piston, direction[0],
                                             direction[1], direction[2], cubic_box)):
                 handle_errors(

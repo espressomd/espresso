@@ -17,10 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the Utils::tensor_product class.
- *
- */
+/* Unit tests for the Utils::tensor_product class. */
 
 #define BOOST_TEST_MODULE Utils::tensor_product
 #define BOOST_TEST_DYN_LINK

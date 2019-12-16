@@ -46,7 +46,7 @@ class ek_fluctuations(ut.TestCase):
         diff = 1.0
         agrid = 1.0
 
-        system.box_l = box_l = [box_x, box_y, box_z]
+        system.box_l = [box_x, box_y, box_z]
         system.time_step = time_step
         system.cell_system.skin = 0.2
         system.thermostat.turn_off()
@@ -82,7 +82,7 @@ class ek_fluctuations(ut.TestCase):
         count = 0
 
         # Integrate
-        for t in range(sample_steps):
+        for _ in range(sample_steps):
             system.integrator.run(integration_steps)
             for i in range(box_x):
                 for j in range(box_y):

@@ -241,10 +241,10 @@ class Correlator(ScriptInterfaceHelper):
         -------
 
         numpy.ndarray
-            The result of the correlation function as a 2d-array. 
+            The result of the correlation function as a 2d-array.
             The first column contains the values of the lag time tau.
             The second column contains the number of values used to
-            perform the averaging of the correlation. Further columns contain 
+            perform the averaging of the correlation. Further columns contain
             the values of the correlation function. The number of these columns
             is the dimension of the output of the correlation operation.
         """

@@ -35,9 +35,9 @@ public:
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
 
-      double RMat[9];
+      auto const id = ids()[i];
       const Utils::Vector3d vel_body =
-          convert_vector_space_to_body(partCfg[i], partCfg[i].m.v);
+          convert_vector_space_to_body(partCfg[id], partCfg[id].m.v);
 
       res[3 * i + 0] = vel_body[0];
       res[3 * i + 1] = vel_body[1];

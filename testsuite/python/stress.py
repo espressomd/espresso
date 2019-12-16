@@ -23,7 +23,7 @@ from espressomd.interactions import HarmonicBond
 from espressomd.interactions import FeneBond
 from espressomd.observables import StressTensor
 
-from tests_common import fene_force, fene_potential, fene_force2
+from tests_common import fene_force2
 
 import numpy as np
 
@@ -33,13 +33,13 @@ tol = 1.0e-13
 # analytical result for convective stress
 
 
-def stress_kinetic(vel, box_l):
+def stress_kinetic(vel):
     return np.einsum('ij,ik->jk', vel, vel) / np.prod(system.box_l)
 
 # analytical result for stress originating from bond force
 
 
-def stress_bonded(pos, box_l):
+def stress_bonded(pos):
     stress = np.zeros([3, 3])
     for p1, p2 in zip(pos[0::2], pos[1::2]):
         r = p1 - p2
@@ -50,7 +50,7 @@ def stress_bonded(pos, box_l):
 # analytical result for stress originating from non-bonded force
 
 
-def stress_nonbonded(particle_pairs, box_l):
+def stress_nonbonded(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if (p1.type == 0 and p2.type == 0) or (p1.type == 1 and p2.type == 2):
@@ -62,7 +62,7 @@ def stress_nonbonded(particle_pairs, box_l):
     return stress
 
 
-def stress_nonbonded_inter(particle_pairs, box_l):
+def stress_nonbonded_inter(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 1 and p2.type == 2 and p1.mol_id != p2.mol_id:
@@ -74,7 +74,7 @@ def stress_nonbonded_inter(particle_pairs, box_l):
     return stress
 
 
-def stress_nonbonded_intra(particle_pairs, box_l):
+def stress_nonbonded_intra(particle_pairs):
     stress = np.zeros([3, 3])
     for p1, p2 in particle_pairs:
         if p1.type == 0 and p2.type == 0 and p1.mol_id == p2.mol_id:
@@ -94,8 +94,7 @@ class Stress(ut.TestCase):
 
     def test(self):
         # system parameters
-        box_l = 10.0
-        system.box_l = [box_l, box_l, box_l]
+        system.box_l = 3 * [10.0]
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step
@@ -160,13 +159,13 @@ class Stress(ut.TestCase):
             'non_bonded_intra', 0, 0]
         sim_pressure_total = system.analysis.pressure()['total']
 
-        anal_stress_kinetic = stress_kinetic(vel, box_l)
-        anal_stress_bonded = stress_bonded(pos, box_l)
-        anal_stress_nonbonded = stress_nonbonded(system.part.pairs(), box_l)
+        anal_stress_kinetic = stress_kinetic(vel)
+        anal_stress_bonded = stress_bonded(pos)
+        anal_stress_nonbonded = stress_nonbonded(system.part.pairs())
         anal_stress_nonbonded_inter = stress_nonbonded_inter(
-            system.part.pairs(), box_l)
+            system.part.pairs())
         anal_stress_nonbonded_intra = stress_nonbonded_intra(
-            system.part.pairs(), box_l)
+            system.part.pairs())
         anal_stress_total = anal_stress_kinetic + \
             anal_stress_bonded + anal_stress_nonbonded
         anal_pressure_kinetic = np.einsum('ii', anal_stress_kinetic) / 3.0
@@ -181,48 +180,48 @@ class Stress(ut.TestCase):
 
         system.part.clear()
 
-        self.assertTrue(np.max(np.abs(sim_stress_kinetic - anal_stress_kinetic))
-                        < tol, 'kinetic stress does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_bonded - anal_stress_bonded))
-                        < tol, 'bonded stress does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_bonded_harmonic - anal_stress_bonded))
-                        < tol, 'bonded stress harmonic bond does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_nonbonded - anal_stress_nonbonded))
-                        < tol, 'non-bonded stress does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_nonbonded_inter - anal_stress_nonbonded_inter))
-                        < tol, 'non-bonded intermolecular stress does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_nonbonded_inter12 - anal_stress_nonbonded_inter)) <
+        self.assertLess(np.max(np.abs(sim_stress_kinetic - anal_stress_kinetic)),
+                        tol, 'kinetic stress does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_bonded - anal_stress_bonded)),
+                        tol, 'bonded stress does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_bonded_harmonic - anal_stress_bonded)),
+                        tol, 'bonded stress harmonic bond does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_nonbonded - anal_stress_nonbonded)),
+                        tol, 'non-bonded stress does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_nonbonded_inter - anal_stress_nonbonded_inter)),
+                        tol, 'non-bonded intermolecular stress does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_nonbonded_inter12 - anal_stress_nonbonded_inter)),
                         tol, 'non-bonded intermolecular stress molecules 1 and 2 does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra - anal_stress_nonbonded_intra))
-                        < tol, 'non-bonded intramolecular stress does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_nonbonded_intra00 - anal_stress_nonbonded_intra))
-                        < tol, 'non-bonded intramolecular stress molecule 0 does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_total - anal_stress_total))
-                        < tol, 'total stress does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_total - sim_stress_kinetic - sim_stress_bonded - sim_stress_nonbonded))
-                        < tol, 'total stress is not given as the sum of all major stress components')
-        self.assertTrue(np.abs(sim_pressure_kinetic - anal_pressure_kinetic)
-                        < tol, 'kinetic pressure does not match analytical result')
-        self.assertTrue(np.abs(sim_pressure_bonded - anal_pressure_bonded)
-                        < tol, 'bonded pressure does not match analytical result')
-        self.assertTrue(np.abs(sim_pressure_bonded_harmonic - anal_pressure_bonded)
-                        < tol, 'bonded pressure harmonic bond does not match analytical result')
-        self.assertTrue(np.abs(sim_pressure_nonbonded - anal_pressure_nonbonded)
-                        < tol, 'non-bonded pressure does not match analytical result')
-        self.assertTrue(np.abs(sim_pressure_nonbonded_inter - anal_pressure_nonbonded_inter)
-                        < tol, 'non-bonded intermolecular pressure does not match analytical result')
-        self.assertTrue(
+        self.assertLess(np.max(np.abs(sim_stress_nonbonded_intra - anal_stress_nonbonded_intra)),
+                        tol, 'non-bonded intramolecular stress does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_nonbonded_intra00 - anal_stress_nonbonded_intra)),
+                        tol, 'non-bonded intramolecular stress molecule 0 does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_total - anal_stress_total)),
+                        tol, 'total stress does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_total - sim_stress_kinetic - sim_stress_bonded - sim_stress_nonbonded)),
+                        tol, 'total stress is not given as the sum of all major stress components')
+        self.assertLess(np.abs(sim_pressure_kinetic - anal_pressure_kinetic),
+                        tol, 'kinetic pressure does not match analytical result')
+        self.assertLess(np.abs(sim_pressure_bonded - anal_pressure_bonded),
+                        tol, 'bonded pressure does not match analytical result')
+        self.assertLess(np.abs(sim_pressure_bonded_harmonic - anal_pressure_bonded),
+                        tol, 'bonded pressure harmonic bond does not match analytical result')
+        self.assertLess(np.abs(sim_pressure_nonbonded - anal_pressure_nonbonded),
+                        tol, 'non-bonded pressure does not match analytical result')
+        self.assertLess(np.abs(sim_pressure_nonbonded_inter - anal_pressure_nonbonded_inter),
+                        tol, 'non-bonded intermolecular pressure does not match analytical result')
+        self.assertLess(
             np.abs(sim_pressure_nonbonded_inter12 -
-                   anal_pressure_nonbonded_inter) < tol,
+                   anal_pressure_nonbonded_inter), tol,
             'non-bonded intermolecular pressure molecule 1 and 2 does not match analytical result')
-        self.assertTrue(np.abs(sim_pressure_nonbonded_intra - anal_pressure_nonbonded_intra)
-                        < tol, 'non-bonded intramolecular pressure does not match analytical result')
-        self.assertTrue(np.abs(sim_pressure_nonbonded_intra00 - anal_pressure_nonbonded_intra) <
+        self.assertLess(np.abs(sim_pressure_nonbonded_intra - anal_pressure_nonbonded_intra),
+                        tol, 'non-bonded intramolecular pressure does not match analytical result')
+        self.assertLess(np.abs(sim_pressure_nonbonded_intra00 - anal_pressure_nonbonded_intra),
                         tol, 'non-bonded intramolecular pressure molecule 0 does not match analytical result')
-        self.assertTrue(np.abs(sim_pressure_total - anal_pressure_total)
-                        < tol, 'total pressure does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_pressure_total - sim_pressure_kinetic - sim_pressure_bonded - sim_pressure_nonbonded))
-                        < tol, 'total pressure is not given as the sum of all major pressure components')
+        self.assertLess(np.abs(sim_pressure_total - anal_pressure_total),
+                        tol, 'total pressure does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_pressure_total - sim_pressure_kinetic - sim_pressure_bonded - sim_pressure_nonbonded)),
+                        tol, 'total pressure is not given as the sum of all major pressure components')
 
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(
@@ -243,8 +242,7 @@ class StressFENE(ut.TestCase):
 
     def test_fene(self):
         # system parameters
-        box_l = 10.0
-        system.box_l = [box_l, box_l, box_l]
+        system.box_l = 3 * [10.0]
         skin = 0.4
         time_step = 0.01
         system.time_step = time_step
@@ -279,18 +277,18 @@ class StressFENE(ut.TestCase):
 
         anal_stress_fene = self.get_anal_stress_fene(
             system.part[0].pos, system.part[1].pos, k, d_r_max, r_0)
-        self.assertTrue(np.max(np.abs(sim_stress_bonded - anal_stress_fene))
-                        < tol, 'bonded stress does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_fene - anal_stress_fene))
-                        < tol, 'bonded stress for fene  does not match analytical result')
-        self.assertTrue(np.max(np.abs(sim_stress_bonded - total_bonded_stresses))
-                        < tol, 'bonded stresses do not sum up to the total value')
+        self.assertLess(np.max(np.abs(sim_stress_bonded - anal_stress_fene)),
+                        tol, 'bonded stress does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_fene - anal_stress_fene)),
+                        tol, 'bonded stress for fene  does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_stress_bonded - total_bonded_stresses)),
+                        tol, 'bonded stresses do not sum up to the total value')
 
         sim_pressure_fene = system.analysis.pressure()[
             'bonded', len(system.bonded_inter) - 1]
         anal_pressure_fene = np.einsum("ii", anal_stress_fene) / 3.0
-        self.assertTrue(np.max(np.abs(sim_pressure_fene - anal_pressure_fene))
-                        < tol, 'bonded pressure for fene does not match analytical result')
+        self.assertLess(np.max(np.abs(sim_pressure_fene - anal_pressure_fene)),
+                        tol, 'bonded pressure for fene does not match analytical result')
 
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(

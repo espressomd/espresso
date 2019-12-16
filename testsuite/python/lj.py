@@ -59,8 +59,8 @@ class LennardJonesTest(ut.TestCase):
 
         rms = rms**0.5
 
-        self.assertTrue(rms < 1e-5)
-        self.assertTrue(max_df < 1e-5)
+        self.assertLess(rms, 1e-5)
+        self.assertLess(max_df, 1e-5)
 
     def test_dd(self):
         self.system.cell_system.set_domain_decomposition(

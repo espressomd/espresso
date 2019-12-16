@@ -18,6 +18,9 @@
  */
 
 #include "collision.hpp"
+
+#ifdef COLLISION_DETECTION
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -36,8 +39,6 @@
 #include <boost/serialization/serialization.hpp>
 
 #include <vector>
-
-#ifdef COLLISION_DETECTION
 
 /// Data type holding the info about a single collision
 typedef struct {
@@ -368,7 +369,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   new_part.r.p = pos;
   auto p_vs = append_indexed_particle(local_cells.cell[0], std::move(new_part));
 
-  local_vs_relate_to(p_vs, &get_part(relate_to));
+  local_vs_relate_to(*p_vs, get_part(relate_to));
 
   p_vs->p.is_virtual = true;
   p_vs->p.type = collision_params.vs_particle_type;

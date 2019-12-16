@@ -32,13 +32,10 @@
 #include "short_range_loop.hpp"
 #include "thermostat.hpp"
 
-#include <Random123/philox.h>
 #include <boost/mpi/collectives/reduce.hpp>
 #include <utils/NoOp.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/tensor_product.hpp>
-#include <utils/u32_to_u64.hpp>
-#include <utils/uniform.hpp>
 
 using Utils::Vector3d;
 
@@ -53,30 +50,9 @@ std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
    seed-per-node)
 */
 Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
-
-  using rng_type = r123::Philox4x64;
-  using ctr_type = rng_type::ctr_type;
-  using key_type = rng_type::key_type;
-
-  ctr_type c{
-      {dpd_rng_counter->value(), static_cast<uint64_t>(RNGSalt::SALT_DPD)}};
-
-  uint64_t merged_ids;
-  auto const id1 = static_cast<uint32_t>(pid1);
-  auto const id2 = static_cast<uint32_t>(pid2);
-
-  if (id1 > id2) {
-    merged_ids = Utils::u32_to_u64(id1, id2);
-  } else {
-    merged_ids = Utils::u32_to_u64(id2, id1);
-  }
-  key_type k{merged_ids};
-
-  auto const noise = rng_type{}(c, k);
-
-  using Utils::uniform;
-  return Vector3d{uniform(noise[0]), uniform(noise[1]), uniform(noise[2])} -
-         Vector3d::broadcast(0.5);
+  return Random::v_noise<RNGSalt::SALT_DPD>(dpd_rng_counter->value(),
+                                            (pid1 < pid2) ? pid2 : pid1,
+                                            (pid1 < pid2) ? pid1 : pid2);
 }
 
 void mpi_bcast_dpd_rng_counter_slave(const uint64_t counter) {
@@ -102,16 +78,6 @@ void dpd_set_rng_state(const uint64_t counter) {
 }
 
 uint64_t dpd_get_rng_state() { return dpd_rng_counter->value(); }
-
-void dpd_heat_up() {
-  double pref_scale = sqrt(3);
-  dpd_update_params(pref_scale);
-}
-
-void dpd_cool_down() {
-  double pref_scale = 1.0 / sqrt(3);
-  dpd_update_params(pref_scale);
-}
 
 int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
                    int wf, double tgamma, double tr_c, int twf) {

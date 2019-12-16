@@ -29,7 +29,7 @@
 #ifndef MMM1D_H
 #define MMM1D_H
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 #ifdef ELECTROSTATICS
 

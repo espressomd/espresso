@@ -76,7 +76,7 @@ class AnalyzeDistance(ut.TestCase):
 
     def test_min_dist(self):
         # try five times
-        for i in range(5):
+        for _ in range(5):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
             self.assertAlmostEqual(self.system.analysis.min_dist(),

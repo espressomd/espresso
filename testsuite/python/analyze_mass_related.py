@@ -22,8 +22,9 @@ from espressomd.galilei import GalileiTransform
 
 class AnalyzeMassRelated(ut.TestCase):
 
-    """Test analysis routines that involve particle mass. E.g., center of mass, inertia tensor, ...
-    Checks that virtual sites (which do not have meaningful mass, are skipped
+    """Test analysis routines that involve particle mass. E.g., center of mass,
+    inertia tensor, ...
+    Checks that virtual sites (which do not have meaningful mass) are skipped.
 
     """
 
@@ -139,12 +140,11 @@ class AnalyzeMassRelated(ut.TestCase):
         np.testing.assert_allclose(
             expected_stress, analyze_stress)
 
-    def test_gyration_radius(self):        
-        if len(self.system.part.select(virtual=True)) > 0:
-            with self.assertRaisesRegexp(Exception, "not well-defined"):
-                core_rg = self.system.analysis.calc_rg(chain_start=0,
-                                                       number_of_chains=1,
-                                                       chain_length=len(self.system.part))
+    def test_gyration_radius(self):
+        if self.system.part.select(virtual=True):
+            with self.assertRaisesRegex(Exception, "not well-defined"):
+                self.system.analysis.calc_rg(chain_start=0, number_of_chains=1,
+                                             chain_length=len(self.system.part))
 
 
 if __name__ == "__main__":
