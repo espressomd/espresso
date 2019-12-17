@@ -107,3 +107,19 @@ BOOST_AUTO_TEST_CASE(apply) {
     BOOST_CHECK(called);
   }
 }
+
+BOOST_AUTO_TEST_CASE(find_if_) {
+  {
+    auto const result = Utils::find_if([](int e) { return e == 2; },
+                                       std::array<int, 4>{1, 2, 3, 4},
+                                       [](int e) { BOOST_CHECK_EQUAL(e, 2); });
+    BOOST_CHECK(result);
+  }
+
+  {
+    auto const result = Utils::find_if([](int e) { return e == 5; },
+                                       std::array<int, 4>{1, 2, 3, 4},
+                                       [](int e) { BOOST_CHECK(false); });
+    BOOST_CHECK(not result);
+  }
+}

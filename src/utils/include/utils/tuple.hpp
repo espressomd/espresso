@@ -19,6 +19,9 @@
 #ifndef ESPRESSO_TUPLE_HPP
 #define ESPRESSO_TUPLE_HPP
 
+#include <utils/get.hpp>
+#include <utils/type_traits.hpp>
+
 /**
  * @file
  * Algorithms for tuple-like inhomogeneous containers.
@@ -72,6 +75,54 @@ template <class F, class Tuple> void for_each(F &&f, Tuple &&t) {
       std::forward<F>(f), std::forward<Tuple>(t),
       std::make_index_sequence<
           std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
+}
+
+namespace detail {
+template <size_t I, size_t N> struct find_if_impl {
+  template <class Pred, class Tuple, class F>
+  static constexpr bool eval(Pred &&pred, Tuple const &t, F &&f) {
+    using Utils::get;
+    auto const &e = get<I>(t);
+
+    if (pred(e)) {
+      f(e);
+      return true;
+    }
+
+    return find_if_impl<I + 1, N>::eval(std::forward<Pred>(pred), t,
+                                        std::forward<F>(f));
+  }
+};
+
+template <size_t N> struct find_if_impl<N, N> {
+  template <class Pred, class Tuple, class F>
+  static constexpr bool eval(Pred, Tuple, F) {
+    return false;
+  }
+};
+} // namespace detail
+
+/**
+ * @brief Find first element in tuple for which a predicate holds,
+ *        and call a Callable with the element.
+ *
+ * Any return value of the Callable is ignored.
+ *
+ * @tparam Pred Must be callable with all type occurring as elements
+ *              in Tuple, returning a value convertible to bool.
+ * @tparam Tuple a tuple-like type supporting Utils::get
+ * @tparam F Must be callable with all type occurring as elements
+ *           in Tuple.
+ * @param pred The predicate.
+ * @param t Tuple for search in.
+ * @param f Is called for first found element.
+ * @return Result of invocation of f if an element was found,
+ *         nothing otherwise.
+ */
+template <class Pred, class Tuple, class F>
+constexpr auto find_if(Pred &&pred, Tuple const &t, F &&f) {
+  return detail::find_if_impl<0, Utils::tuple_size<Tuple>::value>::eval(
+      std::forward<Pred>(pred), t, std::forward<F>(f));
 }
 } // namespace Utils
 
