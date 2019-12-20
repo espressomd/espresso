@@ -59,21 +59,22 @@ class OifVolumeConservation(ut.TestCase):
 
         diameter_stretched = cell0.diameter()
         print("stretched diameter = " + str(diameter_stretched))
-        
+
         # Add slight random distortion
-        system.part[:].pos = system.part[:].pos +1*np.random.random((len(system.part),3))
-
-
+        system.part[:].pos = system.part[:].pos + 1 * \
+            np.random.random((len(system.part), 3))
 
         # Test that restoring forces net to zero and don't produce a torque
         system.integrator.run(1)
-        np.testing.assert_allclose(np.sum(system.part[:].f,axis=0),[0., 0., 0.], atol=1E-12)
-        
-        total_torque =np.zeros(3)
+        np.testing.assert_allclose(
+            np.sum(
+                system.part[:].f, axis=0), [
+                0., 0., 0.], atol=1E-12)
+
+        total_torque = np.zeros(3)
         for p in system.part:
             total_torque += np.cross(p.pos, p.f)
-        np.testing.assert_allclose(total_torque, [0., 0., 0.],atol=2E-12)
-
+        np.testing.assert_allclose(total_torque, [0., 0., 0.], atol=2E-12)
 
         # main integration loop
         system.thermostat.set_langevin(kT=0, gamma=0.7, seed=42)
