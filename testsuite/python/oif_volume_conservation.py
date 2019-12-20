@@ -59,6 +59,11 @@ class OifVolumeConservation(ut.TestCase):
 
         diameter_stretched = cell0.diameter()
         print("stretched diameter = " + str(diameter_stretched))
+        
+        # Add slight random distortion
+        system.part[:].pos = system.part[:].pos +1*np.random.random((len(system.part),3))
+
+
 
         # Test that restoring forces net to zero and don't produce a torque
         system.integrator.run(1)
