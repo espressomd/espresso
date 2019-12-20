@@ -67,7 +67,7 @@ class OifVolumeConservation(ut.TestCase):
         total_torque =np.zeros(3)
         for p in system.part:
             total_torque += np.cross(p.pos, p.f)
-        np.testing.assert_allclose(total_torque, [0., 0., 0.],atol=1E-12)
+        np.testing.assert_allclose(total_torque, [0., 0., 0.],atol=2E-12)
 
 
         # main integration loop
