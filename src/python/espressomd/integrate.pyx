@@ -93,11 +93,11 @@ cdef class Integrator:
                 PyErr_CheckSignals()
 
         elif self._method == "STEEPEST_DESCENT":
-            minimize_energy_init(self._steepest_descent_params["f_max"],
-                                 self._steepest_descent_params["gamma"],
-                                 steps,
-                                 self._steepest_descent_params["max_displacement"])
-            mpi_minimize_energy()
+            steepest_descent_init(self._steepest_descent_params["f_max"],
+                                  self._steepest_descent_params["gamma"],
+                                  steps,
+                                  self._steepest_descent_params["max_displacement"])
+            mpi_steepest_descent()
         else:
             raise ValueError("No integrator method set!")
 

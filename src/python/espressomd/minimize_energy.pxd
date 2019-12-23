@@ -23,7 +23,7 @@ cimport numpy as np
 from espressomd.utils cimport *
 
 cdef extern from "integrators/steepest_descent.hpp":
-    cdef void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement)
+    cdef void steepest_descent_init(const double f_max, const double gamma, const int max_steps, const double max_displacement)
 
 cdef extern from "communication.hpp":
-    cdef int mpi_minimize_energy()
+    cdef int mpi_steepest_descent()

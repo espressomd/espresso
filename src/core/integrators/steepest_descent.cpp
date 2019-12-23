@@ -37,7 +37,7 @@
 #include <limits>
 
 /** Currently active steepest descent instance */
-static MinimizeEnergyParameters *params = nullptr;
+static SteepestDescentParameters *params = nullptr;
 
 bool steepest_descent_step(const ParticleRange &particles) {
   // Maximal force encountered on node
@@ -104,10 +104,11 @@ bool steepest_descent_step(const ParticleRange &particles) {
   return (sqrt(f_max_global) < params->f_max);
 }
 
-void minimize_energy_init(const double f_max, const double gamma,
-                          const int max_steps, const double max_displacement) {
+void steepest_descent_init(const double f_max, const double gamma,
+                           const int max_steps,
+                           const double max_displacement) {
   if (!params)
-    params = new MinimizeEnergyParameters;
+    params = new SteepestDescentParameters;
 
   params->f_max = f_max;
   params->gamma = gamma;
@@ -115,11 +116,11 @@ void minimize_energy_init(const double f_max, const double gamma,
   params->max_displacement = max_displacement;
 }
 
-void minimize_energy() {
+void steepest_descent() {
   if (!params)
-    params = new MinimizeEnergyParameters;
+    params = new SteepestDescentParameters;
 
-  MPI_Bcast(params, sizeof(MinimizeEnergyParameters), MPI_BYTE, 0, comm_cart);
+  MPI_Bcast(params, sizeof(SteepestDescentParameters), MPI_BYTE, 0, comm_cart);
   int integ_switch_old = integ_switch;
   integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   integrate_vv(params->max_steps, -1);

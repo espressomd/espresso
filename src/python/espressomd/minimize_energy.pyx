@@ -109,7 +109,7 @@ cdef class MinimizeEnergy:
         Perform energy minimization sweep.
 
         """
-        minimize_energy_init(self._params["f_max"], self._params["gamma"],
-                             self._params["max_steps"],
-                             self._params["max_displacement"])
-        mpi_minimize_energy()
+        steepest_descent_init(self._params["f_max"], self._params["gamma"],
+                              self._params["max_steps"],
+                              self._params["max_displacement"])
+        mpi_steepest_descent()

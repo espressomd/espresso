@@ -293,8 +293,8 @@ void mpi_remove_particle_slave(int pnode, int part) {
 
 /********************* REQ_MIN_ENERGY ********/
 
-REGISTER_CALLBACK(minimize_energy)
-void mpi_minimize_energy() { mpi_call_all(minimize_energy); }
+REGISTER_CALLBACK(steepest_descent)
+void mpi_steepest_descent() { mpi_call_all(steepest_descent); }
 
 /********************* REQ_INTEGRATE ********/
 static int mpi_integrate_slave(int n_steps, int reuse_forces) {
