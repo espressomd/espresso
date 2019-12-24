@@ -117,9 +117,8 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
  *  @retval ES_OK on success
  *  @retval ES_ERROR on error
  */
-int integrate_set_steepest_descent(const double f_max, const double gamma,
-                                   const int max_steps,
-                                   const double max_displacement);
+int integrate_set_steepest_descent(double f_max, double gamma, int max_steps,
+                                   double max_displacement);
 
 /** @brief Set the velocity Verlet integrator for the NVT ensemble. */
 void integrate_set_nvt();
