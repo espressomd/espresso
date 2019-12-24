@@ -115,13 +115,11 @@ void steepest_descent_init(const double f_max, const double gamma,
   params->max_displacement = max_displacement;
 }
 
-void steepest_descent() {
+void steepest_descent(const int max_steps) {
   if (!params)
     params = new SteepestDescentParameters;
 
+  params->max_steps = max_steps;
   MPI_Bcast(params, sizeof(SteepestDescentParameters), MPI_BYTE, 0, comm_cart);
-  int integ_switch_old = integ_switch;
-  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
   integrate_vv(params->max_steps, -1);
-  integ_switch = integ_switch_old;
 }

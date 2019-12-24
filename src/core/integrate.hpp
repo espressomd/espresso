@@ -24,17 +24,12 @@
 /** \file
  *  Molecular dynamics integrator.
  *
- *  For more information see \ref integrate.cpp "integrate.cpp".
+ *  Implementation in \ref integrate.cpp.
  */
 
 #define INTEG_METHOD_NPT_ISO 0
 #define INTEG_METHOD_NVT 1
 #define INTEG_METHOD_STEEPEST_DESCENT 2
-
-/************************************************************/
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
 
 /** Switch determining which integrator to use. */
 extern int integ_switch;
@@ -66,12 +61,6 @@ extern double verlet_reuse;
 
 /** Communicate signal handling to the Python interpreter */
 extern bool set_py_interrupt;
-
-/*@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
 
 /** check sanity of integrator params */
 void integrator_sanity_checks();
@@ -114,8 +103,6 @@ void integrator_sanity_checks();
  */
 void integrate_vv(int n_steps, int reuse_forces);
 
-/*@}*/
-
 /** @brief Run the integration loop. Can be interrupted with Ctrl+C.
  *
  *  @param n_steps        Number of integration steps, can be zero
@@ -126,10 +113,19 @@ void integrate_vv(int n_steps, int reuse_forces);
  */
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
 
-/** @brief Set the NVT integrator. */
+/** @brief Set the steepest descent integrator for energy minimization.
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
+int integrate_set_steepest_descent(const double f_max, const double gamma,
+                                   const int max_steps,
+                                   const double max_displacement);
+
+/** @brief Set the velocity Verlet integrator for the NVT ensemble. */
 void integrate_set_nvt();
 
-/** @brief Set the NpT isotropic integrator.
+/** @brief Set the velocity Verlet integrator modified for the NpT ensemble
+ *  with isotropic rescaling.
  *
  *  @param ext_pressure  Reference pressure
  *  @param piston        Piston mass

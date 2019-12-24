@@ -73,8 +73,6 @@
 #include <callgrind.h>
 #endif
 
-/*******************  variables  *******************/
-
 int integ_switch = INTEG_METHOD_NVT;
 
 int n_verlet_updates = 0;
@@ -102,22 +100,14 @@ void notify_sig_int() {
 }
 } // namespace
 
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
-
 /** Thermostats increment the RNG counter here. */
 void philox_counter_increment();
-
-/*@}*/
 
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
 }
-
-/************************************************************/
 
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
@@ -308,11 +298,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 }
 
-/************************************************************/
-
-/* Private functions */
-/************************************************************/
-
 void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
@@ -381,6 +366,31 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
       return ES_ERROR;
   }
 
+  return ES_OK;
+}
+
+int integrate_set_steepest_descent(const double f_max, const double gamma,
+                                   const int max_steps,
+                                   const double max_displacement) {
+  if (f_max < 0.0) {
+    runtimeErrorMsg() << "The maximal force must be positive.\n";
+    return ES_ERROR;
+  }
+  if (gamma < 0.0) {
+    runtimeErrorMsg() << "The dampening constant must be positive.\n";
+    return ES_ERROR;
+  }
+  if (max_displacement < 0.0) {
+    runtimeErrorMsg() << "The maximal displacement must be positive.\n";
+    return ES_ERROR;
+  }
+  if (max_steps < 0) {
+    runtimeErrorMsg() << "The maximal number of steps must be positive.\n";
+    return ES_ERROR;
+  }
+  steepest_descent_init(f_max, gamma, max_steps, max_displacement);
+  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
   return ES_OK;
 }
 

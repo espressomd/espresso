@@ -63,7 +63,7 @@ cdef class MinimizeEnergy:
 
         """
         self._old_integrator = self._integrator_handle.get_state()
-        self._max_steps = kwargs.pop('max_steps')
+        self._max_steps = kwargs['max_steps']
         self._integrator_handle.set_steepest_descent(*args, **kwargs)
 
     def minimize(self):

@@ -56,8 +56,10 @@ void steepest_descent_init(double f_max, double gamma, int max_steps,
  *  Integration stops when the maximal force is lower than the user limit
  *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
  *  of steps @ref SteepestDescentParameters::max_steps "max_steps" is reached.
+ *
+ *  @param max_steps New value for @ref SteepestDescentParameters::max_steps
  */
-void steepest_descent();
+void steepest_descent(int max_steps);
 
 /** Steepest descent integrator
  *  @return whether the maximum force/torque encountered is below the user
