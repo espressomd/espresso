@@ -105,8 +105,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
 }
 
 void steepest_descent_init(const double f_max, const double gamma,
-                           const int max_steps,
-                           const double max_displacement) {
+                           const int max_steps, const double max_displacement) {
   if (!params)
     params = new SteepestDescentParameters;
 

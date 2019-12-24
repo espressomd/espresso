@@ -397,9 +397,12 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   nptiso.p_ext = ext_pressure;
   nptiso.piston = piston;
 
-  if (nptiso.piston <= 0.0) {
-    runtimeErrorMsg() << "You must set <piston> as well before you can use "
-                         "this integrator!\n";
+  if (ext_pressure < 0.0) {
+    runtimeErrorMsg() << "The external pressure must be positive.\n";
+    return ES_ERROR;
+  }
+  if (piston <= 0.0) {
+    runtimeErrorMsg() << "The piston mass must be positive.\n";
     return ES_ERROR;
   }
   /* set the NpT geometry */

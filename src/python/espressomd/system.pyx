@@ -95,7 +95,7 @@ cdef class System:
     constraints : :class:`espressomd.constraints.Constraints`
     cuda_init_handle : :class:`espressomd.cuda_init.CudaInitHandle`
     galilei : :class:`espressomd.galilei.GalileiTransform`
-    integrator : :class:`espressomd.integrate.Integrator`
+    integrator : :class:`espressomd.integrate.IntegratorHandle`
     lbboundaries : :class:`espressomd.lbboundaries.LBBoundaries`
     ekboundaries : :class:`espressomd.ekboundaries.EKBoundaries`
     minimize_energy : :class:`espressomd.minimize_energy.MinimizeEnergy`
@@ -152,7 +152,7 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            self.integrator = integrate.Integrator()
+            self.integrator = integrate.IntegratorHandle()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
