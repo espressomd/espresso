@@ -259,3 +259,17 @@ Usage example::
         f_max=0, gamma=0.1, max_displacement=0.1)
     system.integrator.run(20)
     system.integrator.set_vv()  # to switch back to velocity Verlet
+
+A convenience wrapper class :class:`~espressomd.minimize_energy.MinimizeEnergy`
+is available to set up the steepest descent integrator while saving the
+original integrator parameters. The snippet above can be rewritten to::
+
+    system.minimize_energy.init(
+        f_max=0, gamma=0.1, max_displacement=0.1, max_steps=20)
+    system.minimize_energy.minimize()
+    system.minimize_energy.disable()  # to switch back to the original integrator
+
+This convenience class only exists for historical reasons and remains available
+for backward compatibility. New scripts should setup the steepest descent
+integrator with the :meth:`~espressomd.integrate.IntegratorHandle.set_steepest_descent`
+handle directly.

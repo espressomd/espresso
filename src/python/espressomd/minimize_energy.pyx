@@ -17,18 +17,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from . cimport minimize_energy
 from espressomd.utils import is_valid_type
 
 cdef class MinimizeEnergy:
     """
-    Steepest descent algorithm for energy minimization.
-
-    Particles located at :math:`\\vec{r}_i` at integration step :math:`i` and
-    experiencing a potential :math:`\mathcal{H}(\\vec{r}_i)` are displaced
-    according to the equation:
-
-    :math:`\\vec{r}_{i+1} = \\vec{r}_i - \\gamma\\nabla\mathcal{H}(\\vec{r}_i)`
+    Steepest descent algorithm for energy minimization. Wrapper for
+    :class:`espressomd.integrate.SteepestDescent`.
 
     Parameters
     ----------
@@ -46,70 +40,42 @@ cdef class MinimizeEnergy:
         are in the range of 0.1% to 10% of the particle sigma.
 
     """
-    cdef object _params
+    cdef object _integrator_handle
+    cdef object _old_integrator
+    cdef int _max_steps
 
     def __getstate__(self):
-        return self._params
+        return {'integrator_handle': self._integrator_handle,
+                'old_integrator': self._old_integrator,
+                'max_steps': self._max_steps}
 
-    def __setstate__(self, params):
-        self._params = params
+    def __setstate__(self, state):
+        self._integrator_handle = state['integrator_handle']
+        self._old_integrator = state['old_integrator']
+        self._max_steps = state['max_steps']
 
-    def __init__(self, *args, **kwargs):
-        if len(args) == 0:
-            # Initialize default values
-            self._params = self.default_params()
-            return
-
-        # Check if all required keys are given
-        for k in self.required_keys():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
-
-        self._params = kwargs
-        self.validate_params()
+    def __init__(self, integrator_handle):
+        self._integrator_handle = integrator_handle
 
     def init(self, *args, **kwargs):
-        for k in self.required_keys():
-            if k not in kwargs:
-                raise ValueError(
-                    "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
+        """
+        Initialize the steepest descent integrator.
 
-        self._params = kwargs
-        self.validate_params()
-
-    def default_params(self):
-        para = dict()
-        para["f_max"] = 0.0
-        para["gamma"] = 0.0
-        para["max_steps"] = 0
-        para["max_displacement"] = 0.0
-        return para
-
-    def required_keys(self):
-        return "f_max", "gamma", "max_steps", "max_displacement"
-
-    def validate_params(self):
-        if self._params["f_max"] < 0:
-            raise ValueError(
-                "f_max has to be a positive floating point number")
-        if self._params["gamma"] < 0:
-            raise ValueError(
-                "gamma has to be a positive floating point number")
-        if self._params["max_steps"] < 0 or not is_valid_type(
-                self._params["max_steps"], int):
-            raise ValueError(
-                "max_steps has to be a positive integer")
-        if self._params["max_displacement"] < 0:
-            raise ValueError(
-                "max_displacement has to be a positive floating point number")
+        """
+        self._old_integrator = self._integrator_handle.get_state()
+        self._max_steps = kwargs.pop('max_steps')
+        self._integrator_handle.set_steepest_descent(*args, **kwargs)
 
     def minimize(self):
         """
         Perform energy minimization sweep.
 
         """
-        steepest_descent_init(self._params["f_max"], self._params["gamma"],
-                              self._params["max_steps"],
-                              self._params["max_displacement"])
-        mpi_steepest_descent()
+        self._integrator_handle.run(self._max_steps)
+
+    def disable(self, *args, **kwargs):
+        """
+        Restore the original integrator.
+
+        """
+        self._integrator_handle.__setstate__(self._old_integrator)

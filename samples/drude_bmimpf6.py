@@ -252,6 +252,7 @@ n_max_steps = 100000
 system.minimize_energy.init(
     f_max=5.0, gamma=0.01, max_steps=n_max_steps, max_displacement=0.01)
 system.minimize_energy.minimize()
+system.minimize_energy.disable()
 print("After:", system.analysis.energy()["total"])
 
 # THERMOSTAT

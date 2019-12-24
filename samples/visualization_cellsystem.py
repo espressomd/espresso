@@ -53,6 +53,7 @@ print("Before Minimization: E_total = {}".format(energy['total']))
 system.minimize_energy.init(
     f_max=50, gamma=30.0, max_steps=10000, max_displacement=0.001)
 system.minimize_energy.minimize()
+system.minimize_energy.disable()
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy['total']))
 

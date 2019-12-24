@@ -19,7 +19,7 @@
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
 import espressomd.code_info
-from espressomd.utils cimport *
+from espressomd.utils cimport check_type_or_throw_except, handle_errors
 cimport globals
 
 cdef class IntegratorHandle:
@@ -197,7 +197,26 @@ cdef class Integrator:
 
 cdef class SteepestDescent(Integrator):
     """
-    Steepest Descent algorithm.
+    Steepest descent algorithm for energy minimization.
+
+    Particles located at :math:`\\vec{r}_i` at integration step :math:`i` and
+    experiencing a potential :math:`\mathcal{H}(\\vec{r}_i)` are displaced
+    according to the equation:
+
+    :math:`\\vec{r}_{i+1} = \\vec{r}_i - \\gamma\\nabla\mathcal{H}(\\vec{r}_i)`
+
+    Parameters
+    ----------
+    f_max : :obj:`float`
+        Convergence criterion. Minimization stops when the maximal force on
+        particles in the system is lower than this threshold. Set this to 0
+        when running minimization in a loop that stops when a custom
+        convergence criterion is met.
+    gamma : :obj:`float`
+        Dampening constant.
+    max_displacement : :obj:`float`
+        Maximal allowed displacement per step. Typical values for a LJ liquid
+        are in the range of 0.1% to 10% of the particle sigma.
 
     """
 

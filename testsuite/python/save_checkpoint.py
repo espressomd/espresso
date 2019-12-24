@@ -150,6 +150,10 @@ if 'LB.OFF' in modes:
                                                max_displacement=0.01)
     elif 'INT.NVT' in modes:
         system.integrator.set_nvt()
+    # set minimization
+    if 'MINIMIZATION' in modes:
+        system.minimize_energy.init(f_max=1, gamma=10, max_steps=1000,
+                                    max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(

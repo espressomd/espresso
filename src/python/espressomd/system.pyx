@@ -156,7 +156,7 @@ cdef class System:
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
-            self.minimize_energy = MinimizeEnergy()
+            self.minimize_energy = MinimizeEnergy(self.integrator)
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()

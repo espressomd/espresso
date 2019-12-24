@@ -98,6 +98,8 @@ while min_dist < max_sigma:
     system.minimize_energy.minimize()
     min_dist = system.analysis.min_dist()
 
+system.minimize_energy.disable()
+
 # Set thermostat
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)
 

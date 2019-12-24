@@ -72,6 +72,7 @@ for index, N in enumerate(N_MONOMERS):
         max_steps=2000,
         max_displacement=0.01)
     system.minimize_energy.minimize()
+    system.minimize_energy.disable()
     logging.info("Warmup finished.")
 
     logging.info("Equilibration.")

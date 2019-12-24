@@ -55,6 +55,7 @@ print("E before minimization:", system.analysis.energy()["total"])
 system.minimize_energy.init(f_max=0.0, gamma=30.0,
                             max_steps=10000, max_displacement=0.1)
 system.minimize_energy.minimize()
+system.minimize_energy.disable()
 print("E after minimization:", system.analysis.energy()["total"])
 
 system.thermostat.set_npt(kT=2.0, gamma0=1.0, gammav=0.01)

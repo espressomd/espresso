@@ -129,6 +129,7 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
 system.minimize_energy.init(
     f_max=10, gamma=10, max_steps=2000, max_displacement=0.1)
 system.minimize_energy.minimize()
+system.minimize_energy.disable()
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
