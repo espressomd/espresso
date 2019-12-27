@@ -59,7 +59,7 @@ class OifVolumeConservation(ut.TestCase):
 
         diameter_stretched = cell0.diameter()
         print("stretched diameter = " + str(diameter_stretched))
-        
+
         # Apply non-isotropic deformation
         system.part[:].pos = system.part[:].pos * np.array((0.96, 1.05, 1.02))
 
