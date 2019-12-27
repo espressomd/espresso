@@ -59,10 +59,9 @@ class OifVolumeConservation(ut.TestCase):
 
         diameter_stretched = cell0.diameter()
         print("stretched diameter = " + str(diameter_stretched))
-
-        # Add slight random distortion
-        system.part[:].pos = system.part[:].pos + 1 * \
-            np.random.random((len(system.part), 3))
+        
+        # Apply non-isotropic deformation
+        system.part[:].pos = system.part[:].pos * np.array((0.96, 1.05, 1.02))
 
         # Test that restoring forces net to zero and don't produce a torque
         system.integrator.run(1)
@@ -79,8 +78,8 @@ class OifVolumeConservation(ut.TestCase):
         # main integration loop
         system.thermostat.set_langevin(kT=0, gamma=0.7, seed=42)
         # OIF object is let to relax into relaxed shape of the sphere
-        for _ in range(3):
-            system.integrator.run(steps=90)
+        for _ in range(2):
+            system.integrator.run(steps=240)
             diameter_final = cell0.diameter()
             print("final diameter = " + str(diameter_final))
             self.assertAlmostEqual(
