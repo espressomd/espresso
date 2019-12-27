@@ -21,6 +21,8 @@
 
 #include "utils/Vector.hpp"
 
+#include <boost/algorithm/clamp.hpp>
+
 #include <cmath>
 
 namespace Utils {
@@ -57,38 +59,20 @@ inline double area_triangle(const Vector3d &P1, const Vector3d &P2,
  *  function with exactly this order. Otherwise you need to check the
  *  orientations.
  */
-template <typename T1, typename T2, typename T3, typename T4>
-double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
-                           const T4 &P4) {
+inline double angle_btw_triangles(const Vector3d &P1, const Vector3d &P2,
+                                  const Vector3d &P3, const Vector3d &P4) {
   auto const normal1 = get_n_triangle(P2, P1, P3);
   auto const normal2 = get_n_triangle(P2, P3, P4);
-
-  double tmp11;
-  // Now we compute the scalar product of n1 and n2 divided by the norms of n1
-  // and n2
-  // tmp11 = dot(3,normal1,normal2);         // tmp11 = n1.n2
-  tmp11 = normal1 * normal2; // tmp11 = n1.n2
-
-  tmp11 *= fabs(tmp11);                         // tmp11 = (n1.n2)^2
-  tmp11 /= (normal1.norm2() * normal2.norm2()); // tmp11 = (n1.n2/(|n1||n2|))^2
-  if (tmp11 > 0) {
-    tmp11 = std::sqrt(tmp11);
-  } else {
-    tmp11 = -std::sqrt(-tmp11);
-  }
-
-  if (tmp11 > 1.) {
-    tmp11 = 1.0;
-  } else if (tmp11 < -1.) {
-    tmp11 = -1.0;
-  }
-  auto const phi =
-      M_PI - std::acos(tmp11); // The angle between the faces (not considering
-                               // the orientation, always less or equal to Pi)
-                               // is equal to Pi minus angle between the normals
+  auto const cosine = boost::algorithm::clamp(
+      normal1 * normal2 / std::sqrt(normal1.norm2() * normal2.norm2()), -1.0,
+      1.0);
+  // The angle between the faces (not considering
+  // the orientation, always less or equal to Pi)
+  // is equal to Pi minus angle between the normals
+  auto const phi = M_PI - std::acos(cosine);
 
   // Now we need to determine, if the angle between two triangles is less than
-  // Pi or more than Pi. To do this we check,
+  // Pi or more than Pi. To do this, we check
   // if the point P4 lies in the halfspace given by triangle P1P2P3 and the
   // normal to this triangle. If yes, we have
   // angle less than Pi, if not, we have angle more than Pi.
@@ -97,8 +81,7 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   // Point P1 lies in the plane, therefore d = -(n_x*P1_x + n_y*P1_y + n_z*P1_z)
   // Point P4 lies in the halfspace given by normal iff n_x*P4_x + n_y*P4_y +
   // n_z*P4_z + d >= 0
-  tmp11 = -(normal1[0] * P1[0] + normal1[1] * P1[1] + normal1[2] * P1[2]);
-  if (normal1[0] * P4[0] + normal1[1] * P4[1] + normal1[2] * P4[2] + tmp11 < 0)
+  if (normal1 * P4 - normal1 * P1 < 0)
     return 2 * M_PI - phi;
 
   return phi;
