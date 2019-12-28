@@ -40,6 +40,7 @@ for f in ${py_files}; do
     (sed -e 's/^/# /' maintainer/header_template.txt | sed 's/ $//'; cat "${f}") > "${tmp}"
   fi
   cp "${tmp}" "${f}"
+  echo "${f}"
 done
 # process c++/cuda/doxygen files
 for f in ${cpp_files}; do
@@ -48,5 +49,6 @@ for f in ${cpp_files}; do
    echo ' */'
    cat "${f}") > "${tmp}"
   cp "${tmp}" "${f}"
+  echo "${f}"
 done
 rm "${tmp}"

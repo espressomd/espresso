@@ -67,13 +67,13 @@ class DPDThermostat(ut.TestCase):
 
     def check_total_zero(self):
         v_total = np.sum(self.s.part[:].v, axis=0)
-        self.assertTrue(v_total[0] < 1e-11)
-        self.assertTrue(v_total[1] < 1e-11)
-        self.assertTrue(v_total[2] < 1e-11)
+        self.assertLess(v_total[0], 1e-11)
+        self.assertLess(v_total[1], 1e-11)
+        self.assertLess(v_total[2], 1e-11)
 
     def single(self, with_langevin=False):
         """Test velocity distribution of a dpd fluid with a single type."""
-        N = 250
+        N = 500
         s = self.s
         s.part.add(pos=s.box_l * np.random.random((N, 3)))
         kT = 2.3
@@ -95,7 +95,9 @@ class DPDThermostat(ut.TestCase):
         error_tol = 0.01
         self.check_velocity_distribution(
             v_stored, v_minmax, bins, error_tol, kT)
-        self.check_total_zero()
+
+        if not with_langevin:
+            self.check_total_zero()
 
     def test_single(self):
         self.single()
@@ -211,24 +213,24 @@ class DPDThermostat(ut.TestCase):
         # Only trans, so x component should be zero
         self.assertLess(abs(s.part[0].f[0]), 1e-16)
         # f = gamma * v_ij
-        self.assertTrue(abs(s.part[0].f[1] - gamma * v[1]) < 1e-11)
-        self.assertTrue(abs(s.part[0].f[2] - gamma * v[2]) < 1e-11)
+        self.assertLess(abs(s.part[0].f[1] - gamma * v[1]), 1e-11)
+        self.assertLess(abs(s.part[0].f[2] - gamma * v[2]), 1e-11)
         # Momentum conservation
         self.assertLess(abs(s.part[1].f[0]), 1e-16)
-        self.assertTrue(abs(s.part[1].f[1] + gamma * v[1]) < 1e-11)
-        self.assertTrue(abs(s.part[1].f[2] + gamma * v[2]) < 1e-11)
+        self.assertLess(abs(s.part[1].f[1] + gamma * v[1]), 1e-11)
+        self.assertLess(abs(s.part[1].f[2] + gamma * v[2]), 1e-11)
 
         # Trans and parallel
         s.part[1].pos = [5. - 1.1, 5, 5]
 
         s.integrator.run(0)
 
-        self.assertTrue(abs(s.part[0].f[0] - gamma * v[0]) < 1e-11)
-        self.assertTrue(abs(s.part[0].f[1] - gamma * v[1]) < 1e-11)
-        self.assertTrue(abs(s.part[0].f[2] - gamma * v[2]) < 1e-11)
-        self.assertTrue(abs(s.part[1].f[0] + gamma * v[0]) < 1e-11)
-        self.assertTrue(abs(s.part[1].f[1] + gamma * v[1]) < 1e-11)
-        self.assertTrue(abs(s.part[1].f[2] + gamma * v[2]) < 1e-11)
+        self.assertLess(abs(s.part[0].f[0] - gamma * v[0]), 1e-11)
+        self.assertLess(abs(s.part[0].f[1] - gamma * v[1]), 1e-11)
+        self.assertLess(abs(s.part[0].f[2] - gamma * v[2]), 1e-11)
+        self.assertLess(abs(s.part[1].f[0] + gamma * v[0]), 1e-11)
+        self.assertLess(abs(s.part[1].f[1] + gamma * v[1]), 1e-11)
+        self.assertLess(abs(s.part[1].f[2] + gamma * v[2]), 1e-11)
 
     def test_linear_weight_function(self):
         s = self.s
@@ -262,52 +264,52 @@ class DPDThermostat(ut.TestCase):
         # Only trans, so x component should be zero
         self.assertLess(abs(s.part[0].f[0]), 1e-16)
         # f = gamma * v_ij
-        self.assertTrue(
-            abs(s.part[0].f[1] - omega(1.3, 1.4)**2 * gamma * v[1]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[0].f[2] - omega(1.3, 1.4)**2 * gamma * v[2]) < 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[1] - omega(1.3, 1.4)**2 * gamma * v[1]), 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[2] - omega(1.3, 1.4)**2 * gamma * v[2]), 1e-11)
         # Momentum conservation
         self.assertLess(abs(s.part[1].f[0]), 1e-16)
-        self.assertTrue(
-            abs(s.part[1].f[1] + omega(1.3, 1.4)**2 * gamma * v[1]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[1].f[2] + omega(1.3, 1.4)**2 * gamma * v[2]) < 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[1] + omega(1.3, 1.4)**2 * gamma * v[1]), 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[2] + omega(1.3, 1.4)**2 * gamma * v[2]), 1e-11)
 
         # Trans and parallel
         s.part[1].pos = [5. - 1.1, 5, 5]
 
         s.integrator.run(0)
 
-        self.assertTrue(
-            abs(s.part[0].f[0] - omega(1.1, 1.2)**2 * gamma * v[0]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[0].f[1] - omega(1.1, 1.4)**2 * gamma * v[1]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[0].f[2] - omega(1.1, 1.4)**2 * gamma * v[2]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[1].f[0] + omega(1.1, 1.2)**2 * gamma * v[0]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[1].f[1] + omega(1.1, 1.4)**2 * gamma * v[1]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[1].f[2] + omega(1.1, 1.4)**2 * gamma * v[2]) < 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[0] - omega(1.1, 1.2)**2 * gamma * v[0]), 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[1] - omega(1.1, 1.4)**2 * gamma * v[1]), 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[2] - omega(1.1, 1.4)**2 * gamma * v[2]), 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[0] + omega(1.1, 1.2)**2 * gamma * v[0]), 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[1] + omega(1.1, 1.4)**2 * gamma * v[1]), 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[2] + omega(1.1, 1.4)**2 * gamma * v[2]), 1e-11)
 
         # Trans and parallel 2nd point
         s.part[1].pos = [5. - 0.5, 5, 5]
 
         s.integrator.run(0)
 
-        self.assertTrue(
-            abs(s.part[0].f[0] - omega(0.5, 1.2)**2 * gamma * v[0]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[0].f[1] - omega(0.5, 1.4)**2 * gamma * v[1]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[0].f[2] - omega(0.5, 1.4)**2 * gamma * v[2]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[1].f[0] + omega(0.5, 1.2)**2 * gamma * v[0]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[1].f[1] + omega(0.5, 1.4)**2 * gamma * v[1]) < 1e-11)
-        self.assertTrue(
-            abs(s.part[1].f[2] + omega(0.5, 1.4)**2 * gamma * v[2]) < 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[0] - omega(0.5, 1.2)**2 * gamma * v[0]), 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[1] - omega(0.5, 1.4)**2 * gamma * v[1]), 1e-11)
+        self.assertLess(
+            abs(s.part[0].f[2] - omega(0.5, 1.4)**2 * gamma * v[2]), 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[0] + omega(0.5, 1.2)**2 * gamma * v[0]), 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[1] + omega(0.5, 1.4)**2 * gamma * v[1]), 1e-11)
+        self.assertLess(
+            abs(s.part[1].f[2] + omega(0.5, 1.4)**2 * gamma * v[2]), 1e-11)
 
     def test_ghosts_have_v(self):
         s = self.s

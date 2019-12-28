@@ -34,8 +34,9 @@ public:
     std::vector<double> res(n_values());
     for (int i = 0; i < ids().size(); i++) {
 #ifdef ROTATION
+      auto const id = ids()[i];
       const Utils::Vector3d omega =
-          convert_vector_body_to_space(partCfg[i], partCfg[i].m.omega);
+          convert_vector_body_to_space(partCfg[id], partCfg[id].m.omega);
       res[3 * i + 0] = omega[0];
       res[3 * i + 1] = omega[1];
       res[3 * i + 2] = omega[2];

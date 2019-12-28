@@ -29,7 +29,7 @@ class ComForce(Observable):
 
     """Calculates the total force on particles with given ids.
 
-    Note that virtual sites are not included since they do not have a meaningful mass.
+    Note that virtual sites are not included since forces on them do not enter the equation of motion directly.
 
     Output format: :math:`\\left(\\sum_i f^x_i, \\sum_i f^y_i, \\sum_i f^z_i\\right)`
 

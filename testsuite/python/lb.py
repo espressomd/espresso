@@ -247,10 +247,9 @@ class TestLB:
             delta=1e-4)
 
         self.assertEqual(self.lbf.shape,
-                         (
-                             int(self.system.box_l[0] / self.params["agrid"]),
-                             int(self.system.box_l[1] / self.params["agrid"]),
-                             int(self.system.box_l[2] / self.params["agrid"])))
+                         (int(self.system.box_l[0] / self.params["agrid"]),
+                          int(self.system.box_l[1] / self.params["agrid"]),
+                          int(self.system.box_l[2] / self.params["agrid"])))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
         self.lbf[0, 0, 0].velocity = v_fluid

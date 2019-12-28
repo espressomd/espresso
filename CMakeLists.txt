@@ -185,7 +185,11 @@ if(WITH_CUDA)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
       set(HIP 1)
-      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
+      list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
+      list(APPEND HIP_HCC_FLAGS "-pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments")
+      if(WARNINGS_ARE_ERRORS)
+        list(APPEND HIP_HCC_FLAGS "-Werror")
+      endif()
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
 

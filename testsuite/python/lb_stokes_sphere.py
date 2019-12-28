@@ -35,7 +35,7 @@ import numpy as np
 # Define the LB Parameters
 TIME_STEP = 0.5
 AGRID = 0.6
-KVISC = 6 
+KVISC = 6
 DENS = 2.3
 LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,

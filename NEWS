@@ -2,6 +2,98 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.1.2
+==============
+
+This release provides a number of corrections for the ESPResSo 4.1 line.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between ESPResSo 4.1.1 and 4.1.2.
+However, some bugs were discovered which can affect simulation results.
+Below, please find the list of changes. The numbers in brackets refer to
+ticket numbers on https://github.com/espressomd/espresso
+
+General corrections and improvements:
+
+* Remove correlation between the rotational noise and translational
+  noise in the Langevin thermostat (#3355)
+
+* Fix a bug that may cause the wrong temperature to be set by the
+  Langevin and DPD thermostats in the first time step after the system
+  was altered from the Python level, e.g., by changing particles or
+  interactions (#3341)
+
+* Fix a bug that caused the DPD thermostat to generate an incorrect
+  velocity distribution when used together with the Langevin thermostat
+  (#3352)
+
+* Fix a bug in MMM2D and ELC with potential boundary conditions, where
+  one of the correction factors was over-counted resulting in wrong
+  energies (#3310)
+
+* Fix a bug that caused the wrong bonds to be deleted when removing
+  particles from the system (#3356)
+
+* Fix an ambiguity in `ParticleSlice`: the values in the square brackets
+  refer to particle ids, not array indices (#3367). This means the
+  ill-defined syntax `system.part[0:-1]` is no longer valid. See the
+  User Guide section on Setting up particles for more information.
+
+* Remove the mass prefactor in the `ComForce` observable and use
+  the correct Particle ids in the `ParticleAngularVelocities`
+  and `ParticleBodyVelocities` observables (#3380)
+
+* Fix a rounding error that caused debug builds of ESPResSo running with
+  multiple MPI threads to crash when a particle was placed exactly on
+  the boundary between two cells (#3377)
+
+* Fix `espressomd.has_features()` for the corner case where the list of
+  all compiled-in features is passed as argument, returning ``False``
+  instead of ``True`` (#3318)
+
+* Refactor the random number generator code (#3349)
+
+* Minor fixes (#3351, #3336)
+
+Documentation and tutorials corrections and improvements:
+
+* Improve documentation of Monte Carlo methods (#3254, #3330)
+
+* Minor fixes (#3342, #3334)
+
+Build system and platform-related corrections and improvements:
+
+* List all Python dependencies in `requirements.txt` with the supported
+  version numbers (#3300). Please note that most of them are optional.
+
+* Add `MPIEXEC_PREFLAGS` and `MPIEXEC_POSTFLAGS` to the command lines of
+  parallel tests (#3221)
+
+* Add the `-oversubscribe` flag to the command lines of parallel tests
+  running with OpenMPI v2.X to avoid exiting early from a Python test
+  configured without `MAX_NUM_PROC` on a machine with a hyperthreaded
+  CPU where OpenMPI is configured such that the number of threads cannot
+  exceed the number of cores (#3335)
+
+* Refactor the CI, maintainer, Doxygen and pypresso shell scripts to
+  make them more portable and support filepaths containing whitespaces
+  (#3326, #3373)
+
+* Fix a nvcc compiler warning on the empty config (#3329)
+
+Improved testing:
+
+* Add a test for ELC and MMM2D using analytic expressions of the force
+  and energy (#3331)
+
+* Sped-up seven Python tests (#3319)
+
+* Fix a test that broke on s390x architectures with Fedora 31 (#3312)
+
+* Fix tests that broke on i586 architectures with OpenSUSE Tumbleweed
+  (#3327, #3358)
+
+
+
 ESPResSo 4.1.1
 ==============
 

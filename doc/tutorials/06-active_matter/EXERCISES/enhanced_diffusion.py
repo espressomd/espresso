@@ -73,11 +73,11 @@ for run in range(1):
 
     # Use the Langevin thermostat (no hydrodynamics)
     # Set up a random seed (a new one for each run)
-    system.thermostat.set_langevin(kT=1.0, gamma=1.0, 
+    system.thermostat.set_langevin(kT=1.0, gamma=1.0,
                                    seed=np.random.randint(0, 1000))
 
     # Place a single active particle that can rotate in all 3 dimensions.
-    # Set mass and rotational inertia to separate the timescales for 
+    # Set mass and rotational inertia to separate the timescales for
     # translational and rotational diffusion.
     system.part.add(pos=[5.0, 5.0, 5.0], swimming={'v_swim': vel},
                     mass=0.1, rotation=3 * [True], rinertia=3 * [1.])
@@ -125,6 +125,6 @@ for run in range(1):
 ## Exercise 3 ##
 # Once you have tested the routine for a single run,
 # loop over 5 runs.
-# Use a program of your choice to visualize the mean and 
-# standard error of the three correlations for a passive (vel = 0) 
+# Use a program of your choice to visualize the mean and
+# standard error of the three correlations for a passive (vel = 0)
 # and an active (vel != 0) particle
