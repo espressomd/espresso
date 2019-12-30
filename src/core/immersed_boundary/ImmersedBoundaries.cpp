@@ -31,7 +31,7 @@
 
 /** Volume conservation.
  *  Calculate volumes, volume force and add it to each virtual particle.
- *  This function is called from integrate_vv.
+ *  This function is called from @ref integrate.
  */
 void ImmersedBoundaries::volume_conservation() {
   if (VolumeInitDone && !BoundariesFound) {

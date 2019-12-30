@@ -298,7 +298,7 @@ void mpi_steepest_descent(int steps) { mpi_call_all(steepest_descent, steps); }
 
 /********************* REQ_INTEGRATE ********/
 static int mpi_integrate_slave(int n_steps, int reuse_forces) {
-  integrate_vv(n_steps, reuse_forces);
+  integrate(n_steps, reuse_forces);
 
   return check_runtime_errors_local();
 }

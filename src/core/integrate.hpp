@@ -101,7 +101,7 @@ void integrator_sanity_checks();
  *  can be found in doc/sphinx/system_setup.rst and /doc/sphinx/running.rst
  *
  */
-void integrate_vv(int n_steps, int reuse_forces);
+void integrate(int n_steps, int reuse_forces);
 
 /** @brief Run the integration loop. Can be interrupted with Ctrl+C.
  *

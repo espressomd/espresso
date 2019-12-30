@@ -115,5 +115,5 @@ void steepest_descent_init(const double f_max, const double gamma,
 void steepest_descent(const int max_steps) {
   params.max_steps = max_steps;
   MPI_Bcast(&params, sizeof(SteepestDescentParameters), MPI_BYTE, 0, comm_cart);
-  integrate_vv(params.max_steps, -1);
+  integrate(params.max_steps, -1);
 }

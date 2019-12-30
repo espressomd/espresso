@@ -151,7 +151,7 @@ void integrator_step_2(ParticleRange &particles) {
   }
 }
 
-void integrate_vv(int n_steps, int reuse_forces) {
+void integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   /* Prepare the integrator */
