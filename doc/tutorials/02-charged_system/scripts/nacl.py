@@ -20,6 +20,7 @@
 #
 import espressomd
 from espressomd import assert_features, electrostatics
+from espressomd.minimize_energy import minimize_energy
 import numpy
 
 assert_features(["ELECTROSTATICS", "WCA"])
@@ -91,14 +92,11 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
 print("\n--->WCA Equilibration")
 max_sigma = max(wca_sigmas.values())
 min_dist = 0.0
-system.minimize_energy.init(f_max=0, gamma=10, max_steps=10,
-                            max_displacement=max_sigma * 0.01)
 
 while min_dist < max_sigma:
-    system.minimize_energy.minimize()
+    minimize_energy(system, f_max=0, gamma=10, max_steps=10,
+                    max_displacement=max_sigma * 0.01)
     min_dist = system.analysis.min_dist()
-
-system.minimize_energy.disable()
 
 # Set thermostat
 system.thermostat.set_langevin(kT=temp, gamma=gamma, seed=42)

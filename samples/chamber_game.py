@@ -29,6 +29,7 @@ import time
 
 import espressomd
 import espressomd.shapes
+import espressomd.minimize_energy
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
@@ -296,10 +297,8 @@ p_temp_dec = system.part.add(
 
 energy = system.analysis.energy()
 #print("Before Minimization: E_total = {}".format(energy['total']))
-system.minimize_energy.init(f_max=100, gamma=30.0,
-                            max_steps=10000, max_displacement=0.01)
-system.minimize_energy.minimize()
-system.minimize_energy.disable()
+espressomd.minimize_energy.minimize_energy(system, f_max=100, gamma=30.0,
+                                           max_steps=10000, max_displacement=0.01)
 energy = system.analysis.energy()
 #print("After Minimization: E_total = {}".format(energy['total']))
 

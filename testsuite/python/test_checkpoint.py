@@ -179,12 +179,6 @@ class CheckpointTest(ut.TestCase):
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')
     def test_integrator_NPT(self):
-        if 'MINIMIZATION' in modes:
-            integ = system.integrator.get_state()
-            self.assertIsInstance(integ, espressomd.integrate.SteepestDescent)
-            minim = system.minimize_energy.__getstate__()
-            self.assertEqual(minim['max_steps'], 1000)
-            system.minimize_energy.disable()
         integ = system.integrator.get_state()
         self.assertIsInstance(
             integ, espressomd.integrate.VelocityVerletIsotropicNPT)

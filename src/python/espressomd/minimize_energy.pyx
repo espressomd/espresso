@@ -17,15 +17,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from espressomd.utils import is_valid_type
 
-cdef class MinimizeEnergy:
+def minimize_energy(system, *args, **kwargs):
     """
     Steepest descent algorithm for energy minimization. Wrapper for
     :class:`espressomd.integrate.SteepestDescent`.
 
     Parameters
     ----------
+    system : :obj:`espressomd.system.System`
     f_max : :obj:`float`
         Convergence criterion. Minimization stops when the maximal force on
         particles in the system is lower than this threshold. Set this to 0
@@ -40,42 +40,8 @@ cdef class MinimizeEnergy:
         are in the range of 0.1% to 10% of the particle sigma.
 
     """
-    cdef object _integrator_handle
-    cdef object _old_integrator
-    cdef int _max_steps
-
-    def __getstate__(self):
-        return {'integrator_handle': self._integrator_handle,
-                'old_integrator': self._old_integrator,
-                'max_steps': self._max_steps}
-
-    def __setstate__(self, state):
-        self._integrator_handle = state['integrator_handle']
-        self._old_integrator = state['old_integrator']
-        self._max_steps = state['max_steps']
-
-    def __init__(self, integrator_handle):
-        self._integrator_handle = integrator_handle
-
-    def init(self, *args, **kwargs):
-        """
-        Initialize the steepest descent integrator.
-
-        """
-        self._old_integrator = self._integrator_handle.get_state()
-        self._max_steps = kwargs['max_steps']
-        self._integrator_handle.set_steepest_descent(*args, **kwargs)
-
-    def minimize(self):
-        """
-        Perform energy minimization sweep.
-
-        """
-        self._integrator_handle.run(self._max_steps)
-
-    def disable(self, *args, **kwargs):
-        """
-        Restore the original integrator.
-
-        """
-        self._integrator_handle.__setstate__(self._old_integrator)
+    cdef object old_integrator
+    old_integrator = system.integrator.get_state()
+    system.integrator.set_steepest_descent(*args, **kwargs)
+    system.integrator.run(kwargs['max_steps'])
+    system.integrator.__setstate__(old_integrator)
