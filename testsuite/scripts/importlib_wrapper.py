@@ -58,7 +58,7 @@ def configure_and_import(filepath,
         python script to import
     gpu : bool
         whether GPU is necessary or not
-    substitutions function
+    substitutions : function
         custom text replacement operation (useful to edit out calls to the
         OpenGL or Mayavi visualizers' ``run()`` method)
     cmd_arguments : list

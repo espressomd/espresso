@@ -21,22 +21,30 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/05-raspberry_electrophoresis/05-raspberry_electrophoresis.py",
-    gpu=True, box_l=20., E=0.2, num_iterations=150, num_steps_per_iteration=400)
+    gpu=True, box_l=20., E=0.15, num_iterations=150, num_steps_per_iteration=200)
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
     system = tutorial.system
-    def test_trajectory(self):
-        trajectory = np.loadtxt('posVsTime.dat')[:,1:4]
+
+    def trajectory_test(self, trajectory):
         # the raspberry should have traveled mostly on the x-axis
         dist = np.abs(trajectory[-1, :] - trajectory[0, :])
-        self.assertGreater(dist[0], 2 * dist[1])
-        self.assertGreater(dist[0], 2 * dist[2])
-        # the velocity should be highest on the x-axis
+        self.assertGreater(dist[0], dist[1])
+        self.assertGreater(dist[0], dist[2])
+        # the raspberry velocity should be highest on the x-axis
         vel = np.abs(np.mean(trajectory[1:, :] - trajectory[:-1, :], axis=0))
-        self.assertGreater(vel[0], 2 * vel[1])
-        self.assertGreater(vel[0], 2 * vel[2])
+        self.assertGreater(vel[0], vel[1])
+        self.assertGreater(vel[0], vel[2])
+
+    def test_trajectory_simulated(self):
+        trajectory = np.loadtxt('posVsTime.dat')[:,1:4]
+        self.trajectory_test(trajectory)
+
+    def test_trajectory_sample(self):
+        trajectory = np.loadtxt('posVsTime_sample.dat')[:,1:4]
+        self.trajectory_test(trajectory)
 
 
 if __name__ == "__main__":

@@ -4,4 +4,5 @@ configure_file(posVsTime_sample.dat ${CMAKE_CURRENT_BINARY_DIR}/posVsTime_sample
 
 add_custom_target(tutorials_05)
 
-nb_export(TUTORIAL tutorials_05 FILE 05-raspberry_electrophoresis.ipynb HTML_RUN VAR_SUBST "num_iterations=20")
+nb_export(TUTORIAL tutorials_05 FILE 05-raspberry_electrophoresis.ipynb
+          HTML_RUN VAR_SUBST "num_iterations=20;num_steps_per_iteration=20;'trajectory_file=\"posVsTime_sample.dat\"'")
