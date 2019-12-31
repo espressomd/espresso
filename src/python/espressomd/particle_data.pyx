@@ -820,13 +820,13 @@ cdef class ParticleHandle:
             """
             Fixes the particle motion in the specified cartesian directions.
 
-            fix : (3,) array_like of :obj:`int`
+            fix : (3,) array_like of :obj:`bool`
 
-            Fixes the particle in space. By supplying a set of 3 integers as
+            Fixes the particle in space. By supplying a set of 3 bools as
             arguments it is possible to fix motion in x, y, or z coordinates
             independently. For example::
 
-                part[<INDEX>].fix = [0, 0, 1]
+                part[<INDEX>].fix = [False, False, True]
 
             will fix motion for particle with index ``INDEX`` only in z.
 
@@ -838,7 +838,7 @@ cdef class ParticleHandle:
             def __set__(self, _fixed_coord_flag):
                 cdef stdint.uint8_t ext_flag = 0
                 check_type_or_throw_except(
-                    _fixed_coord_flag, 3, int, "Fix has to be 3 ints.")
+                    _fixed_coord_flag, 3, int, "Fix has to be 3 bools.")
                 for i in map(long, range(3)):
                     if _fixed_coord_flag[i]:
                         ext_flag |= _COORD_FIXED(i)

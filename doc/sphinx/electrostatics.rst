@@ -221,13 +221,13 @@ sets up parallel metallic plates and activates ICC::
     # Left electrode (normal [0,0,1])
     for xi in xrange(nicc):
         for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=[1, 1, 1], type=icc_type)
+            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=3*[True], type=icc_type)
     iccNormals.extend([0, 0, 1] * nicc_per_electrode)
 
     # Right electrode (normal [0,0,-1])
     for xi in xrange(nicc):
         for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=[1, 1, 1], type=icc_type)
+            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=3*[True], type=icc_type)
     iccNormals.extend([0, 0, -1] * nicc_per_electrode)
 
     # Common area, sigma and metallic epsilon
