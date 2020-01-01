@@ -23,8 +23,9 @@
  *
  *  A velocity Verlet <a
  * HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
- *  using quaternions is implemented to tackle rotational motion. A random
- * torque and a friction
+ *  using quaternions is implemented to tackle rotational motion.
+ *  See @cite allen2017 for the quaternion components indexing used here.
+ *  A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature
  * all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
