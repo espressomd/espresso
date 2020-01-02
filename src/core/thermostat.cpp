@@ -34,7 +34,6 @@
 #include <fstream>
 #include <iostream>
 
-
 int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
 bool thermo_virtual = true;
