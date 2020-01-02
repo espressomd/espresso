@@ -11,8 +11,8 @@
  * (at your option) any later version.
  *
  * ESPResSo is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -33,6 +33,7 @@
 #include "utils/as_const.hpp"
 
 #include <memory>
+#include <type_traits>
 
 namespace ScriptInterface {
 namespace Accumulators {
@@ -53,8 +54,8 @@ public:
          {"args", m_correlator, &CoreCorr::set_correlation_args,
           &CoreCorr::correlation_args},
          {"dim_corr", m_correlator, &CoreCorr::dim_corr},
-         {"obs1", as_const(m_obs1)},
-         {"obs2", as_const(m_obs2)},
+         {"obs1", (const std::shared_ptr<Observables::Observable>)(m_obs1)},
+         {"obs2", (const std::shared_ptr<Observables::Observable>)(m_obs2)},
          {"n_result", m_correlator, &CoreCorr::n_result}});
   }
 

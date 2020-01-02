@@ -1266,7 +1266,7 @@ static int MMM2D_tune_near(double error) {
   P = 2;
   exponent = M_PI * ux * box_geo.length()[1];
   T = exp(exponent) / exponent;
-  pref = 8 * ux * std::max(C_2PI * ux, 1.0);
+  pref = 8 * ux * std::max(double(C_2PI * ux), 1.0);
   do {
     L = M_PI * ux * (P - 1);
     sum = 0;

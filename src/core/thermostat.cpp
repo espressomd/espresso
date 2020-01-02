@@ -33,7 +33,7 @@
 
 #include <fstream>
 #include <iostream>
-#include <unistd.h>
+
 
 int thermo_switch = THERMO_OFF;
 double temperature = 0.0;

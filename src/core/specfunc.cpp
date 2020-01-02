@@ -44,6 +44,7 @@
 /** \file
  *  Implementation of \ref specfunc.hpp.
  */
+#define _USE_MATH_DEFINES // for MSVC++
 #include "specfunc.hpp"
 #include "polynom.hpp"
 #include <cmath>

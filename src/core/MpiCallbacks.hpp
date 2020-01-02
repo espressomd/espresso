@@ -63,7 +63,7 @@ namespace detail {
  * Not allowed are pointers and non-const references, as output
  * parameters can not work across ranks.
  */
-template <class T>
+template <typename T>
 using is_allowed_argument = std::integral_constant<
     bool, not(std::is_pointer<T>::value ||
               (!std::is_const<std::remove_reference_t<T>>::value &&

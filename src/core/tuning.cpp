@@ -28,8 +28,7 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include <limits>
-#include <sys/resource.h>
-#include <sys/time.h>
+
 #include <utils/statistics/RunningAverage.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>

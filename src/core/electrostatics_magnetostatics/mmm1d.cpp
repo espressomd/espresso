@@ -76,7 +76,7 @@ static std::vector<double> bessel_radii;
 static double far_error(int P, double minrad) {
   // this uses an upper bound to all force components and the potential
   double rhores = 2 * M_PI * uz * minrad;
-  double pref = 4 * uz * std::max(1.0, 2 * M_PI * uz);
+  double pref = 4 * uz * std::max(1.0, double(2 * M_PI * uz));
 
   return pref * K1(rhores * P) * exp(rhores) / rhores * (P - 1 + 1 / rhores);
 }
