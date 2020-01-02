@@ -60,3 +60,6 @@ doc/dg/background_errors.unsorted
 .ipynb_checkpoints
 
 build*/
+
+# Visual studio
+.vs
