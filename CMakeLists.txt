@@ -105,16 +105,16 @@ include(MyConfig)
 include(CheckCXXSourceCompiles)
 
 set(__PRETTYFUNC__ __func__)
-foreach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+foreach(func_name __FUNCSIG__ __PRETTY_FUNCTION__ __FUNCTION__)
   check_cxx_source_compiles("
      #include <string>
      int main() { std::string(${func_name}); }
      " result${func_name})
-  if(result${func_name})
+  if (result${func_name})
     set(__PRETTYFUNC__ ${func_name})
     break()
   endif(result${func_name})
-endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
+endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__ __FUNCSIG__)
 
 #
 # Libraries
@@ -333,7 +333,7 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 # MPI
 #
 
-find_package(MPI 3.0 REQUIRED)
+find_package(MPI 2.0 REQUIRED)
 
 # CMake < 3.9
 if(NOT TARGET MPI::MPI_CXX)
@@ -417,17 +417,30 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
+# Switch MS compiler to tolerant mode
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /permissive-")
+endif()
+
 if(WARNINGS_ARE_ERRORS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
   if(NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
   endif()
 endif(WARNINGS_ARE_ERRORS)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces")
+
+
+# Turn on more warnings depending on compiler support
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter -Wno-missing-braces")
+endif()
+  
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
 endif()
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0"))
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS "7.0.0"))
   # disable warnings from -Wextra
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-implicit-fallthrough")
 endif()
@@ -439,8 +452,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   # disable warnings from -Wextra
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd592")
 endif()
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # G++ and Intel don't know this flag
+if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  # G++, MSVC and Intel don't know this flag
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
