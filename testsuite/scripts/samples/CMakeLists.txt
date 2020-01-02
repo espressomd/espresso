@@ -67,7 +67,7 @@ sample_test(FILE test_widom_insertion.py)
 sample_test(FILE test_object_in_fluid__motivation.py)
 sample_test(FILE test_immersed_boundary.py)
 
-add_custom_target(check_samples COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} $(ARGS) --output-on-failure)
+add_custom_target(check_samples COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} $$(ARGS) --output-on-failure)
 
 add_dependencies(check_samples pypresso local_samples)
 

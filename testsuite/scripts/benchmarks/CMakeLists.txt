@@ -18,7 +18,7 @@ add_custom_target(local_benchmarks
 benchmark_test(FILE test_lj.py)
 benchmark_test(FILE test_p3m.py)
 
-add_custom_target(check_benchmarks COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} $(ARGS) --output-on-failure)
+add_custom_target(check_benchmarks COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} $$(ARGS) --output-on-failure)
 
 add_dependencies(check_benchmarks pypresso local_benchmarks)
 
