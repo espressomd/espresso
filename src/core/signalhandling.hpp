@@ -32,7 +32,7 @@
  * destruction.
  */
 class SignalHandler {
-  struct sigaction old_action;
+  void (*old_action)(int);
 
 public:
   // Delete all copy and move constructors
@@ -47,14 +47,13 @@ public:
    * @param[in] handler Function to handle the signal
    */
   SignalHandler(int signal, void (*handler)(int)) {
-    struct sigaction new_action;
-    new_action.sa_handler = handler;
-    sigemptyset(&new_action.sa_mask);
-    new_action.sa_flags = 0;
+    auto new_action = handler;
 
-    if (sigaction(SIGINT, &new_action, &old_action) < 0) {
-      runtimeErrorMsg() << "Failed to replace signal handler!";
+    auto res = std::signal(SIGINT, new_action);
+    if (res == SIG_ERR) {
+      throw std::runtime_error("Failed to replace signal handler!");
     }
+    old_action = res;
   }
 
   /** @brief Destructor
@@ -63,7 +62,7 @@ public:
    * construction.
    */
   ~SignalHandler() {
-    if (sigaction(SIGINT, &old_action, nullptr) < 0) {
+    if (signal(SIGINT, old_action) == SIG_ERR) {
       runtimeErrorMsg() << "Failed to restore signal handler!";
     }
   }
