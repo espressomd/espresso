@@ -24,7 +24,14 @@
 #include <cmath>
 
 namespace Utils {
-/** Computes the normal vector to the plane given by points P1P2P3 */
+/**
+ * @brief Computes the normal vector of a triangle.
+ *
+ * The sign convention is such that P1P2, P1P3 and
+ * the normal form a right-handed system.
+ * The normal vector is not normalized, e.g. its length
+ * is arbitrary.
+ */
 inline Vector3d get_n_triangle(const Vector3d &P1, const Vector3d &P2,
                                const Vector3d &P3) {
   auto const u = P2 - P1;
