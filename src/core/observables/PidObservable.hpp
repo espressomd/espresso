@@ -24,6 +24,7 @@
 
 #include "PartCfg.hpp"
 
+#include <boost/range/algorithm/transform.hpp>
 #include <vector>
 
 namespace Observables {
@@ -37,7 +38,22 @@ class PidObservable : virtual public Observable {
   /** Identifiers of particles measured by this observable */
   std::vector<int> m_ids;
 
-  virtual std::vector<double> evaluate(PartCfg &partCfg) const = 0;
+  auto resolve_particles(PartCfg &part_cfg) const {
+    std::vector<const Particle *> particles(ids().size());
+
+    boost::transform(ids(), particles.begin(),
+                     [&](int id) { return &part_cfg[id]; });
+
+    return particles;
+  }
+
+  virtual std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const {
+    throw std::runtime_error("Not implemented");
+  }
+  virtual std::vector<double> evaluate(PartCfg &partCfg) const {
+    return evaluate(resolve_particles(partCfg));
+  }
 
 public:
   explicit PidObservable(std::vector<int> ids) : m_ids(std::move(ids)) {}
