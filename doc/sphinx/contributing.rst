@@ -86,7 +86,7 @@ Required Development Tools
 
 -  To build the user documentation, you will need Sphinx_.
 
--  To build the tutorials, you will need LaTeX and Jupyter.
+-  To build the tutorials, you will need Jupyter_.
 
 -  To build the core documentation, you will need Doxygen_.
 
@@ -124,3 +124,5 @@ in :ref:`Installation` and then the documentation with ``make sphinx``.
 .. _Doxygen: http://www.doxygen.org/
 
 .. _Sphinx: https://www.sphinx-doc.org/en/master/
+
+.. _Jupyter: https://jupyter.org/

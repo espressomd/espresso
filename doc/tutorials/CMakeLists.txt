@@ -103,6 +103,7 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_04_3_html
   tutorials_04_4_html
   tutorials_05_html
+  tutorials_06_html
   tutorials_07_html
   tutorials_08_html
   tutorials_11_1_html
