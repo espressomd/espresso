@@ -3,9 +3,12 @@ function(TUTORIAL_TEST)
   set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(TUTORIAL_TEST)
 
-# configure Python module importlib_wrapper.py
+# configure Python modules importlib_wrapper.py and html_runner.py
+configure_file(test_html_runner.py ${CMAKE_CURRENT_BINARY_DIR})
 add_test(importlib_wrapper ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})
+add_test(html_runner ${CMAKE_BINARY_DIR}/pypresso ${CMAKE_CURRENT_BINARY_DIR}/test_html_runner.py)
 set_tests_properties(importlib_wrapper PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER)
+set_tests_properties(html_runner PROPERTIES FIXTURES_SETUP IMPORTLIB_WRAPPER)
 set(tutorials_tests ${tutorials_tests} ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER} PARENT_SCOPE)
 configure_file(../importlib_wrapper.py ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
 
