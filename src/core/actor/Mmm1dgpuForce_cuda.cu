@@ -31,6 +31,7 @@
 // the code is mostly multi-GPU capable, but ESPResSo is not yet
 const int deviceCount = 1;
 float multigpu_factors[] = {1.0};
+#undef cudaSetDevice
 #define cudaSetDevice(d)
 
 #include "EspressoSystemInterface.hpp"

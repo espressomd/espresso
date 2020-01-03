@@ -621,7 +621,7 @@ def count_fluid_nodes(lbf):
 
     fluid_nodes = 0
     for n in lbf.nodes():
-        if not n.boundary: 
+        if not n.boundary:
             fluid_nodes += 1
 
     return fluid_nodes

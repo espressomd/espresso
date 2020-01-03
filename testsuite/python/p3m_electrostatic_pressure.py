@@ -125,7 +125,7 @@ class VirialPressureConsistency(ut.TestCase):
         print("Tune skin: {}".format(self.system.cell_system.tune_skin(
             min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)))
 
-        num_samples = 25 
+        num_samples = 25
         pressure_via_volume_scaling = pressureViaVolumeScaling(
             self.system, self.kT)
         for _ in range(num_samples):
