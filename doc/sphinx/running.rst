@@ -184,7 +184,7 @@ Rotational degrees of freedom and particle anisotropy
 When the feature ``ROTATION`` is compiled in, particles not only have a position, but also an orientation that changes with an angular velocity. A torque on a particle leads to a change in angular velocity depending on the particles rotational inertia. The property :attr:`espressomd.particle_data.ParticleHandle.rinertia` has to be specified as the three eigenvalues of the particles rotational inertia tensor.
 
 The rotational degrees of freedom are also integrated using a velocity Verlet scheme.
-The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98`.
+The implementation is based on a quaternion representation of the particle orientation and described in :cite:`omelyan98` with quaternion components indexing made according to the formalism :math:`q = a + b\mathbf{i} + c\mathbf{j} + d\mathbf{k}` :cite:`allen2017`.
    
 When the Langevin thermostat is enabled, the rotational degrees of freedom are also thermalized.
 
