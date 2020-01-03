@@ -20,11 +20,12 @@ import nbformat
 from nbconvert.preprocessors import ExecutePreprocessor
 import re
 import os
+import ast
 import sys
 import uuid
 import argparse
 sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
-from importlib_wrapper import substitute_variable_values, mock_es_visualization
+import importlib_wrapper as iw
 
 parser = argparse.ArgumentParser(description='Process IPython notebooks.')
 parser.add_argument('--input', type=str,
@@ -71,30 +72,56 @@ for filepath in new_cells:
         code = re.sub('^(#\n)+', '', code.replace(m.group(0), ''), re.M)
     # strip first component in relative paths
     code = re.sub('(?<=[\'\"])\.\./', './', code)
-    # if matplotlib is used in this script, split cell to keep the import
-    # statement separate and avoid a know bug in the Jupyter backend which
-    # causes the plot object to be represented as a string instead of a
-    # canvas when created in the cell where matplotlib is imported
-    # (https://github.com/jupyter/notebook/issues/3523)
-    if 'import matplotlib' in code:
-        cells_code = re.split('^((?:|.*\n)import matplotlib.*?)\n', code,
-                              maxsplit=1, flags=re.DOTALL)[1:]
-    else:
-        cells_code = [code]
     # create new cells
-    cell_md = nbformat.v4.new_markdown_cell(source='Solution from ' + filepath)
+    filename = os.path.relpath(filepath)
+    if len(filename) > len(filepath):
+        filename = filepath
+    cell_md = nbformat.v4.new_markdown_cell(source='Solution from ' + filename)
     nb['cells'].append(cell_md)
-    for cell_code in cells_code:
-        cell_code = nbformat.v4.new_code_cell(source=cell_code.strip())
-        nb['cells'].append(cell_code)
+    cell_code = nbformat.v4.new_code_cell(source=code.strip())
+    nb['cells'].append(cell_code)
+
+
+# disable plot interactivity
+for i in range(len(nb['cells'])):
+    cell = nb['cells'][i]
+    if cell['cell_type'] == 'code' and 'matplotlib' in cell['source']:
+        cell['source'] = re.sub('^%matplotlib +notebook', '%matplotlib inline',
+                                cell['source'], flags=re.M)
+
+
+# if matplotlib is used in this script, split cell to keep the import
+# statement separate and avoid a know bug in the Jupyter backend which
+# causes the plot object to be represented as a string instead of a
+# canvas when created in the cell where matplotlib is imported for the
+# first time (https://github.com/jupyter/notebook/issues/3523)
+for i in range(len(nb['cells'])):
+    cell = nb['cells'][i]
+    if cell['cell_type'] == 'code' and 'matplotlib' in cell['source']:
+        code = iw.protect_ipython_magics(cell['source'])
+        # split cells after matplotlib imports
+        mapping = iw.delimit_statements(code)
+        tree = ast.parse(code)
+        visitor = iw.GetMatplotlibImports()
+        visitor.visit(tree)
+        if visitor.matplotlib_first:
+            code = iw.deprotect_ipython_magics(code)
+            lines = code.split('\n')
+            lineno_end = mapping[visitor.matplotlib_first]
+            split_code = '\n'.join(lines[lineno_end:]).lstrip('\n')
+            new_cell = nbformat.v4.new_code_cell(source=split_code)
+            nb['cells'].insert(i + 1, new_cell)
+            lines = lines[:lineno_end]
+            nb['cells'][i]['source'] = '\n'.join(lines).rstrip('\n')
+            break
 
 # substitute global variables and disable OpenGL/Mayavi GUI
 cell_separator = '\n##{}\n'.format(uuid.uuid4().hex)
 src = cell_separator.join(get_code_cells(nb))
 parameters = dict(x.split('=', 1) for x in new_values)
-src = substitute_variable_values(src, strings_as_is=True, keep_original=False,
-                                 **parameters)
-src_no_gui = mock_es_visualization(src)
+src = iw.substitute_variable_values(src, strings_as_is=True,
+                                    keep_original=False, **parameters)
+src_no_gui = iw.mock_es_visualization(src)
 
 # update notebook with new code
 set_code_cells(nb, src_no_gui.split(cell_separator))

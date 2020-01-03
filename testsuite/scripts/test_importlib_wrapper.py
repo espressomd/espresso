@@ -18,6 +18,7 @@
 import unittest as ut
 import importlib_wrapper as iw
 import sys
+import ast
 
 
 class importlib_wrapper(ut.TestCase):
@@ -203,21 +204,14 @@ except ImportError:
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
-        statement = "from espressomd.visualization_mayavi import a as b, c"
+        statement = "from espressomd.visualization_mayavi import a as b, mayaviLive"
         expected = """
 try:
-    from espressomd.visualization_mayavi import a as b
+    from espressomd.visualization_mayavi import a as b, mayaviLive
 except ImportError:
     from unittest.mock import MagicMock
     import espressomd
-    b = MagicMock()
-
-try:
-    from espressomd.visualization_mayavi import c
-except ImportError:
-    from unittest.mock import MagicMock
-    import espressomd
-    c = MagicMock()
+    mayaviLive = MagicMock()
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
@@ -254,7 +248,56 @@ except ImportError:
             "from espressomd.visualization_mayavi import *"
         ]
         for s in statements_without_namespace:
-            self.assertRaises(AssertionError, iw.mock_es_visualization, s)
+            self.assertRaises(ValueError, iw.mock_es_visualization, s)
+
+    def test_matplotlib_nodevisitor(self):
+        import_stmt = [
+            'import matplotlib',
+            'import matplotlib as mpl',
+            'import matplotlib.pyplot',
+            'import matplotlib.pyplot as plt',
+            'import matplotlib.pyplot.figure as fig',
+            'import ast, matplotlib',
+            'import ast, matplotlib as mpl',
+            'import ast, matplotlib.pyplot',
+            'import ast, matplotlib.pyplot as plt',
+            'import ast, matplotlib.pyplot.figure as fig',
+            'from matplotlib import pyplot',
+            'from matplotlib import pyplot as plt',
+            'from matplotlib.pyplot import figure',
+        ]
+        tree = ast.parse('\n'.join(import_stmt))
+        v = iw.GetMatplotlibImports()
+        v.visit(tree)
+        # find first line where matplotlib is imported
+        self.assertEqual(v.matplotlib_first, 1)
+        # find all aliases for matplotlib
+        expected_mpl_aliases = ['matplotlib', 'mpl', 'matplotlib', 'mpl']
+        self.assertEqual(v.matplotlib_aliases, expected_mpl_aliases)
+        # find all aliases for matplotlib.pyplot
+        expected_plt_aliases = [
+            'matplotlib.pyplot', 'mpl.pyplot', 'matplotlib.pyplot', 'plt',
+            'matplotlib.pyplot', 'mpl.pyplot', 'matplotlib.pyplot', 'plt',
+            'pyplot', 'plt']
+        self.assertEqual(v.pyplot_aliases, expected_plt_aliases)
+
+    def test_delimit_statements(self):
+        lines = [
+            'a = 1 # NEWLINE becomes NL after a comment',
+            'print("""',
+            '',
+            '""")',
+            '',
+            'b = 1 +\\',
+            '3 + (',
+            '4)',
+            'if True:',
+            '   c = 1',
+        ]
+        source_code = '\n'.join(lines)
+        linenos_exp = {1: 1, 2: 4, 6: 8, 9: 9, 10: 10}
+        linenos_out = iw.delimit_statements(source_code)
+        self.assertEqual(linenos_out, linenos_exp)
 
 
 if __name__ == "__main__":
