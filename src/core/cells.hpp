@@ -103,7 +103,7 @@ enum Resort : unsigned {
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 
-/** Flag for cells_on_geometry_change: the processor grid has changed. */
+/** Flag for cells_on_geometry_change: the prozcessor grid has changed. */
 #define CELL_FLAG_GRIDCHANGED 1
 /** Flag for cells_on_geometry_change: skip shrinking of cells. */
 #define CELL_FLAG_FAST 2
@@ -127,9 +127,9 @@ struct CellPList {
 
   Cell *operator[](int i) { return assert(i < n), cell[i]; }
 
-  Cell **cell;
-  int n;
-  int max;
+  Cell **cell = nullptr;
+  int n = 0;
+  int max = 0;
 };
 
 /** Describes a cell structure / cell system. Contains information
@@ -209,13 +209,6 @@ void cells_re_init(int new_cs, double range);
 
 /** Reallocate the list of all cells (\ref cells::cells). */
 void realloc_cells(int size);
-
-/** Initialize a list of cell pointers */
-inline void init_cellplist(CellPList *cpl) {
-  cpl->n = 0;
-  cpl->max = 0;
-  cpl->cell = nullptr;
-}
 
 /** Reallocate a list of cell pointers */
 inline void realloc_cellplist(CellPList *cpl, int size) {

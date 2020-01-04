@@ -249,25 +249,23 @@ static void invalidate_ghosts() {
 /************************************************************/
 
 void cells_re_init(int new_cs, double range) {
-  CellPList tmp_local;
-
   invalidate_ghosts();
 
   topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
-  memmove(&tmp_local, &local_cells, sizeof(CellPList));
-  init_cellplist(&local_cells);
+  CellPList old_local_cells{};
+  std::swap(old_local_cells, local_cells);
 
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(new_cs, range, &tmp_local);
+  topology_init(new_cs, range, &old_local_cells);
   cell_structure.min_range = range;
 
   clear_particle_node();
 
   /* finally deallocate the old cells */
-  realloc_cellplist(&tmp_local, 0);
+  realloc_cellplist(&old_local_cells, 0);
 
   for (auto &cell : tmp_cells) {
     cell.resize(0);
