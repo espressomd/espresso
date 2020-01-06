@@ -36,7 +36,6 @@
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "forcecap.hpp"
 #include "forces_inline.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"

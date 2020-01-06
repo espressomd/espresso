@@ -86,24 +86,6 @@ class LBBoundaryForceCommon:
         np.testing.assert_allclose(measured_force, expected_force, atol=2E-2)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUBoundaryForce(ut.TestCase, LBBoundaryForceCommon):
-
-    """Test for the CPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUBoundaryForce(ut.TestCase, LBBoundaryForceCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBWalberlaBoundaryForce(ut.TestCase, LBBoundaryForceCommon):
 

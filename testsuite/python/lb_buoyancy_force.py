@@ -108,19 +108,11 @@ class Buoyancy(object):
             atol=np.linalg.norm(expected_force) * 0.02)
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU", "EXTERNAL_FORCES"])
-class LBGPUBuoyancy(ut.TestCase, Buoyancy):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-
-
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "EXTERNAL_FORCES"])
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "EXTERNAL_FORCES", "LB_WALBERLA"])
 class LBCPUBuoyancy(ut.TestCase, Buoyancy):
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 if __name__ == "__main__":

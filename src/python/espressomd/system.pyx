@@ -50,7 +50,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .comfixed import ComFixed
 from globals cimport max_seen_particle
 from .globals import Globals
-from espressomd.utils import array_locked, is_valid_type
+from espressomd.utils import array_locked, is_valid_type, handle_errors
 IF VIRTUAL_SITES:
     from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -212,6 +212,7 @@ cdef class System:
 
         def __set__(self, _box_l):
             self.globals.box_l = _box_l
+            handle_errors("Box size setup")
 
         def __get__(self):
             return self.globals.box_l
@@ -248,6 +249,7 @@ cdef class System:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
             self.globals.periodicity = _periodic
+            handle_errors("Setting periodicity")
 
         def __get__(self):
             return self.globals.periodicity

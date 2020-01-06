@@ -65,7 +65,6 @@ public:
 
   Variant call_method(const std::string &name, const VariantMap &) override {
     if (name == "get_force") {
-      const auto rho = lb_lbfluid_get_density();
       const auto agrid = lb_lbfluid_get_agrid();
       const auto tau = lb_lbfluid_get_tau();
       const double unit_conversion = agrid / tau / tau;

@@ -39,10 +39,6 @@ def _construct(cls, params):
     return obj
 
 
-def assert_agrid_tau_set(obj):
-    assert obj.agrid != obj.default_params()['agrid'] and obj.tau != obj.default_params()[
-        'tau'], "tau and agrid have to be set first!"
-
 
 cdef class HydrodynamicInteraction(Actor):
     def _lb_init(self):
@@ -100,31 +96,7 @@ cdef class HydrodynamicInteraction(Actor):
             "Subclasses of HydrodynamicInteraction must define the _set_lattice_switch() method.")
 
     def _set_params_in_es_core(self):
-        default_params = self.default_params()
-        self.agrid = self._params['agrid']
-        self.tau = self._params['tau']
-        self.density = self._params['dens']
-
-        if self._params['kT'] > 0.:
-            self.seed = self._params['seed']
-        self.kT = self._params['kT']
-
-        self.viscosity = self._params['visc']
-        if self._params['bulk_visc'] != default_params['bulk_visc']:
-            self.bulk_viscosity = self._params['bulk_visc']
-
-        self.ext_force_density = self._params["ext_force_density"]
-
-        IF not LB_WALBERLA:
-            if "gamma_odd" in self._params:
-                python_lbfluid_set_gamma_odd(self._params["gamma_odd"])
-
-        IF not LB_WALBERLA:
-            if "gamma_even" in self._params:
-                python_lbfluid_set_gamma_even(self._params["gamma_even"])
-
-        lb_lbfluid_sanity_checks()
-        utils.handle_errors("LB fluid activation")
+        pass
 
     def _get_params_from_es_core(self):
         default_params = self.default_params()
@@ -140,22 +112,6 @@ cdef class HydrodynamicInteraction(Actor):
         self._params['ext_force_density'] = self.ext_force_density
 
         return self._params
-
-    def set_interpolation_order(self, interpolation_order):
-        """ Set the order for the fluid interpolation scheme.
-
-        Parameters
-        ----------
-        interpolation_order : :obj:`str`
-            ``"linear"`` for linear interpolation, ``"quadratic"`` for quadratic interpolation.
-
-        """
-        if (interpolation_order == "linear"):
-            lb_lbinterpolation_set_interpolation_order(linear)
-        elif (interpolation_order == "quadratic"):
-            lb_lbinterpolation_set_interpolation_order(quadratic)
-        else:
-            raise ValueError("Invalid parameter")
 
     def get_interpolated_velocity(self, pos):
         """Get LB fluid velocity at specified position.
@@ -222,10 +178,6 @@ cdef class HydrodynamicInteraction(Actor):
         def __get__(self):
             return lb_lbfluid_get_kT()
 
-        def __set__(self, kT):
-            cdef double _kT = kT
-            lb_lbfluid_set_kT(_kT)
-
     property seed:
         def __get__(self):
             return lb_lbfluid_get_rng_state()
@@ -246,59 +198,26 @@ cdef class HydrodynamicInteraction(Actor):
 
     property ext_force_density:
         def __get__(self):
-            assert_agrid_tau_set(self)
             cdef Vector3d res
             res = python_lbfluid_get_ext_force_density(
                 self.agrid, self.tau)
             return make_array_locked(res)
 
         def __set__(self, ext_force_density):
-            assert_agrid_tau_set(self)
             python_lbfluid_set_ext_force_density(
                 ext_force_density, self.agrid, self.tau)
 
-    property density:
-        def __get__(self):
-            assert_agrid_tau_set(self)
-            return python_lbfluid_get_density(self.agrid)
-
-        def __set__(self, density):
-            assert_agrid_tau_set(self)
-            python_lbfluid_set_density(density, self.agrid)
-
     property viscosity:
         def __get__(self):
-            assert_agrid_tau_set(self)
             return python_lbfluid_get_viscosity(self.agrid, self.tau)
-
-        def __set__(self, viscosity):
-            assert_agrid_tau_set(self)
-            python_lbfluid_set_viscosity(viscosity, self.agrid, self.tau)
-
-    property bulk_viscosity:
-        def __get__(self):
-            assert_agrid_tau_set(self)
-            return python_lbfluid_get_bulk_viscosity(self.agrid, self.tau)
-
-        def __set__(self, viscosity):
-            assert_agrid_tau_set(self)
-            python_lbfluid_set_bulk_viscosity(viscosity, self.agrid, self.tau)
 
     property tau:
         def __get__(self):
             return lb_lbfluid_get_tau()
 
-        def __set__(self, tau):
-            lb_lbfluid_set_tau(tau)
-            if globals.time_step > 0.0:
-                check_tau_time_step_consistency(tau, globals.time_step)
-
     property agrid:
         def __get__(self):
             return lb_lbfluid_get_agrid()
-
-        def __set__(self, agrid):
-            lb_lbfluid_set_agrid(agrid)
 
     def nodes(self):
         """Provides a generator for iterating over all lb nodes"""
@@ -308,25 +227,6 @@ cdef class HydrodynamicInteraction(Actor):
                 range(shape[0]), range(shape[1]), range(shape[2])):
             yield self[i, j, k]
 
-cdef class LBFluid(HydrodynamicInteraction):
-    """
-    Initialize the lattice-Boltzmann method for hydrodynamic flow using the CPU.
-
-    """
-
-    # list of valid keys for parameters
-    #
-
-    def valid_keys(self):
-        return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
-
-    def _set_lattice_switch(self):
-        lb_lbfluid_set_lattice_switch(CPU)
-
-    def _activate_method(self):
-        self.validate_params()
-        self._set_lattice_switch()
-        self._set_params_in_es_core()
 
 IF LB_WALBERLA:
     cdef class LBFluidWalberla(HydrodynamicInteraction):
@@ -370,60 +270,8 @@ IF LB_WALBERLA:
 
         def _deactivate_method(self):
             mpi_destruct_lb_walberla()
+            super()._deactivate_method()
 
-
-IF CUDA:
-    cdef class LBFluidGPU(HydrodynamicInteraction):
-        """
-        Initialize the lattice-Boltzmann method for hydrodynamic flow using the GPU.
-
-        """
-
-        # list of valid keys for parameters
-        #
-
-        def valid_keys(self):
-            return "agrid", "dens", "ext_force_density", "visc", "tau", "bulk_visc", "gamma_odd", "gamma_even", "kT", "seed"
-
-        def _set_lattice_switch(self):
-            lb_lbfluid_set_lattice_switch(GPU)
-
-        def _activate_method(self):
-            self.validate_params()
-            self._set_lattice_switch()
-            self._set_params_in_es_core()
-
-        @cython.boundscheck(False)
-        @cython.wraparound(False)
-        def get_interpolated_fluid_velocity_at_positions(self, np.ndarray[double, ndim=2, mode="c"] positions not None, three_point=False):
-            """Calculate the fluid velocity at given positions.
-
-            Parameters
-            ----------
-            positions : (N,3) numpy-array of type :obj:`float`
-                The 3-dimensional positions.
-
-            Returns
-            -------
-            velocities : (N,3) numpy-array of type :obj:`float`
-                The 3-dimensional LB fluid velocities.
-
-            Raises
-            ------
-            AssertionError
-                If shape of ``positions`` not (N,3).
-
-            """
-            assert positions.shape[1] == 3, \
-                "The input array must have shape (N,3)"
-            cdef int length
-            length = positions.shape[0]
-            velocities = np.empty_like(positions)
-            if three_point:
-                quadratic_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-            else:
-                linear_velocity_interpolation(< double * >np.PyArray_GETPTR2(positions, 0, 0), < double * >np.PyArray_GETPTR2(velocities, 0, 0), length)
-            return velocities * lb_lbfluid_get_lattice_speed()
 
 cdef class LBFluidRoutines:
     cdef Vector3i node

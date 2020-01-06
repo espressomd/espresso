@@ -29,7 +29,6 @@
 namespace LBBoundaries {
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
 class LBBoundary;
-Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb);
 void lb_init_boundaries();
 #endif
 class LBBoundary {

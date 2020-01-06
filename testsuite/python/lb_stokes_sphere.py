@@ -109,20 +109,6 @@ class Stokes:
             atol=stokes_force * 0.03)
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUStokes(ut.TestCase, Stokes):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-
-
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUStokes(ut.TestCase, Stokes):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-
 @utx.skipIfMissingFeatures(['LB_WALBERLA', 'EXTERNAL_FORCES'])
 class LBWalberlaStokes(ut.TestCase, Stokes):
 

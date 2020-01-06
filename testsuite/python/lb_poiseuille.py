@@ -123,25 +123,6 @@ class LBPoiseuilleCommon:
         np.testing.assert_allclose(v_measured, v_expected, atol=4E-3)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES', 'EXTERNAL_FORCES'])
-class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the CPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-
-
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
@@ -149,46 +130,6 @@ class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 
     def setUp(self):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPUPoiseuilleInterpolation(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the higher order interpolation scheme of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-        self.lbf.set_interpolation_order("quadratic")
-
-    def test_profile(self):
-        """
-        Compare against analytical function by calculating the RMSD.
-
-        """
-        self.prepare()
-        velocities = np.zeros((50, 2))
-        x_values = np.linspace(
-            3 * AGRID,
-            self.system.box_l[0] - 3 * AGRID,
-            50)
-
-        cnt = 0
-        for x in x_values:
-            v_tmp = []
-            for y in range(int(self.system.box_l[1] + 1)):
-                for z in range(int(self.system.box_l[2] + 1)):
-                    v_tmp.append(
-                        self.lbf.get_interpolated_velocity([x, y * AGRID, z * AGRID])[2])
-            velocities[cnt, 1] = np.mean(np.array(v_tmp))
-            velocities[cnt, 0] = x
-            cnt += 1
-
-        v_expected = poiseuille_flow(x_values - 0.5 * self.system.box_l[0],
-                                     self.system.box_l[0] - 2.0 * AGRID,
-                                     EXT_FORCE,
-                                     VISC * DENS)
-        np.testing.assert_allclose(velocities[:, 1], v_expected, atol=3E-3)
 
 
 if __name__ == '__main__':

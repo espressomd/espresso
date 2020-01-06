@@ -44,7 +44,6 @@
 #include "galilei.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lb.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
@@ -394,18 +393,8 @@ void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
     pressure_calc((double *)result, (double *)result_t, (double *)result_nb,
                   (double *)result_t_nb, 1);
     break;
-  case 6:
-    mpi_call(mpi_gather_stats_slave, -1, 6);
-    lb_calc_fluid_momentum((double *)result, lbpar, lbfields, lblattice);
-    break;
   case 7:
     break;
-#ifdef LB_BOUNDARIES
-  case 8:
-    mpi_call(mpi_gather_stats_slave, -1, 8);
-    lb_collect_boundary_forces((double *)result);
-    break;
-#endif
   default:
     fprintf(
         stderr,
@@ -431,16 +420,8 @@ void mpi_gather_stats_slave(int, int job) {
      * for 'analyze p_inst' */
     pressure_calc(nullptr, nullptr, nullptr, nullptr, 1);
     break;
-  case 6:
-    lb_calc_fluid_momentum(nullptr, lbpar, lbfields, lblattice);
-    break;
   case 7:
     break;
-#ifdef LB_BOUNDARIES
-  case 8:
-    lb_collect_boundary_forces(nullptr);
-    break;
-#endif
   default:
     fprintf(
         stderr,
@@ -461,13 +442,14 @@ void mpi_set_time_step_slave(double dt) {
 }
 REGISTER_CALLBACK(mpi_set_time_step_slave)
 
-void mpi_set_time_step(double time_s) {
-  if (time_s <= 0.)
-    throw std::invalid_argument("time_step must be > 0.");
-  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
-    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
-  mpi_call_all(mpi_set_time_step_slave, time_s);
+void mpi_set_time_step(double time_s) { 
+if (time_s <= 0.) 
+  throw std::invalid_argument("time_step must be > 0.");
+if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+  check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
+  mpi_call_all(mpi_set_time_step_slave, time_s); 
 }
+
 
 /*************** REQ_BCAST_COULOMB ************/
 void mpi_bcast_coulomb_params() {

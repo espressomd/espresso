@@ -271,6 +271,7 @@ cdef class CellSystem:
             skin = _skin
             mpi_bcast_parameter(FIELD_SKIN)
             integrate.skin_set = True
+            handle_errors("Skin setup")
 
         def __get__(self):
             return skin

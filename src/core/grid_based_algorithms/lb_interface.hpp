@@ -20,12 +20,11 @@
 #define CORE_LB_INTERFACE
 
 #include "config.hpp"
-#include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
 #include <utils/Vector.hpp>
 
 /** @brief LB implementation currently active. */
-enum class ActiveLB { NONE, CPU, GPU, WALBERLA };
+enum class ActiveLB { NONE, WALBERLA };
 
 /** @brief Switch determining the type of lattice dynamics. */
 extern ActiveLB lattice_switch;
@@ -52,7 +51,6 @@ void lb_lbfluid_reinit_fluid();
 /** (Re-)initialize the derived parameters for the lattice Boltzmann system.
  *  The current state of the fluid is unchanged.
  */
-void lb_lbfluid_reinit_parameters();
 
 /**
  * @brief Get the current counter of the Philox RNG.
@@ -65,11 +63,6 @@ uint64_t lb_lbfluid_get_rng_state();
 void lb_lbfluid_set_rng_state(uint64_t counter);
 
 /**
- * @brief Return the instance of the Lattice within the LB method.
- */
-const Lattice &lb_lbfluid_get_lattice();
-
-/**
  * @brief Get the global variable @ref lattice_switch.
  */
 ActiveLB lb_lbfluid_get_lattice_switch();
@@ -80,54 +73,14 @@ ActiveLB lb_lbfluid_get_lattice_switch();
 void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch);
 
 /**
- * @brief Set the LB time step.
- */
-void lb_lbfluid_set_tau(double p_tau);
-
-/**
  * @brief Check if tau is an integer multiple of time_step, throws if not
  */
 void check_tau_time_step_consistency(double tau, double time_s);
 
 /**
- * @brief Set the global LB density.
- */
-void lb_lbfluid_set_density(double p_dens);
-
-/**
- * @brief Set the global LB viscosity.
- */
-void lb_lbfluid_set_viscosity(double p_visc);
-
-/**
- * @brief Set the global LB bulk viscosity.
- */
-void lb_lbfluid_set_bulk_viscosity(double p_bulk_visc);
-
-/**
- * @brief Set the global LB relaxation parameter for odd modes.
- */
-void lb_lbfluid_set_gamma_odd(double p_gamma_odd);
-
-/**
- * @brief Set the global LB relaxation parameter for even modes.
- */
-void lb_lbfluid_set_gamma_even(double p_gamma_even);
-
-/**
- * @brief Set the global LB lattice spacing.
- */
-void lb_lbfluid_set_agrid(double p_agrid);
-
-/**
  * @brief Set the external force density acting on the LB fluid.
  */
 void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density);
-
-/**
- * @brief Set the LB fluid thermal energy.
- */
-void lb_lbfluid_set_kT(double kT);
 
 /**
  * @brief Perform LB parameter and boundary velocity checks.
@@ -179,11 +132,6 @@ double lb_lbfluid_get_bulk_viscosity();
  * @brief Get the global LB viscosity.
  */
 double lb_lbfluid_get_viscosity();
-
-/**
- * @brief Get the global LB density.
- */
-double lb_lbfluid_get_density();
 
 /**
  * @brief Get the external force density acting on the LB fluid.

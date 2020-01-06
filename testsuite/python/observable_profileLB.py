@@ -116,23 +116,13 @@ class ObservableProfileLBCommon:
             obs.calculate()
 
 
-class LBCPU(ut.TestCase, ObservableProfileLBCommon):
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class LBWalberla(ut.TestCase, ObservableProfileLBCommon):
 
     """Test for the CPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-        self.system.actors.clear()
-        self.system.actors.add(self.lbf)
-
-
-@utx.skipIfMissingGPU()
-class LBGPU(ut.TestCase, ObservableProfileLBCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
 

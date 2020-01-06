@@ -21,14 +21,11 @@
 #include "communication.hpp"
 #include "config.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/lattice.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_interpolation.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include <utils/Vector.hpp>
 
-#include "lb.hpp"
-#include "lbgpu.hpp"
 
 namespace {
 
@@ -50,40 +47,6 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
   return interpolation_order;
 }
 
-namespace {
-template <typename Op>
-void lattice_interpolation(Lattice const &lattice, Utils::Vector3d const &pos,
-                           Op &&op) {
-  Utils::Vector<std::size_t, 8> node_index{};
-  Utils::Vector6d delta{};
-
-  /* determine elementary lattice cell surrounding the particle
-     and the relative position of the particle in this cell */
-  lattice.map_position_to_lattice(pos, node_index, delta);
-  for (int z = 0; z < 2; z++) {
-    for (int y = 0; y < 2; y++) {
-      for (int x = 0; x < 2; x++) {
-        auto &index = node_index[(z * 2 + y) * 2 + x];
-        auto const w = delta[3 * x + 0] * delta[3 * y + 1] * delta[3 * z + 2];
-
-        op(index, w);
-      }
-    }
-  }
-}
-
-Utils::Vector3d node_u(Lattice::index_t index) {
-#ifdef LB_BOUNDARIES
-  if (lbfields[index].boundary) {
-    return lbfields[index].slip_velocity;
-  }
-#endif // LB_BOUNDARIES
-  auto const modes = lb_calc_modes(index, lbfluid);
-  auto const local_density = lbpar.density + modes[0];
-  return Utils::Vector3d{modes[1], modes[2], modes[3]} / local_density;
-}
-
-} // namespace
 
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
@@ -92,14 +55,7 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
-  if (lattice_switch == ActiveLB::CPU) {
-    lattice_interpolation(lblattice, pos,
-                          [&interpolated_u](Lattice::index_t index, double w) {
-                            interpolated_u += w * node_u(index);
-                          });
-
-    return interpolated_u;
-  } else if (lattice_switch == ActiveLB::WALBERLA) {
+ if (lattice_switch == ActiveLB::WALBERLA) {
   #ifdef LB_WALBERLA
 
     auto res = lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid());
@@ -115,12 +71,9 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
           "Interpolated velocity could not be obtained from Walberla");
     }
     extern double sim_time;
-    //    printf("%d: %g, pos: %g %g %g, v= %g %g %g\n",
-    //      this_node, sim_time, folded_pos[0],folded_pos[1],folded_pos[2],
-    //      (*res)[0], (*res)[1], (*res)[2]);
     return *res;
   #endif
-  } else
+} 
     throw std::runtime_error("No LB active.");
 }
 
@@ -128,21 +81,16 @@ void lb_lbinterpolation_add_force_density(
     const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
   switch (interpolation_order) {
   case (InterpolationOrder::quadratic):
-    throw std::runtime_error("The non-linear interpolation scheme is not "
-                             "implemented for the CPU LB.");
+    throw std::runtime_error("The non-linear interpolation scheme is not implemented.");
   case (InterpolationOrder::linear):
-    if (lattice_switch == ActiveLB::CPU) {
-      lattice_interpolation(lblattice, pos,
-                            [&force_density](Lattice::index_t index, double w) {
-                              auto &field = lbfields[index];
-                              field.force_density += w * force_density;
-                            });
-    } else if (lattice_switch == ActiveLB::WALBERLA) {
+    if (lattice_switch == ActiveLB::WALBERLA) {
     #ifdef LB_WALBERLA
       lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
                                       force_density);
       #endif
     }
-    break;
+    else
+      throw std::runtime_error("No LB active.");
+    
   }
 }

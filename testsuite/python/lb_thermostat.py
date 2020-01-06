@@ -79,21 +79,13 @@ class LBThermostatCommon:
                 self.assertLessEqual(abs(found - expected), error_tol)
 
 
-class LBCPUThermostat(ut.TestCase, LBThermostatCommon):
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class LBWalberlaThermostat(ut.TestCase, LBThermostatCommon):
 
     """Test for the CPU implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-
-
-@utx.skipIfMissingGPU()
-class LBGPUThermostat(ut.TestCase, LBThermostatCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 if __name__ == '__main__':

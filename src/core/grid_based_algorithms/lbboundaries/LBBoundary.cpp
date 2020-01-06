@@ -11,7 +11,7 @@ Utils::Vector3d LBBoundary::get_force() const {
 #ifdef LB_WALBERLA  
     auto const grid = lb_walberla()->get_grid_dimensions();
     auto const agrid = lb_lbfluid_get_agrid();
-    Utils::Vector3d force_density{0, 0, 0};
+    Utils::Vector3d force{0, 0, 0};
     for (auto index_and_pos : lb_walberla()->global_node_indices_positions()) {
       // Convert to MD units
       auto const index = index_and_pos.first;
@@ -26,20 +26,16 @@ Utils::Vector3d LBBoundary::get_force() const {
               auto node_force_density =
                   lb_walberla()->get_node_boundary_force(shifted_index);
               if (node_force_density) {
-                force_density += (*node_force_density);
+                force += (*node_force_density);
               }
             } // Loop over cells
     }         // loop over lb cells
-    return boost::mpi::all_reduce(comm_cart, force_density,
-                                  std::plus<Utils::Vector3d>()) *
-           lb_lbfluid_get_density();
+    return boost::mpi::all_reduce(comm_cart, force,
+                                  std::plus<Utils::Vector3d>()); 
 #endif           
-  } else {
-    if (this_node==0) {
-      return lbboundary_get_force(this);
-    } else
-      return {};
   }
+  else
+    throw std::runtime_error("No LB active");
 #else
   throw std::runtime_error("Needs LB_BOUNDARIES or LB_BOUNDARIES_GPU.");
 #endif

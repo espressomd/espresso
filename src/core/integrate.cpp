@@ -44,7 +44,6 @@
 #include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/electrokinetics.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_particle_coupling.hpp"
 #include "immersed_boundaries.hpp"

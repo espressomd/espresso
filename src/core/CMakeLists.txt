@@ -88,12 +88,8 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/coulomb.cpp
   electrostatics_magnetostatics/dipole.cpp
   electrostatics_magnetostatics/reaction_field.cpp
-  grid_based_algorithms/halo.cpp
-  grid_based_algorithms/lattice.cpp
   grid_based_algorithms/lb_boundaries.cpp
   grid_based_algorithms/lbboundaries/LBBoundary.cpp
-  grid_based_algorithms/lb_collective_interface.cpp
-  grid_based_algorithms/lb.cpp
   grid_based_algorithms/LbWalberla.cpp
   grid_based_algorithms/lb_walberla_instance.cpp
   grid_based_algorithms/lb_walberla_interface.cpp
@@ -128,8 +124,6 @@ set(EspressoCore_SRC
   observables/CylindricalLBVelocityProfileAtParticlePositions.cpp
   observables/CylindricalLBVelocityProfile.cpp
   observables/LBVelocityProfile.cpp
-  virtual_sites/lb_inertialess_tracers.cpp
-  virtual_sites/lb_inertialess_tracers_cuda_interface.cpp
   virtual_sites/VirtualSitesInertialessTracers.cpp
   virtual_sites/VirtualSitesRelative.cpp
   accumulators/TimeSeries.cpp
@@ -147,12 +141,7 @@ if(CUDA)
     actor/Mmm1dgpuForce_cuda.cu
     electrostatics_magnetostatics/p3m_gpu_cuda.cu
     electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
-    grid_based_algorithms/electrokinetics_cuda.cu
-    grid_based_algorithms/lbgpu_cuda.cu
     grid_based_algorithms/fd-electrostatics_cuda.cu
-    virtual_sites/lb_inertialess_tracers_cuda.cu
-    grid_based_algorithms/electrokinetics.cpp
-    grid_based_algorithms/lbgpu.cpp
     )
 
   add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})

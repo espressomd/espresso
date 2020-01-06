@@ -25,6 +25,7 @@
 
 #include "ParticleRange.hpp"
 #include <utils/Counter.hpp>
+#include <utils/Vector.hpp>
 
 /** Calculate particle lattice interactions.
  *  So far, only viscous coupling with Stokesian friction is implemented.
@@ -55,6 +56,23 @@ void lb_lbcoupling_activate();
  */
 void lb_lbcoupling_deactivate();
 
+/**
+ * @brief Check if a position is within the local LB domain
+ *       plus halo.
+ *
+ * @param pos Position to check
+ *
+ * @return True iff the point is inside of the domain.
+ */
+bool in_local_halo(Utils::Vector3d const &pos);
+
+/**
+ * @brief Add a force to the lattice force density.
+ * @param pos Position of the force
+ * @param force Force in MD units.
+ */
+void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force);
+
 struct LB_Particle_Coupling {
   boost::optional<Utils::Counter<uint64_t>> rng_counter_coupling;
   /*
@@ -75,5 +93,6 @@ private:
 };
 
 extern LB_Particle_Coupling lb_particle_coupling;
+
 
 #endif

@@ -181,15 +181,7 @@ class TestLB:
     def test_raise_if_not_active(self):
         lbf = self.lb_class(visc=1.0, dens=1.0, agrid=1.0, tau=0.1)
         with self.assertRaises(RuntimeError):
-            lbf.viscosity = 0.2
-        with self.assertRaises(RuntimeError):
-            lbf.bulk_viscosity = 0.2
-        with self.assertRaises(RuntimeError):
-            lbf.density = 0.2
-        with self.assertRaises(RuntimeError):
             lbf.seed = 2
-        with self.assertRaises(RuntimeError):
-            lbf.agrid = 0.2
 
     def test_stress_tensor_observable(self):
         """
@@ -367,6 +359,10 @@ class TestLB:
         # / dens * tau * (n_time_steps + 0.5)
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps + 0.5) / self.params['dens']
+        # Chck global linear momentum = density * volume * velocity
+        np.testing.assert_allclose(self.system.analysis.linear_momentum(),fluid_velocity * self.params['dens'] *self.system.volume())
+        
+        # Check node velocities
         for n in self.lbf.nodes():
             np.testing.assert_allclose(
                 np.copy(n.velocity), fluid_velocity, atol=1E-6, err_msg="Fluid node velocity not as expected on node {}".format(n.index))
@@ -414,63 +410,23 @@ class TestLB:
         self.system.actors.add(
             self.lb_class(**params_with_tau(self.system.time_step)))
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self.system.time_step = 2. * lbf.get_params()["tau"]
             self.system.integrator.run(1)
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(Exception):
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
+        self.system.actors.clear()
         self.system.time_step = 0.5 * self.params['time_step']
+        self.system.actors.add(
+            self.lb_class(**params_with_tau(self.system.time_step)))
         self.system.integrator.run(
             int(round(sim_time / self.system.time_step)))
-        self.system.time_step = self.params['time_step']
         v2 = np.copy(lbf.get_interpolated_velocity(probe_pos))
         f2 = np.copy(self.system.part[0].f)
-        np.testing.assert_allclose(v1, v2, rtol=1e-5)
-        np.testing.assert_allclose(f1, f2, rtol=1e-5)
+        np.testing.assert_allclose(v1, v2, rtol=1e-2)
+        np.testing.assert_allclose(f1, f2, rtol=1e-2)
 
-
-class TestLBCPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluid
-        self.params.update({"mom_prec": 1E-9, "mass_prec_per_node": 5E-8})
-
-
-@utx.skipIfMissingGPU()
-class TestLBGPU(TestLB, ut.TestCase):
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
-        self.params.update({"mom_prec": 1E-3, "mass_prec_per_node": 1E-5})
-
-    @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
-    def test_viscous_coupling_higher_order_interpolation(self):
-        self.system.thermostat.turn_off()
-        self.system.actors.clear()
-        self.system.part.clear()
-        v_part = np.array([1, 2, 3])
-        v_fluid = np.array([1.2, 4.3, 0.2])
-        self.lbf = self.lb_class(
-            visc=self.params['viscosity'],
-            dens=self.params['dens'],
-            agrid=self.params['agrid'],
-            tau=self.system.time_step,
-            ext_force_density=[0, 0, 0])
-        self.system.actors.add(self.lbf)
-        self.lbf.set_interpolation_order("quadratic")
-        self.system.thermostat.set_lb(
-            LB_fluid=self.lbf,
-            seed=3,
-            gamma=self.params['friction'])
-        self.system.part.add(
-            pos=[0.5 * self.params['agrid']] * 3, v=v_part, fix=[1, 1, 1])
-        self.lbf[0, 0, 0].velocity = v_fluid
-        v_fluid = self.lbf.get_interpolated_velocity(self.system.part[0].pos)
-        self.system.integrator.run(1)
-        np.testing.assert_allclose(
-            np.copy(self.system.part[0].f), -self.params['friction'] * (v_part - v_fluid), atol=1E-6)
-        self.lbf.set_interpolation_order("linear")
 
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class TestLBWalberla(TestLB, ut.TestCase):

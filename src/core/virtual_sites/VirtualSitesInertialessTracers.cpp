@@ -23,39 +23,33 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
+#include "grid_based_algorithms/lb_interpolation.hpp"
+#include "grid_based_algorithms/lb_particle_coupling.hpp"
+#include "integrate.hpp"
+#include "particle_data.hpp"
 #include <algorithm>
 
 void VirtualSitesInertialessTracers::after_force_calc() {
   // Now the forces are computed and need to go into the LB fluid
-  if (lattice_switch == ActiveLB::CPU or lattice_switch == ActiveLB::WALBERLA) {
-    IBM_ForcesIntoFluid_CPU();
-    return;
-  }
-#ifdef CUDA
-  if (lattice_switch == ActiveLB::GPU) {
-    IBM_ForcesIntoFluid_GPU(local_cells.particles());
-    return;
-  }
-#endif
-  if (std::any_of(local_cells.particles().begin(),
-                  local_cells.particles().end(),
-                  [](Particle &p) { return p.p.is_virtual; })) {
-    runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
-                         "virtual sites present.";
-    return;
+  // Convert units from MD to LB
+  for (auto const& p: local_cells.particles()) {
+    if (in_local_halo(p.r.p)) {
+      add_md_force(p.r.p / lb_lbfluid_get_agrid(), p.f.f);
+    }
   }
 }
 
-void VirtualSitesInertialessTracers::after_lb_propagation() {
-#ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  IBM_UpdateParticlePositions(local_cells.particles());
-  // Ghost positions are now out-of-date
-  // We should update.
-  // Actually we seem to get the same results whether we do this here or not,
-  // but it is safer to do it
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
 
-#endif // VS inertialess tracers
+void VirtualSitesInertialessTracers::after_lb_propagation() {
+  for (auto& p: local_cells.particles()) {
+    if (in_local_halo(p.r.p)) {
+    p.m.v = lb_lbinterpolation_get_interpolated_velocity(p.r.p);
+    for (int i=0;i<3;i++) {
+      if (!(p.p.ext_flag & COORD_FIXED(i))) {
+        p.r.p[i] += p.m.v[i] * time_step;
+      }
+    }
+    }
+  }
 }
 #endif

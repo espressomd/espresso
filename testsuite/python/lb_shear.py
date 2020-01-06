@@ -183,23 +183,6 @@ class LBShearCommon:
         self.check_profile(y, -z)
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBCPUShear(ut.TestCase, LBShearCommon):
-
-    """Test for the CPU implementation of the LB."""
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluid
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBGPUShear(ut.TestCase, LBShearCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lb_class = espressomd.lb.LBFluidGPU
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
 class LBWalberlaShear(ut.TestCase, LBShearCommon):
 

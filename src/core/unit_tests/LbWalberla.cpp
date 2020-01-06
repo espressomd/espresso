@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(boundary) {
   for (Vector3i node :
 
        std::vector<Vector3i>{{0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
-    if (lb.node_in_local_domain(node)) {
+    if (lb.node_in_local_halo(node)) {
       BOOST_CHECK(lb.set_node_velocity_at_boundary(node, vel));
       auto vel_check = lb.get_node_velocity_at_boundary(node);
       // Do we have a value

@@ -191,33 +191,6 @@ class LBPoiseuilleCommon:
         self.check_observable()
 
 
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
-class LBCPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the CPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid
-
-    def tearDown(self):
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU'])
-class LBGPUPoiseuille(ut.TestCase, LBPoiseuilleCommon):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU
-
-    def tearDown(self):
-        self.system.actors.clear()
-        self.system.lbboundaries.clear()
-
-
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
 class LBWalberlaPoiseuille(ut.TestCase, LBPoiseuilleCommon):
 

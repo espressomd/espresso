@@ -79,25 +79,6 @@ class LinearMomentumTest:
             atol=1e-3)
 
 
-@utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
-class LBCPULinearMomentum(ut.TestCase, LinearMomentumTest):
-
-    """Test for the CPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(['LB_BOUNDARIES_GPU', 'EXTERNAL_FORCES'])
-class LBGPULinearMomentum(ut.TestCase, LinearMomentumTest):
-
-    """Test for the GPU implementation of the LB."""
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU
-
-
 @utx.skipIfMissingFeatures(['LB_WALBERLA'])
 class LBWalberlaLinearMomentum(ut.TestCase, LinearMomentumTest):
 
