@@ -444,26 +444,31 @@ void check_resort_particles() {
 
 /*************************************************/
 void cells_update_ghosts() {
+  /* data parts that are only updated on resort */
+  auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
+  auto constexpr data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
+
   if (topology_check_resort(cell_structure.type, resort_particles)) {
     int global = (resort_particles & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
-    /* Communication step: number of ghosts and ghost information */
+    /* Resort cell system */
     cells_resort_particles(global);
 
+    /* Communication step: number of ghosts and ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_PARTNUM);
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
+                       data_parts);
 
-    /* Particles are now sorted, but Verlet lists are invalid
-       and p_old has to be reset. */
+    /* Particles are now sorted */
     resort_particles = Cells::RESORT_NONE;
-  } else
+  } else {
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION);
+                       data_parts & ~resort_only_parts);
+  }
 }
 
 Cell *find_current_cell(const Particle &p) {
