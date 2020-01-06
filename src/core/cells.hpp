@@ -85,10 +85,12 @@ enum {
  */
 /*@{*/
 
-/** Flag for exchange_and_sort_particles : Do global exchange. */
-#define CELL_GLOBAL_EXCHANGE 1
-/** Flag for exchange_and_sort_particles : Do neighbor exchange. */
-#define CELL_NEIGHBOR_EXCHANGE 0
+enum {
+  /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
+  CELL_NEIGHBOR_EXCHANGE = 0,
+  /** Flag for exchange_and_sort_particles : Do global exchange. */
+  CELL_GLOBAL_EXCHANGE = 1
+};
 
 /*@}*/
 
