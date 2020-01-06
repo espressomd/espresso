@@ -236,7 +236,6 @@ bool validate_collision_parameters() {
 
   recalc_forces = true;
   rebuild_verletlist = true;
-  on_ghost_flags_change();
 
   return true;
 }

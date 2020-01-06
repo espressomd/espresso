@@ -401,26 +401,16 @@ void on_parameter_change(int field) {
       nptiso.invalidate_p_vel = true;
     break;
 #endif
-  case FIELD_THERMO_SWITCH:
-    /* DPD needs ghost velocities, other thermostats not */
-    on_ghost_flags_change();
-    break;
-  case FIELD_LATTICE_SWITCH:
-    /* LB needs ghost velocities */
-    on_ghost_flags_change();
     break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     invalidate_obs();
     recalc_forces = true;
     break;
+  case FIELD_THERMO_SWITCH:
+  case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:
-    /* Rattle bonds needs ghost velocities */
-    on_ghost_flags_change();
-    break;
   case FIELD_THERMALIZEDBONDS:
-    /* Thermalized distance bonds needs ghost velocities */
-    on_ghost_flags_change();
     break;
   case FIELD_SIMTIME:
     recalc_forces = true;
@@ -459,16 +449,6 @@ unsigned global_ghost_flags() {
 #endif
 
   return data_parts;
-}
-
-void on_ghost_flags_change() {
-  extern bool ghosts_have_v;
-  extern bool ghosts_have_bonds;
-
-  auto const data_parts = global_ghost_flags();
-
-  ghosts_have_v = data_parts & GHOSTTRANS_MOMENTUM;
-  ghosts_have_bonds = data_parts & GHOSTTRANS_BONDS;
 }
 
 void update_dependent_particles() {

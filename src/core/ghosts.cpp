@@ -31,7 +31,6 @@
 #include "ghosts.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
 #include "particle_data.hpp"
 
 #include <mpi.h>
@@ -41,12 +40,10 @@
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <algorithm>
 #include <boost/range/numeric.hpp>
-#include <cstdio>
-#include <cstring>
-#include <type_traits>
+
 #include <vector>
+#include <algorithm>
 
 /** Tag for ghosts communications. */
 #define REQ_GHOST_SEND 100
@@ -79,13 +76,6 @@ private:
   std::vector<char> buf;    //< Buffer for everything but bonds
   std::vector<int> bondbuf; //< Buffer for bond lists
 };
-
-/** whether the ghosts should have velocity information, e.g. for DPD or RATTLE.
- *  You need this whenever you need the relative velocity of two particles.
- *  NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
- */
-bool ghosts_have_v = false;
-bool ghosts_have_bonds = false;
 
 void prepare_comm(GhostCommunicator *gcr, int num) {
   assert(gcr);
