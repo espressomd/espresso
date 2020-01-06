@@ -189,8 +189,7 @@ void on_integration_start() {
 void on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
-
-  cells_update_ghosts();
+  cells_update_ghosts(global_ghost_flags());
   update_dependent_particles();
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
@@ -434,9 +433,9 @@ void on_parameter_change(int field) {
  *        kernels for the global state, e.g. the force calculation.
  * @return Required data parts;
  */
-auto global_ghost_flags() {
+unsigned global_ghost_flags() {
   /* Position and Properties are always requested. */
-  auto data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
+  unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
   /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
@@ -475,8 +474,8 @@ void on_ghost_flags_change() {
 void update_dependent_particles() {
 #ifdef VIRTUAL_SITES
   virtual_sites()->update(true);
+  cells_update_ghosts(global_ghost_flags());
 #endif
-  cells_update_ghosts();
 
 #ifdef ELECTROSTATICS
   Coulomb::update_dependent_particles();

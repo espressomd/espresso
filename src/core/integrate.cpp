@@ -185,7 +185,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     force_calc(cell_structure);
 
@@ -243,7 +243,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     particles = cell_structure.local_cells().particles();
 

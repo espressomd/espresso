@@ -254,7 +254,7 @@ void cells_on_geometry_change(int flags);
 /** Update ghost information. If @ref resort_particles is not
  *  @ref Cells::RESORT_NONE, the particles are also resorted.
  */
-void cells_update_ghosts();
+void cells_update_ghosts(unsigned data_parts);
 
 /** Calculate and return the total number of particles on this node. */
 int cells_get_n_particles();

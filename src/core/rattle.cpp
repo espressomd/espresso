@@ -162,7 +162,7 @@ void app_pos_correction(const ParticleRange &particles) {
 }
 
 void correct_pos_shake(ParticleRange const &particles) {
-  cells_update_ghosts();
+  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
   int repeat_, cnt = 0;
   int repeat = 1;
 

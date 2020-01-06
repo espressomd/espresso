@@ -109,6 +109,7 @@ void on_parameter_change(int parameter);
  *  inside this procedure.
  */
 void on_ghost_flags_change();
+unsigned global_ghost_flags();
 
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();

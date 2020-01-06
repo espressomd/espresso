@@ -84,7 +84,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
-  cells_update_ghosts();
+  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
@@ -220,7 +220,8 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
   case CELL_STRUCTURE_LAYERED:
-    return boost::mpi::all_reduce(comm_cart, local_resort, std::bit_or<unsigned>());
+    return boost::mpi::all_reduce(comm_cart, local_resort,
+                                  std::bit_or<unsigned>());
   default:
     return true;
   }
@@ -443,12 +444,12 @@ void check_resort_particles() {
 }
 
 /*************************************************/
-void cells_update_ghosts() {
+void cells_update_ghosts(unsigned data_parts) {
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
-  auto constexpr data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
-  auto const global_resort = topology_check_resort(cell_structure.type, resort_particles);
+  auto const global_resort =
+      topology_check_resort(cell_structure.type, resort_particles);
 
   if (global_resort != Cells::RESORT_NONE) {
     int global = (global_resort & Cells::RESORT_GLOBAL)
@@ -461,8 +462,7 @@ void cells_update_ghosts() {
     /* Communication step: number of ghosts and ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_PARTNUM);
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       data_parts);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
 
     /* Particles are now sorted */
     resort_particles = Cells::RESORT_NONE;
