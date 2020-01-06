@@ -42,8 +42,8 @@
 
 #include <boost/range/numeric.hpp>
 
-#include <vector>
 #include <algorithm>
+#include <vector>
 
 /** Tag for ghosts communications. */
 #define REQ_GHOST_SEND 100

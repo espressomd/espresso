@@ -427,21 +427,17 @@ unsigned global_ghost_flags() {
   /* Position and Properties are always requested. */
   unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
-  /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
     data_parts |= GHOSTTRANS_MOMENTUM;
 
-#ifdef BOND_CONSTRAINT
-  if (n_rigidbonds)
-    data_parts |= GHOSTTRANS_MOMENTUM;
-#endif
   if (thermo_switch & THERMO_DPD)
     data_parts |= GHOSTTRANS_MOMENTUM;
-  // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
+
   if (n_thermalized_bonds) {
     data_parts |= GHOSTTRANS_MOMENTUM;
     data_parts |= GHOSTTRANS_BONDS;
   }
+
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
     data_parts |= GHOSTTRANS_BONDS;
