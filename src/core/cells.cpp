@@ -215,12 +215,12 @@ void topology_init(int cs, double range, CellPList *local) {
   }
 }
 
-bool topology_check_resort(int cs, bool local_resort) {
+unsigned topology_check_resort(int cs, unsigned local_resort) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
   case CELL_STRUCTURE_LAYERED:
-    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+    return boost::mpi::all_reduce(comm_cart, local_resort, std::bit_or<unsigned>());
   default:
     return true;
   }
@@ -448,8 +448,10 @@ void cells_update_ghosts() {
   auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
   auto constexpr data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
-  if (topology_check_resort(cell_structure.type, resort_particles)) {
-    int global = (resort_particles & Cells::RESORT_GLOBAL)
+  auto const global_resort = topology_check_resort(cell_structure.type, resort_particles);
+
+  if (global_resort != Cells::RESORT_NONE) {
+    int global = (global_resort & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
