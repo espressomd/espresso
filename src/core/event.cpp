@@ -429,33 +429,47 @@ void on_parameter_change(int field) {
   }
 }
 
-void on_ghost_flags_change() {
-  /* that's all we change here */
-  extern bool ghosts_have_v;
-  extern bool ghosts_have_bonds;
-
-  ghosts_have_v = false;
-  ghosts_have_bonds = false;
+/**
+ * @brief Returns the ghost flags required for running pair
+ *        kernels for the global state, e.g. the force calculation.
+ * @return Required data parts;
+ */
+auto global_ghost_flags() {
+  /* Position and Properties are always requested. */
+  auto data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
   /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
-    ghosts_have_v = true;
+    data_parts |= GHOSTTRANS_MOMENTUM;
+
 #ifdef BOND_CONSTRAINT
   if (n_rigidbonds)
-    ghosts_have_v = true;
+    data_parts |= GHOSTTRANS_MOMENTUM;
 #endif
   if (thermo_switch & THERMO_DPD)
-    ghosts_have_v = true;
+    data_parts |= GHOSTTRANS_MOMENTUM;
   // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
   if (n_thermalized_bonds) {
-    ghosts_have_v = true;
-    ghosts_have_bonds = true;
+    data_parts |= GHOSTTRANS_MOMENTUM;
+    data_parts |= GHOSTTRANS_BONDS;
   }
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
-    ghosts_have_bonds = true;
+    data_parts |= GHOSTTRANS_BONDS;
   }
 #endif
+
+  return data_parts;
+}
+
+void on_ghost_flags_change() {
+  extern bool ghosts_have_v;
+  extern bool ghosts_have_bonds;
+
+  auto const data_parts = global_ghost_flags();
+
+  ghosts_have_v = data_parts & GHOSTTRANS_MOMENTUM;
+  ghosts_have_bonds = data_parts & GHOSTTRANS_BONDS;
 }
 
 void update_dependent_particles() {
