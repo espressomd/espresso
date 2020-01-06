@@ -328,14 +328,6 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
 void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
-  /* if ghosts should have up-to-date velocities, they have to be updated like
-   * positions (except for shifting...) */
-  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
-    data_parts |= GHOSTTRANS_MOMENTUM;
-
-  if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
-    data_parts |= GHOSTTRANS_BONDS;
-
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
     GhostCommunication &ghost_comm = *it;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
