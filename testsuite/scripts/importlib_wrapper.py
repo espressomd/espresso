@@ -147,19 +147,43 @@ def configure_and_import(filepath,
     return module, skipIfMissingFeatures
 
 
+class GetSysArgparseImports(ast.NodeVisitor):
+    """
+    Find all line numbers where ``sys`` or ``argparse`` is imported.
+    """
+
+    def __init__(self):
+        self.linenos = []
+
+    def visit_Import(self, node):
+        for child in node.names:
+            if child.name.split(".")[0] in ("sys", "argparse"):
+                self.linenos.append(node.lineno)
+
+    def visit_ImportFrom(self, node):
+        if node.module.split(".")[0] in ("sys", "argparse"):
+            self.linenos.append(node.lineno)
+
+
 def set_cmd(code, filepath, cmd_arguments):
+    """
+    Set the ``sys.argv`` in the imported module while checkpointing
+    the current ``sys.argv`` value.
+    """
     assert isinstance(cmd_arguments, (list, tuple))
     sys_argv = list(map(str, cmd_arguments))
     sys_argv.insert(0, os.path.basename(filepath))
-    re_import_sys = re.compile("^import[\t\ ]+sys[\t\ ]*$", re.M)
-    re_import_argparse = re.compile("^import[\t\ ]+argparse[\t\ ]*$", re.M)
-    if re_import_sys.search(code) is not None:
-        code = re_import_sys.sub("\g<0>\nsys.argv = " + str(sys_argv), code, 1)
-    elif re_import_argparse.search(code) is not None:
-        code = re_import_argparse.sub("\g<0>\nimport sys\nsys.argv = "
-                                      + str(sys_argv), code, 1)
-    else:
-        raise AssertionError("module sys (or argparse) is not imported")
+    visitor = GetSysArgparseImports()
+    visitor.visit(ast.parse(protect_ipython_magics(code)))
+    assert visitor.linenos, "module sys (or argparse) is not imported"
+    lines = code.split("\n")
+    mapping = delimit_statements(code)
+    lineno = mapping[min(visitor.linenos)]
+    line = lines[lineno - 1]
+    indentation = line[:len(line) - len(line.lstrip())]
+    lines[lineno - 1] = indentation + "import sys;sys.argv = " + \
+        str(sys_argv) + ";" + line.lstrip()
+    code = "\n".join(lines)
     old_sys_argv = list(sys.argv)
     return code, old_sys_argv
 
@@ -243,15 +267,27 @@ def deprotect_ipython_magics(code):
     return re.sub("^#_IPYTHON_MAGIC_(%+)(?=[a-z])", "\g<1>", code, flags=re.M)
 
 
-class GetMatplotlibImports(ast.NodeVisitor):
+class GetMatplotlibPyplot(ast.NodeVisitor):
     """
-    Find all line numbers where ``matplotlib`` is imported.
+    Find all line numbers where ``matplotlib`` and ``pyplot`` are imported
+    and store their alias. Find line numbers where the matplotlib backend
+    is set, where the pyplot interactive mode is activated and where
+    IPython magic functions are set.
+
     """
 
     def __init__(self):
         self.matplotlib_first = None
         self.matplotlib_aliases = []
         self.pyplot_aliases = []
+        self.pyplot_paths = set()
+        self.pyplot_interactive_linenos = []
+        self.matplotlib_backend_linenos = []
+        self.ipython_magic_linenos = []
+
+    def make_pyplot_paths(self):
+        self.pyplot_paths = set(tuple(x.split("."))
+                                for x in self.pyplot_aliases)
 
     def visit_Import(self, node):
         # get line number of the first matplotlib import
@@ -269,6 +305,7 @@ class GetMatplotlibImports(ast.NodeVisitor):
             elif child.name == "matplotlib":
                 name = (child.asname or "matplotlib") + ".pyplot"
                 self.pyplot_aliases.append(name)
+        self.make_pyplot_paths()
 
     def visit_ImportFrom(self, node):
         # get line number of the first matplotlib import
@@ -278,32 +315,64 @@ class GetMatplotlibImports(ast.NodeVisitor):
         for child in node.names:
             if node.module == "matplotlib" and child.name == "pyplot":
                 self.pyplot_aliases.append(child.asname or child.name)
+        self.make_pyplot_paths()
+
+    def visit_Expr(self, node):
+        # get matplotlib custom options that need to be turned off
+        if hasattr(node.value, "func") and hasattr(node.value.func, "value"):
+            value = node.value.func.value
+            # detect pyplot interactive mode
+            if node.value.func.attr == "ion":
+                if hasattr(value, "id") and (value.id,) in self.pyplot_paths or hasattr(
+                        value.value, "id") and (value.value.id, value.attr) in self.pyplot_paths:
+                    self.pyplot_interactive_linenos.append(node.lineno)
+            # detect matplotlib custom backends
+            if node.value.func.attr == "use":
+                if hasattr(
+                        value, "id") and value.id in self.matplotlib_aliases:
+                    self.matplotlib_backend_linenos.append(node.lineno)
+        # detect IPython magic functions: ``%matplotlib ...`` statements are
+        # converted to ``get_ipython().run_line_magic('matplotlib', '...')``
+        if hasattr(node.value, "func") and hasattr(node.value.func, "value") \
+                and hasattr(node.value.func.value, "func") \
+                and hasattr(node.value.func.value.func, "id") \
+                and node.value.func.value.func.id == "get_ipython":
+            self.ipython_magic_linenos.append(node.lineno)
 
 
 def disable_matplotlib_gui(code):
     """
     Use the matplotlib Agg backend (no GUI).
     """
-    visitor = GetMatplotlibImports()
-    visitor.visit(ast.parse(protect_ipython_magics(code)))
-    # find under which names matplotlib is accessible
-    aliases_mpl = set(visitor.matplotlib_aliases)
-    # find under which names pyplot is accessible
-    aliases_plt = set(visitor.pyplot_aliases)
-    # remove any custom backend
-    for alias in aliases_mpl:
-        code = re.sub(r"^[\t\ ]*" + alias + r"\.use\(([\"']+).+?\1[\t\ ]*\)",
-                      "", code, flags=re.M)
-    # use the Agg backend
-    code = re.sub(r"^([\t\ ]*)(?=(?:from|import)[\t\ ]+matplotlib[\.\s])",
-                  r"\g<1>import matplotlib as _mpl;_mpl.use('Agg');",
-                  code, 1, re.M)
+    # remove magic functions that use the percent sign syntax
+    code = protect_ipython_magics(code)
+    tree = ast.parse(code)
+    visitor = GetMatplotlibPyplot()
+    visitor.visit(tree)
+    first_mpl_import = visitor.matplotlib_first
+    # split lines
+    lines = code.split("\n")
+    mapping = delimit_statements(code)
+    # list of lines to comment out
+    lines_comment_out = []
+    # remove magic functions
+    lines_comment_out += visitor.ipython_magic_linenos
     # remove interactive mode
-    for alias in aliases_plt:
-        code = re.sub(r"((?:^[\t\ ]*|;)" + alias + r")\.ion\(",
-                      "\g<1>.ioff(", code, flags=re.M)
-    # remove magic function
-    code = re.sub(r"^get_ipython.*", "", code, flags=re.M)
+    lines_comment_out += visitor.pyplot_interactive_linenos
+    # remove any custom backend
+    lines_comment_out += visitor.matplotlib_backend_linenos
+    # use the Agg backend
+    if first_mpl_import:
+        line = lines[first_mpl_import - 1]
+        indentation = line[:len(line) - len(line.lstrip())]
+        lines[first_mpl_import - 1] = indentation + \
+            "import matplotlib as _mpl;_mpl.use('Agg');" + line.lstrip()
+    # comment out lines
+    for lineno_start in lines_comment_out:
+        lineno_end = mapping[lineno_start]
+        for lineno in range(lineno_start, lineno_end + 1):
+            lines[lineno - 1] = "#" + lines[lineno - 1]
+    code = "\n".join(lines)
     return code
 
 

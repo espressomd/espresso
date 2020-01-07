@@ -102,7 +102,7 @@ for i in range(len(nb['cells'])):
         # split cells after matplotlib imports
         mapping = iw.delimit_statements(code)
         tree = ast.parse(code)
-        visitor = iw.GetMatplotlibImports()
+        visitor = iw.GetMatplotlibPyplot()
         visitor.visit(tree)
         if visitor.matplotlib_first:
             code = iw.deprotect_ipython_magics(code)

@@ -48,12 +48,12 @@ class importlib_wrapper(ut.TestCase):
         sys.argv = [0, "test"]
         # test substitutions
         str_inp = "import sys\nimport argparse"
-        str_exp = "import sys\nsys.argv = ['a.py', '1', '2']\nimport argparse"
+        str_exp = "import sys;sys.argv = ['a.py', '1', '2'];" + str_inp
         str_out, sys_argv = iw.set_cmd(str_inp, "a.py", (1, 2))
         self.assertEqual(str_out, str_exp)
         self.assertEqual(sys_argv, [0, "test"])
         str_inp = "import argparse"
-        str_exp = "import argparse\nimport sys\nsys.argv = ['a.py', '1', '2']"
+        str_exp = "import sys;sys.argv = ['a.py', '1', '2'];" + str_inp
         str_out, sys_argv = iw.set_cmd(str_inp, "a.py", ["1", 2])
         self.assertEqual(str_out, str_exp)
         self.assertEqual(sys_argv, [0, "test"])
@@ -64,14 +64,18 @@ class importlib_wrapper(ut.TestCase):
         sys.argv = original_sys_argv
 
     def test_disable_matplotlib_gui(self):
-        str_inp = "\nimport matplotlib as mp\nmp.use('PS')\n"
-        str_exp = ("\nimport matplotlib as _mpl;_mpl.use('Agg');"
-                   "import matplotlib as mp\n\n")
+        str_inp = "if 1:\n\timport matplotlib as mp\nmp.use('PS')\n"
+        str_exp = ("if 1:\n\timport matplotlib as _mpl;_mpl.use('Agg');"
+                   "import matplotlib as mp\n#mp.use('PS')\n")
         str_out = iw.disable_matplotlib_gui(str_inp)
         self.assertEqual(str_out, str_exp)
-        str_inp = "\nimport matplotlib.pyplot as plt\nplt.ion()\n"
-        str_exp = ("\nimport matplotlib as _mpl;_mpl.use('Agg');"
-                   "import matplotlib.pyplot as plt\nplt.ioff()\n")
+        str_inp = "if 1:\n    import matplotlib.pyplot as plt\nplt.ion()\n"
+        str_exp = ("if 1:\n    import matplotlib as _mpl;_mpl.use('Agg');"
+                   "import matplotlib.pyplot as plt\n#plt.ion()\n")
+        str_out = iw.disable_matplotlib_gui(str_inp)
+        self.assertEqual(str_out, str_exp)
+        str_inp = "if 1:\n\tget_ipython(\n).run_line_magic('matplotlib', 'x')\n"
+        str_exp = "if 1:\n#\tget_ipython(\n#).run_line_magic('matplotlib', 'x')\n"
         str_out = iw.disable_matplotlib_gui(str_inp)
         self.assertEqual(str_out, str_exp)
 
@@ -250,7 +254,7 @@ except ImportError:
         for s in statements_without_namespace:
             self.assertRaises(ValueError, iw.mock_es_visualization, s)
 
-    def test_matplotlib_nodevisitor(self):
+    def test_matplotlib_pyplot_visitor(self):
         import_stmt = [
             'import matplotlib',
             'import matplotlib as mpl',
@@ -265,9 +269,15 @@ except ImportError:
             'from matplotlib import pyplot',
             'from matplotlib import pyplot as plt',
             'from matplotlib.pyplot import figure',
+            'matplotlib.pyplot.ion()',
+            'matplotlib.pyplot.ioff()',
+            'plt.ion()',
+            'mpl.use("PS")',
+            'matplotlib.use("Agg")',
+            'get_ipython().run_line_magic("matplotlib", "notebook")',
         ]
         tree = ast.parse('\n'.join(import_stmt))
-        v = iw.GetMatplotlibImports()
+        v = iw.GetMatplotlibPyplot()
         v.visit(tree)
         # find first line where matplotlib is imported
         self.assertEqual(v.matplotlib_first, 1)
@@ -278,7 +288,8 @@ except ImportError:
         expected_plt_aliases = [
             'matplotlib.pyplot', 'mpl.pyplot', 'matplotlib.pyplot', 'plt',
             'matplotlib.pyplot', 'mpl.pyplot', 'matplotlib.pyplot', 'plt',
-            'pyplot', 'plt']
+            'pyplot', 'plt',
+        ]
         self.assertEqual(v.pyplot_aliases, expected_plt_aliases)
 
     def test_delimit_statements(self):
