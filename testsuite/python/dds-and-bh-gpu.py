@@ -31,7 +31,7 @@ def stopAll(system):
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT"])
+@utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT", "LENNARD_JONES"])
 class BH_DDS_gpu_multCPU_test(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
     # just some seeding based on 14

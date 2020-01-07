@@ -26,7 +26,7 @@ import espressomd.analyze
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["DIPOLES", "ROTATION"])
+@utx.skipIfMissingFeatures(["DIPOLES", "ROTATION", "LENNARD_JONES"])
 class DDSGPUTest(ut.TestCase):
     # Handle for espresso system
     es = espressomd.System(box_l=[1.0, 1.0, 1.0])
