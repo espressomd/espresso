@@ -27,19 +27,14 @@
  *  The corresponding header file is diamond.hpp.
  */
 
-#include <cmath>
-#include <cstddef>
-
-#include "PartCfg.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
-#include "communication.hpp"
-#include "constraints.hpp"
-#include "constraints/ShapeBasedConstraint.hpp"
-#include "diamond.hpp"
-#include "global.hpp"
-#include "integrate.hpp"
-#include "polymer.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
+#include "statistics.hpp"
+
+#include <utils/Vector.hpp>
+
+#include <cmath>
+#include <stdexcept>
 
 int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
                        int const mode, double const shield, int const max_try,
@@ -53,7 +48,7 @@ int create_counterions(PartCfg &partCfg, int const N_CI, int part_id,
       pos[0] = box_geo.length()[0] * d_random();
       pos[1] = box_geo.length()[1] * d_random();
       pos[2] = box_geo.length()[2] * d_random();
-      if ((mode != 0) or (mindist(partCfg, pos) > shield))
+      if ((mode != 0) or (distto(partCfg, pos) > shield))
         break;
     }
     if (cnt1 >= max_try)
