@@ -220,7 +220,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos(particles, ghost_cells.particles());
+      save_old_pos(particles, cell_structure.ghost_cells().particles());
 #endif
 
     bool early_exit = integrator_step_1(particles);

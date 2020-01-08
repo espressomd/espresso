@@ -315,18 +315,18 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
 
   /* allocate cells and mark them */
   realloc_cells(n_layers + 2);
-  realloc_cellplist(&local_cells, local_cells.n = n_layers);
+  cell_structure.m_local_cells.resize(n_layers);
   for (int c = 1; c <= n_layers; c++) {
     Cell *red[] = {&cells[c - 1]};
     Cell *black[] = {&cells[c + 1]};
 
-    local_cells.cell[c - 1] = &cells.at(c);
+    cell_structure.m_local_cells[c - 1] = &cells.at(c);
     cells[c].m_neighbors = Neighbors<Cell *>(red, black);
   }
 
-  realloc_cellplist(&ghost_cells, ghost_cells.n = 2);
-  ghost_cells.cell[0] = &cells.front();
-  ghost_cells.cell[1] = &cells.back();
+  cell_structure.m_ghost_cells.resize(2);
+  cell_structure.m_ghost_cells[0] = &cells.front();
+  cell_structure.m_ghost_cells[1] = &cells.back();
 
   /* create communicators */
   layered_prepare_comm(&cell_structure.exchange_ghosts_comm, false);
@@ -341,7 +341,7 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
-        nc = local_cells.cell[0];
+        nc = cell_structure.m_local_cells[0];
       append_unindexed_particle(nc, std::move(part[p]));
     }
   }
