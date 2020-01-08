@@ -109,8 +109,9 @@ for i in range(len(nb['cells'])):
             lines = code.split('\n')
             lineno_end = mapping[visitor.matplotlib_first]
             split_code = '\n'.join(lines[lineno_end:]).lstrip('\n')
-            new_cell = nbformat.v4.new_code_cell(source=split_code)
-            nb['cells'].insert(i + 1, new_cell)
+            if split_code:
+                new_cell = nbformat.v4.new_code_cell(source=split_code)
+                nb['cells'].insert(i + 1, new_cell)
             lines = lines[:lineno_end]
             nb['cells'][i]['source'] = '\n'.join(lines).rstrip('\n')
             break
