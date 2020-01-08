@@ -131,11 +131,9 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     if (!glue_to_surface_criterion(p1, p2))
       return;
 
-#ifdef VIRTUAL_SITES_RELATIVE
   // Ignore virtual particles
   if ((p1.p.is_virtual) || (p2.p.is_virtual))
     return;
-#endif
 
   // Check, if there's already a bond between the particles
   if (pair_bond_exists_on(p1, p2, collision_params.bond_centers))
