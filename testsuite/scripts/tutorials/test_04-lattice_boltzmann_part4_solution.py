@@ -30,8 +30,8 @@ class Tutorial(ut.TestCase):
     def test_flow_profile(self):
         analytical = tutorial.y_values
         simulation = tutorial.fluid_velocities[:, 1]
-        rmsd = np.sqrt(np.sum(np.square(analytical - simulation)))
-        self.assertLess(rmsd, 0.02 * tutorial.AGRID / tutorial.lbf.tau)
+        rmsd = np.sqrt(np.mean(np.square(analytical - simulation)))
+        self.assertLess(rmsd, 2e-5 * tutorial.AGRID / tutorial.lbf.tau)
 
 
 if __name__ == "__main__":

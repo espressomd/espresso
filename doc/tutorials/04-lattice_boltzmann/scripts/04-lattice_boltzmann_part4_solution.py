@@ -76,6 +76,9 @@ HEIGHT = BOX_L - 2.0 * AGRID
 # analytical curve
 y_values = poiseuille_flow(x_values - (HEIGHT / 2.0 + AGRID), FORCE_DENSITY[1],
                            VISCOSITY * DENSITY, HEIGHT)
+# velocity is zero outside the walls
+y_values[np.nonzero(x_values < WALL_OFFSET)] = 0.0
+y_values[np.nonzero(x_values > BOX_L - WALL_OFFSET)] = 0.0
 
 plt.plot(x_values, y_values, 'o-', label='analytical')
 plt.plot(fluid_velocities[:, 0], fluid_velocities[:, 1], label='simulation')
