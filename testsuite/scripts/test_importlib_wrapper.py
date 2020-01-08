@@ -142,6 +142,29 @@ except ImportError:
 """
         self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
 
+        statement = "import espressomd.visualization, espressomd.visualization as test"
+        expected = """
+try:
+    import espressomd.visualization
+    if hasattr(espressomd.visualization.mayaviLive, 'deferred_ImportError') or \\
+       hasattr(espressomd.visualization.openGLLive, 'deferred_ImportError'):
+        raise ImportError()
+except ImportError:
+    from unittest.mock import MagicMock
+    import espressomd
+    espressomd.visualization = MagicMock()
+try:
+    import espressomd.visualization as test
+    if hasattr(test.mayaviLive, 'deferred_ImportError') or \\
+       hasattr(test.openGLLive, 'deferred_ImportError'):
+        raise ImportError()
+except ImportError:
+    from unittest.mock import MagicMock
+    import espressomd
+    test = MagicMock()
+"""
+        self.assertEqual(iw.mock_es_visualization(statement), expected[1:])
+
         statement = "from espressomd import visualization"
         expected = """
 try:
@@ -217,7 +240,13 @@ except ImportError:
         statement = "from espressomd.visualization_mayavi import a as b, mayaviLive"
         expected = """
 try:
-    from espressomd.visualization_mayavi import a as b, mayaviLive
+    from espressomd.visualization_mayavi import a as b
+except ImportError:
+    from unittest.mock import MagicMock
+    import espressomd
+    b = MagicMock()
+try:
+    from espressomd.visualization_mayavi import mayaviLive
 except ImportError:
     from unittest.mock import MagicMock
     import espressomd

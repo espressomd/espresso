@@ -596,15 +596,25 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
             "visualization_mayavi"}
         self.namespace_visualizers = {
             "espressomd." + x for x in self.visualizers}
-        self.visu_aliases = []
-        self.visu_linenos = []
+        self.visu_items = {}
+
+    def register_import(self, lineno, from_str, module_str, alias):
+        if lineno not in self.visu_items:
+            self.visu_items[lineno] = []
+        if from_str:
+            line = "from {} import {}".format(from_str, module_str)
+        else:
+            line = "import {}".format(module_str)
+        if alias:
+            line += " as {}".format(alias)
+        self.visu_items[lineno].append(line)
 
     def visit_Import(self, node):
         # get visualizer alias
         for child in node.names:
             if child.name in self.namespace_visualizers:
-                self.visu_aliases.append(child.asname or child.name)
-                self.visu_linenos.append(node.lineno)
+                self.register_import(
+                    node.lineno, None, child.name, child.asname)
 
     def visit_ImportFrom(self, node):
         if node.module in self.namespace_visualizers:
@@ -612,15 +622,14 @@ class GetEspressomdVisualizerImports(ast.NodeVisitor):
                 if child.name == "*":
                     raise ValueError("cannot use MagicMock() on a wildcard "
                                      "import at line {}".format(node.lineno))
-                elif child.name in {"openGLLive", "mayaviLive"}:
-                    self.visu_aliases.append(child.asname or child.name)
-                    self.visu_linenos.append(node.lineno)
+                self.register_import(
+                    node.lineno, node.module, child.name, child.asname)
         # get visualizer alias
         if node.module == "espressomd":
             for child in node.names:
                 if child.name in self.visualizers:
-                    self.visu_aliases.append(child.asname or child.name)
-                    self.visu_linenos.append(node.lineno)
+                    self.register_import(
+                        node.lineno, node.module, child.name, child.asname)
 
 
 def mock_es_visualization(code):
@@ -661,10 +670,16 @@ except ImportError:
     visitor = GetEspressomdVisualizerImports()
     visitor.visit(ast.parse(protect_ipython_magics(code)))
     lines = code.split("\n")
-    for alias, lineno in zip(visitor.visu_aliases, visitor.visu_linenos):
+    for lineno, imports in visitor.visu_items.items():
         line = lines[lineno - 1]
-        checks = check_for_deferred_ImportError(line, alias)
-        lines[lineno - 1] = r_es_vis_mock.format(line, checks, alias)
+        indentation = line[:len(line) - len(line.lstrip())]
+        lines[lineno - 1] = ""
+        for import_str in imports:
+            alias = import_str.split()[-1]
+            checks = check_for_deferred_ImportError(import_str, alias)
+            import_str_new = "\n".join(indentation + x for x in
+                                       r_es_vis_mock.format(import_str, checks, alias).split("\n"))
+            lines[lineno - 1] += import_str_new
 
     return "\n".join(lines)
 
