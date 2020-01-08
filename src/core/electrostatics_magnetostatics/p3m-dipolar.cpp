@@ -1798,7 +1798,7 @@ void dp3m_count_magnetic_particles() {
     tot_sums[i] = 0.0;
   }
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : cell_structure.local_cells().particles()) {
     if (p.p.dipm != 0.0) {
       node_sums[0] += p.calc_dip().norm2();
       node_sums[1] += 1.0;
