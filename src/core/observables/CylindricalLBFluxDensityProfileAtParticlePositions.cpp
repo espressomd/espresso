@@ -21,13 +21,11 @@
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
-#include <boost/range/algorithm.hpp>
-
 namespace Observables {
-
 std::vector<double>
 CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
-    PartCfg &partCfg) const {
+    Utils::Span<const Particle *const> particles) const {
+
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                 static_cast<size_t>(n_phi_bins),
                                 static_cast<size_t>(n_z_bins)}};
@@ -37,26 +35,17 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
   // First collect all positions (since we want to call the LB function to
   // get the fluid velocities only once).
-  std::vector<Utils::Vector3d> folded_positions(ids().size());
-  boost::transform(ids(), folded_positions.begin(),
-                   [&partCfg](int id) -> Utils::Vector3d {
-                     return folded_position(partCfg[id].r.p, box_geo);
-                   });
 
-  std::vector<Utils::Vector3d> velocities(folded_positions.size());
-  boost::transform(folded_positions, velocities.begin(),
-                   [](const Utils::Vector3d &pos) {
-                     return lb_lbfluid_get_interpolated_velocity(pos) *
-                            lb_lbfluid_get_lattice_speed();
-                   });
-  for (auto &p : folded_positions)
-    p -= center;
-  for (int ind = 0; ind < ids().size(); ++ind) {
-    histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
-                         folded_positions[ind], axis),
-                     Utils::transform_vector_cartesian_to_cylinder(
-                         velocities[ind], axis, folded_positions[ind]));
+  for (auto p : particles) {
+    auto const pos = folded_position(p->r.p, box_geo);
+    auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
+                   lb_lbfluid_get_lattice_speed();
+
+    histogram.update(
+        Utils::transform_coordinate_cartesian_to_cylinder(pos - center, axis),
+        Utils::transform_vector_cartesian_to_cylinder(v, axis, pos - center));
   }
+
   histogram.normalize();
   return histogram.get_histogram();
 }

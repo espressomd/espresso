@@ -755,7 +755,11 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        re = analyze.calc_re(analyze.partCfg())
+        re = analyze.calc_re(
+            analyze.partCfg(),
+            chain_start,
+            number_of_chains,
+            chain_length)
         return np.array([re[0], re[1], re[2], re[3]])
 
     def calc_rg(self, chain_start=None, number_of_chains=None,
@@ -787,7 +791,11 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rg = analyze.calc_rg(analyze.partCfg())
+        rg = analyze.calc_rg(
+            analyze.partCfg(),
+            chain_start,
+            number_of_chains,
+            chain_length)
         return np.array([rg[0], rg[1], rg[2], rg[3]])
 
     def calc_rh(self, chain_start=None, number_of_chains=None,
@@ -818,7 +826,11 @@ class Analysis:
         """
 
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rh = analyze.calc_rh(analyze.partCfg())
+        rh = analyze.calc_rh(
+            analyze.partCfg(),
+            chain_start,
+            number_of_chains,
+            chain_length)
         return np.array([rh[0], rh[1]])
 
     def check_topology(self, chain_start=None, number_of_chains=None,
@@ -838,9 +850,6 @@ class Analysis:
                                  'n_chains={2:.0f}, chain_length={3:.0f}\n'
                                  'please provide a contiguous range of particle ids'.format(
                                      i, chain_start, number_of_chains, chain_length))
-        analyze.chain_start = chain_start
-        analyze.chain_n_chains = number_of_chains
-        analyze.chain_length = chain_length
 
     #
     # Structure factor
