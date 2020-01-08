@@ -428,8 +428,9 @@ void mpi_who_has_slave(int, int) {
 
   sendbuf.resize(n_part);
 
-  auto end = std::transform(local_cells.particles().begin(),
-                            local_cells.particles().end(), sendbuf.data(),
+  auto end = std::transform(cell_structure.local_cells().particles().begin(),
+                            cell_structure.local_cells().particles().end(),
+                            sendbuf.data(),
                             [](Particle const &p) { return p.p.identity; });
 
   auto npart = std::distance(sendbuf.data(), end);
@@ -467,7 +468,9 @@ void mpi_who_has(const ParticleRange &particles) {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() { mpi_who_has(local_cells.particles()); }
+void build_particle_node() {
+  mpi_who_has(cell_structure.local_cells().particles());
+}
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
@@ -1055,7 +1058,7 @@ static void remove_all_bonds_to(Particle &p, int id) {
 }
 
 void remove_all_bonds_to(int identity) {
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     remove_all_bonds_to(p, identity);
   }
 }
@@ -1063,7 +1066,7 @@ void remove_all_bonds_to(int identity) {
 void local_remove_particle(int part) {
   Cell *cell = nullptr;
   int position = -1;
-  for (auto c : local_cells) {
+  for (auto c : cell_structure.local_cells()) {
     for (int i = 0; i < c->n; i++) {
       auto &p = c->part[i];
 
@@ -1115,10 +1118,10 @@ void local_remove_all_particles() {
   max_seen_particle = -1;
   std::fill(local_particles.begin(), local_particles.end(), nullptr);
 
-  for (c = 0; c < local_cells.n; c++) {
+  for (c = 0; c < cell_structure.local_cells().n; c++) {
     Particle *p;
     int i, np;
-    cell = local_cells.cell[c];
+    cell = cell_structure.local_cells().cell[c];
     p = cell->part;
     np = cell->n;
     for (i = 0; i < np; i++)
@@ -1128,7 +1131,7 @@ void local_remove_all_particles() {
 }
 
 void local_rescale_particles(int dir, double scale) {
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     if (dir < 3)
       p.r.p[dir] *= scale;
     else {
@@ -1195,7 +1198,7 @@ int try_delete_bond(Particle *part, const int *bond) {
 #ifdef EXCLUSIONS
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : cell_structure.local_cells().particles()) {
       p.el.clear();
     }
 
