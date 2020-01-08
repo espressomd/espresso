@@ -188,6 +188,34 @@ def set_cmd(code, filepath, cmd_arguments):
     return code, old_sys_argv
 
 
+class GetVariableAssignments(ast.NodeVisitor):
+    """
+    Find all assignments in the global namespace.
+    """
+
+    def __init__(self, variable_names):
+        self.variables = {x: [] for x in variable_names}
+
+    def visit_Assign(self, node):
+        for target in node.targets:
+            if hasattr(target, "id"):
+                varname = target.id
+                if varname in self.variables:
+                    assert len(node.targets) == 1, \
+                        "Cannot substitute multiple assignments (variable " \
+                        "'{}' at line {})".format(varname, node.lineno)
+                    self.variables[varname].append(node.lineno)
+
+    def visit_ClassDef(self, node):
+        pass  # skip class scopes
+
+    def visit_FunctionDef(self, node):
+        pass  # skip function scopes
+
+    def visit_AsyncFunctionDef(self, node):
+        pass  # skip function scopes
+
+
 def substitute_variable_values(code, strings_as_is=False, keep_original=True,
                                **parameters):
     """
@@ -202,35 +230,215 @@ def substitute_variable_values(code, strings_as_is=False, keep_original=True,
         substitute them in-place without formatting by ``repr()``.
     keep_original : bool
         Keep the original value (e.g. ``N = 10; _N__original = 1000``), helps
-        with debugging. If ``False``, make sure the original value is not a
-        multiline statement, because removing its first line would lead to
-        a syntax error.
+        with debugging.
     \*\*parameters :
         Variable names and their new value.
 
     """
-    for variable, value in parameters.items():
-        assert variable in code, "variable {} not found".format(variable)
-        re_var = re.compile("^(\t|\ {,4})(" + variable + ")(?= *=[^=])", re.M)
-        assert re_var.search(code) is not None, \
-            "variable {} has no assignment".format(variable)
-        val = strings_as_is and value or repr(value)
-        code = re_var.sub(r"\g<1>\g<2> = " + val + r"; _\g<2>__original", code)
-        if not keep_original:
-            code = re.sub(r"; _" + variable + "__original.+", "", code)
-    return code
+    tree = ast.parse(protect_ipython_magics(code))
+    visitor = GetVariableAssignments(parameters.keys())
+    visitor.visit(tree)
+    # split lines
+    lines = code.split("\n")
+    mapping = delimit_statements(code)
+    # substitute values
+    for varname, new_value in parameters.items():
+        linenos = visitor.variables[varname]
+        assert linenos, "variable {} has no assignment".format(varname)
+        new_value = strings_as_is and new_value or repr(new_value)
+        for lineno in linenos:
+            identation, old_value = lines[lineno - 1].split(varname, 1)
+            lines[lineno - 1] = identation + varname + " = " + new_value
+            if keep_original:
+                lines[lineno - 1] += "; _" + varname + "__original" + old_value
+            else:
+                for lineno in range(lineno + 1, mapping[lineno]):
+                    lines[lineno - 1] = ""
+    return "\n".join(lines)
+
+
+class GetPrngSeedEspressomdSystem(ast.NodeVisitor):
+    """
+    Find all assignments of :class:`espressomd.system.System` in the global
+    namespace. Assignments made in classes or function raise an error. Detect
+    random seed setup in the numpy and :class:`espressomd.system.System` PRNGs.
+    """
+
+    def __init__(self):
+        self.numpy_random_aliases = set()
+        self.es_system_aliases = set()
+        self.variable_system_aliases = set()
+        self.system_seeds = []
+        self.numpy_seeds = []
+        self.abort_message = None
+        self.error_msg_multi_assign = "Cannot parse {} in a multiple assignment (line {})"
+
+    def visit_Import(self, node):
+        # get system aliases
+        for child in node.names:
+            if child.name == "espressomd.system.System":
+                name = (child.asname or child.name)
+                self.es_system_aliases.add(name)
+            elif child.name == "espressomd.system":
+                name = (child.asname or child.name)
+                self.es_system_aliases.add(name + ".System")
+            elif child.name == "espressomd.System":
+                name = (child.asname or child.name)
+                self.es_system_aliases.add(name)
+            elif child.name == "espressomd":
+                name = (child.asname or "espressomd")
+                self.es_system_aliases.add(name + ".system.System")
+                self.es_system_aliases.add(name + ".System")
+            elif child.name == "numpy.random":
+                name = (child.asname or child.name)
+                self.numpy_random_aliases.add(name)
+            elif child.name == "numpy":
+                name = (child.asname or "numpy")
+                self.numpy_random_aliases.add(name + ".random")
+
+    def visit_ImportFrom(self, node):
+        # get system aliases
+        for child in node.names:
+            if node.module == "espressomd" and child.name == "system":
+                name = (child.asname or child.name)
+                self.es_system_aliases.add(name + ".System")
+            elif node.module == "espressomd" and child.name == "System":
+                self.es_system_aliases.add(child.asname or child.name)
+            elif node.module == "espressomd.system" and child.name == "System":
+                self.es_system_aliases.add(child.asname or child.name)
+            elif node.module == "numpy" and child.name == "random":
+                self.numpy_random_aliases.add(child.asname or child.name)
+            elif node.module == "numpy.random":
+                self.numpy_random_aliases.add(child.asname or child.name)
+
+    def is_es_system(self, child):
+        if hasattr(child, "value"):
+            if hasattr(child.value, "value") and hasattr(
+                    child.value.value, "id"):
+                if (child.value.value.id + "." + child.value.attr +
+                        "." + child.attr) in self.es_system_aliases:
+                    return True
+            else:
+                if hasattr(child.value, "id") and (child.value.id + "." +
+                                                   child.attr) in self.es_system_aliases:
+                    return True
+        elif isinstance(child, ast.Call):
+            if hasattr(child, "id") and child.func.id in self.es_system_aliases:
+                return True
+            elif hasattr(child, "func") and hasattr(child.func, "value") and (
+                    hasattr(child.func.value, "value") and
+                    (child.func.value.value.id + "." +
+                     child.func.value.attr + "." + child.func.attr)
+                    or (child.func.value.id + "." + child.func.attr)) in self.es_system_aliases:
+                return True
+            elif hasattr(child, "func") and hasattr(child.func, "id") and child.func.id in self.es_system_aliases:
+                return True
+        elif hasattr(child, "id") and child.id in self.es_system_aliases:
+            return True
+        return False
+
+    def detect_es_system_instances(self, node):
+        varname = None
+        for target in node.targets:
+            if isinstance(target, ast.Name):
+                if hasattr(target, "id") and hasattr(node.value, "func") and \
+                        self.is_es_system(node.value.func):
+                    varname = target.id
+            elif isinstance(target, ast.Tuple):
+                value = node.value
+                if (isinstance(value, ast.Tuple) or isinstance(value, ast.List)) \
+                        and any(map(self.is_es_system, node.value.elts)):
+                    raise AssertionError(self.error_msg_multi_assign.format(
+                        "espressomd.System", node.lineno))
+        if varname is not None:
+            assert len(node.targets) == 1, self.error_msg_multi_assign.format(
+                "espressomd.System", node.lineno)
+            assert self.abort_message is None, \
+                "Cannot process espressomd.System assignments in " + self.abort_message
+            self.variable_system_aliases.add(varname)
+
+    def detect_es_system_assign_seed(self, node):
+        def is_seed(target):
+            if isinstance(target, ast.Attribute) \
+                    and hasattr(target.value, "id") \
+                    and target.value.id in self.variable_system_aliases \
+                    and target.attr in ("seed", "random_number_generator_state"):
+                return True
+        for target in node.targets:
+            if is_seed(target):
+                assert len(node.targets) == 1, self.error_msg_multi_assign.format(
+                    "espressomd.System.seed", node.lineno)
+                assert self.abort_message is None, \
+                    "Cannot process espressomd.System assignments in " + self.abort_message
+                self.system_seeds.append(
+                    (node.lineno, target.value.id, target.attr))
+            elif isinstance(target, ast.Tuple) and any(map(is_seed, target.elts)):
+                raise AssertionError(self.error_msg_multi_assign.format(
+                    "espressomd.System.seed", node.lineno))
+
+    def detect_es_system_expr_seed(self, node):
+        if hasattr(node.value, "func") and hasattr(node.value.func, "value") \
+                and hasattr(node.value.func.value, "id") \
+                and node.value.func.value.id in self.variable_system_aliases \
+                and node.value.func.attr == "set_random_state_PRNG":
+            self.system_seeds.append((node.lineno, node.value.func.value.id,
+                                      node.value.func.attr))
+
+    def detect_np_random_expr_seed(self, node):
+        if hasattr(node.value, "func") and hasattr(node.value.func, "value") \
+                and (hasattr(node.value.func.value, "id") and node.value.func.value.id in self.numpy_random_aliases
+                     or hasattr(node.value.func.value, "value")
+                     and hasattr(node.value.func.value.value, "id")
+                     and hasattr(node.value.func.value, "attr")
+                     and (node.value.func.value.value.id + "." +
+                          node.value.func.value.attr) in self.numpy_random_aliases
+                     ) and node.value.func.attr == "seed":
+            self.numpy_seeds.append(node.lineno)
+
+    def visit_Assign(self, node):
+        self.detect_es_system_instances(node)
+        self.detect_es_system_assign_seed(node)
+
+    def visit_Expr(self, node):
+        self.detect_es_system_expr_seed(node)
+        self.detect_np_random_expr_seed(node)
+
+    def visit_ClassDef(self, node):
+        self.abort_message = "class definitions"
+        ast.NodeVisitor.generic_visit(self, node)
+        self.abort_message = None
+
+    def visit_FunctionDef(self, node):
+        self.abort_message = "function definitions"
+        ast.NodeVisitor.generic_visit(self, node)
+        self.abort_message = None
+
+    def visit_AsyncFunctionDef(self, node):
+        self.abort_message = "function definitions"
+        ast.NodeVisitor.generic_visit(self, node)
+        self.abort_message = None
 
 
 def set_random_seeds(code):
-    # delete explicit ESPResSo seed
-    aliases = re.findall(r"([^\s;]+) *= *(?:espressomd\.)?System *\(", code)
-    pattern = r"(?<=[\s;]){}\.(?:seed|random_number_generator_state)(?= *=[^=])"
-    subst = "{}.set_random_state_PRNG(); _random_seed_es__original"
-    for varname in set(aliases):
-        code = re.sub(pattern.format(varname), subst.format(varname), code)
+    code = protect_ipython_magics(code)
+    tree = ast.parse(code)
+    visitor = GetPrngSeedEspressomdSystem()
+    visitor.visit(tree)
+    lines = code.split("\n")
+    # delete ESPResSo system seed
+    for lineno, varname, seed_attribute in visitor.system_seeds:
+        old_stmt = varname + "." + seed_attribute
+        new_stmt = varname + ".set_random_state_PRNG(); _random_seed_es__original"
+        if seed_attribute == "set_random_state_PRNG":
+            new_stmt += " = "
+        lines[lineno - 1] = lines[lineno - 1].replace(old_stmt, new_stmt, 1)
     # delete explicit NumPy seed
-    code = re.sub(r"(?<=[\s;])(?:numpy|np)\.random\.seed *(?=\()",
-                  "_random_seed_np = (lambda *args, **kwargs: None)", code)
+    for lineno in visitor.numpy_seeds:
+        old_stmt = ".seed"
+        new_stmt = ".seed;_random_seed_np = (lambda *args, **kwargs: None)"
+        lines[lineno - 1] = lines[lineno - 1].replace(old_stmt, new_stmt, 1)
+    code = "\n".join(lines)
+    code = deprotect_ipython_magics(code)
     return code
 
 

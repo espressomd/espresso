@@ -42,6 +42,9 @@ class importlib_wrapper(ut.TestCase):
         str_inp = "other_var == 5\n"
         self.assertRaises(AssertionError, iw.substitute_variable_values,
                           str_inp, other_var=10)
+        str_inp = "var, other_var = 5, 6\n"
+        self.assertRaises(AssertionError, iw.substitute_variable_values,
+                          str_inp, var=10)
 
     def test_set_cmd(self):
         original_sys_argv = list(sys.argv)
@@ -81,9 +84,9 @@ class importlib_wrapper(ut.TestCase):
 
     def test_set_random_seeds(self):
         # ESPResSo seed
-        str_es_sys = "system = espressomd.System(box_l=[box_l] * 3)\n"
+        str_es_sys = "import espressomd.System as S\nsystem = S(box_l=[1]*3)\n"
         str_inp = str_es_sys + "system.set_random_state_PRNG()"
-        str_exp = str_es_sys + "system.set_random_state_PRNG()"
+        str_exp = str_es_sys + "system.set_random_state_PRNG(); _random_seed_es__original = ()"
         str_out = iw.set_random_seeds(str_inp)
         self.assertEqual(str_out, str_exp)
         str_inp = str_es_sys + "system.random_number_generator_state = 7 * [0]"
@@ -97,13 +100,16 @@ class importlib_wrapper(ut.TestCase):
         str_out = iw.set_random_seeds(str_inp)
         self.assertEqual(str_out, str_exp)
         # NumPy seed
+        str_np = "import numpy as np\n"
         str_lambda = "(lambda *args, **kwargs: None)"
-        str_inp = "\nnp.random.seed(seed=system.seed)"
-        str_exp = "\n_random_seed_np = " + str_lambda + "(seed=system.seed)"
+        str_inp = str_np + "np.random.seed(seed=system.seed)"
+        str_exp = str_np + "np.random.seed;_random_seed_np = " + \
+            str_lambda + "(seed=system.seed)"
         str_out = iw.set_random_seeds(str_inp)
         self.assertEqual(str_out, str_exp)
-        str_inp = "\nnumpy.random.seed(42)"
-        str_exp = "\n_random_seed_np = " + str_lambda + "(42)"
+        str_np = "import numpy.random as npr\n"
+        str_inp = str_np + "npr.seed(42)"
+        str_exp = str_np + "npr.seed;_random_seed_np = " + str_lambda + "(42)"
         str_out = iw.set_random_seeds(str_inp)
         self.assertEqual(str_out, str_exp)
 
@@ -291,6 +297,82 @@ except ImportError:
             'pyplot', 'plt',
         ]
         self.assertEqual(v.pyplot_aliases, expected_plt_aliases)
+        expected_plt_paths = {('matplotlib', 'pyplot'), ('mpl', 'pyplot'),
+                              ('plt',), ('pyplot',)}
+        self.assertEqual(v.pyplot_paths, expected_plt_paths)
+        # find lines interactive mode, backend setup and magic functions
+        self.assertEqual(v.pyplot_interactive_linenos, [14, 16])
+        self.assertEqual(v.matplotlib_backend_linenos, [17, 18])
+        self.assertEqual(v.ipython_magic_linenos, [19])
+
+    def test_prng_seed_espressomd_system_visitor(self):
+        import_stmt = [
+            'sys0 = espressomd.System()   # nothing: espressomd not imported',
+            'import espressomd as es1',
+            'import espressomd.system as es2',
+            'import espressomd.System as s1, espressomd.system.System as s2',
+            'from espressomd import System as s3, electrostatics',
+            'from espressomd.system import System as s4',
+            'sys1 = es1.System()',
+            'sys2 = es1.system.System()',
+            'sys3 = es2.System()',
+            'sys4 = s1()',
+            'sys5 = s2()',
+            'sys6 = s3()',
+            'sys7 = s4()',
+            'sys3.seed = 5',
+            'sys5.random_number_generator_state = 5',
+            'sys7.set_random_state_PRNG(5)',
+            'import numpy as np',
+            'import numpy.random as npr1',
+            'from numpy import random as npr2',
+            'np.random.seed(1)',
+            'npr1.seed(1)',
+            'npr2.seed(1)',
+        ]
+        tree = ast.parse('\n'.join(import_stmt))
+        v = iw.GetPrngSeedEspressomdSystem()
+        v.visit(tree)
+        # find all aliases for espressomd.system.System
+        expected_es_sys_aliases = {'es1.System', 'es1.system.System',
+                                   'es2.System', 's1', 's2', 's3', 's4'}
+        self.assertEqual(v.es_system_aliases, expected_es_sys_aliases)
+        # find all variables of type espressomd.system.System
+        expected_es_sys_objs = set('sys' + str(i) for i in range(1, 8))
+        self.assertEqual(v.variable_system_aliases, expected_es_sys_objs)
+        # find all seeds setup
+        expected_es_sys_seeds = [
+            (14, 'sys3', 'seed'),
+            (15, 'sys5', 'random_number_generator_state'),
+            (16, 'sys7', 'set_random_state_PRNG'),
+        ]
+        self.assertEqual(v.system_seeds, expected_es_sys_seeds)
+        self.assertEqual(v.numpy_seeds, [20, 21, 22])
+        # test exceptions
+        str_es_sys_list = [
+            'import espressomd.System',
+            'import espressomd.system.System',
+            'from espressomd import System',
+            'from espressomd.system import System',
+        ]
+        exception_stmt = [
+            's, var = System(), 5',
+            'class A:\n\ts = System()',
+            'def A():\n\ts = System()',
+            's = System()\ns.seed, var = 1, 5',
+        ]
+        for str_es_sys in str_es_sys_list:
+            for str_stmt in exception_stmt:
+                for alias in ['', ' as EsSystem']:
+                    str_import = str_es_sys + alias + '\n'
+                    alias = str_import.split()[-1]
+                    code = str_import + str_stmt.replace('System', alias)
+                    v = iw.GetPrngSeedEspressomdSystem()
+                    tree = ast.parse(code)
+                    err_msg = v.__class__.__name__ + \
+                        ' should fail on ' + repr(code)
+                    with self.assertRaises(AssertionError, msg=err_msg):
+                        v.visit(tree)
 
     def test_delimit_statements(self):
         lines = [
