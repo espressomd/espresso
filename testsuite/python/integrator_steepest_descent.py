@@ -19,6 +19,7 @@ import unittest_decorators as utx
 import numpy as np
 
 import espressomd
+import espressomd.minimize_energy
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
@@ -55,7 +56,7 @@ class IntegratorSteepestDescent(ut.TestCase):
         self.system.part.clear()
         self.system.integrator.set_vv()
 
-    def test_relaxation(self):
+    def check_relaxation(self, mode):
         for i in range(self.n_part):
             p = self.system.part.add(
                 id=i, pos=np.random.random(3) * self.system.box_l)
@@ -67,10 +68,13 @@ class IntegratorSteepestDescent(ut.TestCase):
         self.assertNotAlmostEqual(
             self.system.analysis.energy()["total"], 0, places=10)
 
-        self.system.integrator.set_steepest_descent(
-            f_max=0.0, gamma=0.1, max_displacement=0.05)
-
-        self.system.integrator.run(500)
+        sd_params = {"f_max": 0.0, "gamma": 0.1, "max_displacement": 0.05}
+        if mode == "integrator":
+            self.system.integrator.set_steepest_descent(**sd_params)
+            self.system.integrator.run(500)
+        elif mode == "free_function":
+            espressomd.minimize_energy.steepest_descent(
+                self.system, max_steps=500, **sd_params)
 
         self.system.constraints.clear()
 
@@ -81,6 +85,12 @@ class IntegratorSteepestDescent(ut.TestCase):
         if self.test_rotation:
             np.testing.assert_allclose(np.copy(self.system.part[:].dip),
                                        np.hstack((-np.ones((self.n_part, 1)), np.zeros((self.n_part, 1)), np.zeros((self.n_part, 1)))), atol=1E-9)
+
+    def test_relaxation_integrator(self):
+        self.check_relaxation("integrator")
+
+    def test_relaxation_free_function(self):
+        self.check_relaxation("free_function")
 
     def test_rescaling(self):
         self.system.part.add(pos=[5., 5., 4.9], type=0)
@@ -94,9 +104,15 @@ class IntegratorSteepestDescent(ut.TestCase):
         f_old = np.copy(self.system.part[:].f)
 
         # No-op, because gamma = 0.
-        self.system.integrator.set_steepest_descent(
-            f_max=0.0, gamma=0.0, max_displacement=0.001)
+        sd_params = {"f_max": 0.0, "gamma": 0.0, "max_displacement": 0.001}
+
+        self.system.integrator.set_steepest_descent(**sd_params)
         self.system.integrator.run(1)
+
+        np.testing.assert_allclose(f_old, np.copy(self.system.part[:].f))
+
+        espressomd.minimize_energy.steepest_descent(
+            self.system, max_steps=1, **sd_params)
 
         np.testing.assert_allclose(f_old, np.copy(self.system.part[:].f))
 
