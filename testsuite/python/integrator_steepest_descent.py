@@ -118,6 +118,28 @@ class IntegratorSteepestDescent(ut.TestCase):
         np.testing.assert_allclose(np.copy(self.system.part[:].v), 0.)
         np.testing.assert_allclose(np.copy(self.system.part[:].f), 0.)
 
+    def test_convergence(self):
+        max_disp = 0.05
+        self.system.part.add(pos=[0, 0, 0], type=0)
+        self.system.part.add(pos=[0, 0, self.lj_cut - max_disp / 2], type=0)
+        # converges in 1 step
+        sd_params = {"f_max": 1.0, "gamma": 0.1, "max_displacement": max_disp}
+        converged = espressomd.minimize_energy.steepest_descent(
+            self.system, max_steps=0, **sd_params)
+        self.assertFalse(converged)
+        converged = espressomd.minimize_energy.steepest_descent(
+            self.system, max_steps=1, **sd_params)
+        self.assertFalse(converged)
+        converged = espressomd.minimize_energy.steepest_descent(
+            self.system, max_steps=1, **sd_params)
+        self.assertTrue(converged)
+        # never converges, even when the system is in an energy minimum,
+        # because f_max = 0.
+        sd_params["f_max"] = 0.0
+        converged = espressomd.minimize_energy.steepest_descent(
+            self.system, max_steps=1, **sd_params)
+        self.assertFalse(converged)
+
     def test_rescaling(self):
         self.system.part.add(pos=[5., 5., 4.9], type=0)
         self.system.part.add(pos=[5., 5., 5.1], type=0)

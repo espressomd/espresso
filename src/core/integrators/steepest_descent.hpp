@@ -58,6 +58,7 @@ void steepest_descent_init(double f_max, double gamma, int max_steps,
  *  of steps @ref SteepestDescentParameters::max_steps "max_steps" is reached.
  *
  *  @param max_steps New value for @ref SteepestDescentParameters::max_steps
+ *  @return whether the algorithm converged.
  */
 void steepest_descent(int max_steps);
 
@@ -66,5 +67,10 @@ void steepest_descent(int max_steps);
  *          limit @ref SteepestDescentParameters::f_max "f_max".
  */
 bool steepest_descent_step(const ParticleRange &particles);
+
+/**
+ *  @return whether the algorithm converged.
+ */
+bool steepest_descent_converged();
 
 #endif /* __STEEPEST_DESCENT_HPP */

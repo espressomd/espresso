@@ -60,3 +60,6 @@ cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
 
 cdef extern from "communication.hpp":
     void mpi_steepest_descent(int max_steps)
+
+cdef extern from "integrators/steepest_descent.hpp":
+    cdef cbool steepest_descent_converged()

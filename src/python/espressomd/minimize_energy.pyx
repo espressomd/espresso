@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from integrate cimport steepest_descent_converged
+
 
 def steepest_descent(system, *args, **kwargs):
     """
@@ -39,9 +41,15 @@ def steepest_descent(system, *args, **kwargs):
         Maximal allowed displacement per step. Typical values for a LJ liquid
         are in the range of 0.1% to 10% of the particle sigma.
 
+    Returns
+    -------
+    :obj:`bool`
+        Whether the steepest descent has converged.
+
     """
     cdef object old_integrator
     old_integrator = system.integrator.get_state()
     system.integrator.set_steepest_descent(*args, **kwargs)
     system.integrator.run(kwargs['max_steps'])
     system.integrator.__setstate__(old_integrator)
+    return steepest_descent_converged()
