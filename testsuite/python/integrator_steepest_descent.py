@@ -22,7 +22,7 @@ import espressomd
 
 
 @utx.skipIfMissingFeatures("LENNARD_JONES")
-class test_minimize_energy(ut.TestCase):
+class IntegratorSteepestDescent(ut.TestCase):
 
     np.random.seed(42)
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
