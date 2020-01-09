@@ -37,16 +37,11 @@ inline void velocity_verlet_propagate_vel_pos(const ParticleRange &particles) {
     propagate_omega_quat_particle(p);
 #endif
 
-// Don't propagate translational degrees of freedom of vs
-#ifdef VIRTUAL_SITES
+    // Don't propagate translational degrees of freedom of vs
     if (p.p.is_virtual)
       continue;
-#endif
     for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
+      if (!(p.p.ext_flag & COORD_FIXED(j))) {
         /* Propagate velocities: v(t+0.5*dt) = v(t) + 0.5 * dt * a(t) */
         p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
 
@@ -78,14 +73,10 @@ velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
       continue;
 #endif
     for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
-#endif
         /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
         p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
-#ifdef EXTERNAL_FORCES
       }
-#endif
     }
   }
 }

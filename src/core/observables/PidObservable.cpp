@@ -20,8 +20,15 @@
 
 #include "partCfg_global.hpp"
 
+#include <boost/range/algorithm/transform.hpp>
+
 namespace Observables {
 std::vector<double> PidObservable::operator()() const {
-  return this->evaluate(partCfg());
+  std::vector<const Particle *> particles(ids().size());
+
+  boost::transform(ids(), particles.begin(),
+                   [](int id) { return &partCfg()[id]; });
+
+  return this->evaluate(particles);
 }
 } // namespace Observables

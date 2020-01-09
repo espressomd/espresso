@@ -20,7 +20,8 @@
  */
 #include "p3m_send_mesh.hpp"
 
-#ifdef P3M
+#if defined(P3M) || defined(DP3M)
+
 #include "fft.hpp"
 
 #include <utils/mpi/cart_comm.hpp>

@@ -21,26 +21,23 @@
 
 #include "PidObservable.hpp"
 
-#include "integrate.hpp"
-
 namespace Observables {
-
 class ComForce : public PidObservable {
 public:
   using PidObservable::PidObservable;
   int n_values() const override { return 3; }
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
     std::vector<double> res(n_values());
-    for (int i : ids()) {
-      if (partCfg[i].p.is_virtual)
+    for (auto const &p : particles) {
+      if (p->p.is_virtual)
         continue;
-      res[0] += partCfg[i].f.f[0];
-      res[1] += partCfg[i].f.f[1];
-      res[2] += partCfg[i].f.f[2];
+      res[0] += p->f.f[0];
+      res[1] += p->f.f[1];
+      res[2] += p->f.f[2];
     }
     return res;
-  };
+  }
 };
-
 } // Namespace Observables
 #endif

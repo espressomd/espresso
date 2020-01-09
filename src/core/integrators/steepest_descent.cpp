@@ -52,15 +52,10 @@ bool steepest_descent_step(const ParticleRange &particles) {
 
     // For all Cartesian coordinates
     for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
       // Skip, if coordinate is fixed
       if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-#ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
-        if (!p.p.is_virtual)
-#endif
-        {
+        if (!p.p.is_virtual) {
           // Square of force on particle
           f += Utils::sqr(p.f.f[j]);
 

@@ -63,6 +63,7 @@ args = parser.parse_args()
 
 print("\nArguments:", args)
 
+np.random.seed(42)
 # NUM PARTICLES AND BOX
 n_ionpairs = 100
 n_part = n_ionpairs * 2

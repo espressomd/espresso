@@ -34,7 +34,8 @@ Variant H5mdScript::call_method(const std::string &name,
   if (name == "init_file")
     m_h5md->InitFile();
   else if (name == "write")
-    m_h5md->Write(m_h5md->what(), partCfg(), local_cells.particles());
+    m_h5md->Write(m_h5md->what(), partCfg(),
+                  cell_structure.local_cells().particles());
   else if (name == "flush")
     m_h5md->Flush();
   else if (name == "close")
