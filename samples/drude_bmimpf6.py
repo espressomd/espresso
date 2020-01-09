@@ -30,7 +30,7 @@ required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "THOLE", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
-from espressomd.minimize_energy import minimize_energy
+from espressomd.minimize_energy import steepest_descent
 from espressomd.electrostatics import P3M
 from espressomd.interactions import ThermalizedBond, HarmonicBond
 from espressomd import drude_helpers
@@ -250,8 +250,8 @@ for i in range(n_ionpairs):
 print("\n-->E minimization")
 print("Before:", system.analysis.energy()["total"])
 n_max_steps = 100000
-minimize_energy(system, f_max=5.0, gamma=0.01, max_steps=n_max_steps,
-                max_displacement=0.01)
+steepest_descent(system, f_max=5.0, gamma=0.01, max_steps=n_max_steps,
+                 max_displacement=0.01)
 print("After:", system.analysis.energy()["total"])
 
 # THERMOSTAT

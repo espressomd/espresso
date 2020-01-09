@@ -30,7 +30,7 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
-from espressomd.minimize_energy import minimize_energy
+from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints
 
@@ -153,8 +153,8 @@ if 'LB.OFF' in modes:
         system.integrator.set_nvt()
     # set minimization
     if 'MINIMIZATION' in modes:
-        minimize_energy(system, f_max=1, gamma=10, max_steps=0,
-                        max_displacement=0.01)
+        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
+                         max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(

@@ -67,7 +67,7 @@ for index, N in enumerate(N_MONOMERS):
 
     logging.info("Warming up the polymer chain.")
     system.time_step = 0.002
-    espressomd.minimize_energy.minimize_energy(
+    espressomd.minimize_energy.steepest_descent(
         system,
         f_max=1.0,
         gamma=10,

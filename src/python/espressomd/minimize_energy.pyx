@@ -18,7 +18,7 @@
 #
 
 
-def minimize_energy(system, *args, **kwargs):
+def steepest_descent(system, *args, **kwargs):
     """
     Steepest descent algorithm for energy minimization. Wrapper for
     :class:`espressomd.integrate.SteepestDescent`.

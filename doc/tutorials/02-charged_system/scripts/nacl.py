@@ -20,7 +20,7 @@
 #
 import espressomd
 from espressomd import assert_features, electrostatics
-from espressomd.minimize_energy import minimize_energy
+from espressomd.minimize_energy import steepest_descent
 import numpy
 
 assert_features(["ELECTROSTATICS", "WCA"])
@@ -94,8 +94,8 @@ max_sigma = max(wca_sigmas.values())
 min_dist = 0.0
 
 while min_dist < max_sigma:
-    minimize_energy(system, f_max=0, gamma=10, max_steps=10,
-                    max_displacement=max_sigma * 0.01)
+    steepest_descent(system, f_max=0, gamma=10, max_steps=10,
+                     max_displacement=max_sigma * 0.01)
     min_dist = system.analysis.min_dist()
 
 # Set thermostat

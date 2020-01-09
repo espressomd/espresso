@@ -297,8 +297,9 @@ p_temp_dec = system.part.add(
 
 energy = system.analysis.energy()
 #print("Before Minimization: E_total = {}".format(energy['total']))
-espressomd.minimize_energy.minimize_energy(system, f_max=100, gamma=30.0,
-                                           max_steps=10000, max_displacement=0.01)
+espressomd.minimize_energy.steepest_descent(system, f_max=100, gamma=30.0,
+                                            max_steps=10000,
+                                            max_displacement=0.01)
 energy = system.analysis.energy()
 #print("After Minimization: E_total = {}".format(energy['total']))
 
