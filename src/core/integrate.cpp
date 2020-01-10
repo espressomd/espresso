@@ -151,7 +151,7 @@ void integrator_step_2(ParticleRange &particles) {
   }
 }
 
-void integrate(int n_steps, int reuse_forces) {
+int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   /* Prepare the integrator */
@@ -159,7 +159,7 @@ void integrate(int n_steps, int reuse_forces) {
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
-    return;
+    return 0;
 
   /* Verlet list criterion */
 
@@ -193,7 +193,7 @@ void integrate(int n_steps, int reuse_forces) {
   }
 
   if (check_runtime_errors(comm_cart))
-    return;
+    return 0;
 
   n_verlet_updates = 0;
 
@@ -203,6 +203,7 @@ void integrate(int n_steps, int reuse_forces) {
 
   /* Integration loop */
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+  int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 
@@ -265,6 +266,8 @@ void integrate(int n_steps, int reuse_forces) {
 #endif
     }
 
+    integrated_steps++;
+
     if (check_runtime_errors(comm_cart))
       break;
 
@@ -296,6 +299,7 @@ void integrate(int n_steps, int reuse_forces) {
     synchronize_npt_state(n_steps);
   }
 #endif
+  return integrated_steps;
 }
 
 void philox_counter_increment() {

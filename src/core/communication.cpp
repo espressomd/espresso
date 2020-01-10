@@ -291,9 +291,16 @@ void mpi_remove_particle_slave(int pnode, int part) {
 }
 
 /********************* REQ_MIN_ENERGY ********/
+auto return_any = [](int const &lhs, int const &rhs) -> int { return lhs; };
+static int mpi_steepest_descent_slave(int steps) {
+  return steepest_descent(steps);
+}
+REGISTER_CALLBACK_REDUCTION(mpi_steepest_descent_slave, return_any)
 
-REGISTER_CALLBACK(steepest_descent)
-void mpi_steepest_descent(int steps) { mpi_call_all(steepest_descent, steps); }
+int mpi_steepest_descent(int steps) {
+  return mpi_call(Communication::Result::reduction, return_any,
+                  mpi_steepest_descent_slave, steps);
+}
 
 /********************* REQ_INTEGRATE ********/
 static int mpi_integrate_slave(int n_steps, int reuse_forces) {

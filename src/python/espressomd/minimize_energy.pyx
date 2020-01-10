@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from integrate cimport steepest_descent_converged
-
 
 def steepest_descent(system, *args, **kwargs):
     """
@@ -50,6 +48,6 @@ def steepest_descent(system, *args, **kwargs):
     cdef object old_integrator
     old_integrator = system.integrator.get_state()
     system.integrator.set_steepest_descent(*args, **kwargs)
-    system.integrator.run(kwargs['max_steps'])
+    steps = system.integrator.run(kwargs['max_steps'])
     system.integrator.__setstate__(old_integrator)
-    return steepest_descent_converged()
+    return steps < kwargs['max_steps']

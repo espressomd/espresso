@@ -100,8 +100,9 @@ void integrator_sanity_checks();
  *  High-level documentation of the integration and thermostatting schemes
  *  can be found in doc/sphinx/system_setup.rst and /doc/sphinx/running.rst
  *
+ *  @return number of steps that have been integrated
  */
-void integrate(int n_steps, int reuse_forces);
+int integrate(int n_steps, int reuse_forces);
 
 /** @brief Run the integration loop. Can be interrupted with Ctrl+C.
  *

@@ -39,9 +39,6 @@
 /** Currently active steepest descent instance */
 static SteepestDescentParameters params{};
 
-/** Whether steepest descent converged */
-bool converged = false;
-
 bool steepest_descent_step(const ParticleRange &particles) {
   // Maximal force encountered on node
   auto f_max = -std::numeric_limits<double>::max();
@@ -99,8 +96,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
   auto const f_max_global =
       mpi::all_reduce(comm_cart, f_max, mpi::maximum<double>());
 
-  converged = sqrt(f_max_global) < params.f_max;
-  return converged;
+  return sqrt(f_max_global) < params.f_max;
 }
 
 void steepest_descent_init(const double f_max, const double gamma,
@@ -111,11 +107,8 @@ void steepest_descent_init(const double f_max, const double gamma,
   params.max_displacement = max_displacement;
 }
 
-void steepest_descent(const int max_steps) {
-  converged = false;
+int steepest_descent(const int max_steps) {
   params.max_steps = max_steps;
   MPI_Bcast(&params, sizeof(SteepestDescentParameters), MPI_BYTE, 0, comm_cart);
-  integrate(params.max_steps, -1);
+  return integrate(params.max_steps, -1);
 }
-
-bool steepest_descent_converged() { return converged; }

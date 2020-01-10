@@ -58,19 +58,14 @@ void steepest_descent_init(double f_max, double gamma, int max_steps,
  *  of steps @ref SteepestDescentParameters::max_steps "max_steps" is reached.
  *
  *  @param max_steps New value for @ref SteepestDescentParameters::max_steps
- *  @return whether the algorithm converged.
+ *  @return number of integrated steps
  */
-void steepest_descent(int max_steps);
+int steepest_descent(int max_steps);
 
 /** Steepest descent integrator
  *  @return whether the maximum force/torque encountered is below the user
  *          limit @ref SteepestDescentParameters::f_max "f_max".
  */
 bool steepest_descent_step(const ParticleRange &particles);
-
-/**
- *  @return whether the algorithm converged.
- */
-bool steepest_descent_converged();
 
 #endif /* __STEEPEST_DESCENT_HPP */

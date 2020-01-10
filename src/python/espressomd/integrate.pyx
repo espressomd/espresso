@@ -57,7 +57,7 @@ cdef class IntegratorHandle:
         Run the integrator.
 
         """
-        self._integrator.run(*args, **kwargs)
+        return self._integrator.run(*args, **kwargs)
 
     def set_steepest_descent(self, *args, **kwargs):
         """
@@ -265,14 +265,21 @@ cdef class SteepestDescent(Integrator):
         steps : :obj:`int`
             Maximal number of time steps to integrate.
 
+        Returns
+        -------
+        :obj:`int`
+            Number of integrated steps.
+
         """
         check_type_or_throw_except(steps, 1, int, "steps must be an int")
         assert steps >= 0, "steps has to be positive"
         self._params["max_steps"] = steps
 
-        mpi_steepest_descent(steps)
+        integrated = mpi_steepest_descent(steps)
 
         handle_errors("Encountered errors during integrate")
+
+        return integrated
 
 
 cdef class VelocityVerlet(Integrator):
