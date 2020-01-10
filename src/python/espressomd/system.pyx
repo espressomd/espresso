@@ -274,6 +274,11 @@ cdef class System:
             return self.globals.time_step
 
     property timings:
+        """
+        Sets the number of test force calculations to carry out when tuning
+        electrostatics and magnetostatics.
+        """
+
         def __set__(self, int _timings):
             self.globals.timings = _timings
 

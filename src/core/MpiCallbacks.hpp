@@ -271,7 +271,7 @@ public:
    *
    * This is what the client gets for registering a
    * dynamic (= not function pointer) callback.
-   * It manages the lifetime of the callback handle is
+   * It manages the lifetime of the callback handle
    * needed to call it. The handle has a type derived
    * from the signature of the callback, which makes
    * it possible to do static type checking on the
@@ -477,7 +477,7 @@ public:
    * @brief call a callback.
    *
    * Call a static callback by pointer.
-   * The method can only be called the master
+   * The method can only be called on the master
    * and has the prerequisite that the other nodes are
    * in the MPI loop. Also the function has to be previously
    * registered e.g. with the @ref REGISTER_CALLBACK macro.
@@ -500,7 +500,7 @@ public:
    * @brief call a callback.
    *
    * Call a static callback by pointer.
-   * The method can only be called the master
+   * The method can only be called on the master
    * and has the prerequisite that the other nodes are
    * in the MPI loop. Also the function has to be previously
    * registered e.g. with the @ref REGISTER_CALLBACK macro.

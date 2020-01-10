@@ -31,10 +31,9 @@
  *  issue an action using mpi_call(). mpi_loop() immediately
  *  executes an MPI_Bcast and therefore waits for the master node to
  *  broadcast a command, which is done by mpi_call(). The request
- *  consists of three integers, the first one describing the action
- *  issued, the second and third an arbitrary parameter depending on
- *  the action issued. If applicable, the second parameter is the node
- *  number of the slave this request is dedicated to.
+ *  consists of a callback function and two arbitrary integers. If
+ *  applicable, the first integer is the node number of the slave
+ *  this request is dedicated to.
  *
  *  To add new actions (e.g. to implement new interface functionality), do the
  *  following:
@@ -42,7 +41,7 @@
  *  - write the @c mpi_*_slave function
  *  - Add your slave function to \ref CALLBACK_LIST in communication.cpp
  *
- *  After this your procedure is free to do anything. However, it has
+ *  After this, your procedure is free to do anything. However, it has
  *  to be in (MPI) sync with what your new @c mpi_*_slave does. This
  *  procedure is called immediately after the broadcast with the
  *  arbitrary integer as parameter. To this aim it has also to be added
@@ -51,7 +50,7 @@
 
 #include "MpiCallbacks.hpp"
 
-/** Included needed by callbacks. */
+/* Includes needed by callbacks. */
 #include "Particle.hpp"
 #include "cuda_init.hpp"
 #include "grid_based_algorithms/lb_constants.hpp"
@@ -62,19 +61,12 @@
 #include <array>
 #include <vector>
 
-/**************************************************
- * exported variables
- **************************************************/
-
-/** \name Exported Variables */
-/*@{*/
 /** The number of this node. */
 extern int this_node;
 /** The total number of nodes. */
 extern int n_nodes;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
-/*@}*/
 
 /**
  * Default MPI tag used by callbacks.
@@ -96,8 +88,6 @@ MpiCallbacks &mpiCallbacks();
  * the slave nodes. It is denoted by *_slave.
  **************************************************/
 
-/** \name Exported Functions */
-/*@{*/
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
 void mpi_init();
 
@@ -127,7 +117,7 @@ auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
 /** Process requests from master node. Slave nodes main loop. */
 void mpi_loop();
 
-/** Issue REQ_PLACE: move particle to a position on a node.
+/** Move particle to a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to move.
  *  \param node  the node to attach it to.
@@ -135,14 +125,14 @@ void mpi_loop();
  */
 void mpi_place_particle(int node, int id, const Utils::Vector3d &pos);
 
-/** Issue REQ_PLACE: create particle at a position on a node.
+/** Create particle at a position on a node.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to create.
  *  \param pos   the particles position.
  */
 int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
 
-/** Issue REQ_SET_EXCLUSION: send exclusions.
+/** Send exclusions.
  *  Also calls \ref on_particle_change.
  *  \param part     identity of first particle of the exclusion.
  *  \param part2    identity of second particle of the exclusion.
@@ -151,45 +141,44 @@ int mpi_place_new_particle(int id, const Utils::Vector3d &pos);
  */
 void mpi_send_exclusion(int part, int part2, int _delete);
 
-/** Issue REQ_REM_PART: remove a particle.
+/** Remove a particle.
  *  Also calls \ref on_particle_change.
  *  \param id    the particle to remove.
  *  \param node  the node it is attached to.
  */
 void mpi_remove_particle(int node, int id);
 
-/** Issue REQ_INTEGRATE: start integrator.
+/** Start integrator.
  *  @param n_steps       how many steps to do.
  *  @param reuse_forces  whether to trust the old forces for the first half step
  *  @return nonzero on error
  */
 int mpi_integrate(int n_steps, int reuse_forces);
 
-/** Issue REQ_MIN_ENERGY: start energy minimization. */
+/** Start steepest descent. */
 int mpi_steepest_descent(int steps);
 
 void mpi_bcast_all_ia_params();
 
-/** Issue REQ_BCAST_IA: send new ia params.
+/** Send new IA params.
  *  Also calls \ref on_short_range_ia_change.
  *
- *  mpi_bcast_ia_params is used for both, bonded and non-bonded
- *  interaction parameters. Therefore i and j are used depending on
- *  their value:
+ *  Used for both bonded and non-bonded interaction parameters. Therefore
+ *  @p i and @p j are used depending on their value:
  *
- *  \param i   particle type for non bonded interaction parameters /
+ *  \param i   particle type for non bonded-interaction parameters /
  *             bonded interaction type number.
- *  \param j   if not negative: particle type for non bonded interaction
+ *  \param j   if not negative: particle type for non-bonded interaction
  *             parameters / if negative: flag for bonded interaction
  */
 void mpi_bcast_ia_params(int i, int j);
 
-/** Issue REQ_BCAST_IA_SIZE: send new size of \ref ia_params.
+/** Send new size of \ref ia_params.
  *  \param s   the new size for \ref ia_params.
  */
 void mpi_bcast_max_seen_particle_type(int s);
 
-/** Issue REQ_GATHER: gather data for analysis in analyze.
+/** Gather data for analysis.
  *  \todo update parameter descriptions
  *  \param job what to do:
  *      \arg \c 1 calculate and reduce (sum up) energies,
@@ -232,50 +221,46 @@ void mpi_bcast_max_seen_particle_type(int s);
 void mpi_gather_stats(int job, void *result, void *result_t, void *result_nb,
                       void *result_t_nb);
 
-/** Issue REQ_SET_TIME_STEP: send new \ref time_step and rescale the
- *  velocities accordingly.
- */
+/** Send new \ref time_step and rescale the velocities accordingly. */
 void mpi_set_time_step(double time_step);
 
-/** Issue REQ_BCAST_COULOMB: send new Coulomb parameters. */
+/** Send new Coulomb parameters. */
 void mpi_bcast_coulomb_params();
 
-/** Issue REQ_RESCALE_PART: rescales all particle positions in direction 'dir'
- *  by a factor 'scale'.
- */
+/** Rescale all particle positions in direction @p dir by a factor @p scale. */
 void mpi_rescale_particles(int dir, double scale);
 
-/** Issue REQ_BCAST_CS: change the cell structure on all nodes. */
+/** Change the cell structure on all nodes. */
 void mpi_bcast_cell_structure(int cs);
 
-/** Issue REQ_BCAST_NPTISO_GEOM: broadcast nptiso geometry parameter to all
- *  nodes.
- */
+/** Broadcast nptiso geometry parameter to all nodes. */
 void mpi_bcast_nptiso_geom();
 
-/** Issue REQ_BCAST_cuda_global_part_vars: Broadcast a parameter for CUDA */
+/** Broadcast @ref CUDA_global_part_vars structure */
 void mpi_bcast_cuda_global_part_vars();
 
-/** Issue REQ_ICCP3M_INIT: performs iccp3m initialization
+/** Perform iccp3m initialization.
  *  @return nonzero on error
  */
 int mpi_iccp3m_init();
 
-/** Part of MDLC */
+/** Calculate the maximal dipole moment in the system (part of MDLC) */
 void mpi_bcast_max_mu();
 
-/** Galilei and other: set all particle velocities and rotational inertias to
- *                     zero.
- *                     set all forces and torques on the particles to zero
- *                     calculate the centre of mass (CMS)
- *                     calculate the velocity of the CMS
- *                     remove the CMS velocity from the system
+/** @name Galilei and other
+ *  - set all particle velocities and rotational inertias to zero
+ *  - set all forces and torques on the particles to zero
+ *  - calculate the centre of mass (CMS)
+ *  - calculate the velocity of the CMS
+ *  - remove the CMS velocity from the system
  */
+/*@{*/
 void mpi_kill_particle_motion(int rotation);
 void mpi_kill_particle_forces(int torque);
 Utils::Vector3d mpi_system_CMS();
 Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
+/*@}*/
 
 /**
  * @brief Resort the particles.
@@ -287,7 +272,5 @@ void mpi_galilei_transform();
  * @return The number of particles on the nodes after the resort.
  */
 std::vector<int> mpi_resort_particles(int global_flag);
-
-/*@}*/
 
 #endif

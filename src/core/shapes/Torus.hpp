@@ -25,18 +25,18 @@
 namespace Shapes {
 class Torus : public Shape {
 public:
-  /* center of the cylinder. */
+  /** center of the shape. */
   Utils::Vector3d m_center;
-  /* Normal axis of the cylinder. */
+  /** Normal axis of the shape. */
   Utils::Vector3d m_normal;
-  /* radius. */
+  /** radius. */
   double m_rad;
-  /* tube radius. */
+  /** tube radius. */
   double m_tube_rad;
-  /* direction -1: inside, +1 outside */
+  /** direction -1: inside, +1 outside */
   double m_direction;
 
-  /* Unit vector in z direction */
+  /** Unit vector in z direction */
   Utils::Vector3d e_z;
 
   /** @brief Calculate derived parameters. */
