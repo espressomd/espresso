@@ -37,15 +37,14 @@
 int timing_samples = 10;
 
 double time_force_calc(int default_samples) {
-  int rds = timing_samples > 0 ? timing_samples : default_samples;
-  int i;
+  auto const rds = timing_samples > 0 ? timing_samples : default_samples;
   Utils::Statistics::RunningAverage<double> running_average;
 
   if (mpi_integrate(0, 0))
     return -1;
 
   /* perform force calculation test */
-  for (i = 0; i < rds; i++) {
+  for (int i = 0; i < rds; i++) {
     const double tick = MPI_Wtime();
 
     if (mpi_integrate(0, -1))

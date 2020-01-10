@@ -44,7 +44,7 @@
 #include "config.hpp"
 #include <ParticleRange.hpp>
 
-#if defined(DIPOLES) && defined(DP3M)
+#ifdef DP3M
 
 /** parameters for the MDLC method */
 struct DLC_struct {
@@ -83,6 +83,6 @@ void add_mdlc_force_corrections(const ParticleRange &particles);
 double add_mdlc_energy_corrections(const ParticleRange &particles);
 /** Calculate the maximal dipole moment in the system */
 void calc_mu_max();
-#endif
+#endif // DP3M
 
 #endif

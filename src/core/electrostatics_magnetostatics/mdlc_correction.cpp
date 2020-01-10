@@ -23,7 +23,7 @@
 
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
-#if defined(DIPOLES) && defined(DP3M)
+#ifdef DP3M
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -518,4 +518,4 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   return ES_OK;
 }
 
-#endif
+#endif // DP3M

@@ -479,8 +479,6 @@ void mpi_bcast_coulomb_params() {
 
 void mpi_bcast_coulomb_params_slave(int, int) {
 
-#if defined(ELECTROSTATICS) || defined(DIPOLES)
-
 #ifdef ELECTROSTATICS
   MPI_Bcast(&coulomb, sizeof(Coulomb_parameters), MPI_BYTE, 0, comm_cart);
 
@@ -495,6 +493,7 @@ void mpi_bcast_coulomb_params_slave(int, int) {
   Dipole::bcast_params(comm_cart);
 #endif
 
+#if defined(ELECTROSTATICS) || defined(DIPOLES)
   on_coulomb_change();
 #endif
 }
@@ -583,25 +582,19 @@ void mpi_send_exclusion(int part1, int part2, int _delete) {
 /********************* ICCP3M INIT ********/
 #ifdef ELECTROSTATICS
 void mpi_iccp3m_init_slave(const iccp3m_struct &iccp3m_cfg_) {
-#ifdef ELECTROSTATICS
   iccp3m_cfg = iccp3m_cfg_;
 
   on_particle_charge_change();
   check_runtime_errors(comm_cart);
-#endif
 }
 
 REGISTER_CALLBACK(mpi_iccp3m_init_slave)
 
 int mpi_iccp3m_init() {
-#ifdef ELECTROSTATICS
   mpi_call(mpi_iccp3m_init_slave, iccp3m_cfg);
 
   on_particle_charge_change();
   return check_runtime_errors(comm_cart);
-#else
-  return 0;
-#endif
 }
 #endif
 
@@ -609,13 +602,9 @@ int mpi_iccp3m_init() {
 
 #ifdef DP3M
 REGISTER_CALLBACK(calc_mu_max)
-#endif
 
-void mpi_bcast_max_mu() {
-#ifdef DP3M
-  mpi_call_all(calc_mu_max);
+void mpi_bcast_max_mu() { mpi_call_all(calc_mu_max); }
 #endif
-}
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
