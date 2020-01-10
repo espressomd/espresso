@@ -50,6 +50,9 @@ constexpr auto ignore = Ignore{};
 /** Return value from one rank */
 struct OneRank {};
 constexpr auto one_rank = OneRank{};
+/** Return value from master rank */
+struct MasterRank {};
+constexpr auto master_rank = MasterRank{};
 /** Reduce return value over all ranks */
 struct Reduction {};
 constexpr auto reduction = Reduction{};
@@ -143,6 +146,28 @@ struct callback_void_t final : public callback_concept_t {
 };
 
 /**
+ * @brief Callback where the return value is ignored.
+ *
+ * This is an implementation of a callback for a specific callable
+ * @p F and a set of arguments to call it with, where the valued from
+ * all ranks are ignored.
+ */
+template <class F, class... Args>
+struct callback_ignore_t final : public callback_concept_t {
+  F m_f;
+
+  callback_ignore_t(callback_ignore_t const &) = delete;
+  callback_ignore_t(callback_ignore_t &&) = delete;
+
+  template <class FRef>
+  explicit callback_ignore_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
+  void operator()(boost::mpi::communicator const &comm,
+                  boost::mpi::packed_iarchive &ia) const override {
+    detail::invoke<F, Args...>(m_f, ia);
+  }
+};
+
+/**
  * @brief Callback with a return value from one rank.
  *
  * This is an implementation of a callback for a specific callable
@@ -170,6 +195,28 @@ struct callback_one_rank_t final : public callback_concept_t {
     if (!!result) {
       comm.send(0, 42, *result);
     }
+  }
+};
+
+/**
+ * @brief Callback with a return value from the master rank.
+ *
+ * This is an implementation of a callback for a specific callable
+ * @p F and a set of arguments to call it with, where the value from
+ * the master rank is returned.
+ */
+template <class F, class... Args>
+struct callback_master_rank_t final : public callback_concept_t {
+  F m_f;
+
+  callback_master_rank_t(callback_master_rank_t const &) = delete;
+  callback_master_rank_t(callback_master_rank_t &&) = delete;
+
+  template <class FRef>
+  explicit callback_master_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
+  void operator()(boost::mpi::communicator const &comm,
+                  boost::mpi::packed_iarchive &ia) const override {
+    auto const result = detail::invoke<F, Args...>(m_f, ia);
   }
 };
 
@@ -255,8 +302,19 @@ auto make_model(Result::Reduction, R (*f_ptr)(Args...), Op &&op) {
 }
 
 template <class R, class... Args>
+auto make_model(Result::Ignore, R (*f_ptr)(Args...)) {
+  return std::make_unique<callback_ignore_t<R (*)(Args...), Args...>>(f_ptr);
+}
+
+template <class R, class... Args>
 auto make_model(Result::OneRank, R (*f_ptr)(Args...)) {
   return std::make_unique<callback_one_rank_t<R (*)(Args...), Args...>>(f_ptr);
+}
+
+template <class R, class... Args>
+auto make_model(Result::MasterRank, R (*f_ptr)(Args...)) {
+  return std::make_unique<callback_master_rank_t<R (*)(Args...), Args...>>(
+      f_ptr);
 }
 } // namespace detail
 
@@ -539,6 +597,26 @@ public:
   }
 
   /**
+   * @brief Call a callback and ignore the result over all nodes.
+   *
+   * This calls a callback on all nodes, including the head node,
+   * and ignore all return values.
+   *
+   * This method can only be called on the head node.
+   */
+  template <class R, class... Args, class... ArgRef>
+  auto call(Result::Ignore, R (*fp)(Args...), ArgRef... args) const
+      -> std::remove_reference_t<R> {
+
+    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
+    call(id, args...);
+
+    fp(std::forward<Args>(args)...);
+
+    return {};
+  }
+
+  /**
    * @brief Call a callback and reduce the result over all nodes.
    *
    * This calls a callback on all nodes, including the head node,
@@ -567,6 +645,24 @@ public:
     std::remove_cv_t<std::remove_reference_t<R>> result;
     m_comm.recv(boost::mpi::any_source, boost::mpi::any_tag, result);
     return result;
+  }
+
+  /**
+   * @brief Call a callback and return the result of the head node.
+   *
+   * This calls a callback on all nodes, including the head node,
+   * and returns the value from the head node.
+   *
+   * This method can only be called on the head node.
+   */
+  template <class R, class... Args, class... ArgRef>
+  auto call(Result::MasterRank, R (*fp)(Args...), ArgRef... args) const
+      -> std::remove_reference_t<R> {
+
+    const int id = m_func_ptr_to_id.at(reinterpret_cast<void (*)()>(fp));
+    call(id, args...);
+
+    return fp(std::forward<Args>(args)...);
   }
 
   /**
@@ -697,6 +793,21 @@ public:
   }
 
 /**
+ * @brief Register a static callback whose return value is to be ignored
+ *
+ * This registers a function as an mpi callback with
+ * ignored return values.
+ * The macro should be used at global scope.
+ *
+ * @param cb A function
+ */
+#define REGISTER_CALLBACK_IGNORE(cb)                                           \
+  namespace Communication {                                                    \
+  static ::Communication::RegisterCallback                                     \
+      register_ignore_##cb(::Communication::Result::Ignore{}, &(cb));          \
+  }
+
+/**
  * @brief Register a static callback which returns a value on only one node
  *
  * This registers a function as an mpi callback with
@@ -710,6 +821,22 @@ public:
   namespace Communication {                                                    \
   static ::Communication::RegisterCallback                                     \
       register_one_rank_##cb(::Communication::Result::OneRank{}, &(cb));       \
+  }
+
+/**
+ * @brief Register a static callback whose return value is ignored except on
+ * the head node
+ *
+ * This registers a function as an mpi callback with
+ * reduction of the return values from the head node.
+ * The macro should be used at global scope.
+ *
+ * @param cb A function
+ */
+#define REGISTER_CALLBACK_MASTER_RANK(cb)                                      \
+  namespace Communication {                                                    \
+  static ::Communication::RegisterCallback                                     \
+      register_master_rank_##cb(::Communication::Result::MasterRank{}, &(cb)); \
   }
 
 #endif
