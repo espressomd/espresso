@@ -39,7 +39,8 @@
  *  following:
  *  - write the @c mpi_* function that is executed on the master
  *  - write the @c mpi_*_slave function
- *  - Add your slave function to \ref CALLBACK_LIST in communication.cpp
+ *  - in communication.cpp add your slave function to \ref CALLBACK_LIST or
+ *    register it with one of the @c REGISTER_CALLBACK macros
  *
  *  After this, your procedure is free to do anything. However, it has
  *  to be in (MPI) sync with what your new @c mpi_*_slave does. This
@@ -91,23 +92,54 @@ MpiCallbacks &mpiCallbacks();
 /** Initialize MPI and determine \ref n_nodes and \ref this_node. */
 void mpi_init();
 
-/* Call a slave function. */
+/** @brief Call a slave function.
+ *  @tparam Args   Slave function argument types
+ *  @tparam ArgRef Slave function argument types
+ *  @param fp      Slave function
+ *  @param args    Slave function arguments
+ */
 template <class... Args, class... ArgRef>
 void mpi_call(void (*fp)(Args...), ArgRef &&... args) {
   Communication::mpiCallbacks().call(fp, std::forward<ArgRef>(args)...);
 }
 
+/** @brief Call a slave function.
+ *  @tparam Args   Slave function argument types
+ *  @tparam ArgRef Slave function argument types
+ *  @param fp      Slave function
+ *  @param args    Slave function arguments
+ */
 template <class... Args, class... ArgRef>
 void mpi_call_all(void (*fp)(Args...), ArgRef &&... args) {
   Communication::mpiCallbacks().call_all(fp, std::forward<ArgRef>(args)...);
 }
 
+/** @brief Call a slave function.
+ *  @tparam Tag    Any tag type defined in @ref Communication::Result
+ *  @tparam R      Return type of the slave function
+ *  @tparam Args   Slave function argument types
+ *  @tparam ArgRef Slave function argument types
+ *  @param tag     Reduction strategy
+ *  @param fp      Slave function
+ *  @param args    Slave function arguments
+ */
 template <class Tag, class R, class... Args, class... ArgRef>
 auto mpi_call(Tag tag, R (*fp)(Args...), ArgRef &&... args) {
   return Communication::mpiCallbacks().call(tag, fp,
                                             std::forward<ArgRef>(args)...);
 }
 
+/** @brief Call a slave function.
+ *  @tparam Tag    Any tag type defined in @ref Communication::Result
+ *  @tparam TagArg Types of arguments to @p Tag
+ *  @tparam R      Return type of the slave function
+ *  @tparam Args   Slave function argument types
+ *  @tparam ArgRef Slave function argument types
+ *  @param tag     Reduction strategy
+ *  @param tag_arg Arguments to the reduction strategy
+ *  @param fp      Slave function
+ *  @param args    Slave function arguments
+ */
 template <class Tag, class TagArg, class R, class... Args, class... ArgRef>
 auto mpi_call(Tag tag, TagArg &&tag_arg, R (*fp)(Args...), ArgRef &&... args) {
   return Communication::mpiCallbacks().call(tag, std::forward<TagArg>(tag_arg),
