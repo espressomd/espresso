@@ -400,9 +400,14 @@ void integrate_set_nvt() {
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 
-void integrate_set_sd() {
+int integrate_set_sd() {
+  if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2)) {
+    runtimeErrorMsg() << "Stokesian Dynamics requires periodicity 0 0 0\n";
+    return ES_ERROR;
+  }
   integ_switch = INTEG_METHOD_SD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  return ES_OK;
 }
 
 #ifdef NPT

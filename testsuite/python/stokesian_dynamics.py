@@ -94,7 +94,7 @@ class StokesianDiffusionTest(ut.TestCase):
         self.system.integrator.set_sd()
 
     def test(self):
-        intsteps = int(1000000 / self.system.time_step)
+        intsteps = int(300000 / self.system.time_step)
         pos = np.empty([intsteps + 1, 3])
         orientation = np.empty((intsteps + 1, 3))
 
@@ -118,7 +118,8 @@ class StokesianDiffusionTest(ut.TestCase):
         tr_expected = int(1 / (2 * Dr_expected))
         fit = scipy.optimize.curve_fit(lambda t, Dr: np.exp(-2 * Dr * t),
                                        t[:2 * tr_expected],
-                                       costheta[:2 * tr_expected])
+                                       costheta[:2 * tr_expected],
+                                       p0 = 1e-5)
         Dr_measured = fit[0][0]
         self.assertAlmostEqual(
             Dr_expected,
