@@ -30,11 +30,20 @@ inline void
 stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   auto const skin2 = Utils::sqr(0.5 * skin);
 
+  // Compute new (translational and rotational) velocities
   propagate_vel_pos_sd();
 
   for (auto &p : particles) {
+    // Translate particle
+    p.r.p[0] += p.m.v[0] * time_step;
+    p.r.p[1] += p.m.v[1] * time_step;
+    p.r.p[2] += p.m.v[2] * time_step;
+
+#ifdef ROTATION
     // Perform rotation
-    local_rotate_particle(p, p.m.omega, p.m.omega.norm() * time_step);
+    local_rotate_particle(p, p.m.omega.normalize(),
+                          p.m.omega.norm() * time_step);
+#endif
 
     // Verlet criterion check
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +

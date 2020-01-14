@@ -67,9 +67,6 @@ EK_BOUNDARIES                   requires CUDA
 EK_DEBUG                        requires ELECTROKINETICS
 EK_DOUBLE_PREC                  requires ELECTROKINETICS
 
-/* Stokesian dynamics features */
-STOKESIAN_DYNAMICS              implies ROTATION
-
 /* Interaction features */
 TABULATED
 LENNARD_JONES
@@ -120,3 +117,4 @@ SCAFACOS external
 GSL external
 BLAS external
 LAPACK external
+STOKESIAN_DYNAMICS external, implies ROTATION, requires BLAS and LAPACK

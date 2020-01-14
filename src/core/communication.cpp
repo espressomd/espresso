@@ -58,6 +58,7 @@
 #include "rotation.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
