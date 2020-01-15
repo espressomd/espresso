@@ -216,7 +216,7 @@ struct callback_master_rank_t final : public callback_concept_t {
   explicit callback_master_rank_t(FRef &&f) : m_f(std::forward<FRef>(f)) {}
   void operator()(boost::mpi::communicator const &comm,
                   boost::mpi::packed_iarchive &ia) const override {
-    auto const result = detail::invoke<F, Args...>(m_f, ia);
+    (void)detail::invoke<F, Args...>(m_f, ia);
   }
 };
 
