@@ -80,7 +80,7 @@ class Analysis:
         return analyze.min_distance2(p1c, p2c)
 
     def min_dist(self, p1='default', p2='default'):
-        """Minimal distance between two sets of particles.
+        """Minimal distance between two sets of particle types.
 
         Parameters
         ----------
@@ -119,7 +119,8 @@ class Analysis:
 
     def dist_to(self, id=None, pos=None):
         """
-        Calculates the distance to a point or particle.
+        Calculate the minimal distance to either a particle or an arbitrary
+        point in space.
 
         Parameters
         ----------
@@ -197,9 +198,10 @@ class Analysis:
 
     def center_of_mass(self, p_type=None):
         """
-        Calculates the system's center of mass.
+        Calculate the system's center of mass.
 
-        Note that virtual sites are not included, as they do not have a meaningful mass.
+        Note that virtual sites are not included, as they do not have a
+        meaningful mass.
 
         Parameters
         ----------
@@ -221,10 +223,6 @@ class Analysis:
             raise ValueError("Particle type {} does not exist!".format(p_type))
 
         return analyze.centerofmass(analyze.partCfg(), p_type)
-
-    # get all particles in neighborhood r_catch of pos and return their ids
-    # in il. plane can be used to specify the distance in the xy, xz or yz
-    # plane
 
     def nbhood(self, pos=None, r_catch=None, plane='3d'):
         """
@@ -281,7 +279,7 @@ class Analysis:
                             bins_axial=None, bins_radial=None,
                             types=[-1]):
         """
-        Calculates the particle distribution using cylindrical binning.
+        Calculate the particle distribution using cylindrical binning.
 
         Parameters
         ----------
@@ -377,10 +375,10 @@ class Analysis:
         return buffer
 
     def pressure(self, v_comp=False):
-        """Calculates the instantaneous pressure (in parallel). This is only
+        """Calculate the instantaneous pressure (in parallel). This is only
         sensible in an isotropic system which is homogeneous (on average)! Do
         not use this in an anisotropic or inhomogeneous system. In order to
-        obtain the pressure the ensemble average needs to be calculated.
+        obtain the pressure, the ensemble average needs to be calculated.
 
         Returns
         -------
@@ -488,12 +486,12 @@ class Analysis:
         return p
 
     def stress_tensor(self, v_comp=False):
-        """Calculates the instantaneous stress tensor (in parallel). This is
+        """Calculate the instantaneous stress tensor (in parallel). This is
         sensible in an anisotropic system. Still it assumes that the system is
         homogeneous since the volume averaged stress tensor is used. Do not use
         this stress tensor in an (on average) inhomogeneous system. If the
         system is (on average inhomogeneous) then use a local stress tensor.
-        In order to obtain the stress tensor the ensemble average needs to be
+        In order to obtain the stress tensor, the ensemble average needs to be
         calculated.
 
         Returns
@@ -669,7 +667,7 @@ class Analysis:
         # Kinetic energy
         e["kinetic"] = analyze.total_energy.data.e[0]
 
-        # Nonbonded
+        # Non-bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
@@ -724,13 +722,13 @@ class Analysis:
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the mean end-to-end distance of chains and its
+        Calculate the mean end-to-end distance of chains and its
         standard deviation, as well as mean square end-to-end distance of
         chains and its standard deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology has id number
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
         ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
@@ -761,13 +759,14 @@ class Analysis:
     def calc_rg(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the mean radius of gyration of chains and its standard deviation,
-        as well as the mean square radius of gyration of chains and its
-        standard deviation.
+        Calculate the mean radius of gyration of chains and its standard
+        deviation, as well as the mean square radius of gyration of chains
+        and its standard deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology has id number
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -797,12 +796,13 @@ class Analysis:
     def calc_rh(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the hydrodynamic mean radius of chains and its standard deviation.
+        Calculate the hydrodynamic mean radius of chains and its standard
+        deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered (the last particle in that topology has id number :
-        ``chain_start + number_of_chains * chain_length - 1``).
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -902,8 +902,8 @@ class Analysis:
 
         Parameters
         ----------
-        rdf_type : :obj:`str`
-            ``'rdf'`` or ``'<rdf>'``.
+        rdf_type : :obj:`str`, \{'rdf', '<rdf>'\}
+            Type of analysis.
         type_list_a : lists of :obj:`int`
             Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
         type_list_b : lists of :obj:`int`, optional
@@ -911,12 +911,13 @@ class Analysis:
         r_min : :obj:`float`
             Minimal distance to consider.
         r_max : :obj:`float`
-            Maximal distance to consider
+            Maximal distance to consider.
         r_bins : :obj:`int`
             Number of bins.
         n_conf : :obj:`int`, optional
-            If rdf_type is ``'<rdf>'`` this determines
-            the number of stored configs that are used.
+            If ``rdf_type`` is ``'<rdf>'`` this determines
+            the number of stored configs that are used (if
+            ``None``, all configurations are used).
 
         Returns
         -------
@@ -1204,7 +1205,7 @@ class Analysis:
         """
         .. todo:: Looks to be incomplete
 
-        Calculates the compressibility thought volume fluctuations.
+        Calculate the compressibility through volume fluctuations.
 
         Parameters
         ----------
