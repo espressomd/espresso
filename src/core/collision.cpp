@@ -366,7 +366,8 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   Particle new_part;
   new_part.p.identity = current_vs_pid;
   new_part.r.p = pos;
-  auto p_vs = append_indexed_particle(local_cells.cell[0], std::move(new_part));
+  auto p_vs = append_indexed_particle(cell_structure.local_cells().cell[0],
+                                      std::move(new_part));
 
   local_vs_relate_to(*p_vs, get_part(relate_to));
 

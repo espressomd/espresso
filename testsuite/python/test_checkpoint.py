@@ -23,6 +23,7 @@ import numpy as np
 import espressomd
 import espressomd.checkpointing
 import espressomd.virtual_sites
+import espressomd.integrate
 from espressomd.shapes import Sphere, Wall
 import tests_common
 
@@ -179,8 +180,9 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('INT.NPT' not in modes, 'NPT integrator not in modes')
     def test_integrator_NPT(self):
         integ = system.integrator.get_state()
-        self.assertEqual(integ['_method'], 'NPT')
-        params = integ['_isotropic_npt_params']
+        self.assertIsInstance(
+            integ, espressomd.integrate.VelocityVerletIsotropicNPT)
+        params = integ.get_params()
         self.assertEqual(params['ext_pressure'], 2.0)
         self.assertEqual(params['piston'], 0.01)
         self.assertEqual(params['direction'], [1, 0, 0])
@@ -189,8 +191,8 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('INT.SD' not in modes, 'SD integrator not in modes')
     def test_integrator_SD(self):
         integ = system.integrator.get_state()
-        self.assertEqual(integ['_method'], 'STEEPEST_DESCENT')
-        params = integ['_steepest_descent_params']
+        self.assertIsInstance(integ, espressomd.integrate.SteepestDescent)
+        params = integ.get_params()
         self.assertEqual(params['f_max'], 2.0)
         self.assertEqual(params['gamma'], 0.1)
         self.assertEqual(params['max_displacement'], 0.01)
@@ -198,12 +200,16 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf('INT.NVT' not in modes, 'NVT integrator not in modes')
     def test_integrator_NVT(self):
         integ = system.integrator.get_state()
-        self.assertEqual(integ['_method'], 'NVT')
+        self.assertIsInstance(integ, espressomd.integrate.VelocityVerlet)
+        params = integ.get_params()
+        self.assertEqual(params, {})
 
     @ut.skipIf('INT' in modes, 'VV integrator not the default')
     def test_integrator_VV(self):
         integ = system.integrator.get_state()
-        self.assertEqual(integ['_method'], 'VV')
+        self.assertIsInstance(integ, espressomd.integrate.VelocityVerlet)
+        params = integ.get_params()
+        self.assertEqual(params, {})
 
     @utx.skipIfMissingFeatures('LENNARD_JONES')
     @ut.skipIf('LJ' not in modes, "Skipping test due to missing mode.")

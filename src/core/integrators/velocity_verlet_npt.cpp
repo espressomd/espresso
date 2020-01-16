@@ -36,15 +36,11 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 
   for (auto &p : particles) {
-#ifdef VIRTUAL_SITES
     // Virtual sites are not propagated during integration
     if (p.p.is_virtual)
       continue;
-#endif
     for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
-#endif
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
@@ -114,14 +110,10 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
   /* propagate positions while rescaling positions and velocities */
   for (auto &p : particles) {
-#ifdef VIRTUAL_SITES
     if (p.p.is_virtual)
       continue;
-#endif
     for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
-#endif
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           {
             p.r.p[j] = scal[1] * (p.r.p[j] + scal[2] * p.m.v[j] * time_step);
@@ -171,16 +163,11 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
     propagate_omega_quat_particle(p);
 #endif
 
-#ifdef VIRTUAL_SITES
     // Don't propagate translational degrees of freedom of vs
     if (p.p.is_virtual)
       continue;
-#endif
     for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
-      if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-      {
+      if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #ifdef NPT
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {

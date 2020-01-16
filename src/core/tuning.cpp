@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** \file
-    Implementation of tuning.hpp .
-*/
+ *  Implementation of tuning.hpp.
+ */
 #include "communication.hpp"
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
@@ -33,26 +33,18 @@
 #include <utils/statistics/RunningAverage.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
+
 int timing_samples = 10;
 
-/**
- * \brief Time the force calculation.
- * This times the force calculation without
- * propagating the system. It therefore does
- * not include e.g. Verlet list updates.
- *
- * @return Time per integration in ms.
- */
 double time_force_calc(int default_samples) {
-  int rds = timing_samples > 0 ? timing_samples : default_samples;
-  int i;
+  auto const rds = timing_samples > 0 ? timing_samples : default_samples;
   Utils::Statistics::RunningAverage<double> running_average;
 
   if (mpi_integrate(0, 0))
     return -1;
 
   /* perform force calculation test */
-  for (i = 0; i < rds; i++) {
+  for (int i = 0; i < rds; i++) {
     const double tick = MPI_Wtime();
 
     if (mpi_integrate(0, -1))

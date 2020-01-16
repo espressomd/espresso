@@ -26,7 +26,7 @@
  *  DAWAANR => Dipolar All With All And No Replica
  *   Handling of a system of dipoles where no replicas exist.
  *   Assumes minimum image convention for those axis in which the
- *   system is periodic as defined by setmd.
+ *   system is periodic.
  *
  *  MDDS => Magnetic Dipoles Direct Sum
  *   Calculate dipole-dipole interaction of a periodic system
@@ -41,7 +41,7 @@
 #ifdef DIPOLES
 #include "Particle.hpp"
 
-/** Calculates dipolar energy and/or force between two particles */
+/** Calculate dipolar energy and/or force between two particles */
 double calc_dipole_dipole_ia(Particle &p1, Particle &p2, bool force_flag);
 
 /* =============================================================================
@@ -75,7 +75,7 @@ double magnetic_dipolar_direct_sum_calculations(bool force_flag,
                                                 bool energy_flag,
                                                 ParticleRange const &particles);
 
-/** switch on direct sum magnetostatics.
+/** Switch on direct sum magnetostatics.
  *  @param n_cut cut off for the explicit summation
  *  @return ES_ERROR, if not on a single CPU
  */
