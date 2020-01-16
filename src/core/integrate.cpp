@@ -175,7 +175,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     force_calc(cell_structure);
 
@@ -225,17 +225,16 @@ int integrate(int n_steps, int reuse_forces) {
     /* Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
-      correct_pos_shake(cell_structure.local_cells().particles());
+      correct_pos_shake(particles);
     }
 #endif
 
 #ifdef VIRTUAL_SITES
-    // VIRTUAL_SITES pos (and vel for DPD) update for security reason!!!
     virtual_sites()->update(true);
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     particles = cell_structure.local_cells().particles();
 

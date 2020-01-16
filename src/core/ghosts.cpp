@@ -31,7 +31,6 @@
 #include "ghosts.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
 #include "particle_data.hpp"
 
 #include <mpi.h>
@@ -41,11 +40,9 @@
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <algorithm>
 #include <boost/range/numeric.hpp>
-#include <cstdio>
-#include <cstring>
-#include <type_traits>
+
+#include <algorithm>
 #include <vector>
 
 /** Tag for ghosts communications. */
@@ -79,13 +76,6 @@ private:
   std::vector<char> buf;    //< Buffer for everything but bonds
   std::vector<int> bondbuf; //< Buffer for bond lists
 };
-
-/** whether the ghosts should have velocity information, e.g. for DPD or RATTLE.
- *  You need this whenever you need the relative velocity of two particles.
- *  NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
- */
-bool ghosts_have_v = false;
-bool ghosts_have_bonds = false;
 
 void prepare_comm(GhostCommunicator *gcr, int num) {
   assert(gcr);
@@ -327,14 +317,6 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
 
 void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
-
-  /* if ghosts should have up-to-date velocities, they have to be updated like
-   * positions (except for shifting...) */
-  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
-    data_parts |= GHOSTTRANS_MOMENTUM;
-
-  if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
-    data_parts |= GHOSTTRANS_BONDS;
 
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
     GhostCommunication &ghost_comm = *it;
