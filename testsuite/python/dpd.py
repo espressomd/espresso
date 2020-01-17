@@ -429,32 +429,34 @@ class DPDThermostat(ut.TestCase):
         s.part.add(pos=pos)
         s.integrator.run(10)
 
-        s.thermostat.set_dpd(kT=0.0)
+        for kT in [0., 0.1, 1., 10.]:
+            s.thermostat.set_dpd(kT=kT)
+            # run 1 integration step to get velocities
+            s.part[:].v = np.zeros((n_part, 3))
+            s.integrator.run(steps=1)
 
-        s.integrator.run(steps=0, recalc_forces=True)
+            pairs = s.part.pairs()
 
-        pairs = s.part.pairs()
+            stress = np.zeros([3, 3])
 
-        stress = np.zeros([3, 3])
+            for pair in pairs:
+                dist = s.distance_vec(pair[0], pair[1])
+                if np.linalg.norm(dist) < r_cut:
+                    vel_diff = pair[1].v - pair[0].v
+                    stress += calc_stress(dist, vel_diff)
 
-        for pair in pairs:
-            dist = s.distance_vec(pair[0], pair[1])
-            if np.linalg.norm(dist) < r_cut:
-                vel_diff = pair[1].v - pair[0].v
-                stress += calc_stress(dist, vel_diff)
+            stress /= s.box_l[0] ** 3.0
 
-        stress /= s.box_l[0] ** 3.0
+            dpd_stress = s.analysis.dpd_stress()
 
-        dpd_stress = s.analysis.dpd_stress()
+            dpd_obs = DPDStress()
+            obs_stress = dpd_obs.calculate()
+            obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[2]],
+                                   [obs_stress[3], obs_stress[4], obs_stress[5]],
+                                   [obs_stress[6], obs_stress[7], obs_stress[8]]])
 
-        dpd_obs = DPDStress()
-        obs_stress = dpd_obs.calculate()
-        obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[2]],
-                               [obs_stress[3], obs_stress[4], obs_stress[5]],
-                               [obs_stress[6], obs_stress[7], obs_stress[8]]])
-
-        np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
-        np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
+            np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
+            np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
 
     def test_momentum_conservation(self):
         r_cut = 1.0
