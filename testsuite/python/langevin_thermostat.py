@@ -53,12 +53,12 @@ class LangevinThermostat(ut.TestCase):
             for j in range(n_bins):
                 found = data[j]
                 expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertLessEqual(abs(found - expected), error_tol)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
 
     def test_00_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""
-        self.assertLessEqual(
-            abs(single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
+        self.assertAlmostEqual(
+            single_component_maxwell(-10, 10, 4.), 1., delta=1E-4)
 
     def test_01__langevin_seed(self):
         """Test for RNG seed consistency."""
