@@ -268,7 +268,7 @@ Description of sample script
     ``LB``, ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
     ``MASS``, ``OIF_LOCAL_FORCES``,
-    ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
+    ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``
 
 The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at
 `http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
@@ -449,21 +449,7 @@ geometry is correct and no objects intersect with any boundaries.
 Specification of interactions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since we have two cells, we can also set up the cell-cell interactions
-so that they *know* about each other:
-
-::
-
-    system.non_bonded_inter[0, 1].membrane_collision.set_params(
-        membrane_a=0.0001, membrane_n=1.2, membrane_cut=0.1,
-        membrane_offset=0.0)
-
-These interactions act *pointwise*, e.g. each particle of type 0 (all
-mesh points of cell0) has a repulsive membrane collision interaction
-with each particle of type 1 (all mesh points of cell1) once the pair
-gets closer than ``membrane_cut``.
-
-Similar interaction is defined with the boundaries:
+We can define an interaction with the boundaries:
 
 ::
 

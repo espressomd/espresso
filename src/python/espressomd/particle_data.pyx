@@ -544,25 +544,6 @@ cdef class ParticleHandle:
                     self.particle_data, rinertia)
                 return array_locked([rinertia[0], rinertia[1], rinertia[2]])
 
-    IF MEMBRANE_COLLISION:
-        property out_direction:
-            """OIF Outward direction"""
-
-            def __set__(self, _out_direction):
-                cdef double out_direction[3]
-                check_type_or_throw_except(
-                    _out_direction, 3, float, "out_direction has to be 3 floats")
-                for i in range(3):
-                    out_direction[i] = _out_direction[i]
-                set_particle_out_direction(self.id, out_direction)
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * out_direction = NULL
-                pointer_to_out_direction(self.particle_data, out_direction)
-                return np.array(
-                    [out_direction[0], out_direction[1], out_direction[2]])
-
     # Charge
     property q:
         """
