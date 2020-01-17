@@ -268,7 +268,7 @@ class CheckpointTest(ut.TestCase):
         coldet = system.collision_detection
         self.assertEqual(coldet.mode, "bind_centers")
         self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
-        self.assertTrue(coldet.bond_centers, system.bonded_inter[0])
+        self.assertEqual(coldet.bond_centers, system.bonded_inter[0])
 
     @utx.skipIfMissingFeatures('EXCLUSIONS')
     def test_exclusions(self):

@@ -51,8 +51,8 @@ class AnalyzeGyration(ut.TestCase):
         rg = self.system.analysis.calc_rg(
             chain_start=0, number_of_chains=1, chain_length=self.cube_len**3)[0]
         # make sure all eigenvalues (for the cube) are identical
-        self.assertTrue(
-            np.allclose(np.abs(res['eva0'][0]), np.abs(res['eva1'][0]), np.abs(res['eva2'][0]), atol=1e-6))
+        np.testing.assert_allclose(
+            [np.abs(res['eva' + x][0]) for x in '012'], 3 * [1.25], atol=1e-6)
         self.assertTrue(np.allclose(rg**2, res['Rg^2'], atol=1e-6))
 
     def test_gyration_tensor(self):
