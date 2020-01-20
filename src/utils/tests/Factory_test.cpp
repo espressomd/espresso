@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** \file
- * Unit tests for the Utils::Factory class.
+/* Unit tests for the Utils::Factory class.
  * The factory is tested by registering different types of classes
  * with it (first test), and then checking if instances of those classes can be
  * made via the Factory (second test).
@@ -45,7 +44,7 @@ struct OtherDerivedTestClass : public TestClass {};
 
 } /* namespace Testing */
 
-/** Check registration of construction functions */
+/* Check registration of construction functions */
 BOOST_AUTO_TEST_CASE(regiser_class) {
   using namespace Testing;
   typedef Utils::Factory<TestClass> Factory;
@@ -66,7 +65,7 @@ BOOST_AUTO_TEST_CASE(regiser_class) {
   BOOST_CHECK(Factory::has_builder("other_derived_class"));
 }
 
-/** Check object construction. */
+/* Check object construction. */
 BOOST_AUTO_TEST_CASE(make) {
   using namespace Testing;
   /* Make a base object */

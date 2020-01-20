@@ -322,7 +322,7 @@ class Analysis:
         check_type_or_throw_except(
             length, 1, float, "length has to be a float")
         check_type_or_throw_except(
-            radius, 1, float, "radius has to be a floats")
+            radius, 1, float, "radius has to be a float")
         check_type_or_throw_except(
             bins_axial, 1, int, "bins_axial has to be an int")
         check_type_or_throw_except(
@@ -412,7 +412,7 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in espresso core if necessary
+        # Update in ESPResSo core if necessary
         if (analyze.total_pressure.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 
@@ -524,7 +524,7 @@ class Analysis:
         # Dict to store the results
         p = OrderedDict()
 
-        # Update in espresso core if necessary
+        # Update in ESPResSo core if necessary
         if (analyze.total_p_tensor.init_status != 1 + v_comp):
             analyze.update_pressure(v_comp)
 
@@ -755,7 +755,11 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        re = analyze.calc_re(analyze.partCfg())
+        re = analyze.calc_re(
+            analyze.partCfg(),
+            chain_start,
+            number_of_chains,
+            chain_length)
         return np.array([re[0], re[1], re[2], re[3]])
 
     def calc_rg(self, chain_start=None, number_of_chains=None,
@@ -787,7 +791,11 @@ class Analysis:
 
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rg = analyze.calc_rg(analyze.partCfg())
+        rg = analyze.calc_rg(
+            analyze.partCfg(),
+            chain_start,
+            number_of_chains,
+            chain_length)
         return np.array([rg[0], rg[1], rg[2], rg[3]])
 
     def calc_rh(self, chain_start=None, number_of_chains=None,
@@ -818,7 +826,11 @@ class Analysis:
         """
 
         self.check_topology(chain_start, number_of_chains, chain_length)
-        rh = analyze.calc_rh(analyze.partCfg())
+        rh = analyze.calc_rh(
+            analyze.partCfg(),
+            chain_start,
+            number_of_chains,
+            chain_length)
         return np.array([rh[0], rh[1]])
 
     def check_topology(self, chain_start=None, number_of_chains=None,
@@ -838,9 +850,6 @@ class Analysis:
                                  'n_chains={2:.0f}, chain_length={3:.0f}\n'
                                  'please provide a contiguous range of particle ids'.format(
                                      i, chain_start, number_of_chains, chain_length))
-        analyze.chain_start = chain_start
-        analyze.chain_n_chains = number_of_chains
-        analyze.chain_length = chain_length
 
     #
     # Structure factor
@@ -995,11 +1004,11 @@ class Analysis:
             Maximum distance.
         r_bins : :obj:`int`
             Number of bins.
-        log_flag : :obj:`int`
-            When set to 0, the bins are linearly equidistant; when set to 1,
-            the bins are logarithmically equidistant.
-        int_flag : :obj:`int`
-            When set to 1, the result is an integrated distribution.
+        log_flag : :obj:`bool`
+            When set to ``False``, the bins are linearly equidistant; when set
+            to ``True``, the bins are logarithmically equidistant.
+        int_flag : :obj:`bool`
+            When set to ``True``, the result is an integrated distribution.
 
         Returns
         -------
@@ -1017,7 +1026,7 @@ class Analysis:
         if r_max is None:
             r_max = min_box_l / 2.0
 
-        if r_min < 0.0 or (log_flag == 1 and r_min == 0.0):
+        if r_min < 0.0 or (log_flag and r_min == 0.0):
             raise ValueError("r_min was chosen too small!")
         if r_max <= r_min:
             raise ValueError("r_max has to be greater than r_min!")
@@ -1033,7 +1042,7 @@ class Analysis:
 
         analyze.calc_part_distribution(
             analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
-            r_min, r_max, r_bins, log_flag, & low, distribution.data())
+            r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(
             distribution.data(), r_bins)
@@ -1126,13 +1135,12 @@ class Analysis:
                 type, 1, int, "particle type has to be an int")
             if (type < 0 or type >= analyze.max_seen_particle_type):
                 raise ValueError("Particle type", type, "does not exist!")
-        selection = np.in1d(self._system.part[:].type, p_type)
-
-        cm = np.mean(self._system.part[selection].pos, axis=0)
+        selection = self._system.part.select(lambda p: (p.type in p_type))
+        cm = np.mean(selection.pos, axis=0)
         mat = np.zeros(shape=(3, 3))
         for i, j in np.ndindex((3, 3)):
-            mat[i, j] = np.mean(((self._system.part[selection].pos)[:, i] - cm[i]) * (
-                (self._system.part[selection].pos)[:, j] - cm[j]))
+            mat[i, j] = np.mean(((selection.pos)[:, i] - cm[i]) * (
+                (selection.pos)[:, j] - cm[j]))
         w, v = np.linalg.eig(mat)
         # return eigenvalue/vector tuples in order of increasing eigenvalues
         order = np.argsort(np.abs(w))[::-1]

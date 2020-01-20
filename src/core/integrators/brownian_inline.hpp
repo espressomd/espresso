@@ -24,6 +24,7 @@
 #define BROWNIAN_INLINE_HPP
 
 #include "thermostat.hpp"
+#include "random.hpp"
 
 /** Propagate position: viscous drag driven by conservative forces.*/
 /*********************************************************/
@@ -174,7 +175,7 @@ void bd_random_walk(Particle &p, double dt) {
 
   // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared
   // magnitude defined in the second eq. (14.38), Schlick2010.
-  Utils::Vector3d noise = v_noise_g(p.p.identity, RNGSalt::BROWNIAN);
+  Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN>(langevin_rng_counter->value(),p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -242,7 +243,7 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
   }
 #endif /* LANGEVIN_PER_PARTICLE */
 
-  Utils::Vector3d noise = v_noise_g(p.p.identity, RNGSalt::BROWNIAN);
+  Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN>(langevin_rng_counter->value(), p.identity());
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -398,7 +399,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
 #endif /* LANGEVIN_PER_PARTICLE */
 
   Utils::Vector3d dphi = {0.0, 0.0, 0.0};
-  Utils::Vector3d noise = v_noise_g(p.p.identity, RNGSalt::BROWNIAN);
+  Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT>(langevin_rng_counter->value(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -455,7 +456,7 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
 #endif /* LANGEVIN_PER_PARTICLE */
 
   Utils::Vector3d domega;
-  Utils::Vector3d noise = v_noise_g(p.p.identity, RNGSalt::BROWNIAN);
+  Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN>(langevin_rng_counter->value(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))

@@ -67,14 +67,7 @@ Utils::Vector3i calc_node_pos(const boost::mpi::communicator &comm) {
 
 Utils::Vector<int, 6>
 calc_node_neighbors(const boost::mpi::communicator &comm) {
-  using std::get;
-  using Utils::Mpi::cart_shift;
-
-  return {
-      get<1>(cart_shift(comm, 0, -1)), get<1>(cart_shift(comm, 0, +1)),
-      get<1>(cart_shift(comm, 1, -1)), get<1>(cart_shift(comm, 1, +1)),
-      get<1>(cart_shift(comm, 2, -1)), get<1>(cart_shift(comm, 2, +1)),
-  };
+  return Utils::Mpi::cart_neighbors<3>(comm);
 }
 
 LocalBox<double> regular_decomposition(const BoxGeometry &box,

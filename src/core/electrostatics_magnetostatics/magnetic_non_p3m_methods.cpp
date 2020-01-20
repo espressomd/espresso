@@ -301,7 +301,7 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
     } /* of  j and i  */
   }   /* end of the area of calculation */
 
-  /* set the forces, and torques of the particles within Espresso */
+  /* set the forces, and torques of the particles within ESPResSo */
   if (force_flag) {
 
     int dip_particles2 = 0;

@@ -64,8 +64,10 @@
  */
 struct DomainDecomposition {
   DomainDecomposition()
-      : cell_grid{0, 0, 0}, ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0},
-        inv_cell_size{0, 0, 0} {}
+      : cell_offset{0, 0, 0}, cell_grid{0, 0, 0},
+        ghost_cell_grid{0, 0, 0}, cell_size{0, 0, 0}, inv_cell_size{0, 0, 0} {}
+  /** Offset in global grid */
+  int cell_offset[3];
   /** linked cell grid in nodes spatial domain. */
   int cell_grid[3];
   /** linked cell grid with ghost frame. */
@@ -98,7 +100,7 @@ extern int max_num_cells;
 
 /** Minimal number of cells per node. This is mainly to avoid excessively large
  *  numbers of particles per cell, which will result in really large Verlet
- *  lists and eventually crash Espresso.
+ *  lists and eventually crash ESPResSo.
  */
 extern int min_num_cells;
 
@@ -123,7 +125,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
 
 /** Initialize the topology. The argument is a list of cell pointers,
  *  containing particles that have to be sorted into new cells. The
- *  particles might not belong to this node.  This procedure is used
+ *  particles might not belong to this node. This procedure is used
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.

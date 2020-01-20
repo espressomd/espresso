@@ -21,7 +21,7 @@ simulation. Scripts sometimes use variables that
 contain essential information about a simulation: the stored values of
 an observable that was computed in previous time steps, counters, etc.
 These would have to be contained in a checkpoint. However, not all
-variables are of interest. 
+variables are of interest.
 
 Another problem with a generic checkpoint would be the control flow of
 the script. In principle, the checkpoint would have to store where in
@@ -43,7 +43,7 @@ It is strongly recommended to keep track of the times in the simulation run wher
 Moreover, please carefully read the limitations mentioned below.
 
 Checkpointing is implemented by the :class:`espressomd.checkpointing.Checkpoint` class. It is instanced as follows::
-    
+
     from espressomd import checkpointing
     checkpoint = checkpointing.Checkpoint(checkpoint_id="mycheckpoint", checkpoint_path=".")
 
@@ -78,8 +78,8 @@ To trigger the checkpoint when Ctrl+C is pressed during a running simulation, th
     # signal.SIGINT: signal 2, is sent when ctrl+c is pressed
     checkpoint.register_signal(signal.SIGINT)
 
-In the above example checkpointing is triggered, when the user 
-interrupts by pressing Ctrl+C. In this case a new checkpoint is written and the simulation
+In the above example checkpointing is triggered, when the user interrupts by
+pressing Ctrl+C. In this case a new checkpoint is written and the simulation
 quits.
 
 An existing checkpoint can be loaded with::
@@ -94,23 +94,23 @@ An existing checkpoint can be loaded with::
 This will restore the state of the objects registered for checkpointing.
 The checkpointing instance itself will also be restored. I.e., the same variables will be registered for the next checkpoint and the same system signals will be caught as in the initial setup of the checkpointing.
 
-Be aware of the following limitations: 
+Be aware of the following limitations:
 
   * Checkpointing makes use of the ``pickle`` python package. Objects will only be restored as far as they support pickling. This is the case for Python's basic data types, ``numpy`` arrays and many other objects. Still, pickling support cannot be taken for granted.
 
-  * Pickling support of the Espresso system instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms then can be tested.
+  * Pickling support of the :class:`espressomd.system.System` instance and contained objects such as bonded and non-bonded interactions and electrostatics methods. However, there are many more combinations of active interactions and algorithms than can be tested.
 
-  * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods 
+  * The active actors, i.e., the content of ``system.actors``, are checkpointed. For lattice-Boltzmann fluids, this only includes the parameters such as the lattice constant (``agrid``). The actual flow field has to be saved separately with the lattice-Boltzmann specific methods
     :meth:`espressomd.lb.HydrodynamicInteraction.save_checkpoint`
-    and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint
+    and loaded via :meth:`espressomd.lb.HydrodynamicInteraction.load_checkpoint` after restoring the checkpoint.
 
   * References between Python objects are not maintained during checkpointing. For example, if an instance of a shape and an instance of a constraint containing the shape are checkpointed, these two objects are equal before checkpointing but independent copies which have the same parameters after restoring the checkpoint. Changing one will no longer affect the other.
-      
+
   * The state of the cell system as well as the MPI node grid are checkpointed. Therefore, checkpoints can only be loaded, when the script runs on the same number of MPI ranks.
 
   * Checkpoints are not compatible between different |es| versions.
 
-  * Checkpoints may depend on the presence of other Python modules at specific versions. It may therefore not be possible to load a checkpoint in a different environment than where it was loaded. 
+  * Checkpoints may depend on the presence of other Python modules at specific versions. It may therefore not be possible to load a checkpoint in a different environment than where it was loaded.
 
 For additional methods of the checkpointing class, see :class:`espressomd.checkpointing.Checkpoint`.
 
@@ -183,12 +183,13 @@ documentation see `h5py <https://docs.h5py.org/en/stable/>`_). For example,
 all positions stored in the file called "h5mdfile.h5" can be read using:
 
 .. code:: python
-    
+
     import h5py
     h5file = h5py.File("h5mdfile.h5", 'r')
     positions = h5file['particles/atoms/position/value']
 
-Furthermore, the files can be inspected with the GUI tool hdfview.
+Furthermore, the files can be inspected with the GUI tool hdfview or visually with the
+H5MD VMD plugin (see `H5MD plugin <https://github.com/h5md/VMD-h5mdplugin>`_).
 
 For other examples, see :file:`/samples/h5md.py`
 

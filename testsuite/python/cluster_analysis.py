@@ -138,7 +138,7 @@ class ClusterAnalysis(ut.TestCase):
 
             # Radius of gyration
             rg = 0.
-            com_particle = self.es.part[len(self.es.part) / 2]
+            com_particle = self.es.part[len(self.es.part) // 2]
             for p in c.particles():
                 rg += self.es.distance(p, com_particle)**2
             rg /= len(self.es.part)

@@ -23,11 +23,15 @@
 #define RANDOM_H
 
 /** \file
-
-    A random generator
-*/
+ *  Random number generation using Philox.
+ */
 
 #include "errorhandling.hpp"
+
+#include <Random123/philox.h>
+#include <utils/Vector.hpp>
+#include <utils/u32_to_u64.hpp>
+#include <utils/uniform.hpp>
 
 #include <random>
 #include <stdexcept>
@@ -41,18 +45,108 @@
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt {
-  FLUID,
+enum class RNGSalt : uint64_t {
+  FLUID = 0,
   PARTICLES,
   LANGEVIN,
+  LANGEVIN_ROT,
+  BROWNIAN,
+  BROWNIAN_ROT,
   SALT_DPD,
-  THERMALIZED_BOND,
-  BROWNIAN
+  THERMALIZED_BOND
 };
 
 namespace Random {
+/**
+ * @brief get 4 random uint 64 fomr the Philox RNG
+ *
+ * This uses the Philox PRNG, the state is controlled
+ * by the counter, the salt and two keys.
+ * If any of the keys and salt differ, the noise is
+ * not correlated between two calls along the same counter
+ * sequence.
+ *
+ */
+template <RNGSalt salt>
+Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1, int key2 = 0) {
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
+
+  const ctr_type c{{counter, static_cast<uint64_t>(salt)}};
+
+  auto const id1 = static_cast<uint32_t>(key1);
+  auto const id2 = static_cast<uint32_t>(key2);
+  const key_type k{id1, id2};
+
+  auto const res =rng_type{}(c, k);
+  return {res[0], res[1], res[2], res[3]};
+}
+
+/**
+ * @brief 3d uniform vector noise.
+ *
+ * This uses the Philox PRNG, the state is controlled
+ * by the counter, the salt and two keys.
+ * If any of the keys and salt differ, the noise is
+ * not correlated between two calls along the same counter
+ * sequence.
+ *
+ */
+template <RNGSalt salt>
+Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
+
+  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
+
+  using Utils::uniform;
+  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
+                         uniform(noise[2])} -
+         Utils::Vector3d::broadcast(0.5);
+}
+
+/** @brief Generator for Gaussian random 3d vector.
+ *
+ * Mean = 0, standard deviation = 1.0
+ * Based on the Philox RNG using 4x64 bits.
+ * The Box-Muller transform is used to convert from uniform to normal 
+ * distribution. The transform is only valid, if the uniformly distributed
+ * random numbers are not zero (approx one in 2^64). To avoid this case,
+ * such numbers are replaced by std::numeric_limits<double>::min()
+ * This breaks statistics in rare cases but allows for consistent RNG
+ * counters across MPI ranks.
+ * 
+ * @param counter counter for the random number generation
+ * @param key1 key for random number generation
+ * @param key2 key for random number generation
+ * @tparam salt (decorrelates different thermostat types)
+ *
+ * @return 3D vector of Gaussian random numbers.
+ *
+ */
+template <RNGSalt salt>
+inline Utils::Vector3d v_noise_g(uint64_t counter, int key1, int key2 = 0) {
+
+  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
+  using Utils::uniform;
+  Utils::Vector4d u{uniform(noise[0]), uniform(noise[1]), uniform(noise[2]), uniform(noise[3])};
+  
+  // Replace zeros from uniformly distributed numbers (see doc string)
+  static const double epsilon = std::numeric_limits<double>::min();
+  for (int i=0; i<4; i++) 
+    if (u[i]<epsilon) u[i]=epsilon;
+  
+  // Box muller transform code adapted from https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+  
+  static const double two_pi = 2.0*3.14159265358979323846; 
+    return {
+      sqrt(-2.0 * log(u[0])) * cos(two_pi * u[1]),
+	    sqrt(-2.0 * log(u[0])) * sin(two_pi * u[1]),
+      sqrt(-2.0 * log(u[2])) * cos(two_pi * u[3])};
+}
+
+
 extern std::mt19937 generator;
-extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 extern bool user_has_seeded;
 inline void unseeded_error() {
@@ -62,8 +156,7 @@ inline void unseeded_error() {
 
 /**
  * @brief checks the seeded state and throws error if unseeded
- *
- **/
+ */
 inline void check_user_has_seeded() {
   static bool unseeded_error_thrown = false;
   if (!user_has_seeded && !unseeded_error_thrown) {
@@ -77,12 +170,11 @@ inline void check_user_has_seeded() {
  *
  * @param cnt   Unused.
  * @param seeds A vector of seeds, must be at least n_nodes long.
- **/
+ */
 void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
 /**
- * @brief Gets a string representation of the state of all
- *        the nodes.
+ * @brief Gets a string representation of the state of all the nodes.
  */
 std::string mpi_random_get_stat();
 
@@ -90,13 +182,12 @@ std::string mpi_random_get_stat();
  * @brief Set the seeds on all the node to the state represented
  *        by the string.
  * The string representation must be one that was returned by
- * mpi_random_get_stat.
+ * @ref mpi_random_get_stat.
  */
 void mpi_random_set_stat(const std::vector<std::string> &stat);
 
 /**
- * @brief
- * Get the state size of the random number generator
+ * @brief Get the state size of the random number generator
  */
 int get_state_size_of_generator();
 
@@ -118,117 +209,11 @@ void init_random_seed(int seed);
  * @brief Draws a random real number from the uniform distribution in the range
  * [0,1)
  */
-
 inline double d_random() {
   using namespace Random;
   check_user_has_seeded();
   return uniform_real_distribution(generator);
 }
 
-/**
- * @brief draws a random integer from the uniform distribution in the range
- * [0,maxint-1]
- *
- * @param maxint range.
- */
-inline int i_random(int maxint) {
-  using namespace Random;
-  check_user_has_seeded();
-  std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
-  return uniform_int_dist(generator);
-}
-
-/**
- * @brief draws a random number from the normal distribution with mean 0 and
- * variance 1.
- */
-inline double gaussian_random() {
-  using namespace Random;
-  check_user_has_seeded();
-  return normal_distribution(generator);
-}
-
-/**
- * @brief Generator for cutoff Gaussian random numbers.
- *
- * Generates a Gaussian random number and generates a number between -2 sigma
- * and 2 sigma in the form of a Gaussian with standard deviation
- * sigma=1.118591404 resulting in an actual standard deviation of 1.
- *
- * @return Gaussian random number.
- */
-inline double gaussian_random_cut() {
-  using namespace Random;
-  check_user_has_seeded();
-  const double random_number = 1.042267973 * normal_distribution(generator);
-
-  if (fabs(random_number) > 2 * 1.042267973) {
-    if (random_number > 0) {
-      return 2 * 1.042267973;
-    }
-    return -2 * 1.042267973;
-  }
-  return random_number;
-}
-
-/** @brief Generator for Gaussian random numbers.
- *
- * Uses the Box-Muller
- * transformation to generate two Gaussian random numbers from two
- * uniform random numbers.
- *
- * @param d1 decorrelated uniform random from (0..1).
- * @param d2 decorrelated uniform random from (0..1).
- * @param &repeat_flag whether we need to calc new rnd numbers.
- *
- * @return Gaussian random number.
- *
- */
-inline double gaussian_random_box_muller(double d1, double d2,
-                                         int &repeat_flag) {
-  double x1, x2, r2, fac;
-  static int calc_new = 1;
-  static double save;
-  double res = NAN;
-
-  /* On every second call two gaussian random numbers are calculated
-     via the Box-Muller transformation. One is returned as the result
-     and the second one is stored for use on the next call.
-  */
-
-  if (calc_new) {
-
-    /* draw two uniform random numbers in the unit circle */
-    x1 = 2.0 * d1;
-    x2 = 2.0 * d2;
-    r2 = x1 * x1 + x2 * x2;
-    if ((r2 >= 1.0) || (r2 == 0.0)) {
-      repeat_flag = 1;
-      res = NAN; // actually, no numbers
-    } else {
-      repeat_flag = 0;
-
-      /* perform Box-Muller transformation */
-      fac = sqrt(-2.0 * log(r2) / r2);
-
-      /* save one number for later use */
-      save = x1 * fac;
-      calc_new = 0;
-
-      /* return the second number */
-      res = x2 * fac;
-    }
-
-  } else {
-
-    repeat_flag = 0;
-    calc_new = 1;
-
-    /* return the stored gaussian random number */
-    res = save;
-  }
-
-  return res;
-}
 
 #endif

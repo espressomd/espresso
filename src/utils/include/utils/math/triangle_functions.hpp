@@ -24,7 +24,14 @@
 #include <cmath>
 
 namespace Utils {
-/** Computes the normal vector to the plane given by points P1P2P3 */
+/**
+ * @brief Computes the normal vector of a triangle.
+ *
+ * The sign convention is such that P1P2, P1P3 and
+ * the normal form a right-handed system.
+ * The normal vector is not normalized, e.g. its length
+ * is arbitrary.
+ */
 inline Vector3d get_n_triangle(const Vector3d &P1, const Vector3d &P2,
                                const Vector3d &P3) {
   auto const u = P2 - P1;
@@ -33,28 +40,30 @@ inline Vector3d get_n_triangle(const Vector3d &P1, const Vector3d &P2,
   return vector_product(u, v);
 }
 
-/** Computes the area of triangle between vectors P1,P2,P3,
- *  by computing the crossproduct P1P2 x P1P3 and taking the half of its norm */
+/** Computes the area of triangle between vectors P1,P2,P3, by computing
+ *  the cross product P1P2 x P1P3 and taking the half of its norm.
+ */
 inline double area_triangle(const Vector3d &P1, const Vector3d &P2,
                             const Vector3d &P3) {
   return 0.5 * get_n_triangle(P1, P2, P3).norm();
 }
 
-/** This function returns the angle btw the triangle p1,p2,p3 and p2,p3,p4.  Be
- * careful, the angle depends on the orientation of the triangles!  You need to
- * be sure that the orientation (direction of normal vector) of p1p2p3 is given
- * by the cross product p2p1 x p2p3.  The orientation of p2p3p4 must be given
- * by p2p3 x p2p4.
+/** This function returns the angle between the triangle p1,p2,p3 and p2,p3,p4.
+ *  Be careful, the angle depends on the orientation of the triangles! You need
+ *  to be sure that the orientation (direction of normal vector) of p1p2p3
+ *  is given by the cross product p2p1 x p2p3. The orientation of p2p3p4 must
+ *  be given by p2p3 x p2p4.
  *
- *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0).  The
+ *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0). The
  *  orientation of p1p2p3 should be in the direction (0,1,0) and indeed: p2p1 x
  *  p2p3 = (0,0,1)x(1,0,0) = (0,1,0) This function is called in the beginning
- *  of the simulation when creating bonds depending on the angle btw the
- *  triangles, the bending_force.  Here, we determine the orientations by
- *  looping over the triangles and checking the correct orientation.  So if you
+ *  of the simulation when creating bonds depending on the angle between the
+ *  triangles, the bending_force. Here, we determine the orientations by
+ *  looping over the triangles and checking the correct orientation. So if you
  *  have the access to the order of particles, you are safe to call this
  *  function with exactly this order. Otherwise you need to check the
- *  orientations. */
+ *  orientations.
+ */
 template <typename T1, typename T2, typename T3, typename T4>
 double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
                            const T4 &P4) {
@@ -85,8 +94,8 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
                                // the orientation, always less or equal to Pi)
                                // is equal to Pi minus angle between the normals
 
-  // Now we need to determine, if the angle btw two triangles is less than Pi or
-  // more than Pi. To do this we check,
+  // Now we need to determine, if the angle between two triangles is less than
+  // Pi or more than Pi. To do this we check,
   // if the point P4 lies in the halfspace given by triangle P1P2P3 and the
   // normal to this triangle. If yes, we have
   // angle less than Pi, if not, we have angle more than Pi.

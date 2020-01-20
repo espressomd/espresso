@@ -1,19 +1,3 @@
-if(NOT DEFINED TEST_NP)
-  include(ProcessorCount)
-  ProcessorCount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
-endif()
-
-if(EXISTS ${MPIEXEC})
-  # OpenMPI 3.0 and higher checks the number of processes against the number of CPUs
-  execute_process(COMMAND ${MPIEXEC} --version RESULT_VARIABLE mpi_version_result OUTPUT_VARIABLE mpi_version_output ERROR_VARIABLE mpi_version_output)
-  if (mpi_version_result EQUAL 0 AND mpi_version_output MATCHES "\\(Open(RTE| MPI)\\) ([3-9]\\.|1[0-9])")
-    set(MPIEXEC_OVERSUBSCRIBE "-oversubscribe")
-  else()
-    set(MPIEXEC_OVERSUBSCRIBE "")
-  endif()
-endif()
-
 function(PYTHON_TEST)
   cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX" "DEPENDS;DEPENDENCIES;LABELS" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
@@ -206,6 +190,8 @@ python_test(FILE time_series.py MAX_NUM_PROC 1)
 python_test(FILE linear_momentum.py)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE elc.py MAX_NUM_PROC 2)
+python_test(FILE elc_and_mmm2d_vs_analytic.py MAX_NUM_PROC 2)
 
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)

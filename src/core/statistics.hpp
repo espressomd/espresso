@@ -76,7 +76,7 @@ IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
  *              position of a particle).
  *  @return the minimal distance of a particle to coordinates @p pos
  */
-double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid);
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid = -1);
 
 /** Append particles' positions in %p partCfg to #configs
  *  @param partCfg  @copybrief PartCfg
@@ -88,8 +88,8 @@ void analyze_append(PartCfg &partCfg);
  *  Calculates the distance distribution of particles with types given
  *  in the @p p1_types list around particles with types given in the
  *  @p p2_types list. The distances range from @p r_min to @p r_max, binned
- *  into @p r_bins bins which are either equidistant (@p log_flag==0) or
- *  logarithmically equidistant (@p log_flag==1). The result is stored
+ *  into @p r_bins bins which are either equidistant (@p log_flag==false) or
+ *  logarithmically equidistant (@p log_flag==true). The result is stored
  *  in the @p array dist.
  *  @param p1_types list with types of particles to find the distribution for.
  *  @param n_p1     length of @p p1_types.
@@ -105,8 +105,8 @@ void analyze_append(PartCfg &partCfg);
  */
 void calc_part_distribution(PartCfg &, int const *p1_types, int n_p1,
                             int const *p2_types, int n_p2, double r_min,
-                            double r_max, int r_bins, int log_flag, double *low,
-                            double *dist);
+                            double r_max, int r_bins, bool log_flag,
+                            double *low, double *dist);
 
 /** Calculate the radial distribution function.
  *

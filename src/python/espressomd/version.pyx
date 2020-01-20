@@ -19,13 +19,13 @@ from espressomd.utils import to_str
 
 
 def major():
-    """Prints the major version of Espresso.
+    """Prints the major version of ESPResSo.
     """
     return ESPRESSO_VERSION_MAJOR
 
 
 def minor():
-    """Prints the minor version of Espresso.
+    """Prints the minor version of ESPResSo.
     """
     return ESPRESSO_VERSION_MINOR
 
@@ -53,7 +53,7 @@ def git_commit():
 def git_state():
     """Git state of the build if known, otherwise
        empty. State is "CLEAN" if the repository
-       was not changed from git_commit(), "DIRTY"
-       otherwise.
+       was not changed from :meth:`git_commit()`,
+       "DIRTY" otherwise.
     """
     return to_str(GIT_STATE)

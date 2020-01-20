@@ -61,6 +61,12 @@ public:
    * @param box_l Length that should be set.
    */
   void set_length(Utils::Vector3d const &box_l) { m_length = box_l; }
+
+  /**
+   * @brief Box volume
+   * @return Return the volume of the box.
+   */
+  double volume() const { return m_length[0] * m_length[1] * m_length[2]; }
 };
 
 #endif // CORE_BOX_GEOMETRY_HPP

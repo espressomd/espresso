@@ -163,28 +163,28 @@ To use the method, create an instance of :class:`~espressomd.magnetostatics.Dipo
   bh = DipolarBarnesHutGpu(prefactor=pf_dds_gpu, epssq=200.0, itolsq=8.0)
   system.actors.add(bh)
 
-.. _Scafacos Magnetostatics:
+.. _ScaFaCoS Magnetostatics:
 
-Scafacos Magnetostatics
+ScaFaCoS Magnetostatics
 -----------------------
 
-Espresso can use the methods from the Scafacos *Scalable fast Coulomb solvers*
+|es| can use the methods from the ScaFaCoS *Scalable fast Coulomb solvers*
 library for dipoles, if the methods support dipolar calculations. The feature
 ``SCAFACOS_DIPOLES`` has to be added to :file:`myconfig.hpp` to activate this
 feature. Dipolar calculations are only included in the ``dipolar`` branch of
-the Scafacos code.
+the ScaFaCoS code.
 
-To use SCAFACOS, create an instance of :class:`~espressomd.magnetostatics.Scafacos`
+To use ScaFaCoS, create an instance of :class:`~espressomd.magnetostatics.Scafacos`
 and add it to the list of active actors. Three parameters have to be specified:
 
-* ``method_name``: name of the SCAFACOS method being used.
+* ``method_name``: name of the ScaFaCoS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
 * ``prefactor``
 
-The method-specific parameters are described in the SCAFACOS manual.
-Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field
+The method-specific parameters are described in the ScaFaCoS manual.
+In addition, methods supporting tuning have a parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field
 
 For details of the various methods and their parameters please refer to
-the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for Coulomb or for dipolar interactions.
+the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a shared library. ScaFaCoS can be used only once, either for Coulomb or for dipolar interactions.
 
 

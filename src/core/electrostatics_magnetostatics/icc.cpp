@@ -20,9 +20,11 @@
  */
 
 /** \file
-  Detailed Information about the method is included in the corresponding header
-  file \ref icc.hpp.
-*/
+ *  Functions to compute the electric field acting on the induced charges,
+ *  excluding forces other than the electrostatic ones. Detailed information
+ *  about the ICC* method is included in the corresponding header file
+ *  \ref icc.hpp.
+ */
 
 #include "icc.hpp"
 
@@ -51,22 +53,21 @@
 
 iccp3m_struct iccp3m_cfg;
 
-/* functions that are used in icc* to compute the electric field acting on the
- * induced charges, excluding forces other than the electrostatic ones */
 void init_forces_iccp3m(const ParticleRange &particles,
                         const ParticleRange &ghosts_particles);
 
-/** Calculation of the electrostatic forces between source charges (= real
- * charges) and wall charges. For each electrostatic method the proper functions
- * for short and long range parts are called. Long Range Parts are calculated
- * directly, short range parts need helper functions according to the particle
- * data organisation. A modified version of \ref force_calc in \ref forces.hpp.
+/** Calculate the electrostatic forces between source charges (= real charges)
+ *  and wall charges. For each electrostatic method, the proper functions
+ *  for short- and long-range parts are called. Long-range parts are calculated
+ *  directly, short-range parts need helper functions according to the particle
+ *  data organisation. This is a modified version of \ref force_calc.
  */
 void force_calc_iccp3m(const ParticleRange &particles,
                        const ParticleRange &ghost_particles);
 
-/** Variant of add_non_bonded_pair_force where only Coulomb
- *  contributions are calculated   */
+/** Variant of @ref add_non_bonded_pair_force where only Coulomb
+ *  contributions are calculated
+ */
 inline void add_non_bonded_pair_force_iccp3m(Particle &p1, Particle &p2,
                                              Utils::Vector3d const &d,
                                              double dist, double dist2) {

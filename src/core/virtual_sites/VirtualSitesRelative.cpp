@@ -43,7 +43,7 @@ void VirtualSitesRelative::update(bool recalc_positions) const {
       ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
     }
   }
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     if (!p.p.is_virtual)
       continue;
 
@@ -133,7 +133,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   init_forces_ghosts(cell_structure.ghost_cells().particles());
 
   // Iterate over all the particles in the local cells
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     // We only care about virtual particles
     if (p.p.is_virtual) {
       // First obtain the real particle responsible for this virtual particle:
@@ -159,7 +159,7 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
   // Division by 3 volume is somewhere else. (pressure.cpp after all pressure
   // calculations) Iterate over all the particles in the local cells
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     if (!p.p.is_virtual)
       continue;
 

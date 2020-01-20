@@ -395,8 +395,8 @@ BOOST_AUTO_TEST_CASE(interpolated_vector_field) {
         grid_spacing, origin, Field::jacobian_type{});
 
     BOOST_CHECK_SMALL((interpolated_value[0] - field_value[0]).norm(),
-                      std::numeric_limits<double>::epsilon());
+                      3 * std::numeric_limits<double>::epsilon());
     BOOST_CHECK_SMALL((interpolated_value[1] - field_value[1]).norm(),
-                      std::numeric_limits<double>::epsilon());
+                      3 * std::numeric_limits<double>::epsilon());
   }
 }

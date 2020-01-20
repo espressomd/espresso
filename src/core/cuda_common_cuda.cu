@@ -263,7 +263,7 @@ void gpu_init_particle_comm() {
       if (cuda_check_gpu(0) != ES_OK) {
         runtimeWarningMsg()
             << "CUDA device 0 is not capable of running ESPResSo but is used "
-               "by default. Espresso has detected a CUDA capable card but it "
+               "by default. ESPResSo has detected a CUDA capable card but it "
                "is not the one used by ESPResSo by default. Please set the "
                "GPU to use by setting System.cuda_init_handle.device. A list "
                "of available GPUs is available through "
@@ -291,7 +291,7 @@ void copy_part_data_to_gpu(ParticleRange particles) {
       global_part_vars_host.number_of_particles) {
     cuda_mpi_get_particles(particles, particle_data_host);
 
-    /* get espresso md particle values*/
+    /* get espressomd particle values */
     if (this_node == 0)
       cudaMemcpyAsync(particle_data_device, particle_data_host,
                       global_part_vars_host.number_of_particles *

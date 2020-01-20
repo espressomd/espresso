@@ -20,7 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import numpy as np
-from espressomd.accumulators import Correlator
+from espressomd.accumulators import Correlator, TimeSeries
 from espressomd.observables import ParticleVelocities, ParticleBodyAngularVelocities
 from tests_common import single_component_maxwell
 
@@ -39,11 +39,6 @@ class LangevinThermostat(ut.TestCase):
     @classmethod
     def setUpClass(cls):
         np.random.seed(42)
-
-    def setUp(self):
-        self.system.thermostat.turn_off()
-        # the default integrator is supposed implicitly
-        self.system.integrator.set_nvt()
 
     def check_velocity_distribution(self, vel, minmax, n_bins, error_tol, kT):
         """check the recorded particle distributions in velocity against a
@@ -64,38 +59,6 @@ class LangevinThermostat(ut.TestCase):
         """Verifies the normalization of the analytical expression."""
         self.assertLessEqual(
             abs(single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
-
-    def global_langevin_run_check(self, N, kT, loops):
-        """Sampling for the global Langevin parameters test.
-        Parameters
-        ----------
-        N :       :obj:`int`
-                  Number of particles.
-        kT :      :obj:`float`
-                  Temperature.
-        loops :   :obj:`int`
-                  Number of integration steps to sample.
-        """
-        system = self.system
-
-        # Sampling
-        loops = 150
-        v_stored = np.zeros((N * loops, 3))
-        omega_stored = np.zeros((N * loops, 3))
-        for i in range(loops):
-            system.integrator.run(1)
-            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
-            if espressomd.has_features("ROTATION"):
-                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
-
-        v_minmax = 5
-        bins = 4
-        error_tol = 0.01
-        self.check_velocity_distribution(
-            v_stored, v_minmax, bins, error_tol, kT)
-        if espressomd.has_features("ROTATION"):
-            self.check_velocity_distribution(
-                omega_stored, v_minmax, bins, error_tol, kT)
 
     def test_01__langevin_seed(self):
         """Test for RNG seed consistency."""
@@ -223,9 +186,17 @@ class LangevinThermostat(ut.TestCase):
                     np.copy(system.part[0].omega_body),
                     o0 * np.exp(-gamma_r_i / rinertia * system.time), atol=5E-4)
 
-    def test_04__global_langevin(self):
-        """Test for global Langevin parameters."""
-        N = 400
+    def check_global_langevin(self, recalc_forces, loops):
+        """Test velocity distribution for global Langevin parameters.
+
+        Parameters
+        ----------
+        recalc_forces : :obj:`bool`
+            True if the forces should be recalculated after every step.
+        loops : :obj:`int`
+            Number of sampling loops
+        """
+        N = 200
         system = self.system
         system.part.clear()
         system.time_step = 0.06
@@ -244,25 +215,33 @@ class LangevinThermostat(ut.TestCase):
         # Warmup
         system.integrator.run(20)
 
-        self.global_langevin_run_check(N, kT, 150)
+        # Sampling
+        v_stored = np.zeros((N * loops, 3))
+        omega_stored = np.zeros((N * loops, 3))
+        for i in range(loops):
+            system.integrator.run(1, recalc_forces=recalc_forces)
+            v_stored[i * N:(i + 1) * N, :] = system.part[:].v
+            if espressomd.has_features("ROTATION"):
+                omega_stored[i * N:(i + 1) * N, :] = system.part[:].omega_body
 
-        # Large time-step is OK for BD.
-        system.time_step = 7.214
-        system.part[:].v = np.zeros((3))
-        system.part[:].omega_body = np.zeros((3))
-        system.thermostat.turn_off()
-        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
-        system.integrator.set_brownian_dynamics()
-        # Warmup
-        # The BD does not require so the warmup. Only 1 step is enough.
-        # More steps are taken just to be sure that they will not lead
-        # to wrong results.
-        system.integrator.run(3)
-        # Less number of loops are needed in case of BD because the velocity
-        # distribution is already as required. It is not a result of a real
-        # dynamics.
-        self.global_langevin_run_check(N, kT, 70)
-        system.thermostat.turn_off()
+        v_minmax = 5
+        bins = 4
+        error_tol = 0.01
+        self.check_velocity_distribution(
+            v_stored, v_minmax, bins, error_tol, kT)
+        if espressomd.has_features("ROTATION"):
+            self.check_velocity_distribution(
+                omega_stored, v_minmax, bins, error_tol, kT)
+
+    def test_global_langevin(self):
+        """Test velocity distribution for global Langevin parameters."""
+        self.check_global_langevin(False, loops=150)
+
+    def test_global_langevin_initial_forces(self):
+        """Test velocity distribution for global Langevin parameters,
+           when using the initial force calculation.
+        """
+        self.check_global_langevin(True, loops=170)
 
     @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
     def test_05__langevin_per_particle(self):
@@ -519,6 +498,54 @@ class LangevinThermostat(ut.TestCase):
 
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
+
+    def test_08__noise_correlation(self):
+        """Checks that the Langevin noise is uncorrelated"""
+
+        system = self.system
+        system.part.clear()
+        system.time_step = 0.01
+        system.cell_system.skin = 0.1
+        system.part.add(id=(1, 2), pos=np.zeros((2, 3)))
+        vel_obs = ParticleVelocities(ids=system.part[:].id)
+        vel_series = TimeSeries(obs=vel_obs)
+        system.auto_update_accumulators.add(vel_series)
+        if espressomd.has_features("ROTATION"):
+            system.part[:].rotation = (1, 1, 1)
+            omega_obs = ParticleBodyAngularVelocities(ids=system.part[:].id)
+            omega_series = TimeSeries(obs=omega_obs)
+            system.auto_update_accumulators.add(omega_series)
+
+        kT = 3.2
+        system.thermostat.set_langevin(kT=kT, gamma=2.1, seed=17)
+        steps = int(1e6)
+        system.integrator.run(steps)
+
+        # test translational noise correlation
+        vel = np.array(vel_series.time_series())
+        for i in range(6):
+            for j in range(i, 6):
+                corrcoef = np.dot(vel[:, i], vel[:, j]) / steps / kT
+                if i == j:
+                    self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
+                else:
+                    self.assertLessEqual(np.abs(corrcoef), 0.04)
+
+        # test rotational noise correlation
+        if espressomd.has_features("ROTATION"):
+            omega = np.array(omega_series.time_series())
+            for i in range(6):
+                for j in range(6):
+                    corrcoef = np.dot(omega[:, i], omega[:, j]) / steps / kT
+                    if i == j:
+                        self.assertAlmostEqual(corrcoef, 1.0, delta=0.04)
+                    else:
+                        self.assertLessEqual(np.abs(corrcoef), 0.04)
+            # translational and angular velocities should be independent
+            for i in range(6):
+                for j in range(6):
+                    corrcoef = np.dot(vel[:, i], omega[:, j]) / steps / kT
+                    self.assertLessEqual(np.abs(corrcoef), 0.04)
 
 
 if __name__ == "__main__":

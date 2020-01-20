@@ -61,6 +61,8 @@ struct CUDA_particle_data {
   int identity;
 #ifdef VIRTUAL_SITES
   bool is_virtual;
+#else
+  static constexpr const bool is_virtual = false;
 #endif
 
   /** particle momentum struct velocity p.m->v*/

@@ -77,14 +77,14 @@ void nsq_topology_init(CellPList *old) {
 
   /* mark cells */
   local = &cells[this_node];
-  realloc_cellplist(&local_cells, local_cells.n = 1);
-  local_cells.cell[0] = local;
+  cell_structure.m_local_cells.resize(1);
+  cell_structure.m_local_cells[0] = local;
 
-  realloc_cellplist(&ghost_cells, ghost_cells.n = n_nodes - 1);
+  cell_structure.m_ghost_cells.resize(n_nodes - 1);
   int c = 0;
   for (int n = 0; n < n_nodes; n++)
     if (n != this_node)
-      ghost_cells.cell[c++] = &cells[n];
+      cell_structure.m_ghost_cells[c++] = &cells[n];
 
   std::vector<Cell *> red_neighbors;
   std::vector<Cell *> black_neighbors;

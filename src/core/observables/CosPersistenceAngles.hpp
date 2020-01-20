@@ -34,14 +34,15 @@ namespace Observables {
 class CosPersistenceAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
     auto const no_of_angles = n_values();
     std::vector<double> angles(no_of_angles);
     auto const no_of_bonds = n_values() + 1;
     std::vector<Utils::Vector3d> bond_vectors(no_of_bonds);
     auto get_bond_vector = [&](auto index) {
-      return get_mi_vector(partCfg[ids()[index + 1]].r.p,
-                           partCfg[ids()[index]].r.p, box_geo);
+      return get_mi_vector(particles[index + 1]->r.p, particles[index]->r.p,
+                           box_geo);
     };
     for (int i = 0; i < no_of_bonds; ++i) {
       auto const tmp = get_bond_vector(i);

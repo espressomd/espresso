@@ -2,6 +2,201 @@
 = ESPRESSO NEWS =
 =================
 
+ESPResSo 4.1.2
+==============
+
+This release provides a number of corrections for the ESPResSo 4.1 line.
+We recommend that this release be used for all production simulations.
+The interface has not been changed between ESPResSo 4.1.1 and 4.1.2.
+However, some bugs were discovered which can affect simulation results.
+Below, please find the list of changes. The numbers in brackets refer to
+ticket numbers on https://github.com/espressomd/espresso
+
+General corrections and improvements:
+
+* Remove correlation between the rotational noise and translational
+  noise in the Langevin thermostat (#3355)
+
+* Fix a bug that may cause the wrong temperature to be set by the
+  Langevin and DPD thermostats in the first time step after the system
+  was altered from the Python level, e.g., by changing particles or
+  interactions (#3341)
+
+* Fix a bug that caused the DPD thermostat to generate an incorrect
+  velocity distribution when used together with the Langevin thermostat
+  (#3352)
+
+* Fix a bug in MMM2D and ELC with potential boundary conditions, where
+  one of the correction factors was over-counted resulting in wrong
+  energies (#3310)
+
+* Fix a bug that caused the wrong bonds to be deleted when removing
+  particles from the system (#3356)
+
+* Fix an ambiguity in `ParticleSlice`: the values in the square brackets
+  refer to particle ids, not array indices (#3367). This means the
+  ill-defined syntax `system.part[0:-1]` is no longer valid. See the
+  User Guide section on Setting up particles for more information.
+
+* Remove the mass prefactor in the `ComForce` observable and use
+  the correct Particle ids in the `ParticleAngularVelocities`
+  and `ParticleBodyVelocities` observables (#3380)
+
+* Fix a rounding error that caused debug builds of ESPResSo running with
+  multiple MPI threads to crash when a particle was placed exactly on
+  the boundary between two cells (#3377)
+
+* Fix `espressomd.has_features()` for the corner case where the list of
+  all compiled-in features is passed as argument, returning ``False``
+  instead of ``True`` (#3318)
+
+* Refactor the random number generator code (#3349)
+
+* Minor fixes (#3351, #3336)
+
+Documentation and tutorials corrections and improvements:
+
+* Improve documentation of Monte Carlo methods (#3254, #3330)
+
+* Minor fixes (#3342, #3334)
+
+Build system and platform-related corrections and improvements:
+
+* List all Python dependencies in `requirements.txt` with the supported
+  version numbers (#3300). Please note that most of them are optional.
+
+* Add `MPIEXEC_PREFLAGS` and `MPIEXEC_POSTFLAGS` to the command lines of
+  parallel tests (#3221)
+
+* Add the `-oversubscribe` flag to the command lines of parallel tests
+  running with OpenMPI v2.X to avoid exiting early from a Python test
+  configured without `MAX_NUM_PROC` on a machine with a hyperthreaded
+  CPU where OpenMPI is configured such that the number of threads cannot
+  exceed the number of cores (#3335)
+
+* Refactor the CI, maintainer, Doxygen and pypresso shell scripts to
+  make them more portable and support filepaths containing whitespaces
+  (#3326, #3373)
+
+* Fix a nvcc compiler warning on the empty config (#3329)
+
+Improved testing:
+
+* Add a test for ELC and MMM2D using analytic expressions of the force
+  and energy (#3331)
+
+* Sped-up seven Python tests (#3319)
+
+* Fix a test that broke on s390x architectures with Fedora 31 (#3312)
+
+* Fix tests that broke on i586 architectures with OpenSUSE Tumbleweed
+  (#3327, #3358)
+
+
+
+ESPResSo 4.1.1
+==============
+
+This release provides a number of corrections for Espresso 4.1.
+We recommend that this release be used for all production simulations.
+The interface is mostly unchanged between Espresso 4.1 and 4.1.1; the
+two exceptions are limited to these experimental features:
+
+* `Integrator.set_isotropic_npt()`: input value `direction=[0,0,0]`
+  now throws an error instead of being silently changed to `[1,1,1]`
+
+* `ParticleHandle.swimming`: deprecated value `'rotational_friction'`
+  is now disabled
+
+These changes are unlikely to affect production simulations.
+However, some bugs were discovered which can affect simulation results.
+Below, please find the list of changes. The numbers in brackets refer
+to ticket numbers on https://github.com/espressomd/espresso
+
+General corrections and improvements:
+
+* Restore checkpointing mechanism for the steepest descent and NPT
+  integrators, LB and NPT thermostats (#3245)
+
+* Increase the minimum MPI version to 3.0; OpenMPI versions 1.6.5 and
+  lower are no longer supported (#3236)
+
+* Fix `Integrator.set_isotropic_npt()`: remove the silent conversion of
+  the incorrect input parameter `direction=[0,0,0]` to `[1,1,1]` in the
+  core; the function now throws an exception for fixed-volume boxes;
+  this change is unlikely to break pypresso scripts since not providing
+  a value to `direction` or providing `[1,1,1]` were the two standard
+  ways to set up a box with all directions allowed to rescale (#3253)
+
+* Fix `Integrator.set_vv()`: this function failed to set the velocity
+  Verlet integrator if the NPT integrator was active; this is now
+  resolved (#3274)
+
+* Fix the random segmentation fault triggered by the removal of a
+  particle with a bond or a virtual site relationship to another
+  particle (#3288)
+
+* Fix `system.part.writevtk()`: the function now writes down all
+  particles when using `types="all"` (#3290)
+
+* Disable the deprecated and broken ENGINE shear torque calculation
+  feature; the feature will be completely removed from the core in
+  the upcoming 4.2 release (#3277)
+
+* Fix unit conversion for the LB fluid viscosity (#3287)
+
+Documentation and tutorials corrections and improvements:
+
+* Add more detailed installation instructions for ESPResSo and its
+  Python dependencies on MacOS X (#3236)
+
+* Add links to Dockerfiles providing installation instructions for
+  ESPResSo and its Python dependencies on CentOS 7, Fedora 30, Debian 10
+  and OpenSUSE Leap 15.1 (#3244)
+
+* Add instructions to read PDB files with `MDAnalysis`, which is one of
+  the recommended tools to read/write molecular dynamics topologies and
+  trajectories in ESPResSo; the PdbParser feature will be removed in the
+  upcoming 4.2 release (#3257)
+
+* Add a new tutorial on the constant pH method; the reaction ensemble
+  tutorial will be removed in the upcoming 4.2 release (#3184)
+
+Build system and platform-related corrections and improvements:
+
+* Fix a PYTHONPATH error when ESPResSo is built in a directory
+  containing whitespace characters (#3238)
+
+* Fix several issues with the command `make install` that lead to import
+  errors in Python (incorrect runtime path, missing shared objects,
+  name collision for submodule `cluster_analysis`) and deprecate the
+  `make install DESTDIR=/path/to/espresso` command in favor of the
+  standard `cmake .. -DCMAKE_INSTALL_PREFIX=/path/to/espresso` command
+  (#3228), install espressomd module in a platform-dependent python
+  path, typically `lib{,64}/python3.X/{dist,site}-packages` (#3258)
+
+* Fix an issue in mpiio that triggered an assertion in systems with no
+  bonds when ESPResSo is built with stdlibc++ range checking enabled
+  (#3234)
+
+* Fix the pypresso script to correctly parse filepaths containing
+  whitespaces passed after a pypresso flag, such as `--gdb`, and make
+  conditional statements cross-platform (#3292)
+
+Improved testing:
+
+* Test checkpointing of integrators and thermostats (#3245)
+
+* Fix and improve `check_cmake_install` test (#3228, #3258) and add a
+  new CI job to test an installed version of ESPResSo (#3228)
+
+* Test engine LB (#3277)
+
+* Add more LB tests (#2748)
+
+
+
+
 Espresso 4.1
 ============
 

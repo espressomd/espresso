@@ -53,7 +53,7 @@ class pressureViaVolumeScaling:
             self.old_box_lengths[0], "xyz")
         self.system.integrator.run(0)
         DeltaEpot = Epot_new - Epot_old
-        particle_number = len(self.system.part[:].id)
+        particle_number = len(self.system.part)
         current_value = (self.new_volume / self.old_volume)**particle_number * \
             np.exp(-DeltaEpot / self.kbT)
         self.list_of_previous_values.append(current_value)
@@ -81,8 +81,6 @@ class VirialPressureConsistency(ut.TestCase):
 
     def setUp(self):
         np.random.seed(seed=1)
-        self.system.seed = range(
-            self.system.cell_system.get_state()["n_nodes"])
         self.system.time_step = 0.01
         self.kT = 0.5
         self.system.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -127,11 +125,11 @@ class VirialPressureConsistency(ut.TestCase):
         print("Tune skin: {}".format(self.system.cell_system.tune_skin(
             min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)))
 
-        num_samples = 100
+        num_samples = 25
         pressure_via_volume_scaling = pressureViaVolumeScaling(
             self.system, self.kT)
         for _ in range(num_samples):
-            self.system.integrator.run(100)
+            self.system.integrator.run(50)
             pressures_via_virial.append(
                 self.system.analysis.pressure()['total'])
             pressure_via_volume_scaling.measure_pressure_via_volume_scaling()

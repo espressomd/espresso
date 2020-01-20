@@ -28,7 +28,9 @@ class FluxDensityProfile : public PidProfileObservable {
 public:
   using PidProfileObservable::PidProfileObservable;
   int n_values() const override { return 3 * n_x_bins * n_y_bins * n_z_bins; }
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
+
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
     std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
                                   static_cast<size_t>(n_y_bins),
                                   static_cast<size_t>(n_z_bins)}};
@@ -36,10 +38,10 @@ public:
         {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
-    for (auto const &id : ids()) {
-      auto const ppos =
-          ::Utils::Vector3d(folded_position(partCfg[id].r.p, box_geo));
-      histogram.update(ppos, partCfg[id].m.v);
+
+    for (auto p : particles) {
+      auto const ppos = folded_position(p->r.p, box_geo);
+      histogram.update(ppos, p->m.v);
     }
     histogram.normalize();
     return histogram.get_histogram();

@@ -128,7 +128,7 @@ class SwimmerTest():
         # TODO: only thing left to check is the location of the fluid force.
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATION", "MASS"])
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestCPU(SwimmerTest, ut.TestCase):
 
     def setUp(self):
@@ -139,7 +139,7 @@ class SwimmerTestCPU(SwimmerTest, ut.TestCase):
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATION", "MASS"])
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
 class SwimmerTestGPU(SwimmerTest, ut.TestCase):
 
     def setUp(self):

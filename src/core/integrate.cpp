@@ -188,8 +188,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
-    thermo_heat_up();
-
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
@@ -206,8 +204,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
       convert_initial_torques(cell_structure.local_cells().particles());
 #endif
     }
-
-    thermo_cool_down();
 
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
@@ -234,7 +230,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos(particles, ghost_cells.particles());
+      save_old_pos(particles, cell_structure.ghost_cells().particles());
 #endif
 
     bool early_exit = integrator_step_1(particles);
@@ -330,7 +326,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
-  } else if (thermo_switch & THERMO_DPD) {
+  }
+  if (thermo_switch & THERMO_DPD) {
 #ifdef DPD
     dpd_rng_counter_increment();
 #endif

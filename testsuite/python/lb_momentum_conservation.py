@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2018 The ESPResSo project
+# Copyright (C) 2010-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,9 +21,9 @@ import numpy as np
 
 # Define the LB Parameters
 TIME_STEP = 0.1
-AGRID = 1.0 
+AGRID = 1.0
 KVISC = 5
-DENS = 1 
+DENS = 1
 BOX_SIZE = 6 * AGRID
 F = 1. / BOX_SIZE**3
 GAMMA = 15
@@ -37,7 +37,7 @@ LB_PARAMS = {'agrid': AGRID,
 
 class Momentum(object):
     """
-    Tests momentum conservatoin for an LB coupled to a particle, where opposing
+    Tests momentum conservation for an LB coupled to a particle, where opposing
     forces are applied to LB and particle. The test should uncover issues
     with boundary and ghost layer handling.
 
