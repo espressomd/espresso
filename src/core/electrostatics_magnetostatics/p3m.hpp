@@ -86,14 +86,12 @@ struct p3m_data_struct {
   /** Energy optimised influence function (k-space) */
   std::vector<double> g_energy;
 
-#ifdef P3M_STORE_CA_FRAC
   /** number of charged particles on the node. */
   int ca_num;
   /** Charge fractions for mesh assignment. */
   std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
   std::vector<int> ca_fmp;
-#endif
 
   /** number of permutations in k_space */
   int ks_pnum;
@@ -175,7 +173,7 @@ bool p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Assign the physical charges using the tabulated charge assignment function.
- *  If @ref P3M_STORE_CA_FRAC is true, then the charge fractions are buffered
+ *  The charge fractions are buffered
  *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
