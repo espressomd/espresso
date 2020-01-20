@@ -23,10 +23,11 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <type_traits>
 
 namespace Utils {
-template <int order, typename T = double> inline T bspline(int i, T x) {
-  static_assert(order <= 7, "");
+template <int order, typename T>
+auto bspline(int i, T x) -> std::enable_if_t<(order > 0) && (order <= 7), T> {
   assert(i < order);
   assert(x >= -0.5);
   assert(x <= 0.5);
@@ -162,7 +163,7 @@ template <int order, typename T = double> inline T bspline(int i, T x) {
   throw std::runtime_error("Internal interpolation error.");
 }
 
-inline double bspline(int k, int i, double x) {
+template <class T> auto bspline(int i, T x, int k) {
   switch (k) {
   case 1:
     return bspline<1>(i, x);

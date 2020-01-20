@@ -50,6 +50,7 @@ using Utils::sinc;
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
+#include <utils/math/bspline.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -375,7 +376,7 @@ void p3m_interpolate_charge_assignment_function() {
     /* loop over all interpolation points */
     for (j = -p3m.params.inter; j <= p3m.params.inter; j++)
       p3m.int_caf[i][j + p3m.params.inter] =
-          p3m_caf(i, j * dInterpol, p3m.params.cao);
+          Utils::bspline(i, j * dInterpol, p3m.params.cao);
   }
 }
 
@@ -507,9 +508,11 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
 
   if (!inter) {
     for (int i = 0; i < cao; i++) {
-      w_x[i] = p3m_caf(i, dist[0], cao);
-      w_y[i] = p3m_caf(i, dist[1], cao);
-      w_z[i] = p3m_caf(i, dist[2], cao);
+      using Utils::bspline;
+
+      w_x[i] = bspline<cao>(i, dist[0]);
+      w_y[i] = bspline<cao>(i, dist[1]);
+      w_z[i] = bspline<cao>(i, dist[2]);
     }
   } else {
     for (int i = 0; i < cao; i++) {

@@ -170,11 +170,6 @@ void p3m_add_block(double const *in, double *out, int const start[3],
  */
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
 
-/** Compute the assignment function for the \a i'th degree
- *  at value \a x.
- */
-double p3m_caf(int i, double x, int cao_value);
-
 /** Calculate properties of the local FFT mesh for the
  *   charge assignment process.
  */
