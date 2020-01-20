@@ -398,7 +398,7 @@ class DPDThermostat(ut.TestCase):
         s.part.add(pos=pos)
         s.integrator.run(10)
 
-        for kT in [0., 0.1, 1., 10.]:
+        for kT in [0., 2.]:
             s.thermostat.set_dpd(kT=kT)
             # run 1 integration step to get velocities
             s.part[:].v = np.zeros((n_part, 3))
