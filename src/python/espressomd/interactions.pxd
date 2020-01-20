@@ -123,12 +123,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         double cut
         double offset
 
-    cdef struct Membrane_Parameters:
-        double a
-        double n
-        double cut
-        double offset
-
     cdef struct Hat_Parameters:
         double Fmax
         double r
@@ -168,8 +162,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
         LJcos2_Parameters ljcos2
 
         LJGen_Parameters ljgen
-
-        Membrane_Parameters membrane
 
         SoftSphere_Parameters soft_sphere
 
@@ -299,13 +291,6 @@ IF HAT:
     cdef extern from "nonbonded_interactions/hat.hpp":
         int hat_set_params(int part_type_a, int part_type_b,
                            double Fmax, double r)
-
-IF MEMBRANE_COLLISION:
-    cdef extern from "object-in-fluid/membrane_collision.hpp":
-        cdef int membrane_collision_set_params(int part_type_a,
-                                               int part_type_b,
-                                               double a, double n,
-                                               double cut, double offset)
 
 IF SOFT_SPHERE:
     cdef extern from "nonbonded_interactions/soft_sphere.hpp":
@@ -542,8 +527,6 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
     int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc)
-cdef extern from "object-in-fluid/out_direction.hpp":
-    int oif_out_direction_set_params(int bond_type)
 cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
     void thermalized_bond_set_rng_state(stdint.uint64_t counter)

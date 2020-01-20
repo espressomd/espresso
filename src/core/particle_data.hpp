@@ -247,14 +247,6 @@ void set_particle_rotation(int part, int rot);
  */
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle);
 
-#ifdef MEMBRANE_COLLISION
-/** Call only on the master node: set particle out_direction.
- *  @param part the particle.
- *  @param out_direction its new outward direction with respect to membrane.
- */
-void set_particle_out_direction(int part, double *out_direction);
-#endif
-
 /** Call only on the master node: set particle charge.
  *  @param part the particle.
  *  @param q its new charge.
@@ -587,10 +579,6 @@ void pointer_to_swimming(Particle const *p,
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res);
-#endif
-
-#ifdef MEMBRANE_COLLISION
-void pointer_to_out_direction(const Particle *p, const double *&res);
 #endif
 
 /**

@@ -419,41 +419,6 @@ no shift implemented currently, which means that the potential is
 discontinuous at :math:`r=r_\mathrm{cut}`. Therefore energy
 calculations should be used with great caution.
 
-.. _Membrane-collision interaction:
-
-Membrane-collision interaction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-     Feature ``MEMBRANE_COLLISION`` required.
-
-This defines a membrane collision interaction between particles of the
-types ``type1`` and ``type2``, where particle of ``type1`` belongs to one OIF or OIF-like object and
-particle of ``type2`` belongs to another such object.
-
-It is very similar to soft-sphere interaction, but it takes into account
-the local outward normal vectors on the surfaces of the two objects to
-determine the direction for repulsion of objects (i.e. determine whether
-the two membranes are intersected). It is inversely proportional to the
-distance of nodes of membranes that are not crossed and saturating with
-growing distance of nodes of crossed membranes.
-
-In order to work with the OIF objects, both OIF objects need to be created
-using OifCellType class with keyword ``normal=1``, because this implicitly sets up the
-bonded out-direction interaction, which computes the outward normal
-vector.
-
-The membrane-collision interaction for non-intersected membranes is then
-defined by:
-
-.. math:: V(d)= a\frac{1}{1+e^{n\left(d-d_\mathrm{offset}\right)}},
-
-for :math:`d<d_\mathrm{cut}` and :math:`V(d)=0` above. For
-intersected membranes, it is defined as :math:`V(-d)`. There is no shift
-implemented currently, which means that the potential is discontinuous
-at :math:`d=d_\mathrm{cut}`. Therefore energy calculations should
-be used with great caution.
-
 .. _Hat interaction:
 
 Hat interaction
