@@ -60,8 +60,8 @@ class ArrayLockedTest(ut.TestCase):
         add = v + w
         sub = v - w
 
-        self.assertTrue(isinstance(add, np.ndarray))
-        self.assertTrue(isinstance(sub, np.ndarray))
+        self.assertIsInstance(add, np.ndarray)
+        self.assertIsInstance(sub, np.ndarray)
 
         self.assertTrue(add.flags.writeable)
         self.assertTrue(sub.flags.writeable)
@@ -136,17 +136,20 @@ class ArrayPropertyTest(ut.TestCase):
         # Check (allowed) setter
         # Particle
         self.system.part[0].pos = [2, 2, 2]
-        self.assertTrue((self.system.part[0].pos == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].pos), [2, 2, 2])
 
         self.system.part[0].v = [2, 2, 2]
-        self.assertTrue((self.system.part[0].v == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].v), [2, 2, 2])
 
         self.system.part[0].f = [2, 2, 2]
-        self.assertTrue((self.system.part[0].f == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].f), [2, 2, 2])
 
         # System
         self.system.box_l = [2, 2, 2]
-        self.assertTrue((self.system.box_l == [2, 2, 2]).all())
+        np.testing.assert_array_equal(np.copy(self.system.box_l), [2, 2, 2])
 
         # Check if copy is settable
         # Particle
@@ -175,25 +178,28 @@ class ArrayPropertyTest(ut.TestCase):
         # Check (allowed) setter
         # Particle
         self.system.part[0].quat = [0.5, 0.5, 0.5, 0.5]
-        self.assertTrue(
-            (self.system.part[0].quat == [0.5, 0.5, 0.5, 0.5]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].quat), [0.5, 0.5, 0.5, 0.5])
 
         self.system.part[0].omega_lab = [2, 2, 2]
-        self.assertTrue((self.system.part[0].omega_lab == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].omega_lab), [2, 2, 2])
 
-        self.system.part[0].rotation = [1, 1, 1]
-        self.assertTrue((self.system.part[0].rotation == [1, 1, 1]).all())
+        self.system.part[0].rotation = [True, True, True]
+        self.assertEqual(list(self.system.part[0].rotation), 3 * [True])
 
         self.system.part[0].omega_body = [2, 2, 2]
-        self.assertTrue((self.system.part[0].omega_body == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].omega_body), [2, 2, 2])
 
         self.system.part[0].torque_lab = [2, 2, 2]
-        self.assertTrue((self.system.part[0].torque_lab == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].torque_lab), [2, 2, 2])
 
         if espressomd.has_features("EXTERNAL_FORCES"):
             self.system.part[0].ext_torque = [2, 2, 2]
-            self.assertTrue(
-                (self.system.part[0].ext_torque == [2, 2, 2]).all())
+            np.testing.assert_array_equal(
+                np.copy(self.system.part[0].ext_torque), [2, 2, 2])
 
         # Check if copy is settable
         # Particle
@@ -215,7 +221,8 @@ class ArrayPropertyTest(ut.TestCase):
         # Check (allowed) setter
         # Particle
         self.system.part[0].rinertia = [2, 2, 2]
-        self.assertTrue((self.system.part[0].rinertia == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].rinertia), [2, 2, 2])
 
         # Check if copy is settable
         # Particle
@@ -232,10 +239,11 @@ class ArrayPropertyTest(ut.TestCase):
         # Check (allowed) setter
         # Particle
         self.system.part[0].ext_force = [2, 2, 2]
-        self.assertTrue((self.system.part[0].ext_force == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].ext_force), [2, 2, 2])
 
-        self.system.part[0].fix = [1, 1, 1]
-        self.assertTrue((self.system.part[0].fix == [1, 1, 1]).all())
+        self.system.part[0].fix = [True, True, True]
+        self.assertEqual(list(self.system.part[0].fix), [True, True, True])
 
         # Check if copy is settable
         # Particle
@@ -252,7 +260,8 @@ class ArrayPropertyTest(ut.TestCase):
         # Check (allowed) setter
         # Particle
         self.system.part[0].gamma_rot = [2, 2, 2]
-        self.assertTrue((self.system.part[0].gamma_rot == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].gamma_rot), [2, 2, 2])
 
         # Check if copy is settable
         # Particle
@@ -277,7 +286,8 @@ class ArrayPropertyTest(ut.TestCase):
         # Check (allowed) setter
         # Particle
         self.system.part[0].gamma = [2, 2, 2]
-        self.assertTrue((self.system.part[0].gamma == [2, 2, 2]).all())
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[0].gamma), [2, 2, 2])
 
         # Check if copy is settable
         # Particle
@@ -294,7 +304,7 @@ class ArrayPropertyTest(ut.TestCase):
         # Particle
         self.system.part[0].dip = [2, 2, 2]
         np.testing.assert_allclose(
-            [2, 2, 2], np.copy(self.system.part[0].dip), atol=1E-15)
+            np.copy(self.system.part[0].dip), [2, 2, 2], atol=1E-15)
 
         # Check if copy is settable
         # Particle
@@ -315,8 +325,8 @@ class ArrayPropertyTest(ut.TestCase):
 
         # Check (allowed) setter
         # System
-        self.system.periodicity = [1, 0, 0]
-        self.assertTrue((self.system.periodicity == [1, 0, 0]).all())
+        self.system.periodicity = [True, False, False]
+        self.assertEqual(list(self.system.periodicity), [True, False, False])
 
         # Check if copy is settable
         # System

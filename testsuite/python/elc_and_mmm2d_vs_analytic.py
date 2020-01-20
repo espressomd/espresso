@@ -97,11 +97,11 @@ class ELC_and_MMM2D_vs_analytic(ut.TestCase):
 
         analytic_results = np.dstack((analytic_force, analytic_energy))
 
-        self.assertTrue(np.testing.assert_allclose(
-            mmm2d_results, analytic_results, rtol=0, atol=self.check_accuracy) is None)
+        np.testing.assert_allclose(
+            mmm2d_results, analytic_results, rtol=0, atol=self.check_accuracy)
 
-        self.assertTrue(np.testing.assert_allclose(
-            elc_results, analytic_results, rtol=0, atol=self.check_accuracy) is None)
+        np.testing.assert_allclose(
+            elc_results, analytic_results, rtol=0, atol=self.check_accuracy)
 
     def scan(self):
         result_array = np.empty((len(self.q), len(self.zPos), 2))

@@ -50,7 +50,7 @@ class VirtualSites(ut.TestCase):
 
     def verify_vs(self, vs, verify_velocity=True):
         """Verify vs position and (if compiled in) velocity."""
-        self.assertEqual(vs.virtual, True)
+        self.assertTrue(vs.virtual)
 
         vs_r = vs.vs_relative
 
@@ -75,20 +75,19 @@ class VirtualSites(ut.TestCase):
 
     def test_aa_method_switching(self):
         # Virtual sites should be disabled by default
-        self.assertTrue(isinstance(self.system.virtual_sites, VirtualSitesOff))
+        self.assertIsInstance(self.system.virtual_sites, VirtualSitesOff)
 
         # Switch implementation
         self.system.virtual_sites = VirtualSitesRelative(have_velocity=False)
-        self.assertTrue(isinstance(
-            self.system.virtual_sites, VirtualSitesRelative))
-        self.assertEqual(self.system.virtual_sites.have_velocity, False)
+        self.assertIsInstance(self.system.virtual_sites, VirtualSitesRelative)
+        self.assertFalse(self.system.virtual_sites.have_velocity)
 
     def test_vs_quat(self):
         self.system.part.clear()
         # First check that quaternion of virtual particle is unchanged if
         # have_quaterion is false.
         self.system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
-        self.assertEqual(self.system.virtual_sites.have_quaternion, False)
+        self.assertFalse(self.system.virtual_sites.have_quaternion)
         self.system.part.add(id=0, pos=[1, 1, 1], rotation=[1, 1, 1],
                              omega_lab=[1, 1, 1])
         self.system.part.add(id=1, pos=[1, 1, 1], rotation=[1, 1, 1])
@@ -154,7 +153,7 @@ class VirtualSites(ut.TestCase):
             system.part.add(rotation=(1, 1, 1), pos=pos, id=cur_id)
             system.part[cur_id].vs_auto_relate_to(1)
             # Was the particle made virtual
-            self.assertEqual(system.part[cur_id].virtual, True)
+            self.assertTrue(system.part[cur_id].virtual)
             # Are vs relative to id and
             vs_r = system.part[cur_id].vs_relative
             # id
@@ -164,9 +163,9 @@ class VirtualSites(ut.TestCase):
                 system.part[1], system.part[cur_id]), places=6)
             cur_id += 1
 
-        # Move central particle and Check vs placement
+        # Move central particle and check vs placement
         system.part[1].pos = (0.22, 0.22, 0.22)
-        # linear and rotation velocity on central particle
+        # Linear and rotational velocity on central particle
         system.part[1].v = (0.45, 0.14, 0.447)
         system.part[1].omega_lab = (0.45, 0.14, 0.447)
         system.integrator.run(0, recalc_forces=True)
@@ -208,10 +207,11 @@ class VirtualSites(ut.TestCase):
         # Check virtual sites without velocity
         system.virtual_sites.have_velocity = False
 
-        v2 = system.part[2].v
-        system.part[1].v = 17, -13.5, 2
+        # Velocity should not change
+        v2 = np.copy(system.part[2].v)
+        system.part[1].v = [17, -13.5, 2]
         system.integrator.run(0, recalc_forces=True)
-        self.assertLess(np.linalg.norm(v2 - system.part[2].v), 1E-6)
+        np.testing.assert_array_equal(v2, np.copy(system.part[2].v))
 
     def run_test_lj(self):
         """This fills the system with vs-based dumbells, adds a lj potential,
@@ -323,8 +323,8 @@ class VirtualSites(ut.TestCase):
         system.min_global_cut = 0.2
         # Should not have one if vs are turned off
         system.virtual_sites = VirtualSitesOff()
-        self.assertTrue("virtual_sites" not in system.analysis.pressure())
-        self.assertTrue("virtual_sites" not in system.analysis.stress_tensor())
+        self.assertNotIn("virtual_sites", system.analysis.pressure())
+        self.assertNotIn("virtual_sites", system.analysis.stress_tensor())
 
         # vs relative contrib
         system.virtual_sites = VirtualSitesRelative()
