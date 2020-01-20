@@ -539,8 +539,13 @@ cdef class Thermostat:
 
         """
 
-        self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)
+        # Note: hack due to entanglement of Brownian dynamics and Langevin thermostat
+        # The setup code fro Brownian dynamics mis-uses the Langevin setup.
+        # This needs to be changed
         global thermo_switch
+        thermo_switch = (thermo_switch & (~THERMO_BROWNIAN))
+        
+        self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)
         # this is safe because this combination of thermostats is not
         # allowed
         thermo_switch = (thermo_switch & (~THERMO_LANGEVIN))
