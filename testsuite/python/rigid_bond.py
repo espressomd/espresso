@@ -46,7 +46,7 @@ class RigidBondTest(ut.TestCase):
         for i in range(1, 5):
             d = s.distance(s.part[i], s.part[i - 1])
             v_d = s.distance_vec(s.part[i], s.part[i - 1])
-            self.assertLess(abs(d - 1.2), tol)
+            self.assertAlmostEqual(d, 1.2, delta=tol)
             # Velocity projection on distance vector
             vel_proj = np.dot(s.part[i].v - s.part[i - 1].v, v_d) / d
             self.assertLess(vel_proj, tol)
