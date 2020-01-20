@@ -270,7 +270,7 @@ Description of sample script
     ``MASS``, ``OIF_LOCAL_FORCES``,
     ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``
 
-The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at
+The script described in this section is available in :file:`samples/object-in-fluid/motivation.py` and also at
 `http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
 <https://web.archive.org/web/20180719231829/http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso>`_.
 
