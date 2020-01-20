@@ -304,9 +304,35 @@ class RotDiffAniso(ut.TestCase):
 
     def test_case_00(self):
         n = 300
-        self.rot_diffusion_param_setup(n)
+        self.rot_diffusion_param_setup()
+        self.set_anisotropic_param()
+        self.add_particles_setup(n)
         self.system.thermostat.set_langevin(
             kT=self.kT, gamma=self.gamma_global, seed=42)
+        # Actual integration and validation run
+        self.check_rot_diffusion(n)
+
+    # Langevin Dynamics / Isotropic
+    def test_case_01(self):
+        n = 300
+        self.rot_diffusion_param_setup(n)
+        self.set_isotropic_param()
+        self.add_particles_setup(n)
+        self.system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
+        # Actual integration and validation run
+        self.check_rot_diffusion(n)
+
+    # Brownian Dynamics / Isotropic
+    def test_case_10(self):
+        n = 300
+        self.system.thermostat.turn_off()
+        self.rot_diffusion_param_setup()
+        self.set_isotropic_param()
+        self.add_particles_setup(n)
+        self.system.thermostat.set_brownian(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
+        self.system.integrator.set_brownian_dynamics()
         # Actual integration and validation run
         self.check_rot_diffusion(n)
 
