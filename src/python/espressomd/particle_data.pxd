@@ -121,10 +121,6 @@ cdef extern from "particle_data.hpp":
         void pointer_to_omega_body(const particle * p, const double * & res)
         Vector3d get_torque_body(const particle p)
 
-    IF MEMBRANE_COLLISION:
-        void set_particle_out_direction(int part, double out_direction[3])
-        void pointer_to_out_direction(particle * p, double * & res)
-
     IF MASS:
         void pointer_to_mass(particle * p, double * & res)
 
