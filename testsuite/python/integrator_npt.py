@@ -24,7 +24,7 @@ import tests_common
 
 
 @utx.skipIfMissingFeatures(["NPT", "LENNARD_JONES"])
-class NPTintegrator(ut.TestCase):
+class IntegratorNPT(ut.TestCase):
 
     """This compares pressure and compressibility of a LJ system against
        expected values."""

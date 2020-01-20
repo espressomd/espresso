@@ -67,6 +67,8 @@ enum {
 /** \ref ParticleProperties::ext_flag "ext_flag" mask to check whether any of
  *  the coordinates is fixed. */
 #define COORDS_FIX_MASK (COORD_FIXED(0) | COORD_FIXED(1) | COORD_FIXED(2))
+#else
+#define COORD_FIXED(coord) (0)
 #endif
 
 /************************************************

@@ -28,23 +28,23 @@
 namespace Shapes {
 class SpheroCylinder : public Shape {
 public:
-  /* center of the cylinder. */
+  /** center of the cylinder. */
   Utils::Vector3d m_center;
-  /* Axis of the cylinder. */
+  /** Axis of the cylinder. */
   Utils::Vector3d m_axis;
-  /* cylinder radius. */
+  /** cylinder radius. */
   double m_rad;
-  /* cylinder length. */
+  /** cylinder length. */
   double m_length;
 
-  /* Center of smoothing circle */
+  /** Center of smoothing circle */
   double m_half_length;
-  /* direction -1: inside, +1 outside */
+  /** direction -1: inside, +1 outside */
   double m_direction;
-  /* Unit vector in z direction */
+  /** Unit vector in z direction */
   Utils::Vector3d e_z;
 
-  /* Alternative e_r for corner case */
+  /** Alternative e_r for corner case */
   Utils::Vector3d e_r_axis;
 
   /** @brief Calculate derived parameters. */

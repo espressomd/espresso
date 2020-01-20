@@ -103,12 +103,9 @@ cdef extern from "statistics.hpp":
         double * dist)
 
 cdef extern from "statistics_chain.hpp":
-    int chain_start
-    int chain_n_chains
-    int chain_length
-    array4 calc_re(PartCfg & )
-    array4 calc_rg(PartCfg & ) except +
-    array2 calc_rh(PartCfg & )
+    array4 calc_re(PartCfg &, int, int, int)
+    array4 calc_rg(PartCfg &, int, int, int) except +
+    array2 calc_rh(PartCfg &, int, int, int)
 
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure
