@@ -503,40 +503,37 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
   if (cp_cnt >= 0)
     p3m.ca_fmp[cp_cnt] = q_ind;
 
+  Utils::Array<double, cao> w_x, w_y, w_z;
+
   if (!inter) {
-    for (int i0 = 0; i0 < cao; i0++) {
-      auto const tmp0 = p3m_caf(i0, dist[0], cao);
-      for (int i1 = 0; i1 < cao; i1++) {
-        auto const tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
-        for (int i2 = 0; i2 < cao; i2++) {
-          auto const cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-          p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-          /* store current ca frac */
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-          q_ind++;
-        }
-        q_ind += p3m.local_mesh.q_2_off;
-      }
-      q_ind += p3m.local_mesh.q_21_off;
+    for (int i = 0; i < cao; i++) {
+      w_x[i] = p3m_caf(i, dist[0], cao);
+      w_y[i] = p3m_caf(i, dist[1], cao);
+      w_z[i] = p3m_caf(i, dist[2], cao);
     }
   } else {
-    for (int i0 = 0; i0 < cao; i0++) {
-      auto const tmp0 = p3m.int_caf[i0][arg[0]];
-      for (int i1 = 0; i1 < cao; i1++) {
-        auto const tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-        for (int i2 = 0; i2 < cao; i2++) {
-          auto const cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-          p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-          /* store current ca frac */
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-          q_ind++;
-        }
-        q_ind += p3m.local_mesh.q_2_off;
-      }
-      q_ind += p3m.local_mesh.q_21_off;
+    for (int i = 0; i < cao; i++) {
+      w_x[i] = p3m.int_caf[i][arg[0]];
+      w_y[i] = p3m.int_caf[i][arg[1]];
+      w_z[i] = p3m.int_caf[i][arg[2]];
     }
+  }
+
+  for (int i0 = 0; i0 < cao; i0++) {
+    auto const tmp0 = w_x[i0];
+    for (int i1 = 0; i1 < cao; i1++) {
+      auto const tmp1 = tmp0 * w_y[i1];
+      for (int i2 = 0; i2 < cao; i2++) {
+        auto const cur_ca_frac_val = q * tmp1 * w_z[i2];
+        p3m.rs_mesh[q_ind] += cur_ca_frac_val;
+        /* store current ca frac */
+        if (cp_cnt >= 0)
+          *(cur_ca_frac++) = cur_ca_frac_val;
+        q_ind++;
+      }
+      q_ind += p3m.local_mesh.q_2_off;
+    }
+    q_ind += p3m.local_mesh.q_21_off;
   }
 }
 
