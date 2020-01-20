@@ -199,7 +199,7 @@ class BrownianDynamics(ut.TestCase):
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=42)
         system.cell_system.skin = 0.4
 
-        pos_obs = ParticlePositions(ids=(0,))
+        pos_obs = ParticlePositions(ids=(p.id,))
 
         c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
                            corr_operation="square_distance_componentwise",
@@ -212,6 +212,8 @@ class BrownianDynamics(ut.TestCase):
 
         # Check MSD
         msd = c_pos.result()
+        system.auto_update_accumulators.clear()
+
 
         def expected_msd(x):
             return 2. * kT / gamma * x
@@ -251,7 +253,7 @@ class BrownianDynamics(ut.TestCase):
         system.part.clear()
         system.time_step = 0.01
         system.cell_system.skin = 0.1
-        system.part.add(id=(1, 2), pos=np.zeros((2, 3)))
+        system.part.add(id=(0, 1), pos=np.zeros((2, 3)))
         vel_obs = ParticleVelocities(ids=system.part[:].id)
         vel_series = TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_series)
@@ -265,6 +267,7 @@ class BrownianDynamics(ut.TestCase):
         system.thermostat.set_brownian(kT=kT, gamma=2.1, seed=17)
         steps = int(1e6)
         system.integrator.run(steps)
+        system.auto_update_accumulators.clear()
 
         # test translational noise correlation
         vel = np.array(vel_series.time_series())
