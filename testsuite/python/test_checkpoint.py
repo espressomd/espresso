@@ -25,7 +25,6 @@ import espressomd.checkpointing
 import espressomd.virtual_sites
 import espressomd.integrate
 from espressomd.shapes import Sphere, Wall
-import tests_common
 
 modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
          for x in [mode, mode.split('.')[0]]}
@@ -74,7 +73,7 @@ class CheckpointTest(ut.TestCase):
         state = lbf.get_params()
         reference = {'agrid': 0.5, 'visc': 1.3, 'dens': 1.5, 'tau': 0.01}
         for key in reference:
-            self.assertTrue(key in state)
+            self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-7)
 
     @utx.skipIfMissingFeatures('ELECTROKINETICS')
@@ -104,12 +103,12 @@ class CheckpointTest(ut.TestCase):
                      'viscosity': 1.7, 'friction': 0.0,
                      'T': 1.1, 'prefactor': 0.88, 'stencil': "linkcentered"}
         for key in reference:
-            self.assertTrue(key in state)
+            self.assertIn(key, state)
             self.assertAlmostEqual(reference[key], state[key], delta=1E-5)
         state_species = ek_species.get_params()
         reference_species = {'density': 0.4, 'D': 0.02, 'valency': 0.3}
         for key in reference_species:
-            self.assertTrue(key in state_species)
+            self.assertIn(key, state_species)
             self.assertAlmostEqual(
                 reference_species[key],
                 state_species[key],
@@ -241,11 +240,10 @@ class CheckpointTest(ut.TestCase):
 
     @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
     def test_virtual_sites(self):
-        self.assertEqual(system.part[1].virtual, True)
-        self.assertTrue(
-            isinstance(
-                system.virtual_sites,
-                espressomd.virtual_sites.VirtualSitesRelative))
+        self.assertTrue(system.part[1].virtual)
+        self.assertIsInstance(
+            system.virtual_sites,
+            espressomd.virtual_sites.VirtualSitesRelative)
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
@@ -268,16 +266,13 @@ class CheckpointTest(ut.TestCase):
         coldet = system.collision_detection
         self.assertEqual(coldet.mode, "bind_centers")
         self.assertAlmostEqual(coldet.distance, 0.11, delta=1E-9)
-        self.assertTrue(coldet.bond_centers, system.bonded_inter[0])
+        self.assertEqual(coldet.bond_centers, system.bonded_inter[0])
 
     @utx.skipIfMissingFeatures('EXCLUSIONS')
     def test_exclusions(self):
-        self.assertTrue(tests_common.lists_contain_same_elements(
-            system.part[0].exclusions, [2]))
-        self.assertTrue(tests_common.lists_contain_same_elements(
-            system.part[1].exclusions, [2]))
-        self.assertTrue(tests_common.lists_contain_same_elements(
-            system.part[2].exclusions, [0, 1]))
+        self.assertEqual(list(system.part[0].exclusions), [2])
+        self.assertEqual(list(system.part[1].exclusions), [2])
+        self.assertEqual(list(system.part[2].exclusions), [0, 1])
 
     @ut.skipIf(not LB or EK or not (espressomd.has_features("LB_BOUNDARIES")
                                     or espressomd.has_features("LB_BOUNDARIES_GPU")), "Missing features")
