@@ -214,7 +214,6 @@ class BrownianDynamics(ut.TestCase):
         msd = c_pos.result()
         system.auto_update_accumulators.clear()
 
-
         def expected_msd(x):
             return 2. * kT / gamma * x
 
