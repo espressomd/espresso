@@ -70,7 +70,8 @@ namespace Random {
  *
  */
 template <RNGSalt salt>
-Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1, int key2 = 0) {
+Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
+                                            int key2 = 0) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
@@ -82,7 +83,7 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1, int key2
   auto const id2 = static_cast<uint32_t>(key2);
   const key_type k{id1, id2};
 
-  auto const res =rng_type{}(c, k);
+  auto const res = rng_type{}(c, k);
   return {res[0], res[1], res[2], res[3]};
 }
 
@@ -111,13 +112,13 @@ Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
  *
  * Mean = 0, standard deviation = 1.0
  * Based on the Philox RNG using 4x64 bits.
- * The Box-Muller transform is used to convert from uniform to normal 
+ * The Box-Muller transform is used to convert from uniform to normal
  * distribution. The transform is only valid, if the uniformly distributed
  * random numbers are not zero (approx one in 2^64). To avoid this case,
  * such numbers are replaced by std::numeric_limits<double>::min()
  * This breaks statistics in rare cases but allows for consistent RNG
  * counters across MPI ranks.
- * 
+ *
  * @param counter counter for the random number generation
  * @param key1 key for random number generation
  * @param key2 key for random number generation
@@ -131,22 +132,23 @@ inline Utils::Vector3d v_noise_g(uint64_t counter, int key1, int key2 = 0) {
 
   auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
   using Utils::uniform;
-  Utils::Vector4d u{uniform(noise[0]), uniform(noise[1]), uniform(noise[2]), uniform(noise[3])};
-  
+  Utils::Vector4d u{uniform(noise[0]), uniform(noise[1]), uniform(noise[2]),
+                    uniform(noise[3])};
+
   // Replace zeros from uniformly distributed numbers (see doc string)
   static const double epsilon = std::numeric_limits<double>::min();
-  for (int i=0; i<4; i++) 
-    if (u[i]<epsilon) u[i]=epsilon;
-  
-  // Box muller transform code adapted from https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
-  
-  static const double two_pi = 2.0*3.14159265358979323846; 
-    return {
-      sqrt(-2.0 * log(u[0])) * cos(two_pi * u[1]),
-	    sqrt(-2.0 * log(u[0])) * sin(two_pi * u[1]),
-      sqrt(-2.0 * log(u[2])) * cos(two_pi * u[3])};
-}
+  for (int i = 0; i < 4; i++)
+    if (u[i] < epsilon)
+      u[i] = epsilon;
 
+  // Box muller transform code adapted from
+  // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+
+  static const double two_pi = 2.0 * 3.14159265358979323846;
+  return {sqrt(-2.0 * log(u[0])) * cos(two_pi * u[1]),
+          sqrt(-2.0 * log(u[0])) * sin(two_pi * u[1]),
+          sqrt(-2.0 * log(u[2])) * cos(two_pi * u[3])};
+}
 
 extern std::mt19937 generator;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
@@ -216,6 +218,5 @@ inline double d_random() {
   check_user_has_seeded();
   return uniform_real_distribution(generator);
 }
-
 
 #endif

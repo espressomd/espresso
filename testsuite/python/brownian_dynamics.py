@@ -185,44 +185,41 @@ class BrownianDynamics(ut.TestCase):
             if espressomd.has_features("ROTATIONAL_INERTIA"):
                 p.rinertia = [0.4, 0.4, 0.4]
 
-
     def test_msd_global_temp(self):
         """Tests diffusion via MSD for global gamma and temeprature"""
 
         gamma = 9.4
         kT = 0.37
         dt = 0.5
-        
+
         system = self.system
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0), id=0)
         system.time_step = dt
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=42)
         system.cell_system.skin = 0.4
-        
+
         pos_obs = ParticlePositions(ids=(0,))
-        
+
         c_pos = Correlator(obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10,
                            corr_operation="square_distance_componentwise",
                            compress1="discard1")
         system.auto_update_accumulators.add(c_pos)
-        
+
         system.integrator.run(500000)
-        
+
         c_pos.finalize()
-        
-        
+
         # Check MSD
         msd = c_pos.result()
-        
-        
+
         def expected_msd(x):
             return 2. * kT / gamma * x
-        
-        
+
         for i in range(2, 6):
-            np.testing.assert_allclose(msd[i, 2:5], expected_msd(msd[i, 0]),rtol=0.02)
-    
+            np.testing.assert_allclose(
+                msd[i, 2:5], expected_msd(msd[i, 0]), rtol=0.02)
+
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):
         system = self.system

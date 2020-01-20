@@ -544,7 +544,7 @@ cdef class Thermostat:
         # This needs to be changed
         global thermo_switch
         thermo_switch = (thermo_switch & (~THERMO_BROWNIAN))
-        
+
         self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)
         # this is safe because this combination of thermostats is not
         # allowed
