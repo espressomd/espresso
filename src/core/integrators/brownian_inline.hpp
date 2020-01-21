@@ -35,13 +35,13 @@ inline void bd_drag(Particle &p, double dt) {
   // The friction tensor Z from the Eq. (14.31) of Schlick2010:
   Thermostat::GammaType local_gamma;
 
-#ifdef LANGEVIN_PER_PARTICLE
+#ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma;
   } else
 #endif
   {
-    local_gamma = langevin_gamma;
+    local_gamma = brownian_gamma;
   }
 
   bool aniso_flag; // particle anisotropy flag
@@ -108,13 +108,13 @@ inline void bd_drag_vel(Particle &p, double dt) {
   // The friction tensor Z from the eq. (14.31) of Schlick2010:
   Thermostat::GammaType local_gamma;
 
-#ifdef LANGEVIN_PER_PARTICLE
+#ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma;
   } else
 #endif
   {
-    local_gamma = langevin_gamma;
+    local_gamma = brownian_gamma;
   }
 
   bool aniso_flag; // particle anisotropy flag
@@ -206,15 +206,15 @@ void bd_random_walk(Particle &p, double dt) {
   Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
 
   // Override defaults if per-particle values for T and gamma are given
-#ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 2.0;
+#ifdef BROWNIAN_PER_PARTICLE
+  auto const constexpr brownian_temp_coeff = 2.0;
 
   if (p.p.gamma >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
         brown_sigma_pos_temp_inv =
-            sqrt(p.p.gamma / (langevin_temp_coeff * p.p.T));
+            sqrt(p.p.gamma / (brownian_temp_coeff * p.p.T));
       } else {
         brown_sigma_pos_temp_inv =
             brown_gammatype_nan; // just an indication of the infinity
@@ -223,7 +223,7 @@ void bd_random_walk(Particle &p, double dt) {
         // Default temperature but particle-specific gamma
         if (temperature > 0.0) {
       brown_sigma_pos_temp_inv =
-          sqrt(p.p.gamma / (langevin_temp_coeff * temperature));
+          sqrt(p.p.gamma / (brownian_temp_coeff * temperature));
     } else {
       brown_sigma_pos_temp_inv = brown_gammatype_nan;
     }
@@ -233,7 +233,7 @@ void bd_random_walk(Particle &p, double dt) {
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
         brown_sigma_pos_temp_inv =
-            sqrt(langevin_gamma / (langevin_temp_coeff * p.p.T));
+            sqrt(brownian_gamma / (brownian_temp_coeff * p.p.T));
       } else {
         brown_sigma_pos_temp_inv =
             brown_gammatype_nan; // just an indication of the infinity
@@ -243,7 +243,7 @@ void bd_random_walk(Particle &p, double dt) {
       brown_sigma_pos_temp_inv = brown_sigma_pos_inv;
     }
   }
-#endif /* LANGEVIN_PER_PARTICLE */
+#endif /* BROWNIAN_PER_PARTICLE */
 
   bool aniso_flag; // particle anisotropy flag
 
@@ -260,7 +260,7 @@ void bd_random_walk(Particle &p, double dt) {
   // Eq. (14.37) is factored by the Gaussian noise (12.22) with its squared
   // magnitude defined in the second eq. (14.38), Schlick2010.
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_WALK>(
-      langevin_rng_counter->value(), p.p.identity);
+      brownian_rng_counter->value(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -316,21 +316,21 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
   double brown_sigma_vel_temp;
 
   // Override defaults if per-particle values for T and gamma are given
-#ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 1.0;
+#ifdef BROWNIAN_PER_PARTICLE
+  auto const constexpr brownian_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   if (p.p.T >= 0.) {
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p.p.T);
+    brown_sigma_vel_temp = sqrt(brownian_temp_coeff * p.p.T);
   } else {
     brown_sigma_vel_temp = brown_sigma_vel;
   }
 #else
   // defaults
   brown_sigma_vel_temp = brown_sigma_vel;
-#endif /* LANGEVIN_PER_PARTICLE */
+#endif /* BROWNIAN_PER_PARTICLE */
 
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_INC>(
-      langevin_rng_counter->value(), p.identity());
+      brownian_rng_counter->value(), p.identity());
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -359,13 +359,13 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
 void bd_drag_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
 
-#ifdef LANGEVIN_PER_PARTICLE
+#ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma_rot;
   } else
 #endif
   {
-    local_gamma = langevin_gamma_rotation;
+    local_gamma = brownian_gamma_rotation;
   }
 
   Utils::Vector3d dphi = {0.0, 0.0, 0.0};
@@ -399,13 +399,13 @@ void bd_drag_rot(Particle &p, double dt) {
 void bd_drag_vel_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
 
-#ifdef LANGEVIN_PER_PARTICLE
+#ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     local_gamma = p.p.gamma_rot;
   } else
 #endif
   {
-    local_gamma = langevin_gamma_rotation;
+    local_gamma = brownian_gamma_rotation;
   }
 
   for (int j = 0; j < 3; j++) {
@@ -440,15 +440,15 @@ void bd_random_walk_rot(Particle &p, double dt) {
   Thermostat::GammaType brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
 
   // Override defaults if per-particle values for T and gamma are given
-#ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 2.0;
+#ifdef BROWNIAN_PER_PARTICLE
+  auto const constexpr brownian_temp_coeff = 2.0;
 
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
         brown_sigma_pos_temp_inv =
-            sqrt(p.p.gamma_rot / (langevin_temp_coeff * p.p.T));
+            sqrt(p.p.gamma_rot / (brownian_temp_coeff * p.p.T));
       } else {
         brown_sigma_pos_temp_inv =
             brown_gammatype_nan; // just an indication of the infinity
@@ -457,7 +457,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
         // Default temperature but particle-specific gamma
         if (temperature > 0.) {
       brown_sigma_pos_temp_inv =
-          sqrt(p.p.gamma_rot / (langevin_temp_coeff * temperature));
+          sqrt(p.p.gamma_rot / (brownian_temp_coeff * temperature));
     } else {
       brown_sigma_pos_temp_inv = brown_gammatype_nan;
     }
@@ -467,7 +467,7 @@ void bd_random_walk_rot(Particle &p, double dt) {
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
         brown_sigma_pos_temp_inv =
-            sqrt(langevin_gamma_rotation / (langevin_temp_coeff * p.p.T));
+            sqrt(brownian_gamma_rotation / (brownian_temp_coeff * p.p.T));
       } else {
         brown_sigma_pos_temp_inv =
             brown_gammatype_nan; // just an indication of the infinity
@@ -477,11 +477,11 @@ void bd_random_walk_rot(Particle &p, double dt) {
       brown_sigma_pos_temp_inv = brown_sigma_pos_rotation_inv;
     }
   }
-#endif /* LANGEVIN_PER_PARTICLE */
+#endif /* BROWNIAN_PER_PARTICLE */
 
   Utils::Vector3d dphi = {0.0, 0.0, 0.0};
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_INC>(
-      langevin_rng_counter->value(), p.p.identity);
+      brownian_rng_counter->value(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -522,22 +522,22 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
   double brown_sigma_vel_temp;
 
   // Override defaults if per-particle values for T and gamma are given
-#ifdef LANGEVIN_PER_PARTICLE
-  auto const constexpr langevin_temp_coeff = 1.0;
+#ifdef BROWNIAN_PER_PARTICLE
+  auto const constexpr brownian_temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   if (p.p.T >= 0.) {
-    brown_sigma_vel_temp = sqrt(langevin_temp_coeff * p.p.T);
+    brown_sigma_vel_temp = sqrt(brownian_temp_coeff * p.p.T);
   } else {
     brown_sigma_vel_temp = brown_sigma_vel_rotation;
   }
 #else
   // set defaults
   brown_sigma_vel_temp = brown_sigma_vel_rotation;
-#endif /* LANGEVIN_PER_PARTICLE */
+#endif /* BROWNIAN_PER_PARTICLE */
 
   Utils::Vector3d domega;
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_WALK>(
-      langevin_rng_counter->value(), p.p.identity);
+      brownian_rng_counter->value(), p.p.identity);
   for (int j = 0; j < 3; j++) {
 #ifdef EXTERNAL_FORCES
     if (!(p.p.ext_flag & COORD_FIXED(j)))

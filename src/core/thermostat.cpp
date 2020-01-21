@@ -42,8 +42,8 @@ bool thermo_virtual = true;
 using Thermostat::GammaType;
 
 namespace {
-/** @name Langevin parameters sentinels.
- *  These functions return the sentinel value for the Langevin
+/** @name Integrators parameters sentinels.
+ *  These functions return the sentinel value for the Langevin/Brownian
  *  parameters, indicating that they have not been set yet.
  */
 /*@{*/
@@ -59,6 +59,8 @@ GammaType langevin_gamma_rotation = sentinel(GammaType{});
 GammaType langevin_pref1;
 GammaType langevin_pref2;
 GammaType langevin_pref2_rotation;
+GammaType brownian_gamma = sentinel(GammaType{});
+GammaType brownian_gamma_rotation = sentinel(GammaType{});
 // Brownian position random walk standard deviation
 GammaType brown_sigma_pos_inv = sentinel(GammaType{});
 GammaType brown_sigma_pos_rotation_inv = sentinel(GammaType{});
@@ -87,6 +89,7 @@ double nptiso_pref4;
 #endif
 
 std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
+std::unique_ptr<Utils::Counter<uint64_t>> brownian_rng_counter;
 
 void mpi_bcast_langevin_rng_counter_slave(const uint64_t counter) {
   langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
@@ -94,13 +97,28 @@ void mpi_bcast_langevin_rng_counter_slave(const uint64_t counter) {
 
 REGISTER_CALLBACK(mpi_bcast_langevin_rng_counter_slave)
 
+void mpi_bcast_brownian_rng_counter_slave(const uint64_t counter) {
+  brownian_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
+REGISTER_CALLBACK(mpi_bcast_brownian_rng_counter_slave)
+
 void mpi_bcast_langevin_rng_counter(const uint64_t counter) {
   mpi_call(mpi_bcast_langevin_rng_counter_slave, counter);
 }
 
+void mpi_bcast_brownian_rng_counter(const uint64_t counter) {
+  mpi_call(mpi_bcast_brownian_rng_counter_slave, counter);
+}
+
 void langevin_rng_counter_increment() {
-  if (thermo_switch & (THERMO_LANGEVIN | THERMO_BROWNIAN))
+  if (thermo_switch & THERMO_LANGEVIN)
     langevin_rng_counter->increment();
+}
+
+void brownian_rng_counter_increment() {
+  if (thermo_switch & THERMO_BROWNIAN)
+    brownian_rng_counter->increment();
 }
 
 bool langevin_is_seed_required() {
@@ -108,12 +126,24 @@ bool langevin_is_seed_required() {
   return langevin_rng_counter == nullptr;
 }
 
+bool brownian_is_seed_required() {
+  /* Seed is required if rng is not initialized */
+  return brownian_rng_counter == nullptr;
+}
+
 void langevin_set_rng_state(const uint64_t counter) {
   mpi_bcast_langevin_rng_counter(counter);
   langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
+void brownian_set_rng_state(const uint64_t counter) {
+  mpi_bcast_brownian_rng_counter(counter);
+  brownian_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+}
+
 uint64_t langevin_get_rng_state() { return langevin_rng_counter->value(); }
+
+uint64_t brownian_get_rng_state() { return brownian_rng_counter->value(); }
 
 void thermo_init_langevin() {
   langevin_pref1 = -langevin_gamma;
@@ -159,25 +189,25 @@ void thermo_init_brownian() {
    */
   // A multiplicative inverse of the position standard deviation:
   if (temperature > 0.0) {
-    brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
+    brown_sigma_pos_inv = sqrt(brownian_gamma / (2.0 * temperature));
   } else {
     brown_sigma_pos_inv =
         brown_gammatype_nan; // just an indication of the infinity
   }
 #ifdef ROTATION
-  /** Note: the BD thermostat assigns the langevin viscous parameters as well.
+  /** Note: the BD thermostat assigns the brownian viscous parameters as well.
    *  They correspond to the friction tensor Z from the eq. (14.31) of
    *  @cite Schlick2010.
    */
   /* If gamma_rotation is not set explicitly,
      we use the translational one. */
-  if (langevin_gamma_rotation < GammaType{}) {
-    langevin_gamma_rotation = langevin_gamma;
+  if (brownian_gamma_rotation < GammaType{}) {
+    brownian_gamma_rotation = brownian_gamma;
   }
   brown_sigma_vel_rotation = sqrt(temperature);
   // A multiplicative inverse of the position rotation standard deviation:
   if (temperature > 0.0) {
-    brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
+    brown_sigma_pos_rotation_inv = sqrt(brownian_gamma / (2.0 * temperature));
   } else {
     brown_sigma_pos_rotation_inv =
         brown_gammatype_nan; // just an indication of the infinity

@@ -36,14 +36,21 @@ cdef extern from "thermostat.hpp":
     IF PARTICLE_ANISOTROPY:
         Vector3d langevin_gamma_rotation
         Vector3d langevin_gamma
+        Vector3d brownian_gamma_rotation
+        Vector3d brownian_gamma
     ELSE:
         double langevin_gamma_rotation
         double langevin_gamma
+        double brownian_gamma_rotation
+        double brownian_gamma
 
     void langevin_set_rng_state(stdint.uint64_t counter)
+    void brownian_set_rng_state(stdint.uint64_t counter)
     cbool langevin_is_seed_required()
+    cbool brownian_is_seed_required()
 
     stdint.uint64_t langevin_get_rng_state()
+    stdint.uint64_t brownian_get_rng_state()
 
 cdef extern from "dpd.hpp":
     IF DPD:

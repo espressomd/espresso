@@ -111,20 +111,20 @@ class BrownianDynamics(ut.TestCase):
         self.check_vel_dist_global_temp(False, loops=1500)
 
     def test_vel_dist_global_temp_initial_forces(self):
-        """Test velocity distribution for global Langevin parameters,
+        """Test velocity distribution for global Brownian parameters,
            when using the initial force calculation.
         """
         self.check_vel_dist_global_temp(True, loops=170)
 
-    @utx.skipIfMissingFeatures("LANGEVIN_PER_PARTICLE")
-    def test_05__langevin_per_particle(self):
+    @utx.skipIfMissingFeatures("BROWNIAN_PER_PARTICLE")
+    def test_05__brownian_per_particle(self):
         """Test Brownian dynamics with particle specific kT and gamma. Covers all combinations of
            particle specific gamma and temp set or not set.
         """
         N = 400
         system = self.system
         system.part.clear()
-        system.time_step = 1.9 
+        system.time_step = 1.9
         system.part.add(pos=np.random.random((N, 3)))
         if espressomd.has_features("ROTATION"):
             system.part[:].rotation = [1, 1, 1]
@@ -246,7 +246,7 @@ class BrownianDynamics(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(physical.f), [0, 0, 0])
 
     def test_08__noise_correlation(self):
-        """Checks that the Langevin noise is uncorrelated"""
+        """Checks that the Brownian noise is uncorrelated"""
 
         system = self.system
         system.part.clear()

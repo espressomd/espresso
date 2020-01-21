@@ -456,10 +456,10 @@ Best explained in an example::
     system.integrator.set_brownian_dynamics()
 
 where ``gamma`` (hereinafter :math:`\gamma`) is a viscous friction coefficient.
-In terms of the Python interface and setup, Brownian thermostat derives most
-properties of the :ref:`Langevin thermostat`. The feature
-``LANGEVIN_PER_PARTICLE`` is used to control the per-particle
-temperature and the friction coefficient setup. Major differences are
+In terms of the Python interface and setup, the Brownian thermostat is very
+similar to the :ref:`Langevin thermostat`. The feature
+``BROWNIAN_PER_PARTICLE`` is used to control the per-particle
+temperature and the friction coefficient setup. The major differences are
 its internal integrator implementation and other temporal constraints.
 The integrator is still a symplectic Velocity Verlet-like one.
 It is implemented via a viscous drag part and a random walk of both the position and

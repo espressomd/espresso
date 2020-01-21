@@ -155,20 +155,20 @@ cdef class Thermostat:
             lang_dict["type"] = "BROWNIAN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
-            lang_dict["seed"] = int(langevin_get_rng_state())
+            lang_dict["seed"] = int(brownian_get_rng_state())
             IF PARTICLE_ANISOTROPY:
-                lang_dict["gamma"] = [langevin_gamma[0],
-                                      langevin_gamma[1],
-                                      langevin_gamma[2]]
+                lang_dict["gamma"] = [brownian_gamma[0],
+                                      brownian_gamma[1],
+                                      brownian_gamma[2]]
             ELSE:
-                lang_dict["gamma"] = langevin_gamma
+                lang_dict["gamma"] = brownian_gamma
             IF ROTATION:
                 IF PARTICLE_ANISOTROPY:
-                    lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
-                                                   langevin_gamma_rotation[1],
-                                                   langevin_gamma_rotation[2]]
+                    lang_dict["gamma_rotation"] = [brownian_gamma_rotation[0],
+                                                   brownian_gamma_rotation[1],
+                                                   brownian_gamma_rotation[2]]
                 ELSE:
-                    lang_dict["gamma_rotation"] = langevin_gamma_rotation
+                    lang_dict["gamma_rotation"] = brownian_gamma_rotation
             ELSE:
                 lang_dict["gamma_rotation"] = None
 
@@ -217,6 +217,13 @@ cdef class Thermostat:
         ELSE:
             langevin_gamma = 0.
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
+        global brownian_gamma
+        IF PARTICLE_ANISOTROPY:
+            for i in range(3):
+                brownian_gamma[i] = 0.
+        ELSE:
+            brownian_gamma = 0.
+        mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA)
         global langevin_gamma_rotation
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
@@ -225,6 +232,14 @@ cdef class Thermostat:
             ELSE:
                 langevin_gamma_rotation = 0.
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
+        global brownian_gamma_rotation
+        IF ROTATION:
+            IF PARTICLE_ANISOTROPY:
+                for i in range(3):
+                    brownian_gamma_rotation[i] = 0.
+            ELSE:
+                brownian_gamma_rotation = 0.
+            mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA_ROTATION)
 
         global thermo_switch
         thermo_switch = THERMO_OFF
@@ -385,6 +400,158 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
+    @AssertThermostatType(THERMO_BROWNIAN)
+    def set_brownian(self, kT=None, gamma=None, gamma_rotation=None,
+                     act_on_virtual=False, seed=None):
+        """Sets the Brownian thermostat.
+
+        Parameters
+        -----------
+        kT : :obj:`float`
+            Thermal energy of the simulated heat bath.
+        gamma : :obj:`float`
+            Contains the friction coefficient of the bath. If the feature
+            ``PARTICLE_ANISOTROPY`` is compiled in, then ``gamma`` can be a list
+            of three positive floats, for the friction coefficient in each
+            cardinal direction.
+        gamma_rotation : :obj:`float`, optional
+            The same applies to ``gamma_rotation``, which requires the feature
+            ``ROTATION`` to work properly. But also accepts three floats
+            if ``PARTICLE_ANISOTROPY`` is also compiled in.
+        act_on_virtual : :obj:`bool`, optional
+            If ``True`` the thermostat will act on virtual sites, default is
+            ``False``.
+        seed : :obj:`int`
+            Initial counter value (or seed) of the philox RNG.
+            Required on first activation of the Brownian thermostat.
+            Must be positive.
+
+        """
+
+        scalar_gamma_def = True
+        scalar_gamma_rot_def = True
+        IF PARTICLE_ANISOTROPY:
+            if hasattr(gamma, "__iter__"):
+                scalar_gamma_def = False
+            else:
+                scalar_gamma_def = True
+
+        IF PARTICLE_ANISOTROPY:
+            if hasattr(gamma_rotation, "__iter__"):
+                scalar_gamma_rot_def = False
+            else:
+                scalar_gamma_rot_def = True
+
+        if kT is None or gamma is None:
+            raise ValueError(
+                "Both, kT and gamma have to be given as keyword args")
+        utils.check_type_or_throw_except(kT, 1, float, "kT must be a number")
+        if scalar_gamma_def:
+            utils.check_type_or_throw_except(
+                gamma, 1, float, "gamma must be a number")
+        else:
+            utils.check_type_or_throw_except(
+                gamma, 3, float, "diagonal elements of the gamma tensor must be numbers")
+        if gamma_rotation is not None:
+            if scalar_gamma_rot_def:
+                utils.check_type_or_throw_except(
+                    gamma_rotation, 1, float, "gamma_rotation must be a number")
+            else:
+                utils.check_type_or_throw_except(
+                    gamma_rotation, 3, float, "diagonal elements of the gamma_rotation tensor must be numbers")
+
+        if scalar_gamma_def:
+            if float(kT) < 0. or float(gamma) < 0.:
+                raise ValueError(
+                    "temperature and gamma must be positive numbers")
+        else:
+            if float(kT) < 0. or float(gamma[0]) < 0. or float(
+                    gamma[1]) < 0. or float(gamma[2]) < 0.:
+                raise ValueError(
+                    "temperature and diagonal elements of the gamma tensor must be positive numbers")
+        if gamma_rotation is not None:
+            if scalar_gamma_rot_def:
+                if float(gamma_rotation) < 0.:
+                    raise ValueError(
+                        "gamma_rotation must be positive number")
+            else:
+                if float(gamma_rotation[0]) < 0. or float(
+                        gamma_rotation[1]) < 0. or float(gamma_rotation[2]) < 0.:
+                    raise ValueError(
+                        "diagonal elements of the gamma_rotation tensor must be positive numbers")
+
+        # Seed is required if the RNG is not initialized
+        if seed is None and brownian_is_seed_required():
+            raise ValueError(
+                "A seed has to be given as keyword argument on first activation of the thermostat")
+
+        if seed is not None:
+            utils.check_type_or_throw_except(
+                seed, 1, int, "seed must be a positive integer")
+            if seed < 0:
+                raise ValueError("seed must be a positive integer")
+            brownian_set_rng_state(seed)
+
+        global temperature
+        temperature = float(kT)
+        global brownian_gamma
+        IF PARTICLE_ANISOTROPY:
+            if scalar_gamma_def:
+                brownian_gamma[0] = gamma
+                brownian_gamma[1] = gamma
+                brownian_gamma[2] = gamma
+            else:
+                brownian_gamma[0] = gamma[0]
+                brownian_gamma[1] = gamma[1]
+                brownian_gamma[2] = gamma[2]
+        ELSE:
+            brownian_gamma = float(gamma)
+
+        global brownian_gamma_rotation
+        IF ROTATION:
+            if gamma_rotation is not None:
+                IF PARTICLE_ANISOTROPY:
+                    if scalar_gamma_rot_def:
+                        brownian_gamma_rotation[0] = gamma_rotation
+                        brownian_gamma_rotation[1] = gamma_rotation
+                        brownian_gamma_rotation[2] = gamma_rotation
+                    else:
+                        brownian_gamma_rotation[0] = gamma_rotation[0]
+                        brownian_gamma_rotation[1] = gamma_rotation[1]
+                        brownian_gamma_rotation[2] = gamma_rotation[2]
+                ELSE:
+                    if scalar_gamma_rot_def:
+                        brownian_gamma_rotation = gamma_rotation
+                    else:
+                        raise ValueError(
+                            "gamma_rotation must be a scalar since feature PARTICLE_ANISOTROPY is disabled")
+            else:
+                IF PARTICLE_ANISOTROPY:
+                    if scalar_gamma_def:
+                        brownian_gamma_rotation[0] = gamma
+                        brownian_gamma_rotation[1] = gamma
+                        brownian_gamma_rotation[2] = gamma
+                    else:
+                        brownian_gamma_rotation[0] = gamma[0]
+                        brownian_gamma_rotation[1] = gamma[1]
+                        brownian_gamma_rotation[2] = gamma[2]
+                ELSE:
+                    brownian_gamma_rotation = brownian_gamma
+
+        global thermo_switch
+        thermo_switch = (thermo_switch | THERMO_BROWNIAN)
+        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
+        mpi_bcast_parameter(FIELD_TEMPERATURE)
+        mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA)
+
+        global thermo_virtual
+        thermo_virtual = act_on_virtual
+        mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
+
+        IF ROTATION:
+            mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA_ROTATION)
+        return True
+
     @AssertThermostatType(THERMO_LB, THERMO_DPD)
     def set_lb(
         self,
@@ -512,43 +679,3 @@ cdef class Thermostat:
 
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
-
-    @AssertThermostatType(THERMO_BROWNIAN)
-    def set_brownian(self, kT=None, gamma=None, gamma_rotation=None,
-                     act_on_virtual=False, seed=None):
-        """Sets the Brownian Dynamics thermostat with required parameters 'kT' 'gamma'
-        and optional parameter 'gamma_rotation'.
-
-        Parameters
-        -----------
-        kT : :obj:`float`
-         Thermal energy of the simulated heat bath.
-        gamma : :obj:`float`
-                Contains the friction coefficient of the bath. If the feature 'PARTICLE_ANISOTROPY'
-                is compiled in then 'gamma' can be a list of three positive floats, for the friction
-                coefficient in each cardinal direction.
-        gamma_rotation : :obj:`float`, optional
-                         The same applies to 'gamma_rotation', which requires the feature
-                         'ROTATION' to work properly. But also accepts three floating point numbers
-                         if 'PARTICLE_ANISOTROPY' is also compiled in.
-        act_on_virtual : :obj:`bool`, optional
-                If true the thermostat will act on virtual sites, default is off.
-        seed : :obj:`int`, required
-                Initial counter value (or seed) of the philox RNG.
-                Required on first activation of the Brownian Dynamics thermostat.
-
-        """
-
-        # Note: hack due to entanglement of Brownian dynamics and Langevin thermostat
-        # The setup code for Brownian dynamics mis-uses the Langevin setup.
-        # This needs to be changed
-        global thermo_switch
-        thermo_switch = (thermo_switch & (~THERMO_BROWNIAN))
-
-        self.set_langevin(kT, gamma, gamma_rotation, act_on_virtual, seed)
-        # this is safe because this combination of thermostats is not
-        # allowed
-        thermo_switch = (thermo_switch & (~THERMO_LANGEVIN))
-        thermo_switch = (thermo_switch | THERMO_BROWNIAN)
-        mpi_bcast_parameter(FIELD_THERMO_SWITCH)
-        return True

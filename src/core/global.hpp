@@ -98,7 +98,11 @@ enum Fields {
   FIELD_THERMALIZEDBONDS,
   FIELD_FORCE_CAP,
   FIELD_THERMO_VIRTUAL,
-  FIELD_SWIMMING_PARTICLES_EXIST
+  FIELD_SWIMMING_PARTICLES_EXIST,
+  /** index of \ref brownian_gamma */
+  FIELD_BROWNIAN_GAMMA,
+  /** index of \ref brownian_gamma_rotation */
+  FIELD_BROWNIAN_GAMMA_ROTATION,
 };
 
 #endif

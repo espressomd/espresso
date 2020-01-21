@@ -312,8 +312,11 @@ int integrate(int n_steps, int reuse_forces) {
 }
 
 void philox_counter_increment() {
-  if (thermo_switch & THERMO_LANGEVIN or thermo_switch & THERMO_BROWNIAN) {
+  if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
+  }
+  if (thermo_switch & THERMO_BROWNIAN) {
+    brownian_rng_counter_increment();
   }
   if (thermo_switch & THERMO_DPD) {
 #ifdef DPD

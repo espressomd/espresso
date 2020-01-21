@@ -94,6 +94,14 @@ extern double nptiso_gammav;
 /** Langevin RNG counter, used for both translation and rotation. */
 extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 
+/** Brownian friction coefficient gamma for translation. */
+extern Thermostat::GammaType brownian_gamma;
+/** Brownian friction coefficient gamma for rotation. */
+extern Thermostat::GammaType brownian_gamma_rotation;
+
+/** Brownian RNG counter, used for both translation and rotation. */
+extern std::unique_ptr<Utils::Counter<uint64_t>> brownian_rng_counter;
+
 /************************************************
  * functions
  ************************************************/
@@ -101,11 +109,17 @@ extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 /** Only require seed if rng is not initialized. */
 bool langevin_is_seed_required();
 
+/** Only require seed if rng is not initialized. */
+bool brownian_is_seed_required();
+
 /** @name philox functionality: increment, get/set */
 /*@{*/
 void langevin_rng_counter_increment();
 void langevin_set_rng_state(uint64_t counter);
 uint64_t langevin_get_rng_state();
+void brownian_rng_counter_increment();
+void brownian_set_rng_state(uint64_t counter);
+uint64_t brownian_get_rng_state();
 /*@}*/
 
 /** Initialize constants of the thermostat at the start of integration */
