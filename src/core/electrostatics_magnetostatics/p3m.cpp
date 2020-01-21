@@ -53,7 +53,10 @@ using Utils::strcat_alloc;
 #include <utils/math/bspline.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/optional.hpp>
 #include <boost/range/algorithm/min_element.hpp>
+#include <boost/range/numeric.hpp>
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -90,10 +93,6 @@ p3m_data_struct p3m;
  *  whenever the box length changes.
  */
 static void p3m_init_a_ai_cao_cut();
-
-/** Calculates the dipole term */
-static double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
-                                   const ParticleRange &particles);
 
 /** Realloc charge assignment fields. */
 static void p3m_realloc_ca_fields(int newsize);
@@ -579,46 +578,72 @@ static void P3M_assign_forces(double force_prefac, int d_rs,
   }
 }
 
+namespace {
+auto dipole_moment(Particle const &p, BoxGeometry const &box) {
+  return p.p.q * unfolded_position(p.r.p, p.l.i, box.length());
+}
+
+auto calc_dipole_moment(boost::mpi::communicator const &comm,
+                        const ParticleRange &particles,
+                        BoxGeometry const &box) {
+  auto const local_dip = boost::accumulate(
+      particles, Utils::Vector3d{}, [&box](Utils::Vector3d dip, auto const &p) {
+        return dip + dipole_moment(p, box);
+      });
+
+  return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
+}
+
+void add_dipole_correction(Utils::Vector3d const &box_dipole,
+                           const ParticleRange &particles) {
+  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+                    (2 * p3m.params.epsilon + 1);
+
+  auto const dm = pref * box_dipole;
+
+  for (auto &p : particles) {
+    p.f.f -= p.p.q * dm;
+  }
+}
+
+double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
+  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+                    (2 * p3m.params.epsilon + 1);
+
+  return pref * box_dipole.norm2();
+}
+
+} // namespace
 double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles) {
-  int i, d, d_rs, ind, j[3];
-  /**************************************************************/
-  /* Prefactor for force */
-  double force_prefac;
-  /* k-space energy */
-  double k_space_energy = 0.0, node_k_space_energy = 0.0;
-  /* directions */
-  double *d_operator = nullptr;
-
-  force_prefac =
-      coulomb.prefactor /
-      (2 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
+  /* The dipol moment is only needed if we don't have metallic boundaries. */
+  auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
+                              ? boost::make_optional(calc_dipole_moment(
+                                    comm_cart, particles, box_geo))
+                              : boost::none;
 
   /* Gather information for FFT grid inside the nodes domain (inner local mesh)
    * and perform forward 3D FFT (Charge Assignment Mesh). */
-  if (p3m.sum_q2 > 0) {
-    p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
-  }
+  p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
+  fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
+
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
 
   /* === k-space calculations === */
 
   /* === k-space energy calculation  === */
-  //     if(energy_flag && p3m.sum_q2 > 0) {
+  double k_space_energy = 0.0;
   if (energy_flag) {
-    /*********************
-    Coulomb energy
-    **********************/
+    double node_k_space_energy = 0.;
 
-    for (i = 0; i < p3m.fft.plan[3].new_size; i++) {
+    for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
       // Use the energy optimized influence function for energy!
       node_k_space_energy +=
           p3m.g_energy[i] *
           (Utils::sqr(p3m.rs_mesh[2 * i]) + Utils::sqr(p3m.rs_mesh[2 * i + 1]));
     }
-    node_k_space_energy *= force_prefac;
+    node_k_space_energy *= coulomb.prefactor / (2 * box_geo.volume());
 
     MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0,
                comm_cart);
@@ -628,31 +653,36 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                         (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
       /* net charge correction */
       k_space_energy -= coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
-                        (2.0 * box_geo.length()[0] * box_geo.length()[1] *
-                         box_geo.length()[2] * Utils::sqr(p3m.params.alpha));
+                        (2.0 * box_geo.volume() * Utils::sqr(p3m.params.alpha));
+      /* dipole correction */
+      if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+        k_space_energy += dipole_correction_energy(box_dipole.value());
+      }
     }
-
   } /* if (energy_flag) */
 
   /* === k-space force calculation  === */
-  if (force_flag && p3m.sum_q2 > 0) {
-    /***************************
-     COULOMB FORCES (k-space)
-     ****************************/
-    /* Force preparation */
-    ind = 0;
-    /* apply the influence function */
-    for (i = 0; i < p3m.fft.plan[3].new_size; i++) {
-      p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-      ind++;
-      p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-      ind++;
-    }
+  if (force_flag) {
+    auto const force_prefac = coulomb.prefactor / (2 * box_geo.volume());
 
+    /* Force preparation */
+    {
+      int ind = 0;
+      /* apply the influence function */
+      for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
+        p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
+        ind++;
+        p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
+        ind++;
+      }
+    }
     /* === 3 Fold backward 3D FFT (Force Component Meshes) === */
 
     /* Force component loop */
-    for (d = 0; d < 3; d++) {
+    for (int d = 0; d < 3; d++) {
+      /* directions */
+      double const *d_operator = nullptr;
+
       if (d == KX)
         d_operator = p3m.d_op[RX].data();
       else if (d == KY)
@@ -661,9 +691,10 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         d_operator = p3m.d_op[RZ].data();
 
       /* direction in k-space: */
-      d_rs = (d + p3m.ks_pnum) % 3;
+      int d_rs = (d + p3m.ks_pnum) % 3;
       /* sqrt(-1)*k differentiation */
-      ind = 0;
+      int j[3];
+      int ind = 0;
       for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
         for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
           for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
@@ -710,52 +741,16 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         break;
       }
     }
-  } /* if(force_flag) */
 
-  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    k_space_energy += p3m_calc_dipole_term(force_flag, energy_flag, particles);
-  }
+    if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+      add_dipole_correction(box_dipole.value(), particles);
+    }
+  } /* if(force_flag) */
 
   return k_space_energy;
 }
 
 /************************************************************/
-
-double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
-                            const ParticleRange &particles) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
-                    (2 * p3m.params.epsilon + 1);
-  double lcl_dm[3], gbl_dm[3];
-  double en;
-
-  for (double &j : lcl_dm)
-    j = 0;
-
-  for (auto const &p : particles) {
-    for (int j = 0; j < 3; j++)
-      /* dipole moment with unfolded coordinates */
-      lcl_dm[j] += p.p.q * (p.r.p[j] + p.l.i[j] * box_geo.length()[j]);
-  }
-
-  MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
-
-  if (energy_flag)
-    en =
-        0.5 * pref *
-        (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) + Utils::sqr(gbl_dm[2]));
-  else
-    en = 0;
-  if (force_flag) {
-    for (double &j : gbl_dm)
-      j *= pref;
-    for (auto &p : particles) {
-      for (int j = 0; j < 3; j++)
-        p.f.f[j] -= gbl_dm[j] * p.p.q;
-    }
-    return en;
-  }
-  return 0;
-}
 
 void p3m_realloc_ca_fields(int newsize) {
   newsize = ((newsize + CA_INCREMENT - 1) / CA_INCREMENT) * CA_INCREMENT;
