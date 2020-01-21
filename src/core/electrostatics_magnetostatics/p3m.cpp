@@ -196,7 +196,8 @@ template <int cao>
 static void p3m_do_charge_assign(const ParticleRange &particles);
 
 template <int cao>
-void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
+void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
+                          int cp_cnt);
 
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
@@ -426,7 +427,7 @@ template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
 }
 
 /* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt) {
   switch (p3m.params.cao) {
   case 1:
     p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
@@ -453,7 +454,8 @@ void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
 }
 
 template <int cao>
-void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
+void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
+                          int cp_cnt) {
   auto const inter = not(p3m.params.inter == 0);
   /* distance to nearest mesh point */
   double dist[3];
