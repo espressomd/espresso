@@ -709,35 +709,6 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
   /* === k-space calculations === */
 
-  /* === k-space energy calculation  === */
-  double k_space_energy = 0.0;
-  if (energy_flag) {
-    double node_k_space_energy = 0.;
-
-    for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
-      // Use the energy optimized influence function for energy!
-      node_k_space_energy +=
-          p3m.g_energy[i] *
-          (Utils::sqr(p3m.rs_mesh[2 * i]) + Utils::sqr(p3m.rs_mesh[2 * i + 1]));
-    }
-    node_k_space_energy *= coulomb.prefactor / (2 * box_geo.volume());
-
-    MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0,
-               comm_cart);
-    if (this_node == 0) {
-      /* self energy correction */
-      k_space_energy -= coulomb.prefactor *
-                        (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
-      /* net charge correction */
-      k_space_energy -= coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
-                        (2.0 * box_geo.volume() * Utils::sqr(p3m.params.alpha));
-      /* dipole correction */
-      if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-        k_space_energy += dipole_correction_energy(box_dipole.value());
-      }
-    }
-  } /* if (energy_flag) */
-
   /* === k-space force calculation  === */
   if (force_flag) {
     auto const force_prefac = coulomb.prefactor / (2 * box_geo.volume());
@@ -815,7 +786,37 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
     }
   } /* if(force_flag) */
 
-  return k_space_energy;
+  /* === k-space energy calculation  === */
+  if (energy_flag) {
+    double node_k_space_energy = 0.;
+
+    for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
+      // Use the energy optimized influence function for energy!
+      node_k_space_energy +=
+          p3m.g_energy[i] *
+          (Utils::sqr(p3m.rs_mesh[2 * i]) + Utils::sqr(p3m.rs_mesh[2 * i + 1]));
+    }
+    node_k_space_energy *= coulomb.prefactor / (2 * box_geo.volume());
+
+    double k_space_energy = 0.0;
+    MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0,
+               comm_cart);
+    if (this_node == 0) {
+      /* self energy correction */
+      k_space_energy -= coulomb.prefactor *
+                        (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
+      /* net charge correction */
+      k_space_energy -= coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
+                        (2.0 * box_geo.volume() * Utils::sqr(p3m.params.alpha));
+      /* dipole correction */
+      if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+        k_space_energy += dipole_correction_energy(box_dipole.value());
+      }
+    }
+    return k_space_energy;
+  } /* if (energy_flag) */
+
+  return 0.0;
 }
 
 /************************************************************/
