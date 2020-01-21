@@ -34,6 +34,6 @@ BOOST_AUTO_TEST_CASE(inner_product) {
   auto const result = Utils::matrix_vector_product<double, 3, matrix>(vector);
   for (int i = 0; i < 3; ++i) {
     BOOST_CHECK_CLOSE(result[i], boost::inner_product(matrix[i], vector, 0.0),
-                      std::numeric_limits<double>::epsilon());
+                      100. * std::numeric_limits<double>::epsilon());
   }
 }
