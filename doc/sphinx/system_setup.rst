@@ -436,7 +436,7 @@ Brownian thermostat
 Brownian thermostat is a formal name of a thermostat enabling the
 Brownian Dynamics feature (see :cite:`schlick2010`) which implies
 a propagation scheme involving systematic and thermal parts of the
-classical Ermak-McCammom's (see :cite:`ermak1978brownian`)
+classical Ermak-McCammom's (see :cite:`ermak78a`)
 Brownian Dynamics. Currently it is implemented without
 hydrodynamic interactions, i.e.
 with a diagonal diffusion tensor.

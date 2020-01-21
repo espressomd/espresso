@@ -142,19 +142,22 @@ void thermo_init_npt_isotropic() {
 }
 #endif
 
-// brown_sigma_vel determines here the heat velocity random walk dispersion
-// brown_sigma_pos determines here the BD position random walk dispersion
-// default particle mass is assumed to be unitary in this global parameters
+/** Brownian thermostat initializer.
+ *
+ *  Default particle mass is assumed to be unitary in these global parameters.
+ */
 void thermo_init_brownian() {
-  // Dispersions correspond to the Gaussian noise only which is only valid for
-  // the BD. Just a square root of kT, see (10.2.17) and comments in 2
-  // paragraphs afterwards, Pottier2010
-  // https://doi.org/10.1007/s10955-010-0114-6
+  /** The heat velocity dispersion corresponds to the Gaussian noise only,
+   *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
+   *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
+   */
+  // Heat velocity dispersion:
   brown_sigma_vel = sqrt(temperature);
-  // Position dispersion is defined by the second eq. (14.38) of Schlick2010
-  // https://doi.org/10.1007/978-1-4419-6351-2. Its time interval factor will be
-  // added in the Brownian Dynamics functions. Its square root is the standard
-  // deviation. A multiplicative inverse of the position standard deviation:
+  /** The random walk position dispersion is defined by the second eq. (14.38)
+   *  of @cite Schlick2010. Its time interval factor will be added in the
+   *  Brownian Dynamics functions. Its square root is the standard deviation.
+   */
+  // A multiplicative inverse of the position standard deviation:
   if (temperature > 0.0) {
     brown_sigma_pos_inv = sqrt(langevin_gamma / (2.0 * temperature));
   } else {
@@ -162,19 +165,17 @@ void thermo_init_brownian() {
         brown_gammatype_nan; // just an indication of the infinity
   }
 #ifdef ROTATION
-  // Note: the BD thermostat assigns the langevin viscous parameters as well.
-  // They correspond to the friction tensor Z from the eq. (14.31) of
-  // Schlick2010:
+  /** Note: the BD thermostat assigns the langevin viscous parameters as well.
+   *  They correspond to the friction tensor Z from the eq. (14.31) of
+   *  @cite Schlick2010.
+   */
   /* If gamma_rotation is not set explicitly,
      we use the translational one. */
   if (langevin_gamma_rotation < GammaType{}) {
     langevin_gamma_rotation = langevin_gamma;
   }
   brown_sigma_vel_rotation = sqrt(temperature);
-  // Position dispersion is defined by the second eq. (14.38) of Schlick2010.
-  // Its time interval factor will be added in the Brownian Dynamics functions.
-  // Its square root is the standard deviation. A multiplicative inverse of the
-  // position standard deviation:
+  // A multiplicative inverse of the position rotation standard deviation:
   if (temperature > 0.0) {
     brown_sigma_pos_rotation_inv = sqrt(langevin_gamma / (2.0 * temperature));
   } else {

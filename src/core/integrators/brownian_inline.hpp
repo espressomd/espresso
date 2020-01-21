@@ -18,7 +18,7 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-/** \file brownian_inline.hpp */
+/** \file */
 
 #ifndef BROWNIAN_INLINE_HPP
 #define BROWNIAN_INLINE_HPP
@@ -26,13 +26,10 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 
-/** Propagate position: viscous drag driven by conservative forces.*/
-/*********************************************************/
-/** \name bd_drag */
-/*********************************************************/
-/**(Eq. (14.39) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Propagate position: viscous drag driven by conservative forces.
+ *  From eq. (14.39) in @cite Schlick2010.
+ *  @param[in,out] p              Particle
+ *  @param[in]     dt             Time interval
  */
 inline void bd_drag(Particle &p, double dt) {
   // The friction tensor Z from the Eq. (14.31) of Schlick2010:
@@ -102,13 +99,10 @@ inline void bd_drag(Particle &p, double dt) {
 #endif // PARTICLE_ANISOTROPY
 }
 
-/** Set the terminal velocity driven by the conservative forces drag.*/
-/*********************************************************/
-/** \name bd_drag_vel */
-/*********************************************************/
-/**(Eq. (14.34) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Set the terminal velocity driven by the conservative forces drag.
+ *  From eq. (14.34) in @cite Schlick2010.
+ *  @param[in,out] p              Particle
+ *  @param[in]     dt             Time interval
  */
 inline void bd_drag_vel(Particle &p, double dt) {
   // The friction tensor Z from the eq. (14.31) of Schlick2010:
@@ -191,13 +185,10 @@ inline void bd_drag_vel(Particle &p, double dt) {
 #endif // PARTICLE_ANISOTROPY
 }
 
-/** Propagate the positions: random walk part.*/
-/*********************************************************/
-/** \name bd_random_walk */
-/*********************************************************/
-/**(Eq. (14.37) T. Schlick, https://doi.org/10.1007/978-1-4419-6351-2 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Propagate the positions: random walk part.
+ *  From eq. (14.37) in @cite Schlick2010.
+ *  @param[in,out] p          Particle
+ *  @param[in] dt             Time interval
  */
 void bd_random_walk(Particle &p, double dt) {
   // skip the translation thermalizing for virtual sites unless enabled
@@ -309,13 +300,10 @@ void bd_random_walk(Particle &p, double dt) {
   }
 }
 
-/** Determine the velocities: random walk part.*/
-/*********************************************************/
-/** \name bd_random_walk_vel */
-/*********************************************************/
-/**(Eq. (10.2.16) N. Pottier, https://doi.org/10.1007/s10955-010-0114-6 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Determine the velocities: random walk part.
+ *  From eq. (10.2.16) in @cite Pottier2010.
+ *  @param[in, out] p         Particle
+ *  @param[in] dt             Time interval
  */
 inline void bd_random_walk_vel(Particle &p, double dt) {
   // skip the translation thermalizing for virtual sites unless enabled
@@ -363,14 +351,10 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
 
 #ifdef ROTATION
 
-/** Propagate quaternions: viscous drag driven by conservative torques.*/
-/*********************************************************/
-/** \name bd_drag_rot */
-/*********************************************************/
-/**(An analogy of eq. (14.39) T. Schlick,
- * https://doi.org/10.1007/978-1-4419-6351-2 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Propagate quaternions: viscous drag driven by conservative torques.
+ *  An analogy of eq. (14.39) in @cite Schlick2010.
+ *  @param[in,out] p              Particle
+ *  @param[in]     dt             Time interval
  */
 void bd_drag_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
@@ -407,14 +391,10 @@ void bd_drag_rot(Particle &p, double dt) {
   }
 }
 
-/** Set the terminal angular velocity driven by the conservative torques drag.*/
-/*********************************************************/
-/** \name bd_drag_vel_rot */
-/*********************************************************/
-/**(An analogy of the 1st term of the eq. (14.34) T. Schlick,
- * https://doi.org/10.1007/978-1-4419-6351-2 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Set the terminal angular velocity driven by the conservative torques drag.
+ *  An analogy of the 1st term of eq. (14.34) in @cite Schlick2010.
+ *  @param[in,out] p              Particle
+ *  @param[in]     dt             Time interval
  */
 void bd_drag_vel_rot(Particle &p, double dt) {
   Thermostat::GammaType local_gamma;
@@ -448,14 +428,10 @@ void bd_drag_vel_rot(Particle &p, double dt) {
   p.m.omega = mask(p.p.rotation, p.m.omega);
 }
 
-/** Propagate the quaternions: random walk part.*/
-/*********************************************************/
-/** \name bd_random_walk_rot */
-/*********************************************************/
-/**(An analogy of eq. (14.37) T. Schlick,
- * https://doi.org/10.1007/978-1-4419-6351-2 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Propagate the quaternions: random walk part.
+ *  An analogy of eq. (14.37) in @cite Schlick2010.
+ *  @param[in,out] p              Particle
+ *  @param[in]     dt             Time interval
  */
 void bd_random_walk_rot(Particle &p, double dt) {
   extern Thermostat::GammaType brown_sigma_pos_rotation_inv;
@@ -536,14 +512,10 @@ void bd_random_walk_rot(Particle &p, double dt) {
   }
 }
 
-/** Determine the angular velocities: random walk part.*/
-/*********************************************************/
-/** \name bd_random_walk_vel_rot */
-/*********************************************************/
-/**(An analogy of eq. (10.2.16) N. Pottier,
- * https://doi.org/10.1007/s10955-010-0114-6 (2010))
- * @param &p              Reference to the particle (Input)
- * @param dt              Time interval (Input)
+/** Determine the angular velocities: random walk part.
+ *  An analogy of eq. (10.2.16) in @cite Pottier2010.
+ *  @param[in,out] p              Particle
+ *  @param[in]     dt             Time interval
  */
 void bd_random_walk_vel_rot(Particle &p, double dt) {
   extern double brown_sigma_vel_rotation;
