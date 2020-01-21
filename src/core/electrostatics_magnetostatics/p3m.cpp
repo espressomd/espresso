@@ -241,6 +241,9 @@ void p3m_init() {
                  p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
                  node_grid, comm_cart);
     p3m.ks_mesh.resize(ca_mesh_size);
+    for (auto &e : p3m.E_mesh) {
+      e.resize(ca_mesh_size);
+    }
 
     /* k-space part: */
     p3m_calc_differential_operator();
@@ -549,7 +552,7 @@ void p3m_shrink_wrap_charge_grid(int n_charges) {
 
 /* Assign the forces obtained from k-space */
 template <int cao>
-static void P3M_assign_forces(double force_prefac, int d_rs,
+static void P3M_assign_forces(double force_prefac,
                               const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
@@ -564,8 +567,13 @@ static void P3M_assign_forces(double force_prefac, int d_rs,
       for (int i0 = 0; i0 < cao; i0++) {
         for (int i1 = 0; i1 < cao; i1++) {
           for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f[d_rs] -=
-                force_prefac * p3m.ca_frac[cf_cnt] * p3m.rs_mesh[q_ind];
+            p.f.f[0] -=
+                force_prefac * p3m.ca_frac[cf_cnt] * p3m.E_mesh[0][q_ind];
+            p.f.f[1] -=
+                force_prefac * p3m.ca_frac[cf_cnt] * p3m.E_mesh[1][q_ind];
+            p.f.f[2] -=
+                force_prefac * p3m.ca_frac[cf_cnt] * p3m.E_mesh[2][q_ind];
+
             q_ind++;
             cf_cnt++;
           }
@@ -699,47 +707,52 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
           for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
             /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-            p3m.rs_mesh[ind] = -2.0 * Utils::pi() *
-                               (p3m.ks_mesh[ind + 1] *
-                                d_operator[j[d] + p3m.fft.plan[3].start[d]]) /
-                               box_geo.length()[d_rs];
-            ind++;
-            p3m.rs_mesh[ind] = 2.0 * Utils::pi() * p3m.ks_mesh[ind - 1] *
-                               d_operator[j[d] + p3m.fft.plan[3].start[d]] /
-                               box_geo.length()[d_rs];
+            p3m.E_mesh[d_rs][2 * ind + 0] =
+                -2.0 * Utils::pi() *
+                (p3m.ks_mesh[2 * ind + 1] *
+                 d_operator[j[d] + p3m.fft.plan[3].start[d]]) /
+                box_geo.length()[d_rs];
+
+            p3m.E_mesh[d_rs][2 * ind + 1] =
+                2.0 * Utils::pi() * p3m.ks_mesh[2 * ind + 0] *
+                d_operator[j[d] + p3m.fft.plan[3].start[d]] /
+                box_geo.length()[d_rs];
             ind++;
           }
         }
       }
       /* Back FFT force component mesh */
-      fft_perform_back(p3m.rs_mesh, /* check_complex */ !p3m.params.tuning,
-                       p3m.fft, comm_cart);
+      fft_perform_back(p3m.E_mesh[d_rs].data(),
+                       /* check_complex */ !p3m.params.tuning, p3m.fft,
+                       comm_cart);
       /* redistribute force component mesh */
-      p3m.sm.spread_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-      /* Assign force component from mesh to particle */
-      switch (p3m.params.cao) {
-      case 1:
-        P3M_assign_forces<1>(force_prefac, d_rs, particles);
-        break;
-      case 2:
-        P3M_assign_forces<2>(force_prefac, d_rs, particles);
-        break;
-      case 3:
-        P3M_assign_forces<3>(force_prefac, d_rs, particles);
-        break;
-      case 4:
-        P3M_assign_forces<4>(force_prefac, d_rs, particles);
-        break;
-      case 5:
-        P3M_assign_forces<5>(force_prefac, d_rs, particles);
-        break;
-      case 6:
-        P3M_assign_forces<6>(force_prefac, d_rs, particles);
-        break;
-      case 7:
-        P3M_assign_forces<7>(force_prefac, d_rs, particles);
-        break;
-      }
+      p3m.sm.spread_grid(p3m.E_mesh[d_rs].data(), comm_cart,
+                         p3m.local_mesh.dim);
+    }
+
+    /* Assign force component from mesh to particle */
+    switch (p3m.params.cao) {
+    case 1:
+      P3M_assign_forces<1>(force_prefac, particles);
+      break;
+    case 2:
+      P3M_assign_forces<2>(force_prefac, particles);
+      break;
+    case 3:
+      P3M_assign_forces<3>(force_prefac, particles);
+      break;
+    case 4:
+      P3M_assign_forces<4>(force_prefac, particles);
+      break;
+    case 5:
+      P3M_assign_forces<5>(force_prefac, particles);
+      break;
+    case 6:
+      P3M_assign_forces<6>(force_prefac, particles);
+      break;
+    case 7:
+      P3M_assign_forces<7>(force_prefac, particles);
+      break;
     }
 
     if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
