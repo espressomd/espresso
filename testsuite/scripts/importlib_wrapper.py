@@ -420,6 +420,10 @@ class GetPrngSeedEspressomdSystem(ast.NodeVisitor):
 
 
 def set_random_seeds(code):
+    """
+    Remove random number generator seeds (ESPResSo + numpy), such that
+    the sample/tutorial always starts with different random seeds.
+    """
     code = protect_ipython_magics(code)
     tree = ast.parse(code)
     visitor = GetPrngSeedEspressomdSystem()
@@ -468,10 +472,18 @@ def delimit_statements(code):
 
 
 def protect_ipython_magics(code):
+    """
+    Replace all IPython magic commands (e.g. ``%matplotlib notebook``) by a
+    formatted comment. This is necessary whenever the code must be parsed
+    through ``ast``, because magic commands are not valid Python statements.
+    """
     return re.sub("^(%+)(?=[a-z])", "#_IPYTHON_MAGIC_\g<1>", code, flags=re.M)
 
 
 def deprotect_ipython_magics(code):
+    """
+    Reverse the action of :func:`protect_ipython_magics`.
+    """
     return re.sub("^#_IPYTHON_MAGIC_(%+)(?=[a-z])", "\g<1>", code, flags=re.M)
 
 
@@ -479,9 +491,9 @@ class GetMatplotlibPyplot(ast.NodeVisitor):
     """
     Find all line numbers where ``matplotlib`` and ``pyplot`` are imported
     and store their alias. Find line numbers where the matplotlib backend
-    is set, where the pyplot interactive mode is activated and where
-    IPython magic functions are set.
-
+    is set, where the pyplot interactive mode is activated and where IPython
+    magic commands (in the processed form ``get_ipython().func(args)``) are
+    set.
     """
 
     def __init__(self):

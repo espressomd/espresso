@@ -17,11 +17,21 @@
 
 import unittest as ut
 import os
+import sys
 import subprocess
 import nbformat
 
 
 class HtmlRunner(ut.TestCase):
+    """
+    Test the :file:`doc/tutorials/html_runner.py` script. A new Jupyter
+    notebook and a new python script are created, and both are suplied to
+    html_runner.py, which will include the python script in a new code cell,
+    substitute global variables, run the code and then save the result in
+    a new notebook. The input notebook contains IPython magic commands and
+    imports matplotlib and an ESPResSo visualizer, all of which require
+    special treatment.
+    """
 
     cell_md_src = '''
 Cannot plot in the same cell where `matplotlib` is imported for the first
@@ -56,7 +66,7 @@ plt.show()
             "name": "python",
             "nbconvert_exporter": "python",
             "pygments_lexer": "ipython3",
-            "version": "3.6.9"}
+            "version": ".".join(map(str, sys.version_info[:3]))}
     }
 
     def test_html_wrapper(self):

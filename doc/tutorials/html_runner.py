@@ -16,13 +16,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+This script runs Jupyter notebooks and writes the output to new notebooks.
+Global variables can be edited to reduce runtime. External Python scripts
+can be inserted as new code cells (e.g. solutions to exercises).
+The output notebooks can then be converted to HTML externally.
+"""
+
 import argparse
 
-parser = argparse.ArgumentParser(description='Process IPython notebooks.')
+parser = argparse.ArgumentParser(description='Process Jupyter notebooks.',
+                                 epilog=__doc__)
 parser.add_argument('--input', type=str,
-                    help='Path to the original IPython notebook')
+                    help='Path to the original Jupyter notebook')
 parser.add_argument('--output', type=str, nargs='?',
-                    help='Path to the processed IPython notebook')
+                    help='Path to the processed Jupyter notebook')
 parser.add_argument('--substitutions', nargs='*',
                     help='Variables to substitute')
 parser.add_argument('--scripts', nargs='*',
@@ -92,7 +100,7 @@ for i in range(len(nb['cells'])):
 
 
 # if matplotlib is used in this script, split cell to keep the import
-# statement separate and avoid a know bug in the Jupyter backend which
+# statement separate and avoid a known bug in the Jupyter backend which
 # causes the plot object to be represented as a string instead of a
 # canvas when created in the cell where matplotlib is imported for the
 # first time (https://github.com/jupyter/notebook/issues/3523)
