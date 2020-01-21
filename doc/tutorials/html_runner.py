@@ -16,16 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import nbformat
-from nbconvert.preprocessors import ExecutePreprocessor
-import re
-import os
-import ast
-import sys
-import uuid
 import argparse
-sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
-import importlib_wrapper as iw
 
 parser = argparse.ArgumentParser(description='Process IPython notebooks.')
 parser.add_argument('--input', type=str,
@@ -37,6 +28,16 @@ parser.add_argument('--substitutions', nargs='*',
 parser.add_argument('--scripts', nargs='*',
                     help='Scripts to insert in new cells')
 args = parser.parse_args()
+
+import nbformat
+from nbconvert.preprocessors import ExecutePreprocessor
+import re
+import os
+import ast
+import sys
+import uuid
+sys.path.append('@CMAKE_SOURCE_DIR@/testsuite/scripts')
+import importlib_wrapper as iw
 
 
 def get_code_cells(nb):
