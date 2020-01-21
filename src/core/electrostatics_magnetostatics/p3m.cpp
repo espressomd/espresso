@@ -56,11 +56,12 @@ using Utils::strcat_alloc;
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 #include <boost/range/numeric.hpp>
+#include <mpi.h>
 
+#include <complex>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
 
 /************************************************
  * variables
@@ -567,12 +568,9 @@ static void P3M_assign_forces(double force_prefac,
       for (int i0 = 0; i0 < cao; i0++) {
         for (int i1 = 0; i1 < cao; i1++) {
           for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f[0] -=
-                force_prefac * p3m.ca_frac[cf_cnt] * p3m.E_mesh[0][q_ind];
-            p.f.f[1] -=
-                force_prefac * p3m.ca_frac[cf_cnt] * p3m.E_mesh[1][q_ind];
-            p.f.f[2] -=
-                force_prefac * p3m.ca_frac[cf_cnt] * p3m.E_mesh[2][q_ind];
+            p.f.f -= force_prefac * p3m.ca_frac[cf_cnt] *
+                     Utils::Vector3d{p3m.E_mesh[0][q_ind], p3m.E_mesh[1][q_ind],
+                                     p3m.E_mesh[2][q_ind]};
 
             q_ind++;
             cf_cnt++;
@@ -725,8 +723,13 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
       fft_perform_back(p3m.E_mesh[d_rs].data(),
                        /* check_complex */ !p3m.params.tuning, p3m.fft,
                        comm_cart);
+    }
+
+    {
+      std::array<double *, 3> E_fields = {
+          p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()};
       /* redistribute force component mesh */
-      p3m.sm.spread_grid(p3m.E_mesh[d_rs].data(), comm_cart,
+      p3m.sm.spread_grid(Utils::make_span(E_fields), comm_cart,
                          p3m.local_mesh.dim);
     }
 
