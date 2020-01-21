@@ -626,12 +626,12 @@ double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
  *  eq. (2.8) is not present here since M is the empty set in our simulations.
  */
 Utils::Vector9d p3m_calc_kspace_stress() {
+  Utils::Vector9d node_k_space_stress{};
+
   if (p3m.sum_q2 > 0) {
     p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
     fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
-    auto const force_prefac = coulomb.prefactor / (2.0 * box_geo.volume());
 
-    Utils::Vector9d node_k_space_stress{};
     int ind = 0;
     int j[3];
     for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
@@ -686,9 +686,10 @@ Utils::Vector9d p3m_calc_kspace_stress() {
         }
       }
     }
-
-    return  force_prefac * node_k_space_stress;
   }
+
+  auto const force_prefac = coulomb.prefactor / (2.0 * box_geo.volume());
+  return force_prefac * node_k_space_stress;
 }
 
 double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
@@ -741,56 +742,37 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   if (force_flag) {
     auto const force_prefac = coulomb.prefactor / (2 * box_geo.volume());
 
-    /* Force preparation */
-    {
-      int ind = 0;
-      /* apply the influence function */
-      for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
-        p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-        ind++;
-        p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-        ind++;
-      }
-    }
-    /* === 3 Fold backward 3D FFT (Force Component Meshes) === */
+    /* sqrt(-1)*k differentiation */
+    int j[3];
+    int ind = 0;
+    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
+      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
+        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
+          auto const rho_hat = std::complex<double>(p3m.rs_mesh[2 * ind + 0],
+                                                    p3m.rs_mesh[2 * ind + 1]);
+          auto const phi_hat = p3m.g_force[ind] * rho_hat;
 
-    /* Force component loop */
-    for (int d = 0; d < 3; d++) {
-      /* directions */
-      double const *d_operator = nullptr;
+          for (int d = 0; d < 3; d++) {
+            /* direction in r-space: */
+            int d_rs = (d + p3m.ks_pnum) % 3;
+            /* directions */
+            auto const k = 2.0 * Utils::pi() *
+                           p3m.d_op[d_rs][j[d] + p3m.fft.plan[3].start[d]] /
+                           box_geo.length()[d_rs];
 
-      if (d == KX)
-        d_operator = p3m.d_op[RX].data();
-      else if (d == KY)
-        d_operator = p3m.d_op[RY].data();
-      else if (d == KZ)
-        d_operator = p3m.d_op[RZ].data();
-
-      /* direction in k-space: */
-      int d_rs = (d + p3m.ks_pnum) % 3;
-      /* sqrt(-1)*k differentiation */
-      int j[3];
-      int ind = 0;
-      for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
-        for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
-          for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
             /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-            p3m.E_mesh[d_rs][2 * ind + 0] =
-                -2.0 * Utils::pi() *
-                (p3m.ks_mesh[2 * ind + 1] *
-                 d_operator[j[d] + p3m.fft.plan[3].start[d]]) /
-                box_geo.length()[d_rs];
-
-            p3m.E_mesh[d_rs][2 * ind + 1] =
-                2.0 * Utils::pi() * p3m.ks_mesh[2 * ind + 0] *
-                d_operator[j[d] + p3m.fft.plan[3].start[d]] /
-                box_geo.length()[d_rs];
-            ind++;
+            p3m.E_mesh[d_rs][2 * ind + 0] = -k * phi_hat.imag();
+            p3m.E_mesh[d_rs][2 * ind + 1] = +k * phi_hat.real();
           }
+
+          ind++;
         }
       }
-      /* Back FFT force component mesh */
-      fft_perform_back(p3m.E_mesh[d_rs].data(),
+    }
+
+    /* Back FFT force component mesh */
+    for (int d = 0; d < 3; d++) {
+      fft_perform_back(p3m.E_mesh[d].data(),
                        /* check_complex */ !p3m.params.tuning, p3m.fft,
                        comm_cart);
     }
