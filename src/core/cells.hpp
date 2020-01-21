@@ -39,18 +39,6 @@
  *  - layered: in x and y directions, it uses a nsquared type of
  *    interaction calculation, but in z it has a domain decomposition
  *    into layers.
- *
- *  Some structures are common to all cell systems:
- *
- *  - All cells, real cells as well as ghost cells, are stored in the
- *    vector \ref cells::cells whose size has to be changed with
- *    \ref realloc_cells.
- *  - There are two lists of cell pointers to access particles and
- *    ghost particles on a node: \ref local_cells contains pointers to
- *    all cells containing the particles physically residing on that
- *    node. \ref ghost_cells contains pointers to all cells containing
- *    the ghost particles of that node. The size of these lists has to be
- *    changed with \ref realloc_cellplist
  */
 
 #include <utility>
@@ -85,10 +73,12 @@ enum {
  */
 /*@{*/
 
-/** Flag for exchange_and_sort_particles : Do global exchange. */
-#define CELL_GLOBAL_EXCHANGE 1
-/** Flag for exchange_and_sort_particles : Do neighbor exchange. */
-#define CELL_NEIGHBOR_EXCHANGE 0
+enum {
+  /** Flag for exchange_and_sort_particles : Do neighbor exchange. */
+  CELL_NEIGHBOR_EXCHANGE = 0,
+  /** Flag for exchange_and_sort_particles : Do global exchange. */
+  CELL_GLOBAL_EXCHANGE = 1
+};
 
 /*@}*/
 
@@ -103,7 +93,7 @@ enum Resort : unsigned {
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 
-/** Flag for cells_on_geometry_change: the processor grid has changed. */
+/** Flag for cells_on_geometry_change: the prozcessor grid has changed. */
 #define CELL_FLAG_GRIDCHANGED 1
 /** Flag for cells_on_geometry_change: skip shrinking of cells. */
 #define CELL_FLAG_FAST 2
@@ -127,9 +117,8 @@ struct CellPList {
 
   Cell *operator[](int i) { return assert(i < n), cell[i]; }
 
-  Cell **cell;
-  int n;
-  int max;
+  Cell **cell = nullptr;
+  int n = 0;
 };
 
 /** Describes a cell structure / cell system. Contains information
@@ -140,6 +129,9 @@ struct CellPList {
  *  be stored in separate structures.
  */
 struct CellStructure {
+  std::vector<Cell *> m_local_cells = {};
+  std::vector<Cell *> m_ghost_cells = {};
+
   /** type descriptor */
   int type = CELL_STRUCTURE_NONEYET;
 
@@ -152,9 +144,9 @@ struct CellStructure {
   double min_range;
 
   /** Return the global local_cells */
-  CellPList local_cells() const;
+  CellPList local_cells();
   /** Return the global ghost_cells */
-  CellPList ghost_cells() const;
+  CellPList ghost_cells();
 
   /** Communicator to exchange ghost particles. */
   GhostCommunicator exchange_ghosts_comm;
@@ -180,11 +172,6 @@ struct CellStructure {
 /** list of all cells. */
 extern std::vector<Cell> cells;
 
-/** list of all cells containing particles physically on the local node */
-extern CellPList local_cells;
-/** list of all cells containing ghosts */
-extern CellPList ghost_cells;
-
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
@@ -209,21 +196,6 @@ void cells_re_init(int new_cs, double range);
 
 /** Reallocate the list of all cells (\ref cells::cells). */
 void realloc_cells(int size);
-
-/** Initialize a list of cell pointers */
-inline void init_cellplist(CellPList *cpl) {
-  cpl->n = 0;
-  cpl->max = 0;
-  cpl->cell = nullptr;
-}
-
-/** Reallocate a list of cell pointers */
-inline void realloc_cellplist(CellPList *cpl, int size) {
-  if (size != cpl->max) {
-    cpl->max = size;
-    cpl->cell = (Cell **)Utils::realloc(cpl->cell, sizeof(Cell *) * cpl->max);
-  }
-}
 
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
@@ -252,7 +224,7 @@ void cells_on_geometry_change(int flags);
 /** Update ghost information. If @ref resort_particles is not
  *  @ref Cells::RESORT_NONE, the particles are also resorted.
  */
-void cells_update_ghosts();
+void cells_update_ghosts(unsigned data_parts);
 
 /** Calculate and return the total number of particles on this node. */
 int cells_get_n_particles();

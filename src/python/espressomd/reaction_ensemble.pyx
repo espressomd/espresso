@@ -358,12 +358,12 @@ cdef class ReactionAlgorithm:
 
     def change_reaction_constant(self, reaction_id, gamma):
         """
-        Changes the reaction constant of a given reaction 
-        (for the forward and backward reaction). 
-        The reaction_id which is assigned to a reaction
-        depends on the order in which add_reaction() was called.
-        The 0th reaction has reaction_id 0, 
-        the next added reaction needs to be adressed with reaction_id=1, etc.
+        Changes the reaction constant of a given reaction
+        (for the forward and backward reaction).
+        The ``reaction_id`` which is assigned to a reaction
+        depends on the order in which :meth:`add_reaction` was called.
+        The 0th reaction has ``reaction_id=0``, the next added
+        reaction needs to be addressed with ``reaction_id=1``, etc.
 
         Parameters
         ----------
@@ -384,14 +384,14 @@ cdef class ReactionAlgorithm:
 
     def delete_reaction(self, reaction_id):
         """
-        Delete a reaction from the set of used reactions 
-        (the forward and backward reaction). 
-        The reaction_id which is assigned to a reaction
-        depends on the order in which add_reaction() was called.
-        The 0th reaction has reaction_id 0, 
-        the next added reaction needs to be adressed with reaction_id=1, etc.
-        After the deletion of a reaction subsequent reactions 
-        take the reaction_id of the deleted reaction.
+        Delete a reaction from the set of used reactions
+        (the forward and backward reaction).
+        The ``reaction_id`` which is assigned to a reaction
+        depends on the order in which :meth:`add_reaction` was called.
+        The 0th reaction has ``reaction_id=0``, the next added
+        reaction needs to be addressed with ``reaction_id=1``, etc.
+        After the deletion of a reaction subsequent reactions
+        take the ``reaction_id`` of the deleted reaction.
 
         Parameters
         ----------
@@ -434,7 +434,7 @@ cdef class ReactionEnsemble(ReactionAlgorithm):
         self._set_params_in_es_core()
 
 cdef class ConstantpHEnsemble(ReactionAlgorithm):
-    cdef unique_ptr[CConstantpHEnsemble] constpHptr 
+    cdef unique_ptr[CConstantpHEnsemble] constpHptr
 
     def __init__(self, *args, **kwargs):
         self._params = {"temperature": 1,
@@ -703,17 +703,17 @@ cdef class WangLandauReactionEnsemble(ReactionAlgorithm):
     def displacement_mc_move_for_particles_of_type(self, type_mc,
                                                    particle_number_to_be_changed=1):
         """
-        Performs an MC (Monte Carlo) move for particle_number_to_be_changed
-        particle of type type_mc. Positions for the particles are drawn
-        uniformly random within the box. The command takes into account the
-        Wang-Landau terms in the acceptance probability.
+        Performs an MC (Monte Carlo) move for ``particle_number_to_be_changed``
+        particle of type ``type_mc``. Positions for the particles are drawn
+        uniformly and randomly within the box. The command takes into account
+        the Wang-Landau terms in the acceptance probability.
         If there are multiple types, that need to be moved, make sure to move
         them in a random order to avoid artefacts. For the Wang-Landau algorithm
         in the case of energy reweighting you would also need to move the
         monomers of the polymer with special moves for the MC part. Those
-        polymer configuration changing moves need to be implemented in the
+        polymer configuration-changing moves need to be implemented in the
         case of using Wang-Landau with energy reweighting and a polymer in the
-        system. Polymer configuration changing moves had been implemented
+        system. Polymer configuration-changing moves had been implemented
         before but were removed from ESPResSo.
 
         """
@@ -769,11 +769,13 @@ cdef class WidomInsertion(ReactionAlgorithm):
 
     def measure_excess_chemical_potential(self, reaction_id=0):
         """
-        Measures the excess chemical potential in a homogeneous system for the provided reaction_id.
-        Please define the insertion moves first via calling the method add_reaction (with only product types specified).
-        Returns the excess chemical potential and the standard error for the
-        excess chemical potential. The error estimate assumes that your samples are
-        uncorrelated.
+        Measures the excess chemical potential in a homogeneous system for
+        the provided ``reaction_id``. Please define the insertion moves
+        first by calling the method :meth:`~ReactionAlgorithm.add_reaction`
+        (with only product types specified).
+        Returns the excess chemical potential and the standard error for
+        the excess chemical potential. The error estimate assumes that
+        your samples are uncorrelated.
 
         """
         if(reaction_id < 0 or reaction_id > (deref(self.WidomInsertionPtr).reactions.size() + 1) / 2):  # make inverse widom scheme (deletion of particles) inaccessible

@@ -252,11 +252,17 @@ class ThermoTest(ut.TestCase):
                         # reference while gamma_tr is defined in the body one.
                         # Hence, only isotropic gamma_tran_p_validate could be
                         # tested here.
-                        self.assertLess(abs(
-                            self.system.part[ind].v[j] - math.exp(- self.gamma_tran_p_validate[k, j] * self.system.time / self.mass)), tol)
+                        self.assertAlmostEqual(
+                            self.system.part[ind].v[j],
+                            math.exp(- self.gamma_tran_p_validate[k, j]
+                                     * self.system.time / self.mass),
+                            delta=tol)
                         if espressomd.has_features("ROTATION"):
-                            self.assertLess(abs(
-                                self.system.part[ind].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * self.system.time / self.J[j])), tol)
+                            self.assertAlmostEqual(
+                                self.system.part[ind].omega_body[j],
+                                math.exp(- self.gamma_rot_p_validate[k, j]
+                                         * self.system.time / self.J[j]),
+                                delta=tol)
 
     def check_fluctuation_dissipation(self, n):
         """

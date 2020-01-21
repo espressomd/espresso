@@ -205,7 +205,7 @@ cdef class Thermostat:
         lb_lbcoupling_set_gamma(0.0)
         return True
 
-    @AssertThermostatType(THERMO_LANGEVIN)
+    @AssertThermostatType(THERMO_LANGEVIN, THERMO_DPD)
     def set_langevin(self, kT=None, gamma=None, gamma_rotation=None,
                      act_on_virtual=False, seed=None):
         """
@@ -358,7 +358,7 @@ cdef class Thermostat:
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         return True
 
-    @AssertThermostatType(THERMO_LB)
+    @AssertThermostatType(THERMO_LB, THERMO_DPD)
     def set_lb(
         self,
         seed=None,

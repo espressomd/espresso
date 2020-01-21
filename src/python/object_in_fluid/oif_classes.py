@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 import espressomd
-from espressomd.interactions import OifLocalForces, OifGlobalForces, OifOutDirection
+from espressomd.interactions import OifLocalForces, OifGlobalForces
 from .oif_utils import (
     large_number, small_epsilon, discard_epsilon, custom_str, norm,
     vec_distance, get_triangle_normal, area_triangle, angle_btw_triangles,
@@ -871,19 +871,6 @@ class OifCell:
                 triangle.A.part.add_bond(
                     (self.cell_type.global_force_interaction, triangle.B.part_id,
                      triangle.C.part_id))
-
-        # setting the out_direction interaction for membrane collision
-        if self.cell_type.mesh.normal is True:
-            tmp_out_direction_interaction = OifOutDirection()
-            # this interaction could be just one for all objects, but here it
-            # is created multiple times
-            self.cell_type.system.bonded_inter.add(
-                tmp_out_direction_interaction)
-            for p in self.mesh.points:
-                p.part.add_bond(
-                    (tmp_out_direction_interaction, self.mesh.neighbors[
-                        p.id].A.part_id,
-                     self.mesh.neighbors[p.id].B.part_id, self.mesh.neighbors[p.id].C.part_id))
 
     def get_origin(self):
         center = np.array([0.0, 0.0, 0.0])

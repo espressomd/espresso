@@ -364,8 +364,8 @@ does not need to be specified as it is automatically determined from the
 particle distances and maximal pairwise error. The second tuning form
 just takes the maximal pairwise error and tries out a lot of switching
 radii to find out the fastest one. If this takes too long, you can
-change the value of the setmd variable ``timings``, which controls the number of
-test force calculations.
+change the value of the property :attr:`espressomd.system.System.timings`,
+which controls the number of test force calculations.
 
 ::
 

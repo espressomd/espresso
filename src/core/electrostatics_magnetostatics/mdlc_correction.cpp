@@ -23,7 +23,7 @@
 
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
-#if defined(DIPOLES) && defined(DP3M)
+#ifdef DP3M
 #include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -40,7 +40,7 @@ static int n_local_particles = 0;
 static double mu_max;
 
 void calc_mu_max() {
-  auto local_particles = local_cells.particles();
+  auto local_particles = cell_structure.local_cells().particles();
   mu_max = std::accumulate(
       local_particles.begin(), local_particles.end(), 0.0,
       [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });
@@ -518,4 +518,4 @@ int mdlc_set_params(double maxPWerror, double gap_size, double far_cut) {
   return ES_OK;
 }
 
-#endif
+#endif // DP3M

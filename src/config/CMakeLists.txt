@@ -27,8 +27,8 @@ add_custom_target(check_myconfig
           myconfig
   )
 
-execute_process(COMMAND ${PYTHON_EXECUTABLE}  
-                ${CMAKE_CURRENT_SOURCE_DIR}/gen_sampleconfig.py 
+execute_process(COMMAND ${PYTHON_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/gen_sampleconfig.py
                 ${CMAKE_CURRENT_SOURCE_DIR}/features.def
                 OUTPUT_FILE ${CMAKE_BINARY_DIR}/myconfig-sample.hpp
                 )

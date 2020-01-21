@@ -156,7 +156,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
@@ -354,7 +354,7 @@ cdef class ParticleHandle:
         def __set__(self, _mass):
             IF MASS == 1:
                 check_type_or_throw_except(
-                    _mass, 1, float, "Mass has to be 1 floats")
+                    _mass, 1, float, "Mass has to be 1 float")
                 set_particle_mass(self._id, _mass)
             ELSE:
                 raise AttributeError("You are trying to set the particle mass \
@@ -544,25 +544,6 @@ cdef class ParticleHandle:
                     self.particle_data, rinertia)
                 return array_locked([rinertia[0], rinertia[1], rinertia[2]])
 
-    IF MEMBRANE_COLLISION:
-        property out_direction:
-            """OIF Outward direction"""
-
-            def __set__(self, _out_direction):
-                cdef double out_direction[3]
-                check_type_or_throw_except(
-                    _out_direction, 3, float, "out_direction has to be 3 floats")
-                for i in range(3):
-                    out_direction[i] = _out_direction[i]
-                set_particle_out_direction(self.id, out_direction) 
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * out_direction = NULL
-                pointer_to_out_direction(self.particle_data, out_direction)
-                return np.array(
-                    [out_direction[0], out_direction[1], out_direction[2]])
-
     # Charge
     property q:
         """
@@ -580,7 +561,7 @@ cdef class ParticleHandle:
             check_type_or_throw_except(
                 _q, 1, float, "Charge has to be floats.")
             myq = _q
-            set_particle_q(self._id, myq) 
+            set_particle_q(self._id, myq)
 
         def __get__(self):
             self.update_particle_data()
@@ -758,7 +739,7 @@ cdef class ParticleHandle:
                     _q, 3, float, "Dipole moment vector has to be 3 floats.")
                 for i in range(3):
                     myq[i] = _q[i]
-                set_particle_dip(self._id, myq) 
+                set_particle_dip(self._id, myq)
 
             def __get__(self):
                 self.update_particle_data()
@@ -779,8 +760,8 @@ cdef class ParticleHandle:
 
             def __set__(self, _q):
                 check_type_or_throw_except(
-                    _q, 1, float, "Magnitude of dipole moment has to be 1 floats.")
-                set_particle_dipm(self._id, _q) 
+                    _q, 1, float, "Magnitude of dipole moment has to be 1 float.")
+                set_particle_dipm(self._id, _q)
 
             def __get__(self):
                 self.update_particle_data()
@@ -807,7 +788,7 @@ cdef class ParticleHandle:
                 for i in range(3):
                     ext_f[i] = _ext_f[i]
 
-                set_particle_ext_force(self._id, ext_f) 
+                set_particle_ext_force(self._id, ext_f)
 
             def __get__(self):
                 self.update_particle_data()
@@ -842,7 +823,7 @@ cdef class ParticleHandle:
                 for i in map(long, range(3)):
                     if _fixed_coord_flag[i]:
                         ext_flag |= _COORD_FIXED(i)
-                set_particle_fix(self._id, ext_flag) 
+                set_particle_fix(self._id, ext_flag)
 
             def __get__(self):
                 self.update_particle_data()
@@ -874,7 +855,7 @@ cdef class ParticleHandle:
                     for i in range(3):
                         ext_t[i] = _ext_t[i]
 
-                    set_particle_ext_torque(self._id, ext_t) 
+                    set_particle_ext_torque(self._id, ext_t)
 
                 def __get__(self):
                     self.update_particle_data()
@@ -912,7 +893,7 @@ cdef class ParticleHandle:
                         _gamma, 3, float, "Friction has to be 3 floats.")
                     for i in range(3):
                         gamma[i] = _gamma[i]
-                    set_particle_gamma(self._id, gamma) 
+                    set_particle_gamma(self._id, gamma)
 
                 def __get__(self):
                     self.update_particle_data()
@@ -940,7 +921,7 @@ cdef class ParticleHandle:
                 def __set__(self, _gamma):
                     check_type_or_throw_except(
                         _gamma, 1, float, "Gamma has to be a float.")
-                    set_particle_gamma(self._id, _gamma) 
+                    set_particle_gamma(self._id, _gamma)
 
                 def __get__(self):
                     self.update_particle_data()
@@ -970,7 +951,7 @@ cdef class ParticleHandle:
                             _gamma_rot, 3, float, "Rotational friction has to be 3 floats.")
                         for i in range(3):
                             gamma_rot[i] = _gamma_rot[i]
-                        set_particle_gamma_rot(self._id, gamma_rot) 
+                        set_particle_gamma_rot(self._id, gamma_rot)
 
                     def __get__(self):
                         self.update_particle_data()
@@ -991,7 +972,7 @@ cdef class ParticleHandle:
                     def __set__(self, _gamma_rot):
                         check_type_or_throw_except(
                             _gamma_rot, 1, float, "gamma_rot has to be a float.")
-                        set_particle_gamma_rot(self._id, _gamma_rot) 
+                        set_particle_gamma_rot(self._id, _gamma_rot)
 
                     def __get__(self):
                         self.update_particle_data()
@@ -1014,7 +995,7 @@ cdef class ParticleHandle:
             def __set__(self, _temp):
                 check_type_or_throw_except(
                     _temp, 1, float, "temp has to be a float.")
-                set_particle_temperature(self._id, _temp) 
+                set_particle_temperature(self._id, _temp)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1051,7 +1032,7 @@ cdef class ParticleHandle:
                     rot += ROTATION_Y
                 if _rot[2]:
                     rot += ROTATION_Z
-                set_particle_rotation(self._id, rot) 
+                set_particle_rotation(self._id, rot)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1247,7 +1228,7 @@ cdef class ParticleHandle:
                     swimming_particles_exist = True
                     mpi_bcast_parameter(FIELD_SWIMMING_PARTICLES_EXIST)
 
-                set_particle_swimming(self._id, swim) 
+                set_particle_swimming(self._id, swim)
 
             def __get__(self):
                 self.update_particle_data()
@@ -1555,15 +1536,57 @@ cdef class _ParticleSliceImpl:
     """
 
     def __cinit__(self, slice_, prefetch_chunk_size=10000):
+        # Chunk size for pre-fetch cache
         self._chunk_size = prefetch_chunk_size
 
-        id_list = np.arange(max_seen_particle + 1)
-        self.id_selection = id_list[slice_]
-        mask = np.empty(len(self.id_selection), dtype=np.bool)
-        cdef int i
-        for i in range(len(self.id_selection) - 1, -1, -1):
-            mask[i] = particle_exists(i)
-        self.id_selection = self.id_selection[mask]
+        # We distinguish two cases:
+        # * ranges and slices only specify lower and upper bounds for particle
+        #   ids and optionally a step. Gaps in the id range are tolerated.
+        # * Explicit list/tuple/ndarray containing particle ids. Here
+        #   all particles have to exist and the result maintains the order
+        #   specified in the list.
+        if isinstance(slice_, (slice, range)):
+            self.id_selection = self._id_selection_from_slice(slice_)
+        elif isinstance(slice_, (list, tuple, np.ndarray)):
+            self._validate_pid_list(slice_)
+            self.id_selection = np.array(slice_, dtype=int)
+        else:
+            raise TypeError(
+                "ParticleSlice must be initialized with an instance of slice or range, or with a list, tuple, or ndarray of ints, but got {} of type {}".format((str(slice_), str(type(slice_)))))
+
+    def _id_selection_from_slice(self, slice_):
+        """Returns an ndarray of particle ids to be included in the
+        ParticleSlice for a given range or slice object.
+        """
+        # Prevent negative bounds
+        if (not slice_.start is None and slice_.start < 0) or\
+           (not slice_.stop is None and slice_.stop < 0):
+            raise IndexError(
+                "Negative start and end ids are not supported on ParticleSlice")
+
+        # We start with a full list of possible particle ids and then
+        # remove ids of non-existing particles
+        id_list = np.arange(max_seen_particle + 1, dtype=int)
+        id_list = id_list[slice_]
+
+        # Generate a mask which will remove ids of non-existing particles
+        mask = np.empty(len(id_list), dtype=np.bool)
+        mask[:] = True
+        for i, id in enumerate(id_list):
+            if not particle_exists(id):
+                mask[i] = False
+        # Return the id list filtered by the mask
+        return id_list[mask]
+
+    def _validate_pid_list(self, pid_list):
+        """Check that all entries are integers and the corresponding particles exist. Throw, otherwise."""
+        # Check that all entries are some flavor of integer
+        for pid in pid_list:
+            if not is_valid_type(pid, int):
+                raise TypeError(
+                    "Particle id must be an integer but got " + str(pid))
+            if not particle_exists(pid):
+                raise IndexError("Particle does not exist " + str(pid))
 
     def __iter__(self):
         return self._id_gen()
@@ -1682,19 +1705,12 @@ cdef class ParticleList:
     # Retrieve a particle
 
     def __getitem__(self, key):
-        if isinstance(key, slice):
+        # Single particle id results in a ParticleHandle, everything else
+        # in a ParticleSlice
+        if is_valid_type(key, int):
+            return ParticleHandle(key)
+        else:
             return ParticleSlice(key)
-
-        try:
-            if isinstance(key, range):
-                return ParticleSlice(key)
-        except BaseException:
-            pass
-
-        if isinstance(key, (tuple, list, np.ndarray)):
-            return ParticleSlice(np.array(key))
-
-        return ParticleHandle(key)
 
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
@@ -2026,8 +2042,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # Ids of the selected particles
         ids = []
         # Did we get a function as argument?
-        if len(args) == 1 and len(kwargs) == 0 and isinstance(
-                args[0], types.FunctionType):
+        if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
             # Go over all particles and pass them to the user-provided function
             for p in self:
                 if args[0](p):
@@ -2086,6 +2101,10 @@ def _add_particle_slice_properties():
         """
 
         N = len(particle_slice.id_selection)
+
+        if N == 0:
+            raise AttributeError(
+                "Cannot set properties of an empty ParticleSlice")
 
         # Special attributes
         if attribute == "bonds":

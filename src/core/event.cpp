@@ -189,8 +189,7 @@ void on_integration_start() {
 void on_observable_calc() {
   /* Prepare particle structure: Communication step: number of ghosts and ghost
    * information */
-
-  cells_update_ghosts();
+  cells_update_ghosts(global_ghost_flags());
   update_dependent_particles();
 #ifdef ELECTROSTATICS
   if (reinit_electrostatics) {
@@ -402,26 +401,16 @@ void on_parameter_change(int field) {
       nptiso.invalidate_p_vel = true;
     break;
 #endif
-  case FIELD_THERMO_SWITCH:
-    /* DPD needs ghost velocities, other thermostats not */
-    on_ghost_flags_change();
-    break;
-  case FIELD_LATTICE_SWITCH:
-    /* LB needs ghost velocities */
-    on_ghost_flags_change();
     break;
   case FIELD_FORCE_CAP:
     /* If the force cap changed, forces are invalid */
     invalidate_obs();
     recalc_forces = true;
     break;
+  case FIELD_THERMO_SWITCH:
+  case FIELD_LATTICE_SWITCH:
   case FIELD_RIGIDBONDS:
-    /* Rattle bonds needs ghost velocities */
-    on_ghost_flags_change();
-    break;
   case FIELD_THERMALIZEDBONDS:
-    /* Thermalized distance bonds needs ghost velocities */
-    on_ghost_flags_change();
     break;
   case FIELD_SIMTIME:
     recalc_forces = true;
@@ -429,40 +418,40 @@ void on_parameter_change(int field) {
   }
 }
 
-void on_ghost_flags_change() {
-  /* that's all we change here */
-  extern bool ghosts_have_v;
-  extern bool ghosts_have_bonds;
+/**
+ * @brief Returns the ghost flags required for running pair
+ *        kernels for the global state, e.g. the force calculation.
+ * @return Required data parts;
+ */
+unsigned global_ghost_flags() {
+  /* Position and Properties are always requested. */
+  unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
 
-  ghosts_have_v = false;
-  ghosts_have_bonds = false;
-
-  /* DPD and LB need also ghost velocities */
   if (lattice_switch == ActiveLB::CPU)
-    ghosts_have_v = true;
-#ifdef BOND_CONSTRAINT
-  if (n_rigidbonds)
-    ghosts_have_v = true;
-#endif
+    data_parts |= GHOSTTRANS_MOMENTUM;
+
   if (thermo_switch & THERMO_DPD)
-    ghosts_have_v = true;
-  // THERMALIZED_DIST_BOND needs v to calculate v_com and v_dist for thermostats
+    data_parts |= GHOSTTRANS_MOMENTUM;
+
   if (n_thermalized_bonds) {
-    ghosts_have_v = true;
-    ghosts_have_bonds = true;
+    data_parts |= GHOSTTRANS_MOMENTUM;
+    data_parts |= GHOSTTRANS_BONDS;
   }
+
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
-    ghosts_have_bonds = true;
+    data_parts |= GHOSTTRANS_BONDS;
   }
 #endif
+
+  return data_parts;
 }
 
 void update_dependent_particles() {
 #ifdef VIRTUAL_SITES
   virtual_sites()->update(true);
+  cells_update_ghosts(global_ghost_flags());
 #endif
-  cells_update_ghosts();
 
 #ifdef ELECTROSTATICS
   Coulomb::update_dependent_particles();

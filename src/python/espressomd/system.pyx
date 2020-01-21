@@ -38,7 +38,6 @@ from .lb cimport lb_lbfluid_get_lattice_switch
 from .lb cimport NONE
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
-from .minimize_energy import MinimizeEnergy
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
@@ -95,10 +94,9 @@ cdef class System:
     constraints : :class:`espressomd.constraints.Constraints`
     cuda_init_handle : :class:`espressomd.cuda_init.CudaInitHandle`
     galilei : :class:`espressomd.galilei.GalileiTransform`
-    integrator : :class:`espressomd.integrate.Integrator`
+    integrator : :class:`espressomd.integrate.IntegratorHandle`
     lbboundaries : :class:`espressomd.lbboundaries.LBBoundaries`
     ekboundaries : :class:`espressomd.ekboundaries.EKBoundaries`
-    minimize_energy : :class:`espressomd.minimize_energy.MinimizeEnergy`
     non_bonded_inter : :class:`espressomd.interactions.NonBondedInteractions`
     part : :class:`espressomd.particle_data.ParticleList`
     thermostat : :class:`espressomd.thermostat.Thermostat`
@@ -111,7 +109,6 @@ cdef class System:
         bonded_inter
         cell_system
         thermostat
-        minimize_energy
         actors
         analysis
         galilei
@@ -152,11 +149,10 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            self.integrator = integrate.Integrator()
+            self.integrator = integrate.IntegratorHandle()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
-            self.minimize_energy = MinimizeEnergy()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
@@ -191,10 +187,8 @@ cdef class System:
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
-        odict['minimize_energy'] = System.__getattribute__(
-            self, "minimize_energy")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
-        IF COLLISION_DETECTION: 
+        IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
                 self, "collision_detection")
         return odict
@@ -280,6 +274,11 @@ cdef class System:
             return self.globals.time_step
 
     property timings:
+        """
+        Sets the number of test force calculations to carry out when tuning
+        electrostatics and magnetostatics.
+        """
+
         def __set__(self, int _timings):
             self.globals.timings = _timings
 

@@ -27,7 +27,7 @@ function test_install() {
                       "@PYTHON_DIR@/espressomd/_init.so" \
                       "@PYTHON_DIR@/espressomd/__init__.py"
                      )
-  for filepath in ${filepaths[@]}; do
+  for filepath in "${filepaths[@]}"; do
     assert_file_exists "${filepath}"
   done
 

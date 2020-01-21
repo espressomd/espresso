@@ -158,6 +158,8 @@ void dd_create_cell_grid(double range) {
     runtimeErrorMsg() << "no suitable cell grid found ";
   }
 
+  auto const node_pos = calc_node_pos(comm_cart);
+
   /* now set all dependent variables */
   new_cells = 1;
   for (i = 0; i < 3; i++) {
@@ -165,13 +167,14 @@ void dd_create_cell_grid(double range) {
     new_cells *= dd.ghost_cell_grid[i];
     dd.cell_size[i] = local_geo.length()[i] / (double)dd.cell_grid[i];
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
+    dd.cell_offset[i] = node_pos[i] * dd.cell_grid[i];
   }
   cell_structure.max_range = dd.cell_size;
 
   /* allocate cell array and cell pointer arrays */
   realloc_cells(new_cells);
-  realloc_cellplist(&local_cells, local_cells.n = n_local_cells);
-  realloc_cellplist(&ghost_cells, ghost_cells.n = new_cells - n_local_cells);
+  cell_structure.m_local_cells.resize(n_local_cells);
+  cell_structure.m_ghost_cells.resize(new_cells - n_local_cells);
 }
 
 /** Fill local_cells list and ghost_cells list for use with domain
@@ -187,9 +190,9 @@ void dd_mark_cells() {
         if ((m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&
              n < dd.ghost_cell_grid[1] - 1 && o > 0 &&
              o < dd.ghost_cell_grid[2] - 1))
-          local_cells.cell[cnt_l++] = &cells[cnt_c++];
+          cell_structure.m_local_cells[cnt_l++] = &cells[cnt_c++];
         else
-          ghost_cells.cell[cnt_g++] = &cells[cnt_c++];
+          cell_structure.m_ghost_cells[cnt_g++] = &cells[cnt_c++];
       }
 }
 
@@ -484,8 +487,8 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   int cpos[3];
 
   for (int i = 0; i < 3; i++) {
-    auto const lpos = pos[i] - local_geo.my_left()[i];
-    cpos[i] = static_cast<int>(std::floor(lpos * dd.inv_cell_size[i])) + 1;
+    cpos[i] = static_cast<int>(std::floor(pos[i] * dd.inv_cell_size[i])) + 1 -
+              dd.cell_offset[i];
 
     /* particles outside our box. Still take them if
        nonperiodic boundary. We also accept the particle if we are at
@@ -614,19 +617,20 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
-        nc = local_cells.cell[0];
+        nc = cell_structure.m_local_cells[0];
       append_unindexed_particle(nc, std::move(part[p]));
     }
   }
-  for (c = 0; c < local_cells.n; c++) {
-    update_local_particles(local_cells.cell[c]);
+  for (c = 0; c < cell_structure.m_local_cells.size(); c++) {
+    update_local_particles(cell_structure.m_local_cells[c]);
   }
 }
 
 /************************************************************/
 void dd_topology_release() {
   /* free ghost cell pointer list */
-  realloc_cellplist(&ghost_cells, ghost_cells.n = 0);
+
+  cell_structure.m_ghost_cells.resize(0);
   /* free ghost communicators */
   free_comm(&cell_structure.exchange_ghosts_comm);
   free_comm(&cell_structure.collect_ghost_force_comm);

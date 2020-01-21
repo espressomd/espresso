@@ -106,16 +106,6 @@ int thermalized_bond_set_params(int bond_type, double temp_com,
   return ES_OK;
 }
 
-void thermalized_bond_heat_up() {
-  double pref_scale = sqrt(3);
-  thermalized_bond_update_params(pref_scale);
-}
-
-void thermalized_bond_cool_down() {
-  double pref_scale = 1.0 / sqrt(3);
-  thermalized_bond_update_params(pref_scale);
-}
-
 void thermalized_bond_init() {
 
   for (auto &bonded_ia_param : bonded_ia_params) {

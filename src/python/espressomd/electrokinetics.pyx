@@ -267,7 +267,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the boundary is written to.
+                Path of the .vtk file the boundary is written to.
 
             """
             lb_lbfluid_print_vtk_boundary(utils.to_char_pointer(path))
@@ -279,7 +279,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the velocity is written to.
+                Path of the .vtk file the velocity is written to.
 
             """
             ek_lb_print_vtk_velocity(utils.to_char_pointer(path))
@@ -291,7 +291,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the LB density is written to.
+                Path of the .vtk file the LB density is written to.
 
             """
             ek_lb_print_vtk_density(utils.to_char_pointer(path))
@@ -303,7 +303,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the electrostatic potential is written to.
+                Path of the .vtk file the electrostatic potential is written to.
 
             """
             ek_print_vtk_potential(utils.to_char_pointer(path))
@@ -315,7 +315,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the LB force is written to.
+                Path of the .vtk file the LB force is written to.
 
             """
             ek_print_vtk_lbforce_density(utils.to_char_pointer(path))
@@ -329,7 +329,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the electrostatic potential is written to.
+                Path of the .vtk file the electrostatic potential is written to.
 
             """
 
@@ -512,7 +512,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the species density is written to.
+                Path of the .vtk file the species density is written to.
 
             """
             ek_print_vtk_density(self.id, utils.to_char_pointer(path))
@@ -524,7 +524,7 @@ IF ELECTROKINETICS:
             Parameters
             ----------
             path : :obj:`str`
-                The path and vtk-file name the species flux is written to.
+                Path of the .vtk file the species flux is written to.
 
             """
             ek_print_vtk_flux(self.id, utils.to_char_pointer(path))

@@ -377,8 +377,8 @@ void Correlator::update() {
         "No data can be added after finalize() was called.");
   }
   // We must now go through the hierarchy and make sure there is space for the
-  // new datapoint. For every hierarchy level we have to decide if it necessary
-  // to move something
+  // new datapoint. For every hierarchy level we have to decide if it is
+  // necessary to move something
   int highest_level_to_compress = -1;
 
   t++;
@@ -474,8 +474,8 @@ int Correlator::finalize() {
     throw std::runtime_error("Correlator::finalize() can only be called once.");
   }
   // We must now go through the hierarchy and make sure there is space for the
-  // new datapoint. For every hierarchy level we have to decide if it necessary
-  // to move something
+  // new datapoint. For every hierarchy level we have to decide if it is
+  // necessary to move something
   int highest_level_to_compress;
 
   // mark the correlation as finalized

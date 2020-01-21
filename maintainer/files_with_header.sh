@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
@@ -15,15 +16,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+
+
+# List all files that are eligible for a copyright header.
 
 git ls-files --exclude-standard |
-egrep -v '\.(blk|gz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|bib|vtf|vtk|svg|ico|eps)$' |
-egrep -v '^testsuite/configs/|^old/|^cmake/|^libs/' |
-egrep -v '(ChangeLog|AUTHORS|COPYING|NEWS|README|INSTALL)' |
-egrep -v '(\.gitignore|pkgIndex\.tcl)' |
-egrep -v '(config/config\.guess|config/config\.sub|config/install-sh)' |
-egrep -v '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk|doc/misc/homepage/palette\.html)' |
-egrep -v '(src/features\.def)' |
-egrep -v '(featurelist)' |
-egrep -v '(\.cproject|\.project|\.settings)'
+grep -vE '\.(blk|gz|npz|data|dat|tab|chk|jpg|png|pdf|fig|gif|xcf|css|bib|vtf|vtk|svg|ico|eps|rst|ipynb)$' |
+grep -vE '^testsuite/configs/|^old/|^cmake/|^libs/' |
+grep -vE '(ChangeLog|AUTHORS|COPYING|NEWS|README|INSTALL)' |
+grep -vE '(\.gitmodules|\.github|\.gitignore|\.codecov\.yml|\.gitlab-ci\.yml|\.travis\.yml|bors\.toml)' |
+grep -vE '(\.clang-format|\.clang-tidy|\.pylintrc|tools/ubsan-suppressions\.txt)' |
+grep -vE '(Doxyfile|latexmk\.1|latexmkrc|assemble_quickref\.awk|doc/misc/homepage/palette\.html)' |
+grep -vE '(src/config/features\.def)' |
+grep -vE '(featurelist)' |
+grep -vE '(\.cproject|\.project|\.settings)'

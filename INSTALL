@@ -28,7 +28,7 @@ of your choice by
 Then you can run cmake and build ESPResSo by
 
 > cmake <path-to-espresso-source>
-> make
+> cmake --build .
 
 If you have installed the curses frontend to cmake you can see
 and modify the build options graphically by running

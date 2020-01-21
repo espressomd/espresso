@@ -35,10 +35,10 @@ class SimplePore : public Shape {
   double c_r;
   double c_z;
   double m_half_length;
-  /* Unit vector in z direction */
+  /** Unit vector in z direction */
   Utils::Vector3d e_z;
 
-  /* Alternative e_r for corner case */
+  /** Alternative e_r for corner case */
   Utils::Vector3d e_r_axis;
 
   /** @brief Calculate derived parameters. */

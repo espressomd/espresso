@@ -73,8 +73,6 @@
 #include <callgrind.h>
 #endif
 
-/*******************  variables  *******************/
-
 int integ_switch = INTEG_METHOD_NVT;
 
 int n_verlet_updates = 0;
@@ -102,22 +100,14 @@ void notify_sig_int() {
 }
 } // namespace
 
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
-
 /** Thermostats increment the RNG counter here. */
 void philox_counter_increment();
-
-/*@}*/
 
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
 }
-
-/************************************************************/
 
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
@@ -161,7 +151,7 @@ void integrator_step_2(ParticleRange &particles) {
   }
 }
 
-void integrate_vv(int n_steps, int reuse_forces) {
+int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   /* Prepare the integrator */
@@ -169,7 +159,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
-    return;
+    return 0;
 
   /* Verlet list criterion */
 
@@ -178,8 +168,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
    */
   if (reuse_forces == -1 || (recalc_forces && reuse_forces != 1)) {
     ESPRESSO_PROFILER_MARK_BEGIN("Initial Force Calculation");
-    thermo_heat_up();
-
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
@@ -187,7 +175,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     force_calc(cell_structure);
 
@@ -197,8 +185,6 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     }
 
-    thermo_cool_down();
-
     ESPRESSO_PROFILER_MARK_END("Initial Force Calculation");
   }
 
@@ -207,7 +193,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
   }
 
   if (check_runtime_errors(comm_cart))
-    return;
+    return 0;
 
   n_verlet_updates = 0;
 
@@ -217,6 +203,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
   /* Integration loop */
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+  int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 
@@ -224,7 +211,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos(particles, ghost_cells.particles());
+      save_old_pos(particles, cell_structure.ghost_cells().particles());
 #endif
 
     bool early_exit = integrator_step_1(particles);
@@ -238,17 +225,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
-      correct_pos_shake(cell_structure.local_cells().particles());
+      correct_pos_shake(particles);
     }
 #endif
 
 #ifdef VIRTUAL_SITES
-    // VIRTUAL_SITES pos (and vel for DPD) update for security reason!!!
     virtual_sites()->update(true);
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     particles = cell_structure.local_cells().particles();
 
@@ -278,6 +264,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
       handle_collisions();
 #endif
     }
+
+    integrated_steps++;
 
     if (check_runtime_errors(comm_cart))
       break;
@@ -310,17 +298,14 @@ void integrate_vv(int n_steps, int reuse_forces) {
     synchronize_npt_state(n_steps);
   }
 #endif
+  return integrated_steps;
 }
-
-/************************************************************/
-
-/* Private functions */
-/************************************************************/
 
 void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
-  } else if (thermo_switch & THERMO_DPD) {
+  }
+  if (thermo_switch & THERMO_DPD) {
 #ifdef DPD
     dpd_rng_counter_increment();
 #endif
@@ -387,6 +372,31 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   return ES_OK;
 }
 
+int integrate_set_steepest_descent(const double f_max, const double gamma,
+                                   const int max_steps,
+                                   const double max_displacement) {
+  if (f_max < 0.0) {
+    runtimeErrorMsg() << "The maximal force must be positive.\n";
+    return ES_ERROR;
+  }
+  if (gamma < 0.0) {
+    runtimeErrorMsg() << "The dampening constant must be positive.\n";
+    return ES_ERROR;
+  }
+  if (max_displacement < 0.0) {
+    runtimeErrorMsg() << "The maximal displacement must be positive.\n";
+    return ES_ERROR;
+  }
+  if (max_steps < 0) {
+    runtimeErrorMsg() << "The maximal number of steps must be positive.\n";
+    return ES_ERROR;
+  }
+  steepest_descent_init(f_max, gamma, max_steps, max_displacement);
+  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  return ES_OK;
+}
+
 void integrate_set_nvt() {
   integ_switch = INTEG_METHOD_NVT;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
@@ -400,9 +410,12 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   nptiso.p_ext = ext_pressure;
   nptiso.piston = piston;
 
-  if (nptiso.piston <= 0.0) {
-    runtimeErrorMsg() << "You must set <piston> as well before you can use "
-                         "this integrator!\n";
+  if (ext_pressure < 0.0) {
+    runtimeErrorMsg() << "The external pressure must be positive.\n";
+    return ES_ERROR;
+  }
+  if (piston <= 0.0) {
+    runtimeErrorMsg() << "The piston mass must be positive.\n";
     return ES_ERROR;
   }
   /* set the NpT geometry */

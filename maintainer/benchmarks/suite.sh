@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Copyright (C) 2018-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -49,7 +49,7 @@ mkdir "${build_dir}"
 cd "${build_dir}"
 
 # check for unstaged changes
-if [ "$(git diff-index HEAD -- ${directories})" ]; then
+if [ ! -z "$(git status --porcelain -- ${directories})" ]; then
   echo "fatal: you have unstaged changes, please commit or stash them:"
   git diff-index --name-only HEAD -- ${directories}
   exit 1
@@ -57,19 +57,19 @@ fi
 
 cleanup() {
   # restore files in source directory
-  git checkout HEAD ${directories}
+  git checkout HEAD -- ${directories}
 }
 
 # prepare output files
 rm -f benchmarks.log
 cat > benchmarks_suite.csv << EOF
-"commit","config","script","arguments","cores","MPI","mean","ci","nsteps","duration"
+"commit","config","script","arguments","cores","mean","ci","nsteps","duration"
 EOF
 
 # run benchmarks
 for commit in ${commits}; do
   echo "### commit ${commit}" >> benchmarks.log
-  git checkout ${commit} ${directories}
+  git checkout ${commit} -- ${directories}
   bash ../maintainer/benchmarks/runner.sh
   sed -ri "s/^/\"${commit}\",/" benchmarks.csv
   tail -n +2 benchmarks.csv >> benchmarks_suite.csv

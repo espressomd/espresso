@@ -115,10 +115,8 @@ set(EspressoCore_SRC
   nonbonded_interactions/smooth_step.cpp
   nonbonded_interactions/thole.cpp
   nonbonded_interactions/wca.cpp
-  object-in-fluid/membrane_collision.cpp
   object-in-fluid/oif_global_forces.cpp
   object-in-fluid/oif_local_forces.cpp
-  object-in-fluid/out_direction.cpp
   observables/CylindricalLBFluxDensityProfileAtParticlePositions.cpp
   observables/CylindricalLBVelocityProfileAtParticlePositions.cpp
   observables/CylindricalLBVelocityProfile.cpp

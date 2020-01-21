@@ -23,11 +23,15 @@
 #define RANDOM_H
 
 /** \file
-
-    A random generator
-*/
+ *  Random number generation using Philox.
+ */
 
 #include "errorhandling.hpp"
+
+#include <Random123/philox.h>
+#include <utils/Vector.hpp>
+#include <utils/u32_to_u64.hpp>
+#include <utils/uniform.hpp>
 
 #include <random>
 #include <stdexcept>
@@ -41,11 +45,48 @@
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt { FLUID, PARTICLES, LANGEVIN, SALT_DPD, THERMALIZED_BOND };
+enum class RNGSalt : uint64_t {
+  FLUID = 0,
+  PARTICLES,
+  LANGEVIN,
+  LANGEVIN_ROT,
+  SALT_DPD,
+  THERMALIZED_BOND
+};
 
 namespace Random {
+/**
+ * @brief 3d uniform vector noise.
+ *
+ * This uses the Philox PRNG, the state is controlled
+ * by the counter, the salt and two keys.
+ * If any of the keys and salt differ, the noise is
+ * not correlated between two calls along the same counter
+ * sequence.
+ *
+ */
+template <RNGSalt salt>
+Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
+
+  using rng_type = r123::Philox4x64;
+  using ctr_type = rng_type::ctr_type;
+  using key_type = rng_type::key_type;
+
+  const ctr_type c{{counter, static_cast<uint64_t>(salt)}};
+
+  auto const id1 = static_cast<uint32_t>(key1);
+  auto const id2 = static_cast<uint32_t>(key2);
+  const key_type k{id1, id2};
+
+  auto const noise = rng_type{}(c, k);
+
+  using Utils::uniform;
+  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
+                         uniform(noise[2])} -
+         Utils::Vector3d::broadcast(0.5);
+}
+
 extern std::mt19937 generator;
-extern std::normal_distribution<double> normal_distribution;
 extern std::uniform_real_distribution<double> uniform_real_distribution;
 extern bool user_has_seeded;
 inline void unseeded_error() {
@@ -55,8 +96,7 @@ inline void unseeded_error() {
 
 /**
  * @brief checks the seeded state and throws error if unseeded
- *
- **/
+ */
 inline void check_user_has_seeded() {
   static bool unseeded_error_thrown = false;
   if (!user_has_seeded && !unseeded_error_thrown) {
@@ -70,12 +110,11 @@ inline void check_user_has_seeded() {
  *
  * @param cnt   Unused.
  * @param seeds A vector of seeds, must be at least n_nodes long.
- **/
+ */
 void mpi_random_seed(int cnt, std::vector<int> &seeds);
 
 /**
- * @brief Gets a string representation of the state of all
- *        the nodes.
+ * @brief Gets a string representation of the state of all the nodes.
  */
 std::string mpi_random_get_stat();
 
@@ -83,13 +122,12 @@ std::string mpi_random_get_stat();
  * @brief Set the seeds on all the node to the state represented
  *        by the string.
  * The string representation must be one that was returned by
- * mpi_random_get_stat.
+ * @ref mpi_random_get_stat.
  */
 void mpi_random_set_stat(const std::vector<std::string> &stat);
 
 /**
- * @brief
- * Get the state size of the random number generator
+ * @brief Get the state size of the random number generator
  */
 int get_state_size_of_generator();
 
@@ -111,57 +149,10 @@ void init_random_seed(int seed);
  * @brief Draws a random real number from the uniform distribution in the range
  * [0,1)
  */
-
 inline double d_random() {
   using namespace Random;
   check_user_has_seeded();
   return uniform_real_distribution(generator);
-}
-
-/**
- * @brief draws a random integer from the uniform distribution in the range
- * [0,maxint-1]
- *
- * @param maxint range.
- */
-inline int i_random(int maxint) {
-  using namespace Random;
-  check_user_has_seeded();
-  std::uniform_int_distribution<int> uniform_int_dist(0, maxint - 1);
-  return uniform_int_dist(generator);
-}
-
-/**
- * @brief draws a random number from the normal distribution with mean 0 and
- * variance 1.
- */
-inline double gaussian_random() {
-  using namespace Random;
-  check_user_has_seeded();
-  return normal_distribution(generator);
-}
-
-/**
- * @brief Generator for cutoff Gaussian random numbers.
- *
- * Generates a Gaussian random number and generates a number between -2 sigma
- * and 2 sigma in the form of a Gaussian with standard deviation
- * sigma=1.118591404 resulting in an actual standard deviation of 1.
- *
- * @return Gaussian random number.
- */
-inline double gaussian_random_cut() {
-  using namespace Random;
-  check_user_has_seeded();
-  const double random_number = 1.042267973 * normal_distribution(generator);
-
-  if (fabs(random_number) > 2 * 1.042267973) {
-    if (random_number > 0) {
-      return 2 * 1.042267973;
-    }
-    return -2 * 1.042267973;
-  }
-  return random_number;
 }
 
 #endif
