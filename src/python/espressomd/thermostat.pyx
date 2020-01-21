@@ -112,8 +112,10 @@ cdef class Thermostat:
             if thmst["type"] == "DPD":
                 self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
             if thmst["type"] == "BROWNIAN":
-                self.set_brownian(kT=thmst["kT"], gamma=thmst[
-                                  "gamma"], gamma_rotation=thmst["gamma_rotation"], act_on_virtual=thmst["act_on_virtual"], seed=thmst["seed"])
+                self.set_brownian(kT=thmst["kT"], gamma=thmst["gamma"],
+                                  gamma_rotation=thmst["gamma_rotation"],
+                                  act_on_virtual=thmst["act_on_virtual"],
+                                  seed=thmst["seed"])
 
     def get_ts(self):
         return thermo_switch
@@ -162,11 +164,9 @@ cdef class Thermostat:
                 lang_dict["gamma"] = langevin_gamma
             IF ROTATION:
                 IF PARTICLE_ANISOTROPY:
-                    lang_dict[
-                        "gamma_rotation"] = [langevin_gamma_rotation[0],
-                                             langevin_gamma_rotation[
-                                             1],
-                                             langevin_gamma_rotation[2]]
+                    lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
+                                                   langevin_gamma_rotation[1],
+                                                   langevin_gamma_rotation[2]]
                 ELSE:
                     lang_dict["gamma_rotation"] = langevin_gamma_rotation
             ELSE:
@@ -540,7 +540,7 @@ cdef class Thermostat:
         """
 
         # Note: hack due to entanglement of Brownian dynamics and Langevin thermostat
-        # The setup code fro Brownian dynamics mis-uses the Langevin setup.
+        # The setup code for Brownian dynamics mis-uses the Langevin setup.
         # This needs to be changed
         global thermo_switch
         thermo_switch = (thermo_switch & (~THERMO_BROWNIAN))

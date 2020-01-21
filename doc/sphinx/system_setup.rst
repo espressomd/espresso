@@ -267,15 +267,15 @@ The Langevin thermostat is based on an extension of Newton's equation of motion 
 
 .. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma v_i(t) + \sqrt{2\gamma k_B T} \eta_i(t).
 
-Here, :math:`f_i` are all deterministic forces from interactions, 
-:math:`\gamma` the bare friction coefficient and :math:`\eta` a random, "thermal" force. 
+Here, :math:`f_i` are all deterministic forces from interactions,
+:math:`\gamma` the bare friction coefficient and :math:`\eta` a random, "thermal" force.
 The friction term accounts for dissipation in a surrounding fluid whereas
-the random force  mimics collisions of the particle with solvent molecules 
+the random force  mimics collisions of the particle with solvent molecules
 at temperature :math:`T` and satisfies
 
 .. math:: <\eta(t)> = 0 , <\eta^\alpha_i(t)\eta^\beta_j(t')> = \delta_{\alpha\beta} \delta_{ij}\delta(t-t')
 
-(:math:`<\cdot>` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates). 
+(:math:`<\cdot>` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates).
 
 In the |es| implementation of the Langevin thermostat,
 the additional terms only enter in the force calculation.
@@ -283,9 +283,9 @@ This reduces the accuracy of the Velocity Verlet integrator
 by one order in :math:`dt` because forces are now velocity-dependent.
 
 The random process :math:`\eta(t)` is discretized by drawing an uncorrelated random number
-:math:`\overline{\eta}` for each component of all the particle forces. 
+:math:`\overline{\eta}` for each component of all the particle forces.
 The distribution of :math:`\overline{\eta}` is uniform and satisfies
- 
+
 .. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
 
 The keyword ``seed`` controls the state of the random number generator (Philox
@@ -305,9 +305,9 @@ can be useful, for instance, in high Péclet number active matter systems, where
 one only wants to thermalize only the rotational degrees of freedom and
 translational motion is effected by the self-propulsion.
 
-The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar, 
-or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues 
-of the respective friction coefficient tensor. This is enables the simulation of 
+The keywords ``gamma`` and ``gamma_rotate`` can be specified as a scalar,
+or, with feature ``PARTICLE_ANISOTROPY`` compiled in, as the three eigenvalues
+of the respective friction coefficient tensor. This is enables the simulation of
 the anisotropic diffusion of anisotropic colloids (rods, etc.).
 
 Using the Langevin thermostat, it is possible to set a temperature and a
@@ -324,17 +324,17 @@ The :ref:`Lattice-Boltzmann` thermostat acts similar to the :ref:`Langevin therm
 
 .. math::  m_i \dot{v}_i(t) = f_i(\{x_j\},v_i,t) - \gamma (v_i(t)-u(x_i(t),t)) + \sqrt{2\gamma k_B T} \eta_i(t).
 
-where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`. 
-To preserve momentum, an equal and opposite friction force and random force act on the fluid. 
+where :math:`u(x,t)` is the fluid velocity at position :math:`x` and time :math:`t`.
+To preserve momentum, an equal and opposite friction force and random force act on the fluid.
 
-Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities 
+Numerically the fluid velocity is determined from the lattice-Boltzmann node velocities
 by interpolating as described in :ref:`Interpolating velocities`.
-The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes. 
+The backcoupling of friction forces and noise to the fluid is also done by distributing those forces amongst the nearest LB nodes.
 Details for both the interpolation and the force distribution can be found in :cite:`ahlrichs99` and :cite:`duenweg08a`.
 
 The LB fluid can be used to thermalize particles, while also including their hydrodynamic interactions.
 The LB thermostat expects an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`.
-Temperature is set via the ``kT`` argument of the LB fluid. 
+Temperature is set via the ``kT`` argument of the LB fluid.
 
 Furthermore a ``seed`` has to be given for the
 thermalization of the particle coupling. The magnitude of the frictional coupling can be adjusted by
@@ -362,8 +362,8 @@ Dissipative Particle Dynamics (DPD)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The DPD thermostat adds friction and noise to the particle
-dynamics like the :ref:`Langevin thermostat`, but these 
-are not applied to every particle individually but instead 
+dynamics like the :ref:`Langevin thermostat`, but these
+are not applied to every particle individually but instead
 encoded in a dissipative interaction between particles :cite:`soddeman03a`.
 
 To realize a complete DPD fluid model in |es|, three parts are needed:
@@ -376,7 +376,7 @@ The temperature is set via
 which takes ``kT`` as the only argument.
 
 The friction coefficients and cutoff are controlled via the
-:ref:`DPD interaction` on a per type-pair basis. For details 
+:ref:`DPD interaction` on a per type-pair basis. For details
 see there.
 
 The friction (dissipative) and noise (random) term are coupled via the
@@ -444,31 +444,31 @@ The hydrodynamic interactions feature will be available later
 as a part of the present Brownian Dynamics or
 implemented separately within the Stokesian Dynamics.
 
-In order to activate the Brownian thermostat the member function
+In order to activate the Brownian thermostat, the member function
 :py:attr:`~espressomd.thermostat.Thermostat.set_brownian` of the thermostat
 class :class:`espressomd.thermostat.Thermostat` has to be invoked.
 The system integrator should be also changed.
 Best explained in an example::
-    
+
     import espressomd
     system = espressomd.System()
     system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=41)
     system.integrator.set_brownian_dynamics()
 
 where ``gamma`` (hereinafter :math:`\gamma`) is a viscous friction coefficient.
-In terms of the Python interface and setup, Brownian thermostat derives most 
-properties of the :ref:`Langevin thermostat`. Same feature
-``LANGEVIN_PER_PARTICLE`` is using to be able to control the per-particle
+In terms of the Python interface and setup, Brownian thermostat derives most
+properties of the :ref:`Langevin thermostat`. The feature
+``LANGEVIN_PER_PARTICLE`` is used to control the per-particle
 temperature and the friction coefficient setup. Major differences are
 its internal integrator implementation and other temporal constraints.
 The integrator is still a symplectic Velocity Verlet-like one.
 It is implemented via a viscous drag part and a random walk of both the position and
 velocity. Due to a nature of the Brownian Dynamics method, its time step :math:`\Delta t`
-should be large enough compare to the relaxation time
+should be large enough compared to the relaxation time
 :math:`m/\gamma` where :math:`m` is the particle mass.
 This requirement is just a conceptual one
 without specific implementation technical restrictions.
-Note, that with all similarities of
+Note that with all similarities of
 Langevin and Brownian Dynamics, the Langevin thermostat temporal constraint
 is opposite. A velocity is restarting from zero at every step.
 Formally, the previous step velocity at the beginning of the the :math:`\Delta t` interval
@@ -491,11 +491,11 @@ corresponds to a diffusion within the Wiener process:
 .. math:: \sigma_p^2 = 2 \frac{kT}{\gamma} \cdot \Delta t
 
 Each velocity component random walk variance :math:`\sigma_v^2` is defined by the heat
-component: 
+component:
 
 .. math:: \sigma_v^2 = \frac{kT}{m}
 
-Note, that the velocity random walk is propagated from zero at each step.
+Note that the velocity random walk is propagated from zero at each step.
 
 A rotational motion is implemented similarly.
 Note: the rotational Brownian dynamics implementation is compatible with particles which have

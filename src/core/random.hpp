@@ -30,6 +30,7 @@
 
 #include <Random123/philox.h>
 #include <utils/Vector.hpp>
+#include <utils/constants.hpp>
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
@@ -60,7 +61,7 @@ enum class RNGSalt : uint64_t {
 
 namespace Random {
 /**
- * @brief get 4 random uint 64 fomr the Philox RNG
+ * @brief get 4 random uint 64 from the Philox RNG
  *
  * This uses the Philox PRNG, the state is controlled
  * by the counter, the salt and two keys.
@@ -144,7 +145,7 @@ inline Utils::Vector3d v_noise_g(uint64_t counter, int key1, int key2 = 0) {
   // Box muller transform code adapted from
   // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
 
-  static const double two_pi = 2.0 * 3.14159265358979323846;
+  static const double two_pi = 2.0 * Utils::pi();
   return {sqrt(-2.0 * log(u[0])) * cos(two_pi * u[1]),
           sqrt(-2.0 * log(u[0])) * sin(two_pi * u[1]),
           sqrt(-2.0 * log(u[2])) * cos(two_pi * u[3])};
