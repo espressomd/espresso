@@ -236,7 +236,6 @@ bool validate_collision_parameters() {
 
   recalc_forces = true;
   rebuild_verletlist = true;
-  on_ghost_flags_change();
 
   return true;
 }
@@ -675,7 +674,7 @@ void handle_collisions() {
     // If any node had a collision, all nodes need to resort
     if (!gathered_queue.empty()) {
       set_resort_particles(Cells::RESORT_GLOBAL);
-      cells_update_ghosts();
+      cells_update_ghosts(GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS);
     }
   }    // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE

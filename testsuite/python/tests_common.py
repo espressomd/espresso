@@ -18,34 +18,32 @@ import os
 import numpy as np
 
 
-def params_match(inParams, outParams):
+def assert_params_match(ut_obj, inParams, outParams, msg_long=None):
     """Check if the parameters set and gotten back match.
-    Only check keys present in inParams.
+    Only check keys present in ``inParams``.
     """
+    if msg_long:
+        msg_long = "\n" + msg_long
+    else:
+        msg_long = ""
 
-    for k in list(inParams.keys()):
-        if k not in outParams:
-            print(k, "missing from returned parameters")
-            return False
+    for k in inParams.keys():
+        ut_obj.assertIn(k, outParams)
         if isinstance(inParams[k], float):
-            if abs(outParams[k] - inParams[k]) >= 1E-14:
-                print("Mismatch in parameter ", k, inParams[k], outParams[k], type(
-                    inParams[k]), type(outParams[k]), abs(inParams[k] - outParams[k]))
-                return False
+            ut_obj.assertAlmostEqual(
+                outParams[k], inParams[k], delta=1E-14,
+                msg="Mismatching parameter {!r}{}".format(k, msg_long))
         else:
-            if outParams[k] != inParams[k]:
-                print("Mismatch in parameter ", k, inParams[k],
-                      outParams[k], type(inParams[k]), type(outParams[k]))
-                return False
-
-    return True
+            ut_obj.assertEqual(
+                outParams[k], inParams[k],
+                msg="Mismatching parameter {!r}{}".format(k, msg_long))
 
 
 def generate_test_for_class(_system, _interClass, _params):
     """Generates test cases for checking interaction parameters set and gotten back
     from Es actually match. Only keys which are present in _params are checked
-    1st: Interaction parameters as dictionary, i.e., {"k": 1.,"r_0": 0}
-    2nd: Name of the interaction property to set (i.e. "P3M")
+    1st: Interaction parameters as dictionary, i.e., ``{"k": 1., "r_0": 0}``
+    2nd: Name of the interaction property to set (i.e. ``"P3M"``)
     """
     params = _params
     interClass = _interClass
@@ -64,12 +62,8 @@ def generate_test_for_class(_system, _interClass, _params):
         outParams = Inter.get_params()
         del system.actors[0]
 
-        self.assertTrue(
-            params_match(params, outParams),
-            "Mismatch of parameters.\nParameters set " +
-            params.__str__() +
-            " vs. output parameters " +
-            outParams.__str__())
+        assert_params_match(self, params, outParams, "Parameters set {} vs. {}"
+                            .format(params, outParams))
 
     return func
 
@@ -615,10 +609,6 @@ def single_component_maxwell(x1, x2, kT):
     """Integrate the probability density from x1 to x2 using the trapezoidal rule"""
     x = np.linspace(x1, x2, 1000)
     return np.trapz(np.exp(-x**2 / (2. * kT)), x) / np.sqrt(2. * np.pi * kT)
-
-
-def lists_contain_same_elements(list1, list2):
-    return len(list1) == len(list2) and sorted(list1) == sorted(list2)
 
 
 def count_fluid_nodes(lbf):

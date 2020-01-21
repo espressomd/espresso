@@ -32,8 +32,6 @@ int n_rigidbonds = 0;
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
 #include <utils/constants.hpp>
@@ -162,7 +160,7 @@ void app_pos_correction(const ParticleRange &particles) {
 }
 
 void correct_pos_shake(ParticleRange const &particles) {
-  cells_update_ghosts();
+  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
   int repeat_, cnt = 0;
   int repeat = 1;
 
@@ -175,7 +173,7 @@ void correct_pos_shake(ParticleRange const &particles) {
     app_pos_correction(cell_structure.local_cells().particles());
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION);
+                       GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
@@ -278,7 +276,8 @@ void revert_force(const ParticleRange &particles,
 }
 
 void correct_vel_shake() {
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
 
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
@@ -296,7 +295,7 @@ void correct_vel_shake() {
                        GHOSTTRANS_FORCE);
     apply_vel_corr(particles);
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION);
+                       GHOSTTRANS_MOMENTUM);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else

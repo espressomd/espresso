@@ -81,7 +81,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
-  cells_update_ghosts();
+  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
@@ -212,12 +212,13 @@ void topology_init(int cs, double range, CellPList local) {
   }
 }
 
-bool topology_check_resort(int cs, bool local_resort) {
+unsigned topology_check_resort(int cs, unsigned local_resort) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
   case CELL_STRUCTURE_LAYERED:
-    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+    return boost::mpi::all_reduce(comm_cart, local_resort,
+                                  std::bit_or<unsigned>());
   default:
     return true;
   }
@@ -396,13 +397,6 @@ void cells_resort_particles(int global_flag) {
 #endif
   }
 
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PARTNUM);
-  ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                     GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
-
-  /* Particles are now sorted, but Verlet lists are invalid
-     and p_old has to be reset. */
-  resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = true;
 
   displaced_parts.clear();
@@ -446,19 +440,33 @@ void check_resort_particles() {
 }
 
 /*************************************************/
-void cells_update_ghosts() {
-  if (topology_check_resort(cell_structure.type, resort_particles)) {
-    int global = (resort_particles & Cells::RESORT_GLOBAL)
+void cells_update_ghosts(unsigned data_parts) {
+  /* data parts that are only updated on resort */
+  auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
+
+  auto const global_resort =
+      topology_check_resort(cell_structure.type, resort_particles);
+
+  if (global_resort != Cells::RESORT_NONE) {
+    int global = (global_resort & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
-    /* Communication step: number of ghosts and ghost information */
+    /* Resort cell system */
     cells_resort_particles(global);
 
-  } else
+    /* Communication step: number of ghosts and ghost information */
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_PARTNUM);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+
+    /* Particles are now sorted */
+    resort_particles = Cells::RESORT_NONE;
+  } else {
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION);
+                       data_parts & ~resort_only_parts);
+  }
 }
 
 Cell *find_current_cell(const Particle &p) {

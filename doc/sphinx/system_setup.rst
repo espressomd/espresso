@@ -27,7 +27,7 @@ for further calculations, you should explicitly make a copy e.g. via
     particle coordinates will remain the same, i.e., the particle stay in
     the same image box, but at the same relative position in their image
     box. If you want to scale the positions, use the command
-    :py:func:`~espressomd.system.System.change_volume_and_rescale_particles`.
+    :py:meth:`~espressomd.system.System.change_volume_and_rescale_particles`.
 
 * :py:attr:`~espressomd.system.System.periodicity`
 
@@ -411,8 +411,8 @@ Isotropic NPT thermostat
 
 This feature allows to simulate an (on average) homogeneous and isotropic system in the NPT ensemble.
 In order to use this feature, ``NPT`` has to be defined in the :file:`myconfig.hpp`.
-Activate the NPT thermostat with the command :py:func:`~espressomd.thermostat.Thermostat.set_npt`
-and setup the integrator for the NPT ensemble with :py:func:`~espressomd.integrate.Integrator.set_isotropic_npt`.
+Activate the NPT thermostat with the command :py:meth:`~espressomd.thermostat.Thermostat.set_npt`
+and setup the integrator for the NPT ensemble with :py:meth:`~espressomd.integrate.IntegratorHandle.set_isotropic_npt`.
 
 For example::
 

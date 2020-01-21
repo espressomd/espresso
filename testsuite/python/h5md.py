@@ -83,32 +83,32 @@ class CommonTests(ut.TestCase):
 
     def test_pos(self):
         """Test if positions have been written properly."""
-        self.assertTrue(np.allclose(
+        np.testing.assert_allclose(
             np.array([3 * [float(i) % self.box_l] for i in range(npart)]),
-            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))])))
+            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_pos))]))
 
     def test_img(self):
         """Test if images have been written properly."""
         images = np.append(np.zeros((int(npart / 2), 3)),
                            np.ones((int(npart / 2), 3)))
         images = images.reshape(npart, 3)
-        self.assertTrue((np.allclose(np.array(
-            [x for (_, x) in sorted(zip(self.py_id, self.py_img))]), images)))
+        np.testing.assert_allclose(
+            [x for (_, x) in sorted(zip(self.py_id, self.py_img))], images)
 
     def test_vel(self):
         """Test if velocities have been written properly."""
-        self.assertTrue(np.allclose(
+        np.testing.assert_allclose(
             np.array([[1.0, 2.0, 3.0] for _ in range(npart)]),
-            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))])),
-            msg="Velocities not written correctly by H5md!")
+            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_vel))]),
+            err_msg="Velocities not written correctly by H5md!")
 
     @utx.skipIfMissingFeatures(['EXTERNAL_FORCES'])
     def test_f(self):
         """Test if forces have been written properly."""
-        self.assertTrue(np.allclose(
+        np.testing.assert_allclose(
             np.array([[0.1, 0.2, 0.3] for _ in range(npart)]),
-            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_f))])),
-            msg="Forces not written correctly by H5md!")
+            np.array([x for (_, x) in sorted(zip(self.py_id, self.py_f))]),
+            err_msg="Forces not written correctly by H5md!")
 
     def test_bonds(self):
         """Test if bonds have been written properly."""
@@ -156,8 +156,8 @@ class H5mdTestOrdered(CommonTests):
 
     def test_ids(self):
         """Test if ids have been written properly."""
-        self.assertTrue(np.allclose(np.array(range(npart)), self.py_id),
-                        msg="ids incorrectly ordered and written by H5md!")
+        np.testing.assert_allclose(np.array(range(npart)), self.py_id,
+                                   err_msg="ids incorrectly ordered and written by H5md!")
 
 
 @utx.skipIfMissingFeatures(['H5MD'])
