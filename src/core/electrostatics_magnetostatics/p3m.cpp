@@ -618,16 +618,81 @@ double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
 
   return pref * box_dipole.norm2();
 }
-
 } // namespace
+
+/** @details Calculate the long range electrostatics part of the stress
+ *  tensor. This is part \f$\Pi_{\textrm{dir}, \alpha, \beta}\f$ eq. (2.6)
+ *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
+ *  eq. (2.8) is not present here since M is the empty set in our simulations.
+ */
+Utils::Vector9d p3m_calc_kspace_stress() {
+  if (p3m.sum_q2 > 0) {
+    p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
+    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
+    auto const force_prefac = coulomb.prefactor / (2.0 * box_geo.volume());
+
+    Utils::Vector9d node_k_space_stress{};
+    int ind = 0;
+    int j[3];
+    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
+      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
+        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
+          auto const kx = 2.0 * Utils::pi() *
+                          p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
+                          box_geo.length()[RX];
+          auto const ky = 2.0 * Utils::pi() *
+                          p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
+                          box_geo.length()[RY];
+          auto const kz = 2.0 * Utils::pi() *
+                          p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
+                          box_geo.length()[RZ];
+          auto const sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
+
+          auto const node_k_space_energy =
+              (sqk == 0)
+                  ? 0.0
+                  : p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
+                                         Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
+          ind++;
+
+          auto const vterm =
+              (sqk == 0)
+                  ? 0.
+                  : -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
+
+          node_k_space_stress[0] +=
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
+          node_k_space_stress[1] +=
+              node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
+          node_k_space_stress[2] +=
+              node_k_space_energy * (vterm * kx * kz); /* sigma_xz */
+
+          node_k_space_stress[3] +=
+              node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
+          node_k_space_stress[4] +=
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
+          node_k_space_stress[5] +=
+              node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
+
+          node_k_space_stress[6] +=
+              node_k_space_energy * (vterm * kx * kz); /* sigma_zx */
+          node_k_space_stress[7] +=
+              node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
+          node_k_space_stress[8] +=
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
+        }
+      }
+    }
+
+    return  force_prefac * node_k_space_stress;
+  }
+}
+
 double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles) {
-  /* The dipol moment is only needed if we don't have metallic boundaries. */
-  auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
-                              ? boost::make_optional(calc_dipole_moment(
-                                    comm_cart, particles, box_geo))
-                              : boost::none;
-
   /* Gather information for FFT grid inside the nodes domain (inner local mesh)
    * and perform forward 3D FFT (Charge Assignment Mesh). */
   p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
@@ -635,6 +700,11 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
+  /* The dipol moment is only needed if we don't have metallic boundaries. */
+  auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
+                              ? boost::make_optional(calc_dipole_moment(
+                                    comm_cart, particles, box_geo))
+                              : boost::none;
 
   /* === k-space calculations === */
 
@@ -1837,93 +1907,6 @@ void p3m_scaleby_box_l() {
   p3m_sanity_checks_boxl();
   p3m_calc_influence_function_force();
   p3m_calc_influence_function_energy();
-}
-
-/** @details Calculate the long range electrostatics part of the stress
- *  tensor. This is part \f$\Pi_{\textrm{dir}, \alpha, \beta}\f$ eq. (2.6)
- *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
- *  eq. (2.8) is not present here since M is the empty set in our simulations.
- */
-void p3m_calc_kspace_stress(double *stress) {
-  if (p3m.sum_q2 > 0) {
-    std::vector<double> node_k_space_stress;
-    std::vector<double> k_space_stress;
-    double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
-
-    int j[3], i, ind = 0;
-    // ordering after Fourier transform
-    node_k_space_stress.resize(9);
-    k_space_stress.resize(9);
-
-    for (i = 0; i < 9; i++) {
-      node_k_space_stress[i] = 0.0;
-      k_space_stress[i] = 0.0;
-    }
-
-    p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
-    force_prefac =
-        coulomb.prefactor /
-        (2.0 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
-
-    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
-      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
-        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          kx = 2.0 * Utils::pi() *
-               p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
-               box_geo.length()[RX];
-          ky = 2.0 * Utils::pi() *
-               p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
-               box_geo.length()[RY];
-          kz = 2.0 * Utils::pi() *
-               p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
-               box_geo.length()[RZ];
-          sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
-          if (sqk == 0) {
-            node_k_space_energy = 0.0;
-            vterm = 0.0;
-          } else {
-            vterm = -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
-            node_k_space_energy =
-                p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
-                                     Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
-          }
-          ind++;
-          node_k_space_stress[0] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
-          node_k_space_stress[1] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
-          node_k_space_stress[2] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_xz */
-
-          node_k_space_stress[3] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
-          node_k_space_stress[4] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
-          node_k_space_stress[5] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
-
-          node_k_space_stress[6] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_zx */
-          node_k_space_stress[7] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
-          node_k_space_stress[8] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
-        }
-      }
-    }
-
-    MPI_Reduce(node_k_space_stress.data(), k_space_stress.data(), 9, MPI_DOUBLE,
-               MPI_SUM, 0, comm_cart);
-    if (this_node == 0) {
-      for (i = 0; i < 9; i++) {
-        stress[i] = k_space_stress[i] * force_prefac;
-      }
-    }
-  }
 }
 
 #endif /* of P3M */
