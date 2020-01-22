@@ -35,23 +35,22 @@ extern BrownianThermostat brownian;
  */
 inline void bd_drag(Particle &p, double dt) {
   // The friction tensor Z from the Eq. (14.31) of Schlick2010:
-  Thermostat::GammaType local_gamma;
+  Thermostat::GammaType gamma;
 
 #ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
-    local_gamma = p.p.gamma;
+    gamma = p.p.gamma;
   } else
 #endif
   {
-    local_gamma = brownian.gamma;
+    gamma = brownian.gamma;
   }
 
   bool aniso_flag; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
-  aniso_flag =
-      (local_gamma[0] != local_gamma[1]) || (local_gamma[1] != local_gamma[2]);
+  aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
 #endif
 
   Utils::Vector3d force_body;
@@ -68,13 +67,13 @@ inline void bd_drag(Particle &p, double dt) {
     // Only a conservative part of the force is used here
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
-      delta_pos_body[j] = force_body[j] * dt / (local_gamma[j]);
+      delta_pos_body[j] = force_body[j] * dt / (gamma[j]);
     } else {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
       {
-        p.r.p[j] += p.f.f[j] * dt / (local_gamma[j]);
+        p.r.p[j] += p.f.f[j] * dt / (gamma[j]);
       }
     }
 #else
@@ -82,7 +81,7 @@ inline void bd_drag(Particle &p, double dt) {
     if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      p.r.p[j] += p.f.f[j] * dt / (local_gamma);
+      p.r.p[j] += p.f.f[j] * dt / (gamma);
     }
 #endif // PARTICLE_ANISOTROPY
   }
@@ -108,23 +107,22 @@ inline void bd_drag(Particle &p, double dt) {
  */
 inline void bd_drag_vel(Particle &p, double dt) {
   // The friction tensor Z from the eq. (14.31) of Schlick2010:
-  Thermostat::GammaType local_gamma;
+  Thermostat::GammaType gamma;
 
 #ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma >= Thermostat::GammaType{}) {
-    local_gamma = p.p.gamma;
+    gamma = p.p.gamma;
   } else
 #endif
   {
-    local_gamma = brownian.gamma;
+    gamma = brownian.gamma;
   }
 
   bool aniso_flag; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
-  aniso_flag =
-      (local_gamma[0] != local_gamma[1]) || (local_gamma[1] != local_gamma[2]);
+  aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
 #endif
 
   Utils::Vector3d force_body;
@@ -143,13 +141,13 @@ inline void bd_drag_vel(Particle &p, double dt) {
     // further on top of it
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
-      vel_body[j] = force_body[j] * dt / (local_gamma[j]);
+      vel_body[j] = force_body[j] * dt / (gamma[j]);
     } else {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
       {
-        p.m.v[j] = p.f.f[j] / (local_gamma[j]);
+        p.m.v[j] = p.f.f[j] / (gamma[j]);
       }
 #ifdef EXTERNAL_FORCES
       else {
@@ -162,7 +160,7 @@ inline void bd_drag_vel(Particle &p, double dt) {
     if (!(p.p.ext_flag & COORD_FIXED(j)))
 #endif
     {
-      p.m.v[j] = p.f.f[j] / (local_gamma);
+      p.m.v[j] = p.f.f[j] / (gamma);
     }
 #endif // PARTICLE_ANISOTROPY
   }
@@ -198,41 +196,41 @@ void bd_random_walk(Particle &p, double dt) {
   if (p.p.is_virtual && !thermo_virtual)
     return;
   // first, set defaults
-  Thermostat::GammaType brown_sigma_pos_inv = brownian.sigma_pos_inv;
+  Thermostat::GammaType sigma_pos_inv = brownian.sigma_pos_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr brown_temp_coeff = 2.0;
+  auto const constexpr temp_coeff = 2.0;
 
   if (p.p.gamma >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        brown_sigma_pos_inv = sqrt(p.p.gamma / (brown_temp_coeff * p.p.T));
+        sigma_pos_inv = sqrt(p.p.gamma / (temp_coeff * p.p.T));
       } else {
         // just an indication of the infinity
-        brown_sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos_inv = brownian.gammatype_nan;
       }
     } else
         // default temperature but particle-specific gamma
         if (temperature > 0.0) {
-      brown_sigma_pos_inv = sqrt(p.p.gamma / (brown_temp_coeff * temperature));
+      sigma_pos_inv = sqrt(p.p.gamma / (temp_coeff * temperature));
     } else {
-      brown_sigma_pos_inv = brownian.gammatype_nan;
+      sigma_pos_inv = brownian.gammatype_nan;
     }
   } // particle-specific gamma
   else {
     // No particle-specific gamma, but is there particle-specific temperature
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        brown_sigma_pos_inv = sqrt(brownian.gamma / (brown_temp_coeff * p.p.T));
+        sigma_pos_inv = sqrt(brownian.gamma / (temp_coeff * p.p.T));
       } else {
         // just an indication of the infinity
-        brown_sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos_inv = brownian.gammatype_nan;
       }
     } else {
       // default values for both
-      brown_sigma_pos_inv = brownian.sigma_pos_inv;
+      sigma_pos_inv = brownian.sigma_pos_inv;
     }
   }
 #endif /* BROWNIAN_PER_PARTICLE */
@@ -241,8 +239,8 @@ void bd_random_walk(Particle &p, double dt) {
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
-  aniso_flag = (brown_sigma_pos_inv[0] != brown_sigma_pos_inv[1]) ||
-               (brown_sigma_pos_inv[1] != brown_sigma_pos_inv[2]);
+  aniso_flag = (sigma_pos_inv[0] != sigma_pos_inv[1]) ||
+               (sigma_pos_inv[1] != sigma_pos_inv[2]);
 #else
   aniso_flag = false;
 #endif // PARTICLE_ANISOTROPY
@@ -259,15 +257,14 @@ void bd_random_walk(Particle &p, double dt) {
 #endif
     {
 #ifndef PARTICLE_ANISOTROPY
-      if (brown_sigma_pos_inv > 0.0) {
-        delta_pos_body[j] = (1.0 / brown_sigma_pos_inv) * sqrt(dt) * noise[j];
+      if (sigma_pos_inv > 0.0) {
+        delta_pos_body[j] = (1.0 / sigma_pos_inv) * sqrt(dt) * noise[j];
       } else {
         delta_pos_body[j] = 0.0;
       }
 #else
-      if (brown_sigma_pos_inv[j] > 0.0) {
-        delta_pos_body[j] =
-            (1.0 / brown_sigma_pos_inv[j]) * sqrt(dt) * noise[j];
+      if (sigma_pos_inv[j] > 0.0) {
+        delta_pos_body[j] = (1.0 / sigma_pos_inv[j]) * sqrt(dt) * noise[j];
       } else {
         delta_pos_body[j] = 0.0;
       }
@@ -303,20 +300,20 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
     return;
   // Just a square root of kT, see eq. (10.2.17) and comments in 2 paragraphs
   // afterwards, Pottier2010
-  double brown_sigma_vel;
+  double sigma_vel;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr brown_temp_coeff = 1.0;
+  auto const constexpr temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   if (p.p.T >= 0.) {
-    brown_sigma_vel = sqrt(brown_temp_coeff * p.p.T);
+    sigma_vel = sqrt(temp_coeff * p.p.T);
   } else {
-    brown_sigma_vel = brownian.sigma_vel;
+    sigma_vel = brownian.sigma_vel;
   }
 #else
   // defaults
-  brown_sigma_vel = brownian.sigma_vel;
+  sigma_vel = brownian.sigma_vel;
 #endif /* BROWNIAN_PER_PARTICLE */
 
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_INC>(
@@ -334,7 +331,7 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
       // of Schlick2010. A difference is the mass factor to the friction tensor.
       // The noise is Gaussian according to the convention at p. 237 (last
       // paragraph), Pottier2010.
-      p.m.v[j] += brown_sigma_vel * noise[j] / sqrt(p.p.mass);
+      p.m.v[j] += sigma_vel * noise[j] / sqrt(p.p.mass);
     }
   }
 }
@@ -347,15 +344,15 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
  *  @param[in]     dt             Time interval
  */
 void bd_drag_rot(Particle &p, double dt) {
-  Thermostat::GammaType local_gamma;
+  Thermostat::GammaType gamma;
 
 #ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
-    local_gamma = p.p.gamma_rot;
+    gamma = p.p.gamma_rot;
   } else
 #endif
   {
-    local_gamma = brownian.gamma_rotation;
+    gamma = brownian.gamma_rotation;
   }
 
   Utils::Vector3d dphi = {0.0, 0.0, 0.0};
@@ -366,9 +363,9 @@ void bd_drag_rot(Particle &p, double dt) {
     {
       // only a conservative part of the torque is used here
 #ifndef PARTICLE_ANISOTROPY
-      dphi[j] = p.f.torque[j] * dt / (local_gamma);
+      dphi[j] = p.f.torque[j] * dt / (gamma);
 #else
-      dphi[j] = p.f.torque[j] * dt / (local_gamma[j]);
+      dphi[j] = p.f.torque[j] * dt / (gamma[j]);
 #endif // ROTATIONAL_INERTIA
     }
   } // j
@@ -387,15 +384,15 @@ void bd_drag_rot(Particle &p, double dt) {
  *  @param[in]     dt             Time interval
  */
 void bd_drag_vel_rot(Particle &p, double dt) {
-  Thermostat::GammaType local_gamma;
+  Thermostat::GammaType gamma;
 
 #ifdef BROWNIAN_PER_PARTICLE
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
-    local_gamma = p.p.gamma_rot;
+    gamma = p.p.gamma_rot;
   } else
 #endif
   {
-    local_gamma = brownian.gamma_rotation;
+    gamma = brownian.gamma_rotation;
   }
 
   for (int j = 0; j < 3; j++) {
@@ -409,9 +406,9 @@ void bd_drag_vel_rot(Particle &p, double dt) {
       // NOTE: velocity is assigned here and propagated by thermal part further
       // on top of it
 #ifndef PARTICLE_ANISOTROPY
-      p.m.omega[j] = p.f.torque[j] / (local_gamma);
+      p.m.omega[j] = p.f.torque[j] / (gamma);
 #else
-      p.m.omega[j] = p.f.torque[j] / (local_gamma[j]);
+      p.m.omega[j] = p.f.torque[j] / (gamma[j]);
 #endif // ROTATIONAL_INERTIA
     }
   }
@@ -425,43 +422,41 @@ void bd_drag_vel_rot(Particle &p, double dt) {
  */
 void bd_random_walk_rot(Particle &p, double dt) {
   // first, set defaults
-  Thermostat::GammaType brown_sigma_pos_inv = brownian.sigma_pos_rotation_inv;
+  Thermostat::GammaType sigma_pos_inv = brownian.sigma_pos_rotation_inv;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr brown_temp_coeff = 2.0;
+  auto const constexpr temp_coeff = 2.0;
 
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        brown_sigma_pos_inv = sqrt(p.p.gamma_rot / (brown_temp_coeff * p.p.T));
+        sigma_pos_inv = sqrt(p.p.gamma_rot / (temp_coeff * p.p.T));
       } else {
         // just an indication of the infinity
-        brown_sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos_inv = brownian.gammatype_nan;
       }
     } else if (temperature > 0.) {
       // Default temperature but particle-specific gamma
-      brown_sigma_pos_inv =
-          sqrt(p.p.gamma_rot / (brown_temp_coeff * temperature));
+      sigma_pos_inv = sqrt(p.p.gamma_rot / (temp_coeff * temperature));
     } else {
       // just an indication of the infinity
-      brown_sigma_pos_inv = brownian.gammatype_nan;
+      sigma_pos_inv = brownian.gammatype_nan;
     }
   } // particle-specific gamma
   else {
     // No particle-specific gamma, but is there particle-specific temperature
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        brown_sigma_pos_inv =
-            sqrt(brownian.gamma_rotation / (brown_temp_coeff * p.p.T));
+        sigma_pos_inv = sqrt(brownian.gamma_rotation / (temp_coeff * p.p.T));
       } else {
         // just an indication of the infinity
-        brown_sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos_inv = brownian.gammatype_nan;
       }
     } else {
       // Defaut values for both
-      brown_sigma_pos_inv = brownian.sigma_pos_rotation_inv;
+      sigma_pos_inv = brownian.sigma_pos_rotation_inv;
     }
   }
 #endif /* BROWNIAN_PER_PARTICLE */
@@ -475,14 +470,14 @@ void bd_random_walk_rot(Particle &p, double dt) {
 #endif
     {
 #ifndef PARTICLE_ANISOTROPY
-      if (brown_sigma_pos_inv > 0.0) {
-        dphi[j] = noise[j] * (1.0 / brown_sigma_pos_inv) * sqrt(dt);
+      if (sigma_pos_inv > 0.0) {
+        dphi[j] = noise[j] * (1.0 / sigma_pos_inv) * sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
 #else
-      if (brown_sigma_pos_inv[j] > 0.0) {
-        dphi[j] = noise[j] * (1.0 / brown_sigma_pos_inv[j]) * sqrt(dt);
+      if (sigma_pos_inv[j] > 0.0) {
+        dphi[j] = noise[j] * (1.0 / sigma_pos_inv[j]) * sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
@@ -505,20 +500,20 @@ void bd_random_walk_rot(Particle &p, double dt) {
  *  @param[in]     dt             Time interval
  */
 void bd_random_walk_vel_rot(Particle &p, double dt) {
-  double brown_sigma_vel;
+  double sigma_vel;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr brown_temp_coeff = 1.0;
+  auto const constexpr temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   if (p.p.T >= 0.) {
-    brown_sigma_vel = sqrt(brown_temp_coeff * p.p.T);
+    sigma_vel = sqrt(temp_coeff * p.p.T);
   } else {
-    brown_sigma_vel = brownian.sigma_vel_rotation;
+    sigma_vel = brownian.sigma_vel_rotation;
   }
 #else
   // set defaults
-  brown_sigma_vel = brownian.sigma_vel_rotation;
+  sigma_vel = brownian.sigma_vel_rotation;
 #endif /* BROWNIAN_PER_PARTICLE */
 
   Utils::Vector3d domega;
@@ -531,7 +526,7 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
     {
       // velocity is added here. It is already initialized in the terminal drag
       // part.
-      domega[j] = brown_sigma_vel * noise[j] / sqrt(p.p.rinertia[j]);
+      domega[j] = sigma_vel * noise[j] / sqrt(p.p.rinertia[j]);
     }
   }
   domega = mask(p.p.rotation, domega);
