@@ -73,13 +73,12 @@ class AnalyzeMassRelated(ut.TestCase):
         # Particles of type 0
         I0 = self.i_tensor(self.system.part.select(
             lambda p: (not p.virtual) and p.type == 0).id)
-
         np.testing.assert_allclose(
             I0, self.system.analysis.moment_of_inertia_matrix(p_type=0), atol=1E-9)
-        # type=1
+        # Particles of type 1
         I1 = self.i_tensor(self.system.part.select(type=1).id)
-        self.assertTrue(
-            np.allclose(I1, self.system.analysis.moment_of_inertia_matrix(p_type=1), atol=1E-9))
+        np.testing.assert_allclose(
+            I1, self.system.analysis.moment_of_inertia_matrix(p_type=1), atol=1E-9)
 
     def test_center_of_mass(self):
         no_virtual_type_0 = self.system.part.select(

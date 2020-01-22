@@ -49,15 +49,8 @@
 #include <cstdlib>
 #include <cstring>
 
-/* Variables */
-
 /** list of all cells. */
 std::vector<Cell> cells;
-/** list of pointers to all cells containing particles physically on the local
- * node. */
-CellPList local_cells = {nullptr, 0, 0};
-/** list of pointers to all cells containing ghosts. */
-CellPList ghost_cells = {nullptr, 0, 0};
 
 /** Type of cell structure in use */
 CellStructure cell_structure;
@@ -67,9 +60,13 @@ CellStructure cell_structure;
 unsigned resort_particles = Cells::RESORT_NONE;
 bool rebuild_verletlist = true;
 
-CellPList CellStructure::local_cells() const { return ::local_cells; }
+CellPList CellStructure::local_cells() {
+  return {m_local_cells.data(), static_cast<int>(m_local_cells.size())};
+}
 
-CellPList CellStructure::ghost_cells() const { return ::ghost_cells; }
+CellPList CellStructure::ghost_cells() {
+  return {m_ghost_cells.data(), static_cast<int>(m_ghost_cells.size())};
+}
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -84,7 +81,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
-  cells_update_ghosts();
+  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
@@ -94,31 +91,31 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           return (p1.r.p - p2.r.p).norm2();
-                         });
+    Algorithm::link_cell(
+        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
+        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
+        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
+          return (p1.r.p - p2.r.p).norm2();
+        });
     break;
   case CELL_STRUCTURE_NSQUARE:
     Algorithm::link_cell(
-        boost::make_indirect_iterator(local_cells.begin()),
-        boost::make_indirect_iterator(local_cells.end()), Utils::NoOp{},
-        pair_kernel, [](Particle const &p1, Particle const &p2) {
+        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
+        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
+        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
           return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
         });
     break;
   case CELL_STRUCTURE_LAYERED:
-    Algorithm::link_cell(boost::make_indirect_iterator(local_cells.begin()),
-                         boost::make_indirect_iterator(local_cells.end()),
-                         Utils::NoOp{}, pair_kernel,
-                         [](Particle const &p1, Particle const &p2) {
-                           auto vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
-                           vec21[2] = p1.r.p[2] - p2.r.p[2];
+    Algorithm::link_cell(
+        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
+        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
+        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
+          auto vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+          vec21[2] = p1.r.p[2] - p2.r.p[2];
 
-                           return vec21.norm2();
-                         });
+          return vec21.norm2();
+        });
   }
 
   /* Sort pairs */
@@ -185,7 +182,7 @@ static void topology_release(int cs) {
 }
 
 /** Choose the topology init function of a certain cell system. */
-void topology_init(int cs, double range, CellPList *local) {
+void topology_init(int cs, double range, CellPList local) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
@@ -198,13 +195,13 @@ void topology_init(int cs, double range, CellPList *local) {
     topology_init(cell_structure.type, range, local);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(local, node_grid, range);
+    dd_topology_init(&local, node_grid, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init(local);
+    nsq_topology_init(&local);
     break;
   case CELL_STRUCTURE_LAYERED:
-    layered_topology_init(local, node_grid, range);
+    layered_topology_init(&local, node_grid, range);
     break;
   default:
     fprintf(stderr,
@@ -215,27 +212,28 @@ void topology_init(int cs, double range, CellPList *local) {
   }
 }
 
-bool topology_check_resort(int cs, bool local_resort) {
+unsigned topology_check_resort(int cs, unsigned local_resort) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
   case CELL_STRUCTURE_LAYERED:
-    return boost::mpi::all_reduce(comm_cart, local_resort, std::logical_or<>());
+    return boost::mpi::all_reduce(comm_cart, local_resort,
+                                  std::bit_or<unsigned>());
   default:
     return true;
   }
 }
 
-/** Go through \ref ghost_cells and remove the ghost entries from \ref
+/** Go through ghost cells and remove the ghost entries from \ref
     local_particles. */
 static void invalidate_ghosts() {
-  for (auto const &p : ghost_cells.particles()) {
+  for (auto const &p : cell_structure.ghost_cells().particles()) {
     if (local_particles[p.identity()] == &p) {
       local_particles[p.identity()] = {};
     }
   }
 
-  for (auto &c : ghost_cells) {
+  for (auto &c : cell_structure.m_ghost_cells) {
     c->n = 0;
   }
 }
@@ -249,25 +247,22 @@ static void invalidate_ghosts() {
 /************************************************************/
 
 void cells_re_init(int new_cs, double range) {
-  CellPList tmp_local;
-
   invalidate_ghosts();
 
   topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
-  memmove(&tmp_local, &local_cells, sizeof(CellPList));
-  init_cellplist(&local_cells);
+  std::vector<Cell *> old_local_cells;
+  std::swap(old_local_cells, cell_structure.m_local_cells);
 
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(new_cs, range, &tmp_local);
+  topology_init(
+      new_cs, range,
+      {old_local_cells.data(), static_cast<int>(old_local_cells.size())});
   cell_structure.min_range = range;
 
   clear_particle_node();
-
-  /* finally deallocate the old cells */
-  realloc_cellplist(&tmp_local, 0);
 
   for (auto &cell : tmp_cells) {
     cell.resize(0);
@@ -302,7 +297,8 @@ unsigned const &get_resort_particles() { return resort_particles; }
 /*************************************************/
 
 int cells_get_n_particles() {
-  return std::accumulate(local_cells.begin(), local_cells.end(), 0,
+  return std::accumulate(cell_structure.m_local_cells.begin(),
+                         cell_structure.m_local_cells.end(), 0,
                          [](int n, const Cell *c) { return n + c->n; });
 }
 
@@ -370,7 +366,7 @@ void cells_resort_particles(int global_flag) {
   n_verlet_updates++;
 
   ParticleList displaced_parts =
-      sort_and_fold_parts(cell_structure, local_cells);
+      sort_and_fold_parts(cell_structure, cell_structure.local_cells());
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_LAYERED: {
@@ -391,7 +387,7 @@ void cells_resort_particles(int global_flag) {
                         << " moved more than"
                            " one local box length in one timestep.";
       resort_particles = Cells::RESORT_GLOBAL;
-      append_indexed_particle(local_cells.cell[0], std::move(part));
+      append_indexed_particle(cell_structure.m_local_cells[0], std::move(part));
     }
   } else {
 #ifdef ADDITIONAL_CHECKS
@@ -401,18 +397,11 @@ void cells_resort_particles(int global_flag) {
 #endif
   }
 
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_PARTNUM);
-  ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                     GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
-
-  /* Particles are now sorted, but Verlet lists are invalid
-     and p_old has to be reset. */
-  resort_particles = Cells::RESORT_NONE;
   rebuild_verletlist = true;
 
   displaced_parts.clear();
 
-  on_resort_particles(local_cells.particles());
+  on_resort_particles(cell_structure.local_cells().particles());
 }
 
 /*************************************************/
@@ -440,29 +429,44 @@ void cells_on_geometry_change(int flags) {
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
-  resort_particles |= (std::any_of(local_cells.particles().begin(),
-                                   local_cells.particles().end(),
-                                   [&skin2](Particle const &p) {
-                                     return (p.r.p - p.l.p_old).norm2() > skin2;
-                                   }))
-                          ? Cells::RESORT_LOCAL
-                          : Cells::RESORT_NONE;
+  resort_particles |=
+      (std::any_of(cell_structure.local_cells().particles().begin(),
+                   cell_structure.local_cells().particles().end(),
+                   [&skin2](Particle const &p) {
+                     return (p.r.p - p.l.p_old).norm2() > skin2;
+                   }))
+          ? Cells::RESORT_LOCAL
+          : Cells::RESORT_NONE;
 }
 
 /*************************************************/
-void cells_update_ghosts() {
-  if (topology_check_resort(cell_structure.type, resort_particles)) {
-    int global = (resort_particles & Cells::RESORT_GLOBAL)
+void cells_update_ghosts(unsigned data_parts) {
+  /* data parts that are only updated on resort */
+  auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
+
+  auto const global_resort =
+      topology_check_resort(cell_structure.type, resort_particles);
+
+  if (global_resort != Cells::RESORT_NONE) {
+    int global = (global_resort & Cells::RESORT_GLOBAL)
                      ? CELL_GLOBAL_EXCHANGE
                      : CELL_NEIGHBOR_EXCHANGE;
 
-    /* Communication step: number of ghosts and ghost information */
+    /* Resort cell system */
     cells_resort_particles(global);
 
-  } else
+    /* Communication step: number of ghosts and ghost information */
+    ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                       GHOSTTRANS_PARTNUM);
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+
+    /* Particles are now sorted */
+    resort_particles = Cells::RESORT_NONE;
+  } else {
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION);
+                       data_parts & ~resort_only_parts);
+  }
 }
 
 Cell *find_current_cell(const Particle &p) {

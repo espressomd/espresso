@@ -50,6 +50,7 @@ using Utils::sinc;
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
+#include <utils/math/bspline.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -94,10 +95,8 @@ static void p3m_init_a_ai_cao_cut();
 static double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
                                    const ParticleRange &particles);
 
-#ifdef P3M_STORE_CA_FRAC
 /** Realloc charge assignment fields. */
 static void p3m_realloc_ca_fields(int newsize);
-#endif
 
 static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
 
@@ -210,9 +209,7 @@ p3m_data_struct::p3m_data_struct() {
 
   pos_shift = 0.0;
 
-#ifdef P3M_STORE_CA_FRAC
   ca_num = 0;
-#endif
   ks_pnum = 0;
 }
 
@@ -231,11 +228,9 @@ void p3m_init() {
      * the cutoff for charge assignment p3m.params.cao_cut */
     p3m_init_a_ai_cao_cut();
 
-#ifdef P3M_STORE_CA_FRAC
     /* initialize ca fields to size CA_INCREMENT: p3m.ca_frac and p3m.ca_fmp */
     p3m.ca_num = 0;
     p3m_realloc_ca_fields(CA_INCREMENT);
-#endif
 
     p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
 
@@ -381,7 +376,7 @@ void p3m_interpolate_charge_assignment_function() {
     /* loop over all interpolation points */
     for (j = -p3m.params.inter; j <= p3m.params.inter; j++)
       p3m.int_caf[i][j + p3m.params.inter] =
-          p3m_caf(i, j * dInterpol, p3m.params.cao);
+          Utils::bspline(i, j * dInterpol, p3m.params.cao);
   }
 }
 
@@ -427,9 +422,7 @@ template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
     }
   }
 
-#ifdef P3M_STORE_CA_FRAC
   p3m_shrink_wrap_charge_grid(cp_cnt);
-#endif
 }
 
 /* Template wrapper for p3m_do_assign_charge() */
@@ -468,14 +461,12 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
   int arg[3];
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
-#ifdef P3M_STORE_CA_FRAC
   // make sure we have enough space
   if (cp_cnt >= p3m.ca_num)
     p3m_realloc_ca_fields(cp_cnt + 1);
   // do it here, since p3m_realloc_ca_fields may change the address of
   // p3m.ca_frac
   double *cur_ca_frac = p3m.ca_frac.data() + cao * cao * cao * cp_cnt;
-#endif
 
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
@@ -510,59 +501,50 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
 #endif
   }
 
-#ifdef P3M_STORE_CA_FRAC
   if (cp_cnt >= 0)
     p3m.ca_fmp[cp_cnt] = q_ind;
-#endif
+
+  Utils::Array<double, cao> w_x, w_y, w_z;
 
   if (!inter) {
-    for (int i0 = 0; i0 < cao; i0++) {
-      auto const tmp0 = p3m_caf(i0, dist[0], cao);
-      for (int i1 = 0; i1 < cao; i1++) {
-        auto const tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
-        for (int i2 = 0; i2 < cao; i2++) {
-          auto const cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-          p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-#ifdef P3M_STORE_CA_FRAC
-          /* store current ca frac */
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-#endif
-          q_ind++;
-        }
-        q_ind += p3m.local_mesh.q_2_off;
-      }
-      q_ind += p3m.local_mesh.q_21_off;
+    for (int i = 0; i < cao; i++) {
+      using Utils::bspline;
+
+      w_x[i] = bspline<cao>(i, dist[0]);
+      w_y[i] = bspline<cao>(i, dist[1]);
+      w_z[i] = bspline<cao>(i, dist[2]);
     }
   } else {
-    for (int i0 = 0; i0 < cao; i0++) {
-      auto const tmp0 = p3m.int_caf[i0][arg[0]];
-      for (int i1 = 0; i1 < cao; i1++) {
-        auto const tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-        for (int i2 = 0; i2 < cao; i2++) {
-          auto const cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-          p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-#ifdef P3M_STORE_CA_FRAC
-          /* store current ca frac */
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-#endif
-          q_ind++;
-        }
-        q_ind += p3m.local_mesh.q_2_off;
-      }
-      q_ind += p3m.local_mesh.q_21_off;
+    for (int i = 0; i < cao; i++) {
+      w_x[i] = p3m.int_caf[i][arg[0]];
+      w_y[i] = p3m.int_caf[i][arg[1]];
+      w_z[i] = p3m.int_caf[i][arg[2]];
     }
+  }
+
+  for (int i0 = 0; i0 < cao; i0++) {
+    auto const tmp0 = w_x[i0];
+    for (int i1 = 0; i1 < cao; i1++) {
+      auto const tmp1 = tmp0 * w_y[i1];
+      for (int i2 = 0; i2 < cao; i2++) {
+        auto const cur_ca_frac_val = q * tmp1 * w_z[i2];
+        p3m.rs_mesh[q_ind] += cur_ca_frac_val;
+        /* store current ca frac */
+        if (cp_cnt >= 0)
+          *(cur_ca_frac++) = cur_ca_frac_val;
+        q_ind++;
+      }
+      q_ind += p3m.local_mesh.q_2_off;
+    }
+    q_ind += p3m.local_mesh.q_21_off;
   }
 }
 
-#ifdef P3M_STORE_CA_FRAC
 void p3m_shrink_wrap_charge_grid(int n_charges) {
   /* we do not really want to export these */
   if (n_charges < p3m.ca_num)
     p3m_realloc_ca_fields(n_charges);
 }
-#endif
 
 /* Assign the forces obtained from k-space */
 template <int cao>
@@ -570,21 +552,13 @@ static void P3M_assign_forces(double force_prefac, int d_rs,
                               const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
-#ifdef P3M_STORE_CA_FRAC
   int cf_cnt = 0;
-#else
-  /* distance to nearest mesh point */
-  double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
-#endif
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
 
   for (auto &p : particles) {
     auto const q = p.p.q;
     if (q != 0.0) {
-#ifdef P3M_STORE_CA_FRAC
       q_ind = p3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < cao; i0++) {
         for (int i1 = 0; i1 < cao; i1++) {
@@ -599,60 +573,6 @@ static void P3M_assign_forces(double force_prefac, int d_rs,
         q_ind += p3m.local_mesh.q_21_off;
       }
       cp_cnt++;
-#else
-      double pos;
-      int nmp;
-      double tmp0, tmp1;
-      double cur_ca_frac_val;
-      for (int d = 0; d < 3; d++) {
-        /* particle position in mesh coordinates */
-        pos = ((p.r.p[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
-              p3m.pos_shift;
-        /* nearest mesh point */
-        nmp = (int)pos;
-        /* 3d-array index of nearest mesh point */
-        q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
-
-        if (p3m.params.inter == 0)
-          /* distance to nearest mesh point */
-          dist[d] = (pos - nmp) - 0.5;
-        else
-          /* distance to nearest mesh point for interpolation */
-          arg[d] = (int)((pos - nmp) * p3m.params.inter2);
-      }
-
-      if (p3m.params.inter == 0) {
-        for (int i0 = 0; i0 < cao; i0++) {
-          tmp0 = p3m_caf(i0, dist[0], cao);
-          for (int i1 = 0; i1 < cao; i1++) {
-            tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
-            for (int i2 = 0; i2 < cao; i2++) {
-              cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-              p.f.f[d_rs] -=
-                  force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
-              q_ind++;
-            }
-            q_ind += p3m.local_mesh.q_2_off;
-          }
-          q_ind += p3m.local_mesh.q_21_off;
-        }
-      } else {
-        for (int i0 = 0; i0 < cao; i0++) {
-          tmp0 = p3m.int_caf[i0][arg[0]];
-          for (int i1 = 0; i1 < cao; i1++) {
-            tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-            for (int i2 = 0; i2 < cao; i2++) {
-              cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-              p.f.f[d_rs] -=
-                  force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
-              q_ind++;
-            }
-            q_ind += p3m.local_mesh.q_2_off;
-          }
-          q_ind += p3m.local_mesh.q_21_off;
-        }
-      }
-#endif
     }
   }
 }
@@ -835,7 +755,6 @@ double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
   return 0;
 }
 
-#ifdef P3M_STORE_CA_FRAC
 void p3m_realloc_ca_fields(int newsize) {
   newsize = ((newsize + CA_INCREMENT - 1) / CA_INCREMENT) * CA_INCREMENT;
   if (newsize == p3m.ca_num)
@@ -847,7 +766,6 @@ void p3m_realloc_ca_fields(int newsize) {
   p3m.ca_frac.resize(p3m.params.cao3 * p3m.ca_num);
   p3m.ca_fmp.resize(p3m.ca_num);
 }
-#endif
 
 void p3m_calc_meshift() {
   p3m.meshift_x.resize(p3m.params.mesh[0]);
@@ -1715,7 +1633,7 @@ void p3m_count_charged_particles() {
     tot_sums[i] = 0.0;
   }
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : cell_structure.local_cells().particles()) {
     if (p.p.q != 0.0) {
       node_sums[0] += 1.0;
       node_sums[1] += Utils::sqr(p.p.q);

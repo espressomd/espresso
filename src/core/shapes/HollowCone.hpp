@@ -64,7 +64,7 @@ private:
   double m_width;
   double m_opening_angle;
 
-  /** Inside/Outside (+1 outside -1 inside interaction direction)*/
+  /** Inside/Outside (+1 outside -1 inside interaction direction) */
   double m_direction;
 };
 } // namespace Shapes

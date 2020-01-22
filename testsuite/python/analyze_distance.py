@@ -92,18 +92,18 @@ class AnalyzeDistance(ut.TestCase):
         for i in range(1, 10, 2):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
-            self.assertTrue(
-                np.allclose(self.system.analysis.nbhood([i, i, i], i * 2),
-                            self.nbhood([i, i, i], i * 2)))
+            np.testing.assert_allclose(
+                self.system.analysis.nbhood([i, i, i], i * 2),
+                self.nbhood([i, i, i], i * 2))
 
     def test_dist_to_pos(self):
         # try five times
         for i in range(5):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
-            self.assertTrue(
-                np.allclose(self.system.analysis.dist_to(pos=[i, i, i]),
-                            self.dist_to_pos([i, i, i])))
+            np.testing.assert_allclose(
+                self.system.analysis.dist_to(pos=[i, i, i]),
+                self.dist_to_pos([i, i, i]))
 
     def test_dist_to_id(self):
         # try five times

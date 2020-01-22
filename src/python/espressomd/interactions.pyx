@@ -1383,49 +1383,6 @@ IF SOFT_SPHERE == 1:
             return {"a", "n", "cutoff"}
 
 
-IF MEMBRANE_COLLISION == 1:
-
-    cdef class MembraneCollisionInteraction(NonBondedInteraction):
-
-        def validate_params(self):
-            if self._params["cutoff"] < 0:
-                raise ValueError("Membrane Collision cutoff has to be >=0")
-            return True
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0], self._part_types[1])
-            return {
-                "a": ia_params.membrane.a,
-                "n": ia_params.membrane.n,
-                "cutoff": ia_params.membrane.cut,
-                "offset": ia_params.membrane.offset}
-
-        def is_active(self):
-            return (self._params["a"] > 0)
-
-        def _set_params_in_es_core(self):
-            if membrane_collision_set_params(self._part_types[0],
-                                             self._part_types[1],
-                                             self._params["a"],
-                                             self._params["n"],
-                                             self._params["cutoff"],
-                                             self._params["offset"]):
-                raise Exception("Could not set Membrane Collision parameters")
-
-        def default_params(self):
-            return {"offset": 0.}
-
-        def type_name(self):
-            return "MembraneCollision"
-
-        def valid_keys(self):
-            return {"a", "n", "cutoff", "offset"}
-
-        def required_keys(self):
-            return {"a", "n", "cutoff"}
-
 IF HERTZIAN == 1:
 
     cdef class HertzianInteraction(NonBondedInteraction):
@@ -1608,7 +1565,6 @@ class NonBondedInteractionHandle:
     hertzian = None
     gaussian = None
     tabulated = None
-    membrane_collision = None
     gay_berne = None
     dpd = None
     hat = None
@@ -1625,9 +1581,6 @@ class NonBondedInteractionHandle:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF WCA:
             self.wca = WCAInteraction(_type1, _type2)
-        IF MEMBRANE_COLLISION:
-            self.membrane_collision = MembraneCollisionInteraction(
-                _type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
@@ -3293,43 +3246,6 @@ class OifLocalForces(BondedInteraction):
             self._params["kvisc"])
 
 
-IF MEMBRANE_COLLISION == 1:
-
-    class OifOutDirection(BondedInteraction):
-
-        """
-        Determine the surface normals of triangles on a mesh.
-        Takes no parameter.
-
-        """
-
-        def type_number(self):
-            return BONDED_IA_OIF_OUT_DIRECTION
-
-        def type_name(self):
-            return "OIF_OUT_DIRECTION"
-
-        def valid_keys(self):
-            return set()
-
-        def required_keys(self):
-            return set()
-
-        def set_default_params(self):
-            self._params = {}
-
-        def _get_params_from_es_core(self):
-            return {}
-
-        def _set_params_in_es_core(self):
-            oif_out_direction_set_params(
-                self._bond_id)
-
-ELSE:
-    class OifOutDirection(BondedInteractionNotDefined):
-        name = "OIF_OUT_DIRECTION"
-
-
 class QuarticBond(BondedInteraction):
 
     """
@@ -3404,7 +3320,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
-    int(BONDED_IA_OIF_OUT_DIRECTION): OifOutDirection,
     int(BONDED_IA_IBM_TRIEL): IBM_Triel,
     int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
     int(BONDED_IA_IBM_VOLUME_CONSERVATION): IBM_VolCons,

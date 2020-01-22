@@ -119,8 +119,10 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   assert(get_resort_particles() == Cells::RESORT_NONE);
 
   if (cell_structure.min_range != INACTIVE_CUTOFF) {
-    auto first = boost::make_indirect_iterator(local_cells.begin());
-    auto last = boost::make_indirect_iterator(local_cells.end());
+    auto first =
+        boost::make_indirect_iterator(cell_structure.local_cells().begin());
+    auto last =
+        boost::make_indirect_iterator(cell_structure.local_cells().end());
 
     detail::decide_distance(
         first, last, std::forward<ParticleKernel>(particle_kernel),

@@ -90,7 +90,7 @@ void IBM_ResetLBForces_GPU() {
 }
 
 /** Transfer particle forces into the LB fluid.
- *  Called from @ref integrate_vv.
+ *  Called from @ref integrate.
  *  This must be the first CUDA-IBM function to be called because it also does
  *  some initialization.
  */

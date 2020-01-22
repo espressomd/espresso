@@ -51,6 +51,7 @@ using Utils::strcat_alloc;
 #include <utils/math/sinc.hpp>
 using Utils::sinc;
 #include <utils/constants.hpp>
+#include <utils/math/bspline.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -517,7 +518,7 @@ void dp3m_interpolate_dipole_assignment_function() {
     /* loop over all interpolation points */
     for (j = -dp3m.params.inter; j <= dp3m.params.inter; j++)
       dp3m.int_caf[i][j + dp3m.params.inter] =
-          p3m_caf(i, j * dInterpol, dp3m.params.cao);
+          Utils::bspline(i, j * dInterpol, dp3m.params.cao);
   }
 }
 
@@ -544,9 +545,6 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
                         double const dip[3], int cp_cnt) {
   /* we do not really want to export these, but this function should be inlined
    */
-  double p3m_caf(int i, double x, int cao_value);
-  void dp3m_realloc_ca_fields(int size);
-
   int d, i0, i1, i2;
   double tmp0, tmp1;
   /* position of a particle in local mesh units */
@@ -585,11 +583,11 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
       dp3m.ca_fmp[cp_cnt] = q_ind;
 
     for (i0 = 0; i0 < dp3m.params.cao; i0++) {
-      tmp0 = p3m_caf(i0, dist[0], dp3m.params.cao);
+      tmp0 = Utils::bspline(i0, dist[0], dp3m.params.cao);
       for (i1 = 0; i1 < dp3m.params.cao; i1++) {
-        tmp1 = tmp0 * p3m_caf(i1, dist[1], dp3m.params.cao);
+        tmp1 = tmp0 * Utils::bspline(i1, dist[1], dp3m.params.cao);
         for (i2 = 0; i2 < dp3m.params.cao; i2++) {
-          cur_ca_frac_val = tmp1 * p3m_caf(i2, dist[2], dp3m.params.cao);
+          cur_ca_frac_val = tmp1 * Utils::bspline(i2, dist[2], dp3m.params.cao);
           if (cp_cnt >= 0)
             *(cur_ca_frac++) = cur_ca_frac_val;
           if (mu != 0.0) {
@@ -1798,7 +1796,7 @@ void dp3m_count_magnetic_particles() {
     tot_sums[i] = 0.0;
   }
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : cell_structure.local_cells().particles()) {
     if (p.p.dipm != 0.0) {
       node_sums[0] += p.calc_dip().norm2();
       node_sums[1] += 1.0;

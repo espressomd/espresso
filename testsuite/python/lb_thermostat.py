@@ -76,7 +76,7 @@ class LBThermostatCommon:
             for j in range(n_bins):
                 found = data[j]
                 expected = single_component_maxwell(bins[j], bins[j + 1], KT)
-                self.assertLessEqual(abs(found - expected), error_tol)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
 
 
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):

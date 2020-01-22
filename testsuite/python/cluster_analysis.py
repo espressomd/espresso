@@ -130,11 +130,11 @@ class ClusterAnalysis(ut.TestCase):
             self.assertLess(np.linalg.norm(c.center_of_mass()), 1E-8)
 
             # Longest distance
-            self.assertLess(
-                abs(c.longest_distance()
-                    - self.es.distance(self.es.part[0],
-                                       self.es.part[len(self.es.part) - 1])),
-                1E-8)
+            self.assertAlmostEqual(
+                c.longest_distance(),
+                self.es.distance(self.es.part[0],
+                                 self.es.part[len(self.es.part) - 1]),
+                delta=1E-8)
 
             # Radius of gyration
             rg = 0.
@@ -143,11 +143,11 @@ class ClusterAnalysis(ut.TestCase):
                 rg += self.es.distance(p, com_particle)**2
             rg /= len(self.es.part)
             rg = np.sqrt(rg)
-            self.assertTrue(abs(c.radius_of_gyration() - rg) <= 1E-6)
+            self.assertAlmostEqual(c.radius_of_gyration(), rg, delta=1E-6)
 
             # Fractal dimension calc require gsl
             if not espressomd.has_features("GSL"):
-                print("Skipping fractal dimension tests for lack of GSL")
+                print("Skipping fractal dimension tests due to missing GSL dependency")
                 return
             # The fractal dimension of a line should be 1
 
