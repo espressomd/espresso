@@ -59,6 +59,21 @@ using GammaType = double;
 #endif
 } // namespace Thermostat
 
+namespace {
+/** @name Integrators parameters sentinels.
+ *  These functions return the sentinel value for the Langevin/Brownian
+ *  parameters, indicating that they have not been set yet.
+ */
+/*@{*/
+constexpr double sentinel(double) { return -1.0; }
+constexpr Utils::Vector3d sentinel(Utils::Vector3d) {
+  return {-1.0, -1.0, -1.0};
+}
+constexpr double set_nan(double) { return NAN; }
+constexpr Utils::Vector3d set_nan(Utils::Vector3d) { return {NAN, NAN, NAN}; }
+/*@}*/
+} // namespace
+
 /************************************************
  * exported variables
  ************************************************/
