@@ -58,6 +58,7 @@ using Utils::strcat_alloc;
 #include <boost/range/numeric.hpp>
 #include <mpi.h>
 
+#include <boost/range/algorithm/copy.hpp>
 #include <complex>
 #include <cstdio>
 #include <cstdlib>
@@ -371,9 +372,6 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
   // make sure we have enough space
   if (cp_cnt >= p3m.ca_num)
     p3m_realloc_ca_fields(cp_cnt + 1);
-  // do it here, since p3m_realloc_ca_fields may change the address of
-  // p3m.ca_frac
-  double *cur_ca_frac = p3m.ca_frac.data() + cao * cao * cao * cp_cnt;
 
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
@@ -436,14 +434,17 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
       for (int i2 = 0; i2 < cao; i2++) {
         auto const cur_ca_frac_val = q * tmp1 * w_z[i2];
         p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-        /* store current ca frac */
-        if (cp_cnt >= 0)
-          *(cur_ca_frac++) = cur_ca_frac_val;
         q_ind++;
       }
       q_ind += p3m.local_mesh.q_2_off;
     }
     q_ind += p3m.local_mesh.q_21_off;
+  }
+
+  if (cp_cnt >= 0) {
+    boost::copy(w_x, p3m.ca_frac.begin() + (3 * cp_cnt + 0) * cao);
+    boost::copy(w_y, p3m.ca_frac.begin() + (3 * cp_cnt + 1) * cao);
+    boost::copy(w_z, p3m.ca_frac.begin() + (3 * cp_cnt + 2) * cao);
   }
 }
 
@@ -532,25 +533,33 @@ void p3m_shrink_wrap_charge_grid(int n_charges) {
 template <int cao>
 static void P3M_assign_forces(double force_prefac,
                               const ParticleRange &particles) {
+  using Utils::make_const_span;
+  using Utils::Span;
+  using Utils::Vector;
+
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
-  int cf_cnt = 0;
-  /* index, index jumps for rs_mesh array */
-  int q_ind = 0;
 
   for (auto &p : particles) {
     auto const q = p.p.q;
     if (q != 0.0) {
-      q_ind = p3m.ca_fmp[cp_cnt];
+      Span<const double> w_x(p3m.ca_frac.data() + (3 * cp_cnt + 0) * cao, cao);
+      const Vector<double, cao> w_y(
+          make_const_span(p3m.ca_frac.data() + (3 * cp_cnt + 1) * cao, cao));
+      const Vector<double, cao> w_z(
+          make_const_span(p3m.ca_frac.data() + (3 * cp_cnt + 2) * cao, cao));
+
+      /* index, index jumps for rs_mesh array */
+      auto q_ind = p3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < cao; i0++) {
+        auto const fx = q * w_x[i0];
         for (int i1 = 0; i1 < cao; i1++) {
+          auto const fxy = w_y[i1] * fx;
           for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f -= force_prefac * p3m.ca_frac[cf_cnt] *
+            p.f.f -= force_prefac * fxy * w_z[i2] *
                      Utils::Vector3d{p3m.E_mesh[0][q_ind], p3m.E_mesh[1][q_ind],
                                      p3m.E_mesh[2][q_ind]};
-
             q_ind++;
-            cf_cnt++;
           }
           q_ind += p3m.local_mesh.q_2_off;
         }
