@@ -203,7 +203,6 @@ p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
 
-  rs_mesh = nullptr;
   sum_qpart = 0;
   sum_q2 = 0.0;
   square_sum_q = 0.0;
@@ -237,11 +236,10 @@ void p3m_init() {
 
     p3m.sm.resize(comm_cart, p3m.local_mesh);
 
-    int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
-                 node_grid, comm_cart);
-    p3m.ks_mesh.resize(ca_mesh_size);
+    int ca_mesh_size = fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin,
+                                p3m.params.mesh, p3m.params.mesh_off,
+                                &p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
+    p3m.rs_mesh.resize(ca_mesh_size);
     for (auto &e : p3m.E_mesh) {
       e.resize(ca_mesh_size);
     }
@@ -629,8 +627,8 @@ Utils::Vector9d p3m_calc_kspace_stress() {
   Utils::Vector9d node_k_space_stress{};
 
   if (p3m.sum_q2 > 0) {
-    p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
+    p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
+    fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
 
     int ind = 0;
     int j[3];
@@ -696,8 +694,8 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles) {
   /* Gather information for FFT grid inside the nodes domain (inner local mesh)
    * and perform forward 3D FFT (Charge Assignment Mesh). */
-  p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-  fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
+  p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
+  fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
 
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!

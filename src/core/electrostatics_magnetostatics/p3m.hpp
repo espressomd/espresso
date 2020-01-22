@@ -57,11 +57,9 @@ struct p3m_data_struct {
   /** local mesh. */
   p3m_local_mesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
-  double *rs_mesh;
-  /** k-space mesh (local) for k-space calculation and FFT.*/
-  std::vector<double> ks_mesh;
+  fft_vector<double> rs_mesh;
   /** mesh (local) for the electric field.*/
-  std::array<std::vector<double>, 3> E_mesh;
+  std::array<fft_vector<double>, 3> E_mesh;
 
   /** number of charged particles (only on master node). */
   int sum_qpart;

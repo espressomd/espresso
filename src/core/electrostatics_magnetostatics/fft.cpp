@@ -488,7 +488,7 @@ void calc_2d_grid(int n, int grid[3]) {
 }
 } // namespace
 
-int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
+int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
              fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm) {
@@ -646,24 +646,13 @@ int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
   /* Factor 2 for complex numbers */
   fft.send_buf.resize(fft.max_comm_size);
   fft.recv_buf.resize(fft.max_comm_size);
-  if (*data)
-    fftw_free(*data);
-  (*data) = (double *)fftw_malloc(fft.max_mesh_size * sizeof(double));
-  if (fft.data_buf)
-    fftw_free(fft.data_buf);
-  fft.data_buf = (double *)fftw_malloc(fft.max_mesh_size * sizeof(double));
-  if (!(*data) || !fft.data_buf) {
-    throw std::bad_alloc{};
-  }
-
-  auto *c_data = (fftw_complex *)(*data);
+  fft.data_buf.resize(fft.max_mesh_size);
+  auto *c_data = (fftw_complex *)(fft.data_buf.data());
 
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for (i = 1; i < 4; i++) {
     fft.plan[i].dir = FFTW_FORWARD;
-    /* FFT plan creation.
-       Attention: destroys contents of c_data/data and c_fft.data_buf/data_buf.
-     */
+    /* FFT plan creation.*/
 
     if (fft.init_tag)
       fftw_destroy_plan(fft.plan[i].our_fftw_plan);
@@ -706,10 +695,10 @@ void fft_perform_forw(double *data, fft_data_struct &fft,
   /* ===== first direction  ===== */
 
   auto *c_data = (fftw_complex *)data;
-  auto *c_data_buf = (fftw_complex *)fft.data_buf;
+  auto *c_data_buf = (fftw_complex *)fft.data_buf.data();
 
   /* communication to current dir row format (in is data) */
-  forw_grid_comm(fft.plan[1], data, fft.data_buf, fft, comm);
+  forw_grid_comm(fft.plan[1], data, fft.data_buf.data(), fft, comm);
 
   /* complexify the real data array (in is fft.data_buf) */
   for (int i = 0; i < fft.plan[1].new_size; i++) {
@@ -720,12 +709,12 @@ void fft_perform_forw(double *data, fft_data_struct &fft,
   fftw_execute_dft(fft.plan[1].our_fftw_plan, c_data, c_data);
   /* ===== second direction ===== */
   /* communication to current dir row format (in is data) */
-  forw_grid_comm(fft.plan[2], data, fft.data_buf, fft, comm);
+  forw_grid_comm(fft.plan[2], data, fft.data_buf.data(), fft, comm);
   /* perform FFT (in/out is fft.data_buf)*/
   fftw_execute_dft(fft.plan[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* ===== third direction  ===== */
   /* communication to current dir row format (in is fft.data_buf) */
-  forw_grid_comm(fft.plan[3], fft.data_buf, data, fft, comm);
+  forw_grid_comm(fft.plan[3], fft.data_buf.data(), data, fft, comm);
   /* perform FFT (in/out is data)*/
   fftw_execute_dft(fft.plan[3].our_fftw_plan, c_data, c_data);
 
@@ -736,20 +725,22 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
                       const boost::mpi::communicator &comm) {
 
   auto *c_data = (fftw_complex *)data;
-  auto *c_data_buf = (fftw_complex *)fft.data_buf;
+  auto *c_data_buf = (fftw_complex *)fft.data_buf.data();
 
   /* ===== third direction  ===== */
 
   /* perform FFT (in is data) */
   fftw_execute_dft(fft.back[3].our_fftw_plan, c_data, c_data);
   /* communicate (in is data)*/
-  back_grid_comm(fft.plan[3], fft.back[3], data, fft.data_buf, fft, comm);
+  back_grid_comm(fft.plan[3], fft.back[3], data, fft.data_buf.data(), fft,
+                 comm);
 
   /* ===== second direction ===== */
   /* perform FFT (in is fft.data_buf) */
   fftw_execute_dft(fft.back[2].our_fftw_plan, c_data_buf, c_data_buf);
   /* communicate (in is fft.data_buf) */
-  back_grid_comm(fft.plan[2], fft.back[2], fft.data_buf, data, fft, comm);
+  back_grid_comm(fft.plan[2], fft.back[2], fft.data_buf.data(), data, fft,
+                 comm);
 
   /* ===== first direction  ===== */
   /* perform FFT (in is data) */
@@ -766,7 +757,8 @@ void fft_perform_back(double *data, bool check_complex, fft_data_struct &fft,
     }
   }
   /* communicate (in is fft.data_buf) */
-  back_grid_comm(fft.plan[1], fft.back[1], fft.data_buf, data, fft, comm);
+  back_grid_comm(fft.plan[1], fft.back[1], fft.data_buf.data(), data, fft,
+                 comm);
 
   /* REMARK: Result has to be in data. */
 }
