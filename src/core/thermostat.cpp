@@ -43,17 +43,7 @@ using Thermostat::GammaType;
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
-
-/* NPT ISOTROPIC THERMOSTAT */
-double nptiso_gamma0 = 0.0;
-double nptiso_gammav = 0.0;
-
-#ifdef NPT
-double nptiso_pref1;
-double nptiso_pref2;
-double nptiso_pref3;
-double nptiso_pref4;
-#endif
+IsotropicNptThermostat npt_iso = {};
 
 void mpi_bcast_langevin_rng_counter_slave(const uint64_t counter) {
   langevin.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
@@ -125,11 +115,10 @@ void thermo_init_langevin() {
 #ifdef NPT
 void thermo_init_npt_isotropic() {
   if (nptiso.piston != 0.0) {
-    nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
-
-    nptiso_pref2 = sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
-    nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
-    nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
+    npt_iso.pref1 = -npt_iso.gamma0 * 0.5 * time_step;
+    npt_iso.pref2 = sqrt(12.0 * temperature * npt_iso.gamma0 * time_step);
+    npt_iso.pref3 = -npt_iso.gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
+    npt_iso.pref4 = sqrt(12.0 * temperature * npt_iso.gammav * time_step);
   } else {
     thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
   }

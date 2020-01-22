@@ -107,11 +107,11 @@ const std::unordered_map<int, Datafield> fields{
      {node_grid.data(), Datafield::Type::INT, 3,
       "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
-     {&nptiso_gamma0, Datafield::Type::DOUBLE, 1,
-      "nptiso_gamma0"}}, /* 21 from thermostat.cpp */
+     {&npt_iso.gamma0, Datafield::Type::DOUBLE, 1,
+      "npt_iso.gamma0"}}, /* 21 from thermostat.cpp */
     {FIELD_NPTISO_GV,
-     {&nptiso_gammav, Datafield::Type::DOUBLE, 1,
-      "nptiso_gammav"}}, /* 22 from thermostat.cpp */
+     {&npt_iso.gammav, Datafield::Type::DOUBLE, 1,
+      "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
     {FIELD_NPTISO_PEXT,
      {&nptiso.p_ext, Datafield::Type::DOUBLE, 1,
       "npt_p_ext"}}, /* 23 from pressure.cpp */

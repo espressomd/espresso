@@ -47,10 +47,14 @@ cdef extern from "thermostat.hpp":
         ctypedef struct brownian_thermostat_struct "BrownianThermostat":
             double gamma_rotation
             double gamma
+    ctypedef struct npt_iso_thermostat_struct "IsotropicNptThermostat":
+        double gamma0
+        double gammav
 
     # links intern C-struct with python object
     cdef extern langevin_thermostat_struct langevin
     cdef extern brownian_thermostat_struct brownian
+    cdef extern npt_iso_thermostat_struct npt_iso
 
     void langevin_set_rng_state(stdint.uint64_t counter)
     void brownian_set_rng_state(stdint.uint64_t counter)

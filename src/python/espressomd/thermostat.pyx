@@ -185,8 +185,8 @@ cdef class Thermostat:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
             npt_dict["kT"] = temperature
-            npt_dict["gamma0"] = nptiso_gamma0
-            npt_dict["gammav"] = nptiso_gammav
+            npt_dict["gamma0"] = npt_iso.gamma0
+            npt_dict["gammav"] = npt_iso.gammav
             npt_dict.update(nptiso)
             thermo_list.append(npt_dict)
         if thermo_switch & THERMO_DPD:
@@ -624,10 +624,9 @@ cdef class Thermostat:
             temperature = float(kT)
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_NPT_ISO)
-            global nptiso_gamma0
-            nptiso_gamma0 = gamma0
-            global nptiso_gammav
-            nptiso_gammav = gammav
+            global npt_iso
+            npt_iso.gamma0 = gamma0
+            npt_iso.gammav = gammav
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
             mpi_bcast_parameter(FIELD_NPTISO_G0)

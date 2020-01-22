@@ -114,15 +114,6 @@ public:
 
 extern LangevinThermostat langevin;
 
-/** Friction coefficient for nptiso-thermostat's function
- *  @ref friction_therm0_nptiso
- */
-extern double nptiso_gamma0;
-/** Friction coefficient for nptiso-thermostat's function
- *  @ref friction_thermV_nptiso
- */
-extern double nptiso_gammav;
-
 /** %Thermostat for Brownian dynamics. */
 struct BrownianThermostat {
 private:
@@ -157,6 +148,26 @@ public:
 
 extern BrownianThermostat brownian;
 
+/** %Thermostat for isotropic NPT dynamics. */
+struct IsotropicNptThermostat {
+private:
+  using GammaType = Thermostat::GammaType;
+
+public:
+  /** Friction coefficient @f$ \gamma_0 @f$ */
+  double gamma0;
+  /** Friction coefficient @f$ \gamma_V @f$ */
+  double gammav;
+#ifdef NPT
+  double pref1;
+  double pref2;
+  double pref3;
+  double pref4;
+#endif
+};
+
+extern IsotropicNptThermostat npt_iso;
+
 /************************************************
  * functions
  ************************************************/
@@ -188,12 +199,11 @@ void thermo_init();
  *                dt (contained in prefactors)
  */
 inline double friction_therm0_nptiso(double vj) {
-  extern double nptiso_pref1, nptiso_pref2;
   if (thermo_switch & THERMO_NPT_ISO) {
-    if (nptiso_pref2 > 0.0) {
-      return (nptiso_pref1 * vj + nptiso_pref2 * Thermostat::noise());
+    if (npt_iso.pref2 > 0.0) {
+      return npt_iso.pref1 * vj + npt_iso.pref2 * Thermostat::noise();
     }
-    return nptiso_pref1 * vj;
+    return npt_iso.pref1 * vj;
   }
   return 0.0;
 }
@@ -202,12 +212,11 @@ inline double friction_therm0_nptiso(double vj) {
  *  nptiso_struct::p_diff
  */
 inline double friction_thermV_nptiso(double p_diff) {
-  extern double nptiso_pref3, nptiso_pref4;
   if (thermo_switch & THERMO_NPT_ISO) {
-    if (nptiso_pref4 > 0.0) {
-      return (nptiso_pref3 * p_diff + nptiso_pref4 * Thermostat::noise());
+    if (npt_iso.pref4 > 0.0) {
+      return npt_iso.pref3 * p_diff + npt_iso.pref4 * Thermostat::noise();
     }
-    return nptiso_pref3 * p_diff;
+    return npt_iso.pref3 * p_diff;
   }
   return 0.0;
 }
