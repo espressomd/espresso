@@ -109,13 +109,39 @@ extern double nptiso_gammav;
 /** Langevin RNG counter, used for both translation and rotation. */
 extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 
-/** Brownian friction coefficient gamma for translation. */
-extern Thermostat::GammaType brownian_gamma;
-/** Brownian friction coefficient gamma for rotation. */
-extern Thermostat::GammaType brownian_gamma_rotation;
+/** %Thermostat for Brownian dynamics. */
+struct BrownianThermostat {
+private:
+  using GammaType = Thermostat::GammaType;
 
-/** Brownian RNG counter, used for both translation and rotation. */
-extern std::unique_ptr<Utils::Counter<uint64_t>> brownian_rng_counter;
+public:
+  /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
+  GammaType gamma = sentinel(GammaType{});
+  /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
+  GammaType gamma_rotation = sentinel(GammaType{});
+  /** Inverse of the translational noise standard deviation.
+   *  Stores @f$ \left(\sqrt{2D_{\text{trans}}}\right)^{-1} @f$ with
+   *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
+   *  the translational diffusion coefficient
+   */
+  GammaType sigma_pos_inv = sentinel(GammaType{});
+  /** Inverse of the rotational noise standard deviation.
+   *  Stores @f$ \left(\sqrt{2D_{\text{rot}}}\right)^{-1} @f$ with
+   *  @f$ D_{\text{rot}} = k_B T/\gamma_{\text{rot}} @f$
+   *  the rotational diffusion coefficient
+   */
+  GammaType sigma_pos_rotation_inv = sentinel(GammaType{});
+  /** Sentinel value for divisions by zero. */
+  GammaType const gammatype_nan = set_nan(GammaType{});
+  /** Translational velocity noise standard deviation. */
+  double sigma_vel = 0;
+  /** Angular velocity noise standard deviation. */
+  double sigma_vel_rotation = 0;
+  /** RNG counter, used for both translation and rotation. */
+  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
+};
+
+extern BrownianThermostat brownian;
 
 /************************************************
  * functions

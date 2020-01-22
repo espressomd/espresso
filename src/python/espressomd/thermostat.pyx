@@ -157,18 +157,18 @@ cdef class Thermostat:
             lang_dict["act_on_virtual"] = thermo_virtual
             lang_dict["seed"] = int(brownian_get_rng_state())
             IF PARTICLE_ANISOTROPY:
-                lang_dict["gamma"] = [brownian_gamma[0],
-                                      brownian_gamma[1],
-                                      brownian_gamma[2]]
+                lang_dict["gamma"] = [brownian.gamma[0],
+                                      brownian.gamma[1],
+                                      brownian.gamma[2]]
             ELSE:
-                lang_dict["gamma"] = brownian_gamma
+                lang_dict["gamma"] = brownian.gamma
             IF ROTATION:
                 IF PARTICLE_ANISOTROPY:
-                    lang_dict["gamma_rotation"] = [brownian_gamma_rotation[0],
-                                                   brownian_gamma_rotation[1],
-                                                   brownian_gamma_rotation[2]]
+                    lang_dict["gamma_rotation"] = [brownian.gamma_rotation[0],
+                                                   brownian.gamma_rotation[1],
+                                                   brownian.gamma_rotation[2]]
                 ELSE:
-                    lang_dict["gamma_rotation"] = brownian_gamma_rotation
+                    lang_dict["gamma_rotation"] = brownian.gamma_rotation
             ELSE:
                 lang_dict["gamma_rotation"] = None
 
@@ -217,12 +217,12 @@ cdef class Thermostat:
         ELSE:
             langevin_gamma = 0.
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
-        global brownian_gamma
+        global brownian
         IF PARTICLE_ANISOTROPY:
             for i in range(3):
-                brownian_gamma[i] = 0.
+                brownian.gamma[i] = 0.
         ELSE:
-            brownian_gamma = 0.
+            brownian.gamma = 0.
         mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA)
         global langevin_gamma_rotation
         IF ROTATION:
@@ -232,13 +232,12 @@ cdef class Thermostat:
             ELSE:
                 langevin_gamma_rotation = 0.
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
-        global brownian_gamma_rotation
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
                 for i in range(3):
-                    brownian_gamma_rotation[i] = 0.
+                    brownian.gamma_rotation[i] = 0.
             ELSE:
-                brownian_gamma_rotation = 0.
+                brownian.gamma_rotation = 0.
             mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA_ROTATION)
 
         global thermo_switch
@@ -494,49 +493,47 @@ cdef class Thermostat:
 
         global temperature
         temperature = float(kT)
-        global brownian_gamma
+        global brownian
         IF PARTICLE_ANISOTROPY:
             if scalar_gamma_def:
-                brownian_gamma[0] = gamma
-                brownian_gamma[1] = gamma
-                brownian_gamma[2] = gamma
+                brownian.gamma[0] = gamma
+                brownian.gamma[1] = gamma
+                brownian.gamma[2] = gamma
             else:
-                brownian_gamma[0] = gamma[0]
-                brownian_gamma[1] = gamma[1]
-                brownian_gamma[2] = gamma[2]
+                brownian.gamma[0] = gamma[0]
+                brownian.gamma[1] = gamma[1]
+                brownian.gamma[2] = gamma[2]
         ELSE:
-            brownian_gamma = float(gamma)
-
-        global brownian_gamma_rotation
+            brownian.gamma = float(gamma)
         IF ROTATION:
             if gamma_rotation is not None:
                 IF PARTICLE_ANISOTROPY:
                     if scalar_gamma_rot_def:
-                        brownian_gamma_rotation[0] = gamma_rotation
-                        brownian_gamma_rotation[1] = gamma_rotation
-                        brownian_gamma_rotation[2] = gamma_rotation
+                        brownian.gamma_rotation[0] = gamma_rotation
+                        brownian.gamma_rotation[1] = gamma_rotation
+                        brownian.gamma_rotation[2] = gamma_rotation
                     else:
-                        brownian_gamma_rotation[0] = gamma_rotation[0]
-                        brownian_gamma_rotation[1] = gamma_rotation[1]
-                        brownian_gamma_rotation[2] = gamma_rotation[2]
+                        brownian.gamma_rotation[0] = gamma_rotation[0]
+                        brownian.gamma_rotation[1] = gamma_rotation[1]
+                        brownian.gamma_rotation[2] = gamma_rotation[2]
                 ELSE:
                     if scalar_gamma_rot_def:
-                        brownian_gamma_rotation = gamma_rotation
+                        brownian.gamma_rotation = gamma_rotation
                     else:
                         raise ValueError(
                             "gamma_rotation must be a scalar since feature PARTICLE_ANISOTROPY is disabled")
             else:
                 IF PARTICLE_ANISOTROPY:
                     if scalar_gamma_def:
-                        brownian_gamma_rotation[0] = gamma
-                        brownian_gamma_rotation[1] = gamma
-                        brownian_gamma_rotation[2] = gamma
+                        brownian.gamma_rotation[0] = gamma
+                        brownian.gamma_rotation[1] = gamma
+                        brownian.gamma_rotation[2] = gamma
                     else:
-                        brownian_gamma_rotation[0] = gamma[0]
-                        brownian_gamma_rotation[1] = gamma[1]
-                        brownian_gamma_rotation[2] = gamma[2]
+                        brownian.gamma_rotation[0] = gamma[0]
+                        brownian.gamma_rotation[1] = gamma[1]
+                        brownian.gamma_rotation[2] = gamma[2]
                 ELSE:
-                    brownian_gamma_rotation = brownian_gamma
+                    brownian.gamma_rotation = brownian.gamma
 
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_BROWNIAN)
