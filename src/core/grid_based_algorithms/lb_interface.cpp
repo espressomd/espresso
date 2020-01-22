@@ -486,9 +486,9 @@ void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
       throw std::runtime_error(err_msg + "extra data found, expected EOF.");
     }
     fclose(cpfile);
-  }
+  } else
 #endif
-  else {
+  {
     throw std::runtime_error(
         "To load an LB checkpoint one needs to have already "
         "initialized the LB fluid with the same grid size.");
@@ -601,9 +601,9 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
   if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind,
                                              p_density);
-  } 
+  } else 
 #endif
-  else {
+  {
     throw NoLBActive();
   }
 }
@@ -614,9 +614,8 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
   if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_velocity, ind,
                                              u);
-  }
+  } else
 #endif
-  else
     throw NoLBActive();
 }
 
