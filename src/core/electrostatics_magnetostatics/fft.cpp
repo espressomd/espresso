@@ -33,12 +33,12 @@
 using Utils::permute_ifield;
 #include <utils/index.hpp>
 using Utils::get_linear_index;
-#include <utils/memory.hpp>
 
 #include <fftw3.h>
 #include <mpi.h>
 
 #include <cstring>
+#include <utils/Span.hpp>
 
 /************************************************
  * DEFINES
@@ -79,7 +79,8 @@ namespace {
  */
 boost::optional<std::vector<int>>
 find_comm_groups(Utils::Vector3i const &grid1, Utils::Vector3i const &grid2,
-                 int const *node_list1, int *node_list2, int *pos, int *my_pos,
+                 Utils::Span<const int> node_list1, Utils::Span<int> node_list2,
+                 Utils::Span<int> pos, Utils::Span<int> my_pos,
                  boost::mpi::communicator const &comm) {
   int i;
   /* communication group cell size on grid1 and grid2 */
@@ -496,10 +497,10 @@ int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
   /* helpers */
   int mult[3];
 
-  int n_grid[4][3]; /* The four node grids. */
-  int my_pos[4][3]; /* The position of comm.rank() in the node grids. */
-  int *n_id[4];     /* linear node identity lists for the node grids. */
-  int *n_pos[4];    /* positions of nodes in the node grids. */
+  int n_grid[4][3];         /* The four node grids. */
+  int my_pos[4][3];         /* The position of comm.rank() in the node grids. */
+  std::vector<int> n_id[4]; /* linear node identity lists for the node grids. */
+  std::vector<int> n_pos[4]; /* positions of nodes in the node grids. */
 
   int node_pos[3];
   MPI_Cart_coords(comm, comm.rank(), 3, node_pos);
@@ -507,8 +508,8 @@ int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
   fft.max_comm_size = 0;
   fft.max_mesh_size = 0;
   for (i = 0; i < 4; i++) {
-    n_id[i] = (int *)Utils::malloc(1 * comm.size() * sizeof(int));
-    n_pos[i] = (int *)Utils::malloc(3 * comm.size() * sizeof(int));
+    n_id[i].resize(1 * comm.size());
+    n_pos[i].resize(3 * comm.size());
   }
 
   /* === node grids === */
@@ -545,10 +546,11 @@ int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
     fft.plan[0].new_mesh[i] = ca_mesh_dim[i];
 
   for (i = 1; i < 4; i++) {
-    auto group =
-        find_comm_groups({n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-                         {n_grid[i][0], n_grid[i][1], n_grid[i][2]},
-                         n_id[i - 1], n_id[i], n_pos[i], my_pos[i], comm);
+    using Utils::make_span;
+    auto group = find_comm_groups(
+        {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
+        {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1],
+        make_span(n_id[i]), make_span(n_pos[i]), my_pos[i], comm);
     if (not group) {
       /* try permutation */
       std::swap(n_grid[i][(fft.plan[i].row_dir + 1) % 3],
@@ -556,8 +558,8 @@ int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
 
       group = find_comm_groups(
           {n_grid[i - 1][0], n_grid[i - 1][1], n_grid[i - 1][2]},
-          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, n_id[i - 1], n_id[i],
-          n_pos[i], my_pos[i], comm);
+          {n_grid[i][0], n_grid[i][1], n_grid[i][2]}, make_span(n_id[i - 1]),
+          make_span(n_id[i]), make_span(n_pos[i]), my_pos[i], comm);
 
       if (not group) {
         throw std::runtime_error("INTERNAL ERROR: fft_find_comm_groups error");
@@ -683,10 +685,7 @@ int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
   }
 
   fft.init_tag = true;
-  for (i = 0; i < 4; i++) {
-    free(n_id[i]);
-    free(n_pos[i]);
-  }
+
   return fft.max_mesh_size;
 }
 
