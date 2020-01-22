@@ -137,19 +137,6 @@ static void p3m_calc_influence_function_force();
  */
 static void p3m_calc_influence_function_energy();
 
-/** Calculate the aliasing sums for the optimal influence function.
- *
- *  Calculate the aliasing sums in the nominator and denominator of
- *  the expression for the optimal influence function (see
- *  @cite hockney88a : 8-22, p. 275).
- *
- *  \param  n           n-vector for which the aliasing sum is to be performed.
- *  \param  nominator   aliasing sums in the nominator.
- *  \retval denominator aliasing sum in the denominator
- */
-double p3m_perform_aliasing_sums_force(int n[3], double nominator[3]);
-double p3m_perform_aliasing_sums_energy(int n[3]);
-
 /*@}*/
 
 /** @name P3M tuning helper functions */
@@ -187,17 +174,6 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                                    const double mesh_i[3], int cao,
                                    double alpha_L_i, double *alias1,
                                    double *alias2);
-
-/** Template parameterized calculation of the charge assignment to be called by
- *  wrapper.
- *  \tparam cao      charge assignment order.
- */
-template <int cao>
-static void p3m_do_charge_assign(const ParticleRange &particles);
-
-template <int cao>
-void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
-                          int cp_cnt);
 
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
@@ -382,78 +358,6 @@ void p3m_interpolate_charge_assignment_function() {
   }
 }
 
-/* Template wrapper for p3m_do_charge_assign() */
-void p3m_charge_assign(const ParticleRange &particles) {
-  switch (p3m.params.cao) {
-  case 1:
-    p3m_do_charge_assign<1>(particles);
-    break;
-  case 2:
-    p3m_do_charge_assign<2>(particles);
-    break;
-  case 3:
-    p3m_do_charge_assign<3>(particles);
-    break;
-  case 4:
-    p3m_do_charge_assign<4>(particles);
-    break;
-  case 5:
-    p3m_do_charge_assign<5>(particles);
-    break;
-  case 6:
-    p3m_do_charge_assign<6>(particles);
-    break;
-  case 7:
-    p3m_do_charge_assign<7>(particles);
-    break;
-  }
-}
-
-/** Assign the charges */
-template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
-  /* charged particle counter, charge fraction counter */
-  int cp_cnt = 0;
-  /* prepare local FFT mesh */
-  for (int i = 0; i < p3m.local_mesh.size; i++)
-    p3m.rs_mesh[i] = 0.0;
-
-  for (auto &p : particles) {
-    if (p.p.q != 0.0) {
-      p3m_do_assign_charge<cao>(p.p.q, p.r.p, cp_cnt);
-      cp_cnt++;
-    }
-  }
-
-  p3m_shrink_wrap_charge_grid(cp_cnt);
-}
-
-/* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt) {
-  switch (p3m.params.cao) {
-  case 1:
-    p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
-    break;
-  case 2:
-    p3m_do_assign_charge<2>(q, real_pos, cp_cnt);
-    break;
-  case 3:
-    p3m_do_assign_charge<3>(q, real_pos, cp_cnt);
-    break;
-  case 4:
-    p3m_do_assign_charge<4>(q, real_pos, cp_cnt);
-    break;
-  case 5:
-    p3m_do_assign_charge<5>(q, real_pos, cp_cnt);
-    break;
-  case 6:
-    p3m_do_assign_charge<6>(q, real_pos, cp_cnt);
-    break;
-  case 7:
-    p3m_do_assign_charge<7>(q, real_pos, cp_cnt);
-    break;
-  }
-}
-
 template <int cao>
 void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
                           int cp_cnt) {
@@ -540,6 +444,81 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
       q_ind += p3m.local_mesh.q_2_off;
     }
     q_ind += p3m.local_mesh.q_21_off;
+  }
+}
+
+/** Template parameterized calculation of the charge assignment to be called by
+ *  wrapper.
+ *  \tparam cao      charge assignment order.
+ */
+template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
+  /* charged particle counter, charge fraction counter */
+  int cp_cnt = 0;
+  /* prepare local FFT mesh */
+  for (int i = 0; i < p3m.local_mesh.size; i++)
+    p3m.rs_mesh[i] = 0.0;
+
+  for (auto &p : particles) {
+    if (p.p.q != 0.0) {
+      p3m_do_assign_charge<cao>(p.p.q, p.r.p, cp_cnt);
+      cp_cnt++;
+    }
+  }
+
+  p3m_shrink_wrap_charge_grid(cp_cnt);
+}
+
+/* Template wrapper for p3m_do_charge_assign() */
+void p3m_charge_assign(const ParticleRange &particles) {
+  switch (p3m.params.cao) {
+  case 1:
+    p3m_do_charge_assign<1>(particles);
+    break;
+  case 2:
+    p3m_do_charge_assign<2>(particles);
+    break;
+  case 3:
+    p3m_do_charge_assign<3>(particles);
+    break;
+  case 4:
+    p3m_do_charge_assign<4>(particles);
+    break;
+  case 5:
+    p3m_do_charge_assign<5>(particles);
+    break;
+  case 6:
+    p3m_do_charge_assign<6>(particles);
+    break;
+  case 7:
+    p3m_do_charge_assign<7>(particles);
+    break;
+  }
+}
+
+/* Template wrapper for p3m_do_assign_charge() */
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt) {
+  switch (p3m.params.cao) {
+  case 1:
+    p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
+    break;
+  case 2:
+    p3m_do_assign_charge<2>(q, real_pos, cp_cnt);
+    break;
+  case 3:
+    p3m_do_assign_charge<3>(q, real_pos, cp_cnt);
+    break;
+  case 4:
+    p3m_do_assign_charge<4>(q, real_pos, cp_cnt);
+    break;
+  case 5:
+    p3m_do_assign_charge<5>(q, real_pos, cp_cnt);
+    break;
+  case 6:
+    p3m_do_assign_charge<6>(q, real_pos, cp_cnt);
+    break;
+  case 7:
+    p3m_do_assign_charge<7>(q, real_pos, cp_cnt);
+    break;
   }
 }
 
