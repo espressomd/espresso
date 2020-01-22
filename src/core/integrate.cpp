@@ -58,6 +58,7 @@
 #include "virtual_sites.hpp"
 
 #include "integrators/brownian_inline.hpp"
+#include "integrators/langevin_inline.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"

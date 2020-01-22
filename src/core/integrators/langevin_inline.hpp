@@ -1,0 +1,128 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+/** \file */
+
+#ifndef LANGEVIN_INLINE_HPP
+#define LANGEVIN_INLINE_HPP
+
+#include "random.hpp"
+#include "thermostat.hpp"
+
+extern LangevinThermostat langevin;
+
+/** Langevin thermostat for particle translational velocities.
+ *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
+ *  Collects the langevin parameters kT, gamma (different for
+ *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
+ */
+inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
+  // Early exit for virtual particles without thermostat
+  if (p.p.is_virtual && !thermo_virtual) {
+    return {};
+  }
+
+  // Determine prefactors for the friction and the noise term
+  // first, set defaults
+  Thermostat::GammaType langevin_pref_friction = langevin.pref_friction;
+  Thermostat::GammaType langevin_pref_noise = langevin.pref_noise;
+  // Override defaults if per-particle values for T and gamma are given
+#ifdef LANGEVIN_PER_PARTICLE
+  if (p.p.gamma >= Thermostat::GammaType{} or p.p.T >= 0.) {
+    auto const constexpr langevin_temp_coeff = 24.0;
+    auto const kT = p.p.T >= 0. ? p.p.T : temperature;
+    auto const gamma =
+        p.p.gamma >= Thermostat::GammaType{} ? p.p.gamma : langevin.gamma;
+    langevin_pref_friction = -gamma;
+    langevin_pref_noise = sqrt(langevin_temp_coeff * kT * gamma / time_step);
+  }
+#endif /* LANGEVIN_PER_PARTICLE */
+
+  // Get effective velocity in the thermostatting
+#ifdef ENGINE
+  auto const &velocity = (p.p.swim.v_swim != 0)
+                             ? p.m.v - p.p.swim.v_swim * p.r.calc_director()
+                             : p.m.v;
+#else
+  auto const &velocity = p.m.v;
+#endif
+#ifdef PARTICLE_ANISOTROPY
+  // Particle frictional isotropy check
+  auto const aniso_flag =
+      (langevin_pref_friction[0] != langevin_pref_friction[1]) ||
+      (langevin_pref_friction[1] != langevin_pref_friction[2]);
+
+  // In case of anisotropic particle: body-fixed reference frame. Otherwise:
+  // lab-fixed reference frame.
+  auto const friction_op =
+      aniso_flag ? convert_body_to_space(p, diag_matrix(langevin_pref_friction))
+                 : diag_matrix(langevin_pref_friction);
+  auto const noise_op = diag_matrix(langevin_pref_noise);
+#else
+  auto const &friction_op = langevin_pref_friction;
+  auto const &noise_op = langevin_pref_noise;
+#endif // PARTICLE_ANISOTROPY
+  using Random::v_noise;
+
+  // Do the actual (isotropic) thermostatting
+  return friction_op * velocity +
+         noise_op * v_noise<RNGSalt::LANGEVIN>(langevin.rng_counter->value(),
+                                               p.p.identity);
+}
+
+#ifdef ROTATION
+/** Langevin thermostat for particle angular velocities.
+ *  Collects the particle velocity (different for PARTICLE_ANISOTROPY).
+ *  Collects the langevin parameters kT, gamma_rot (different for
+ *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
+ */
+inline Utils::Vector3d friction_thermo_langevin_rotation(const Particle &p) {
+
+  auto langevin_pref_friction = -langevin.gamma_rotation;
+  auto langevin_pref_noise = langevin.pref_noise_rotation;
+
+  // Override defaults if per-particle values for T and gamma are given
+#ifdef LANGEVIN_PER_PARTICLE
+  if (p.p.gamma_rot >= Thermostat::GammaType{} or p.p.T >= 0.) {
+    auto const constexpr langevin_temp_coeff = 24.0;
+    auto const kT = p.p.T >= 0. ? p.p.T : temperature;
+    auto const gamma = p.p.gamma_rot >= Thermostat::GammaType{}
+                           ? p.p.gamma_rot
+                           : langevin.gamma_rotation;
+    langevin_pref_friction = -gamma;
+    langevin_pref_noise = sqrt(langevin_temp_coeff * kT * gamma / time_step);
+  }
+#endif /* LANGEVIN_PER_PARTICLE */
+
+  using Random::v_noise;
+
+  // Here the thermostats happens
+  auto const noise = v_noise<RNGSalt::LANGEVIN_ROT>(
+      langevin.rng_counter->value(), p.p.identity);
+#ifdef PARTICLE_ANISOTROPY
+  return hadamard_product(langevin_pref_friction, p.m.omega) +
+         hadamard_product(langevin_pref_noise, noise);
+#else
+  return langevin_pref_friction * p.m.omega + langevin_pref_noise * noise;
+#endif
+}
+
+#endif // ROTATION
+#endif
