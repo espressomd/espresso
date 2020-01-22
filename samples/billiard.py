@@ -216,8 +216,8 @@ def main():
             N = i + 1
             t = order[pid - 1]
             pos = sp + a1 * (N - j) + a2 * j
-            system.part.add(
-                id=pid, pos=pos, mass=ball_mass, type=t, fix=[0, 1, 0])
+            system.part.add(id=pid, pos=pos, mass=ball_mass,
+                            type=t, fix=[False, True, False])
             spawnpos.append(pos)
             pid += 1
 
