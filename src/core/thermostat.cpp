@@ -41,25 +41,12 @@ bool thermo_virtual = true;
 
 using Thermostat::GammaType;
 
-GammaType langevin_gamma = sentinel(GammaType{});
-GammaType langevin_gamma_rotation = sentinel(GammaType{});
-GammaType langevin_pref1;
-GammaType langevin_pref2;
-GammaType langevin_pref2_rotation;
+LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
 
 /* NPT ISOTROPIC THERMOSTAT */
 double nptiso_gamma0 = 0.0;
 double nptiso_gammav = 0.0;
-
-/** @name Langevin buffers
- *  Buffers for the workaround for the correlated random values which cool the
- *  system, and require a magical heat up whenever reentering the integrator.
- */
-/*@{*/
-static GammaType langevin_pref2_buffer;
-static GammaType langevin_pref2_rotation_buffer;
-/*@}*/
 
 #ifdef NPT
 double nptiso_pref1;
@@ -68,10 +55,8 @@ double nptiso_pref3;
 double nptiso_pref4;
 #endif
 
-std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
-
 void mpi_bcast_langevin_rng_counter_slave(const uint64_t counter) {
-  langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+  langevin.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
 REGISTER_CALLBACK(mpi_bcast_langevin_rng_counter_slave)
@@ -92,7 +77,7 @@ void mpi_bcast_brownian_rng_counter(const uint64_t counter) {
 
 void langevin_rng_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN)
-    langevin_rng_counter->increment();
+    langevin.rng_counter->increment();
 }
 
 void brownian_rng_counter_increment() {
@@ -102,7 +87,7 @@ void brownian_rng_counter_increment() {
 
 bool langevin_is_seed_required() {
   /* Seed is required if rng is not initialized */
-  return langevin_rng_counter == nullptr;
+  return langevin.rng_counter == nullptr;
 }
 
 bool brownian_is_seed_required() {
@@ -112,7 +97,7 @@ bool brownian_is_seed_required() {
 
 void langevin_set_rng_state(const uint64_t counter) {
   mpi_bcast_langevin_rng_counter(counter);
-  langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
+  langevin.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
 void brownian_set_rng_state(const uint64_t counter) {
@@ -120,21 +105,21 @@ void brownian_set_rng_state(const uint64_t counter) {
   brownian.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
-uint64_t langevin_get_rng_state() { return langevin_rng_counter->value(); }
+uint64_t langevin_get_rng_state() { return langevin.rng_counter->value(); }
 
 uint64_t brownian_get_rng_state() { return brownian.rng_counter->value(); }
 
 void thermo_init_langevin() {
-  langevin_pref1 = -langevin_gamma;
-  langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
+  langevin.pref_friction = -langevin.gamma;
+  langevin.pref_noise = sqrt(24.0 * temperature / time_step * langevin.gamma);
 
   /* If gamma_rotation is not set explicitly, use the linear one. */
-  if (langevin_gamma_rotation < GammaType{}) {
-    langevin_gamma_rotation = langevin_gamma;
+  if (langevin.gamma_rotation < GammaType{}) {
+    langevin.gamma_rotation = langevin.gamma;
   }
 
-  langevin_pref2_rotation =
-      sqrt(24.0 * temperature * langevin_gamma_rotation / time_step);
+  langevin.pref_noise_rotation =
+      sqrt(24.0 * temperature * langevin.gamma_rotation / time_step);
 }
 
 #ifdef NPT

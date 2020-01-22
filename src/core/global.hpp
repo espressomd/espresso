@@ -48,7 +48,7 @@ enum Fields {
   FIELD_BOXL = 0,
   /** index of \ref DomainDecomposition::cell_grid */
   FIELD_CELLGRID,
-  /** index of \ref langevin_gamma */
+  /** index of \ref LangevinThermostat::gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
   FIELD_INTEG_SWITCH,
@@ -91,7 +91,7 @@ enum Fields {
   FIELD_LATTICE_SWITCH,
   /** index of \ref min_global_cut */
   FIELD_MIN_GLOBAL_CUT,
-  /** index of \ref langevin_gamma_rotation */
+  /** index of \ref LangevinThermostat::gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
   /** index of \ref n_thermalized_bonds */

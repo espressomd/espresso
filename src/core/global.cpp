@@ -78,12 +78,12 @@ const std::unordered_map<int, Datafield> fields{
       "cell_grid"}}, /* 1  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
-     {&langevin_gamma, Datafield::Type::DOUBLE, 1,
-      "gamma"}}, /* 5  from thermostat.cpp */
+     {&langevin.gamma, Datafield::Type::DOUBLE, 1,
+      "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA,
-     {langevin_gamma.data(), Datafield::Type::DOUBLE, 3,
-      "gamma"}}, /* 5  from thermostat.cpp */
+     {langevin.gamma.data(), Datafield::Type::DOUBLE, 3,
+      "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
@@ -152,12 +152,12 @@ const std::unordered_map<int, Datafield> fields{
       "swimming_particles_exist"}}, /* from particle_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
-      "gamma_rot"}}, /* 55 from thermostat.cpp */
+     {&langevin.gamma_rotation, Datafield::Type::DOUBLE, 1,
+      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
-      "gamma_rot"}}, /* 55 from thermostat.cpp */
+     {langevin.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #endif
 #ifdef OIF_GLOBAL_FORCES
     {FIELD_MAX_OIF_OBJECTS,
