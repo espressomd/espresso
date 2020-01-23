@@ -63,6 +63,7 @@ using Utils::strcat_alloc;
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <utils/index.hpp>
 
 /************************************************
  * variables
@@ -320,40 +321,27 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
                           int cp_cnt) {
   /* distance to nearest mesh point */
   double dist[3];
-  /* index, index jumps for rs_mesh array */
-  int q_ind = 0;
   // make sure we have enough space
   if (cp_cnt >= p3m.ca_num)
     p3m_realloc_ca_fields(cp_cnt + 1);
+
+  /* nearest mesh point */
+  Utils::Vector3i nmp;
 
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
     auto const pos =
         ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
         p3m.pos_shift;
-    /* nearest mesh point */
-    auto const nmp = (int)pos;
-    /* 3d-array index of nearest mesh point */
-    q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
+
+    nmp[d] = (int)pos;
 
     /* distance to nearest mesh point */
-    dist[d] = (pos - nmp) - 0.5;
-
-#ifdef ADDITIONAL_CHECKS
-    if (pos < -skin * p3m.params.ai[d]) {
-      fprintf(stderr, "%d: rs_mesh underflow! (pos %f)\n", this_node,
-              real_pos[d]);
-      fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
-    }
-    if ((nmp + cao) > p3m.local_mesh.dim[d]) {
-      fprintf(stderr, "%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node,
-              real_pos[d], nmp);
-      fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
-    }
-#endif
+    dist[d] = (pos - nmp[d]) - 0.5;
   }
+  /* 3d-array index of nearest mesh point */
+  auto q_ind = Utils::get_linear_index(nmp, p3m.local_mesh.dim,
+                                       Utils::MemoryOrder::ROW_MAJOR);
 
   if (cp_cnt >= 0)
     p3m.ca_fmp[cp_cnt] = q_ind;

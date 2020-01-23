@@ -489,7 +489,7 @@ void calc_2d_grid(int n, int grid[3]) {
 }
 } // namespace
 
-int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
+int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
              fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm) {

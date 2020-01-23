@@ -71,7 +71,7 @@ enum P3M_TUNE_ERROR {
 typedef struct {
   /* local mesh characterization. */
   /** dimension (size) of local mesh. */
-  int dim[3];
+  Utils::Vector3i dim;
   /** number of local mesh points. */
   int size;
   /** index of lower left corner of the

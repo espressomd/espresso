@@ -186,7 +186,7 @@ struct fft_data_struct {
  *  \param comm            MPI communicator.
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
-int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
+int fft_init(const Utils::Vector3i &ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
              fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm);
