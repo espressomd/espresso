@@ -99,73 +99,6 @@ uint64_t langevin_get_rng_state() { return langevin.rng_counter->value(); }
 
 uint64_t brownian_get_rng_state() { return brownian.rng_counter->value(); }
 
-void thermo_init_langevin(LangevinThermostat &langevin) {
-  langevin.pref_friction = -langevin.gamma;
-  langevin.pref_noise = sqrt(24.0 * temperature / time_step * langevin.gamma);
-
-  /* If gamma_rotation is not set explicitly, use the linear one. */
-  if (langevin.gamma_rotation < GammaType{}) {
-    langevin.gamma_rotation = langevin.gamma;
-  }
-
-  langevin.pref_noise_rotation =
-      sqrt(24.0 * temperature * langevin.gamma_rotation / time_step);
-}
-
-#ifdef NPT
-void thermo_init_npt_isotropic(IsotropicNptThermostat &npt_iso) {
-  if (nptiso.piston != 0.0) {
-    npt_iso.pref1 = -npt_iso.gamma0 * 0.5 * time_step;
-    npt_iso.pref2 = sqrt(12.0 * temperature * npt_iso.gamma0 * time_step);
-    npt_iso.pref3 = -npt_iso.gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
-    npt_iso.pref4 = sqrt(12.0 * temperature * npt_iso.gammav * time_step);
-  } else {
-    thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
-  }
-}
-#endif
-
-/** Brownian thermostat initializer.
- *
- *  Default particle mass is assumed to be unitary in these global parameters.
- */
-void thermo_init_brownian(BrownianThermostat &brownian) {
-  /** The heat velocity dispersion corresponds to the Gaussian noise only,
-   *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
-   *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
-   */
-  brownian.sigma_vel = sqrt(temperature);
-  /** The random walk position dispersion is defined by the second eq. (14.38)
-   *  of @cite Schlick2010. Its time interval factor will be added in the
-   *  Brownian Dynamics functions. Its square root is the standard deviation.
-   */
-  if (temperature > 0.0) {
-    brownian.sigma_pos_inv = sqrt(brownian.gamma / (2.0 * temperature));
-  } else {
-    // just an indication of the infinity
-    brownian.sigma_pos_inv = brownian.gammatype_nan;
-  }
-#ifdef ROTATION
-  /** Note: the BD thermostat assigns the brownian viscous parameters as well.
-   *  They correspond to the friction tensor Z from the eq. (14.31) of
-   *  @cite Schlick2010.
-   */
-  /* If gamma_rotation is not set explicitly,
-     we use the translational one. */
-  if (brownian.gamma_rotation < GammaType{}) {
-    brownian.gamma_rotation = brownian.gamma;
-  }
-  brownian.sigma_vel_rotation = sqrt(temperature);
-  if (temperature > 0.0) {
-    brownian.sigma_pos_rotation_inv =
-        sqrt(brownian.gamma_rotation / (2.0 * temperature));
-  } else {
-    // just an indication of the infinity
-    brownian.sigma_pos_rotation_inv = brownian.gammatype_nan;
-  }
-#endif // ROTATION
-}
-
 void thermo_init() {
   // Init thermalized bond despite of thermostat
   if (n_thermalized_bonds) {
@@ -175,15 +108,20 @@ void thermo_init() {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    thermo_init_langevin(langevin);
+    langevin.recalc_prefactors();
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
     dpd_init();
 #endif
 #ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO)
-    thermo_init_npt_isotropic(npt_iso);
+  if (thermo_switch & THERMO_NPT_ISO) {
+    if (nptiso.piston == 0.0) {
+      thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
+    } else {
+      npt_iso.recalc_prefactors(nptiso.piston);
+    }
+  }
 #endif
   if (thermo_switch & THERMO_BROWNIAN)
-    thermo_init_brownian(brownian);
+    brownian.recalc_prefactors();
 }

@@ -102,30 +102,94 @@ private:
   using GammaType = Thermostat::GammaType;
 
 public:
+  /** Recalculate prefactors.
+   *  Needs to be called every time the parameters are changed.
+   */
+  void recalc_prefactors() {
+    pref_friction = -gamma;
+    pref_noise = sqrt(24.0 * temperature / time_step * gamma);
+    // If gamma_rotation is not set explicitly, use the translational one.
+    if (gamma_rotation < GammaType{}) {
+      gamma_rotation = gamma;
+    }
+    pref_noise_rotation = sqrt(24.0 * temperature * gamma_rotation / time_step);
+  }
+  /** @name Parameters */
+  /*@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
   GammaType gamma = sentinel(GammaType{});
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
+  /*@}*/
+  /** @name Prefactors */
+  /*@{*/
   /** Prefactor for the friction. */
   GammaType pref_friction;
   /** Prefactor for the translational velocity noise. */
   GammaType pref_noise;
   /** Prefactor for the angular velocity noise. */
   GammaType pref_noise_rotation;
+  /*@}*/
   /** RNG counter, used for both translation and rotation. */
   std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
 
-/** %Thermostat for Brownian dynamics. */
+/** %Thermostat for Brownian dynamics.
+ *  Default particle mass is assumed to be unitary in these global parameters.
+ */
 struct BrownianThermostat {
 private:
   using GammaType = Thermostat::GammaType;
 
 public:
+  /** Recalculate prefactors.
+   *  Needs to be called every time the parameters are changed.
+   */
+  void recalc_prefactors() {
+    /** The heat velocity dispersion corresponds to the Gaussian noise only,
+     *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
+     *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
+     */
+    sigma_vel = sqrt(temperature);
+    /** The random walk position dispersion is defined by the second eq. (14.38)
+     *  of @cite Schlick2010. Its time interval factor will be added in the
+     *  Brownian Dynamics functions. Its square root is the standard deviation.
+     */
+    if (temperature > 0.0) {
+      sigma_pos_inv = sqrt(gamma / (2.0 * temperature));
+    } else {
+      // just an indication of the infinity
+      sigma_pos_inv = gammatype_nan;
+    }
+#ifdef ROTATION
+    /** Note: the BD thermostat assigns the brownian viscous parameters as well.
+     *  They correspond to the friction tensor Z from the eq. (14.31) of
+     *  @cite Schlick2010.
+     */
+    // If gamma_rotation is not set explicitly, use the translational one.
+    if (gamma_rotation < GammaType{}) {
+      gamma_rotation = gamma;
+    }
+    sigma_vel_rotation = sqrt(temperature);
+    if (temperature > 0.0) {
+      sigma_pos_rotation_inv = sqrt(gamma_rotation / (2.0 * temperature));
+    } else {
+      // just an indication of the infinity
+      sigma_pos_rotation_inv = gammatype_nan;
+    }
+#endif // ROTATION
+  }
+  /** @name Parameters */
+  /*@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
   GammaType gamma = sentinel(GammaType{});
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
+  /*@}*/
+  /** Sentinel value for divisions by zero. */
+  GammaType const gammatype_nan = set_nan(GammaType{});
+  /** @name Prefactors */
+  /*@{*/
   /** Inverse of the translational noise standard deviation.
    *  Stores @f$ \left(\sqrt{2D_{\text{trans}}}\right)^{-1} @f$ with
    *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
@@ -138,12 +202,11 @@ public:
    *  the rotational diffusion coefficient
    */
   GammaType sigma_pos_rotation_inv = sentinel(GammaType{});
-  /** Sentinel value for divisions by zero. */
-  GammaType const gammatype_nan = set_nan(GammaType{});
   /** Translational velocity noise standard deviation. */
   double sigma_vel = 0;
   /** Angular velocity noise standard deviation. */
   double sigma_vel_rotation = 0;
+  /*@}*/
   /** RNG counter, used for both translation and rotation. */
   std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
@@ -154,15 +217,33 @@ private:
   using GammaType = Thermostat::GammaType;
 
 public:
+#ifdef NPT
+  /** Recalculate prefactors.
+   *  Needs to be called every time the parameters are changed.
+   */
+  void recalc_prefactors(double piston) {
+    assert(piston > 0.0);
+    pref1 = -gamma0 * 0.5 * time_step;
+    pref2 = sqrt(12.0 * temperature * gamma0 * time_step);
+    pref3 = -gammav * (1.0 / piston) * 0.5 * time_step;
+    pref4 = sqrt(12.0 * temperature * gammav * time_step);
+  }
+#endif
+  /** @name Parameters */
+  /*@{*/
   /** Friction coefficient @f$ \gamma_0 @f$ */
   double gamma0;
   /** Friction coefficient @f$ \gamma_V @f$ */
   double gammav;
+  /*@}*/
 #ifdef NPT
+  /** @name Prefactors */
+  /*@{*/
   double pref1;
   double pref2;
   double pref3;
   double pref4;
+  /*@}*/
 #endif
 };
 
