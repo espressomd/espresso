@@ -51,11 +51,6 @@ cdef extern from "thermostat.hpp":
         double gamma0
         double gammav
 
-    # links intern C-struct with python object
-    cdef extern langevin_thermostat_struct langevin
-    cdef extern brownian_thermostat_struct brownian
-    cdef extern npt_iso_thermostat_struct npt_iso
-
     void langevin_set_rng_state(stdint.uint64_t counter)
     void brownian_set_rng_state(stdint.uint64_t counter)
     cbool langevin_is_seed_required()
@@ -63,6 +58,12 @@ cdef extern from "thermostat.hpp":
 
     stdint.uint64_t langevin_get_rng_state()
     stdint.uint64_t brownian_get_rng_state()
+
+cdef extern from "Globals.hpp":
+    # links intern C-struct with python object
+    cdef extern langevin_thermostat_struct langevin
+    cdef extern brownian_thermostat_struct brownian
+    cdef extern npt_iso_thermostat_struct npt_iso
 
 cdef extern from "dpd.hpp":
     IF DPD:

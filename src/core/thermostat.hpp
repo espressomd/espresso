@@ -92,6 +92,10 @@ extern double temperature;
 /** True if the thermostat should act on virtual particles. */
 extern bool thermo_virtual;
 
+/************************************************
+ * parameter structs
+ ************************************************/
+
 /** %Thermostat for Langevin dynamics. */
 struct LangevinThermostat {
 private:
@@ -111,8 +115,6 @@ public:
   /** RNG counter, used for both translation and rotation. */
   std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
-
-extern LangevinThermostat langevin;
 
 /** %Thermostat for Brownian dynamics. */
 struct BrownianThermostat {
@@ -146,8 +148,6 @@ public:
   std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
 
-extern BrownianThermostat brownian;
-
 /** %Thermostat for isotropic NPT dynamics. */
 struct IsotropicNptThermostat {
 private:
@@ -165,8 +165,6 @@ public:
   double pref4;
 #endif
 };
-
-extern IsotropicNptThermostat npt_iso;
 
 /************************************************
  * functions
@@ -194,11 +192,13 @@ void thermo_init();
 #ifdef NPT
 /** Add velocity-dependent noise and friction for NpT-sims to the particle's
  *  velocity
+ *  @param npt_iso Parameters
  *  @param vj     j-component of the velocity
  *  @return       j-component of the noise added to the velocity, also scaled by
  *                dt (contained in prefactors)
  */
-inline double friction_therm0_nptiso(double vj) {
+inline double friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
+                                     double vj) {
   if (thermo_switch & THERMO_NPT_ISO) {
     if (npt_iso.pref2 > 0.0) {
       return npt_iso.pref1 * vj + npt_iso.pref2 * Thermostat::noise();
@@ -211,7 +211,8 @@ inline double friction_therm0_nptiso(double vj) {
 /** Add p_diff-dependent noise and friction for NpT-sims to \ref
  *  nptiso_struct::p_diff
  */
-inline double friction_thermV_nptiso(double p_diff) {
+inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
+                                     double p_diff) {
   if (thermo_switch & THERMO_NPT_ISO) {
     if (npt_iso.pref4 > 0.0) {
       return npt_iso.pref3 * p_diff + npt_iso.pref4 * Thermostat::noise();

@@ -99,7 +99,7 @@ uint64_t langevin_get_rng_state() { return langevin.rng_counter->value(); }
 
 uint64_t brownian_get_rng_state() { return brownian.rng_counter->value(); }
 
-void thermo_init_langevin() {
+void thermo_init_langevin(LangevinThermostat &langevin) {
   langevin.pref_friction = -langevin.gamma;
   langevin.pref_noise = sqrt(24.0 * temperature / time_step * langevin.gamma);
 
@@ -113,7 +113,7 @@ void thermo_init_langevin() {
 }
 
 #ifdef NPT
-void thermo_init_npt_isotropic() {
+void thermo_init_npt_isotropic(IsotropicNptThermostat &npt_iso) {
   if (nptiso.piston != 0.0) {
     npt_iso.pref1 = -npt_iso.gamma0 * 0.5 * time_step;
     npt_iso.pref2 = sqrt(12.0 * temperature * npt_iso.gamma0 * time_step);
@@ -129,7 +129,7 @@ void thermo_init_npt_isotropic() {
  *
  *  Default particle mass is assumed to be unitary in these global parameters.
  */
-void thermo_init_brownian() {
+void thermo_init_brownian(BrownianThermostat &brownian) {
   /** The heat velocity dispersion corresponds to the Gaussian noise only,
    *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
    *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
@@ -142,8 +142,8 @@ void thermo_init_brownian() {
   if (temperature > 0.0) {
     brownian.sigma_pos_inv = sqrt(brownian.gamma / (2.0 * temperature));
   } else {
-    brownian.sigma_pos_inv =
-        brownian.gammatype_nan; // just an indication of the infinity
+    // just an indication of the infinity
+    brownian.sigma_pos_inv = brownian.gammatype_nan;
   }
 #ifdef ROTATION
   /** Note: the BD thermostat assigns the brownian viscous parameters as well.
@@ -160,8 +160,8 @@ void thermo_init_brownian() {
     brownian.sigma_pos_rotation_inv =
         sqrt(brownian.gamma_rotation / (2.0 * temperature));
   } else {
-    brownian.sigma_pos_rotation_inv =
-        brownian.gammatype_nan; // just an indication of the infinity
+    // just an indication of the infinity
+    brownian.sigma_pos_rotation_inv = brownian.gammatype_nan;
   }
 #endif // ROTATION
 }
@@ -175,15 +175,15 @@ void thermo_init() {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    thermo_init_langevin();
+    thermo_init_langevin(langevin);
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
     dpd_init();
 #endif
 #ifdef NPT
   if (thermo_switch & THERMO_NPT_ISO)
-    thermo_init_npt_isotropic();
+    thermo_init_npt_isotropic(npt_iso);
 #endif
   if (thermo_switch & THERMO_BROWNIAN)
-    thermo_init_brownian();
+    thermo_init_brownian(brownian);
 }

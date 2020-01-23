@@ -47,6 +47,9 @@
 #include <unordered_map>
 
 extern double force_cap;
+extern LangevinThermostat langevin;
+extern BrownianThermostat brownian;
+extern IsotropicNptThermostat npt_iso;
 
 namespace {
 

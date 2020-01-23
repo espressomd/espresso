@@ -26,14 +26,14 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 
-extern BrownianThermostat brownian;
-
 /** Propagate position: viscous drag driven by conservative forces.
  *  From eq. (14.39) in @cite Schlick2010.
- *  @param[in,out] p              Particle
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
  *  @param[in]     dt             Time interval
  */
-inline void bd_drag(Particle &p, double dt) {
+inline void bd_drag(BrownianThermostat const &brownian, Particle &p,
+                    double dt) {
   // The friction tensor Z from the Eq. (14.31) of Schlick2010:
   Thermostat::GammaType gamma;
 
@@ -102,10 +102,12 @@ inline void bd_drag(Particle &p, double dt) {
 
 /** Set the terminal velocity driven by the conservative forces drag.
  *  From eq. (14.34) in @cite Schlick2010.
- *  @param[in,out] p              Particle
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
  *  @param[in]     dt             Time interval
  */
-inline void bd_drag_vel(Particle &p, double dt) {
+inline void bd_drag_vel(BrownianThermostat const &brownian, Particle &p,
+                        double dt) {
   // The friction tensor Z from the eq. (14.31) of Schlick2010:
   Thermostat::GammaType gamma;
 
@@ -187,10 +189,12 @@ inline void bd_drag_vel(Particle &p, double dt) {
 
 /** Propagate the positions: random walk part.
  *  From eq. (14.37) in @cite Schlick2010.
- *  @param[in,out] p          Particle
- *  @param[in] dt             Time interval
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
+ *  @param[in]     dt             Time interval
  */
-void bd_random_walk(Particle &p, double dt) {
+void bd_random_walk(BrownianThermostat const &brownian, Particle &p,
+                    double dt) {
   // skip the translation thermalizing for virtual sites unless enabled
   extern bool thermo_virtual;
   if (p.p.is_virtual && !thermo_virtual)
@@ -290,10 +294,12 @@ void bd_random_walk(Particle &p, double dt) {
 
 /** Determine the velocities: random walk part.
  *  From eq. (10.2.16) in @cite Pottier2010.
- *  @param[in, out] p         Particle
- *  @param[in] dt             Time interval
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
+ *  @param[in]     dt             Time interval
  */
-inline void bd_random_walk_vel(Particle &p, double dt) {
+inline void bd_random_walk_vel(BrownianThermostat const &brownian, Particle &p,
+                               double dt) {
   // skip the translation thermalizing for virtual sites unless enabled
   extern bool thermo_virtual;
   if (p.p.is_virtual && !thermo_virtual)
@@ -340,10 +346,11 @@ inline void bd_random_walk_vel(Particle &p, double dt) {
 
 /** Propagate quaternions: viscous drag driven by conservative torques.
  *  An analogy of eq. (14.39) in @cite Schlick2010.
- *  @param[in,out] p              Particle
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
  *  @param[in]     dt             Time interval
  */
-void bd_drag_rot(Particle &p, double dt) {
+void bd_drag_rot(BrownianThermostat const &brownian, Particle &p, double dt) {
   Thermostat::GammaType gamma;
 
 #ifdef BROWNIAN_PER_PARTICLE
@@ -380,10 +387,12 @@ void bd_drag_rot(Particle &p, double dt) {
 
 /** Set the terminal angular velocity driven by the conservative torques drag.
  *  An analogy of the 1st term of eq. (14.34) in @cite Schlick2010.
- *  @param[in,out] p              Particle
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
  *  @param[in]     dt             Time interval
  */
-void bd_drag_vel_rot(Particle &p, double dt) {
+void bd_drag_vel_rot(BrownianThermostat const &brownian, Particle &p,
+                     double dt) {
   Thermostat::GammaType gamma;
 
 #ifdef BROWNIAN_PER_PARTICLE
@@ -417,10 +426,12 @@ void bd_drag_vel_rot(Particle &p, double dt) {
 
 /** Propagate the quaternions: random walk part.
  *  An analogy of eq. (14.37) in @cite Schlick2010.
- *  @param[in,out] p              Particle
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
  *  @param[in]     dt             Time interval
  */
-void bd_random_walk_rot(Particle &p, double dt) {
+void bd_random_walk_rot(BrownianThermostat const &brownian, Particle &p,
+                        double dt) {
   // first, set defaults
   Thermostat::GammaType sigma_pos_inv = brownian.sigma_pos_rotation_inv;
 
@@ -496,10 +507,12 @@ void bd_random_walk_rot(Particle &p, double dt) {
 
 /** Determine the angular velocities: random walk part.
  *  An analogy of eq. (10.2.16) in @cite Pottier2010.
- *  @param[in,out] p              Particle
+ *  @param[in]     brownian       Parameters
+ *  @param[in,out] p              %Particle
  *  @param[in]     dt             Time interval
  */
-void bd_random_walk_vel_rot(Particle &p, double dt) {
+void bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle &p,
+                            double dt) {
   double sigma_vel;
 
   // Override defaults if per-particle values for T and gamma are given
@@ -534,7 +547,8 @@ void bd_random_walk_vel_rot(Particle &p, double dt) {
 }
 #endif // ROTATION
 
-inline void brownian_dynamics_propagator(const ParticleRange &particles) {
+inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
+                                         const ParticleRange &particles) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
@@ -542,10 +556,10 @@ inline void brownian_dynamics_propagator(const ParticleRange &particles) {
     if (!(p.p.is_virtual) or thermo_virtual)
 #endif
     {
-      bd_drag(p, time_step);
-      bd_drag_vel(p, time_step);
-      bd_random_walk(p, time_step);
-      bd_random_walk_vel(p, time_step);
+      bd_drag(brownian, p, time_step);
+      bd_drag_vel(brownian, p, time_step);
+      bd_random_walk(brownian, p, time_step);
+      bd_random_walk_vel(brownian, p, time_step);
       /* Verlet criterion check */
       if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
         set_resort_particles(Cells::RESORT_LOCAL);
@@ -554,10 +568,10 @@ inline void brownian_dynamics_propagator(const ParticleRange &particles) {
     if (!p.p.rotation)
       continue;
     convert_torque_to_body_frame_apply_fix(p);
-    bd_drag_rot(p, time_step);
-    bd_drag_vel_rot(p, time_step);
-    bd_random_walk_rot(p, time_step);
-    bd_random_walk_vel_rot(p, time_step);
+    bd_drag_rot(brownian, p, time_step);
+    bd_drag_vel_rot(brownian, p, time_step);
+    bd_random_walk_rot(brownian, p, time_step);
+    bd_random_walk_vel_rot(brownian, p, time_step);
 #endif // ROTATION
   }
   sim_time += time_step;

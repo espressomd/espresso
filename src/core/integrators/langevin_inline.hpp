@@ -26,14 +26,14 @@
 #include "random.hpp"
 #include "thermostat.hpp"
 
-extern LangevinThermostat langevin;
-
 /** Langevin thermostat for particle translational velocities.
  *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
  *  Collects the langevin parameters kT, gamma (different for
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  */
-inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
+inline Utils::Vector3d
+friction_thermo_langevin(LangevinThermostat const &langevin,
+                         Particle const &p) {
   // Early exit for virtual particles without thermostat
   if (p.p.is_virtual && !thermo_virtual) {
     return {};
@@ -92,7 +92,9 @@ inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
  *  Collects the langevin parameters kT, gamma_rot (different for
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  */
-inline Utils::Vector3d friction_thermo_langevin_rotation(const Particle &p) {
+inline Utils::Vector3d
+friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
+                                  const Particle &p) {
 
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;
