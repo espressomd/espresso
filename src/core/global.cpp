@@ -171,21 +171,21 @@ const std::unordered_map<int, Datafield> fields{
      {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}},
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_BROWNIAN_GAMMA_ROTATION,
-     {&brownian_gamma_rotation, Datafield::Type::DOUBLE, 1,
-      "gamma_rot"}}, /* 57 from thermostat.cpp */
+     {&brownian.gamma_rotation, Datafield::Type::DOUBLE, 1,
+      "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
 #else
     {FIELD_BROWNIAN_GAMMA_ROTATION,
-     {brownian_gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
-      "gamma_rot"}}, /* 57 from thermostat.cpp */
+     {brownian.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+      "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
 #endif
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_BROWNIAN_GAMMA,
-     {&brownian_gamma, Datafield::Type::DOUBLE, 1,
-      "gamma"}}, /* 58  from thermostat.cpp */
+     {&brownian.gamma, Datafield::Type::DOUBLE, 1,
+      "brownian.gamma"}}, /* 58  from thermostat.cpp */
 #else
     {FIELD_BROWNIAN_GAMMA,
-     {brownian_gamma.data(), Datafield::Type::DOUBLE, 3,
-      "gamma"}}, /* 58  from thermostat.cpp */
+     {brownian.gamma.data(), Datafield::Type::DOUBLE, 3,
+      "brownian.gamma"}}, /* 58  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
 };
 
