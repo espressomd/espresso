@@ -543,7 +543,8 @@ inline void brownian_dynamics_propagator(const ParticleRange &particles) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
-    if (!(p.p.is_virtual))
+    extern bool thermo_virtual;
+    if (!(p.p.is_virtual) or thermo_virtual)
 #endif
     {
       bd_drag(p, time_step);

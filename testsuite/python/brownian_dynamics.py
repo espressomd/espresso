@@ -238,12 +238,17 @@ class BrownianDynamics(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.v), [1, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.v), [0, 0, 0])
 
+
+        system.part.clear()
+        virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
+        physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
+
         system.thermostat.set_brownian(
             kT=0, gamma=1, gamma_rotation=1., act_on_virtual=True, seed=41)
         system.integrator.run(1)
 
-        np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
-        np.testing.assert_almost_equal(np.copy(physical.f), [0, 0, 0])
+        np.testing.assert_almost_equal(np.copy(virtual.v), [0, 0, 0])
+        np.testing.assert_almost_equal(np.copy(physical.v), [0, 0, 0])
 
     def test_08__noise_correlation(self):
         """Checks that the Brownian noise is uncorrelated"""
