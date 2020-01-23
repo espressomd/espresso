@@ -1,0 +1,18 @@
+image: Visual Studio 2017
+
+platform: x64
+
+environment:
+  GENERATOR: "Visual Studio 15 2017 Win64"
+  CONFIG: Debug
+  matrix:
+  - BOOST_ROOT: "C:\\Libraries\\boost_1_65_1"
+
+build_script:
+  - mkdir build
+  - cd build
+  - cmake -G "%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" -DBOOST_ROOT="%BOOST_ROOT%" ..
+  - cmake --build "./examples" --target "examples" --config "%CONFIG%"
+
+test_script:
+  - cmake --build "./tests" --target "check" --config "%CONFIG%"

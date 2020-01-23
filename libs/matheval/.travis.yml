@@ -1,0 +1,52 @@
+dist: bionic
+sudo: false
+
+language: cpp
+
+script:
+  - mkdir build
+  - cd build
+  - cmake -DWITH_COVERAGE=ON -DWITH_CLANG_TIDY=ON ..
+  - make -k -j 2 examples
+  - make -k -j 2 check
+  - curl -s https://codecov.io/bash | bash -
+
+matrix:
+  include:
+    - os: linux
+      compiler: clang
+      addons:
+        apt:
+          packages:
+            - libboost-dev
+            - libboost-test-dev
+    - os: linux
+      compiler: gcc
+      addons:
+        apt:
+          packages:
+            - libboost-dev
+            - libboost-test-dev
+    - os: osx
+      install:
+        - brew link --force readline
+      compiler: clang
+    - if: branch = master
+      os: linux
+      env: docs=yes
+      addons:
+        apt:
+          packages:
+            - doxygen
+            - lcov
+            - libboost-dev
+            - libboost-test-dev
+      script:
+        - mkdir build
+        - cd build
+        - bash ../doc/prepare_documentation.sh
+        - cmake -DWITH_COVERAGE=ON ..
+        - make -k -j 2 examples
+        - make -k -j 2 check
+        - bash ../doc/update_documentation.sh
+        - curl -s https://codecov.io/bash | bash -s - -X gcov
