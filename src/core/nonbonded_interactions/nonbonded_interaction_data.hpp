@@ -254,7 +254,7 @@ struct IA_parameters {
   TabulatedPotential tab;
 #endif
 
-#ifdef EXPRESSION
+#ifdef MATHEVAL
   GenericPotential gen;
 #endif
 

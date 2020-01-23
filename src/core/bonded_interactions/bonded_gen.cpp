@@ -18,6 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include "config.hpp"
+
+#ifdef MATHEVAL
 #include "bonded_interactions/bonded_gen.hpp"
 
 #include "communication.hpp"
@@ -68,3 +72,4 @@ int generic_bonded_set_params(int bond_type, GenericBondedInteraction type,
 
   return ES_OK;
 }
+#endif

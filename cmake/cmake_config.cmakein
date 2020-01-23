@@ -9,6 +9,9 @@
 
 #cmakedefine H5MD
 
+#cmakedefine MATHEVAL
+
+
 #cmakedefine SCAFACOS
 
 #cmakedefine GSL

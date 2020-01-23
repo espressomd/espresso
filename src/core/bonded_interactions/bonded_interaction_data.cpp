@@ -49,7 +49,7 @@ double recalc_maximal_cutoff_bonded() {
       max_cut_bonded =
           std::max(max_cut_bonded, bonded_ia_param.p.tab.pot->cutoff());
       break;
-#ifdef EXPRESSION
+#ifdef MATHEVAL
     case BONDED_IA_GENERIC_DISTANCE:
       max_cut_bonded =
           std::max(max_cut_bonded, bonded_ia_param.p.gen.pot->cutoff());
@@ -70,7 +70,7 @@ double recalc_maximal_cutoff_bonded() {
     switch (bonded_ia_param.type) {
     case BONDED_IA_DIHEDRAL:
     case BONDED_IA_TABULATED_DIHEDRAL:
-#ifdef EXPRESSION
+#ifdef MATHEVAL
     case BONDED_IA_GENERIC_DIHEDRAL:
 #endif
       max_cut_bonded *= 2;

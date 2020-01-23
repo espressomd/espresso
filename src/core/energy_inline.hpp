@@ -160,7 +160,7 @@ inline double calc_non_bonded_pair_energy(Particle const &p1,
   ret += tabulated_pair_energy(ia_params, dist);
 #endif
 
-#ifdef EXPRESSION
+#ifdef MATHEVAL
   /* generic */
   ret += generic_pair_energy(ia_params, dist);
 #endif
@@ -295,7 +295,7 @@ inline void add_bonded_energy(Particle const *const p1) {
       case BONDED_IA_TABULATED_DISTANCE:
         retval = tab_bond_energy(iaparams, dx);
         break;
-#ifdef EXPRESSION
+#ifdef MATHEVAL
       case BONDED_IA_GENERIC_DISTANCE:
         retval = gen_bond_energy(iaparams, dx);
         break;
@@ -332,7 +332,7 @@ inline void add_bonded_energy(Particle const *const p1) {
         retval = boost::optional<double>(
             tab_angle_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
         break;
-#ifdef EXPRESSION
+#ifdef MATHEVAL
       case BONDED_IA_GENERIC_ANGLE:
         retval = boost::optional<double>(
             gen_angle_energy(p1->r.p, p2->r.p, p3->r.p, iaparams));
@@ -353,7 +353,7 @@ inline void add_bonded_energy(Particle const *const p1) {
         retval =
             tab_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
         break;
-#ifdef EXPRESSION
+#ifdef MATHEVAL
       case BONDED_IA_GENERIC_DIHEDRAL:
         retval =
             gen_dihedral_energy(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);

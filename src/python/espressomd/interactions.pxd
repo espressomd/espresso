@@ -38,12 +38,16 @@ cdef extern from "TabulatedPotential.hpp":
         double minval
         vector[double] energy_tab
         vector[double] force_tab
-
-cdef extern from "GenericPotential.hpp":
-    struct GenericPotential:
-        double maxval
-        string force_expr
-        string energy_expr
+IF MATHEVAL: 
+    cdef extern from "GenericPotential.hpp":
+        struct GenericPotential:
+            double maxval
+            string force_expr
+            string energy_expr
+ELSE:
+    cdef extern from "GenericPotential.hpp":
+        struct GenericPotential:
+            pass
 
 cdef extern from "dpd.hpp":
     cdef struct DPDParameters:
@@ -313,7 +317,7 @@ IF TABULATED:
                                  vector[double] energy,
                                  vector[double] force)
 
-IF EXPRESSION:
+IF MATHEVAL:
     cdef extern from "nonbonded_interactions/nonbonded_gen.hpp":
         int generic_set_params(int part_type_a, int part_type_b,
                                double max, string energy, string force)

@@ -20,9 +20,14 @@
 #define SERIALIZATION_IA_PARAMETERS_HPP
 
 #include <memory>
+#include "config.hpp"
 
-#include "matheval.hpp"
+
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+
+#ifdef MATHEVAL
+#include "matheval.hpp"
+#endif
 
 namespace boost {
 namespace serialization {
@@ -38,7 +43,7 @@ void load(Archive &ar, IA_parameters &p,
   new (&(p.tab)) TabulatedPotential(std::move(tab));
 #endif
 
-#ifdef EXPRESSION
+#ifdef MATHEVAL
   GenericPotential gen;
   ar >> gen;
 
@@ -60,7 +65,7 @@ void save(Archive &ar, IA_parameters const &p,
   ar << p.tab;
 #endif
 
-#ifdef EXPRESSION
+#ifdef MATHEVAL
   ar << p.gen;
 #endif
 }

@@ -22,15 +22,17 @@
  *
  *  Implementation of \ref nonbonded_gen.hpp
  */
+#include "config.hpp"
+
+#ifdef MATHEVAL
 #include "nonbonded_interactions/nonbonded_gen.hpp"
 
-#ifdef EXPRESSION
+#include "matheval.hpp"
 
 #include <memory>
 
 #include "communication.hpp"
 
-#include "matheval.hpp"
 
 #include <utils/constants.hpp>
 

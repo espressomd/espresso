@@ -172,7 +172,7 @@ if(WITH_COVERAGE)
 endif()
 
 target_link_libraries(EspressoCore PUBLIC EspressoConfig utils)
-target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123 matheval.x3)
+target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
 target_link_libraries(EspressoCore PRIVATE Profiler)
 
 if(FFTW3_FOUND)
@@ -185,7 +185,9 @@ if(SCAFACOS)
 endif(SCAFACOS)
 
 target_include_directories(EspressoCore SYSTEM PUBLIC ${CMAKE_SOURCE_DIR}/libs)
-target_link_libraries(EspressoCore PUBLIC matheval)
+if (MATHEVAL)
+  target_link_libraries(EspressoCore PUBLIC matheval.x3)
+endif()
 
 # Subdirectories
 add_subdirectory(io)

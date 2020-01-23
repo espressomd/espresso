@@ -270,10 +270,11 @@ struct Tabulated_bond_parameters {
 };
 
 /** Parameters for n-body potential from mathematical expression. */
+#ifdef MATHEVAL
 struct Generic_bond_parameters {
   GenericPotential *pot;
 };
-
+#endif
 #ifdef UMBRELLA
 /** Parameters for umbrella potential */
 struct Umbrella_bond_parameters {
@@ -365,7 +366,9 @@ union Bond_parameters {
   Angle_cossquare_bond_parameters angle_cossquare;
   Dihedral_bond_parameters dihedral;
   Tabulated_bond_parameters tab;
+#ifdef MATHEVAL 
   Generic_bond_parameters gen;
+#endif
 #ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
 #endif

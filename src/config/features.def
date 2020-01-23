@@ -69,7 +69,6 @@ EK_DOUBLE_PREC                  requires ELECTROKINETICS
 
 /* Interaction features */
 TABULATED
-EXPRESSION
 LENNARD_JONES
 WCA
 LENNARD_JONES_GENERIC           implies LENNARD_JONES
@@ -113,5 +112,6 @@ ADDITIONAL_CHECKS
 CUDA external
 FFTW external
 H5MD external
+MATHEVAL external
 SCAFACOS external
 GSL external

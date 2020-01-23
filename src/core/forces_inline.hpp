@@ -192,7 +192,7 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
   force_factor += tabulated_pair_force_factor(ia_params, dist);
 #endif
 /* generic */
-#ifdef EXPRESSION
+#ifdef MATHEVAL
   force_factor += generic_pair_force_factor(ia_params, dist);
 #endif
 /* Gay-Berne */
@@ -380,7 +380,7 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
   case BONDED_IA_TABULATED_DISTANCE:
     result = tab_bond_force(iaparams, dx);
     break;
-#ifdef EXPRESSION
+#ifdef MATHEVAL
   case BONDED_IA_GENERIC_DISTANCE:
     result = gen_bond_force(iaparams, dx);
     break;
@@ -507,7 +507,7 @@ inline void add_bonded_force(Particle *const p1) {
             tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
-#ifdef EXPRESSION
+#ifdef MATHEVAL
       case BONDED_IA_GENERIC_ANGLE:
         std::tie(force1, force2, force3) =
             gen_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
@@ -565,7 +565,7 @@ inline void add_bonded_force(Particle *const p1) {
         }
         break;
       }
-#ifdef EXPRESSION
+#ifdef MATHEVAL
       case BONDED_IA_GENERIC_DIHEDRAL: {
         auto result =
             gen_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);

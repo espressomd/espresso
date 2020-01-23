@@ -78,6 +78,10 @@
 #include <boost/serialization/utility.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
+#ifdef MATHEVAL
+#include "matheval.hpp"
+#endif
+
 using namespace std;
 
 namespace Communication {
@@ -340,7 +344,7 @@ void mpi_bcast_ia_params(int i, int j) {
         bonded_ia_params[i].type == BONDED_IA_TABULATED_DIHEDRAL) {
       boost::mpi::broadcast(comm_cart, *bonded_ia_params[i].p.tab.pot, 0);
     }
-#ifdef EXPRESSION
+#ifdef MATHEVAL
     if (bonded_ia_params[i].type == BONDED_IA_GENERIC_DISTANCE ||
         bonded_ia_params[i].type == BONDED_IA_GENERIC_ANGLE ||
         bonded_ia_params[i].type == BONDED_IA_GENERIC_DIHEDRAL) {
@@ -369,7 +373,7 @@ void mpi_bcast_ia_params_slave(int i, int j) {
 
       bonded_ia_params[i].p.tab.pot = tab_pot;
     }
-#ifdef EXPRESSION
+#ifdef MATHEVAL
     if (bonded_ia_params[i].type == BONDED_IA_GENERIC_DISTANCE ||
         bonded_ia_params[i].type == BONDED_IA_GENERIC_ANGLE ||
         bonded_ia_params[i].type == BONDED_IA_GENERIC_DIHEDRAL) {

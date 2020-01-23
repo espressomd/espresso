@@ -19,14 +19,14 @@ from __future__ import print_function
 import unittest as ut
 
 import espressomd
-features = ["EXPRESSION", "LENNARD_JONES"]
-if espressomd.has_features(features):
-    from espressomd.interactions import GenericDistance, GenericAngle, HarmonicBond, AngleHarmonic
 
 import numpy as np
+import unittest_decorators as utx
+required_features = ["LENNARD_JONES", "MATHEVAL"]
+if espressomd.has_features(required_features):
+    from espressomd.interactions import HarmonicBond, AngleHarmonic, GenericDistance, GenericAngle
 
-
-@ut.skipIf(not espressomd.has_features(features), "Missing features")
+@utx.skipIfMissingFeatures(["LENNARD_JONES", "MATHEVAL"])
 class GenericTest(ut.TestCase):
 
     system = espressomd.System(box_l=[10, 10, 10])

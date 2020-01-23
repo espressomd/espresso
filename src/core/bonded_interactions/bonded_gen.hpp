@@ -29,7 +29,7 @@
  */
 
 #include "config.hpp"
-
+#ifdef MATHEVAL
 #include "angle_common.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/dihedral.hpp"
@@ -238,4 +238,5 @@ gen_dihedral_energy(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   return gen_pot->energy(phi);
 }
 
+#endif
 #endif

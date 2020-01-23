@@ -170,7 +170,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
   max_cut_current = std::max(max_cut_current, data.tab.cutoff());
 #endif
 
-#ifdef EXPRESSION
+#ifdef MATHEVAL
   max_cut_current = std::max(max_cut_current, data.gen.cutoff());
 #endif
 

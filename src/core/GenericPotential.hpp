@@ -1,6 +1,9 @@
 #ifndef CORE_GENERIC_POTENTIAL_HPP
 #define CORE_GENERIC_POTENTIAL_HPP
 
+#include "config.hpp"
+#ifdef MATHEVAL
+
 #include <cassert>
 #include <memory>
 #include <string>
@@ -60,4 +63,5 @@ private:
   }
 };
 
+#endif
 #endif
