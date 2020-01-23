@@ -68,8 +68,6 @@ struct p3m_data_struct {
   /** square of sum of charges (only on master node). */
   double square_sum_q;
 
-  /** position shift for calc. of first assignment mesh point. */
-  double pos_shift;
   /** help variable for calculation of aliasing sums */
   std::vector<double> meshift_x;
   std::vector<double> meshift_y;

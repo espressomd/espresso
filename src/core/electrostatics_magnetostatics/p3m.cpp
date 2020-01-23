@@ -179,8 +179,6 @@ p3m_data_struct::p3m_data_struct() {
   sum_q2 = 0.0;
   square_sum_q = 0.0;
 
-  pos_shift = 0.0;
-
   ca_num = 0;
   ks_pnum = 0;
 }
@@ -221,10 +219,6 @@ void p3m_init() {
 
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
-
-    /* position offset for calc. of first meshpoint */
-    p3m.pos_shift =
-        std::floor((p3m.params.cao - 1) / 2.0) - (p3m.params.cao % 2) / 2.0;
 
     p3m_count_charged_particles();
   }
@@ -319,11 +313,11 @@ int p3m_set_eps(double eps) {
 template <int cao>
 void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
                           int cp_cnt) {
+  /** position shift for calc. of first assignment mesh point. */
+  static auto const pos_shift = std::floor((cao - 1) / 2.0) - (cao % 2) / 2.0;
+
   /* distance to nearest mesh point */
   double dist[3];
-  // make sure we have enough space
-  if (cp_cnt >= p3m.ca_num)
-    p3m_realloc_ca_fields(cp_cnt + 1);
 
   /* nearest mesh point */
   Utils::Vector3i nmp;
@@ -332,7 +326,7 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
     /* particle position in mesh coordinates */
     auto const pos =
         ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
-        p3m.pos_shift;
+        pos_shift;
 
     nmp[d] = (int)pos;
 
@@ -343,6 +337,9 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
   auto q_ind = Utils::get_linear_index(nmp, p3m.local_mesh.dim,
                                        Utils::MemoryOrder::ROW_MAJOR);
 
+  // make sure we have enough space
+  if (cp_cnt >= p3m.ca_num)
+    p3m_realloc_ca_fields(cp_cnt + 1);
   if (cp_cnt >= 0)
     p3m.ca_fmp[cp_cnt] = q_ind;
 
