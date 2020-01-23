@@ -15,16 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization sample of a simple plate capacitor with applied potential
-difference and charged particles.
+Visualize charged particles confined between two plates of a capacitor with an
+applied potential difference.
 """
 
 import numpy as np
-import math
-from threading import Thread
 
 import espressomd
 import espressomd.shapes
+from espressomd.minimize_energy import steepest_descent
 from espressomd import electrostatics
 from espressomd import visualization
 
@@ -57,17 +56,13 @@ system.constraints.add(shape=espressomd.shapes.Wall(
 system.constraints.add(shape=espressomd.shapes.Wall(
     dist=-box_l, normal=[0, 0, -1]), particle_type=1)
 
-WCA_cut = 2.**(1. / 6.)
-system.non_bonded_inter[0, 1].wca.set_params(
-    epsilon=1.0, sigma=1.0)
-system.non_bonded_inter[0, 0].wca.set_params(
-    epsilon=1.0, sigma=1.0)
+system.non_bonded_inter[0, 1].wca.set_params(epsilon=1.0, sigma=1.0)
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1.0, sigma=1.0)
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total=", energy['total'])
-system.minimize_energy.init(
-    f_max=10, gamma=50.0, max_steps=1000, max_displacement=0.2)
-system.minimize_energy.minimize()
+steepest_descent(system, f_max=10, gamma=50.0, max_steps=1000,
+                 max_displacement=0.2)
 energy = system.analysis.energy()
 print("After Minimization: E_total=", energy['total'])
 

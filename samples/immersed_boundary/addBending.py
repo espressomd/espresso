@@ -26,7 +26,7 @@ def AddBending(system, kb):
         numAngles = int(fp.readline())
         print("Found {}".format(numAngles))
         # actual add
-        for i in range(0, numAngles):
+        for _ in range(0, numAngles):
             line = str.split(fp.readline())
             id1 = int(line[0])
             id2 = int(line[1])

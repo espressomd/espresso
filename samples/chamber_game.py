@@ -15,7 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-ESPResSo as a game engine.
+Game based on Maxwell's demon, a thought experiment used to teach statistical
+thermodynamics. The user has to scoop particles from a chamber and guide them
+to another chamber through a channel with the help of a snake controlled by a
+gamepad or the keyboard. The particle imbalance between chambers creates
+a pressure gradient that makes it harder to move particles to the chamber
+with an excess of particles.
 """
 
 from threading import Thread
@@ -23,9 +28,8 @@ import numpy as np
 import time
 
 import espressomd
-from espressomd import thermostat
-from espressomd import integrate
 import espressomd.shapes
+import espressomd.minimize_energy
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
@@ -176,7 +180,7 @@ for i in range(snake_n):
         p_head = system.part.add(
             pos=snake_startpos,
             type=snake_head_type,
-            fix=[0, 0, 1],
+            fix=[False, False, True],
             mass=snake_head_mass,
             temp=temperature_snake,
             gamma=gamma_snake_head)
@@ -188,7 +192,7 @@ for i in range(snake_n):
                + (i - 1) * snake_bead_sigma),
             bonds=(harmonic_bead if (i > 1) else harmonic_head, i - 1),
             type=snake_bead_type,
-            fix=[0, 0, 1],
+            fix=[False, False, True],
             mass=snake_bead_mass,
             temp=temperature_snake,
             gamma=gamma_snake_bead)
@@ -249,8 +253,7 @@ system.constraints.add(shape=espressomd.shapes.SimplePore(
 # BUBBLES
 n = 0
 
-# for i in range(bubbles_n):
-while (n < bubbles_n):
+while n < bubbles_n:
     # bpos = [pore_xr +  np.random.random() * (pore_xr - pore_xl -
     # snake_head_sigma*4) + snake_head_sigma * 2, np.random.random() * box[1],
     # box[2]*0.5]
@@ -259,7 +262,7 @@ while (n < bubbles_n):
     system.part.add(
         pos=bpos,
         type=bubble_type,
-        fix=[0, 0, 1],
+        fix=[False, False, True],
         mass=bubble_mass,
         temp=temperature_bubbles,
         gamma=gamma_bubbles)
@@ -278,7 +281,7 @@ bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
 p_temp_inc = system.part.add(
     pos=bpos,
     type=temp_change_inc_type,
-    fix=[1, 1, 1])
+    fix=[True, True, True])
 
 bpos = [pore_xr
         + np.random.random() * (pore_xr - pore_xl - snake_head_sigma * 4)
@@ -288,15 +291,15 @@ bpos = [pore_xr
 p_temp_dec = system.part.add(
     pos=bpos,
     type=temp_change_dec_type,
-    fix=[1, 1, 1])
+    fix=[True, True, True])
 
 # MINIMIZE ENERGY
 
 energy = system.analysis.energy()
 #print("Before Minimization: E_total = {}".format(energy['total']))
-system.minimize_energy.init(f_max=100, gamma=30.0,
-                            max_steps=10000, max_displacement=0.01)
-system.minimize_energy.minimize()
+espressomd.minimize_energy.steepest_descent(system, f_max=100, gamma=30.0,
+                                            max_steps=10000,
+                                            max_displacement=0.01)
 energy = system.analysis.energy()
 #print("After Minimization: E_total = {}".format(energy['total']))
 

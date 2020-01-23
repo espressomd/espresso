@@ -14,6 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+Build the ESPResSo logo with particles.
+"""
 import math
 import numpy as np
 
@@ -48,7 +51,7 @@ for i in range(cup_height):
 # cup bottom
 rad = cup_bot_circ / (2.0 * np.pi)
 posy = yoff
-while (rad > 1.0):
+while rad > 1.0:
     rad -= 0.9
     circ = 2.0 * np.pi * rad
     alpha = 2.0 * np.pi / int(circ)
@@ -133,7 +136,7 @@ for i in range(n_steam):
         pid = len(system.part) - 1
 
         if j == 0:
-            system.part[pid].fix = [1, 1, 1]
+            system.part[pid].fix = [True, True, True]
         else:
             system.part[pid].bonds = (fene, pid - 1)
 

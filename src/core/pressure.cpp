@@ -53,19 +53,14 @@ nptiso_struct nptiso = {0.0,
                         0.0,
                         0.0,
                         0.0,
-                        0.0,
                         {0.0, 0.0, 0.0},
                         {0.0, 0.0, 0.0},
                         true,
                         0,
                         {NPTGEOM_XDIR, NPTGEOM_YDIR, NPTGEOM_ZDIR},
                         0,
-                        0,
+                        false,
                         0};
-
-/************************************************************/
-/* callbacks for setmd                                      */
-/************************************************************/
 
 /************************************************************/
 /* local prototypes                                         */
@@ -105,9 +100,7 @@ inline void add_single_particle_virials(int v_comp, Particle &p) {
 
 void pressure_calc(double *result, double *result_t, double *result_nb,
                    double *result_t_nb, int v_comp) {
-  int n, i;
-  double volume =
-      box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2];
+  auto const volume = box_geo.volume();
 
   if (!interactions_sanity_checks())
     return;
@@ -131,27 +124,27 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials(local_cells.particles());
+  calc_long_range_virials(cell_structure.local_cells().particles());
 
 #ifdef VIRTUAL_SITES
   virtual_sites()->pressure_and_stress_tensor_contribution(
       virials.virtual_sites, p_tensor.virtual_sites);
 #endif
 
-  for (n = 1; n < virials.data.n; n++)
+  for (int n = 1; n < virials.data.n; n++)
     virials.data.e[n] /= 3.0 * volume;
 
-  for (i = 0; i < 9; i++)
+  for (int i = 0; i < 9; i++)
     p_tensor.data.e[i] /= (volume * time_step * time_step);
 
-  for (i = 9; i < p_tensor.data.n; i++)
+  for (int i = 9; i < p_tensor.data.n; i++)
     p_tensor.data.e[i] /= volume;
 
   /* Intra- and Inter- part of nonbonded interaction */
-  for (n = 0; n < virials_non_bonded.data_nb.n; n++)
+  for (int n = 0; n < virials_non_bonded.data_nb.n; n++)
     virials_non_bonded.data_nb.e[n] /= 3.0 * volume;
 
-  for (i = 0; i < p_tensor_non_bonded.data_nb.n; i++)
+  for (int i = 0; i < p_tensor_non_bonded.data_nb.n; i++)
     p_tensor_non_bonded.data_nb.e[i] /= volume;
 
   /* gather data */

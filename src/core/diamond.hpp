@@ -30,8 +30,6 @@
  */
 
 #include "PartCfg.hpp"
-#include "particle_data.hpp"
-#include "utils/Vector.hpp"
 
 /** C implementation of 'counterions \<N_CI\> [options]'.
  *  @param  N_CI         number of counterions to create

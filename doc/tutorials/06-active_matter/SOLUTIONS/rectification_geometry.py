@@ -25,11 +25,10 @@
 from math import cos, pi, sin
 import numpy as np
 import os
-import sys
 
 import espressomd
 espressomd.assert_features(["CUDA", "LB_BOUNDARIES_GPU"])
-from espressomd import assert_features, lb
+from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
 from espressomd.shapes import Cylinder, Wall, HollowCone
 
@@ -39,8 +38,8 @@ from espressomd.shapes import Cylinder, Wall, HollowCone
 outdir = "./RESULTS_RECTIFICATION"
 os.makedirs(outdir, exist_ok=True)
 
-# Setup the box (we pad the diameter to ensure that the LB boundaries
-# and therefore the constraints, are away from the edge of the box)
+# Setup the box (we pad the geometry to make sure
+# the LB boundaries are away from the edges of the box)
 
 LENGTH = 100
 DIAMETER = 20

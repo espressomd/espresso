@@ -23,10 +23,10 @@
  *
  *  The corresponding header file is particle_data.hpp.
  */
-
 #include "particle_data.hpp"
 
 #include "PartCfg.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -57,9 +57,6 @@
 /************************************************
  * defines
  ************************************************/
-
-/** granularity of the particle buffers in particles */
-#define PART_INCREMENT 8
 
 /** my magic MPI code for send/recv_particles */
 #define REQ_SNDRCV_PART 0xaa
@@ -96,32 +93,6 @@ using UpdateMomentum = UpdateParticle<ParticleMomentum, &Particle::m, T, m>;
 template <typename T, T ParticleForce ::*m>
 using UpdateForce = UpdateParticle<ParticleForce, &Particle::f, T, m>;
 
-#ifdef EXTERNAL_FORCES
-/**
- * @brief Special updater for the external flags.
- *
- * These need to be treated specially as they are
- * updated masked and not overwritten.
- */
-struct UpdateExternalFlag {
-  /* The bits to update */
-  int mask;
-  /* The actual values for the update */
-  int flag;
-  void operator()(Particle &p) const {
-    /* mask out old flags */
-    p.p.ext_flag &= ~mask;
-    /* set new values */
-    p.p.ext_flag |= (mask & flag);
-  }
-
-  template <class Archive> void serialize(Archive &ar, long int) {
-    ar &mask;
-    ar &flag;
-  }
-};
-#endif
-
 using Prop = ParticleProperties;
 
 // clang-format off
@@ -137,15 +108,17 @@ using UpdatePropertyMessage = boost::variant
 #ifdef ROTATIONAL_INERTIA
         , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
-#ifdef MEMBRANE_COLLISION
-        , UpdateProperty<Utils::Vector3d, &Prop::out_direction>
+#ifdef ROTATION
+        , UpdateProperty<uint8_t, &Prop::rotation>
 #endif
-        , UpdateProperty<int, &Prop::rotation>
 #ifdef ELECTROSTATICS
         , UpdateProperty<double, &Prop::q>
 #endif
 #ifdef LB_ELECTROHYDRODYNAMICS
         , UpdateProperty<Utils::Vector3d, &Prop::mu_E>
+#endif
+#ifdef ENGINE
+        , UpdateProperty<ParticleParametersSwimming, &Prop::swim>
 #endif
 #ifdef DIPOLES
         , UpdateProperty<double, &Prop::dipm>
@@ -153,7 +126,7 @@ using UpdatePropertyMessage = boost::variant
 #ifdef VIRTUAL_SITES
         , UpdateProperty<bool, &Prop::is_virtual>
 #ifdef VIRTUAL_SITES_RELATIVE
-        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameteres,
+        , UpdateProperty<ParticleProperties::VirtualSitesRelativeParameters,
                          &Prop::vs_relative>
 #endif
 #endif
@@ -169,11 +142,11 @@ using UpdatePropertyMessage = boost::variant
         , UpdateProperty<double, &Prop::gamma_rot>
 #else
         , UpdateProperty<Utils::Vector3d, &Prop::gamma_rot>
-#endif // ROTATIONAL_INERTIA
+#endif // PARTICLE_ANISOTROPY
 #endif // ROTATION
 #endif // LANGEVIN_PER_PARTICLE
 #ifdef EXTERNAL_FORCES
-        , UpdateExternalFlag
+        , UpdateProperty<uint8_t, &Prop::ext_flag>
         , UpdateProperty<Utils::Vector3d, &Prop::ext_force>
 #ifdef ROTATION
         , UpdateProperty<Utils::Vector3d, &Prop::ext_torque>
@@ -251,21 +224,6 @@ using UpdateBondMessage = boost::variant
         , AddBond
         >;
 
-#ifdef ENGINE
-struct UpdateSwim {
-    ParticleParametersSwimming swim;
-
-    void operator()(Particle &p) const {
-      p.swim = swim;
-    }
-
-    template<class Archive>
-    void serialize(Archive &ar, long int) {
-      ar & swim;
-    }
-};
-#endif
-
 #ifdef ROTATION
 struct UpdateOrientation {
     Utils::Vector3d axis;
@@ -300,9 +258,6 @@ using UpdateMessage = boost::variant
         , UpdateMomentumMessage
         , UpdateForceMessage
         , UpdateBondMessage
-#ifdef ENGINE
-        , UpdateSwim
-#endif
 #ifdef ROTATION
         , UpdateOrientation
 #endif
@@ -439,8 +394,7 @@ bool swimming_particles_exist = false;
  */
 std::unordered_map<int, int> particle_node;
 
-int max_local_particles = 0;
-Particle **local_particles = nullptr;
+std::vector<Particle *> local_particles;
 
 /************************************************
  * local functions
@@ -471,8 +425,9 @@ void mpi_who_has_slave(int, int) {
 
   sendbuf.resize(n_part);
 
-  auto end = std::transform(local_cells.particles().begin(),
-                            local_cells.particles().end(), sendbuf.data(),
+  auto end = std::transform(cell_structure.local_cells().particles().begin(),
+                            cell_structure.local_cells().particles().end(),
+                            sendbuf.data(),
                             [](Particle const &p) { return p.p.identity; });
 
   auto npart = std::distance(sendbuf.data(), end);
@@ -510,7 +465,9 @@ void mpi_who_has(const ParticleRange &particles) {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() { mpi_who_has(local_cells.particles()); }
+void build_particle_node() {
+  mpi_who_has(cell_structure.local_cells().particles());
+}
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
@@ -542,45 +499,14 @@ void clear_particle_node() { particle_node.clear(); }
     \param part the highest existing particle
 */
 void realloc_local_particles(int part) {
-  if (part >= max_local_particles) {
-    /* round up part + 1 in granularity PART_INCREMENT */
-    max_local_particles =
-        PART_INCREMENT * ((part + PART_INCREMENT) / PART_INCREMENT);
-    local_particles = Utils::realloc(local_particles,
-                                     sizeof(Particle *) * max_local_particles);
+  constexpr auto INCREMENT = 8;
 
-    /* Set new memory to 0 */
-    for (int i = (max_seen_particle + 1); i < max_local_particles; i++)
-      local_particles[i] = nullptr;
+  if (part >= local_particles.size()) {
+    /* increase vector size by round up part + 1 in granularity INCREMENT and
+     * set new memory to nullptr */
+    local_particles.resize(INCREMENT * ((part + INCREMENT) / INCREMENT),
+                           nullptr);
   }
-}
-
-void init_particlelist(ParticleList *pList) {
-  pList->n = 0;
-  pList->max = 0;
-  pList->part = nullptr;
-}
-
-int realloc_particlelist(ParticleList *l, int size) {
-  assert(size >= 0);
-  int old_max = l->max;
-  Particle *old_start = l->part;
-
-  if (size < l->max) {
-    if (size == 0)
-      /* to be able to free an array again */
-      l->max = 0;
-    else
-      /* shrink not as fast, just lose half, rounded up */
-      l->max =
-          PART_INCREMENT *
-          (((l->max + size + 1) / 2 + PART_INCREMENT - 1) / PART_INCREMENT);
-  } else
-    /* round up */
-    l->max = PART_INCREMENT * ((size + PART_INCREMENT - 1) / PART_INCREMENT);
-  if (l->max != old_max)
-    l->part = Utils::realloc(l->part, sizeof(Particle) * l->max);
-  return l->part != old_start;
 }
 
 void update_local_particles(ParticleList *pl) {
@@ -591,12 +517,12 @@ void update_local_particles(ParticleList *pl) {
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  realloc_particlelist(l, ++l->n);
+  l->resize(l->n + 1);
   new (&(l->part[l->n - 1])) Particle(std::move(part));
 }
 
 Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = realloc_particlelist(l, ++l->n);
+  auto const re = l->resize(l->n + 1);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
   assert(p->p.identity <= max_seen_particle);
@@ -612,7 +538,7 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
 
-  realloc_particlelist(dl, ++dl->n);
+  dl->resize(dl->n + 1);
   auto dst = &dl->part[dl->n - 1];
   auto src = &sl->part[i];
   auto end = &sl->part[sl->n - 1];
@@ -622,14 +548,14 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  realloc_particlelist(sl, --sl->n);
+  sl->resize(sl->n - 1);
   return dst;
 }
 
 Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
-  int re = realloc_particlelist(dl, ++dl->n);
+  int re = dl->resize(dl->n + 1);
   Particle *dst = &dl->part[dl->n - 1];
   Particle *src = &sl->part[i];
   Particle *end = &sl->part[sl->n - 1];
@@ -647,7 +573,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -682,7 +608,7 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
     new (src) Particle(std::move(*end));
   }
 
-  if (realloc_particlelist(sl, --sl->n)) {
+  if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
     local_particles[src->p.identity] = src;
@@ -845,7 +771,8 @@ void set_particle_v(int part, double *v) {
 
 #ifdef ENGINE
 void set_particle_swimming(int part, ParticleParametersSwimming swim) {
-  mpi_send_update_message(part, UpdateSwim{swim});
+  mpi_update_particle_property<ParticleParametersSwimming,
+                               &ParticleProperties::swim>(part, swim);
 }
 #endif
 
@@ -872,20 +799,13 @@ constexpr Utils::Vector3d ParticleProperties::rinertia;
 #endif
 #ifdef ROTATION
 void set_particle_rotation(int part, int rot) {
-  mpi_update_particle_property<int, &ParticleProperties::rotation>(part, rot);
+  mpi_update_particle_property<uint8_t, &ParticleProperties::rotation>(part,
+                                                                       rot);
 }
 #endif
 #ifdef ROTATION
 void rotate_particle(int part, const Utils::Vector3d &axis, double angle) {
   mpi_send_update_message(part, UpdateOrientation{axis, angle});
-}
-#endif
-
-#ifdef MEMBRANE_COLLISION
-void set_particle_out_direction(int part, double *out_direction) {
-  mpi_update_particle_property<Utils::Vector3d,
-                               &ParticleProperties::out_direction>(
-      part, Utils::Vector3d(out_direction, out_direction + 3));
 }
 #endif
 
@@ -914,24 +834,24 @@ void set_particle_virtual(int part, bool is_virtual) {
 #endif
 
 #ifdef VIRTUAL_SITES_RELATIVE
-void set_particle_vs_quat(int part, double *vs_relative_quat) {
+void set_particle_vs_quat(int part, Utils::Vector4d const &vs_relative_quat) {
   auto vs_relative = get_particle_data(part).p.vs_relative;
-  vs_relative.quat = Utils::Vector4d(vs_relative_quat, vs_relative_quat + 4);
+  vs_relative.quat = vs_relative_quat;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 
 void set_particle_vs_relative(int part, int vs_relative_to, double vs_distance,
-                              double *rel_ori) {
-  ParticleProperties::VirtualSitesRelativeParameteres vs_relative;
+                              Utils::Vector4d const &rel_ori) {
+  ParticleProperties::VirtualSitesRelativeParameters vs_relative;
   vs_relative.distance = vs_distance;
   vs_relative.to_particle_id = vs_relative_to;
-  vs_relative.rel_orientation = {rel_ori, rel_ori + 4};
+  vs_relative.rel_orientation = rel_ori;
 
   mpi_update_particle_property<
-      ParticleProperties::VirtualSitesRelativeParameteres,
+      ParticleProperties::VirtualSitesRelativeParameters,
       &ParticleProperties::vs_relative>(part, vs_relative);
 }
 #endif
@@ -1046,33 +966,19 @@ void set_particle_gamma_rot(int part, Utils::Vector3d gamma_rot) {
 #ifdef EXTERNAL_FORCES
 #ifdef ROTATION
 void set_particle_ext_torque(int part, const Utils::Vector3d &torque) {
-  // No lint because clang-tidy 6 wrongly detects this as size check.
-  auto const flag =
-      (torque != Utils::Vector3d{}) ? PARTICLE_EXT_TORQUE : 0; // NOLINT
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_torque>(part, torque);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_TORQUE, flag}));
+  mpi_update_particle_property<Utils::Vector3d,
+                               &ParticleProperties::ext_torque>(part, torque);
 }
 #endif
 
 void set_particle_ext_force(int part, const Utils::Vector3d &force) {
-  // No lint because clang-tidy 6 wrongly detects this as size check.
-  auto const flag =
-      (force != Utils::Vector3d{}) ? PARTICLE_EXT_FORCE : 0; // NOLINT
-  if (flag) {
-    mpi_update_particle_property<Utils::Vector3d,
-                                 &ParticleProperties::ext_force>(part, force);
-  }
-  mpi_send_update_message(part, UpdatePropertyMessage(UpdateExternalFlag{
-                                    PARTICLE_EXT_FORCE, flag}));
+  mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::ext_force>(
+      part, force);
 }
 
-void set_particle_fix(int part, int flag) {
-  mpi_send_update_message(
-      part, UpdatePropertyMessage(UpdateExternalFlag{COORDS_FIX_MASK, flag}));
+void set_particle_fix(int part, uint8_t flag) {
+  mpi_update_particle_property<uint8_t, &ParticleProperties::ext_flag>(part,
+                                                                       flag);
 }
 #endif
 
@@ -1117,50 +1023,54 @@ int remove_particle(int p_id) {
   return ES_OK;
 }
 
-namespace {
-std::pair<Cell *, size_t> find_particle(Particle *p, Cell *c) {
-  for (int i = 0; i < c->n; ++i) {
-    if ((c->part + i) == p) {
-      return {c, i};
-    }
+/**
+ * @brief Remove all bonds on particle involing other particle.
+ *
+ * @param p Particle whose bond list is modified.
+ * @param id Bonds involving this id are removed.
+ */
+static void remove_all_bonds_to(Particle &p, int id) {
+  IntList *bl = &p.bl;
+  int i, j, partners;
+
+  for (i = 0; i < bl->n;) {
+    partners = bonded_ia_params[bl->e[i]].num;
+    for (j = 1; j <= partners; j++)
+      if (bl->e[i + j] == id)
+        break;
+    if (j <= partners) {
+      bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
+    } else
+      i += 1 + partners;
   }
-  return {nullptr, 0};
+  assert(i == bl->n);
 }
 
-std::pair<Cell *, size_t> find_particle(Particle *p, CellPList cells) {
-  for (auto &c : cells) {
-    auto res = find_particle(p, c);
-    if (res.first) {
-      return res;
-    }
+void remove_all_bonds_to(int identity) {
+  for (auto &p : cell_structure.local_cells().particles()) {
+    remove_all_bonds_to(p, identity);
   }
-
-  return {nullptr, 0};
 }
-} // namespace
 
 void local_remove_particle(int part) {
-  Particle *p = local_particles[part];
-  assert(p);
-  assert(not p->l.ghost);
-
-  /* If the particles are sorted we can use the
-   * cell system to find the cell containing the
-   * particle. Otherwise we do a brute force search
-   * of the cells. */
   Cell *cell = nullptr;
-  size_t n = 0;
-  if (Cells::RESORT_NONE == get_resort_particles()) {
-    std::tie(cell, n) = find_particle(p, find_current_cell(*p));
+  int position = -1;
+  for (auto c : cell_structure.local_cells()) {
+    for (int i = 0; i < c->n; i++) {
+      auto &p = c->part[i];
+
+      if (p.identity() == part) {
+        cell = c;
+        position = i;
+      } else {
+        remove_all_bonds_to(p, part);
+      }
+    }
   }
 
-  if (not cell) {
-    std::tie(cell, n) = find_particle(p, local_cells);
-  }
+  assert(cell && (position >= 0));
 
-  assert(cell && cell->part && (n < cell->n) && ((cell->part + n) == p));
-
-  Particle p_destroy = extract_indexed_particle(cell, n);
+  extract_indexed_particle(cell, position);
 }
 
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
@@ -1195,12 +1105,12 @@ void local_remove_all_particles() {
   int c;
   n_part = 0;
   max_seen_particle = -1;
-  std::fill(local_particles, local_particles + max_local_particles, nullptr);
+  std::fill(local_particles.begin(), local_particles.end(), nullptr);
 
-  for (c = 0; c < local_cells.n; c++) {
+  for (c = 0; c < cell_structure.local_cells().n; c++) {
     Particle *p;
     int i, np;
-    cell = local_cells.cell[c];
+    cell = cell_structure.local_cells().cell[c];
     p = cell->part;
     np = cell->n;
     for (i = 0; i < np; i++)
@@ -1210,7 +1120,7 @@ void local_remove_all_particles() {
 }
 
 void local_rescale_particles(int dir, double scale) {
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     if (dir < 3)
       p.r.p[dir] *= scale;
     else {
@@ -1274,35 +1184,10 @@ int try_delete_bond(Particle *part, const int *bond) {
   return ES_ERROR;
 }
 
-void remove_all_bonds_to(int identity) {
-  for (auto &p : local_cells.particles()) {
-    IntList *bl = &p.bl;
-    int i, j, partners;
-
-    for (i = 0; i < bl->n;) {
-      partners = bonded_ia_params[bl->e[i]].num;
-      for (j = 1; j <= partners; j++)
-        if (bl->e[i + j] == identity)
-          break;
-      if (j <= partners) {
-        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-      } else
-        i += 1 + partners;
-    }
-    if (i != bl->n) {
-      fprintf(stderr,
-              "%d: INTERNAL ERROR: bond information corrupt for "
-              "particle %d, exiting...\n",
-              this_node, p.p.identity);
-      errexit();
-    }
-  }
-}
-
 #ifdef EXCLUSIONS
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
-    for (auto &p : local_cells.particles()) {
+    for (auto &p : cell_structure.local_cells().particles()) {
       p.el.clear();
     }
 
@@ -1355,7 +1240,7 @@ void send_particles(ParticleList *particles, int node) {
     free_particle(&particles->part[pc]);
   }
 
-  realloc_particlelist(particles, particles->n = 0);
+  particles->clear();
 }
 
 void recv_particles(ParticleList *particles, int node) {
@@ -1539,19 +1424,15 @@ void pointer_to_dipm(Particle const *p, double const *&res) {
 #endif
 
 #ifdef EXTERNAL_FORCES
-void pointer_to_ext_force(Particle const *p, int const *&res1,
-                          double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_force(Particle const *p, double const *&res2) {
   res2 = p->p.ext_force.data();
 }
 #ifdef ROTATION
-void pointer_to_ext_torque(Particle const *p, int const *&res1,
-                           double const *&res2) {
-  res1 = &(p->p.ext_flag);
+void pointer_to_ext_torque(Particle const *p, double const *&res2) {
   res2 = p->p.ext_torque.data();
 }
 #endif
-void pointer_to_fix(Particle const *p, int const *&res) {
+void pointer_to_fix(Particle const *p, const uint8_t *&res) {
   res = &(p->p.ext_flag);
 }
 #endif
@@ -1580,26 +1461,16 @@ void pointer_to_temperature(Particle const *p, double const *&res) {
 }
 #endif // LANGEVIN_PER_PARTICLE
 
-void pointer_to_rotation(Particle const *p, int const *&res) {
-  res = &(p->p.rotation);
-}
-
 #ifdef ENGINE
 void pointer_to_swimming(Particle const *p,
                          ParticleParametersSwimming const *&swim) {
-  swim = &(p->swim);
+  swim = &(p->p.swim);
 }
 #endif
 
 #ifdef ROTATIONAL_INERTIA
 void pointer_to_rotational_inertia(Particle const *p, double const *&res) {
   res = p->p.rinertia.data();
-}
-#endif
-
-#ifdef MEMBRANE_COLLISION
-void pointer_to_out_direction(const Particle *p, const double *&res) {
-  res = p->p.out_direction.data();
 }
 #endif
 

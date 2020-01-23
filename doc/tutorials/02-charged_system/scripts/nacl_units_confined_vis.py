@@ -21,10 +21,10 @@
 import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.shapes import Wall
+from espressomd.minimize_energy import steepest_descent
 from espressomd import visualization_opengl
 import numpy
 from threading import Thread
-from time import sleep
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
@@ -127,9 +127,8 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
     system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-system.minimize_energy.init(
-    f_max=10, gamma=10, max_steps=2000, max_displacement=0.1)
-system.minimize_energy.minimize()
+steepest_descent(system, f_max=10, gamma=10, max_steps=2000,
+                 max_displacement=0.1)
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)

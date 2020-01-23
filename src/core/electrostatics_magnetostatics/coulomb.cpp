@@ -75,9 +75,10 @@ void calc_pressure_long_range(Observable_stat &virials,
     break;
   case COULOMB_P3M: {
     p3m_charge_assign(particles);
-    virials.coulomb[1] = p3m_calc_kspace_forces(false, true, particles);
-    p3m_charge_assign(particles);
-    p3m_calc_kspace_stress(p_tensor.coulomb + 9);
+    auto const p3m_stress = p3m_calc_kspace_stress();
+    std::copy_n(p3m_stress.data(), 9, p_tensor.coulomb + 9);
+    virials.coulomb[1] = p3m_stress[0] + p3m_stress[4] + p3m_stress[8];
+
     break;
   }
 #endif
@@ -199,7 +200,7 @@ void integrate_sanity_check() {
 }
 
 void update_dependent_particles() {
-  iccp3m_iteration(local_cells.particles(),
+  iccp3m_iteration(cell_structure.local_cells().particles(),
                    cell_structure.ghost_cells().particles());
 }
 
@@ -334,7 +335,7 @@ void calc_long_range_force(const ParticleRange &particles) {
     if (this_node == 0) {
       p3m_gpu_add_farfield_force();
     }
-    /* there is no NPT handling here as long as we cannot compute energies.g
+    /* there is no NPT handling here as long as we cannot compute energies.
        This is checked in integrator_npt_sanity_checks() when integration
        starts. */
     break;

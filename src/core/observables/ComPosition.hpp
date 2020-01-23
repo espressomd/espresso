@@ -24,21 +24,22 @@
 #include <vector>
 
 namespace Observables {
-
 class ComPosition : public PidObservable {
 public:
   using PidObservable::PidObservable;
   int n_values() const override { return 3; }
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
+
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
     std::vector<double> res(n_values());
     double total_mass = 0;
-    for (int i : ids()) {
-      if (partCfg[i].p.is_virtual)
+    for (auto p : particles) {
+      if (p->p.is_virtual)
         continue;
-      double mass = partCfg[i].p.mass;
-      res[0] += mass * partCfg[i].r.p[0];
-      res[1] += mass * partCfg[i].r.p[1];
-      res[2] += mass * partCfg[i].r.p[2];
+      double mass = p->p.mass;
+      res[0] += mass * p->r.p[0];
+      res[1] += mass * p->r.p[1];
+      res[2] += mass * p->r.p[2];
       total_mass += mass;
     }
     res[0] /= total_mass;

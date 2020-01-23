@@ -99,16 +99,13 @@ cdef extern from "statistics.hpp":
 
     void calc_part_distribution(
         PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
-        double r_min, double r_max, int r_bins, int log_flag, double * low,
+        double r_min, double r_max, int r_bins, bint log_flag, double * low,
         double * dist)
 
 cdef extern from "statistics_chain.hpp":
-    int chain_start
-    int chain_n_chains
-    int chain_length
-    array4 calc_re(PartCfg & )
-    array4 calc_rg(PartCfg & ) except +
-    array2 calc_rh(PartCfg & )
+    array4 calc_re(PartCfg &, int, int, int)
+    array4 calc_rg(PartCfg &, int, int, int) except +
+    array2 calc_rh(PartCfg &, int, int, int)
 
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure

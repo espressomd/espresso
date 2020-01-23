@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env sh
 # Copyright (C) 2010-2019 The ESPResSo project
-# 
+#
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
 # notice and this notice are preserved.  This file is offered as-is,
@@ -8,19 +8,19 @@
 #
 
 if test -n "$PYTHONPATH"; then
-  PYTHONPATH=@PYTHON_DIR@:$PYTHONPATH
+  PYTHONPATH="@PYTHON_DIR@:$PYTHONPATH"
 else
-  PYTHONPATH=@PYTHON_DIR@
+  PYTHONPATH="@PYTHON_DIR@"
 fi
 export PYTHONPATH
 
-if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" -a "@WITH_ASAN@" = "ON" ]; then
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@WITH_ASAN@" = "ON" ]; then
   asan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=address 2>&1 | grep -o '[" ][^" ]*libclang_rt.asan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
   for lib in $asan_lib; do
       test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
   done
 fi
-if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" -a "@WITH_UBSAN@" = "ON" -a "@WITH_ASAN@" != "ON" ]; then
+if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@WITH_UBSAN@" = "ON" ] && [ "@WITH_ASAN@" != "ON" ]; then
   ubsan_lib=$("@CMAKE_CXX_COMPILER@" /dev/null -### -o /dev/null -fsanitize=undefined 2>&1 | grep -o '[" ][^" ]*libclang_rt.ubsan[^" ]*[^s][" ]' | sed 's/[" ]//g' | sed 's/\.a$/.so/g')
   for lib in $ubsan_lib; do
     test -f $lib && LD_PRELOAD="$lib $LD_PRELOAD"
@@ -29,9 +29,9 @@ fi
 export LD_PRELOAD
 if [ "@WITH_UBSAN@" = "ON" ]; then
   if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
-    export UBSAN_OPTIONS="halt_on_error=1 print_stacktrace=1 suppressions=@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt $UBSAN_OPTIONS"
+    export UBSAN_OPTIONS="halt_on_error=1 print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt\" $UBSAN_OPTIONS"
   else
-    export UBSAN_OPTIONS="print_stacktrace=1 suppressions=@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt $UBSAN_OPTIONS"
+    export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt\" $UBSAN_OPTIONS"
   fi
 fi
 if [ "@WITH_ASAN@" = "ON" ]; then
@@ -47,59 +47,59 @@ if [ "@WITH_ASAN@" = "ON" ]; then
   fi
   export ASAN_OPTIONS
 fi
-if [ "@WITH_MSAN@" = "ON" -a "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
+if [ "@WITH_MSAN@" = "ON" ] && [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
   export MSAN_OPTIONS="halt_on_error=1 $MSAN_OPTIONS"
 fi
 
-case $1 in
+case "$1" in
     --gdb)
         shift
-        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" --args "@PYTHON_EXECUTABLE@" $@
-        exec gdb --args @PYTHON_FRONTEND@ $@
+        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" --args "@PYTHON_EXECUTABLE@" "$@"
+        exec gdb --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --lldb)
         shift
-        exec lldb -- @PYTHON_FRONTEND@ $@
+        exec lldb -- "@PYTHON_FRONTEND@" "$@"
         ;;
     --valgrind)
         shift
-        exec valgrind --leak-check=full @PYTHON_FRONTEND@ $@
+        exec valgrind --leak-check=full "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-gdb)
         shift
-        exec cuda-gdb --args @PYTHON_FRONTEND@ $@
+        exec cuda-gdb --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-memcheck)
         shift
-        exec cuda-memcheck @PYTHON_FRONTEND@ $@
+        exec cuda-memcheck "@PYTHON_FRONTEND@" "$@"
         ;;
     --gdb=*)
         options="${1#*=}"
         shift
-        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" ${options} --args "@PYTHON_EXECUTABLE@" $@
-        exec gdb ${options} --args @PYTHON_FRONTEND@ $@
+        [ "@PYTHON_FRONTEND@" = "@IPYTHON_EXECUTABLE@" ] && exec gdb -ex "set print thread-events off" -ex "set exec-wrapper sh -c 'exec \"@IPYTHON_EXECUTABLE@\" \"\$@\"'" ${options} --args "@PYTHON_EXECUTABLE@" "$@"
+        exec gdb ${options} --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --lldb=*)
         options="${1#*=}"
         shift
-        exec lldb ${options} -- @PYTHON_FRONTEND@ $@
+        exec lldb ${options} -- "@PYTHON_FRONTEND@" "$@"
         ;;
     --valgrind=*)
         options="${1#*=}"
         shift
-        exec valgrind ${options} @PYTHON_FRONTEND@ $@
+        exec valgrind ${options} "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-gdb=*)
         options="${1#*=}"
         shift
-        exec cuda-gdb ${options} --args @PYTHON_FRONTEND@ $@
+        exec cuda-gdb ${options} --args "@PYTHON_FRONTEND@" "$@"
         ;;
     --cuda-memcheck=*)
         options="${1#*=}"
         shift
-        exec cuda-memcheck ${options} @PYTHON_FRONTEND@ $@
+        exec cuda-memcheck ${options} "@PYTHON_FRONTEND@" "$@"
         ;;
     *)
-        exec @PYTHON_FRONTEND@ "$@"
+        exec "@PYTHON_FRONTEND@" "$@"
         ;;
 esac

@@ -20,11 +20,10 @@
 """
 Testmodule for the VTF file writing.
 """
-import os
 import sys
 import unittest as ut
 import numpy as np
-import espressomd  # pylint: disable=import-error
+import espressomd
 from espressomd import interactions
 from espressomd.io.writer import vtf
 import tempfile
@@ -66,38 +65,37 @@ class CommonTests(ut.TestCase):
         if self.types_to_write == 'all':
             simulation_pos = np.array(
                 [((i), float(i), float(i), float(i)) for i in range(npart)])
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             simulation_pos = np.array(
                 [((i * 2), float(i * 2), float(i * 2), float(i * 2)) for i in range(npart // 2)])
 
-        self.assertTrue(np.allclose(
-            simulation_pos[:, 1:], self.written_pos[:, 1:]),
-            msg="Positions not written correctly by writevcf!")
+        np.testing.assert_allclose(
+            simulation_pos[:, 1:], self.written_pos[:, 1:],
+            err_msg="Positions not written correctly by writevcf!")
 
     def test_bonds(self):
         """Test if bonds have been written properly: just look at number of bonds"""
         if self.types_to_write == 'all':
             simulation_bonds = np.array([1, 2, 3])  # the two bonded particles
-        elif (2 in self.types_to_write):
-            types = [2]
+        elif 2 in self.types_to_write:
             simulation_bonds = np.array(2)  # only this one is type 2
 
-        self.assertTrue(np.allclose(
-            np.shape(simulation_bonds), np.shape(self.written_bonds)),
-            msg="Bonds not written correctly by writevsf!")
+        np.testing.assert_allclose(
+            np.shape(simulation_bonds), np.shape(self.written_bonds),
+            err_msg="Bonds not written correctly by writevsf!")
 
     def test_atoms(self):
         """Test if atom declarations have been written properly."""
         if self.types_to_write == 'all':
             simulation_atoms = np.array(
                 [((i), (1 + (-1)**i)) for i in range(npart)])
-        elif (2 in self.types_to_write):
+        elif 2 in self.types_to_write:
             simulation_atoms = np.array([((i * 2), 2)
                                          for i in range(npart // 2)])
 
-        self.assertTrue(np.allclose(
-            simulation_atoms[:, 1], self.written_atoms[:, 1]),
-            msg="Atoms not written correctly by writevsf!")
+        np.testing.assert_allclose(
+            simulation_atoms[:, 1], self.written_atoms[:, 1],
+            err_msg="Atoms not written correctly by writevsf!")
 
 
 class VCFTestAll(CommonTests):

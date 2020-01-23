@@ -22,7 +22,7 @@
 #define CORE_EVENT_HPP
 /** \file
  *  This file contains the hook procedures. These are the ones with names
- *  on_* and are called whenever something is changed in Espresso which
+ *  on_* and are called whenever something is changed in ESPResSo which
  *  might influence other parts. For example, the P3M code has to be
  *  reinitialized whenever the box size changes. The hooking mechanism
  *  allows to keep track of such changes.
@@ -103,12 +103,7 @@ void on_temperature_change();
  */
 void on_parameter_change(int parameter);
 
-/** call this if you want to change ghost flags, e.g. whether ghosts
- *  have velocities or not. This is an opt-in process, i.e. all
- *  features are turned off and have to be reactivated if necessary
- *  inside this procedure.
- */
-void on_ghost_flags_change();
+unsigned global_ghost_flags();
 
 /** called every time the walls for the lb fluid are changed */
 void on_lbboundary_change();

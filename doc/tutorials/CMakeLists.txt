@@ -30,7 +30,7 @@ function(NB_EXPORT)
     set(HTML_FILE_DEPENDS "${NB_FILE_BASE}.run${NB_FILE_EXT}")
     add_custom_command(
       OUTPUT "${HTML_FILE_DEPENDS}"
-      DEPENDS "${NB_FILE}"
+      DEPENDS "${NB_FILE};${NB_EXPORT_ADD_SCRIPTS};${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py;${CMAKE_BINARY_DIR}/testsuite/scripts/importlib_wrapper.py"
       COMMAND
       "${CMAKE_BINARY_DIR}/pypresso"
       "${CMAKE_BINARY_DIR}/doc/tutorials/html_runner.py"
@@ -45,7 +45,7 @@ function(NB_EXPORT)
 
   add_custom_command(
     OUTPUT ${HTML_FILE}
-    DEPENDS ${HTML_FILE_DEPENDS}
+    DEPENDS ${HTML_FILE_DEPENDS};${NB_EXPORT_ADD_SCRIPTS}
     COMMAND
     ${IPYTHON_EXECUTABLE} nbconvert
     --to "html"
@@ -76,7 +76,6 @@ add_subdirectory(05-raspberry_electrophoresis)
 add_subdirectory(06-active_matter)
 add_subdirectory(07-electrokinetics)
 add_subdirectory(08-visualization)
-add_subdirectory(10-reaction_ensemble)
 add_subdirectory(11-ferrofluid)
 add_subdirectory(12-constant_pH)
 
@@ -90,7 +89,6 @@ add_custom_target(tutorials DEPENDS
   tutorials_06
   tutorials_07
   tutorials_08
-  tutorials_10
   tutorials_11
   tutorials_12
   )
@@ -105,6 +103,7 @@ add_custom_target(tutorials_html DEPENDS
   tutorials_04_3_html
   tutorials_04_4_html
   tutorials_05_html
+  tutorials_06_html
   tutorials_07_html
   tutorials_08_html
   tutorials_11_1_html

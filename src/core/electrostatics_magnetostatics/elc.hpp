@@ -29,7 +29,7 @@
 #ifndef _ELC_H
 #define _ELC_H
 
-#include "particle_data.hpp"
+#include "Particle.hpp"
 
 #ifdef P3M
 

@@ -15,10 +15,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Visualization of the system cells and MPI domains.
+Visualize the system cells and MPI domains. Run ESPResSo in parallel
+to color particles by node.
 """
 
 import espressomd
+from espressomd.minimize_energy import steepest_descent
 from espressomd.visualization_opengl import openGLLive
 import numpy as np
 
@@ -45,14 +47,12 @@ for i in range(100):
     system.part.add(pos=box * np.random.random(3))
 
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=100.0, sigma=1.0,
-    cutoff=3.0, shift="auto")
+    epsilon=100.0, sigma=1.0, cutoff=3.0, shift="auto")
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total = {}".format(energy['total']))
-system.minimize_energy.init(
-    f_max=50, gamma=30.0, max_steps=10000, max_displacement=0.001)
-system.minimize_energy.minimize()
+steepest_descent(system, f_max=50, gamma=30.0, max_steps=10000,
+                 max_displacement=0.001)
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy['total']))
 

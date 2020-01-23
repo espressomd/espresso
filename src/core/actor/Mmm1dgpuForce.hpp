@@ -52,8 +52,7 @@ private:
   unsigned int numBlocks(SystemInterface &s);
 
   // the box length currently set on the GPU
-  // Needed to make sure it hasn't been modified using setmd after inter coulomb
-  // was used.
+  // Needed to make sure it hasn't been modified after inter coulomb was used.
   mmm1dgpu_real host_boxz;
   // the number of particles we had during the last run. Needed to check if we
   // have to realloc dev_forcePairs

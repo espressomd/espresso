@@ -34,9 +34,11 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
+#include "particle_data.hpp"
 #include "rattle.hpp"
 #include "thermostat.hpp"
 #include "tuning.hpp"
+
 #include <utils/mpi/all_compare.hpp>
 
 #include <boost/functional/hash.hpp>
@@ -49,7 +51,8 @@ extern double force_cap;
 namespace {
 
 /** Type describing global variables. These are accessible from the
-    front end, and are distributed to all compute nodes. */
+ *  front end, and are distributed to all compute nodes.
+ */
 typedef struct {
   enum class Type { INT = 0, DOUBLE = 1, BOOL = 2, UNSIGNED_LONG = 3 };
   /** Physical address of the variable. */
@@ -63,10 +66,9 @@ typedef struct {
 } Datafield;
 
 /** This array contains the description of all global variables.
-
-    Please declare where the variables come from.
-*/
-
+ *
+ *  Please declare where the variables come from.
+ */
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
      {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
@@ -116,9 +118,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_NPTISO_PINST,
      {&nptiso.p_inst, Datafield::Type::DOUBLE, 1,
       "npt_p_inst"}}, /* 24 from pressure.cpp */
-    {FIELD_NPTISO_PINSTAV,
-     {&nptiso.p_inst_av, Datafield::Type::DOUBLE, 1,
-      "npt_p_inst_av"}}, /* 25 from pressure.cpp */
     {FIELD_NPTISO_PDIFF,
      {&nptiso.p_diff, Datafield::Type::DOUBLE, 1,
       "npt_p_diff"}}, /* 26 from pressure.cpp */
@@ -244,7 +243,7 @@ void check_global_consistency() {
   }
 }
 
-/*************** REQ_BCAST_PAR ************/
+/*************** BCAST PARAMETER ************/
 
 void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);

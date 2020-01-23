@@ -28,11 +28,15 @@ cdef extern from "config.hpp":
 cdef extern from "integrate.hpp" nogil:
     cdef int python_integrate(int n_steps, cbool recalc_forces, int reuse_forces)
     cdef void integrate_set_nvt()
+    cdef int integrate_set_steepest_descent(const double f_max, const double gamma,
+                                            const int max_steps, const double max_displacement)
     cdef extern cbool skin_set
 
 IF NPT:
     cdef extern from "integrate.hpp" nogil:
-        cdef int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir, int ydir, int zdir, int cubic_box)
+        cdef int integrate_set_npt_isotropic(double ext_pressure, double piston,
+                                             cbool xdir_rescale, cbool ydir_rescale,
+                                             cbool zdir_rescale, cbool cubic_box)
 
 cdef inline int _integrate(int nSteps, cbool recalc_forces, int reuse_forces):
     with nogil:
@@ -54,12 +58,5 @@ cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError]mpi_gather_runtime_errors()
 
-cdef extern from "integrators/steepest_descent.hpp":
-    void minimize_energy_init(const double f_max, const double gamma, const int max_steps, const double max_displacement)
 cdef extern from "communication.hpp":
-    int mpi_minimize_energy()
-
-
-# cdef class Integrator:
-#     cdef public _method
-#     cdef public _steepest_descent_params
+    int mpi_steepest_descent(int max_steps)

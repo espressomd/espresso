@@ -146,9 +146,6 @@ class CollisionDetection(ut.TestCase):
         # At the end of test, this list should be empty
         parts_not_accounted_for = list(range(expected_np))
 
-        # Collect pairs of non-virtual-particles found
-        non_virtual_pairs = []
-
         # We traverse particles. We look for a vs with a bond to find the other vs.
         # From the two vs we find the two non-virtual particles
         for p in self.s.part:
@@ -165,7 +162,7 @@ class CollisionDetection(ut.TestCase):
             # get partner
             p2 = self.s.part[p.bonds[0][1]]
             # Is that really a vs
-            self.assertEqual(p2.virtual, True)
+            self.assertTrue(p2.virtual)
             # Get base particles
             base_p1 = self.s.part[p.vs_relative[0]]
             base_p2 = self.s.part[p2.vs_relative[0]]
@@ -176,7 +173,7 @@ class CollisionDetection(ut.TestCase):
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
         p = self.s.part[parts_not_accounted_for[0]]
-        self.assertEqual(p.virtual, False)
+        self.assertFalse(p.virtual)
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
         self.assertEqual(parts_not_accounted_for, [])
@@ -193,8 +190,8 @@ class CollisionDetection(ut.TestCase):
         self.assertTrue(vs1.bonds == bond_vs1 or vs2.bonds == bond_vs2)
 
         # Vs properties
-        self.assertEqual(vs1.virtual, True)
-        self.assertEqual(vs2.virtual, True)
+        self.assertTrue(vs1.virtual)
+        self.assertTrue(vs2.virtual)
 
         # vs_relative properties
         seen = []
@@ -203,7 +200,7 @@ class CollisionDetection(ut.TestCase):
             rel_to = r[0]
             dist = r[1]
             # Vs is related to one of the particles
-            self.assertTrue(rel_to == p1.id or rel_to == p2.id)
+            self.assertIn(rel_to, (p1.id, p2.id))
             # The two vs relate to two different particles
             self.assertNotIn(rel_to, seen)
             seen.append(rel_to)
@@ -301,7 +298,7 @@ class CollisionDetection(ut.TestCase):
         vs_pairs = []
         for p in virtual_sites:
             # 0 or 1 bond on vs?
-            self.assertTrue(len(p.bonds) in [0, 1])
+            self.assertIn(len(p.bonds), [0, 1])
 
             if len(p.bonds) == 1:
                 vs_pairs.append((p.id, p.bonds[0][1]))
@@ -317,7 +314,7 @@ class CollisionDetection(ut.TestCase):
                  self.s.part[vs_pair[1]].vs_relative[0]]))
 
             # Is there a corresponding bond?
-            self.assertTrue(base_particles in bonds)
+            self.assertIn(base_particles, bonds)
 
         # Tidy
         self.s.non_bonded_inter[0, 0].lennard_jones.set_params(
@@ -330,18 +327,18 @@ class CollisionDetection(ut.TestCase):
         # Place particle which should not take part in collisions
         # In this case, it is skipped, because it is of the wrong type,
         # even if it is within range for a collision
-        p = self.s.part.add(pos=positions[0], type=self.other_type)
+        self.s.part.add(pos=positions[0], type=self.other_type)
         for pos in positions:
             # Since this is non-symmetric, we randomize order
             if np.random.random() > .5:
-                p1 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
-                p2 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0.1, 0, 0), type=self.part_type_to_be_glued)
             else:
-                p2 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0.1, 0, 0), type=self.part_type_to_be_glued)
-                p1 = self.s.part.add(
+                self.s.part.add(
                     pos=pos + (0, 0, 0), type=self.part_type_to_attach_vs_to)
 
         # 2 non-virtual + 1 virtual + one that doesn't take part
@@ -409,7 +406,7 @@ class CollisionDetection(ut.TestCase):
         # Check particle that did not take part in collision.
         self.assertEqual(len(parts_not_accounted_for), 1)
         p = self.s.part[parts_not_accounted_for[0]]
-        self.assertEqual(p.virtual, False)
+        self.assertFalse(p.virtual)
         self.assertEqual(p.type, self.other_type)
         self.assertEqual(p.bonds, ())
         parts_not_accounted_for.remove(p.id)
@@ -434,7 +431,7 @@ class CollisionDetection(ut.TestCase):
         self.assertEqual(vs.bonds, ())
 
         # Vs properties
-        self.assertEqual(vs.virtual, True)
+        self.assertTrue(vs.virtual)
         self.assertEqual(vs.vs_relative[0], base_p.id)
 
         # Distance vs,bound_p
@@ -508,7 +505,6 @@ class CollisionDetection(ut.TestCase):
         # Analysis
         virtual_sites = self.s.part.select(virtual=True)
         non_virtual = self.s.part.select(virtual=False)
-        to_be_glued = self.s.part.select(type=self.part_type_to_be_glued)
         after_glueing = self.s.part.select(type=self.part_type_after_glueing)
 
         # One virtual site per glued particle?
@@ -531,7 +527,7 @@ class CollisionDetection(ut.TestCase):
                 # part_type_after_glueing can have a bond to a vs or to a
                 # non_virtual particle
                 if p.type == self.part_type_after_glueing:
-                    self.assertTrue(bond[0] in (self.H, self.H2))
+                    self.assertIn(bond[0], (self.H, self.H2))
                     # Bonds to virtual sites:
                     if bond[0] == self.H2:
                         self.assertEqual(
@@ -583,7 +579,6 @@ class CollisionDetection(ut.TestCase):
         self.s.part.clear()
         dx = np.array((1, 0, 0))
         dy = np.array((0, 1, 0))
-        dz = np.array((0, 0, 1))
         a = np.array((0.499, 0.499, 0.499))
         b = a + 0.1 * dx
         c = a + 0.03 * dx + 0.03 * dy
@@ -660,9 +655,9 @@ class CollisionDetection(ut.TestCase):
                     d_ij = np.copy(p_j.pos - p_i.pos)
                     d_ik = np.copy(p_k.pos - p_i.pos)
                     d_jk = np.copy(p_k.pos - p_j.pos)
-                    d_ij /= np.sqrt(np.sum(d_ij**2))
-                    d_ik /= np.sqrt(np.sum(d_ik**2))
-                    d_jk /= np.sqrt(np.sum(d_jk**2))
+                    d_ij /= np.linalg.norm(d_ij)
+                    d_ik /= np.linalg.norm(d_ik)
+                    d_jk /= np.linalg.norm(d_jk)
 
                     if self.s.distance(p_i, p_j) <= distance and self.s.distance(
                             p_i, p_k) <= distance:

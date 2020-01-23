@@ -24,6 +24,7 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "version.hpp"
 
 #include <vector>
 
@@ -115,8 +116,8 @@ void File::InitFile() {
   if (file_exists) {
     if (check_for_H5MD_structure(m_filename)) {
       /*
-       * If the file exists and has a valid H5MD structure, lets create a
-       * backup of it.  This has the advantage, that the new file can
+       * If the file exists and has a valid H5MD structure, let's create a
+       * backup of it. This has the advantage, that the new file can
        * just be deleted if the simulation crashes at some point and we
        * still have a valid trajectory, we can start from.
        */

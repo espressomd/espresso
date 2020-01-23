@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (C) 2017,2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -15,14 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-[ "$#" -eq 1 ] || exit -1
+[ "${#}" -eq 1 ] || exit -1
 
 GIT_COMMIT=$(git rev-parse HEAD)
-URL=$(echo "https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/pipelines/${CI_PIPELINE_ID}")
-STATUS="$1"
-curl "https://api.github.com/repos/espressomd/espresso/statuses/$GIT_COMMIT?access_token=$GITHUB_TOKEN" \
+URL="https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/pipelines/${CI_PIPELINE_ID}"
+STATUS="${1}"
+curl "https://api.github.com/repos/espressomd/espresso/statuses/${GIT_COMMIT}?access_token=${GITHUB_TOKEN}" \
      -H "Content-Type: application/json" \
      -X POST \
-     -d "{\"state\": \"$STATUS\", \"context\": \"ICP GitLab CI\", \"target_url\": \"$URL\"}"
+     -d "{\"state\": \"${STATUS}\", \"context\": \"ICP GitLab CI\", \"target_url\": \"${URL}\"}"

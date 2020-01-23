@@ -29,17 +29,19 @@ class DipoleMoment : public PidObservable {
 public:
   using PidObservable::PidObservable;
   int n_values() const override { return 3; };
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
-    std::vector<double> res(n_values(), 0.0);
-    for (int i : ids()) {
-#ifdef ELECTROSTATICS
-      double charge = partCfg[i].p.q;
 
-      res[0] += charge * partCfg[i].r.p[0];
-      res[1] += charge * partCfg[i].r.p[1];
-      res[2] += charge * partCfg[i].r.p[2];
-#endif // ELECTROSTATICS
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
+    std::vector<double> res(n_values(), 0.0);
+#ifdef ELECTROSTATICS
+    for (auto p : particles) {
+      double charge = p->p.q;
+
+      res[0] += charge * p->r.p[0];
+      res[1] += charge * p->r.p[1];
+      res[2] += charge * p->r.p[2];
     }
+#endif // ELECTROSTATICS
     return res;
   }
 };

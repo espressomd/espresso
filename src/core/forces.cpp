@@ -68,7 +68,7 @@ void init_forces(const ParticleRange &particles) {
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
-  for (auto &p : ghost_cells.particles()) {
+  for (auto &p : cell_structure.ghost_cells().particles()) {
     p.f = init_ghost_force(p);
   }
 }
@@ -167,7 +167,8 @@ void force_calc(CellStructure &cell_structure) {
 #endif
 
   // Communication Step: ghost forces
-  ghost_communicator(&cell_structure.collect_ghost_force_comm);
+  ghost_communicator(&cell_structure.collect_ghost_force_comm,
+                     GHOSTTRANS_FORCE);
 
   // should be pretty late, since it needs to zero out the total force
   comfixed.apply(comm_cart, particles);

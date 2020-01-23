@@ -17,14 +17,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
-This samples sets up a Lattice-Boltzmann fluid and applies an external force
-density on it.
+Set up a lattice-Boltzmann fluid and apply an external force density on it.
 """
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(epilog=__doc__)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('--cpu', action='store_true')
 group.add_argument('--gpu', action='store_true')
@@ -33,7 +32,7 @@ args = parser.parse_args()
 
 print("""
 =======================================================
-=         Lattice Boltzmann fluid example             =
+=         lattice-Boltzmann fluid example             =
 =======================================================
 """)
 
@@ -50,9 +49,6 @@ import espressomd
 espressomd.assert_features(required_features)
 import espressomd.lb
 
-print("\nProgram Information:")
-print(espressomd.features())
-
 
 box_l = 50
 system = espressomd.System(box_l=[box_l] * 3)
@@ -61,7 +57,7 @@ system.set_random_state_PRNG()
 system.time_step = 0.01
 system.cell_system.skin = 0.1
 
-system.part.add(pos=[box_l / 2.0] * 3, fix=[1, 1, 1])
+system.part.add(pos=[box_l / 2.0] * 3, fix=[True, True, True])
 
 
 lb_params = {'agrid': 1, 'dens': 1, 'visc': 1, 'tau': 0.01,

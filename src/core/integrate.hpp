@@ -24,19 +24,14 @@
 /** \file
  *  Molecular dynamics integrator.
  *
- *  For more information see \ref integrate.cpp "integrate.cpp".
+ *  Implementation in \ref integrate.cpp.
  */
 
 #define INTEG_METHOD_NPT_ISO 0
 #define INTEG_METHOD_NVT 1
 #define INTEG_METHOD_STEEPEST_DESCENT 2
 
-/************************************************************/
-/** \name Exported Variables */
-/************************************************************/
-/*@{*/
-
-/** Switch determining which Integrator to use. */
+/** Switch determining which integrator to use. */
 extern int integ_switch;
 
 /** incremented if a Verlet update is done, aka particle resorting. */
@@ -61,61 +56,91 @@ extern bool skin_set;
 
 /** If true, the forces will be recalculated before the next integration. */
 extern bool recalc_forces;
-/** Average number of integration steps the Verlet list has been re
-    used. */
+/** Average number of integration steps the Verlet list has been re-using. */
 extern double verlet_reuse;
 
 /** Communicate signal handling to the Python interpreter */
 extern bool set_py_interrupt;
 
-/*@}*/
-
-/** \name Exported Functions */
-/************************************************************/
-/*@{*/
-
 /** check sanity of integrator params */
 void integrator_sanity_checks();
 
-/** integrate equations of motion
-    \param n_steps number of steps to integrate.
-    \param reuse_forces if nonzero, blindly trust
-    the forces still stored with the particles for the first time step.
-
-    @details This function calls two hooks for propagation kernels such as
-    velocity verlet, velocity verlet + npt box changes, and steepest_descent.
-    One hook is called before and one after the force calculation.
-    It is up to the propagation kernels to increment the simulation time.
-
-    This function propagates the system according to the choice of integrator
-    stored in @ref integ_switch. The general structure is:
-    - if reuse_forces is zero, recalculate the forces based on the current
-      state of the system
-    - Loop over the number of simulation steps:
-      -# initialization (e.g., RATTLE)
-      -# First hook for propagation kernels
-      -# Update dependent particles and properties (RATTLE, virtual sites)
-      -# Calculate forces for the current state of the system. This includes
-   forces added by the Langevin thermostat and the Lattice-Boltzmann-particle
-   coupling
-      -# Second hook for propagation kernels
-      -# Update dependent properties (Virtual sites, RATTLE)
-      -# Run single step algorithms (Lattice-Boltzmann propagation, collision
-   detection, NPT update)
-    - Final update of dependent properties and statistics/counters
-
-    High-level documentation of the integration and thermostatting schemes
-    can be found in doc/sphinx/system_setup.rst and /doc/sphinx/running.rst
-
+/** Integrate equations of motion
+ *  @param n_steps       Number of integration steps, can be zero
+ *  @param reuse_forces  Decide when to re-calculate forces:
+ *                       - -1: recalculate forces unconditionally
+ *                         (mostly used for timing)
+ *                       - 0: recalculate forces if @ref recalc_forces is set,
+ *                         meaning it is probably necessary
+ *                       - 1: do not recalculate forces (mostly when reading
+ *                         checkpoints with forces)
+ *
+ *  @details This function calls two hooks for propagation kernels such as
+ *  velocity verlet, velocity verlet + npt box changes, and steepest_descent.
+ *  One hook is called before and one after the force calculation.
+ *  It is up to the propagation kernels to increment the simulation time.
+ *
+ *  This function propagates the system according to the choice of integrator
+ *  stored in @ref integ_switch. The general structure is:
+ *  - if reuse_forces is zero, recalculate the forces based on the current
+ *    state of the system
+ *  - Loop over the number of simulation steps:
+ *    -# initialization (e.g., RATTLE)
+ *    -# First hook for propagation kernels
+ *    -# Update dependent particles and properties (RATTLE, virtual sites)
+ *    -# Calculate forces for the current state of the system. This includes
+ *       forces added by the Langevin thermostat and the
+ *       Lattice-Boltzmann-particle coupling
+ *    -# Second hook for propagation kernels
+ *    -# Update dependent properties (Virtual sites, RATTLE)
+ *    -# Run single step algorithms (Lattice-Boltzmann propagation, collision
+ *       detection, NpT update)
+ *  - Final update of dependent properties and statistics/counters
+ *
+ *  High-level documentation of the integration and thermostatting schemes
+ *  can be found in doc/sphinx/system_setup.rst and /doc/sphinx/running.rst
+ *
+ *  @return number of steps that have been integrated
  */
-void integrate_vv(int n_steps, int reuse_forces);
+int integrate(int n_steps, int reuse_forces);
 
-/*@}*/
-
+/** @brief Run the integration loop. Can be interrupted with Ctrl+C.
+ *
+ *  @param n_steps        Number of integration steps, can be zero
+ *  @param recalc_forces  Whether to recalculate forces
+ *  @param reuse_forces   Whether to re-use forces
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces);
 
+/** @brief Set the steepest descent integrator for energy minimization.
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
+int integrate_set_steepest_descent(double f_max, double gamma, int max_steps,
+                                   double max_displacement);
+
+/** @brief Set the velocity Verlet integrator for the NVT ensemble. */
 void integrate_set_nvt();
-int integrate_set_npt_isotropic(double ext_pressure, double piston, int xdir,
-                                int ydir, int zdir, bool cubic_box);
+
+/** @brief Set the velocity Verlet integrator modified for the NpT ensemble
+ *  with isotropic rescaling.
+ *
+ *  @param ext_pressure  Reference pressure
+ *  @param piston        Piston mass
+ *  @param xdir_rescale  Enable box rescaling in the *x*-direction
+ *  @param ydir_rescale  Enable box rescaling in the *y*-direction
+ *  @param zdir_rescale  Enable box rescaling in the *z*-direction
+ *  @param cubic_box     Determines if the volume fluctuations should also
+ *                       apply to dimensions which are switched off by the
+ *                       above flags and which do not contribute to the
+ *                       pressure (3D) or tension (2D, 1D)
+ *  @retval ES_OK on success
+ *  @retval ES_ERROR on error
+ */
+int integrate_set_npt_isotropic(double ext_pressure, double piston,
+                                bool xdir_rescale, bool ydir_rescale,
+                                bool zdir_rescale, bool cubic_box);
 
 #endif

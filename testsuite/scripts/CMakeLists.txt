@@ -1,9 +1,3 @@
-if(NOT DEFINED TEST_NP)
-  include(ProcessorCount)
-  ProcessorCount(NP)
-  math(EXPR TEST_NP "${NP}/2 + 1")
-endif()
-
 set(TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER ${CMAKE_CURRENT_BINARY_DIR}/test_importlib_wrapper.py)
 configure_file(importlib_wrapper.py ${CMAKE_CURRENT_BINARY_DIR}/importlib_wrapper.py)
 configure_file(test_importlib_wrapper.py ${TEST_FILE_CONFIGURED_IMPORTLIB_WRAPPER})

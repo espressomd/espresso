@@ -25,9 +25,9 @@
  */
 
 #include "GenericPotential.hpp"
+#include "Particle.hpp"
 #include "TabulatedPotential.hpp"
 #include "dpd.hpp"
-#include "particle_data.hpp"
 
 #include <utils/index.hpp>
 #include <utils/math/sqr.hpp>
@@ -136,14 +136,6 @@ struct SoftSphere_Parameters {
   double offset = 0.0;
 };
 
-/** membrane collision potential */
-struct Membrane_Parameters {
-  double a = 0.0;
-  double n = 0.0;
-  double cut = INACTIVE_CUTOFF;
-  double offset = 0.0;
-};
-
 /** hat potential */
 struct Hat_Parameters {
   double Fmax = 0.0;
@@ -240,10 +232,6 @@ struct IA_parameters {
 
 #ifdef SOFT_SPHERE
   SoftSphere_Parameters soft_sphere;
-#endif
-
-#ifdef MEMBRANE_COLLISION
-  Membrane_Parameters membrane;
 #endif
 
 #ifdef HAT

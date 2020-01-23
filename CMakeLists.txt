@@ -18,25 +18,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.10)
 include(FeatureSummary)
+include(GNUInstallDirs)
 project(ESPResSo)
 include(cmake/FindPythonModule.cmake)
-if(NOT ${CMAKE_VERSION} VERSION_LESS "3.12")
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
   cmake_policy(SET CMP0074 NEW)
 endif()
 
 enable_language(CXX)
 
-set(PROJECT_VERSION "5.0-dev")
-string(REGEX
-       REPLACE "^([1-9]+)\\.[0-9]+.*$"
-               "\\1"
-               SOVERSION
-               "${PROJECT_VERSION}")
-if(NOT ${SOVERSION} MATCHES "^[1-9]+$")
-  message(FATAL_ERROR "Could not determine SOVERSION from ${PROJECT_VERSION}")
-endif(NOT ${SOVERSION} MATCHES "^[1-9]+$")
+set(PROJECT_VERSION "4.2-dev")
 
 #
 # CMake internal vars
@@ -64,7 +57,7 @@ option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks"   OFF)
 option(WITH_VALGRIND_INSTRUMENTATION "Build with valgrind instrumentation markers" OFF)
-if(CMAKE_VERSION VERSION_GREATER 3.5.2 AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
@@ -191,7 +184,11 @@ if(WITH_CUDA)
       message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
       set(CUDA 1)
       set(HIP 1)
-      list(APPEND HIP_HCC_FLAGS "-Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
+      list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
+      list(APPEND HIP_HCC_FLAGS "-pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments")
+      if(WARNINGS_ARE_ERRORS)
+        list(APPEND HIP_HCC_FLAGS "-Werror")
+      endif()
 
       find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
 
@@ -235,10 +232,10 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.3 REQUIRED)
+find_package(PythonInterp 3.5 REQUIRED)
 
 if(WITH_PYTHON)
-  find_package(Cython 0.23 REQUIRED)
+  find_package(Cython 0.26 REQUIRED)
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} -c
             "import distutils.sysconfig as cg; print(cg.get_python_inc())"
@@ -249,7 +246,7 @@ if(WITH_PYTHON)
     execute_process(
       COMMAND
         ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(1,0,prefix='${CMAKE_INSTALL_EXEC_PREFIX}'))"
+        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
       OUTPUT_VARIABLE PYTHON_INSTDIR
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
@@ -336,7 +333,7 @@ endif(WITH_VALGRIND_INSTRUMENTATION)
 # MPI
 #
 
-find_package(MPI REQUIRED)
+find_package(MPI 3.0 REQUIRED)
 
 # CMake < 3.9
 if(NOT TARGET MPI::MPI_CXX)
@@ -377,11 +374,11 @@ endif()
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   set(BOOST_MINIMUM_VERSION "1.65.0")
-  if (CUDA_FOUND AND NOT CUDA_VERSION VERSION_LESS "9.0")
+  if (CUDA_FOUND AND CUDA_VERSION VERSION_GREATER_EQUAL "9.0")
     set(BOOST_MINIMUM_VERSION "1.66.0")
   endif()
 else()
-  set(BOOST_MINIMUM_VERSION "1.55.0")
+  set(BOOST_MINIMUM_VERSION "1.58.0")
 endif()
 
 # old Boost.MPI versions contain a use-after-free bug that seems to only cause crashes on 32-bit architectures
@@ -391,7 +388,7 @@ endif()
 
 find_package(Boost ${BOOST_MINIMUM_VERSION} REQUIRED ${BOOST_COMPONENTS})
 
-if(Boost_VERSION VERSION_GREATER 106399 AND Boost_VERSION VERSION_LESS 106500)
+if(Boost_VERSION VERSION_GREATER_EQUAL 106400 AND Boost_VERSION VERSION_LESS 106500)
   # Boost 1.64 has incompatible Serialization and MPI modules, see
   # https://svn.boost.org/trac10/ticket/12723 . Some distributions, like Fedora,
   # have backported the patch.
@@ -405,10 +402,6 @@ endif()
 #
 # Paths
 #
-
-if(NOT DEFINED BINDIR)
-  set(BINDIR "bin")
-endif(NOT DEFINED BINDIR)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 

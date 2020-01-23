@@ -56,7 +56,7 @@ class ThermalizedBond(ut.TestCase):
             for j in range(n_bins):
                 found = data[j]
                 expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertLessEqual(abs(found - expected), error_tol)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
 
     def test_com_langevin(self):
         """Test for COM thermalization."""
@@ -143,7 +143,7 @@ class ThermalizedBond(ut.TestCase):
         v_stored = np.zeros((N2 * loops, 3))
         for i in range(loops):
             self.system.integrator.run(12)
-            v_dist = self.system.part[1::2].v - self.system.part[::2].v 
+            v_dist = self.system.part[1::2].v - self.system.part[::2].v
             v_stored[i * N2:(i + 1) * N2, :] = v_dist
 
         v_minmax = 5

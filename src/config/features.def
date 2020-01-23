@@ -46,7 +46,7 @@ DIPOLAR_BARNES_HUT              requires CUDA
 DIPOLAR_BARNES_HUT              equals DIPOLES and ROTATION and CUDA
 
 /* Virtual sites features */
-VIRTUAL_SITES                   
+VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
 VIRTUAL_SITES_RELATIVE          implies ROTATION
 
@@ -93,7 +93,6 @@ THOLE                           requires ELECTROSTATICS
 /* Fluid-Structure Interactions (object in fluid) */
 OIF_LOCAL_FORCES
 OIF_GLOBAL_FORCES
-MEMBRANE_COLLISION requires EXPERIMENTAL_FEATURES
 
 /* Immersed-Boundary Bayreuth version */
 SCAFACOS_DIPOLES                requires SCAFACOS

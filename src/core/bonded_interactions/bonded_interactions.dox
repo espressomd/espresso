@@ -210,9 +210,7 @@
  *
  *  @subsection bondedIA_angle_force General expressions for the forces
  *
- *  This section uses the particle force expressions derived in
- *  Swope, Ferguson *J. Comput. Chem.* **1992**, *13*(5): 585-594,
- *  doi:[10.1002/jcc.540130508](https://doi.org/10.1002/jcc.540130508).
+ *  This section uses the particle force expressions derived in @cite swope92a.
  *
  *  The gradient of the potential at particle @f$ i @f$ is given by the chain
  *  rule in equation 6:

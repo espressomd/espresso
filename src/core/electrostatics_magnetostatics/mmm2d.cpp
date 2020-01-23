@@ -27,6 +27,7 @@
 #include "electrostatics_magnetostatics/mmm2d.hpp"
 
 #ifdef ELECTROSTATICS
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -34,7 +35,6 @@
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "mmm-common.hpp"
-#include "particle_data.hpp"
 #include "specfunc.hpp"
 
 #include <utils/constants.hpp>
@@ -272,7 +272,7 @@ void MMM2D_setup_constants() {
   uy = 1 / box_geo.length()[1];
   uy2 = uy * uy;
   uz = 1 / box_geo.length()[2];
-  layer_h = local_geo.length()[2] / local_cells.n;
+  layer_h = local_geo.length()[2] / cell_structure.local_cells().n;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
@@ -438,7 +438,8 @@ void clear_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(gblcblk, local_cells.n - 1, e_size), e_size);
+    clear_vec(abventry(gblcblk, cell_structure.local_cells().n - 1, e_size),
+              e_size);
 }
 
 void gather_image_contributions(int e_size) {
@@ -457,7 +458,7 @@ void gather_image_contributions(int e_size) {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    copy_vec(abventry(gblcblk, local_cells.n - 1, e_size),
+    copy_vec(abventry(gblcblk, cell_structure.local_cells().n - 1, e_size),
              recvbuf.data() + e_size, e_size);
 }
 /*@}*/
@@ -475,16 +476,20 @@ void distribute(int e_size, double fac) {
     /* up */
     if (node == this_node) {
       /* calculate sums of cells below */
-      for (c = 1; c < local_cells.n; c++)
+      for (c = 1; c < cell_structure.local_cells().n; c++)
         addscale_vec(blwentry(gblcblk, c, e_size), fac,
                      blwentry(gblcblk, c - 1, e_size),
                      blwentry(lclcblk, c - 1, e_size), e_size);
 
       /* calculate my ghost contribution only if a node above exists */
       if (node + 1 < n_nodes) {
-        addscale_vec(sendbuf, fac, blwentry(gblcblk, local_cells.n - 1, e_size),
-                     blwentry(lclcblk, local_cells.n - 1, e_size), e_size);
-        copy_vec(sendbuf + e_size, blwentry(lclcblk, local_cells.n, e_size),
+        addscale_vec(
+            sendbuf, fac,
+            blwentry(gblcblk, cell_structure.local_cells().n - 1, e_size),
+            blwentry(lclcblk, cell_structure.local_cells().n - 1, e_size),
+            e_size);
+        copy_vec(sendbuf + e_size,
+                 blwentry(lclcblk, cell_structure.local_cells().n, e_size),
                  e_size);
         MPI_Send(sendbuf, 2 * e_size, MPI_DOUBLE, node + 1, 0, comm_cart);
       }
@@ -497,7 +502,7 @@ void distribute(int e_size, double fac) {
     /* down */
     if (inv_node == this_node) {
       /* calculate sums of all cells above */
-      for (c = local_cells.n + 1; c > 2; c--)
+      for (c = cell_structure.local_cells().n + 1; c > 2; c--)
         addscale_vec(abventry(gblcblk, c - 3, e_size), fac,
                      abventry(gblcblk, c - 2, e_size),
                      abventry(lclcblk, c, e_size), e_size);
@@ -512,9 +517,10 @@ void distribute(int e_size, double fac) {
     } else if (inv_node - 1 == this_node) {
       MPI_Recv(recvbuf, 2 * e_size, MPI_DOUBLE, inv_node, 0, comm_cart,
                &status);
-      copy_vec(abventry(gblcblk, local_cells.n - 1, e_size), recvbuf, e_size);
-      copy_vec(abventry(lclcblk, local_cells.n + 1, e_size), recvbuf + e_size,
-               e_size);
+      copy_vec(abventry(gblcblk, cell_structure.local_cells().n - 1, e_size),
+               recvbuf, e_size);
+      copy_vec(abventry(lclcblk, cell_structure.local_cells().n + 1, e_size),
+               recvbuf + e_size, e_size);
     }
   }
 }
@@ -527,21 +533,21 @@ static void setup_z_force() {
   const double pref = coulomb.prefactor * C_2PI * ux * uy;
   constexpr int e_size = 1, size = 2;
 
-  /* there is NO contribution from images here, unlike claimed in Tyagi et al.
-     Please refer to the Entropy
-     article of Arnold, Kesselheim, Breitsprecher et al, 2013, for details. */
+  /** there is NO contribution from images here, unlike claimed in
+   *  @cite tyagi10a. Please refer to @cite arnold13c for details. */
 
   if (this_node == 0) {
     clear_vec(blwentry(lclcblk, 0, e_size), e_size);
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, cell_structure.local_cells().n + 1, e_size),
+              e_size);
   }
 
   /* calculate local cellblks. partblks don't make sense */
-  for (int c = 1; c <= local_cells.n; c++) {
-    auto cell = local_cells[c - 1];
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
+    auto cell = cell_structure.local_cells()[c - 1];
 
     lclcblk[size * c] = pref * boost::accumulate(cell->particles(), 0.,
                                                  [](double Q, auto const &p) {
@@ -572,10 +578,10 @@ static void add_z_force(const ParticleRange &particles) {
     field_tot = coulomb.field_induced + coulomb.field_applied;
   }
 
-  for (int c = 1; c <= local_cells.n; c++) {
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
     auto othcblk = block(gblcblk, c - 1, size);
     auto const add = othcblk[QQEQQP] - othcblk[QQEQQM];
-    auto cell = local_cells[c - 1];
+    auto cell = cell_structure.local_cells()[c - 1];
 
     for (auto &p : cell->particles()) {
       p.f.f[2] += p.p.q * (add + field_tot);
@@ -594,11 +600,12 @@ static void setup_z_energy() {
 
   if (this_node == n_nodes - 1)
     /* same for the top node */
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, cell_structure.local_cells().n + 1, e_size),
+              e_size);
 
   /* calculate local cellblks. partblks don't make sense */
-  for (int c = 1; c <= local_cells.n; c++) {
-    auto cell = local_cells[c - 1];
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
+    auto cell = cell_structure.local_cells()[c - 1];
 
     clear_vec(blwentry(lclcblk, c, e_size), e_size);
     for (auto const &p : cell->particles()) {
@@ -617,9 +624,9 @@ static void setup_z_energy() {
 static double z_energy(const ParticleRange &particles) {
   constexpr int size = 4;
   double eng = 0;
-  for (int c = 1; c <= local_cells.n; c++) {
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
     auto othcblk = block(gblcblk, c - 1, size);
-    auto cell = local_cells[c - 1];
+    auto cell = cell_structure.local_cells()[c - 1];
 
     for (auto const &p : cell->particles()) {
       eng += p.p.q * (p.r.p[2] * othcblk[ABEQQP] - othcblk[ABEQZP] -
@@ -641,7 +648,7 @@ static double z_energy(const ParticleRange &particles) {
       // zero potential difference contribution
       eng += gbl_dm_z * gbl_dm_z * coulomb.prefactor * 2 * M_PI * ux * uy * uz;
       // external potential shift contribution
-      eng -= mmm2d_params.pot_diff * uz * gbl_dm_z;
+      eng -= 2. * mmm2d_params.pot_diff * uz * gbl_dm_z;
     }
   }
 
@@ -671,17 +678,18 @@ static void setup(int p, double omega, double fac,
   }
   if (this_node == n_nodes - 1) {
     /* same for the top node */
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, cell_structure.local_cells().n + 1, e_size),
+              e_size);
   }
 
   auto layer_top = local_geo.my_left()[2] + layer_h;
   int ic = 0;
-  for (int c = 1; c <= local_cells.n; c++) {
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
     auto llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
-    auto cell = local_cells[c - 1];
+    auto cell = cell_structure.local_cells()[c - 1];
     for (auto const &p : cell->particles()) {
       auto const e = exp(omega * (p.r.p[2] - layer_top));
 
@@ -715,7 +723,7 @@ static void setup(int p, double omega, double fac,
         }
 
         double e_di_h;
-        if (c == local_cells.n && this_node == n_nodes - 1) {
+        if (c == cell_structure.local_cells().n && this_node == n_nodes - 1) {
           /* There are image charges at (3h-z) and (h+z) from the top layer etc.
              layer_h included due to the shift in z */
           e_di_h = (exp(omega * (p.r.p[2] - 3 * h + 2 * layer_h)) *
@@ -728,7 +736,8 @@ static void setup(int p, double omega, double fac,
           auto e = exp(omega * (p.r.p[2] - h + layer_h)) *
                    mmm2d_params.delta_mid_top;
 
-          auto lclimgetop = block(lclcblk, local_cells.n + 1, size);
+          auto lclimgetop =
+              block(lclcblk, cell_structure.local_cells().n + 1, size);
           lclimgetop[POQESM] += p.p.q * sccache[o + ic].s * e;
           lclimgetop[POQECM] += p.p.q * sccache[o + ic].c * e;
         } else
@@ -759,7 +768,9 @@ static void setup(int p, double omega, double fac,
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+      scale_vec(pref,
+                abventry(lclcblk, cell_structure.local_cells().n + 1, e_size),
+                e_size);
   }
 }
 
@@ -779,10 +790,10 @@ template <size_t dir> static void add_force() {
   constexpr const auto size = 4;
 
   auto ic = 0;
-  for (int c = 0; c < local_cells.n; c++) {
+  for (int c = 0; c < cell_structure.local_cells().n; c++) {
     auto const othcblk = block(gblcblk, c, size);
 
-    auto cell = local_cells[c];
+    auto cell = cell_structure.local_cells()[c];
     for (auto &p : cell->particles()) {
       p.f.f[dir] += partblk[size * ic + POQESM] * othcblk[POQECP] -
                     partblk[size * ic + POQECM] * othcblk[POQESP] +
@@ -806,9 +817,9 @@ static double P_energy(double omega) {
   double pref = 1 / omega;
 
   auto ic = 0;
-  for (int c = 0; c < local_cells.n; c++) {
+  for (int c = 0; c < cell_structure.local_cells().n; c++) {
     auto const othcblk = block(gblcblk, c, size);
-    auto cell = local_cells[c];
+    auto cell = cell_structure.local_cells()[c];
     for (int i = 0; i < cell->particles().size(); i++) {
       eng += pref * (partblk[size * ic + POQECM] * othcblk[POQECP] +
                      partblk[size * ic + POQESM] * othcblk[POQESP] +
@@ -826,8 +837,8 @@ static double Q_energy(double omega) {
   const double pref = 1 / omega;
 
   auto ic = 0;
-  for (int c = 0; c < local_cells.n; c++) {
-    auto cell = local_cells[c];
+  for (int c = 0; c < cell_structure.local_cells().n; c++) {
+    auto cell = cell_structure.local_cells()[c];
     auto othcblk = block(gblcblk, c, size);
 
     for (int i = 0; i < cell->particles().size(); i++) {
@@ -866,17 +877,18 @@ static void setup_PQ(int p, int q, double omega, double fac,
   }
 
   if (this_node == n_nodes - 1) {
-    clear_vec(abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+    clear_vec(abventry(lclcblk, cell_structure.local_cells().n + 1, e_size),
+              e_size);
   }
 
   auto layer_top = local_geo.my_left()[2] + layer_h;
   int ic = 0;
-  for (int c = 1; c <= local_cells.n; c++) {
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
     auto const llclcblk = block(lclcblk, c, size);
 
     clear_vec(llclcblk, size);
 
-    auto cell = local_cells[c - 1];
+    auto cell = cell_structure.local_cells()[c - 1];
     for (auto const &p : cell->particles()) {
       auto const e = exp(omega * (p.r.p[2] - layer_top));
 
@@ -926,7 +938,7 @@ static void setup_PQ(int p, int q, double omega, double fac,
         }
 
         double e_di_h;
-        if (c == local_cells.n && this_node == n_nodes - 1) {
+        if (c == cell_structure.local_cells().n && this_node == n_nodes - 1) {
           e_di_h = (exp(omega * (p.r.p[2] - 3 * h + 2 * layer_h)) *
                         mmm2d_params.delta_mid_top +
                     exp(omega * (-p.r.p[2] - h + 2 * layer_h))) *
@@ -935,7 +947,8 @@ static void setup_PQ(int p, int q, double omega, double fac,
           auto const e_di = exp(omega * (p.r.p[2] - h + layer_h)) *
                             mmm2d_params.delta_mid_top;
 
-          auto const lclimgetop = block(lclcblk, local_cells.n + 1, size);
+          auto const lclimgetop =
+              block(lclcblk, cell_structure.local_cells().n + 1, size);
           lclimgetop[PQESSM] +=
               scxcache[ox + ic].s * scycache[oy + ic].s * p.p.q * e_di;
           lclimgetop[PQESCM] +=
@@ -985,7 +998,9 @@ static void setup_PQ(int p, int q, double omega, double fac,
     if (this_node == 0)
       scale_vec(pref, blwentry(lclcblk, 0, e_size), e_size);
     if (this_node == n_nodes - 1)
-      scale_vec(pref, abventry(lclcblk, local_cells.n + 1, e_size), e_size);
+      scale_vec(pref,
+                abventry(lclcblk, cell_structure.local_cells().n + 1, e_size),
+                e_size);
   }
 }
 
@@ -995,10 +1010,10 @@ static void add_PQ_force(int p, int q, double omega) {
   constexpr int size = 8;
 
   int ic = 0;
-  for (int c = 1; c <= local_cells.n; c++) {
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
     auto othcblk = block(gblcblk, c - 1, size);
 
-    auto cell = local_cells[c - 1];
+    auto cell = cell_structure.local_cells()[c - 1];
     for (auto &p : cell->particles()) {
       p.f.f[0] += pref_x * (partblk[size * ic + PQESCM] * othcblk[PQECCP] +
                             partblk[size * ic + PQESSM] * othcblk[PQECSP] -
@@ -1035,8 +1050,8 @@ static double PQ_energy(double omega) {
   double pref = 1 / omega;
 
   int ic = 0;
-  for (int c = 1; c <= local_cells.n; c++) {
-    int np = local_cells[c - 1]->particles().size();
+  for (int c = 1; c <= cell_structure.local_cells().n; c++) {
+    int np = cell_structure.local_cells()[c - 1]->particles().size();
     auto const *othcblk = block(gblcblk, c - 1, size);
 
     for (int i = 0; i < np; i++) {
@@ -1162,7 +1177,7 @@ double MMM2D_add_far(bool calc_forces, bool calc_energies,
 
   partblk.resize(n_localpart * 8);
   lclcblk.resize(cells.size() * 8);
-  gblcblk.resize(local_cells.n * 8);
+  gblcblk.resize(cell_structure.local_cells().n * 8);
 
   // It's not really far...
   auto eng = calc_energies ? MMM2D_self_energy(particles) : 0;
@@ -1680,7 +1695,7 @@ int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top,
   /* if we cannot do the far formula, force off */
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
       (cell_structure.type == CELL_STRUCTURE_LAYERED &&
-       n_nodes * local_cells.n < 3)) {
+       n_nodes * cell_structure.local_cells().n < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
       return ERROR_ICL;
@@ -1740,7 +1755,7 @@ void MMM2D_init() {
   }
   if (cell_structure.type == CELL_STRUCTURE_NSQUARE ||
       (cell_structure.type == CELL_STRUCTURE_LAYERED &&
-       n_nodes * local_cells.n < 3)) {
+       n_nodes * cell_structure.local_cells().n < 3)) {
     mmm2d_params.far_cut = 0.0;
     if (mmm2d_params.dielectric_contrast_on) {
       runtimeErrorMsg() << "MMM2D auto-retuning: IC requires layered "
@@ -1781,7 +1796,7 @@ void MMM2D_dielectric_layers_force_contribution() {
 
   // First and last layer near field force contribution
   if (this_node == 0) {
-    auto cell = local_cells[0];
+    auto cell = cell_structure.local_cells()[0];
     for (auto &p1 : cell->particles()) {
       Utils::Vector3d force{};
 
@@ -1803,7 +1818,8 @@ void MMM2D_dielectric_layers_force_contribution() {
   }
 
   if (this_node == n_nodes - 1) {
-    auto cell = local_cells[local_cells.n - 1];
+    auto cell =
+        cell_structure.local_cells()[cell_structure.local_cells().n - 1];
 
     for (auto &p1 : cell->particles()) {
       Utils::Vector3d force{};
@@ -1834,7 +1850,7 @@ double MMM2D_dielectric_layers_energy_contribution() {
   double eng = 0.0;
 
   if (this_node == 0) {
-    auto cell = local_cells[0];
+    auto cell = cell_structure.local_cells()[0];
 
     for (auto const &p1 : cell->particles()) {
       for (auto const &p2 : cell->particles()) {
@@ -1853,7 +1869,8 @@ double MMM2D_dielectric_layers_energy_contribution() {
   }
 
   if (this_node == n_nodes - 1) {
-    auto cell = local_cells[local_cells.n - 1];
+    auto cell =
+        cell_structure.local_cells()[cell_structure.local_cells().n - 1];
 
     for (auto const &p1 : cell->particles()) {
       for (auto const &p2 : cell->particles()) {

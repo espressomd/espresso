@@ -20,7 +20,6 @@
 # reference data from direct summation. In 2d, reference data from the mdlc
 # test case is used
 
-import os
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
@@ -40,7 +39,6 @@ class Scafacos1d2d(ut.TestCase):
         n_particle = 100
 
         particle_radius = 0.5
-        dipole_lambda = 3.0
 
         #################################################
 

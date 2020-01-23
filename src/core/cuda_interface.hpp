@@ -28,17 +28,6 @@
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
-#ifdef ENGINE
-// velocities which need to be copied from the GPU to the CPU to calculate a
-// torque
-typedef struct {
-
-  // center and source velocity of the md part
-  float v_cs[6];
-
-} CUDA_v_cs;
-#endif
-
 // Parameters for swimmers
 #ifdef ENGINE
 struct CUDA_ParticleParametersSwimming {
@@ -72,6 +61,8 @@ struct CUDA_particle_data {
   int identity;
 #ifdef VIRTUAL_SITES
   bool is_virtual;
+#else
+  static constexpr const bool is_virtual = false;
 #endif
 
   /** particle momentum struct velocity p.m->v*/
@@ -106,13 +97,15 @@ typedef struct {
 
 extern CUDA_particle_data *particle_data_host;
 
-/** This structure contains global variables associated with all of the
- * particles and not with one individual particle */
+/** Global variables associated with all of the particles and not with
+ *  one individual particle.
+ */
 typedef struct {
   unsigned int number_of_particles;
 
-  /** a boolean variable to indicate if particle info should be communicated
-   * between the cpu and gpu */
+  /** Boolean flag to indicate if particle info should be communicated
+   *  between the cpu and gpu
+   */
   unsigned int communication_enabled;
 } CUDA_global_part_vars;
 
@@ -141,12 +134,13 @@ void copy_part_data_to_gpu(ParticleRange particles);
 /**
  * @brief Distribute forces to the slaves, and add them to the particles.
  *
- * @param particles The particles the forces (and torques should be added to)
- * @param host_forces The forces as flat array of size 3 * particles.size(),
- only relevant on the master.
+ * @param particles    The particles for which the forces (and torques) should
+ *                     be added to.
+ * @param host_forces  The forces as flat array of size 3 * particles.size(),
+ *                     only relevant on the master.
  * @param host_torques The torques as flat array of size 3 * particles.size(),
- *                this is only touched if ROTATION is active. Only relevant
- on the master.
+ *                     this is only touched if ROTATION is active. Only
+ *                     relevant on the master.
  *
  * This is a collective call.
  */
@@ -156,13 +150,6 @@ void cuda_mpi_send_forces(ParticleRange particles,
 void cuda_bcast_global_part_params();
 void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
 void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
-
-#ifdef ENGINE
-void copy_v_cs_from_GPU(ParticleRange particles);
-void cuda_mpi_send_v_cs(ParticleRange particles,
-                        std::vector<CUDA_v_cs> host_v_cs);
-#endif
-
 #endif /* ifdef CUDA */
 
 #endif /* ifdef CUDA_INTERFACE_HPP */

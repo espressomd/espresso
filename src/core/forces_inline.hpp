@@ -58,10 +58,10 @@
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
-#include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
-#include "object-in-fluid/out_direction.hpp"
+#include "particle_data.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 
 #ifdef DIPOLES
@@ -80,41 +80,45 @@
 /** Initialize the forces for a ghost particle */
 inline ParticleForce init_ghost_force(Particle const &) { return {}; }
 
-/** Initialize the forces for a real particle */
-inline ParticleForce init_local_particle_force(Particle const &part) {
-  auto f = (thermo_switch & THERMO_LANGEVIN) ? friction_thermo_langevin(part)
-                                             : ParticleForce{};
+/** External particle forces */
+inline ParticleForce external_force(Particle const &p) {
+  ParticleForce f = {};
 
 #ifdef EXTERNAL_FORCES
-  // If individual coordinates are fixed, set force to 0.
-  for (int j = 0; j < 3; j++)
-    if (part.p.ext_flag & COORD_FIXED(j))
-      f.f[j] = 0;
-  // Add external force
-  if (part.p.ext_flag & PARTICLE_EXT_FORCE)
-    f.f += part.p.ext_force;
-#endif
-
+  f.f += p.p.ext_force;
 #ifdef ROTATION
-  {
-
-#ifdef EXTERNAL_FORCES
-    if (part.p.ext_flag & PARTICLE_EXT_TORQUE) {
-      f.torque += part.p.ext_torque;
-    }
+  f.torque += p.p.ext_torque;
+#endif
 #endif
 
 #ifdef ENGINE
-    // apply a swimming force in the direction of
-    // the particle's orientation axis
-    if (part.swim.swimming) {
-      f.f += part.swim.f_swim * part.r.calc_director();
-    }
-#endif
+  // apply a swimming force in the direction of
+  // the particle's orientation axis
+  if (p.p.swim.swimming) {
+    f.f += p.p.swim.f_swim * p.r.calc_director();
   }
 #endif
 
   return f;
+}
+
+inline ParticleForce thermostat_force(Particle const &p) {
+  if (!(thermo_switch & THERMO_LANGEVIN)) {
+    return {};
+  }
+
+#ifdef ROTATION
+  return {
+      friction_thermo_langevin(p),
+      convert_vector_body_to_space(p, friction_thermo_langevin_rotation(p))};
+#else
+  return friction_thermo_langevin(p);
+#endif
+}
+
+/** Initialize the forces for a real particle */
+inline ParticleForce init_local_particle_force(Particle const &part) {
+  return thermostat_force(part) + external_force(part);
 }
 
 inline Utils::Vector3d calc_non_bonded_pair_force_parts(
@@ -166,10 +170,6 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
   force_factor += soft_pair_force_factor(ia_params, dist);
-#endif
-/*repulsive membrane potential*/
-#ifdef MEMBRANE_COLLISION
-  force += membrane_collision_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /*hat potential*/
 #ifdef HAT
@@ -531,13 +531,6 @@ inline void add_bonded_force(Particle *const p1) {
     } // 2 partners (angle bonds...)
     else if (n_partners == 3) {
       switch (type) {
-#ifdef MEMBRANE_COLLISION
-      case BONDED_IA_OIF_OUT_DIRECTION: {
-        p1->p.out_direction = calc_out_direction(*p2, *p3, *p4);
-        bond_broken = false;
-        break;
-      }
-#endif
 #ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
         // in OIF nomenclature, particles p2 and p3 are common to both triangles

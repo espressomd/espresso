@@ -18,6 +18,7 @@
  */
 
 #include "oif_global_forces.hpp"
+#include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"

@@ -19,8 +19,8 @@
 #ifndef PAIR_CRITERIA_HPP
 #define PAIR_CRITERIA_HPP
 
+#include "Particle.hpp"
 #include "energy_inline.hpp"
-#include "particle_data.hpp"
 #include <stdexcept>
 
 namespace PairCriteria {

@@ -20,8 +20,7 @@ import unittest_decorators as utx
 from tests_common import abspath
 
 
-@utx.skipIfMissingFeatures(["MEMBRANE_COLLISION", "OIF_LOCAL_FORCES",
-                            "OIF_GLOBAL_FORCES"])
+@utx.skipIfMissingFeatures(["OIF_LOCAL_FORCES", "OIF_GLOBAL_FORCES"])
 class OifVolumeConservation(ut.TestCase):
 
     """Loads a soft elastic sphere via object_in_fluid, stretches it and checks
@@ -55,7 +54,6 @@ class OifVolumeConservation(ut.TestCase):
         print("initial diameter = " + str(diameter_init))
 
         # OIF object is being stretched by factor 1.5
-        maxCycle = 500
         system.part[:].pos = (system.part[:].pos - 5) * 1.5 + 5
 
         diameter_stretched = cell0.diameter()
@@ -63,7 +61,7 @@ class OifVolumeConservation(ut.TestCase):
 
         # main integration loop
         # OIF object is let to relax into relaxed shape of the sphere
-        for i in range(3):
+        for _ in range(3):
             system.integrator.run(steps=90)
             diameter_final = cell0.diameter()
             print("final diameter = " + str(diameter_final))

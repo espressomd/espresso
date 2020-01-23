@@ -368,7 +368,7 @@ def _unpickle_script_object_registry(so_name, params, items):
     so = _python_class_by_so_name[so_name](**params)
     for item in items:
         so.add(item)
-    return so       
+    return so
 
 
 # Map from script object names to their corresponding python classes

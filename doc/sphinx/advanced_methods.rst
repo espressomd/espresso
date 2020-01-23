@@ -125,7 +125,7 @@ The following limitations currently apply for the collision detection:
 Lees-Edwards boundary conditions
 --------------------------------
 
-Lees-Edwards boundary conditions are not available in the current version of ESPResSo.
+Lees-Edwards boundary conditions are not available in the current version of |es|.
 
 .. _Immersed Boundary Method for soft elastic objects:
 
@@ -141,7 +141,7 @@ thin shell filled with liquid (see e.g. :cite:`Peskin2002,Crowl2010,KruegerThesi
 shell is deformed by an external flow, it responds with elastic restoring
 forces which are transmitted into the fluid. In the present case, the
 inner and outer liquid are of the same type and are simulated using
-lattice Boltzmann.
+lattice-Boltzmann.
 
 Numerically, the shell is discretized by a set of marker points
 connected by triangles. The marker points are advected with *exactly*
@@ -154,7 +154,7 @@ the local fluid velocity.
 
 The immersed boundary method consists of two components, which can be used independently:
 
-  * :ref:`Inertialess lattice Boltzmann tracers` implemented as virtual sites
+  * :ref:`Inertialess lattice-Boltzmann tracers` implemented as virtual sites
 
   * Interactions providing the elastic forces for the particles forming the surface. These are described below.
 
@@ -194,9 +194,9 @@ The comma is needed to force Python to create a tuple containing a single item.
 
 
 For a more detailed description, see e.g. Guckenberger and Gekle, J. Phys. Cond. Mat. (2017) or contact us.
-This feature probably does not work with advanced LB features such electro kinetics.
+This feature probably does not work with advanced LB features such as electro kinetics.
 
-A sample script is provided in the :file:`/samples/immersed_boundary/` directory of the source distribution.
+A sample script is provided in the :file:`samples/immersed_boundary/` directory of the source distribution.
 
 
 
@@ -208,10 +208,10 @@ Object-in-fluid
 If you plan to use this feature, please contact the Cell-in-fluid Research Group at the
 University of Zilina: ivan.cimrak@fri.uniza.sk or iveta.jancigova@fri.uniza.sk.
 
-When using this module, please cite :cite:`Cimrak2014` (BibTeX key Cimrak2014 in doc/sphinx/zrefs.bib) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in doc/sphinx/zrefs.bib)
+When using this module, please cite :cite:`Cimrak2014` (BibTeX key Cimrak2014 in :file:`doc/sphinx/zrefs.bib`) and :cite:`Cimrak2012` (Bibtex key Cimrak2012 in :file:`doc/sphinx/zrefs.bib`)
 
 This documentation introduces the features of module Object-in-fluid (OIF).
-Even though ESPResSo was not primarily intended to work with closed
+Even though |es| was not primarily intended to work with closed
 objects, it is a flexible package and appears very suitable when one
 wants to model closed objects with elastic properties, especially if
 they are immersed in a moving fluid. Here we describe the module
@@ -268,9 +268,9 @@ Description of sample script
     ``LB``, ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
     ``MASS``, ``OIF_LOCAL_FORCES``,
-    ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
+    ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``
 
-The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at
+The script described in this section is available in :file:`samples/object-in-fluid/motivation.py` and also at
 `http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
 <https://web.archive.org/web/20180719231829/http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso>`_.
 
@@ -315,7 +315,7 @@ just copies of the same template.
 
 The three mandatory arguments are ``nodes-file`` and ``triangles-file``
 that specify input data files with desired triangulation and ``system``
-that specifies the ESPResSo system. The relaxed mesh triangles should be
+that specifies the |es| system. The relaxed mesh triangles should be
 as close to equilateral as possible with average edge length
 approximately equal to the space discretisation step :math:`\Delta x`.
 While these lengths vary during the simulation, the connectivity of the
@@ -449,21 +449,7 @@ geometry is correct and no objects intersect with any boundaries.
 Specification of interactions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Since we have two cells, we can also set up the cell-cell interactions
-so that they *know* about each other:
-
-::
-
-    system.non_bonded_inter[0, 1].membrane_collision.set_params(
-        membrane_a=0.0001, membrane_n=1.2, membrane_cut=0.1,
-        membrane_offset=0.0)
-
-These interactions act *pointwise*, e.g. each particle of type 0 (all
-mesh points of cell0) has a repulsive membrane collision interaction
-with each particle of type 1 (all mesh points of cell1) once the pair
-gets closer than ``membrane_cut``.
-
-Similar interaction is defined with the boundaries:
+We can define an interaction with the boundaries:
 
 ::
 
@@ -793,7 +779,7 @@ bonds are created here.
     OifCellType.mesh.output_mesh_triangles(filename)
 
 | ``nodesfile=``\ *nodes.dat* - input file. Each line contains three
-  real numbers. These are the :math:`x, y, z` coordinates of individual
+  real numbers. These are the *x, y, z* coordinates of individual
   surface mesh nodes of the objects centered at [0,0,0] and normalized
   so that the "radius" of the object is 1.
 
@@ -838,27 +824,27 @@ bonds are created here.
 | Note: At least one of the elastic moduli should be set.
 
 | ``resize=``\ (*x, y, z*) - coefficients, by which the coordinates
-  stored in :math:`nodesfile` will be stretched in the :math:`x, y, z`
+  stored in *nodesfile* will be stretched in the *x, y, z*
   direction. The default value is (1.0, 1.0, 1.0).
 
 | ``mirror=``\ (*x, y, z*) - whether the respective coordinates should
-  be flipped around 0. Arguments :math:`x, y, z` must be either 0 or 1.
+  be flipped around 0. Arguments *x, y, z* must be either 0 or 1.
   The reflection of only one coordinate is allowed so at most one
   argument is set to 1, others are 0. For example ``mirror=``\ (0, 1, 0)
   results in flipping the coordinates (*x, y, z*) to (*x, -y, z*). The
   default value is (0, 0, 0).
 
-| ``normal`` - by default set to :math:`False`, however without this
+| ``normal`` - by default set to *False*, however without this
   option enabled, the membrane collision (and thus cell-cell
   interactions) will not work.
 
-| ``check_orientation`` - by default set to :math:`True`. This options
-  performs a check, whether the supplied :math:`trianglesfile` contains
+| ``check_orientation`` - by default set to *True*. This options
+  performs a check, whether the supplied *trianglesfile* contains
   triangles with correct orientation. If not, it corrects the
   orientation and created cells with corrected triangles. It is useful
   for new or unknown meshes, but not necessary for meshes that have
   already been tried out. Since it can take a few minutes for larger
-  meshes (with thousands of nodes), it can be set to :math:`False`. In
+  meshes (with thousands of nodes), it can be set to *False*. In
   that case, the check is skipped when creating the ``CellType`` and a
   warning is displayed.
 
@@ -876,10 +862,10 @@ bonds are created here.
 | Note, this method tells the user about the correction it makes. If
   there is any, it might be useful to save the corrected triangulation
   for future simulations using the method
-  ``CellType.mesh.OutputMeshTriangles``\ (:math:`filename`), so that the
+  ``CellType.mesh.OutputMeshTriangles``\ (*filename*), so that the
   check does not have to be used repeatedly.
 
-| ``CellType.mesh.output_mesh_triangles``\ (:math:`filename`) - this is
+| ``CellType.mesh.output_mesh_triangles``\ (*filename*) - this is
   useful after checking orientation, if any of the triangles where
   corrected. This method saves the current triangles into a file that
   can be used as input in the next simulations.
@@ -928,9 +914,9 @@ class OifCell
   point.
 
 | ``rotate``\ =(\ *x, y, z*) - angles in radians, by which the object
-  will be rotated about the :math:`x, y, z` axis. Default value is (0.0,
+  will be rotated about the *x, y, z* axis. Default value is (0.0,
   0.0, 0.0). Value (:math:`\pi/2, 0.0, 0.0`) means that the object will
-  be rotated by :math:`\pi/2` radians clockwise around the :math:`x`
+  be rotated by :math:`\pi/2` radians clockwise around the *x*
   axis when looking in the positive direction of the axis.
 
 | ``mass``\ =\ *m* - mass of one particle. Default value is 1.0.
@@ -947,12 +933,12 @@ class OifCell
 
 | ``OifCell.get_approx_origin()`` - outputs the approximate location of
   the center of the object. It is computed as average of 6 mesh points
-  that have extremal :math:`x, y` and :math:`z` coordinates at the time
+  that have extremal *x, y* and *z* coordinates at the time
   of object loading.
 
 | ``OifCell.get_approx_origin_folded()`` - outputs the approximate location
   of the center of the object. It is computed as average of 6 mesh
-  points that have extremal :math:`x, y` and :math:`z` coordinates at
+  points that have extremal *x, y* and *z* coordinates at
   the time of object loading. For periodical movements the coordinates
   are folded (always within the computational box). TODO: this is not
   implemented yet, but it should be
@@ -1002,14 +988,14 @@ class OifCell
 
 | ``OifCell.append_point_data_to_vtk``\ (*filename.vtk*, *dataname*,
   **data**, *firstAppend*) - outputs the specified scalar **data** to an
-  existing :math:`filename.vtk`. This is useful for ParaView
+  existing *filename.vtk*. This is useful for ParaView
   visualisation of local velocity magnitudes, magnitudes of forces, etc.
   in the meshnodes and can be shown in ParaView by selecting the
-  :math:`dataname` in the :math:`Properties` toolbar. It is possible to
-  consecutively write multiple datasets into one :math:`filename.vtk`.
-  For the first one, the :math:`firstAppend` parameter is set to
-  :math:`True`, for the following datasets, it needs to be set to
-  :math:`False`. This is to ensure the proper structure of the output
+  *dataname* in the *Properties* toolbar. It is possible to
+  consecutively write multiple datasets into one *filename.vtk*.
+  For the first one, the *firstAppend* parameter is set to
+  *True*, for the following datasets, it needs to be set to
+  *False*. This is to ensure the proper structure of the output
   file.
 
 | ``OifCell.output_raw_data``\ (*filename*, **rawdata**) - outputs the
@@ -1037,27 +1023,27 @@ class OifCell
   energy.
 
 | To compute the elastic forces, use the vector
-  :math:`\mathbf{elasticforces}`. It is a sextuple of zeros and ones,
-  e.g. :math:`\mathbf{elasticforces}=(1,0,0,1,0,0)`, where the ones
+  **elasticforces**. It is a sextuple of zeros and ones,
+  e.g. **elasticforces** = (1,0,0,1,0,0), where the ones
   denote the elastic forces to be computed. The order is (stretching,
   bending, local area, global area, volume, total). The output can be
   saved in two different ways: either by setting
-  :math:`vtkfile = filename.vtk`, which saves a .vtk file that can be
+  *vtkfile = filename.vtk*, which saves a .vtk file that can be
   visualized using ParaView. If more than one elastic force was
   selected, they can be chosen in the Properties window in ParaView. The
-  other type of output is :math:`rawdatafile=filename.dat`, which will
+  other type of output is *rawdatafile=filename.dat*, which will
   save a datafile with the selected type of elastic force - one force
   per row, where each row corresponds to a single mesh node. Note that
   only one type of elastic force can be written this way at a time.
   Thus, if you need output for several elastic forces, this method
   should be called several times.
 
-| To compute the f-metric, use the vector :math:`\mathbf{fmetric}`. It
+| To compute the f-metric, use the vector **fmetric**. It
   is again a sextuple of zeros and ones, e.g.
-  :math:`\mathbf{fmetric}=(1,1,0,0,0,0)`, where the ones denote the
+  **fmetric** = (1,1,0,0,0,0), where the ones denote the
   elastic forces to be computed. The order is (stretching, bending,
   local area, global area, volume, total). The output is again a vector
-  with six elements, each corresponding to the requested fmetric/“naive
+  with six elements, each corresponding to the requested f-metric/“naive
   energy” computed as a sum of magnitudes of respective elastic forces
   over all nodes of the object.
 
@@ -1068,15 +1054,15 @@ class OifCell
 Short utility procedures
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-| ``get_n_triangle``\ (:math:`\mathbf{a,b,c}`) - returns the normal **n**
+| ``get_n_triangle``\ (**a, b, c**) - returns the normal **n**
   to the triangle given by points (**a, b, c**).
 
-| ``norm``\ (:math:`\mathbf{v}`) - returns the norm of the vector **v**.
+| ``norm``\ (**v**) - returns the norm of the vector **v**.
 
-| ``distance``\ (:math:`\mathbf{a,b}`) - returns the distance between
+| ``distance``\ (**a, b**) - returns the distance between
   points **a** and **b**.
 
-| ``area_triangle``\ (:math:`\mathbf{a,b,c}`) - returns the area of the
+| ``area_triangle``\ (**a, b, c**) - returns the area of the
   given triangle (**a, b, c**).
 
 | ``angle_btw_triangles``\ (:math:`\mathbf{p}_1`, :math:`\mathbf{p}_2`,
@@ -1086,18 +1072,18 @@ Short utility procedures
   :math:`\mathbf{p}_2`, :math:`\mathbf{p}_4`) that have a common edge
   (:math:`\mathbf{p}_2`, :math:`\mathbf{p}_3`).
 
-| ``discard_epsilon``\ (:math:`x`) - needed for rotation; discards very
+| ``discard_epsilon``\ (*x*) - needed for rotation; discards very
   small numbers *x*.
 
 | ``oif_neo_hookean_nonlin``\ (:math:`\lambda`) - nonlinearity for neo-Hookean stretching
 
-| ``calc_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B,\ dist_0,\ dist`)
+| ``calc_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B`, *dist0*, *dist*)
   - computes the nonlinear stretching force with given :math:`k_s` for
   points :math:`\mathbf{p}_A` and :math:`\mathbf{p}_B` given by their
   coordinates, whose initial distance was *dist0* and current distance
   is *dist*.
 
-| ``calc_linear_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B,\ dist_0,\ dist`)
+| ``calc_linear_stretching_force``\ (:math:`k_s,\ \mathbf{p}_A,\ \mathbf{p}_B`, *dist0*, *dist*)
   - computes the linear stretching force with given :math:`k_s` for
   points :math:`\mathbf{p}_A` and :math:`\mathbf{p}_B` given by their
   coordinates, whose initial distance was *dist0* and current distance
@@ -1123,19 +1109,19 @@ Short utility procedures
   given by their coordinates; the initial surface area of the object was
   :math:`A_{g0}`, the current surface area of the object is :math:`A_g`.
 
-| ``calc_volume_force``\ (:math:`k_v,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ V_0\ V`)
+| ``calc_volume_force``\ (:math:`k_v,\ \mathbf{p}_A,\ \mathbf{p}_B,\ \mathbf{p}_C,\ V_0,\ V`)
   - computes the volume force with given :math:`k_v` for points
   :math:`\mathbf{p}_A`, :math:`\mathbf{p}_B` and :math:`\mathbf{p}_C`
   given by their coordinates; the initial volume of the object was
   :math:`V_0`, the current volume of the object is :math:`V`.
 
-| ``output_vtk_rhomboid``\ (:math:`\mathbf{corner}, \mathbf{a}, \mathbf{b}, \mathbf{c}, outFile.vtk`)
+| ``output_vtk_rhomboid``\ (**corner**, **a**, **b**, **c**, *outFile.vtk*)
   - outputs rhomboid boundary for later visualisation in ParaView.
 
-| ``output_vtk_cylinder``\ (:math:`\mathbf{center}, \mathbf{normal}, L, r, n, outFile.vtk`)
+| ``output_vtk_cylinder``\ (**center**, **normal**, *L*, *r*, *n*, *outFile.vtk*)
   - outputs cylinder boundary for later visualisation in ParaView.
 
-| ``output_vtk_lines``\ (:math:`lines, outFile.vtk`) - outputs a set of
+| ``output_vtk_lines``\ (*lines*, *outFile.vtk*) - outputs a set of
   line segments for later visualisation in ParaView.
 
 
@@ -1146,7 +1132,7 @@ Awareness of these classes is not necessary for a user of OIF module,
 but is essential for developers who wish to modify it because it shows
 how the object data are stored.
 
-classes FixedPoint and PartPoint
+classes ``FixedPoint`` and ``PartPoint``
 
 
 Class PartPoint represents a particle. These particles are then used as
@@ -1158,7 +1144,7 @@ particle. The FixedPoints of one OifCellType form a mesh that is
 centered around origin. Only after it is stretched and shifted to the
 object origin are the PartPoints of the given object created.
 
-classes Edge, Angle, Triangle, ThreeNeighbors
+classes ``Edge``, ``Angle``, ``Triangle``, ``ThreeNeighbors``
 
 
 These classes represent the building blocks of a mesh. They are used to
@@ -1167,7 +1153,7 @@ bending, Triangle for local and global area and volume and ThreeNeigbors
 for calculation of outward normal vector needed for cell-cell
 interaction.
 
-class Mesh
+class ``Mesh``
 
 
 This class holds all the information about the geometry of the object,
@@ -1204,7 +1190,7 @@ Electrokinetics
 
 The electrokinetics setup in |es| allows for the description of
 electro-hydrodynamic systems on the level of ion density distributions
-coupled to a Lattice Boltzmann (LB) fluid. The ion density distributions
+coupled to a lattice-Boltzmann (LB) fluid. The ion density distributions
 may also interact with explicit charged particles, which are
 interpolated on the LB grid. In the following paragraph we briefly
 explain the electrokinetic model implemented in |es|, before we come to the
@@ -1351,8 +1337,8 @@ Initialization
 .. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 
 The above is a minimal example how to initialize the LB fluid, and
-it is very similar to the lattice Boltzmann command in set-up. We
-therefore refer the reader to Chapter :ref:`Lattice Boltzmann` for details on the
+it is very similar to the lattice-Boltzmann command in set-up. We
+therefore refer the reader to Chapter :ref:`Lattice-Boltzmann` for details on the
 implementation of LB in |es| and describe only the major differences here.
 
 The first major difference with the LB implementation is that the
@@ -1367,7 +1353,7 @@ To set up a proper LB fluid using this command one has to specify at
 least the following options: ``agrid``, ``lb_density``, ``viscosity``, ``friction``, ``T``, and ``prefactor``. The other options can be
 used to modify the behavior of the LB fluid. Note that the command does
 not allow the user to set the time step parameter as is the case for the
-lattice Boltzmann command, this parameter is instead taken directly from the value set for
+lattice-Boltzmann command, this parameter is instead taken directly from the value set for
 :attr:`espressomd.system.System.time_step`. The LB *mass density* is set independently from the
 electrokinetic *number densities*, since the LB fluid serves only as a
 medium through which hydrodynamic interactions are propagated, as will
@@ -1428,7 +1414,7 @@ it is possible to choose parameters for which the LB is more stable. The species
 
     ek.add_species(species)
 
-One can also add the species during the initialization step of the 
+One can also add the species during the initialization step of the
 :class:`espressomd.electrokinetics.Electrokinetics` by defining the list variable ``species``::
 
     ek = espressomd.electrokinetics.Electrokinetics(species=[species], ...)
@@ -1689,19 +1675,19 @@ bonded particles.
     to damp dipole-dipole interactions on short distances. It is available in |es|
     as a non-bonded interaction.
 
+.. _Monte Carlo Methods:
+
+Monte Carlo Methods
+-------------------
+
+.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all active interactions in the simulation. Please also note that Monte Carlo methods may create and delete particles from the system. This process can invalidate particle ids, in which case the particles are no longer numbered contiguously. Particle slices returned by ``system.part`` are still iterable, but the indices no longer match the particle ids.
+
 .. _Reaction Ensemble:
 
 Reaction Ensemble
------------------
+~~~~~~~~~~~~~~~~~
 
-.. note:: The whole Reaction Ensemble module uses Monte Carlo moves which require potential energies. Therefore the Reaction Ensemble requires support for energy calculations for all interactions which are used in the simulation.
-
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
-An Example script can be found here:
-
-* `Reaction ensemble/ constant pH ensemble                    <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
-
-The reaction ensemble :cite:`smith94a,turner2008simulation` allows to simulate
+The reaction ensemble :cite:`smith94c,turner2008simulation` allows to simulate
 chemical reactions which can be represented by the general equation:
 
 .. math::
@@ -1766,7 +1752,7 @@ In the *forward* reaction, the appropriate number of reactants (given by
 products is inserted into the system. In the *backward* reaction,
 reactants and products exchange their roles. The acceptance probability
 :math:`P^{\xi}` for move from state :math:`o` to :math:`n` reaction
-ensemble is given by the criterion :cite:`smith94a`
+ensemble is given by the criterion :cite:`smith94c`
 
 .. math::
 
@@ -1787,7 +1773,7 @@ The parameter :math:`\Gamma` proportional to the reaction constant. It is define
 
 where :math:`\left<N_i\right>/V` is the average number density of particles of type :math:`i`.
 Note that the dimension of :math:`\Gamma` is :math:`V^{\bar\nu}`, therefore its
-units must be consistent with the units in which Espresso measures the box volume,
+units must be consistent with the units in which |es| measures the box volume,
 i.e. :math:`\sigma^3`.
 
 It is often convenient, and in some cases even necessary, that some particles
@@ -1801,16 +1787,24 @@ coefficients allow for it.  Corresponding means having the same position (index)
 the python lists of reactants and products which are used to set up the
 reaction.
 
-.. _Converting tabulated reaction constants to internal units in Espresso:
+Multiple reactions can be added to the same instance of the reaction ensemble.
 
-Converting tabulated reaction constants to internal units in Espresso
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+An example script can be found here:
 
-The implementation in Espresso requires that the dimension of :math:`\Gamma`
-is consistent with the internal unit of volume, :math:`\sigma^3`.
-The tabulated values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
+
+.. _Converting tabulated reaction constants to internal units in ESPResSo:
+
+Converting tabulated reaction constants to internal units in |es|
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The implementation in |es| requires that the dimension of :math:`\Gamma`
+is consistent with the internal unit of volume, :math:`\sigma^3`. The tabulated
+values of equilibrium constants for reactions in solution, :math:`K_c`, typically use
 :math:`c^{\ominus} = 1\,\mathrm{moldm^{-3}}` as the reference concentration,
-and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`.  To be used with Espresso, the
+and have the dimension of :math:`(c^{\ominus})^{\bar\nu}`. To be used with |es|, the
 value of :math:`K_c` has to be converted as
 
 .. math::
@@ -1827,40 +1821,80 @@ be converted to :math:`K_c` as
    K_p(p^{\ominus}=1\,\mathrm{atm}) = K_c(c^{\ominus} = 1\,\mathrm{moldm^{-3}}) \biggl(\frac{c^{\ominus}RT}{p^{\ominus}}\biggr)^{\bar\nu},
 
 where :math:`p^{\ominus}=1\,\mathrm{atm}` is the standard pressure.
-
+Consider using the python module pint for unit conversion.
 
 .. _Wang-Landau Reaction Ensemble:
 
 Wang-Landau Reaction Ensemble
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies in one way or the other.
-
-An Example script can be found here:
-
-* `Wang Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`_
-
 Combination of the Reaction Ensemble with the Wang-Landau algorithm
-:cite:`wang01a`
-allows for enhanced sampling of the reacting system, and
+:cite:`wang01a`. Allows for enhanced sampling of the reacting system
 and for the determination of the density of states with respect
 to the reaction coordinate or with respect to some other collective
 variable :cite:`landsgesell17a`. Here the 1/t Wang-Landau
 algorithm :cite:`belardinelli07a` is implemented since it
-does not suffer from systematic errors. Additionally to the above
-commands for the reaction ensemble use the following commands for the
-Wang-Landau reaction ensemble. For a description of the available methods see :mod:`espressomd.reaction_ensemble`:
+does not suffer from systematic errors.
+
+Multiple reactions and multiple collective variables can be set.
+
+An example script can be found here:
+
+* `Wang-Landau reaction ensemble <https://github.com/espressomd/espresso/blob/python/samples/wang_landau_reaction_ensemble.py>`__
+
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ReactionEnsemble`.
+
+.. _Grand canonical ensemble simulation using the Reaction Ensemble:
+
+Grand canonical ensemble simulation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As a special case, all stoichiometric coefficients on one side of the chemical
+reaction can be set to zero. Such a reaction creates particles *ex nihilo*, and
+is equivalent to exchanging particles with a reservoir. This type of simulation
+in the reaction ensemble is equivalent to the grand canonical simulation.
+Formally, this can be expressed by the reaction
+
+.. math::
+
+    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,,
+
+where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
+However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
+equivalent to the grand canonical only in the limit of large average number of species A in the box.
+If the reaction contains more than one product, then the reaction constant
+:math:`\Gamma` defines only the sum of their chemical potentials but not the
+chemical potential of each product alone.
+
+Since the Reaction Ensemble acceptance transition probability can be
+derived from the grand canonical acceptance transition probability, we
+can use the reaction ensemble to implement grand canonical simulation
+moves. This is done by adding reactions that only have reactants (for the
+deletion of particles) or only have products (for the creation of
+particles). There exists a one-to-one mapping of the expressions in the
+grand canonical transition probabilities and the expressions in the
+reaction ensemble transition probabilities.
 
 .. _Constant pH simulation using the Reaction Ensemble:
 
-Constant pH simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Constant pH simulation
+~~~~~~~~~~~~~~~~~~~~~~
 
-.. .. note:: Requires support for energy calculations for all used interactions since it uses Monte-Carlo moves which use energies.
+As before in the Reaction Ensemble one can define multiple reactions (e.g. for an ampholytic system which contains an acid and a base) in one :class:`~espressomd.reaction_ensemble.ConstantpHEnsemble` instance:
 
-An Example script can be found here:
+.. code-block:: python
 
-* `Reaction ensemble/ constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
+    cpH=reaction_ensemble.ConstantpHEnsemble(
+        temperature=1, exclusion_radius=1, seed=77)
+    cpH.add_reaction(gamma=K_diss, reactant_types=[0], reactant_coefficients=[1],
+                    product_types=[1, 2], product_coefficients=[1, 1],
+                    default_charges={0: 0, 1: -1, 2: +1})
+    cpH.add_reaction(gamma=1/(10**-14/K_diss), reactant_types=[3], reactant_coefficients=[1], product_types=[0, 2], product_coefficients=[1, 1], default_charges={0:0, 2:1, 3:1} )
+
+
+An example script can be found here:
+
+* `Reaction ensemble / constant pH ensemble <https://github.com/espressomd/espresso/blob/python/samples/reaction_ensemble.py>`_
 
 In the constant pH method due to Reed and Reed
 :cite:`reed92a` it is possible to set the chemical potential
@@ -1881,86 +1915,68 @@ constant :math:`K_c` for the following reaction:
 
    \mathrm{HA \rightleftharpoons\ H^+ + A^- } \,,
 
-For an example of how to setup
-a Constant pH simulation, see the file in the testsuite directory.
-For a description of the available methods see :mod:`espressomd.reaction_ensemble`.
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.ConstantpHEnsemble`.
 
-.. _Grand canonical ensemble simulation using the Reaction Ensemble:
-
-Grand canonical ensemble simulation using the Reaction Ensemble
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-As a special case, all stoichiometric coefficients on one side of the chemical
-reaction can be set to zero.  Such reaction creates particles *ex nihilo*, and
-is equivalent to exchange with a reservoir. Then the simulation in the reaction ensemble becomes equivalent with the
-grandcanonical simulation. Formally, this can be expressed by the reaction
-
-.. math::
-
-    \mathrm{\emptyset \rightleftharpoons\ \nu_A A  }  \,,
-
-where, if :math:`\nu_A=1`, the reaction constant :math:`\Gamma` defines the chemical potential of species A.
-However, if :math:`\nu_A\neq 1`, the statistics of the reaction ensemble becomes
-equivalent to the grandcanonical only in the limit of large average number of species A in the box.
-If the reaction contains more than one product, then the reaction constant
-:math:`\Gamma` defines only the sum of their chemical potentials but not the
-chemical potential of each product alone.
-
-Since the Reaction Ensemble acceptance transition probability can be
-derived from the grand canonical acceptance transition probability we
-can use the reaction ensemble to implement grand canonical simulation
-moves. This is done via adding reactions that only have reactants (for the
-deletion of particles) or only have products (for the creation of
-particles). There exists a one to one mapping of the expressions in the
-grand canonical transition probabilities and the expressions in the
-reaction ensemble transition probabilities.
-
-..
-    The text below is commented-out because it is still an open research question how it should be used correctly.
-
-    This can be used to include water autoprotolysis in the implicit solvent simulation,
-    by means of a reaction:
-
-    .. math::
-
-       \mathrm{2 H_2O \rightleftharpoons\ H_3O^+ + OH^- } \,,
-
-
-    add the following ex nihilo reactions to Espresso. (:math:`\emptyset`, read ex
-    nihilo). Ex nihilo means that the reaction has no reactants or products.
-    Therefore, if :math:`\emptyset` is a product, particles vanish and if
-    :math:`\emptyset` is a reactant, then particles are created ex nihilo:
-
-    .. math::
-
-       \mathrm{\emptyset \rightleftharpoons\ H_3O^+ + OH^- }  \,,
-
-    with reaction constant K
-
-    .. math::
-
-       \mathrm{H_3O^+ + OH^- \rightleftharpoons\ \emptyset} \,,
-
-    with reaction constant 1/K. K is given implicitly as a function of the apparent dissociation
-    constant :math:`K_w=10^{-14} \rm{mol^2/l^2}=x\cdot \rm{1/(\sigma^3)^2}` such that the dimensionless is
-    :math:`K=(x\cdot \rm{1/(\sigma^3)^2})/(\beta P^0)^{\overline{\nu}}` with
-    :math:`\overline{\nu}=2` for the dissociation reaction and where x is
-    the value of the apparent dissociation constant that is converted from
-    :math:`\rm{mol^2/l^2}` to a number density in :math:`1/(\sigma^3)^2`,
-    where :math:`\sigma` is the simulation length unit. If :math:`\beta` and
-    :math:`P^0` are provided in simulation units this will make :math:`K`
-    dimensionless. As a test for the autodissociation of water a big
-    simulation box can be set up and the autodissociation reaction can be
-    performed. Then the box should fill with the correct number of protons
-    and hydroxide ions (check for the number of protons and hydroxide ions
-    in the given simulation volume and compare this to the expected value at
-    pH 7). Further the :math:`pK_w=14` should be reproduced -also in the
-    case of an initial excess of acid or base in the simulation box. Note
-    that this only works for big enough volumes.
 
 Widom Insertion (for homogeneous systems)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-An example script can be found here:
+The Widom insertion method measures the change in excess free energy, i.e. the excess chemical potential due to the insertion of a new particle, or a group of particles:
+
+.. math::
+
+   \mu^\mathrm{ex}_B & :=\Delta F^\mathrm{ex} =F^\mathrm{ex}(N_B+1,V,T)-F^\mathrm{ex}(N_B,V,T)\\
+   &=-kT \ln \left(\frac{1}{V} \int_V d^3r_{N_B+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_B} \right)
+
+For this one has to provide the following reaction to the Widom method:
+
+.. code-block:: python
+
+    type_B=1
+    widom = reaction_ensemble.WidomInsertion(
+        temperature=temperature, seed=77)
+    widom.add_reaction(reactant_types=[],
+    reactant_coefficients=[], product_types=[type_B],
+    product_coefficients=[1], default_charges={1: 0})
+    widom.measure_excess_chemical_potential(0)
+
+
+The call of ``add_reaction`` define the insertion :math:`\mathrm{\emptyset \to type_B}` (which is the 0th defined reaction).
+Multiple reactions for the insertions of different types can be added to the same ``WidomInsertion`` instance.
+Measuring the excess chemical potential using the insertion method is done via calling ``widom.measure_excess_chemical_potential(0)``.
+If another particle insertion is defined, then the excess chemical potential for this insertion can be measured by calling ``widom.measure_excess_chemical_potential(1)``.
+Be aware that the implemented method only works for the canonical ensemble. If the numbers of particles fluctuate (i.e. in a semi grand canonical simulation) one has to adapt the formulas from which the excess chemical potential is calculated! This is not implemented. Also in a isobaric-isothermal simulation (NPT) the corresponding formulas for the excess chemical potentials need to be adapted. This is not implemented.
+
+The implementation can also deal with the simultaneous insertion of multiple particles and can therefore measure the change of excess free energy of multiple particles like e.g.:
+
+.. math::
+
+   \mu^\mathrm{ex, pair}&:=\Delta F^\mathrm{ex, pair}:= F^\mathrm{ex}(N_1+1, N_2+1,V,T)-F^\mathrm{ex}(N_1, N_2 ,V,T)\\
+   &=-kT \ln \left(\frac{1}{V^2} \int_V \int_V d^3r_{N_1+1} d^3 r_{N_2+1} \langle \exp(-\beta \Delta E_\mathrm{pot}) \rangle_{N_1, N_2} \right)
+
+Note that the measurement involves three averages: the canonical ensemble average :math:`\langle \cdot \rangle_{N_1, N_2}` and the two averages over the position of particles :math:`N_1+1` and :math:`N_2+1`.
+Since the averages over the position of the inserted particles are obtained via brute force sampling of the insertion positions it can be beneficial to have multiple insertion tries on the same configuration of the other particles.
+
+One can measure the change in excess free energy due to the simultaneous insertions of particles of type 1 and 2 and the simultaneous removal of a particle of type 3:
+
+.. math::
+
+   \mu^\mathrm{ex}:=\Delta F^\mathrm{ex, }:= F^\mathrm{ex}(N_1+1, N_2+1, N_3-1,V,T)-F^\mathrm{ex}(N_1, N_2, N_3 ,V,T)
+
+For this one has to provide the following reaction to the Widom method:
+
+.. code-block:: python
+
+    widom.add_reaction(reactant_types=[type_3],
+    reactant_coefficients=[1], product_types=[type_1, type_2],
+    product_coefficients=[1,1], default_charges={1: 0})
+    widom.measure_excess_chemical_potential(0)
+
+Be aware that in the current implementation, for MC moves which add and remove particles, the insertion of the new particle always takes place at the position where the last particle was removed. Be sure that this is the behaviour you want to have. Otherwise implement a new function ``WidomInsertion::make_reaction_attempt`` in the core.
+
+An example script which demonstrates the usage for measuring the pair excess chemical potential for inserting an ion pair into a salt solution can be found here:
 
 * `Widom Insertion <https://github.com/espressomd/espresso/blob/python/samples/widom_insertion.py>`_
+
+For a description of the available methods, see :class:`espressomd.reaction_ensemble.WidomInsertion`.
+

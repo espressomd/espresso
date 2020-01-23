@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -77,27 +76,15 @@ class CoulombCloudWall(ut.TestCase):
                 p.f / prefactor - self.forces[p.id])
         force_abs_diff /= len(self.S.part)
 
-        print(method_name, "force difference", force_abs_diff)
-
         # Energy
         if energy:
-            energy_abs_diff = abs(self.S.analysis.energy()["total"] / prefactor
-                                  - self.reference_energy)
-            print(method_name, "energy difference", energy_abs_diff)
-            self.assertLessEqual(
-                energy_abs_diff,
-                self.tolerance,
-                "Absolute energy difference " +
-                str(energy_abs_diff) +
-                " too large for " +
-                method_name)
+            self.assertAlmostEqual(
+                self.S.analysis.energy()["total"] / prefactor,
+                self.reference_energy, delta=self.tolerance,
+                msg="Absolute energy difference too large for " + method_name)
         self.assertLessEqual(
-            force_abs_diff,
-            self.tolerance,
-            "Absolute force difference " +
-            str(force_abs_diff) +
-            " too large for method " +
-            method_name)
+            force_abs_diff, self.tolerance,
+            "Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
 

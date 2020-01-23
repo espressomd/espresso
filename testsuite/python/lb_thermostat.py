@@ -22,7 +22,7 @@ import espressomd.lb
 from tests_common import single_component_maxwell
 
 """
-Check the Lattice Boltzmann thermostat with respect to the particle velocity
+Check the lattice-Boltzmann thermostat with respect to the particle velocity
 distribution.
 
 
@@ -54,7 +54,7 @@ class LBThermostatCommon:
         self.system.actors.add(self.lbf)
         self.system.part.add(
             pos=np.random.random((100, 3)) * self.system.box_l)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=2.0)
+        self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=5, gamma=5.0)
 
     def test_velocity_distribution(self):
         self.prepare()
@@ -63,7 +63,7 @@ class LBThermostatCommon:
         loops = 250
         v_stored = np.zeros((N * loops, 3))
         for i in range(loops):
-            self.system.integrator.run(6)
+            self.system.integrator.run(3)
             v_stored[i * N:(i + 1) * N, :] = self.system.part[:].v
         minmax = 5
         n_bins = 7
@@ -76,7 +76,7 @@ class LBThermostatCommon:
             for j in range(n_bins):
                 found = data[j]
                 expected = single_component_maxwell(bins[j], bins[j + 1], KT)
-                self.assertLessEqual(abs(found - expected), error_tol)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
 
 
 class LBCPUThermostat(ut.TestCase, LBThermostatCommon):

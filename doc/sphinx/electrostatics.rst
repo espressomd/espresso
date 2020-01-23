@@ -221,13 +221,13 @@ sets up parallel metallic plates and activates ICC::
     # Left electrode (normal [0,0,1])
     for xi in xrange(nicc):
         for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=[1, 1, 1], type=icc_type)
+            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=3*[True], type=icc_type)
     iccNormals.extend([0, 0, 1] * nicc_per_electrode)
 
     # Right electrode (normal [0,0,-1])
     for xi in xrange(nicc):
         for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=[1, 1, 1], type=icc_type)
+            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=3*[True], type=icc_type)
     iccNormals.extend([0, 0, -1] * nicc_per_electrode)
 
     # Common area, sigma and metallic epsilon
@@ -433,8 +433,8 @@ does not need to be specified as it is automatically determined from the
 particle distances and maximal pairwise error. The second tuning form
 just takes the maximal pairwise error and tries out a lot of switching
 radii to find out the fastest one. If this takes too long, you can
-change the value of the setmd variable ``timings``, which controls the number of
-test force calculations.
+change the value of the property :attr:`espressomd.system.System.timings`,
+which controls the number of test force calculations.
 
 ::
 
@@ -455,24 +455,24 @@ one.
 For details on the MMM family of algorithms, refer to appendix :ref:`The MMM family of algorithms`.
 
 
-.. _Scafacos Electrostatics:
+.. _ScaFaCoS Electrostatics:
 
-Scafacos Electrostatics
+ScaFaCoS Electrostatics
 -----------------------
 
-Espresso can use the electrostatics methods from the SCAFACOS *Scalable
+|es| can use the electrostatics methods from the ScaFaCoS *Scalable
 fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :meth:`espressomd.scafacos.available_methods`
 
-To use SCAFACOS, create an instance of :class:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+To use ScaFaCoS, create an instance of :class:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
 
-* ``method_name``: name of the SCAFACOS method being used.
+* ``method_name``: name of the ScaFaCoS method being used.
 * ``method_params``: dictionary containing the method-specific parameters
 * ``prefactor``: Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
 
-The method-specific parameters are described in the SCAFACOS manual.
-Additionally, methods supporting tuning have the parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field
+The method-specific parameters are described in the ScaFaCoS manual.
+In addition, methods supporting tuning have a parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field.
 
-To use the, e.g.,  ``ewald`` solver from SCAFACOS as electrostatics solver for your system, set its
+To use the, e.g., ``ewald`` solver from ScaFaCoS as electrostatics solver for your system, set its
 cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 :math:`10^{-3}`, use::
 
@@ -483,5 +483,5 @@ cutoff to :math:`1.5` and tune the other parameters for an accuracy of
 
 
 For details of the various methods and their parameters please refer to
-the SCAFACOS manual. To use this feature, SCAFACOS has to be built as a shared library. SCAFACOS can be used only once, either for Coulomb or for dipolar interactions.
+the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a shared library. ScaFaCoS can be used only once, either for Coulomb or for dipolar interactions.
 

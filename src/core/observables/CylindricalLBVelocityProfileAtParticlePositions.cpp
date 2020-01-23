@@ -18,14 +18,13 @@
  */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include <boost/range/algorithm/transform.hpp>
+
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 
 namespace Observables {
-
 std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
-    PartCfg &partCfg) const {
+    Utils::Span<const Particle *const> particles) const {
   std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
                                 static_cast<size_t>(n_phi_bins),
                                 static_cast<size_t>(n_z_bins)}};
@@ -33,27 +32,17 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
       {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
        std::make_pair(min_z, max_z)}};
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
-  // First collect all positions (since we want to call the LB function to
-  // get the fluid velocities only once).
-  std::vector<Utils::Vector3d> folded_positions(ids().size());
-  boost::transform(ids(), folded_positions.begin(), [&partCfg](int id) {
-    return folded_position(partCfg[id].r.p, box_geo);
-  });
 
-  std::vector<Utils::Vector3d> velocities(ids().size());
-  boost::transform(folded_positions, velocities.begin(),
-                   [](const Utils::Vector3d &pos) {
-                     return lb_lbfluid_get_interpolated_velocity(pos) *
-                            lb_lbfluid_get_lattice_speed();
-                   });
-  for (auto &p : folded_positions)
-    p -= center;
-  for (int ind = 0; ind < ids().size(); ++ind) {
-    histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
-                         folded_positions[ind], axis),
-                     Utils::transform_vector_cartesian_to_cylinder(
-                         velocities[ind], axis, folded_positions[ind]));
+  for (auto p : particles) {
+    auto const pos = folded_position(p->r.p, box_geo);
+    auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
+                   lb_lbfluid_get_lattice_speed();
+
+    histogram.update(
+        Utils::transform_coordinate_cartesian_to_cylinder(pos - center, axis),
+        Utils::transform_vector_cartesian_to_cylinder(v, axis, pos - center));
   }
+
   auto hist_tmp = histogram.get_histogram();
   auto tot_count = histogram.get_tot_count();
   for (size_t ind = 0; ind < hist_tmp.size(); ++ind) {

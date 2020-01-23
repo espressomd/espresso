@@ -30,19 +30,25 @@ namespace Observables {
 class ParticleAngularVelocities : public PidObservable {
 public:
   using PidObservable::PidObservable;
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
+
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
     std::vector<double> res(n_values());
-    for (int i = 0; i < ids().size(); i++) {
+
 #ifdef ROTATION
+    size_t i = 0;
+    for (auto p : particles) {
       const Utils::Vector3d omega =
-          convert_vector_body_to_space(partCfg[i], partCfg[i].m.omega);
+          convert_vector_body_to_space(*p, p->m.omega);
       res[3 * i + 0] = omega[0];
       res[3 * i + 1] = omega[1];
       res[3 * i + 2] = omega[2];
-#endif
+      i++;
     }
+#endif
     return res;
   }
+
   int n_values() const override { return 3 * ids().size(); }
 };
 

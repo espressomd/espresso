@@ -54,6 +54,36 @@
  * data types
  ************************************************/
 
+/** Aligned allocator for fft data. */
+template <class T> struct fft_allocator {
+  typedef T value_type;
+  fft_allocator() noexcept = default; // default ctor not required
+  template <class U> explicit fft_allocator(const fft_allocator<U> &) {}
+  template <class U> bool operator==(const fft_allocator<U> &) const {
+    return true;
+  }
+  template <class U> bool operator!=(const fft_allocator<U> &) const {
+    return false;
+  }
+
+  T *allocate(const size_t n) const {
+    if (n == 0) {
+      return nullptr;
+    }
+    if (n > static_cast<size_t>(-1) / sizeof(T)) {
+      throw std::bad_array_new_length();
+    }
+    void *const pv = fftw_malloc(n * sizeof(T));
+    if (!pv) {
+      throw std::bad_alloc();
+    }
+    return static_cast<T *>(pv);
+  }
+  void deallocate(T *const p, size_t) const noexcept { fftw_free(p); }
+};
+
+template <class T> using fft_vector = std::vector<T, fft_allocator<T>>;
+
 /** Structure for performing a 1D FFT.
  *
  *  This includes the information about the redistribution of the 3D
@@ -87,13 +117,13 @@ struct fft_forw_plan {
   void (*pack_function)(double const *const, double *const, int const *,
                         int const *, int const *, int);
   /** Send block specification. 6 integers for each node: start[3], size[3]. */
-  int *send_block = nullptr;
+  std::vector<int> send_block;
   /** Send block communication sizes. */
-  int *send_size = nullptr;
+  std::vector<int> send_size;
   /** Recv block specification. 6 integers for each node: start[3], size[3]. */
-  int *recv_block = nullptr;
+  std::vector<int> recv_block;
   /** Recv block communication sizes. */
-  int *recv_size = nullptr;
+  std::vector<int> recv_size;
   /** size of send block elements. */
   int element;
 };
@@ -133,11 +163,11 @@ struct fft_data_struct {
   int max_mesh_size = 0;
 
   /** send buffer. */
-  double *send_buf = nullptr;
+  std::vector<double> send_buf;
   /** receive buffer. */
-  double *recv_buf = nullptr;
+  std::vector<double> recv_buf;
   /** Buffer for receive data. */
-  double *data_buf = nullptr;
+  fft_vector<double> data_buf;
 };
 
 /** \name Exported Functions */
@@ -146,7 +176,6 @@ struct fft_data_struct {
 
 /** Initialize everything connected to the 3D-FFT.
  *
- *  \param data            Data array.
  *  \param ca_mesh_dim     Local CA mesh dimensions.
  *  \param ca_mesh_margin  Local CA mesh margins.
  *  \param global_mesh_dim Global CA mesh dimensions.
@@ -157,7 +186,7 @@ struct fft_data_struct {
  *  \param comm            MPI communicator.
  *  \return Maximal size of local fft mesh (needed for allocation of ca_mesh).
  */
-int fft_init(double **data, int const *ca_mesh_dim, int const *ca_mesh_margin,
+int fft_init(int const *ca_mesh_dim, int const *ca_mesh_margin,
              int *global_mesh_dim, double *global_mesh_off, int *ks_pnum,
              fft_data_struct &fft, const Utils::Vector3i &grid,
              const boost::mpi::communicator &comm);

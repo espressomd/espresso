@@ -24,6 +24,7 @@
 #include "communication.hpp"
 #include "event.hpp"
 #include "integrate.hpp"
+#include "particle_data.hpp"
 #include "rotation.hpp"
 
 #include <utils/math/sqr.hpp>
@@ -36,7 +37,7 @@
 #include <limits>
 
 /** Currently active steepest descent instance */
-static MinimizeEnergyParameters *params = nullptr;
+static SteepestDescentParameters params{};
 
 bool steepest_descent_step(const ParticleRange &particles) {
   // Maximal force encountered on node
@@ -48,22 +49,17 @@ bool steepest_descent_step(const ParticleRange &particles) {
 
     // For all Cartesian coordinates
     for (int j = 0; j < 3; j++) {
-#ifdef EXTERNAL_FORCES
       // Skip, if coordinate is fixed
       if (!(p.p.ext_flag & COORD_FIXED(j)))
-#endif
-#ifdef VIRTUAL_SITES
         // Skip positional increments of virtual particles
-        if (!p.p.is_virtual)
-#endif
-        {
+        if (!p.p.is_virtual) {
           // Square of force on particle
           f += Utils::sqr(p.f.f[j]);
 
           // Positional increment, crop to maximum allowed by user
-          auto const dp = boost::algorithm::clamp(params->gamma * p.f.f[j],
-                                                  -params->max_displacement,
-                                                  params->max_displacement);
+          auto const dp = boost::algorithm::clamp(params.gamma * p.f.f[j],
+                                                  -params.max_displacement,
+                                                  params.max_displacement);
 
           // Move particle
           p.r.p[j] += dp;
@@ -72,15 +68,15 @@ bool steepest_descent_step(const ParticleRange &particles) {
 #ifdef ROTATION
     {
       // Rotational increment
-      auto const dq = params->gamma * p.f.torque; // Vector parallel to torque
+      auto const dq = params.gamma * p.f.torque; // Vector parallel to torque
       auto const t = p.f.torque.norm2();
 
       // Normalize rotation axis and compute amount of rotation
       auto const l = dq.norm();
       if (l > 0.0) {
         auto const axis = dq / l;
-        auto const angle = boost::algorithm::clamp(l, -params->max_displacement,
-                                                   params->max_displacement);
+        auto const angle = boost::algorithm::clamp(l, -params.max_displacement,
+                                                   params.max_displacement);
 
         // Rotate the particle around axis dq by amount l
         local_rotate_particle(p, axis, angle);
@@ -100,27 +96,19 @@ bool steepest_descent_step(const ParticleRange &particles) {
   auto const f_max_global =
       mpi::all_reduce(comm_cart, f_max, mpi::maximum<double>());
 
-  return (sqrt(f_max_global) < params->f_max);
+  return sqrt(f_max_global) < params.f_max;
 }
 
-void minimize_energy_init(const double f_max, const double gamma,
-                          const int max_steps, const double max_displacement) {
-  if (!params)
-    params = new MinimizeEnergyParameters;
-
-  params->f_max = f_max;
-  params->gamma = gamma;
-  params->max_steps = max_steps;
-  params->max_displacement = max_displacement;
+void steepest_descent_init(const double f_max, const double gamma,
+                           const int max_steps, const double max_displacement) {
+  params.f_max = f_max;
+  params.gamma = gamma;
+  params.max_steps = max_steps;
+  params.max_displacement = max_displacement;
 }
 
-void minimize_energy() {
-  if (!params)
-    params = new MinimizeEnergyParameters;
-
-  MPI_Bcast(params, sizeof(MinimizeEnergyParameters), MPI_BYTE, 0, comm_cart);
-  int integ_switch_old = integ_switch;
-  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
-  integrate_vv(params->max_steps, -1);
-  integ_switch = integ_switch_old;
+int steepest_descent(const int max_steps) {
+  params.max_steps = max_steps;
+  MPI_Bcast(&params, sizeof(SteepestDescentParameters), MPI_BYTE, 0, comm_cart);
+  return integrate(params.max_steps, -1);
 }

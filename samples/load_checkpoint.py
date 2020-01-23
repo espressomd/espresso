@@ -15,8 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-This sample illustrates how various observables of interest can be checkpointed.
+Basic usage of the checkpointing feature. Show how to load the state of:
+
+* custom user variables.
+* non-bonded interactions.
+* particles.
+* P3M parameters.
+* thermostat.
 """
+# pylint: disable=undefined-variable
 import espressomd
 
 required_features = ["P3M", "WCA"]

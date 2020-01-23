@@ -65,12 +65,14 @@
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
+#include "particle_data.hpp"
 
 #include <utils/math/int_pow.hpp>
 using Utils::int_pow;
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
 using Utils::sqr;
+#include <utils/math/bspline.hpp>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -116,148 +118,6 @@ struct p3m_gpu_fft_plans_t {
 } p3m_gpu_fft_plans;
 
 static char p3m_gpu_data_initialized = 0;
-
-template <int cao_value, typename T> __device__ T caf(int i, T x) {
-  switch (cao_value) {
-  case 1:
-    return 1.0;
-  case 2: {
-    switch (i) {
-    case 0:
-      return 0.5 - x;
-    case 1:
-      return 0.5 + x;
-    default:
-      return 0.0;
-    }
-  }
-  case 3: {
-    switch (i) {
-    case 0:
-      return 0.5 * sqr(0.5 - x);
-    case 1:
-      return 0.75 - sqr(x);
-    case 2:
-      return 0.5 * sqr(0.5 + x);
-    default:
-      return 0.0;
-    }
-  case 4: {
-    switch (i) {
-    case 0:
-      return (1.0 + x * (-6.0 + x * (12.0 - x * 8.0))) / 48.0;
-    case 1:
-      return (23.0 + x * (-30.0 + x * (-12.0 + x * 24.0))) / 48.0;
-    case 2:
-      return (23.0 + x * (30.0 + x * (-12.0 - x * 24.0))) / 48.0;
-    case 3:
-      return (1.0 + x * (6.0 + x * (12.0 + x * 8.0))) / 48.0;
-    default:
-      return 0.0;
-    }
-  }
-  case 5: {
-    switch (i) {
-    case 0:
-      return (1.0 + x * (-8.0 + x * (24.0 + x * (-32.0 + x * 16.0)))) / 384.0;
-    case 1:
-      return (19.0 + x * (-44.0 + x * (24.0 + x * (16.0 - x * 16.0)))) / 96.0;
-    case 2:
-      return (115.0 + x * x * (-120.0 + x * x * 48.0)) / 192.0;
-    case 3:
-      return (19.0 + x * (44.0 + x * (24.0 + x * (-16.0 - x * 16.0)))) / 96.0;
-    case 4:
-      return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * 16.0)))) / 384.0;
-    default:
-      return 0.0;
-    }
-  }
-  case 6: {
-    switch (i) {
-    case 0:
-      return (1.0 +
-              x * (-10.0 + x * (40.0 + x * (-80.0 + x * (80.0 - x * 32.0))))) /
-             3840.0;
-    case 1:
-      return (237.0 +
-              x * (-750.0 +
-                   x * (840.0 + x * (-240.0 + x * (-240.0 + x * 160.0))))) /
-             3840.0;
-    case 2:
-      return (841.0 +
-              x * (-770.0 +
-                   x * (-440.0 + x * (560.0 + x * (80.0 - x * 160.0))))) /
-             1920.0;
-    case 3:
-      return (841.0 +
-              x * (+770.0 +
-                   x * (-440.0 + x * (-560.0 + x * (80.0 + x * 160.0))))) /
-             1920.0;
-    case 4:
-      return (237.0 +
-              x * (750.0 +
-                   x * (840.0 + x * (240.0 + x * (-240.0 - x * 160.0))))) /
-             3840.0;
-    case 5:
-      return (1.0 +
-              x * (10.0 + x * (40.0 + x * (80.0 + x * (80.0 + x * 32.0))))) /
-             3840.0;
-    default:
-      return 0.0;
-    }
-  }
-  case 7: {
-    switch (i) {
-    case 0:
-      return (1.0 +
-              x * (-12.0 +
-                   x * (60.0 + x * (-160.0 +
-                                    x * (240.0 + x * (-192.0 + x * 64.0)))))) /
-             46080.0;
-    case 1:
-      return (361.0 + x * (-1416.0 +
-                           x * (2220.0 +
-                                x * (-1600.0 +
-                                     x * (240.0 + x * (384.0 - x * 192.0)))))) /
-             23040.0;
-    case 2:
-      return (10543.0 +
-              x * (-17340.0 +
-                   x * (4740.0 +
-                        x * (6880.0 +
-                             x * (-4080.0 + x * (-960.0 + x * 960.0)))))) /
-             46080.0;
-    case 3:
-      return (5887.0 + x * x * (-4620.0 + x * x * (1680.0 - x * x * 320.0))) /
-             11520.0;
-    case 4:
-      return (10543.0 +
-              x * (17340.0 +
-                   x * (4740.0 +
-                        x * (-6880.0 +
-                             x * (-4080.0 + x * (960.0 + x * 960.0)))))) /
-             46080.0;
-    case 5:
-      return (361.0 +
-              x * (1416.0 +
-                   x * (2220.0 +
-                        x * (1600.0 +
-                             x * (240.0 + x * (-384.0 - x * 192.0)))))) /
-             23040.0;
-    case 6:
-      return (1.0 +
-              x * (12.0 +
-                   x * (60.0 +
-                        x * (160.0 + x * (240.0 + x * (192.0 + x * 64.0)))))) /
-             46080.0;
-    default:
-      return 0.0;
-    }
-  }
-  }
-  }
-  return 0.0;
-}
 
 template <int cao>
 __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
@@ -448,7 +308,7 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
       weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
-          caf<cao>(cao_id_x, m_pos[threadIdx.y]);
+          Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
     }
 
     __syncthreads();
@@ -459,9 +319,10 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
                   weights[3 * cao * part_in_block + 3 * threadIdx.z + 2] * p.q);
 
   } else {
-    atomicAdd(&(charge_mesh[ind]), caf<cao>(cao_id_x, m_pos[0]) *
-                                       caf<cao>(threadIdx.y, m_pos[1]) *
-                                       caf<cao>(threadIdx.z, m_pos[2]) * p.q);
+    atomicAdd(&(charge_mesh[ind]),
+              Utils::bspline<cao>(cao_id_x, m_pos[0]) *
+                  Utils::bspline<cao>(threadIdx.y, m_pos[1]) *
+                  Utils::bspline<cao>(threadIdx.z, m_pos[2]) * p.q);
   }
 }
 
@@ -577,7 +438,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
       weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
-          caf<cao>(cao_id_x, m_pos[threadIdx.y]);
+          Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
     }
 
     __syncthreads();
@@ -586,8 +447,9 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
         weights[3 * cao * part_in_block + 3 * threadIdx.y + 1] *
         weights[3 * cao * part_in_block + 3 * threadIdx.z + 2] * p.q;
   } else {
-    c = -prefactor * caf<cao>(cao_id_x, m_pos[0]) *
-        caf<cao>(threadIdx.y, m_pos[1]) * caf<cao>(threadIdx.z, m_pos[2]) * p.q;
+    c = -prefactor * Utils::bspline<cao>(cao_id_x, m_pos[0]) *
+        Utils::bspline<cao>(threadIdx.y, m_pos[1]) *
+        Utils::bspline<cao>(threadIdx.z, m_pos[2]) * p.q;
   }
 
   const REAL_TYPE *force_mesh_x = (REAL_TYPE *)par.force_mesh_x;

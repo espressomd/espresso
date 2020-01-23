@@ -30,7 +30,7 @@ cdef class NonBondedInteraction:
     """
     Represents an instance of a non-bonded interaction, such as Lennard-Jones.
     Either called with two particle type id, in which case, the interaction
-    will represent the bonded interaction as it is defined in Espresso core,
+    will represent the bonded interaction as it is defined in ESPResSo core,
     or called with keyword arguments describing a new interaction.
 
     """
@@ -50,7 +50,7 @@ cdef class NonBondedInteraction:
                 args[0], int) and is_valid_type(args[1], int):
             self._part_types = args
 
-            # Load the parameters currently set in the Espresso core
+            # Load the parameters currently set in the ESPResSo core
             self._params = self._get_params_from_es_core()
 
         # Or have we been called with keyword args describing the interaction
@@ -72,7 +72,7 @@ cdef class NonBondedInteraction:
                 "The constructor has to be called either with two particle type ids (as integer), or with a set of keyword arguments describing a new interaction")
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso.
+        """Check, if the data stored in the instance still matches what is in ESPResSo.
 
         """
         temp_params = self._get_params_from_es_core()
@@ -123,7 +123,7 @@ cdef class NonBondedInteraction:
                     raise ValueError(
                         "At least the following keys have to be given as keyword arguments: " + self.required_keys().__str__())
 
-        # If this instance refers to an interaction defined in the espresso core,
+        # If this instance refers to an interaction defined in the ESPResSo core,
         # load the parameters from there
 
         if self._part_types[0] >= 0 and self._part_types[1] >= 0:
@@ -1383,49 +1383,6 @@ IF SOFT_SPHERE == 1:
             return {"a", "n", "cutoff"}
 
 
-IF MEMBRANE_COLLISION == 1:
-
-    cdef class MembraneCollisionInteraction(NonBondedInteraction):
-
-        def validate_params(self):
-            if self._params["cutoff"] < 0:
-                raise ValueError("Membrane Collision cutoff has to be >=0")
-            return True
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0], self._part_types[1])
-            return {
-                "a": ia_params.membrane.a,
-                "n": ia_params.membrane.n,
-                "cutoff": ia_params.membrane.cut,
-                "offset": ia_params.membrane.offset}
-
-        def is_active(self):
-            return (self._params["a"] > 0)
-
-        def _set_params_in_es_core(self):
-            if membrane_collision_set_params(self._part_types[0],
-                                             self._part_types[1],
-                                             self._params["a"],
-                                             self._params["n"],
-                                             self._params["cutoff"],
-                                             self._params["offset"]):
-                raise Exception("Could not set Membrane Collision parameters")
-
-        def default_params(self):
-            return {"offset": 0.}
-
-        def type_name(self):
-            return "MembraneCollision"
-
-        def valid_keys(self):
-            return {"a", "n", "cutoff", "offset"}
-
-        def required_keys(self):
-            return {"a", "n", "cutoff"}
-
 IF HERTZIAN == 1:
 
     cdef class HertzianInteraction(NonBondedInteraction):
@@ -1609,7 +1566,6 @@ class NonBondedInteractionHandle:
     gaussian = None
     tabulated = None
     generic = None
-    membrane_collision = None
     gay_berne = None
     dpd = None
     hat = None
@@ -1626,9 +1582,6 @@ class NonBondedInteractionHandle:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF WCA:
             self.wca = WCAInteraction(_type1, _type2)
-        IF MEMBRANE_COLLISION:
-            self.membrane_collision = MembraneCollisionInteraction(
-                _type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
@@ -1704,7 +1657,7 @@ cdef class BondedInteraction:
     Base class for bonded interactions.
 
     Either called with an interaction id, in which case the interaction
-    will represent the bonded interaction as it is defined in Espresso core,
+    will represent the bonded interaction as it is defined in ESPResSo core,
     or called with keyword arguments describing a new interaction.
 
     """
@@ -1716,14 +1669,14 @@ cdef class BondedInteraction:
         # Interaction id as argument
         if len(args) == 1 and is_valid_type(args[0], int):
             bond_id = args[0]
-            # Check if the bond type in Espresso core matches this class
+            # Check if the bond type in ESPResSo core matches this class
             if bonded_ia_params[bond_id].type != self.type_number():
                 raise Exception(
-                    "The bond with this id is not defined as a " + self.type_name() + " bond in the Espresso core.")
+                    "The bond with this id is not defined as a " + self.type_name() + " bond in the ESPResSo core.")
 
             self._bond_id = bond_id
 
-            # Load the parameters currently set in the Espresso core
+            # Load the parameters currently set in the ESPResSo core
             self._params = self._get_params_from_es_core()
             self._bond_id = bond_id
 
@@ -1748,16 +1701,16 @@ cdef class BondedInteraction:
         return (self.__class__, (self._bond_id,))
 
     def is_valid(self):
-        """Check, if the data stored in the instance still matches what is in Espresso.
+        """Check, if the data stored in the instance still matches what is in ESPResSo.
 
         """
-        # Check if the bond type in Espresso still matches the bond type saved
+        # Check if the bond type in ESPResSo still matches the bond type saved
         # in this class
         if bonded_ia_params[self._bond_id].type != self.type_number():
             return False
 
         # check, if the bond parameters saved in the class still match those
-        # saved in Espresso
+        # saved in ESPResSo
         temp_params = self._get_params_from_es_core()
         if self._params != temp_params:
             return False
@@ -1869,7 +1822,7 @@ class BondedInteractionNotDefined:
 
     def __init__(self, *args, **kwargs):
         raise Exception(
-            self.__class__.__name__ + " not compiled into Espresso core")
+            self.__class__.__name__ + " not compiled into ESPResSo core")
 
     def type_number(self):
         raise Exception(("%s has to be defined in myconfig.hpp.") % self.name)
@@ -3609,43 +3562,6 @@ class OifLocalForces(BondedInteraction):
             self._params["kvisc"])
 
 
-IF MEMBRANE_COLLISION == 1:
-
-    class OifOutDirection(BondedInteraction):
-
-        """
-        Determine the surface normals of triangles on a mesh.
-        Takes no parameter.
-
-        """
-
-        def type_number(self):
-            return BONDED_IA_OIF_OUT_DIRECTION
-
-        def type_name(self):
-            return "OIF_OUT_DIRECTION"
-
-        def valid_keys(self):
-            return set()
-
-        def required_keys(self):
-            return set()
-
-        def set_default_params(self):
-            self._params = {}
-
-        def _get_params_from_es_core(self):
-            return {}
-
-        def _set_params_in_es_core(self):
-            oif_out_direction_set_params(
-                self._bond_id)
-
-ELSE:
-    class OifOutDirection(BondedInteractionNotDefined):
-        name = "OIF_OUT_DIRECTION"
-
-
 class QuarticBond(BondedInteraction):
 
     """
@@ -3723,7 +3639,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
-    int(BONDED_IA_OIF_OUT_DIRECTION): OifOutDirection,
     int(BONDED_IA_IBM_TRIEL): IBM_Triel,
     int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
     int(BONDED_IA_IBM_VOLUME_CONSERVATION): IBM_VolCons,
@@ -3753,13 +3668,13 @@ class BondedInteractions:
             raise ValueError(
                 "Index to BondedInteractions[] has to be an integer referring to a bond id")
 
-        # Find out the type of the interaction from Espresso
+        # Find out the type of the interaction from ESPResSo
         if key >= bonded_ia_params.size():
             raise IndexError(
                 "Index to BondedInteractions[] out of range")
         bond_type = bonded_ia_params[key].type
 
-        # Check if the bonded interaction exists in Espresso core
+        # Check if the bonded interaction exists in ESPResSo core
         if bond_type == -1:
             raise ValueError(
                 "The bonded interaction with the id " + str(key) + " is not yet defined.")
@@ -3768,7 +3683,7 @@ class BondedInteractions:
         bond_class = bonded_interaction_classes[bond_type]
 
         # And return an instance of it, which refers to the bonded interaction
-        # id in Espresso
+        # id in ESPResSo
         return bond_class(key)
 
     def __setitem__(self, key, value):

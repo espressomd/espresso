@@ -16,7 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-import os
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -72,28 +71,15 @@ class CoulombMixedPeriodicity(ut.TestCase):
             rms_force_diff += np.sum((p.f - self.forces[p.id])**2)
         rms_force_diff = np.sqrt(rms_force_diff / len(self.S.part))
 
-        print(method_name, "rms force difference", rms_force_diff)
-
         # Energy
         if energy:
-            energy_abs_diff = abs(
-                self.S.analysis.energy()["total"] - self.reference_energy)
-            print(method_name, "energy", self.S.analysis.energy()["total"])
-            print(method_name, "energy difference", energy_abs_diff)
-            self.assertLessEqual(
-                energy_abs_diff,
-                self.tolerance_energy,
-                "Absolute energy difference " +
-                str(energy_abs_diff) +
-                " too large for " +
-                method_name)
+            self.assertAlmostEqual(
+                self.S.analysis.energy()["total"],
+                self.reference_energy, delta=self.tolerance_energy,
+                msg="Absolute energy difference too large for " + method_name)
         self.assertLessEqual(
-            rms_force_diff,
-            self.tolerance_force,
-            "Absolute force difference " +
-            str(rms_force_diff) +
-            " too large for method " +
-            method_name)
+            rms_force_diff, self.tolerance_force,
+            "Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
 

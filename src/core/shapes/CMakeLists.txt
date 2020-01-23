@@ -13,5 +13,4 @@ set(Shapes_SRC
 )
 add_library(Shapes SHARED ${Shapes_SRC})
 install(TARGETS Shapes LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
-set_target_properties(Shapes PROPERTIES SOVERSION ${SOVERSION})
 target_link_libraries(Shapes PUBLIC EspressoConfig EspressoCore)

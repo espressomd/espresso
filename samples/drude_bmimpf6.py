@@ -15,17 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-Particle polarization with cold Drude oscillators on a coarse grained
-ionic liquid BMIM PF6.
+Particle polarization with cold Drude oscillators on a coarse-grained
+simulation of the ionic liquid BMIM PF6.
 """
 
-import sys
 import time
 import os
 import numpy as np
 import argparse
-from threading import Thread
-from time import sleep
 
 import espressomd
 required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
@@ -33,6 +30,7 @@ required_features = ["LENNARD_JONES", "P3M", "MASS", "ROTATION",
                      "THOLE", "LANGEVIN_PER_PARTICLE"]
 espressomd.assert_features(required_features)
 
+from espressomd.minimize_energy import steepest_descent
 from espressomd.electrostatics import P3M
 from espressomd.interactions import ThermalizedBond, HarmonicBond
 from espressomd import drude_helpers
@@ -40,11 +38,11 @@ from espressomd.virtual_sites import VirtualSitesRelative
 import espressomd.visualization_opengl
 
 
-print("""This script demonstrates particle polarization with cold Drude
-oscillators. It is a coarse grained simulation of the ionic liquid BMIM PF6.
+print(__doc__ + """
 The density and particle numbers are low for testing purposes. It writes the
 xyz trajectory and RDF to the specified output path. Run with --help to see
-available arguments (e.g. use --visual for visualization).""")
+available arguments (e.g. use --visual for visualization).
+""")
 
 parser = argparse.ArgumentParser(description='Drude LJ liquid')
 parser.add_argument("--epsilon_r", nargs='?', default=1.0, type=float)
@@ -65,6 +63,7 @@ args = parser.parse_args()
 
 print("\nArguments:", args)
 
+np.random.seed(42)
 # NUM PARTICLES AND BOX
 n_ionpairs = 100
 n_part = n_ionpairs * 2
@@ -252,9 +251,8 @@ for i in range(n_ionpairs):
 print("\n-->E minimization")
 print("Before:", system.analysis.energy()["total"])
 n_max_steps = 100000
-system.minimize_energy.init(
-    f_max=5.0, gamma=0.01, max_steps=n_max_steps, max_displacement=0.01)
-system.minimize_energy.minimize()
+steepest_descent(system, f_max=5.0, gamma=0.01, max_steps=n_max_steps,
+                 max_displacement=0.01)
 print("After:", system.analysis.energy()["total"])
 
 # THERMOSTAT

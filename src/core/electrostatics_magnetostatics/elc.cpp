@@ -21,11 +21,11 @@
 /** \file
  *  Implementation of \ref elc.hpp.
  */
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "mmm-common.hpp"
-#include "particle_data.hpp"
 #include "pressure.hpp"
 #include <cmath>
 #include <mpi.h>
@@ -229,6 +229,9 @@ void distribute(int size) {
 /* dipole terms */
 /*****************************************************************/
 
+/** Calculate the dipole force.
+ *  See @cite yeh99a.
+ */
 static void add_dipole_force(const ParticleRange &particles) {
   double pref = coulomb.prefactor * 4 * M_PI * ux * uy * uz;
   int size = 3;
@@ -270,7 +273,7 @@ static void add_dipole_force(const ParticleRange &particles) {
 
   distribute(size);
 
-  // Yeh+Berkowitz dipole term
+  // Yeh + Berkowitz dipole term @cite yeh99a
   field_tot = gblcblk[0];
 
   // Const. potential contribution
@@ -290,6 +293,9 @@ static void add_dipole_force(const ParticleRange &particles) {
   }
 }
 
+/** Calculate the dipole energy.
+ *  See @cite yeh99a.
+ */
 static double dipole_energy(const ParticleRange &particles) {
   double pref = coulomb.prefactor * 2 * M_PI * ux * uy * uz;
   int size = 7;
@@ -332,7 +338,7 @@ static double dipole_energy(const ParticleRange &particles) {
 
   distribute(size);
 
-  // Yeh + Berkowitz term
+  // Yeh + Berkowitz term @cite yeh99a
   double eng = 2 * pref * (Utils::sqr(gblcblk[2]) + gblcblk[2] * gblcblk[3]);
 
   if (!elc_params.neutralize) {
@@ -347,11 +353,11 @@ static double dipole_energy(const ParticleRange &particles) {
       // zero potential difference contribution
       eng += pref * height_inverse / uz * Utils::sqr(gblcblk[6]);
       // external potential shift contribution
-      eng -= elc_params.pot_diff * height_inverse * gblcblk[6];
+      eng -= 2 * elc_params.pot_diff * height_inverse * gblcblk[6];
     }
 
     /* counter the P3M homogeneous background contribution to the
-       boundaries.  We never need that, since a homogeneous background
+       boundaries. We never need that, since a homogeneous background
        spanning the artificial boundary layers is aphysical. */
     eng += pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
                    (1. - 2. / 3.) * gblcblk[0] * gblcblk[1] *
@@ -1288,8 +1294,26 @@ void ELC_P3M_self_forces(const ParticleRange &particles) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
+namespace {
+void assign_image_charge(const Particle &p) {
+  if (p.r.p[2] < elc_params.space_layer) {
+    auto const q_eff = elc_params.delta_mid_bot * p.p.q;
+    auto const pos = Utils::Vector3d{p.r.p[0], p.r.p[1], -p.r.p[2]};
+
+    p3m_assign_charge(q_eff, pos, -1);
+  }
+
+  if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+    auto const q_eff = elc_params.delta_mid_top * p.p.q;
+    auto const pos =
+        Utils::Vector3d{p.r.p[0], p.r.p[1], 2 * elc_params.h - p.r.p[2]};
+
+    p3m_assign_charge(q_eff, pos, -1);
+  }
+}
+} // namespace
+
 void ELC_p3m_charge_assign_both(const ParticleRange &particles) {
-  Utils::Vector3d pos;
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
@@ -1299,55 +1323,22 @@ void ELC_p3m_charge_assign_both(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (p.p.q != 0.0) {
       p3m_assign_charge(p.p.q, p.r.p, cp_cnt);
-
-      if (p.r.p[2] < elc_params.space_layer) {
-        double q = elc_params.delta_mid_bot * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = -p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
-
-      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        double q = elc_params.delta_mid_top * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = 2 * elc_params.h - p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
+      assign_image_charge(p);
 
       cp_cnt++;
     }
   }
-#ifdef P3M_STORE_CA_FRAC
   p3m_shrink_wrap_charge_grid(cp_cnt);
-#endif
 }
 
 void ELC_p3m_charge_assign_image(const ParticleRange &particles) {
-  Utils::Vector3d pos;
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : particles) {
     if (p.p.q != 0.0) {
-
-      if (p.r.p[2] < elc_params.space_layer) {
-        double q = elc_params.delta_mid_bot * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = -p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
-
-      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        double q = elc_params.delta_mid_top * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = 2 * elc_params.h - p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
+      assign_image_charge(p);
     }
   }
 }

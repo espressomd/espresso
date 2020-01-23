@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "EspressoSystemInterface.hpp"
+#include "Particle.hpp"
 #include "cells.hpp"
 #include "cuda_interface.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 /* Initialize instance pointer */
 EspressoSystemInterface *EspressoSystemInterface::m_instance = nullptr;
@@ -32,7 +32,7 @@ void EspressoSystemInterface::gatherParticles() {
 #ifdef CUDA
   if (m_gpu) {
     if (gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      copy_part_data_to_gpu(local_cells.particles());
+      copy_part_data_to_gpu(cell_structure.local_cells().particles());
       reallocDeviceMemory(
           gpu_get_global_particle_vars_pointer_host()->number_of_particles);
       if (m_splitParticleStructGpu && (this_node == 0))

@@ -16,25 +16,34 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+"""
+Simulate a Lennard-Jones fluid in different thermodynamic ensembles (NVT, NpT).
+Sliders from a MIDI controller can change system variables such as temperature
+and volume. Some thermodynamic observables are analyzed and plotted live.
+"""
 import matplotlib
 matplotlib.use('WXAgg')
 import espressomd
 espressomd.assert_features(["LENNARD_JONES"])
-from espressomd import thermostat
 from espressomd import visualization
 import numpy as np
 from matplotlib import pyplot
 from threading import Thread
-from traits.api import HasTraits, Button, Any, Range, List, Enum, Float
-from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor, EnumEditor
-import sys
+from traits.api import HasTraits, Any, Range, List, Enum, Float
+from traitsui.api import View, Group, Item, CheckListEditor, RangeEditor
 import time
+import argparse
 
-use_opengl = "opengl" in sys.argv
-use_mayavi = "mayavi" in sys.argv
-if not use_opengl and not use_mayavi:
-    use_mayavi = True
-assert use_opengl != use_mayavi
+parser = argparse.ArgumentParser(epilog=__doc__)
+group = parser.add_mutually_exclusive_group()
+group.add_argument("--mayavi", action="store_const", dest="visualizer",
+                   const="mayavi", help="MayaVi visualizer", default="mayavi")
+group.add_argument("--opengl", action="store_const", dest="visualizer",
+                   const="opengl", help="OpenGL visualizer")
+args = parser.parse_args()
+
+use_opengl = args.visualizer == "opengl"
+use_mayavi = args.visualizer == "mayavi"
 
 if use_mayavi:
     from espressomd.visualization_mayavi import mlab
@@ -75,10 +84,7 @@ NPTInitPistonMass = NPTMinPistonMass
 box_l = 7.5395
 density = 0.7
 
-#global_boxlen = box_l
-#mainthread_boxlen = box_l
-
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
 lj_eps = 1.0
@@ -88,7 +94,7 @@ lj_cap = 20
 
 # Integration parameters
 #############################################################
-system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.set_random_state_PRNG()
 #system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
@@ -113,8 +119,6 @@ int_n_times = 5000000
 # Interaction setup
 #############################################################
 
-system.box_l = [box_l, box_l, box_l]
-
 system.non_bonded_inter[0, 0].lennard_jones.set_params(
     epsilon=lj_eps, sigma=lj_sig,
     cutoff=lj_cut, shift="auto")
@@ -123,7 +127,7 @@ system.force_cap = lj_cap
 # Particle setup
 #############################################################
 
-volume = box_l * box_l * box_l
+volume = box_l**3
 n_part = int(volume * density)
 
 for i in range(n_part):
@@ -132,7 +136,6 @@ for i in range(n_part):
 system.analysis.dist_to(0)
 
 act_min_dist = system.analysis.min_dist()
-system.cell_system.max_num_cells = 2744
 
 if use_mayavi:
     vis = visualization.mayaviLive(system)
@@ -396,7 +399,7 @@ def pressure_from_midi_val(midi_val, pmin, pmax, log_flag=pressure_log_flag):
     if log_flag:
         return pmin * (float(pmax) / pmin)**(float(midi_val) / 127)
     else:
-        return (midi_val * (pmax - pmin) / 127 + pmin)
+        return midi_val * (pmax - pmin) / 127 + pmin
 
 
 def main_loop():
@@ -489,7 +492,7 @@ def main_loop():
 
 
 def main_thread():
-    for i in range(int_n_times):
+    for _ in range(int_n_times):
         main_loop()
 
 
@@ -500,7 +503,7 @@ def midi_thread():
             if controls.midi_input is not None and controls.midi_input.poll():
                 events = controls.midi_input.read(1000)
                 for event in events:
-                    status, data1, data2, data3 = event[0]
+                    status, data1, data2, _ = event[0]
                     if status == controls.MIDI_NUM_TEMPERATURE:
                         temperature = data2 * \
                             (controls.max_temp - controls.min_temp) / \

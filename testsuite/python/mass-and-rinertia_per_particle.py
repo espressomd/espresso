@@ -20,7 +20,6 @@ import numpy as np
 from numpy.random import uniform
 import espressomd
 import math
-import random
 
 
 @utx.skipIfMissingFeatures(["MASS", "PARTICLE_ANISOTROPY",
@@ -33,7 +32,7 @@ class ThermoTest(ut.TestCase):
     kT = 0.0
     gamma_global = np.zeros((3))
     gamma_global_rot = np.zeros((3))
-    # Test ranges    
+    # Test ranges
     gamma_min = 5.
     gamma_max = 10.
 
@@ -243,7 +242,7 @@ class ThermoTest(ut.TestCase):
         """
 
         tol = 1.2E-3
-        for step in range(100):
+        for _ in range(100):
             self.system.integrator.run(2)
             for i in range(n):
                 for k in range(2):
@@ -253,11 +252,17 @@ class ThermoTest(ut.TestCase):
                         # reference while gamma_tr is defined in the body one.
                         # Hence, only isotropic gamma_tran_p_validate could be
                         # tested here.
-                        self.assertLess(abs(
-                            self.system.part[ind].v[j] - math.exp(- self.gamma_tran_p_validate[k, j] * self.system.time / self.mass)), tol)
+                        self.assertAlmostEqual(
+                            self.system.part[ind].v[j],
+                            math.exp(- self.gamma_tran_p_validate[k, j]
+                                     * self.system.time / self.mass),
+                            delta=tol)
                         if espressomd.has_features("ROTATION"):
-                            self.assertLess(abs(
-                                self.system.part[ind].omega_body[j] - math.exp(- self.gamma_rot_p_validate[k, j] * self.system.time / self.J[j])), tol)
+                            self.assertAlmostEqual(
+                                self.system.part[ind].omega_body[j],
+                                math.exp(- self.gamma_rot_p_validate[k, j]
+                                         * self.system.time / self.J[j]),
+                                delta=tol)
 
     def check_fluctuation_dissipation(self, n):
         """

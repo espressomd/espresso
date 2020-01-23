@@ -395,10 +395,8 @@ inline void add_bonded_energy(Particle const *const p1) {
  *  @param[in] p1   particle for which to calculate energies
  */
 inline void add_kinetic_energy(Particle const &p1) {
-#ifdef VIRTUAL_SITES
   if (p1.p.is_virtual)
     return;
-#endif
 
   /* kinetic energy */
   if (not p1.p.is_virtual)

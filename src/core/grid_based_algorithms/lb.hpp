@@ -70,7 +70,7 @@ struct LB_FluidNode {
   Utils::Vector3d force_density;
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
   // For particle update, we need the force on the nodes in LBM
-  // Yet, Espresso resets the force immediately after the LBM update
+  // Yet, ESPResSo resets the force immediately after the LBM update
   // Therefore we save it here
   Utils::Vector3d force_density_buf;
 #endif
@@ -253,9 +253,7 @@ void lb_prepare_communication(HaloCommunicator &halo_comm,
 /** Bounce back boundary conditions.
  * The populations that have propagated into a boundary node
  * are bounced back to the node they came from. This results
- * in no slip boundary conditions.
- *
- * [cf. Ladd and Verberg, J. Stat. Phys. 104(5/6):1191-1251, 2001]
+ * in no slip boundary conditions, cf. @cite ladd01a.
  */
 void lb_bounce_back(LB_Fluid &lbfluid, const LB_Parameters &lb_parameters,
                     const std::vector<LB_FluidNode> &lb_fields);

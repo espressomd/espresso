@@ -40,9 +40,9 @@ class Exclusions(ut.TestCase):
 
         self.s.part[0].add_exclusion(1)
         self.s.part[0].add_exclusion(2)
-        self.assertTrue((self.s.part[0].exclusions == [1, 2]).all())
+        self.assertEqual(list(self.s.part[0].exclusions), [1, 2])
         self.s.part[0].delete_exclusion(1)
-        self.assertEqual(self.s.part[0].exclusions, [2])
+        self.assertEqual(list(self.s.part[0].exclusions), [2])
         self.s.part[0].delete_exclusion(2)
         self.assertEqual(list(self.s.part[0].exclusions), [])
 
@@ -54,9 +54,9 @@ class Exclusions(ut.TestCase):
 
         self.s.part[0].exclusions = [1, 2, 3]
 
-        for i in range(15):
+        for _ in range(15):
             self.s.integrator.run(100)
-            self.assertTrue((self.s.part[0].exclusions == [1, 2, 3]).all())
+            self.assertEqual(list(self.s.part[0].exclusions), [1, 2, 3])
 
     @utx.skipIfMissingFeatures(['LENNARD_JONES'])
     def test_particle_property(self):

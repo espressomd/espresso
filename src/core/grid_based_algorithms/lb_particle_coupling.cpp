@@ -27,6 +27,7 @@
 #include "lb_interface.hpp"
 #include "lb_interpolation.hpp"
 #include "lbgpu.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
 
 #include <profiler/profiler.hpp>
@@ -119,7 +120,7 @@ namespace {
  */
 void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
   /* transform momentum transfer to lattice units
-     (Eq. (12) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+     (eq. (12) @cite ahlrichs99a) */
   auto const delta_j = -(time_step / lb_lbfluid_get_lattice_speed()) * force;
   lb_lbinterpolation_add_force_density(pos, delta_j);
 }
@@ -127,26 +128,25 @@ void add_md_force(Utils::Vector3d const &pos, Utils::Vector3d const &force) {
 
 /** Coupling of a single particle to viscous fluid with Stokesian friction.
  *
- *  Section II.C. Ahlrichs and Duenweg, JCP 111(17):8225 (1999)
+ *  Section II.C. @cite ahlrichs99a
  *
- * @param[in] p             The coupled particle.
- * @param[in]     f_random  Additional force to be included.
+ *  @param[in] p             The coupled particle.
+ *  @param[in]     f_random  Additional force to be included.
  *
- * @return The viscous coupling force plus f_random.
+ *  @return The viscous coupling force plus f_random.
  */
 Utils::Vector3d lb_viscous_coupling(Particle const &p,
                                     Utils::Vector3d const &f_random) {
   /* calculate fluid velocity at particle's position
-     this is done by linear interpolation
-     (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
+     this is done by linear interpolation (eq. (11) @cite ahlrichs99a) */
   auto const interpolated_u =
       lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
       lb_lbfluid_get_lattice_speed();
 
   Utils::Vector3d v_drift = interpolated_u;
 #ifdef ENGINE
-  if (p.swim.swimming) {
-    v_drift += p.swim.v_swim * p.r.calc_director();
+  if (p.p.swim.swimming) {
+    v_drift += p.p.swim.v_swim * p.r.calc_director();
   }
 #endif
 
@@ -154,9 +154,7 @@ Utils::Vector3d lb_viscous_coupling(Particle const &p,
   v_drift += p.p.mu_E;
 #endif
 
-  /* calculate viscous force
-   * (Eq. (9) Ahlrichs and Duenweg, JCP 111(17):8225 (1999))
-   * */
+  /* calculate viscous force (eq. (9) @cite ahlrichs99a) */
   auto const force = -lb_lbcoupling_get_gamma() * (p.m.v - v_drift) + f_random;
 
   add_md_force(p.r.p, force);
@@ -221,16 +219,10 @@ bool in_local_halo(Vector3d const &pos) {
 
 #ifdef ENGINE
 void add_swimmer_force(Particle &p) {
-  if (p.swim.swimming) {
-    if (in_local_domain(p.r.p, local_geo)) {
-      p.swim.v_center = lb_lbinterpolation_get_interpolated_velocity(p.r.p) *
-                        lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_center = {};
-    }
-
+  if (p.p.swim.swimming) {
     // calculate source position
-    const double direction = double(p.swim.push_pull) * p.swim.dipole_length;
+    const double direction =
+        double(p.p.swim.push_pull) * p.p.swim.dipole_length;
     auto const director = p.r.calc_director();
     auto const source_position = p.r.p + direction * director;
 
@@ -238,15 +230,7 @@ void add_swimmer_force(Particle &p) {
       return;
     }
 
-    if (in_local_domain(source_position, local_geo)) {
-      p.swim.v_source =
-          lb_lbinterpolation_get_interpolated_velocity(source_position) *
-          lb_lbfluid_get_lattice_speed();
-    } else {
-      p.swim.v_source = {};
-    }
-
-    add_md_force(source_position, p.swim.f_swim * director);
+    add_md_force(source_position, p.p.swim.f_swim * director);
   }
 }
 #endif
@@ -279,45 +263,21 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         throw std::runtime_error("The non-linear interpolation scheme is not "
                                  "implemented for the CPU LB.");
       case (InterpolationOrder::linear): {
-#ifdef ENGINE
-        ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                           GHOSTTRANS_SWIMMING);
-#endif
-
-        using rng_type = r123::Philox4x64;
-        using ctr_type = rng_type::ctr_type;
-        using key_type = rng_type::key_type;
-
-        ctr_type c;
         auto const kT = lb_lbfluid_get_kT();
+        /* Eq. (16) @cite ahlrichs99a.
+         * The factor 12 comes from the fact that we use random numbers
+         * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
+         * time_step comes from the discretization.
+         */
         auto const noise_amplitude =
             (kT > 0.) ? std::sqrt(12. * 2. * lb_lbcoupling_get_gamma() * kT /
                                   time_step)
                       : 0.0;
 
-        if (noise_amplitude > 0.0) {
-          c = ctr_type{{lb_particle_coupling.rng_counter_coupling->value(),
-                        static_cast<uint64_t>(RNGSalt::PARTICLES)}};
-        } else {
-          c = ctr_type{{0, 0}};
-        }
-
-        /* Eq. (16) Ahlrichs and Duenweg, JCP 111(17):8225 (1999).
-         * The factor 12 comes from the fact that we use random numbers
-         * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-         * time_step comes from the discretization.
-         */
-        auto f_random = [&c, noise_amplitude](int id) -> Utils::Vector3d {
+        auto f_random = [noise_amplitude](int id) -> Utils::Vector3d {
           if (noise_amplitude > 0.0) {
-            key_type k{{static_cast<uint32_t>(id)}};
-
-            auto const noise = rng_type{}(c, k);
-
-            using Utils::uniform;
-            using Utils::Vector3d;
-            return Vector3d{uniform(noise[0]), uniform(noise[1]),
-                            uniform(noise[2])} -
-                   Vector3d::broadcast(0.5);
+            return Random::v_noise<RNGSalt::PARTICLES>(
+                lb_particle_coupling.rng_counter_coupling->value(), id);
           }
           return {};
         };

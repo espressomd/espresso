@@ -139,7 +139,7 @@ class ObservableTests(ut.TestCase):
                 np.sin(phi) + k * np.dot(k, v) * (1.0 - np.cos(phi))
             return vrot
 
-        def rotate_particle(p1, p2, p3, p4, phi):
+        def rotate_particle(p2, p3, p4, phi):
             """Rotates particle p4 around the axis formed by the bond
             between p2 and p3."""
             k = p3 - p2
@@ -182,10 +182,10 @@ class ObservableTests(ut.TestCase):
                     # place particles and keep list of unfolded positions
                     pos = place_particles(bond_length, 3 * [offset])
                     # rotate the 1st particle
-                    p[0].pos = pos[0] = rotate_particle(*pos[0:4, :][::-1],
+                    p[0].pos = pos[0] = rotate_particle(*pos[1:4, :][::-1],
                                                         phi=phi)
                     # rotate the 5th particle
-                    p[4].pos = pos[4] = rotate_particle(*pos[1:5, :], phi=phi)
+                    p[4].pos = pos[4] = rotate_particle(*pos[2:5, :], phi=phi)
                     # expected values
                     dih1 = calculate_dihedral(*pos[0:4, :][::-1])
                     dih2 = calculate_dihedral(*pos[1:5, :])

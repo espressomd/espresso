@@ -40,11 +40,10 @@ class ek_charged_plate(ut.TestCase):
         box_x = 20
         box_y = 20
         box_z = 20
-        system.box_l = box_l = [box_x, box_y, box_z]
+        system.box_l = [box_x, box_y, box_z]
         system.cell_system.skin = 0.2
         system.time_step = 0.1
         system.periodicity = [1, 1, 1]
-        coulomb_accuracy = 1.0e-4
         bjerrum_length = 2.13569
         agrid = 0.5
 
@@ -92,7 +91,6 @@ class ek_charged_plate(ut.TestCase):
             if abs(expected_force - particle_force[0]) > force_difference:
                 force_difference = abs(expected_force - particle_force[0])
 
-        print("Force deviation: {}".format(force_difference))
         self.assertLess(force_difference, 1.0e-04,
                         "Force accuracy in X not achieved, allowed deviation: "
                         "1.0e-04, measured: {}".format(force_difference))
@@ -124,7 +122,6 @@ class ek_charged_plate(ut.TestCase):
             if abs(expected_force - particle_force[1]) > force_difference:
                 force_difference = abs(expected_force - particle_force[1])
 
-        print("Force deviation: {}".format(force_difference))
         self.assertLess(force_difference, 1.0e-04,
                         "Force accuracy in Y not achieved, allowed deviation: "
                         "1.0e-04, measured: {}".format(force_difference))
@@ -156,7 +153,6 @@ class ek_charged_plate(ut.TestCase):
             if abs(expected_force - particle_force[2]) > force_difference:
                 force_difference = abs(expected_force - particle_force[2])
 
-        print("Force deviation: {}".format(force_difference))
         self.assertLess(force_difference, 1.0e-04,
                         "Force accuracy in Z not achieved, allowed deviation: "
                         "1.0e-04, measured: {}".format(force_difference))

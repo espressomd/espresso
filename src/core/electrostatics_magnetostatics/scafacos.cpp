@@ -41,6 +41,7 @@
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
+#include "particle_data.hpp"
 #include "tuning.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -85,7 +86,7 @@ int ScafacosData::update_particle_data() {
 #endif
   }
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : cell_structure.local_cells().particles()) {
     auto const pos = folded_position(p.r.p, box_geo);
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
@@ -112,7 +113,7 @@ void ScafacosData::update_particle_forces() const {
   if (positions.empty())
     return;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     if (!dipolar()) {
       p.f.f += coulomb.prefactor * p.p.q *
                Utils::Vector3d(Utils::Span<const double>(&(fields[it]), 3));
@@ -313,7 +314,7 @@ void tune() {
       return; // Tune on the master node will issue mpi calls
     }
   } else {
-    // Espresso is not affected by a short range cutoff. Tune in parallel
+    // ESPResSo is not affected by a short range cutoff. Tune in parallel
     scafacos->tune(particles.charges, particles.positions);
   }
 }

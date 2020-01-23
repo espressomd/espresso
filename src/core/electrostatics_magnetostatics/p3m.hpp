@@ -25,28 +25,10 @@
  *
  *  We use a P3M (Particle-Particle Particle-Mesh) method based on the
  *  Ewald summation. Details of the used method can be found in
- *  Hockney/Eastwood and Deserno/Holm.
+ *  @cite hockney88a and @cite deserno98a @cite deserno98b.
  *
- *  Further reading:
- *  - P. P. Ewald,
- *    *Die Berechnung optischer und elektrostatischer Gitterpotentiale*,
- *    Ann. Phys. (64) 253-287, 1921
- *  - R. W. Hockney and J. W. Eastwood,
- *    *Computer simulation using particles*,
- *    IOP, London, 1988
- *  - M. Deserno and C. Holm,
- *    *How to mesh up Ewald sums I + II*,
- *    J. Chem. Phys. (109) 7678, 1998; (109) 7694, 1998
- *  - M. Deserno, C. Holm and H. J. Limbach,
- *    *How to mesh up Ewald sums*,
- *    in Molecular Dynamics on Parallel Computers,
- *    Ed. R. Esser et al., World Scientific, Singapore, 2000
- *  - M. Deserno,
- *    *Counterion condensation for rigid linear polyelectrolytes*,
- *    PhD Thesis, Universität Mainz, 2000
- *  - J. J. Cerda,
- *    *P3M for dipolar interactions*,
- *    J. Chem. Phys (129) 234104, 2008
+ *  Further reading: @cite ewald21a, @cite hockney88a, @cite deserno98a,
+ *  @cite deserno98b, @cite deserno00e, @cite deserno00b, @cite cerda08d.
  *
  *  Implementation in p3m.cpp.
  */
@@ -57,6 +39,7 @@
 
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
 #include <utils/constants.hpp>
@@ -74,9 +57,9 @@ struct p3m_data_struct {
   /** local mesh. */
   p3m_local_mesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
-  double *rs_mesh;
-  /** k-space mesh (local) for k-space calculation and FFT.*/
-  std::vector<double> ks_mesh;
+  fft_vector<double> rs_mesh;
+  /** mesh (local) for the electric field.*/
+  std::array<fft_vector<double>, 3> E_mesh;
 
   /** number of charged particles (only on master node). */
   int sum_qpart;
@@ -103,25 +86,18 @@ struct p3m_data_struct {
   /** Energy optimised influence function (k-space) */
   std::vector<double> g_energy;
 
-#ifdef P3M_STORE_CA_FRAC
   /** number of charged particles on the node. */
   int ca_num;
   /** Charge fractions for mesh assignment. */
   std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
   std::vector<int> ca_fmp;
-#endif
 
   /** number of permutations in k_space */
   int ks_pnum;
 
   /** send/recv mesh sizes */
   p3m_send_mesh sm;
-
-  /** vector to store grid points to send. */
-  std::vector<double> send_grid;
-  /** vector to store grid points to recv */
-  std::vector<double> recv_grid;
 
   fft_data_struct fft;
 };
@@ -141,7 +117,7 @@ extern p3m_data_struct p3m;
  *  These parameters are stored in the @ref p3m object.
  *
  *  The function utilizes the analytic expression of the error estimate
- *  for the P3M method in the book of Hockney and Eastwood (Eqn. 8.23) in
+ *  for the P3M method in @cite hockney88a (eq. (8.23)) in
  *  order to obtain the rms error in the force for a system of N randomly
  *  distributed particles in a cubic box.
  *  For the real space error the estimate of Kolafa/Perram is used.
@@ -186,7 +162,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles);
 
 /** Compute the k-space part of the stress tensor **/
-void p3m_calc_kspace_stress(double *stress);
+Utils::Vector9d p3m_calc_kspace_stress();
 
 /** Sanity checks */
 bool p3m_sanity_checks();
@@ -197,7 +173,7 @@ bool p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Assign the physical charges using the tabulated charge assignment function.
- *  If @ref P3M_STORE_CA_FRAC is true, then the charge fractions are buffered
+ *  The charge fractions are buffered
  *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
@@ -212,7 +188,7 @@ void p3m_charge_assign(const ParticleRange &particles);
  *                        is not stored in the @ref p3m_data_struct::ca_frac
  *                        "ca_frac" arrays
  */
-void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt);
 
 /** Shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);
@@ -300,9 +276,6 @@ inline double p3m_pair_energy(double chgfac, double dist) {
   }
   return 0.0;
 }
-
-/** Clean up P3M memory allocations. */
-void p3m_free();
 
 #endif /* of ifdef P3M */
 

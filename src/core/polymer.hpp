@@ -30,32 +30,11 @@
  */
 
 #include "PartCfg.hpp"
-#include "particle_data.hpp"
-#include "utils/Vector.hpp"
+#include "Particle.hpp"
 
-Utils::Vector3d random_position(std::function<double()> const &generate_rn);
-Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn);
+#include <utils/Vector.hpp>
 
-/** Returns the minimum distance between position @p pos and all existing
- *  particles.
- */
-double mindist(PartCfg &partCfg, Utils::Vector3d const &pos);
-
-/** Determines whether a given position @p pos is valid, i.e., it doesn't
- *  collide with existing or buffered particles, nor with existing constraints
- *  (if @c respect_constraints).
- *  @param pos                   the trial position in question
- *  @param positions             buffered positions to respect
- *  @param partCfg               existing particles to respect
- *  @param min_distance          threshold for the minimum distance between
- *                               trial position and buffered/existing particles
- *  @param respect_constraints   whether to respect constraints
- *  @return true if valid position, false if not.
- */
-bool is_valid_position(
-    Utils::Vector3d const *pos,
-    std::vector<std::vector<Utils::Vector3d>> const *positions,
-    PartCfg const &partCfg, double min_distance, int respect_constraints);
+#include <vector>
 
 /** Determines valid polymer positions and returns them.
  *  @param  n_polymers        how many polymers to create

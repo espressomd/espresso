@@ -1,6 +1,6 @@
 # Doxyfile 1.8.2
 
-@INCLUDE = @CMAKE_CURRENT_BINARY_DIR@/doxy-features
+@INCLUDE = "@CMAKE_CURRENT_BINARY_DIR@/doxy-features"
 
 # This file describes the settings to be used by the documentation system
 # doxygen (www.doxygen.org) for a project.
@@ -47,14 +47,14 @@ PROJECT_BRIEF          = "Extensible Simulation Package for Research on Soft Mat
 # exceed 55 pixels and the maximum width should not exceed 200 pixels.
 # Doxygen will copy the logo to the output directory.
 
-PROJECT_LOGO           = @CMAKE_SOURCE_DIR@/doc/logo/logo_48x48.png
+PROJECT_LOGO           = "@CMAKE_SOURCE_DIR@/doc/logo/logo_48x48.png"
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.
 # If a relative path is entered, it will be relative to the location
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@
+OUTPUT_DIRECTORY       = "@CMAKE_CURRENT_BINARY_DIR@"
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create
 # 4096 sub-directories (in 2 levels) under the output directory of each output
@@ -585,7 +585,7 @@ LAYOUT_FILE            =
 # of the bibliography can be controlled using LATEX_BIB_STYLE. To use this
 # feature you need bibtex and perl available in the search path.
 
-CITE_BIB_FILES         =
+CITE_BIB_FILES         = bibliography.bib
 
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
@@ -647,8 +647,8 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = @CMAKE_SOURCE_DIR@/src \
-                         @CMAKE_SOURCE_DIR@/doc/doxygen/main.dox
+INPUT                  = "@CMAKE_SOURCE_DIR@/src" \
+                         "@CMAKE_SOURCE_DIR@/doc/doxygen/main.dox"
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -686,7 +686,7 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = @CMAKE_SOURCE_DIR@/src/config/myconfig-default.hpp
+EXCLUDE                = "@CMAKE_SOURCE_DIR@/src/config/myconfig-default.hpp"
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded
@@ -700,7 +700,8 @@ EXCLUDE_SYMLINKS       = NO
 # against the file with absolute path, so to exclude all test directories
 # for example use the pattern */test/*
 
-EXCLUDE_PATTERNS       =
+EXCLUDE_PATTERNS       = "@CMAKE_SOURCE_DIR@/*/unit_tests/*" \
+                         "@CMAKE_SOURCE_DIR@/*/tests/*"
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
@@ -734,7 +735,7 @@ EXAMPLE_RECURSIVE      = YES
 # directories that contain image that are included in the documentation (see
 # the \image command).
 
-IMAGE_PATH             = @CMAKE_SOURCE_DIR@/doc/doxygen/figs
+IMAGE_PATH             = "@CMAKE_SOURCE_DIR@/doc/doxygen/figs"
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
@@ -1315,7 +1316,7 @@ LATEX_SOURCE_CODE      = NO
 # bibliography, e.g. plainnat, or ieeetr. The default style is "plain". See
 # http://en.wikipedia.org/wiki/BibTeX for more info.
 
-LATEX_BIB_STYLE        = plain
+LATEX_BIB_STYLE        = plainnat
 
 #---------------------------------------------------------------------------
 # configuration options related to the RTF output
