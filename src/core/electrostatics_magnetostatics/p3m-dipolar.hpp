@@ -115,9 +115,6 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
 int dp3m_set_params(double r_cut, int mesh, int cao, double alpha,
                     double accuracy);
 
-/** @copydoc p3m_set_ninterpol */
-int dp3m_set_ninterpol(int n);
-
 /** @copydoc p3m_set_mesh_offset */
 int dp3m_set_mesh_offset(double x, double y, double z);
 

@@ -112,8 +112,6 @@ typedef struct {
   double mesh_off[3] = {P3M_MESHOFF, P3M_MESHOFF, P3M_MESHOFF};
   /** charge assignment order ([0,7]). */
   int cao = 0;
-  /** number of interpolation points for charge assignment function */
-  int inter = P3M_N_INTERPOL;
   /** accuracy of the actual parameter set. */
   double accuracy = 0.0;
 
@@ -131,8 +129,6 @@ typedef struct {
   /** unscaled @ref P3MParameters::r_cut_iL "r_cut_iL" for use with fast
    *  inline functions only */
   double r_cut = -1.;
-  /** full size of the interpolated assignment function */
-  int inter2 = 0;
   /** number of points unto which a single charge is interpolated, i.e.
    *  p3m.cao^3 */
   int cao3 = 0;
@@ -142,8 +138,8 @@ typedef struct {
 
   template <typename Archive> void serialize(Archive &ar, long int) {
     ar &tuning &alpha_L &r_cut_iL &mesh;
-    ar &mesh_off &cao &inter &accuracy &epsilon &cao_cut;
-    ar &a &ai &alpha &r_cut &inter2 &cao3 &additional_mesh;
+    ar &mesh_off &cao &accuracy &epsilon &cao_cut;
+    ar &a &ai &alpha &r_cut &cao3 &additional_mesh;
   }
 
 } P3MParameters;

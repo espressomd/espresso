@@ -165,7 +165,6 @@ IF DP3M == 1:
         def _set_params_in_es_core(self):
             self.set_magnetostatics_prefactor()
             dp3m_set_eps(self._params["epsilon"])
-            dp3m_set_ninterpol(self._params["inter"])
             self.python_dp3m_set_mesh_offset(self._params["mesh_off"])
             self.python_dp3m_set_params(
                 self._params["r_cut"], self._params["mesh"],

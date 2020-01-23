@@ -68,9 +68,6 @@ struct p3m_data_struct {
   /** square of sum of charges (only on master node). */
   double square_sum_q;
 
-  /** interpolation of the charge assignment function. */
-  std::array<std::vector<double>, 7> int_caf;
-
   /** position shift for calc. of first assignment mesh point. */
   double pos_shift;
   /** help variable for calculation of aliasing sums */
@@ -226,10 +223,9 @@ inline void p3m_add_pair_force(double q1q2, Utils::Vector3d const &d,
  *  @param[in]  cao          @copybrief P3MParameters::cao
  *  @param[in]  alpha        @copybrief P3MParameters::alpha
  *  @param[in]  accuracy     @copybrief P3MParameters::accuracy
- *  @param[in]  n_interpol   @copybrief P3MParameters::inter
  */
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
-                         double accuracy, int n_interpol);
+                         double accuracy);
 
 /** Set custom parameters
  *
@@ -255,12 +251,6 @@ int p3m_set_mesh_offset(double x, double y, double z);
  *  @param[in]  eps          @copybrief P3MParameters::epsilon
  */
 int p3m_set_eps(double eps);
-
-/** Set @ref P3MParameters::inter "inter" parameter
- *
- *  @param[in]  n            @copybrief P3MParameters::inter
- */
-int p3m_set_ninterpol(int n);
 
 /** Calculate real space contribution of Coulomb pair energy. */
 inline double p3m_pair_energy(double chgfac, double dist) {

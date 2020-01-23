@@ -90,12 +90,6 @@ static void dp3m_realloc_ca_fields(int newsize);
  */
 static bool dp3m_sanity_checks_boxl();
 
-/** Interpolate the P-th order charge assignment function from
- *  @cite hockney88a 5-189 (or 8-61). The following charge fractions
- *  are also tabulated in @cite deserno98a @cite deserno98b.
- */
-static void dp3m_interpolate_dipole_assignment_function();
-
 /** Shift the mesh points by mesh/2 */
 static void dp3m_calc_meshift();
 
@@ -298,9 +292,6 @@ void dp3m_init() {
     /* fix box length dependent constants */
     dp3m_scaleby_box_l();
 
-    if (dp3m.params.inter > 0)
-      dp3m_interpolate_dipole_assignment_function();
-
     dp3m.pos_shift =
         std::floor((dp3m.params.cao - 1) / 2.0) - (dp3m.params.cao % 2) / 2.0;
 
@@ -419,9 +410,6 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
 
   if (accuracy >= 0)
     dp3m.params.accuracy = accuracy;
-
-  if (n_interpol != -1)
-    dp3m.params.inter = n_interpol;
 }
 
 /*****************************************************************************/
@@ -486,40 +474,6 @@ int dp3m_set_eps(double eps) {
   return ES_OK;
 }
 
-int dp3m_set_ninterpol(int n) {
-  if (n < 0)
-    return ES_ERROR;
-
-  dp3m.params.inter = n;
-
-  mpi_bcast_coulomb_params();
-
-  return ES_OK;
-}
-
-/*****************************************************************************/
-
-void dp3m_interpolate_dipole_assignment_function() {
-  double dInterpol = 0.5 / (double)dp3m.params.inter;
-  int i;
-  long j;
-
-  if (dp3m.params.inter == 0)
-    return;
-
-  dp3m.params.inter2 = 2 * dp3m.params.inter + 1;
-
-  for (i = 0; i < dp3m.params.cao; i++) {
-    /* allocate memory for interpolation array */
-    dp3m.int_caf[i].resize(2 * dp3m.params.inter + 1);
-
-    /* loop over all interpolation points */
-    for (j = -dp3m.params.inter; j <= dp3m.params.inter; j++)
-      dp3m.int_caf[i][j + dp3m.params.inter] =
-          Utils::bspline(i, j * dInterpol, dp3m.params.cao);
-  }
-}
-
 void dp3m_dipole_assign(const ParticleRange &particles) {
   /* magnetic particle counter, dipole fraction counter */
   int cp_cnt = 0;
@@ -551,8 +505,6 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
   int nmp;
   /* distance to nearest mesh point */
   double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
   /* index, index jumps for dp3m.rs_mesh array */
   int q_ind = 0;
   double cur_ca_frac_val, *cur_ca_frac;
@@ -564,74 +516,39 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
   // dp3m.ca_frac
   cur_ca_frac = dp3m.ca_frac.data() + dp3m.params.cao3 * cp_cnt;
 
-  if (dp3m.params.inter == 0) {
-    for (d = 0; d < 3; d++) {
-      /* particle position in mesh coordinates */
-      pos = ((real_pos[d] - dp3m.local_mesh.ld_pos[d]) * dp3m.params.ai[d]) -
-            dp3m.pos_shift;
-      /* nearest mesh point */
-      nmp = (int)pos;
-      /* distance to nearest mesh point */
-      dist[d] = (pos - nmp) - 0.5;
-      /* 3d-array index of nearest mesh point */
-      q_ind = (d == 0) ? nmp : nmp + dp3m.local_mesh.dim[d] * q_ind;
-    }
-
-    if (cp_cnt >= 0)
-      dp3m.ca_fmp[cp_cnt] = q_ind;
-
-    for (i0 = 0; i0 < dp3m.params.cao; i0++) {
-      tmp0 = Utils::bspline(i0, dist[0], dp3m.params.cao);
-      for (i1 = 0; i1 < dp3m.params.cao; i1++) {
-        tmp1 = tmp0 * Utils::bspline(i1, dist[1], dp3m.params.cao);
-        for (i2 = 0; i2 < dp3m.params.cao; i2++) {
-          cur_ca_frac_val = tmp1 * Utils::bspline(i2, dist[2], dp3m.params.cao);
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-          if (mu != 0.0) {
-            dp3m.rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-          }
-          q_ind++;
-        }
-        q_ind += dp3m.local_mesh.q_2_off;
-      }
-      q_ind += dp3m.local_mesh.q_21_off;
-    }
-  } else {
+  for (d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
-    for (d = 0; d < 3; d++) {
-      pos = ((real_pos[d] - dp3m.local_mesh.ld_pos[d]) * dp3m.params.ai[d]) -
-            dp3m.pos_shift;
-      nmp = (int)pos;
-      arg[d] = (int)((pos - nmp) * dp3m.params.inter2);
-      /* for the first dimension, q_ind is always zero, so this shifts correctly
-       */
-      q_ind = nmp + dp3m.local_mesh.dim[d] * q_ind;
-    }
-    if (cp_cnt >= 0)
-      dp3m.ca_fmp[cp_cnt] = q_ind;
+    pos = ((real_pos[d] - dp3m.local_mesh.ld_pos[d]) * dp3m.params.ai[d]) -
+          dp3m.pos_shift;
+    /* nearest mesh point */
+    nmp = (int)pos;
+    /* distance to nearest mesh point */
+    dist[d] = (pos - nmp) - 0.5;
+    /* 3d-array index of nearest mesh point */
+    q_ind = (d == 0) ? nmp : nmp + dp3m.local_mesh.dim[d] * q_ind;
+  }
 
-    for (i0 = 0; i0 < dp3m.params.cao; i0++) {
-      tmp0 = dp3m.int_caf[i0][arg[0]];
-      for (i1 = 0; i1 < dp3m.params.cao; i1++) {
-        tmp1 = tmp0 * dp3m.int_caf[i1][arg[1]];
-        for (i2 = 0; i2 < dp3m.params.cao; i2++) {
-          cur_ca_frac_val = tmp1 * dp3m.int_caf[i2][arg[2]];
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-          if (mu != 0.0) {
-            dp3m.rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-          }
-          q_ind++;
+  if (cp_cnt >= 0)
+    dp3m.ca_fmp[cp_cnt] = q_ind;
+
+  for (i0 = 0; i0 < dp3m.params.cao; i0++) {
+    tmp0 = Utils::bspline(i0, dist[0], dp3m.params.cao);
+    for (i1 = 0; i1 < dp3m.params.cao; i1++) {
+      tmp1 = tmp0 * Utils::bspline(i1, dist[1], dp3m.params.cao);
+      for (i2 = 0; i2 < dp3m.params.cao; i2++) {
+        cur_ca_frac_val = tmp1 * Utils::bspline(i2, dist[2], dp3m.params.cao);
+        if (cp_cnt >= 0)
+          *(cur_ca_frac++) = cur_ca_frac_val;
+        if (mu != 0.0) {
+          dp3m.rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
+          dp3m.rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
+          dp3m.rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
         }
-        q_ind += dp3m.local_mesh.q_2_off;
+        q_ind++;
       }
-      q_ind += dp3m.local_mesh.q_21_off;
+      q_ind += dp3m.local_mesh.q_2_off;
     }
+    q_ind += dp3m.local_mesh.q_21_off;
   }
 }
 

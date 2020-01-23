@@ -106,12 +106,6 @@ static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
  */
 static bool p3m_sanity_checks_boxl();
 
-/** Interpolate the P-th order charge assignment function from
- *  @cite hockney88a 5-189 (or 8-61). The following charge fractions
- *  are also tabulated in @cite deserno98a @cite deserno98b.
- */
-static void p3m_interpolate_charge_assignment_function();
-
 /** Shift the mesh points by mesh/2 */
 static void p3m_calc_meshift();
 
@@ -227,9 +221,6 @@ void p3m_init() {
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
 
-    if (p3m.params.inter > 0)
-      p3m_interpolate_charge_assignment_function();
-
     /* position offset for calc. of first meshpoint */
     p3m.pos_shift =
         std::floor((p3m.params.cao - 1) / 2.0) - (p3m.params.cao % 2) / 2.0;
@@ -239,7 +230,7 @@ void p3m_init() {
 }
 
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
-                         double accuracy, int n_interpol) {
+                         double accuracy) {
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
     p3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
@@ -261,9 +252,6 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
 
   if (accuracy >= 0)
     p3m.params.accuracy = accuracy;
-
-  if (n_interpol != -1)
-    p3m.params.inter = n_interpol;
 }
 
 /*@}*/
@@ -327,46 +315,11 @@ int p3m_set_eps(double eps) {
   return ES_OK;
 }
 
-int p3m_set_ninterpol(int n) {
-  if (n < 0)
-    return ES_ERROR;
-
-  p3m.params.inter = n;
-
-  mpi_bcast_coulomb_params();
-
-  return ES_OK;
-}
-
-void p3m_interpolate_charge_assignment_function() {
-  double dInterpol = 0.5 / (double)p3m.params.inter;
-  int i;
-  long j;
-
-  if (p3m.params.inter == 0)
-    return;
-
-  p3m.params.inter2 = 2 * p3m.params.inter + 1;
-
-  for (i = 0; i < p3m.params.cao; i++) {
-    /* allocate memory for interpolation array */
-    p3m.int_caf[i].resize(2 * p3m.params.inter + 1);
-
-    /* loop over all interpolation points */
-    for (j = -p3m.params.inter; j <= p3m.params.inter; j++)
-      p3m.int_caf[i][j + p3m.params.inter] =
-          Utils::bspline(i, j * dInterpol, p3m.params.cao);
-  }
-}
-
 template <int cao>
 void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
                           int cp_cnt) {
-  auto const inter = not(p3m.params.inter == 0);
   /* distance to nearest mesh point */
   double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
   // make sure we have enough space
@@ -383,12 +336,8 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
     /* 3d-array index of nearest mesh point */
     q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
 
-    if (!inter)
-      /* distance to nearest mesh point */
-      dist[d] = (pos - nmp) - 0.5;
-    else
-      /* distance to nearest mesh point for interpolation */
-      arg[d] = (int)((pos - nmp) * p3m.params.inter2);
+    /* distance to nearest mesh point */
+    dist[d] = (pos - nmp) - 0.5;
 
 #ifdef ADDITIONAL_CHECKS
     if (pos < -skin * p3m.params.ai[d]) {
@@ -411,20 +360,12 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
 
   Utils::Array<double, cao> w_x, w_y, w_z;
 
-  if (!inter) {
-    for (int i = 0; i < cao; i++) {
-      using Utils::bspline;
+  for (int i = 0; i < cao; i++) {
+    using Utils::bspline;
 
-      w_x[i] = bspline<cao>(i, dist[0]);
-      w_y[i] = bspline<cao>(i, dist[1]);
-      w_z[i] = bspline<cao>(i, dist[2]);
-    }
-  } else {
-    for (int i = 0; i < cao; i++) {
-      w_x[i] = p3m.int_caf[i][arg[0]];
-      w_y[i] = p3m.int_caf[i][arg[1]];
-      w_z[i] = p3m.int_caf[i][arg[2]];
-    }
+    w_x[i] = bspline<cao>(i, dist[0]);
+    w_y[i] = bspline<cao>(i, dist[1]);
+    w_z[i] = bspline<cao>(i, dist[2]);
   }
 
   for (int i0 = 0; i0 < cao; i0++) {
@@ -815,7 +756,7 @@ void p3m_realloc_ca_fields(int newsize) {
     newsize = CA_INCREMENT;
 
   p3m.ca_num = newsize;
-  p3m.ca_frac.resize(p3m.params.cao3 * p3m.ca_num);
+  p3m.ca_frac.resize(3 * p3m.params.cao * p3m.ca_num);
   p3m.ca_fmp.resize(p3m.ca_num);
 }
 
