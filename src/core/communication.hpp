@@ -277,6 +277,14 @@ Utils::Vector3d mpi_system_CMS();
 Utils::Vector3d mpi_system_CMS_velocity();
 void mpi_galilei_transform();
 
+/** Gather particle information on the master node which is required by the 
+ *  Stokesian Dynamics integrator.
+ */
+void mpi_sd_gather_particles();
+
+/** Send SD integration results efficiently to the appropriate nodes */
+void mpi_sd_scatter_results();
+
 /**
  * @brief Resort the particles.
  *

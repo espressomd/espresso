@@ -56,6 +56,7 @@
 #include "partCfg_global.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
 #include "virtual_sites.hpp"
@@ -67,9 +68,12 @@
 
 #include "serialization/IA_parameters.hpp"
 #include "serialization/Particle.hpp"
+#include "serialization/SD_particle_data.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/u32_to_u64.hpp>
+#include <utils/mpi/gather_buffer.hpp>
+#include <utils/mpi/scatter_buffer.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/range/algorithm/min_element.hpp>
@@ -77,6 +81,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
 #include <utils/mpi/cart_comm.hpp>
+
 
 using namespace std;
 
@@ -670,6 +675,35 @@ void mpi_galilei_transform() {
 
   mpi_call_all(mpi_galilei_transform_slave, cmsvel);
 }
+
+/*********** STOKESIAN DYNAMICS COMMUNICATION ************/
+
+void mpi_sd_gather_particles_slave() {
+  printf("Doing gather callback on node %d \n",this_node);
+  auto buffer = sd_gather_local_particles(local_cells.particles());
+  Utils::Mpi::gather_buffer(buffer, comm_cart, 0);
+}
+
+REGISTER_CALLBACK(mpi_sd_gather_particles_slave)
+
+void mpi_sd_gather_particles() {
+  mpi_call_all(mpi_sd_gather_particles_slave);
+}
+
+void mpi_sd_scatter_results_slave() {
+  printf("Doing scatter callback on node %d \n",this_node);
+  auto buffer = get_sd_local_v_buffer();
+  Utils::Mpi::scatter_buffer(buffer.data(), buffer.size(), comm_cart, 0);
+  printf("Buffer being returned from scatter has size %lu \n", buffer.size());
+  sd_update_locally(local_cells.particles());
+}
+
+REGISTER_CALLBACK(mpi_sd_scatter_results_slave)
+
+void mpi_sd_scatter_results() {
+  mpi_call_all(mpi_sd_scatter_results_slave);
+}
+
 
 /*********************** MAIN LOOP for slaves ****************/
 
