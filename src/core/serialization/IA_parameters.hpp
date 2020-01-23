@@ -21,7 +21,7 @@
 
 #include <memory>
 
-#include "matheval/matheval.hpp"
+#include "matheval.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 
 namespace boost {

@@ -175,7 +175,7 @@ if(WITH_COVERAGE)
 endif()
 
 target_link_libraries(EspressoCore PUBLIC EspressoConfig utils)
-target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123)
+target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi MPI::MPI_CXX Random123 matheval.x3)
 target_link_libraries(EspressoCore PRIVATE Profiler)
 target_link_libraries(EspressoCore PRIVATE pdbparser)
 

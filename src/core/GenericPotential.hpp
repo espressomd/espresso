@@ -9,7 +9,7 @@
 #include <boost/serialization/string.hpp>
 
 #include "integrate.hpp"
-#include "matheval/matheval.hpp"
+#include "matheval.hpp"
 
 struct GenericPotential {
   double maxval = -1.0;

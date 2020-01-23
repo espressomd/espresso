@@ -1,4 +1,4 @@
-add_library(matheval.x3
+add_library(matheval.x3 SHARED
   ast_adapted.hpp
   ast.hpp
   evaluator.cpp

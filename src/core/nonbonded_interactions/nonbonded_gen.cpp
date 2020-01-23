@@ -30,7 +30,7 @@
 
 #include "communication.hpp"
 
-#include "matheval/matheval.hpp"
+#include "matheval.hpp"
 
 #include <utils/constants.hpp>
 
