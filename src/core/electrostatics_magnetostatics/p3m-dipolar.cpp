@@ -244,8 +244,6 @@ dp3m_data_struct::dp3m_data_struct() {
 
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
-  rs_mesh = nullptr;
-
   sum_dip_part = 0;
   sum_mu2 = 0.0;
 
@@ -306,10 +304,10 @@ void dp3m_init() {
     dp3m.pos_shift =
         std::floor((dp3m.params.cao - 1) / 2.0) - (dp3m.params.cao % 2) / 2.0;
 
-    int ca_mesh_size =
-        fft_init(&dp3m.rs_mesh, dp3m.local_mesh.dim, dp3m.local_mesh.margin,
-                 dp3m.params.mesh, dp3m.params.mesh_off, &dp3m.ks_pnum,
-                 dp3m.fft, node_grid, comm_cart);
+    int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
+                                dp3m.params.mesh, dp3m.params.mesh_off,
+                                &dp3m.ks_pnum, dp3m.fft, node_grid, comm_cart);
+    dp3m.rs_mesh.resize(ca_mesh_size);
     dp3m.ks_mesh.resize(ca_mesh_size);
 
     for (auto &val : dp3m.rs_mesh_dip) {
@@ -887,9 +885,10 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         }
 
         /* Back FFT force component mesh */
-        fft_perform_back(dp3m.rs_mesh, false, dp3m.fft, comm_cart);
+        fft_perform_back(dp3m.rs_mesh.data(), false, dp3m.fft, comm_cart);
         /* redistribute force component mesh */
-        dp3m.sm.spread_grid(dp3m.rs_mesh, comm_cart, dp3m.local_mesh.dim);
+        dp3m.sm.spread_grid(dp3m.rs_mesh.data(), comm_cart,
+                            dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
         P3M_assign_torques(dipole_prefac *
                                (2 * Utils::pi() / box_geo.length()[0]),
