@@ -19,9 +19,8 @@
 #ifndef SERIALIZATION_IA_PARAMETERS_HPP
 #define SERIALIZATION_IA_PARAMETERS_HPP
 
-#include <memory>
 #include "config.hpp"
-
+#include <memory>
 
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 

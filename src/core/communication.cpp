@@ -33,8 +33,8 @@
 #include "errorhandling.hpp"
 
 #include "EspressoSystemInterface.hpp"
-#include "bonded_interactions/bonded_gen.hpp"
 #include "Particle.hpp"
+#include "bonded_interactions/bonded_gen.hpp"
 #include "bonded_interactions/bonded_tab.hpp"
 #include "cells.hpp"
 #include "collision.hpp"

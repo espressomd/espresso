@@ -26,6 +26,7 @@ required_features = ["LENNARD_JONES", "MATHEVAL"]
 if espressomd.has_features(required_features):
     from espressomd.interactions import HarmonicBond, AngleHarmonic, GenericDistance, GenericAngle
 
+
 @utx.skipIfMissingFeatures(["LENNARD_JONES", "MATHEVAL"])
 class GenericTest(ut.TestCase):
 
