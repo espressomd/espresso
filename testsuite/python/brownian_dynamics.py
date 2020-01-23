@@ -238,7 +238,6 @@ class BrownianDynamics(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.v), [1, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.v), [0, 0, 0])
 
-
         system.part.clear()
         virtual = system.part.add(pos=[0, 0, 0], virtual=True, v=[1, 0, 0])
         physical = system.part.add(pos=[0, 0, 0], virtual=False, v=[1, 0, 0])
