@@ -39,6 +39,7 @@
 
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m_interpolation.hpp"
 #include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
@@ -81,12 +82,7 @@ struct p3m_data_struct {
   /** Energy optimised influence function (k-space) */
   std::vector<double> g_energy;
 
-  /** number of charged particles on the node. */
-  int ca_num;
-  /** Charge fractions for mesh assignment. */
-  std::vector<double> ca_frac;
-  /** index of first mesh point for charge assignment. */
-  std::vector<int> ca_fmp;
+  p3m_interpolation_weights inter_weights;
 
   /** number of permutations in k_space */
   int ks_pnum;
@@ -178,15 +174,12 @@ void p3m_charge_assign(const ParticleRange &particles);
  *
  *  @param[in] q          %Particle charge
  *  @param[in] real_pos   %Particle position in real space
- *  @param[in] cp_cnt     The running index, which may be smaller than 0, in
- *                        which case the charge is assumed to be virtual and
- *                        is not stored in the @ref p3m_data_struct::ca_frac
- *                        "ca_frac" arrays
+ *  @param[in] inter_weights     The running index, which may be smaller than 0,
+ * in which case the charge is assumed to be virtual and is not stored in the
+ * @ref p3m_data_struct::ca_frac "ca_frac" arrays
  */
-void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt);
-
-/** Shrink wrap the charge grid */
-void p3m_shrink_wrap_charge_grid(int n_charges);
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos,
+                       p3m_interpolation_weights *inter_weights);
 
 /** Calculate real space contribution of Coulomb pair forces. */
 inline void p3m_add_pair_force(double q1q2, Utils::Vector3d const &d,
