@@ -302,6 +302,8 @@ int p3m_set_eps(double eps) {
 
 template <int cao>
 void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
+                          const Utils::Vector3d &ai,
+                          p3m_local_mesh const &local_mesh,
                           p3m_interpolation_weights *inter_weights = nullptr) {
   /** position shift for calc. of first assignment mesh point. */
   static auto const pos_shift = std::floor((cao - 1) / 2.0) - (cao % 2) / 2.0;
@@ -314,9 +316,7 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
 
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
-    auto const pos =
-        ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
-        pos_shift;
+    auto const pos = ((real_pos[d] - local_mesh.ld_pos[d]) * ai[d]) - pos_shift;
 
     nmp[d] = (int)pos;
 
@@ -324,7 +324,7 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
     dist[d] = (pos - nmp[d]) - 0.5;
   }
   /* 3d-array index of nearest mesh point */
-  auto q_ind = Utils::get_linear_index(nmp, p3m.local_mesh.dim,
+  auto q_ind = Utils::get_linear_index(nmp, local_mesh.dim,
                                        Utils::MemoryOrder::ROW_MAJOR);
 
   Utils::Array<double, cao> w_x, w_y, w_z;
@@ -350,9 +350,9 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
         p3m.rs_mesh[q_ind] += cur_ca_frac_val;
         q_ind++;
       }
-      q_ind += p3m.local_mesh.q_2_off;
+      q_ind += local_mesh.q_2_off;
     }
-    q_ind += p3m.local_mesh.q_21_off;
+    q_ind += local_mesh.q_21_off;
   }
 }
 
@@ -363,7 +363,8 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
 template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (p.p.q != 0.0) {
-      p3m_do_assign_charge<cao>(p.p.q, p.r.p, &p3m.inter_weights);
+      p3m_do_assign_charge<cao>(p.p.q, p.r.p, p3m.params.ai, p3m.local_mesh,
+                                &p3m.inter_weights);
     }
   }
 }
@@ -406,25 +407,32 @@ void p3m_assign_charge(double q, const Utils::Vector3d &real_pos,
                        p3m_interpolation_weights *inter_weights) {
   switch (p3m.params.cao) {
   case 1:
-    p3m_do_assign_charge<1>(q, real_pos, inter_weights);
+    p3m_do_assign_charge<1>(q, real_pos, p3m.params.ai, p3m.local_mesh,
+                            inter_weights);
     break;
   case 2:
-    p3m_do_assign_charge<2>(q, real_pos, inter_weights);
+    p3m_do_assign_charge<2>(q, real_pos, p3m.params.ai, p3m.local_mesh,
+                            inter_weights);
     break;
   case 3:
-    p3m_do_assign_charge<3>(q, real_pos, inter_weights);
+    p3m_do_assign_charge<3>(q, real_pos, p3m.params.ai, p3m.local_mesh,
+                            inter_weights);
     break;
   case 4:
-    p3m_do_assign_charge<4>(q, real_pos, inter_weights);
+    p3m_do_assign_charge<4>(q, real_pos, p3m.params.ai, p3m.local_mesh,
+                            inter_weights);
     break;
   case 5:
-    p3m_do_assign_charge<5>(q, real_pos, inter_weights);
+    p3m_do_assign_charge<5>(q, real_pos, p3m.params.ai, p3m.local_mesh,
+                            inter_weights);
     break;
   case 6:
-    p3m_do_assign_charge<6>(q, real_pos, inter_weights);
+    p3m_do_assign_charge<6>(q, real_pos, p3m.params.ai, p3m.local_mesh,
+                            inter_weights);
     break;
   case 7:
-    p3m_do_assign_charge<7>(q, real_pos, inter_weights);
+    p3m_do_assign_charge<7>(q, real_pos, p3m.params.ai, p3m.local_mesh,
+                            inter_weights);
     break;
   }
 }

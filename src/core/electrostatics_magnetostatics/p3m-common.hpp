@@ -38,6 +38,8 @@
 
 #include "LocalBox.hpp"
 
+#include <utils/Vector.hpp>
+
 /** Error Codes for p3m tuning (version 2) */
 enum P3M_TUNE_ERROR {
   /** force evaluation failed */
@@ -122,7 +124,7 @@ typedef struct {
   /** mesh constant. */
   double a[3] = {};
   /** inverse mesh constant. */
-  double ai[3] = {};
+  Utils::Vector3d ai = {};
   /** unscaled @ref P3MParameters::alpha_L "alpha_L" for use with fast
    *  inline functions only */
   double alpha = 0.0;

@@ -28,8 +28,6 @@ IF P3M == 1 or DP3M == 1:
             double epsilon
             double cao_cut[3]
             double a[3]
-            double ai[3]
             double alpha
             double r_cut
-            int    cao3
             double additional_mesh[3]
