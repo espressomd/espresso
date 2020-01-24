@@ -184,7 +184,7 @@ void thermo_init_brownian() {
   brownian.sigma_vel_rotation = sqrt(temperature);
   if (temperature > 0.0) {
     brownian.sigma_pos_rotation_inv =
-        sqrt(brownian.gamma / (2.0 * temperature));
+        sqrt(brownian.gamma_rotation / (2.0 * temperature));
   } else {
     brownian.sigma_pos_rotation_inv =
         brownian.gammatype_nan; // just an indication of the infinity
