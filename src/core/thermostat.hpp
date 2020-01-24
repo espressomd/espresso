@@ -69,8 +69,6 @@ constexpr double sentinel(double) { return -1.0; }
 constexpr Utils::Vector3d sentinel(Utils::Vector3d) {
   return {-1.0, -1.0, -1.0};
 }
-constexpr double set_nan(double) { return NAN; }
-constexpr Utils::Vector3d set_nan(Utils::Vector3d) { return {NAN, NAN, NAN}; }
 /*@}*/
 } // namespace
 
@@ -107,12 +105,17 @@ public:
    */
   void recalc_prefactors() {
     pref_friction = -gamma;
-    pref_noise = sqrt(24.0 * temperature / time_step * gamma);
+    pref_noise = sigma(temperature, time_step, gamma);
     // If gamma_rotation is not set explicitly, use the translational one.
     if (gamma_rotation < GammaType{}) {
       gamma_rotation = gamma;
     }
-    pref_noise_rotation = sqrt(24.0 * temperature / time_step * gamma_rotation);
+    pref_noise_rotation = sigma(temperature, time_step, gamma_rotation);
+  }
+  /** Calculate the noise standard deviation. */
+  static GammaType sigma(double kT, double time_step, GammaType const &gamma) {
+    constexpr auto const temp_coeff = 24.0;
+    return sqrt((temp_coeff * kT / time_step) * gamma);
   }
   /** @name Parameters */
   /*@{*/
@@ -150,17 +153,12 @@ public:
      *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
      *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
      */
-    sigma_vel = sqrt(temperature);
+    sigma_vel = sigma(temperature);
     /** The random walk position dispersion is defined by the second eq. (14.38)
      *  of @cite Schlick2010. Its time interval factor will be added in the
      *  Brownian Dynamics functions. Its square root is the standard deviation.
      */
-    if (temperature > 0.0) {
-      sigma_pos_inv = sqrt(gamma / (2.0 * temperature));
-    } else {
-      // just an indication of the infinity
-      sigma_pos_inv = gammatype_nan;
-    }
+    sigma_pos = sigma(temperature, gamma);
 #ifdef ROTATION
     /** Note: the BD thermostat assigns the brownian viscous parameters as well.
      *  They correspond to the friction tensor Z from the eq. (14.31) of
@@ -170,14 +168,19 @@ public:
     if (gamma_rotation < GammaType{}) {
       gamma_rotation = gamma;
     }
-    sigma_vel_rotation = sqrt(temperature);
-    if (temperature > 0.0) {
-      sigma_pos_rotation_inv = sqrt(gamma_rotation / (2.0 * temperature));
-    } else {
-      // just an indication of the infinity
-      sigma_pos_rotation_inv = gammatype_nan;
-    }
+    sigma_vel_rotation = sigma(temperature);
+    sigma_pos_rotation = sigma(temperature, gamma_rotation);
 #endif // ROTATION
+  }
+  /** Calculate the noise standard deviation. */
+  static GammaType sigma(double kT, GammaType const &gamma) {
+    constexpr auto const temp_coeff = 2.0;
+    return sqrt(Utils::hadamard_division(temp_coeff * kT, gamma));
+  }
+  /** Calculate the noise standard deviation. */
+  static double sigma(double kT) {
+    constexpr auto const temp_coeff = 1.0;
+    return sqrt(temp_coeff * kT);
   }
   /** @name Parameters */
   /*@{*/
@@ -186,25 +189,27 @@ public:
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
   /*@}*/
-  /** Sentinel value for divisions by zero. */
-  GammaType const gammatype_nan = set_nan(GammaType{});
   /** @name Prefactors */
   /*@{*/
-  /** Inverse of the translational noise standard deviation.
-   *  Stores @f$ \left(\sqrt{2D_{\text{trans}}}\right)^{-1} @f$ with
+  /** Translational noise standard deviation.
+   *  Stores @f$ \sqrt{2D_{\text{trans}}} @f$ with
    *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
-   *  the translational diffusion coefficient
+   *  the translational diffusion coefficient.
    */
-  GammaType sigma_pos_inv = sentinel(GammaType{});
-  /** Inverse of the rotational noise standard deviation.
-   *  Stores @f$ \left(\sqrt{2D_{\text{rot}}}\right)^{-1} @f$ with
+  GammaType sigma_pos = sentinel(GammaType{});
+  /** Rotational noise standard deviation.
+   *  Stores @f$ \sqrt{2D_{\text{rot}}} @f$ with
    *  @f$ D_{\text{rot}} = k_B T/\gamma_{\text{rot}} @f$
-   *  the rotational diffusion coefficient
+   *  the rotational diffusion coefficient.
    */
-  GammaType sigma_pos_rotation_inv = sentinel(GammaType{});
-  /** Translational velocity noise standard deviation. */
+  GammaType sigma_pos_rotation = sentinel(GammaType{});
+  /** Translational velocity noise standard deviation.
+   *  Stores @f$ \sqrt{k_B T} @f$.
+   */
   double sigma_vel = 0;
-  /** Angular velocity noise standard deviation. */
+  /** Angular velocity noise standard deviation.
+   *  Stores @f$ \sqrt{k_B T} @f$.
+   */
   double sigma_vel_rotation = 0;
   /*@}*/
   /** RNG counter, used for both translation and rotation. */

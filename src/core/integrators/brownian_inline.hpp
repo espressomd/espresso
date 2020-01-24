@@ -206,51 +206,48 @@ void bd_random_walk(BrownianThermostat const &brownian, Particle &p,
   if (p.p.is_virtual && !thermo_virtual)
     return;
   // first, set defaults
-  Thermostat::GammaType sigma_pos_inv = brownian.sigma_pos_inv;
+  Thermostat::GammaType sigma_pos = brownian.sigma_pos;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr temp_coeff = 2.0;
-
   if (p.p.gamma >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        sigma_pos_inv = sqrt(p.p.gamma / (temp_coeff * p.p.T));
+        sigma_pos = BrownianThermostat::sigma(p.p.T, p.p.gamma);
       } else {
         // just an indication of the infinity
-        sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos = Thermostat::GammaType{};
       }
     } else
         // default temperature but particle-specific gamma
         if (temperature > 0.0) {
-      sigma_pos_inv = sqrt(p.p.gamma / (temp_coeff * temperature));
+      sigma_pos = BrownianThermostat::sigma(temperature, p.p.gamma);
     } else {
-      sigma_pos_inv = brownian.gammatype_nan;
+      sigma_pos = Thermostat::GammaType{};
     }
   } // particle-specific gamma
   else {
     // No particle-specific gamma, but is there particle-specific temperature
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        sigma_pos_inv = sqrt(brownian.gamma / (temp_coeff * p.p.T));
+        sigma_pos = BrownianThermostat::sigma(p.p.T, brownian.gamma);
       } else {
         // just an indication of the infinity
-        sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos = Thermostat::GammaType{};
       }
     } else {
       // default values for both
-      sigma_pos_inv = brownian.sigma_pos_inv;
+      sigma_pos = brownian.sigma_pos;
     }
   }
-#endif /* BROWNIAN_PER_PARTICLE */
+#endif // BROWNIAN_PER_PARTICLE
 
   bool aniso_flag; // particle anisotropy flag
 
 #ifdef PARTICLE_ANISOTROPY
   // Particle frictional isotropy check.
-  aniso_flag = (sigma_pos_inv[0] != sigma_pos_inv[1]) ||
-               (sigma_pos_inv[1] != sigma_pos_inv[2]);
+  aniso_flag = (sigma_pos[0] != sigma_pos[1]) || (sigma_pos[1] != sigma_pos[2]);
 #else
   aniso_flag = false;
 #endif // PARTICLE_ANISOTROPY
@@ -267,14 +264,14 @@ void bd_random_walk(BrownianThermostat const &brownian, Particle &p,
 #endif
     {
 #ifndef PARTICLE_ANISOTROPY
-      if (sigma_pos_inv > 0.0) {
-        delta_pos_body[j] = (1.0 / sigma_pos_inv) * sqrt(dt) * noise[j];
+      if (sigma_pos > 0.0) {
+        delta_pos_body[j] = sigma_pos * sqrt(dt) * noise[j];
       } else {
         delta_pos_body[j] = 0.0;
       }
 #else
-      if (sigma_pos_inv[j] > 0.0) {
-        delta_pos_body[j] = (1.0 / sigma_pos_inv[j]) * sqrt(dt) * noise[j];
+      if (sigma_pos[j] > 0.0) {
+        delta_pos_body[j] = sigma_pos[j] * sqrt(dt) * noise[j];
       } else {
         delta_pos_body[j] = 0.0;
       }
@@ -315,17 +312,16 @@ inline void bd_random_walk_vel(BrownianThermostat const &brownian,
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   if (p.p.T >= 0.) {
-    sigma_vel = sqrt(temp_coeff * p.p.T);
+    sigma_vel = BrownianThermostat::sigma(p.p.T);
   } else {
     sigma_vel = brownian.sigma_vel;
   }
 #else
   // defaults
   sigma_vel = brownian.sigma_vel;
-#endif /* BROWNIAN_PER_PARTICLE */
+#endif // BROWNIAN_PER_PARTICLE
 
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_INC>(
       brownian.rng_counter->value(), p.identity());
@@ -438,44 +434,42 @@ void bd_drag_vel_rot(Thermostat::GammaType const &brownian_gamma_rotation,
 void bd_random_walk_rot(BrownianThermostat const &brownian, Particle &p,
                         double dt) {
   // first, set defaults
-  Thermostat::GammaType sigma_pos_inv = brownian.sigma_pos_rotation_inv;
+  Thermostat::GammaType sigma_pos = brownian.sigma_pos_rotation;
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr temp_coeff = 2.0;
-
   if (p.p.gamma_rot >= Thermostat::GammaType{}) {
     // Is a particle-specific temperature also specified?
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        sigma_pos_inv = sqrt(p.p.gamma_rot / (temp_coeff * p.p.T));
+        sigma_pos = BrownianThermostat::sigma(p.p.T, p.p.gamma_rot);
       } else {
         // just an indication of the infinity
-        sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos = Utils::Vector3d{};
       }
     } else if (temperature > 0.) {
       // Default temperature but particle-specific gamma
-      sigma_pos_inv = sqrt(p.p.gamma_rot / (temp_coeff * temperature));
+      sigma_pos = BrownianThermostat::sigma(temperature, p.p.gamma_rot);
     } else {
       // just an indication of the infinity
-      sigma_pos_inv = brownian.gammatype_nan;
+      sigma_pos = Utils::Vector3d{};
     }
   } // particle-specific gamma
   else {
     // No particle-specific gamma, but is there particle-specific temperature
     if (p.p.T >= 0.) {
       if (p.p.T > 0.0) {
-        sigma_pos_inv = sqrt(brownian.gamma_rotation / (temp_coeff * p.p.T));
+        sigma_pos = BrownianThermostat::sigma(p.p.T, brownian.gamma_rotation);
       } else {
         // just an indication of the infinity
-        sigma_pos_inv = brownian.gammatype_nan;
+        sigma_pos = Utils::Vector3d{};
       }
     } else {
       // Defaut values for both
-      sigma_pos_inv = brownian.sigma_pos_rotation_inv;
+      sigma_pos = brownian.sigma_pos_rotation;
     }
   }
-#endif /* BROWNIAN_PER_PARTICLE */
+#endif // BROWNIAN_PER_PARTICLE
 
   Utils::Vector3d dphi = {0.0, 0.0, 0.0};
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_INC>(
@@ -486,14 +480,14 @@ void bd_random_walk_rot(BrownianThermostat const &brownian, Particle &p,
 #endif
     {
 #ifndef PARTICLE_ANISOTROPY
-      if (sigma_pos_inv > 0.0) {
-        dphi[j] = noise[j] * (1.0 / sigma_pos_inv) * sqrt(dt);
+      if (sigma_pos > 0.0) {
+        dphi[j] = noise[j] * sigma_pos * sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
 #else
-      if (sigma_pos_inv[j] > 0.0) {
-        dphi[j] = noise[j] * (1.0 / sigma_pos_inv[j]) * sqrt(dt);
+      if (sigma_pos[j] > 0.0) {
+        dphi[j] = noise[j] * sigma_pos[j] * sqrt(dt);
       } else {
         dphi[j] = 0.0;
       }
@@ -520,17 +514,16 @@ void bd_random_walk_vel_rot(BrownianThermostat const &brownian, Particle &p) {
 
   // Override defaults if per-particle values for T and gamma are given
 #ifdef BROWNIAN_PER_PARTICLE
-  auto const constexpr temp_coeff = 1.0;
   // Is a particle-specific temperature specified?
   if (p.p.T >= 0.) {
-    sigma_vel = sqrt(temp_coeff * p.p.T);
+    sigma_vel = BrownianThermostat::sigma(p.p.T);
   } else {
     sigma_vel = brownian.sigma_vel_rotation;
   }
 #else
   // set defaults
   sigma_vel = brownian.sigma_vel_rotation;
-#endif /* BROWNIAN_PER_PARTICLE */
+#endif // BROWNIAN_PER_PARTICLE
 
   Utils::Vector3d domega;
   Utils::Vector3d noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_WALK>(
