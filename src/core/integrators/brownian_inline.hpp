@@ -143,7 +143,7 @@ inline void bd_drag_vel(Particle &p, double dt) {
     // further on top of it
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
-      vel_body[j] = force_body[j] * dt / (local_gamma[j]);
+      vel_body[j] = force_body[j] / (local_gamma[j]);
     } else {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j)))
