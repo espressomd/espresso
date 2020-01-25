@@ -57,9 +57,9 @@ struct p3m_data_struct {
   /** local mesh. */
   p3m_local_mesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
-  double *rs_mesh;
-  /** k-space mesh (local) for k-space calculation and FFT.*/
-  std::vector<double> ks_mesh;
+  fft_vector<double> rs_mesh;
+  /** mesh (local) for the electric field.*/
+  std::array<fft_vector<double>, 3> E_mesh;
 
   /** number of charged particles (only on master node). */
   int sum_qpart;
@@ -162,7 +162,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles);
 
 /** Compute the k-space part of the stress tensor **/
-void p3m_calc_kspace_stress(double *stress);
+Utils::Vector9d p3m_calc_kspace_stress();
 
 /** Sanity checks */
 bool p3m_sanity_checks();
@@ -188,7 +188,7 @@ void p3m_charge_assign(const ParticleRange &particles);
  *                        is not stored in the @ref p3m_data_struct::ca_frac
  *                        "ca_frac" arrays
  */
-void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt);
 
 /** Shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);

@@ -141,7 +141,7 @@ inline void bd_drag_vel(Particle &p, double dt) {
     // further on top of it
 #ifdef PARTICLE_ANISOTROPY
     if (aniso_flag) {
-      vel_body[j] = force_body[j] * dt / (gamma[j]);
+      vel_body[j] = force_body[j] / (gamma[j]);
     } else {
 #ifdef EXTERNAL_FORCES
       if (!(p.p.ext_flag & COORD_FIXED(j)))
@@ -538,7 +538,8 @@ inline void brownian_dynamics_propagator(const ParticleRange &particles) {
   for (auto &p : particles) {
     // Don't propagate translational degrees of freedom of vs
 #ifdef VIRTUAL_SITES
-    if (!(p.p.is_virtual))
+    extern bool thermo_virtual;
+    if (!(p.p.is_virtual) or thermo_virtual)
 #endif
     {
       bd_drag(p, time_step);
