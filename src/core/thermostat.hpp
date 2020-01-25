@@ -112,7 +112,7 @@ public:
     if (gamma_rotation < GammaType{}) {
       gamma_rotation = gamma;
     }
-    pref_noise_rotation = sqrt(24.0 * temperature * gamma_rotation / time_step);
+    pref_noise_rotation = sqrt(24.0 * temperature / time_step * gamma_rotation);
   }
   /** @name Parameters */
   /*@{*/

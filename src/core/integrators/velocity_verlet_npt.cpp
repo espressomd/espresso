@@ -59,17 +59,16 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
 /** Scale and communicate instantaneous NpT pressure */
 void velocity_verlet_npt_finalize_p_inst() {
   extern IsotropicNptThermostat npt_iso;
-  double p_tmp = 0.0;
-  int i;
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
       nptiso.p_vel[i] /= Utils::sqr(time_step);
       nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
     }
   }
 
+  double p_tmp = 0.0;
   MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   if (this_node == 0) {
     nptiso.p_inst = p_tmp / (nptiso.dimension * nptiso.volume);
