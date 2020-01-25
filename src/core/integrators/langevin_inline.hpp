@@ -35,7 +35,7 @@
  *  Collects the langevin parameters kT, gamma (different for
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
- *  @param[in,out] p              %Particle
+ *  @param[in]     p              %Particle
  */
 inline Utils::Vector3d
 friction_thermo_langevin(LangevinThermostat const &langevin,
@@ -96,11 +96,11 @@ friction_thermo_langevin(LangevinThermostat const &langevin,
  *  Collects the langevin parameters kT, gamma_rot (different for
  *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
  *  @param[in]     langevin       Parameters
- *  @param[in,out] p              %Particle
+ *  @param[in]     p              %Particle
  */
 inline Utils::Vector3d
 friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
-                                  const Particle &p) {
+                                  Particle const &p) {
 
   auto pref_friction = -langevin.gamma_rotation;
   auto pref_noise = langevin.pref_noise_rotation;

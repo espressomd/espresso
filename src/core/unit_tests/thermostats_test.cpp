@@ -75,46 +75,46 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
 
   /* check translation */
   {
-    auto p = particle_factory();
+    auto const p = particle_factory();
     auto const ref = time_step * dispersion;
-    bd_drag(brownian.gamma, p, time_step);
-    BOOST_CHECK_CLOSE(p.r.p[0], ref[0], tol);
-    BOOST_CHECK_CLOSE(p.r.p[1], ref[1], tol);
-    BOOST_CHECK_CLOSE(p.r.p[2], ref[2], tol);
+    auto const out = bd_drag(brownian.gamma, p, time_step);
+    BOOST_CHECK_CLOSE(out[0], ref[0], tol);
+    BOOST_CHECK_CLOSE(out[1], ref[1], tol);
+    BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 
   /* check translational velocity */
   {
-    auto p = particle_factory();
+    auto const p = particle_factory();
     auto const ref = dispersion;
-    bd_drag_vel(brownian.gamma, p);
-    BOOST_CHECK_CLOSE(p.m.v[0], ref[0], tol);
-    BOOST_CHECK_CLOSE(p.m.v[1], ref[1], tol);
-    BOOST_CHECK_CLOSE(p.m.v[2], ref[2], tol);
+    auto const out = bd_drag_vel(brownian.gamma, p);
+    BOOST_CHECK_CLOSE(out[0], ref[0], tol);
+    BOOST_CHECK_CLOSE(out[1], ref[1], tol);
+    BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 
   /* check walk translation */
   {
-    auto p = particle_factory();
+    auto const p = particle_factory();
     auto const sigma = sqrt(brownian.gamma / (2.0 * temperature));
     auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_WALK>(0, 0);
     auto const ref = hadamard_division(noise, sigma) * sqrt(time_step);
-    bd_random_walk(brownian, p, time_step);
-    BOOST_CHECK_CLOSE(p.r.p[0], ref[0], tol);
-    BOOST_CHECK_CLOSE(p.r.p[1], ref[1], tol);
-    BOOST_CHECK_CLOSE(p.r.p[2], ref[2], tol);
+    auto const out = bd_random_walk(brownian, p, time_step);
+    BOOST_CHECK_CLOSE(out[0], ref[0], tol);
+    BOOST_CHECK_CLOSE(out[1], ref[1], tol);
+    BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 
   /* check walk translational velocity */
   {
-    auto p = particle_factory();
+    auto const p = particle_factory();
     auto const sigma = sqrt(temperature);
     auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_INC>(0, 0);
     auto const ref = sigma * noise / sqrt(p.p.mass);
-    bd_random_walk_vel(brownian, p);
-    BOOST_CHECK_CLOSE(p.m.v[0], ref[0], tol);
-    BOOST_CHECK_CLOSE(p.m.v[1], ref[1], tol);
-    BOOST_CHECK_CLOSE(p.m.v[2], ref[2], tol);
+    auto const out = bd_random_walk_vel(brownian, p);
+    BOOST_CHECK_CLOSE(out[0], ref[0], tol);
+    BOOST_CHECK_CLOSE(out[1], ref[1], tol);
+    BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 
 #ifdef ROTATION
@@ -126,11 +126,11 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto p = particle_factory();
     p.p.rotation = ROTATION_X;
     auto const phi = time_step * dispersion_rotation[0];
-    bd_drag_rot(brownian.gamma_rotation, p, time_step);
-    BOOST_CHECK_CLOSE(p.r.quat[0], std::cos(phi / 2), tol);
-    BOOST_CHECK_CLOSE(p.r.quat[1], std::sin(phi / 2), tol);
-    BOOST_CHECK_CLOSE(p.r.quat[2], 0, tol);
-    BOOST_CHECK_CLOSE(p.r.quat[3], 0, tol);
+    auto const out = bd_drag_rot(brownian.gamma_rotation, p, time_step);
+    BOOST_CHECK_CLOSE(out[0], std::cos(phi / 2), tol);
+    BOOST_CHECK_CLOSE(out[1], std::sin(phi / 2), tol);
+    BOOST_CHECK_CLOSE(out[2], 0.0, tol);
+    BOOST_CHECK_CLOSE(out[3], 0.0, tol);
   }
 
   /* check rotational velocity */
@@ -138,10 +138,10 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto p = particle_factory();
     p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
     auto const ref = dispersion_rotation;
-    bd_drag_vel_rot(brownian.gamma_rotation, p);
-    BOOST_CHECK_CLOSE(p.m.omega[0], ref[0], tol);
-    BOOST_CHECK_CLOSE(p.m.omega[1], ref[1], tol);
-    BOOST_CHECK_CLOSE(p.m.omega[2], ref[2], tol);
+    auto const out = bd_drag_vel_rot(brownian.gamma_rotation, p);
+    BOOST_CHECK_CLOSE(out[0], ref[0], tol);
+    BOOST_CHECK_CLOSE(out[1], ref[1], tol);
+    BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 
   /* check walk rotation */
@@ -151,11 +151,11 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto const sigma = sqrt(brownian.gamma_rotation / (2.0 * temperature));
     auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_INC>(0, 0);
     auto const phi = hadamard_division(noise, sigma)[0] * sqrt(time_step);
-    bd_random_walk_rot(brownian, p, time_step);
-    BOOST_CHECK_CLOSE(p.r.quat[0], std::cos(phi / 2), tol);
-    BOOST_CHECK_CLOSE(p.r.quat[1], std::sin(phi / 2), tol);
-    BOOST_CHECK_CLOSE(p.r.quat[2], 0, tol);
-    BOOST_CHECK_CLOSE(p.r.quat[3], 0, tol);
+    auto const out = bd_random_walk_rot(brownian, p, time_step);
+    BOOST_CHECK_CLOSE(out[0], std::cos(phi / 2), tol);
+    BOOST_CHECK_CLOSE(out[1], std::sin(phi / 2), tol);
+    BOOST_CHECK_CLOSE(out[2], 0.0, tol);
+    BOOST_CHECK_CLOSE(out[3], 0.0, tol);
   }
 
   /* check walk rotational velocity */
@@ -165,10 +165,10 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto const sigma = sqrt(temperature);
     auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_WALK>(0, 0);
     auto const ref = sigma * noise;
-    bd_random_walk_vel_rot(brownian, p);
-    BOOST_CHECK_CLOSE(p.m.omega[0], ref[0], tol);
-    BOOST_CHECK_CLOSE(p.m.omega[1], ref[1], tol);
-    BOOST_CHECK_CLOSE(p.m.omega[2], ref[2], tol);
+    auto const out = bd_random_walk_vel_rot(brownian, p);
+    BOOST_CHECK_CLOSE(out[0], ref[0], tol);
+    BOOST_CHECK_CLOSE(out[1], ref[1], tol);
+    BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 #endif // ROTATION
 }
