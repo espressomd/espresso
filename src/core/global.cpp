@@ -168,7 +168,26 @@ const std::unordered_map<int, Datafield> fields{
       "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */
     {FIELD_FORCE_CAP, {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap"}},
     {FIELD_THERMO_VIRTUAL,
-     {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}}};
+     {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}},
+#ifndef PARTICLE_ANISOTROPY
+    {FIELD_BROWNIAN_GAMMA_ROTATION,
+     {&brownian.gamma_rotation, Datafield::Type::DOUBLE, 1,
+      "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
+#else
+    {FIELD_BROWNIAN_GAMMA_ROTATION,
+     {brownian.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+      "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
+#endif
+#ifndef PARTICLE_ANISOTROPY
+    {FIELD_BROWNIAN_GAMMA,
+     {&brownian.gamma, Datafield::Type::DOUBLE, 1,
+      "brownian.gamma"}}, /* 58  from thermostat.cpp */
+#else
+    {FIELD_BROWNIAN_GAMMA,
+     {brownian.gamma.data(), Datafield::Type::DOUBLE, 3,
+      "brownian.gamma"}}, /* 58  from thermostat.cpp */
+#endif // PARTICLE_ANISOTROPY
+};
 
 std::size_t hash_value(Datafield const &field) {
   using boost::hash_range;

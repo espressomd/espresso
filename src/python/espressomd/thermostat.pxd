@@ -31,6 +31,7 @@ cdef extern from "thermostat.hpp":
     int THERMO_LB
     int THERMO_NPT_ISO
     int THERMO_DPD
+    int THERMO_BROWNIAN
 
     IF PARTICLE_ANISOTROPY:
         Vector3d langevin_gamma_rotation
@@ -39,10 +40,25 @@ cdef extern from "thermostat.hpp":
         double langevin_gamma_rotation
         double langevin_gamma
 
+    IF PARTICLE_ANISOTROPY:
+        ctypedef struct brownian_thermostat_struct "BrownianThermostat":
+            Vector3d gamma_rotation
+            Vector3d gamma
+    ELSE:
+        ctypedef struct brownian_thermostat_struct "BrownianThermostat":
+            double gamma_rotation
+            double gamma
+
+    # links intern C-struct with python object
+    cdef extern brownian_thermostat_struct brownian
+
     void langevin_set_rng_state(stdint.uint64_t counter)
+    void brownian_set_rng_state(stdint.uint64_t counter)
     cbool langevin_is_seed_required()
+    cbool brownian_is_seed_required()
 
     stdint.uint64_t langevin_get_rng_state()
+    stdint.uint64_t brownian_get_rng_state()
 
 cdef extern from "dpd.hpp":
     IF DPD:

@@ -45,6 +45,7 @@
 #define THERMO_DPD 2
 #define THERMO_NPT_ISO 4
 #define THERMO_LB 8
+#define THERMO_BROWNIAN 16
 /*@}*/
 
 namespace Thermostat {
@@ -57,6 +58,21 @@ using GammaType = Utils::Vector3d;
 using GammaType = double;
 #endif
 } // namespace Thermostat
+
+namespace {
+/** @name Integrators parameters sentinels.
+ *  These functions return the sentinel value for the Langevin/Brownian
+ *  parameters, indicating that they have not been set yet.
+ */
+/*@{*/
+constexpr double sentinel(double) { return -1.0; }
+constexpr Utils::Vector3d sentinel(Utils::Vector3d) {
+  return {-1.0, -1.0, -1.0};
+}
+constexpr double set_nan(double) { return NAN; }
+constexpr Utils::Vector3d set_nan(Utils::Vector3d) { return {NAN, NAN, NAN}; }
+/*@}*/
+} // namespace
 
 /************************************************
  * exported variables
@@ -93,6 +109,40 @@ extern double nptiso_gammav;
 /** Langevin RNG counter, used for both translation and rotation. */
 extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 
+/** %Thermostat for Brownian dynamics. */
+struct BrownianThermostat {
+private:
+  using GammaType = Thermostat::GammaType;
+
+public:
+  /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
+  GammaType gamma = sentinel(GammaType{});
+  /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
+  GammaType gamma_rotation = sentinel(GammaType{});
+  /** Inverse of the translational noise standard deviation.
+   *  Stores @f$ \left(\sqrt{2D_{\text{trans}}}\right)^{-1} @f$ with
+   *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
+   *  the translational diffusion coefficient
+   */
+  GammaType sigma_pos_inv = sentinel(GammaType{});
+  /** Inverse of the rotational noise standard deviation.
+   *  Stores @f$ \left(\sqrt{2D_{\text{rot}}}\right)^{-1} @f$ with
+   *  @f$ D_{\text{rot}} = k_B T/\gamma_{\text{rot}} @f$
+   *  the rotational diffusion coefficient
+   */
+  GammaType sigma_pos_rotation_inv = sentinel(GammaType{});
+  /** Sentinel value for divisions by zero. */
+  GammaType const gammatype_nan = set_nan(GammaType{});
+  /** Translational velocity noise standard deviation. */
+  double sigma_vel = 0;
+  /** Angular velocity noise standard deviation. */
+  double sigma_vel_rotation = 0;
+  /** RNG counter, used for both translation and rotation. */
+  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
+};
+
+extern BrownianThermostat brownian;
+
 /************************************************
  * functions
  ************************************************/
@@ -100,11 +150,17 @@ extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
 /** Only require seed if rng is not initialized. */
 bool langevin_is_seed_required();
 
+/** Only require seed if rng is not initialized. */
+bool brownian_is_seed_required();
+
 /** @name philox functionality: increment, get/set */
 /*@{*/
 void langevin_rng_counter_increment();
 void langevin_set_rng_state(uint64_t counter);
 uint64_t langevin_get_rng_state();
+void brownian_rng_counter_increment();
+void brownian_set_rng_state(uint64_t counter);
+uint64_t brownian_get_rng_state();
 /*@}*/
 
 /** Initialize constants of the thermostat at the start of integration */

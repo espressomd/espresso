@@ -167,6 +167,11 @@ def transform_vel_from_cartesian_to_polar_coordinates(pos, vel):
         (pos[0] * vel[1] - pos[1] * vel[0]) / (pos[0]**2 + pos[1]**2), vel[2]])
 
 
+def convert_vec_body_to_space(system, part, vec):
+    A = rotation_matrix_quat(system, part)
+    return np.dot(A.transpose(), vec)
+
+
 def rotation_matrix(axis, theta):
     """
     Return the rotation matrix associated with counterclockwise rotation about

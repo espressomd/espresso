@@ -57,11 +57,13 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
+#include "integrators/brownian_inline.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
 
 #include <profiler/profiler.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -126,6 +128,10 @@ bool integrator_step_1(ParticleRange &particles) {
     velocity_verlet_npt_step_1(particles);
     break;
 #endif
+  case INTEG_METHOD_BD:
+    // the Ermak-McCammon's Brownian Dynamics requires a single step
+    // so, just skip here
+    break;
   default:
     throw std::runtime_error("Unknown value for integ_switch");
   }
@@ -146,6 +152,10 @@ void integrator_step_2(ParticleRange &particles) {
     velocity_verlet_npt_step_2(particles);
     break;
 #endif
+  case INTEG_METHOD_BD:
+    // the Ermak-McCammon's Brownian Dynamics requires a single step
+    brownian_dynamics_propagator(particles);
+    break;
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
   }
@@ -305,6 +315,9 @@ void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
   }
+  if (thermo_switch & THERMO_BROWNIAN) {
+    brownian_rng_counter_increment();
+  }
   if (thermo_switch & THERMO_DPD) {
 #ifdef DPD
     dpd_rng_counter_increment();
@@ -399,6 +412,11 @@ int integrate_set_steepest_descent(const double f_max, const double gamma,
 
 void integrate_set_nvt() {
   integ_switch = INTEG_METHOD_NVT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+}
+
+void integrate_set_bd() {
+  integ_switch = INTEG_METHOD_BD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 
