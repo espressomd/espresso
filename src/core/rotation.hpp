@@ -93,16 +93,17 @@ convert_dip_to_quat(const Utils::Vector3d &dip) {
 #endif
 
 /** Rotate the particle p around the body-frame defined NORMALIZED axis
- * aBodyFrame by amount phi
+ *  @p aBodyFrame by amount @p phi.
  */
-inline void local_rotate_particle_body(Particle &p,
-                                       const Utils::Vector3d &axis_body_frame,
-                                       const double phi) {
+inline Utils::Vector4d
+local_rotate_particle_body(Particle const &p,
+                           const Utils::Vector3d &axis_body_frame,
+                           const double phi) {
   auto axis = axis_body_frame;
 
   // Rotation turned off entirely?
   if (!p.p.rotation)
-    return;
+    return {};
 
   // Convert rotation axis to body-fixed frame
   axis = mask(p.p.rotation, axis).normalize();
@@ -112,8 +113,7 @@ inline void local_rotate_particle_body(Particle &p,
       Utils::Vector4d{cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]}
           .normalize();
 
-  // Rotate the particle
-  p.r.quat = Utils::multiply_quaternions(p.r.quat, q);
+  return Utils::multiply_quaternions(p.r.quat, q);
 }
 
 /** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
@@ -123,7 +123,7 @@ inline void local_rotate_particle(Particle &p,
                                   const double phi) {
   // Convert rotation axis to body-fixed frame
   Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
-  local_rotate_particle_body(p, axis, phi);
+  p.r.quat = local_rotate_particle_body(p, axis, phi);
 }
 
 inline void convert_torque_to_body_frame_apply_fix(Particle &p) {

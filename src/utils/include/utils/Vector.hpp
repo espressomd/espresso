@@ -417,6 +417,37 @@ auto hadamard_product(Vector<T, N> const &a, Vector<U, N> const &b) {
   return ret;
 }
 
+// specializations for when one or both operands is a scalar depending on
+// compile time features (e.g. when PARTICLE_ANISOTROPY is not enabled)
+template <class T, class U, size_t N,
+          class = std::enable_if_t<not(detail::is_vector<T>::value)>>
+auto hadamard_product(T const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret = a * b;
+
+  return ret;
+}
+
+template <class T, class U, size_t N,
+          class = std::enable_if_t<not(detail::is_vector<U>::value)>>
+auto hadamard_product(Vector<T, N> const &a, U const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret = a * b;
+
+  return ret;
+}
+
+template <typename T, typename U,
+          class = std::enable_if_t<not(detail::is_vector<T>::value or
+                                       detail::is_vector<U>::value)>>
+auto hadamard_product(T const &a, U const &b) {
+  return a * b;
+}
+
 template <class T, class U, size_t N>
 auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
   using std::declval;
@@ -427,6 +458,38 @@ auto hadamard_division(Vector<T, N> const &a, Vector<U, N> const &b) {
                  [](auto ai, auto bi) { return ai / bi; });
 
   return ret;
+}
+
+// specializations for when one or both operands is a scalar depending on
+// compile time features (e.g. when PARTICLE_ANISOTROPY is not enabled)
+template <class T, class U, size_t N,
+          class = std::enable_if_t<not(detail::is_vector<U>::value)>>
+auto hadamard_division(Vector<T, N> const &a, U const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret = a / b;
+
+  return ret;
+}
+
+template <class T, class U, size_t N,
+          class = std::enable_if_t<not(detail::is_vector<T>::value)>>
+auto hadamard_division(T const &a, Vector<U, N> const &b) {
+  using std::declval;
+  using R = decltype(declval<T>() * declval<U>());
+
+  Vector<R, N> ret;
+  std::transform(std::begin(b), std::end(b), ret.begin(),
+                 [a](T const &bi) { return a / bi; });
+  return ret;
+}
+
+template <typename T, typename U,
+          class = std::enable_if_t<not(detail::is_vector<T>::value or
+                                       detail::is_vector<U>::value)>>
+auto hadamard_division(T const &a, U const &b) {
+  return a / b;
 }
 
 /**

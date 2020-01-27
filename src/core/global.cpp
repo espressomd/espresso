@@ -47,6 +47,9 @@
 #include <unordered_map>
 
 extern double force_cap;
+extern LangevinThermostat langevin;
+extern BrownianThermostat brownian;
+extern IsotropicNptThermostat npt_iso;
 
 namespace {
 
@@ -78,12 +81,12 @@ const std::unordered_map<int, Datafield> fields{
       "cell_grid"}}, /* 1  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
-     {&langevin_gamma, Datafield::Type::DOUBLE, 1,
-      "gamma"}}, /* 5  from thermostat.cpp */
+     {&langevin.gamma, Datafield::Type::DOUBLE, 1,
+      "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA,
-     {langevin_gamma.data(), Datafield::Type::DOUBLE, 3,
-      "gamma"}}, /* 5  from thermostat.cpp */
+     {langevin.gamma.data(), Datafield::Type::DOUBLE, 3,
+      "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
@@ -107,11 +110,11 @@ const std::unordered_map<int, Datafield> fields{
      {node_grid.data(), Datafield::Type::INT, 3,
       "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
-     {&nptiso_gamma0, Datafield::Type::DOUBLE, 1,
-      "nptiso_gamma0"}}, /* 21 from thermostat.cpp */
+     {&npt_iso.gamma0, Datafield::Type::DOUBLE, 1,
+      "npt_iso.gamma0"}}, /* 21 from thermostat.cpp */
     {FIELD_NPTISO_GV,
-     {&nptiso_gammav, Datafield::Type::DOUBLE, 1,
-      "nptiso_gammav"}}, /* 22 from thermostat.cpp */
+     {&npt_iso.gammav, Datafield::Type::DOUBLE, 1,
+      "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
     {FIELD_NPTISO_PEXT,
      {&nptiso.p_ext, Datafield::Type::DOUBLE, 1,
       "npt_p_ext"}}, /* 23 from pressure.cpp */
@@ -152,12 +155,12 @@ const std::unordered_map<int, Datafield> fields{
       "swimming_particles_exist"}}, /* from particle_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
-      "gamma_rot"}}, /* 55 from thermostat.cpp */
+     {&langevin.gamma_rotation, Datafield::Type::DOUBLE, 1,
+      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
-      "gamma_rot"}}, /* 55 from thermostat.cpp */
+     {langevin.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #endif
 #ifdef OIF_GLOBAL_FORCES
     {FIELD_MAX_OIF_OBJECTS,

@@ -69,8 +69,6 @@ constexpr double sentinel(double) { return -1.0; }
 constexpr Utils::Vector3d sentinel(Utils::Vector3d) {
   return {-1.0, -1.0, -1.0};
 }
-constexpr double set_nan(double) { return NAN; }
-constexpr Utils::Vector3d set_nan(Utils::Vector3d) { return {NAN, NAN, NAN}; }
 /*@}*/
 } // namespace
 
@@ -92,56 +90,167 @@ extern double temperature;
 /** True if the thermostat should act on virtual particles. */
 extern bool thermo_virtual;
 
-/** Langevin friction coefficient gamma for translation. */
-extern Thermostat::GammaType langevin_gamma;
-/** Langevin friction coefficient gamma for rotation. */
-extern Thermostat::GammaType langevin_gamma_rotation;
+/************************************************
+ * parameter structs
+ ************************************************/
 
-/** Friction coefficient for nptiso-thermostat's function
- *  @ref friction_therm0_nptiso
+/** %Thermostat for Langevin dynamics. */
+struct LangevinThermostat {
+private:
+  using GammaType = Thermostat::GammaType;
+
+public:
+  /** Recalculate prefactors.
+   *  Needs to be called every time the parameters are changed.
+   */
+  void recalc_prefactors() {
+    pref_friction = -gamma;
+    pref_noise = sigma(temperature, time_step, gamma);
+    // If gamma_rotation is not set explicitly, use the translational one.
+    if (gamma_rotation < GammaType{}) {
+      gamma_rotation = gamma;
+    }
+    pref_noise_rotation = sigma(temperature, time_step, gamma_rotation);
+  }
+  /** Calculate the noise standard deviation. */
+  static GammaType sigma(double kT, double time_step, GammaType const &gamma) {
+    constexpr auto const temp_coeff = 24.0;
+    return sqrt((temp_coeff * kT / time_step) * gamma);
+  }
+  /** @name Parameters */
+  /*@{*/
+  /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
+  GammaType gamma = sentinel(GammaType{});
+  /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
+  GammaType gamma_rotation = sentinel(GammaType{});
+  /*@}*/
+  /** @name Prefactors */
+  /*@{*/
+  /** Prefactor for the friction. */
+  GammaType pref_friction;
+  /** Prefactor for the translational velocity noise. */
+  GammaType pref_noise;
+  /** Prefactor for the angular velocity noise. */
+  GammaType pref_noise_rotation;
+  /*@}*/
+  /** RNG counter, used for both translation and rotation. */
+  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
+};
+
+/** %Thermostat for Brownian dynamics.
+ *  Default particle mass is assumed to be unitary in these global parameters.
  */
-extern double nptiso_gamma0;
-/** Friction coefficient for nptiso-thermostat's function
- *  @ref friction_thermV_nptiso
- */
-extern double nptiso_gammav;
-
-/** Langevin RNG counter, used for both translation and rotation. */
-extern std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
-
-/** %Thermostat for Brownian dynamics. */
 struct BrownianThermostat {
 private:
   using GammaType = Thermostat::GammaType;
 
 public:
+  /** Recalculate prefactors.
+   *  Needs to be called every time the parameters are changed.
+   */
+  void recalc_prefactors() {
+    /** The heat velocity dispersion corresponds to the Gaussian noise only,
+     *  which is only valid for the BD. Just a square root of kT, see (10.2.17)
+     *  and comments in 2 paragraphs afterwards, @cite Pottier2010.
+     */
+    sigma_vel = sigma(temperature);
+    /** The random walk position dispersion is defined by the second eq. (14.38)
+     *  of @cite Schlick2010. Its time interval factor will be added in the
+     *  Brownian Dynamics functions. Its square root is the standard deviation.
+     */
+    sigma_pos = sigma(temperature, gamma);
+#ifdef ROTATION
+    /** Note: the BD thermostat assigns the brownian viscous parameters as well.
+     *  They correspond to the friction tensor Z from the eq. (14.31) of
+     *  @cite Schlick2010.
+     */
+    // If gamma_rotation is not set explicitly, use the translational one.
+    if (gamma_rotation < GammaType{}) {
+      gamma_rotation = gamma;
+    }
+    sigma_vel_rotation = sigma(temperature);
+    sigma_pos_rotation = sigma(temperature, gamma_rotation);
+#endif // ROTATION
+  }
+  /** Calculate the noise standard deviation. */
+  static GammaType sigma(double kT, GammaType const &gamma) {
+    constexpr auto const temp_coeff = 2.0;
+    return sqrt(Utils::hadamard_division(temp_coeff * kT, gamma));
+  }
+  /** Calculate the noise standard deviation. */
+  static double sigma(double kT) {
+    constexpr auto const temp_coeff = 1.0;
+    return sqrt(temp_coeff * kT);
+  }
+  /** @name Parameters */
+  /*@{*/
   /** Translational friction coefficient @f$ \gamma_{\text{trans}} @f$. */
   GammaType gamma = sentinel(GammaType{});
   /** Rotational friction coefficient @f$ \gamma_{\text{rot}} @f$. */
   GammaType gamma_rotation = sentinel(GammaType{});
-  /** Inverse of the translational noise standard deviation.
-   *  Stores @f$ \left(\sqrt{2D_{\text{trans}}}\right)^{-1} @f$ with
+  /*@}*/
+  /** @name Prefactors */
+  /*@{*/
+  /** Translational noise standard deviation.
+   *  Stores @f$ \sqrt{2D_{\text{trans}}} @f$ with
    *  @f$ D_{\text{trans}} = k_B T/\gamma_{\text{trans}} @f$
-   *  the translational diffusion coefficient
+   *  the translational diffusion coefficient.
    */
-  GammaType sigma_pos_inv = sentinel(GammaType{});
-  /** Inverse of the rotational noise standard deviation.
-   *  Stores @f$ \left(\sqrt{2D_{\text{rot}}}\right)^{-1} @f$ with
+  GammaType sigma_pos = sentinel(GammaType{});
+  /** Rotational noise standard deviation.
+   *  Stores @f$ \sqrt{2D_{\text{rot}}} @f$ with
    *  @f$ D_{\text{rot}} = k_B T/\gamma_{\text{rot}} @f$
-   *  the rotational diffusion coefficient
+   *  the rotational diffusion coefficient.
    */
-  GammaType sigma_pos_rotation_inv = sentinel(GammaType{});
-  /** Sentinel value for divisions by zero. */
-  GammaType const gammatype_nan = set_nan(GammaType{});
-  /** Translational velocity noise standard deviation. */
+  GammaType sigma_pos_rotation = sentinel(GammaType{});
+  /** Translational velocity noise standard deviation.
+   *  Stores @f$ \sqrt{k_B T} @f$.
+   */
   double sigma_vel = 0;
-  /** Angular velocity noise standard deviation. */
+  /** Angular velocity noise standard deviation.
+   *  Stores @f$ \sqrt{k_B T} @f$.
+   */
   double sigma_vel_rotation = 0;
+  /*@}*/
   /** RNG counter, used for both translation and rotation. */
   std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
 
-extern BrownianThermostat brownian;
+/** %Thermostat for isotropic NPT dynamics. */
+struct IsotropicNptThermostat {
+private:
+  using GammaType = Thermostat::GammaType;
+
+public:
+#ifdef NPT
+  /** Recalculate prefactors.
+   *  Needs to be called every time the parameters are changed.
+   */
+  void recalc_prefactors(double piston) {
+    assert(piston > 0.0);
+    pref1 = -gamma0 * 0.5 * time_step;
+    pref2 = sqrt(12.0 * temperature * gamma0 * time_step);
+    pref3 = -gammav * (1.0 / piston) * 0.5 * time_step;
+    pref4 = sqrt(12.0 * temperature * gammav * time_step);
+  }
+#endif
+  /** @name Parameters */
+  /*@{*/
+  /** Friction coefficient @f$ \gamma_0 @f$ */
+  double gamma0;
+  /** Friction coefficient @f$ \gamma_V @f$ */
+  double gammav;
+  /*@}*/
+#ifdef NPT
+  /** @name Prefactors */
+  /*@{*/
+  double pref1;
+  double pref2;
+  double pref3;
+  double pref4;
+  /*@}*/
+#endif
+};
 
 /************************************************
  * functions
@@ -169,17 +278,18 @@ void thermo_init();
 #ifdef NPT
 /** Add velocity-dependent noise and friction for NpT-sims to the particle's
  *  velocity
+ *  @param npt_iso Parameters
  *  @param vj     j-component of the velocity
  *  @return       j-component of the noise added to the velocity, also scaled by
  *                dt (contained in prefactors)
  */
-inline double friction_therm0_nptiso(double vj) {
-  extern double nptiso_pref1, nptiso_pref2;
+inline double friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
+                                     double vj) {
   if (thermo_switch & THERMO_NPT_ISO) {
-    if (nptiso_pref2 > 0.0) {
-      return (nptiso_pref1 * vj + nptiso_pref2 * Thermostat::noise());
+    if (npt_iso.pref2 > 0.0) {
+      return npt_iso.pref1 * vj + npt_iso.pref2 * Thermostat::noise();
     }
-    return nptiso_pref1 * vj;
+    return npt_iso.pref1 * vj;
   }
   return 0.0;
 }
@@ -187,120 +297,16 @@ inline double friction_therm0_nptiso(double vj) {
 /** Add p_diff-dependent noise and friction for NpT-sims to \ref
  *  nptiso_struct::p_diff
  */
-inline double friction_thermV_nptiso(double p_diff) {
-  extern double nptiso_pref3, nptiso_pref4;
+inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
+                                     double p_diff) {
   if (thermo_switch & THERMO_NPT_ISO) {
-    if (nptiso_pref4 > 0.0) {
-      return (nptiso_pref3 * p_diff + nptiso_pref4 * Thermostat::noise());
+    if (npt_iso.pref4 > 0.0) {
+      return npt_iso.pref3 * p_diff + npt_iso.pref4 * Thermostat::noise();
     }
-    return nptiso_pref3 * p_diff;
+    return npt_iso.pref3 * p_diff;
   }
   return 0.0;
 }
 #endif
 
-/** Langevin thermostat for particle translational velocities.
- *  Collects the particle velocity (different for ENGINE, PARTICLE_ANISOTROPY).
- *  Collects the langevin parameters kT, gamma (different for
- *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
- */
-inline Utils::Vector3d friction_thermo_langevin(Particle const &p) {
-  // Early exit for virtual particles without thermostat
-  if (p.p.is_virtual && !thermo_virtual) {
-    return {};
-  }
-
-  // Determine prefactors for the friction (pref1) and the noise (pref2) term
-  extern Thermostat::GammaType langevin_pref1;
-  extern Thermostat::GammaType langevin_pref2;
-  // first, set defaults
-  Thermostat::GammaType langevin_pref_friction_buf = langevin_pref1;
-  Thermostat::GammaType langevin_pref_noise_buf = langevin_pref2;
-  // Override defaults if per-particle values for T and gamma are given
-#ifdef LANGEVIN_PER_PARTICLE
-  if (p.p.gamma >= Thermostat::GammaType{} or p.p.T >= 0.) {
-    auto const constexpr langevin_temp_coeff = 24.0;
-    auto const kT = p.p.T >= 0. ? p.p.T : temperature;
-    auto const gamma =
-        p.p.gamma >= Thermostat::GammaType{} ? p.p.gamma : langevin_gamma;
-    langevin_pref_friction_buf = -gamma;
-    langevin_pref_noise_buf =
-        sqrt(langevin_temp_coeff * kT * gamma / time_step);
-  }
-#endif /* LANGEVIN_PER_PARTICLE */
-
-  // Get effective velocity in the thermostatting
-#ifdef ENGINE
-  auto const &velocity = (p.p.swim.v_swim != 0)
-                             ? p.m.v - p.p.swim.v_swim * p.r.calc_director()
-                             : p.m.v;
-#else
-  auto const &velocity = p.m.v;
-#endif
-#ifdef PARTICLE_ANISOTROPY
-  // Particle frictional isotropy check
-  auto const aniso_flag =
-      (langevin_pref_friction_buf[0] != langevin_pref_friction_buf[1]) ||
-      (langevin_pref_friction_buf[1] != langevin_pref_friction_buf[2]);
-
-  // In case of anisotropic particle: body-fixed reference frame. Otherwise:
-  // lab-fixed reference frame.
-  auto const friction_op =
-      aniso_flag
-          ? convert_body_to_space(p, diag_matrix(langevin_pref_friction_buf))
-          : diag_matrix(langevin_pref_friction_buf);
-  auto const noise_op = diag_matrix(langevin_pref_noise_buf);
-#else
-  auto const &friction_op = langevin_pref_friction_buf;
-  auto const &noise_op = langevin_pref_noise_buf;
-#endif // PARTICLE_ANISOTROPY
-  using Random::v_noise;
-
-  // Do the actual (isotropic) thermostatting
-  return friction_op * velocity +
-         noise_op * v_noise<RNGSalt::LANGEVIN>(langevin_rng_counter->value(),
-                                               p.p.identity);
-}
-
-#ifdef ROTATION
-/** Langevin thermostat for particle angular velocities.
- *  Collects the particle velocity (different for PARTICLE_ANISOTROPY).
- *  Collects the langevin parameters kT, gamma_rot (different for
- *  LANGEVIN_PER_PARTICLE). Applies the noise and friction term.
- */
-inline Utils::Vector3d friction_thermo_langevin_rotation(const Particle &p) {
-  extern Thermostat::GammaType langevin_pref2_rotation;
-
-  auto langevin_pref_friction_buf = -langevin_gamma_rotation;
-  auto langevin_pref_noise_buf = langevin_pref2_rotation;
-
-  // Override defaults if per-particle values for T and gamma are given
-#ifdef LANGEVIN_PER_PARTICLE
-  if (p.p.gamma_rot >= Thermostat::GammaType{} or p.p.T >= 0.) {
-    auto const constexpr langevin_temp_coeff = 24.0;
-    auto const kT = p.p.T >= 0. ? p.p.T : temperature;
-    auto const gamma = p.p.gamma_rot >= Thermostat::GammaType{}
-                           ? p.p.gamma_rot
-                           : langevin_gamma_rotation;
-    langevin_pref_friction_buf = -gamma;
-    langevin_pref_noise_buf =
-        sqrt(langevin_temp_coeff * kT * gamma / time_step);
-  }
-#endif /* LANGEVIN_PER_PARTICLE */
-
-  using Random::v_noise;
-
-  // Here the thermostats happens
-  auto const noise = v_noise<RNGSalt::LANGEVIN_ROT>(
-      langevin_rng_counter->value(), p.p.identity);
-#ifdef PARTICLE_ANISOTROPY
-  return hadamard_product(langevin_pref_friction_buf, p.m.omega) +
-         hadamard_product(langevin_pref_noise_buf, noise);
-#else
-  return langevin_pref_friction_buf * p.m.omega +
-         langevin_pref_noise_buf * noise;
-#endif
-}
-
-#endif // ROTATION
 #endif

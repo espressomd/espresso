@@ -33,6 +33,7 @@
 #include <utils/math/sqr.hpp>
 
 void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
+  extern IsotropicNptThermostat npt_iso;
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 
   for (auto &p : particles) {
@@ -44,7 +45,7 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
           p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
-                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+                      friction_therm0_nptiso(npt_iso, p.m.v[j]) / p.p.mass;
         } else
           // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
           p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
@@ -57,23 +58,23 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
 
 /** Scale and communicate instantaneous NpT pressure */
 void velocity_verlet_npt_finalize_p_inst() {
-  double p_tmp = 0.0;
-  int i;
+  extern IsotropicNptThermostat npt_iso;
   /* finalize derivation of p_inst */
   nptiso.p_inst = 0.0;
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
     if (nptiso.geometry & nptiso.nptgeom_dir[i]) {
       nptiso.p_vel[i] /= Utils::sqr(time_step);
       nptiso.p_inst += nptiso.p_vir[i] + nptiso.p_vel[i];
     }
   }
 
+  double p_tmp = 0.0;
   MPI_Reduce(&nptiso.p_inst, &p_tmp, 1, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
   if (this_node == 0) {
     nptiso.p_inst = p_tmp / (nptiso.dimension * nptiso.volume);
     nptiso.p_diff = nptiso.p_diff +
                     (nptiso.p_inst - nptiso.p_ext) * 0.5 * time_step +
-                    friction_thermV_nptiso(nptiso.p_diff);
+                    friction_thermV_nptiso(npt_iso, nptiso.p_diff);
   }
 }
 
@@ -154,6 +155,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 }
 
 void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
+  extern IsotropicNptThermostat npt_iso;
 #ifdef NPT
   nptiso.p_vel[0] = nptiso.p_vel[1] = nptiso.p_vel[2] = 0.0;
 #endif
@@ -172,7 +174,7 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
           p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass +
-                      friction_therm0_nptiso(p.m.v[j]) / p.p.mass;
+                      friction_therm0_nptiso(npt_iso, p.m.v[j]) / p.p.mass;
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif

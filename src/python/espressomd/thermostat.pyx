@@ -134,18 +134,18 @@ cdef class Thermostat:
             lang_dict["act_on_virtual"] = thermo_virtual
             lang_dict["seed"] = int(langevin_get_rng_state())
             IF PARTICLE_ANISOTROPY:
-                lang_dict["gamma"] = [langevin_gamma[0],
-                                      langevin_gamma[1],
-                                      langevin_gamma[2]]
+                lang_dict["gamma"] = [langevin.gamma[0],
+                                      langevin.gamma[1],
+                                      langevin.gamma[2]]
             ELSE:
-                lang_dict["gamma"] = langevin_gamma
+                lang_dict["gamma"] = langevin.gamma
             IF ROTATION:
                 IF PARTICLE_ANISOTROPY:
-                    lang_dict["gamma_rotation"] = [langevin_gamma_rotation[0],
-                                                   langevin_gamma_rotation[1],
-                                                   langevin_gamma_rotation[2]]
+                    lang_dict["gamma_rotation"] = [langevin.gamma_rotation[0],
+                                                   langevin.gamma_rotation[1],
+                                                   langevin.gamma_rotation[2]]
                 ELSE:
-                    lang_dict["gamma_rotation"] = langevin_gamma_rotation
+                    lang_dict["gamma_rotation"] = langevin.gamma_rotation
             ELSE:
                 lang_dict["gamma_rotation"] = None
 
@@ -185,8 +185,8 @@ cdef class Thermostat:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
             npt_dict["kT"] = temperature
-            npt_dict["gamma0"] = nptiso_gamma0
-            npt_dict["gammav"] = nptiso_gammav
+            npt_dict["gamma0"] = npt_iso.gamma0
+            npt_dict["gammav"] = npt_iso.gammav
             npt_dict.update(nptiso)
             thermo_list.append(npt_dict)
         if thermo_switch & THERMO_DPD:
@@ -210,12 +210,12 @@ cdef class Thermostat:
         temperature = 0.
         mpi_bcast_parameter(FIELD_THERMO_VIRTUAL)
         mpi_bcast_parameter(FIELD_TEMPERATURE)
-        global langevin_gamma
+        global langevin
         IF PARTICLE_ANISOTROPY:
             for i in range(3):
-                langevin_gamma[i] = 0.
+                langevin.gamma[i] = 0.
         ELSE:
-            langevin_gamma = 0.
+            langevin.gamma = 0.
         mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA)
         global brownian
         IF PARTICLE_ANISOTROPY:
@@ -224,13 +224,12 @@ cdef class Thermostat:
         ELSE:
             brownian.gamma = 0.
         mpi_bcast_parameter(FIELD_BROWNIAN_GAMMA)
-        global langevin_gamma_rotation
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
                 for i in range(3):
-                    langevin_gamma_rotation[i] = 0.
+                    langevin.gamma_rotation[i] = 0.
             ELSE:
-                langevin_gamma_rotation = 0.
+                langevin.gamma_rotation = 0.
             mpi_bcast_parameter(FIELD_LANGEVIN_GAMMA_ROTATION)
         IF ROTATION:
             IF PARTICLE_ANISOTROPY:
@@ -341,49 +340,47 @@ cdef class Thermostat:
 
         global temperature
         temperature = float(kT)
-        global langevin_gamma
+        global langevin
         IF PARTICLE_ANISOTROPY:
             if scalar_gamma_def:
-                langevin_gamma[0] = gamma
-                langevin_gamma[1] = gamma
-                langevin_gamma[2] = gamma
+                langevin.gamma[0] = gamma
+                langevin.gamma[1] = gamma
+                langevin.gamma[2] = gamma
             else:
-                langevin_gamma[0] = gamma[0]
-                langevin_gamma[1] = gamma[1]
-                langevin_gamma[2] = gamma[2]
+                langevin.gamma[0] = gamma[0]
+                langevin.gamma[1] = gamma[1]
+                langevin.gamma[2] = gamma[2]
         ELSE:
-            langevin_gamma = float(gamma)
-
-        global langevin_gamma_rotation
+            langevin.gamma = float(gamma)
         IF ROTATION:
             if gamma_rotation is not None:
                 IF PARTICLE_ANISOTROPY:
                     if scalar_gamma_rot_def:
-                        langevin_gamma_rotation[0] = gamma_rotation
-                        langevin_gamma_rotation[1] = gamma_rotation
-                        langevin_gamma_rotation[2] = gamma_rotation
+                        langevin.gamma_rotation[0] = gamma_rotation
+                        langevin.gamma_rotation[1] = gamma_rotation
+                        langevin.gamma_rotation[2] = gamma_rotation
                     else:
-                        langevin_gamma_rotation[0] = gamma_rotation[0]
-                        langevin_gamma_rotation[1] = gamma_rotation[1]
-                        langevin_gamma_rotation[2] = gamma_rotation[2]
+                        langevin.gamma_rotation[0] = gamma_rotation[0]
+                        langevin.gamma_rotation[1] = gamma_rotation[1]
+                        langevin.gamma_rotation[2] = gamma_rotation[2]
                 ELSE:
                     if scalar_gamma_rot_def:
-                        langevin_gamma_rotation = gamma_rotation
+                        langevin.gamma_rotation = gamma_rotation
                     else:
                         raise ValueError(
                             "gamma_rotation must be a scalar since feature PARTICLE_ANISOTROPY is disabled")
             else:
                 IF PARTICLE_ANISOTROPY:
                     if scalar_gamma_def:
-                        langevin_gamma_rotation[0] = gamma
-                        langevin_gamma_rotation[1] = gamma
-                        langevin_gamma_rotation[2] = gamma
+                        langevin.gamma_rotation[0] = gamma
+                        langevin.gamma_rotation[1] = gamma
+                        langevin.gamma_rotation[2] = gamma
                     else:
-                        langevin_gamma_rotation[0] = gamma[0]
-                        langevin_gamma_rotation[1] = gamma[1]
-                        langevin_gamma_rotation[2] = gamma[2]
+                        langevin.gamma_rotation[0] = gamma[0]
+                        langevin.gamma_rotation[1] = gamma[1]
+                        langevin.gamma_rotation[2] = gamma[2]
                 ELSE:
-                    langevin_gamma_rotation = langevin_gamma
+                    langevin.gamma_rotation = langevin.gamma
 
         global thermo_switch
         thermo_switch = (thermo_switch | THERMO_LANGEVIN)
@@ -627,10 +624,9 @@ cdef class Thermostat:
             temperature = float(kT)
             global thermo_switch
             thermo_switch = (thermo_switch | THERMO_NPT_ISO)
-            global nptiso_gamma0
-            nptiso_gamma0 = gamma0
-            global nptiso_gammav
-            nptiso_gammav = gammav
+            global npt_iso
+            npt_iso.gamma0 = gamma0
+            npt_iso.gammav = gammav
             mpi_bcast_parameter(FIELD_THERMO_SWITCH)
             mpi_bcast_parameter(FIELD_TEMPERATURE)
             mpi_bcast_parameter(FIELD_NPTISO_G0)

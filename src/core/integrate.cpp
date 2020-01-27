@@ -58,6 +58,7 @@
 #include "virtual_sites.hpp"
 
 #include "integrators/brownian_inline.hpp"
+#include "integrators/langevin_inline.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
@@ -140,6 +141,7 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
+  extern BrownianThermostat brownian;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -154,7 +156,7 @@ void integrator_step_2(ParticleRange &particles) {
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(particles);
+    brownian_dynamics_propagator(brownian, particles);
     break;
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
