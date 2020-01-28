@@ -85,7 +85,7 @@ template <size_t I, size_t N> struct find_if_impl {
     auto const &e = get<I>(t);
 
     if (pred(e)) {
-      f(e);
+      (void)f(e);
       return true;
     }
 
@@ -108,16 +108,15 @@ template <size_t N> struct find_if_impl<N, N> {
  *
  * Any return value of the Callable is ignored.
  *
- * @tparam Pred Must be callable with all type occurring as elements
+ * @tparam Pred Must be callable with all types occurring as elements
  *              in Tuple, returning a value convertible to bool.
  * @tparam Tuple a tuple-like type supporting Utils::get
- * @tparam F Must be callable with all type occurring as elements
+ * @tparam F Must be callable with all types occurring as elements
  *           in Tuple.
  * @param pred The predicate.
  * @param t Tuple for search in.
  * @param f Is called for first found element.
- * @return Result of invocation of f if an element was found,
- *         nothing otherwise.
+ * @return true iff the predicate was true for at least one element.
  */
 template <class Pred, class Tuple, class F>
 constexpr auto find_if(Pred &&pred, Tuple const &t, F &&f) {
