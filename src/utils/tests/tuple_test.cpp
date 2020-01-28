@@ -123,3 +123,13 @@ BOOST_AUTO_TEST_CASE(find_if_) {
     BOOST_CHECK(not result);
   }
 }
+
+BOOST_AUTO_TEST_CASE(filter_) {
+  using Utils::filter;
+
+  constexpr auto const expected = std::make_tuple(1, 2u);
+  constexpr auto const result =
+      filter<std::is_integral>(std::make_tuple(1, 1.5, 2u, 2.5));
+
+  BOOST_CHECK(expected == result);
+}

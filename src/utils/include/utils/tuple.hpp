@@ -124,6 +124,60 @@ constexpr auto find_if(Pred &&pred, Tuple const &t, F &&f) {
   return detail::find_if_impl<0, Utils::tuple_size<Tuple>::value>::eval(
       std::forward<Pred>(pred), t, std::forward<F>(f));
 }
+
+namespace detail {
+template <template <class> class Predicate, size_t I, size_t N>
+struct filter_impl {
+  template <class Tuple>
+  constexpr static auto get(Tuple const &t, std::true_type) {
+    using Utils::get;
+
+    return std::make_tuple(get<I>(t));
+  }
+
+  template <class Tuple>
+  constexpr static auto get(Tuple const &t, std::false_type) {
+    return std::make_tuple();
+  }
+
+  template <class Tuple> constexpr static auto eval(Tuple const &t) {
+    using Utils::tuple_element_t;
+    using element_type = tuple_element_t<I, Tuple>;
+    constexpr bool pred = Predicate<element_type>::value;
+
+    return std::tuple_cat(
+        get(t, std::conditional_t<pred, std::true_type, std::false_type>{}),
+        filter_impl<Predicate, I + 1, N>::eval(t));
+  }
+};
+
+template <template <class> class Predicate, size_t I>
+struct filter_impl<Predicate, I, I> {
+  template <class Tuple> constexpr static auto eval(Tuple const &) {
+    return std::make_tuple();
+  }
+};
+
+} // namespace detail
+
+/**
+ * @brief Filter a tuple by a static predicate.
+ *
+ * E.g. filter(std::is_integral, std::make_tuple(1, 1.5, 2u))
+ *       -> std::tuple<int, unsigned>(1, 2u).
+ *
+ *       @tparam Predicate Metafunction that returns a bool for each type.
+ *       @tparam Tuple tuple-like type that implements the tuple interface.
+ *       @param in The input tuple-like
+ *
+ *       @return std::tuple with the elements selected by the predicate.
+ */
+template <template <class> class Predicate, class Tuple>
+constexpr auto filter(Tuple const &in) {
+  using Utils::tuple_size;
+
+  return detail::filter_impl<Predicate, 0, tuple_size<Tuple>::value>::eval(in);
+}
 } // namespace Utils
 
 #endif // ESPRESSO_TUPLE_HPP
