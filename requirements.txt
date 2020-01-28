@@ -27,3 +27,4 @@ pycodestyle==2.3.1
 pylint>=2.2.2
 astroid>=2.1.0
 isort>=4.3.4
+setuptools>=41.2.0
