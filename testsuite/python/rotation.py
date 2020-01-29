@@ -1,12 +1,52 @@
 import numpy as np
 import unittest as ut
+
 try:
     import scipy.spatial.transform as sst
 except BaseException:
     pass
 
-import espressomd.inertia_tensor
+import espressomd.rotation
 import unittest_decorators as utx
+
+
+@utx.skipIfUnmetModuleVersionRequirement('scipy', '>1.2.0')
+class TestRotation(ut.TestCase):
+    """
+    Tests for the rotation utility functions.
+
+    """
+
+    def setUp(self):
+        angle = 2.0 * np.pi * np.random.random()
+        quat = [np.sin(angle / 2.0), np.sin(angle / 2.0),
+                np.sin(angle / 2.0), np.cos(angle / 2.0)]
+        self.rotation = sst.Rotation.from_quat(quat)
+
+    def test_quat_from_matrix(self):
+        """
+        Compare the calculated quaternion representation with scipy.
+
+        """
+        v_x = np.array([1.0, 0.0, 0.0])
+        rotated_vector_ref = self.rotation.apply(v_x)
+        quat_from_matrix = espressomd.rotation.matrix_to_quat(
+            self.rotation.as_matrix())
+        rotated_vector_matrix = sst.Rotation.from_quat(
+            np.roll(quat_from_matrix, shift=-1)).apply(v_x)
+        self.assertAlmostEqual(
+            np.dot(rotated_vector_ref, rotated_vector_matrix), 1.0)
+
+    def test_raise_if_improper(self):
+        """
+        Check that an improper rotation matrix as an argument to
+        :meth:`espressomd.rotation.matrix_to_quat` raises an exception.
+
+        """
+        matrix = self.rotation.as_matrix()
+        matrix[[0, 1], :] = matrix[[1, 0], :]
+        with self.assertRaises(ValueError):
+            espressomd.rotation.matrix_to_quat(matrix)
 
 
 def generate_cuboid_positions(rho, dx, dy, dz):
@@ -89,7 +129,7 @@ class TestInertiaTensor(ut.TestCase):
         respective literature values.
 
         """
-        np.testing.assert_almost_equal(espressomd.inertia_tensor.inertia_tensor(
+        np.testing.assert_almost_equal(espressomd.rotation.inertia_tensor(
             self.samples, self.masses), inertia_tensor_cuboid(self.m, self.dx, self.dy, self.dz), decimal=1)
 
     def test_right_handedness_eigenvectormatrix(self):
@@ -97,7 +137,7 @@ class TestInertiaTensor(ut.TestCase):
         Check that the eigenvectors form a right-handed basis.
 
         """
-        _, eigenvectors = espressomd.inertia_tensor.diagonalized_inertia_tensor(
+        _, eigenvectors = espressomd.rotation.diagonalized_inertia_tensor(
             self.samples, self.masses)
         for i in range(3):
             ev = np.roll(eigenvectors, axis=0, shift=i)
@@ -116,7 +156,7 @@ class TestInertiaTensor(ut.TestCase):
                 np.sin(angle / 2.0), np.cos(angle / 2.0)]
         rotation = sst.Rotation.from_quat(quat)
         rotated_samples = rotation.apply(self.samples)
-        _, eigenvectors = espressomd.inertia_tensor.diagonalized_inertia_tensor(
+        _, eigenvectors = espressomd.rotation.diagonalized_inertia_tensor(
             rotated_samples, self.masses)
         rotated_basis = rotation.apply(np.identity(3))
         for i in range(3):

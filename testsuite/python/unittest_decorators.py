@@ -58,7 +58,10 @@ def skipIfMissingGPU():
 
 def skipIfUnmetModuleVersionRequirement(module, version_requirement):
     """Unittest skipIf decorator for unmet module version requirement."""
-    _module = importlib.import_module(module)
+    try:
+        _module = importlib.import_module(module)
+    except ImportError:
+        return skipIfMissingModules(module)
     if not setuptools.version.pkg_resources.packaging.specifiers.SpecifierSet(
             version_requirement).contains(_module.__version__):
         return unittest.skip(
