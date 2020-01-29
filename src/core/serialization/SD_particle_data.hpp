@@ -32,10 +32,12 @@ BOOST_IS_BITWISE_SERIALIZABLE(SD_particle_data)
 // only applicable as long as SD_particle_data has no pointers 
 // and no variable-size data
 // maybe redundant to the above BOOST_IS_BITWISE_SERIALIZABLE() ??
+/*
 namespace boost { namespace mpi {
   template <>
   struct is_mpi_datatype<SD_particle_data> : mpl::true_ { };
 } }
+*/
 
 
 namespace boost {

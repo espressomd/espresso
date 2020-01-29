@@ -58,16 +58,6 @@ struct SD_particle_data {
   
 };
 
-/** gathers SD relevant information of local particles into a buffer */
-std::vector<SD_particle_data> &sd_gather_local_particles(ParticleRange const &parts);
-
-/** returns a reference to the local (translational and angular) velocities 
-    buffer, which is guaranteed to have the appropriate size */
-std::vector<double> &get_sd_local_v_buffer();
-
-/** Performs the integration step locally on each node */
-void sd_update_locally(ParticleRange const &parts); 
-
 void set_sd_viscosity(double eta);
 double get_sd_viscosity();
 
@@ -86,6 +76,8 @@ int get_sd_flags();
 void set_sd_seed(std::size_t seed);
 std::size_t get_sd_seed();
 
+/* takes the forces and torques on all particles and propagates them
+ * acts on particles on all nodes */
 void propagate_vel_pos_sd();
 
 #endif // STOKESIAN_DYNAMICS

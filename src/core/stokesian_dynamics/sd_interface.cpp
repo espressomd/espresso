@@ -26,8 +26,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <utils/Vector.hpp>
-
 
 #include <boost/config.hpp>
 
@@ -35,10 +33,17 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
-#include "partCfg_global.hpp" // still needed?
+//#include "partCfg_global.hpp" 
 #include "particle_data.hpp"
 #include "ParticleRange.hpp"
 #include "thermostat.hpp"
+
+#include "serialization/SD_particle_data.hpp"
+
+#include <utils/Vector.hpp>
+#include <utils/mpi/gather_buffer.hpp>
+#include <utils/mpi/scatter_buffer.hpp>
+
 
 #if defined(BLAS) && defined(LAPACK)
 #include "sd_cpu.hpp"
@@ -63,17 +68,13 @@ std::size_t sd_seed = 0UL;
 
 int sd_flags = 0;
 
-
 /* Buffer that holds local particle data, and all particles on the master node 
    used for sending particle data to master node */
 std::vector<SD_particle_data> parts_buffer{};
 
 /* Buffer that holds the (translational and angular) velocities of the local
    particles on each node, used for returning results */
-std::vector<double> v_sd{};
-
-
-int debug_cnt = 0; 
+static std::vector<double> v_sd{};
 
 } // namespace
 
@@ -83,8 +84,9 @@ int debug_cnt = 0;
 
 
 /* packs selected properties of all local particles into a buffer */
-std::vector<SD_particle_data> &sd_gather_local_particles(ParticleRange const &parts) {
+void sd_gather_local_particles(ParticleRange const &parts) {
   std::size_t n_part = parts.size();
+  
   parts_buffer.resize(n_part);
   std::size_t i = 0;
   
@@ -112,26 +114,32 @@ std::vector<SD_particle_data> &sd_gather_local_particles(ParticleRange const &pa
     parts_buffer[i].ext_torque[1] = p.f.torque[1];
     parts_buffer[i].ext_torque[2] = p.f.torque[2];
     
-    //TODO: radius?
-    parts_buffer[i].r = radius_dict[p.p.type];
-    //parts_buffer[i].r = 1;
+    parts_buffer[i].r = 0; 
+    // radius_dict is not initialized on slave nodes -> need to do that later
+    // on master node
     
     i++;
   }
   
-  return parts_buffer;
+
 }
 
-std::vector<double> &get_sd_local_v_buffer() {
-  v_sd.resize(local_cells.particles().size() * 6);
-  return v_sd;
-}
-
+/* takes the (translational and rotational) velocity of each particle
+ * and integrates its position */
 void sd_update_locally(ParticleRange const &parts) {
   std::size_t n_part = parts.size();
   std::size_t i = 0;
   
+  // even though on the master node, the v_sd vector is larger than
+  // the local particles count, this should still work because the local 
+  // particles correspond to the first 6*n entries in the "global" v_sd
+  
   for (auto &p: parts) {
+    // skip virtual particles
+    if (p.m.id == -1) {
+      continue;
+    }
+    
     // Copy velocities
     p.m.v[0] = v_sd[6 * i];
     p.m.v[1] = v_sd[6 * i + 1];
@@ -153,6 +161,18 @@ void sd_update_locally(ParticleRange const &parts) {
   }
 }
 
+void print_buffer(std::vector<double> &buffer, std::string name) {
+  std::size_t col = 0;
+  printf("Printing buffer %s: \n",name.c_str());
+  for (auto &f: buffer) {
+    printf("%f  ", f);
+    ++col;
+    if (col==4) {
+      col=0;
+      printf("\n");
+    }
+  }
+}
 
 void set_sd_viscosity(double eta) { sd_viscosity = eta; }
 
@@ -198,234 +218,130 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd() {
-  if (thermo_switch & THERMO_SD) {
-    if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
-      runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
-                               std::to_string(sd_viscosity);
-      return;
-    }
-
-    if (BOOST_UNLIKELY(sd_kT < 0.0)) {
-      runtimeErrorMsg() << "sd_kT has an invalid value: " +
-                               std::to_string(sd_viscosity);
-      return;
-    }
-    
-    
-    printf("Doing it 1\n");
-    
-    
-    mpi_sd_gather_particles();
-    
-    std::size_t n_part = local_cells.particles().size(); // parts_buffer.size();
-    
-    printf("Doing it 2, n_part = %lu \n",n_part);
-    
-    parts_buffer.resize(n_part);
-    
-    static std::vector<int> id{};  // wanted these static
-    static std::vector<double> x_host{};
-    static std::vector<double> f_host{};
-    static std::vector<double> a_host{};
-    
-    id.resize(n_part);
-    x_host.resize(6 * n_part);
-    f_host.resize(6 * n_part);
-    a_host.resize(6 * n_part);
-    
-    printf("Doing it 3\n");
-    
-    std::size_t i = 0;
-    for (auto const &p : parts_buffer) {  
-      id[i] = parts_buffer[i].id; // p.p.is_virtual ? -1 : p.p.identity;
-      
-      x_host[6 * i + 0] = p.pos[0]; // p.r.p[0];
-      x_host[6 * i + 1] = p.pos[1]; // p.r.p[1];
-      x_host[6 * i + 2] = p.pos[2]; // p.r.p[2];
-      // TODO: Rotation
-      x_host[6 * i + 3] = 0; 
-      x_host[6 * i + 4] = 0;
-      x_host[6 * i + 5] = 0;
-      
-      printf("Particle %lu @ (%f,%f,%f)\n",i,p.pos[0],p.pos[1],p.pos[2]);
-      
-      f_host[6 * i + 0] = p.ext_force[0]; // p.f.f[0];
-      f_host[6 * i + 1] = p.ext_force[1]; // p.f.f[1];
-      f_host[6 * i + 2] = p.ext_force[2]; // p.f.f[2];
-      f_host[6 * i + 3] = p.ext_torque[0]; // p.f.torque[0];
-      f_host[6 * i + 4] = p.ext_torque[1]; // p.f.torque[1];
-      f_host[6 * i + 5] = p.ext_torque[2]; // p.f.torque[2];
-      
-      double radius = p.r; // radius_dict[p.p.type];
-      
-      //if (debug_cnt<5)
-        // position
-        //printf("Particle %lu: x=(%f,%f,%f)\n",i,x_host[6 * i + 0],x_host[6 * i + 1],x_host[6 * i + 2]);
-        // force
-        //printf("Particle %lu: f=(%f,%f,%f)\n",i,f_host[6 * i + 0],f_host[6 * i + 1],f_host[6 * i + 2]);
-        // id
-        //printf("Particle %lu: id=%d\n",i,id[i]);
-      
-      
-      if (BOOST_UNLIKELY(radius < 0.0)) {
-        runtimeErrorMsg() << "particle of type " + std::to_string(p.type) + 
-                                 " has an invalid radius: " +
-                                 std::to_string(radius);
+  std::size_t n_part_local = local_cells.particles().size();
+  
+  if (this_node == 0) {
+    if (thermo_switch & THERMO_SD) {
+      if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
+        runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
+                                 std::to_string(sd_viscosity);
         return;
       }
 
-      
-      
-      a_host[i] = radius;
-
-      ++i;
-    } 
-    
-    printf("Doing it 4\n");
-    
-    std::size_t offset = std::round(sim_time / time_step);
-    //std::vector<double> v_sd;
-    switch (device) {
-
-#if defined(BLAS) && defined(LAPACK)
-    case CPU:
-      v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                    sd_kT / time_step, offset, sd_seed, sd_flags);
-      break;
-#endif
-
-
-#ifdef CUDA
-    case GPU:
-      v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                    sd_kT / time_step, offset, sd_seed, sd_flags);
-      break;
-#endif
-
-    default:
-      runtimeErrorMsg()
-          << "Invalid device for Stokesian dynamics. Available devices:"
-#if defined(BLAS) && defined(LAPACK)
-             " cpu"
-#endif
-#ifdef CUDA
-             " gpu"
-#endif
-          ;
-      return;
-    }
-    
-    printf("Doing it 5\n");
-    
-    /*
-    
-    // put results into buffer
-    for (int i = 0; i < n_part; ++i) {
-      // skip virtual particles
-      if (parts_buffer[i].id == -1) {
-        continue;
-      }
-
-      SD_particle_data &p = parts_buffer[i];
-      
-      // velocities
-      p.vel[0] = v_sd[6 * i + 0];
-      p.vel[1] = v_sd[6 * i + 1];
-      p.vel[2] = v_sd[6 * i + 2];
-      p.omega[0] = v_sd[6 * i + 3];
-      p.omega[1] = v_sd[6 * i + 4];
-      p.omega[2] = v_sd[6 * i + 5];
-      // integrated position
-      p.pos[0] = x_host[6 * i + 0] + time_step * v_sd[6 * i + 0];
-      p.pos[1] = x_host[6 * i + 1] + time_step * v_sd[6 * i + 1];
-      p.pos[2] = x_host[6 * i + 2] + time_step * v_sd[6 * i + 2];
-      // TODO: integrated rotation
-      p.quat[0] = 1;
-      p.quat[1] = 0;
-      p.quat[2] = 0;
-      p.quat[3] = 0;
-    }    
-    
-    */
-    
-    // send results over to nodes
-    mpi_sd_scatter_results();
-    
-    printf("Doing it 6\n");
-    
-    // update local buffer ... does it work? 
-    sd_update_locally(local_cells.particles());  
-    
-    
-    printf("Doing it 7\n");
-    
-    
-    
-    /*
-    // prepare buffers to be sent via MPI: counting and resizing
-    
-    for (std::pair<int,SD_node_buffer> &element: node_buffers) {
-      element.second.counter = 0;
-    }
-    
-    for (auto const &p : parts_buffer) {
-      // skip virtual particles
-      if (p.id == -1) {
-        continue;
+      if (BOOST_UNLIKELY(sd_kT < 0.0)) {
+        runtimeErrorMsg() << "sd_kT has an invalid value: " +
+                                 std::to_string(sd_viscosity);
+        return;
       }
       
-      ++node_buffers[p.on_node].counter;
-    }
-    
-    for (std::pair<int,SD_node_buffer> &element: node_buffers) {
-      // hopefully, the size doesn't change often
-      element.second.buffer.resize(node.second.counter);
-      element.second.counter = 0;
-    }
-    
-    
-    // sort particles by their nodes and put data into appropriate buffer
-    for (int i = 0; i < n_part; ++i) {
-      // skip virtual particles
-      if (parts_buffer[i].id == -1) {
-        continue;
-      }
+      sd_gather_local_particles(local_cells.particles());
+      Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
       
-      // put results into buffer
-      SD_node_buffer &current = node_buffers[p.on_node];
-      auto &p = current.buffer[current.counter];
       
-      p.node = parts_buffer[i].node;
-      p.id   = parts_buffer[i].id;
-      // velocities
-      p.vel[0] = v_sd[6 * i + 0];
-      p.vel[1] = v_sd[6 * i + 1];
-      p.vel[2] = v_sd[6 * i + 2];
-      p.omega[0] = v_sd[6 * i + 3];
-      p.omega[1] = v_sd[6 * i + 4];
-      p.omega[2] = v_sd[6 * i + 5];
-      // integrated position
-      p.pos[0] = x_host[6 * i + 0] + time_step * v_sd[6 * i + 0];
-      p.pos[1] = x_host[6 * i + 1] + time_step * v_sd[6 * i + 1];
-      p.pos[2] = x_host[6 * i + 2] + time_step * v_sd[6 * i + 2];
-      // TODO: integrated rotation
-      p.quat[0] = 1;
-      p.quat[1] = 0;
-      p.quat[2] = 0;
-      p.quat[3] = 0;
+      std::size_t n_part = parts_buffer.size();
       
-      ++current.counter;
-    }
-    
-    mpi_sd_scatter_results();
-    
-    */
-    
-    // Ende meine Version
+      static std::vector<int> id{};
+      static std::vector<double> x_host{};
+      static std::vector<double> f_host{};
+      static std::vector<double> a_host{};
+      
+      // n_part not expected to change, but anyway ...
+      id.resize(n_part);
+      x_host.resize(6 * n_part);
+      f_host.resize(6 * n_part);
+      a_host.resize(6 * n_part);
+      
 
+      
+      std::size_t i = 0;
+      for (auto const &p : parts_buffer) {  
+        id[i] = parts_buffer[i].id;
+        
+        x_host[6 * i + 0] = p.pos[0]; // p.r.p[0];
+        x_host[6 * i + 1] = p.pos[1]; // p.r.p[1];
+        x_host[6 * i + 2] = p.pos[2]; // p.r.p[2];
+        // TODO: Rotation
+        //x_host[6 * i + 3] = 0; 
+        //x_host[6 * i + 4] = 0;
+        //x_host[6 * i + 5] = 0;
+        
+        //printf("Particle %lu @ (%f,%f,%f)\n",i,x_host[6 * i + 0],x_host[6 * i + 1],x_host[6 * i + 2]);
+        
+        f_host[6 * i + 0] = p.ext_force[0];
+        f_host[6 * i + 1] = p.ext_force[1];
+        f_host[6 * i + 2] = p.ext_force[2];
+        f_host[6 * i + 3] = p.ext_torque[0];
+        f_host[6 * i + 4] = p.ext_torque[1];
+        f_host[6 * i + 5] = p.ext_torque[2]; 
+        
+        double radius = radius_dict[p.type];
+        
+        
+        if (BOOST_UNLIKELY(radius < 0.0)) {
+          runtimeErrorMsg() << "particle of type " + 
+                                   std::to_string(
+                                   int(parts_buffer[i].type)) +
+                                   " has an invalid radius: " +
+                                   std::to_string(radius);
+          return;
+        }
+
+        
+        
+        a_host[i] = radius;
+
+        ++i;
+      } 
+      
+      std::size_t offset = std::round(sim_time / time_step);
+      switch (device) {
+
+  #if defined(BLAS) && defined(LAPACK)
+      case CPU:
+        v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                      sd_kT / time_step, offset, sd_seed, sd_flags);
+        break;
+  #endif
+
+
+  #ifdef CUDA
+      case GPU:
+        v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
+                      sd_kT / time_step, offset, sd_seed, sd_flags);
+        break;
+  #endif
+
+      default:
+        runtimeErrorMsg()
+            << "Invalid device for Stokesian dynamics. Available devices:"
+  #if defined(BLAS) && defined(LAPACK)
+               " cpu"
+  #endif
+  #ifdef CUDA
+               " gpu"
+  #endif
+            ;
+        return;
+      }
+
+      Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
+      sd_update_locally(local_cells.particles());
+    }
+    
+  } else { // if (this_node == 0)
   
 
-  }
+    sd_gather_local_particles(local_cells.particles());
+    Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
+    
+    v_sd.resize(n_part_local * 6);
+    
+    // now wait while master node is busy ...
+    
+   
+    Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
+    sd_update_locally(local_cells.particles());
+  } // if (this_node == 0) {...} else 
 }
 
 #endif // STOKESIAN_DYNAMICS
