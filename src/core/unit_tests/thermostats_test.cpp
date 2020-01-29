@@ -19,12 +19,13 @@
 
 /* Unit tests for thermostats. */
 
-#define BOOST_TEST_MODULE Particle test
+#define BOOST_TEST_MODULE Thermostats test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <limits>
 
+#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
@@ -32,6 +33,7 @@
 #include "Particle.hpp"
 #include "integrators/brownian_inline.hpp"
 #include "integrators/langevin_inline.hpp"
+#include "random_test.hpp"
 #include "thermostat.hpp"
 
 extern double time_step;
@@ -208,4 +210,84 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
     BOOST_CHECK_CLOSE(out[2], ref[2], tol);
   }
 #endif // ROTATION
+}
+
+BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
+  time_step = 1.0;
+  temperature = 2.0;
+  auto thermostat = thermostat_factory<BrownianThermostat>();
+  auto p = particle_factory();
+  {
+    thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+    auto const stats = noise_stats(
+        [&p, &thermostat](int i) -> Utils::Vector3d {
+          thermostat.rng_counter->increment();
+          return bd_random_walk(thermostat, p, time_step);
+        },
+        2'500'000);
+    noise_check_correlation(std::get<2>(stats));
+  }
+  {
+    thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+    auto const stats = noise_stats(
+        [&p, &thermostat](int i) -> Utils::Vector3d {
+          thermostat.rng_counter->increment();
+          return bd_random_walk_vel(thermostat, p);
+        },
+        2'500'000);
+    noise_check_correlation(std::get<2>(stats));
+  }
+#ifdef ROTATION
+  p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
+  {
+    // here we only test the first 3 components of the quaternion
+    thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+    auto const stats = noise_stats(
+        [&p, &thermostat](int i) -> Utils::Vector4d {
+          thermostat.rng_counter->increment();
+          return bd_random_walk_rot(thermostat, p, time_step);
+        },
+        2'500'000);
+    noise_check_correlation(std::get<2>(stats));
+  }
+  {
+    thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+    auto const stats = noise_stats(
+        [&p, &thermostat](int i) -> Utils::Vector3d {
+          thermostat.rng_counter->increment();
+          return bd_random_walk_vel_rot(thermostat, p);
+        },
+        2'500'000);
+    noise_check_correlation(std::get<2>(stats));
+  }
+#endif
+}
+
+BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
+  time_step = 1.0;
+  temperature = 2.0;
+  auto thermostat = thermostat_factory<LangevinThermostat>();
+  auto const p = particle_factory();
+  {
+    thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+    auto const stats = noise_stats(
+        [&p, &thermostat](int i) -> Utils::Vector3d {
+          thermostat.rng_counter->increment();
+          return friction_thermo_langevin(thermostat, p);
+        },
+        2'000'000);
+    noise_check_correlation(std::get<2>(stats));
+  }
+#ifdef ROTATION
+  {
+    thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+    auto const stats = noise_stats(
+        [&p, &thermostat](int i) -> Utils::Vector3d {
+          thermostat.rng_counter->increment();
+          return friction_thermo_langevin_rotation(thermostat, p);
+        },
+        2'000'000);
+    noise_check_correlation(std::get<2>(stats));
+  }
+#endif
 }
