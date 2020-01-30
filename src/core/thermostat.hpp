@@ -114,9 +114,14 @@ public:
     }
     pref_noise_rotation = sigma(temperature, time_step, gamma_rotation);
   }
-  /** Calculate the noise standard deviation. */
+  /** Calculate the noise prefactor.
+   *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma / dt} / \sigma_\eta @f$
+   *  with @f$ \sigma_\eta @f$ the standard deviation of the random uniform
+   *  process @f$ \eta(t) @f$.
+   */
   static GammaType sigma(double kT, double time_step, GammaType const &gamma) {
-    constexpr auto const temp_coeff = 24.0;
+    // random uniform noise has variance 1/12
+    constexpr auto const temp_coeff = 2.0 * 12.0;
     return sqrt((temp_coeff * kT / time_step) * gamma);
   }
   /** @name Parameters */
@@ -128,11 +133,17 @@ public:
   /*@}*/
   /** @name Prefactors */
   /*@{*/
-  /** Prefactor for the friction. */
+  /** Prefactor for the friction.
+   *  Stores @f$ \gamma_{\text{trans}} @f$.
+   */
   GammaType pref_friction;
-  /** Prefactor for the translational velocity noise. */
+  /** Prefactor for the translational velocity noise.
+   *  Stores @f$ \sqrt{2 k_B T \gamma_{\text{trans}} / dt} / \sigma_\eta @f$.
+   */
   GammaType pref_noise;
-  /** Prefactor for the angular velocity noise. */
+  /** Prefactor for the angular velocity noise.
+   *  Stores @f$ \sqrt{2 k_B T \gamma_{\text{rot}} / dt} / \sigma_\eta @f$.
+   */
   GammaType pref_noise_rotation;
   /*@}*/
 };
@@ -172,12 +183,20 @@ public:
     sigma_pos_rotation = sigma(temperature, gamma_rotation);
 #endif // ROTATION
   }
-  /** Calculate the noise standard deviation. */
+  /** Calculate the noise prefactor.
+   *  Evaluates the quantity @f$ \sqrt{2 k_B T / \gamma} / \sigma_\eta @f$
+   *  with @f$ \sigma_\eta @f$ the standard deviation of the random gaussian
+   *  process @f$ \eta(t) @f$.
+   */
   static GammaType sigma(double kT, GammaType const &gamma) {
     constexpr auto const temp_coeff = 2.0;
     return sqrt(Utils::hadamard_division(temp_coeff * kT, gamma));
   }
-  /** Calculate the noise standard deviation. */
+  /** Calculate the noise prefactor.
+   *  Evaluates the quantity @f$ \sqrt{k_B T} / \sigma_\eta @f$
+   *  with @f$ \sigma_\eta @f$ the standard deviation of the random gaussian
+   *  process @f$ \eta(t) @f$.
+   */
   static double sigma(double kT) {
     constexpr auto const temp_coeff = 1.0;
     return sqrt(temp_coeff * kT);
@@ -227,31 +246,49 @@ public:
 #ifdef NPT
     assert(piston > 0.0);
     auto const half_time_step = time_step / 2.0;
-    pref1 = -gamma0 * half_time_step;
-    pref2 = sigma(temperature, gamma0);
-    pref3 = -gammav * half_time_step / piston;
-    pref4 = sigma(temperature, gammav);
+    pref_rescale_0 = -gamma0 * half_time_step;
+    pref_noise_0 = sigma(temperature, gamma0);
+    pref_rescale_V = -gammav * half_time_step / piston;
+    pref_noise_V = sigma(temperature, gammav);
 #endif
   }
-  /** Calculate the noise standard deviation. */
+  /** Calculate the noise prefactor.
+   *  Evaluates the quantity @f$ \sqrt{2 k_B T \gamma dt / 2} / \sigma_\eta @f$
+   *  with @f$ \sigma_\eta @f$ the standard deviation of the random uniform
+   *  process @f$ \eta(t) @f$.
+   */
   static double sigma(double kT, double gamma) {
+    // random uniform noise has variance 1/12; the temperature
+    // coefficient of 2 is canceled out by the half time step
     constexpr auto const temp_coeff = 12.0;
     return sqrt(temp_coeff * temperature * gamma * time_step);
   }
   /** @name Parameters */
   /*@{*/
-  /** Friction coefficient @f$ \gamma_0 @f$ */
+  /** Friction coefficient of the particles @f$ \gamma^0 @f$ */
   double gamma0;
-  /** Friction coefficient @f$ \gamma_V @f$ */
+  /** Friction coefficient for the box @f$ \gamma^V @f$ */
   double gammav;
   /*@}*/
 #ifdef NPT
   /** @name Prefactors */
   /*@{*/
-  double pref1;
-  double pref2;
-  double pref3;
-  double pref4;
+  /** %Particle velocity rescaling at half the time step.
+   *  Stores @f$ \gamma^{0}\cdot\frac{dt}{2} @f$.
+   */
+  double pref_rescale_0;
+  /** %Particle velocity rescaling noise standard deviation.
+   *  Stores @f$ \sqrt{k_B T \gamma^{0} dt} / \sigma_\eta @f$.
+   */
+  double pref_noise_0;
+  /** Volume rescaling at half the time step.
+   *  Stores @f$ \frac{\gamma^{V}}{Q}\cdot\frac{dt}{2} @f$.
+   */
+  double pref_rescale_V;
+  /** Volume rescaling noise standard deviation.
+   *  Stores @f$ \sqrt{k_B T \gamma^{V} dt} / \sigma_\eta @f$.
+   */
+  double pref_noise_V;
   /*@}*/
 #endif
 };
@@ -296,13 +333,13 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
   constexpr auto const salt =
       (step == 1) ? RNGSalt::NPTISO0_HALF_STEP1 : RNGSalt::NPTISO0_HALF_STEP2;
   if (thermo_switch & THERMO_NPT_ISO) {
-    if (npt_iso.pref2 > 0.0) {
-      return npt_iso.pref1 * vel +
-             npt_iso.pref2 *
+    if (npt_iso.pref_noise_0 > 0.0) {
+      return npt_iso.pref_rescale_0 * vel +
+             npt_iso.pref_noise_0 *
                  Random::v_noise<salt>(npt_iso.rng_counter->value(),
                                        p_identity);
     }
-    return npt_iso.pref1 * vel;
+    return npt_iso.pref_rescale_0 * vel;
   }
   return {};
 }
@@ -313,12 +350,12 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
 inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
                                      double p_diff) {
   if (thermo_switch & THERMO_NPT_ISO) {
-    if (npt_iso.pref4 > 0.0) {
-      return npt_iso.pref3 * p_diff +
-             npt_iso.pref4 * Random::noise<RNGSalt::NPTISOV>(
-                                 npt_iso.rng_counter->value(), 0);
+    if (npt_iso.pref_noise_V > 0.0) {
+      return npt_iso.pref_rescale_V * p_diff +
+             npt_iso.pref_noise_V * Random::noise<RNGSalt::NPTISOV>(
+                                        npt_iso.rng_counter->value(), 0);
     }
-    return npt_iso.pref3 * p_diff;
+    return npt_iso.pref_rescale_V * p_diff;
   }
   return 0.0;
 }

@@ -171,6 +171,8 @@ The discretisation consists of the following steps (see :cite:`kolb99a` for a fu
    .. math:: \mathcal{P} = \mathcal{P}(x(t+dt),V(t+dt),f(x(t+dt)), v(t+dt/2))
    .. math:: \Pi(t+dt) = \Pi(t+dt/2) + (\mathcal{P}-P) dt/2 -\frac{\gamma^V}{Q}\Pi(t+dt/2) dt/2  +  \sqrt{k_B T \gamma^V dt} \overline{\eta}
 
+   with uncorrelated numbers :math:`\overline{\eta}` drawn from a random uniform process :math:`\eta(t)`
+
 6. Update the velocities
 
    .. math:: v(t+dt) = v(t+dt/2) + \frac{F(t+dt)}{m} dt/2
@@ -180,7 +182,7 @@ Notes:
 * The NpT algorithm is only tested for all 3 directions enabled for scaling. Usage of ``direction`` is considered an experimental feature.
 * In step 4, only those coordinates are scaled for which ``direction`` is set.
 * For the instantaneous pressure, the same limitations of applicability hold as described in :ref:`Pressure`.
-* The particle forces :math:`F` include interactions as well as a friction and noise term analogous to the terms in the :ref:`Langevin thermostat`.
+* The particle forces :math:`F` include interactions as well as a friction (:math:`\gamma^0`) and noise term (:math:`\sqrt{k_B T \gamma^0 dt} \overline{\eta}`) analogous to the terms in the :ref:`Langevin thermostat`.
 * The particle forces are only calculated in step 5 and then reused in step 1 of the next iteration. See :ref:`Velocity Verlet Algorithm` for the implications of that.
 
 .. _Rotational degrees of freedom and particle anisotropy:

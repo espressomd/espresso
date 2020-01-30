@@ -113,6 +113,7 @@ template <RNGSalt salt> double noise(uint64_t counter, int key1, int key2 = 0) {
 /**
  * @brief 3d uniform vector noise.
  *
+ * Mean = 0, variance = 1 / 12.
  * This uses the Philox PRNG, the state is controlled
  * by the counter, the salt and two keys.
  * If any of the keys and salt differ, the noise is
@@ -133,7 +134,7 @@ Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
 
 /** @brief Generator for Gaussian random 3d vector.
  *
- * Mean = 0, standard deviation = 1.0
+ * Mean = 0, standard deviation = 1.0.
  * Based on the Philox RNG using 4x64 bits.
  * The Box-Muller transform is used to convert from uniform to normal
  * distribution. The transform is only valid, if the uniformly distributed
@@ -233,8 +234,8 @@ void init_random_seed(int seed);
 } // namespace Random
 
 /**
- * @brief Draws a random real number from the uniform distribution in the range
- * [0,1)
+ * @brief Draws a random real number from the uniform distribution in the
+ * range [0,1) using the Mersenne twister.
  */
 inline double d_random() {
   using namespace Random;
