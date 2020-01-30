@@ -53,11 +53,14 @@ cdef extern from "thermostat.hpp":
 
     void langevin_set_rng_state(stdint.uint64_t counter)
     void brownian_set_rng_state(stdint.uint64_t counter)
+    void npt_iso_set_rng_state(stdint.uint64_t counter)
     cbool langevin_is_seed_required()
     cbool brownian_is_seed_required()
+    cbool npt_iso_is_seed_required()
 
     stdint.uint64_t langevin_get_rng_state()
     stdint.uint64_t brownian_get_rng_state()
+    stdint.uint64_t npt_iso_get_rng_state()
 
 cdef extern from "Globals.hpp":
     # links intern C-struct with python object

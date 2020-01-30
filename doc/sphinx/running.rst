@@ -106,7 +106,7 @@ A code snippet would look like::
     import espressomd
 
     system = espressomd.System()
-    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
+    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=42)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
 The physical meaning of these parameters is described below:

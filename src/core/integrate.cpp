@@ -320,11 +320,16 @@ void philox_counter_increment() {
   if (thermo_switch & THERMO_BROWNIAN) {
     brownian_rng_counter_increment();
   }
-  if (thermo_switch & THERMO_DPD) {
-#ifdef DPD
-    dpd_rng_counter_increment();
-#endif
+#ifdef NPT
+  if (thermo_switch & THERMO_NPT_ISO) {
+    npt_iso_rng_counter_increment();
   }
+#endif
+#ifdef DPD
+  if (thermo_switch & THERMO_DPD) {
+    dpd_rng_counter_increment();
+  }
+#endif
   if (n_thermalized_bonds)
     thermalized_bond_rng_counter_increment();
 }

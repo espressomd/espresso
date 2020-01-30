@@ -82,6 +82,7 @@ IsotropicNptThermostat npt_iso = {};
 
 REGISTER_THERMOSTAT_CALLBACKS(langevin, THERMO_LANGEVIN)
 REGISTER_THERMOSTAT_CALLBACKS(brownian, THERMO_BROWNIAN)
+REGISTER_THERMOSTAT_CALLBACKS(npt_iso, THERMO_NPT_ISO)
 
 void thermo_init() {
   // Init thermalized bond despite of thermostat

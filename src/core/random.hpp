@@ -55,6 +55,9 @@ enum class RNGSalt : uint64_t {
   BROWNIAN_INC,
   BROWNIAN_ROT_INC,
   BROWNIAN_ROT_WALK,
+  NPTISO0_HALF_STEP1,
+  NPTISO0_HALF_STEP2,
+  NPTISOV,
   SALT_DPD,
   THERMALIZED_BOND
 };
@@ -86,6 +89,25 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
 
   auto const res = rng_type{}(c, k);
   return {res[0], res[1], res[2], res[3]};
+}
+
+/**
+ * @brief Uniform noise.
+ *
+ * Mean = 0, variance = 1 / 12.
+ * This uses the Philox PRNG, the state is controlled
+ * by the counter, the salt and two keys.
+ * If any of the keys and salt differ, the noise is
+ * not correlated between two calls along the same counter
+ * sequence.
+ *
+ */
+template <RNGSalt salt> double noise(uint64_t counter, int key1, int key2 = 0) {
+
+  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
+
+  using Utils::uniform;
+  return uniform(noise[0]) - 0.5;
 }
 
 /**

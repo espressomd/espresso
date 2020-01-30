@@ -39,8 +39,7 @@ class IntegratorNPT(ut.TestCase):
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.25
 
-        data = np.genfromtxt(tests_common.abspath(
-            "data/npt_lj_system.data"))
+        data = np.genfromtxt(tests_common.abspath("data/npt_lj_system.data"))
 
         # Input format: id pos f
         for particle in data:
@@ -51,7 +50,7 @@ class IntegratorNPT(ut.TestCase):
         self.S.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=1, cutoff=1.12246, shift=0.25)
 
-        self.S.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004)
+        self.S.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
         self.S.integrator.set_isotropic_npt(
             ext_pressure=self.p_ext, piston=0.0001)
 

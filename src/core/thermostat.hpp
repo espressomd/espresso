@@ -49,9 +49,6 @@
 /*@}*/
 
 namespace Thermostat {
-
-static auto noise = []() { return (d_random() - 0.5); };
-
 #ifdef PARTICLE_ANISOTROPY
 using GammaType = Utils::Vector3d;
 #else
@@ -229,11 +226,17 @@ public:
   void recalc_prefactors(double piston) {
 #ifdef NPT
     assert(piston > 0.0);
-    pref1 = -gamma0 * 0.5 * time_step;
-    pref2 = sqrt(12.0 * temperature * gamma0 * time_step);
-    pref3 = -gammav * (1.0 / piston) * 0.5 * time_step;
-    pref4 = sqrt(12.0 * temperature * gammav * time_step);
+    auto const half_time_step = time_step / 2.0;
+    pref1 = -gamma0 * half_time_step;
+    pref2 = sigma(temperature, gamma0);
+    pref3 = -gammav * half_time_step / piston;
+    pref4 = sigma(temperature, gammav);
 #endif
+  }
+  /** Calculate the noise standard deviation. */
+  static double sigma(double kT, double gamma) {
+    constexpr auto const temp_coeff = 12.0;
+    return sqrt(temp_coeff * temperature * gamma * time_step);
   }
   /** @name Parameters */
   /*@{*/
@@ -270,6 +273,7 @@ public:
 
 NEW_THERMOSTAT(langevin)
 NEW_THERMOSTAT(brownian)
+NEW_THERMOSTAT(npt_iso)
 
 /** Initialize constants of the thermostat at the start of integration */
 void thermo_init();
@@ -277,20 +281,30 @@ void thermo_init();
 #ifdef NPT
 /** Add velocity-dependent noise and friction for NpT-sims to the particle's
  *  velocity
- *  @param npt_iso Parameters
- *  @param vj     j-component of the velocity
- *  @return       j-component of the noise added to the velocity, also scaled by
- *                dt (contained in prefactors)
+ *  @tparam step       Which half time step to integrate (1 or 2)
+ *  @param npt_iso     Parameters
+ *  @param vel         particle velocity
+ *  @param p_identity  particle identity
+ *  @return noise added to the velocity, already rescaled by
+ *          dt/2 (contained in prefactors)
  */
-inline double friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
-                                     double vj) {
+template <size_t step>
+inline Utils::Vector3d
+friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
+                       Utils::Vector3d const &vel, int p_identity) {
+  static_assert(step == 1 or step == 2, "NPT only has 2 integration steps");
+  constexpr auto const salt =
+      (step == 1) ? RNGSalt::NPTISO0_HALF_STEP1 : RNGSalt::NPTISO0_HALF_STEP2;
   if (thermo_switch & THERMO_NPT_ISO) {
     if (npt_iso.pref2 > 0.0) {
-      return npt_iso.pref1 * vj + npt_iso.pref2 * Thermostat::noise();
+      return npt_iso.pref1 * vel +
+             npt_iso.pref2 *
+                 Random::v_noise<salt>(npt_iso.rng_counter->value(),
+                                       p_identity);
     }
-    return npt_iso.pref1 * vj;
+    return npt_iso.pref1 * vel;
   }
-  return 0.0;
+  return {};
 }
 
 /** Add p_diff-dependent noise and friction for NpT-sims to \ref
@@ -300,7 +314,9 @@ inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
                                      double p_diff) {
   if (thermo_switch & THERMO_NPT_ISO) {
     if (npt_iso.pref4 > 0.0) {
-      return npt_iso.pref3 * p_diff + npt_iso.pref4 * Thermostat::noise();
+      return npt_iso.pref3 * p_diff +
+             npt_iso.pref4 * Random::noise<RNGSalt::NPTISOV>(
+                                 npt_iso.rng_counter->value(), 0);
     }
     return npt_iso.pref3 * p_diff;
   }
