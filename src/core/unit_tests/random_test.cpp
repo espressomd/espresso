@@ -29,26 +29,87 @@
 #include "random.hpp"
 #include "random_test.hpp"
 
-BOOST_AUTO_TEST_CASE(test_noise_uniform) {
-  double mean, var;
-  Utils::Matrix<double, 3, 3> cov;
-  std::tie(mean, var, cov) = noise_stats(
-      [](int i) -> Utils::Vector3d {
-        return Random::v_noise<RNGSalt::LANGEVIN>(i, 0);
-      },
-      10'000'000);
-  noise_check_stats(1.0 / 12.0, mean, var, cov);
-  noise_check_correlation(cov);
+BOOST_AUTO_TEST_CASE(test_noise_statistics) {
+  constexpr size_t const sample_size = 100'000;
+  constexpr size_t const x = 0, y = 1, z = 2;
+  constexpr double const tol = 1e-12;
+
+  double value = 1;
+  std::vector<double> means, variances;
+  std::vector<std::vector<double>> covariance;
+  std::vector<std::vector<double>> correlation;
+  std::tie(means, variances, covariance, correlation) =
+      noise_statistics(std::function<std::vector<VariantVectorXd>()>(
+                           [&value]() -> std::vector<VariantVectorXd> {
+                             value *= -1;
+                             return {{Utils::Vector2d{value, -value}}};
+                           }),
+                       sample_size);
+  // check pooled mean and variance
+  BOOST_CHECK_SMALL(std::abs(means[0]), 100 * tol);
+  BOOST_CHECK_CLOSE(variances[0], 1.0, tol);
+  // check variance per axis
+  BOOST_CHECK_CLOSE(covariance[x][x], 1.0, tol);
+  BOOST_CHECK_CLOSE(covariance[y][y], 1.0, tol);
+  BOOST_CHECK_CLOSE(covariance[x][y], -1.0, tol);
+  BOOST_CHECK_EQUAL(covariance[x][y], covariance[y][x]);
+  // check correlation
+  BOOST_CHECK_CLOSE(correlation[x][x], 1.0, tol);
+  BOOST_CHECK_CLOSE(correlation[y][y], 1.0, tol);
+  BOOST_CHECK_CLOSE(correlation[x][y], -1.0, tol);
+  BOOST_CHECK_EQUAL(correlation[x][y], correlation[y][x]);
 }
 
-BOOST_AUTO_TEST_CASE(test_noise_gaussian) {
-  double mean, var;
-  Utils::Matrix<double, 3, 3> cov;
-  std::tie(mean, var, cov) = noise_stats(
-      [](int i) -> Utils::Vector3d {
-        return Random::v_noise_g<RNGSalt::BROWNIAN_WALK>(i, 0);
-      },
-      10'000'000);
-  noise_check_stats(1.0, mean, var, cov);
-  noise_check_correlation(cov);
+BOOST_AUTO_TEST_CASE(test_noise_uniform_3d) {
+  constexpr size_t const sample_size = 4'000'000;
+  constexpr size_t const x = 0, y = 1, z = 2;
+
+  int counter = 0;
+  std::vector<double> means, variances;
+  std::vector<std::vector<double>> covariance;
+  std::vector<std::vector<double>> correlation;
+  std::tie(means, variances, covariance, correlation) = noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [&counter]() -> std::vector<VariantVectorXd> {
+            return {{Random::v_noise<RNGSalt::LANGEVIN>(counter++, 0)}};
+          }),
+      sample_size);
+  // check pooled mean and variance
+  BOOST_CHECK_SMALL(std::abs(means[0]), 2e-4);
+  BOOST_CHECK_CLOSE(variances[0] * 12.0, 1.0, 0.05);
+  // check variance per axis
+  BOOST_CHECK_CLOSE(covariance[x][x] * 12.0, 1.0, 0.2);
+  BOOST_CHECK_CLOSE(covariance[y][y] * 12.0, 1.0, 0.2);
+  BOOST_CHECK_CLOSE(covariance[z][z] * 12.0, 1.0, 0.2);
+  // check correlation
+  BOOST_CHECK_SMALL(std::abs(correlation[x][y]), 2e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[y][z]), 2e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[z][x]), 2e-3);
+}
+
+BOOST_AUTO_TEST_CASE(test_noise_gaussian_3d) {
+  constexpr size_t const sample_size = 4'000'000;
+  constexpr size_t const x = 0, y = 1, z = 2;
+
+  int counter = 0;
+  std::vector<double> means, variances;
+  std::vector<std::vector<double>> covariance;
+  std::vector<std::vector<double>> correlation;
+  std::tie(means, variances, covariance, correlation) = noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [&counter]() -> std::vector<VariantVectorXd> {
+            return {{Random::v_noise_g<RNGSalt::BROWNIAN_WALK>(counter++, 0)}};
+          }),
+      sample_size);
+  // check pooled mean and variance
+  BOOST_CHECK_SMALL(std::abs(means[0]), 2e-4);
+  BOOST_CHECK_CLOSE(variances[0], 1.0, 0.05);
+  // check variance per axis
+  BOOST_CHECK_CLOSE(covariance[x][x], 1.0, 0.2);
+  BOOST_CHECK_CLOSE(covariance[y][y], 1.0, 0.2);
+  BOOST_CHECK_CLOSE(covariance[z][z], 1.0, 0.2);
+  // check correlation
+  BOOST_CHECK_SMALL(std::abs(correlation[x][y]), 2e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[y][z]), 2e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[z][x]), 2e-3);
 }
