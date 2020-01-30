@@ -94,8 +94,13 @@ extern bool thermo_virtual;
  * parameter structs
  ************************************************/
 
+struct BaseThermostat {
+  /** RNG counter. */
+  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
+};
+
 /** %Thermostat for Langevin dynamics. */
-struct LangevinThermostat {
+struct LangevinThermostat : public BaseThermostat {
 private:
   using GammaType = Thermostat::GammaType;
 
@@ -133,14 +138,12 @@ public:
   /** Prefactor for the angular velocity noise. */
   GammaType pref_noise_rotation;
   /*@}*/
-  /** RNG counter, used for both translation and rotation. */
-  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
 
 /** %Thermostat for Brownian dynamics.
  *  Default particle mass is assumed to be unitary in these global parameters.
  */
-struct BrownianThermostat {
+struct BrownianThermostat : public BaseThermostat {
 private:
   using GammaType = Thermostat::GammaType;
 
@@ -212,28 +215,26 @@ public:
    */
   double sigma_vel_rotation = 0;
   /*@}*/
-  /** RNG counter, used for both translation and rotation. */
-  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
 
 /** %Thermostat for isotropic NPT dynamics. */
-struct IsotropicNptThermostat {
+struct IsotropicNptThermostat : public BaseThermostat {
 private:
   using GammaType = Thermostat::GammaType;
 
 public:
-#ifdef NPT
   /** Recalculate prefactors.
    *  Needs to be called every time the parameters are changed.
    */
   void recalc_prefactors(double piston) {
+#ifdef NPT
     assert(piston > 0.0);
     pref1 = -gamma0 * 0.5 * time_step;
     pref2 = sqrt(12.0 * temperature * gamma0 * time_step);
     pref3 = -gammav * (1.0 / piston) * 0.5 * time_step;
     pref4 = sqrt(12.0 * temperature * gammav * time_step);
-  }
 #endif
+  }
   /** @name Parameters */
   /*@{*/
   /** Friction coefficient @f$ \gamma_0 @f$ */
@@ -256,21 +257,19 @@ public:
  * functions
  ************************************************/
 
-/** Only require seed if rng is not initialized. */
-bool langevin_is_seed_required();
+/**
+ * @brief Register a thermostat public interface
+ *
+ * @param thermostat        The thermostat name
+ */
+#define NEW_THERMOSTAT(thermostat)                                             \
+  bool thermostat##_is_seed_required();                                        \
+  void thermostat##_rng_counter_increment();                                   \
+  void thermostat##_set_rng_state(uint64_t counter);                           \
+  uint64_t thermostat##_get_rng_state();
 
-/** Only require seed if rng is not initialized. */
-bool brownian_is_seed_required();
-
-/** @name philox functionality: increment, get/set */
-/*@{*/
-void langevin_rng_counter_increment();
-void langevin_set_rng_state(uint64_t counter);
-uint64_t langevin_get_rng_state();
-void brownian_rng_counter_increment();
-void brownian_set_rng_state(uint64_t counter);
-uint64_t brownian_get_rng_state();
-/*@}*/
+NEW_THERMOSTAT(langevin)
+NEW_THERMOSTAT(brownian)
 
 /** Initialize constants of the thermostat at the start of integration */
 void thermo_init();
@@ -307,6 +306,6 @@ inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
   }
   return 0.0;
 }
-#endif
+#endif // NPT
 
 #endif
