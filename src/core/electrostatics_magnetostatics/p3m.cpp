@@ -414,26 +414,15 @@ static void P3M_assign_forces(double force_prefac,
     auto const q = p.p.q;
     if (q != 0.0) {
       auto const pref = q * force_prefac;
+      auto const w = p3m.inter_weights.load<cao>(cp_cnt++);
 
-      auto const w = p3m.inter_weights.load<cao>(cp_cnt);
+      Utils::Vector3d E{};
+      p3m_interpolate(p3m.local_mesh, w, [&E](int ind, double w) {
+        E += w * Utils::Vector3d{p3m.E_mesh[0][ind], p3m.E_mesh[1][ind],
+                                 p3m.E_mesh[2][ind]};
+      });
 
-      auto q_ind = w.ind;
-
-      for (int i0 = 0; i0 < cao; i0++) {
-        auto const fx = w.w_x[i0];
-        for (int i1 = 0; i1 < cao; i1++) {
-          auto const fxy = w.w_y[i1] * fx;
-          for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f -= pref * fxy * w.w_z[i2] *
-                     Utils::Vector3d{p3m.E_mesh[0][q_ind], p3m.E_mesh[1][q_ind],
-                                     p3m.E_mesh[2][q_ind]};
-            q_ind++;
-          }
-          q_ind += p3m.local_mesh.q_2_off;
-        }
-        q_ind += p3m.local_mesh.q_21_off;
-      }
-      cp_cnt++;
+      p.f.f -= pref * E;
     }
   }
 }
