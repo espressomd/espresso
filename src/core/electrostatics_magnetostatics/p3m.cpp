@@ -305,55 +305,15 @@ void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
                           const Utils::Vector3d &ai,
                           p3m_local_mesh const &local_mesh,
                           p3m_interpolation_weights *inter_weights = nullptr) {
-  /** position shift for calc. of first assignment mesh point. */
-  static auto const pos_shift = std::floor((cao - 1) / 2.0) - (cao % 2) / 2.0;
-
-  /* distance to nearest mesh point */
-  double dist[3];
-
-  /* nearest mesh point */
-  Utils::Vector3i nmp;
-
-  for (int d = 0; d < 3; d++) {
-    /* particle position in mesh coordinates */
-    auto const pos = ((real_pos[d] - local_mesh.ld_pos[d]) * ai[d]) - pos_shift;
-
-    nmp[d] = (int)pos;
-
-    /* distance to nearest mesh point */
-    dist[d] = (pos - nmp[d]) - 0.5;
-  }
-  /* 3d-array index of nearest mesh point */
-  auto q_ind = Utils::get_linear_index(nmp, local_mesh.dim,
-                                       Utils::MemoryOrder::ROW_MAJOR);
-
-  Utils::Array<double, cao> w_x, w_y, w_z;
-
-  for (int i = 0; i < cao; i++) {
-    using Utils::bspline;
-
-    w_x[i] = bspline<cao>(i, dist[0]);
-    w_y[i] = bspline<cao>(i, dist[1]);
-    w_z[i] = bspline<cao>(i, dist[2]);
-  }
+  auto const w =
+      p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh);
 
   if (inter_weights) {
-    inter_weights->store(q_ind, w_x, w_y, w_z);
+    inter_weights->store(w);
   }
 
-  for (int i0 = 0; i0 < cao; i0++) {
-    auto const tmp0 = w_x[i0];
-    for (int i1 = 0; i1 < cao; i1++) {
-      auto const tmp1 = tmp0 * w_y[i1];
-      for (int i2 = 0; i2 < cao; i2++) {
-        auto const cur_ca_frac_val = q * tmp1 * w_z[i2];
-        p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-        q_ind++;
-      }
-      q_ind += local_mesh.q_2_off;
-    }
-    q_ind += local_mesh.q_21_off;
-  }
+  p3m_interpolate(local_mesh, w,
+                  [q](int ind, double w) { p3m.rs_mesh[ind] += w * q; });
 }
 
 /** Template parameterized calculation of the charge assignment to be called by
@@ -455,20 +415,16 @@ static void P3M_assign_forces(double force_prefac,
     if (q != 0.0) {
       auto const pref = q * force_prefac;
 
-      Span<const double> w_x, cw_y, cw_z;
-      int q_ind;
-      std::tie(q_ind, w_x, cw_y, cw_z) = p3m.inter_weights.load(cp_cnt);
+      auto const w = p3m.inter_weights.load<cao>(cp_cnt);
 
-      /* We only pin the directions that are used multiple times. */
-      const Vector<double, cao> w_y(cw_y);
-      const Vector<double, cao> w_z(cw_z);
+      auto q_ind = w.ind;
 
       for (int i0 = 0; i0 < cao; i0++) {
-        auto const fx = w_x[i0];
+        auto const fx = w.w_x[i0];
         for (int i1 = 0; i1 < cao; i1++) {
-          auto const fxy = w_y[i1] * fx;
+          auto const fxy = w.w_y[i1] * fx;
           for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f -= pref * fxy * w_z[i2] *
+            p.f.f -= pref * fxy * w.w_z[i2] *
                      Utils::Vector3d{p3m.E_mesh[0][q_ind], p3m.E_mesh[1][q_ind],
                                      p3m.E_mesh[2][q_ind]};
             q_ind++;
