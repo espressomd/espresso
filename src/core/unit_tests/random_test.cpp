@@ -60,6 +60,24 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   BOOST_CHECK_EQUAL(correlation[x][y], correlation[y][x]);
 }
 
+BOOST_AUTO_TEST_CASE(test_noise_uniform_1d) {
+  constexpr size_t const sample_size = 4'000'000;
+
+  int counter = 0;
+  std::vector<double> means, variances;
+  std::vector<std::vector<double>> covariance;
+  std::vector<std::vector<double>> correlation;
+  std::tie(means, variances, covariance, correlation) = noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [&counter]() -> std::vector<VariantVectorXd> {
+            return {{Random::noise<RNGSalt::NPTISOV>(counter++, 0)}};
+          }),
+      sample_size);
+  // check pooled mean and variance
+  BOOST_CHECK_SMALL(std::abs(means[0]), 2e-4);
+  BOOST_CHECK_CLOSE(variances[0] * 12.0, 1.0, 0.05);
+}
+
 BOOST_AUTO_TEST_CASE(test_noise_uniform_3d) {
   constexpr size_t const sample_size = 4'000'000;
   constexpr size_t const x = 0, y = 1, z = 2;

@@ -303,3 +303,36 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
     }
   }
 }
+
+#ifdef NPT
+BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
+  extern int thermo_switch;
+  thermo_switch |= THERMO_NPT_ISO;
+  time_step = 1.0;
+  temperature = 2.0;
+  constexpr size_t const sample_size = 500'000;
+  IsotropicNptThermostat thermostat{};
+  thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+  thermostat.gamma0 = 2.0;
+  thermostat.gammav = 0.1;
+  thermostat.recalc_prefactors(1.0);
+  auto p = particle_factory();
+
+  auto const correlation = std::get<3>(noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [&p, &thermostat]() -> std::vector<VariantVectorXd> {
+            thermostat.rng_counter->increment();
+            return {{
+                friction_therm0_nptiso<1>(thermostat, p.m.v, 0),
+                friction_therm0_nptiso<2>(thermostat, p.m.v, 0),
+                friction_thermV_nptiso(thermostat, 1.5),
+            }};
+          }),
+      sample_size));
+  for (size_t i = 0; i < correlation.size(); ++i) {
+    for (size_t j = i + 1; j < correlation.size(); ++j) {
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 5e-2));
+    }
+  }
+}
+#endif // NPT
