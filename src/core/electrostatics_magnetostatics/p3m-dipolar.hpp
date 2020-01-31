@@ -65,9 +65,6 @@ struct dp3m_data_struct {
   /** Sum of square of magnetic dipoles (only on master node). */
   double sum_mu2;
 
-  /** interpolation of the charge assignment function. */
-  std::vector<std::vector<double>> int_caf{7};
-
   /** position shift for calc. of first assignment mesh point. */
   double pos_shift;
   /** help variable for calculation of aliasing sums */
@@ -191,19 +188,6 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
  *  charges and the squared sum of the charges.
  */
 void dp3m_count_magnetic_particles();
-
-/** Assign a single dipole into the current dipole grid.
- *
- *  @param[in] real_pos   %Particle position in real space
- *  @param[in] mu         %Particle magnetic dipole magnitude
- *  @param[in] dip        %Particle magnetic dipole vector
- *  @param[in] cp_cnt     The running index, which may be smaller than 0, in
- *                        which case the dipole is assumed to be virtual and
- *                        is not stored in the @ref dp3m_data_struct::ca_frac
- *                        "ca_frac" arrays
- */
-void dp3m_assign_dipole(double const real_pos[3], double mu,
-                        double const dip[3], int cp_cnt);
 
 /** Shrink wrap the dipoles grid */
 void dp3m_shrink_wrap_dipole_grid(int n_dipoles);

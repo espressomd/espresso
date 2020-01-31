@@ -408,27 +408,18 @@ int dp3m_set_eps(double eps) {
   return ES_OK;
 }
 
-void dp3m_dipole_assign(const ParticleRange &particles) {
-  /* magnetic particle counter, dipole fraction counter */
-  int cp_cnt = 0;
-
-  /* prepare local FFT mesh */
-  for (auto &i : dp3m.rs_mesh_dip)
-    for (int j = 0; j < dp3m.local_mesh.size; j++)
-      i[j] = 0.0;
-
-  for (auto const &p : particles) {
-    if (p.p.dipm != 0.0) {
-      dp3m_assign_dipole(p.r.p.data(), p.p.dipm, p.calc_dip().data(), cp_cnt);
-      cp_cnt++;
-    }
-  }
-
-  dp3m_shrink_wrap_dipole_grid(cp_cnt);
-}
-
-void dp3m_assign_dipole(double const real_pos[3], double mu,
-                        double const dip[3], int cp_cnt) {
+/** Assign a single dipole into the current dipole grid.
+ *
+ *  @param[in] real_pos   %Particle position in real space
+ *  @param[in] mu         %Particle magnetic dipole magnitude
+ *  @param[in] dip        %Particle magnetic dipole vector
+ *  @param[in] cp_cnt     The running index, which may be smaller than 0, in
+ *                        which case the dipole is assumed to be virtual and
+ *                        is not stored in the @ref dp3m_data_struct::ca_frac
+ *                        "ca_frac" arrays
+ */
+static void dp3m_assign_dipole(Utils::Vector3d const &real_pos, double mu,
+                               Utils::Vector3d const &dip, int cp_cnt) {
   /* we do not really want to export these, but this function should be inlined
    */
   int d, i0, i1, i2;
@@ -465,11 +456,11 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
   if (cp_cnt >= 0)
     dp3m.ca_fmp[cp_cnt] = q_ind;
 
-  for (i0 = 0; i0 < dp3m.params.cao; i0++) {
+  for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
     tmp0 = Utils::bspline(i0, dist[0], dp3m.params.cao);
-    for (i1 = 0; i1 < dp3m.params.cao; i1++) {
+    for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
       tmp1 = tmp0 * Utils::bspline(i1, dist[1], dp3m.params.cao);
-      for (i2 = 0; i2 < dp3m.params.cao; i2++) {
+      for (int i2 = 0; i2 < dp3m.params.cao; i2++) {
         cur_ca_frac_val = tmp1 * Utils::bspline(i2, dist[2], dp3m.params.cao);
         if (cp_cnt >= 0)
           *(cur_ca_frac++) = cur_ca_frac_val;
@@ -484,6 +475,25 @@ void dp3m_assign_dipole(double const real_pos[3], double mu,
     }
     q_ind += dp3m.local_mesh.q_21_off;
   }
+}
+
+void dp3m_dipole_assign(const ParticleRange &particles) {
+  /* magnetic particle counter, dipole fraction counter */
+  int cp_cnt = 0;
+
+  /* prepare local FFT mesh */
+  for (auto &i : dp3m.rs_mesh_dip)
+    for (int j = 0; j < dp3m.local_mesh.size; j++)
+      i[j] = 0.0;
+
+  for (auto const &p : particles) {
+    if (p.p.dipm != 0.0) {
+      dp3m_assign_dipole(p.r.p, p.p.dipm, p.calc_dip(), cp_cnt);
+      cp_cnt++;
+    }
+  }
+
+  dp3m_shrink_wrap_dipole_grid(cp_cnt);
 }
 
 void dp3m_shrink_wrap_dipole_grid(int n_dipoles) {
