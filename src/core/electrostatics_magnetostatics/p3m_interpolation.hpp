@@ -11,6 +11,13 @@
 #include <tuple>
 #include <vector>
 
+/**
+ * @brief Interpolation weights for one point.
+ *
+ * Interpolation weights and  grid offset for one point.
+ *
+ * @tparam cao Interpolation order.
+ */
 template <int cao> struct InterpolationWeights {
   /** Linear index of the corner of the interpolation cube. */
   int ind;
@@ -18,13 +25,20 @@ template <int cao> struct InterpolationWeights {
   Utils::Array<double, cao> w_x, w_y, w_z;
 };
 
-struct p3m_interpolation_weights {
+/**
+ * @brief Cache for interpolation weights.
+ *
+ * This is a storage container for interpolation weights of
+ * type InterpolationWeights.
+ */
+class p3m_interpolation_cache {
   size_t m_cao = 0;
   /** Charge fractions for mesh assignment. */
   std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
   std::vector<int> ca_fmp;
 
+public:
   /**
    * @brief Number of points in the cache.
    * @return Number of points currently in the cache.
@@ -40,10 +54,9 @@ struct p3m_interpolation_weights {
   /**
    * @brief Push back weights for one point.
    *
-   * @param q_ind Mesh index.
-   * @param w_x Weights in first direction.
-   * @param w_y Weights in second direction.
-   * @param w_z Weights in third direction.
+   * @tparam cao Interpolation order has to match the order
+   *         set at last call to @ref p3m_interpolation_cache::reset.
+   * @param w Interpolation weights to store.
    */
   template <int cao> void store(const InterpolationWeights<cao> &w) {
     assert(cao == m_cao);
@@ -55,6 +68,17 @@ struct p3m_interpolation_weights {
     boost::copy(w.w_z, it);
   }
 
+  /**
+   * @brief Load entry from the cache.
+   *
+   * This loads an entry at an index from the cache,
+   * the entries are indexed by the order they were stored.
+   *
+   * @tparam cao Interpolation order has to match the order
+   *         set at last call to @ref p3m_interpolation_cache::reset.
+   * @param i Index of the entry to load.
+   * @return i-it interpolation weights.
+   */
   template <int cao> InterpolationWeights<cao> load(size_t i) const {
     assert(cao == m_cao);
 
@@ -86,7 +110,7 @@ struct p3m_interpolation_weights {
 
 template <int cao>
 InterpolationWeights<cao>
-p3m_calculate_interpolation_weights(const Utils::Vector3d &real_pos,
+p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
                                     const Utils::Vector3d &ai,
                                     p3m_local_mesh const &local_mesh) {
   /** position shift for calc. of first assignment mesh point. */
@@ -100,7 +124,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &real_pos,
 
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
-    auto const pos = ((real_pos[d] - local_mesh.ld_pos[d]) * ai[d]) - pos_shift;
+    auto const pos = ((position[d] - local_mesh.ld_pos[d]) * ai[d]) - pos_shift;
 
     nmp[d] = (int)pos;
 
@@ -124,16 +148,27 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &real_pos,
   return ret;
 }
 
+/**
+ * @brief P3M grid interpolation.
+ *
+ * This runs an kernel for every interpolation point
+ * in a set of interpolation weights with the linear
+ * grid index and the weight of the point as arguments.
+ *
+ * @param local_mesh Mesh info.
+ * @param weights Set of weights
+ * @param kernel The kernel to run.
+ */
 template <int cao, class Kernel>
 void p3m_interpolate(p3m_local_mesh const &local_mesh,
-                     InterpolationWeights<cao> const &w, Kernel kernel) {
-  auto q_ind = w.ind;
+                     InterpolationWeights<cao> const &weights, Kernel kernel) {
+  auto q_ind = weights.ind;
   for (int i0 = 0; i0 < cao; i0++) {
-    auto const tmp0 = w.w_x[i0];
+    auto const tmp0 = weights.w_x[i0];
     for (int i1 = 0; i1 < cao; i1++) {
-      auto const tmp1 = tmp0 * w.w_y[i1];
+      auto const tmp1 = tmp0 * weights.w_y[i1];
       for (int i2 = 0; i2 < cao; i2++) {
-        kernel(q_ind, tmp1 * w.w_z[i2]);
+        kernel(q_ind, tmp1 * weights.w_z[i2]);
 
         q_ind++;
       }

@@ -82,7 +82,7 @@ struct p3m_data_struct {
   /** Energy optimised influence function (k-space) */
   std::vector<double> g_energy;
 
-  p3m_interpolation_weights inter_weights;
+  p3m_interpolation_cache inter_weights;
 
   /** number of permutations in k_space */
   int ks_pnum;
@@ -164,9 +164,6 @@ bool p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Assign the physical charges using the tabulated charge assignment function.
- *  The charge fractions are buffered
- *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
- *  "ca_frac".
  */
 void p3m_charge_assign(const ParticleRange &particles);
 
@@ -174,12 +171,11 @@ void p3m_charge_assign(const ParticleRange &particles);
  *
  *  @param[in] q          %Particle charge
  *  @param[in] real_pos   %Particle position in real space
- *  @param[in] inter_weights     The running index, which may be smaller than 0,
- * in which case the charge is assumed to be virtual and is not stored in the
- * @ref p3m_data_struct::ca_frac "ca_frac" arrays
+ *  @param[in] inter_weights Cached interpolation weights to be used, can be
+ * null.
  */
 void p3m_assign_charge(double q, const Utils::Vector3d &real_pos,
-                       p3m_interpolation_weights *inter_weights);
+                       p3m_interpolation_cache *inter_weights);
 
 /** Calculate real space contribution of Coulomb pair forces. */
 inline void p3m_add_pair_force(double q1q2, Utils::Vector3d const &d,

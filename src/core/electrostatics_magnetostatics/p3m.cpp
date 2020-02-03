@@ -304,7 +304,7 @@ template <int cao>
 void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
                           const Utils::Vector3d &ai,
                           p3m_local_mesh const &local_mesh,
-                          p3m_interpolation_weights *inter_weights = nullptr) {
+                          p3m_interpolation_cache *inter_weights = nullptr) {
   auto const w =
       p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh);
 
@@ -364,7 +364,7 @@ void p3m_charge_assign(const ParticleRange &particles) {
 
 /* Template wrapper for p3m_do_assign_charge() */
 void p3m_assign_charge(double q, const Utils::Vector3d &real_pos,
-                       p3m_interpolation_weights *inter_weights) {
+                       p3m_interpolation_cache *inter_weights) {
   switch (p3m.params.cao) {
   case 1:
     p3m_do_assign_charge<1>(q, real_pos, p3m.params.ai, p3m.local_mesh,

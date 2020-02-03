@@ -40,6 +40,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "fft.hpp"
 #include "p3m-common.hpp"
+#include "p3m_interpolation.hpp"
 #include "p3m_send_mesh.hpp"
 
 #include <ParticleRange.hpp>
@@ -78,13 +79,8 @@ struct dp3m_data_struct {
   /** Energy optimised influence function (k-space) */
   std::vector<double> g_energy;
 
-  /** number of charged particles on the node. */
-  int ca_num;
+  p3m_interpolation_cache inter_weights;
 
-  /** Charge fractions for mesh assignment. */
-  std::vector<double> ca_frac;
-  /** index of first mesh point for charge assignment. */
-  std::vector<int> ca_fmp;
   /** number of permutations in k_space */
   int ks_pnum;
 
@@ -188,9 +184,6 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
  *  charges and the squared sum of the charges.
  */
 void dp3m_count_magnetic_particles();
-
-/** Shrink wrap the dipoles grid */
-void dp3m_shrink_wrap_dipole_grid(int n_dipoles);
 
 /** Calculate real space contribution of p3m dipolar pair forces and torques.
  *  If NPT is compiled in, it returns the energy, which is needed for NPT.
