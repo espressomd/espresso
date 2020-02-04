@@ -138,8 +138,10 @@ if 'LB.OFF' in modes:
     # set thermostat
     if 'THERM.LANGEVIN' in modes:
         system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
+    elif 'THERM.BD' in modes:
+        system.thermostat.set_brownian(kT=1.0, gamma=2.0, seed=42)
     elif 'THERM.NPT' in modes and has_features('NPT'):
-        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1)
+        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
     elif 'THERM.DPD' in modes and has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     # set integrator
@@ -151,6 +153,8 @@ if 'LB.OFF' in modes:
                                                max_displacement=0.01)
     elif 'INT.NVT' in modes:
         system.integrator.set_nvt()
+    elif 'INT.BD' in modes:
+        system.integrator.set_brownian_dynamics()
     # set minimization
     if 'MINIMIZATION' in modes:
         steepest_descent(system, f_max=1, gamma=10, max_steps=0,
