@@ -180,7 +180,7 @@ for i in range(snake_n):
         p_head = system.part.add(
             pos=snake_startpos,
             type=snake_head_type,
-            fix=[0, 0, 1],
+            fix=[False, False, True],
             mass=snake_head_mass,
             temp=temperature_snake,
             gamma=gamma_snake_head)
@@ -192,7 +192,7 @@ for i in range(snake_n):
                + (i - 1) * snake_bead_sigma),
             bonds=(harmonic_bead if (i > 1) else harmonic_head, i - 1),
             type=snake_bead_type,
-            fix=[0, 0, 1],
+            fix=[False, False, True],
             mass=snake_bead_mass,
             temp=temperature_snake,
             gamma=gamma_snake_bead)
@@ -262,7 +262,7 @@ while n < bubbles_n:
     system.part.add(
         pos=bpos,
         type=bubble_type,
-        fix=[0, 0, 1],
+        fix=[False, False, True],
         mass=bubble_mass,
         temp=temperature_bubbles,
         gamma=gamma_bubbles)
@@ -281,7 +281,7 @@ bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
 p_temp_inc = system.part.add(
     pos=bpos,
     type=temp_change_inc_type,
-    fix=[1, 1, 1])
+    fix=[True, True, True])
 
 bpos = [pore_xr
         + np.random.random() * (pore_xr - pore_xl - snake_head_sigma * 4)
@@ -291,7 +291,7 @@ bpos = [pore_xr
 p_temp_dec = system.part.add(
     pos=bpos,
     type=temp_change_dec_type,
-    fix=[1, 1, 1])
+    fix=[True, True, True])
 
 # MINIMIZE ENERGY
 
