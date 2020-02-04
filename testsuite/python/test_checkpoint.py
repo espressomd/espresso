@@ -187,6 +187,7 @@ class CheckpointTest(ut.TestCase):
     def test_thermostat_NPT(self):
         thmst = system.thermostat.get_state()[0]
         self.assertEqual(thmst['type'], 'NPT_ISO')
+        self.assertEqual(thmst['seed'], 42)
         self.assertEqual(thmst['gamma0'], 2.0)
         self.assertEqual(thmst['gammav'], 0.1)
 

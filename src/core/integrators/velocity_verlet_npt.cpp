@@ -40,15 +40,15 @@ void velocity_verlet_npt_propagate_vel_final(const ParticleRange &particles) {
     // Virtual sites are not propagated during integration
     if (p.p.is_virtual)
       continue;
+    auto const noise = friction_therm0_nptiso<2>(npt_iso, p.m.v, p.p.identity);
     for (int j = 0; j < 3; j++) {
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
         if (nptiso.geometry & nptiso.nptgeom_dir[j]) {
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
-          p.m.v[j] += 0.5 * time_step / p.p.mass * p.f.f[j] +
-                      friction_therm0_nptiso(npt_iso, p.m.v[j]) / p.p.mass;
+          p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
         } else
           // Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt)
-          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+          p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
 #ifdef EXTERNAL_FORCES
       }
 #endif
@@ -171,15 +171,16 @@ void velocity_verlet_npt_propagate_vel(const ParticleRange &particles) {
     for (int j = 0; j < 3; j++) {
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
 #ifdef NPT
+        auto const noise =
+            friction_therm0_nptiso<1>(npt_iso, p.m.v, p.p.identity);
         if (integ_switch == INTEG_METHOD_NPT_ISO &&
             (nptiso.geometry & nptiso.nptgeom_dir[j])) {
-          p.m.v[j] += p.f.f[j] * 0.5 * time_step / p.p.mass +
-                      friction_therm0_nptiso(npt_iso, p.m.v[j]) / p.p.mass;
+          p.m.v[j] += (p.f.f[j] * time_step / 2.0 + noise[j]) / p.p.mass;
           nptiso.p_vel[j] += Utils::sqr(p.m.v[j] * time_step) * p.p.mass;
         } else
 #endif
           // Propagate velocities: v(t+0.5*dt) = v(t) + 0.5*dt * a(t)
-          p.m.v[j] += 0.5 * time_step * p.f.f[j] / p.p.mass;
+          p.m.v[j] += p.f.f[j] * time_step / 2.0 / p.p.mass;
       }
     }
   }

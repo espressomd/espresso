@@ -141,7 +141,7 @@ if 'LB.OFF' in modes:
     elif 'THERM.BD' in modes:
         system.thermostat.set_brownian(kT=1.0, gamma=2.0, seed=42)
     elif 'THERM.NPT' in modes and has_features('NPT'):
-        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1)
+        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
     elif 'THERM.DPD' in modes and has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     # set integrator
