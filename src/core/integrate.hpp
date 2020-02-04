@@ -30,6 +30,7 @@
 #define INTEG_METHOD_NPT_ISO 0
 #define INTEG_METHOD_NVT 1
 #define INTEG_METHOD_STEEPEST_DESCENT 2
+#define INTEG_METHOD_BD 3
 
 /** Switch determining which integrator to use. */
 extern int integ_switch;
@@ -123,6 +124,9 @@ int integrate_set_steepest_descent(double f_max, double gamma, int max_steps,
 
 /** @brief Set the velocity Verlet integrator for the NVT ensemble. */
 void integrate_set_nvt();
+
+/** @brief Set the Brownian Dynamics integrator. */
+void integrate_set_bd();
 
 /** @brief Set the velocity Verlet integrator modified for the NpT ensemble
  *  with isotropic rescaling.

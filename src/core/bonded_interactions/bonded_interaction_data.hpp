@@ -83,10 +83,6 @@ enum BondedInteraction {
   BONDED_IA_OIF_LOCAL_FORCES,
   /** Type of bonded interaction: OIF global forces. */
   BONDED_IA_OIF_GLOBAL_FORCES,
-  /** Type of bonded interaction: determining outward direction of OIF membrane
-   *  (not associated to a parameter struct).
-   */
-  BONDED_IA_OIF_OUT_DIRECTION,
   /** Type of bonded interaction is a wall repulsion (immersed boundary). */
   BONDED_IA_IBM_TRIEL,
   /** Type of bonded interaction is volume conservation force (immersed
@@ -128,6 +124,8 @@ struct Fene_bond_parameters {
   double drmax2;
   /** inverse square of @p drmax (internal parameter) */
   double drmax2i;
+
+  double cutoff() const { return r0 + drmax; }
 };
 
 /** Parameters for OIF global forces
@@ -144,6 +142,8 @@ struct Oif_global_forces_bond_parameters {
   double V0;
   /** Volume coefficient */
   double kv;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for OIF local forces
@@ -169,6 +169,8 @@ struct Oif_local_forces_bond_parameters {
   double kal;
   /** Viscous coefficient of the triangle vertices */
   double kvisc;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for harmonic bond Potential */
@@ -179,6 +181,8 @@ struct Harmonic_bond_parameters {
   double r;
   /** cutoff bond length */
   double r_cut;
+
+  double cutoff() const { return r_cut; }
 };
 
 /** Parameters for Thermalized bond **/
@@ -192,9 +196,10 @@ struct Thermalized_bond_parameters {
   double pref2_com;
   double pref1_dist;
   double pref2_dist;
+
+  double cutoff() const { return r_cut; }
 };
 
-#ifdef ROTATION
 /** Parameters for harmonic dumbbell bond Potential */
 struct Harmonic_dumbbell_bond_parameters {
   /** spring constant */
@@ -205,26 +210,33 @@ struct Harmonic_dumbbell_bond_parameters {
   double r;
   /** cutoff bond length */
   double r_cut;
+
+  double cutoff() const { return r_cut; }
 };
-#endif
 
 /** Parameters for quartic bond Potential */
 struct Quartic_bond_parameters {
   double k0, k1;
   double r;
   double r_cut;
+
+  double cutoff() const { return r_cut; }
 };
 
 /** Parameters for %Coulomb bond Potential */
 struct Bonded_coulomb_bond_parameters {
   /** %Coulomb prefactor */
   double prefactor;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for %Coulomb bond short-range Potential */
 struct Bonded_coulomb_sr_bond_parameters {
   /** charge factor */
   double q1q2;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for three-body angular potential (harmonic). */
@@ -233,6 +245,8 @@ struct Angle_harmonic_bond_parameters {
   double bend;
   /** equilibrium angle (default is 180 degrees) */
   double phi0;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for three-body angular potential (cosine). */
@@ -245,6 +259,8 @@ struct Angle_cosine_bond_parameters {
   double cos_phi0;
   /** sine of @p phi0 (internal parameter) */
   double sin_phi0;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for three-body angular potential (cossquare). */
@@ -255,6 +271,8 @@ struct Angle_cossquare_bond_parameters {
   double phi0;
   /** cosine of @p phi0 (internal parameter) */
   double cos_phi0;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for four-body angular potential (dihedral-angle potentials). */
@@ -262,11 +280,23 @@ struct Dihedral_bond_parameters {
   double mult;
   double bend;
   double phase;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for n-body tabulated potential (n=2,3,4). */
 struct Tabulated_bond_parameters {
+  TabulatedBondedInteraction type;
   TabulatedPotential *pot;
+
+  double cutoff() const {
+    switch (type) {
+    case TAB_BOND_LENGTH:
+      return assert(pot), pot->cutoff();
+    default:
+      return -1.;
+    };
+  }
 };
 
 /** Parameters for n-body potential from mathematical expression. */
@@ -275,17 +305,19 @@ struct Generic_bond_parameters {
   GenericPotential *pot;
 };
 #endif
-#ifdef UMBRELLA
 /** Parameters for umbrella potential */
 struct Umbrella_bond_parameters {
   double k;
   int dir;
   double r;
+
+  double cutoff() const { return std::numeric_limits<double>::infinity(); }
 };
-#endif
 
 /** Dummy parameters for subtracted-LJ Potential */
-struct Subt_lj_bond_parameters {};
+struct Subt_lj_bond_parameters {
+  double cutoff() const { return -1.; }
+};
 
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
 struct Rigid_bond_parameters {
@@ -297,6 +329,8 @@ struct Rigid_bond_parameters {
   /**Velocity Tolerance/Accuracy for termination of RATTLE/SHAKE iterations
    * during velocity corrections */
   double v_tol;
+
+  double cutoff() const { return std::sqrt(d2); }
 };
 
 enum class tElasticLaw { NeoHookean, Skalak };
@@ -323,6 +357,8 @@ struct IBM_Triel_Parameters {
   tElasticLaw elasticLaw;
   double k1;
   double k2;
+
+  double cutoff() const { return maxDist; }
 };
 
 /** Parameters for IBM volume conservation bond **/
@@ -333,10 +369,8 @@ struct IBM_VolCons_Parameters {
   double volRef;
   /** Spring constant for volume force */
   double kappaV;
-  // Whether to write out center-of-mass at each time step
-  // Actually this is more of an analysis function and does not strictly belong
-  // to volume conservation
-  //  bool writeCOM;
+
+  double cutoff() const { return -1.; }
 };
 
 /** Parameters for IBM tribend **/
@@ -346,6 +380,12 @@ struct IBM_Tribend_Parameters {
 
   /** Reference angle */
   double theta0;
+
+  double cutoff() const { return -1.; }
+};
+
+struct VirtualBond_Parameters {
+  double cutoff() const { return -1.; }
 };
 
 /** Union in which to store the parameters of an individual bonded interaction
@@ -355,9 +395,7 @@ union Bond_parameters {
   Oif_global_forces_bond_parameters oif_global_forces;
   Oif_local_forces_bond_parameters oif_local_forces;
   Harmonic_bond_parameters harmonic;
-#ifdef ROTATION
   Harmonic_dumbbell_bond_parameters harmonic_dumbbell;
-#endif
   Quartic_bond_parameters quartic;
   Bonded_coulomb_bond_parameters bonded_coulomb;
   Bonded_coulomb_sr_bond_parameters bonded_coulomb_sr;
@@ -369,15 +407,14 @@ union Bond_parameters {
 #ifdef MATHEVAL
   Generic_bond_parameters gen;
 #endif
-#ifdef UMBRELLA
   Umbrella_bond_parameters umbrella;
-#endif
   Thermalized_bond_parameters thermalized_bond;
   Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;
   IBM_Tribend_Parameters ibm_tribend;
+  VirtualBond_Parameters virt;
 };
 
 /** Defines parameters for a bonded interaction. */

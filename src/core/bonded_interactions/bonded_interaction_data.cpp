@@ -19,68 +19,93 @@
 #include "bonded_interaction_data.hpp"
 #include "communication.hpp"
 
+#include <boost/range/numeric.hpp>
 #include <utils/constants.hpp>
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
-double recalc_maximal_cutoff_bonded() {
-  auto max_cut_bonded = -1.;
-
-  for (auto const &bonded_ia_param : bonded_ia_params) {
-    switch (bonded_ia_param.type) {
-    case BONDED_IA_FENE:
-      max_cut_bonded =
-          std::max(max_cut_bonded,
-                   bonded_ia_param.p.fene.r0 + bonded_ia_param.p.fene.drmax);
-      break;
-    case BONDED_IA_HARMONIC:
-      max_cut_bonded =
-          std::max(max_cut_bonded, bonded_ia_param.p.harmonic.r_cut);
-      break;
-    case BONDED_IA_THERMALIZED_DIST:
-      max_cut_bonded =
-          std::max(max_cut_bonded, bonded_ia_param.p.thermalized_bond.r_cut);
-      break;
-    case BONDED_IA_RIGID_BOND:
-      max_cut_bonded =
-          std::max(max_cut_bonded, std::sqrt(bonded_ia_param.p.rigid_bond.d2));
-      break;
-    case BONDED_IA_TABULATED_DISTANCE:
-      max_cut_bonded =
-          std::max(max_cut_bonded, bonded_ia_param.p.tab.pot->cutoff());
-      break;
+auto cutoff(int type, Bond_parameters const &bp) {
+  switch (type) {
+  case BONDED_IA_NONE:
+    return -1.;
+  case BONDED_IA_FENE:
+    return bp.fene.cutoff();
+  case BONDED_IA_HARMONIC:
+    return bp.harmonic.cutoff();
+  case BONDED_IA_HARMONIC_DUMBBELL:
+    return bp.harmonic_dumbbell.cutoff();
+  case BONDED_IA_QUARTIC:
+    return bp.quartic.cutoff();
+  case BONDED_IA_BONDED_COULOMB:
+    return bp.bonded_coulomb.cutoff();
+  case BONDED_IA_BONDED_COULOMB_SR:
+    return bp.bonded_coulomb_sr.cutoff();
+  case BONDED_IA_DIHEDRAL:
+    return bp.dihedral.cutoff();
+  case BONDED_IA_TABULATED_DISTANCE:
+  case BONDED_IA_TABULATED_ANGLE:
+  case BONDED_IA_TABULATED_DIHEDRAL:
+    return bp.tab.cutoff();
+  case BONDED_IA_SUBT_LJ:
+    return bp.subt_lj.cutoff();
+  case BONDED_IA_RIGID_BOND:
+    return bp.rigid_bond.cutoff();
+  case BONDED_IA_VIRTUAL_BOND:
+    return bp.virt.cutoff();
+  case BONDED_IA_ANGLE_HARMONIC:
+    return bp.angle_harmonic.cutoff();
+  case BONDED_IA_ANGLE_COSINE:
+    return bp.angle_cosine.cutoff();
+  case BONDED_IA_ANGLE_COSSQUARE:
+    return bp.angle_cossquare.cutoff();
+  case BONDED_IA_OIF_LOCAL_FORCES:
+    return bp.oif_local_forces.cutoff();
+  case BONDED_IA_OIF_GLOBAL_FORCES:
+    return bp.oif_global_forces.cutoff();
+  case BONDED_IA_IBM_TRIEL:
+    return bp.ibm_triel.cutoff();
+  case BONDED_IA_IBM_VOLUME_CONSERVATION:
+    return bp.ibmVolConsParameters.cutoff();
+  case BONDED_IA_IBM_TRIBEND:
+    return bp.ibm_tribend.cutoff();
+  case BONDED_IA_UMBRELLA:
+    return bp.umbrella.cutoff();
+  case BONDED_IA_THERMALIZED_DIST:
+    return bp.thermalized_bond.cutoff();
 #ifdef MATHEVAL
-    case BONDED_IA_GENERIC_DISTANCE:
-      max_cut_bonded =
-          std::max(max_cut_bonded, bonded_ia_param.p.gen.pot->cutoff());
-      break;
+  case BONDED_IA_GENERIC_DISTANCE:
+    max_cut_bonded =
+        std::max(max_cut_bonded, bonded_ia_param.p.gen.pot->cutoff());
+    break;
 #endif
-    case BONDED_IA_IBM_TRIEL:
-      max_cut_bonded =
-          std::max(max_cut_bonded, bonded_ia_param.p.ibm_triel.maxDist);
-      break;
-    default:
-      break;
-    }
+  default:
+    throw std::runtime_error("Unknown bond type.");
   }
+}
+
+double recalc_maximal_cutoff_bonded() {
+  auto const max_cut_bonded =
+      boost::accumulate(bonded_ia_params, -1.,
+                        [](auto max_cut, Bonded_ia_parameters const &bond) {
+                          return std::max(max_cut, cutoff(bond.type, bond.p));
+                        });
+
+  /* Check if there are dihedrals */
+  auto const any_dihedrals = std::any_of(
+      bonded_ia_params.begin(), bonded_ia_params.end(), [](auto const &bond) {
+        switch (bond.type) {
+        case BONDED_IA_DIHEDRAL:
+        case BONDED_IA_GENERIC_DIHEDRAL:
+        case BONDED_IA_TABULATED_DIHEDRAL:
+          return true;
+        default:
+          return false;
+        }
+      });
 
   /* dihedrals: the central particle is indirectly connected to the fourth
    * particle via the third particle, so we have to double the cutoff */
-  for (auto const &bonded_ia_param : bonded_ia_params) {
-    switch (bonded_ia_param.type) {
-    case BONDED_IA_DIHEDRAL:
-    case BONDED_IA_TABULATED_DIHEDRAL:
-#ifdef MATHEVAL
-    case BONDED_IA_GENERIC_DIHEDRAL:
-#endif
-      max_cut_bonded *= 2;
-      break;
-    default:
-      break;
-    }
-  }
-
-  return max_cut_bonded;
+  return (any_dihedrals) ? 2 * max_cut_bonded : max_cut_bonded;
 }
 
 void make_bond_type_exist(int type) {
@@ -104,6 +129,7 @@ int virtual_set_params(int bond_type) {
 
   bonded_ia_params[bond_type].type = BONDED_IA_VIRTUAL_BOND;
   bonded_ia_params[bond_type].num = 1;
+  bonded_ia_params[bond_type].p.virt = VirtualBond_Parameters{};
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(bond_type, -1);
