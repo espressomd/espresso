@@ -419,7 +419,7 @@ For example::
     import espressomd
 
     system = espressomd.System()
-    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0)
+    system.thermostat.set_npt(kT=1.0, gamma0=1.0, gammav=1.0, seed=41)
     system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=1.0)
 
 For an explanation of the algorithm involved, see :ref:`Isotropic NPT integrator`.

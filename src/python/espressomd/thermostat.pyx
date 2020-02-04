@@ -108,7 +108,7 @@ cdef class Thermostat:
                     seed=thmst["rng_counter_fluid"])
             if thmst["type"] == "NPT_ISO":
                 self.set_npt(kT=thmst["kT"], gamma0=thmst["gamma0"],
-                             gammav=thmst["gammav"])
+                             gammav=thmst["gammav"], seed=thmst["seed"])
             if thmst["type"] == "DPD":
                 self.set_dpd(kT=thmst["kT"], seed=thmst["seed"])
             if thmst["type"] == "BROWNIAN":
@@ -185,6 +185,7 @@ cdef class Thermostat:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
             npt_dict["kT"] = temperature
+            npt_dict["seed"] = int(npt_iso_get_rng_state())
             npt_dict["gamma0"] = npt_iso.gamma0
             npt_dict["gammav"] = npt_iso.gammav
             npt_dict.update(nptiso)
@@ -600,7 +601,7 @@ cdef class Thermostat:
 
     IF NPT:
         @AssertThermostatType(THERMO_NPT_ISO)
-        def set_npt(self, kT=None, gamma0=None, gammav=None):
+        def set_npt(self, kT=None, gamma0=None, gammav=None, seed=None):
             """
             Sets the NPT thermostat.
 
@@ -612,6 +613,10 @@ cdef class Thermostat:
                 Friction coefficient of the bath
             gammav : :obj:`float`
                 Artificial friction coefficient for the volume fluctuations.
+            seed : :obj:`int`
+                Initial counter value (or seed) of the philox RNG.
+                Required on first activation of the Langevin thermostat.
+                Must be positive.
 
             """
 
@@ -620,6 +625,19 @@ cdef class Thermostat:
                     "kT, gamma0 and gammav have to be given as keyword args")
             if not isinstance(kT, float):
                 raise ValueError("temperature must be a positive number")
+
+            # Seed is required if the RNG is not initialized
+            if seed is None and npt_iso_is_seed_required():
+                raise ValueError(
+                    "A seed has to be given as keyword argument on first activation of the thermostat")
+
+            if seed is not None:
+                utils.check_type_or_throw_except(
+                    seed, 1, int, "seed must be a positive integer")
+                if seed < 0:
+                    raise ValueError("seed must be a positive integer")
+                npt_iso_set_rng_state(seed)
+
             global temperature
             temperature = float(kT)
             global thermo_switch

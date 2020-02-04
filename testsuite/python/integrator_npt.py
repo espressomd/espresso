@@ -29,7 +29,6 @@ class IntegratorNPT(ut.TestCase):
     """This compares pressure and compressibility of a LJ system against
        expected values."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
     p_ext = 2.0
 
     def setUp(self):
@@ -39,8 +38,7 @@ class IntegratorNPT(ut.TestCase):
         self.S.time_step = 0.01
         self.S.cell_system.skin = 0.25
 
-        data = np.genfromtxt(tests_common.abspath(
-            "data/npt_lj_system.data"))
+        data = np.genfromtxt(tests_common.abspath("data/npt_lj_system.data"))
 
         # Input format: id pos f
         for particle in data:
@@ -51,7 +49,7 @@ class IntegratorNPT(ut.TestCase):
         self.S.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1, sigma=1, cutoff=1.12246, shift=0.25)
 
-        self.S.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004)
+        self.S.thermostat.set_npt(kT=1.0, gamma0=2, gammav=0.004, seed=42)
         self.S.integrator.set_isotropic_npt(
             ext_pressure=self.p_ext, piston=0.0001)
 
@@ -69,11 +67,10 @@ class IntegratorNPT(ut.TestCase):
 
         avp /= (n / skip_p)
         Vs = np.array(ls)**3
-        compressibility = pow(np.std(Vs), 2) / np.average(Vs)
-        print(avp, compressibility)
+        compressibility = np.var(Vs) / np.average(Vs)
 
-        self.assertAlmostEqual(2.0, avp, delta=0.02)
-        self.assertAlmostEqual(0.2, compressibility, delta=0.02)
+        self.assertAlmostEqual(avp, 2.0, delta=0.02)
+        self.assertAlmostEqual(compressibility, 0.32, delta=0.02)
 
 
 if __name__ == "__main__":

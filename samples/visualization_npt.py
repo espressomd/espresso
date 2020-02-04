@@ -57,7 +57,7 @@ steepest_descent(system, f_max=0.0, gamma=30.0, max_steps=10000,
                  max_displacement=0.1)
 print("E after minimization:", system.analysis.energy()["total"])
 
-system.thermostat.set_npt(kT=2.0, gamma0=1.0, gammav=0.01)
+system.thermostat.set_npt(kT=2.0, gamma0=1.0, gammav=0.01, seed=42)
 system.integrator.set_isotropic_npt(ext_pressure=1.0, piston=0.01)
 
 

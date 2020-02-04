@@ -55,6 +55,9 @@ enum class RNGSalt : uint64_t {
   BROWNIAN_INC,
   BROWNIAN_ROT_INC,
   BROWNIAN_ROT_WALK,
+  NPTISO0_HALF_STEP1,
+  NPTISO0_HALF_STEP2,
+  NPTISOV,
   SALT_DPD,
   THERMALIZED_BOND
 };
@@ -89,8 +92,28 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
 }
 
 /**
+ * @brief Uniform noise.
+ *
+ * Mean = 0, variance = 1 / 12.
+ * This uses the Philox PRNG, the state is controlled
+ * by the counter, the salt and two keys.
+ * If any of the keys and salt differ, the noise is
+ * not correlated between two calls along the same counter
+ * sequence.
+ *
+ */
+template <RNGSalt salt> double noise(uint64_t counter, int key1, int key2 = 0) {
+
+  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
+
+  using Utils::uniform;
+  return uniform(noise[0]) - 0.5;
+}
+
+/**
  * @brief 3d uniform vector noise.
  *
+ * Mean = 0, variance = 1 / 12.
  * This uses the Philox PRNG, the state is controlled
  * by the counter, the salt and two keys.
  * If any of the keys and salt differ, the noise is
@@ -111,7 +134,7 @@ Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
 
 /** @brief Generator for Gaussian random 3d vector.
  *
- * Mean = 0, standard deviation = 1.0
+ * Mean = 0, standard deviation = 1.0.
  * Based on the Philox RNG using 4x64 bits.
  * The Box-Muller transform is used to convert from uniform to normal
  * distribution. The transform is only valid, if the uniformly distributed
@@ -211,8 +234,8 @@ void init_random_seed(int seed);
 } // namespace Random
 
 /**
- * @brief Draws a random real number from the uniform distribution in the range
- * [0,1)
+ * @brief Draws a random real number from the uniform distribution in the
+ * range [0,1) using the Mersenne twister.
  */
 inline double d_random() {
   using namespace Random;

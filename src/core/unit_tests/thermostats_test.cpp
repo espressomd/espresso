@@ -19,12 +19,13 @@
 
 /* Unit tests for thermostats. */
 
-#define BOOST_TEST_MODULE Particle test
+#define BOOST_TEST_MODULE Thermostats test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 #include <cmath>
 #include <limits>
 
+#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
@@ -32,6 +33,7 @@
 #include "Particle.hpp"
 #include "integrators/brownian_inline.hpp"
 #include "integrators/langevin_inline.hpp"
+#include "random_test.hpp"
 #include "thermostat.hpp"
 
 extern double time_step;
@@ -207,3 +209,128 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   }
 #endif // ROTATION
 }
+
+BOOST_AUTO_TEST_CASE(test_noise_statistics) {
+  time_step = 1.0;
+  temperature = 2.0;
+  constexpr size_t const sample_size = 1'000'000;
+  auto thermostat = thermostat_factory<LangevinThermostat>();
+  thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+  auto p1 = particle_factory();
+  auto p2 = particle_factory();
+  p1.p.identity = 0;
+  p1.p.identity = 1;
+
+  auto const correlation = std::get<3>(noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [&p1, &p2, &thermostat]() -> std::vector<VariantVectorXd> {
+            thermostat.rng_counter->increment();
+            return {{friction_thermo_langevin(thermostat, p1),
+                     -friction_thermo_langevin(thermostat, p1),
+                     friction_thermo_langevin(thermostat, p2)}};
+          }),
+      sample_size));
+  for (size_t i = 0; i < correlation.size(); ++i) {
+    for (size_t j = i; j < correlation.size(); ++j) {
+      double expected;
+      if (i == j) {
+        expected = 1.0;
+      } else if (i < 3 and j == i + 3) {
+        expected = -1.0;
+      } else {
+        expected = 0.0;
+      }
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, expected, 2e-3));
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
+  time_step = 1.0;
+  temperature = 2.0;
+  constexpr size_t const sample_size = 500'000;
+  auto const thermostat = thermostat_factory<BrownianThermostat>();
+  auto p = particle_factory();
+#ifdef ROTATION
+  p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
+#endif
+
+  auto const correlation = std::get<3>(
+      noise_statistics(std::function<std::vector<VariantVectorXd>()>(
+                           [&p, &thermostat]() -> std::vector<VariantVectorXd> {
+                             thermostat.rng_counter->increment();
+                             return {{
+                                 bd_random_walk(thermostat, p, time_step),
+                                 bd_random_walk_vel(thermostat, p),
+#ifdef ROTATION
+                                 bd_random_walk_rot(thermostat, p, time_step),
+                                 bd_random_walk_vel_rot(thermostat, p),
+#endif
+                             }};
+                           }),
+                       sample_size));
+  for (size_t i = 0; i < correlation.size(); ++i) {
+    for (size_t j = i + 1; j < correlation.size(); ++j) {
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 5e-2));
+    }
+  }
+}
+
+BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
+  time_step = 1.0;
+  temperature = 2.0;
+  constexpr size_t const sample_size = 500'000;
+  auto const thermostat = thermostat_factory<LangevinThermostat>();
+  auto p = particle_factory();
+
+  auto const correlation = std::get<3>(noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [&p, &thermostat]() -> std::vector<VariantVectorXd> {
+            thermostat.rng_counter->increment();
+            return {{
+                friction_thermo_langevin(thermostat, p),
+#ifdef ROTATION
+                friction_thermo_langevin_rotation(thermostat, p),
+#endif
+            }};
+          }),
+      sample_size));
+  for (size_t i = 0; i < correlation.size(); ++i) {
+    for (size_t j = i + 1; j < correlation.size(); ++j) {
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 5e-2));
+    }
+  }
+}
+
+#ifdef NPT
+BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
+  extern int thermo_switch;
+  thermo_switch |= THERMO_NPT_ISO;
+  time_step = 1.0;
+  temperature = 2.0;
+  constexpr size_t const sample_size = 500'000;
+  IsotropicNptThermostat thermostat{};
+  thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+  thermostat.gamma0 = 2.0;
+  thermostat.gammav = 0.1;
+  thermostat.recalc_prefactors(1.0);
+  auto p = particle_factory();
+
+  auto const correlation = std::get<3>(noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [&p, &thermostat]() -> std::vector<VariantVectorXd> {
+            thermostat.rng_counter->increment();
+            return {{
+                friction_therm0_nptiso<1>(thermostat, p.m.v, 0),
+                friction_therm0_nptiso<2>(thermostat, p.m.v, 0),
+                friction_thermV_nptiso(thermostat, 1.5),
+            }};
+          }),
+      sample_size));
+  for (size_t i = 0; i < correlation.size(); ++i) {
+    for (size_t j = i + 1; j < correlation.size(); ++j) {
+      BOOST_CHECK(correlation_almost_equal(correlation, i, j, 0.0, 5e-2));
+    }
+  }
+}
+#endif // NPT
