@@ -305,14 +305,6 @@ if(WITH_HDF5 AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
   endif()
 endif()
 
-if (WITH_MATHEVAL)
-    if(EXISTS "${CMAKE_SOURCE_DIR}/libs/matheval")
-      set(MATHEVAL 1)
-    else()
-      unset(MATHEVAL)
-    endif()
-endif()
-
 if(WITH_SCAFACOS)
   find_package(PkgConfig)
   pkg_check_modules(SCAFACOS scafacos)
@@ -407,6 +399,17 @@ if(Boost_VERSION VERSION_GREATER_EQUAL 106400 AND Boost_VERSION VERSION_LESS 106
     message(FATAL_ERROR "Boost 1.64 is unsupported")
   endif()
 endif()
+
+
+if (WITH_MATHEVAL)
+    # Note: Boost version check can be removed, once 1.65.1 is required
+    if(EXISTS "${CMAKE_SOURCE_DIR}/libs/matheval" AND (Boost_VERSION VERSION_GREATER_EQUAL 106501))
+      set(MATHEVAL 1)
+    else()
+      unset(MATHEVAL)
+    endif()
+endif()
+
 
 #
 # Paths
