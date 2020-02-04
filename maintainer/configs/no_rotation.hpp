@@ -57,7 +57,7 @@
 #define EXCLUSIONS
 
 #define TABULATED
-#define MATHEVAL
+#define EXPRESSION
 #define LENNARD_JONES
 #define LENNARD_JONES_GENERIC
 #define LJGEN_SOFTCORE
