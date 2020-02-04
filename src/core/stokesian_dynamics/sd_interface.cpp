@@ -36,6 +36,7 @@
 //#include "partCfg_global.hpp" 
 #include "particle_data.hpp"
 #include "ParticleRange.hpp"
+#include "rotation.hpp"
 #include "thermostat.hpp"
 
 #include "serialization/SD_particle_data.hpp"
@@ -98,25 +99,23 @@ void sd_gather_local_particles(ParticleRange const &parts) {
     parts_buffer[i].pos[1] = p.r.p[1];
     parts_buffer[i].pos[2] = p.r.p[2];
     
-    // Velocity is not needed for SD, thus omit while gathering
-    
-    // TODO: rotation
-    parts_buffer[i].quat[0] = 1.0;
-    parts_buffer[i].quat[1] = 0.0;
-    parts_buffer[i].quat[2] = 0.0;
-    parts_buffer[i].quat[3] = 0.0;
+    // Velocity is not needed for SD, thus omit while gathering.
+    // Particle orientation is also not needed for SD
+    // since all particles are assumed spherical.
     
     parts_buffer[i].ext_force[0] = p.f.f[0];
     parts_buffer[i].ext_force[1] = p.f.f[1];
     parts_buffer[i].ext_force[2] = p.f.f[2];
     
+  #ifdef ROTATION
     parts_buffer[i].ext_torque[0] = p.f.torque[0];
     parts_buffer[i].ext_torque[1] = p.f.torque[1];
     parts_buffer[i].ext_torque[2] = p.f.torque[2];
+  #endif
     
+    // radius_dict is not initialized on slave nodes -> need to assign radius 
+    // later on master node    
     parts_buffer[i].r = 0; 
-    // radius_dict is not initialized on slave nodes -> need to do that later
-    // on master node
     
     i++;
   }
@@ -136,7 +135,7 @@ void sd_update_locally(ParticleRange const &parts) {
   
   for (auto &p: parts) {
     // skip virtual particles
-    if (p.m.id == -1) {
+    if (p.p.is_virtual) {
       continue;
     }
     
@@ -153,24 +152,14 @@ void sd_update_locally(ParticleRange const &parts) {
     // Question: is the time step the same on all nodes? Should be ...
     p.r.p[0] += p.m.v[0] * time_step;
     p.r.p[1] += p.m.v[1] * time_step;
-    p.r.p[2] += p.m.v[2] * time_step;    
+    p.r.p[2] += p.m.v[2] * time_step;
     
-    // TODO: rotation
+  #ifdef ROTATION    
+    //propagate_omega_quat_particle(p); // nah, this does VV integration which we can't have. Too bad.
+    local_rotate_particle(p, p.m.omega.normalize(), p.m.omega.norm()*time_step);
+  #endif
     
     i++;
-  }
-}
-
-void print_buffer(std::vector<double> &buffer, std::string name) {
-  std::size_t col = 0;
-  printf("Printing buffer %s: \n",name.c_str());
-  for (auto &f: buffer) {
-    printf("%f  ", f);
-    ++col;
-    if (col==4) {
-      col=0;
-      printf("\n");
-    }
   }
 }
 
@@ -220,7 +209,7 @@ int get_sd_flags() { return sd_flags; }
 void propagate_vel_pos_sd() {
   std::size_t n_part_local = local_cells.particles().size();
   
-  if (this_node == 0) {
+  if (this_node == 0) { 
     if (thermo_switch & THERMO_SD) {
       if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
         runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
@@ -257,22 +246,31 @@ void propagate_vel_pos_sd() {
       for (auto const &p : parts_buffer) {  
         id[i] = parts_buffer[i].id;
         
-        x_host[6 * i + 0] = p.pos[0]; // p.r.p[0];
-        x_host[6 * i + 1] = p.pos[1]; // p.r.p[1];
-        x_host[6 * i + 2] = p.pos[2]; // p.r.p[2];
-        // TODO: Rotation
-        //x_host[6 * i + 3] = 0; 
-        //x_host[6 * i + 4] = 0;
-        //x_host[6 * i + 5] = 0;
+        x_host[6 * i + 0] = p.pos[0];
+        x_host[6 * i + 1] = p.pos[1];
+        x_host[6 * i + 2] = p.pos[2];
+        // TODO: Orientation ... what would be a good default here?
+        // Actual orientation is not needed, just need default.
+        x_host[6 * i + 3] = 1; 
+        x_host[6 * i + 4] = 0;
+        x_host[6 * i + 5] = 0;
         
-        //printf("Particle %lu @ (%f,%f,%f)\n",i,x_host[6 * i + 0],x_host[6 * i + 1],x_host[6 * i + 2]);
         
         f_host[6 * i + 0] = p.ext_force[0];
         f_host[6 * i + 1] = p.ext_force[1];
         f_host[6 * i + 2] = p.ext_force[2];
+        
+  #ifdef ROTATION
         f_host[6 * i + 3] = p.ext_torque[0];
         f_host[6 * i + 4] = p.ext_torque[1];
         f_host[6 * i + 5] = p.ext_torque[2]; 
+  #else 
+        // Is that really what we want?
+        // SD method will return nonzero omegas nonetheless ...
+        f_host[6 * i + 3] = 0;
+        f_host[6 * i + 4] = 0;
+        f_host[6 * i + 5] = 0;
+  #endif
         
         double radius = radius_dict[p.type];
         
@@ -330,17 +328,18 @@ void propagate_vel_pos_sd() {
     
   } else { // if (this_node == 0)
   
-
-    sd_gather_local_particles(local_cells.particles());
-    Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
+    if (thermo_switch & THERMO_SD) {
+      sd_gather_local_particles(local_cells.particles());
+      Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
+      
+      v_sd.resize(n_part_local * 6);
+      
+      // now wait while master node is busy ...
+      
+      Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
+      sd_update_locally(local_cells.particles());
+    }
     
-    v_sd.resize(n_part_local * 6);
-    
-    // now wait while master node is busy ...
-    
-   
-    Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
-    sd_update_locally(local_cells.particles());
   } // if (this_node == 0) {...} else 
 }
 

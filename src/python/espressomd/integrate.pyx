@@ -142,6 +142,7 @@ cdef class Integrator:
         """
         self._method = "SD"
         integrate_set_sd()
+        handle_errors("Encountered error while setting integration method to SD")
 
     def set_isotropic_npt(self, ext_pressure, piston,
                           direction=(True, True, True), cubic_box=False):

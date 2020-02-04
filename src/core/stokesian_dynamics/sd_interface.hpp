@@ -44,11 +44,10 @@ struct SD_particle_data {
   /* particle velocity */
   Utils::Vector3d vel = {0., 0., 0.};
   
+#ifdef ROTATION
   /* particle rotational velocity */
   Utils::Vector3d omega = {0., 0., 0.};
-  
-  /* quaternion to define particle orientation */
-  Utils::Vector4d quat = {1., 0., 0., 0.};  // TODO: make sure rotations work as they should
+#endif
   
   /* external force */
   Utils::Vector3d ext_force = {0.0, 0.0, 0.0};  // double or float?

@@ -10,6 +10,24 @@ s = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
 
 @utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
+class StokesianConfigTest(ut.TestCase):
+    system = s
+
+    def setUp(self):
+        self.system.part.clear()
+
+    def test_pbc_checks(self):
+        self.system.periodicity = [0, 0, 1]
+        with (self.assertRaises(Exception)): 
+            self.system.integrator.set_sd()
+        
+        self.system.periodicity = [0, 0, 0]
+        self.system.integrator.set_sd()
+        with (self.assertRaises(Exception)):
+            self.system.periodicity = [0, 1, 0]
+
+
+@utx.skipIfMissingFeatures(["STOKESIAN_DYNAMICS"])
 class StokesianDynamicsTest(ut.TestCase):
     system = s
 

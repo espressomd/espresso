@@ -26,6 +26,7 @@ from globals cimport forcecap_set
 from globals cimport forcecap_get
 from espressomd.utils import array_locked, is_valid_type
 from espressomd.utils cimport Vector3d, make_array_locked
+from espressomd.utils cimport handle_errors
 
 cdef class Globals:
     property box_l:
@@ -68,6 +69,7 @@ cdef class Globals:
                 grid.box_geo.set_periodic(i, _periodic[i])
 
             mpi_bcast_parameter(FIELD_PERIODIC)
+            handle_errors("Error while assigning system periodicity")
 
         def __get__(self):
             periodicity = np.zeros(3)
