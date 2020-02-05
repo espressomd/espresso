@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   {
     auto const p = particle_factory();
     auto const sigma = sqrt(brownian.gamma / (2.0 * temperature));
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_WALK>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(0, 0);
     auto const ref = hadamard_division(noise, sigma) * sqrt(time_step);
     auto const out = bd_random_walk(brownian, p, time_step);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   {
     auto const p = particle_factory();
     auto const sigma = sqrt(temperature);
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_INC>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(0, 0);
     auto const ref = sigma * noise / sqrt(p.p.mass);
     auto const out = bd_random_walk_vel(brownian, p);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto p = particle_factory();
     p.p.rotation = ROTATION_X;
     auto const sigma = sqrt(brownian.gamma_rotation / (2.0 * temperature));
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_INC>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(0, 0);
     auto const phi = hadamard_division(noise, sigma)[0] * sqrt(time_step);
     auto const out = bd_random_walk_rot(brownian, p, time_step);
     BOOST_CHECK_CLOSE(out[0], std::cos(phi / 2), tol);
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto p = particle_factory();
     p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
     auto const sigma = sqrt(temperature);
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_WALK>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(0, 0);
     auto const ref = sigma * noise;
     auto const out = bd_random_walk_vel_rot(brownian, p);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   {
     auto p = particle_factory();
     p.m.v = {1.0, 2.0, 3.0};
-    auto const noise = Random::v_noise<RNGSalt::LANGEVIN>(0, 0);
+    auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN>(0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma);
     auto const ref = hadamard_product(-langevin.gamma, p.m.v) +
                      hadamard_product(pref, noise);
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   {
     auto p = particle_factory();
     p.m.omega = {1.0, 2.0, 3.0};
-    auto const noise = Random::v_noise<RNGSalt::LANGEVIN_ROT>(0, 0);
+    auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma_rotation);
     auto const ref = hadamard_product(-langevin.gamma_rotation, p.m.omega) +
                      hadamard_product(pref, noise);

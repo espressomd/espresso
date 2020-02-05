@@ -354,8 +354,7 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
     if (npt_iso.pref_noise_0 > 0.0) {
       return npt_iso.pref_rescale_0 * vel +
              npt_iso.pref_noise_0 *
-                 Random::v_noise<salt>(npt_iso.rng_get(),
-                                       p_identity);
+                 Random::noise_uniform<salt>(npt_iso.rng_get(), p_identity);
     }
     return npt_iso.pref_rescale_0 * vel;
   }
@@ -370,7 +369,7 @@ inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
   if (thermo_switch & THERMO_NPT_ISO) {
     if (npt_iso.pref_noise_V > 0.0) {
       return npt_iso.pref_rescale_V * p_diff +
-             npt_iso.pref_noise_V * Random::noise<RNGSalt::NPTISOV>(
+             npt_iso.pref_noise_V * Random::noise_uniform<RNGSalt::NPTISOV, 1>(
                                         npt_iso.rng_get(), 0);
     }
     return npt_iso.pref_rescale_V * p_diff;

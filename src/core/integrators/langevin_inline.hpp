@@ -83,11 +83,10 @@ friction_thermo_langevin(LangevinThermostat const &langevin,
   auto const &friction_op = pref_friction;
   auto const &noise_op = pref_noise;
 #endif // PARTICLE_ANISOTROPY
-  using Random::v_noise;
 
   return friction_op * velocity +
-         noise_op * v_noise<RNGSalt::LANGEVIN>(langevin.rng_get(),
-                                               p.p.identity);
+         noise_op * Random::noise_uniform<RNGSalt::LANGEVIN>(langevin.rng_get(),
+                                                             p.p.identity);
 }
 
 #ifdef ROTATION
@@ -117,9 +116,7 @@ friction_thermo_langevin_rotation(LangevinThermostat const &langevin,
   }
 #endif // LANGEVIN_PER_PARTICLE
 
-  using Random::v_noise;
-
-  auto const noise = v_noise<RNGSalt::LANGEVIN_ROT>(
+  auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(
       langevin.rng_get(), p.p.identity);
   return hadamard_product(pref_friction, p.m.omega) +
          hadamard_product(pref_noise, noise);

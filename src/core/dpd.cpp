@@ -50,9 +50,9 @@ std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
    seed-per-node)
 */
 Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
-  return Random::v_noise<RNGSalt::SALT_DPD>(dpd_rng_counter->value(),
-                                            (pid1 < pid2) ? pid2 : pid1,
-                                            (pid1 < pid2) ? pid1 : pid2);
+  return Random::noise_uniform<RNGSalt::SALT_DPD>(dpd_rng_counter->value(),
+                                                  (pid1 < pid2) ? pid2 : pid1,
+                                                  (pid1 < pid2) ? pid1 : pid2);
 }
 
 void mpi_bcast_dpd_rng_counter_slave(const uint64_t counter) {

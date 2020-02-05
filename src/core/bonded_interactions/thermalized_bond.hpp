@@ -84,7 +84,7 @@ thermalized_bond_forces(Particle const &p1, Particle const &p2,
 
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
-  auto const noise = Random::v_noise<RNGSalt::THERMALIZED_BOND>(
+  auto const noise = Random::noise_uniform<RNGSalt::THERMALIZED_BOND>(
       thermalized_bond_rng_counter->value(), p1.p.identity, p2.p.identity);
 
   for (int i = 0; i < 3; i++) {

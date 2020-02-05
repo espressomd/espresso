@@ -92,7 +92,7 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
 }
 
 /**
- * @brief Uniform noise.
+ * @brief Generator for random uniform noise.
  *
  * Mean = 0, variance = 1 / 12.
  * This uses the Philox PRNG, the state is controlled
@@ -101,38 +101,31 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
  * not correlated between two calls along the same counter
  * sequence.
  *
+ * @tparam salt RNG salt
+ * @tparam N    Size of the noise vector
+ *
+ * @return Vector of uniform random numbers.
  */
-template <RNGSalt salt> double noise(uint64_t counter, int key1, int key2 = 0) {
+template <RNGSalt salt, size_t N = 3,
+          typename std::enable_if<(N > 1) and (N <= 4), int>::type = 0>
+auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
 
-  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
-
-  using Utils::uniform;
-  return uniform(noise[0]) - 0.5;
+  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
+  Utils::VectorXd<N> noise{};
+  std::transform(integers.begin(), integers.begin() + N, noise.begin(),
+                 [](size_t value) { return Utils::uniform(value) - 0.5; });
+  return noise;
 }
 
-/**
- * @brief 3d uniform vector noise.
- *
- * Mean = 0, variance = 1 / 12.
- * This uses the Philox PRNG, the state is controlled
- * by the counter, the salt and two keys.
- * If any of the keys and salt differ, the noise is
- * not correlated between two calls along the same counter
- * sequence.
- *
- */
-template <RNGSalt salt>
-Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
+template <RNGSalt salt, size_t N,
+          typename std::enable_if<N == 1, int>::type = 0>
+auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
 
-  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
-
-  using Utils::uniform;
-  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
-                         uniform(noise[2])} -
-         Utils::Vector3d::broadcast(0.5);
+  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
+  return Utils::uniform(integers[0]) - 0.5;
 }
 
-/** @brief Generator for Gaussian random 3d vector.
+/** @brief Generator for Gaussian noise.
  *
  * Mean = 0, standard deviation = 1.0.
  * Based on the Philox RNG using 4x64 bits.
@@ -148,30 +141,45 @@ Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
  * @param key2 key for random number generation
  * @tparam salt (decorrelates different thermostat types)
  *
- * @return 3D vector of Gaussian random numbers.
+ * @return Vector of Gaussian random numbers.
  *
  */
-template <RNGSalt salt>
-inline Utils::Vector3d v_noise_g(uint64_t counter, int key1, int key2 = 0) {
+template <RNGSalt salt, size_t N = 3,
+          typename std::enable_if<(N >= 1) and (N <= 4), int>::type = 0>
+auto noise_gaussian(uint64_t counter, int key1, int key2 = 0) {
 
-  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
-  using Utils::uniform;
-  Utils::Vector4d u{uniform(noise[0]), uniform(noise[1]), uniform(noise[2]),
-                    uniform(noise[3])};
-
-  // Replace zeros from uniformly distributed numbers (see doc string)
+  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
   static const double epsilon = std::numeric_limits<double>::min();
-  for (int i = 0; i < 4; i++)
-    if (u[i] < epsilon)
-      u[i] = epsilon;
 
-  // Box muller transform code adapted from
+  constexpr size_t M = (N <= 2) ? 2 : 4;
+  Utils::VectorXd<M> u{};
+  std::transform(integers.begin(), integers.begin() + M, u.begin(),
+                 [](size_t value) {
+                   auto u = Utils::uniform(value);
+                   return (u < epsilon) ? epsilon : u;
+                 });
+
+  // Box-Muller transform code adapted from
   // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
-
-  static const double two_pi = 2.0 * Utils::pi();
-  return {sqrt(-2.0 * log(u[0])) * cos(two_pi * u[1]),
-          sqrt(-2.0 * log(u[0])) * sin(two_pi * u[1]),
-          sqrt(-2.0 * log(u[2])) * cos(two_pi * u[3])};
+  // optimizations: the modulo is cached (logarithms are expensive), the
+  // sin/cos are evaluated simultaneously by gcc or separately by Clang
+  Utils::VectorXd<N> noise{};
+  constexpr double two_pi = 2.0 * Utils::pi();
+  auto modulo = sqrt(-2.0 * log(u[0]));
+  auto angle = two_pi * u[1];
+  noise[0] = modulo * cos(angle);
+  if (N > 1) {
+    noise[1] = modulo * sin(angle);
+  }
+  if (N > 2) {
+    modulo = sqrt(-2.0 * log(u[2]));
+    angle = two_pi * u[3];
+    noise[2] = modulo * cos(angle);
+  }
+  if (N > 3) {
+    noise[3] = modulo * sin(angle);
+  }
+  return noise;
 }
 
 extern std::mt19937 generator;
