@@ -92,6 +92,24 @@ extern bool thermo_virtual;
  ************************************************/
 
 struct BaseThermostat {
+public:
+  /** Initialize or re-initialize the RNG counter with a seed. */
+  void rng_initialize(uint64_t const seed) {
+    rng_counter = std::make_unique<Utils::Counter<uint64_t>>(seed);
+  }
+  /** Increment the RNG counter */
+  void rng_increment() { rng_counter->increment(); }
+  /** Get current value of the RNG */
+  uint64_t rng_get() const {
+    if (!rng_is_initialized()) {
+      throw "The RNG is not initialized";
+    }
+    return rng_counter->value();
+  }
+  /** Is the RNG counter initialized */
+  bool rng_is_initialized() const { return rng_counter != nullptr; }
+
+private:
   /** RNG counter. */
   std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
 };
@@ -336,7 +354,7 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
     if (npt_iso.pref_noise_0 > 0.0) {
       return npt_iso.pref_rescale_0 * vel +
              npt_iso.pref_noise_0 *
-                 Random::v_noise<salt>(npt_iso.rng_counter->value(),
+                 Random::v_noise<salt>(npt_iso.rng_get(),
                                        p_identity);
     }
     return npt_iso.pref_rescale_0 * vel;
@@ -353,7 +371,7 @@ inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
     if (npt_iso.pref_noise_V > 0.0) {
       return npt_iso.pref_rescale_V * p_diff +
              npt_iso.pref_noise_V * Random::noise<RNGSalt::NPTISOV>(
-                                        npt_iso.rng_counter->value(), 0);
+                                        npt_iso.rng_get(), 0);
     }
     return npt_iso.pref_rescale_V * p_diff;
   }

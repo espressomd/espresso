@@ -45,36 +45,32 @@ using Thermostat::GammaType;
  * @param thermostat_enum   The thermostat enum value
  */
 #define REGISTER_THERMOSTAT_CALLBACKS(thermostat, thermostat_enum)             \
-  void mpi_bcast_##thermostat##_rng_counter_slave(const uint64_t counter) {    \
-    thermostat.rng_counter =                                                   \
-        std::make_unique<Utils::Counter<uint64_t>>(counter);                   \
+  void mpi_bcast_##thermostat##_rng_counter_slave(const uint64_t seed) {       \
+    thermostat.rng_initialize(seed);                                           \
   }                                                                            \
                                                                                \
   REGISTER_CALLBACK(mpi_bcast_##thermostat##_rng_counter_slave)                \
                                                                                \
-  void mpi_bcast_##thermostat##_rng_counter(const uint64_t counter) {          \
-    mpi_call(mpi_bcast_##thermostat##_rng_counter_slave, counter);             \
+  void mpi_bcast_##thermostat##_rng_counter(const uint64_t seed) {             \
+    mpi_call(mpi_bcast_##thermostat##_rng_counter_slave, seed);                \
   }                                                                            \
                                                                                \
   void thermostat##_rng_counter_increment() {                                  \
     if (thermo_switch & thermostat_enum)                                       \
-      thermostat.rng_counter->increment();                                     \
+      thermostat.rng_increment();                                              \
   }                                                                            \
                                                                                \
   bool thermostat##_is_seed_required() {                                       \
     /* Seed is required if rng is not initialized */                           \
-    return thermostat.rng_counter == nullptr;                                  \
+    return !thermostat.rng_is_initialized();                                   \
   }                                                                            \
                                                                                \
-  void thermostat##_set_rng_state(const uint64_t counter) {                    \
-    mpi_bcast_##thermostat##_rng_counter(counter);                             \
-    thermostat.rng_counter =                                                   \
-        std::make_unique<Utils::Counter<uint64_t>>(counter);                   \
+  void thermostat##_set_rng_state(const uint64_t seed) {                       \
+    mpi_bcast_##thermostat##_rng_counter(seed);                                \
+    thermostat.rng_initialize(seed);                                           \
   }                                                                            \
                                                                                \
-  uint64_t thermostat##_get_rng_state() {                                      \
-    return thermostat.rng_counter->value();                                    \
-  }
+  uint64_t thermostat##_get_rng_state() { return thermostat.rng_get(); }
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
