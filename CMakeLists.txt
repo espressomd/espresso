@@ -18,17 +18,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 include(FeatureSummary)
 include(GNUInstallDirs)
-project(ESPResSo)
-include(cmake/FindPythonModule.cmake)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-enable_language(CXX)
-
+project(ESPResSo LANGUAGES CXX)
 set(PROJECT_VERSION "4.2-dev")
 
 #
@@ -262,6 +255,7 @@ endif()
 # We need the parallel hdf5 version!
 if (WITH_HDF5)
   set(HDF5_PREFER_PARALLEL 1)
+  enable_language(C)
   find_package(HDF5 "1.8" COMPONENTS C)
   if(HDF5_IS_PARALLEL)
     set(H5MD 1)
