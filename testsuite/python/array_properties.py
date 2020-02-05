@@ -86,8 +86,6 @@ class ArrayPropertyTest(ut.TestCase):
     system.time_step = 0.01
     system.cell_system.skin = 0.01
     system.part.add(pos=[0, 0, 0])
-    lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
-    system.actors.add(lbf)
 
     def locked_operators(self, v):
         with self.assertRaises(ValueError):
@@ -268,12 +266,17 @@ class ArrayPropertyTest(ut.TestCase):
         self.set_copy(self.system.part[0].gamma_rot)
 
     def test_lb(self):
+        lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
+        self.system.actors.add(lbf)
+    
         # Check for exception for various operators
         # LB
-        self.locked_operators(self.lbf[0, 0, 0].velocity)
-        self.locked_operators(self.lbf[0, 0, 0].stress)
-        self.locked_operators(self.lbf[0, 0, 0].stress_neq)
-        self.locked_operators(self.lbf[0, 0, 0].population)
+        self.locked_operators(lbf[0, 0, 0].velocity)
+        self.locked_operators(lbf[0, 0, 0].stress)
+        self.locked_operators(lbf[0, 0, 0].stress_neq)
+        self.locked_operators(lbf[0, 0, 0].population)
+        
+        self.system.actors.clear()
 
     @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])
