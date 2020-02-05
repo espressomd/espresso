@@ -268,14 +268,14 @@ class ArrayPropertyTest(ut.TestCase):
     def test_lb(self):
         lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
         self.system.actors.add(lbf)
-    
+
         # Check for exception for various operators
         # LB
         self.locked_operators(lbf[0, 0, 0].velocity)
         self.locked_operators(lbf[0, 0, 0].stress)
         self.locked_operators(lbf[0, 0, 0].stress_neq)
         self.locked_operators(lbf[0, 0, 0].population)
-        
+
         self.system.actors.clear()
 
     @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",
