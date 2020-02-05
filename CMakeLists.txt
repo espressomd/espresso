@@ -232,15 +232,10 @@ if(WITH_CUDA)
   endif()
 endif(WITH_CUDA)
 
-find_package(PythonInterp 3.5 REQUIRED)
+find_package(Python3 3.5 COMPONENTS Interpreter Development REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
-  execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} -c
-            "import distutils.sysconfig as cg; print(cg.get_python_inc())"
-    OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
   find_package(NumPy REQUIRED)
   if(NOT PYTHON_INSTDIR)
     execute_process(
