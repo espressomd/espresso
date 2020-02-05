@@ -311,6 +311,14 @@ public:
 #endif
 };
 
+/** %Thermostat for thermalized bonds. */
+struct ThermalizedBondThermostat : public BaseThermostat {};
+
+#ifdef DPD
+/** %Thermostat for dissipative particle dynamics. */
+struct DPDThermostat : public BaseThermostat {};
+#endif
+
 /************************************************
  * functions
  ************************************************/
@@ -329,6 +337,10 @@ public:
 NEW_THERMOSTAT(langevin)
 NEW_THERMOSTAT(brownian)
 NEW_THERMOSTAT(npt_iso)
+NEW_THERMOSTAT(thermalized_bond)
+#ifdef DPD
+NEW_THERMOSTAT(dpd)
+#endif
 
 /** Initialize constants of the thermostat at the start of integration */
 void thermo_init();

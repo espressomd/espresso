@@ -39,7 +39,7 @@ bool thermo_virtual = true;
 using Thermostat::GammaType;
 
 /**
- * @brief Register a thermostat MPI callbacks
+ * @brief Register a thermostat's MPI callbacks
  *
  * @param thermostat        The thermostat global variable
  */
@@ -54,9 +54,7 @@ using Thermostat::GammaType;
     mpi_call(mpi_bcast_##thermostat##_rng_counter_slave, seed);                \
   }                                                                            \
                                                                                \
-  void thermostat##_rng_counter_increment() {                                  \
-    thermostat.rng_increment();                                                \
-  }                                                                            \
+  void thermostat##_rng_counter_increment() { thermostat.rng_increment(); }    \
                                                                                \
   bool thermostat##_is_seed_required() {                                       \
     /* Seed is required if rng is not initialized */                           \
@@ -73,13 +71,21 @@ using Thermostat::GammaType;
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
 IsotropicNptThermostat npt_iso = {};
+ThermalizedBondThermostat thermalized_bond = {};
+#ifdef DPD
+DPDThermostat dpd = {};
+#endif
 
 REGISTER_THERMOSTAT_CALLBACKS(langevin)
 REGISTER_THERMOSTAT_CALLBACKS(brownian)
 REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
+REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
+#ifdef DPD
+REGISTER_THERMOSTAT_CALLBACKS(dpd)
+#endif
 
 void thermo_init() {
-  // Init thermalized bond despite of thermostat
+  // initialize thermalized bond regardless of the current thermostat
   if (n_thermalized_bonds) {
     thermalized_bond_init();
   }
