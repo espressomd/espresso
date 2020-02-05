@@ -42,9 +42,8 @@ using Thermostat::GammaType;
  * @brief Register a thermostat MPI callbacks
  *
  * @param thermostat        The thermostat global variable
- * @param thermostat_enum   The thermostat enum value
  */
-#define REGISTER_THERMOSTAT_CALLBACKS(thermostat, thermostat_enum)             \
+#define REGISTER_THERMOSTAT_CALLBACKS(thermostat)                              \
   void mpi_bcast_##thermostat##_rng_counter_slave(const uint64_t seed) {       \
     thermostat.rng_initialize(seed);                                           \
   }                                                                            \
@@ -56,8 +55,7 @@ using Thermostat::GammaType;
   }                                                                            \
                                                                                \
   void thermostat##_rng_counter_increment() {                                  \
-    if (thermo_switch & thermostat_enum)                                       \
-      thermostat.rng_increment();                                              \
+    thermostat.rng_increment();                                                \
   }                                                                            \
                                                                                \
   bool thermostat##_is_seed_required() {                                       \
@@ -76,9 +74,9 @@ LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};
 IsotropicNptThermostat npt_iso = {};
 
-REGISTER_THERMOSTAT_CALLBACKS(langevin, THERMO_LANGEVIN)
-REGISTER_THERMOSTAT_CALLBACKS(brownian, THERMO_BROWNIAN)
-REGISTER_THERMOSTAT_CALLBACKS(npt_iso, THERMO_NPT_ISO)
+REGISTER_THERMOSTAT_CALLBACKS(langevin)
+REGISTER_THERMOSTAT_CALLBACKS(brownian)
+REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
 
 void thermo_init() {
   // Init thermalized bond despite of thermostat
