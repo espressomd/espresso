@@ -119,6 +119,12 @@ class ArrayPropertyTest(ut.TestCase):
         cpy = np.copy(v)
         self.assertTrue(cpy.flags.writeable)
 
+    def setUp(self):
+        self.system.box_l = [12.0, 12.0, 12.0]
+
+    def tearDown(self):
+        self.system.actors.clear()
+
     def test_common(self):
 
         # Check for exception for various operators
@@ -275,8 +281,6 @@ class ArrayPropertyTest(ut.TestCase):
         self.locked_operators(lbf[0, 0, 0].stress)
         self.locked_operators(lbf[0, 0, 0].stress_neq)
         self.locked_operators(lbf[0, 0, 0].population)
-
-        self.system.actors.clear()
 
     @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])
