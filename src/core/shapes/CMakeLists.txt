@@ -12,5 +12,5 @@ set(Shapes_SRC
     Wall.cpp
 )
 add_library(Shapes SHARED ${Shapes_SRC})
-install(TARGETS Shapes LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Shapes LIBRARY DESTINATION ${Python3_SITEARCH}/espressomd)
 target_link_libraries(Shapes PUBLIC EspressoConfig EspressoCore)

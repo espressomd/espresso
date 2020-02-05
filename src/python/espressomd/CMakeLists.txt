@@ -107,7 +107,7 @@ foreach(cython_file ${cython_SRC})
       set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
       target_link_libraries(${target} PRIVATE Python3::Python EspressoConfig EspressoCore EspressoScriptInterface)
       add_dependencies(espressomd ${target})
-      install(TARGETS ${target} LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+      install(TARGETS ${target} LIBRARY DESTINATION ${Python3_SITEARCH}/espressomd)
   endif()
 endforeach()
 
@@ -126,5 +126,5 @@ foreach(auxfile ${cython_AUX})
 endforeach(auxfile)
 
 # Install Python files
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${PYTHON_INSTDIR}
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DESTINATION ${Python3_SITEARCH}
         FILES_MATCHING PATTERN "*.py" PATTERN "CMakeFiles" EXCLUDE)

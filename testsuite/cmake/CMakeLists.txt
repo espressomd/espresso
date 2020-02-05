@@ -11,7 +11,7 @@ function(CMAKE_TEST)
   set(cmake_tests ${cmake_tests} ${TEST_FILE} PARENT_SCOPE)
 endfunction(CMAKE_TEST)
 
-set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR})
+set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${Python3_SITEARCH})
 
 cmake_test(FILE test_install.sh DEPENDENCIES BashUnitTests.sh)
 

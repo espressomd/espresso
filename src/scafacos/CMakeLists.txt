@@ -6,4 +6,4 @@ target_include_directories(Scafacos PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${SCAFACO
 target_link_libraries(Scafacos PRIVATE ${SCAFACOS_LDFLAGS})
 target_link_libraries(Scafacos PUBLIC MPI::MPI_CXX)
 
-install(TARGETS Scafacos DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS Scafacos DESTINATION ${Python3_SITEARCH}/espressomd)

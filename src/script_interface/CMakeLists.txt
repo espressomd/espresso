@@ -32,7 +32,7 @@ if( WITH_COVERAGE )
 endif()
 
 add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
-install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS EspressoScriptInterface LIBRARY DESTINATION ${Python3_SITEARCH}/espressomd)
 target_link_libraries(EspressoScriptInterface PRIVATE EspressoConfig PUBLIC EspressoCore Shapes core_cluster_analysis mpiio)
 if(HDF5_FOUND)
  target_link_libraries(EspressoScriptInterface PRIVATE H5mdCore)

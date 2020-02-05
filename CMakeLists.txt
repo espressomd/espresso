@@ -237,15 +237,7 @@ find_package(Python3 3.5 COMPONENTS Interpreter Development REQUIRED)
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
   find_package(NumPy REQUIRED)
-  if(NOT PYTHON_INSTDIR)
-    execute_process(
-      COMMAND
-        ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
-      OUTPUT_VARIABLE PYTHON_INSTDIR
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif(NOT PYTHON_INSTDIR)
-
+  
   set(CYTHON_FLAGS "-3"
       CACHE STRING "Flags used by the Cython compiler during all build types.")
 
@@ -398,7 +390,7 @@ endif()
 # Paths
 #
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${Python3_SITEARCH}/espressomd")
 
 #
 # Flags

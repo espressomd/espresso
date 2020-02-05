@@ -35,7 +35,7 @@ execute_process(COMMAND ${PYTHON_EXECUTABLE}
 
 add_library(EspressoConfig SHARED config-features.cpp)
 add_dependencies(EspressoConfig myconfig check_myconfig generate_config_features)
-install(TARGETS EspressoConfig LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS EspressoConfig LIBRARY DESTINATION ${Python3_SITEARCH}/espressomd)
 target_include_directories(EspressoConfig PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 find_package(Git)

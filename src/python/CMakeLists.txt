@@ -10,7 +10,7 @@ if( IPYTHON_EXECUTABLE )
 endif( )
 
 # Configure pypresso for install dir
-set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR})
+set(PYTHON_DIR ${CMAKE_INSTALL_PREFIX}/${Python3_SITEARCH})
 
 set(PYTHON_FRONTEND ${PYTHON_EXECUTABLE})
 configure_file(pypresso.cmakein ${CMAKE_CURRENT_BINARY_DIR}/pypresso @ONLY)

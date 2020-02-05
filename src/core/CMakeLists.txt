@@ -154,7 +154,7 @@ else(CUDA)
   add_library(EspressoCore SHARED ${EspressoCore_SRC})
 endif(CUDA)
 
-install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+install(TARGETS EspressoCore LIBRARY DESTINATION ${Python3_SITEARCH}/espressomd)
 target_include_directories(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 if(WITH_COVERAGE)
   target_compile_options(EspressoCore PUBLIC "$<$<CONFIG:Release>:-g>")
