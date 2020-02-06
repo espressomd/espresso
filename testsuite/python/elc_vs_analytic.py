@@ -23,7 +23,7 @@ from espressomd import electrostatic_extensions
 
 
 @utx.skipIfMissingFeatures(["P3M"])
-class ELC_and_MMM2D_vs_analytic(ut.TestCase):
+class ELC_vs_analytic(ut.TestCase):
     # Handle to espresso system
     box_l = 200.
     system = espressomd.System(box_l=[box_l, box_l, box_l])
@@ -39,40 +39,17 @@ class ELC_and_MMM2D_vs_analytic(ut.TestCase):
     zPos = np.linspace(0.1, 8, number_samples)
     q = np.arange(-5.0, 5.1, 2.5)
 
-    def test_elc_and_mmm2d(self):
+    def test_elc(self):
         """
-        Testing ELC and MMM2D against the analytic solution for an infinite large simulation box with dielectric contrast on the bottom of the box, which can be calculated analytically with image charges.
+        Testing ELC against the analytic solution for an infinite large simulation box with dielectric contrast on the bottom of the box, which can be calculated analytically with image charges.
         """
-        # MMM2D
-        self.system.cell_system.skin = 0.1
-        buf_node_grid = self.system.cell_system.node_grid
-        self.system.cell_system.set_layered(
-            n_layers=10, use_verlet_lists=False)
-
-        self.system.periodicity = [1, 1, 0]
-
         self.system.part.add(id=1, pos=self.system.box_l / 2., q=self.q[0])
         self.system.part.add(id=2, pos=self.system.box_l / 2. + [0, 0, 1],
                              q=-self.q[0])
 
-        # MMM2D
-        mmm2d = espressomd.electrostatics.MMM2D(prefactor=1.0,
-                                                maxPWerror=self.accuracy,
-                                                delta_mid_bot=self.delta_mid_bot,
-                                                delta_mid_top=self.delta_mid_top,
-                                                dielectric_contrast_on=1)
-
-        self.system.actors.add(mmm2d)
-
-        mmm2d_results = self.scan()
-
-        self.system.actors.remove(mmm2d)
-
-        # ELC
         self.system.box_l = [self.box_l, self.box_l, self.box_l + self.elc_gap]
         self.system.cell_system.set_domain_decomposition(
             use_verlet_lists=True)
-        self.system.cell_system.node_grid = buf_node_grid
         self.system.periodicity = [1, 1, 1]
         p3m = espressomd.electrostatics.P3M(prefactor=1.,
                                             accuracy=self.accuracy,
@@ -96,9 +73,6 @@ class ELC_and_MMM2D_vs_analytic(ut.TestCase):
             4 * self.zPos) - 1 / (2 * self.zPos + self.distance) + 1 / (4 * (self.zPos + self.distance))))
 
         analytic_results = np.dstack((analytic_force, analytic_energy))
-
-        np.testing.assert_allclose(
-            mmm2d_results, analytic_results, rtol=0, atol=self.check_accuracy)
 
         np.testing.assert_allclose(
             elc_results, analytic_results, rtol=0, atol=self.check_accuracy)
