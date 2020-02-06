@@ -257,72 +257,6 @@ result in a minimal number of iterations. Also please make sure to read the
 corresponding articles, mainly :cite:`arnold13a,tyagi10a,kesselheim11a` before
 using it.
 
-.. _MMM2D:
-
-MMM2D
------
-
-.. note::
-    Required features: ``ELECTROSTATICS``.
-
-MMM2D is an electrostatics solver for explicit 2D periodic systems.
-It can account for different dielectric jumps on both sides of the
-non-periodic direction. MMM2D Coulomb method needs periodicity (1 1 0) and the
-layered cell system. The performance of the method depends on the number of
-slices of the cell system, which has to be tuned manually. It is
-automatically ensured that the maximal pairwise error is smaller than
-the given bound. Note that the user has to take care that the particles don't
-leave the box in the non-periodic z-direction e.g. with constraints. By default,
-no dielectric contrast is set and it is used as::
-
-    mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror=1e-3)
-    system.actors.add(mmm2d)
-
-where the prefactor :math:`C` is defined in Eqn. :eq:`coulomb_prefactor`.
-For a detailed list of parameters see :attr:`espressomd.electrostatics.MMM2D`.
-The last two, mutually exclusive parameters ``dielectric`` and
-``dielectric_constants_on`` allow to specify dielectric contrasts at the
-upper and lower boundaries of the simulation box. The first form
-specifies the respective dielectric constants in the media, which
-however is only used to calculate the contrasts. That is, specifying
-:math:`\epsilon_t=\epsilon_m=\epsilon_b=\text{const}` is always
-identical to :math:`\epsilon_t=\epsilon_m=\epsilon_b=1`::
-
-    mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror=1e-3, dielectric=1,
-                                 top=1, mid=1, bot=1)
-
-The second form specifies only the dielectric contrasts at the boundaries,
-that is :math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}`
-and :math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`.
-Using this form allows to choose :math:`\Delta_{t/b}=-1`, corresponding
-to metallic boundary conditions::
-
-    mmm2d = electrostatics.MMM2D(prefactor=C, maxPWerror=1e-3, dielectric_contrast_on=1,
-                                 delta_mid_top=-1, delta_mid_bot=-1)
-
-Using ``const_pot`` allows to maintain a constant electric potential difference ``pot_diff``
-between the xy-planes at :math:`z=0` and :math:`z=L`, where :math:`L`
-denotes the box length in :math:`z`-direction::
-
-    mmm2d = electrostatics.MMM2D(prefactor=100.0, maxPWerror=1e-3, const_pot=1, pot_diff=100.0)
-
-This is done by countering the total dipole moment of the system with the
-electric field :math:`E_{induced}` and superposing a homogeneous electric field
-:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the
-induction of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0`
-for planar electrodes at :math:`z=0` and :math:`z=L` in a capacitor connected
-to a battery with voltage ``pot_diff``. Using 0 is equivalent to
-:math:`\Delta_{t/b}=-1`.
-
-Finally, the far cutoff setting should only be used for testing reasons,
-otherwise you are more safe with the automatic tuning. If you even don't know
-what it is, do not even think of touching the far cutoff. For details on the
-MMM family of algorithms, refer to appendix :ref:`The MMM family of algorithms`.
-Please cite :cite:`arnold02a` when using MMM2D.
-
-A complete (but unphysical) sample script for a plate capacitor simulated with MMM2D
-can be found in :file:`/samples/visualization_mmm2d.py`.
-
 .. _Electrostatic Layer Correction (ELC):
 
 Electrostatic Layer Correction (ELC)
@@ -331,13 +265,11 @@ Electrostatic Layer Correction (ELC)
 *ELC* can be used to simulate charged system with 2D periodicity. In more
 detail, is a special procedure that converts a 3D electrostatic method to a 2D
 method in computational order N. Currently, it only supports P3M. This means,
-that you will first have to set up the P3M algorithm before using ELC. The
-algorithm is definitely faster than MMM2D for larger numbers of particles
-(:math:`>400` at reasonable accuracy requirements). The periodicity has to be
-set to (1 1 1) still, *ELC* cancels the electrostatic contribution of the
-periodic replica in **z-direction**. Make sure that you read the papers on ELC
-(:cite:`arnold02c,arnold02d,tyagi08a`) before using it. ELC is an |es| actor
-and is used with::
+that you will first have to set up the P3M algorithm before using ELC.
+The periodicity has to be set to (1 1 1) still, *ELC* cancels the electrostatic 
+contribution of the periodic replica in **z-direction**. Make sure that you 
+read the papers on ELC (:cite:`arnold02c,arnold02d,tyagi08a`) before using it. 
+ELC is an |es| actor and is used with::
 
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
@@ -360,7 +292,7 @@ Parameters are:
     * ``delta_mid_top``/``delta_mid_bot``:
         *ELC* can also be used to simulate 2D periodic systems with image charges,
         specified by dielectric contrasts on the non-periodic boundaries
-        (:cite:`tyagi08a`).  Similar to *MMM2D*, these can be set with the
+        (:cite:`tyagi08a`).  These can be set with the
         keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
         jump from the simulation region (*middle*) to *bottom* (at ``z<0``) and
         from *middle* to *top* (``z > box_l[2] - gap_size``). The fully metallic case
@@ -368,9 +300,8 @@ Parameters are:
         forces/energies in *ELC* and is therefore only possible with the
         ``const_pot`` option.
     * ``const_pot``:
-        As described, setting this to ``True`` leads to fully metallic boundaries and
-        behaves just like the mmm2d parameter of the same name: It maintains a
-        constant potential ``pot_diff`` by countering the total dipole moment of
+        As described, setting this to ``True`` leads to fully metallic boundaries:
+        It maintains a constant potential ``pot_diff`` by countering the total dipole moment of
         the system and adding a homogeneous electric field according to
         ``pot_diff``.
     * ``pot_diff``:
