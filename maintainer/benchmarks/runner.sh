@@ -36,11 +36,11 @@ for config in ${configs}; do
   # add minimal features for the benchmarks to run
   sed -i '1 i\#define ELECTROSTATICS\n#define LENNARD_JONES\n#define MASS\n' "${config}"
   # remove checks
-  sed -ri "s/#define ADDITIONAL_CHECKS//" "${config}"
+  sed -ri "s/#define\s+ADDITIONAL_CHECKS//" "${config}"
 done
 
 cat > benchmarks.csv << EOF
-"config","script","arguments","cores","MPI","mean","ci","nsteps","duration"
+"config","script","arguments","cores","mean","ci","nsteps","duration"
 EOF
 
 # run benchmarks

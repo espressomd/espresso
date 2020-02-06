@@ -31,7 +31,7 @@
 
 /** Volume conservation.
  *  Calculate volumes, volume force and add it to each virtual particle.
- *  This function is called from integrate_vv.
+ *  This function is called from @ref integrate.
  */
 void ImmersedBoundaries::volume_conservation() {
   if (VolumeInitDone && !BoundariesFound) {
@@ -125,8 +125,8 @@ void ImmersedBoundaries::calc_volumes() {
   std::vector<double> tempVol(MaxNumIBM);
 
   // Loop over all particles on local node
-  for (int c = 0; c < local_cells.n; c++) {
-    const Cell *const cell = local_cells.cell[c];
+  for (int c = 0; c < cell_structure.local_cells().n; c++) {
+    const Cell *const cell = cell_structure.local_cells().cell[c];
 
     for (int i = 0; i < cell->n; i++) {
       Particle &p1 = cell->part[i];
@@ -231,8 +231,8 @@ void ImmersedBoundaries::calc_volumes() {
 /** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force() {
   // Loop over all particles on local node
-  for (int c = 0; c < local_cells.n; c++) {
-    const Cell *const cell = local_cells.cell[c];
+  for (int c = 0; c < cell_structure.local_cells().n; c++) {
+    const Cell *const cell = cell_structure.local_cells().cell[c];
 
     for (int i = 0; i < cell->n; i++) {
       Particle &p1 = cell->part[i];

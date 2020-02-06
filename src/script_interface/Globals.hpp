@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2019 The ESPResSo project
+ * Copyright (C) 2019 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,26 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#ifndef SCRIPT_INTERFACE_GLOBALS_HPP
+#define SCRIPT_INTERFACE_GLOBALS_HPP
 
-#include "out_direction.hpp"
+#include "thermostat.hpp"
 
-#ifdef MEMBRANE_COLLISION
-#include "communication.hpp"
-
-#include <utils/constants.hpp>
-
-int oif_out_direction_set_params(int bond_type) {
-  if (bond_type < 0)
-    return ES_ERROR;
-
-  make_bond_type_exist(bond_type);
-
-  bonded_ia_params[bond_type].type = BONDED_IA_OIF_OUT_DIRECTION;
-  bonded_ia_params[bond_type].num = 3;
-
-  mpi_bcast_ia_params(bond_type, -1);
-
-  return ES_OK;
-}
+extern LangevinThermostat langevin;
+extern BrownianThermostat brownian;
+extern IsotropicNptThermostat npt_iso;
 
 #endif

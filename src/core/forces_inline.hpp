@@ -38,6 +38,7 @@
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
+#include "integrators/langevin_inline.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
@@ -56,10 +57,8 @@
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
-#include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
-#include "object-in-fluid/out_direction.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
@@ -103,16 +102,17 @@ inline ParticleForce external_force(Particle const &p) {
 }
 
 inline ParticleForce thermostat_force(Particle const &p) {
+  extern LangevinThermostat langevin;
   if (!(thermo_switch & THERMO_LANGEVIN)) {
     return {};
   }
 
 #ifdef ROTATION
-  return {
-      friction_thermo_langevin(p),
-      convert_vector_body_to_space(p, friction_thermo_langevin_rotation(p))};
+  return {friction_thermo_langevin(langevin, p),
+          convert_vector_body_to_space(
+              p, friction_thermo_langevin_rotation(langevin, p))};
 #else
-  return friction_thermo_langevin(p);
+  return friction_thermo_langevin(langevin, p);
 #endif
 }
 
@@ -170,10 +170,6 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
   force_factor += soft_pair_force_factor(ia_params, dist);
-#endif
-/*repulsive membrane potential*/
-#ifdef MEMBRANE_COLLISION
-  force += membrane_collision_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /*hat potential*/
 #ifdef HAT
@@ -519,13 +515,6 @@ inline void add_bonded_force(Particle *const p1) {
     } // 2 partners (angle bonds...)
     else if (n_partners == 3) {
       switch (type) {
-#ifdef MEMBRANE_COLLISION
-      case BONDED_IA_OIF_OUT_DIRECTION: {
-        p1->p.out_direction = calc_out_direction(*p2, *p3, *p4);
-        bond_broken = false;
-        break;
-      }
-#endif
 #ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
         // in OIF nomenclature, particles p2 and p3 are common to both triangles

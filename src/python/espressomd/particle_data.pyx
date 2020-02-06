@@ -544,25 +544,6 @@ cdef class ParticleHandle:
                     self.particle_data, rinertia)
                 return array_locked([rinertia[0], rinertia[1], rinertia[2]])
 
-    IF MEMBRANE_COLLISION:
-        property out_direction:
-            """OIF Outward direction"""
-
-            def __set__(self, _out_direction):
-                cdef double out_direction[3]
-                check_type_or_throw_except(
-                    _out_direction, 3, float, "out_direction has to be 3 floats")
-                for i in range(3):
-                    out_direction[i] = _out_direction[i]
-                set_particle_out_direction(self.id, out_direction)
-
-            def __get__(self):
-                self.update_particle_data()
-                cdef const double * out_direction = NULL
-                pointer_to_out_direction(self.particle_data, out_direction)
-                return np.array(
-                    [out_direction[0], out_direction[1], out_direction[2]])
-
     # Charge
     property q:
         """
@@ -820,13 +801,13 @@ cdef class ParticleHandle:
             """
             Fixes the particle motion in the specified cartesian directions.
 
-            fix : (3,) array_like of :obj:`int`
+            fix : (3,) array_like of :obj:`bool`
 
-            Fixes the particle in space. By supplying a set of 3 integers as
+            Fixes the particle in space. By supplying a set of 3 bools as
             arguments it is possible to fix motion in x, y, or z coordinates
             independently. For example::
 
-                part[<INDEX>].fix = [0, 0, 1]
+                part[<INDEX>].fix = [False, False, True]
 
             will fix motion for particle with index ``INDEX`` only in z.
 
@@ -838,7 +819,7 @@ cdef class ParticleHandle:
             def __set__(self, _fixed_coord_flag):
                 cdef stdint.uint8_t ext_flag = 0
                 check_type_or_throw_except(
-                    _fixed_coord_flag, 3, int, "Fix has to be 3 ints.")
+                    _fixed_coord_flag, 3, int, "Fix has to be 3 bools.")
                 for i in map(long, range(3)):
                     if _fixed_coord_flag[i]:
                         ext_flag |= _COORD_FIXED(i)

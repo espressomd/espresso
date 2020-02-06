@@ -50,13 +50,18 @@ using Utils::sinc;
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
+#include <utils/math/bspline.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <boost/optional.hpp>
 #include <boost/range/algorithm/min_element.hpp>
+#include <boost/range/numeric.hpp>
+#include <mpi.h>
+
+#include <complex>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <mpi.h>
 
 /************************************************
  * variables
@@ -90,14 +95,8 @@ p3m_data_struct p3m;
  */
 static void p3m_init_a_ai_cao_cut();
 
-/** Calculates the dipole term */
-static double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
-                                   const ParticleRange &particles);
-
-#ifdef P3M_STORE_CA_FRAC
 /** Realloc charge assignment fields. */
 static void p3m_realloc_ca_fields(int newsize);
-#endif
 
 static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
 
@@ -197,22 +196,20 @@ template <int cao>
 static void p3m_do_charge_assign(const ParticleRange &particles);
 
 template <int cao>
-void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
+void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
+                          int cp_cnt);
 
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
 
-  rs_mesh = nullptr;
   sum_qpart = 0;
   sum_q2 = 0.0;
   square_sum_q = 0.0;
 
   pos_shift = 0.0;
 
-#ifdef P3M_STORE_CA_FRAC
   ca_num = 0;
-#endif
   ks_pnum = 0;
 }
 
@@ -231,21 +228,21 @@ void p3m_init() {
      * the cutoff for charge assignment p3m.params.cao_cut */
     p3m_init_a_ai_cao_cut();
 
-#ifdef P3M_STORE_CA_FRAC
     /* initialize ca fields to size CA_INCREMENT: p3m.ca_frac and p3m.ca_fmp */
     p3m.ca_num = 0;
     p3m_realloc_ca_fields(CA_INCREMENT);
-#endif
 
     p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
 
     p3m.sm.resize(comm_cart, p3m.local_mesh);
 
-    int ca_mesh_size =
-        fft_init(&p3m.rs_mesh, p3m.local_mesh.dim, p3m.local_mesh.margin,
-                 p3m.params.mesh, p3m.params.mesh_off, &p3m.ks_pnum, p3m.fft,
-                 node_grid, comm_cart);
-    p3m.ks_mesh.resize(ca_mesh_size);
+    int ca_mesh_size = fft_init(p3m.local_mesh.dim, p3m.local_mesh.margin,
+                                p3m.params.mesh, p3m.params.mesh_off,
+                                &p3m.ks_pnum, p3m.fft, node_grid, comm_cart);
+    p3m.rs_mesh.resize(ca_mesh_size);
+    for (auto &e : p3m.E_mesh) {
+      e.resize(ca_mesh_size);
+    }
 
     /* k-space part: */
     p3m_calc_differential_operator();
@@ -381,7 +378,7 @@ void p3m_interpolate_charge_assignment_function() {
     /* loop over all interpolation points */
     for (j = -p3m.params.inter; j <= p3m.params.inter; j++)
       p3m.int_caf[i][j + p3m.params.inter] =
-          p3m_caf(i, j * dInterpol, p3m.params.cao);
+          Utils::bspline(i, j * dInterpol, p3m.params.cao);
   }
 }
 
@@ -427,13 +424,11 @@ template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
     }
   }
 
-#ifdef P3M_STORE_CA_FRAC
   p3m_shrink_wrap_charge_grid(cp_cnt);
-#endif
 }
 
 /* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt) {
   switch (p3m.params.cao) {
   case 1:
     p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
@@ -460,7 +455,8 @@ void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
 }
 
 template <int cao>
-void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
+void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
+                          int cp_cnt) {
   auto const inter = not(p3m.params.inter == 0);
   /* distance to nearest mesh point */
   double dist[3];
@@ -468,14 +464,12 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
   int arg[3];
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
-#ifdef P3M_STORE_CA_FRAC
   // make sure we have enough space
   if (cp_cnt >= p3m.ca_num)
     p3m_realloc_ca_fields(cp_cnt + 1);
   // do it here, since p3m_realloc_ca_fields may change the address of
   // p3m.ca_frac
   double *cur_ca_frac = p3m.ca_frac.data() + cao * cao * cao * cp_cnt;
-#endif
 
   for (int d = 0; d < 3; d++) {
     /* particle position in mesh coordinates */
@@ -510,87 +504,72 @@ void p3m_do_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt) {
 #endif
   }
 
-#ifdef P3M_STORE_CA_FRAC
   if (cp_cnt >= 0)
     p3m.ca_fmp[cp_cnt] = q_ind;
-#endif
+
+  Utils::Array<double, cao> w_x, w_y, w_z;
 
   if (!inter) {
-    for (int i0 = 0; i0 < cao; i0++) {
-      auto const tmp0 = p3m_caf(i0, dist[0], cao);
-      for (int i1 = 0; i1 < cao; i1++) {
-        auto const tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
-        for (int i2 = 0; i2 < cao; i2++) {
-          auto const cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-          p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-#ifdef P3M_STORE_CA_FRAC
-          /* store current ca frac */
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-#endif
-          q_ind++;
-        }
-        q_ind += p3m.local_mesh.q_2_off;
-      }
-      q_ind += p3m.local_mesh.q_21_off;
+    for (int i = 0; i < cao; i++) {
+      using Utils::bspline;
+
+      w_x[i] = bspline<cao>(i, dist[0]);
+      w_y[i] = bspline<cao>(i, dist[1]);
+      w_z[i] = bspline<cao>(i, dist[2]);
     }
   } else {
-    for (int i0 = 0; i0 < cao; i0++) {
-      auto const tmp0 = p3m.int_caf[i0][arg[0]];
-      for (int i1 = 0; i1 < cao; i1++) {
-        auto const tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-        for (int i2 = 0; i2 < cao; i2++) {
-          auto const cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-          p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-#ifdef P3M_STORE_CA_FRAC
-          /* store current ca frac */
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-#endif
-          q_ind++;
-        }
-        q_ind += p3m.local_mesh.q_2_off;
-      }
-      q_ind += p3m.local_mesh.q_21_off;
+    for (int i = 0; i < cao; i++) {
+      w_x[i] = p3m.int_caf[i][arg[0]];
+      w_y[i] = p3m.int_caf[i][arg[1]];
+      w_z[i] = p3m.int_caf[i][arg[2]];
     }
+  }
+
+  for (int i0 = 0; i0 < cao; i0++) {
+    auto const tmp0 = w_x[i0];
+    for (int i1 = 0; i1 < cao; i1++) {
+      auto const tmp1 = tmp0 * w_y[i1];
+      for (int i2 = 0; i2 < cao; i2++) {
+        auto const cur_ca_frac_val = q * tmp1 * w_z[i2];
+        p3m.rs_mesh[q_ind] += cur_ca_frac_val;
+        /* store current ca frac */
+        if (cp_cnt >= 0)
+          *(cur_ca_frac++) = cur_ca_frac_val;
+        q_ind++;
+      }
+      q_ind += p3m.local_mesh.q_2_off;
+    }
+    q_ind += p3m.local_mesh.q_21_off;
   }
 }
 
-#ifdef P3M_STORE_CA_FRAC
 void p3m_shrink_wrap_charge_grid(int n_charges) {
   /* we do not really want to export these */
   if (n_charges < p3m.ca_num)
     p3m_realloc_ca_fields(n_charges);
 }
-#endif
 
 /* Assign the forces obtained from k-space */
 template <int cao>
-static void P3M_assign_forces(double force_prefac, int d_rs,
+static void P3M_assign_forces(double force_prefac,
                               const ParticleRange &particles) {
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
-#ifdef P3M_STORE_CA_FRAC
   int cf_cnt = 0;
-#else
-  /* distance to nearest mesh point */
-  double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
-#endif
   /* index, index jumps for rs_mesh array */
   int q_ind = 0;
 
   for (auto &p : particles) {
     auto const q = p.p.q;
     if (q != 0.0) {
-#ifdef P3M_STORE_CA_FRAC
       q_ind = p3m.ca_fmp[cp_cnt];
       for (int i0 = 0; i0 < cao; i0++) {
         for (int i1 = 0; i1 < cao; i1++) {
           for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f[d_rs] -=
-                force_prefac * p3m.ca_frac[cf_cnt] * p3m.rs_mesh[q_ind];
+            p.f.f -= force_prefac * p3m.ca_frac[cf_cnt] *
+                     Utils::Vector3d{p3m.E_mesh[0][q_ind], p3m.E_mesh[1][q_ind],
+                                     p3m.E_mesh[2][q_ind]};
+
             q_ind++;
             cf_cnt++;
           }
@@ -599,105 +578,225 @@ static void P3M_assign_forces(double force_prefac, int d_rs,
         q_ind += p3m.local_mesh.q_21_off;
       }
       cp_cnt++;
-#else
-      double pos;
-      int nmp;
-      double tmp0, tmp1;
-      double cur_ca_frac_val;
-      for (int d = 0; d < 3; d++) {
-        /* particle position in mesh coordinates */
-        pos = ((p.r.p[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
-              p3m.pos_shift;
-        /* nearest mesh point */
-        nmp = (int)pos;
-        /* 3d-array index of nearest mesh point */
-        q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
-
-        if (p3m.params.inter == 0)
-          /* distance to nearest mesh point */
-          dist[d] = (pos - nmp) - 0.5;
-        else
-          /* distance to nearest mesh point for interpolation */
-          arg[d] = (int)((pos - nmp) * p3m.params.inter2);
-      }
-
-      if (p3m.params.inter == 0) {
-        for (int i0 = 0; i0 < cao; i0++) {
-          tmp0 = p3m_caf(i0, dist[0], cao);
-          for (int i1 = 0; i1 < cao; i1++) {
-            tmp1 = tmp0 * p3m_caf(i1, dist[1], cao);
-            for (int i2 = 0; i2 < cao; i2++) {
-              cur_ca_frac_val = q * tmp1 * p3m_caf(i2, dist[2], cao);
-              p.f.f[d_rs] -=
-                  force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
-              q_ind++;
-            }
-            q_ind += p3m.local_mesh.q_2_off;
-          }
-          q_ind += p3m.local_mesh.q_21_off;
-        }
-      } else {
-        for (int i0 = 0; i0 < cao; i0++) {
-          tmp0 = p3m.int_caf[i0][arg[0]];
-          for (int i1 = 0; i1 < cao; i1++) {
-            tmp1 = tmp0 * p3m.int_caf[i1][arg[1]];
-            for (int i2 = 0; i2 < cao; i2++) {
-              cur_ca_frac_val = q * tmp1 * p3m.int_caf[i2][arg[2]];
-              p.f.f[d_rs] -=
-                  force_prefac * cur_ca_frac_val * p3m.rs_mesh[q_ind];
-              q_ind++;
-            }
-            q_ind += p3m.local_mesh.q_2_off;
-          }
-          q_ind += p3m.local_mesh.q_21_off;
-        }
-      }
-#endif
     }
   }
 }
 
+namespace {
+auto dipole_moment(Particle const &p, BoxGeometry const &box) {
+  return p.p.q * unfolded_position(p.r.p, p.l.i, box.length());
+}
+
+auto calc_dipole_moment(boost::mpi::communicator const &comm,
+                        const ParticleRange &particles,
+                        BoxGeometry const &box) {
+  auto const local_dip = boost::accumulate(
+      particles, Utils::Vector3d{}, [&box](Utils::Vector3d dip, auto const &p) {
+        return dip + dipole_moment(p, box);
+      });
+
+  return boost::mpi::all_reduce(comm, local_dip, std::plus<>());
+}
+
+void add_dipole_correction(Utils::Vector3d const &box_dipole,
+                           const ParticleRange &particles) {
+  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+                    (2 * p3m.params.epsilon + 1);
+
+  auto const dm = pref * box_dipole;
+
+  for (auto &p : particles) {
+    p.f.f -= p.p.q * dm;
+  }
+}
+
+double dipole_correction_energy(Utils::Vector3d const &box_dipole) {
+  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
+                    (2 * p3m.params.epsilon + 1);
+
+  return pref * box_dipole.norm2();
+}
+} // namespace
+
+/** @details Calculate the long range electrostatics part of the stress
+ *  tensor. This is part \f$\Pi_{\textrm{dir}, \alpha, \beta}\f$ eq. (2.6)
+ *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
+ *  eq. (2.8) is not present here since M is the empty set in our simulations.
+ */
+Utils::Vector9d p3m_calc_kspace_stress() {
+  Utils::Vector9d node_k_space_stress{};
+
+  if (p3m.sum_q2 > 0) {
+    p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
+    fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
+
+    int ind = 0;
+    int j[3];
+    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
+      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
+        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
+          auto const kx = 2.0 * Utils::pi() *
+                          p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
+                          box_geo.length()[RX];
+          auto const ky = 2.0 * Utils::pi() *
+                          p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
+                          box_geo.length()[RY];
+          auto const kz = 2.0 * Utils::pi() *
+                          p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
+                          box_geo.length()[RZ];
+          auto const sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
+
+          auto const node_k_space_energy =
+              (sqk == 0)
+                  ? 0.0
+                  : p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
+                                         Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
+          ind++;
+
+          auto const vterm =
+              (sqk == 0)
+                  ? 0.
+                  : -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
+
+          node_k_space_stress[0] +=
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
+          node_k_space_stress[1] +=
+              node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
+          node_k_space_stress[2] +=
+              node_k_space_energy * (vterm * kx * kz); /* sigma_xz */
+
+          node_k_space_stress[3] +=
+              node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
+          node_k_space_stress[4] +=
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
+          node_k_space_stress[5] +=
+              node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
+
+          node_k_space_stress[6] +=
+              node_k_space_energy * (vterm * kx * kz); /* sigma_zx */
+          node_k_space_stress[7] +=
+              node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
+          node_k_space_stress[8] +=
+              node_k_space_energy *
+              (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
+        }
+      }
+    }
+  }
+
+  auto const force_prefac = coulomb.prefactor / (2.0 * box_geo.volume());
+  return force_prefac * node_k_space_stress;
+}
+
 double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles) {
-  int i, d, d_rs, ind, j[3];
-  /**************************************************************/
-  /* Prefactor for force */
-  double force_prefac;
-  /* k-space energy */
-  double k_space_energy = 0.0, node_k_space_energy = 0.0;
-  /* directions */
-  double *d_operator = nullptr;
-
-  force_prefac =
-      coulomb.prefactor /
-      (2 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
-
   /* Gather information for FFT grid inside the nodes domain (inner local mesh)
    * and perform forward 3D FFT (Charge Assignment Mesh). */
-  if (p3m.sum_q2 > 0) {
-    p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
-  }
+  p3m.sm.gather_grid(p3m.rs_mesh.data(), comm_cart, p3m.local_mesh.dim);
+  fft_perform_forw(p3m.rs_mesh.data(), p3m.fft, comm_cart);
+
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
+  /* The dipol moment is only needed if we don't have metallic boundaries. */
+  auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
+                              ? boost::make_optional(calc_dipole_moment(
+                                    comm_cart, particles, box_geo))
+                              : boost::none;
 
   /* === k-space calculations === */
 
-  /* === k-space energy calculation  === */
-  //     if(energy_flag && p3m.sum_q2 > 0) {
-  if (energy_flag) {
-    /*********************
-    Coulomb energy
-    **********************/
+  /* === k-space force calculation  === */
+  if (force_flag) {
+    auto const force_prefac = coulomb.prefactor / (2 * box_geo.volume());
 
-    for (i = 0; i < p3m.fft.plan[3].new_size; i++) {
+    /* sqrt(-1)*k differentiation */
+    int j[3];
+    int ind = 0;
+    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
+      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
+        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
+          auto const rho_hat = std::complex<double>(p3m.rs_mesh[2 * ind + 0],
+                                                    p3m.rs_mesh[2 * ind + 1]);
+          auto const phi_hat = p3m.g_force[ind] * rho_hat;
+
+          for (int d = 0; d < 3; d++) {
+            /* direction in r-space: */
+            int d_rs = (d + p3m.ks_pnum) % 3;
+            /* directions */
+            auto const k = 2.0 * Utils::pi() *
+                           p3m.d_op[d_rs][j[d] + p3m.fft.plan[3].start[d]] /
+                           box_geo.length()[d_rs];
+
+            /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
+            p3m.E_mesh[d_rs][2 * ind + 0] = -k * phi_hat.imag();
+            p3m.E_mesh[d_rs][2 * ind + 1] = +k * phi_hat.real();
+          }
+
+          ind++;
+        }
+      }
+    }
+
+    /* Back FFT force component mesh */
+    for (int d = 0; d < 3; d++) {
+      fft_perform_back(p3m.E_mesh[d].data(),
+                       /* check_complex */ !p3m.params.tuning, p3m.fft,
+                       comm_cart);
+    }
+
+    {
+      std::array<double *, 3> E_fields = {
+          p3m.E_mesh[0].data(), p3m.E_mesh[1].data(), p3m.E_mesh[2].data()};
+      /* redistribute force component mesh */
+      p3m.sm.spread_grid(Utils::make_span(E_fields), comm_cart,
+                         p3m.local_mesh.dim);
+    }
+
+    /* Assign force component from mesh to particle */
+    switch (p3m.params.cao) {
+    case 1:
+      P3M_assign_forces<1>(force_prefac, particles);
+      break;
+    case 2:
+      P3M_assign_forces<2>(force_prefac, particles);
+      break;
+    case 3:
+      P3M_assign_forces<3>(force_prefac, particles);
+      break;
+    case 4:
+      P3M_assign_forces<4>(force_prefac, particles);
+      break;
+    case 5:
+      P3M_assign_forces<5>(force_prefac, particles);
+      break;
+    case 6:
+      P3M_assign_forces<6>(force_prefac, particles);
+      break;
+    case 7:
+      P3M_assign_forces<7>(force_prefac, particles);
+      break;
+    }
+
+    if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+      add_dipole_correction(box_dipole.value(), particles);
+    }
+  } /* if(force_flag) */
+
+  /* === k-space energy calculation  === */
+  if (energy_flag) {
+    double node_k_space_energy = 0.;
+
+    for (int i = 0; i < p3m.fft.plan[3].new_size; i++) {
       // Use the energy optimized influence function for energy!
       node_k_space_energy +=
           p3m.g_energy[i] *
           (Utils::sqr(p3m.rs_mesh[2 * i]) + Utils::sqr(p3m.rs_mesh[2 * i + 1]));
     }
-    node_k_space_energy *= force_prefac;
+    node_k_space_energy *= coulomb.prefactor / (2 * box_geo.volume());
 
+    double k_space_energy = 0.0;
     MPI_Reduce(&node_k_space_energy, &k_space_energy, 1, MPI_DOUBLE, MPI_SUM, 0,
                comm_cart);
     if (this_node == 0) {
@@ -706,136 +805,20 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                         (p3m.sum_q2 * p3m.params.alpha * Utils::sqrt_pi_i());
       /* net charge correction */
       k_space_energy -= coulomb.prefactor * p3m.square_sum_q * Utils::pi() /
-                        (2.0 * box_geo.length()[0] * box_geo.length()[1] *
-                         box_geo.length()[2] * Utils::sqr(p3m.params.alpha));
+                        (2.0 * box_geo.volume() * Utils::sqr(p3m.params.alpha));
+      /* dipole correction */
+      if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
+        k_space_energy += dipole_correction_energy(box_dipole.value());
+      }
     }
-
+    return k_space_energy;
   } /* if (energy_flag) */
 
-  /* === k-space force calculation  === */
-  if (force_flag && p3m.sum_q2 > 0) {
-    /***************************
-     COULOMB FORCES (k-space)
-     ****************************/
-    /* Force preparation */
-    ind = 0;
-    /* apply the influence function */
-    for (i = 0; i < p3m.fft.plan[3].new_size; i++) {
-      p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-      ind++;
-      p3m.ks_mesh[ind] = p3m.g_force[i] * p3m.rs_mesh[ind];
-      ind++;
-    }
-
-    /* === 3 Fold backward 3D FFT (Force Component Meshes) === */
-
-    /* Force component loop */
-    for (d = 0; d < 3; d++) {
-      if (d == KX)
-        d_operator = p3m.d_op[RX].data();
-      else if (d == KY)
-        d_operator = p3m.d_op[RY].data();
-      else if (d == KZ)
-        d_operator = p3m.d_op[RZ].data();
-
-      /* direction in k-space: */
-      d_rs = (d + p3m.ks_pnum) % 3;
-      /* sqrt(-1)*k differentiation */
-      ind = 0;
-      for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[0]; j[0]++) {
-        for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[1]; j[1]++) {
-          for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[2]; j[2]++) {
-            /* i*k*(Re+i*Im) = - Im*k + i*Re*k     (i=sqrt(-1)) */
-            p3m.rs_mesh[ind] = -2.0 * Utils::pi() *
-                               (p3m.ks_mesh[ind + 1] *
-                                d_operator[j[d] + p3m.fft.plan[3].start[d]]) /
-                               box_geo.length()[d_rs];
-            ind++;
-            p3m.rs_mesh[ind] = 2.0 * Utils::pi() * p3m.ks_mesh[ind - 1] *
-                               d_operator[j[d] + p3m.fft.plan[3].start[d]] /
-                               box_geo.length()[d_rs];
-            ind++;
-          }
-        }
-      }
-      /* Back FFT force component mesh */
-      fft_perform_back(p3m.rs_mesh, /* check_complex */ !p3m.params.tuning,
-                       p3m.fft, comm_cart);
-      /* redistribute force component mesh */
-      p3m.sm.spread_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-      /* Assign force component from mesh to particle */
-      switch (p3m.params.cao) {
-      case 1:
-        P3M_assign_forces<1>(force_prefac, d_rs, particles);
-        break;
-      case 2:
-        P3M_assign_forces<2>(force_prefac, d_rs, particles);
-        break;
-      case 3:
-        P3M_assign_forces<3>(force_prefac, d_rs, particles);
-        break;
-      case 4:
-        P3M_assign_forces<4>(force_prefac, d_rs, particles);
-        break;
-      case 5:
-        P3M_assign_forces<5>(force_prefac, d_rs, particles);
-        break;
-      case 6:
-        P3M_assign_forces<6>(force_prefac, d_rs, particles);
-        break;
-      case 7:
-        P3M_assign_forces<7>(force_prefac, d_rs, particles);
-        break;
-      }
-    }
-  } /* if(force_flag) */
-
-  if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    k_space_energy += p3m_calc_dipole_term(force_flag, energy_flag, particles);
-  }
-
-  return k_space_energy;
+  return 0.0;
 }
 
 /************************************************************/
 
-double p3m_calc_dipole_term(bool force_flag, bool energy_flag,
-                            const ParticleRange &particles) {
-  auto const pref = coulomb.prefactor * 4 * M_PI / box_geo.volume() /
-                    (2 * p3m.params.epsilon + 1);
-  double lcl_dm[3], gbl_dm[3];
-  double en;
-
-  for (double &j : lcl_dm)
-    j = 0;
-
-  for (auto const &p : particles) {
-    for (int j = 0; j < 3; j++)
-      /* dipole moment with unfolded coordinates */
-      lcl_dm[j] += p.p.q * (p.r.p[j] + p.l.i[j] * box_geo.length()[j]);
-  }
-
-  MPI_Allreduce(lcl_dm, gbl_dm, 3, MPI_DOUBLE, MPI_SUM, comm_cart);
-
-  if (energy_flag)
-    en =
-        0.5 * pref *
-        (Utils::sqr(gbl_dm[0]) + Utils::sqr(gbl_dm[1]) + Utils::sqr(gbl_dm[2]));
-  else
-    en = 0;
-  if (force_flag) {
-    for (double &j : gbl_dm)
-      j *= pref;
-    for (auto &p : particles) {
-      for (int j = 0; j < 3; j++)
-        p.f.f[j] -= gbl_dm[j] * p.p.q;
-    }
-    return en;
-  }
-  return 0;
-}
-
-#ifdef P3M_STORE_CA_FRAC
 void p3m_realloc_ca_fields(int newsize) {
   newsize = ((newsize + CA_INCREMENT - 1) / CA_INCREMENT) * CA_INCREMENT;
   if (newsize == p3m.ca_num)
@@ -847,7 +830,6 @@ void p3m_realloc_ca_fields(int newsize) {
   p3m.ca_frac.resize(p3m.params.cao3 * p3m.ca_num);
   p3m.ca_fmp.resize(p3m.ca_num);
 }
-#endif
 
 void p3m_calc_meshift() {
   p3m.meshift_x.resize(p3m.params.mesh[0]);
@@ -1715,7 +1697,7 @@ void p3m_count_charged_particles() {
     tot_sums[i] = 0.0;
   }
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : cell_structure.local_cells().particles()) {
     if (p.p.q != 0.0) {
       node_sums[0] += 1.0;
       node_sums[1] += Utils::sqr(p.p.q);
@@ -1906,93 +1888,6 @@ void p3m_scaleby_box_l() {
   p3m_sanity_checks_boxl();
   p3m_calc_influence_function_force();
   p3m_calc_influence_function_energy();
-}
-
-/** @details Calculate the long range electrostatics part of the stress
- *  tensor. This is part \f$\Pi_{\textrm{dir}, \alpha, \beta}\f$ eq. (2.6)
- *  in @cite essmann95a. The part \f$\Pi_{\textrm{corr}, \alpha, \beta}\f$
- *  eq. (2.8) is not present here since M is the empty set in our simulations.
- */
-void p3m_calc_kspace_stress(double *stress) {
-  if (p3m.sum_q2 > 0) {
-    std::vector<double> node_k_space_stress;
-    std::vector<double> k_space_stress;
-    double force_prefac, node_k_space_energy, sqk, vterm, kx, ky, kz;
-
-    int j[3], i, ind = 0;
-    // ordering after Fourier transform
-    node_k_space_stress.resize(9);
-    k_space_stress.resize(9);
-
-    for (i = 0; i < 9; i++) {
-      node_k_space_stress[i] = 0.0;
-      k_space_stress[i] = 0.0;
-    }
-
-    p3m.sm.gather_grid(p3m.rs_mesh, comm_cart, p3m.local_mesh.dim);
-    fft_perform_forw(p3m.rs_mesh, p3m.fft, comm_cart);
-    force_prefac =
-        coulomb.prefactor /
-        (2.0 * box_geo.length()[0] * box_geo.length()[1] * box_geo.length()[2]);
-
-    for (j[0] = 0; j[0] < p3m.fft.plan[3].new_mesh[RX]; j[0]++) {
-      for (j[1] = 0; j[1] < p3m.fft.plan[3].new_mesh[RY]; j[1]++) {
-        for (j[2] = 0; j[2] < p3m.fft.plan[3].new_mesh[RZ]; j[2]++) {
-          kx = 2.0 * Utils::pi() *
-               p3m.d_op[RX][j[KX] + p3m.fft.plan[3].start[KX]] /
-               box_geo.length()[RX];
-          ky = 2.0 * Utils::pi() *
-               p3m.d_op[RY][j[KY] + p3m.fft.plan[3].start[KY]] /
-               box_geo.length()[RY];
-          kz = 2.0 * Utils::pi() *
-               p3m.d_op[RZ][j[KZ] + p3m.fft.plan[3].start[KZ]] /
-               box_geo.length()[RZ];
-          sqk = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
-          if (sqk == 0) {
-            node_k_space_energy = 0.0;
-            vterm = 0.0;
-          } else {
-            vterm = -2.0 * (1 / sqk + Utils::sqr(1.0 / 2.0 / p3m.params.alpha));
-            node_k_space_energy =
-                p3m.g_energy[ind] * (Utils::sqr(p3m.rs_mesh[2 * ind]) +
-                                     Utils::sqr(p3m.rs_mesh[2 * ind + 1]));
-          }
-          ind++;
-          node_k_space_stress[0] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kx)); /* sigma_xx */
-          node_k_space_stress[1] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_xy */
-          node_k_space_stress[2] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_xz */
-
-          node_k_space_stress[3] +=
-              node_k_space_energy * (vterm * kx * ky); /* sigma_yx */
-          node_k_space_stress[4] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(ky)); /* sigma_yy */
-          node_k_space_stress[5] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_yz */
-
-          node_k_space_stress[6] +=
-              node_k_space_energy * (vterm * kx * kz); /* sigma_zx */
-          node_k_space_stress[7] +=
-              node_k_space_energy * (vterm * ky * kz); /* sigma_zy */
-          node_k_space_stress[8] +=
-              node_k_space_energy *
-              (1.0 + vterm * Utils::sqr(kz)); /* sigma_zz */
-        }
-      }
-    }
-
-    MPI_Reduce(node_k_space_stress.data(), k_space_stress.data(), 9, MPI_DOUBLE,
-               MPI_SUM, 0, comm_cart);
-    if (this_node == 0) {
-      for (i = 0; i < 9; i++) {
-        stress[i] = k_space_stress[i] * force_prefac;
-      }
-    }
-  }
 }
 
 #endif /* of P3M */

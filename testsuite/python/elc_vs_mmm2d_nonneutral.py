@@ -135,8 +135,8 @@ class ELC_vs_MMM2D_neutral(ut.TestCase):
 #        elc_res["const_pot_m1"] = self.scan()
 
         for run in elc_res:
-            self.assertTrue(np.testing.assert_allclose(
-                mmm2d_res[run], elc_res[run], rtol=0, atol=1e-4) is None)
+            np.testing.assert_allclose(
+                mmm2d_res[run], elc_res[run], rtol=0, atol=1e-4)
 
     def scan(self):
         n = 10

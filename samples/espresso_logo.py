@@ -136,7 +136,7 @@ for i in range(n_steam):
         pid = len(system.part) - 1
 
         if j == 0:
-            system.part[pid].fix = [1, 1, 1]
+            system.part[pid].fix = [True, True, True]
         else:
             system.part[pid].bonds = (fene, pid - 1)
 

@@ -23,8 +23,9 @@
  *
  *  A velocity Verlet <a
  * HREF="http://ciks.cbt.nist.gov/~garbocz/dpd1/dpd.html">algorithm</a>
- *  using quaternions is implemented to tackle rotational motion. A random
- * torque and a friction
+ *  using quaternions is implemented to tackle rotational motion.
+ *  See @cite allen2017 for the quaternion components indexing used here.
+ *  A random torque and a friction
  *  term are added to provide the constant NVT conditions. Due to this feature
  * all particles are
  *  treated as 3D objects with 3 translational and 3 rotational degrees of
@@ -37,6 +38,7 @@
 #ifdef ROTATION
 #include "integrate.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/mask.hpp>
 
@@ -150,11 +152,6 @@ void propagate_omega_quat_particle(Particle &p) {
   }
 }
 
-inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
-  auto const torque = convert_vector_space_to_body(p, p.f.torque);
-  p.f.torque = mask(p.p.rotation, torque);
-}
-
 /** convert the torques to the body-fixed frames and propagate angular
  * velocities */
 void convert_torques_propagate_omega(const ParticleRange &particles) {
@@ -198,28 +195,6 @@ void convert_initial_torques(const ParticleRange &particles) {
       continue;
     convert_torque_to_body_frame_apply_fix(p);
   }
-}
-
-/** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
- */
-void local_rotate_particle(Particle &p, const Utils::Vector3d &axis_space_frame,
-                           const double phi) {
-  // Rotation turned off entirely?
-  if (!p.p.rotation)
-    return;
-
-  // Convert rotation axis to body-fixed frame
-  auto const axis =
-      mask(p.p.rotation, convert_vector_space_to_body(p, axis_space_frame))
-          .normalize();
-
-  auto const s = std::sin(phi / 2);
-  auto const q =
-      Utils::Vector4d{cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]}
-          .normalize();
-
-  // Rotate the particle
-  p.r.quat = Utils::multiply_quaternions(p.r.quat, q);
 }
 
 #endif // ROTATION

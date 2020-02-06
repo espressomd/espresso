@@ -103,9 +103,9 @@ class ActorTest(ut.TestCase):
         self.assertFalse(a.is_active())
 
         params = a.get_params()
-        self.assertTrue(params["a"])
-        self.assertFalse(params["b"])
-        self.assertTrue(params["c"])
+        self.assertEqual(params["a"], True)
+        self.assertEqual(params["b"], False)
+        self.assertEqual(params["c"], True)
 
 
 if __name__ == "__main__":

@@ -46,8 +46,8 @@ class LBBoundariesBase:
 
         lbb.remove(b1)
 
-        self.assertFalse(b1 in lbb)
-        self.assertTrue(b2 in lbb)
+        self.assertNotIn(b1, lbb)
+        self.assertIn(b2, lbb)
 
     def test_size(self):
         lbb = self.system.lbboundaries

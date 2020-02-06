@@ -47,11 +47,15 @@
 #include <unordered_map>
 
 extern double force_cap;
+extern LangevinThermostat langevin;
+extern BrownianThermostat brownian;
+extern IsotropicNptThermostat npt_iso;
 
 namespace {
 
 /** Type describing global variables. These are accessible from the
-    front end, and are distributed to all compute nodes. */
+ *  front end, and are distributed to all compute nodes.
+ */
 typedef struct {
   enum class Type { INT = 0, DOUBLE = 1, BOOL = 2, UNSIGNED_LONG = 3 };
   /** Physical address of the variable. */
@@ -65,10 +69,9 @@ typedef struct {
 } Datafield;
 
 /** This array contains the description of all global variables.
-
-    Please declare where the variables come from.
-*/
-
+ *
+ *  Please declare where the variables come from.
+ */
 const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
      {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
@@ -78,12 +81,12 @@ const std::unordered_map<int, Datafield> fields{
       "cell_grid"}}, /* 1  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
-     {&langevin_gamma, Datafield::Type::DOUBLE, 1,
-      "gamma"}}, /* 5  from thermostat.cpp */
+     {&langevin.gamma, Datafield::Type::DOUBLE, 1,
+      "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA,
-     {langevin_gamma.data(), Datafield::Type::DOUBLE, 3,
-      "gamma"}}, /* 5  from thermostat.cpp */
+     {langevin.gamma.data(), Datafield::Type::DOUBLE, 3,
+      "langevin.gamma"}}, /* 5  from thermostat.cpp */
 #endif // PARTICLE_ANISOTROPY
     {FIELD_INTEG_SWITCH,
      {&integ_switch, Datafield::Type::INT, 1,
@@ -107,11 +110,11 @@ const std::unordered_map<int, Datafield> fields{
      {node_grid.data(), Datafield::Type::INT, 3,
       "node_grid"}}, /* 20 from grid.cpp */
     {FIELD_NPTISO_G0,
-     {&nptiso_gamma0, Datafield::Type::DOUBLE, 1,
-      "nptiso_gamma0"}}, /* 21 from thermostat.cpp */
+     {&npt_iso.gamma0, Datafield::Type::DOUBLE, 1,
+      "npt_iso.gamma0"}}, /* 21 from thermostat.cpp */
     {FIELD_NPTISO_GV,
-     {&nptiso_gammav, Datafield::Type::DOUBLE, 1,
-      "nptiso_gammav"}}, /* 22 from thermostat.cpp */
+     {&npt_iso.gammav, Datafield::Type::DOUBLE, 1,
+      "npt_iso.gammav"}}, /* 22 from thermostat.cpp */
     {FIELD_NPTISO_PEXT,
      {&nptiso.p_ext, Datafield::Type::DOUBLE, 1,
       "npt_p_ext"}}, /* 23 from pressure.cpp */
@@ -152,12 +155,12 @@ const std::unordered_map<int, Datafield> fields{
       "swimming_particles_exist"}}, /* from particle_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {&langevin_gamma_rotation, Datafield::Type::DOUBLE, 1,
-      "gamma_rot"}}, /* 55 from thermostat.cpp */
+     {&langevin.gamma_rotation, Datafield::Type::DOUBLE, 1,
+      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #else
     {FIELD_LANGEVIN_GAMMA_ROTATION,
-     {langevin_gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
-      "gamma_rot"}}, /* 55 from thermostat.cpp */
+     {langevin.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+      "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #endif
 #ifdef OIF_GLOBAL_FORCES
     {FIELD_MAX_OIF_OBJECTS,
@@ -168,7 +171,26 @@ const std::unordered_map<int, Datafield> fields{
       "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */
     {FIELD_FORCE_CAP, {&force_cap, Datafield::Type::DOUBLE, 1, "force_cap"}},
     {FIELD_THERMO_VIRTUAL,
-     {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}}};
+     {&thermo_virtual, Datafield::Type::BOOL, 1, "thermo_virtual"}},
+#ifndef PARTICLE_ANISOTROPY
+    {FIELD_BROWNIAN_GAMMA_ROTATION,
+     {&brownian.gamma_rotation, Datafield::Type::DOUBLE, 1,
+      "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
+#else
+    {FIELD_BROWNIAN_GAMMA_ROTATION,
+     {brownian.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
+      "brownian.gamma_rotation"}}, /* 57 from thermostat.cpp */
+#endif
+#ifndef PARTICLE_ANISOTROPY
+    {FIELD_BROWNIAN_GAMMA,
+     {&brownian.gamma, Datafield::Type::DOUBLE, 1,
+      "brownian.gamma"}}, /* 58  from thermostat.cpp */
+#else
+    {FIELD_BROWNIAN_GAMMA,
+     {brownian.gamma.data(), Datafield::Type::DOUBLE, 3,
+      "brownian.gamma"}}, /* 58  from thermostat.cpp */
+#endif // PARTICLE_ANISOTROPY
+};
 
 std::size_t hash_value(Datafield const &field) {
   using boost::hash_range;
@@ -243,7 +265,7 @@ void check_global_consistency() {
   }
 }
 
-/*************** REQ_BCAST_PAR ************/
+/*************** BCAST PARAMETER ************/
 
 void mpi_bcast_parameter_slave(int i) {
   common_bcast_parameter(i);

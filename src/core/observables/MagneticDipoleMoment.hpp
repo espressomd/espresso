@@ -29,13 +29,16 @@ class MagneticDipoleMoment : public PidObservable {
 public:
   using PidObservable::PidObservable;
   int n_values() const override { return 3; };
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
+
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
     std::vector<double> res(n_values(), 0.0);
 #ifdef DIPOLES
-    for (int i : ids()) {
-      res[0] += partCfg[i].calc_dip()[0];
-      res[1] += partCfg[i].calc_dip()[1];
-      res[2] += partCfg[i].calc_dip()[2];
+    for (auto p : particles) {
+      auto const dip = p->calc_dip();
+      res[0] += dip[0];
+      res[1] += dip[1];
+      res[2] += dip[2];
     }
 #endif
     return res;

@@ -60,12 +60,8 @@ class CoulombCloudWallTune(ut.TestCase):
             force_abs_diff += np.linalg.norm(p.f - self.forces[p.id])
         force_abs_diff /= len(self.system.part)
         self.assertLessEqual(
-            force_abs_diff,
-            self.tolerance,
-            "Absolute force difference " +
-            str(force_abs_diff) +
-            " too large for method " +
-            method_name)
+            force_abs_diff, self.tolerance,
+            "Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
     @utx.skipIfMissingFeatures(["P3M"])

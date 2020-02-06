@@ -21,43 +21,34 @@
 #ifndef _GLOBAL_HPP
 #define _GLOBAL_HPP
 
-/** \file
- *  This file contains the code for access to globally
- *  defined variables using the script command setmd. Please refer to
- *  the Developer's guide, section "Adding global variables", for
- *  details on how to add new variables in the interpreter's space.
+/** @file
+ *  This file contains the codes for global variables.
+ *  Add any global variable that should be handled
+ *  automatically in global.cpp. This includes
+ *  distribution to other nodes and
+ *  read/user-defined access from the script interface.
  */
 
-/**********************************************
- * description of global variables
- * add any variable that should be handled
- * automatically in global.cpp. This includes
- * distribution to other nodes and
- * read/user-defined access from the script interface.
- **********************************************/
-
-/** Issue REQ_BCAST_PAR: broadcast a parameter from datafield.
- *  @param i the number from \ref global.hpp "global.hpp" referencing the
- *           datafield.
+/** Broadcast a global variable.
+ *  @param i  the number from @ref anonymous_namespace{global.cpp}::fields
+ *            "fields" specifying which Datafield to broadcast.
  *  @return nonzero on error
  */
 int mpi_bcast_parameter(int i);
 
-/*
- * @brief Check if all the global fields are synchronized between the nodes.
- */
+/** @brief Check if all the global fields are synchronized between the nodes. */
 void check_global_consistency();
 
-/** \name Field Enumeration
+/** @brief Field Enumeration
  *  These numbers identify the variables given in
- *  \ref anonymous_namespace{global.cpp}::fields "fields"
- *  for use with \ref mpi_bcast_parameter.
+ *  @ref anonymous_namespace{global.cpp}::fields "fields"
+ *  for use with @ref mpi_bcast_parameter.
  */
 enum Fields {
   FIELD_BOXL = 0,
   /** index of \ref DomainDecomposition::cell_grid */
   FIELD_CELLGRID,
-  /** index of \ref langevin_gamma */
+  /** index of \ref LangevinThermostat::gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */
   FIELD_INTEG_SWITCH,
@@ -73,9 +64,9 @@ enum Fields {
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
   FIELD_NODEGRID,
-  /** index of \ref nptiso_gamma0 */
+  /** index of \ref IsotropicNptThermostat::gamma0 */
   FIELD_NPTISO_G0,
-  /** index of \ref nptiso_gammav */
+  /** index of \ref IsotropicNptThermostat::gammav */
   FIELD_NPTISO_GV,
   /** index of \ref nptiso_struct::p_ext */
   FIELD_NPTISO_PEXT,
@@ -100,14 +91,18 @@ enum Fields {
   FIELD_LATTICE_SWITCH,
   /** index of \ref min_global_cut */
   FIELD_MIN_GLOBAL_CUT,
-  /** index of \ref langevin_gamma_rotation */
+  /** index of \ref LangevinThermostat::gamma_rotation */
   FIELD_LANGEVIN_GAMMA_ROTATION,
   FIELD_MAX_OIF_OBJECTS, // soft objects as per the object-in-fluid method
   /** index of \ref n_thermalized_bonds */
   FIELD_THERMALIZEDBONDS,
   FIELD_FORCE_CAP,
   FIELD_THERMO_VIRTUAL,
-  FIELD_SWIMMING_PARTICLES_EXIST
+  FIELD_SWIMMING_PARTICLES_EXIST,
+  /** index of \ref BrownianThermostat::gamma */
+  FIELD_BROWNIAN_GAMMA,
+  /** index of \ref BrownianThermostat::gamma_rotation */
+  FIELD_BROWNIAN_GAMMA_ROTATION,
 };
 
 #endif

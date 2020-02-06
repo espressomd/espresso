@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(nearest_point) {
   bspline_3d<1>({.1, .2, .3}, save_ind, {0.5, 0.5, 0.5}, {});
 
   BOOST_CHECK((std::array<int, 3>{{0, 0, 1}} == nmp));
-  BOOST_CHECK_CLOSE(weight, 1., std::numeric_limits<double>::epsilon());
+  BOOST_CHECK_CLOSE(weight, 1., 100. * std::numeric_limits<double>::epsilon());
 }
 
 BOOST_AUTO_TEST_CASE(interpolation_points_3) {
