@@ -81,15 +81,15 @@ class Momentum(object):
         while True: 
             self.system.integrator.run(1000)
             measured_momentum = self.system.analysis.linear_momentum()
-            
-            stokes_force_compensation = p.f *TIME_STEP /2 * AGRID**3 
-            print(measured_momentum+f_half_compensation)
+
+            stokes_force_compensation = p.f * TIME_STEP / 2 * AGRID**3 
+            print(measured_momentum + f_half_compensation)
             # fluid force is opposed to particle force
 
-            np.testing.assert_allclose(measured_momentum +f_half_compensation +stokes_force_compensation, 
+            np.testing.assert_allclose(measured_momentum + f_half_compensation + stokes_force_compensation, 
                                        initial_momentum, rtol=0.05)
             if np.linalg.norm(stokes_force_compensation) < 1E-6 \
-               and np.all(np.abs(p.pos) > 1.1*self.system.box_l):
+               and np.all(np.abs(p.pos) > 1.1 * self.system.box_l):
                 break
 
         # Make sure, the particle has crossed the periodic boundaries
