@@ -107,7 +107,7 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
  * @return Vector of uniform random numbers.
  */
 template <RNGSalt salt, size_t N = 3,
-          typename std::enable_if<(N > 1) and (N <= 4), int>::type = 0>
+          std::enable_if_t<(N > 1) and (N <= 4), int> = 0>
 auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
@@ -117,8 +117,7 @@ auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
   return noise;
 }
 
-template <RNGSalt salt, size_t N,
-          typename std::enable_if<N == 1, int>::type = 0>
+template <RNGSalt salt, size_t N, std::enable_if_t<N == 1, int> = 0>
 auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
@@ -145,7 +144,7 @@ auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
  *
  */
 template <RNGSalt salt, size_t N = 3,
-          typename std::enable_if<(N >= 1) and (N <= 4), int>::type = 0>
+          class = std::enable_if_t<(N >= 1) and (N <= 4)>>
 auto noise_gaussian(uint64_t counter, int key1, int key2 = 0) {
 
   auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
@@ -165,19 +164,19 @@ auto noise_gaussian(uint64_t counter, int key1, int key2 = 0) {
   // sin/cos are evaluated simultaneously by gcc or separately by Clang
   Utils::VectorXd<N> noise{};
   constexpr double two_pi = 2.0 * Utils::pi();
-  auto modulo = sqrt(-2.0 * log(u[0]));
-  auto angle = two_pi * u[1];
+  auto const modulo = sqrt(-2.0 * log(u[0]));
+  auto const angle = two_pi * u[1];
   noise[0] = modulo * cos(angle);
   if (N > 1) {
     noise[1] = modulo * sin(angle);
   }
   if (N > 2) {
-    modulo = sqrt(-2.0 * log(u[2]));
-    angle = two_pi * u[3];
+    auto const modulo = sqrt(-2.0 * log(u[2]));
+    auto const angle = two_pi * u[3];
     noise[2] = modulo * cos(angle);
-  }
-  if (N > 3) {
-    noise[3] = modulo * sin(angle);
+    if (N > 3) {
+      noise[3] = modulo * sin(angle);
+    }
   }
   return noise;
 }

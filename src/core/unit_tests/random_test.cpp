@@ -63,13 +63,12 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
 BOOST_AUTO_TEST_CASE(test_noise_uniform_1d) {
   constexpr size_t const sample_size = 4'000'000;
 
-  int counter = 0;
   std::vector<double> means, variances;
   std::vector<std::vector<double>> covariance;
   std::vector<std::vector<double>> correlation;
   std::tie(means, variances, covariance, correlation) = noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
-          [&counter]() -> std::vector<VariantVectorXd> {
+          [counter = 0]() mutable -> std::vector<VariantVectorXd> {
             return {{Random::noise_uniform<RNGSalt::NPTISOV, 1>(counter++, 0)}};
           }),
       sample_size);
@@ -82,13 +81,12 @@ BOOST_AUTO_TEST_CASE(test_noise_uniform_3d) {
   constexpr size_t const sample_size = 4'000'000;
   constexpr size_t const x = 0, y = 1, z = 2;
 
-  int counter = 0;
   std::vector<double> means, variances;
   std::vector<std::vector<double>> covariance;
   std::vector<std::vector<double>> correlation;
   std::tie(means, variances, covariance, correlation) = noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
-          [&counter]() -> std::vector<VariantVectorXd> {
+          [counter = 0]() mutable -> std::vector<VariantVectorXd> {
             return {{Random::noise_uniform<RNGSalt::LANGEVIN>(counter++, 0)}};
           }),
       sample_size);

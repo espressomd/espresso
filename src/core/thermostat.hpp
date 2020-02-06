@@ -35,6 +35,7 @@
 #include <utils/Vector.hpp>
 #include <utils/math/rotation_matrix.hpp>
 
+#include <boost/optional.hpp>
 #include <cmath>
 #include <tuple>
 
@@ -95,23 +96,28 @@ struct BaseThermostat {
 public:
   /** Initialize or re-initialize the RNG counter with a seed. */
   void rng_initialize(uint64_t const seed) {
-    rng_counter = std::make_unique<Utils::Counter<uint64_t>>(seed);
+    rng_counter = Utils::Counter<uint64_t>(seed);
   }
   /** Increment the RNG counter */
-  void rng_increment() { rng_counter->increment(); }
+  void rng_increment() {
+    if (!rng_counter) {
+      throw "The RNG counter is not initialized";
+    }
+    rng_counter.get().increment();
+  }
   /** Get current value of the RNG */
   uint64_t rng_get() const {
-    if (!rng_is_initialized()) {
-      throw "The RNG is not initialized";
+    if (!rng_counter) {
+      throw "The RNG counter is not initialized";
     }
-    return rng_counter->value();
+    return rng_counter.get().value();
   }
   /** Is the RNG counter initialized */
-  bool rng_is_initialized() const { return rng_counter != nullptr; }
+  bool rng_is_initialized() const { return static_cast<bool>(rng_counter); }
 
 private:
   /** RNG counter. */
-  std::unique_ptr<Utils::Counter<uint64_t>> rng_counter;
+  boost::optional<Utils::Counter<uint64_t>> rng_counter;
 };
 
 /** %Thermostat for Langevin dynamics. */
