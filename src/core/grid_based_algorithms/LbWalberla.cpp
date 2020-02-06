@@ -294,30 +294,28 @@ LbWalberla::get_node_is_boundary(const Utils::Vector3i &node) const {
 
 bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
                                   const Utils::Vector3d &force) {
-  const auto f_pos = folded_position(pos, box_geo);
 
-  auto block = get_block(f_pos, true);
+  auto block = get_block(pos, true);
   if (!block)
     return false;
   auto *force_distributor =
       block->getData<Vector_field_distributor_t>(m_force_distributor_id);
   auto f = to_vector3(force);
-  force_distributor->distribute(to_vector3(f_pos), &f);
+  force_distributor->distribute(to_vector3(pos), &f);
   return true;
 }
 
 boost::optional<Utils::Vector3d>
 LbWalberla::get_force_at_pos(const Utils::Vector3d &pos) const {
-  const auto f_pos = folded_position(pos, box_geo);
 
-  auto block = get_block(f_pos, true);
+  auto block = get_block(pos, true);
   if (!block)
     return {boost::none};
 
   auto *force_interpolator =
       block->getData<ForceFieldAdaptorInterpolator>(m_force_interpolator_id);
   Vector3<real_t> f;
-  force_interpolator->get(to_vector3(f_pos), &f);
+  force_interpolator->get(to_vector3(pos), &f);
   return {to_vector3d(f)};
 }
 
@@ -357,16 +355,14 @@ LbWalberla::get_node_velocity(const Utils::Vector3i node) const {
 
 boost::optional<Utils::Vector3d>
 LbWalberla::get_velocity_at_pos(const Utils::Vector3d &pos) const {
-  const auto f_pos = folded_position(pos, box_geo);
-
-  auto block = get_block(f_pos, true);
+  auto block = get_block(pos, true);
   if (!block)
     return {boost::none};
 
   auto *velocity_interpolator = block->getData<VectorFieldAdaptorInterpolator>(
       m_velocity_interpolator_id);
   Vector3<real_t> v;
-  velocity_interpolator->get(to_vector3(f_pos), &v);
+  velocity_interpolator->get(to_vector3(pos), &v);
   return {to_vector3d(v)};
 }
 
@@ -386,16 +382,15 @@ bool LbWalberla::set_node_velocity(const Utils::Vector3i &node,
 
 boost::optional<double>
 LbWalberla::get_density_at_pos(const Utils::Vector3d &pos) {
-  const auto f_pos = folded_position(pos, box_geo);
 
-  auto block = get_block(f_pos, true);
+  auto block = get_block(pos, true);
   if (!block)
     return {boost::none};
 
   auto *density_interpolator =
       block->getData<ScalarFieldAdaptorInterpolator>(m_density_interpolator_id);
   double dens;
-  density_interpolator->get(to_vector3(f_pos), &dens);
+  density_interpolator->get(to_vector3(pos), &dens);
   return {dens};
 }
 
