@@ -49,8 +49,6 @@ Particle particle_factory() {
   p.f.f = {1.0, 2.0, 3.0};
 #ifdef ROTATION
   p.f.torque = 4.0 * p.f.f;
-  constexpr Utils::Vector4d identity_quat{{1, 0, 0, 0}};
-  p.r.quat = identity_quat; // the particle force won't be rotated
 #endif
   return p;
 }
