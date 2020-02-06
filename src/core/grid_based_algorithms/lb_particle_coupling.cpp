@@ -216,7 +216,6 @@ void add_swimmer_force(Particle &p) {
 }
 #endif
 
-
 void lb_lbcoupling_calc_particle_lattice_ia(
     bool couple_virtual, const ParticleRange &particles,
     const ParticleRange &more_particles) {
@@ -248,15 +247,14 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         };
 
         auto couple_particle = [&](Particle &p) -> void {
-          
           // We only couple ghosts, if the physical particle is not on the node
           if (p.l.ghost and not local_particles[p.p.identity]->l.ghost)
             return;
-          
+
           if (p.p.is_virtual and !couple_virtual)
             return;
 
-          Utils::Vector3d pos = folded_position(p.r.p,box_geo);
+          Utils::Vector3d pos = folded_position(p.r.p, box_geo);
           /* Particle is in our LB volume, so this node
            * is responsible to adding its force */
           if (in_local_domain(pos, local_geo)) {

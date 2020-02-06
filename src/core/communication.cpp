@@ -447,12 +447,12 @@ void mpi_set_time_step_slave(double dt) {
 }
 REGISTER_CALLBACK(mpi_set_time_step_slave)
 
-void mpi_set_time_step(double time_s) { 
-if (time_s <= 0.) 
-  throw std::invalid_argument("time_step must be > 0.");
-if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
-  check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
-  mpi_call_all(mpi_set_time_step_slave, time_s); 
+void mpi_set_time_step(double time_s) {
+  if (time_s <= 0.)
+    throw std::invalid_argument("time_step must be > 0.");
+  if (lb_lbfluid_get_lattice_switch() != ActiveLB::NONE)
+    check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_s);
+  mpi_call_all(mpi_set_time_step_slave, time_s);
 }
 
 /*************** BCAST COULOMB ************/

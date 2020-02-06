@@ -484,15 +484,14 @@ bool LbWalberla::node_in_local_domain(const Utils::Vector3i &node) const {
   auto block = m_blocks->getBlock(
       Cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])}, 0);
   return (block != nullptr);
-
 }
 
 bool LbWalberla::node_in_local_halo(const Utils::Vector3i &node) const {
-  auto res =get_block_and_cell(node, true);
-  if (res) return true;
+  auto res = get_block_and_cell(node, true);
+  if (res)
+    return true;
   return false;
 }
-
 
 bool LbWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {
   auto block =

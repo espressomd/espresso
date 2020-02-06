@@ -20,6 +20,7 @@
 #include "MpiCallbacks.hpp"
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -28,7 +29,6 @@
 #include "lb_interpolation.hpp"
 #include "lb_walberla_instance.hpp"
 #include "lb_walberla_interface.hpp"
-#include "errorhandling.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/index.hpp>
@@ -42,13 +42,13 @@ struct NoLBActive : public std::exception {
   const char *what() const noexcept override { return "LB not activated"; }
 };
 
-void lb_lbfluid_init() {};
+void lb_lbfluid_init(){};
 
 void lb_lbfluid_update() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
     lb_walberla()->integrate();
-    #endif
+#endif
   } else
     throw NoLBActive();
 }
@@ -68,9 +68,9 @@ void lb_lbfluid_propagate() {
     fluidstep = 0;
     lb_lbfluid_update();
     if (lb_lbfluid_get_kT() > 0.0) {
-        rng_counter_fluid->increment();
-      }
+      rng_counter_fluid->increment();
     }
+  }
 }
 
 /**
@@ -103,7 +103,7 @@ void lb_lbfluid_sanity_checks() {
     check_tau_time_step_consistency(lb_lbfluid_get_tau(), time_step);
 
   if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
     // Make sure, Walberla and Espresso agree on domain decomposition
     auto walberla_domain = lb_walberla()->get_local_domain();
     // Unit conversion
@@ -125,28 +125,19 @@ void lb_lbfluid_sanity_checks() {
       throw std::runtime_error(
           "Walberla and Espresso disagree about domain decomposition.");
     }
-  #endif
+#endif
   }
 }
 
-void lb_lbfluid_on_integration_start() {
-  lb_lbfluid_sanity_checks();
-}
+void lb_lbfluid_on_integration_start() { lb_lbfluid_sanity_checks(); }
 
-void lb_lbfluid_invalidate_particle_allocation() {
-}
+void lb_lbfluid_invalidate_particle_allocation() {}
 
-
-
-
-uint64_t lb_lbfluid_get_rng_state() {
-    return rng_counter_fluid->value();
-}
+uint64_t lb_lbfluid_get_rng_state() { return rng_counter_fluid->value(); }
 
 void lb_lbfluid_set_rng_state(uint64_t counter) {
-    rng_counter_fluid.reset(new Utils::Counter<uint64_t>(counter));
+  rng_counter_fluid.reset(new Utils::Counter<uint64_t>(counter));
 }
-
 
 double lb_lbfluid_get_viscosity() {
 #ifdef LB_WALBERLA
@@ -157,28 +148,27 @@ double lb_lbfluid_get_viscosity() {
   throw NoLBActive();
 }
 
-
 double lb_lbfluid_get_bulk_viscosity() {
-  if (lattice_switch == ActiveLB::WALBERLA) 
+  if (lattice_switch == ActiveLB::WALBERLA)
     throw std::runtime_error("Getting bulk viscosity not implemented.");
   throw NoLBActive();
 }
 
 double lb_lbfluid_get_agrid() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
     return lb_walberla()->get_grid_spacing();
-  #endif
+#endif
   }
   throw NoLBActive();
 }
 
 void lb_lbfluid_set_ext_force_density(const Utils::Vector3d &force_density) {
   if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
     ::Communication::mpiCallbacks().call_all(Walberla::set_ext_force_density,
                                              force_density);
-  #endif
+#endif
   } else {
     throw NoLBActive();
   }
@@ -229,12 +219,11 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
   mpi_bcast_parameter(FIELD_LATTICE_SWITCH);
 }
 
-
 double lb_lbfluid_get_kT() {
   if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
     return lb_walberla()->get_kT();
-  #endif
+#endif
   }
   throw NoLBActive();
 }
@@ -534,9 +523,9 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
 const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
   // Add equilibrium stress to the diagonal (in LB units)
   auto const p0 = 0;
- // Global density does not exist. Needs to be summed over nodes
- // lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
- throw std::runtime_error("Not implemented");
+  // Global density does not exist. Needs to be summed over nodes
+  // lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
+  throw std::runtime_error("Not implemented");
 
   auto stress = lb_lbnode_get_stress_neq(ind);
   stress[0] += p0;
@@ -556,7 +545,7 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
     // reverts the correction done by walberla
     auto const revert_factor =
         lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0 / 6.0);
-    stress[1] /= revert_factor; 
+    stress[1] /= revert_factor;
     stress[3] /= revert_factor;
     stress[4] /= revert_factor;
 
@@ -601,7 +590,7 @@ void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
   if (lattice_switch == ActiveLB::WALBERLA) {
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_density, ind,
                                              p_density);
-  } else 
+  } else
 #endif
   {
     throw NoLBActive();
@@ -626,24 +615,22 @@ void lb_lbnode_set_pop(const Utils::Vector3i &ind,
     ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
                                              p_pop);
 #endif
-  }
-  else {
+  } else {
     throw NoLBActive();
   }
 }
-
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }
 
 Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   Utils::Vector3d fluid_momentum{};
   if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
     fluid_momentum = ::Communication::mpiCallbacks().call(
                          ::Communication::Result::Reduction(), std::plus<>(),
                          Walberla::get_momentum) *
                      (lb_lbfluid_get_agrid() / lb_lbfluid_get_tau());
-  #endif
+#endif
   } else
     throw NoLBActive();
 
@@ -655,7 +642,7 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
   auto const folded_pos = folded_position(pos, box_geo);
   auto const interpolation_order = lb_lbinterpolation_get_interpolation_order();
   if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
     switch (interpolation_order) {
     case (InterpolationOrder::quadratic):
       throw std::runtime_error("The non-linear interpolation scheme is not "
@@ -664,7 +651,7 @@ lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
       return mpi_call(::Communication::Result::one_rank,
                       Walberla::get_velocity_at_pos, folded_pos);
     }
-  #endif
+#endif
   }
   throw NoLBActive();
 }

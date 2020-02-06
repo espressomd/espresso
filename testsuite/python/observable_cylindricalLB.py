@@ -228,6 +228,7 @@ class CylindricalLBObservableCommon:
         self.params['axis'] = 'z'
         self.perform_tests()
 
+
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class CylindricalLBObservableWalberla(
         ut.TestCase, CylindricalLBObservableCommon):

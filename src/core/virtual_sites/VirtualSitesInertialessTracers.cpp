@@ -32,23 +32,22 @@
 void VirtualSitesInertialessTracers::after_force_calc() {
   // Now the forces are computed and need to go into the LB fluid
   // Convert units from MD to LB
-  for (auto const& p: cell_structure.local_cells().particles()) {
+  for (auto const &p : cell_structure.local_cells().particles()) {
     if (in_local_halo(p.r.p)) {
       add_md_force(p.r.p / lb_lbfluid_get_agrid(), p.f.f);
     }
   }
 }
 
-
 void VirtualSitesInertialessTracers::after_lb_propagation() {
-  for (auto& p: cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     if (in_local_halo(p.r.p)) {
-    p.m.v = lb_lbinterpolation_get_interpolated_velocity(p.r.p);
-    for (int i=0;i<3;i++) {
-      if (!(p.p.ext_flag & COORD_FIXED(i))) {
-        p.r.p[i] += p.m.v[i] * time_step;
+      p.m.v = lb_lbinterpolation_get_interpolated_velocity(p.r.p);
+      for (int i = 0; i < 3; i++) {
+        if (!(p.p.ext_flag & COORD_FIXED(i))) {
+          p.r.p[i] += p.m.v[i] * time_step;
+        }
       }
-    }
     }
   }
 }

@@ -360,8 +360,12 @@ class TestLB:
         fluid_velocity = np.array(ext_force_density) * self.system.time_step * (
             n_time_steps + 0.5) / self.params['dens']
         # Chck global linear momentum = density * volume * velocity
-        np.testing.assert_allclose(self.system.analysis.linear_momentum(),fluid_velocity * self.params['dens'] *self.system.volume())
-        
+        np.testing.assert_allclose(
+            self.system.analysis.linear_momentum(),
+            fluid_velocity *
+            self.params['dens'] *
+            self.system.volume())
+
         # Check node velocities
         for n in self.lbf.nodes():
             np.testing.assert_allclose(

@@ -26,7 +26,6 @@
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include <utils/Vector.hpp>
 
-
 namespace {
 
 InterpolationOrder interpolation_order = InterpolationOrder::linear;
@@ -47,7 +46,6 @@ InterpolationOrder lb_lbinterpolation_get_interpolation_order() {
   return interpolation_order;
 }
 
-
 const Utils::Vector3d
 lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   Utils::Vector3d interpolated_u{};
@@ -55,8 +53,8 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
   /* calculate fluid velocity at particle's position
      this is done by linear interpolation
      (Eq. (11) Ahlrichs and Duenweg, JCP 111(17):8225 (1999)) */
- if (lattice_switch == ActiveLB::WALBERLA) {
-  #ifdef LB_WALBERLA
+  if (lattice_switch == ActiveLB::WALBERLA) {
+#ifdef LB_WALBERLA
 
     auto res = lb_walberla()->get_velocity_at_pos(pos / lb_lbfluid_get_agrid());
     if (!res) {
@@ -72,25 +70,24 @@ lb_lbinterpolation_get_interpolated_velocity(const Utils::Vector3d &pos) {
     }
     extern double sim_time;
     return *res;
-  #endif
-} 
-    throw std::runtime_error("No LB active.");
+#endif
+  }
+  throw std::runtime_error("No LB active.");
 }
 
 void lb_lbinterpolation_add_force_density(
     const Utils::Vector3d &pos, const Utils::Vector3d &force_density) {
   switch (interpolation_order) {
   case (InterpolationOrder::quadratic):
-    throw std::runtime_error("The non-linear interpolation scheme is not implemented.");
+    throw std::runtime_error(
+        "The non-linear interpolation scheme is not implemented.");
   case (InterpolationOrder::linear):
     if (lattice_switch == ActiveLB::WALBERLA) {
-    #ifdef LB_WALBERLA
+#ifdef LB_WALBERLA
       lb_walberla()->add_force_at_pos(pos / lb_lbfluid_get_agrid(),
                                       force_density);
-      #endif
-    }
-    else
+#endif
+    } else
       throw std::runtime_error("No LB active.");
-    
   }
 }

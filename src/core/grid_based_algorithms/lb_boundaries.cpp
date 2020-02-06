@@ -64,7 +64,7 @@ void remove(const std::shared_ptr<LBBoundary> &b) {
 
 /** Initialize boundary conditions for all constraints in the system. */
 void lb_init_boundaries() {
-if (lattice_switch == ActiveLB::WALBERLA) {
+  if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
 #if defined(LB_BOUNDARIES)
 
@@ -104,9 +104,8 @@ if (lattice_switch == ActiveLB::WALBERLA) {
     }     // Loop over cells
 #endif
 #endif
-}       // lattice switch is WALBERLA
+  } // lattice switch is WALBERLA
 }
-
 
 #endif /* LB_BOUNDARIES or LB_BOUNDARIES_GPU */
 

@@ -203,7 +203,6 @@ void on_observable_calc() {
     reinit_magnetostatics = false;
   }
 #endif /*ifdef ELECTROSTATICS */
-
 }
 
 void on_particle_charge_change() {
@@ -337,9 +336,9 @@ void on_cell_structure_change() {
   }
 }
 
-void on_temperature_change() { 
+void on_temperature_change() {
   if (lattice_switch != ActiveLB::NONE) {
-      throw std::runtime_error("Temperature change not supported by LB");
+    throw std::runtime_error("Temperature change not supported by LB");
   }
 }
 
@@ -385,9 +384,9 @@ void on_parameter_change(int field) {
     reinit_thermo = true;
     break;
   case FIELD_TIMESTEP:
-  if (lattice_switch != ActiveLB::NONE) {
+    if (lattice_switch != ActiveLB::NONE) {
       throw std::runtime_error("Time step change not supported by LB");
-  }
+    }
   case FIELD_LANGEVIN_GAMMA:
   case FIELD_LANGEVIN_GAMMA_ROTATION:
   case FIELD_NPTISO_G0:

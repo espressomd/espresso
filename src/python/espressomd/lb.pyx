@@ -39,7 +39,6 @@ def _construct(cls, params):
     return obj
 
 
-
 cdef class HydrodynamicInteraction(Actor):
     def _lb_init(self):
         raise Exception(

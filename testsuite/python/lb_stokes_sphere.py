@@ -116,6 +116,5 @@ class LBWalberlaStokes(ut.TestCase, Stokes):
         self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
-
 if __name__ == "__main__":
     ut.main()

@@ -74,6 +74,7 @@ class LBMassCommon:
             np.zeros_like(result),
             atol=1e-7)
 
+
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class LBWalberlaMass(ut.TestCase, LBMassCommon):
 

@@ -128,7 +128,8 @@ class SwimmerTest():
         # TODO: only thing left to check is the location of the fluid force.
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+@utx.skipIfMissingFeatures(
+    ["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
 class SwimmerTestWALBERLA(SwimmerTest, ut.TestCase):
 
     def setUp(self):

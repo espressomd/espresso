@@ -94,5 +94,4 @@ private:
 
 extern LB_Particle_Coupling lb_particle_coupling;
 
-
 #endif

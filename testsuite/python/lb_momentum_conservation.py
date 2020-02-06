@@ -32,7 +32,6 @@ F = 0.05
 GAMMA = 5
 
 
-
 # Tolerance in average LB velocity in lattice units
 TOL_V_LATTICE = 1E-7 
 # TOLERANCE FOR MOMENTUM
@@ -49,7 +48,7 @@ LB_PARAMS = {'agrid': AGRID,
              'dens': DENS,
              'visc': KVISC,
              'tau': TIME_STEP,
-             'ext_force_density': [-.5 * F, .3 * F, .8 *F]}
+             'ext_force_density': [-.5 * F, .3 * F, .8 * F]}
 
 
 class Momentum(object):
@@ -69,12 +68,14 @@ class Momentum(object):
         self.system.part.clear()
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=GAMMA, seed=1)
-        np.testing.assert_allclose(self.lbf.ext_force_density, LB_PARAMS["ext_force_density"])
-        
+        np.testing.assert_allclose(
+            self.lbf.ext_force_density,
+            LB_PARAMS["ext_force_density"])
+
         # Initial momentum before integration = 0
         np.testing.assert_allclose(
-          self.system.analysis.linear_momentum(), [0., 0., 0.])
-        
+            self.system.analysis.linear_momentum(), [0., 0., 0.])
+
         applied_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
 
@@ -82,18 +83,23 @@ class Momentum(object):
             pos=(0, 0, 0), ext_force=-applied_force, v=[.1, .2, .3])
         initial_momentum = np.array(self.system.analysis.linear_momentum())
         np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
-        
-        f_half_compensation = np.array(self.lbf.ext_force_density * TIME_STEP *self.system.volume()/2)
-        i=0
+
+        f_half_compensation = np.array(
+            self.lbf.ext_force_density *
+            TIME_STEP *
+            self.system.volume() /
+            2)
+        i = 0
         while True: 
             self.system.integrator.run(100)
             measured_momentum = self.system.analysis.linear_momentum()
-            stokes_force_compensation = p.f * TIME_STEP  # fluid force is opposed to particle force
+            # fluid force is opposed to particle force
+            stokes_force_compensation = p.f * TIME_STEP
 
             np.testing.assert_allclose(measured_momentum, 
-                initial_momentum - f_half_compensation - stokes_force_compensation, atol=tolerance)
-            if np.linalg.norm(stokes_force_compensation) < 1E-6: break
-
+                                       initial_momentum - f_half_compensation - stokes_force_compensation, atol=tolerance)
+            if np.linalg.norm(stokes_force_compensation) < 1E-6:
+                break
 
         # Make sure, the particle has crossed the periodic boundaries
         self.assertGreater(
