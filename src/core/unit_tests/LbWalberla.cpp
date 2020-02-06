@@ -121,9 +121,6 @@ BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
   }
   for (int j = 0; j < grid_dimensions[2]; j++) {
     auto v = lb.get_node_velocity(Vector3i{0, 0, j});
-    if (v) {
-      printf("%d,%g %g %g\n", j, (*v)[0], (*v)[1], (*v)[2]);
-    }
   }
 }
 
