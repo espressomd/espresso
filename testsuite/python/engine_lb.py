@@ -128,23 +128,12 @@ class SwimmerTest():
         # TODO: only thing left to check is the location of the fluid force.
 
 
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestCPU(SwimmerTest, ut.TestCase):
+@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS", "LB_WALBERLA"])
+class SwimmerTestWALBERLA(SwimmerTest, ut.TestCase):
 
     def setUp(self):
         self.tol = 1e-10
-        self.lbf = lb.LBFluid(**self.LB_params)
-        self.system.actors.add(self.lbf)
-        self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["ENGINE", "ROTATIONAL_INERTIA", "MASS"])
-class SwimmerTestGPU(SwimmerTest, ut.TestCase):
-
-    def setUp(self):
-        self.tol = 1e-5
-        self.lbf = lb.LBFluidGPU(**self.LB_params)
+        self.lbf = lb.LBFluidWalberla(**self.LB_params)
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, gamma=self.gamma)
 

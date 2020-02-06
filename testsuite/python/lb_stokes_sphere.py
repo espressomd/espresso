@@ -91,7 +91,7 @@ class Stokes:
             return np.sqrt(tmp)
 
         last_force = -1000.
-        dynamic_viscosity = self.lbf.viscosity * self.lbf.density
+        dynamic_viscosity = self.lbf.viscosity * DENS 
         stokes_force = 6 * np.pi * dynamic_viscosity * radius * size(v)
         self.system.integrator.run(50)
         while True:

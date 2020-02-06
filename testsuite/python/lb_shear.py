@@ -156,7 +156,7 @@ class LBShearCommon:
         # NOTE: the so called stress property of the fluid is actually the
         # pressure tensor not the viscous stress tensor!
         shear_rate = SHEAR_VELOCITY / H
-        dynamic_viscosity = self.lbf.viscosity * self.lbf.density
+        dynamic_viscosity = self.lbf.viscosity * DENS
         p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
             np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
         for n in (2, 3, 4), (3, 4, 2), (5, 4, 3):

@@ -37,7 +37,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
     def test(self):
         system = self.system
 
-        lb_fluid = espressomd.lb.LBFluid(
+        lb_fluid = espressomd.lb.LBFluidWalberla(
             agrid=2.0, dens=.5, visc=3.0, tau=0.5)
         system.actors.add(lb_fluid)
 
@@ -50,7 +50,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
 
         system.integrator.run(2000)
 
-        v_fluid = lb_fluid[1, 0, 0].velocity
+        v_fluid = lb_fluid[3, 0, 0].velocity
         self.assertAlmostEqual(v_fluid[0], v_boundary[0], places=3)
         self.assertAlmostEqual(v_fluid[1], v_boundary[1], places=3)
         self.assertAlmostEqual(v_fluid[2], v_boundary[2], places=3)

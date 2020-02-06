@@ -82,13 +82,6 @@ class LBBoundaryThermoVirtualTest(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(physical.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual.f), [-1, 0, 0])
 
-    def test_lb_cpu(self):
-        self.check_virtual(espressomd.lb.LBFluid)
-
-    @utx.skipIfMissingGPU()
-    def test_lb_gpu(self):
-        self.check_virtual(espressomd.lb.LBFluidGPU)
-
     @utx.skipIfMissingFeatures(["LB_WALBERLA"])
     def test_lb_walberla(self):
         self.check_virtual(espressomd.lb.LBFluidWalberla)

@@ -17,6 +17,8 @@
 import unittest as ut
 import numpy as np
 
+import unittest_decorators as utx
+
 import espressomd
 import espressomd.lb
 
@@ -72,13 +74,13 @@ class LBMassCommon:
             np.zeros_like(result),
             atol=1e-7)
 
+@utx.skipIfMissingFeatures("LB_WALBERLA")
+class LBWalberlaMass(ut.TestCase, LBMassCommon):
 
-class LBCPUMass(ut.TestCase, LBMassCommon):
-
-    """Test for the CPU implementation of the LB."""
+    """Test for the Walberla implementation of the LB."""
 
     def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
+        self.lbf = espressomd.lb.LBFluidWalberla(**LB_PARAMS)
 
 
 if __name__ == '__main__':

@@ -228,32 +228,6 @@ class CylindricalLBObservableCommon:
         self.params['axis'] = 'z'
         self.perform_tests()
 
-
-class CylindricalLBObservableCPU(ut.TestCase, CylindricalLBObservableCommon):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluid(**LB_PARAMS)
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        del self.positions[:]
-        self.system.actors.remove(self.lbf)
-        self.system.part.clear()
-
-
-@utx.skipIfMissingGPU()
-class CylindricalLBObservableGPU(ut.TestCase, CylindricalLBObservableCommon):
-
-    def setUp(self):
-        self.lbf = espressomd.lb.LBFluidGPU(**LB_PARAMS)
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        del self.positions[:]
-        self.system.actors.remove(self.lbf)
-        self.system.part.clear()
-
-
 @utx.skipIfMissingFeatures("LB_WALBERLA")
 class CylindricalLBObservableWalberla(
         ut.TestCase, CylindricalLBObservableCommon):
