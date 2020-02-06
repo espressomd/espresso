@@ -50,22 +50,32 @@ inline double area_triangle(const Vector3d &P1, const Vector3d &P2,
   return 0.5 * get_n_triangle(P1, P2, P3).norm();
 }
 
-/** This function returns the angle between the triangle p1,p2,p3 and p2,p3,p4.
- *  Be careful, the angle depends on the orientation of the triangles! You need
- *  to be sure that the orientation (direction of normal vector) of p1p2p3
- *  is given by the cross product p2p1 x p2p3. The orientation of p2p3p4 must
- *  be given by p2p3 x p2p4.
- *
- *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0). The
- *  orientation of p1p2p3 should be in the direction (0,1,0) and indeed: p2p1 x
- *  p2p3 = (0,0,1)x(1,0,0) = (0,1,0) This function is called in the beginning
- *  of the simulation when creating bonds depending on the angle between the
- *  triangles, the bending_force. Here, we determine the orientations by
- *  looping over the triangles and checking the correct orientation. So if you
- *  have the access to the order of particles, you are safe to call this
- *  function with exactly this order. Otherwise you need to check the
- *  orientations.
- */
+/** @brief Returns the angle between two triangles in 3D space
+
+
+Returns the angle between two triangles in 3D space given by points P1P2P3 and
+P2P3P4. Note, that the common edge is given as the second and the third
+argument. Here, the angle can have values from 0 to 2 * PI, depending on the
+orientation of the two triangles. So the angle can be convex or concave. For
+each triangle, an inward direction has been defined as the direction of one of
+the two normal vectors. Particularly, for triangle P1P2P3 it is the vector N1 =
+P2P1 x P2P3 and for triangle P2P3P4 it is N2 = P2P3 x P2P4. The method first
+computes the angle between N1 and N2, which gives always value between 0 and PI
+and then it checks whether this value must be corrected to a value between PI
+and 2 * PI.
+
+As an example, consider 4 points A,B,C,D in space given by coordinates A =
+[1,1,1], B = [2,1,1], C = [1,2,1], D = [1,1,2]. We want to determine the angle
+between triangles ABC and ACD. In case that the orientations of the triangle ABC
+is [0,0,1] and orientation of ACD is [1,0,0], then the resulting angle must be
+PI/2.0. To get correct result, note that the common edge is AC, and one must
+call the method as angle_btw_triangles(B,A,C,D). With this call we have ensured
+that N1 = AB x AC (which coincides with [0,0,1]) and N2 = AC x AD (which
+coincides with [1,0,0]). Alternatively, if the orientations of the two triangles
+were the oppisite, the correct call would be angle_btw_triangles(B,C,A,D) so
+that N1 = CB x CA and N2 = CA x CD.
+
+*/
 inline double angle_btw_triangles(const Vector3d &P1, const Vector3d &P2,
                                   const Vector3d &P3, const Vector3d &P4) {
   auto const normal1 = get_n_triangle(P2, P1, P3);
