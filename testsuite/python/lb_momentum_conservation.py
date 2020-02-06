@@ -23,25 +23,13 @@ import unittest_decorators as utx
 import numpy as np
 
 # Define the LB Parameters
-TIME_STEP = 0.004
-AGRID = 1.0
+TIME_STEP = 0.01
+AGRID = .5 
 GRID_SIZE = 6
-KVISC = 5
-DENS = 1
+KVISC = 4
+DENS = 2.1 
 F = 0.05
 GAMMA = 5
-
-
-# Tolerance in average LB velocity in lattice units
-TOL_V_LATTICE = 1E-7 
-# TOLERANCE FOR MOMENTUM
-# (num latticer sites * total mass * tolerance for lattice_velocity * unit)
-lattice_velocity = AGRID / TIME_STEP
-n_sites = GRID_SIZE**3
-box_volume = n_sites * AGRID**3
-fluid_mass = box_volume * DENS
-tolerance = TOL_V_LATTICE * lattice_velocity * fluid_mass
-print(tolerance)
 
 
 LB_PARAMS = {'agrid': AGRID,
@@ -91,14 +79,17 @@ class Momentum(object):
             2)
         i = 0
         while True: 
-            self.system.integrator.run(100)
+            self.system.integrator.run(1000)
             measured_momentum = self.system.analysis.linear_momentum()
+            
+            stokes_force_compensation = p.f *TIME_STEP /2 * AGRID**3 
+            print(measured_momentum+f_half_compensation)
             # fluid force is opposed to particle force
-            stokes_force_compensation = p.f * TIME_STEP
 
-            np.testing.assert_allclose(measured_momentum, 
-                                       initial_momentum - f_half_compensation - stokes_force_compensation, atol=tolerance)
-            if np.linalg.norm(stokes_force_compensation) < 1E-6:
+            np.testing.assert_allclose(measured_momentum +f_half_compensation +stokes_force_compensation, 
+                                       initial_momentum, rtol=0.05)
+            if np.linalg.norm(stokes_force_compensation) < 1E-6 \
+               and np.all(np.abs(p.pos) > 1.1*self.system.box_l):
                 break
 
         # Make sure, the particle has crossed the periodic boundaries
