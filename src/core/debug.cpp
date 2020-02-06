@@ -37,8 +37,8 @@ void check_particle_consistency() {
   int cell_err_cnt = 0;
 
   /* checks: part_id, part_pos, local_particles id */
-  for (c = 0; c < local_cells.n; c++) {
-    auto const cell = local_cells.cell[c];
+  for (c = 0; c < cell_structure.local_cells().n; c++) {
+    auto const cell = cell_structure.local_cells().cell[c];
     cell_part_cnt += cell->n;
     for (int n = 0; n < cell->n; n++) {
       auto const &p = cell->part[n];
@@ -73,8 +73,8 @@ void check_particle_consistency() {
     }
   }
 
-  for (c = 0; c < ghost_cells.n; c++) {
-    auto const cell = ghost_cells.cell[c];
+  for (c = 0; c < cell_structure.ghost_cells().n; c++) {
+    auto const cell = cell_structure.ghost_cells().cell[c];
     if (cell->n > 0) {
       ghost_part_cnt += cell->n;
       fprintf(stderr,
@@ -112,10 +112,10 @@ void check_particle_consistency() {
             "but %d parts in local_particles\n",
             this_node, cell_part_cnt, local_part_cnt);
 
-    for (c = 0; c < local_cells.n; c++) {
-      for (int p = 0; p < local_cells.cell[c]->n; p++)
+    for (c = 0; c < cell_structure.local_cells().n; c++) {
+      for (int p = 0; p < cell_structure.local_cells().cell[c]->n; p++)
         fprintf(stderr, "%d: got particle %d in cell %d\n", this_node,
-                local_cells.cell[c]->part[p].p.identity, c);
+                cell_structure.local_cells().cell[c]->part[p].p.identity, c);
     }
 
     for (int p = 0; p < n_part; p++)
@@ -136,8 +136,8 @@ void check_particle_consistency() {
 }
 
 void check_particle_sorting() {
-  for (int c = 0; c < local_cells.n; c++) {
-    auto const cell = local_cells.cell[c];
+  for (int c = 0; c < cell_structure.local_cells().n; c++) {
+    auto const cell = cell_structure.local_cells().cell[c];
     for (int n = 0; n < cell->n; n++) {
       auto const p = cell->part[n];
       if (cell_structure.particle_to_cell(p) != cell) {

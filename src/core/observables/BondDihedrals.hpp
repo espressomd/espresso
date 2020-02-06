@@ -39,16 +39,16 @@ namespace Observables {
 class BondDihedrals : public PidObservable {
 public:
   using PidObservable::PidObservable;
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
+
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
     std::vector<double> res(n_values());
-    auto v1 =
-        get_mi_vector(partCfg[ids()[1]].r.p, partCfg[ids()[0]].r.p, box_geo);
-    auto v2 =
-        get_mi_vector(partCfg[ids()[2]].r.p, partCfg[ids()[1]].r.p, box_geo);
+    auto v1 = get_mi_vector(particles[1]->r.p, particles[0]->r.p, box_geo);
+    auto v2 = get_mi_vector(particles[2]->r.p, particles[1]->r.p, box_geo);
     auto c1 = vector_product(v1, v2);
     for (int i = 0, end = n_values(); i < end; i++) {
-      auto v3 = get_mi_vector(partCfg[ids()[i + 3]].r.p,
-                              partCfg[ids()[i + 2]].r.p, box_geo);
+      auto v3 =
+          get_mi_vector(particles[i + 3]->r.p, particles[i + 2]->r.p, box_geo);
       auto c2 = vector_product(v2, v3);
       /* the 2-argument arctangent returns an angle in the range [-pi, pi] that
        * allows for an unambiguous determination of the 4th particle position */

@@ -56,7 +56,7 @@ class ThermalizedBond(ut.TestCase):
             for j in range(n_bins):
                 found = data[j]
                 expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertLessEqual(abs(found - expected), error_tol)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
 
     def test_com_langevin(self):
         """Test for COM thermalization."""

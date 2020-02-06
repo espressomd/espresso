@@ -56,11 +56,14 @@
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
 
+#include "integrators/brownian_inline.hpp"
+#include "integrators/langevin_inline.hpp"
 #include "integrators/steepest_descent.hpp"
 #include "integrators/velocity_verlet_inline.hpp"
 #include "integrators/velocity_verlet_npt.hpp"
 
 #include <profiler/profiler.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -71,8 +74,6 @@
 #ifdef VALGRIND_INSTRUMENTATION
 #include <callgrind.h>
 #endif
-
-/*******************  variables  *******************/
 
 int integ_switch = INTEG_METHOD_NVT;
 
@@ -101,22 +102,14 @@ void notify_sig_int() {
 }
 } // namespace
 
-/** \name Private Functions */
-/************************************************************/
-/*@{*/
-
 /** Thermostats increment the RNG counter here. */
 void philox_counter_increment();
-
-/*@}*/
 
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
   }
 }
-
-/************************************************************/
 
 /** @brief Calls the hook for propagation kernels before the force calculation
  *  @return whether or not to stop the integration loop early.
@@ -135,6 +128,10 @@ bool integrator_step_1(ParticleRange &particles) {
     velocity_verlet_npt_step_1(particles);
     break;
 #endif
+  case INTEG_METHOD_BD:
+    // the Ermak-McCammon's Brownian Dynamics requires a single step
+    // so, just skip here
+    break;
   default:
     throw std::runtime_error("Unknown value for integ_switch");
   }
@@ -143,6 +140,7 @@ bool integrator_step_1(ParticleRange &particles) {
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
+  extern BrownianThermostat brownian;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -155,12 +153,16 @@ void integrator_step_2(ParticleRange &particles) {
     velocity_verlet_npt_step_2(particles);
     break;
 #endif
+  case INTEG_METHOD_BD:
+    // the Ermak-McCammon's Brownian Dynamics requires a single step
+    brownian_dynamics_propagator(brownian, particles);
+    break;
   default:
     throw std::runtime_error("Unknown value for INTEG_SWITCH");
   }
 }
 
-void integrate_vv(int n_steps, int reuse_forces) {
+int integrate(int n_steps, int reuse_forces) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   /* Prepare the integrator */
@@ -168,7 +170,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
   /* if any method vetoes (P3M not initialized), immediately bail out */
   if (check_runtime_errors(comm_cart))
-    return;
+    return 0;
 
   /* Verlet list criterion */
 
@@ -184,7 +186,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     force_calc(cell_structure);
 
@@ -202,7 +204,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
   }
 
   if (check_runtime_errors(comm_cart))
-    return;
+    return 0;
 
   n_verlet_updates = 0;
 
@@ -212,6 +214,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
   /* Integration loop */
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
+  int integrated_steps = 0;
   for (int step = 0; step < n_steps; step++) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 
@@ -219,7 +222,7 @@ void integrate_vv(int n_steps, int reuse_forces) {
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
-      save_old_pos(particles, ghost_cells.particles());
+      save_old_pos(particles, cell_structure.ghost_cells().particles());
 #endif
 
     bool early_exit = integrator_step_1(particles);
@@ -233,17 +236,16 @@ void integrate_vv(int n_steps, int reuse_forces) {
     /* Correct those particle positions that participate in a rigid/constrained
      * bond */
     if (n_rigidbonds) {
-      correct_pos_shake(cell_structure.local_cells().particles());
+      correct_pos_shake(particles);
     }
 #endif
 
 #ifdef VIRTUAL_SITES
-    // VIRTUAL_SITES pos (and vel for DPD) update for security reason!!!
     virtual_sites()->update(true);
 #endif
 
     // Communication step: distribute ghost positions
-    cells_update_ghosts();
+    cells_update_ghosts(global_ghost_flags());
 
     particles = cell_structure.local_cells().particles();
 
@@ -276,6 +278,8 @@ void integrate_vv(int n_steps, int reuse_forces) {
 #endif
     }
 
+    integrated_steps++;
+
     if (check_runtime_errors(comm_cart))
       break;
 
@@ -307,22 +311,26 @@ void integrate_vv(int n_steps, int reuse_forces) {
     synchronize_npt_state(n_steps);
   }
 #endif
+  return integrated_steps;
 }
-
-/************************************************************/
-
-/* Private functions */
-/************************************************************/
 
 void philox_counter_increment() {
   if (thermo_switch & THERMO_LANGEVIN) {
     langevin_rng_counter_increment();
   }
-  if (thermo_switch & THERMO_DPD) {
-#ifdef DPD
-    dpd_rng_counter_increment();
-#endif
+  if (thermo_switch & THERMO_BROWNIAN) {
+    brownian_rng_counter_increment();
   }
+#ifdef NPT
+  if (thermo_switch & THERMO_NPT_ISO) {
+    npt_iso_rng_counter_increment();
+  }
+#endif
+#ifdef DPD
+  if (thermo_switch & THERMO_DPD) {
+    dpd_rng_counter_increment();
+  }
+#endif
   if (n_thermalized_bonds)
     thermalized_bond_rng_counter_increment();
 }
@@ -385,8 +393,38 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
   return ES_OK;
 }
 
+int integrate_set_steepest_descent(const double f_max, const double gamma,
+                                   const int max_steps,
+                                   const double max_displacement) {
+  if (f_max < 0.0) {
+    runtimeErrorMsg() << "The maximal force must be positive.\n";
+    return ES_ERROR;
+  }
+  if (gamma < 0.0) {
+    runtimeErrorMsg() << "The dampening constant must be positive.\n";
+    return ES_ERROR;
+  }
+  if (max_displacement < 0.0) {
+    runtimeErrorMsg() << "The maximal displacement must be positive.\n";
+    return ES_ERROR;
+  }
+  if (max_steps < 0) {
+    runtimeErrorMsg() << "The maximal number of steps must be positive.\n";
+    return ES_ERROR;
+  }
+  steepest_descent_init(f_max, gamma, max_steps, max_displacement);
+  integ_switch = INTEG_METHOD_STEEPEST_DESCENT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+  return ES_OK;
+}
+
 void integrate_set_nvt() {
   integ_switch = INTEG_METHOD_NVT;
+  mpi_bcast_parameter(FIELD_INTEG_SWITCH);
+}
+
+void integrate_set_bd() {
+  integ_switch = INTEG_METHOD_BD;
   mpi_bcast_parameter(FIELD_INTEG_SWITCH);
 }
 
@@ -398,9 +436,12 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   nptiso.p_ext = ext_pressure;
   nptiso.piston = piston;
 
-  if (nptiso.piston <= 0.0) {
-    runtimeErrorMsg() << "You must set <piston> as well before you can use "
-                         "this integrator!\n";
+  if (ext_pressure < 0.0) {
+    runtimeErrorMsg() << "The external pressure must be positive.\n";
+    return ES_ERROR;
+  }
+  if (piston <= 0.0) {
+    runtimeErrorMsg() << "The piston mass must be positive.\n";
     return ES_ERROR;
   }
   /* set the NpT geometry */

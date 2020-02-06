@@ -97,9 +97,9 @@ void energy_calc(double *result, const double time) {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
       });
 
-  calc_long_range_energies(local_cells.particles());
+  calc_long_range_energies(cell_structure.local_cells().particles());
 
-  auto local_parts = local_cells.particles();
+  auto local_parts = cell_structure.local_cells().particles();
   Constraints::constraints.add_energy(local_parts, time, energy);
 
 #ifdef CUDA

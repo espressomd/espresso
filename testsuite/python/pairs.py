@@ -64,7 +64,7 @@ class PairTest(ut.TestCase):
 
         self.assertEqual(len(pairs), len(epairs))
         for p in pairs:
-            self.assertTrue(p in epairs)
+            self.assertIn(p, epairs)
 
     def test_nsquare(self):
         self.s.cell_system.set_n_square()

@@ -236,7 +236,6 @@ bool validate_collision_parameters() {
 
   recalc_forces = true;
   rebuild_verletlist = true;
-  on_ghost_flags_change();
 
   return true;
 }
@@ -367,7 +366,8 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   Particle new_part;
   new_part.p.identity = current_vs_pid;
   new_part.r.p = pos;
-  auto p_vs = append_indexed_particle(local_cells.cell[0], std::move(new_part));
+  auto p_vs = append_indexed_particle(cell_structure.local_cells().cell[0],
+                                      std::move(new_part));
 
   local_vs_relate_to(*p_vs, get_part(relate_to));
 
@@ -674,7 +674,7 @@ void handle_collisions() {
     // If any node had a collision, all nodes need to resort
     if (!gathered_queue.empty()) {
       set_resort_particles(Cells::RESORT_GLOBAL);
-      cells_update_ghosts();
+      cells_update_ghosts(GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS);
     }
   }    // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE

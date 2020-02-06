@@ -57,9 +57,9 @@ struct p3m_data_struct {
   /** local mesh. */
   p3m_local_mesh local_mesh;
   /** real space mesh (local) for CA/FFT.*/
-  double *rs_mesh;
-  /** k-space mesh (local) for k-space calculation and FFT.*/
-  std::vector<double> ks_mesh;
+  fft_vector<double> rs_mesh;
+  /** mesh (local) for the electric field.*/
+  std::array<fft_vector<double>, 3> E_mesh;
 
   /** number of charged particles (only on master node). */
   int sum_qpart;
@@ -86,14 +86,12 @@ struct p3m_data_struct {
   /** Energy optimised influence function (k-space) */
   std::vector<double> g_energy;
 
-#ifdef P3M_STORE_CA_FRAC
   /** number of charged particles on the node. */
   int ca_num;
   /** Charge fractions for mesh assignment. */
   std::vector<double> ca_frac;
   /** index of first mesh point for charge assignment. */
   std::vector<int> ca_fmp;
-#endif
 
   /** number of permutations in k_space */
   int ks_pnum;
@@ -164,7 +162,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                               const ParticleRange &particles);
 
 /** Compute the k-space part of the stress tensor **/
-void p3m_calc_kspace_stress(double *stress);
+Utils::Vector9d p3m_calc_kspace_stress();
 
 /** Sanity checks */
 bool p3m_sanity_checks();
@@ -175,7 +173,7 @@ bool p3m_sanity_checks();
 void p3m_count_charged_particles();
 
 /** Assign the physical charges using the tabulated charge assignment function.
- *  If @ref P3M_STORE_CA_FRAC is true, then the charge fractions are buffered
+ *  The charge fractions are buffered
  *  in @ref p3m_data_struct::ca_fmp "ca_fmp" and @ref p3m_data_struct::ca_frac
  *  "ca_frac".
  */
@@ -190,7 +188,7 @@ void p3m_charge_assign(const ParticleRange &particles);
  *                        is not stored in the @ref p3m_data_struct::ca_frac
  *                        "ca_frac" arrays
  */
-void p3m_assign_charge(double q, Utils::Vector3d &real_pos, int cp_cnt);
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt);
 
 /** Shrink wrap the charge grid */
 void p3m_shrink_wrap_charge_grid(int n_charges);

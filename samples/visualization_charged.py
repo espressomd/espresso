@@ -20,6 +20,7 @@ LJ parameters and masses.
 """
 
 import espressomd
+from espressomd.minimize_energy import steepest_descent
 from espressomd.visualization_opengl import openGLLive
 from espressomd import electrostatics
 import numpy as np
@@ -115,9 +116,8 @@ for i in range(len(species)):
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total = {}".format(energy['total']))
-system.minimize_energy.init(f_max=1000, gamma=30.0,
-                            max_steps=1000, max_displacement=0.01)
-system.minimize_energy.minimize()
+steepest_descent(system, f_max=1000, gamma=30.0, max_steps=1000,
+                 max_displacement=0.01)
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy['total']))
 

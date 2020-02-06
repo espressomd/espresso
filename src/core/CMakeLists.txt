@@ -76,7 +76,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/magnetic_non_p3m_methods.cpp
   electrostatics_magnetostatics/mdlc_correction.cpp
   electrostatics_magnetostatics/mmm1d.cpp
-  electrostatics_magnetostatics/mmm2d.cpp
   electrostatics_magnetostatics/mmm-common.cpp
   electrostatics_magnetostatics/p3m-common.cpp
   electrostatics_magnetostatics/p3m_send_mesh.cpp
@@ -116,10 +115,8 @@ set(EspressoCore_SRC
   nonbonded_interactions/smooth_step.cpp
   nonbonded_interactions/thole.cpp
   nonbonded_interactions/wca.cpp
-  object-in-fluid/membrane_collision.cpp
   object-in-fluid/oif_global_forces.cpp
   object-in-fluid/oif_local_forces.cpp
-  object-in-fluid/out_direction.cpp
   observables/CylindricalLBFluxDensityProfileAtParticlePositions.cpp
   observables/CylindricalLBVelocityProfileAtParticlePositions.cpp
   observables/CylindricalLBVelocityProfile.cpp

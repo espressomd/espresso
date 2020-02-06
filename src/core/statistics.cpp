@@ -86,7 +86,7 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
 }
 
 Utils::Vector3d local_particle_momentum() {
-  auto const particles = local_cells.particles();
+  auto const particles = cell_structure.local_cells().particles();
   auto const momentum =
       std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
                       [](Utils::Vector3d &m, Particle const &p) {

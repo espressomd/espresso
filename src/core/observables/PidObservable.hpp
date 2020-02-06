@@ -21,8 +21,7 @@
 #define OBSERVABLES_PIDOBSERVABLE_HPP
 
 #include "Observable.hpp"
-
-#include "PartCfg.hpp"
+#include "Particle.hpp"
 
 #include <vector>
 
@@ -37,7 +36,8 @@ class PidObservable : virtual public Observable {
   /** Identifiers of particles measured by this observable */
   std::vector<int> m_ids;
 
-  virtual std::vector<double> evaluate(PartCfg &partCfg) const = 0;
+  virtual std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const = 0;
 
 public:
   explicit PidObservable(std::vector<int> ids) : m_ids(std::move(ids)) {}

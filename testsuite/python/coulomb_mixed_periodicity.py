@@ -71,28 +71,15 @@ class CoulombMixedPeriodicity(ut.TestCase):
             rms_force_diff += np.sum((p.f - self.forces[p.id])**2)
         rms_force_diff = np.sqrt(rms_force_diff / len(self.S.part))
 
-        print(method_name, "rms force difference", rms_force_diff)
-
         # Energy
         if energy:
-            energy_abs_diff = abs(
-                self.S.analysis.energy()["total"] - self.reference_energy)
-            print(method_name, "energy", self.S.analysis.energy()["total"])
-            print(method_name, "energy difference", energy_abs_diff)
-            self.assertLessEqual(
-                energy_abs_diff,
-                self.tolerance_energy,
-                "Absolute energy difference " +
-                str(energy_abs_diff) +
-                " too large for " +
-                method_name)
+            self.assertAlmostEqual(
+                self.S.analysis.energy()["total"],
+                self.reference_energy, delta=self.tolerance_energy,
+                msg="Absolute energy difference too large for " + method_name)
         self.assertLessEqual(
-            rms_force_diff,
-            self.tolerance_force,
-            "Absolute force difference " +
-            str(rms_force_diff) +
-            " too large for method " +
-            method_name)
+            rms_force_diff, self.tolerance_force,
+            "Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
 
@@ -117,25 +104,6 @@ class CoulombMixedPeriodicity(ut.TestCase):
         self.S.integrator.run(0)
         self.compare("elc", energy=True)
         self.S.actors.remove(p3m)
-
-    def test_MMM2D(self):
-        self.S.box_l = (10, 10, 10)
-        self.S.cell_system.set_layered(n_layers=10, use_verlet_lists=False)
-        self.S.periodicity = [1, 1, 0]
-        mmm2d = electrostatics.MMM2D(prefactor=1, maxPWerror=1E-7)
-
-        self.S.actors.add(mmm2d)
-        self.S.integrator.run(0)
-        if self.generate_data:
-            n = len(self.S.part)
-            data = np.hstack((self.S.part[:].id.reshape((n, 1)),
-                              self.S.part[:].pos_folded,
-                              self.S.part[:].q.reshape((n, 1)),
-                              self.S.part[:].f))
-            np.savetxt(tests_common.abspath(
-                "data/coulomb_mixed_periodicity_system.data"), data)
-        self.compare("mmm2d (compared to stored data)", energy=True)
-        self.S.actors.remove(mmm2d)
 
     @ut.skipIf(not espressomd.has_features("SCAFACOS")
                or 'p2nfft' not in scafacos.available_methods(),

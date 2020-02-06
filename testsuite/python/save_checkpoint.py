@@ -30,6 +30,7 @@ if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
 import espressomd.electrokinetics
+from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints
 
@@ -139,8 +140,10 @@ if 'LB.OFF' in modes:
     # set thermostat
     if 'THERM.LANGEVIN' in modes:
         system.thermostat.set_langevin(kT=1.0, gamma=2.0, seed=42)
+    elif 'THERM.BD' in modes:
+        system.thermostat.set_brownian(kT=1.0, gamma=2.0, seed=42)
     elif 'THERM.NPT' in modes and has_features('NPT'):
-        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1)
+        system.thermostat.set_npt(kT=1.0, gamma0=2.0, gammav=0.1, seed=42)
     elif 'THERM.DPD' in modes and has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     # set integrator
@@ -152,6 +155,12 @@ if 'LB.OFF' in modes:
                                                max_displacement=0.01)
     elif 'INT.NVT' in modes:
         system.integrator.set_nvt()
+    elif 'INT.BD' in modes:
+        system.integrator.set_brownian_dynamics()
+    # set minimization
+    if 'MINIMIZATION' in modes:
+        steepest_descent(system, f_max=1, gamma=10, max_steps=0,
+                         max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(

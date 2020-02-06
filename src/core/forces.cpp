@@ -67,7 +67,7 @@ void init_forces(const ParticleRange &particles) {
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
-  for (auto &p : ghost_cells.particles()) {
+  for (auto &p : cell_structure.ghost_cells().particles()) {
     p.f = init_ghost_force(p);
   }
 }

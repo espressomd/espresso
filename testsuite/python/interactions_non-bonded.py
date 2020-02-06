@@ -92,8 +92,8 @@ class InteractionsNonBondedTest(ut.TestCase):
             E_sim = self.system.analysis.energy()["non_bonded"]
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.lj_generic_force(
                 espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
                 cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
@@ -102,7 +102,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref[i])
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -133,15 +133,15 @@ class InteractionsNonBondedTest(ut.TestCase):
             E_sim = self.system.analysis.energy()["non_bonded"]
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.lj_generic_force(
                 espressomd, r=(i + 1) * self.step_width, eps=wca_eps,
                 sig=wca_sig, cutoff=wca_cutoff)
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref[i])
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -180,8 +180,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 e2=lj_e2, shift=lj_shift, delta=lj_delta, lam=lj_lam)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.lj_generic_force(
                 espressomd, r=(i + 1) * self.step_width, eps=lj_eps, sig=lj_sig,
                 cutoff=lj_cut, offset=lj_off, b1=lj_b1, b2=lj_b2, e1=lj_e1,
@@ -190,7 +190,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -220,8 +220,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 shift=lj_shift)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * \
                 tests_common.lj_force(espressomd, r=(i + 1) * self.step_width,
                                       eps=lj_eps, sig=lj_sig, cutoff=lj_cut)
@@ -229,7 +229,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -259,8 +259,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 cutoff=ljcos_cut, offset=ljcos_offset)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.lj_cos_force(
                 espressomd, (i + 1) * self.step_width, eps=ljcos_eps,
                 sig=ljcos_sig, cutoff=ljcos_cut, offset=ljcos_offset)
@@ -268,7 +268,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -299,8 +299,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 offset=ljcos2_offset, width=ljcos2_width)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.lj_cos2_force(
                 espressomd, r=(i + 1) * self.step_width, eps=ljcos2_eps,
                 sig=ljcos2_sig, offset=ljcos2_offset, width=ljcos2_width)
@@ -308,7 +308,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -341,8 +341,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.smooth_step_force(
                 r=(i + 1) * self.step_width, eps=sst_eps, sig=sst_sig,
                 cutoff=sst_cut, d=sst_d, n=sst_n, k0=sst_k0)
@@ -350,7 +350,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -382,8 +382,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.bmhtf_force(
                 r=(i + 1) * self.step_width, a=bmhtf_a, b=bmhtf_b, c=bmhtf_c,
                 d=bmhtf_d, sig=bmhtf_sig, cutoff=bmhtf_cut)
@@ -391,7 +391,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -420,8 +420,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 cutoff=m_cut, rmin=m_rmin)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.morse_force(
                 r=(i + 1) * self.step_width, eps=m_eps, alpha=m_alpha,
                 cutoff=m_cut, rmin=m_rmin)
@@ -429,7 +429,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -462,8 +462,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 discont=b_disc, cutoff=b_cut, shift=b_shift)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.buckingham_force(
                 r=(i + 1) * self.step_width, a=b_a, b=b_b, c=b_c, d=b_d,
                 discont=b_disc, cutoff=b_cut, shift=b_shift)
@@ -471,7 +471,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -502,8 +502,8 @@ class InteractionsNonBondedTest(ut.TestCase):
                 offset=ss_off)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.soft_sphere_force(
                 r=(i + 13) * self.step_width, a=ss_a, n=ss_n, cutoff=ss_cut,
                 offset=ss_off)
@@ -511,7 +511,7 @@ class InteractionsNonBondedTest(ut.TestCase):
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -537,15 +537,15 @@ class InteractionsNonBondedTest(ut.TestCase):
                 r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.hertzian_force(
                 r=(i + 1) * self.step_width, eps=h_eps, sig=h_sig)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -572,15 +572,15 @@ class InteractionsNonBondedTest(ut.TestCase):
                 r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
 
             # Calculate forces
-            f0_sim = self.system.part[0].f
-            f1_sim = self.system.part[1].f
+            f0_sim = np.copy(self.system.part[0].f)
+            f1_sim = np.copy(self.system.part[1].f)
             f1_ref = self.axis * tests_common.gaussian_force(
                 r=(i + 1) * self.step_width, eps=g_eps, sig=g_sig, cutoff=g_cut)
 
             # Check that energies match, ...
             self.assertFractionAlmostEqual(E_sim, E_ref)
             # force equals minus the counter-force  ...
-            self.assertTrue((f0_sim == -f1_sim).all())
+            np.testing.assert_array_equal(f0_sim, -f1_sim)
             # and has correct value.
             self.assertItemsFractionAlmostEqual(f1_sim, f1_ref)
 
@@ -696,12 +696,12 @@ class InteractionsNonBondedTest(ut.TestCase):
             self.assertAlmostEqual(E_sim, E_ref, delta=delta)
 
             # Calc forces
-            f1_sim = p1.f
-            f2_sim = p2.f
+            f1_sim = np.copy(p1.f)
+            f2_sim = np.copy(p2.f)
             f2_ref = get_reference_force(gb_params, r, director1, director2)
             # Test forces
             # force equals minus the counter-force
-            self.assertTrue((f1_sim == -f2_sim).all())
+            np.testing.assert_array_equal(f1_sim, -f2_sim)
             # compare force to reference force
             for i in range(3):
                 self.assertAlmostEqual(f2_sim[i], f2_ref[i], delta=delta)
