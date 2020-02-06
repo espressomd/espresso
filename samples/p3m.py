@@ -24,7 +24,6 @@ espressomd.assert_features(required_features)
 
 from espressomd import thermostat
 from espressomd import electrostatics
-from espressomd import electrostatic_extensions
 
 print("""
 =======================================================
@@ -41,7 +40,7 @@ print(espressomd.features())
 box_l = 10
 density = 0.3
 
-# Interaction parameters (repulsive Lennard Jones)
+# Interaction parameters (repulsive Lennard-Jones)
 #############################################################
 
 wca_eps = 10.0
@@ -134,8 +133,6 @@ p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
 
-# elc=electrostatic_extensions.ELC(maxPWerror=1.0,gap_size=1.0)
-# system.actors.add(elc)
 print(system.actors)
 
 #############################################################
