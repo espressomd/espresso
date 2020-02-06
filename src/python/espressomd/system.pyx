@@ -62,14 +62,11 @@ cimport tuning
 
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings", "force_cap"]
+                      "time_step", "timings", "force_cap", "max_oif_objects"]
 
 if VIRTUAL_SITES:
     setable_properties.append("_active_virtual_sites_handle")
 
-
-if OIF_GLOBAL_FORCES:
-    setable_properties.append("max_oif_objects")
 
 cdef bool _system_created = False
 
@@ -384,19 +381,18 @@ cdef class System:
             def __get__(self):
                 return self._active_virtual_sites_handle.implementation
 
-    IF OIF_GLOBAL_FORCES:
-        property max_oif_objects:
-            """Maximum number of objects as per the object_in_fluid method.
+    property max_oif_objects:
+        """Maximum number of objects as per the object_in_fluid method.
 
-            """
+        """
 
-            def __get__(self):
-                return max_oif_objects
+        def __get__(self):
+            return max_oif_objects
 
-            def __set__(self, v):
-                global max_oif_objects
-                max_oif_objects = v
-                mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
+        def __set__(self, v):
+            global max_oif_objects
+            max_oif_objects = v
+            mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.

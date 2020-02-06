@@ -162,10 +162,8 @@ const std::unordered_map<int, Datafield> fields{
      {langevin.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
       "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #endif
-#ifdef OIF_GLOBAL_FORCES
     {FIELD_MAX_OIF_OBJECTS,
      {&max_oif_objects, Datafield::Type::INT, 1, "max_oif_objects"}},
-#endif
     {FIELD_THERMALIZEDBONDS,
      {&n_thermalized_bonds, Datafield::Type::INT, 1,
       "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */

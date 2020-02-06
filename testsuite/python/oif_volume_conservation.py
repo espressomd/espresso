@@ -21,7 +21,6 @@ import unittest_decorators as utx
 from tests_common import abspath
 
 
-@utx.skipIfMissingFeatures(["OIF_LOCAL_FORCES", "OIF_GLOBAL_FORCES"])
 class OifVolumeConservation(ut.TestCase):
 
     """Loads a soft elastic sphere via object_in_fluid, stretches it and checks
