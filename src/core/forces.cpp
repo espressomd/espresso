@@ -130,7 +130,6 @@ void force_calc(CellStructure &cell_structure) {
 
   Constraints::constraints.add_forces(particles, sim_time);
 
-#ifdef OIF_GLOBAL_FORCES
   if (max_oif_objects) {
     double area_volume[2]; // There are two global quantities that need to be
     // evaluated: object's surface and object's volume. One
@@ -144,7 +143,6 @@ void force_calc(CellStructure &cell_structure) {
       add_oif_global_forces(area_volume, i, particles);
     }
   }
-#endif
 
   // Must be done here. Forces need to be ghost-communicated
   immersed_boundaries.volume_conservation();
