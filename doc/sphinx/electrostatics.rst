@@ -221,13 +221,13 @@ sets up parallel metallic plates and activates ICC::
     # Left electrode (normal [0,0,1])
     for xi in xrange(nicc):
         for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=[1, 1, 1], type=icc_type)
+            system.part.add(pos=[l * xi, l * yi, 0], q=-0.0001, fix=3*[True], type=icc_type)
     iccNormals.extend([0, 0, 1] * nicc_per_electrode)
 
     # Right electrode (normal [0,0,-1])
     for xi in xrange(nicc):
         for yi in xrange(nicc):
-            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=[1, 1, 1], type=icc_type)
+            system.part.add(pos=[l * xi, l * yi, box_l], q=0.0001, fix=3*[True], type=icc_type)
     iccNormals.extend([0, 0, -1] * nicc_per_electrode)
 
     # Common area, sigma and metallic epsilon
@@ -330,9 +330,9 @@ Electrostatic Layer Correction (ELC)
 
 *ELC* can be used to simulate charged system with 2D periodicity. In more
 detail, is a special procedure that converts a 3D electrostatic method to a 2D
-method in computational order N. Currently, it only supports P3M. This means,
-that you will first have to set up the P3M algorithm before using ELC. The
-algorithm is definitely faster than MMM2D for larger numbers of particles
+method in computational order N. Currently, it only supports P3M without GPU.
+This means, that you will first have to set up the P3M algorithm before using ELC.
+The algorithm is definitely faster than MMM2D for larger numbers of particles
 (:math:`>400` at reasonable accuracy requirements). The periodicity has to be
 set to (1 1 1) still, *ELC* cancels the electrostatic contribution of the
 periodic replica in **z-direction**. Make sure that you read the papers on ELC
@@ -341,6 +341,28 @@ and is used with::
 
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
+
+You can specify the dielectric contrasts at the boundaries, i.e.
+:math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}`
+and :math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`,
+possibly such that :math:`\Delta_{t/b}=-1` (corresponding to metallic boundary conditions)::
+
+    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
+                                       delta_mid_top=0.9, delta_mid_bot=0.1)
+
+Toggle ``const_pot`` on to maintain a constant electric potential difference ``pot_diff``
+between the xy-planes at :math:`z=0` and :math:`z = L_z - h`, where :math:`L_z`
+denotes the box length in :math:`z`-direction and :math:`h` the gap size::
+
+    elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
+                                       const_pot=True, delta_mid_bot=100.0)
+
+This is done by countering the total dipole moment of the system with the
+electric field :math:`E_{induced}` and superposing a homogeneous electric field
+:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the
+induction of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0`
+for planar electrodes at :math:`z=0` and :math:`z=L_z - h` in a capacitor connected
+to a battery with voltage ``pot_diff``.
 
 
 Parameters are:
@@ -369,7 +391,7 @@ Parameters are:
         ``const_pot`` option.
     * ``const_pot``:
         As described, setting this to ``True`` leads to fully metallic boundaries and
-        behaves just like the mmm2d parameter of the same name: It maintains a
+        behaves just like the mmm2d parameter of the same name: it maintains a
         constant potential ``pot_diff`` by countering the total dipole moment of
         the system and adding a homogeneous electric field according to
         ``pot_diff``.
@@ -392,9 +414,9 @@ Parameters are:
         explicitly as constraints, you have to disable the neutralization.
         When using a dielectric contrast or full metallic walls
         (``delta_mid_top != 0`` or ``delta_mid_bot != 0`` or
-        ``const_pot=1``), ``neutralize`` is overwritten and switched off internally.
-        Note that the special case of non-neutral systems with a *non-metallic* dielectric jump (eg.
-        ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not covered by the
+        ``const_pot=True``), ``neutralize`` is overwritten and switched off internally.
+        Note that the special case of non-neutral systems with a *non-metallic* dielectric jump
+        (eg. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not covered by the
         algorithm and will throw an error.
 
 
@@ -433,8 +455,8 @@ does not need to be specified as it is automatically determined from the
 particle distances and maximal pairwise error. The second tuning form
 just takes the maximal pairwise error and tries out a lot of switching
 radii to find out the fastest one. If this takes too long, you can
-change the value of the setmd variable ``timings``, which controls the number of
-test force calculations.
+change the value of the property :attr:`espressomd.system.System.timings`,
+which controls the number of test force calculations.
 
 ::
 
