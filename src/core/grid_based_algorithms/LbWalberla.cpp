@@ -88,7 +88,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       uint_c(node_grid[2]), // cpus per direction
       true, true, true);
 
-  m_force_field_id = field::addToStorage<vector_field_t>(
+  m_last_applied_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       n_ghost_layers());
   m_force_to_be_applied_id = field::addToStorage<vector_field_t>(
@@ -97,7 +97,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_lattice_model = std::make_shared<Lattice_model_t>(Lattice_model_t(
       lbm::collision_model::TRT::constructWithMagicNumber(
           lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
-      force_model_t(m_force_field_id)));
+      force_model_t(m_last_applied_force_field_id)));
 
   m_pdf_field_id = lbm::addPdfFieldToStorage(
       m_blocks, "pdf field", *m_lattice_model, to_vector3(m_velocity),
@@ -125,7 +125,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
           m_pdf_field_id));
   m_reset_force = std::make_shared<
       ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
-      m_pdf_field_id, m_force_field_id, m_force_to_be_applied_id,
+      m_pdf_field_id, m_last_applied_force_field_id, m_force_to_be_applied_id,
       m_boundary_handling_id);
 
   m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
