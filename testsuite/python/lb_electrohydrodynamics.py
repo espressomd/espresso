@@ -72,27 +72,11 @@ class LBEHTest(object):
             atol=5e-5)
 
 
-@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
-class LBEHCPU(LBEHTest, ut.TestCase):
-
-    def setUp(self):
-        self.LBClass = lb.LBFluid
-
-
 @utx.skipIfMissingFeatures(["LB_WALBERLA", "LB_ELECTROHYDRODYNAMICS"])
 class LBEHWalberla(LBEHTest, ut.TestCase):
 
     def setUp(self):
         self.LBClass = lb.LBFluidWalberla
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["LB_ELECTROHYDRODYNAMICS"])
-class LBEHGPU(LBEHTest, ut.TestCase):
-
-    def setUp(self):
-        self.LBClass = lb.LBFluidGPU
-
 
 if __name__ == "__main__":
     ut.main()
