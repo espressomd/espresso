@@ -91,7 +91,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
   m_force_field_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       n_ghost_layers());
-  m_force_field_from_md_id = field::addToStorage<vector_field_t>(
+  m_force_to_be_applied_id = field::addToStorage<vector_field_t>(
       m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
       n_ghost_layers());
   m_lattice_model = std::make_shared<Lattice_model_t>(Lattice_model_t(
@@ -125,7 +125,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
           m_pdf_field_id));
   m_reset_force = std::make_shared<
       ResetForce<Pdf_field_t, vector_field_t, Boundary_handling_t>>(
-      m_pdf_field_id, m_force_field_id, m_force_field_from_md_id,
+      m_pdf_field_id, m_force_field_id, m_force_to_be_applied_id,
       m_boundary_handling_id);
 
   m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
@@ -144,7 +144,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_force_distributor_id =
       field::addDistributor<Vector_field_distributor_t, Flag_field_t>(
-          m_blocks, m_force_field_from_md_id, m_flag_field_id, Fluid_flag);
+          m_blocks, m_force_to_be_applied_id, m_flag_field_id, Fluid_flag);
 
   m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
       m_blocks, m_pdf_field_id, "velocity adaptor");
@@ -154,7 +154,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
           m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
 
   m_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
-      m_blocks, m_force_field_from_md_id, "force adaptor");
+      m_blocks, m_force_to_be_applied_id, "force adaptor");
 
   m_force_interpolator_id =
       field::addFieldInterpolator<ForceFieldAdaptorInterpolator, Flag_field_t>(
