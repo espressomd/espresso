@@ -156,41 +156,56 @@ BOOST_AUTO_TEST_CASE(velocity) {
     }
   }
   box_geo.set_length(box_dimensions);
-  for (Vector3d offset: std::vector<Vector3d>{{0.0,      0.0,      0.0},
-                                              {0.0,      0.0,      skin/2.0},
-                                              {0.0,      skin/2.0, 0.0},
-                                              {0.0,      skin/2.0, skin/2.0},
-                                              {skin/2.0, 0.0,      0.0},
-                                              {skin/2.0, 0.0,      skin/2.0},
-                                              {skin/2.0, skin/2.0, 0.0},
-                                              {skin/2.0, skin/2.0, skin/2.0}})
-  for (Vector3d pos: std::vector<Vector3d>{
-                      {box_dimensions[0], box_dimensions[1], box_dimensions[2]},
-                      {0.0,               0.0,               box_dimensions[2]},
-                      {0.0,               box_dimensions[1], 0.0},
-                      {0.0,               box_dimensions[1], box_dimensions[2]},
-                      {box_dimensions[0], 0.0,               0.0},
-                      {box_dimensions[0], 0.0,               box_dimensions[2]},
-                      {box_dimensions[0], box_dimensions[1], 0.0},
-                      {0.0,               0.0,               0.0}}){
-    if (lb.pos_in_local_domain(pos)) {
-      for (int i=0; i<3; i++){
-        if(pos[i] > 0.0)
-          pos[i] += offset[i];
-        else
-          pos[i] -= offset[i];
+
+  std::vector<Vector3d> corners;
+  auto const local_domain =lb.get_local_domain();
+  auto const my_left = local_domain.first;
+  auto const my_right = local_domain.second;
+  auto const local_domain_size = my_right - my_left;
+  for (double x : {0,1}) 
+    for (double y : {0,1}) 
+      for (double z: {0,1}) {
+        corners.push_back(my_left +hadamard_product(local_domain_size, Vector3d{x,y,z}));
       }
-      // Halo only
-      pos=folded_position(pos,box_geo);
-      if (lb.pos_in_local_domain(pos)) {
-        BOOST_CHECK(lb.get_velocity_at_pos(pos));
+  
+  // check corners
+  for (Vector3d pos: corners) {
+    // Left corners should be in local domain
+    if (pos == my_left) {
+      BOOST_CHECK(lb.pos_in_local_domain(pos));
+    }
+    // All corners should be in local halo
+    BOOST_CHECK(lb.pos_in_local_halo(pos));
+    // velocity should be accessible
+    BOOST_CHECK(lb.get_velocity_at_pos(pos));
+  }
+  
+  // Corners + offsets
+  std::vector<Vector3d> offsets;
+  for (double x : {-1, 1}) 
+    for (double y : {-1, 1}) 
+      for (double z: {-1, 1}) {
+        offsets.push_back(0.99* Vector3d{x,y,z});
+      }
+  for (auto corner : corners)
+    for (auto offset: offsets) {
+      auto const pos = corner + offset;
+      // Should be in local halo
+      BOOST_CHECK(lb.pos_in_local_halo(pos));
+      // Velocity should be accessible
+      BOOST_CHECK(lb.get_velocity_at_pos(pos));
+      // Positions >= my_left and < my_right
+      bool in_local_domain = true;
+      for (int i=0; i<3;i++) 
+        if (pos[i] < my_left[i] or pos[i] >= my_right[i]) in_local_domain = false;
+      
+      if (in_local_domain) 
+        BOOST_CHECK(lb.pos_in_local_domain(pos));
+      else {
+        BOOST_CHECK(! lb.pos_in_local_domain(pos));
         BOOST_CHECK(lb.pos_in_local_halo(pos));
       }
-      else if (lb.pos_in_local_halo(pos)) {
-        BOOST_CHECK(lb.get_velocity_at_pos(pos));
-      }
     }
-  }
 }
 
 BOOST_AUTO_TEST_CASE(total_momentum) {
