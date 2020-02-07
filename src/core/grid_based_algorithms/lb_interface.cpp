@@ -530,16 +530,15 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
     // reverts the correction done by walberla
     auto const revert_factor =
         lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0 / 6.0);
-//    stress[1] /= revert_factor;
-//    stress[3] /= revert_factor;
-//    stress[4] /= revert_factor;
+    //    stress[1] /= revert_factor;
+    //    stress[3] /= revert_factor;
+    //    stress[4] /= revert_factor;
 
     return stress;
   }
 #endif
   throw NoLBActive();
 }
-
 
 /** calculates the average stress of all nodes by iterating
  * over all nodes and dividing by the number_of_nodes.
@@ -613,8 +612,8 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     fluid_momentum = ::Communication::mpiCallbacks().call(
-                         ::Communication::Result::Reduction(), std::plus<>(),
-                         Walberla::get_momentum);
+        ::Communication::Result::Reduction(), std::plus<>(),
+        Walberla::get_momentum);
 #endif
   } else
     throw NoLBActive();

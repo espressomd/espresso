@@ -46,7 +46,8 @@ public:
              walberla::BlockDataID last_applied_force_field_id,
              walberla::BlockDataID force_to_be_applied_id,
              walberla::BlockDataID boundary_handling_id)
-      : m_pdf_field_id(pdf_field_id), m_last_applied_force_field_id(last_applied_force_field_id),
+      : m_pdf_field_id(pdf_field_id),
+        m_last_applied_force_field_id(last_applied_force_field_id),
         m_force_to_be_applied_id(force_to_be_applied_id),
         m_boundary_handling_id(boundary_handling_id),
         m_ext_force(walberla::Vector3<walberla::real_t>{0, 0, 0}){};
@@ -59,7 +60,8 @@ public:
 
   void operator()(walberla::IBlock *block) {
     PdfField_T *pdf_field = block->getData<PdfField_T>(m_pdf_field_id);
-    ForceField_T *force_field = block->getData<ForceField_T>(m_last_applied_force_field_id);
+    ForceField_T *force_field =
+        block->getData<ForceField_T>(m_last_applied_force_field_id);
     ForceField_T *force_to_be_applied =
         block->getData<ForceField_T>(m_force_to_be_applied_id);
     BoundaryHandling_T *boundary_handling =

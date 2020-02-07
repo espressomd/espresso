@@ -78,5 +78,6 @@ class LBEHWalberla(LBEHTest, ut.TestCase):
     def setUp(self):
         self.LBClass = lb.LBFluidWalberla
 
+
 if __name__ == "__main__":
     ut.main()

@@ -10,10 +10,10 @@
 #include <vector>
 
 #include "boost/mpi.hpp"
+#include "grid.hpp"
 #include "grid_based_algorithms/LbWalberla.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
-#include "grid.hpp"
 #include "utils/Vector.hpp"
 #include <iostream>
 
@@ -158,18 +158,19 @@ BOOST_AUTO_TEST_CASE(velocity) {
   box_geo.set_length(box_dimensions);
 
   std::vector<Vector3d> corners;
-  auto const local_domain =lb.get_local_domain();
+  auto const local_domain = lb.get_local_domain();
   auto const my_left = local_domain.first;
   auto const my_right = local_domain.second;
   auto const local_domain_size = my_right - my_left;
-  for (double x : {0,1}) 
-    for (double y : {0,1}) 
-      for (double z: {0,1}) {
-        corners.push_back(my_left +hadamard_product(local_domain_size, Vector3d{x,y,z}));
+  for (double x : {0, 1})
+    for (double y : {0, 1})
+      for (double z : {0, 1}) {
+        corners.push_back(
+            my_left + hadamard_product(local_domain_size, Vector3d{x, y, z}));
       }
-  
+
   // check corners
-  for (Vector3d pos: corners) {
+  for (Vector3d pos : corners) {
     // Left corners should be in local domain
     if (pos == my_left) {
       BOOST_CHECK(lb.pos_in_local_domain(pos));
@@ -179,16 +180,16 @@ BOOST_AUTO_TEST_CASE(velocity) {
     // velocity should be accessible
     BOOST_CHECK(lb.get_velocity_at_pos(pos));
   }
-  
+
   // Corners + offsets
   std::vector<Vector3d> offsets;
-  for (double x : {-1, 1}) 
-    for (double y : {-1, 1}) 
-      for (double z: {-1, 1}) {
-        offsets.push_back(0.99* Vector3d{x,y,z});
+  for (double x : {-1, 1})
+    for (double y : {-1, 1})
+      for (double z : {-1, 1}) {
+        offsets.push_back(0.99 * Vector3d{x, y, z});
       }
   for (auto corner : corners)
-    for (auto offset: offsets) {
+    for (auto offset : offsets) {
       auto const pos = corner + offset;
       // Should be in local halo
       BOOST_CHECK(lb.pos_in_local_halo(pos));
@@ -196,13 +197,14 @@ BOOST_AUTO_TEST_CASE(velocity) {
       BOOST_CHECK(lb.get_velocity_at_pos(pos));
       // Positions >= my_left and < my_right
       bool in_local_domain = true;
-      for (int i=0; i<3;i++) 
-        if (pos[i] < my_left[i] or pos[i] >= my_right[i]) in_local_domain = false;
-      
-      if (in_local_domain) 
+      for (int i = 0; i < 3; i++)
+        if (pos[i] < my_left[i] or pos[i] >= my_right[i])
+          in_local_domain = false;
+
+      if (in_local_domain)
         BOOST_CHECK(lb.pos_in_local_domain(pos));
       else {
-        BOOST_CHECK(! lb.pos_in_local_domain(pos));
+        BOOST_CHECK(!lb.pos_in_local_domain(pos));
         BOOST_CHECK(lb.pos_in_local_halo(pos));
       }
     }

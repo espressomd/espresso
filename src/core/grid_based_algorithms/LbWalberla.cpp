@@ -83,7 +83,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
              node_grid[1]), // number of cells per block in y direction
       uint_c(grid_dimensions[2] /
              node_grid[2]), // number of cells per block in z direction
-      1,          // Lattice constant
+      1,                    // Lattice constant
       uint_c(node_grid[0]), uint_c(node_grid[1]),
       uint_c(node_grid[2]), // cpus per direction
       true, true, true);
@@ -153,14 +153,14 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       field::addFieldInterpolator<VectorFieldAdaptorInterpolator, Flag_field_t>(
           m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
 
-  
   // Force interpolation for force_to_be_applied
   m_force_to_be_applied_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
       m_blocks, m_force_to_be_applied_id, "force adaptor");
 
   m_force_to_be_applied_interpolator_id =
       field::addFieldInterpolator<ForceFieldAdaptorInterpolator, Flag_field_t>(
-          m_blocks, m_force_to_be_applied_adaptor_id, m_flag_field_id, Fluid_flag);
+          m_blocks, m_force_to_be_applied_adaptor_id, m_flag_field_id,
+          Fluid_flag);
 
   // Force interpolation for last_applied_force
   m_last_applied_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
@@ -168,7 +168,8 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
 
   m_last_applied_force_interpolator_id =
       field::addFieldInterpolator<ForceFieldAdaptorInterpolator, Flag_field_t>(
-          m_blocks, m_last_applied_force_adaptor_id, m_flag_field_id, Fluid_flag);
+          m_blocks, m_last_applied_force_adaptor_id, m_flag_field_id,
+          Fluid_flag);
 
   m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
       m_blocks, m_pdf_field_id, "density adaptor");
@@ -191,7 +192,7 @@ Utils::Vector3d LbWalberla::get_momentum() const {
       mom += local_dens * local_v;
     });
   }
-  return m_density *  to_vector3d(mom);
+  return m_density * to_vector3d(mom);
 }
 
 void LbWalberla::integrate() { m_time_loop->singleStep(); }
@@ -261,7 +262,7 @@ bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
 boost::optional<Utils::Vector3d>
 LbWalberla::get_node_velocity_at_boundary(const Utils::Vector3i &node) const {
   boost::optional<Utils::Vector3d> res;
-  auto bc = get_block_and_cell(node,true);
+  auto bc = get_block_and_cell(node, true);
   // return if we don't have the cell
   if (!bc)
     return res;
@@ -281,7 +282,7 @@ LbWalberla::get_node_velocity_at_boundary(const Utils::Vector3i &node) const {
 }
 
 bool LbWalberla::remove_node_from_boundary(const Utils::Vector3i &node) {
-  auto bc = get_block_and_cell(node,true);
+  auto bc = get_block_and_cell(node, true);
   if (!bc)
     return false;
   Boundary_handling_t *boundary_handling =
@@ -308,8 +309,8 @@ bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
   auto block = get_block(pos, true);
   if (!block)
     return false;
-  auto *force_distributor =
-      block->getData<Vector_field_distributor_t>(m_force_to_be_applied_distributor_id);
+  auto *force_distributor = block->getData<Vector_field_distributor_t>(
+      m_force_to_be_applied_distributor_id);
   auto f = to_vector3(force / m_density);
   force_distributor->distribute(to_vector3(pos), &f);
   return true;
@@ -322,8 +323,8 @@ LbWalberla::get_force_at_pos(const Utils::Vector3d &pos) const {
   if (!block)
     return {boost::none};
 
-  auto *force_interpolator =
-      block->getData<ForceFieldAdaptorInterpolator>(m_force_to_be_applied_interpolator_id);
+  auto *force_interpolator = block->getData<ForceFieldAdaptorInterpolator>(
+      m_force_to_be_applied_interpolator_id);
   Vector3<real_t> f;
   force_interpolator->get(to_vector3(pos), &f);
   return {to_vector3d(f) * m_density};
@@ -347,8 +348,8 @@ LbWalberla::get_node_boundary_force(const Utils::Vector3i node) const {
 
   auto const uid = bh->getBoundaryUID(UBB_flag);
   auto const &ubb = bh->getBoundaryCondition<UBB_t>(uid);
-  return {m_density * to_vector3d(
-      ubb.getForce((*bc).cell.x(), (*bc).cell.y(), (*bc).cell.z()))};
+  return {m_density * to_vector3d(ubb.getForce((*bc).cell.x(), (*bc).cell.y(),
+                                               (*bc).cell.z()))};
 }
 
 boost::optional<Utils::Vector3d>
@@ -415,8 +416,8 @@ bool LbWalberla::set_node_density(const Utils::Vector3i node,
       (*bc).block->getData<VelocityAdaptor>(m_velocity_adaptor_id);
   Vector3<double> v = vel_adaptor->get((*bc).cell);
 
-  pdf_field->setDensityAndVelocity((*bc).cell,
-                                   Vector3<double>{v[0], v[1], v[2]}, density / m_density);
+  pdf_field->setDensityAndVelocity(
+      (*bc).cell, Vector3<double>{v[0], v[1], v[2]}, density / m_density);
 
   return true;
 }
@@ -499,11 +500,11 @@ bool LbWalberla::node_in_local_halo(const Utils::Vector3i &node) const {
 }
 
 bool LbWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {
-  return get_block(pos,false) != nullptr;
+  return get_block(pos, false) != nullptr;
 }
 
 bool LbWalberla::pos_in_local_halo(const Utils::Vector3d &pos) const {
-  return get_block(pos,true) != nullptr;
+  return get_block(pos, true) != nullptr;
 }
 
 std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
