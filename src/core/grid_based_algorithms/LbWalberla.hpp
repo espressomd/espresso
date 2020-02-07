@@ -253,11 +253,13 @@ private:
   walberla::BlockDataID m_flag_field_id;
   walberla::BlockDataID m_last_applied_force_field_id;
   walberla::BlockDataID m_force_to_be_applied_id;
-  walberla::BlockDataID m_force_distributor_id;
+  walberla::BlockDataID m_force_to_be_applied_distributor_id;
   walberla::BlockDataID m_velocity_adaptor_id;
   walberla::BlockDataID m_velocity_interpolator_id;
-  walberla::BlockDataID m_force_adaptor_id;
-  walberla::BlockDataID m_force_interpolator_id;
+  walberla::BlockDataID m_last_applied_force_adaptor_id;
+  walberla::BlockDataID m_last_applied_force_interpolator_id;
+  walberla::BlockDataID m_force_to_be_applied_adaptor_id;
+  walberla::BlockDataID m_force_to_be_applied_interpolator_id;
   walberla::BlockDataID m_density_adaptor_id;
   walberla::BlockDataID m_density_interpolator_id;
 

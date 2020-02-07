@@ -142,7 +142,7 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
               m_pdf_field_id, m_flag_field_id, Fluid_flag)),
       "LB stream & collide");
 
-  m_force_distributor_id =
+  m_force_to_be_applied_distributor_id =
       field::addDistributor<Vector_field_distributor_t, Flag_field_t>(
           m_blocks, m_force_to_be_applied_id, m_flag_field_id, Fluid_flag);
 
@@ -153,12 +153,22 @@ LbWalberla::LbWalberla(double viscosity, double density, double agrid,
       field::addFieldInterpolator<VectorFieldAdaptorInterpolator, Flag_field_t>(
           m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
 
-  m_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
+  
+  // Force interpolation for force_to_be_applied
+  m_force_to_be_applied_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
       m_blocks, m_force_to_be_applied_id, "force adaptor");
 
-  m_force_interpolator_id =
+  m_force_to_be_applied_interpolator_id =
       field::addFieldInterpolator<ForceFieldAdaptorInterpolator, Flag_field_t>(
-          m_blocks, m_force_adaptor_id, m_flag_field_id, Fluid_flag);
+          m_blocks, m_force_to_be_applied_adaptor_id, m_flag_field_id, Fluid_flag);
+
+  // Force interpolation for last_applied_force
+  m_last_applied_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
+      m_blocks, m_last_applied_force_field_id, "force adaptor");
+
+  m_last_applied_force_interpolator_id =
+      field::addFieldInterpolator<ForceFieldAdaptorInterpolator, Flag_field_t>(
+          m_blocks, m_last_applied_force_adaptor_id, m_flag_field_id, Fluid_flag);
 
   m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
       m_blocks, m_pdf_field_id, "density adaptor");
@@ -299,7 +309,7 @@ bool LbWalberla::add_force_at_pos(const Utils::Vector3d &pos,
   if (!block)
     return false;
   auto *force_distributor =
-      block->getData<Vector_field_distributor_t>(m_force_distributor_id);
+      block->getData<Vector_field_distributor_t>(m_force_to_be_applied_distributor_id);
   auto f = to_vector3(force / m_density);
   force_distributor->distribute(to_vector3(pos), &f);
   return true;
@@ -313,7 +323,7 @@ LbWalberla::get_force_at_pos(const Utils::Vector3d &pos) const {
     return {boost::none};
 
   auto *force_interpolator =
-      block->getData<ForceFieldAdaptorInterpolator>(m_force_interpolator_id);
+      block->getData<ForceFieldAdaptorInterpolator>(m_force_to_be_applied_interpolator_id);
   Vector3<real_t> f;
   force_interpolator->get(to_vector3(pos), &f);
   return {to_vector3d(f) * m_density};
