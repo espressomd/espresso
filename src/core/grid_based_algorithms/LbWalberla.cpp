@@ -251,7 +251,7 @@ bool LbWalberla::set_node_velocity_at_boundary(const Utils::Vector3i node,
 boost::optional<Utils::Vector3d>
 LbWalberla::get_node_velocity_at_boundary(const Utils::Vector3i &node) const {
   boost::optional<Utils::Vector3d> res;
-  auto bc = get_block_and_cell(node);
+  auto bc = get_block_and_cell(node,true);
   // return if we don't have the cell
   if (!bc)
     return res;
@@ -271,7 +271,7 @@ LbWalberla::get_node_velocity_at_boundary(const Utils::Vector3i &node) const {
 }
 
 bool LbWalberla::remove_node_from_boundary(const Utils::Vector3i &node) {
-  auto bc = get_block_and_cell(node);
+  auto bc = get_block_and_cell(node,true);
   if (!bc)
     return false;
   Boundary_handling_t *boundary_handling =
@@ -283,7 +283,7 @@ bool LbWalberla::remove_node_from_boundary(const Utils::Vector3i &node) {
 
 boost::optional<bool>
 LbWalberla::get_node_is_boundary(const Utils::Vector3i &node) const {
-  auto bc = get_block_and_cell(node);
+  auto bc = get_block_and_cell(node, true);
   if (!bc)
     return {boost::none};
 
