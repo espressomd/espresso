@@ -13,6 +13,7 @@
 #include "grid_based_algorithms/LbWalberla.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
+#include "grid.hpp"
 #include "utils/Vector.hpp"
 #include <iostream>
 
@@ -152,6 +153,38 @@ BOOST_AUTO_TEST_CASE(velocity) {
       BOOST_CHECK(!lb.get_node_velocity(node));
       BOOST_CHECK(!lb.get_velocity_at_pos(pos));
       BOOST_CHECK(!lb.set_node_velocity(node, Vector3d{{0, 0, 0}}));
+    }
+  }
+  box_geo.set_length(box_dimensions);
+  for (Vector3d offset: std::vector<Vector3d>{{0.0,      0.0,      0.0},
+                                              {0.0,      0.0,      skin/2.0},
+                                              {0.0,      skin/2.0, 0.0},
+                                              {0.0,      skin/2.0, skin/2.0},
+                                              {skin/2.0, 0.0,      0.0},
+                                              {skin/2.0, 0.0,      skin/2.0},
+                                              {skin/2.0, skin/2.0, 0.0},
+                                              {skin/2.0, skin/2.0, skin/2.0}})
+  for (Vector3d pos: std::vector<Vector3d>{
+                      {box_dimensions[0], box_dimensions[1], box_dimensions[2]},
+                      {0.0,               0.0,               box_dimensions[2]},
+                      {0.0,               box_dimensions[1], 0.0},
+                      {0.0,               box_dimensions[1], box_dimensions[2]},
+                      {box_dimensions[0], 0.0,               0.0},
+                      {box_dimensions[0], 0.0,               box_dimensions[2]},
+                      {box_dimensions[0], box_dimensions[1], 0.0},
+                      {0.0,               0.0,               0.0}}){
+    if (lb.pos_in_local_domain(pos)) {
+      for (int i=0; i<3; i++){
+        if(pos[i] > 0.0)
+          pos[i] += offset[i];
+        else
+          pos[i] -= offset[i];
+      }
+      // Halo only
+      pos=folded_position(pos,box_geo);
+      if (!lb.pos_in_local_domain(pos)) {
+        BOOST_CHECK(lb.get_velocity_at_pos(pos));
+      }
     }
   }
 }
