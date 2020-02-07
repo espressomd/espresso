@@ -182,7 +182,11 @@ BOOST_AUTO_TEST_CASE(velocity) {
       }
       // Halo only
       pos=folded_position(pos,box_geo);
-      if (!lb.pos_in_local_domain(pos)) {
+      if (lb.pos_in_local_domain(pos)) {
+        BOOST_CHECK(lb.get_velocity_at_pos(pos));
+        BOOST_CHECK(lb.pos_in_local_halo(pos));
+      }
+      else if (lb.pos_in_local_halo(pos)) {
         BOOST_CHECK(lb.get_velocity_at_pos(pos));
       }
     }

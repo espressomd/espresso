@@ -489,9 +489,11 @@ bool LbWalberla::node_in_local_halo(const Utils::Vector3i &node) const {
 }
 
 bool LbWalberla::pos_in_local_domain(const Utils::Vector3d &pos) const {
-  auto block =
-      m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
-  return (block != nullptr);
+  return get_block(pos,false) != nullptr;
+}
+
+bool LbWalberla::pos_in_local_halo(const Utils::Vector3d &pos) const {
+  return get_block(pos,true) != nullptr;
 }
 
 std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
