@@ -521,21 +521,6 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
 }
 
 const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
-  // Add equilibrium stress to the diagonal (in LB units)
-  auto const p0 = 0;
-  // Global density does not exist. Needs to be summed over nodes
-  // lb_lbfluid_get_density() * D3Q19::c_sound_sq<double>;
-  throw std::runtime_error("Not implemented");
-
-  auto stress = lb_lbnode_get_stress_neq(ind);
-  stress[0] += p0;
-  stress[2] += p0;
-  stress[5] += p0;
-
-  return stress;
-}
-
-const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     Utils::Vector6d stress = ::Communication::mpiCallbacks().call(
@@ -545,15 +530,16 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
     // reverts the correction done by walberla
     auto const revert_factor =
         lb_lbfluid_get_viscosity() / (lb_lbfluid_get_viscosity() + 1.0 / 6.0);
-    stress[1] /= revert_factor;
-    stress[3] /= revert_factor;
-    stress[4] /= revert_factor;
+//    stress[1] /= revert_factor;
+//    stress[3] /= revert_factor;
+//    stress[4] /= revert_factor;
 
     return stress;
   }
 #endif
   throw NoLBActive();
 }
+
 
 /** calculates the average stress of all nodes by iterating
  * over all nodes and dividing by the number_of_nodes.

@@ -319,16 +319,6 @@ cdef class LBFluidRoutines:
         def __set__(self, value):
             raise NotImplementedError
 
-    property stress_neq:
-        def __get__(self):
-            cdef Vector6d stress = python_lbnode_get_stress_neq(self.node)
-            return array_locked(np.array([[stress[0], stress[1], stress[3]],
-                                          [stress[1], stress[2], stress[4]],
-                                          [stress[3], stress[4], stress[5]]]))
-
-        def __set__(self, value):
-            raise NotImplementedError
-
     property population:
         def __get__(self):
             cdef Vector19d double_return

@@ -71,7 +71,6 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     double lb_lbnode_get_density(const Vector3i & ind) except +
     void lb_lbnode_set_density(const Vector3i & ind, double density) except +
     const Vector6d lb_lbnode_get_stress(const Vector3i & ind) except +
-    const Vector6d lb_lbnode_get_stress_neq(const Vector3i & ind) except +
     const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
     void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
     int lb_lbnode_get_boundary(const Vector3i & ind) except +
@@ -165,13 +164,6 @@ cdef inline Vector6d python_lbnode_get_stress(Vector3i node) except +:
     cdef double agrid = lb_lbfluid_get_agrid()
     cdef double unit_conversion = 1.0 / (tau * tau * agrid)
     cdef Vector6d c_stress = lb_lbnode_get_stress(node)
-    return c_stress * unit_conversion
-
-cdef inline Vector6d python_lbnode_get_stress_neq(Vector3i node) except +:
-    cdef double tau = lb_lbfluid_get_tau()
-    cdef double agrid = lb_lbfluid_get_agrid()
-    cdef double unit_conversion = 1.0 / (tau * tau * agrid)
-    cdef Vector6d c_stress = lb_lbnode_get_stress_neq(node)
     return c_stress * unit_conversion
 
 cdef inline double python_lbnode_get_density(Vector3i node) except +: 

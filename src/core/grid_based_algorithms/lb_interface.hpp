@@ -158,7 +158,6 @@ double lb_lbnode_get_density(const Utils::Vector3i &ind);
  */
 const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
 const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
-const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind);
 
 /** calculates the average stress of all nodes by iterating
  * over all nodes and dividing by the number_of_nodes.
