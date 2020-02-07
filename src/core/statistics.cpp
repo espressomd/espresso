@@ -109,7 +109,7 @@ Utils::Vector3d calc_linear_momentum(int include_particles,
   }
   if (include_lbfluid) {
     if (lattice_switch != ActiveLB::NONE) {
-      linear_momentum += lb_lbfluid_calc_fluid_momentum();
+      linear_momentum += lb_lbfluid_calc_fluid_momentum() *lb_lbfluid_get_lattice_speed();
     }
   }
   return linear_momentum;

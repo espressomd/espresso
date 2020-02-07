@@ -628,8 +628,7 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
 #ifdef LB_WALBERLA
     fluid_momentum = ::Communication::mpiCallbacks().call(
                          ::Communication::Result::Reduction(), std::plus<>(),
-                         Walberla::get_momentum) *
-                     (lb_lbfluid_get_agrid() / lb_lbfluid_get_tau());
+                         Walberla::get_momentum);
 #endif
   } else
     throw NoLBActive();

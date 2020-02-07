@@ -202,10 +202,10 @@ public:
   Utils::Vector3d get_momentum() const;
 
   void set_external_force(const Utils::Vector3d &ext_force) {
-    m_reset_force->set_ext_force(ext_force);
+    m_reset_force->set_ext_force(ext_force / m_density);
   }
   Utils::Vector3d get_external_force() {
-    return m_reset_force->get_ext_force();
+    return m_reset_force->get_ext_force() * m_density;
   }
 
   void set_viscosity(double viscosity);
