@@ -632,14 +632,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
 }
 
 /************************************************************/
-void dd_topology_release() {
-  /* free ghost cell pointer list */
-
-  cell_structure.m_ghost_cells.resize(0);
-  /* free ghost communicators */
-  free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.collect_ghost_force_comm);
-}
 
 namespace {
 /**

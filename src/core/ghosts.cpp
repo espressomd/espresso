@@ -77,13 +77,6 @@ private:
   std::vector<int> bondbuf; //< Buffer for bond lists
 };
 
-void free_comm(GhostCommunicator *gcr) {
-  assert(gcr);
-  // Invalidate the elements in all "part_lists" of all GhostCommunications.
-  for (auto &ghost_comm : gcr->comm)
-    ghost_comm.part_lists.clear();
-}
-
 static size_t calc_transmit_size(unsigned data_parts) {
   size_t size = {};
   if (data_parts & GHOSTTRANS_PROPRTS) {

@@ -152,9 +152,9 @@ enum : unsigned {
 
 struct GhostCommunication {
   /** Communication type. */
-  int type;
+  int type = -1;
   /** Node to communicate with (to use with all MPI operations). */
-  int node;
+  int node = -1;
 
   /** Pointer array to particle lists to communicate. */
   std::vector<Cell *> part_lists = {};
@@ -175,9 +175,6 @@ struct GhostCommunicator {
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
-
-/** Free a communicator. */
-void free_comm(GhostCommunicator *gcr);
 
 /**
  * @brief Do a ghost communication with caller specified data parts.

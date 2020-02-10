@@ -36,12 +36,6 @@ static Cell *nsq_id_to_cell(int id) {
   return ((id % n_nodes) == this_node) ? local : nullptr;
 }
 
-void nsq_topology_release() {
-  /* free ghost cell pointer list */
-  free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.collect_ghost_force_comm);
-}
-
 static std::vector<GhostCommunication>
 nsq_prepare_comm(boost::mpi::communicator const &comm) {
   /* no need for comm for only 1 node */

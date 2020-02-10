@@ -100,11 +100,6 @@ Cell *layered_position_to_cell(const Utils::Vector3d &pos) {
   return &(cells[cpos]);
 }
 
-void layered_topology_release() {
-  free_comm(&cell_structure.exchange_ghosts_comm);
-  free_comm(&cell_structure.collect_ghost_force_comm);
-}
-
 static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
 
   if (n_nodes > 1) {
