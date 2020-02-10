@@ -29,49 +29,49 @@ using namespace std;
 namespace Shapes {
 void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
                                 Utils::Vector3d &vec) const {
-  int number = -1;
-  double r0, r1, w, alpha, xd, yd, zd, mu, x_2D, y_2D, t0, t1, t2, time1, time2,
-      time3, time4, mdst0, mdst1, mdst2, mdst3, mindist, normalize, normal_x_3D,
-      normal_y_3D, normal_z_3D;
 
   // Set the dimensions of the hollow cone
 
-  r0 = m_inner_radius;
-  r1 = m_outer_radius;
-  w = m_width;
-  alpha = m_opening_angle;
+  auto const r0 = m_inner_radius;
+  auto const r1 = m_outer_radius;
+  auto const w = m_width;
+  auto const alpha = m_opening_angle;
 
   // Set the point for which we want to know the distance
 
-  Utils::Vector3d point_3D = pos;
+  Utils::Vector3d const point_3D = pos;
 
   /***** Convert 3D coordinates to 2D planar coordinates *****/
 
   // Calculate the point on position + mu * orientation,
   // where the difference segment is orthogonal
 
-  mu = (m_orientation * point_3D - m_position * m_orientation) /
-       m_orientation.norm2();
+  auto const mu = (m_orientation * point_3D - m_position * m_orientation) /
+                  m_orientation.norm2();
 
   // Then the closest point to the line is
 
-  Utils::Vector3d closest_point_3D = m_position + mu * m_orientation;
+  Utils::Vector3d const closest_point_3D = m_position + mu * m_orientation;
 
   // So the shortest distance to the line is
 
-  x_2D = (closest_point_3D - point_3D).norm();
-  y_2D = mu * m_orientation.norm();
+  auto const x_2D = (closest_point_3D - point_3D).norm();
+  auto const y_2D = mu * m_orientation.norm();
 
   /***** Use the obtained planar coordinates in distance function *****/
 
   // Calculate intermediate results which we need to determine
   // the distance
 
-  t0 = (y_2D * cos(alpha) + (x_2D - r0) * sin(alpha)) / r1;
-  t1 = (w - 2.0 * (x_2D - r0) * cos(alpha) + 2.0 * y_2D * sin(alpha)) /
-       (2.0 * w);
-  t2 = (w + 2.0 * (x_2D - r0) * cos(alpha) - 2.0 * y_2D * sin(alpha)) /
-       (2.0 * w);
+  auto const t0 = (y_2D * cos(alpha) + (x_2D - r0) * sin(alpha)) / r1;
+  auto const t1 =
+      (w - 2.0 * (x_2D - r0) * cos(alpha) + 2.0 * y_2D * sin(alpha)) /
+      (2.0 * w);
+  auto const t2 =
+      (w + 2.0 * (x_2D - r0) * cos(alpha) - 2.0 * y_2D * sin(alpha)) /
+      (2.0 * w);
+
+  double time1, time2, time3, time4;
 
   if (t0 >= 0.0 && t0 <= 1.0) {
     time1 = t0;
@@ -100,40 +100,39 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
     time4 = 0.0;
   }
 
-  mdst0 =
+  auto const mdst0 =
       x_2D * x_2D + y_2D * y_2D - 2.0 * x_2D * r0 + r0 * r0 +
       r1 * r1 * time1 * time1 + 0.25 * w * w +
       (-2.0 * y_2D * r1 * time1 + (x_2D - r0) * w) * cos(alpha) -
       (2.0 * x_2D * r1 * time1 - 2.0 * r0 * r1 * time1 + y_2D * w) * sin(alpha);
-  mdst0 = sqrt(mdst0);
 
-  mdst1 = x_2D * x_2D + y_2D * y_2D - 2.0 * x_2D * r0 + r0 * r0 +
-          r1 * r1 * time2 * time2 + 0.25 * w * w +
-          (-2.0 * y_2D * r1 * time2 + (-x_2D + r0) * w) * cos(alpha) +
-          (-2.0 * x_2D * r1 * time2 + 2.0 * r0 * r1 * time2 + y_2D * w) *
-              sin(alpha);
-  mdst1 = sqrt(mdst1);
+  auto const mdst1 =
+      x_2D * x_2D + y_2D * y_2D - 2.0 * x_2D * r0 + r0 * r0 +
+      r1 * r1 * time2 * time2 + 0.25 * w * w +
+      (-2.0 * y_2D * r1 * time2 + (-x_2D + r0) * w) * cos(alpha) +
+      (-2.0 * x_2D * r1 * time2 + 2.0 * r0 * r1 * time2 + y_2D * w) *
+          sin(alpha);
 
-  mdst2 = x_2D * x_2D + y_2D * y_2D - 2.0 * x_2D * r0 + r0 * r0 + 0.25 * w * w -
-          time3 * w * w + time3 * time3 * w * w +
-          (x_2D - r0) * (-1.0 + 2.0 * time3) * w * cos(alpha) -
-          y_2D * (-1.0 + 2.0 * time3) * w * sin(alpha);
-  mdst2 = sqrt(mdst2);
+  auto const mdst2 = x_2D * x_2D + y_2D * y_2D - 2.0 * x_2D * r0 + r0 * r0 +
+                     0.25 * w * w - time3 * w * w + time3 * time3 * w * w +
+                     (x_2D - r0) * (-1.0 + 2.0 * time3) * w * cos(alpha) -
+                     y_2D * (-1.0 + 2.0 * time3) * w * sin(alpha);
 
-  mdst3 = x_2D * x_2D + y_2D * y_2D - 2.0 * x_2D * r0 + r0 * r0 + 0.25 * w * w -
-          time4 * w * w + time4 * time4 * w * w -
-          (x_2D - r0) * (-1.0 + 2.0 * time4) * w * cos(alpha) +
-          y_2D * (-1.0 + 2.0 * time4) * w * sin(alpha) + r1 * r1 -
-          2.0 * y_2D * r1 * cos(alpha) +
-          (-2.0 * x_2D * r1 + 2.0 * r0 * r1) * sin(alpha);
-  mdst3 = sqrt(mdst3);
+  auto const mdst3 = x_2D * x_2D + y_2D * y_2D - 2.0 * x_2D * r0 + r0 * r0 +
+                     0.25 * w * w - time4 * w * w + time4 * time4 * w * w -
+                     (x_2D - r0) * (-1.0 + 2.0 * time4) * w * cos(alpha) +
+                     y_2D * (-1.0 + 2.0 * time4) * w * sin(alpha) + r1 * r1 -
+                     2.0 * y_2D * r1 * cos(alpha) +
+                     (-2.0 * x_2D * r1 + 2.0 * r0 * r1) * sin(alpha);
 
-  double distlist[4] = {mdst0, mdst1, mdst2, mdst3};
+  double const distlist[4] = {sqrt(mdst0), sqrt(mdst1), sqrt(mdst2),
+                              sqrt(mdst3)};
 
   // Now we only need to determine which distance is minimal
   // and remember which one it is
 
-  mindist = -1.0;
+  int number = -1;
+  double mindist = -1.0;
 
   for (int i = 0; i < 4; i++) {
     if (mindist < 0.0) {
@@ -155,6 +154,7 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
   double normal_x = -1.0;
   double normal_y = -1.0;
   double direction = 0.0;
+  double normalize;
 
   if (number == 0) {
     normal_x = x_2D - r0 + 0.5 * w * cos(alpha) - r1 * time1 * sin(alpha);
@@ -268,9 +268,9 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // transformation to get it in 3D. The minimum distance stays
   // the same though. We first get the normalized direction vector.
 
-  xd = m_orientation[0] / m_orientation.norm();
-  yd = m_orientation[1] / m_orientation.norm();
-  zd = m_orientation[2] / m_orientation.norm();
+  auto const xd = m_orientation[0] / m_orientation.norm();
+  auto const yd = m_orientation[1] / m_orientation.norm();
+  auto const zd = m_orientation[2] / m_orientation.norm();
 
   // We now establish the rotation matrix required to go
   // form {0,0,1} to {xd,yd,zd}
@@ -315,7 +315,7 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // Next we determine the 3D vector between the center
   // of the hollow cylinder and the point of interest
 
-  Utils::Vector3d p(point_3D - m_position);
+  Utils::Vector3d const p(point_3D - m_position);
 
   // Now we use the inverse matrix to find the
   // position of the point with respect to the origin
@@ -327,6 +327,7 @@ void HollowCone::calculate_dist(const Utils::Vector3d &pos, double &dist,
   pp[1] = matrix[1] * p[0] + matrix[4] * p[1] + matrix[7] * p[2];
 
   // Now use this direction to orient the normal
+  double normal_x_3D, normal_y_3D, normal_z_3D;
 
   if (pp.norm2() > 1.0e-10) {
     // The point is off the rotational symmetry

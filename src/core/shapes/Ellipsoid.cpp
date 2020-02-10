@@ -33,7 +33,7 @@ void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   Utils::Vector3d const ppos_e = pos - m_center;
 
   /* set appropriate initial point for Newton's method */
-  double l0, l = 0.;
+  double l = 0.;
   int distance_prefactor = -1;
   if (not inside_ellipsoid(ppos_e)) {
     l = *std::max_element(m_semiaxes.begin(), m_semiaxes.end()) * ppos_e.norm();
@@ -44,7 +44,7 @@ void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double &dist,
   double eps = 10.;
   int step = 0;
   while ((eps >= 1e-12) and (step < 100)) {
-    l0 = l;
+    auto const l0 = l;
     l -= newton_term(ppos_e, l0);
     eps = std::abs(l - l0);
     step++;
@@ -60,14 +60,7 @@ void Ellipsoid::calculate_dist(const Utils::Vector3d &pos, double &dist,
 }
 
 bool Ellipsoid::inside_ellipsoid(const Utils::Vector3d &ppos) const {
-  bool is_inside = false;
-  if (Utils::sqr(ppos[0] / m_semiaxes[0]) +
-          Utils::sqr(ppos[1] / m_semiaxes[1]) +
-          Utils::sqr(ppos[2] / m_semiaxes[2]) <=
-      1)
-    is_inside = true;
-
-  return is_inside;
+  return Utils::hadamard_division(ppos, m_semiaxes).norm2() <= 1;
 }
 
 double Ellipsoid::newton_term(const Utils::Vector3d &ppos,
