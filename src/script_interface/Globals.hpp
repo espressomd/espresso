@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2019 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,31 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_ComForce_HPP
-#define OBSERVABLES_ComForce_HPP
+#ifndef SCRIPT_INTERFACE_GLOBALS_HPP
+#define SCRIPT_INTERFACE_GLOBALS_HPP
 
-#include "PidObservable.hpp"
+#include "thermostat.hpp"
 
-#include <vector>
+extern LangevinThermostat langevin;
+extern BrownianThermostat brownian;
+extern IsotropicNptThermostat npt_iso;
 
-namespace Observables {
-class ComForce : public PidObservable {
-public:
-  using PidObservable::PidObservable;
-  int n_values() const override { return 3; }
-
-  std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
-    std::vector<double> res(n_values());
-    for (auto const &p : particles) {
-      if (p->p.is_virtual)
-        continue;
-      res[0] += p->f.f[0];
-      res[1] += p->f.f[1];
-      res[2] += p->f.f[2];
-    }
-    return res;
-  }
-};
-} // Namespace Observables
 #endif

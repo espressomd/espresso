@@ -38,6 +38,7 @@
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
+#include "integrators/langevin_inline.hpp"
 #include "metadynamics.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
@@ -101,16 +102,17 @@ inline ParticleForce external_force(Particle const &p) {
 }
 
 inline ParticleForce thermostat_force(Particle const &p) {
+  extern LangevinThermostat langevin;
   if (!(thermo_switch & THERMO_LANGEVIN)) {
     return {};
   }
 
 #ifdef ROTATION
-  return {
-      friction_thermo_langevin(p),
-      convert_vector_body_to_space(p, friction_thermo_langevin_rotation(p))};
+  return {friction_thermo_langevin(langevin, p),
+          convert_vector_body_to_space(
+              p, friction_thermo_langevin_rotation(langevin, p))};
 #else
-  return friction_thermo_langevin(p);
+  return friction_thermo_langevin(langevin, p);
 #endif
 }
 

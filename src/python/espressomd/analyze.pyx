@@ -53,11 +53,10 @@ class Analysis:
 
     def append(self):
         """Append configuration for averaged analysis."""
-        if analyze.n_part == 0:
-            raise Exception("No particles to append!")
-        if (analyze.n_configs > 0) and (analyze.n_part_conf != analyze.n_part):
-            raise Exception(
-                "All configurations stored must have the same length")
+        assert analyze.n_part, "No particles to append!"
+        if analyze.n_configs > 0:
+            assert analyze.n_part_conf == analyze.n_part, \
+                "All configurations stored must have the same length"
 
         analyze.analyze_append(analyze.partCfg())
 
@@ -81,7 +80,7 @@ class Analysis:
         return analyze.min_distance2(p1c, p2c)
 
     def min_dist(self, p1='default', p2='default'):
-        """Minimal distance between two sets of particles.
+        """Minimal distance between two sets of particle types.
 
         Parameters
         ----------
@@ -97,19 +96,18 @@ class Analysis:
 
         if p1 == 'default' and p2 == 'default':
             pass
-        elif (p1 == 'default' and not p2 == 'default') or \
-             (not p1 == 'default' and p2 == 'default'):
-            raise Exception("Both, p1 and p2 have to be specified\n" + __doc__)
+        elif p1 == 'default' or p2 == 'default':
+            raise ValueError("Both p1 and p2 have to be specified")
         else:
             for i in range(len(p1)):
                 if not is_valid_type(p1[i], int):
-                    raise ValueError(
-                        "Particle types in p1 and p2 have to be of type int: " + str(p1[i]))
+                    raise TypeError(
+                        "Particle types in p1 have to be of type int, got: " + repr(p1[i]))
 
             for i in range(len(p2)):
                 if not is_valid_type(p2[i], int):
-                    raise ValueError(
-                        "Particle types in p1 and p2 have to be of type int" + str(p2[i]))
+                    raise TypeError(
+                        "Particle types in p2 have to be of type int, got: " + repr(p2[i]))
 
             set1 = create_int_list_from_python_object(p1)
             set2 = create_int_list_from_python_object(p2)
@@ -121,7 +119,8 @@ class Analysis:
 
     def dist_to(self, id=None, pos=None):
         """
-        Calculates the distance to a point or particle.
+        Calculate the minimal distance to either a particle or an arbitrary
+        point in space.
 
         Parameters
         ----------
@@ -139,22 +138,21 @@ class Analysis:
         """
 
         if id is None and pos is None:
-            raise Exception(
-                "Either id or pos have to be specified\n" + __doc__)
+            raise ValueError(
+                "Either id or pos have to be specified")
 
         if (id is not None) and (pos is not None):
-            raise Exception(
-                "Only one of id or pos may be specified\n" + __doc__)
+            raise ValueError(
+                "Only one of id or pos may be specified")
 
-        cdef Vector3d cpos
-        if len(self._system.part) == 0:
-            raise Exception("no particles")
+        assert len(self._system.part), "no particles in the system"
 
         # Get position
+        cdef Vector3d cpos
         # If particle id specified
         if id is not None:
             if not is_valid_type(id, int):
-                raise ValueError("Id has to be an integer")
+                raise TypeError("Id has to be an integer")
             if id not in self._system.part[:].id:
                 raise ValueError(
                     "Id has to be an index of an existing particle")
@@ -200,9 +198,10 @@ class Analysis:
 
     def center_of_mass(self, p_type=None):
         """
-        Calculates the system's center of mass.
+        Calculate the system's center of mass.
 
-        Note that virtual sites are not included, as they do not have a meaningful mass.
+        Note that virtual sites are not included, as they do not have a
+        meaningful mass.
 
         Parameters
         ----------
@@ -220,14 +219,10 @@ class Analysis:
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= analyze.max_seen_particle_type):
-            raise ValueError("Particle type", p_type, "does not exist!")
+        if p_type < 0 or p_type >= analyze.max_seen_particle_type:
+            raise ValueError("Particle type {} does not exist!".format(p_type))
 
         return analyze.centerofmass(analyze.partCfg(), p_type)
-
-    # get all particles in neighborhood r_catch of pos and return their ids
-    # in il. plane can be used to specify the distance in the xy, xz or yz
-    # plane
 
     def nbhood(self, pos=None, r_catch=None, plane='3d'):
         """
@@ -254,7 +249,7 @@ class Analysis:
         cdef Vector3d c_pos
 
         check_type_or_throw_except(
-            pos, 3, float, "_pos=(float,float,float) must be passed to nbhood")
+            pos, 3, float, "pos=(float,float,float) must be passed to nbhood")
         check_type_or_throw_except(
             r_catch, 1, float, "r_catch=float needs to be passed to nbhood")
 
@@ -269,7 +264,7 @@ class Analysis:
         elif plane == 'yz':
             planedims[0] = 0
         elif plane != '3d':
-            raise Exception(
+            raise ValueError(
                 'Invalid argument for specifying plane, must be xy, xz, or yz plane')
 
         for i in range(3):
@@ -284,7 +279,7 @@ class Analysis:
                             bins_axial=None, bins_radial=None,
                             types=[-1]):
         """
-        Calculates the particle distribution using cylindrical binning.
+        Calculate the particle distribution using cylindrical binning.
 
         Parameters
         ----------
@@ -358,7 +353,7 @@ class Analysis:
                 pos_radial = (index_radial + .5) * binwd_radial
                 pos_axial = (index_axial + .5) * binwd_axial - .5 * c_length
 
-                if (index_radial == 0):
+                if index_radial == 0:
                     binvolume = np.pi * binwd_radial * binwd_radial * c_length
                 else:
                     binvolume = np.pi * \
@@ -380,10 +375,10 @@ class Analysis:
         return buffer
 
     def pressure(self, v_comp=False):
-        """Calculates the instantaneous pressure (in parallel). This is only
+        """Calculate the instantaneous pressure (in parallel). This is only
         sensible in an isotropic system which is homogeneous (on average)! Do
         not use this in an anisotropic or inhomogeneous system. In order to
-        obtain the pressure the ensemble average needs to be calculated.
+        obtain the pressure, the ensemble average needs to be calculated.
 
         Returns
         -------
@@ -413,7 +408,7 @@ class Analysis:
         p = OrderedDict()
 
         # Update in ESPResSo core if necessary
-        if (analyze.total_pressure.init_status != 1 + v_comp):
+        if analyze.total_pressure.init_status != 1 + v_comp:
             analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
@@ -433,7 +428,7 @@ class Analysis:
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
-            if (bonded_ia_params[i].type != BONDED_IA_NONE):
+            if bonded_ia_params[i].type != BONDED_IA_NONE:
                 p["bonded", i] = analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
                 total_bonded += analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
@@ -491,12 +486,12 @@ class Analysis:
         return p
 
     def stress_tensor(self, v_comp=False):
-        """Calculates the instantaneous stress tensor (in parallel). This is
+        """Calculate the instantaneous stress tensor (in parallel). This is
         sensible in an anisotropic system. Still it assumes that the system is
         homogeneous since the volume averaged stress tensor is used. Do not use
         this stress tensor in an (on average) inhomogeneous system. If the
         system is (on average inhomogeneous) then use a local stress tensor.
-        In order to obtain the stress tensor the ensemble average needs to be
+        In order to obtain the stress tensor, the ensemble average needs to be
         calculated.
 
         Returns
@@ -525,7 +520,7 @@ class Analysis:
         p = OrderedDict()
 
         # Update in ESPResSo core if necessary
-        if (analyze.total_p_tensor.init_status != 1 + v_comp):
+        if analyze.total_p_tensor.init_status != 1 + v_comp:
             analyze.update_pressure(v_comp)
 
         # Individual components of the pressure
@@ -547,7 +542,7 @@ class Analysis:
         # Bonded
         total_bonded = np.zeros((3, 3))
         for i in range(bonded_ia_params.size()):
-            if (bonded_ia_params[i].type != BONDED_IA_NONE):
+            if bonded_ia_params[i].type != BONDED_IA_NONE:
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
                     analyze.obsstat_bonded(& analyze.total_p_tensor, i), 9),
                     (3, 3))
@@ -650,8 +645,7 @@ class Analysis:
         >>> print(energy["external_fields"])
 
         """
-        #  if system.n_part == 0:
-        #    raise Exception('no particles')
+        #  assert len(self._system.part), "no particles in the system"
 
         e = OrderedDict()
 
@@ -673,11 +667,11 @@ class Analysis:
         # Kinetic energy
         e["kinetic"] = analyze.total_energy.data.e[0]
 
-        # Nonbonded
+        # Non-bonded
         cdef double total_bonded
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
-            if (bonded_ia_params[i].type != BONDED_IA_NONE):
+            if bonded_ia_params[i].type != BONDED_IA_NONE:
                 e["bonded", i] = analyze.obsstat_bonded(& analyze.total_energy, i)[0]
                 total_bonded += analyze.obsstat_bonded(& analyze.total_energy, i)[0]
         e["bonded"] = total_bonded
@@ -728,13 +722,13 @@ class Analysis:
     def calc_re(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the mean end-to-end distance of chains and its
+        Calculate the mean end-to-end distance of chains and its
         standard deviation, as well as mean square end-to-end distance of
         chains and its standard deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology has id number
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
         ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
@@ -765,13 +759,14 @@ class Analysis:
     def calc_rg(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the mean radius of gyration of chains and its standard deviation,
-        as well as the mean square radius of gyration of chains and its
-        standard deviation.
+        Calculate the mean radius of gyration of chains and its standard
+        deviation, as well as the mean square radius of gyration of chains
+        and its standard deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered, the last particle in that topology has id number
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -801,12 +796,13 @@ class Analysis:
     def calc_rh(self, chain_start=None, number_of_chains=None,
                 chain_length=None):
         """
-        Calculates the hydrodynamic mean radius of chains and its standard deviation.
+        Calculate the hydrodynamic mean radius of chains and its standard
+        deviation.
 
-        This requires that a set of chains of equal length which start with the
-        particle with particle number ``chain_start`` and are consecutively
-        numbered (the last particle in that topology has id number :
-        ``chain_start + number_of_chains * chain_length - 1``).
+        This requires that a set of chains of equal length which start
+        with the particle number ``chain_start`` and are consecutively
+        numbered, the last particle in that topology having id number
+        ``chain_start + number_of_chains * chain_length - 1``.
 
         Parameters
         ----------
@@ -844,10 +840,10 @@ class Analysis:
         id_min = chain_start
         id_max = chain_start + chain_length * number_of_chains
         for i in range(id_min, id_max):
-            if (not self._system.part.exists(i)):
-                raise ValueError('particle with id {0:.0f} does not exist\n'
-                                 'cannot perform analysis on the range chain_start={1:.0f}, '
-                                 'n_chains={2:.0f}, chain_length={3:.0f}\n'
+            if not self._system.part.exists(i):
+                raise ValueError('particle with id {0} does not exist\n'
+                                 'cannot perform analysis on the range '
+                                 'chain_start={1}, number_of_chains={2}, chain_length={3}\n'
                                  'please provide a contiguous range of particle ids'.format(
                                      i, chain_start, number_of_chains, chain_length))
 
@@ -906,8 +902,8 @@ class Analysis:
 
         Parameters
         ----------
-        rdf_type : :obj:`str`
-            ``'rdf'`` or ``'<rdf>'``.
+        rdf_type : :obj:`str`, \{'rdf', '<rdf>'\}
+            Type of analysis.
         type_list_a : lists of :obj:`int`
             Left :attr:`~espressomd.particle_data.ParticleHandle.type` of the rdf.
         type_list_b : lists of :obj:`int`, optional
@@ -915,12 +911,13 @@ class Analysis:
         r_min : :obj:`float`
             Minimal distance to consider.
         r_max : :obj:`float`
-            Maximal distance to consider
+            Maximal distance to consider.
         r_bins : :obj:`int`
             Number of bins.
         n_conf : :obj:`int`, optional
-            If rdf_type is ``'<rdf>'`` this determines
-            the number of stored configs that are used.
+            If ``rdf_type`` is ``'<rdf>'`` this determines
+            the number of stored configs that are used (if
+            ``None``, all configurations are used).
 
         Returns
         -------
@@ -934,7 +931,8 @@ class Analysis:
             raise ValueError("rdf_type must not be empty!")
         if (type_list_a is None) or (not hasattr(type_list_a, '__iter__')):
             raise ValueError("type_list_a has to be a list!")
-        if type_list_b and (not hasattr(type_list_b, '__iter__')):
+        if (type_list_b is not None) and (
+                not hasattr(type_list_b, '__iter__')):
             raise ValueError("type_list_b has to be a list!")
         if type_list_b is None:
             type_list_b = type_list_a
@@ -942,8 +940,8 @@ class Analysis:
         if rdf_type != 'rdf':
             if n_configs == 0:
                 raise ValueError("No configurations founds!\n",
-                                 "Use 'analyze append' to save some,",
-                                 "or 'analyze rdf' to only look at current RDF!""")
+                                 "Use `analyze.append()` to save configurations,",
+                                 "or `analyze.rdf('rdf')` to only look at current RDF!""")
             if n_conf is None:
                 n_conf = n_configs
 
@@ -963,8 +961,7 @@ class Analysis:
                 analyze.partCfg(), p1_types, p2_types, r_min,
                 r_max, r_bins, rdf, n_conf)
         else:
-            raise Exception(
-                "rdf_type has to be one of 'rdf', '<rdf>', and '<rdf_intermol>'")
+            raise ValueError("Unknown rdf_type value {!r}".format(rdf_type))
 
         r = np.empty(r_bins)
         bin_width = (r_max - r_min) / r_bins
@@ -1026,12 +1023,10 @@ class Analysis:
         if r_max is None:
             r_max = min_box_l / 2.0
 
-        if r_min < 0.0 or (log_flag and r_min == 0.0):
-            raise ValueError("r_min was chosen too small!")
-        if r_max <= r_min:
-            raise ValueError("r_max has to be greater than r_min!")
-        if r_bins < 1:
-            raise ValueError("r_bins has to be greater than zero!")
+        assert r_min >= 0.0, "r_min was chosen too small!"
+        assert not log_flag or r_min != 0.0, "r_min cannot include zero"
+        assert r_max > r_min, "r_max has to be greater than r_min!"
+        assert r_bins >= 1, "r_bins has to be greater than zero!"
 
         cdef double low
         cdef vector[double] distribution
@@ -1130,11 +1125,12 @@ class Analysis:
                 "The p_type keyword argument must be provided (particle type)")
         if not hasattr(p_type, '__iter__'):
             p_type = [p_type]
-        for type in p_type:
+        for ptype in p_type:
             check_type_or_throw_except(
-                type, 1, int, "particle type has to be an int")
-            if (type < 0 or type >= analyze.max_seen_particle_type):
-                raise ValueError("Particle type", type, "does not exist!")
+                ptype, 1, int, "particle type has to be an int")
+            if ptype < 0 or ptype >= analyze.max_seen_particle_type:
+                raise ValueError(
+                    "Particle type {} does not exist!".format(ptype))
         selection = self._system.part.select(lambda p: (p.type in p_type))
         cm = np.mean(selection.pos, axis=0)
         mat = np.zeros(shape=(3, 3))
@@ -1183,8 +1179,8 @@ class Analysis:
             raise ValueError(
                 "The p_type keyword argument must be provided (particle type)")
         check_type_or_throw_except(p_type, 1, int, "p_type has to be an int")
-        if (p_type < 0 or p_type >= analyze.max_seen_particle_type):
-            raise ValueError("Particle type", p_type, "does not exist!")
+        if p_type < 0 or p_type >= analyze.max_seen_particle_type:
+            raise ValueError("Particle type {} does not exist!".format(p_type))
 
         analyze.momentofinertiamatrix(
             analyze.partCfg(), p_type, MofImatrix)
@@ -1209,7 +1205,7 @@ class Analysis:
         """
         .. todo:: Looks to be incomplete
 
-        Calculates the compressibility thought volume fluctuations.
+        Calculate the compressibility through volume fluctuations.
 
         Parameters
         ----------
@@ -1226,27 +1222,27 @@ class Analysis:
 
         check_type_or_throw_except(mode, 1, str, "mode has to be a string")
 
-        if (mode == "reset"):
+        if mode == "reset":
             self._Vkappa["Vk1"] = 0.0
             self._Vkappa["Vk2"] = 0.0
             self._Vkappa["avk"] = 0.0
-        elif (mode == "read"):
+        elif mode == "read":
             return self._Vkappa
-        elif (mode == "set"):
+        elif mode == "set":
             check_type_or_throw_except(Vk1, 1, float, "Vk1 has to be a float")
             self._Vkappa["Vk1"] = Vk1
             check_type_or_throw_except(Vk2, 1, float, "Vk2 has to be a float")
             self._Vkappa["Vk2"] = Vk2
             check_type_or_throw_except(avk, 1, float, "avk has to be a float")
             self._Vkappa["avk"] = avk
-            if (self._Vkappa["avk"] <= 0.0):
+            if self._Vkappa["avk"] <= 0.0:
                 result = self._Vkappa["Vk1"] = self._Vkappa[
                     "Vk2"] = self._Vkappa["avk"] = 0.0
-                raise Exception(
-                    "ERROR: # of averages <avk> has to be positive! Resetting values.")
+                raise ValueError(
+                    "# of averages <avk> has to be positive! Resetting values.")
             else:
                 result = self._Vkappa["Vk2"] / self._Vkappa["avk"] - \
                     (self._Vkappa["Vk1"] / self._Vkappa["avk"])**2
             return result
         else:
-            raise Exception("ERROR: Unknown mode.")
+            raise ValueError("Unknown mode {!r}".format(mode))

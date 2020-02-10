@@ -94,6 +94,13 @@ cdef class IntegratorHandle:
         """
         self._integrator = VelocityVerletIsotropicNPT(*args, **kwargs)
 
+    def set_brownian_dynamics(self):
+        """
+        Set the integration method to BD.
+
+        """
+        self._integrator = BrownianDynamics()
+
 
 cdef class Integrator:
     """
@@ -371,3 +378,31 @@ ELSE:
     cdef class VelocityVerletIsotropicNPT(Integrator):
         def __init__(self, *args, **kwargs):
             raise Exception("NPT not compiled in.")
+
+
+cdef class BrownianDynamics(Integrator):
+    """
+    Brownian Dynamics integrator.
+
+    """
+
+    def default_params(self):
+        return {}
+
+    def valid_keys(self):
+        """All parameters that can be set.
+
+        """
+        return {}
+
+    def required_keys(self):
+        """Parameters that have to be set.
+
+        """
+        return {}
+
+    def validate_params(self):
+        return True
+
+    def _set_params_in_es_core(self):
+        integrate_set_bd()

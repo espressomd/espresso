@@ -76,7 +76,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/magnetic_non_p3m_methods.cpp
   electrostatics_magnetostatics/mdlc_correction.cpp
   electrostatics_magnetostatics/mmm1d.cpp
-  electrostatics_magnetostatics/mmm2d.cpp
   electrostatics_magnetostatics/mmm-common.cpp
   electrostatics_magnetostatics/p3m-common.cpp
   electrostatics_magnetostatics/p3m_send_mesh.cpp

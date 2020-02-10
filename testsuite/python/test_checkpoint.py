@@ -157,7 +157,22 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['type'], 'LANGEVIN')
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
-        np.testing.assert_array_equal(thmst['gamma'], np.array(3 * [2.0]))
+        self.assertFalse(thmst['act_on_virtual'])
+        np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
+        if espressomd.has_features('ROTATION'):
+            np.testing.assert_array_equal(thmst['gamma_rotation'], 3 * [2.0])
+
+    @ut.skipIf('THERM.BD' not in modes,
+               'Brownian thermostat not in modes')
+    def test_thermostat_Brownian(self):
+        thmst = system.thermostat.get_state()[0]
+        self.assertEqual(thmst['type'], 'BROWNIAN')
+        self.assertEqual(thmst['kT'], 1.0)
+        self.assertEqual(thmst['seed'], 42)
+        self.assertFalse(thmst['act_on_virtual'])
+        np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
+        if espressomd.has_features('ROTATION'):
+            np.testing.assert_array_equal(thmst['gamma_rotation'], 3 * [2.0])
 
     @utx.skipIfMissingFeatures('DPD')
     @ut.skipIf('THERM.DPD' not in modes, 'DPD thermostat not in modes')
@@ -172,6 +187,7 @@ class CheckpointTest(ut.TestCase):
     def test_thermostat_NPT(self):
         thmst = system.thermostat.get_state()[0]
         self.assertEqual(thmst['type'], 'NPT_ISO')
+        self.assertEqual(thmst['seed'], 42)
         self.assertEqual(thmst['gamma0'], 2.0)
         self.assertEqual(thmst['gammav'], 0.1)
 
@@ -207,6 +223,13 @@ class CheckpointTest(ut.TestCase):
     def test_integrator_VV(self):
         integ = system.integrator.get_state()
         self.assertIsInstance(integ, espressomd.integrate.VelocityVerlet)
+        params = integ.get_params()
+        self.assertEqual(params, {})
+
+    @ut.skipIf('INT.BD' not in modes, 'BD integrator not in modes')
+    def test_integrator_BD(self):
+        integ = system.integrator.get_state()
+        self.assertIsInstance(integ, espressomd.integrate.BrownianDynamics)
         params = integ.get_params()
         self.assertEqual(params, {})
 

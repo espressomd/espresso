@@ -54,7 +54,7 @@ class AnalyzeDistributions(ut.TestCase):
 
     # test system.analysis.rdf()
     def test_rdf(self):
-        # increase PBC for remove mirror images
+        # increase PBC to remove mirror images
         old_pos = self.system.part[:].pos.copy()
         self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos

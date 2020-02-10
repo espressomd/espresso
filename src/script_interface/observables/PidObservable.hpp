@@ -31,12 +31,13 @@
 
 #include <memory>
 #include <type_traits>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Observables {
 
 /** Base class for script interfaces to particle-based observables
- *  @tparam CorePidObs Any core class derived from  @ref
+ *  @tparam CorePidObs Any core class derived from @ref
  *                     ::Observables::PidObservable "Observables::PidObservable"
  */
 template <typename CorePidObs>

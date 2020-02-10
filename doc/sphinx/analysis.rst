@@ -411,7 +411,7 @@ are calculated is beyond the scope of this manual. Three body potentials
 are implemented following the procedure in
 Ref. :cite:`thompson09a`. A different formula is used to
 calculate contribution from electrostatic interactions. For
-electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann1995smooth`.
+electrostatic interactions in P3M, the :math:`k`-space contribution is implemented according to :cite:`essmann95a`.
 The implementation of the Coulomb P3M pressure is tested against LAMMPS.
 
 Four-body dihedral potentials are not included. Except of
@@ -439,7 +439,7 @@ The instantaneous virial stress tensor is calculated by
 where the notation is the same as for the pressure. The superscripts :math:`k`
 and :math:`l` correspond to the components in the tensors and vectors.
 
-If electrostatic interactions are present then also the coulombic parts of the stress tensor need to be calculated. If P3M is present, then the instantaneous stress tensor is added to the above equation in accordance with :cite:`essmann1995smooth` :
+If electrostatic interactions are present then also the coulombic parts of the stress tensor need to be calculated. If P3M is present, then the instantaneous stress tensor is added to the above equation in accordance with :cite:`essmann95a` :
 
 .. math :: p^\text{Coulomb, P3M}_{(k,l)} =p^\text{Coulomb, P3M, dir}_{(k,l)} + p^\text{Coulomb, P3M, rec}_{(k,l)},
 
