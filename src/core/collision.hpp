@@ -90,6 +90,24 @@ public:
    *  0.5=in the middle between
    */
   double vs_placement;
+
+  double distance;
+
+  double distance_cutoff;
+
+  double rate;
+
+  std::vector<int> particle_type;
+
+  std::vector<int> particle_type_after_collision;
+
+  std::vector<int> vs_particle_type;
+
+  std::vector<double> distance_vs_particle;
+
+  int bond_type;
+
+  int vs_bond_type;
 };
 
 /// Parameters for collision detection
@@ -119,20 +137,29 @@ inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
            (p1.p.type == collision_params.part_type_to_attach_vs_to)));
 }
 
+inline bool particle_type_criterion(Particle const &p1, Particle const &p2) {
+  int count_multiples = 1;
+  if(p1.p.type == p2.p.type)
+    count_multiples = 2;
+  if(std::count(particle_type.begin(),particle_type.end(),p1.type) == count_multiples)
+    return (count_multiples == 2 || std::count(particle_type.begin(),particle_type.end(),p2.type));
+  return 0;
+}
+
+inline bool collision_detection_criterion(Particle const &p1, Particle const &p2){
+  if(collision_params.rate > 0)
+    return d_random > collision_params.rate * time_step;
+  /* TODO implement other criteria */
+}
+
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(Particle const &p1, Particle const &p2,
                              const double &dist_betw_part2) {
-  if (dist_betw_part2 > collision_params.distance2)
+  if (dist_betw_part2 > collision_params.distance)
     return;
 
-  // If we are in the glue to surface mode, check that the particles
-  // are of the right type
-  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)
-    if (!glue_to_surface_criterion(p1, p2))
-      return;
-
-  // Ignore virtual particles
-  if ((p1.p.is_virtual) || (p2.p.is_virtual))
+  // Check, if the particle types match the criteria
+  if (particle_type_criterion)
     return;
 
   // Check, if there's already a bond between the particles
@@ -140,6 +167,9 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     return;
 
   if (pair_bond_exists_on(p2, p1, collision_params.bond_centers))
+    return;
+
+  if(collision_detection_criterion(p1, p2))
     return;
 
   /* If we're still here, there is no previous bond between the particles,
@@ -156,8 +186,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
 
 inline double collision_detection_cutoff() {
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode)
-    return collision_params.distance;
+  return collision_params.distance_cutoff;
 #endif
   return 0.;
 }
