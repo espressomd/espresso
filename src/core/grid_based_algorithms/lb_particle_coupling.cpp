@@ -241,7 +241,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
 
         auto f_random = [noise_amplitude](int id) -> Utils::Vector3d {
           if (noise_amplitude > 0.0) {
-            return Random::v_noise<RNGSalt::PARTICLES>(
+            return Random::noise_uniform<RNGSalt::PARTICLES>(
                 lb_particle_coupling.rng_counter_coupling->value(), id);
           }
           return {};

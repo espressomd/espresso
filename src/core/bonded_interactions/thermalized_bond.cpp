@@ -27,49 +27,6 @@
 #include "bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "global.hpp"
-#include "random.hpp"
-
-#include <utils/constants.hpp>
-
-/** Common TB RNG Counter */
-std::unique_ptr<Utils::Counter<uint64_t>> thermalized_bond_rng_counter;
-
-/** Communication */
-void mpi_bcast_thermalized_bond_rng_counter_slave(const uint64_t counter) {
-  thermalized_bond_rng_counter =
-      std::make_unique<Utils::Counter<uint64_t>>(counter);
-}
-
-REGISTER_CALLBACK(mpi_bcast_thermalized_bond_rng_counter_slave)
-
-void mpi_bcast_thermalized_bond_rng_counter(const uint64_t counter) {
-  mpi_call(mpi_bcast_thermalized_bond_rng_counter_slave, counter);
-}
-
-void thermalized_bond_rng_counter_increment() {
-  thermalized_bond_rng_counter->increment();
-}
-
-/** Interface */
-bool thermalized_bond_is_seed_required() {
-  /* Seed is required if rng is not initialized */
-  return thermalized_bond_rng_counter == nullptr;
-}
-
-uint64_t thermalized_bond_get_rng_state() {
-  return thermalized_bond_rng_counter->value();
-}
-
-void thermalized_bond_set_rng_state(const uint64_t counter) {
-  mpi_bcast_thermalized_bond_rng_counter(counter);
-  thermalized_bond_rng_counter =
-      std::make_unique<Utils::Counter<uint64_t>>(counter);
-}
-
-/** Called each integration step */
-void thermalized_bonds_rng_counter_increment() {
-  thermalized_bond_rng_counter->increment();
-}
 
 int n_thermalized_bonds = 0;
 

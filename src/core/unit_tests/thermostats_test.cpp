@@ -62,7 +62,7 @@ template <typename T> T thermostat_factory() {
 #endif
   thermostat.gamma_rotation = 3.0 * thermostat.gamma;
   thermostat.recalc_prefactors();
-  thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+  thermostat.rng_initialize(0);
   return thermostat;
 }
 
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   {
     auto const p = particle_factory();
     auto const sigma = sqrt(brownian.gamma / (2.0 * temperature));
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_WALK>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_WALK>(0, 0);
     auto const ref = hadamard_division(noise, sigma) * sqrt(time_step);
     auto const out = bd_random_walk(brownian, p, time_step);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   {
     auto const p = particle_factory();
     auto const sigma = sqrt(temperature);
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_INC>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_INC>(0, 0);
     auto const ref = sigma * noise / sqrt(p.p.mass);
     auto const out = bd_random_walk_vel(brownian, p);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -149,7 +149,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto p = particle_factory();
     p.p.rotation = ROTATION_X;
     auto const sigma = sqrt(brownian.gamma_rotation / (2.0 * temperature));
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_INC>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_INC>(0, 0);
     auto const phi = hadamard_division(noise, sigma)[0] * sqrt(time_step);
     auto const out = bd_random_walk_rot(brownian, p, time_step);
     BOOST_CHECK_CLOSE(out[0], std::cos(phi / 2), tol);
@@ -163,7 +163,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
     auto p = particle_factory();
     p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
     auto const sigma = sqrt(temperature);
-    auto const noise = Random::v_noise_g<RNGSalt::BROWNIAN_ROT_WALK>(0, 0);
+    auto const noise = Random::noise_gaussian<RNGSalt::BROWNIAN_ROT_WALK>(0, 0);
     auto const ref = sigma * noise;
     auto const out = bd_random_walk_vel_rot(brownian, p);
     BOOST_CHECK_CLOSE(out[0], ref[0], tol);
@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   {
     auto p = particle_factory();
     p.m.v = {1.0, 2.0, 3.0};
-    auto const noise = Random::v_noise<RNGSalt::LANGEVIN>(0, 0);
+    auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN>(0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma);
     auto const ref = hadamard_product(-langevin.gamma, p.m.v) +
                      hadamard_product(pref, noise);
@@ -198,7 +198,7 @@ BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   {
     auto p = particle_factory();
     p.m.omega = {1.0, 2.0, 3.0};
-    auto const noise = Random::v_noise<RNGSalt::LANGEVIN_ROT>(0, 0);
+    auto const noise = Random::noise_uniform<RNGSalt::LANGEVIN_ROT>(0, 0);
     auto const pref = sqrt(prefactor_squared * langevin.gamma_rotation);
     auto const ref = hadamard_product(-langevin.gamma_rotation, p.m.omega) +
                      hadamard_product(pref, noise);
@@ -215,7 +215,6 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   temperature = 2.0;
   constexpr size_t const sample_size = 1'000'000;
   auto thermostat = thermostat_factory<LangevinThermostat>();
-  thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
   auto p1 = particle_factory();
   auto p2 = particle_factory();
   p1.p.identity = 0;
@@ -224,7 +223,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   auto const correlation = std::get<3>(noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [&p1, &p2, &thermostat]() -> std::vector<VariantVectorXd> {
-            thermostat.rng_counter->increment();
+            thermostat.rng_increment();
             return {{friction_thermo_langevin(thermostat, p1),
                      -friction_thermo_langevin(thermostat, p1),
                      friction_thermo_langevin(thermostat, p2)}};
@@ -249,7 +248,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   time_step = 1.0;
   temperature = 2.0;
   constexpr size_t const sample_size = 500'000;
-  auto const thermostat = thermostat_factory<BrownianThermostat>();
+  auto thermostat = thermostat_factory<BrownianThermostat>();
   auto p = particle_factory();
 #ifdef ROTATION
   p.p.rotation = ROTATION_X | ROTATION_Y | ROTATION_Z;
@@ -258,7 +257,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   auto const correlation = std::get<3>(
       noise_statistics(std::function<std::vector<VariantVectorXd>()>(
                            [&p, &thermostat]() -> std::vector<VariantVectorXd> {
-                             thermostat.rng_counter->increment();
+                             thermostat.rng_increment();
                              return {{
                                  bd_random_walk(thermostat, p, time_step),
                                  bd_random_walk_vel(thermostat, p),
@@ -280,13 +279,13 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
   time_step = 1.0;
   temperature = 2.0;
   constexpr size_t const sample_size = 500'000;
-  auto const thermostat = thermostat_factory<LangevinThermostat>();
+  auto thermostat = thermostat_factory<LangevinThermostat>();
   auto p = particle_factory();
 
   auto const correlation = std::get<3>(noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [&p, &thermostat]() -> std::vector<VariantVectorXd> {
-            thermostat.rng_counter->increment();
+            thermostat.rng_increment();
             return {{
                 friction_thermo_langevin(thermostat, p),
 #ifdef ROTATION
@@ -310,7 +309,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   temperature = 2.0;
   constexpr size_t const sample_size = 500'000;
   IsotropicNptThermostat thermostat{};
-  thermostat.rng_counter = std::make_unique<Utils::Counter<uint64_t>>(0);
+  thermostat.rng_initialize(0);
   thermostat.gamma0 = 2.0;
   thermostat.gammav = 0.1;
   thermostat.recalc_prefactors(1.0);
@@ -319,7 +318,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   auto const correlation = std::get<3>(noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [&p, &thermostat]() -> std::vector<VariantVectorXd> {
-            thermostat.rng_counter->increment();
+            thermostat.rng_increment();
             return {{
                 friction_therm0_nptiso<1>(thermostat, p.m.v, 0),
                 friction_therm0_nptiso<2>(thermostat, p.m.v, 0),
