@@ -79,12 +79,11 @@ private:
 
 void prepare_comm(GhostCommunicator *gcr, int num) {
   assert(gcr);
-  gcr->comm.resize(num);
-  for (auto &ghost_comm : gcr->comm)
-    ghost_comm.shift.fill(0.0);
+  gcr->comm = std::vector<GhostCommunication>(num);
 }
 
 void free_comm(GhostCommunicator *gcr) {
+  assert(gcr);
   // Invalidate the elements in all "part_lists" of all GhostCommunications.
   for (auto &ghost_comm : gcr->comm)
     ghost_comm.part_lists.clear();

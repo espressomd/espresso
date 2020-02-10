@@ -104,7 +104,8 @@
  *  @ref nsq_topology_init for further details.
  */
 #include "Cell.hpp"
-#include <mpi.h>
+
+#include <boost/mpi/communicator.hpp>
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
