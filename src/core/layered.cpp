@@ -105,64 +105,63 @@ void layered_topology_release() {
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
-static void layered_prepare_comm(GhostCommunicator *comm, int reverse) {
-  int c, n;
+static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
 
   if (n_nodes > 1) {
     /* more than one node => no local transfers */
 
     /* how many communications to do: up even/odd, down even/odd */
-    n = 4;
+    int n = 4;
     /* one communication missing if not periodic but on border */
     if (!LAYERED_TOP_NEIGHBOR)
       n -= 2;
     if (!LAYERED_BTM_NEIGHBOR)
       n -= 2;
 
-    prepare_comm(comm, n);
+    std::vector<GhostCommunication> comms(n);
 
     /* always sending/receiving 1 cell per time step */
-    for (c = 0; c < n; c++) {
-      comm->comm[c].part_lists.resize(1);
+    for (int c = 0; c < n; c++) {
+      comms[c].part_lists.resize(1);
     }
 
-    c = 0;
+    int c = 0;
 
     /* downwards */
     for (int even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
-        comm->comm[c].type = GHOST_SEND;
+        comms[c].type = GHOST_SEND;
         /* round 1 uses prefetched data and stores delayed data */
         if (c == 1)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-        comm->comm[c].node = btm;
+          comms[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        comms[c].node = btm;
         if (reverse) {
-          comm->comm[c].part_lists[0] = &cells[0];
+          comms[c].part_lists[0] = &cells[0];
         } else {
-          comm->comm[c].part_lists[0] = &cells[1];
+          comms[c].part_lists[0] = &cells[1];
 
           /* if periodic and bottom or top, send shifted */
-          comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
+          comms[c].shift[0] = comms[c].shift[1] = 0;
           if ((layered_flags & LAYERED_BTM_MASK) == LAYERED_BTM_MASK) {
-            comm->comm[c].shift[2] = box_geo.length()[2];
+            comms[c].shift[2] = box_geo.length()[2];
           } else
-            comm->comm[c].shift[2] = 0;
+            comms[c].shift[2] = 0;
         }
         c++;
       }
       /* recv. Note we test r_node as we always have to test the sender
          as for odd n_nodes maybe we send AND receive. */
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
-        comm->comm[c].type = GHOST_RECV;
+        comms[c].type = GHOST_RECV;
         /* round 0 prefetch send for round 1 and delay recvd data processing */
         if (c == 0)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-        comm->comm[c].node = top;
+          comms[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        comms[c].node = top;
         if (reverse) {
-          comm->comm[c].part_lists[0] = &cells[n_layers];
+          comms[c].part_lists[0] = &cells[n_layers];
         } else {
-          comm->comm[c].part_lists[0] = &cells[n_layers + 1];
+          comms[c].part_lists[0] = &cells[n_layers + 1];
         }
         c++;
       }
@@ -172,85 +171,87 @@ static void layered_prepare_comm(GhostCommunicator *comm, int reverse) {
     for (int even_odd = 0; even_odd < 2; even_odd++) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
-        comm->comm[c].type = GHOST_SEND;
+        comms[c].type = GHOST_SEND;
         /* round 1 use prefetched data from round 0.
            But this time there may already have been two transfers downwards */
         if (c % 2 == 1)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-        comm->comm[c].node = top;
+          comms[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        comms[c].node = top;
         if (reverse) {
-          comm->comm[c].part_lists[0] = &cells[n_layers + 1];
+          comms[c].part_lists[0] = &cells[n_layers + 1];
         } else {
-          comm->comm[c].part_lists[0] = &cells[n_layers];
+          comms[c].part_lists[0] = &cells[n_layers];
 
           /* if periodic and bottom or top, send shifted */
-          comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
+          comms[c].shift[0] = comms[c].shift[1] = 0;
           if ((layered_flags & LAYERED_TOP_MASK) == LAYERED_TOP_MASK) {
-            comm->comm[c].shift[2] = -box_geo.length()[2];
+            comms[c].shift[2] = -box_geo.length()[2];
           } else
-            comm->comm[c].shift[2] = 0;
+            comms[c].shift[2] = 0;
         }
         c++;
       }
       /* recv. Note we test r_node as we always have to test the sender
          as for odd n_nodes maybe we send AND receive. */
       if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
-        comm->comm[c].type = GHOST_RECV;
+        comms[c].type = GHOST_RECV;
         /* round 0 prefetch. But this time there may already have been two
          * transfers downwards */
         if (c % 2 == 0)
-          comm->comm[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-        comm->comm[c].node = btm;
+          comms[c].type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+        comms[c].node = btm;
         if (reverse) {
-          comm->comm[c].part_lists[0] = &cells[1];
+          comms[c].part_lists[0] = &cells[1];
         } else {
-          comm->comm[c].part_lists[0] = &cells[0];
+          comms[c].part_lists[0] = &cells[0];
         }
         c++;
       }
     }
-  } else {
-    /* one node => local transfers, either 2 (up and down, periodic) or zero*/
+    return comms;
+  }
 
-    n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
+  /* one node => local transfers, either 2 (up and down, periodic) or zero*/
 
-    prepare_comm(comm, n);
+  auto const n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
+  std::vector<GhostCommunication> comms(n);
 
-    if (n != 0) {
-      /* two cells: from and to */
-      for (c = 0; c < n; c++) {
-        comm->comm[c].part_lists.resize(2);
-        comm->comm[c].node = this_node;
-      }
+  if (n != 0) {
+    /* two cells: from and to */
+    for (int c = 0; c < n; c++) {
+      comms[c].part_lists.resize(2);
+      comms[c].node = this_node;
+    }
 
-      c = 0;
+    int c = 0;
 
-      /* downwards */
-      comm->comm[c].type = GHOST_LOCL;
-      if (reverse) {
-        comm->comm[c].part_lists[0] = &cells[0];
-        comm->comm[c].part_lists[1] = &cells[n_layers];
-      } else {
-        comm->comm[c].part_lists[0] = &cells[1];
-        comm->comm[c].part_lists[1] = &cells[n_layers + 1];
-        comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = box_geo.length()[2];
-      }
-      c++;
+    /* downwards */
+    comms[c].type = GHOST_LOCL;
+    if (reverse) {
+      comms[c].part_lists[0] = &cells[0];
+      comms[c].part_lists[1] = &cells[n_layers];
+    } else {
+      comms[c].part_lists[0] = &cells[1];
+      comms[c].part_lists[1] = &cells[n_layers + 1];
+      comms[c].shift[0] = comms[c].shift[1] = 0;
+      comms[c].shift[2] = box_geo.length()[2];
+    }
+    c++;
 
-      /* upwards */
-      comm->comm[c].type = GHOST_LOCL;
-      if (reverse) {
-        comm->comm[c].part_lists[0] = &cells[n_layers + 1];
-        comm->comm[c].part_lists[1] = &cells[1];
-      } else {
-        comm->comm[c].part_lists[0] = &cells[n_layers];
-        comm->comm[c].part_lists[1] = &cells[0];
-        comm->comm[c].shift[0] = comm->comm[c].shift[1] = 0;
-        comm->comm[c].shift[2] = -box_geo.length()[2];
-      }
+    /* upwards */
+    comms[c].type = GHOST_LOCL;
+    if (reverse) {
+      comms[c].part_lists[0] = &cells[n_layers + 1];
+      comms[c].part_lists[1] = &cells[1];
+    } else {
+      comms[c].part_lists[0] = &cells[n_layers];
+      comms[c].part_lists[1] = &cells[0];
+      comms[c].shift[0] = comms[c].shift[1] = 0;
+      comms[c].shift[2] = -box_geo.length()[2];
     }
   }
+
+  return comms;
 }
 
 void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
@@ -329,8 +330,10 @@ void layered_topology_init(CellPList *old, Utils::Vector3i &grid,
   cell_structure.m_ghost_cells[1] = &cells.back();
 
   /* create communicators */
-  layered_prepare_comm(&cell_structure.exchange_ghosts_comm, false);
-  layered_prepare_comm(&cell_structure.collect_ghost_force_comm, true);
+  cell_structure.exchange_ghosts_comm =
+      GhostCommunicator{layered_prepare_comm(false)};
+  cell_structure.collect_ghost_force_comm =
+      GhostCommunicator{layered_prepare_comm(true)};
 
   /* copy particles */
   for (int c = 0; c < old->n; c++) {
