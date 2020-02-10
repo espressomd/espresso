@@ -3,7 +3,7 @@
 #include "config.hpp"
 
 #ifdef LB_WALBERLA
-#include "LbWalberla.hpp"
+#include "LbWalberlaBase.hpp"
 #include "communication.hpp"
 #include "utils/Vector.hpp"
 #include "utils/mpi/gatherv.hpp"
@@ -12,7 +12,7 @@
 void walberla_mpi_init();
 
 /** @brief Access the per-MPI-node LbWalberla isntance */
-LbWalberla *lb_walberla();
+LbWalberlaBase *lb_walberla();
 
 /** @brief Create the LbWalberal instance and sets the lattice dwitch to
  * WALBERLA

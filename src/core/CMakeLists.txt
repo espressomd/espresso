@@ -89,7 +89,6 @@ set(EspressoCore_SRC
   electrostatics_magnetostatics/reaction_field.cpp
   grid_based_algorithms/lb_boundaries.cpp
   grid_based_algorithms/lbboundaries/LBBoundary.cpp
-  grid_based_algorithms/LbWalberla.cpp
   grid_based_algorithms/lb_walberla_instance.cpp
   grid_based_algorithms/lb_walberla_interface.cpp
   grid_based_algorithms/lb_interface.cpp

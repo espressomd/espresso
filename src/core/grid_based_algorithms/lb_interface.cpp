@@ -561,12 +561,13 @@ bool lb_lbnode_is_boundary(const Utils::Vector3i &ind) {
 }
 
 const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
-#ifdef LB_WALBERLA
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    return ::Communication::mpiCallbacks().call(
-        ::Communication::Result::one_rank, Walberla::get_node_pop, ind);
-  }
-#endif
+//#ifdef LB_WALBERLA
+//  if (lattice_switch == ActiveLB::WALBERLA) {
+//    return ::Communication::mpiCallbacks().call(
+//        ::Communication::Result::one_rank, Walberla::get_node_pop, ind);
+//  }
+  throw std::runtime_error("Not implemented.");
+//#endif
   throw NoLBActive();
 }
 
@@ -596,10 +597,11 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,
                        const Utils::Vector19d &p_pop) {
   if (lattice_switch == ActiveLB::WALBERLA) {
-#ifdef LB_WALBERLA
-    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
-                                             p_pop);
-#endif
+//#ifdef LB_WALBERLA
+//    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
+//                                             p_pop);
+//#endif
+  throw std::runtime_error("Not implemented");
   } else {
     throw NoLBActive();
   }

@@ -2,7 +2,8 @@
 #include "errorhandling.hpp"
 
 #ifdef LB_WALBERLA
-#include "LbWalberla.hpp"
+#include "LbWalberlaBase.hpp"
+#include "LbWalberla_impl.hpp"
 
 #include "communication.hpp"
 #include "grid.hpp"
@@ -15,7 +16,6 @@
 
 #include "core/mpi/Environment.h"
 
-#ifdef LB_WALBERLA
 void walberla_mpi_init() {
   int argc = 0;
   char **argv = NULL;
@@ -24,10 +24,10 @@ void walberla_mpi_init() {
 }
 
 namespace {
-std::unique_ptr<LbWalberla> lb_walberla_instance = nullptr;
+std::unique_ptr<LbWalberlaBase> lb_walberla_instance = nullptr;
 }
 
-LbWalberla *lb_walberla() {
+LbWalberlaBase *lb_walberla() {
   if (!lb_walberla_instance) {
     throw std::runtime_error(
         "Attempted access to uninitialized LbWalberla instance.");
@@ -35,14 +35,17 @@ LbWalberla *lb_walberla() {
   return lb_walberla_instance.get();
 }
 
+using LatticeModelD3Q19TRT = walberla::lbm::D3Q19<walberla::lbm::collision_model::TRT, false, walberla::lbm::force_model::GuoField<walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>>>;
+using LbWalberlaD3Q19TRT = walberla::LbWalberla<LatticeModelD3Q19TRT>;
+
 void init_lb_walberla(double viscosity, double density, double agrid,
                       double tau, const Utils::Vector3d &box_dimensions,
                       const Utils::Vector3i &node_grid, double skin) {
   // Exceptions need to be converted to runtime erros so they can be
   // handled from Python in a parallel simulation
   try {
-    lb_walberla_instance = std::make_unique<LbWalberla>(LbWalberla{
-        viscosity, density, agrid, tau, box_dimensions, node_grid, skin});
+    lb_walberla_instance = std::make_unique<LbWalberlaD3Q19TRT>(LbWalberlaD3Q19TRT{
+        viscosity, density, agrid, tau, box_dimensions, node_grid, 2});
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
     lb_walberla_instance.reset(nullptr);
@@ -68,5 +71,4 @@ void mpi_destruct_lb_walberla() {
   lb_lbfluid_set_lattice_switch(ActiveLB::NONE);
   Communication::mpiCallbacks().call_all(destruct_lb_walberla);
 }
-#endif
 #endif
