@@ -81,63 +81,26 @@ class LBBoundariesBase:
 
         lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
         lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape2))
-
-        rng = range(20)
         lbf = self.lbf
 
+        rng = range(20)
+
         for i in product(range(0, 5), rng, rng):
-            self.assertEqual(lbf[i].boundary, 1)
+            self.assertEqual(lbf[i].is_boundary, True)
 
         for i in product(range(5, 15), rng, rng):
-            self.assertEqual(lbf[i].boundary, 0)
+            self.assertEqual(lbf[i].is_boundary, False)
 
         for i in product(range(15, 20), rng, rng):
-            self.assertEqual(lbf[i].boundary, 2)
+            print(i)
+            self.assertEqual(lbf[i].is_boundary, True)
 
         lbb.clear()
         for i in product(rng, rng, rng):
-            self.assertEqual(lbf[i].boundary, 0)
+            self.assertEqual(lbf[i].is_boundary, False)
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
-class LBBoundariesCPU(ut.TestCase, LBBoundariesBase):
-    lbf = None
-
-    def setUp(self):
-        if not self.lbf:
-            self.lbf = espressomd.lb.LBFluid(
-                visc=1.0,
-                dens=1.0,
-                agrid=0.5,
-                tau=1.0)
-
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.remove(self.lbf)
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES_GPU"])
-class LBBoundariesGPU(ut.TestCase, LBBoundariesBase):
-    lbf = None
-
-    def setUp(self):
-        if not self.lbf:
-            self.lbf = espressomd.lb.LBFluidGPU(
-                visc=1.0,
-                dens=1.0,
-                agrid=0.5,
-                tau=1.0)
-
-        self.system.actors.add(self.lbf)
-
-    def tearDown(self):
-        self.system.lbboundaries.clear()
-        self.system.actors.remove(self.lbf)
-
-
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):
     lbf = None

@@ -167,7 +167,7 @@ const Utils::Vector6d lb_lbfluid_get_stress();
 /**
  * @brief Get the LB fluid boundary bool for a single node.
  */
-int lb_lbnode_get_boundary(const Utils::Vector3i &ind);
+bool lb_lbnode_is_boundary(const Utils::Vector3i &ind);
 
 /**
  * @brief Get the LB fluid populations for a single node.

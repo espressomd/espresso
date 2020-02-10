@@ -261,7 +261,7 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
     for (pos[2] = 0; pos[2] < grid_size[2]; pos[2]++) {
       for (pos[1] = 0; pos[1] < grid_size[1]; pos[1]++) {
         for (pos[0] = 0; pos[0] < grid_size[0]; pos[0]++) {
-          auto boundary = lb_lbnode_get_boundary(pos);
+          auto boundary = lb_lbnode_is_boundary(pos);
           fprintf(fp, "%d \n", boundary);
         }
       }
@@ -550,7 +550,7 @@ const Utils::Vector6d lb_lbfluid_get_stress() {
   throw NoLBActive();
 }
 
-int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
+bool lb_lbnode_is_boundary(const Utils::Vector3i &ind) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     return ::Communication::mpiCallbacks().call(

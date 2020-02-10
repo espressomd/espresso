@@ -73,7 +73,7 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     const Vector6d lb_lbnode_get_stress(const Vector3i & ind) except +
     const Vector19d lb_lbnode_get_pop(const Vector3i & ind) except +
     void lb_lbnode_set_pop(const Vector3i & ind, const Vector19d & populations) except +
-    int lb_lbnode_get_boundary(const Vector3i & ind) except +
+    bool lb_lbnode_is_boundary(const Vector3i & ind) except +
     stdint.uint64_t lb_lbfluid_get_rng_state() except +
     void lb_lbfluid_set_rng_state(stdint.uint64_t) except +
     void lb_lbfluid_set_kT(double) except +

@@ -350,9 +350,9 @@ cdef class LBFluidRoutines:
                 _population[i] = population[i]
             lb_lbnode_set_pop(self.node, _population)
 
-    property boundary:
+    property is_boundary:
         def __get__(self):
-            return lb_lbnode_get_boundary(self.node)
+            return lb_lbnode_is_boundary(self.node)
 
         def __set__(self, value):
             raise NotImplementedError
