@@ -124,9 +124,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
         } else {
           p.r.p[j] += p.m.v[j] * time_step;
         }
-#ifdef EXTERNAL_FORCES
       }
-#endif
     }
   }
 
