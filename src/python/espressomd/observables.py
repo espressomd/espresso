@@ -310,8 +310,8 @@ class ParticleBodyAngularVelocities(Observable):
 
     """Calculates the angular velocity (omega) in the particles'  body-fixed frame of reference.
 
-   For each particle, the body-fixed frame of reference is obtained from the particle's
-   orientation stored in the quaternions.
+    For each particle, the body-fixed frame of reference is obtained from the particle's
+    orientation stored in the quaternions.
 
     Parameters
     ----------
