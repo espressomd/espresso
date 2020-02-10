@@ -12,11 +12,11 @@ follows. For a pair of particles at distance :math:`r` with charges
 where
 
 .. math::
-   C=\frac{1}{4\pi \epsilon_0 \epsilon_r}
+   C=\frac{1}{4\pi \varepsilon_0 \varepsilon_r}
    :label: coulomb_prefactor
 
 is a prefactor which can be set by the user. The commonly used Bjerrum length
-:math:`l_B = e_o^2 / (4 \pi \epsilon_0 \epsilon_r k_B T)` is the length at
+:math:`l_B = e_o^2 / (4 \pi \varepsilon_0 \varepsilon_r k_B T)` is the length at
 which the Coulomb energy between two unit charges is equal to the thermal
 energy :math:`k_B T`.
 Based on the this length, the prefactor is given by :math:`C=l_B k_B T`.
@@ -56,10 +56,6 @@ Coulomb P3M
 -----------
 
 :class:`espressomd.electrostatics.P3M`
-
-Required parameters:
-    * ``prefactor``
-    * ``accuracy``
 
 For this feature to work, you need to have the ``fftw3`` library
 installed on your system. In |es|, you can check if it is compiled in by
@@ -119,10 +115,6 @@ Coulomb P3M on GPU
 
 :class:`espressomd.electrostatics.P3MGPU`
 
-Required parameters:
-    * ``prefactor``
-    * ``accuracy``
-
 The GPU implementation of P3M calculates the far field portion on the GPU.
 It uses the same parameters and interface functionality as the CPU version of
 the solver. It should be noted that this does not always provide significant
@@ -137,15 +129,16 @@ and :ref:`Electrostatic Layer Correction (ELC)`.
 Debye-Hückel potential
 ----------------------
 
-For a list of all parameters see :attr:`espressomd.electrostatics.DH`
-Uses the Debye-Hückel electrostatic potential defined by
+:class:`espressomd.electrostatics.DH`
+
+The Debye-Hückel electrostatic potential is defined by
 
   .. math:: U^{C-DH} = C \cdot \frac{q_1 q_2 \exp(-\kappa r)}{r}\quad \mathrm{for}\quad r<r_{\mathrm{cut}}
 
 where :math:`C` is defined as in Eqn. :eq:`coulomb_prefactor`.
 The Debye-Hückel potential is an approximate method for calculating
 electrostatic interactions, but technically it is treated as other
-short-ranged non-bonding potentials. For :math:`r>r_{\mathrm cut}` it is
+short-ranged non-bonding potentials. For :math:`r > r_{\textrm{cut}}` it is
 set to zero which introduces a step in energy. Therefore, it introduces
 fluctuations in energy.
 
@@ -157,6 +150,8 @@ For :math:`\kappa = 0`, this corresponds to the plain Coulomb potential.
 Dielectric interfaces with the ICC\ :math:`\star` algorithm
 -----------------------------------------------------------
 
+:class:`espressomd.electrostatic_extensions.ICC`
+
 The ICC\ :math:`\star` algorithm allows to take into account arbitrarily shaped
 dielectric interfaces and dynamic charge induction. For instance, it can be
 used to simulate a curved metallic boundary. This is done by iterating the
@@ -167,38 +162,12 @@ surface. ICC relies on a Coulomb solver that is already initialized. So far, it
 is implemented and well tested with the Coulomb solver P3M. ICC is an |es|
 actor and can be activated via::
 
-    icc = ICC(<See the following list of ICC parameters>)
+    from espressomd.electrostatic_extensions import ICC
+    icc = ICC(...)
     system.actors.add(icc)
 
-Parameters are:
-
-	* ``first_id``:
-		ID of the first ICC Particle.
-	* ``n_icc``:
-		Total number of ICC Particles.
-	* ``convergence``:
-		Abort criteria of the iteration. It corresponds to the maximum relative
-		change of any of the interface particle's charge.
-	* ``relaxation``:
-		SOR relaxation parameter.
-	* ``ext_field``:
-		Homogeneous electric field added to the calculation of dielectric boundary forces.
-	* ``max_iterations``:
-		Maximal number of iterations.
-	* ``eps_out``:
-		Relative permittivity of the outer region (where the particles are).
-	* ``normals``:
-		List of size ``n_icc`` with normal vectors pointing into the outer region.
-	* ``areas``
-		List of size ``n_icc`` with areas of the discretized surface.
-	* ``sigmas``
-		List of size ``n_icc`` with an additional surface charge density in
-		absence of any charge induction
-	* ``epsilons``
-		List of size ``n_icc`` with the dielectric constant associated to the area.
-
-The ICC particles are setup as normal |es| particles. Note that they should be
-fixed in space and need an initial nonzero charge. The following usage example
+The ICC particles are setup as normal |es| particles. Note that they should
+be fixed in space and need an initial non-zero charge. The following example
 sets up parallel metallic plates and activates ICC::
 
     # Set the ICC line density and calculate the number of
@@ -262,8 +231,10 @@ using it.
 Electrostatic Layer Correction (ELC)
 ------------------------------------
 
-*ELC* is an extension of the P3M electrostatics solver for explicit 2D periodic systems.
-It can account for different dielectric jumps on both sides of the
+:class:`espressomd.electrostatic_extensions.ELC`
+
+*ELC* is an extension of the P3M electrostatics solver for explicit 2D periodic
+systems. It can account for different dielectric jumps on both sides of the
 non-periodic direction. In more detail, it is a special procedure that
 converts a 3D electrostatic method to a 2D method in computational order N.
 Currently, it only supports P3M without GPU. This means,
@@ -271,86 +242,54 @@ that you will first have to set up the P3M algorithm before using ELC.
 The periodicity has to be set to (1 1 1). *ELC* cancels the electrostatic
 contribution of the periodic replica in **z-direction**. Make sure that you
 read the papers on ELC (:cite:`arnold02c,arnold02d,tyagi08a`) before using it.
-ELC is an |es| actor and is used with::
+See :ref:`ELC theory` for more details.
 
+Usage notes:
+
+  * The non-periodic direction is always the **z-direction**.
+
+  * The method relies on a slab of the simulation box perpendicular to the
+    z-direction not to contain particles. The size in z-direction of this slab
+    is controlled by the ``gap_size`` parameter. The user has to ensure that
+    no particles enter this region by means of constraints or by fixing the
+    particles' z-coordinate. When there is no empty slab of the specified size,
+    the method will silently produce wrong results.
+
+*ELC* is an |es| actor and is used with::
+
+    import espressomd.electrostatic_extensions
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3)
     system.actors.add(elc)
 
-You can specify the dielectric contrasts at the boundaries, i.e.
-:math:`\Delta_t=\frac{\epsilon_m-\epsilon_t}{\epsilon_m+\epsilon_t}`
-and :math:`\Delta_b=\frac{\epsilon_m-\epsilon_b}{\epsilon_m+\epsilon_b}`,
-possibly such that :math:`\Delta_{t/b}=-1` (corresponding to metallic boundary conditions)::
+*ELC* can also be used to simulate 2D periodic systems with image charges,
+specified by dielectric contrasts on the non-periodic boundaries
+(:cite:`tyagi08a`). This is achieved by setting the dielectric jump from the
+simulation region (*middle*) to *bottom* (at :math:`z=0`) and from *middle* to
+*top* (at :math:`z = L_z - h`), where :math:`L_z` denotes the box length in
+:math:`z`-direction and :math:`h` the gap size. The corresponding expressions
+are :math:`\Delta_t=\frac{\varepsilon_m-\varepsilon_t}{\varepsilon_m+\varepsilon_t}`
+and :math:`\Delta_b=\frac{\varepsilon_m-\varepsilon_b}{\varepsilon_m+\varepsilon_b}`::
 
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
                                        delta_mid_top=0.9, delta_mid_bot=0.1)
 
-Toggle ``const_pot`` on to maintain a constant electric potential difference ``pot_diff``
-between the xy-planes at :math:`z=0` and :math:`z = L_z - h`, where :math:`L_z`
-denotes the box length in :math:`z`-direction and :math:`h` the gap size::
+The fully metallic case :math:`\Delta_t=\Delta_b=-1` would lead to divergence
+of the forces/energies in *ELC* and is therefore only possible with the
+``const_pot`` option.
+
+Toggle ``const_pot`` on to maintain a constant electric potential difference
+``pot_diff`` between the xy-planes at :math:`z=0` and :math:`z = L_z - h`::
 
     elc = electrostatic_extensions.ELC(gap_size=box_l * 0.2, maxPWerror=1e-3,
                                        const_pot=True, delta_mid_bot=100.0)
 
 This is done by countering the total dipole moment of the system with the
-electric field :math:`E_{induced}` and superposing a homogeneous electric field
-:math:`E_{applied} = \frac{U}{L}` to retain :math:`U`. This mimics the
-induction of surface charges :math:`\pm\sigma = E_{induced} \cdot \epsilon_0`
-for planar electrodes at :math:`z=0` and :math:`z=L_z - h` in a capacitor connected
-to a battery with voltage ``pot_diff``.
-
-
-Parameters are:
-    * ``gap_size``:
-        The gap size gives the height of the empty region between the system box
-        and the neighboring artificial images. |es| does not
-        make sure that the gap is actually empty, this is the users
-        responsibility. The method will compute fine if the condition is not
-        fulfilled, however, the error bound will not be reached. Therefore you
-        should really make sure that the gap region is empty (e.g. with wall
-        constraints).
-    * ``maxPWerror``:
-        The maximal pairwise error sets the least upper bound (LUB) error of
-        the force between any two charges without prefactors (see the papers).
-        The algorithm tries to find parameters to meet this LUB requirements or
-        will throw an error if there are none.
-    * ``delta_mid_top``/``delta_mid_bot``:
-        *ELC* can also be used to simulate 2D periodic systems with image charges,
-        specified by dielectric contrasts on the non-periodic boundaries
-        (:cite:`tyagi08a`). These can be set with the
-        keywords ``delta_mid_bot`` and ``delta_mid_top``, setting the dielectric
-        jump from the simulation region (*middle*) to *bottom* (at ``z<0``) and
-        from *middle* to *top* (``z > box_l[2] - gap_size``). The fully metallic case
-        ``delta_mid_top=delta_mid_bot=-1`` would lead to divergence of the
-        forces/energies in *ELC* and is therefore only possible with the
-        ``const_pot`` option.
-    * ``const_pot``:
-        As described, setting this to ``True`` leads to fully metallic boundaries:
-        it maintains a constant potential ``pot_diff`` by countering the total dipole moment of
-        the system and adding a homogeneous electric field according to
-        ``pot_diff``.
-    * ``pot_diff``:
-        Used in conjunction with ``const_pot`` set to ``True``, this sets the
-        potential difference between the boundaries in the z-direction between
-        ``z=0`` and ``z = box_l[2] - gap_size``.
-    * ``far_cut``:
-        The setting of the far cutoff is only intended for testing and allows to
-        directly set the cutoff. In this case, the maximal pairwise error is
-        ignored.
-    * ``neutralize``:
-        By default, ELC just as P3M adds a homogeneous neutralizing background
-        to the system in case of a net charge. However, unlike in three dimensions,
-        this background adds a parabolic potential across the
-        slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
-        probably want to disable the neutralization for non-neutral systems.
-        This corresponds then to a formal regularization of the forces and
-        energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
-        explicitly as constraints, you have to disable the neutralization.
-        When using a dielectric contrast or full metallic walls
-        (``delta_mid_top != 0`` or ``delta_mid_bot != 0`` or
-        ``const_pot=True``), ``neutralize`` is overwritten and switched off internally.
-        Note that the special case of non-neutral systems with a *non-metallic* dielectric jump
-        (eg. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not covered by the
-        algorithm and will throw an error.
+electric field :math:`E_{\textrm{induced}}` and superposing a homogeneous
+electric field :math:`E_{\textrm{applied}} = \frac{U}{L}` to retain :math:`U`.
+This mimics the induction of surface charges
+:math:`\pm\sigma = E_{\textrm{induced}} \cdot \varepsilon_0`
+for planar electrodes at :math:`z=0` and :math:`z=L_z - h` in a capacitor
+connected to a battery with voltage ``pot_diff``.
 
 
 .. _MMM1D:
@@ -358,23 +297,18 @@ Parameters are:
 MMM1D
 -----
 
-.. note::
-    Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version additionally needs
-    the features ``CUDA`` and ``MMM1D_GPU``.
+:class:`espressomd.electrostatics.MMM1D`
 
-::
+.. note::
+    Required features: ``ELECTROSTATICS`` for MMM1D, the GPU version
+    additionally needs the features ``CUDA`` and ``MMM1D_GPU``.
+
+Please cite :cite:`arnold05a` when using MMM1D. See :ref:`MMM1D theory` for
+the details.
+
+MMM1D is used with::
 
     from espressomd.electrostatics import MMM1D
-    from espressomd.electrostatics import MMM1DGPU
-
-Please cite :cite:`arnold05a`  when using MMM1D.
-
-See :attr:`espressomd.electrostatics.MMM1D` or
-:attr:`espressomd.electrostatics.MMM1DGPU` for the list of available
-parameters.
-
-::
-
     mmm1d = MMM1D(prefactor=C, far_switch_radius=fr, maxPWerror=err, tune=False,
                   bessel_cutoff=bc)
     mmm1d = MMM1D(prefactor=C, maxPWerror=err)
@@ -391,52 +325,63 @@ radii to find out the fastest one. If this takes too long, you can
 change the value of the property :attr:`espressomd.system.System.timings`,
 which controls the number of test force calculations.
 
+.. _MMM1D on GPU:
+
+MMM1D on GPU
+~~~~~~~~~~~~
+
+:class:`espressomd.electrostatics.MMM1DGPU`
+
+MMM1D is also available in a GPU implementation. Unlike its CPU
+counterpart, it does not need the nsquared cell system.
+
 ::
 
+    from espressomd.electrostatics import MMM1DGPU
     mmm1d_gpu = MMM1DGPU(prefactor=C, far_switch_radius=fr, maxPWerror=err,
                          tune=False, bessel_cutoff=bc)
     mmm1d_gpu = MMM1DGPU(prefactor=C, maxPWerror=err)
 
-MMM1D is also available in a GPU implementation. Unlike its CPU
-counterpart, it does not need the nsquared cell system. The first form
-sets parameters manually. The switch radius determines at which
+The first form sets parameters manually. The switch radius determines at which
 xy-distance the force calculation switches from the near to the far
 formula. If the Bessel cutoff is not explicitly given, it is determined
 from the maximal pairwise error, otherwise this error only counts for
 the near formula. The second tuning form just takes the maximal pairwise
-error and tries out a lot of switching radii to find out the fastest
-one.
+error and tries out a lot of switching radii to find out the fastest one.
 
-For details on the MMM family of algorithms, refer to appendix :ref:`The MMM family of algorithms`.
+For details on the MMM family of algorithms, refer to appendix
+:ref:`The MMM family of algorithms`.
 
 
-.. _ScaFaCoS Electrostatics:
+.. _ScaFaCoS electrostatics:
 
-ScaFaCoS Electrostatics
+ScaFaCoS electrostatics
 -----------------------
 
-|es| can use the electrostatics methods from the ScaFaCoS *Scalable
-fast Coulomb solvers* library. The specific methods available depend on the compile-time options of the library, and can be queried using :meth:`espressomd.scafacos.available_methods`
+:class:`espressomd.electrostatics.Scafacos`
 
-To use ScaFaCoS, create an instance of :class:`espressomd.electrostatics.Scafacos` and add it to the list of active actors. Three parameters have to be specified:
+|es| can use the methods from the ScaFaCoS *Scalable fast Coulomb solvers*
+library. The specific methods available depend on the compile-time options of
+the library, and can be queried using :meth:`espressomd.scafacos.available_methods`.
 
-* ``method_name``: name of the ScaFaCoS method being used.
-* ``method_params``: dictionary containing the method-specific parameters
-* ``prefactor``: Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
+To use ScaFaCoS, create an instance of :class:`~espressomd.electrostatics.Scafacos`
+and add it to the list of active actors. Three parameters have to be specified:
+``prefactor``, ``method_name``, ``method_params``. The method-specific
+parameters are described in the ScaFaCoS manual. In addition, methods
+supporting tuning have a parameter ``tolerance_field`` which sets the desired
+root mean square accuracy for the electric field.
 
-The method-specific parameters are described in the ScaFaCoS manual.
-In addition, methods supporting tuning have a parameter ``tolerance_field`` which sets the desired root mean square accuracy for the electric field.
-
-To use the, e.g., ``ewald`` solver from ScaFaCoS as electrostatics solver for your system, set its
-cutoff to :math:`1.5` and tune the other parameters for an accuracy of
-:math:`10^{-3}`, use::
+To use a specific electrostatics solver from ScaFaCoS for your system,
+e.g. ``ewald``, set its cutoff to :math:`1.5` and tune the other parameters
+for an accuracy of :math:`10^{-3}`::
 
    from espressomd.electrostatics import Scafacos
    scafacos = Scafacos(prefactor=1, method_name="ewald",
                        method_params={"ewald_r_cut": 1.5, "tolerance_field": 1e-3})
    system.actors.add(scafacos)
 
-
 For details of the various methods and their parameters please refer to
-the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a shared library. ScaFaCoS can be used only once, either for Coulomb or for dipolar interactions.
+the ScaFaCoS manual. To use this feature, ScaFaCoS has to be built as a
+shared library. ScaFaCoS can be used only once, either for Coulomb or for
+dipolar interactions.
 

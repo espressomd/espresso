@@ -63,7 +63,7 @@ void init_forces_ghosts(const ParticleRange &particles);
  */
 void force_calc(CellStructure &cell_structure);
 
-/** Calculate long range forces (P3M, MMM2d...). */
+/** Calculate long range forces (P3M, ...). */
 void calc_long_range_forces(const ParticleRange &particles);
 /*@}*/
 

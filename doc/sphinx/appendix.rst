@@ -452,7 +452,7 @@ where
      &2u_xu_y\sum_{q>0}\frac{\cosh(2\pi f_q z)}{f_q(e^{2\pi f_q\lambda_z}
        - 1)}\cos(\omega_q y). \end{array}
 
-The implementation is very similar to MMM2d, except that the separation
+The implementation is very similar to MMM2D, except that the separation
 between slices close by, and above and below is not necessary.
 
 .. _Errors:

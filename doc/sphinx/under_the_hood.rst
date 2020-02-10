@@ -22,7 +22,7 @@ ParticleProperties), which in turn represent basic physical properties
 such as position, force or charge. The particles are organized in one or
 more particle lists on each node, called Cell cells. The cells are
 arranged by several possible systems, the cellsystems as described
-above. A cell system defines a way the particles are stored in , i.e.
+above. A cell system defines a way the particles are stored in |es|, i.e.
 how they are distributed onto the processor nodes and how they are
 organized on each of them. Moreover a cell system also defines
 procedures to efficiently calculate the force, energy and pressure for

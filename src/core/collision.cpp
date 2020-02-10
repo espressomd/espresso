@@ -544,7 +544,7 @@ void handle_collisions() {
       // that see both particles
 
       // If we cannot access both particles, both are ghosts,
-      // ore one is ghost and one is not accessible
+      // or one is ghost and one is not accessible
       // we only increase the counter for the ext id to use based on the
       // number of particles created by other nodes
       if (((!p1 or p1->l.ghost) and (!p2 or p2->l.ghost)) or !p1 or !p2) {

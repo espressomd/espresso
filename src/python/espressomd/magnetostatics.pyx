@@ -32,7 +32,7 @@ IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):
         """Provide magnetostatic interactions.
 
-        Attributes
+        Parameters
         ----------
         prefactor : :obj:`float`
             Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
@@ -65,9 +65,11 @@ IF DIPOLES == 1:
 
 IF DP3M == 1:
     cdef class DipolarP3M(MagnetostaticInteraction):
-        """Calculate magnetostatic interactions using the dipolar P3M method.
+        """
+        Calculate magnetostatic interactions using the dipolar P3M method.
+        See :ref:`Dipolar P3M` for more details.
 
-        Attributes
+        Parameters
         ----------
         prefactor : :obj:`float`
             Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
@@ -86,7 +88,7 @@ IF DP3M == 1:
             Real space cutoff.
         tune : :obj:`bool`, optional
             Activate/deactivate the tuning method on activation
-            (default is True, i.e., activated).
+            (default is ``True``, i.e., activated).
 
         """
 
@@ -247,14 +249,15 @@ IF DP3M == 1:
 
 IF DIPOLES == 1:
     cdef class DipolarDirectSumCpu(MagnetostaticInteraction):
-        """Calculate magnetostatic interactions by direct summation over all pairs.
+        """
+        Calculate magnetostatic interactions by direct summation over all pairs.
+        See :ref:`Dipolar direct sum` for more details.
 
         If the system has periodic boundaries, the minimum image convention is
         applied in the respective directions.
 
-        Attributes
+        Parameters
         ----------
-
         prefactor : :obj:`float`
             Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
 
@@ -285,12 +288,14 @@ IF DIPOLES == 1:
     @requires_experimental_features("No test coverage")
     class DipolarDirectSumWithReplicaCpu(MagnetostaticInteraction):
 
-        """Calculate magnetostatic interactions by direct summation over all pairs.
+        """
+        Calculate magnetostatic interactions by direct summation over all pairs.
+        See :ref:`Dipolar direct sum` for more details.
 
         If the system has periodic boundaries, ``n_replica`` copies of the system are
         taken into account in the respective directions. Spherical cutoff is applied.
 
-        Attributes
+        Parameters
         ----------
         prefactor : :obj:`float`
             Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
@@ -326,18 +331,20 @@ IF DIPOLES == 1:
         class Scafacos(ScafacosConnector, MagnetostaticInteraction):
 
             """
-            Calculates dipolar interactions using dipoles-capable method from the SCAFACOs library.
+            Calculate the dipolar interaction using dipoles-capable methods
+            from the ScaFaCoS library. See :ref:`ScaFaCoS magnetostatics` for
+            more details.
 
-            Attributes
+            Parameters
             ----------
             prefactor : :obj:`float`
-                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
+                Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`).
             method_name : :obj:`str`
-                Name of the method as defined in Scafacos
+                Name of the ScaFaCoS method to use.
             method_params : :obj:`dict`
                 Dictionary with the key-value pairs of the method parameters as
-                defined in Scafacos. Note that the values are cast to strings
-                to match Scafacos' interface
+                defined in ScaFaCoS. Note that the values are cast to strings
+                to match ScaFaCoS' interface.
 
             """
 
@@ -361,7 +368,9 @@ IF DIPOLES == 1:
 
     IF(CUDA == 1) and (DIPOLES == 1) and (ROTATION == 1):
         cdef class DipolarDirectSumGpu(MagnetostaticInteraction):
-            """Calculate magnetostatic interactions by direct summation over all pairs.
+            """
+            Calculate magnetostatic interactions by direct summation over all
+            pairs. See :ref:`Dipolar direct sum` for more details.
 
             If the system has periodic boundaries, the minimum image convention
             is applied in the respective directions.
@@ -369,7 +378,7 @@ IF DIPOLES == 1:
             This is the GPU version of :class:`espressomd.magnetostatics.DipolarDirectSumCpu`
             but uses floating point precision.
 
-            Attributes
+            Parameters
             ----------
             prefactor : :obj:`float`
                 Magnetostatics prefactor (:math:`\\mu_0/(4\\pi)`)
@@ -402,9 +411,13 @@ IF DIPOLES == 1:
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef class DipolarBarnesHutGpu(MagnetostaticInteraction):
 
-            """Calculates magnetostatic interactions by direct summation over all
-            pairs. TODO: If the system has periodic boundaries, the minimum image
-            convention is applied."""
+            """
+            Calculates magnetostatic interactions by direct summation over all
+            pairs. See :ref:`Barnes-Hut octree sum on GPU` for more details.
+
+            TODO: If the system has periodic boundaries, the minimum image
+            convention is applied.
+            """
 
             def default_params(self):
                 return {"epssq": 100.0,
