@@ -77,11 +77,6 @@ private:
   std::vector<int> bondbuf; //< Buffer for bond lists
 };
 
-void prepare_comm(GhostCommunicator *gcr, int num) {
-  assert(gcr);
-  gcr->comm = std::vector<GhostCommunication>(num);
-}
-
 void free_comm(GhostCommunicator *gcr) {
   assert(gcr);
   // Invalidate the elements in all "part_lists" of all GhostCommunications.
