@@ -35,9 +35,8 @@ public:
   void update(bool recalc_positions) const override;
   /** @copydoc VirtualSites::back_transfer_forces_and_torques */
   void back_transfer_forces_and_torques() const override;
-  /** @copydoc VirtualSites::pressure_and_stress_tensor_contribution */
-  Utils::Matrix<double, 3, 3>
-  pressure_and_stress_tensor_contribution() const override;
+  /** @copydoc VirtualSites::stress_tensor */
+  Utils::Matrix<double, 3, 3> stress_tensor() const override;
 
 private:
   /** Update the position of the given virtual particle as defined by the real

@@ -129,8 +129,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
 #ifdef VIRTUAL_SITES
   {
-    auto const vs_stress =
-        virtual_sites()->pressure_and_stress_tensor_contribution();
+    auto const vs_stress = virtual_sites()->stress_tensor();
 
     *virials.virtual_sites += trace(vs_stress);
     boost::copy(flatten(vs_stress), p_tensor.virtual_sites);

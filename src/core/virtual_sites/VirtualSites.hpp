@@ -50,8 +50,7 @@ public:
   virtual void after_force_calc(){};
   virtual void after_lb_propagation(){};
   /** @brief Pressure contribution. */
-  virtual Utils::Matrix<double, 3, 3>
-  pressure_and_stress_tensor_contribution() const {
+  virtual Utils::Matrix<double, 3, 3> stress_tensor() const {
     return {};
   };
   /** @brief Enable/disable velocity calculations for vs. */
