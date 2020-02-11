@@ -19,6 +19,7 @@
 
 #include "VirtualSitesRelative.hpp"
 #include "forces_inline.hpp"
+#include <boost/range/numeric.hpp>
 #include <utils/math/quaternion.hpp>
 #include <utils/math/sqr.hpp>
 
@@ -160,16 +161,11 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 // Rigid body contribution to scalar pressure and stress tensor
 Utils::Matrix<double, 3, 3>
 VirtualSitesRelative::pressure_and_stress_tensor_contribution() const {
-  // Division by 3 volume is somewhere else. (pressure.cpp after all pressure
-  // calculations) Iterate over all the particles in the local cells
-
   Utils::Matrix<double, 3, 3> stress_tensor = {};
 
   for (auto &p : cell_structure.local_cells().particles()) {
     if (!p.p.is_virtual)
       continue;
-
-    update_pos(p);
 
     // First obtain the real particle responsible for this virtual particle:
     const Particle *p_real =
