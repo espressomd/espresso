@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef OBSERVABLES_ComForce_HPP
-#define OBSERVABLES_ComForce_HPP
+#ifndef OBSERVABLES_TotalForce_HPP
+#define OBSERVABLES_TotalForce_HPP
 
 #include "PidObservable.hpp"
 
 #include <vector>
 
 namespace Observables {
-class ComForce : public PidObservable {
+class TotalForce : public PidObservable {
 public:
   using PidObservable::PidObservable;
   int n_values() const override { return 3; }
