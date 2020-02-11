@@ -276,7 +276,37 @@ BOOST_AUTO_TEST_CASE(integrate_with_point_forces) {
     auto mom = lb.get_momentum();
     MPI_Allreduce(MPI_IN_PLACE, mom.data(), 3, MPI_DOUBLE, MPI_SUM,
                   MPI_COMM_WORLD);
-    BOOST_CHECK_SMALL((mom - mom_exp).norm(), 8E-5);
+    BOOST_CHECK_SMALL((mom - mom_exp).norm(), 2E-4);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(forces) {
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
+  for (Vector3d pos : std::vector<Vector3d>{
+           {1.5, 1.5, 1.5}, {1.0, 3.0, 1.0}, {4.2, 1.7, 1.6},
+           {3.2, 1.3, 3.1}}) {
+    if (lb.pos_in_local_domain(pos)) {
+      auto res = lb.get_force_to_be_applied_at_pos(pos);
+      BOOST_CHECK(res);
+      BOOST_CHECK_SMALL((*res - Vector3d{0, 0, 0}).norm(), 1E-10);
+      const Vector3d f{{pos[0] + 1, -1, 2.5 - pos[2]}};
+      double eps = 1E-8;
+      BOOST_CHECK(lb.add_force_at_pos(pos, f));
+      *res = {0.0,0.0,0.0};
+      for(int x=-1; x<=1; x++)
+      for(int y=-1; y<=1; y++)
+      for(int z=-1; z<=1; z++){
+        *res += *lb.get_force_to_be_applied_at_pos({pos[0]+x,pos[1]+y,pos[2]+z});
+      }
+      BOOST_CHECK((*res - f).norm() < eps);
+      BOOST_CHECK(lb.add_force_at_pos(pos, -1*f));
+      res = lb.get_force_to_be_applied_at_pos(pos);
+      BOOST_CHECK(res);
+      BOOST_CHECK_SMALL((*res - Vector3d{0, 0, 0}).norm(), 1E-10);
+    } else {
+      BOOST_CHECK(!lb.get_force_to_be_applied_at_pos(pos));
+    }
   }
 }
 
