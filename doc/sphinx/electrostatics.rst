@@ -433,10 +433,11 @@ the library, and can be queried using :meth:`espressomd.scafacos.available_metho
 
 To use ScaFaCoS, create an instance of :class:`~espressomd.electrostatics.Scafacos`
 and add it to the list of active actors. Three parameters have to be specified:
-``prefactor``, ``method_name``, ``method_params``. The method-specific
-parameters are described in the ScaFaCoS manual. In addition, methods
-supporting tuning have a parameter ``tolerance_field`` which sets the desired
-root mean square accuracy for the electric field.
+``prefactor`` (as defined in :eq:`coulomb_prefactor`), ``method_name``,
+``method_params``. The method-specific parameters are described in the
+ScaFaCoS manual. In addition, methods supporting tuning have a parameter
+``tolerance_field`` which sets the desired root mean square accuracy for
+the electric field.
 
 To use a specific electrostatics solver from ScaFaCoS for your system,
 e.g. ``ewald``, set its cutoff to :math:`1.5` and tune the other parameters
