@@ -155,6 +155,25 @@ using Vector3i = VectorXi<3>;
 
 template <class T, size_t N, size_t M> using Matrix = Vector<Vector<T, M>, N>;
 
+/**
+ * @brief Trace of a matrix.
+ *
+ * Returns the sum of the diagonal elements
+ * of a square matrix.
+ *
+ * @tparam T Arithmetic type
+ * @tparam N Matrix dimension
+ * @param m Input matrix
+ * @return Trace of matrix.
+ */
+template <class T, size_t N> T trace(Matrix<T, N, N> const &m) {
+  T tr = T{};
+  for (size_t i = 0; i < N; i++)
+    tr += m[i][i];
+
+  return tr;
+}
+
 namespace detail {
 template <size_t N, typename T, typename U, typename Op>
 auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {
