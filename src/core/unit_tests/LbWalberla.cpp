@@ -31,13 +31,15 @@ double skin = 0.01;
 double density = 2.5;
 Vector3i node_grid;
 
-using LatticeModelD3Q19TRT = walberla::lbm::D3Q19<walberla::lbm::collision_model::TRT, false, walberla::lbm::force_model::GuoField<walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>>>;
+using LatticeModelD3Q19TRT = walberla::lbm::D3Q19<
+    walberla::lbm::collision_model::TRT, false,
+    walberla::lbm::force_model::GuoField<
+        walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>>>;
 using LbWalberlaD3Q19TRT = walberla::LbWalberla<LatticeModelD3Q19TRT>;
 
-
 BOOST_AUTO_TEST_CASE(viscosity_test) {
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
-                             node_grid, 2);
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
   BOOST_CHECK(lb.get_grid_dimensions() == grid_dimensions);
   BOOST_CHECK(lb.get_grid_spacing() == agrid);
   BOOST_CHECK(lb.get_tau() == tau);
@@ -52,8 +54,8 @@ BOOST_AUTO_TEST_CASE(viscosity_test) {
 
 BOOST_AUTO_TEST_CASE(boundary) {
   Vector3d vel = {0.2, 3.8, 4.2};
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
-                             node_grid, 2);
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
   for (Vector3i node :
 
        std::vector<Vector3i>{{0, 0, 0}, {0, 1, 2}, {9, 9, 9}}) {
@@ -82,7 +84,8 @@ BOOST_AUTO_TEST_CASE(boundary) {
 
 // BOOST_AUTO_TEST_CASE(boundary_flow_single_node) {
 //  Vector3d vel = {0.2, 3.8, 0};
-//  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
+//  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+//  box_dimensions,
 //                             node_grid, 2);
 //    Vector3i node{5,5,5};
 //    if (lb.node_in_local_domain(node)) {
@@ -106,8 +109,8 @@ BOOST_AUTO_TEST_CASE(boundary) {
 
 BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
   Vector3d vel = {0.2, -0.3, 0};
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
-                             node_grid, 2);
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
   for (int x = 1; x < grid_dimensions[0] - 1; x++) {
     for (int y = 1; y < grid_dimensions[1] - 1; y++) {
       Vector3i node{x, y, 1};
@@ -130,8 +133,8 @@ BOOST_AUTO_TEST_CASE(boundary_flow_shear) {
 }
 
 BOOST_AUTO_TEST_CASE(velocity) {
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
-                             node_grid, 2);
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
   for (Vector3i node : std::vector<Vector3i>{
            {2, 2, 3}, {1, 0, 0}, {0, 1, 2}, {3, 2, 3}, {3, 2, 3}}) {
     const Vector3d pos = Vector3d{
@@ -215,8 +218,8 @@ BOOST_AUTO_TEST_CASE(velocity) {
 }
 
 BOOST_AUTO_TEST_CASE(total_momentum) {
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
-                             node_grid, 2);
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
   auto v = Vector3d{1.5, 2.5, -2.2};
   lb.set_node_velocity(Vector3i{1, 1, 1}, v);
   lb.set_node_velocity(Vector3i{3, 5, 7}, v);
@@ -228,8 +231,8 @@ BOOST_AUTO_TEST_CASE(total_momentum) {
 }
 
 BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
-                             node_grid, 2);
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
   auto f = Vector3d{0.015, 0.25, -0.22};
   lb.set_external_force(f);
   BOOST_CHECK_SMALL(lb.get_momentum().norm(), 1E-10);
@@ -248,8 +251,8 @@ BOOST_AUTO_TEST_CASE(integrate_with_volume_force) {
 }
 
 BOOST_AUTO_TEST_CASE(integrate_with_point_forces) {
-  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau, box_dimensions,
-                             node_grid, 2);
+  LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
+                                             box_dimensions, node_grid, 2);
   // auto f = Vector3d{0.15, 0.25, -0.22};
   auto f = Vector3d{0.0006, -0.0013, 0.000528};
   auto f2 = Vector3d{0.095, 0.23, -0.52};

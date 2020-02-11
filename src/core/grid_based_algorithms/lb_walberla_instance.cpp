@@ -35,7 +35,10 @@ LbWalberlaBase *lb_walberla() {
   return lb_walberla_instance.get();
 }
 
-using LatticeModelD3Q19TRT = walberla::lbm::D3Q19<walberla::lbm::collision_model::TRT, false, walberla::lbm::force_model::GuoField<walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>>>;
+using LatticeModelD3Q19TRT = walberla::lbm::D3Q19<
+    walberla::lbm::collision_model::TRT, false,
+    walberla::lbm::force_model::GuoField<
+        walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>>>;
 using LbWalberlaD3Q19TRT = walberla::LbWalberla<LatticeModelD3Q19TRT>;
 
 void init_lb_walberla(double viscosity, double density, double agrid,
@@ -44,8 +47,9 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   // Exceptions need to be converted to runtime erros so they can be
   // handled from Python in a parallel simulation
   try {
-    lb_walberla_instance = std::make_unique<LbWalberlaD3Q19TRT>(LbWalberlaD3Q19TRT{
-        viscosity, density, agrid, tau, box_dimensions, node_grid, 2});
+    lb_walberla_instance =
+        std::make_unique<LbWalberlaD3Q19TRT>(LbWalberlaD3Q19TRT{
+            viscosity, density, agrid, tau, box_dimensions, node_grid, 2});
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
     lb_walberla_instance.reset(nullptr);

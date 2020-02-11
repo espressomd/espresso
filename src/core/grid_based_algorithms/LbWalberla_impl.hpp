@@ -6,12 +6,9 @@
 
 #ifdef LB_WALBERLA
 #include "LbWalberlaBase.hpp"
-#include "utils/Vector.hpp"
-#include "utils/math/make_lin_space.hpp"
-#include "boost/optional.hpp"
-#include "boost/tuple/tuple.hpp"
-#include "blockforest/StructuredBlockForest.h"
 #include "blockforest/Initialization.h"
+#include "blockforest/StructuredBlockForest.h"
+#include "blockforest/communication/UniformBufferedScheme.h"
 #include "boost/optional.hpp"
 #include "boost/tuple/tuple.hpp"
 #include "boundary/BoundaryHandling.h"
@@ -24,10 +21,11 @@
 #include "lbm/boundary/UBB.h"
 #include "lbm/field/Adaptors.h"
 #include "lbm/field/PdfField.h"
-#include "lbm/lattice_model/D3Q19.h"
 #include "lbm/lattice_model/CollisionModel.h"
+#include "lbm/lattice_model/D3Q19.h"
 #include "timeloop/SweepTimeloop.h"
-#include "blockforest/communication/UniformBufferedScheme.h"
+#include "utils/Vector.hpp"
+#include "utils/math/make_lin_space.hpp"
 
 #include "boundary/BoundaryHandling.h"
 
@@ -56,37 +54,29 @@
 
 #include "timeloop/SweepTimeloop.h"
 
-
 namespace walberla {
 
 // Flags marking fluid and boundaries
 const FlagUID Fluid_flag("fluid");
 const FlagUID UBB_flag("velocity bounce back");
 
-
-
-
 // Vector conversion helpers
-inline Utils::Vector3d
-to_vector3d(const Vector3<real_t> v) {
+inline Utils::Vector3d to_vector3d(const Vector3<real_t> v) {
   return Utils::Vector3d{v[0], v[1], v[2]};
 }
 inline Vector3<real_t> to_vector3(const Utils::Vector3d v) {
   return Vector3<real_t>{v[0], v[1], v[2]};
 }
-inline Utils::Vector6d
-to_vector6d(const Matrix3<real_t> m) {
+inline Utils::Vector6d to_vector6d(const Matrix3<real_t> m) {
   return Utils::Vector6d{m[0], m[3], m[4], m[6], m[7], m[8]};
 }
-/** Sweep that swaps force_toe_be_applied and last_applied_force 
+/** Sweep that swaps force_toe_be_applied and last_applied_force
 and resets force_to_be_applied to the global external force
 */
-template <typename PdfField, typename ForceField,
-          typename BoundaryHandling>
+template <typename PdfField, typename ForceField, typename BoundaryHandling>
 class ResetForce {
 public:
-  ResetForce(BlockDataID pdf_field_id,
-             BlockDataID last_applied_force_field_id,
+  ResetForce(BlockDataID pdf_field_id, BlockDataID last_applied_force_field_id,
              BlockDataID force_to_be_applied_id,
              BlockDataID boundary_handling_id)
       : m_pdf_field_id(pdf_field_id),
@@ -99,7 +89,7 @@ public:
     m_ext_force = to_vector3(ext_force);
   }
 
-  Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force) ; };
+  Utils::Vector3d get_ext_force() const { return to_vector3d(m_ext_force); };
 
   void operator()(IBlock *block) {
     PdfField *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
@@ -133,27 +123,22 @@ private:
   Vector3<real_t> m_ext_force;
 };
 
-
 /** Class that runs and controls the LB on WaLBerla
  */
-template <typename  LatticeModel> 
-class LbWalberla : public LbWalberlaBase {
+template <typename LatticeModel> class LbWalberla : public LbWalberlaBase {
 private:
-// Type definitions
-  using VectorField =
-      GhostLayerField<Vector3<real_t>, 1>;
+  // Type definitions
+  using VectorField = GhostLayerField<Vector3<real_t>, 1>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
   using PdfField = lbm::PdfField<LatticeModel>;
 
-  using UBB =
-      lbm::UBB<LatticeModel, uint8_t, true, true>;
+  using UBB = lbm::UBB<LatticeModel, uint8_t, true, true>;
   using Boundaries =
       BoundaryHandling<FlagField, typename LatticeModel::Stencil, UBB>;
-  
+
   // Adaptors, interpolators, distributors
   using DensityAdaptor = typename lbm::Adaptor<LatticeModel>::Density;
-  using VelocityAdaptor =
-      typename lbm::Adaptor<LatticeModel>::VelocityVector;
+  using VelocityAdaptor = typename lbm::Adaptor<LatticeModel>::VelocityVector;
 
   template <typename VectorField> class force_vector_adaptor_function {
   public:
@@ -176,33 +161,29 @@ private:
     }
   };
 
-  using ForceAdaptor = field::GhostLayerFieldAdaptor<
-      force_vector_adaptor_function<VectorField>, 0>;
+  using ForceAdaptor =
+      field::GhostLayerFieldAdaptor<force_vector_adaptor_function<VectorField>,
+                                    0>;
   using VectorFieldDistributor =
       field::KernelDistributor<VectorField, FlagField>;
   using VectorFieldAdaptorInterpolator =
-      field::TrilinearFieldInterpolator<VelocityAdaptor,
-                                                  FlagField>;
+      field::TrilinearFieldInterpolator<VelocityAdaptor, FlagField>;
   using ForceFieldAdaptorInterpolator =
       field::TrilinearFieldInterpolator<ForceAdaptor, FlagField>;
   using ScalarFieldAdaptorInterpolator =
       field::TrilinearFieldInterpolator<DensityAdaptor, FlagField>;
 
-
-
-
-
-// Member variables
-double m_agrid;
-double m_tau;
-double m_kT;
-double m_density;
-Utils::Vector3i m_grid_dimensions;
-int m_n_ghost_layers;  
+  // Member variables
+  double m_agrid;
+  double m_tau;
+  double m_kT;
+  double m_density;
+  Utils::Vector3i m_grid_dimensions;
+  int m_n_ghost_layers;
   // Block data access handles
   BlockDataID m_pdf_field_id;
   BlockDataID m_flag_field_id;
-  
+
   BlockDataID m_last_applied_force_field_id;
   BlockDataID m_last_applied_force_adaptor_id;
   BlockDataID m_last_applied_force_interpolator_id;
@@ -210,83 +191,81 @@ int m_n_ghost_layers;
   BlockDataID m_force_to_be_applied_interpolator_id;
   BlockDataID m_force_to_be_applied_id;
   BlockDataID m_force_to_be_applied_distributor_id;
-  
+
   BlockDataID m_velocity_adaptor_id;
   BlockDataID m_velocity_interpolator_id;
-  
+
   BlockDataID m_density_adaptor_id;
   BlockDataID m_density_interpolator_id;
   BlockDataID m_boundary_handling_id;
-  
+
   // Block forest
   std::shared_ptr<blockforest::StructuredBlockForest> m_blocks;
-  
+
   // time loop
   std::shared_ptr<timeloop::SweepTimeloop> m_time_loop;
-  
+
   // MPI
   std::shared_ptr<mpi::Environment> m_env;
-  
+
   // Lattice model
   std::shared_ptr<LatticeModel> m_lattice_model;
-  
+
   // ResetForce sweep + external force handling
-  std::shared_ptr<ResetForce<PdfField, VectorField, Boundaries>>
-      m_reset_force;
+  std::shared_ptr<ResetForce<PdfField, VectorField, Boundaries>> m_reset_force;
 
-
-// Helpers to retrieve blocks and cells
+  // Helpers to retrieve blocks and cells
   struct BlockAndCell {
     IBlock *block;
     Cell cell;
   };
-boost::optional<BlockAndCell>
-get_block_and_cell(const Utils::Vector3i &node,
-                               bool consider_ghost_layers) const {
-  // Get block and local cell
-  Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
-  auto block = m_blocks->getBlock(global_cell, 0);
-  // Return if we don't have the cell
-  if (consider_ghost_layers and !block) {
-    // Try to find a block which has the cell as ghost layer
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      if (b->getAABB()
-              .getExtended(m_n_ghost_layers)
-              .contains(real_c(node[0]), real_c(node[1]), real_c(node[2]))) {
-        block = &(*b);
-        break;
+  boost::optional<BlockAndCell>
+  get_block_and_cell(const Utils::Vector3i &node,
+                     bool consider_ghost_layers) const {
+    // Get block and local cell
+    Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
+    auto block = m_blocks->getBlock(global_cell, 0);
+    // Return if we don't have the cell
+    if (consider_ghost_layers and !block) {
+      // Try to find a block which has the cell as ghost layer
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+        if (b->getAABB()
+                .getExtended(m_n_ghost_layers)
+                .contains(real_c(node[0]), real_c(node[1]), real_c(node[2]))) {
+          block = &(*b);
+          break;
+        }
       }
     }
+    if (!block)
+      return {boost::none};
+
+    // Transform coords to block local
+    Cell local_cell;
+    m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
+    return {{block, local_cell}};
   }
-  if (!block)
-    return {boost::none};
 
-  // Transform coords to block local
-  Cell local_cell;
-  m_blocks->transformGlobalToBlockLocalCell(local_cell, *block, global_cell);
-  return {{block, local_cell}};
-}
-
-IBlock *get_block(const Utils::Vector3d &pos,
-                              bool consider_ghost_layers) const {
-  // Get block and local cell
-  auto block =
-      m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
-  if (consider_ghost_layers and !block) {
-    // Try to find a block which has the cell as ghost layer
-    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-      auto ab = b->getAABB().getExtended(1.0 * n_ghost_layers());
-      if (ab.contains(pos[0], pos[1], pos[2])) {
-        block = &(*b);
-        break;
+  IBlock *get_block(const Utils::Vector3d &pos,
+                    bool consider_ghost_layers) const {
+    // Get block and local cell
+    auto block =
+        m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
+    if (consider_ghost_layers and !block) {
+      // Try to find a block which has the cell as ghost layer
+      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+        auto ab = b->getAABB().getExtended(1.0 * n_ghost_layers());
+        if (ab.contains(pos[0], pos[1], pos[2])) {
+          block = &(*b);
+          break;
+        }
       }
     }
-  }
 
-  return block;
-};
+    return block;
+  };
 
-// Boundary handling
+  // Boundary handling
   class LB_boundary_handling {
   public:
     LB_boundary_handling(const BlockDataID &flag_field_id,
@@ -295,7 +274,8 @@ IBlock *get_block(const Utils::Vector3d &pos,
 
     Boundaries *operator()(IBlock *const block) {
 
-      FlagField *flag_field = block->template getData<FlagField>(m_flag_field_id);
+      FlagField *flag_field =
+          block->template getData<FlagField>(m_flag_field_id);
       PdfField *pdf_field = block->template getData<PdfField>(m_pdf_field_id);
 
       // const uint8_t fluid = flag_field->registerFlag(Fluid_flag);
@@ -313,173 +293,179 @@ IBlock *get_block(const Utils::Vector3d &pos,
     const BlockDataID m_pdf_field_id;
   };
 
-
-
 public:
   LbWalberla(double viscosity, double density, double agrid, double tau,
              const Utils::Vector3d &box_dimensions,
              const Utils::Vector3i &node_grid, int n_ghost_layers) {
-  m_agrid = agrid;
-  m_tau = tau;
-  m_density = density;
-  m_n_ghost_layers = n_ghost_layers;
-  m_kT = 0;
+    m_agrid = agrid;
+    m_tau = tau;
+    m_density = density;
+    m_n_ghost_layers = n_ghost_layers;
+    m_kT = 0;
 
-  if (m_n_ghost_layers <=0) 
-    throw std::runtime_error("At least one ghost layer must be used");
+    if (m_n_ghost_layers <= 0)
+      throw std::runtime_error("At least one ghost layer must be used");
 
-  for (int i = 0; i < 3; i++) {
-    if (fabs(round(box_dimensions[i] / agrid) * agrid - box_dimensions[i]) /
-            box_dimensions[i] >
-        std::numeric_limits<double>::epsilon()) {
-      throw std::runtime_error(
-          "Box length not commensurate with agrid in direction " +
-          std::to_string(i));
+    for (int i = 0; i < 3; i++) {
+      if (fabs(round(box_dimensions[i] / agrid) * agrid - box_dimensions[i]) /
+              box_dimensions[i] >
+          std::numeric_limits<double>::epsilon()) {
+        throw std::runtime_error(
+            "Box length not commensurate with agrid in direction " +
+            std::to_string(i));
+      }
+      m_grid_dimensions[i] = int(std::round(box_dimensions[i] / agrid));
+      if (m_grid_dimensions[i] % node_grid[i] != 0) {
+        printf("Grid dimension: %d, node grid %d\n", m_grid_dimensions[i],
+               node_grid[i]);
+        throw std::runtime_error(
+            "LB grid dimensions and mpi node grid are not compatible.");
+      }
     }
-    m_grid_dimensions[i] = int(std::round(box_dimensions[i] / agrid));
-    if (m_grid_dimensions[i] % node_grid[i] != 0) {
-      printf("Grid dimension: %d, node grid %d\n", m_grid_dimensions[i],
-             node_grid[i]);
-      throw std::runtime_error(
-          "LB grid dimensions and mpi node grid are not compatible.");
-    }
-  }
 
-  m_blocks = blockforest::createUniformBlockGrid(
-      uint_c(node_grid[0]), // blocks in x direction
-      uint_c(node_grid[1]), // blocks in y direction
-      uint_c(node_grid[2]), // blocks in z direction
-      uint_c(m_grid_dimensions[0] /
-             node_grid[0]), // number of cells per block in x direction
-      uint_c(m_grid_dimensions[1] /
-             node_grid[1]), // number of cells per block in y direction
-      uint_c(m_grid_dimensions[2] /
-             node_grid[2]), // number of cells per block in z direction
-      1,                    // Lattice constant
-      uint_c(node_grid[0]), uint_c(node_grid[1]),
-      uint_c(node_grid[2]), // cpus per direction
-      true, true, true);
+    m_blocks = blockforest::createUniformBlockGrid(
+        uint_c(node_grid[0]), // blocks in x direction
+        uint_c(node_grid[1]), // blocks in y direction
+        uint_c(node_grid[2]), // blocks in z direction
+        uint_c(m_grid_dimensions[0] /
+               node_grid[0]), // number of cells per block in x direction
+        uint_c(m_grid_dimensions[1] /
+               node_grid[1]), // number of cells per block in y direction
+        uint_c(m_grid_dimensions[2] /
+               node_grid[2]), // number of cells per block in z direction
+        1,                    // Lattice constant
+        uint_c(node_grid[0]), uint_c(node_grid[1]),
+        uint_c(node_grid[2]), // cpus per direction
+        true, true, true);
 
-  m_last_applied_force_field_id = field::addToStorage<VectorField>(
-      m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      m_n_ghost_layers);
-  m_force_to_be_applied_id = field::addToStorage<VectorField>(
-      m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
-      m_n_ghost_layers);
-  m_lattice_model = std::make_shared<LatticeModel>(LatticeModel(
-      lbm::collision_model::TRT::constructWithMagicNumber(
-          lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
-      lbm::force_model::GuoField<VectorField>(m_last_applied_force_field_id)));
+    m_last_applied_force_field_id = field::addToStorage<VectorField>(
+        m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
+        m_n_ghost_layers);
+    m_force_to_be_applied_id = field::addToStorage<VectorField>(
+        m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
+        m_n_ghost_layers);
+    m_lattice_model = std::make_shared<LatticeModel>(LatticeModel(
+        lbm::collision_model::TRT::constructWithMagicNumber(
+            lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
+        lbm::force_model::GuoField<VectorField>(
+            m_last_applied_force_field_id)));
 
-  m_pdf_field_id = lbm::addPdfFieldToStorage(
-      m_blocks, "pdf field", *m_lattice_model, to_vector3(Utils::Vector3d{}),
-      (real_t)1.0, m_n_ghost_layers);
+    m_pdf_field_id = lbm::addPdfFieldToStorage(
+        m_blocks, "pdf field", *m_lattice_model, to_vector3(Utils::Vector3d{}),
+        (real_t)1.0, m_n_ghost_layers);
 
-  m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
-      m_blocks, "flag field", m_n_ghost_layers);
+    m_flag_field_id = field::addFlagFieldToStorage<FlagField>(
+        m_blocks, "flag field", m_n_ghost_layers);
 
-  m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
-      LB_boundary_handling(m_flag_field_id, m_pdf_field_id),
-      "boundary handling");
+    m_boundary_handling_id = m_blocks->addBlockData<Boundaries>(
+        LB_boundary_handling(m_flag_field_id, m_pdf_field_id),
+        "boundary handling");
 
-  clear_boundaries();
+    clear_boundaries();
 
-  // 1 timestep each time the integrate function is called
-  m_time_loop =
-      std::make_shared<timeloop::SweepTimeloop>(m_blocks->getBlockStorage(), 1);
+    // 1 timestep each time the integrate function is called
+    m_time_loop = std::make_shared<timeloop::SweepTimeloop>(
+        m_blocks->getBlockStorage(), 1);
 
-  // sets up the communication
-  blockforest::communication::UniformBufferedScheme<
-      typename LatticeModel::CommunicationStencil>
-      communication(m_blocks);
-  communication.addPackInfo(
-      std::make_shared<field::communication::PackInfo<PdfField>>(
-          m_pdf_field_id));
-  m_reset_force = std::make_shared<
-      ResetForce<PdfField, VectorField, Boundaries>>(
-      m_pdf_field_id, m_last_applied_force_field_id, m_force_to_be_applied_id,
-      m_boundary_handling_id);
+    // sets up the communication
+    blockforest::communication::UniformBufferedScheme<
+        typename LatticeModel::CommunicationStencil>
+        communication(m_blocks);
+    communication.addPackInfo(
+        std::make_shared<field::communication::PackInfo<PdfField>>(
+            m_pdf_field_id));
+    m_reset_force =
+        std::make_shared<ResetForce<PdfField, VectorField, Boundaries>>(
+            m_pdf_field_id, m_last_applied_force_field_id,
+            m_force_to_be_applied_id, m_boundary_handling_id);
 
-  m_time_loop->add() << timeloop::BeforeFunction(communication, "communication")
-                     << timeloop::Sweep(Boundaries::getBlockSweep(
-                                            m_boundary_handling_id),
-                                        "boundary handling");
-  m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
-                                        "Reset force fields");
-//        << timeloop::AfterFunction(communication, "communication");
-  m_time_loop->add() << timeloop::Sweep(
-      domain_decomposition::makeSharedSweep(
-          lbm::makeCellwiseSweep<LatticeModel, FlagField>(
-              m_pdf_field_id, m_flag_field_id, Fluid_flag)),
-      "LB stream & collide")
+    m_time_loop->add() << timeloop::BeforeFunction(communication,
+                                                   "communication")
+                       << timeloop::Sweep(
+                              Boundaries::getBlockSweep(m_boundary_handling_id),
+                              "boundary handling");
+    m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
+                                          "Reset force fields");
+    //        << timeloop::AfterFunction(communication, "communication");
+    m_time_loop->add()
+        << timeloop::Sweep(
+               domain_decomposition::makeSharedSweep(
+                   lbm::makeCellwiseSweep<LatticeModel, FlagField>(
+                       m_pdf_field_id, m_flag_field_id, Fluid_flag)),
+               "LB stream & collide")
         << timeloop::AfterFunction(communication, "communication");
 
-  m_force_to_be_applied_distributor_id =
-      field::addDistributor<VectorFieldDistributor, FlagField>(
-          m_blocks, m_force_to_be_applied_id, m_flag_field_id, Fluid_flag);
+    m_force_to_be_applied_distributor_id =
+        field::addDistributor<VectorFieldDistributor, FlagField>(
+            m_blocks, m_force_to_be_applied_id, m_flag_field_id, Fluid_flag);
 
-  m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
-      m_blocks, m_pdf_field_id, "velocity adaptor");
+    m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
+        m_blocks, m_pdf_field_id, "velocity adaptor");
 
-  m_velocity_interpolator_id =
-      field::addFieldInterpolator<VectorFieldAdaptorInterpolator, FlagField>(
-          m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
+    m_velocity_interpolator_id =
+        field::addFieldInterpolator<VectorFieldAdaptorInterpolator, FlagField>(
+            m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
 
-  // Force interpolation for force_to_be_applied
-  m_force_to_be_applied_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
-      m_blocks, m_force_to_be_applied_id, "force adaptor");
+    // Force interpolation for force_to_be_applied
+    m_force_to_be_applied_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
+        m_blocks, m_force_to_be_applied_id, "force adaptor");
 
-  m_force_to_be_applied_interpolator_id =
-      field::addFieldInterpolator<ForceFieldAdaptorInterpolator, FlagField>(
-          m_blocks, m_force_to_be_applied_adaptor_id, m_flag_field_id,
-          Fluid_flag);
+    m_force_to_be_applied_interpolator_id =
+        field::addFieldInterpolator<ForceFieldAdaptorInterpolator, FlagField>(
+            m_blocks, m_force_to_be_applied_adaptor_id, m_flag_field_id,
+            Fluid_flag);
 
-  // Force interpolation for last_applied_force
-  m_last_applied_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
-      m_blocks, m_last_applied_force_field_id, "force adaptor");
+    // Force interpolation for last_applied_force
+    m_last_applied_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
+        m_blocks, m_last_applied_force_field_id, "force adaptor");
 
-  m_last_applied_force_interpolator_id =
-      field::addFieldInterpolator<ForceFieldAdaptorInterpolator, FlagField>(
-          m_blocks, m_last_applied_force_adaptor_id, m_flag_field_id,
-          Fluid_flag);
+    m_last_applied_force_interpolator_id =
+        field::addFieldInterpolator<ForceFieldAdaptorInterpolator, FlagField>(
+            m_blocks, m_last_applied_force_adaptor_id, m_flag_field_id,
+            Fluid_flag);
 
-  m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
-      m_blocks, m_pdf_field_id, "density adaptor");
+    m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
+        m_blocks, m_pdf_field_id, "density adaptor");
 
-  m_density_interpolator_id =
-      field::addFieldInterpolator<ScalarFieldAdaptorInterpolator, FlagField>(
-          m_blocks, m_density_adaptor_id, m_flag_field_id, Fluid_flag);
+    m_density_interpolator_id =
+        field::addFieldInterpolator<ScalarFieldAdaptorInterpolator, FlagField>(
+            m_blocks, m_density_adaptor_id, m_flag_field_id, Fluid_flag);
 
-  communication();
+    communication();
   };
 
   void integrate() override { m_time_loop->singleStep(); };
-  
+
   // Velocity
   boost::optional<Utils::Vector3d>
-  get_node_velocity(const Utils::Vector3i node) const override { 
+  get_node_velocity(const Utils::Vector3i node) const override {
     auto const bc = get_block_and_cell(node, false);
-    if (!bc) return {};
+    if (!bc)
+      return {};
     auto const &vel_adaptor =
-      (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
-  return {to_vector3d(vel_adaptor->get((*bc).cell))};
+        (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
+    return {to_vector3d(vel_adaptor->get((*bc).cell))};
   };
-  bool set_node_velocity(const Utils::Vector3i &node, const Utils::Vector3d v) override {
+  bool set_node_velocity(const Utils::Vector3i &node,
+                         const Utils::Vector3d v) override {
     auto bc = get_block_and_cell(node, false);
-    if (!bc) return false;
+    if (!bc)
+      return false;
     auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
     const real_t density = pdf_field->getDensity((*bc).cell);
-    pdf_field->setDensityAndVelocity((*bc).cell,
-                                   Vector3<double>{v[0], v[1], v[2]}, density);
+    pdf_field->setDensityAndVelocity(
+        (*bc).cell, Vector3<double>{v[0], v[1], v[2]}, density);
     return true;
-  }; 
-  
+  };
+
   boost::optional<Utils::Vector3d>
   get_velocity_at_pos(const Utils::Vector3d &pos) const override {
     auto block = get_block(pos, true);
-    if (!block) return {boost::none};
-    auto *velocity_interpolator = block->template getData<VectorFieldAdaptorInterpolator>(
-      m_velocity_interpolator_id);
+    if (!block)
+      return {boost::none};
+    auto *velocity_interpolator =
+        block->template getData<VectorFieldAdaptorInterpolator>(
+            m_velocity_interpolator_id);
     Vector3<real_t> v;
     velocity_interpolator->get(to_vector3(pos), &v);
     return {to_vector3d(v)};
@@ -488,129 +474,144 @@ public:
   // Local force
   bool add_force_at_pos(const Utils::Vector3d &pos,
                         const Utils::Vector3d &force) override {
-  auto block = get_block(pos, true);
-  if (!block) return false;
-  auto *force_distributor = block->template getData<VectorFieldDistributor>(
-      m_force_to_be_applied_distributor_id);
-  auto f = to_vector3(force / m_density);
-  force_distributor->distribute(to_vector3(pos), &f);
-  return true;
-  }; 
+    auto block = get_block(pos, true);
+    if (!block)
+      return false;
+    auto *force_distributor = block->template getData<VectorFieldDistributor>(
+        m_force_to_be_applied_distributor_id);
+    auto f = to_vector3(force / m_density);
+    force_distributor->distribute(to_vector3(pos), &f);
+    return true;
+  };
   boost::optional<Utils::Vector3d>
   get_force_to_be_applied_at_pos(const Utils::Vector3d &pos) const override {
-  auto block = get_block(pos, true);
-  if (!block) return {boost::none};
+    auto block = get_block(pos, true);
+    if (!block)
+      return {boost::none};
 
-  auto *force_interpolator = block->template getData<ForceFieldAdaptorInterpolator>(
-      m_force_to_be_applied_interpolator_id);
-  Vector3<real_t> f;
-  force_interpolator->get(to_vector3(pos), &f);
-  return {to_vector3d(f) * m_density};
-    
-  }; 
-  
+    auto *force_interpolator =
+        block->template getData<ForceFieldAdaptorInterpolator>(
+            m_force_to_be_applied_interpolator_id);
+    Vector3<real_t> f;
+    force_interpolator->get(to_vector3(pos), &f);
+    return {to_vector3d(f) * m_density};
+  };
+
   // Density
-  boost::optional<double> get_density_at_pos(const Utils::Vector3d &pos) override {
+  boost::optional<double>
+  get_density_at_pos(const Utils::Vector3d &pos) override {
 
-  auto block = get_block(pos, true);
-  if (!block) return {boost::none};
+    auto block = get_block(pos, true);
+    if (!block)
+      return {boost::none};
 
-  auto *density_interpolator =
-      block->template getData<ScalarFieldAdaptorInterpolator>(m_density_interpolator_id);
-  double dens;
-  density_interpolator->get(to_vector3(pos), &dens);
-  return {m_density * dens};
+    auto *density_interpolator =
+        block->template getData<ScalarFieldAdaptorInterpolator>(
+            m_density_interpolator_id);
+    double dens;
+    density_interpolator->get(to_vector3(pos), &dens);
+    return {m_density * dens};
   };
-  bool set_node_density(const Utils::Vector3i node, const double density) override {
-  auto bc = get_block_and_cell(node, false);
-  if (!bc) return false;
+  bool set_node_density(const Utils::Vector3i node,
+                        const double density) override {
+    auto bc = get_block_and_cell(node, false);
+    if (!bc)
+      return false;
 
-  auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
-  auto const &vel_adaptor =
-      (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
-  Vector3<double> v = vel_adaptor->get((*bc).cell);
+    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+    auto const &vel_adaptor =
+        (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
+    Vector3<double> v = vel_adaptor->get((*bc).cell);
 
-  pdf_field->setDensityAndVelocity(
-      (*bc).cell, Vector3<double>{v[0], v[1], v[2]}, density / m_density);
+    pdf_field->setDensityAndVelocity(
+        (*bc).cell, Vector3<double>{v[0], v[1], v[2]}, density / m_density);
 
-  return true;
+    return true;
   };
-  
-  boost::optional<double> get_node_density(const Utils::Vector3i node) const override {
-  auto bc = get_block_and_cell(node, false);
-  if (!bc) return {boost::none};
 
-  auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+  boost::optional<double>
+  get_node_density(const Utils::Vector3i node) const override {
+    auto bc = get_block_and_cell(node, false);
+    if (!bc)
+      return {boost::none};
 
-  return {m_density * pdf_field->getDensity((*bc).cell)};
+    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+
+    return {m_density * pdf_field->getDensity((*bc).cell)};
   };
 
   // Boundary related
   boost::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(const Utils::Vector3i &node) const override {
-  auto bc = get_block_and_cell(node, true);
-  if (!bc) return {boost::none}; 
-  const Boundaries *boundary_handling =
-      (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-  boundary::BoundaryUID uid =
-      boundary_handling->getBoundaryUID(UBB_flag);
+    auto bc = get_block_and_cell(node, true);
+    if (!bc)
+      return {boost::none};
+    const Boundaries *boundary_handling =
+        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
+    boundary::BoundaryUID uid = boundary_handling->getBoundaryUID(UBB_flag);
 
-  if (!boundary_handling->isBoundary((*bc).cell))
-    return {boost::none};
+    if (!boundary_handling->isBoundary((*bc).cell))
+      return {boost::none};
 
-  return {to_vector3d(boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
-          (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
+    return {to_vector3d(
+        boundary_handling->template getBoundaryCondition<UBB>(uid).getValue(
+            (*bc).cell[0], (*bc).cell[1], (*bc).cell[2]))};
   };
   bool set_node_velocity_at_boundary(const Utils::Vector3i node,
-          const Utils::Vector3d& v) override {
-  auto bc = get_block_and_cell(node, true);
-  if (!bc) return false;
+                                     const Utils::Vector3d &v) override {
+    auto bc = get_block_and_cell(node, true);
+    if (!bc)
+      return false;
 
-  const typename  UBB::Velocity velocity(real_c(v[0]), real_c(v[1]), real_c(v[2]));
+    const typename UBB::Velocity velocity(real_c(v[0]), real_c(v[1]),
+                                          real_c(v[2]));
 
-  Boundaries *boundary_handling =
-      (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-  boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
-                                   bc->cell[2], velocity);
-  return true;
+    Boundaries *boundary_handling =
+        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
+    boundary_handling->forceBoundary(UBB_flag, bc->cell[0], bc->cell[1],
+                                     bc->cell[2], velocity);
+    return true;
   };
   boost::optional<Utils::Vector3d>
   get_node_boundary_force(const Utils::Vector3i node) const override {
-  auto bc = get_block_and_cell(node, true); // including ghosts
-  if (!bc) return {boost::none};
-  // Get boundary handling
-  auto const &bh =
-      (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-  auto const &ff = (*bc).block->template getData<FlagField>(m_flag_field_id);
-  try {
-    if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
+    auto bc = get_block_and_cell(node, true); // including ghosts
+    if (!bc)
       return {boost::none};
-  } catch (std::exception e) {
-    return {boost::none};
-  }
+    // Get boundary handling
+    auto const &bh =
+        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
+    auto const &ff = (*bc).block->template getData<FlagField>(m_flag_field_id);
+    try {
+      if (!ff->isFlagSet((*bc).cell, ff->getFlag(UBB_flag)))
+        return {boost::none};
+    } catch (std::exception e) {
+      return {boost::none};
+    }
 
-  auto const uid = bh->getBoundaryUID(UBB_flag);
-  auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
-  return {m_density * to_vector3d(ubb.getForce((*bc).cell.x(), (*bc).cell.y(),
-                                               (*bc).cell.z()))};
-    
+    auto const uid = bh->getBoundaryUID(UBB_flag);
+    auto const &ubb = bh->template getBoundaryCondition<UBB>(uid);
+    return {m_density * to_vector3d(ubb.getForce((*bc).cell.x(), (*bc).cell.y(),
+                                                 (*bc).cell.z()))};
   };
   bool remove_node_from_boundary(const Utils::Vector3i &node) override {
-  auto bc = get_block_and_cell(node, true);
-  if (!bc) return false;
-  Boundaries *boundary_handling =
-      (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-  boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
-                                    (*bc).cell[2]);
-  return true;
+    auto bc = get_block_and_cell(node, true);
+    if (!bc)
+      return false;
+    Boundaries *boundary_handling =
+        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
+    boundary_handling->removeBoundary((*bc).cell[0], (*bc).cell[1],
+                                      (*bc).cell[2]);
+    return true;
   };
-  boost::optional<bool> get_node_is_boundary(const Utils::Vector3i &node) const override {
-  auto bc = get_block_and_cell(node, true);
-  if (!bc) return {boost::none};
+  boost::optional<bool>
+  get_node_is_boundary(const Utils::Vector3i &node) const override {
+    auto bc = get_block_and_cell(node, true);
+    if (!bc)
+      return {boost::none};
 
-  Boundaries *boundary_handling =
-      (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
-  return {boundary_handling->isBoundary((*bc).cell)};
+    Boundaries *boundary_handling =
+        (*bc).block->template getData<Boundaries>(m_boundary_handling_id);
+    return {boundary_handling->isBoundary((*bc).cell)};
   };
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
@@ -625,58 +626,60 @@ public:
 
       boundary_handling->fillWithDomain(domain_bb);
     }
-    
   };
 
   // Pressure tensor
   boost::optional<Utils::Vector6d>
   get_node_pressure_tensor(const Utils::Vector3i node) const override {
     auto bc = get_block_and_cell(node, false);
-  if (!bc) return {boost::none};
-  auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
-  return to_vector6d(pdf_field->getPressureTensor((*bc).cell));
-  }; 
+    if (!bc)
+      return {boost::none};
+    auto pdf_field = (*bc).block->template getData<PdfField>(m_pdf_field_id);
+    return to_vector6d(pdf_field->getPressureTensor((*bc).cell));
+  };
 
   // Global momentum
   Utils::Vector3d get_momentum() const override {
-  Vector3<real_t> mom;
-  for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
-       ++block_it) {
-    auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
-    Vector3<real_t> local_v;
-    WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
-      double local_dens = pdf_field->getDensityAndVelocity(local_v, x, y, z);
-      mom += local_dens * local_v;
-    });
-  }
-  return m_density * to_vector3d(mom);
-
-  }; 
+    Vector3<real_t> mom;
+    for (auto block_it = m_blocks->begin(); block_it != m_blocks->end();
+         ++block_it) {
+      auto pdf_field = block_it->template getData<PdfField>(m_pdf_field_id);
+      Vector3<real_t> local_v;
+      WALBERLA_FOR_ALL_CELLS_XYZ(pdf_field, {
+        double local_dens = pdf_field->getDensityAndVelocity(local_v, x, y, z);
+        mom += local_dens * local_v;
+      });
+    }
+    return m_density * to_vector3d(mom);
+  };
   // Global external force
   void set_external_force(const Utils::Vector3d &ext_force) override {
     m_reset_force->set_ext_force(ext_force / m_density);
-  }; 
+  };
   Utils::Vector3d get_external_force() const override {
     return m_reset_force->get_ext_force() * m_density;
-  }; 
-  
+  };
+
   // Global parameters
   void set_viscosity(double viscosity) override {
     m_lattice_model->collisionModel().resetWithMagicNumber(
-      lbm::collision_model::omegaFromViscosity((real_t)viscosity));
+        lbm::collision_model::omegaFromViscosity((real_t)viscosity));
   };
   double get_viscosity() const override {
     return m_lattice_model->collisionModel().viscosity();
-  }; 
+  };
 
-double get_tau() const override { return m_tau; };
+  double get_tau() const override { return m_tau; };
   double get_kT() const override { return m_kT; };
-  
+
   // Grid, domain, halo
   int n_ghost_layers() const override { return m_n_ghost_layers; };
-  Utils::Vector3i get_grid_dimensions() const override { return m_grid_dimensions; }
+  Utils::Vector3i get_grid_dimensions() const override {
+    return m_grid_dimensions;
+  }
   double get_grid_spacing() const override { return m_agrid; };
-  std::pair<Utils::Vector3d, Utils::Vector3d> get_local_domain() const override  {
+  std::pair<Utils::Vector3d, Utils::Vector3d>
+  get_local_domain() const override {
     // We only have one block per mpi rank
     assert(++(m_blocks->begin()) == m_blocks->end());
 
@@ -686,68 +689,66 @@ double get_tau() const override { return m_tau; };
 
   bool node_in_local_domain(const Utils::Vector3i &node) const override {
     // Note: Lattice constant =1, cell centers offset by .5
-    return get_block_and_cell(node,false) != boost::none;
+    return get_block_and_cell(node, false) != boost::none;
   };
   bool node_in_local_halo(const Utils::Vector3i &node) const override {
-    return get_block_and_cell(node,true) != boost::none;
+    return get_block_and_cell(node, true) != boost::none;
   };
   bool pos_in_local_domain(const Utils::Vector3d &pos) const override {
-    return get_block(pos,false) != nullptr;
+    return get_block(pos, false) != nullptr;
   };
-  bool pos_in_local_halo(const Utils::Vector3d &pos) const override { 
-    return get_block(pos,true) != nullptr;
+  bool pos_in_local_halo(const Utils::Vector3d &pos) const override {
+    return get_block(pos, true) != nullptr;
   };
 
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   node_indices_positions() const override {
-  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-  for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
-    auto left = block->getAABB().min();
-    // Lattice constant is 1, node centers are offset by .5
-    Utils::Vector3d pos_offset =
-        to_vector3d(left) + Utils::Vector3d::broadcast(.5);
+    std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
+    for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
+      auto left = block->getAABB().min();
+      // Lattice constant is 1, node centers are offset by .5
+      Utils::Vector3d pos_offset =
+          to_vector3d(left) + Utils::Vector3d::broadcast(.5);
 
-    // Lattice constant is 1, so cast left corner position to ints
-    Utils::Vector3i index_offset =
-        Utils::Vector3i{int(left[0]), int(left[1]), int(left[2])};
+      // Lattice constant is 1, so cast left corner position to ints
+      Utils::Vector3i index_offset =
+          Utils::Vector3i{int(left[0]), int(left[1]), int(left[2])};
 
-    // Get field data which knows about the indices
-    // In the loop, x,y,z are in block-local coordinates
-    auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
-    for (int x : Utils::make_lin_space(int(0), int(pdf_field->xSize()),
-                                       int(pdf_field->xSize()), false)) {
-      for (int y : Utils::make_lin_space(int(0), int(pdf_field->ySize()),
-                                         int(pdf_field->ySize()), false)) {
-        for (int z : Utils::make_lin_space(int(0), int(pdf_field->zSize()),
-                                           int(pdf_field->zSize()), false)) {
-          res.push_back(
-              {index_offset + Utils::Vector3i{x, y, z},
-               pos_offset + Utils::Vector3d{double(x), double(y), double(z)}});
+      // Get field data which knows about the indices
+      // In the loop, x,y,z are in block-local coordinates
+      auto pdf_field = block->template getData<PdfField>(m_pdf_field_id);
+      for (int x : Utils::make_lin_space(int(0), int(pdf_field->xSize()),
+                                         int(pdf_field->xSize()), false)) {
+        for (int y : Utils::make_lin_space(int(0), int(pdf_field->ySize()),
+                                           int(pdf_field->ySize()), false)) {
+          for (int z : Utils::make_lin_space(int(0), int(pdf_field->zSize()),
+                                             int(pdf_field->zSize()), false)) {
+            res.push_back({index_offset + Utils::Vector3i{x, y, z},
+                           pos_offset + Utils::Vector3d{double(x), double(y),
+                                                        double(z)}});
+          }
         }
       }
     }
-  }
-  return res;
-  
+    return res;
   };
   std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   global_node_indices_positions() const override {
-  std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
-  for (int x : Utils::make_lin_space(int(0), int(m_grid_dimensions[0]),
-                                     int(m_grid_dimensions[0]), false)) {
-    for (int y : Utils::make_lin_space(int(0), int(m_grid_dimensions[1]),
-                                       int(m_grid_dimensions[1]), false)) {
-      for (int z : Utils::make_lin_space(int(0), int(m_grid_dimensions[2]),
-                                         int(m_grid_dimensions[2]), false)) {
-        res.push_back({Utils::Vector3i{x, y, z},
-                       Utils::Vector3d::broadcast(.5) +
-                           Utils::Vector3d{double(x), double(y), double(z)}});
+    std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>> res;
+    for (int x : Utils::make_lin_space(int(0), int(m_grid_dimensions[0]),
+                                       int(m_grid_dimensions[0]), false)) {
+      for (int y : Utils::make_lin_space(int(0), int(m_grid_dimensions[1]),
+                                         int(m_grid_dimensions[1]), false)) {
+        for (int z : Utils::make_lin_space(int(0), int(m_grid_dimensions[2]),
+                                           int(m_grid_dimensions[2]), false)) {
+          res.push_back({Utils::Vector3i{x, y, z},
+                         Utils::Vector3d::broadcast(.5) +
+                             Utils::Vector3d{double(x), double(y), double(z)}});
+        }
       }
     }
-  }
-  return res;
+    return res;
   };
-
 };
 } // namespace walberla
 #endif // LB_WALBERLA
