@@ -405,8 +405,8 @@ public:
                                             m_boundary_handling_id),
                                         "boundary handling");
   m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
-                                        "Reset force fields")
-        << timeloop::AfterFunction(communication, "communication");
+                                        "Reset force fields");
+//        << timeloop::AfterFunction(communication, "communication");
   m_time_loop->add() << timeloop::Sweep(
       domain_decomposition::makeSharedSweep(
           lbm::makeCellwiseSweep<LatticeModel, FlagField>(
