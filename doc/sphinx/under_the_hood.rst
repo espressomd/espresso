@@ -16,13 +16,13 @@ Since basically all major parts of the main MD integration have to
 access the particle data, efficient access to the particle data is
 crucial for a fast MD code. Therefore the particle data needs some more
 elaborate organization, which will be presented here. A particle itself
-is represented by a structure (Particle) consisting of several
-substructures (e.g. ParticlePosition, ParticleForce or
-ParticleProperties), which in turn represent basic physical properties
+is represented by a structure (``Particle``) consisting of several
+substructures (e.g. ``ParticlePosition``, ``ParticleForce`` or
+``ParticleProperties``), which in turn represent basic physical properties
 such as position, force or charge. The particles are organized in one or
-more particle lists on each node, called Cell cells. The cells are
-arranged by several possible systems, the cellsystems as described
-above. A cell system defines a way the particles are stored in , i.e.
+more particle lists on each node, called ``CellPList``. The cells are
+arranged by several possible systems, as described in :ref:`Cellsystems`.
+A cell system defines a way the particles are stored in |es|, i.e.
 how they are distributed onto the processor nodes and how they are
 organized on each of them. Moreover a cell system also defines
 procedures to efficiently calculate the force, energy and pressure for
