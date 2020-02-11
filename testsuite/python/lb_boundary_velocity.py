@@ -21,7 +21,7 @@ import unittest as ut
 import unittest_decorators as utx
 
 
-@utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
+@utx.skipIfMissingFeatures(["LB_BOUNDARIES", "LB_WALBERLA"])
 class LBBoundaryVelocityTest(ut.TestCase):
 
     """Test slip velocity of boundaries.

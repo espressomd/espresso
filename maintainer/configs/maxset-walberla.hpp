@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 /* maximal set of features usable at the same time */
-#define PARTIAL_PERIODIC
 #define ELECTROSTATICS
 #define DIPOLES
 #define ROTATION
@@ -45,7 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define ENGINE
 
 #ifdef CUDA
-#define LB_GPU
 #define LB_BOUNDARIES_GPU
 #define ELECTROKINETICS
 #define EK_BOUNDARIES
@@ -78,11 +76,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define IMMERSED_BOUNDARY
-#define FLATNOISE
 #define OIF_GLOBAL_FORCES
 #define OIF_LOCAL_FORCES
-#define MEMBRANE_COLLISION
-#define AFFINITY
 
 #define ADDITIONAL_CHECKS
