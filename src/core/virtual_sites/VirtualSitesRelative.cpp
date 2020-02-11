@@ -157,8 +157,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 }
 
 // Rigid body contribution to scalar pressure and stress tensor
-Utils::Matrix<double, 3, 3>
-VirtualSitesRelative::stress_tensor() const {
+Utils::Matrix<double, 3, 3> VirtualSitesRelative::stress_tensor() const {
   Utils::Matrix<double, 3, 3> stress_tensor = {};
 
   for (auto &p : cell_structure.local_cells().particles()) {
