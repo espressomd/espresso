@@ -36,9 +36,8 @@ public:
   /** @copydoc VirtualSites::back_transfer_forces_and_torques */
   void back_transfer_forces_and_torques() const override;
   /** @copydoc VirtualSites::pressure_and_stress_tensor_contribution */
-  void
-  pressure_and_stress_tensor_contribution(double *pressure,
-                                          double *stress_tensor) const override;
+  Utils::Matrix<double, 3, 3>
+  pressure_and_stress_tensor_contribution() const override;
 
 private:
   /** Update the position of the given virtual particle as defined by the real

@@ -33,6 +33,8 @@
  */
 
 #ifdef VIRTUAL_SITES
+#include <utils/Vector.hpp>
+
 #include <memory>
 
 /** @brief Base class for virtual sites implementations */
@@ -50,9 +52,10 @@ public:
   virtual void after_force_calc(){};
   virtual void after_lb_propagation(){};
   /** @brief Pressure contribution. */
-  virtual void
-  pressure_and_stress_tensor_contribution(double *pressure,
-                                          double *stress_tensor) const {};
+  virtual Utils::Matrix<double, 3, 3>
+  pressure_and_stress_tensor_contribution() const {
+    return {};
+  };
   /** @brief Enable/disable velocity calculations for vs. */
   void set_have_velocity(const bool &v) { m_have_velocity = v; };
   const bool &get_have_velocity() const { return m_have_velocity; };

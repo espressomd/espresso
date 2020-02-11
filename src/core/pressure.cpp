@@ -29,6 +29,7 @@
 #include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
+#include <boost/range/algorithm/copy.hpp>
 
 #include "short_range_loop.hpp"
 
@@ -127,8 +128,13 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   calc_long_range_virials(cell_structure.local_cells().particles());
 
 #ifdef VIRTUAL_SITES
-  virtual_sites()->pressure_and_stress_tensor_contribution(
-      virials.virtual_sites, p_tensor.virtual_sites);
+  {
+    auto const vs_stress =
+        virtual_sites()->pressure_and_stress_tensor_contribution();
+
+    *virials.virtual_sites += trace(vs_stress);
+    boost::copy(flatten(vs_stress), p_tensor.virtual_sites);
+  }
 #endif
 
   for (int n = 1; n < virials.data.n; n++)

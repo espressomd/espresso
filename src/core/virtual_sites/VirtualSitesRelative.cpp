@@ -158,10 +158,12 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 }
 
 // Rigid body contribution to scalar pressure and stress tensor
-void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
-    double *pressure, double *stress_tensor) const {
+Utils::Matrix<double, 3, 3>
+VirtualSitesRelative::pressure_and_stress_tensor_contribution() const {
   // Division by 3 volume is somewhere else. (pressure.cpp after all pressure
   // calculations) Iterate over all the particles in the local cells
+
+  Utils::Matrix<double, 3, 3> stress_tensor = {};
 
   for (auto &p : cell_structure.local_cells().particles()) {
     if (!p.p.is_virtual)
@@ -178,15 +180,10 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     // conditions
     auto const d = get_mi_vector(p_real->r.p, p.r.p, box_geo);
 
-    // Stress tensor contribution
-    for (int k = 0; k < 3; k++)
-      for (int l = 0; l < 3; l++)
-        stress_tensor[k * 3 + l] += p.f.f[k] * d[l];
-
-    // Pressure = 1/3 trace of stress tensor
-    // but the 1/3 is applied somewhere else.
-    *pressure += p.f.f * d;
+    stress_tensor += tensor_product(d, p.f.f);
   }
+
+  return stress_tensor;
 }
 
 #endif
