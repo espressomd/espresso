@@ -40,9 +40,7 @@ void VirtualSitesRelative::update(bool recalc_positions) const {
         (get_have_velocity() ? (GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM)
                              : GHOSTTRANS_NONE);
 
-    if (recalc_positions or get_have_velocity()) {
-      ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
-    }
+    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
   }
   for (auto &p : cell_structure.local_cells().particles()) {
     if (!p.p.is_virtual)
