@@ -28,7 +28,6 @@ The direct analysis commands can be classified into two types:
     - :ref:`Minimal distances between particles`
     - :ref:`Particles in the neighborhood`
     - :ref:`Particle distribution`
-    - :ref:`Cylindrical Average`
     - :ref:`Radial distribution function` with ``rdf_type='rdf'``
     - :ref:`Structure factor`
     - :ref:`Center of mass`
