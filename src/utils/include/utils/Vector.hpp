@@ -174,6 +174,23 @@ template <class T, size_t N> T trace(Matrix<T, N, N> const &m) {
   return tr;
 }
 
+/**
+ * @brief Flatten a matrix to a linear vector.
+ *
+ * @param m Input Matrix
+ * @return Flat vector with elements of @ref m.
+ */
+template <class T, size_t N, size_t M>
+Vector<T, N * M> flatten(Matrix<T, N, M> const &m) {
+  Vector<T, N * M> ret;
+
+  for (size_t i = 0; i < N; i++)
+    for (size_t j = 0; j < M; j++)
+      ret[i * M + j] = m[j][i];
+
+  return ret;
+}
+
 namespace detail {
 template <size_t N, typename T, typename U, typename Op>
 auto binary_op(Vector<T, N> const &a, Vector<U, N> const &b, Op op) {

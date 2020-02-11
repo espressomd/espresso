@@ -389,3 +389,11 @@ BOOST_AUTO_TEST_CASE(trace_) {
 
   BOOST_CHECK_EQUAL(expected, result);
 }
+
+BOOST_AUTO_TEST_CASE(flatten_) {
+  auto const A = Utils::Matrix<int, 2, 2>{{1, 2}, {3, 4}};
+  auto const result = flatten(A);
+  auto const expected = Utils::Vector<int, 4>{1, 3, 2, 4};
+
+  BOOST_CHECK(result == expected);
+}
