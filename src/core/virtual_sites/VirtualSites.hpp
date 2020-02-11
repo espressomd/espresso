@@ -35,8 +35,6 @@
 #ifdef VIRTUAL_SITES
 #include <utils/Vector.hpp>
 
-#include <memory>
-
 /** @brief Base class for virtual sites implementations */
 class VirtualSites {
 public:
