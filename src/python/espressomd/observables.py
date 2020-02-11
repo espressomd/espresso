@@ -289,7 +289,6 @@ class MagneticDipoleMoment(Observable):
 
 @script_interface_register
 class ParticleAngularVelocities(Observable):
-    _so_name = "Observables::ParticleAngularVelocities"
 
     """Calculates the angular velocity (omega) in the spaced-fixed frame of reference
 
@@ -303,15 +302,16 @@ class ParticleAngularVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
+    _so_name = "Observables::ParticleAngularVelocities"
 
 
 @script_interface_register
 class ParticleBodyAngularVelocities(Observable):
-    _so_name = "Observables::ParticleBodyAngularVelocities"
+
     """Calculates the angular velocity (omega) in the particles'  body-fixed frame of reference.
 
-   For each particle, the body-fixed frame of reference is obtained from the particle's
-   orientation stored in the quaternions.
+    For each particle, the body-fixed frame of reference is obtained from the particle's
+    orientation stored in the quaternions.
 
     Parameters
     ----------
@@ -319,6 +319,7 @@ class ParticleBodyAngularVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
+    _so_name = "Observables::ParticleBodyAngularVelocities"
 
 
 @script_interface_register
