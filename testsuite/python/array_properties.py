@@ -15,312 +15,210 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
-import unittest_decorators as utx
+
 import numpy as np
+
 import espressomd
-from espressomd import lb
-from espressomd import utils
+import espressomd.lb
+import espressomd.utils
+import unittest_decorators as utx
 
 
-class ArrayLockedTest(ut.TestCase):
+class ArrayCommon(ut.TestCase):
+    def assert_operator_usage_raises(self, array):
+        with self.assertRaises(ValueError):
+            array[0] = 0
+        with self.assertRaises(ValueError):
+            array += [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array -= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array *= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array /= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array //= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array %= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array **= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array <<= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array >>= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array &= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array |= [1, 1, 1]
+        with self.assertRaises(ValueError):
+            array ^= [1, 1, 1]
 
+
+class ArrayLockedTest(ArrayCommon):
     def test_locked_operators(self):
-        v = utils.array_locked([1., 2., 3.])
-
-        with self.assertRaises(ValueError):
-            v[0] = 0
-        with self.assertRaises(ValueError):
-            v += [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v -= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v *= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v /= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v //= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v %= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v **= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v <<= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v >>= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v &= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v |= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v ^= [1, 1, 1]
+        array = espressomd.utils.array_locked([1., 2., 3.])
+        self.assert_operator_usage_raises(array)
 
     def test_unlocked_operators(self):
-        v = utils.array_locked([1, 2, 3])
-        w = utils.array_locked([4, 5, 6])
-        add = v + w
-        sub = v - w
+        array = espressomd.utils.array_locked([1, 2, 3])
+        array2 = espressomd.utils.array_locked([4, 5, 6])
+        add = array + array2
+        sub = array - array2
 
-        self.assertTrue(isinstance(add, np.ndarray))
-        self.assertTrue(isinstance(sub, np.ndarray))
+        self.assertIsInstance(add, np.ndarray)
+        self.assertIsInstance(sub, np.ndarray)
 
         self.assertTrue(add.flags.writeable)
         self.assertTrue(sub.flags.writeable)
 
-        np.testing.assert_array_equal(add, np.add(np.copy(v), np.copy(w)))
-        np.testing.assert_array_equal(sub, np.subtract(np.copy(v), np.copy(w)))
-        np.testing.assert_array_equal(sub, -(w - v))
+        np.testing.assert_array_equal(
+            add, np.add(np.copy(array), np.copy(array2)))
+        np.testing.assert_array_equal(
+            sub, np.subtract(
+                np.copy(array), np.copy(array2)))
+        np.testing.assert_array_equal(sub, -(array2 - array))
 
     def test_copy_is_writeable(self):
-        v = np.copy(utils.array_locked([1, 2, 3]))
-        self.assertTrue(v.flags.writeable)
+        array = np.copy(espressomd.utils.array_locked([1, 2, 3]))
+        self.assertTrue(array.flags.writeable)
 
     def test_setter(self):
-        v = utils.array_locked([1, 2, 3])
-        v = [4, 5, 6]
-        np.testing.assert_array_equal(v, [4, 5, 6])
+        array = espressomd.utils.array_locked([1, 2, 3])
+        array = [4, 5, 6]
+        np.testing.assert_array_equal(array, [4, 5, 6])
 
 
-class ArrayPropertyTest(ut.TestCase):
+def check_array_writable(array):
+    value = np.random.random(array.shape[0]).astype(type(array[0]))
+    array = value
+    np.testing.assert_array_almost_equal(np.copy(array), value)
+
+
+class ArrayPropertyTest(ArrayCommon):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.box_l = [12.0, 12.0, 12.0]
     system.time_step = 0.01
     system.cell_system.skin = 0.01
     system.part.add(pos=[0, 0, 0])
-    lbf = lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
-    system.actors.add(lbf)
 
-    def locked_operators(self, v):
-        with self.assertRaises(ValueError):
-            v[0] = 0
-        with self.assertRaises(ValueError):
-            v += [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v -= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v *= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v /= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v //= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v %= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v **= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v <<= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v >>= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v &= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v |= [1, 1, 1]
-        with self.assertRaises(ValueError):
-            v ^= [1, 1, 1]
+    def setUp(self):
+        self.system.box_l = [12.0, 12.0, 12.0]
 
-    def set_copy(self, v):
-        cpy = np.copy(v)
+    def tearDown(self):
+        self.system.actors.clear()
+
+    def assert_copy_is_writable(self, array):
+        cpy = np.copy(array)
         self.assertTrue(cpy.flags.writeable)
 
     def test_common(self):
+        self.assert_operator_usage_raises(self.system.part[0].pos)
+        self.assert_operator_usage_raises(self.system.part[0].v)
+        self.assert_operator_usage_raises(self.system.part[0].f)
+        self.assert_operator_usage_raises(self.system.part[0].pos_folded)
 
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].pos)
-        self.locked_operators(self.system.part[0].v)
-        self.locked_operators(self.system.part[0].f)
-        self.locked_operators(self.system.part[0].pos_folded)
+        self.assert_operator_usage_raises(self.system.box_l)
 
-        # System
-        self.locked_operators(self.system.box_l)
+        check_array_writable(self.system.part[0].pos)
+        check_array_writable(self.system.part[0].v)
+        check_array_writable(self.system.part[0].f)
+        check_array_writable(self.system.box_l)
 
-        # Check (allowed) setter
-        # Particle
-        self.system.part[0].pos = [2, 2, 2]
-        self.assertTrue((self.system.part[0].pos == [2, 2, 2]).all())
+        self.assert_copy_is_writable(self.system.part[0].pos)
+        self.assert_copy_is_writable(self.system.part[0].v)
+        self.assert_copy_is_writable(self.system.part[0].f)
+        self.assert_copy_is_writable(self.system.part[0].pos_folded)
 
-        self.system.part[0].v = [2, 2, 2]
-        self.assertTrue((self.system.part[0].v == [2, 2, 2]).all())
-
-        self.system.part[0].f = [2, 2, 2]
-        self.assertTrue((self.system.part[0].f == [2, 2, 2]).all())
-
-        # System
-        self.system.box_l = [2, 2, 2]
-        self.assertTrue((self.system.box_l == [2, 2, 2]).all())
-
-        # Check if copy is settable
-        # Particle
-        self.set_copy(self.system.part[0].pos)
-        self.set_copy(self.system.part[0].pos)
-        self.set_copy(self.system.part[0].v)
-        self.set_copy(self.system.part[0].f)
-        self.set_copy(self.system.part[0].pos_folded)
-
-        # System
-        self.set_copy(self.system.box_l)
+        self.assert_copy_is_writable(self.system.box_l)
 
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_rotation(self):
-
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].omega_lab)
-        self.locked_operators(self.system.part[0].quat)
-        self.locked_operators(self.system.part[0].rotation)
-        self.locked_operators(self.system.part[0].omega_body)
-        self.locked_operators(self.system.part[0].torque_lab)
+        self.assert_operator_usage_raises(self.system.part[0].omega_lab)
+        self.assert_operator_usage_raises(self.system.part[0].quat)
+        self.assert_operator_usage_raises(self.system.part[0].rotation)
+        self.assert_operator_usage_raises(self.system.part[0].omega_body)
+        self.assert_operator_usage_raises(self.system.part[0].torque_lab)
         if espressomd.has_features("EXTERNAL_FORCES"):
-            self.locked_operators(self.system.part[0].ext_torque)
+            self.assert_operator_usage_raises(self.system.part[0].ext_torque)
 
-        # Check (allowed) setter
-        # Particle
-        self.system.part[0].quat = [0.5, 0.5, 0.5, 0.5]
-        self.assertTrue(
-            (self.system.part[0].quat == [0.5, 0.5, 0.5, 0.5]).all())
-
-        self.system.part[0].omega_lab = [2, 2, 2]
-        self.assertTrue((self.system.part[0].omega_lab == [2, 2, 2]).all())
-
-        self.system.part[0].rotation = [1, 1, 1]
-        self.assertTrue((self.system.part[0].rotation == [1, 1, 1]).all())
-
-        self.system.part[0].omega_body = [2, 2, 2]
-        self.assertTrue((self.system.part[0].omega_body == [2, 2, 2]).all())
-
-        self.system.part[0].torque_lab = [2, 2, 2]
-        self.assertTrue((self.system.part[0].torque_lab == [2, 2, 2]).all())
+        check_array_writable(self.system.part[0].quat)
+        check_array_writable(self.system.part[0].omega_lab)
+        check_array_writable(self.system.part[0].rotation)
+        check_array_writable(self.system.part[0].omega_body)
+        check_array_writable(self.system.part[0].torque_lab)
 
         if espressomd.has_features("EXTERNAL_FORCES"):
-            self.system.part[0].ext_torque = [2, 2, 2]
-            self.assertTrue(
-                (self.system.part[0].ext_torque == [2, 2, 2]).all())
+            check_array_writable(self.system.part[0].ext_torque)
 
-        # Check if copy is settable
-        # Particle
-        self.set_copy(self.system.part[0].omega_lab)
-        self.set_copy(self.system.part[0].quat)
-        self.set_copy(self.system.part[0].rotation)
-        self.set_copy(self.system.part[0].omega_body)
-        self.set_copy(self.system.part[0].torque_lab)
+        self.assert_copy_is_writable(self.system.part[0].omega_lab)
+        self.assert_copy_is_writable(self.system.part[0].quat)
+        self.assert_copy_is_writable(self.system.part[0].rotation)
+        self.assert_copy_is_writable(self.system.part[0].omega_body)
+        self.assert_copy_is_writable(self.system.part[0].torque_lab)
         if espressomd.has_features("EXTERNAL_FORCES"):
-            self.set_copy(self.system.part[0].ext_torque)
+            self.assert_copy_is_writable(self.system.part[0].ext_torque)
 
     @utx.skipIfMissingFeatures(["ROTATIONAL_INERTIA"])
     def test_rotational_inertia(self):
-
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].rinertia)
-
-        # Check (allowed) setter
-        # Particle
-        self.system.part[0].rinertia = [2, 2, 2]
-        self.assertTrue((self.system.part[0].rinertia == [2, 2, 2]).all())
-
-        # Check if copy is settable
-        # Particle
-        self.set_copy(self.system.part[0].rinertia)
+        self.assert_operator_usage_raises(self.system.part[0].rinertia)
+        check_array_writable(self.system.part[0].rinertia)
+        self.assert_copy_is_writable(self.system.part[0].rinertia)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_external_forces(self):
+        self.assert_operator_usage_raises(self.system.part[0].ext_force)
+        self.assert_operator_usage_raises(self.system.part[0].fix)
 
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].ext_force)
-        self.locked_operators(self.system.part[0].fix)
+        check_array_writable(self.system.part[0].ext_force)
+        check_array_writable(self.system.part[0].fix)
 
-        # Check (allowed) setter
-        # Particle
-        self.system.part[0].ext_force = [2, 2, 2]
-        self.assertTrue((self.system.part[0].ext_force == [2, 2, 2]).all())
-
-        self.system.part[0].fix = [1, 1, 1]
-        self.assertTrue((self.system.part[0].fix == [1, 1, 1]).all())
-
-        # Check if copy is settable
-        # Particle
-        self.set_copy(self.system.part[0].ext_force)
-        self.set_copy(self.system.part[0].fix)
+        self.assert_copy_is_writable(self.system.part[0].ext_force)
+        self.assert_copy_is_writable(self.system.part[0].fix)
 
     @utx.skipIfMissingFeatures(["ROTATION", "PARTICLE_ANISOTROPY"])
     def test_rot_aniso(self):
+        self.assert_operator_usage_raises(self.system.part[0].gamma_rot)
 
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].gamma_rot)
+        check_array_writable(self.system.part[0].gamma_rot)
 
-        # Check (allowed) setter
-        # Particle
-        self.system.part[0].gamma_rot = [2, 2, 2]
-        self.assertTrue((self.system.part[0].gamma_rot == [2, 2, 2]).all())
-
-        # Check if copy is settable
-        # Particle
-        self.set_copy(self.system.part[0].gamma_rot)
+        self.assert_copy_is_writable(self.system.part[0].gamma_rot)
 
     def test_lb(self):
-        # Check for exception for various operators
-        # LB
-        self.locked_operators(self.lbf[0, 0, 0].velocity)
-        self.locked_operators(self.lbf[0, 0, 0].stress)
-        self.locked_operators(self.lbf[0, 0, 0].stress_neq)
-        self.locked_operators(self.lbf[0, 0, 0].population)
+        lbf = espressomd.lb.LBFluid(agrid=0.5, dens=1, visc=1, tau=0.01)
+        self.system.actors.add(lbf)
+
+        self.assert_operator_usage_raises(lbf[0, 0, 0].velocity)
+        self.assert_operator_usage_raises(lbf[0, 0, 0].stress)
+        self.assert_operator_usage_raises(lbf[0, 0, 0].stress_neq)
+        self.assert_operator_usage_raises(lbf[0, 0, 0].population)
 
     @utx.skipIfMissingFeatures(["LANGEVIN_PER_PARTICLE",
                                 "PARTICLE_ANISOTROPY"])
     def test_langevinpp_aniso(self):
+        self.assert_operator_usage_raises(self.system.part[0].gamma)
 
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].gamma)
+        check_array_writable(self.system.part[0].gamma)
 
-        # Check (allowed) setter
-        # Particle
-        self.system.part[0].gamma = [2, 2, 2]
-        self.assertTrue((self.system.part[0].gamma == [2, 2, 2]).all())
-
-        # Check if copy is settable
-        # Particle
-        self.set_copy(self.system.part[0].gamma)
+        self.assert_copy_is_writable(self.system.part[0].gamma)
 
     @utx.skipIfMissingFeatures(["DIPOLES"])
     def test_dipoles(self):
+        self.assert_operator_usage_raises(self.system.part[0].dip)
 
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].dip)
+        check_array_writable(self.system.part[0].dip)
 
-        # Check (allowed) setter
-        # Particle
-        self.system.part[0].dip = [2, 2, 2]
-        np.testing.assert_allclose(
-            [2, 2, 2], np.copy(self.system.part[0].dip), atol=1E-15)
-
-        # Check if copy is settable
-        # Particle
-        self.set_copy(self.system.part[0].dip)
+        self.assert_copy_is_writable(self.system.part[0].dip)
 
     @utx.skipIfMissingFeatures(["EXCLUSIONS"])
     def test_exclusions(self):
-
-        # Check for exception for various operators
-        # Particle
-        self.locked_operators(self.system.part[0].exclusions)
+        self.assert_operator_usage_raises(self.system.part[0].exclusions)
 
     def test_partial_periodic(self):
+        self.assert_operator_usage_raises(self.system.periodicity)
 
-        # Check for exception for various operators
-        # System
-        self.locked_operators(self.system.periodicity)
+        check_array_writable(self.system.periodicity)
 
-        # Check (allowed) setter
-        # System
-        self.system.periodicity = [1, 0, 0]
-        self.assertTrue((self.system.periodicity == [1, 0, 0]).all())
-
-        # Check if copy is settable
-        # System
-        self.set_copy(self.system.periodicity)
+        self.assert_copy_is_writable(self.system.periodicity)
 
 
 if __name__ == "__main__":

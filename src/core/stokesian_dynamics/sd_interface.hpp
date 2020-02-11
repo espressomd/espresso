@@ -20,8 +20,8 @@
 #ifndef STOKESIAN_DYNAMICS_INTERFACE_H
 #define STOKESIAN_DYNAMICS_INTERFACE_H
 
-#include "config.hpp"
 #include "ParticleRange.hpp"
+#include "config.hpp"
 
 #include <string>
 #include <unordered_map>
@@ -33,28 +33,27 @@
 struct SD_particle_data {
   int on_node = -1;
   int id = -1;
-  int type = 0; 
-  
+  int type = 0;
+
   /* particle radius */
-  double r = -1;   // Where do I get this?  Particle type table?
+  double r = -1; 
 
   /* particle position */
   Utils::Vector3d pos = {0., 0., 0.};
-  
+
   /* particle velocity */
   Utils::Vector3d vel = {0., 0., 0.};
-  
+
 #ifdef ROTATION
   /* particle rotational velocity */
   Utils::Vector3d omega = {0., 0., 0.};
 #endif
-  
+
   /* external force */
-  Utils::Vector3d ext_force = {0.0, 0.0, 0.0};  // double or float?
-  
+  Utils::Vector3d ext_force = {0.0, 0.0, 0.0}; 
+
   /* external torque */
   Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
-  
 };
 
 void set_sd_viscosity(double eta);
@@ -75,7 +74,7 @@ int get_sd_flags();
 void set_sd_seed(std::size_t seed);
 std::size_t get_sd_seed();
 
-/* takes the forces and torques on all particles and propagates them
+/* takes the forces and torques on all particles computes new velocities
  * acts on particles on all nodes */
 void propagate_vel_pos_sd();
 

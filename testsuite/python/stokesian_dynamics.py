@@ -20,7 +20,7 @@ class StokesianConfigTest(ut.TestCase):
         self.system.periodicity = [0, 0, 1]
         with (self.assertRaises(Exception)): 
             self.system.integrator.set_sd()
-        
+
         self.system.periodicity = [0, 0, 0]
         self.system.integrator.set_sd()
         with (self.assertRaises(Exception)):
@@ -137,7 +137,7 @@ class StokesianDiffusionTest(ut.TestCase):
         fit = scipy.optimize.curve_fit(lambda t, Dr: np.exp(-2 * Dr * t),
                                        t[:2 * tr_expected],
                                        costheta[:2 * tr_expected],
-                                       p0 = 1e-5)
+                                       p0=1e-5)
         Dr_measured = fit[0][0]
         self.assertAlmostEqual(
             Dr_expected,

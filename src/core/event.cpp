@@ -376,10 +376,11 @@ void on_parameter_change(int field) {
 #ifdef STOKESIAN_DYNAMICS
     if (integ_switch == INTEG_METHOD_SD) {
       if (box_geo.periodic(0) || box_geo.periodic(1) || box_geo.periodic(2))
-        runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: " 
-          << box_geo.periodic(0) << " " << box_geo.periodic(1) << " " 
-          << box_geo.periodic(2) << "\n" << "  Required: 0 0 0\n";
-    } 
+        runtimeErrorMsg() << "Illegal box periodicity for Stokesian Dynamics: "
+                          << box_geo.periodic(0) << " " << box_geo.periodic(1)
+                          << " " << box_geo.periodic(2) << "\n"
+                          << "  Required: 0 0 0\n";
+    }
 #endif
 
     cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);

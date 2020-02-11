@@ -56,9 +56,9 @@
 #include "partCfg_global.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
-#include "stokesian_dynamics/sd_interface.hpp"
 #include "statistics.hpp"
 #include "statistics_chain.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "virtual_sites.hpp"
 
 #include "electrostatics_magnetostatics/coulomb.hpp"
@@ -78,7 +78,6 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/utility.hpp>
 #include <utils/mpi/cart_comm.hpp>
-
 
 using namespace std;
 
@@ -672,7 +671,6 @@ void mpi_galilei_transform() {
 
   mpi_call_all(mpi_galilei_transform_slave, cmsvel);
 }
-
 
 /*********************** MAIN LOOP for slaves ****************/
 
