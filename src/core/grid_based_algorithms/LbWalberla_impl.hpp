@@ -25,6 +25,7 @@
 #include "lbm/lattice_model/D3Q19.h"
 #include "timeloop/SweepTimeloop.h"
 #include "utils/Vector.hpp"
+#include "utils/interpolation/bspline_3d.hpp"
 #include "utils/math/make_lin_space.hpp"
 
 #include "boundary/BoundaryHandling.h"
@@ -69,6 +70,9 @@ inline Vector3<real_t> to_vector3(const Utils::Vector3d v) {
 }
 inline Utils::Vector6d to_vector6d(const Matrix3<real_t> m) {
   return Utils::Vector6d{m[0], m[3], m[4], m[6], m[7], m[8]};
+}
+inline Utils::Vector3i to_vector3i(const std::array<int, 3> v) {
+  return Utils::Vector3i{v[0], v[1], v[2]};
 }
 /** Sweep that swaps force_toe_be_applied and last_applied_force
 and resets force_to_be_applied to the global external force
@@ -437,6 +441,14 @@ public:
 
   void integrate() override { m_time_loop->singleStep(); };
 
+  template <typename Function>
+  void distribute_property_at_pos(Utils::Vector3d pos,
+                                  Function f) const{
+    Utils::Interpolation::bspline_3d<2>(pos, f,
+                                        Utils::Vector3d{1.0,1.0,1.0},//grid spacing
+                                        Utils::Vector3d{0.0,0.0,0.0});//offset
+  }
+
   // Velocity
   boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i node) const override {
@@ -464,12 +476,11 @@ public:
     auto block = get_block(pos, true);
     if (!block)
       return {boost::none};
-    auto *velocity_interpolator =
-        block->template getData<VectorFieldAdaptorInterpolator>(
-            m_velocity_interpolator_id);
-    Vector3<real_t> v;
-    velocity_interpolator->get(to_vector3(pos), &v);
-    return {to_vector3d(v)};
+    Utils::Vector3d v{0.0,0.0,0.0};
+    distribute_property_at_pos(pos, [this,&v](const std::array<int, 3> node, double weight) { 
+              v += *get_node_velocity(to_vector3i(node)) * weight; 
+            });
+    return v*8.0;
   };
 
   // Local force
@@ -478,24 +489,31 @@ public:
     auto block = get_block(pos, true);
     if (!block)
       return false;
-    auto *force_distributor = block->template getData<VectorFieldDistributor>(
-        m_force_to_be_applied_distributor_id);
-    auto f = to_vector3(force / m_density);
-    force_distributor->distribute(to_vector3(pos), &f);
+    auto force_at_node = [this,force](const std::array<int, 3> node, double weight) {
+              auto const bc = get_block_and_cell(to_vector3i(node), true);
+              auto force_field =
+                  (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
+              force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
+            };
+    distribute_property_at_pos(pos, force_at_node);
     return true;
   };
+
   boost::optional<Utils::Vector3d>
   get_force_to_be_applied_at_pos(const Utils::Vector3d &pos) const override {
     auto block = get_block(pos, true);
     if (!block)
       return {boost::none};
 
-    auto *force_interpolator =
-        block->template getData<ForceFieldAdaptorInterpolator>(
-            m_force_to_be_applied_interpolator_id);
-    Vector3<real_t> f;
-    force_interpolator->get(to_vector3(pos), &f);
-    return {to_vector3d(f) * m_density};
+    Utils::Vector3d f{0.0,0.0,0.0};
+    auto force_at_node = [this,&f](const std::array<int, 3> node, double weight) {
+              auto const bc = get_block_and_cell(to_vector3i(node), true);
+              auto const &force_field =
+                  (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
+              f += to_vector3d(force_field->get((*bc).cell)) * weight;
+            };
+    distribute_property_at_pos(pos, force_at_node);
+    return f * m_density;
   };
 
   // Density
