@@ -1633,7 +1633,8 @@ class openGLLive:
                     # if 'agrid' in pa:
                     self.lb_params = a.get_params()
                     self.lb = a
-                    self.lb_is_cpu = not isinstance(a, espressomd.lb.LBFluidGPU)
+                    self.lb_is_cpu = not isinstance(
+                        a, espressomd.lb.LBFluidGPU)
                     break
 
         if self.specs['LB_draw_velocity_plane']:
