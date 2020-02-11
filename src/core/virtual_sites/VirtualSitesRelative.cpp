@@ -67,6 +67,7 @@ void VirtualSitesRelative::update_virtual_particle_quaternion(
         "virtual_sites_relative.cpp - update_mol_pos_particle(): No real "
         "particle associated with virtual site.\n");
   }
+
   p.r.quat = multiply_quaternions(p_real->r.quat, p.p.vs_relative.quat);
 }
 

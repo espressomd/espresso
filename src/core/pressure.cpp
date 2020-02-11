@@ -190,7 +190,7 @@ void init_virials(Observable_stat *stat) {
   Dipole::pressure_n();
 #endif
 #ifdef VIRTUAL_SITES
-  n_vs = virtual_sites()->n_pressure_contribs();
+  n_vs = 1;
 #endif
 
   // Allocate memory for the data
@@ -228,7 +228,7 @@ void init_p_tensor(Observable_stat *stat) {
   auto const n_dipolar = 0;
 #endif
 #ifdef VIRTUAL_SITES
-  n_vs = virtual_sites()->n_pressure_contribs();
+  n_vs = 1;
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,

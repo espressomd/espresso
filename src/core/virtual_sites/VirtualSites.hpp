@@ -49,8 +49,6 @@ public:
   /** @brief Called after force calculation (and before rattle/shake) */
   virtual void after_force_calc(){};
   virtual void after_lb_propagation(){};
-  /** @brief Number of pressure contributions */
-  virtual int n_pressure_contribs() const { return 0; };
   /** @brief Pressure contribution. */
   virtual void
   pressure_and_stress_tensor_contribution(double *pressure,

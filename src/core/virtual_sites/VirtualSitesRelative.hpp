@@ -35,8 +35,6 @@ public:
   void update(bool recalc_positions) const override;
   /** @copydoc VirtualSites::back_transfer_forces_and_torques */
   void back_transfer_forces_and_torques() const override;
-  /** @copydoc VirtualSites::n_pressure_contribs */
-  int n_pressure_contribs() const override { return 1; };
   /** @copydoc VirtualSites::pressure_and_stress_tensor_contribution */
   void
   pressure_and_stress_tensor_contribution(double *pressure,

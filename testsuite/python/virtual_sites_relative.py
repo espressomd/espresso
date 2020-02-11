@@ -320,10 +320,12 @@ class VirtualSites(ut.TestCase):
         system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.2
-        # Should not have one if vs are turned off
+        # Should not have a pressure
         system.virtual_sites = VirtualSitesOff()
-        self.assertNotIn("virtual_sites", system.analysis.pressure())
-        self.assertNotIn("virtual_sites", system.analysis.stress_tensor())
+        stress_vs = system.analysis.stress_tensor()["virtual_sites", 0]
+        p_vs = system.analysis.pressure()["virtual_sites", 0]
+        np.testing.assert_allclose(stress_vs, 0., atol=1e-10)
+        np.testing.assert_allclose(p_vs, 0., atol=1e-10)
 
         # vs relative contrib
         system.virtual_sites = VirtualSitesRelative()
