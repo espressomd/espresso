@@ -557,11 +557,11 @@ cdef class Thermostat:
         """
         Sets the LB thermostat.
 
-        This thermostat requires the feature ``LBFluid`` or ``LBFluidGPU``.
+        This thermostat requires the feature ``LB_WALBERLA``.
 
         Parameters
         ----------
-        LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
+        LB_fluid : :class:`~espressomd.lb.LBFluidWalberla`
         seed : :obj:`int`
             Seed for the random number generator, required if kT > 0.
             Must be positive.

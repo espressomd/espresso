@@ -18,7 +18,6 @@
 #
 import unittest as ut
 import unittest_decorators as utx
-import espressomd
 from espressomd import lb
 
 from virtual_sites_tracers_common import VirtualSitesTracersCommon

@@ -77,7 +77,6 @@ class Momentum(object):
             TIME_STEP *
             self.system.volume() /
             2)
-        i = 0
         while True: 
             self.system.integrator.run(1000)
             measured_momentum = self.system.analysis.linear_momentum()

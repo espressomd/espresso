@@ -17,7 +17,6 @@
 from __future__ import print_function, absolute_import
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 import numpy as np
-import array
 from . import utils
 from espressomd.utils import array_locked, is_valid_type
 

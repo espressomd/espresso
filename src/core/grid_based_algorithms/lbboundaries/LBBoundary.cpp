@@ -32,6 +32,8 @@ Utils::Vector3d LBBoundary::get_force() const {
     }         // loop over lb cells
     return boost::mpi::all_reduce(comm_cart, force,
                                   std::plus<Utils::Vector3d>());
+#else
+    return {0, 0, 0};
 #endif
   } else
     throw std::runtime_error("No LB active");

@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from espressomd.utils import to_str
+# pylint: disable=undefined-variable
 
 
 def major():

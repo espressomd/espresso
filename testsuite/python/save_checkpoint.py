@@ -29,7 +29,8 @@ from espressomd import has_features
 if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
     from espressomd.lbboundaries import LBBoundary
 import espressomd.lb
-import espressomd.electrokinetics
+if has_features('ELECTROKINETICS'):
+    import espressomd.electrokinetics
 from espressomd.minimize_energy import steepest_descent
 from espressomd.shapes import Wall, Sphere
 from espressomd import constraints

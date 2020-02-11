@@ -42,7 +42,7 @@ struct NoLBActive : public std::exception {
   const char *what() const noexcept override { return "LB not activated"; }
 };
 
-void lb_lbfluid_init(){};
+void lb_lbfluid_init() {}
 
 void lb_lbfluid_update() {
   if (lattice_switch == ActiveLB::WALBERLA) {
@@ -625,10 +625,11 @@ Utils::Vector3d lb_lbfluid_calc_fluid_momentum() {
 
 const Utils::Vector3d
 lb_lbfluid_get_interpolated_velocity(const Utils::Vector3d &pos) {
-  auto const folded_pos = folded_position(pos, box_geo);
-  auto const interpolation_order = lb_lbinterpolation_get_interpolation_order();
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
+    auto const folded_pos = folded_position(pos, box_geo);
+    auto const interpolation_order =
+        lb_lbinterpolation_get_interpolation_order();
     switch (interpolation_order) {
     case (InterpolationOrder::quadratic):
       throw std::runtime_error("The non-linear interpolation scheme is not "
