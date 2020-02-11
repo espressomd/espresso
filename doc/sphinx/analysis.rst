@@ -634,9 +634,9 @@ all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.ComVelocity`: Velocity of the center of mass
 
-   - :class:`~espressomd.observables.ComForce`: Sum of the forces on the particles
-
    - :class:`~espressomd.observables.ParticleDistances`: Distances between particles on a polymer chain.
+
+   - :class:`~espressomd.observables.TotalForce`: Sum of the forces on the particles
 
    - :class:`~espressomd.observables.BondAngles`: Angles between bonds on a polymer chain.
 
