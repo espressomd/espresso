@@ -185,13 +185,6 @@ std::vector<double> calc_structurefactor(PartCfg &, int const *p_types,
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);
 
-int calc_cylindrical_average(
-    PartCfg &, std::vector<double> const &center,
-    std::vector<double> const &direction, double length, double radius,
-    int bins_axial, int bins_radial, std::vector<int> types,
-    std::map<std::string, std::vector<std::vector<std::vector<double>>>>
-        &distribution);
-
 template <typename T>
 double min_distance2(Utils::Vector<T, 3> const &pos1,
                      Utils::Vector<T, 3> const &pos2) {
