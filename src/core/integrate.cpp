@@ -330,8 +330,9 @@ void philox_counter_increment() {
     dpd_rng_counter_increment();
   }
 #endif
-  if (n_thermalized_bonds)
+  if (n_thermalized_bonds) {
     thermalized_bond_rng_counter_increment();
+  }
 }
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {

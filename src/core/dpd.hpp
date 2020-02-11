@@ -21,7 +21,7 @@
 #ifndef CORE_DPD_HPP
 #define CORE_DPD_HPP
 /** \file
- *  Routines to use dpd as thermostat or pair force @cite soddemann03a
+ *  Routines to use DPD as thermostat or pair force @cite soddemann03a
  *
  *  Implementation in @ref dpd.cpp.
  */
@@ -31,7 +31,6 @@
 #ifdef DPD
 #include "Particle.hpp"
 
-#include <utils/Counter.hpp>
 #include <utils/Vector.hpp>
 
 struct IA_parameters;
@@ -53,14 +52,6 @@ Utils::Vector3d dpd_pair_force(Particle const &p1, Particle const &p2,
                                Utils::Vector3d const &d, double dist,
                                double dist2);
 Utils::Vector9d dpd_stress();
-
-/** philox interface */
-bool dpd_is_seed_required();
-void dpd_set_rng_state(uint64_t counter);
-uint64_t dpd_get_rng_state();
-
-/** Called in integration loop */
-void dpd_rng_counter_increment();
 
 #endif
 #endif

@@ -10,7 +10,7 @@ import espressomd.rotation
 import unittest_decorators as utx
 
 
-@utx.skipIfUnmetModuleVersionRequirement('scipy', '>1.2.0')
+@utx.skipIfUnmetModuleVersionRequirement('scipy', '>=1.4.0')
 class TestRotation(ut.TestCase):
     """
     Tests for the rotation utility functions.
