@@ -14,6 +14,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import sys
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
@@ -42,6 +43,69 @@ class ShapeBasedConstraintTest(ut.TestCase):
                         semiaxis1 * np.sqrt(1. - v**2) * np.sin(theta),
                         semiaxis2 * v])
         return pos + center
+
+    def test_hollow_conical_frustum(self):
+        """
+        Test implementation of conical frustum shape.
+
+        """
+        R1 = 5.0
+        R2 = 10.0
+        LENGTH = 15.0
+        D = 2.4
+
+        def z(y, r1, r2, l): return l / (r1 - r2) * \
+            y + l / 2. - l * r1 / (r1 - r2)
+
+        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
+            0, 0, 1], r1=R1, r2=R2, thickness=0.0, length=LENGTH)
+        y_vals = np.linspace(R1, R2, 100)
+        for y in y_vals:
+            dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
+            self.assertAlmostEqual(dist[0], 0.0)
+
+        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
+            0, 0, 1], r1=R1, r2=R2, thickness=D, length=LENGTH, direction=-1)
+        for y in y_vals:
+            dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
+            self.assertAlmostEqual(dist[0], 0.5 * D)
+
+        np.testing.assert_almost_equal(np.copy(shape.center), [0.0, 0.0, 0.0])
+        np.testing.assert_almost_equal(np.copy(shape.axis), [0, 0, 1])
+        self.assertEqual(shape.r1, R1)
+        self.assertEqual(shape.r2, R2)
+        self.assertEqual(shape.thickness, D)
+        self.assertEqual(shape.length, LENGTH)
+        self.assertEqual(shape.direction, -1)
+
+        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
+            0, 0, 1], r1=R1, r2=R2, thickness=D, length=LENGTH)
+        for y in y_vals:
+            dist = shape.calc_distance(position=[0.0, y, z(y, R1, R2, LENGTH)])
+            self.assertAlmostEqual(dist[0], -0.5 * D)
+
+        # check sign of dist
+        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
+            0, 0, 1], r1=R1, r2=R1, thickness=D, length=LENGTH)
+        self.assertLess(shape.calc_distance(
+            position=[0.0, R1, 0.25 * LENGTH])[0], 0.0)
+        self.assertLess(shape.calc_distance(
+            position=[0.0, R1 + (0.5 - sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
+        self.assertGreater(shape.calc_distance(
+            position=[0.0, R1 + (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
+        self.assertGreater(shape.calc_distance(
+            position=[0.0, R1 - (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
+
+        shape = espressomd.shapes.HollowConicalFrustum(center=[0.0, 0.0, 0.0], axis=[
+            0, 0, 1], r1=R1, r2=R1, thickness=D, length=LENGTH, direction=-1)
+        self.assertGreater(shape.calc_distance(
+            position=[0.0, R1, 0.25 * LENGTH])[0], 0.0)
+        self.assertGreater(shape.calc_distance(
+            position=[0.0, R1 + (0.5 - sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
+        self.assertLess(shape.calc_distance(
+            position=[0.0, R1 + (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
+        self.assertLess(shape.calc_distance(
+            position=[0.0, R1 - (0.5 + sys.float_info.epsilon) * D, 0.25 * LENGTH])[0], 0.0)
 
     def test_sphere(self):
         """Checks geometry of an inverted sphere
@@ -476,55 +540,6 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
         system.non_bonded_inter[0, 2].lennard_jones.set_params(
-            epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
-
-    def test_hollowcone(self):
-        """Checks that hollowcone constraints with LJ interactions exert forces
-        on a test particle (that is, the constraints do what they should).
-
-        """
-        system = self.system
-        system.time_step = 0.01
-        system.cell_system.skin = 0.4
-
-        system.part.add(id=0, pos=[self.box_l / 2.0 + 1.5,
-                                   self.box_l / 2.0,
-                                   self.box_l / 2.0], type=0)
-
-        # check force calculation of hollowcone constraint
-        interaction_dir = +1  # constraint is directed outwards
-        hollowcone_shape = espressomd.shapes.HollowCone(
-            center=3 * [self.box_l / 2.0],
-            axis=[0, 0, 1],
-            direction=interaction_dir,
-            inner_radius=3.,
-            outer_radius=6.,
-            opening_angle=np.pi / 5,
-            width=1.)
-        hollowcone_constraint = espressomd.constraints.ShapeBasedConstraint(
-            shape=hollowcone_shape, particle_type=1, penetrable=False)
-        system.constraints.add(hollowcone_constraint)
-        system.non_bonded_inter[0, 1].lennard_jones.set_params(
-            epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
-        system.integrator.run(0)  # update forces
-
-        # distance measured manually; shape geometry not trivial
-        self.assertAlmostEqual(hollowcone_constraint.min_dist(), 1.134228603)
-
-        # test summed forces on hollowcone wall
-        self.assertAlmostEqual(
-            hollowcone_constraint.total_normal_force(),
-            tests_common.lj_force(
-                espressomd,
-                cutoff=2.0,
-                offset=0.,
-                eps=1.0,
-                sig=1.0,
-                r=hollowcone_constraint.min_dist()),
-            places=9)
-
-        # Reset
-        system.non_bonded_inter[0, 1].lennard_jones.set_params(
             epsilon=0.0, sigma=0.0, cutoff=0.0, shift=0)
 
     def test_slitpore(self):
