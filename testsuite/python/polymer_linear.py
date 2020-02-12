@@ -21,7 +21,17 @@ from espressomd import polymer
 import espressomd.shapes
 
 
-class LinearPolymerPolymerPositions(ut.TestCase):
+class LinearPolymerPositions(ut.TestCase):
+    """
+    Test the functionality of espressomd.polymer.linear_polymer_positions()
+    in terms of
+    * bond lengths
+    * bond angles
+    * starting positions
+    * minimum distance for self avoiding walks
+    * distance to constraints
+    """
+
     box_l = 15
     seed = 23
 

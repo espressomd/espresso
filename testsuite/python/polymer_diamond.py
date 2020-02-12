@@ -20,6 +20,14 @@ from espressomd import System, polymer, interactions
 
 
 class DiamondPolymer(ut.TestCase):
+    """
+    Test the functionality of espressomd.polymer.setup_diamond_polymer()
+    in terms of
+    * properties of particles created
+    * connections via bonds
+    * the geometry of the polymer network
+    """
+
     system = System(box_l=3 * [16])
     diamond_params = {'MPC': 15, 
                       'dist_cM': 3, 
