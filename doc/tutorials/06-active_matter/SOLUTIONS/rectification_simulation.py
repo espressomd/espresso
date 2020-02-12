@@ -29,7 +29,8 @@ import argparse
 
 import espressomd
 from espressomd import assert_features
-from espressomd.shapes import Cylinder, Wall, HollowCone
+import espressomd.shapes
+from espressomd.shapes import Cylinder, Wall
 
 
 assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
@@ -104,7 +105,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 cylinder = Cylinder(
     center=0.5 * BOX_L,
     axis=[1, 0, 0], radius=DIAMETER / 2.0, length=LENGTH, direction=-1)
-system.constraints.add(shape=cylinder, particle_type=1)
+#system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
 wall = Wall(dist=PADDING, normal=[1, 0, 0])
@@ -119,18 +120,16 @@ ANGLE = pi / 4.0
 ORAD = (DIAMETER - IRAD) / sin(ANGLE)
 SHIFT = 0.25 * ORAD * cos(ANGLE)
 
-hollow_cone = HollowCone(
-    center=[BOX_L[0] / 2.0 + SHIFT,
-            BOX_L[1] / 2.0,
-            BOX_L[2] / 2.0],
-    axis=[-1, 0, 0],
-    outer_radius=ORAD,
-    inner_radius=IRAD,
-    width=2.0,
-    opening_angle=ANGLE,
-    direction=1)
-system.constraints.add(shape=hollow_cone, particle_type=1)
-
+conical_shape = espressomd.shapes.HollowConicalFrustum(center=[BOX_L[0] / 2.0 - 1.3 * SHIFT,
+                                                               BOX_L[1] / 2.0,
+                                                               BOX_L[2] / 2.0],
+                                                       axis=[-1, 0, 0],
+                                                       r1=ORAD,
+                                                       r2=IRAD,
+                                                       thickness=2.0,
+                                                       length=18,
+                                                       direction=1)
+system.constraints.add(shape=conical_shape, particle_type=1)
 ##########################################################################
 #
 # We set up a WCA (almost-hard) interaction between the particles and the
@@ -175,7 +174,6 @@ for cntr in range(N_PART):
                     quat=quats, rotation=[1, 1, 1])
 
 ##########################################################################
-
 # Equilibrate
 system.integrator.run(25 * PROD_LENGTH)
 

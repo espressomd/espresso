@@ -25,8 +25,6 @@
 
 #include <cmath>
 
-using namespace std;
-
 namespace Shapes {
 void Sphere::calculate_dist(const Utils::Vector3d &pos, double &dist,
                             Utils::Vector3d &vec) const {
