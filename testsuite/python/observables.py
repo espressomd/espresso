@@ -195,7 +195,7 @@ class Observables(ut.TestCase):
 
         np.testing.assert_allclose(
             np.sum(particles.f, axis=0),
-            espressomd.observables.ComForce(ids=id_list).calculate())
+            espressomd.observables.TotalForce(ids=id_list).calculate())
 
 
 if __name__ == "__main__":
