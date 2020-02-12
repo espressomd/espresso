@@ -25,8 +25,6 @@ unit_test(NAME RuntimeError_test SRC RuntimeError_test.cpp DEPENDS Boost::serial
 unit_test(NAME RuntimeErrorCollector_test SRC RuntimeErrorCollector_test.cpp DEPENDS EspressoCore Boost::mpi MPI::MPI_CXX)
 
 unit_test(NAME ScriptInterface_test SRC ScriptInterface_test.cpp DEPENDS EspressoScriptInterface)
-unit_test(NAME Wall_test SRC Wall_test.cpp ../shapes/Wall.cpp DEPENDS utils)
-unit_test(NAME Ellipsoid_test SRC Ellipsoid_test.cpp DEPENDS Shapes EspressoConfig)
 unit_test(NAME MpiCallbacks_test SRC MpiCallbacks_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp DEPENDS EspressoScriptInterface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp DEPENDS EspressoScriptInterface)

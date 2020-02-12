@@ -28,7 +28,6 @@ The direct analysis commands can be classified into two types:
     - :ref:`Minimal distances between particles`
     - :ref:`Particles in the neighborhood`
     - :ref:`Particle distribution`
-    - :ref:`Cylindrical Average`
     - :ref:`Radial distribution function` with ``rdf_type='rdf'``
     - :ref:`Structure factor`
     - :ref:`Center of mass`
@@ -184,76 +183,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     #. The seem to average with respect to the center of mass of the
        particles in the individual bins rather than with respect to the
        central axis, which one would think is natural.
-
-
-.. _Cylindrical average:
-
-Cylindrical Average
-~~~~~~~~~~~~~~~~~~~
-
-:meth:`espressomd.analyze.Analysis.cylindrical_average`
-
-Calculates the particle distribution using cylindrical binning.
-
-The volume considered is inside a cylinder defined by the parameters ``center``, ``axis``, ``length`` and  ``radius``.
-
-The geometrical details of the cylindrical binning is defined using ``bins_axial`` and ``bins_radial`` which are the number bins in the axial and radial directions (respectively).
-See figure :ref:`cylindrical_average` for a visual representation of the binning geometry.
-
-.. _cylindrical_average:
-
-.. figure:: figures/analysis_cylindrical_average.png
-   :alt: Geometry for the cylindrical binning
-   :align: center
-   :height: 6.00000cm
-
-   Geometry for the cylindrical binning
-
-
-The command returns a list of lists. The outer list contains all data
-combined whereas each inner list contains one line. Each lines stores a
-different combination of the radial and axial index. The output might
-look something like this
-
-.. code-block:: numpy
-
-    [ [ 0 0 0.05 -0.25 0.0314159 0 0 0 0 0 0 ]
-      [ 0 1 0.05 0.25 0.0314159 31.831 1.41421 1 0 0 0 ]
-      ... ]
-
-In this case two different particle types were present.
-The columns of the respective lines are coded like this
-
-=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
-index_radial     index_axial   pos_radial   pos_axial   binvolume  density  v_radial   v_axial   density  v_radial   v_axial
-=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
-0                0             0.05         -0.25       0.0314159  0        0          0         0        0          0
-0                1             0.05         0.25        0.0314159  31.831   1.41421    1         0        0          0
-=============    ============  ===========  ==========  =========  =======  ========   ========  =======  =========  =======
-
-As one can see the columns **density**, **v_radial** and **v_axial** appear twice.
-The order of appearance corresponds to the order of the types in the argument ``types``.
-For example if was set to ``types=[0, 1]`` then the first triple is associated to type 0 and
-the second triple to type 1.
-
-..
-	.. _Vkappa:
-
-	Vkappa
-	~~~~~~
-	:meth:`espressomd.analyze.Analysis.v_kappa`
-
-	.. todo:: Implementation appears to be incomplete
-
-	Calculates the compressibility :math:`V \times \kappa_T` through the
-	Volume fluctuations
-	:math:`V \times \kappa_T = \beta \left(\langle V^2\rangle - \langle V \rangle^2\right)`
-	:cite:`kolb99a`. Given no arguments this function calculates
-	and returns the current value of the running average for the volume
-	fluctuations. The ``mode=reset`` argument clears the currently stored values. With ``mode=read`` the
-	cumulative mean volume, cumulative mean squared volume and how many
-	samples were used can be retrieved. Likewise the option ``mode=set`` enables you to
-	set those.
 
 
 .. _Radial distribution function:
@@ -447,12 +376,12 @@ where the first summand is the short ranged part and the second summand is the l
 
 The short ranged part is given by:
 
-.. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ \mathrm{erfc}(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} + \\ \frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
+.. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \varepsilon_0 \varepsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ \mathrm{erfc}(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} + \\ \frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
 
 where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterisk denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
 The long ranged (k-space) part is given by:
 
-.. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
+.. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \varepsilon_0 \varepsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
 
 where :math:`S(\vec{k})` is the Fourier transformed charge density. Compared to Essmann we do not have the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
 
@@ -705,9 +634,9 @@ all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.ComVelocity`: Velocity of the center of mass
 
-   - :class:`~espressomd.observables.ComForce`: Sum of the forces on the particles
-
    - :class:`~espressomd.observables.ParticleDistances`: Distances between particles on a polymer chain.
+
+   - :class:`~espressomd.observables.TotalForce`: Sum of the forces on the particles
 
    - :class:`~espressomd.observables.BondAngles`: Angles between bonds on a polymer chain.
 
