@@ -54,7 +54,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // So the shortest distance to the line is
 
   auto const dist_2D =
-      Utils::Vector2d{{(closest_pos - pos).norm(), mu * m_orientation.norm()}};
+      Utils::Vector2d{(closest_pos - pos).norm(), mu * m_orientation.norm()};
 
   /***** Use the obtained planar coordinates in distance function *****/
 
@@ -146,10 +146,10 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
 
   // Center points for the circles
 
-  auto const pt0 = Utils::Vector2d{{0.0, 0.0}};
-  auto const pt1 = Utils::Vector2d{{3.0 * c + e, d - e}};
-  auto const pt2 = Utils::Vector2d{{3.0 * c, d}};
-  auto const pt3 = Utils::Vector2d{{0.0, a - b - 2 * c}};
+  auto const pt0 = Utils::Vector2d{0.0, 0.0};
+  auto const pt1 = Utils::Vector2d{3.0 * c + e, d - e};
+  auto const pt2 = Utils::Vector2d{3.0 * c, d};
+  auto const pt3 = Utils::Vector2d{0.0, a - b - 2 * c};
 
   // Distance of point of interest to center points
 
