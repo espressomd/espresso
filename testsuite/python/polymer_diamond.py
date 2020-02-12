@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 from espressomd import System, polymer, interactions
 
@@ -86,9 +87,7 @@ class DiamondPolymer(ut.TestCase):
     def test_bonds(self):
         """
         test that the right number of bonds is formed on each particle
-        and that the network is connected
-
-        """       
+        """  
         # 4 bonds on nodes
         for part in self.node_parts:
             self.assertEqual(len(part.bonds), 4)
@@ -100,7 +99,12 @@ class DiamondPolymer(ut.TestCase):
         number_non_node = 16 * self.diamond_params['MPC']
         self.assertEqual(np.sum(n_bonds), number_non_node - 16)
 
-        # see if everything is connected by pushing one particle
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
+    def test_connected(self):
+        """
+        test that all particles in the polymer are connected by pushing one particle
+        """
+
         self.system.part[self.diamond_params['start_id']].ext_force = 3 * [2]
         self.system.integrator.run(200)
         vels = np.linalg.norm(self.system.part[:].v, axis=1)
