@@ -305,7 +305,8 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
 void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
-  for (auto it = gcr->m_communications.begin(); it != gcr->m_communications.end(); ++it) {
+  for (auto it = gcr->m_communications.begin();
+       it != gcr->m_communications.end(); ++it) {
     GhostCommunication &ghost_comm = *it;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
@@ -329,8 +330,8 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       assert(send_buffer.size() == calc_transmit_size(ghost_comm, data_parts));
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
-      auto prefetch_ghost_comm =
-          std::find_if(std::next(it), gcr->m_communications.end(), is_prefetchable);
+      auto prefetch_ghost_comm = std::find_if(
+          std::next(it), gcr->m_communications.end(), is_prefetchable);
       if (prefetch_ghost_comm != gcr->m_communications.end())
         prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
     }
@@ -392,8 +393,9 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       /* send op; write back delayed data from last recv, when this was a
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
-      auto poststore_ghost_comm = std::find_if(
-          std::make_reverse_iterator(it), gcr->m_communications.rend(), is_poststorable);
+      auto poststore_ghost_comm =
+          std::find_if(std::make_reverse_iterator(it),
+                       gcr->m_communications.rend(), is_poststorable);
 
       if (poststore_ghost_comm != gcr->m_communications.rend()) {
         assert(recv_buffer.size() ==

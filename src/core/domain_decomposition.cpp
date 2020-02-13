@@ -351,13 +351,12 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
  *  is working in reverted order with exchanged
  *  communication types GHOST_SEND <-> GHOST_RECV.
  */
-GhostCommunicator dd_revert_comm_order(GhostCommunicator comm) {
-
+auto dd_revert_comm_order(std::vector<GhostCommunication> communications) {
   /* revert order */
-  boost::reverse(comm.m_communications);
+  boost::reverse(communications);
 
   /* exchange SEND/RECV */
-  for (auto &c : comm.m_communications) {
+  for (auto &c : communications) {
     if (c.type == GHOST_SEND)
       c.type = GHOST_RECV;
     else if (c.type == GHOST_RECV)
@@ -367,15 +366,14 @@ GhostCommunicator dd_revert_comm_order(GhostCommunicator comm) {
     }
   }
 
-  return comm;
+  return communications;
 }
 
 /** Of every two communication rounds, set the first receivers to prefetch and
  *  poststore
  */
-void dd_assign_prefetches(GhostCommunicator *comm) {
-  for (auto it = comm->m_communications.begin();
-       it != comm->m_communications.end(); it += 2) {
+void dd_assign_prefetches(std::vector<GhostCommunication> &communications) {
+  for (auto it = communications.begin(); it != communications.end(); it += 2) {
     auto next = std::next(it);
     if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
       it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
@@ -607,15 +605,16 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   /* mark cells */
   dd_mark_cells();
 
-  /* create communicators */
-  cell_structure.exchange_ghosts_comm =
-      GhostCommunicator{dd_prepare_comm(comm_cart)};
-  /* collect forces has to be done in reverted order! */
-  cell_structure.collect_ghost_force_comm =
-      dd_revert_comm_order(cell_structure.exchange_ghosts_comm);
+  /* create communication lists */
+  auto exchange_comms = dd_prepare_comm(comm_cart);
+  auto collect_comms = dd_revert_comm_order(exchange_comms);
 
-  dd_assign_prefetches(&cell_structure.exchange_ghosts_comm);
-  dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
+  dd_assign_prefetches(exchange_comms);
+  dd_assign_prefetches(collect_comms);
+
+  /* create communicators */
+  cell_structure.exchange_ghosts_comm = GhostCommunicator{exchange_comms};
+  cell_structure.collect_ghost_force_comm = GhostCommunicator{collect_comms};
 
   dd_init_cell_interactions();
 
