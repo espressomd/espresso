@@ -491,9 +491,11 @@ public:
       return false;
     auto force_at_node = [this,force](const std::array<int, 3> node, double weight) {
               auto const bc = get_block_and_cell(to_vector3i(node), true);
-              auto force_field =
-                  (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-              force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
+              if(bc){
+                auto force_field =
+                    (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
+                force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
+              }
             };
     distribute_property_at_pos(pos, force_at_node);
     return true;
@@ -508,9 +510,11 @@ public:
     Utils::Vector3d f{0.0,0.0,0.0};
     auto force_at_node = [this,&f](const std::array<int, 3> node, double weight) {
               auto const bc = get_block_and_cell(to_vector3i(node), true);
-              auto const &force_field =
-                  (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-              f += to_vector3d(force_field->get((*bc).cell)) * weight;
+              if(bc){
+                auto const &force_field =
+                    (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
+                f += to_vector3d(force_field->get((*bc).cell)) * weight;
+              }
             };
     distribute_property_at_pos(pos, force_at_node);
     return f * m_density;

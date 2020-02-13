@@ -283,10 +283,12 @@ BOOST_AUTO_TEST_CASE(integrate_with_point_forces) {
 BOOST_AUTO_TEST_CASE(forces) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,
                                              box_dimensions, node_grid, 2);
+  Vector3d minus = grid_dimensions/2 - Vector3d{0.1, 0.1, 0.1};
+  Vector3d plus = grid_dimensions/2 + Vector3d{0.1, 0.1, 0.1};
   for (Vector3d pos : std::vector<Vector3d>{
-           {1.5, 1.5, 1.5}, {1.0, 3.0, 1.0}, {4.2, 1.7, 1.6},
-           {3.2, 1.3, 3.1}}) {
-    if (lb.pos_in_local_domain(pos)) {
+           {1.25, 1.25, 1.25}, {1.0, 3.0, 1.0}, {4.2, 1.7, 1.6},
+           {3.2, 1.3, 3.1}, minus, plus}) {
+    if (lb.pos_in_local_halo(pos)) {
       auto res = lb.get_force_to_be_applied_at_pos(pos);
       BOOST_CHECK(res);
       BOOST_CHECK_SMALL((*res - Vector3d{0, 0, 0}).norm(), 1E-10);
@@ -297,9 +299,13 @@ BOOST_AUTO_TEST_CASE(forces) {
       for(int x=-1; x<=1; x++)
       for(int y=-1; y<=1; y++)
       for(int z=-1; z<=1; z++){
-        *res += *lb.get_force_to_be_applied_at_pos({pos[0]+x,pos[1]+y,pos[2]+z});
+        auto res_temp = lb.get_force_to_be_applied_at_pos(
+                          {pos[0]+x,pos[1]+y,pos[2]+z});
+        if(res_temp)
+          *res += *res_temp;
       }
-      BOOST_CHECK((*res - f).norm() < eps);
+      if (lb.pos_in_local_domain(pos)) // If the force is applied on the halo region then the some of the nodes are outside of the ghost layer and no forces are added on these nodes, therefore the sum of all forces is not equal the injected force. TODO: maybe the forces distibuted on local nodes from the halo should to be checked further for correctness.
+        BOOST_CHECK((*res - f).norm() < eps);
       BOOST_CHECK(lb.add_force_at_pos(pos, -1*f));
       res = lb.get_force_to_be_applied_at_pos(pos);
       BOOST_CHECK(res);
