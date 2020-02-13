@@ -104,10 +104,8 @@ void nsq_topology_init(CellPList *old) {
   local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 
   /* create communicators */
-  cell_structure.exchange_ghosts_comm =
-      GhostCommunicator{nsq_prepare_comm(comm_cart)};
-  cell_structure.collect_ghost_force_comm =
-      GhostCommunicator{nsq_prepare_comm(comm_cart)};
+  auto comms_exchange = nsq_prepare_comm(comm_cart);
+  auto comms_collect = comms_exchange;
 
   /* here we just decide what to transfer where */
   if (n_nodes > 1) {
@@ -115,18 +113,22 @@ void nsq_topology_init(CellPList *old) {
       /* use the prefetched send buffers. Node 0 transmits first and never
        * prefetches. */
       if (this_node == 0 || this_node != n) {
-        cell_structure.exchange_ghosts_comm.comm[n].type = GHOST_BCST;
+        comms_exchange[n].type = GHOST_BCST;
       } else {
-        cell_structure.exchange_ghosts_comm.comm[n].type =
-            GHOST_BCST | GHOST_PREFETCH;
+        comms_exchange[n].type = GHOST_BCST | GHOST_PREFETCH;
       }
-      cell_structure.collect_ghost_force_comm.comm[n].type = GHOST_RDCE;
+      comms_collect[n].type = GHOST_RDCE;
     }
     /* first round: all nodes except the first one prefetch their send data */
     if (this_node != 0) {
-      cell_structure.exchange_ghosts_comm.comm[0].type |= GHOST_PREFETCH;
+      comms_exchange[0].type |= GHOST_PREFETCH;
     }
   }
+
+  cell_structure.exchange_ghosts_comm =
+      GhostCommunicator{std::move(comms_exchange)};
+  cell_structure.collect_ghost_force_comm =
+      GhostCommunicator{std::move(comms_collect)};
 
   /* copy particles */
   for (int c = 0; c < old->n; c++) {

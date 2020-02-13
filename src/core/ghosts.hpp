@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef _GHOSTS_H
-_GHOSTS_H
-/= *,* \file
+#define _GHOSTS_H
+/** \file
  *  Ghost particles and particle exchange.
  *
  *  In this file you find everything concerning the exchange of
@@ -112,16 +112,16 @@ _GHOSTS_H
 /*@{*/
 
 enum : unsigned {
-/// send to a single node
-GHOST_SEND = 0,
-/// recv from a single node
-GHOST_RECV = 1,
-/// broadcast, the node entry gives the sender
-GHOST_BCST = 2,
-/// reduce, the node entry gives the receiver
-GHOST_RDCE = 3,
-/// transfer data from cell to cell on this node
-GHOST_LOCL = 4
+  /// send to a single node
+  GHOST_SEND = 0,
+  /// recv from a single node
+  GHOST_RECV = 1,
+  /// broadcast, the node entry gives the sender
+  GHOST_BCST = 2,
+  /// reduce, the node entry gives the receiver
+  GHOST_RDCE = 3,
+  /// transfer data from cell to cell on this node
+  GHOST_LOCL = 4
 };
 
 enum : unsigned {

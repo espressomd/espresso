@@ -237,7 +237,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
  */
 std::vector<GhostCommunication> dd_prepare_comm(const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
-  int lc[3], hc[3], done[3] = {0, 0, 0};
+  int lc[3], hc[3], done[3] = {0, 0, 0 - };
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
