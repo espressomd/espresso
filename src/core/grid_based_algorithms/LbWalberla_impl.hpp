@@ -477,8 +477,13 @@ public:
     if (!block)
       return {boost::none};
     Utils::Vector3d v{0.0,0.0,0.0};
-    distribute_property_at_pos(pos, [this,&v](const std::array<int, 3> node, double weight) { 
-              v += *get_node_velocity(to_vector3i(node)) * weight; 
+    distribute_property_at_pos(pos, [this,&v](const std::array<int, 3> node, double weight) {
+              auto const bc = get_block_and_cell(to_vector3i(node), true);
+              if (bc){
+                auto const &vel_adaptor =
+                    (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
+                v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
+              }
             });
     return v*8.0;
   };
