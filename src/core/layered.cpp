@@ -127,12 +127,6 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comms[c].type = GHOST_SEND;
-        /* round 1 uses prefetched data and stores delayed data */
-        if (c == 1) {
-          comms[c].prefetch = true;
-          comms[c].poststore = true;
-        }
-
         comms[c].node = btm;
         if (reverse) {
           comms[c].part_lists[0] = &cells[0];
@@ -152,12 +146,6 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
          as for odd n_nodes maybe we send AND receive. */
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comms[c].type = GHOST_RECV;
-        /* round 0 prefetch send for round 1 and delay recvd data processing */
-        if (c == 0) {
-          comms[c].prefetch = true;
-          comms[c].poststore = true;
-        }
-
         comms[c].node = top;
         if (reverse) {
           comms[c].part_lists[0] = &cells[n_layers];
@@ -173,13 +161,6 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comms[c].type = GHOST_SEND;
-        /* round 1 use prefetched data from round 0.
-           But this time there may already have been two transfers downwards */
-        if (c % 2 == 1) {
-          comms[c].prefetch = true;
-          comms[c].poststore = true;
-        }
-
         comms[c].node = top;
         if (reverse) {
           comms[c].part_lists[0] = &cells[n_layers + 1];
@@ -199,13 +180,6 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
          as for odd n_nodes maybe we send AND receive. */
       if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comms[c].type = GHOST_RECV;
-        /* round 0 prefetch. But this time there may already have been two
-         * transfers downwards */
-        if (c % 2 == 0) {
-          comms[c].prefetch = true;
-          comms[c].poststore = true;
-        }
-
         comms[c].node = btm;
         if (reverse) {
           comms[c].part_lists[0] = &cells[1];

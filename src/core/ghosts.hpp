@@ -85,21 +85,6 @@
  *  @ref GHOST_RDCE, all nodes have to have the same communication type
  *  and the same master sender/receiver (just like the MPI commands).
  *
- *  A special topic are @ref GhostCommunication::prefetch and @ref
- * GhostCommunication::poststore. For example, if all nodes broadcast to the
- * other, the naive implementation will be that @c n_nodes times a @ref
- * GHOST_BCST is done with different master nodes. But this means that each time
- * <tt>n_nodes - 1</tt> nodes wait for the master to construct its send buffer.
- * Therefore there is the prefetch flag which can be set on a pair of recv/send
- * operations. If the ghost communication reaches a recv operation with
- * prefetch, the next send operation (which must have the prefetch set!!) is
- * searched and the send buffer already created. When sending, this precreated
- * send buffer is used. In the scenario above, all nodes create the send buffers
- * simultaneously in the first communication step, thereby reducing the latency
- * a little bit. The pststore is similar and postpones the write back of
- * received data until a send operation (with a precreated send buffer) is
- * finished.
- *
  *  The ghost communicators are created in the init routines of the cell
  *  systems, therefore have a look at @ref dd_topology_init or
  *  @ref nsq_topology_init for further details.
@@ -158,9 +143,6 @@ public:
       : GhostCommunication() {
     this->comm = std::move(comm);
   }
-
-  bool prefetch = false;
-  bool poststore = false;
 
   unsigned type = GHOSTTRANS_NONE;
   /** Node to communicate with (to use with all MPI operations). */

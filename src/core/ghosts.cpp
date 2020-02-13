@@ -290,14 +290,6 @@ static bool is_recv_op(GhostCommunication const &ghost_comm) {
           (comm_type == GHOST_RDCE && node == this_node));
 }
 
-static bool is_prefetchable(GhostCommunication const &ghost_comm) {
-  return is_send_op(ghost_comm) && ghost_comm.prefetch;
-}
-
-static bool is_poststorable(GhostCommunication const &ghost_comm) {
-  return is_recv_op(ghost_comm) && ghost_comm.poststore;
-}
-
 void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
@@ -311,25 +303,12 @@ void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
       continue;
     }
 
-    int const prefetch = ghost_comm.prefetch;
-    int const poststore = ghost_comm.poststore;
     int const node = ghost_comm.node;
 
     /* prepare send buffer if necessary */
     if (is_send_op(ghost_comm)) {
-      /* ok, we send this step, prepare send buffer if not yet done */
-      if (!prefetch) {
-        prepare_send_buffer(send_buffer, ghost_comm, data_parts);
-      }
-      // Check prefetched send buffers (must also hold for buffers allocated
-      // in the previous lines.)
-      assert(send_buffer.size() == calc_transmit_size(ghost_comm, data_parts));
-    } else if (prefetch) {
-      /* we do not send this time, let's look for a prefetch */
-      auto prefetch_ghost_comm = std::find_if(
-          std::next(it), gcr->communications().end(), is_prefetchable);
-      if (prefetch_ghost_comm != gcr->communications().end())
-        prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
+      /* ok, we send this step, prepare send buffer */
+      prepare_send_buffer(send_buffer, ghost_comm, data_parts);
     }
 
     /* recv buffer for recv and multinode operations to this node */
@@ -377,31 +356,12 @@ void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
 
     // recv op; write back data directly, if no PSTSTORE delay is requested.
     if (is_recv_op(ghost_comm)) {
-      if (!poststore) {
-        /* forces have to be added, the rest overwritten. Exception is RDCE,
-         * where the addition is integrated into the communication. */
-        if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-          add_forces_from_recv_buffer(recv_buffer, ghost_comm);
-        else
-          put_recv_buffer(recv_buffer, ghost_comm, data_parts);
-      }
-    } else if (poststore) {
-      /* send op; write back delayed data from last recv, when this was a
-       * prefetch send. */
-      /* find previous action where we recv and which has PSTSTORE set */
-      auto poststore_ghost_comm =
-          std::find_if(std::make_reverse_iterator(it),
-                       gcr->communications().rend(), is_poststorable);
-
-      if (poststore_ghost_comm != gcr->communications().rend()) {
-        assert(recv_buffer.size() ==
-               calc_transmit_size(*poststore_ghost_comm, data_parts));
-        /* as above */
-        if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-          add_forces_from_recv_buffer(recv_buffer, *poststore_ghost_comm);
-        else
-          put_recv_buffer(recv_buffer, *poststore_ghost_comm, data_parts);
-      }
+      /* forces have to be added, the rest overwritten. Exception is RDCE,
+       * where the addition is integrated into the communication. */
+      if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+        add_forces_from_recv_buffer(recv_buffer, ghost_comm);
+      else
+        put_recv_buffer(recv_buffer, ghost_comm, data_parts);
     }
   }
 }

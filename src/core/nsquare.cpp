@@ -110,19 +110,8 @@ void nsq_topology_init(CellPList *old) {
   /* here we just decide what to transfer where */
   if (n_nodes > 1) {
     for (int n = 0; n < n_nodes; n++) {
-      /* use the prefetched send buffers. Node 0 transmits first and never
-       * prefetches. */
-      if (this_node == 0 || this_node != n) {
-        comms_exchange[n].type = GHOST_BCST;
-      } else {
-        comms_exchange[n].type = GHOST_BCST;
-        comms_exchange[n].prefetch = true;
-      }
+      comms_exchange[n].type = GHOST_BCST;
       comms_collect[n].type = GHOST_RDCE;
-    }
-    /* first round: all nodes except the first one prefetch their send data */
-    if (this_node != 0) {
-      comms_exchange[0].prefetch = true;
     }
   }
 
