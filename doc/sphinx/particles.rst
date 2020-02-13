@@ -283,34 +283,6 @@ interaction :math:`0` is taken which must be a two-particle bond.
 See :class:`espressomd.diamond.Diamond` for more details. For simulating compressed or stretched gels the function 
 :meth:`espressomd.system.System.change_volume_and_rescale_particles` may be used.
 
-..
-    .. _Cross-linking polymers:
-
-    Cross-linking polymers
-    ~~~~~~~~~~~~~~~~~~~~~~
-
-    .. todo:: This is not implemented in Python
-
-    Attempts to end-crosslink the current configuration of equally long
-    polymers with monomers each, returning how many ends are successfully
-    connected.
-
-    specifies the first monomer of the chains to be linked. It has to be
-    specified if the polymers do not start at id 0.
-
-    Set the radius around each monomer which is searched for possible new
-    monomers to connect to. defaults to :math:`1.9`.
-
-    The minimal distance of two interconnecting links. It defaults to
-    :math:`2`.
-
-    The minimal distance for an interconnection along the same chain. It
-    defaults to :math:`0`. If set to , no interchain connections are
-    created.
-
-    Sets the bond type for the connections to .
-
-    If not specified, defaults to :math:`30000`.
 
 .. _Virtual sites:
 
