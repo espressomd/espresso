@@ -121,6 +121,35 @@ cart_neighbors(const boost::mpi::communicator &comm) {
 
   return ret;
 }
+
+template <size_t dim> struct CartInfo {
+  /** Number of processes for each Cartesian dimension (array of integers). */
+  Utils::Vector<int, dim> dims;
+  /** Periodicity (true/false) for each Cartesian dimension (array of logicals).
+   */
+  Utils::Vector<int, dim> periods;
+  /** Coordinates of calling process in Cartesian structure (array of integers).
+   */
+  Utils::Vector<int, dim> coords;
+};
+
+/**
+ * @brief Get topology information for a cartesian communicator.
+ *
+ * @tparam dim Dimension of the communicator
+ * @param comm Cartesian communicator
+ *
+ * @return @ref CartInfo for communicator.
+ */
+template <size_t dim>
+CartInfo<dim> cart_get(const boost::mpi::communicator &comm) {
+  CartInfo<dim> ret;
+
+  BOOST_MPI_CHECK_RESULT(MPI_Cart_get, (comm, dim, ret.dims.data(),
+                                        ret.periods.data(), ret.coords.data()));
+
+  return ret;
+}
 } // namespace Mpi
 } // namespace Utils
 
