@@ -124,15 +124,6 @@ enum : unsigned {
   GHOST_LOCL = 4
 };
 
-enum : unsigned {
-  /// mask to the job area of the transfer type
-  GHOST_JOBMASK = 15,
-  /// additional flag for prefetching
-  GHOST_PREFETCH = 16,
-  /// additional flag for poststoring
-  GHOST_PSTSTORE = 32
-};
-
 /*@}*/
 
 /** Transfer data classes, for \ref ghost_communicator */
@@ -156,8 +147,10 @@ enum : unsigned {
 /*@{*/
 
 struct GhostCommunication {
-  /** Communication type. */
-  int type = -1;
+  bool prefetch = false;
+  bool poststore = false;
+
+  unsigned type = GHOSTTRANS_NONE;
   /** Node to communicate with (to use with all MPI operations). */
   int node = -1;
 

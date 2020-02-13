@@ -289,15 +289,15 @@ static bool is_recv_op(int comm_type, int node) {
 }
 
 static bool is_prefetchable(GhostCommunication const &ghost_comm) {
-  int const comm_type = ghost_comm.type & GHOST_JOBMASK;
-  int const prefetch = ghost_comm.type & GHOST_PREFETCH;
+  int const comm_type = ghost_comm.type;
+  int const prefetch = ghost_comm.prefetch;
   int const node = ghost_comm.node;
   return is_send_op(comm_type, node) && prefetch;
 }
 
 static bool is_poststorable(GhostCommunication const &ghost_comm) {
-  int const comm_type = ghost_comm.type & GHOST_JOBMASK;
-  int const poststore = ghost_comm.type & GHOST_PSTSTORE;
+  int const comm_type = ghost_comm.type;
+  int const poststore = ghost_comm.poststore;
   int const node = ghost_comm.node;
   return is_recv_op(comm_type, node) && poststore;
 }
@@ -308,15 +308,15 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
   for (auto it = gcr->communications().begin();
        it != gcr->communications().end(); ++it) {
     GhostCommunication const &ghost_comm = *it;
-    int const comm_type = ghost_comm.type & GHOST_JOBMASK;
+    int const comm_type = ghost_comm.type;
 
     if (comm_type == GHOST_LOCL) {
       cell_cell_transfer(ghost_comm, data_parts);
       continue;
     }
 
-    int const prefetch = ghost_comm.type & GHOST_PREFETCH;
-    int const poststore = ghost_comm.type & GHOST_PSTSTORE;
+    int const prefetch = ghost_comm.prefetch;
+    int const poststore = ghost_comm.poststore;
     int const node = ghost_comm.node;
 
     /* prepare send buffer if necessary */

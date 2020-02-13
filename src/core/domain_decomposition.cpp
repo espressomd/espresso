@@ -376,8 +376,10 @@ void dd_assign_prefetches(std::vector<GhostCommunication> &communications) {
   for (auto it = communications.begin(); it != communications.end(); it += 2) {
     auto next = std::next(it);
     if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
-      it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
-      next->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
+      it->prefetch = true;
+      it->poststore = true;
+      next->prefetch = true;
+      next->poststore = true;
     }
   }
 }
