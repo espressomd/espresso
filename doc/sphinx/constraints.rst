@@ -362,7 +362,7 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
 
 .. _figure-slitpore:
 
-.. figure:: figures/slitpore.pdf
+.. figure:: figures/slitpore.png
    :alt: Schematic for the slitpore shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
@@ -460,7 +460,6 @@ For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
 ``penetrable`` is set to ``True``. Otherwise, when the ``penetrable`` option is
 ignored or is set to ``False``, the constraint cannot be violated, i.e. no
 particle can go through the constraint surface (|es| will exit if it does).
-
 
 .. _Available options:
 
