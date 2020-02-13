@@ -103,7 +103,7 @@
  *  systems, therefore have a look at @ref dd_topology_init or
  *  @ref nsq_topology_init for further details.
  */
-#include "Cell.hpp"
+#include "ParticleList.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
@@ -166,7 +166,7 @@ public:
   int node = -1;
 
   /** Pointer array to particle lists to communicate. */
-  std::vector<Cell *> part_lists = {};
+  std::vector<ParticleList *> part_lists = {};
 
   /** Position shift for ghost particles. The shift is done on the sender side.
    */
@@ -200,7 +200,7 @@ private:
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
-void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts);
+void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts);
 
 /*@}*/
 

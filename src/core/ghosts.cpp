@@ -147,7 +147,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   assert(archiver.bytes_written() == send_buffer.size());
 }
 
-static void prepare_ghost_cell(Cell *cell, int size) {
+static void prepare_ghost_cell(ParticleList *cell, int size) {
   using Utils::make_span;
   auto const old_cap = cell->capacity();
 
@@ -241,8 +241,8 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
   /* transfer data */
   int const offset = ghost_comm.part_lists.size() / 2;
   for (int pl = 0; pl < offset; pl++) {
-    Cell *src_list = ghost_comm.part_lists[pl];
-    Cell *dst_list = ghost_comm.part_lists[pl + offset];
+    const ParticleList *src_list = ghost_comm.part_lists[pl];
+    ParticleList *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->n);
@@ -298,7 +298,7 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
   return is_recv_op(ghost_comm) && ghost_comm.poststore;
 }
 
-void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
+void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
   for (auto it = gcr->communications().begin();
