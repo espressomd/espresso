@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #ifndef _GHOSTS_H
-#define _GHOSTS_H
-/** \file
+_GHOSTS_H
+/= *,* \file
  *  Ghost particles and particle exchange.
  *
  *  In this file you find everything concerning the exchange of
@@ -111,23 +111,28 @@
 /************************************************************/
 /*@{*/
 
+enum : unsigned {
 /// send to a single node
-#define GHOST_SEND 0
+GHOST_SEND = 0,
 /// recv from a single node
-#define GHOST_RECV 1
+GHOST_RECV = 1,
 /// broadcast, the node entry gives the sender
-#define GHOST_BCST 2
+GHOST_BCST = 2,
 /// reduce, the node entry gives the receiver
-#define GHOST_RDCE 3
+GHOST_RDCE = 3,
 /// transfer data from cell to cell on this node
-#define GHOST_LOCL 4
+GHOST_LOCL = 4
+};
 
-/// mask to the job area of the transfer type
-#define GHOST_JOBMASK 15
-/// additional flag for prefetching
-#define GHOST_PREFETCH 16
-/// additional flag for poststoring
-#define GHOST_PSTSTORE 32
+enum : unsigned {
+  /// mask to the job area of the transfer type
+  GHOST_JOBMASK = 15,
+  /// additional flag for prefetching
+  GHOST_PREFETCH = 16,
+  /// additional flag for poststoring
+  GHOST_PSTSTORE = 32
+};
+
 /*@}*/
 
 /** Transfer data classes, for \ref ghost_communicator */
