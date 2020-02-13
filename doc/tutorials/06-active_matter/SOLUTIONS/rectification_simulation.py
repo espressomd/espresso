@@ -105,7 +105,7 @@ system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 cylinder = Cylinder(
     center=0.5 * BOX_L,
     axis=[1, 0, 0], radius=DIAMETER / 2.0, length=LENGTH, direction=-1)
-#system.constraints.add(shape=cylinder, particle_type=1)
+system.constraints.add(shape=cylinder, particle_type=1)
 
 # Setup walls
 wall = Wall(dist=PADDING, normal=[1, 0, 0])
