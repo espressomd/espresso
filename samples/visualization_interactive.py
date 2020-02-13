@@ -31,7 +31,6 @@ print("Press u/j to change temperature")
 
 box_l = 10.0
 system = espressomd.System(box_l=[box_l] * 3)
-system.set_random_state_PRNG()
 visualizer = visualization_opengl.openGLLive(
     system, drag_enabled=True, drag_force=100)
 

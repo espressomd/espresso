@@ -43,8 +43,7 @@ espressomd.assert_features(required_features)
 
 box_l = 50.0
 system = espressomd.System(box_l=[box_l] * 3)
-system.set_random_state_PRNG()
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 
 system.time_step = 0.0001
 system.cell_system.skin = 0.3

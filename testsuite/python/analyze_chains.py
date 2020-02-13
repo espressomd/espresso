@@ -26,7 +26,6 @@ from espressomd import polymer
 class AnalyzeChain(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     np.random.seed(1234)
-    system.set_random_state_PRNG()
 
     num_poly = 2
     num_mono = 5

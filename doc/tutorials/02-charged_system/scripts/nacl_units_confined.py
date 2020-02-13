@@ -27,8 +27,7 @@ import numpy
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-numpy.random.seed(system.seed)
+numpy.random.seed(seed=42)
 
 print("\n--->Setup system")
 

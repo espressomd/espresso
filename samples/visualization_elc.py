@@ -38,8 +38,7 @@ box_l = 20
 elc_gap = 10
 potential_diff = -3.
 system = espressomd.System(box_l=[box_l, box_l, box_l + elc_gap])
-system.set_random_state_PRNG()
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 visualizer = visualization.openGLLive(
     system,
     background_color=[1, 1, 1],

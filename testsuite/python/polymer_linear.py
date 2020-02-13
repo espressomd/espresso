@@ -37,7 +37,6 @@ class LinearPolymerPositions(ut.TestCase):
 
     system = espressomd.System(box_l=[box_l, box_l, box_l])
     np.random.seed(1234)
-    system.set_random_state_PRNG()
 
     def assertShape(self, positions, n_poly, n_mono):
         """

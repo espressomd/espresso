@@ -34,10 +34,7 @@ import numpy as np
 
 box_l = 50.0
 system = espressomd.System(box_l=[box_l] * 3)
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
-
-# if no seed is provided espresso generates a seed
+np.random.seed(seed=42)
 
 system.time_step = 0.01
 system.cell_system.skin = 10.0

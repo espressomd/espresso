@@ -24,8 +24,6 @@ from espressomd import polymer
 from espressomd import interactions
 
 system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)

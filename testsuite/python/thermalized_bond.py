@@ -35,7 +35,6 @@ class ThermalizedBond(ut.TestCase):
     system = espressomd.System(box_l=[box_l] * 3)
     system.cell_system.set_n_square()
     system.cell_system.skin = 0.3
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     @classmethod
     def setUpClass(cls):
