@@ -25,7 +25,7 @@ class _PairCriterion(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        p1, p2 : :obj:`ParticleHandle` or :obj:`int` containing the particle id.
+        p1, p2 : :obj:`espressomd.particle_data.ParticleHandle` or :obj:`int` containing the particle id.
             Particle pair.
         """
         id1 = None
@@ -45,7 +45,7 @@ class _PairCriterion(ScriptInterfaceHelper):
 @script_interface_register
 class DistanceCriterion(_PairCriterion):
 
-    """Pair criterion returning true, if particles are closer than a cut off.
+    """Pair criterion returning true, if particles are closer than a cutoff.
        Periodic boundaries are treated via minimum image convention.
 
        The following parameters can be passed to the constructor, changed via set_params()
