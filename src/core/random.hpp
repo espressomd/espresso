@@ -32,6 +32,7 @@
 #include <utils/u32_to_u64.hpp>
 #include <utils/uniform.hpp>
 
+#include <random>
 #include <vector>
 
 /*
@@ -133,7 +134,7 @@ auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
  * @param counter counter for the random number generation
  * @param key1 key for random number generation
  * @param key2 key for random number generation
- * @tparam salt (decorrelates different thermostat types)
+ * @tparam salt decorrelates different thermostat types
  *
  * @return Vector of Gaussian random numbers.
  *
@@ -174,6 +175,19 @@ auto noise_gaussian(uint64_t counter, int key1, int key2 = 0) {
     }
   }
   return noise;
+}
+
+/** Mersenne Twister with warmup.
+ *  The first 100'000 values of Mersenne Twister generators are often heavily
+ *  correlated @cite panneton06a. This utility function discards the first
+ *  1'000'000 values.
+ *
+ *  @param seed RNG seed
+ */
+template <typename T> std::mt19937 mt19937(T &&seed) {
+  std::mt19937 generator(seed);
+  generator.discard(1'000'000);
+  return generator;
 }
 
 } // namespace Random
