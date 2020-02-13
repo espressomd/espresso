@@ -59,6 +59,7 @@ class DiamondPolymer(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
     def test_particle_properties(self):
         """
         checks if the particles created have the right type and charge
