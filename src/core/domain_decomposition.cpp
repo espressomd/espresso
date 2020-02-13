@@ -388,6 +388,8 @@ void dd_assign_prefetches(std::vector<GhostCommunication> &communications) {
  */
 void dd_update_communicators_w_boxl(const boost::mpi::communicator &comm) {
   auto cart_info = Utils::Mpi::cart_get<3>(comm);
+  auto exchange_comms =
+      std::move(cell_structure.exchange_ghosts_comm).communications();
 
   int cnt = 0;
 
@@ -400,8 +402,7 @@ void dd_update_communicators_w_boxl(const boost::mpi::communicator &comm) {
             (local_geo.boundary()[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (local_geo.boundary()[2 * dir + lr] != 0) {
-            cell_structure.exchange_ghosts_comm.m_communications[cnt]
-                .shift[dir] =
+            exchange_comms[cnt].shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
           }
           cnt++;
@@ -414,8 +415,7 @@ void dd_update_communicators_w_boxl(const boost::mpi::communicator &comm) {
             if ((cart_info.coords[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (local_geo.boundary()[2 * dir + lr] != 0) {
-                cell_structure.exchange_ghosts_comm.m_communications[cnt]
-                    .shift[dir] =
+                exchange_comms[cnt].shift[dir] =
                     local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
               }
               cnt++;
@@ -429,6 +429,9 @@ void dd_update_communicators_w_boxl(const boost::mpi::communicator &comm) {
       }
     }
   }
+
+  cell_structure.exchange_ghosts_comm =
+      GhostCommunicator{std::move(exchange_comms)};
 }
 
 /** Init cell interactions for cell system domain decomposition.

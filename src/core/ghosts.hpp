@@ -171,7 +171,19 @@ struct GhostCommunication {
 
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
+  GhostCommunicator() = default;
+  explicit GhostCommunicator(std::vector<GhostCommunication> communications)
+      : m_communications(std::move(communications)) {}
+
   /** List of ghost communications. */
+  const std::vector<GhostCommunication> &communications() const & {
+    return m_communications;
+  }
+  std::vector<GhostCommunication> &&communications() && {
+    return std::move(m_communications);
+  }
+
+private:
   std::vector<GhostCommunication> m_communications;
 };
 
