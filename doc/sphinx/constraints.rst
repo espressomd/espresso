@@ -362,7 +362,7 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
 
 .. _figure-slitpore:
 
-.. figure:: figures/slitpore.pdf
+.. figure:: figures/slitpore.png
    :alt: Schematic for the slitpore shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
@@ -423,11 +423,16 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
 
 
 :class:`espressomd.shapes.HollowConicalFrustum`
-The conical frustum shape is a hollow cone with round corners. The specific parameters
-are described in the shapes class :class:`espressomd.shapes.HollowConicalFrustum`.
+    The conical frustum shape is a hollow cone with round corners. The specific parameters
+    are described in the shapes class :class:`espressomd.shapes.HollowConicalFrustum`.
 
 .. figure:: figures/shape-conical_frustum.png
    :alt: Conical frustum shape schematic.
+   :align: center
+   :height: 6.00000cm
+
+.. figure:: figures/conical_frustum.png
+   :alt: Schematic for the conical frustum shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
 
