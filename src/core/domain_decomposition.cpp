@@ -38,7 +38,9 @@ using Utils::get_linear_index;
 #include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>
+#include <boost/range/algorithm/copy.hpp>
 #include <boost/range/algorithm/reverse.hpp>
+
 #include <utils/mpi/cart_comm.hpp>
 
 /** Returns pointer to the cell which corresponds to the position if the
@@ -206,19 +208,9 @@ void dd_mark_cells() {
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(ParticleList **part_lists, const int *lc,
-                            const int *hc) {
-  /* sanity check */
-  for (int i = 0; i < 3; i++) {
-    if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
-      return 0;
-    if (hc[i] < 0 || hc[i] >= dd.ghost_cell_grid[i])
-      return 0;
-    if (lc[i] > hc[i])
-      return 0;
-  }
-
-  int c = 0;
+std::vector<ParticleList *> dd_fill_comm_cell_lists(const int *lc,
+                                                    const int *hc) {
+  std::vector<ParticleList *> ret;
   for (int o = lc[0]; o <= hc[0]; o++)
     for (int n = lc[1]; n <= hc[1]; n++)
       for (int m = lc[2]; m <= hc[2]; m++) {
@@ -227,10 +219,12 @@ int dd_fill_comm_cell_lists(ParticleList **part_lists, const int *lc,
                              {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
                               dd.ghost_cell_grid[2]});
 
-        part_lists[c] = &cells[i];
-        c++;
+        ret.push_back(&cells[i]);
       }
-  return c;
+
+  ret.shrink_to_fit();
+
+  return ret;
 }
 
 /** Create communicators for cell structure domain decomposition. (see \ref
@@ -285,8 +279,6 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
           comm[cnt].type = GHOST_LOCL;
           comm[cnt].node = communicator.rank();
 
-          /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
           comm[cnt].shift[dir] =
               local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
@@ -294,15 +286,16 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm[cnt].part_lists.data(), lc, hc);
+          comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
           /* place receive cells after send cells */
-          dd_fill_comm_cell_lists(&comm[cnt].part_lists[n_comm_cells[dir]], lc,
-                                  hc);
-
+          {
+            auto const part_lists = dd_fill_comm_cell_lists(lc, hc);
+            boost::copy(part_lists, std::back_inserter(comm[cnt].part_lists));
+          }
           cnt++;
         }
       } else {
@@ -313,14 +306,13 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
             if ((cart_info.coords[dir] + i) % 2 == 0) {
               comm[cnt].type = GHOST_SEND;
               comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
               comm[cnt].shift[dir] =
                   local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm[cnt].part_lists.data(), lc, hc);
+              comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
@@ -328,11 +320,10 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
             if ((cart_info.coords[dir] + (1 - i)) % 2 == 0) {
               comm[cnt].type = GHOST_RECV;
               comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm[cnt].part_lists.resize(n_comm_cells[dir]);
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm[cnt].part_lists.data(), lc, hc);
+              comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
               cnt++;
             }
         }
