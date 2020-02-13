@@ -6,7 +6,6 @@ set(EspressoCore_SRC
   communication.cpp
   constraints.cpp
   debug.cpp
-  diamond.cpp
   domain_decomposition.cpp
   dpd.cpp
   energy.cpp

@@ -34,10 +34,10 @@ system.cell_system.skin = 0.4
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-positions = polymer.positions(n_polymers=5,
-                              beads_per_chain=50,
-                              bond_length=1.0,
-                              seed=1234)
+positions = polymer.linear_polymer_positions(n_polymers=5,
+                                             beads_per_chain=50,
+                                             bond_length=1.0,
+                                             seed=1234)
 for polymer in positions:
     for i, pos in enumerate(polymer):
         id = len(system.part)
