@@ -26,6 +26,8 @@ public:
                                 const Utils::Vector3d &force) = 0;
   virtual boost::optional<Utils::Vector3d>
   get_force_to_be_applied_at_pos(const Utils::Vector3d &position) const = 0;
+  virtual boost::optional<Utils::Vector3d>
+  get_force_last_applied_at_pos(const Utils::Vector3d &position) const = 0;
 
   // Density
   virtual boost::optional<double>

@@ -525,6 +525,25 @@ public:
     return f * m_density;
   };
 
+  boost::optional<Utils::Vector3d>
+  get_force_last_applied_at_pos(const Utils::Vector3d &pos) const override {
+    auto block = get_block(pos, true);
+    if (!block)
+      return {boost::none};
+
+    Utils::Vector3d f{0.0,0.0,0.0};
+    auto force_at_node = [this,&f](const std::array<int, 3> node, double weight) {
+              auto const bc = get_block_and_cell(to_vector3i(node), true);
+              if(bc){
+                auto const &force_field =
+                    (*bc).block->template getData<VectorField>(m_last_applied_force_field_id);
+                f += to_vector3d(force_field->get((*bc).cell)) * weight;
+              }
+            };
+    distribute_property_at_pos(pos, force_at_node);
+    return f * m_density;
+  };
+
   // Density
   boost::optional<double>
   get_density_at_pos(const Utils::Vector3d &pos) override {
