@@ -69,7 +69,6 @@ if(SPHINX_FOUND)
     add_custom_target(sphinx
         ${SPHINX_API_DOC_EXE}
             -f
-            -P
             -o ${SPHINX_BASE}
             ${SPHINX_PYTHON_DIR}
             ${EXCLUDE}
