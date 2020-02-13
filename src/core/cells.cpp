@@ -433,6 +433,12 @@ void cells_update_ghosts(unsigned data_parts) {
                        GHOSTTRANS_PARTNUM);
     ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
 
+    for (auto &p : cell_structure.ghost_cells().particles()) {
+      if (local_particles[p.p.identity] == nullptr) {
+        local_particles[p.p.identity] = &p;
+      }
+    }
+
     /* Particles are now sorted */
     resort_particles = Cells::RESORT_NONE;
   } else {

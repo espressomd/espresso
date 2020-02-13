@@ -29,8 +29,8 @@
  * - a "GhostCommunication" is always named "ghost_comm".
  */
 #include "ghosts.hpp"
+
 #include "Particle.hpp"
-#include "particle_data.hpp"
 
 #include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
@@ -197,9 +197,6 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (local_particles[part.p.identity] == nullptr) {
-            local_particles[part.p.identity] = &part;
-          }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           archiver >> part.r;
