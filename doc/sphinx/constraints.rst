@@ -362,7 +362,7 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
 
 .. _figure-slitpore:
 
-.. figure:: figures/slitpore.pdf
+.. figure:: figures/slitpore.png
    :alt: Schematic for the slitpore shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
@@ -423,11 +423,16 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
 
 
 :class:`espressomd.shapes.HollowConicalFrustum`
-The conical frustum shape is a hollow cone with round corners. The specific parameters
-are described in the shapes class :class:`espressomd.shapes.HollowConicalFrustum`.
+    The conical frustum shape is a hollow cone with round corners. The specific parameters
+    are described in the shapes class :class:`espressomd.shapes.HollowConicalFrustum`.
 
 .. figure:: figures/shape-conical_frustum.png
    :alt: Conical frustum shape schematic.
+   :align: center
+   :height: 6.00000cm
+
+.. figure:: figures/conical_frustum.png
+   :alt: Schematic for the conical frustum shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
 
@@ -518,24 +523,10 @@ define nodes which are part of a boundary, please refer to :ref:`Using shapes
 as lattice-Boltzmann boundary`.
 
 
-..
-    .. _Creating a harmonic trap:
-
-    Creating a harmonic trap
-    ------------------------
-
-    .. todo:: This feature is not yet implemented.
-
-    Calculates a spring force for all particles, where the equilibrium
-    position of the spring is at and its force constant is . A more
-    flexible trap can be constructed with constraints, but this one runs on
-    the GPU.
-
 .. _External Fields:
 
-
 External Fields
---------------------------
+---------------
 
 There is a variety of external fields, which differ by how their
 values are obtained and how they couple to particles.
@@ -560,7 +551,7 @@ here.
 
 
 Interpolated Force and Potential fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The values of these fields are obtained by interpolating table data,
 which has to be provided by the user. The fields differ by how

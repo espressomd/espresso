@@ -1530,8 +1530,8 @@ cdef class _ParticleSliceImpl:
     """Handles slice inputs.
 
     This base class should not be used directly. Use
-    :class:`espressomd.ParticleSlice` instead, which contains all the particle
-    properties.
+    :class:`espressomd.particle_data.ParticleSlice` instead, which contains
+    all the particle properties.
 
     """
 
@@ -1673,7 +1673,7 @@ cdef class _ParticleSliceImpl:
 
         See Also
         --------
-        add
+        :meth:`espressomd.particle_data.ParticleList.add`
 
         """
         for id in self.id_selection:
@@ -1683,7 +1683,7 @@ cdef class _ParticleSliceImpl:
 class ParticleSlice(_ParticleSliceImpl):
 
     """
-    Handles slice inputs e.g. part[0:2]. Sets values for selected slices or
+    Handles slice inputs e.g. ``part[0:2]``. Sets values for selected slices or
     returns values as a single list.
 
     """
@@ -1697,8 +1697,8 @@ class ParticleSlice(_ParticleSliceImpl):
 
 cdef class ParticleList:
     """
-    Provides access to the particles via [i], where i is the particle id.
-    Returns a :class:`ParticleHandle` object.
+    Provides access to the particles via ``[i]``, where ``i`` is the particle
+    id. Returns a :class:`espressomd.particle_data.ParticleHandle` object.
 
     """
 
@@ -1715,13 +1715,18 @@ cdef class ParticleList:
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         """Attributes to pickle.
-        Content of particle_attributes, minus a few exceptions dip, director:
-        Setting only the director will overwrite the orientation of the
-        particle around the axis parallel to dipole moment/director.
-        Quaternions contain the full info id: The particle id is used as the
-        storage key when pickling all particles via ParticleList, and the
-        interface (rightly) does not support changing of the id after the
-        particle was created.
+
+        Content of ``particle_attributes``, minus a few exceptions:
+
+        - :attr:`~ParticleHandle.dip`, :attr:`~ParticleHandle.director`:
+          Setting only the director will overwrite the orientation of the
+          particle around the axis parallel to dipole moment/director.
+          Quaternions contain the full info.
+        - :attr:`~ParticleHandle.id`: The particle id is used as the
+          storage key when pickling all particles via :class:`ParticleList`,
+          and the interface (rightly) does not support changing of the id
+          after the particle was created.
+        - :attr:`~ParticleHandle.image_box`, :attr:`~ParticleHandle.node`
 
         """
 
