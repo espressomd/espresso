@@ -113,7 +113,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
     if (!LAYERED_BTM_NEIGHBOR)
       n -= 2;
 
-    std::vector<GhostCommunication> comms(n);
+    std::vector<GhostCommunication> comms(n, GhostCommunication{comm_cart});
 
     /* always sending/receiving 1 cell per time step */
     for (int c = 0; c < n; c++) {
@@ -221,7 +221,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
   /* one node => local transfers, either 2 (up and down, periodic) or zero*/
 
   auto const n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
-  std::vector<GhostCommunication> comms(n);
+  std::vector<GhostCommunication> comms(n, GhostCommunication{comm_cart});
 
   if (n != 0) {
     /* two cells: from and to */

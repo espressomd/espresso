@@ -259,7 +259,7 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
   }
 
   /* We fill in num communication steps. */
-  std::vector<GhostCommunication> comm(num);
+  std::vector<GhostCommunication> comm(num, GhostCommunication(communicator));
 
   /* number of cells to communicate in a direction */
   n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];

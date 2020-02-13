@@ -147,6 +147,17 @@ enum : unsigned {
 /*@{*/
 
 struct GhostCommunication {
+  boost::mpi::communicator comm;
+
+private:
+  GhostCommunication() = default;
+
+public:
+  explicit GhostCommunication(boost::mpi::communicator comm)
+      : GhostCommunication() {
+    this->comm = std::move(comm);
+  }
+
   bool prefetch = false;
   bool poststore = false;
 

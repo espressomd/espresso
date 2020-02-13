@@ -43,7 +43,7 @@ nsq_prepare_comm(boost::mpi::communicator const &comm) {
     return {};
   }
 
-  std::vector<GhostCommunication> comms(comm.size());
+  std::vector<GhostCommunication> comms(comm.size(), GhostCommunication{comm});
   /* every node has its dedicated comm step */
   for (int n = 0; n < n_nodes; n++) {
     comms[n].part_lists.resize(1);

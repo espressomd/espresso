@@ -30,17 +30,15 @@
  */
 #include "ghosts.hpp"
 #include "Particle.hpp"
-#include "communication.hpp"
 #include "particle_data.hpp"
 
-#include <mpi.h>
 #include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
+#include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/copy.hpp>
-#include <boost/serialization/vector.hpp>
-
 #include <boost/range/numeric.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <vector>
@@ -277,29 +275,30 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
   }
 }
 
-static bool is_send_op(int comm_type, int node) {
-  return ((comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
-          (comm_type == GHOST_BCST && node == this_node));
+static bool is_send_op(GhostCommunication const &ghost_comm) {
+  auto const comm_type = ghost_comm.type;
+
+  return (
+      (comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
+      (comm_type == GHOST_BCST && ghost_comm.node == ghost_comm.comm.rank()));
 }
 
-static bool is_recv_op(int comm_type, int node) {
+static bool is_recv_op(GhostCommunication const &ghost_comm) {
+  auto const comm_type = ghost_comm.type;
+  auto const node = ghost_comm.node;
+  auto const this_node = ghost_comm.comm.rank();
+
   return ((comm_type == GHOST_RECV) ||
           (comm_type == GHOST_BCST && node != this_node) ||
           (comm_type == GHOST_RDCE && node == this_node));
 }
 
 static bool is_prefetchable(GhostCommunication const &ghost_comm) {
-  int const comm_type = ghost_comm.type;
-  int const prefetch = ghost_comm.prefetch;
-  int const node = ghost_comm.node;
-  return is_send_op(comm_type, node) && prefetch;
+  return is_send_op(ghost_comm) && ghost_comm.prefetch;
 }
 
 static bool is_poststorable(GhostCommunication const &ghost_comm) {
-  int const comm_type = ghost_comm.type;
-  int const poststore = ghost_comm.poststore;
-  int const node = ghost_comm.node;
-  return is_recv_op(comm_type, node) && poststore;
+  return is_recv_op(ghost_comm) && ghost_comm.poststore;
 }
 
 void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
@@ -320,7 +319,7 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
     int const node = ghost_comm.node;
 
     /* prepare send buffer if necessary */
-    if (is_send_op(comm_type, node)) {
+    if (is_send_op(ghost_comm)) {
       /* ok, we send this step, prepare send buffer if not yet done */
       if (!prefetch) {
         prepare_send_buffer(send_buffer, ghost_comm, data_parts);
@@ -337,50 +336,50 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
     }
 
     /* recv buffer for recv and multinode operations to this node */
-    if (is_recv_op(comm_type, node))
+    if (is_recv_op(ghost_comm))
       prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
 
     /* transfer data */
     // Use two send/recvs in order to avoid, having to serialize CommBuf
     // (which consists of already serialized data).
-    switch (comm_type) {
+    switch (ghost_comm.type) {
     case GHOST_RECV:
-      comm_cart.recv(node, REQ_GHOST_SEND, recv_buffer.data(),
-                     recv_buffer.size());
-      comm_cart.recv(node, REQ_GHOST_SEND, recv_buffer.bonds());
+      ghost_comm.comm.recv(node, REQ_GHOST_SEND, recv_buffer.data(),
+                           recv_buffer.size());
+      ghost_comm.comm.recv(node, REQ_GHOST_SEND, recv_buffer.bonds());
       break;
     case GHOST_SEND:
-      comm_cart.send(node, REQ_GHOST_SEND, send_buffer.data(),
-                     send_buffer.size());
-      comm_cart.send(node, REQ_GHOST_SEND, send_buffer.bonds());
+      ghost_comm.comm.send(node, REQ_GHOST_SEND, send_buffer.data(),
+                           send_buffer.size());
+      ghost_comm.comm.send(node, REQ_GHOST_SEND, send_buffer.bonds());
       break;
     case GHOST_BCST:
-      if (node == this_node) {
-        boost::mpi::broadcast(comm_cart, send_buffer.data(), send_buffer.size(),
-                              node);
-        boost::mpi::broadcast(comm_cart, send_buffer.bonds(), node);
+      if (node == ghost_comm.comm.rank()) {
+        boost::mpi::broadcast(ghost_comm.comm, send_buffer.data(),
+                              send_buffer.size(), node);
+        boost::mpi::broadcast(ghost_comm.comm, send_buffer.bonds(), node);
       } else {
-        boost::mpi::broadcast(comm_cart, recv_buffer.data(), recv_buffer.size(),
-                              node);
-        boost::mpi::broadcast(comm_cart, recv_buffer.bonds(), node);
+        boost::mpi::broadcast(ghost_comm.comm, recv_buffer.data(),
+                              recv_buffer.size(), node);
+        boost::mpi::broadcast(ghost_comm.comm, recv_buffer.bonds(), node);
       }
       break;
     case GHOST_RDCE:
-      if (node == this_node)
-        boost::mpi::reduce(comm_cart,
+      if (node == ghost_comm.comm.rank())
+        boost::mpi::reduce(ghost_comm.comm,
                            reinterpret_cast<double *>(send_buffer.data()),
                            send_buffer.size() / sizeof(double),
                            reinterpret_cast<double *>(recv_buffer.data()),
                            std::plus<double>{}, node);
       else
         boost::mpi::reduce(
-            comm_cart, reinterpret_cast<double *>(send_buffer.data()),
+            ghost_comm.comm, reinterpret_cast<double *>(send_buffer.data()),
             send_buffer.size() / sizeof(double), std::plus<double>{}, node);
       break;
     }
 
     // recv op; write back data directly, if no PSTSTORE delay is requested.
-    if (is_recv_op(comm_type, node)) {
+    if (is_recv_op(ghost_comm)) {
       if (!poststore) {
         /* forces have to be added, the rest overwritten. Exception is RDCE,
          * where the addition is integrated into the communication. */
