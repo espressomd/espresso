@@ -235,9 +235,11 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
 /** Create communicators for cell structure domain decomposition. (see \ref
  *  GhostCommunicator)
  */
-std::vector<GhostCommunication> dd_prepare_comm(const Utils::Vector3i &grid) {
+std::vector<GhostCommunication>
+dd_prepare_comm(const Utils::Vector3i &grid,
+                std::vector<GhostCommunication> &&comm = {}) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
-  int lc[3], hc[3], done[3] = {0, 0, 0 - };
+  int lc[3], hc[3], done[3] = {0, 0, 0};
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
@@ -257,7 +259,8 @@ std::vector<GhostCommunication> dd_prepare_comm(const Utils::Vector3i &grid) {
   }
 
   /* We fill in num communication steps. */
-  std::vector<GhostCommunication> comm(num);
+  comm.clear();
+  comm.resize(num);
 
   /* number of cells to communicate in a direction */
   n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];
