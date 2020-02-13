@@ -172,7 +172,7 @@ struct GhostCommunication {
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
   /** List of ghost communications. */
-  std::vector<GhostCommunication> comm;
+  std::vector<GhostCommunication> m_communications;
 };
 
 /*@}*/
