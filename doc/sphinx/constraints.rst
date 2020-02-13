@@ -518,24 +518,10 @@ define nodes which are part of a boundary, please refer to :ref:`Using shapes
 as lattice-Boltzmann boundary`.
 
 
-..
-    .. _Creating a harmonic trap:
-
-    Creating a harmonic trap
-    ------------------------
-
-    .. todo:: This feature is not yet implemented.
-
-    Calculates a spring force for all particles, where the equilibrium
-    position of the spring is at and its force constant is . A more
-    flexible trap can be constructed with constraints, but this one runs on
-    the GPU.
-
 .. _External Fields:
 
-
 External Fields
---------------------------
+---------------
 
 There is a variety of external fields, which differ by how their
 values are obtained and how they couple to particles.
@@ -560,7 +546,7 @@ here.
 
 
 Interpolated Force and Potential fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The values of these fields are obtained by interpolating table data,
 which has to be provided by the user. The fields differ by how
