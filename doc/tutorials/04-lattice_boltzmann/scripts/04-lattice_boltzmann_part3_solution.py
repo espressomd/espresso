@@ -55,10 +55,10 @@ for index, N in enumerate(N_MONOMERS):
     system.actors.clear()
     system.auto_update_accumulators.clear()
     # Setup polymer of part_id 0 with fene bond
-    positions = espressomd.polymer.positions(n_polymers=1,
-                                             beads_per_chain=N,
-                                             bond_length=1, seed=5642,
-                                             min_distance=0.9)
+    positions = espressomd.polymer.linear_polymer_positions(n_polymers=1,
+                                                            beads_per_chain=N,
+                                                            bond_length=1, seed=5642,
+                                                            min_distance=0.9)
     for i, pos in enumerate(positions[0]):
         pid = len(system.part)
         system.part.add(id=pid, pos=pos)
