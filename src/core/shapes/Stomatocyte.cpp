@@ -33,41 +33,28 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
 
   using Utils::sqr;
 
-  // Parameters
-
-  int number;
-
-  double mu, T0, T1, T1p, T2, T3, T3sqrt, T3p, T4, a, b, c, d, e, rad0, rad1,
-      rad2, rad3, dst0, dst1, dst2, dst3, t0, t1, t2, t3, t4, ttota, distance,
-      mindist, time0, time1, xd, yd, zd, normal_x_3D, normal_y_3D, normal_z_3D;
-
-  Utils::Vector3d closest_pos({-1.0, -1.0, -1.0});
-
   // Set the three dimensions of the stomatocyte
 
-  a = m_outer_radius;
-  b = m_inner_radius;
-  c = m_layer_width;
-  a = a * c;
-  b = b * c;
+  auto const c = m_layer_width;
+  auto const a = m_outer_radius * c;
+  auto const b = m_inner_radius * c;
 
   /***** Convert 3D coordinates to 2D planar coordinates *****/
 
   // Calculate the point on position + mu * orientation,
   // where the difference segment is orthogonal
 
-  mu = (m_orientation * pos - m_position * m_orientation) /
-       m_orientation.norm2();
+  auto const mu = (m_orientation * pos - m_position * m_orientation) /
+                  m_orientation.norm2();
 
   // Then the closest point to the line is
 
-  closest_pos = m_position + mu * m_orientation;
+  auto const closest_pos = m_position + mu * m_orientation;
 
   // So the shortest distance to the line is
 
-  Utils::Vector2d dist_2D;
-  dist_2D[0] = (closest_pos - pos).norm();
-  dist_2D[1] = mu * m_orientation.norm();
+  auto const dist_2D =
+      Utils::Vector2d{(closest_pos - pos).norm(), mu * m_orientation.norm()};
 
   /***** Use the obtained planar coordinates in distance function *****/
 
@@ -76,14 +63,14 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // segments of the 2D cut of the stomatocyte meet. The
   // geometry is rather complex however and details will not be given
 
-  d = -sqrt(sqr(b) + 4 * b * c - 5 * sqr(c)) + a - 2 * c - b;
+  auto const d = -sqrt(sqr(b) + 4 * b * c - 5 * sqr(c)) + a - 2 * c - b;
 
-  e = (6 * sqr(c) - 2 * c * d + a * (-3 * c + d) +
-       sqrt(-sqr(a - 2 * c) *
-            (-2 * sqr(a) + 8 * a * c + sqr(c) + 6 * c * d + sqr(d)))) /
-      (2 * (a - 2 * c));
+  auto const e = (6 * sqr(c) - 2 * c * d + a * (-3 * c + d) +
+                  sqrt(-sqr(a - 2 * c) * (-2 * sqr(a) + 8 * a * c + sqr(c) +
+                                          6 * c * d + sqr(d)))) /
+                 (2 * (a - 2 * c));
 
-  T0 = acos(
+  auto const T0 = acos(
       (sqr(a) * d + 5 * sqr(c) * d + pow(d, 3) - sqr(a) * e - 5 * sqr(c) * e +
        6 * c * d * e - 3 * sqr(d) * e - 6 * c * sqr(e) + 4 * d * sqr(e) -
        2 * pow(e, 3) -
@@ -95,7 +82,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
                      2 * sqr(e)))) /
       (2 * a * (9 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e + 2 * sqr(e))));
 
-  T1p = acos(-(
+  auto const T1p = acos(-(
       (39 * pow(c, 3) + 3 * c * sqr(d) + 31 * sqr(c) * e - 6 * c * d * e +
        sqr(d) * e + 12 * c * sqr(e) - 2 * d * sqr(e) + 2 * pow(e, 3) -
        sqr(a) * (3 * c + e) -
@@ -111,19 +98,18 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
                      2 * sqr(e)))) /
       (4 * c * (9 * sqr(c) + sqr(d) + 6 * c * e - 2 * d * e + 2 * sqr(e)))));
 
-  T1 = 3.0 * M_PI / 4.0 - T1p;
+  auto const T1 = 3.0 * M_PI / 4.0 - T1p;
 
-  T2 = e;
+  auto const T2 = e;
 
-  T3sqrt = -sqr(b * c) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-            2 * a * (b + 2 * c + d)) *
-           (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) - 2 * a * (b + 2 * c + d) +
-            2 * b * (4 * c + d));
+  auto const T3sqrt =
+      std::max(0.0, -sqr(b * c) *
+                        (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
+                         2 * a * (b + 2 * c + d)) *
+                        (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) -
+                         2 * a * (b + 2 * c + d) + 2 * b * (4 * c + d)));
 
-  T3sqrt = std::max(T3sqrt, 0.0);
-
-  T3p = acos(
+  auto const T3p = acos(
       -((-pow(a, 3) * b + 2 * pow(b, 3) * (2 * c + d) +
          3 * sqr(a) * b * (b + 2 * c + d) +
          sqr(b) * (25 * sqr(c) + 12 * c * d + 3 * sqr(d)) +
@@ -136,42 +122,41 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
          (sqr(a) + sqr(b) + 13 * sqr(c) + 4 * c * d + sqr(d) +
           2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)))));
 
-  T3 = 3.0 * M_PI / 4.0 - T3p;
+  auto const T3 = 3.0 * M_PI / 4.0 - T3p;
 
-  T4 = acos((b * (-a + b + 2 * c + d) *
-                 (sqr(a) + 2 * sqr(b) + 9 * sqr(c) + 4 * c * d + sqr(d) +
-                  2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)) -
-             3 * sqrt(-sqr(b * c) *
-                      (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
-                       2 * a * (b + 2 * c + d)) *
-                      (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) -
-                       2 * a * (b + 2 * c + d) + 2 * b * (4 * c + d)))) /
-            (2 * sqr(b) *
-             (sqr(a) + sqr(b) + 13 * sqr(c) + 4 * c * d + sqr(d) +
-              2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d))));
+  auto const T4 =
+      acos((b * (-a + b + 2 * c + d) *
+                (sqr(a) + 2 * sqr(b) + 9 * sqr(c) + 4 * c * d + sqr(d) +
+                 2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d)) -
+            3 * sqrt(-sqr(b * c) *
+                     (sqr(a) + 9 * sqr(c) + 4 * c * d + d * (2 * b + d) -
+                      2 * a * (b + 2 * c + d)) *
+                     (sqr(a) + 9 * sqr(c) + 4 * c * d + sqr(d) -
+                      2 * a * (b + 2 * c + d) + 2 * b * (4 * c + d)))) /
+           (2 * sqr(b) *
+            (sqr(a) + sqr(b) + 13 * sqr(c) + 4 * c * d + sqr(d) +
+             2 * b * (2 * c + d) - 2 * a * (b + 2 * c + d))));
 
   // Radii for the various parts of the swimmer
 
-  rad0 = a;
-  rad1 = 2.0 * c;
-  rad2 = 2.0 * c;
-  rad3 = b;
+  auto const rad0 = a;
+  auto const rad1 = 2.0 * c;
+  auto const rad2 = 2.0 * c;
+  auto const rad3 = b;
 
   // Center points for the circles
 
-  Utils::Vector2d pt0, pt1, pt2, pt3;
-
-  pt0 = {0.0, 0.0};
-  pt1 = {3.0 * c + e, d - e};
-  pt2 = {3.0 * c, d};
-  pt3 = {0.0, a - b - 2 * c};
+  auto const pt0 = Utils::Vector2d{0.0, 0.0};
+  auto const pt1 = Utils::Vector2d{3.0 * c + e, d - e};
+  auto const pt2 = Utils::Vector2d{3.0 * c, d};
+  auto const pt3 = Utils::Vector2d{0.0, a - b - 2 * c};
 
   // Distance of point of interest to center points
 
-  dst0 = (pt0 - dist_2D).norm();
-  dst1 = (pt1 - dist_2D).norm();
-  dst2 = (pt2 - dist_2D).norm();
-  dst3 = (pt3 - dist_2D).norm();
+  auto const dst0 = (pt0 - dist_2D).norm();
+  auto const dst1 = (pt1 - dist_2D).norm();
+  auto const dst2 = (pt2 - dist_2D).norm();
+  auto const dst3 = (pt3 - dist_2D).norm();
 
   // Now for the minimum distances, the fourth
   // is for the line segment
@@ -188,22 +173,23 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // Now determine at which time during the parametrization
   // the minimum distance to each segment is achieved
 
-  ttota = T0 + T1 + T2 + T3 + T4;
+  auto const ttota = T0 + T1 + T2 + T3 + T4;
 
-  t0 = acos((dist_2D[1] - pt0[1]) / (dist_2D - pt0).norm());
-  t1 = acos((dist_2D[0] - pt1[0]) / (dist_2D - pt1).norm());
-  t2 = acos((dist_2D[1] - pt2[1]) / (dist_2D - pt2).norm());
-  t3 = acos((dist_2D[1] - pt3[1]) / (dist_2D - pt3).norm());
-  t4 = (3.0 * c - d + 2.0 * e + 2.0 * T0 + 2.0 * T1 - dist_2D[0] + dist_2D[1]) /
-       (2.0 * ttota);
+  auto const t0 = acos((dist_2D[1] - pt0[1]) / (dist_2D - pt0).norm());
+  auto const t1 = acos((dist_2D[0] - pt1[0]) / (dist_2D - pt1).norm());
+  auto const t2 = acos((dist_2D[1] - pt2[1]) / (dist_2D - pt2).norm());
+  auto const t3 = acos((dist_2D[1] - pt3[1]) / (dist_2D - pt3).norm());
+  auto const t4 =
+      (3.0 * c - d + 2.0 * e + 2.0 * T0 + 2.0 * T1 - dist_2D[0] + dist_2D[1]) /
+      (2.0 * ttota);
 
   // Now we can use these times to check whether or not the
   // point where the shortest distance is found is on the
   // segment of the circles or line that contributes to the
   // stomatocyte contour
 
-  time0 = (T0 + T1) / ttota;
-  time1 = (T0 + T1 + T2) / ttota;
+  auto const time0 = (T0 + T1) / ttota;
+  auto const time1 = (T0 + T1 + T2) / ttota;
 
   int io[5];
 
@@ -218,8 +204,8 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // Now we only need to consider those distances for which
   // the io# flag is set to 1
 
-  number = -1;
-  mindist = -1.0;
+  int number = -1;
+  double mindist = -1.0;
 
   for (int i = 0; i < 5; i++) {
     if ((io[i] == 1) and ((mindist < 0.0) or (mindist > mdst[i]))) {
@@ -232,7 +218,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // to which the point is closest, we know the distance,
   // but we still need the normal
 
-  distance = -mindist;
+  double distance = -mindist;
   Utils::Vector2d normal({-1.0, -1.0});
 
   switch (number) {
@@ -267,9 +253,9 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // transformation to get it in 3D. The minimum distance stays
   // the same though. We first get the normalized direction vector.
 
-  xd = m_orientation[0] / m_orientation.norm();
-  yd = m_orientation[1] / m_orientation.norm();
-  zd = m_orientation[2] / m_orientation.norm();
+  auto const xd = m_orientation[0] / m_orientation.norm();
+  auto const yd = m_orientation[1] / m_orientation.norm();
+  auto const zd = m_orientation[2] / m_orientation.norm();
 
   // We now establish the rotation matrix required to go
   // form {0,0,1} to {xd,yd,zd}
@@ -314,7 +300,7 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   // Next we determine the 3D vector between the center
   // of the stomatocyte and the point of interest
 
-  Utils::Vector3d p(pos - m_position);
+  Utils::Vector3d const p(pos - m_position);
 
   // Now we use the inverse matrix to find the
   // position of the point with respect to the origin
@@ -326,6 +312,8 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
   pp[1] = matrix[1] * p[0] + matrix[4] * p[1] + matrix[7] * p[2];
 
   // Now use this direction to orient the normal
+
+  double normal_x_3D, normal_y_3D, normal_z_3D;
 
   if (pp.norm2() > 1.e-10) {
     // The point is off the rotational symmetry

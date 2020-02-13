@@ -24,7 +24,6 @@ class Shape:
 
 @script_interface_register
 class Cylinder(Shape, ScriptInterfaceHelper):
-
     """
     A cylinder shape.
 
@@ -50,7 +49,6 @@ class Cylinder(Shape, ScriptInterfaceHelper):
 
 @script_interface_register
 class Ellipsoid(Shape, ScriptInterfaceHelper):
-
     """
     An ellipsoid.
 
@@ -73,36 +71,7 @@ class Ellipsoid(Shape, ScriptInterfaceHelper):
 
 
 @script_interface_register
-class HollowCone(Shape, ScriptInterfaceHelper):
-
-    """
-    A hollow cone shape.
-
-    Attributes
-    ----------
-    inner_radius : :obj:`float`
-        Inner radius of the cone.
-    outer_radius  : :obj:`float`
-        Outer radius of the cone.
-    opening_angle : :obj:`float`
-        Opening angle of the cone (in rad).
-    axis : (3,) array_like of :obj:`float`
-        Axis of symmetry, prescribes orientation of the cone.
-    center : (3,) array_like of :obj:`float`
-        Position of the cone.
-    width : :obj:`float`
-        Wall thickness of the cone.
-    direction : :obj:`int`
-        Surface orientation, for +1 the normal points
-        out of the mantel, for -1 it points inward.
-
-    """
-    _so_name = "Shapes::HollowCone"
-
-
-@script_interface_register
 class Rhomboid(Shape, ScriptInterfaceHelper):
-
     """
     An parallelepiped.
 
@@ -126,7 +95,6 @@ class Rhomboid(Shape, ScriptInterfaceHelper):
 
 @script_interface_register
 class Slitpore(Shape, ScriptInterfaceHelper):
-
     """
 
     .. image:: figures/slitpore.png
@@ -148,7 +116,6 @@ class Slitpore(Shape, ScriptInterfaceHelper):
 
 @script_interface_register
 class Sphere(Shape, ScriptInterfaceHelper):
-
     """
     A sphere.
 
@@ -168,7 +135,6 @@ class Sphere(Shape, ScriptInterfaceHelper):
 
 @script_interface_register
 class SpheroCylinder(Shape, ScriptInterfaceHelper):
-
     """
     A cylinder with hemispheres as caps.
 
@@ -193,7 +159,6 @@ class SpheroCylinder(Shape, ScriptInterfaceHelper):
 @script_interface_register
 @requires_experimental_features("No test coverage")
 class Stomatocyte(Shape, ScriptInterfaceHelper):
-
     """
     Attributes
     ----------
@@ -218,7 +183,6 @@ class Stomatocyte(Shape, ScriptInterfaceHelper):
 
 @script_interface_register
 class Torus(Shape, ScriptInterfaceHelper):
-
     """
     A torus shape.
 
@@ -242,7 +206,6 @@ class Torus(Shape, ScriptInterfaceHelper):
 
 @script_interface_register
 class Wall(Shape, ScriptInterfaceHelper):
-
     """
     An infinite plane.
 
@@ -259,7 +222,6 @@ class Wall(Shape, ScriptInterfaceHelper):
 
 @script_interface_register
 class SimplePore(Shape, ScriptInterfaceHelper):
-
     """
     Two parallel infinite planes, and a cylindrical channel connecting them.
     The cylinder and the planes are connected by torus segments with an
@@ -280,3 +242,27 @@ class SimplePore(Shape, ScriptInterfaceHelper):
 
     """
     _so_name = "Shapes::SimplePore"
+
+
+@script_interface_register
+class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
+    """
+    Hollow conical frustum shape.
+
+    Attributes
+    ----------
+    r1: :obj:`float`
+        Radius r1.
+    r2: :obj:`float`
+        Radius r2.
+    length: :obj:`float`
+        Length of the conical frustum along `axis`.
+    axis: (3,) array_like of :obj:`float`
+        Symmetry axis.
+    center: (3,) array_like of :obj:`float`
+        Position of the center.
+
+
+    .. image:: figures/conical_frustum.png
+    """
+    _so_name = "Shapes::HollowConicalFrustum"

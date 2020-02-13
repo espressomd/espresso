@@ -44,13 +44,13 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Wall`
     - :class:`espressomd.shapes.Cylinder`
     - :class:`espressomd.shapes.Ellipsoid`
-    - :class:`espressomd.shapes.HollowCone`
     - :class:`espressomd.shapes.Rhomboid`
     - :class:`espressomd.shapes.SimplePore`
     - :class:`espressomd.shapes.Slitpore`
     - :class:`espressomd.shapes.Sphere`
     - :class:`espressomd.shapes.SpheroCylinder`
     - :class:`espressomd.shapes.Stomatocyte`
+    - :class:`espressomd.shapes.HollowConicalFrustum`
 
 
 .. _Adding shape-based constraints to the system:
@@ -422,37 +422,14 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
     system.constraints.add(shape=spherocylinder, particle_type=0)
 
 
-:class:`espressomd.shapes.HollowCone`
-   A hollow cone.
+:class:`espressomd.shapes.HollowConicalFrustum`
+The conical frustum shape is a hollow cone with round corners. The specific parameters
+are described in the shapes class :class:`espressomd.shapes.HollowConicalFrustum`.
 
-The resulting surface is a section of a hollow cone.
-The parameters ``inner_radius`` and ``outer_radius`` specifies the two radii .
-The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and :math:`\pi/2` ), and thus also determines the length.
-
-The orientation of the (cylindrically symmetric) cone is specified with the parameter ``axis`` (a (3,) array_like of :obj:`float`),
-which points in the direction of the symmetry axis, and does not need to be normalized.
-
-The position is specified via the (3,) array_like ``center`` and can be any point in the simulation box.
-
-The ``width`` specifies the width.
-This shape supports the ``direction`` parameter, ``+1`` for outward and ``-1`` for inward.
-
-.. figure:: figures/shape-hollowcone.png
-   :alt:  Example constraint with a  ``Hollowcone`` shape.
+.. figure:: figures/shape-conical_frustum.png
+   :alt: Conical frustum shape schematic.
    :align: center
    :height: 6.00000cm
-
-
-Pictured is an example constraint with a ``Hollowcone`` shape created with ::
-
-    hollowcone = HollowCone(inner_radius=5,
-                            outer_radius=20,
-                            opening_angle=np.pi/4.0,
-                            axis=[1.0, 0.0, 0.0],
-                            center=[25, 25, 25],
-                            width=2,
-                            direction=1)
-    system.constraints.add(shape=hollowcone, particle_type=0, penetrable=True)
 
 
 For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
@@ -460,7 +437,6 @@ For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
 ``penetrable`` is set to ``True``. Otherwise, when the ``penetrable`` option is
 ignored or is set to ``False``, the constraint cannot be violated, i.e. no
 particle can go through the constraint surface (|es| will exit if it does).
-
 
 .. _Available options:
 

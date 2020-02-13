@@ -18,9 +18,7 @@
 #
 """
 Simulate a Lennard-Jones liquid with charges. The P3M method is used to
-calculate electrostatic interactions. The ELC method can be optionally
-added to subtract the electrostatic contribution from the *z*-direction.
-For more details, see :ref:`Electrostatic Layer Correction (ELC)`.
+calculate electrostatic interactions.
 """
 import numpy as np
 import espressomd
@@ -29,7 +27,6 @@ required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
-from espressomd import electrostatic_extensions
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -38,8 +35,6 @@ group.add_argument("--cpu", action="store_const", dest="mode",
                    const="cpu", help="P3M on CPU", default="cpu")
 group.add_argument("--gpu", action="store_const", dest="mode",
                    const="gpu", help="P3M on GPU")
-group.add_argument("--elc", action="store_const", dest="mode",
-                   const="elc", help="P3M and ELC on CPU")
 args = parser.parse_args()
 
 
@@ -141,10 +136,6 @@ print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
-
-if args.mode == "elc":
-    elc = electrostatic_extensions.ELC(maxPWerror=1.0, gap_size=1.0)
-    system.actors.add(elc)
 
 print(system.actors)
 

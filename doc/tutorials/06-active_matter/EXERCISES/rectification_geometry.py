@@ -30,7 +30,8 @@ import espressomd
 espressomd.assert_features(["CUDA", "LB_BOUNDARIES_GPU"])
 from espressomd import lb
 from espressomd.lbboundaries import LBBoundary
-from espressomd.shapes import Cylinder, Wall, HollowCone
+import espressomd.shapes
+from espressomd.shapes import Cylinder
 
 
 # Setup constants
@@ -94,17 +95,17 @@ ANGLE = pi / 4.0
 ORAD = (DIAMETER - IRAD) / sin(ANGLE)
 SHIFT = 0.25 * ORAD * cos(ANGLE)
 
-hollow_cone = LBBoundary(
-    shape=HollowCone(
-        center=[BOX_L[0] / 2. + SHIFT,
-                BOX_L[1] / 2.,
-                BOX_L[2] / 2.,
-        axis=[-1, 0, 0],
-        outer_radius=ORAD,
-        inner_radius=IRAD,
-        width=2.0,
-        opening_angle=ANGLE,
-        direction=1))
+hollow_cone = LBBoundary(shape=espressomd.shapes.HollowConicalFrustum(center=[BOX_L[0] / 2.0 - 1.3 * SHIFT,
+                                                                              BOX_L[1] /
+                                                                              2.0,
+                                                                              BOX_L[2] / 2.0],
+                                                                      axis=[-1,
+                                                                            0, 0],
+                                                                      r1=ORAD,
+                                                                      r2=IRAD,
+                                                                      thickness=2.0,
+                                                                      length=18,
+                                                                      direction=1))
 system.lbboundaries.add(hollow_cone)
 
 ##########################################################################

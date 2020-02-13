@@ -1,0 +1,4 @@
+include(unit_test)
+unit_test(NAME Wall_test SRC Wall_test.cpp DEPENDS Shapes)
+unit_test(NAME ConicalFrustum_test SRC HollowConicalFrustum_test.cpp DEPENDS Shapes)
+unit_test(NAME Ellipsoid_test SRC Ellipsoid_test.cpp DEPENDS Shapes)

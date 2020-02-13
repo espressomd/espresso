@@ -66,7 +66,7 @@ nptiso_struct nptiso = {0.0,
 /* local prototypes                                         */
 /************************************************************/
 
-/** Calculate long range virials (P3M, MMM2d...). */
+/** Calculate long range virials (P3M, ...). */
 void calc_long_range_virials(const ParticleRange &particles);
 
 /** Initializes a virials Observable stat. */
