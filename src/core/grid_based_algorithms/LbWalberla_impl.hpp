@@ -404,11 +404,10 @@ public:
   void integrate() override { m_time_loop->singleStep(); };
 
   template <typename Function>
-  void interpolate_bspline_at_pos(Utils::Vector3d pos,
-                                  Function f) const{
-    Utils::Interpolation::bspline_3d<2>(pos, f,
-                                        Utils::Vector3d{1.0,1.0,1.0},//grid spacing
-                                        Utils::Vector3d{0.0,0.0,0.0});//offset
+  void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) const {
+    Utils::Interpolation::bspline_3d<2>(
+        pos, f, Utils::Vector3d{1.0, 1.0, 1.0}, // grid spacing
+        Utils::Vector3d{0.0, 0.0, 0.0});        // offset
   }
 
   // Velocity
@@ -438,16 +437,18 @@ public:
     auto block = get_block(pos, true);
     if (!block)
       return {boost::none};
-    Utils::Vector3d v{0.0,0.0,0.0};
-    interpolate_bspline_at_pos(pos, [this,&v](const std::array<int, 3> node, double weight) {
-              auto const bc = get_block_and_cell(to_vector3i(node), true);
-              if (bc){
-                auto const &vel_adaptor =
-                    (*bc).block->template getData<VelocityAdaptor>(m_velocity_adaptor_id);
-                v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
-              }
-            });
-    return v*8.0;
+    Utils::Vector3d v{0.0, 0.0, 0.0};
+    interpolate_bspline_at_pos(
+        pos, [this, &v](const std::array<int, 3> node, double weight) {
+          auto const bc = get_block_and_cell(to_vector3i(node), true);
+          if (bc) {
+            auto const &vel_adaptor =
+                (*bc).block->template getData<VelocityAdaptor>(
+                    m_velocity_adaptor_id);
+            v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
+          }
+        });
+    return v * 8.0;
   };
 
   // Local force
@@ -456,14 +457,15 @@ public:
     auto block = get_block(pos, true);
     if (!block)
       return false;
-    auto force_at_node = [this,force](const std::array<int, 3> node, double weight) {
-              auto const bc = get_block_and_cell(to_vector3i(node), true);
-              if(bc){
-                auto force_field =
-                    (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-                force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
-              }
-            };
+    auto force_at_node = [this, force](const std::array<int, 3> node,
+                                       double weight) {
+      auto const bc = get_block_and_cell(to_vector3i(node), true);
+      if (bc) {
+        auto force_field = (*bc).block->template getData<VectorField>(
+            m_force_to_be_applied_id);
+        force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
+      }
+    };
     interpolate_bspline_at_pos(pos, force_at_node);
     return true;
   };
@@ -474,15 +476,16 @@ public:
     if (!block)
       return {boost::none};
 
-    Utils::Vector3d f{0.0,0.0,0.0};
-    auto force_at_node = [this,&f](const std::array<int, 3> node, double weight) {
-              auto const bc = get_block_and_cell(to_vector3i(node), true);
-              if(bc){
-                auto const &force_field =
-                    (*bc).block->template getData<VectorField>(m_force_to_be_applied_id);
-                f += to_vector3d(force_field->get((*bc).cell)) * weight;
-              }
-            };
+    Utils::Vector3d f{0.0, 0.0, 0.0};
+    auto force_at_node = [this, &f](const std::array<int, 3> node,
+                                    double weight) {
+      auto const bc = get_block_and_cell(to_vector3i(node), true);
+      if (bc) {
+        auto const &force_field = (*bc).block->template getData<VectorField>(
+            m_force_to_be_applied_id);
+        f += to_vector3d(force_field->get((*bc).cell)) * weight;
+      }
+    };
     interpolate_bspline_at_pos(pos, force_at_node);
     return f * m_density;
   };
@@ -493,15 +496,16 @@ public:
     if (!block)
       return {boost::none};
 
-    Utils::Vector3d f{0.0,0.0,0.0};
-    auto force_at_node = [this,&f](const std::array<int, 3> node, double weight) {
-              auto const bc = get_block_and_cell(to_vector3i(node), true);
-              if(bc){
-                auto const &force_field =
-                    (*bc).block->template getData<VectorField>(m_last_applied_force_field_id);
-                f += to_vector3d(force_field->get((*bc).cell)) * weight;
-              }
-            };
+    Utils::Vector3d f{0.0, 0.0, 0.0};
+    auto force_at_node = [this, &f](const std::array<int, 3> node,
+                                    double weight) {
+      auto const bc = get_block_and_cell(to_vector3i(node), true);
+      if (bc) {
+        auto const &force_field = (*bc).block->template getData<VectorField>(
+            m_last_applied_force_field_id);
+        f += to_vector3d(force_field->get((*bc).cell)) * weight;
+      }
+    };
     interpolate_bspline_at_pos(pos, force_at_node);
     return f * m_density;
   };

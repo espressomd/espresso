@@ -695,8 +695,8 @@ void lb_lbfluid_add_force_at_pos(const Utils::Vector3d &pos,
       throw std::runtime_error("The non-linear interpolation scheme is not "
                                "implemented for the CPU LB.");
     case (InterpolationOrder::linear):
-    ::Communication::mpiCallbacks().call_all(Walberla::add_force_at_pos, 
-                                             folded_pos, f);
+      ::Communication::mpiCallbacks().call_all(Walberla::add_force_at_pos,
+                                               folded_pos, f);
     }
 #endif
   } else {

@@ -23,8 +23,10 @@ void set_node_density(Utils::Vector3i ind, double density);
 Utils::Vector3d get_momentum();
 
 boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos);
-boost::optional<Utils::Vector3d> get_force_to_be_applied_at_pos(Utils::Vector3d pos);
-boost::optional<Utils::Vector3d> get_force_last_applied_at_pos(Utils::Vector3d pos);
+boost::optional<Utils::Vector3d>
+get_force_to_be_applied_at_pos(Utils::Vector3d pos);
+boost::optional<Utils::Vector3d>
+get_force_last_applied_at_pos(Utils::Vector3d pos);
 
 void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f);
 

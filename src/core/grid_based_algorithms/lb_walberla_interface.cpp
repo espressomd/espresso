@@ -78,14 +78,16 @@ boost::optional<Utils::Vector3d> get_velocity_at_pos(Utils::Vector3d pos) {
 
 REGISTER_CALLBACK_ONE_RANK(get_velocity_at_pos)
 
-boost::optional<Utils::Vector3d> get_force_to_be_applied_at_pos(Utils::Vector3d pos) {
+boost::optional<Utils::Vector3d>
+get_force_to_be_applied_at_pos(Utils::Vector3d pos) {
   auto res = lb_walberla()->get_force_to_be_applied_at_pos(pos);
   return res;
 }
 
 REGISTER_CALLBACK_ONE_RANK(get_force_to_be_applied_at_pos)
 
-boost::optional<Utils::Vector3d> get_force_last_applied_at_pos(Utils::Vector3d pos) {
+boost::optional<Utils::Vector3d>
+get_force_last_applied_at_pos(Utils::Vector3d pos) {
   auto res = lb_walberla()->get_force_last_applied_at_pos(pos);
   return res;
 }
@@ -97,7 +99,6 @@ void add_force_at_pos(Utils::Vector3d pos, Utils::Vector3d f) {
 }
 
 REGISTER_CALLBACK(add_force_at_pos)
-
 
 } // namespace Walberla
 #endif

@@ -216,7 +216,7 @@ const Utils::Vector3d
 lb_lbfluid_get_interpolated_to_be_applied_force(const Utils::Vector3d &pos);
 
 /**
- * @brief Calculates the interpolated fluid force, which was applied 
+ * @brief Calculates the interpolated fluid force, which was applied
  *        within the last integration step, on the master process.
  * @param pos Position at which the force is to be calculated.
  * @retval interpolated force.
@@ -225,7 +225,7 @@ const Utils::Vector3d
 lb_lbfluid_get_interpolated_last_applied_force(const Utils::Vector3d &pos);
 
 /**
- * @brief Distributes a force at a position which will be applied during 
+ * @brief Distributes a force at a position which will be applied during
  *        the next integration loop
  * @param pos Position at which the force is beeing applied.
  *        f   The force vector that is beeing applied.
