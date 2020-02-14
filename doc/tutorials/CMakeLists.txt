@@ -18,9 +18,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 function(NB_EXPORT)
-  cmake_parse_arguments(NB_EXPORT "HTML_RUN" "FILE;TUTORIAL" "VAR_SUBST;ADD_SCRIPTS" ${ARGN})
+  cmake_parse_arguments(NB_EXPORT "HTML_RUN" "FILE;TARGET;SUFFIX" "VAR_SUBST;ADD_SCRIPTS" ${ARGN})
 
   set(NB_FILE "${CMAKE_CURRENT_BINARY_DIR}/${NB_EXPORT_FILE}")
+  set(DEPENDENCY_OF_TARGET "${NB_EXPORT_TARGET}")
+  if(NOT "${NB_EXPORT_SUFFIX}" STREQUAL "")
+    set(NB_EXPORT_TARGET "${NB_EXPORT_TARGET}_${NB_EXPORT_SUFFIX}")
+  endif()
   get_filename_component(NB_FILE_BASE ${NB_FILE} NAME_WE)
   get_filename_component(NB_FILE_EXT ${NB_FILE} EXT)
   set(HTML_FILE "${NB_FILE_BASE}.html")
@@ -63,9 +67,16 @@ function(NB_EXPORT)
     ${NB_FILE}
     )
 
-  add_custom_target("${NB_EXPORT_TUTORIAL}_html" DEPENDS ${HTML_FILE})
-  add_custom_target("${NB_EXPORT_TUTORIAL}_python" DEPENDS ${PY_FILE})
+  add_custom_target("${NB_EXPORT_TARGET}_html" DEPENDS ${HTML_FILE} ${DEPENDENCY_OF_TARGET})
+  add_custom_target("${NB_EXPORT_TARGET}_python" DEPENDS ${PY_FILE} ${DEPENDENCY_OF_TARGET})
+  add_dependencies(tutorials_html "${NB_EXPORT_TARGET}_html")
+  add_dependencies(tutorials_python "${NB_EXPORT_TARGET}_python")
 endfunction(NB_EXPORT)
+
+
+add_custom_target(tutorials)
+add_custom_target(tutorials_html)
+add_custom_target(tutorials_python)
 
 
 ### Here: add new directory
@@ -79,60 +90,6 @@ add_subdirectory(08-visualization)
 add_subdirectory(11-ferrofluid)
 add_subdirectory(12-constant_pH)
 
-
-### here: add the appropriate tutorial target after DEPENDS
-add_custom_target(tutorials DEPENDS
-  tutorial_01
-  tutorial_02
-  tutorial_04
-  tutorial_05
-  tutorial_06
-  tutorial_07
-  tutorial_08
-  tutorial_11
-  tutorial_12
-  )
-
-add_custom_target(tutorials_html DEPENDS
-  tutorials
-  tutorial_01_html
-  tutorial_02_1_html
-  tutorial_02_2_html
-  tutorial_04_1_html
-  tutorial_04_2_html
-  tutorial_04_3_html
-  tutorial_04_4_html
-  tutorial_05_html
-  tutorial_06_html
-  tutorial_07_html
-  tutorial_08_html
-  tutorial_11_1_html
-  tutorial_11_2_html
-  tutorial_11_3_html
-  tutorial_12_html
-  )
-
-add_custom_target(tutorials_python_only DEPENDS
-  tutorial_01_python
-  tutorial_02_1_python
-  tutorial_02_2_python
-  tutorial_04_1_python
-  tutorial_04_2_python
-  tutorial_04_3_python
-  tutorial_04_4_python
-  tutorial_05_python
-  tutorial_07_python
-  tutorial_08_python
-  tutorial_11_1_python
-  tutorial_11_2_python
-  tutorial_11_3_python
-  tutorial_12_python
-  )
-
-add_custom_target(tutorials_python DEPENDS
-  tutorials
-  tutorials_python_only
-  )
 
 configure_file(Readme.rst ${CMAKE_CURRENT_BINARY_DIR}/Readme.rst COPYONLY)
 configure_file(html_runner.py ${CMAKE_CURRENT_BINARY_DIR}/html_runner.py)

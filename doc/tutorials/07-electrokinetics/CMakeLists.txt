@@ -5,5 +5,6 @@ configure_file(figures/schlitzpore_3d.png ${CMAKE_CURRENT_BINARY_DIR}/figures/sc
 configure_file(07-electrokinetics.ipynb ${CMAKE_CURRENT_BINARY_DIR}/07-electrokinetics.ipynb COPYONLY)
 
 add_custom_target(tutorial_07)
+add_dependencies(tutorials tutorial_07)
 
-nb_export(TUTORIAL tutorial_07 FILE "07-electrokinetics.ipynb" HTML_RUN VAR_SUBST "integration_length=600;dt=0.5" ADD_SCRIPTS "scripts/eof_analytical.py;scripts/plot.py")
+nb_export(TARGET tutorial_07 SUFFIX "" FILE "07-electrokinetics.ipynb" HTML_RUN VAR_SUBST "integration_length=600;dt=0.5" ADD_SCRIPTS "scripts/eof_analytical.py;scripts/plot.py")

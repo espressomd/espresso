@@ -15,8 +15,9 @@ add_custom_command(
 )
 
 add_custom_target(tutorial_04)
+add_dependencies(tutorials tutorial_04)
 
-nb_export(TUTORIAL tutorial_04_1 FILE "04-lattice_boltzmann_part1.ipynb" HTML_RUN)
-nb_export(TUTORIAL tutorial_04_2 FILE "04-lattice_boltzmann_part2.ipynb" HTML_RUN)
-nb_export(TUTORIAL tutorial_04_3 FILE "04-lattice_boltzmann_part3.ipynb" HTML_RUN)
-nb_export(TUTORIAL tutorial_04_4 FILE "04-lattice_boltzmann_part4.ipynb" HTML_RUN ADD_SCRIPTS "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py")
+nb_export(TARGET tutorial_04 SUFFIX "1" FILE "04-lattice_boltzmann_part1.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_04 SUFFIX "2" FILE "04-lattice_boltzmann_part2.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_04 SUFFIX "3" FILE "04-lattice_boltzmann_part3.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_04 SUFFIX "4" FILE "04-lattice_boltzmann_part4.ipynb" HTML_RUN ADD_SCRIPTS "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py")
