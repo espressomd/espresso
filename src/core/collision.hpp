@@ -131,9 +131,15 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     if (!glue_to_surface_criterion(p1, p2))
       return;
 
-  // Ignore virtual particles
-  if ((p1.p.is_virtual) || (p2.p.is_virtual))
-    return;
+  /* Do not bind to virtual sites that were automatically placed
+   * in ealier collisions. */
+  if (collision_params.mode &
+      (COLLISION_MODE_GLUE_TO_SURF | COLLISION_MODE_VS)) {
+    if ((p1.p.type == collision_params.vs_particle_type) ||
+        (p2.p.type == collision_params.vs_particle_type)) {
+      return;
+    }
+  }
 
   // Check, if there's already a bond between the particles
   if (pair_bond_exists_on(p1, p2, collision_params.bond_centers))
