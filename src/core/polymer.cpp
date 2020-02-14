@@ -142,8 +142,8 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
     }
   }
 
-  /* Draw a monomer position, obeying angel and starting position
-   * constraints where apropriate. */
+  /* Draw a monomer position, obeying angle and starting position
+   * constraints where appropriate. */
   auto draw_monomer_position = [&](int p, int m) {
     if (m == 0) {
       return (p < start_positions.size()) ? start_positions[p]
