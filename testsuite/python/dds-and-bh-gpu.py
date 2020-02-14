@@ -34,10 +34,6 @@ def stopAll(system):
 @utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT", "LENNARD_JONES"])
 class BH_DDS_gpu_multCPU_test(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
-    # just some seeding based on 14
-    system.seed = [s * 14 for s in range(
-        system.cell_system.get_state()["n_nodes"])]
-    # just some seeding different from the previous one
     np.random.seed(71)
 
     def vectorsTheSame(self, a, b):

@@ -31,7 +31,6 @@ set(EspressoCore_SRC
   polymer.cpp
   polynom.cpp
   pressure.cpp
-  random.cpp
   rattle.cpp
   reaction_ensemble.cpp
   rotate_system.cpp

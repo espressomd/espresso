@@ -118,7 +118,6 @@ cdef class System:
         lbboundaries
         ekboundaries
         collision_detection
-        __seed
         cuda_init_handle
         comfixed
         _active_virtual_sites_handle
@@ -299,82 +298,6 @@ cdef class System:
 
         def __get__(self):
             return self.globals.min_global_cut
-
-    def _get_PRNG_state_size(self):
-        """
-        Returns the state size of the pseudo random number generator.
-        """
-
-        return get_state_size_of_generator()
-
-    def set_random_state_PRNG(self):
-        """
-        Sets the state of the pseudo random number generator using real random numbers.
-        """
-
-        _state_size_plus_one = self._get_PRNG_state_size() + 1
-        states = string_vec(n_nodes)
-        rng = random.SystemRandom()  # true RNG that uses os.urandom()
-        for i in range(n_nodes):
-            states_on_node_i = []
-            for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(
-                    rng.randint(0, numeric_limits[int].max()))
-            states[i] = (" ".join(map(str, states_on_node_i))).encode('utf-8')
-        mpi_random_set_stat(states)
-
-    property seed:
-        """
-        Sets the seed of the pseudo random number with a list of seeds which is
-        as long as the number of used nodes.
-        """
-
-        def __set__(self, _seed):
-            cdef vector[int] seed_array
-            self.__seed = _seed
-            if(is_valid_type(_seed, int) and n_nodes == 1):
-                seed_array.resize(1)
-                seed_array[0] = int(_seed)
-                mpi_random_seed(0, seed_array)
-            elif(hasattr(_seed, "__iter__")):
-                if(len(_seed) < n_nodes or len(_seed) > n_nodes):
-                    raise ValueError(
-                        "The list needs to contain one seed value per node")
-                seed_array.resize(len(_seed))
-                for i in range(len(_seed)):
-                    seed_array[i] = int(_seed[i])
-                mpi_random_seed(n_nodes, seed_array)
-            else:
-                raise ValueError(
-                    "The seed has to be an integer or a list of integers with one integer per node")
-
-        def __get__(self):
-            return self.__seed
-
-    property random_number_generator_state:
-        """Sets the random number generator state in the core. This is of
-        interest for deterministic checkpointing.
-        """
-
-        def __set__(self, rng_state):
-            _state_size_plus_one = self._get_PRNG_state_size() + 1
-            if(len(rng_state) == n_nodes * _state_size_plus_one):
-                states = string_vec(n_nodes)
-                for i in range(n_nodes):
-                    states[i] = (" ".join(map(str,
-                                              rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
-                                          )).encode('utf-8')
-                mpi_random_set_stat(states)
-            else:
-                raise ValueError(
-                    "Wrong number of arguments: Usage: 'system.random_number_generator_state = "
-                    "[<state(1)>, ..., <state(n_nodes*(state_size+1))>], where each <state(i)> "
-                    "is an integer. The state size of the PRNG can be obtained by calling "
-                    "system._get_PRNG_state_size().")
-
-        def __get__(self):
-            rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
-            return rng_state
 
     IF VIRTUAL_SITES:
         property virtual_sites:

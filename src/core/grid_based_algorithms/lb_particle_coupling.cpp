@@ -20,6 +20,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"

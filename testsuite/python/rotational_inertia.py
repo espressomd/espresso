@@ -27,7 +27,6 @@ class RotationalInertia(ut.TestCase):
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 0
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     # Particle's angular momentum: initial and ongoing
     L_0_lab = np.zeros((3))
     L_lab = np.zeros((3))

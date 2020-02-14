@@ -22,7 +22,6 @@
 
 #include "Actor.hpp"
 #include "SystemInterface.hpp"
-#include <iostream>
 
 typedef float mmm1dgpu_real;
 

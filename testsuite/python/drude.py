@@ -41,7 +41,6 @@ class Drude(ut.TestCase):
         box_l = 50
         system = espressomd.System(box_l=[box_l, box_l, box_l])
 
-        system.seed = system.cell_system.get_state()['n_nodes'] * [12]
         np.random.seed(12)
 
         # Reference Results, reproduced with LAMMPS

@@ -32,13 +32,13 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
+#include "random.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/math/vec_rotate.hpp>
 
 #include <cmath>
-#include <random>
 #include <stdexcept>
 
 template <class RNG> static Utils::Vector3d random_position(RNG &rng) {
@@ -119,7 +119,7 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
                        double const min_distance, int const max_tries,
                        int const use_bond_angle, double const bond_angle,
                        int const respect_constraints, int const seed) {
-  auto rng = [mt = std::mt19937{static_cast<unsigned>(seed)},
+  auto rng = [mt = Random::mt19937(static_cast<unsigned>(seed)),
               dist = std::uniform_real_distribution<double>(
                   0.0, 1.0)]() mutable { return dist(mt); };
 

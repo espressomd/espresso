@@ -69,7 +69,6 @@
 
 #include <boost/range/algorithm/min_element.hpp>
 #include <cmath>
-#include <cstdio>
 #include <mpi.h>
 
 #ifdef VALGRIND_INSTRUMENTATION
