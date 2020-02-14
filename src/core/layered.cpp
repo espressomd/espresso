@@ -115,11 +115,6 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
 
     std::vector<GhostCommunication> comms(n, GhostCommunication{comm_cart});
 
-    /* always sending/receiving 1 cell per time step */
-    for (int c = 0; c < n; c++) {
-      comms[c].part_lists.resize(1);
-    }
-
     int c = 0;
 
     /* downwards */
@@ -127,11 +122,11 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comms[c].type = GHOST_SEND;
-        comms[c].node = btm;
+        comms[c].send_to = btm;
         if (reverse) {
-          comms[c].part_lists[0] = &cells[0];
+          comms[c].send_lists.push_back(&cells[0]);
         } else {
-          comms[c].part_lists[0] = &cells[1];
+          comms[c].send_lists.push_back(&cells[1]);
 
           /* if periodic and bottom or top, send shifted */
           comms[c].shift[0] = comms[c].shift[1] = 0;
@@ -146,11 +141,11 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
          as for odd n_nodes maybe we send AND receive. */
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comms[c].type = GHOST_RECV;
-        comms[c].node = top;
+        comms[c].recv_from = top;
         if (reverse) {
-          comms[c].part_lists[0] = &cells[n_layers];
+          comms[c].recv_lists.push_back(&cells[n_layers]);
         } else {
-          comms[c].part_lists[0] = &cells[n_layers + 1];
+          comms[c].recv_lists.push_back(&cells[n_layers + 1]);
         }
         c++;
       }
@@ -161,11 +156,11 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comms[c].type = GHOST_SEND;
-        comms[c].node = top;
+        comms[c].send_to = top;
         if (reverse) {
-          comms[c].part_lists[0] = &cells[n_layers + 1];
+          comms[c].send_lists.push_back(&cells[n_layers + 1]);
         } else {
-          comms[c].part_lists[0] = &cells[n_layers];
+          comms[c].send_lists.push_back(&cells[n_layers]);
 
           /* if periodic and bottom or top, send shifted */
           comms[c].shift[0] = comms[c].shift[1] = 0;
@@ -180,11 +175,11 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
          as for odd n_nodes maybe we send AND receive. */
       if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comms[c].type = GHOST_RECV;
-        comms[c].node = btm;
+        comms[c].recv_from = btm;
         if (reverse) {
-          comms[c].part_lists[0] = &cells[1];
+          comms[c].recv_lists.push_back(&cells[1]);
         } else {
-          comms[c].part_lists[0] = &cells[0];
+          comms[c].recv_lists.push_back(&cells[0]);
         }
         c++;
       }
@@ -200,8 +195,8 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
   if (n != 0) {
     /* two cells: from and to */
     for (int c = 0; c < n; c++) {
-      comms[c].part_lists.resize(2);
-      comms[c].node = this_node;
+      comms[c].send_to = this_node;
+      comms[c].recv_from = this_node;
     }
 
     int c = 0;
@@ -209,11 +204,11 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
     /* downwards */
     comms[c].type = GHOST_LOCL;
     if (reverse) {
-      comms[c].part_lists[0] = &cells[0];
-      comms[c].part_lists[1] = &cells[n_layers];
+      comms[c].send_lists.push_back(&cells[0]);
+      comms[c].recv_lists.push_back(&cells[n_layers]);
     } else {
-      comms[c].part_lists[0] = &cells[1];
-      comms[c].part_lists[1] = &cells[n_layers + 1];
+      comms[c].send_lists.push_back(&cells[1]);
+      comms[c].recv_lists.push_back(&cells[n_layers + 1]);
       comms[c].shift[0] = comms[c].shift[1] = 0;
       comms[c].shift[2] = box_geo.length()[2];
     }
@@ -222,11 +217,11 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
     /* upwards */
     comms[c].type = GHOST_LOCL;
     if (reverse) {
-      comms[c].part_lists[0] = &cells[n_layers + 1];
-      comms[c].part_lists[1] = &cells[1];
+      comms[c].send_lists.push_back(&cells[n_layers + 1]);
+      comms[c].recv_lists.push_back(&cells[1]);
     } else {
-      comms[c].part_lists[0] = &cells[n_layers];
-      comms[c].part_lists[1] = &cells[0];
+      comms[c].send_lists.push_back(&cells[n_layers]);
+      comms[c].recv_lists.push_back(&cells[0]);
       comms[c].shift[0] = comms[c].shift[1] = 0;
       comms[c].shift[2] = -box_geo.length()[2];
     }

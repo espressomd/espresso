@@ -276,8 +276,10 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
         /* just copy cells on a single node */
         if (box_geo.periodic(dir) ||
             (local_geo.boundary()[2 * dir + lr] == 0)) {
+
           comm[cnt].type = GHOST_LOCL;
-          comm[cnt].node = communicator.rank();
+          comm[cnt].send_to = communicator.rank();
+          comm[cnt].recv_from = communicator.rank();
 
           /* prepare folding of ghost positions */
           comm[cnt].shift[dir] =
@@ -285,17 +287,12 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
-
-          comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
+          comm[cnt].send_lists = dd_fill_comm_cell_lists(lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
+          comm[cnt].recv_lists = dd_fill_comm_cell_lists(lc, hc);
 
-          /* place receive cells after send cells */
-          {
-            auto const part_lists = dd_fill_comm_cell_lists(lc, hc);
-            boost::copy(part_lists, std::back_inserter(comm[cnt].part_lists));
-          }
           cnt++;
         }
       } else {
@@ -305,25 +302,23 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
               (local_geo.boundary()[2 * dir + lr] == 0))
             if ((cart_info.coords[dir] + i) % 2 == 0) {
               comm[cnt].type = GHOST_SEND;
-              comm[cnt].node = node_neighbors[2 * dir + lr];
+              comm[cnt].send_to = node_neighbors[2 * dir + lr];
               /* prepare folding of ghost positions */
               comm[cnt].shift[dir] =
                   local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
-
-              comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
+              comm[cnt].send_lists = dd_fill_comm_cell_lists(lc, hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
               (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((cart_info.coords[dir] + (1 - i)) % 2 == 0) {
               comm[cnt].type = GHOST_RECV;
-              comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
+              comm[cnt].recv_from = node_neighbors[2 * dir + (1 - lr)];
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
-
-              comm[cnt].part_lists = dd_fill_comm_cell_lists(lc, hc);
+              comm[cnt].recv_lists = dd_fill_comm_cell_lists(lc, hc);
               cnt++;
             }
         }
@@ -352,9 +347,9 @@ auto dd_revert_comm_order(std::vector<GhostCommunication> communications) {
       c.type = GHOST_RECV;
     else if (c.type == GHOST_RECV)
       c.type = GHOST_SEND;
-    else if (c.type == GHOST_LOCL) {
-      boost::reverse(c.part_lists);
-    }
+
+    std::swap(c.send_lists, c.recv_lists);
+    std::swap(c.send_to, c.recv_from);
   }
 
   return communications;

@@ -93,14 +93,15 @@ static size_t calc_transmit_size(unsigned data_parts) {
   return size;
 }
 
-static size_t calc_transmit_size(const GhostCommunication &ghost_comm,
+static size_t calc_transmit_size(std::vector<ParticleList *> const &part_lists,
                                  unsigned int data_parts) {
   if (data_parts & GHOSTTRANS_PARTNUM)
-    return sizeof(int) * ghost_comm.part_lists.size();
+    return sizeof(int) * part_lists.size();
 
-  auto const n_part = boost::accumulate(
-      ghost_comm.part_lists, 0ul,
-      [](size_t sum, auto part_list) { return sum + part_list->n; });
+  auto const n_part =
+      boost::accumulate(part_lists, 0ul, [](size_t sum, auto part_list) {
+        return sum + part_list->n;
+      });
   return n_part * calc_transmit_size(data_parts);
 }
 
@@ -108,14 +109,14 @@ static void prepare_send_buffer(CommBuf &send_buffer,
                                 const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate send buffer */
-  send_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
+  send_buffer.resize(calc_transmit_size(ghost_comm.send_lists, data_parts));
   send_buffer.bonds().clear();
 
   auto archiver = Utils::MemcpyOArchive{Utils::make_span(send_buffer)};
   auto bond_buffer = std::back_inserter(send_buffer.bonds());
 
   /* put in data */
-  for (auto part_list : ghost_comm.part_lists) {
+  for (auto part_list : ghost_comm.send_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       int np = part_list->n;
       archiver << np;
@@ -178,7 +179,7 @@ static void prepare_recv_buffer(CommBuf &recv_buffer,
                                 const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate recv buffer */
-  recv_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
+  recv_buffer.resize(calc_transmit_size(ghost_comm.recv_lists, data_parts));
 }
 
 static void put_recv_buffer(CommBuf &recv_buffer,
@@ -188,7 +189,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
   auto bond_buffer = recv_buffer.bonds().begin();
 
-  for (auto part_list : ghost_comm.part_lists) {
+  for (auto part_list : ghost_comm.recv_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
       int np;
       archiver >> np;
@@ -227,7 +228,7 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
                                         const GhostCommunication &ghost_comm) {
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
-  for (auto &part_list : ghost_comm.part_lists) {
+  for (auto &part_list : ghost_comm.recv_lists) {
     for (Particle &part : part_list->particles()) {
       ParticleForce pf;
       archiver >> pf;
@@ -238,11 +239,11 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
 
 static void cell_cell_transfer(const GhostCommunication &ghost_comm,
                                unsigned int data_parts) {
+  assert(ghost_comm.send_lists.size() == ghost_comm.recv_lists.size());
   /* transfer data */
-  int const offset = ghost_comm.part_lists.size() / 2;
-  for (int pl = 0; pl < offset; pl++) {
-    const ParticleList *src_list = ghost_comm.part_lists[pl];
-    ParticleList *dst_list = ghost_comm.part_lists[pl + offset];
+  for (int pl = 0; pl < ghost_comm.send_lists.size(); pl++) {
+    const ParticleList *src_list = ghost_comm.send_lists[pl];
+    ParticleList *dst_list = ghost_comm.recv_lists[pl];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->n);
@@ -272,24 +273,6 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
   }
 }
 
-static bool is_send_op(GhostCommunication const &ghost_comm) {
-  auto const comm_type = ghost_comm.type;
-
-  return (
-      (comm_type == GHOST_SEND) || (comm_type == GHOST_RDCE) ||
-      (comm_type == GHOST_BCST && ghost_comm.node == ghost_comm.comm.rank()));
-}
-
-static bool is_recv_op(GhostCommunication const &ghost_comm) {
-  auto const comm_type = ghost_comm.type;
-  auto const node = ghost_comm.node;
-  auto const this_node = ghost_comm.comm.rank();
-
-  return ((comm_type == GHOST_RECV) ||
-          (comm_type == GHOST_BCST && node != this_node) ||
-          (comm_type == GHOST_RDCE && node == this_node));
-}
-
 void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
@@ -303,65 +286,59 @@ void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
       continue;
     }
 
-    int const node = ghost_comm.node;
-
     /* prepare send buffer if necessary */
-    if (is_send_op(ghost_comm)) {
-      /* ok, we send this step, prepare send buffer */
-      prepare_send_buffer(send_buffer, ghost_comm, data_parts);
-    }
+    prepare_send_buffer(send_buffer, ghost_comm, data_parts);
 
     /* recv buffer for recv and multinode operations to this node */
-    if (is_recv_op(ghost_comm))
-      prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
+    prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
+
+    auto const send_to = ghost_comm.send_to;
+    auto const recv_from = ghost_comm.recv_from;
 
     /* transfer data */
     // Use two send/recvs in order to avoid, having to serialize CommBuf
     // (which consists of already serialized data).
     switch (ghost_comm.type) {
     case GHOST_RECV:
-      ghost_comm.comm.recv(node, REQ_GHOST_SEND, recv_buffer.data(),
+      ghost_comm.comm.recv(recv_from, REQ_GHOST_SEND, recv_buffer.data(),
                            recv_buffer.size());
-      ghost_comm.comm.recv(node, REQ_GHOST_SEND, recv_buffer.bonds());
+      ghost_comm.comm.recv(recv_from, REQ_GHOST_SEND, recv_buffer.bonds());
       break;
     case GHOST_SEND:
-      ghost_comm.comm.send(node, REQ_GHOST_SEND, send_buffer.data(),
+      ghost_comm.comm.send(send_to, REQ_GHOST_SEND, send_buffer.data(),
                            send_buffer.size());
-      ghost_comm.comm.send(node, REQ_GHOST_SEND, send_buffer.bonds());
+      ghost_comm.comm.send(send_to, REQ_GHOST_SEND, send_buffer.bonds());
       break;
     case GHOST_BCST:
-      if (node == ghost_comm.comm.rank()) {
+      if (send_to == ghost_comm.comm.rank()) {
         boost::mpi::broadcast(ghost_comm.comm, send_buffer.data(),
-                              send_buffer.size(), node);
-        boost::mpi::broadcast(ghost_comm.comm, send_buffer.bonds(), node);
+                              send_buffer.size(), send_to);
+        boost::mpi::broadcast(ghost_comm.comm, send_buffer.bonds(), send_to);
       } else {
         boost::mpi::broadcast(ghost_comm.comm, recv_buffer.data(),
-                              recv_buffer.size(), node);
-        boost::mpi::broadcast(ghost_comm.comm, recv_buffer.bonds(), node);
+                              recv_buffer.size(), send_to);
+        boost::mpi::broadcast(ghost_comm.comm, recv_buffer.bonds(), send_to);
       }
       break;
     case GHOST_RDCE:
-      if (node == ghost_comm.comm.rank())
+      if (send_to == ghost_comm.comm.rank())
         boost::mpi::reduce(ghost_comm.comm,
                            reinterpret_cast<double *>(send_buffer.data()),
                            send_buffer.size() / sizeof(double),
                            reinterpret_cast<double *>(recv_buffer.data()),
-                           std::plus<double>{}, node);
+                           std::plus<double>{}, send_to);
       else
         boost::mpi::reduce(
             ghost_comm.comm, reinterpret_cast<double *>(send_buffer.data()),
-            send_buffer.size() / sizeof(double), std::plus<double>{}, node);
+            send_buffer.size() / sizeof(double), std::plus<double>{}, send_to);
       break;
     }
 
-    // recv op; write back data directly, if no PSTSTORE delay is requested.
-    if (is_recv_op(ghost_comm)) {
-      /* forces have to be added, the rest overwritten. Exception is RDCE,
-       * where the addition is integrated into the communication. */
-      if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-        add_forces_from_recv_buffer(recv_buffer, ghost_comm);
-      else
-        put_recv_buffer(recv_buffer, ghost_comm, data_parts);
-    }
+    /* forces have to be added, the rest overwritten. Exception is RDCE,
+     * where the addition is integrated into the communication. */
+    if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
+      add_forces_from_recv_buffer(recv_buffer, ghost_comm);
+    else
+      put_recv_buffer(recv_buffer, ghost_comm, data_parts);
   }
 }

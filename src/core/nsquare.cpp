@@ -45,10 +45,15 @@ nsq_prepare_comm(boost::mpi::communicator const &comm) {
 
   std::vector<GhostCommunication> comms(comm.size(), GhostCommunication{comm});
   /* every node has its dedicated comm step */
-  for (int n = 0; n < n_nodes; n++) {
-    comms[n].part_lists.resize(1);
-    comms[n].part_lists[0] = &cells[n];
-    comms[n].node = n;
+  for (int n = 0; n < comm.size(); n++) {
+    if (comm.rank() == n) {
+      comms[n].send_lists.push_back(&cells[n]);
+    } else {
+      comms[n].recv_lists.push_back(&cells[n]);
+    }
+
+    comms[n].send_to = n;
+    comms[n].recv_from = n;
   }
 
   return comms;

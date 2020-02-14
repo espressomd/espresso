@@ -146,10 +146,12 @@ public:
 
   unsigned type = GHOSTTRANS_NONE;
   /** Node to communicate with (to use with all MPI operations). */
-  int node = -1;
+  int send_to = -1;
+  int recv_from = -1;
 
   /** Pointer array to particle lists to communicate. */
-  std::vector<ParticleList *> part_lists = {};
+  std::vector<ParticleList *> send_lists = {};
+  std::vector<ParticleList *> recv_lists = {};
 
   /** Position shift for ghost particles. The shift is done on the sender side.
    */
