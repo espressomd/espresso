@@ -126,12 +126,8 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
               dist = std::uniform_real_distribution<double>(
                   0.0, 1.0)]() mutable { return dist(mt); };
 
-  Utils::Vector3d trial_pos;
-  int attempts_mono, attempts_poly;
-
   // make sure that if given, all starting positions are valid
-  if ((not start_positions.empty()) and
-      std::any_of(start_positions.begin(), start_positions.end(),
+  if (std::any_of(start_positions.begin(), start_positions.end(),
                   [&positions, &partCfg, min_distance,
                    respect_constraints](Utils::Vector3d const &v) {
                     return not is_valid_position(v, positions, partCfg,
@@ -141,9 +137,10 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
     throw std::runtime_error("Invalid start positions.");
   // use (if none given, random) starting positions for every first monomer
   for (int p = 0; p < n_polymers; ++p) {
-    attempts_mono = 0;
+    int attempts_mono = 0;
     // first monomer for all polymers
     if (start_positions.empty()) {
+      Utils::Vector3d trial_pos;
       do {
         trial_pos = random_position(rng);
         attempts_mono++;
@@ -161,9 +158,10 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
 
   // create remaining monomers' positions
   for (int p = 0; p < n_polymers; ++p) {
-    attempts_poly = 0;
+    int attempts_poly = 0;
     for (int m = 1; m < beads_per_chain; ++m) {
-      attempts_mono = 0;
+      Utils::Vector3d trial_pos;
+      int attempts_mono = 0;
       do {
         if (m == 0) {
           // m == 0 is only true after a failed attempt to position a polymer
