@@ -408,7 +408,7 @@ public:
   void integrate() override { m_time_loop->singleStep(); };
 
   template <typename Function>
-  void distribute_property_at_pos(Utils::Vector3d pos,
+  void interpolate_bspline_at_pos(Utils::Vector3d pos,
                                   Function f) const{
     Utils::Interpolation::bspline_3d<2>(pos, f,
                                         Utils::Vector3d{1.0,1.0,1.0},//grid spacing
@@ -443,7 +443,7 @@ public:
     if (!block)
       return {boost::none};
     Utils::Vector3d v{0.0,0.0,0.0};
-    distribute_property_at_pos(pos, [this,&v](const std::array<int, 3> node, double weight) {
+    interpolate_bspline_at_pos(pos, [this,&v](const std::array<int, 3> node, double weight) {
               auto const bc = get_block_and_cell(to_vector3i(node), true);
               if (bc){
                 auto const &vel_adaptor =
@@ -468,7 +468,7 @@ public:
                 force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
               }
             };
-    distribute_property_at_pos(pos, force_at_node);
+    interpolate_bspline_at_pos(pos, force_at_node);
     return true;
   };
 
@@ -487,7 +487,7 @@ public:
                 f += to_vector3d(force_field->get((*bc).cell)) * weight;
               }
             };
-    distribute_property_at_pos(pos, force_at_node);
+    interpolate_bspline_at_pos(pos, force_at_node);
     return f * m_density;
   };
 
