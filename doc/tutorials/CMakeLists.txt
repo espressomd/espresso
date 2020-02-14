@@ -82,51 +82,51 @@ add_subdirectory(12-constant_pH)
 
 ### here: add the appropriate tutorial target after DEPENDS
 add_custom_target(tutorials DEPENDS
-  tutorials_01
-  tutorials_02
-  tutorials_04
-  tutorials_05
-  tutorials_06
-  tutorials_07
-  tutorials_08
-  tutorials_11
-  tutorials_12
+  tutorial_01
+  tutorial_02
+  tutorial_04
+  tutorial_05
+  tutorial_06
+  tutorial_07
+  tutorial_08
+  tutorial_11
+  tutorial_12
   )
 
 add_custom_target(tutorials_html DEPENDS
   tutorials
-  tutorials_01_html
-  tutorials_02_1_html
-  tutorials_02_2_html
-  tutorials_04_1_html
-  tutorials_04_2_html
-  tutorials_04_3_html
-  tutorials_04_4_html
-  tutorials_05_html
-  tutorials_06_html
-  tutorials_07_html
-  tutorials_08_html
-  tutorials_11_1_html
-  tutorials_11_2_html
-  tutorials_11_3_html
-  tutorials_12_html
+  tutorial_01_html
+  tutorial_02_1_html
+  tutorial_02_2_html
+  tutorial_04_1_html
+  tutorial_04_2_html
+  tutorial_04_3_html
+  tutorial_04_4_html
+  tutorial_05_html
+  tutorial_06_html
+  tutorial_07_html
+  tutorial_08_html
+  tutorial_11_1_html
+  tutorial_11_2_html
+  tutorial_11_3_html
+  tutorial_12_html
   )
 
 add_custom_target(tutorials_python_only DEPENDS
-  tutorials_01_python
-  tutorials_02_1_python
-  tutorials_02_2_python
-  tutorials_04_1_python
-  tutorials_04_2_python
-  tutorials_04_3_python
-  tutorials_04_4_python
-  tutorials_05_python
-  tutorials_07_python
-  tutorials_08_python
-  tutorials_11_1_python
-  tutorials_11_2_python
-  tutorials_11_3_python
-  tutorials_12_python
+  tutorial_01_python
+  tutorial_02_1_python
+  tutorial_02_2_python
+  tutorial_04_1_python
+  tutorial_04_2_python
+  tutorial_04_3_python
+  tutorial_04_4_python
+  tutorial_05_python
+  tutorial_07_python
+  tutorial_08_python
+  tutorial_11_1_python
+  tutorial_11_2_python
+  tutorial_11_3_python
+  tutorial_12_python
   )
 
 add_custom_target(tutorials_python DEPENDS
