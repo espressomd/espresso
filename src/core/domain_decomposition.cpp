@@ -202,9 +202,8 @@ void dd_mark_cells() {
 /** Fill a communication cell pointer list. Fill the cell pointers of
  *  all cells which are inside a rectangular subgrid of the 3D cell
  *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
- *  lower left corner lc up to the high top corner hc. The cell
- *  pointer list part_lists must already be large enough.
- *  \param part_lists  List of cell pointers to store the result.
+ *  lower left corner lc up to the high top corner hc.
+ *
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
  */
