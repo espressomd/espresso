@@ -8,19 +8,11 @@ configure_file(figures/latticeboltzmann-momentumexchange.png ${CMAKE_CURRENT_BIN
 configure_file(figures/latticeboltzmann-grid.png ${CMAKE_CURRENT_BINARY_DIR}/figures/latticeboltzmann-grid.png COPYONLY)
 
 add_custom_command(
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py"
-      DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution.py"
-      COMMAND
-      "cp"
-      "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution.py"
-      "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py"
-      COMMAND
-      "sed"
-      "-n"
-      "-i"
-      "'/# Extract fluid velocity along the x-axis/,$$p;1i\\import matplotlib.pyplot as plt'"
-      "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py"
-      )
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/04-lattice_boltzmann_part4_solution.py"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.cmake"
+  COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.cmake"
+)
 
 add_custom_target(tutorials_04)
 
