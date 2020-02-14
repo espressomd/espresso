@@ -148,15 +148,16 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
     if (m == 0) {
       return (p < start_positions.size()) ? start_positions[p]
                                           : random_position(rng);
-    } else if (not use_bond_angle or m < 2) {
-      return positions[p][m - 1] + bond_length * random_unit_vector(rng);
-    } else {
-      auto const last_vec = positions[p][m - 1] - positions[p][m - 2];
-      return positions[p][m - 1] +
-             Utils::vec_rotate(
-                 vector_product(last_vec, random_unit_vector(rng)), bond_angle,
-                 -last_vec);
     }
+
+    if (not use_bond_angle or m < 2) {
+      return positions[p][m - 1] + bond_length * random_unit_vector(rng);
+    }
+
+    auto const last_vec = positions[p][m - 1] - positions[p][m - 2];
+    return positions[p][m - 1] +
+           Utils::vec_rotate(vector_product(last_vec, random_unit_vector(rng)),
+                             bond_angle, -last_vec);
   };
 
   /* Try up to max_tries times to draw a valid position */
@@ -193,10 +194,9 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
 
       /* If the polymer has not full length, we  try again. Otherwise we can
        * move on to the next polymer. */
-      if (positions[p].size() < beads_per_chain) {
-        continue;
-      } else
+      if (positions[p].size() == beads_per_chain) {
         break;
+      }
     }
 
     /* We did not get a complete polymer, but have exceeded the maximal
