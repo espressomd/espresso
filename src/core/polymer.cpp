@@ -127,9 +127,9 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
   std::vector<std::vector<Utils::Vector3d>> positions(
       n_polymers, std::vector<Utils::Vector3d>(beads_per_chain));
 
-  auto mt = Random::mt19937(static_cast<unsigned>(seed));
-  auto rng = [&mt, dist = std::uniform_real_distribution<double>(
-                       0.0, 1.0)]() mutable { return dist(mt); };
+  auto rng = [mt = Random::mt19937(static_cast<unsigned>(seed)),
+              dist = std::uniform_real_distribution<double>(
+                  0.0, 1.0)]() mutable { return dist(mt); };
 
   Utils::Vector3d trial_pos;
   int attempts_mono, attempts_poly;
