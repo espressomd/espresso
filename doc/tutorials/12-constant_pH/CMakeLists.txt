@@ -1,7 +1,4 @@
-configure_file(12-constant_pH.ipynb ${CMAKE_CURRENT_BINARY_DIR}/12-constant_pH.ipynb COPYONLY)
-
-add_custom_target(tutorial_12)
-add_dependencies(tutorials tutorial_12)
+configure_tutorial_target(TARGET tutorial_12 DEPENDS 12-constant_pH.ipynb)
 
 nb_export(TARGET tutorial_12 SUFFIX "" FILE "12-constant_pH.ipynb" HTML_RUN)
 

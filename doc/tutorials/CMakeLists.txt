@@ -17,6 +17,30 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+# Register a new tutorial target that depends on a list of files that need
+# to be copied from the source directory to the build directory. Make the
+# tutorial target a dependency of target `tutorials`.
+function(configure_tutorial_target)
+  cmake_parse_arguments(CONFIGURE "" "TARGET" "DEPENDS" ${ARGN})
+  set(TARGET_DEPENDENCIES "")
+  foreach(filepath ${CONFIGURE_DEPENDS})
+    list(APPEND TARGET_DEPENDENCIES "${CMAKE_CURRENT_BINARY_DIR}/${filepath}")
+    add_custom_command(
+      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${filepath}"
+      DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${filepath}"
+      COMMAND ${CMAKE_COMMAND} -E copy
+              "${CMAKE_CURRENT_SOURCE_DIR}/${filepath}"
+              "${CMAKE_CURRENT_BINARY_DIR}/${filepath}"
+    )
+  endforeach(filepath)
+  add_custom_target(${CONFIGURE_TARGET} DEPENDS ${TARGET_DEPENDENCIES})
+  add_dependencies(tutorials ${CONFIGURE_TARGET})
+endfunction(configure_tutorial_target)
+
+
+# Convert a tutorial to the Python and HTML formats. Make these files
+# dependencies of targets `tutorials_html` and `tutorials_python`.
 function(NB_EXPORT)
   cmake_parse_arguments(NB_EXPORT "HTML_RUN" "FILE;TARGET;SUFFIX" "VAR_SUBST;ADD_SCRIPTS" ${ARGN})
 
