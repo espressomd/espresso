@@ -165,15 +165,8 @@ private:
     }
   };
 
-  using ForceAdaptor =
-      field::GhostLayerFieldAdaptor<force_vector_adaptor_function<VectorField>,
-                                    0>;
-  using VectorFieldDistributor =
-      field::KernelDistributor<VectorField, FlagField>;
   using VectorFieldAdaptorInterpolator =
       field::TrilinearFieldInterpolator<VelocityAdaptor, FlagField>;
-  using ForceFieldAdaptorInterpolator =
-      field::TrilinearFieldInterpolator<ForceAdaptor, FlagField>;
   using ScalarFieldAdaptorInterpolator =
       field::TrilinearFieldInterpolator<DensityAdaptor, FlagField>;
 
@@ -189,12 +182,7 @@ private:
   BlockDataID m_flag_field_id;
 
   BlockDataID m_last_applied_force_field_id;
-  BlockDataID m_last_applied_force_adaptor_id;
-  BlockDataID m_last_applied_force_interpolator_id;
-  BlockDataID m_force_to_be_applied_adaptor_id;
-  BlockDataID m_force_to_be_applied_interpolator_id;
   BlockDataID m_force_to_be_applied_id;
-  BlockDataID m_force_to_be_applied_distributor_id;
 
   BlockDataID m_velocity_adaptor_id;
   BlockDataID m_velocity_interpolator_id;
@@ -400,34 +388,12 @@ public:
                "LB stream & collide")
         << timeloop::AfterFunction(communication, "communication");
 
-    m_force_to_be_applied_distributor_id =
-        field::addDistributor<VectorFieldDistributor, FlagField>(
-            m_blocks, m_force_to_be_applied_id, m_flag_field_id, Fluid_flag);
-
     m_velocity_adaptor_id = field::addFieldAdaptor<VelocityAdaptor>(
         m_blocks, m_pdf_field_id, "velocity adaptor");
 
     m_velocity_interpolator_id =
         field::addFieldInterpolator<VectorFieldAdaptorInterpolator, FlagField>(
             m_blocks, m_velocity_adaptor_id, m_flag_field_id, Fluid_flag);
-
-    // Force interpolation for force_to_be_applied
-    m_force_to_be_applied_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
-        m_blocks, m_force_to_be_applied_id, "force adaptor");
-
-    m_force_to_be_applied_interpolator_id =
-        field::addFieldInterpolator<ForceFieldAdaptorInterpolator, FlagField>(
-            m_blocks, m_force_to_be_applied_adaptor_id, m_flag_field_id,
-            Fluid_flag);
-
-    // Force interpolation for last_applied_force
-    m_last_applied_force_adaptor_id = field::addFieldAdaptor<ForceAdaptor>(
-        m_blocks, m_last_applied_force_field_id, "force adaptor");
-
-    m_last_applied_force_interpolator_id =
-        field::addFieldInterpolator<ForceFieldAdaptorInterpolator, FlagField>(
-            m_blocks, m_last_applied_force_adaptor_id, m_flag_field_id,
-            Fluid_flag);
 
     m_density_adaptor_id = field::addFieldAdaptor<DensityAdaptor>(
         m_blocks, m_pdf_field_id, "density adaptor");
