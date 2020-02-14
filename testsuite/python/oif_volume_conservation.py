@@ -17,7 +17,6 @@
 import espressomd
 import numpy as np
 import unittest as ut
-import unittest_decorators as utx
 from tests_common import abspath
 
 
