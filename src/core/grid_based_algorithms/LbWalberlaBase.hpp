@@ -80,6 +80,7 @@ public:
   node_indices_positions() const = 0;
   virtual std::vector<std::pair<Utils::Vector3i, Utils::Vector3d>>
   global_node_indices_positions() const = 0;
+  virtual ~LbWalberlaBase() = default;
 };
 
 #endif // LB_WALBERLA

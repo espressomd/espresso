@@ -25,24 +25,6 @@ class Observable(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class ComForce(Observable):
-
-    """Calculates the total force on particles with given ids.
-
-    Note that virtual sites are not included since forces on them do not enter the equation of motion directly.
-
-    Output format: :math:`\\left(\\sum_i f^x_i, \\sum_i f^y_i, \\sum_i f^z_i\\right)`
-
-    Parameters
-    ----------
-    ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
-
-    """
-    _so_name = "Observables::ComForce"
-
-
-@script_interface_register
 class ComPosition(Observable):
 
     """Calculates the center of mass for particles with given ids.
@@ -289,7 +271,6 @@ class MagneticDipoleMoment(Observable):
 
 @script_interface_register
 class ParticleAngularVelocities(Observable):
-    _so_name = "Observables::ParticleAngularVelocities"
 
     """Calculates the angular velocity (omega) in the spaced-fixed frame of reference
 
@@ -303,15 +284,16 @@ class ParticleAngularVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
+    _so_name = "Observables::ParticleAngularVelocities"
 
 
 @script_interface_register
 class ParticleBodyAngularVelocities(Observable):
-    _so_name = "Observables::ParticleBodyAngularVelocities"
+
     """Calculates the angular velocity (omega) in the particles'  body-fixed frame of reference.
 
-   For each particle, the body-fixed frame of reference is obtained from the particle's
-   orientation stored in the quaternions.
+    For each particle, the body-fixed frame of reference is obtained from the particle's
+    orientation stored in the quaternions.
 
     Parameters
     ----------
@@ -319,6 +301,7 @@ class ParticleBodyAngularVelocities(Observable):
           The ids of (existing) particles to take into account.
 
     """
+    _so_name = "Observables::ParticleBodyAngularVelocities"
 
 
 @script_interface_register
@@ -409,6 +392,24 @@ class ParticleDistances(Observable):
 
     """
     _so_name = "Observables::ParticleDistances"
+
+
+@script_interface_register
+class TotalForce(Observable):
+
+    """Calculates the total force on particles with given ids.
+
+    Note that virtual sites are not included since forces on them do not enter the equation of motion directly.
+
+    Output format: :math:`\\left(\\sum_i f^x_i, \\sum_i f^y_i, \\sum_i f^z_i\\right)`
+
+    Parameters
+    ----------
+    ids : array_like of :obj:`int`
+          The ids of (existing) particles to take into account.
+
+    """
+    _so_name = "Observables::TotalForce"
 
 
 @script_interface_register

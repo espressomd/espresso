@@ -3,7 +3,7 @@
 
 #ifdef LB_WALBERLA
 #include "LbWalberlaBase.hpp"
-#include "LbWalberla_impl.hpp"
+#include "LbWalberlaD3Q19TRT.hpp"
 
 #include "communication.hpp"
 #include "grid.hpp"
@@ -24,7 +24,7 @@ void walberla_mpi_init() {
 }
 
 namespace {
-std::unique_ptr<LbWalberlaBase> lb_walberla_instance = nullptr;
+std::unique_ptr<LbWalberlaBase> lb_walberla_instance;
 }
 
 LbWalberlaBase *lb_walberla() {
@@ -35,21 +35,18 @@ LbWalberlaBase *lb_walberla() {
   return lb_walberla_instance.get();
 }
 
-using LatticeModelD3Q19TRT = walberla::lbm::D3Q19<
-    walberla::lbm::collision_model::TRT, false,
-    walberla::lbm::force_model::GuoField<
-        walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>>>;
-using LbWalberlaD3Q19TRT = walberla::LbWalberla<LatticeModelD3Q19TRT>;
-
 void init_lb_walberla(double viscosity, double density, double agrid,
                       double tau, const Utils::Vector3d &box_dimensions,
                       const Utils::Vector3i &node_grid, double skin) {
   // Exceptions need to be converted to runtime erros so they can be
   // handled from Python in a parallel simulation
   try {
-    lb_walberla_instance =
-        std::make_unique<LbWalberlaD3Q19TRT>(LbWalberlaD3Q19TRT{
-            viscosity, density, agrid, tau, box_dimensions, node_grid, 2});
+
+    auto d3q19trt = new walberla::LbWalberlaD3Q19TRT{
+        viscosity, density, agrid, tau, box_dimensions, node_grid, 2};
+    d3q19trt->construct_lattice_model(viscosity);
+    d3q19trt->setup_with_valid_lattice_model();
+    lb_walberla_instance.reset(d3q19trt);
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
     lb_walberla_instance.reset(nullptr);

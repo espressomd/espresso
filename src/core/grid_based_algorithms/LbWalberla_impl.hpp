@@ -130,7 +130,7 @@ private:
 /** Class that runs and controls the LB on WaLBerla
  */
 template <typename LatticeModel> class LbWalberla : public LbWalberlaBase {
-private:
+protected:
   // Type definitions
   using VectorField = GhostLayerField<Vector3<real_t>, 1>;
   using FlagField = walberla::FlagField<walberla::uint8_t>;
@@ -336,12 +336,8 @@ public:
     m_force_to_be_applied_id = field::addToStorage<VectorField>(
         m_blocks, "force field", math::Vector3<real_t>{0, 0, 0}, field::zyxf,
         m_n_ghost_layers);
-    m_lattice_model = std::make_shared<LatticeModel>(LatticeModel(
-        lbm::collision_model::TRT::constructWithMagicNumber(
-            lbm::collision_model::omegaFromViscosity((real_t)viscosity)),
-        lbm::force_model::GuoField<VectorField>(
-            m_last_applied_force_field_id)));
-
+  };
+  void setup_with_valid_lattice_model() {
     m_pdf_field_id = lbm::addPdfFieldToStorage(
         m_blocks, "pdf field", *m_lattice_model, to_vector3(Utils::Vector3d{}),
         (real_t)1.0, m_n_ghost_layers);
@@ -377,9 +373,8 @@ public:
                               Boundaries::getBlockSweep(m_boundary_handling_id),
                               "boundary handling");
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
-                                          "Reset force fields")
-                       << timeloop::AfterFunction(communication,
-                                                  "communication");
+                                          "Reset force fields");
+    //        << timeloop::AfterFunction(communication, "communication");
     m_time_loop->add()
         << timeloop::Sweep(
                domain_decomposition::makeSharedSweep(
@@ -404,6 +399,7 @@ public:
 
     communication();
   };
+  std::shared_ptr<LatticeModel> get_lattice_model() { return m_lattice_model; };
 
   void integrate() override { m_time_loop->singleStep(); };
 
@@ -674,10 +670,6 @@ public:
   };
 
   // Global parameters
-  void set_viscosity(double viscosity) override {
-    m_lattice_model->collisionModel().resetWithMagicNumber(
-        lbm::collision_model::omegaFromViscosity((real_t)viscosity));
-  };
   double get_viscosity() const override {
     return m_lattice_model->collisionModel().viscosity();
   };
@@ -762,6 +754,8 @@ public:
     }
     return res;
   };
+
+  virtual ~LbWalberla() = default;
 };
 } // namespace walberla
 #endif // LB_WALBERLA
