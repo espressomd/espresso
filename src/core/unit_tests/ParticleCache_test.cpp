@@ -20,7 +20,6 @@
 
 /* Unit tests for the MpiCallbacks class. */
 
-#include <random>
 #include <vector>
 
 #include "ParticleCache.hpp"

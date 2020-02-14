@@ -42,7 +42,6 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <random>
 
 LB_particle_allocation_state lb_reinit_particles_gpu;
 

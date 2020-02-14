@@ -26,6 +26,7 @@
 #include "integrate.hpp"
 #include "version.hpp"
 
+#include <fstream>
 #include <vector>
 
 namespace Writer {
