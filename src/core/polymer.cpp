@@ -75,9 +75,10 @@ is_valid_position(Utils::Vector3d const &pos,
                   std::vector<std::vector<Utils::Vector3d>> const &positions,
                   PartCfg &partCfg, double const min_distance,
                   int const respect_constraints) {
-  Utils::Vector3d const folded_pos = folded_position(pos, box_geo);
   // check if constraint is violated
   if (respect_constraints) {
+    Utils::Vector3d const folded_pos = folded_position(pos, box_geo);
+
     for (auto &c : Constraints::constraints) {
       auto cs =
           std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
@@ -99,18 +100,13 @@ is_valid_position(Utils::Vector3d const &pos,
     if (distto(partCfg, pos, -1) < min_distance) {
       return false;
     }
-    // check for collision with buffered positions
-    double buff_mindist = std::numeric_limits<double>::infinity();
-    double h;
+
     for (auto const &p : positions) {
       for (auto const &m : p) {
-        h = (folded_position(pos, box_geo) - folded_position(m, box_geo))
-                .norm2();
-        buff_mindist = std::min(h, buff_mindist);
+        if (get_mi_vector(pos, m, box_geo).norm() < min_distance) {
+          return false;
+        }
       }
-    }
-    if (std::sqrt(buff_mindist) < min_distance) {
-      return false;
     }
   }
   return true;
