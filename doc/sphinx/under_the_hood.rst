@@ -104,7 +104,7 @@ particles is fairly random, determined e.g. by the order in which the
 particles are set up or have been communicated across the processor
 boundaries. The force loop therefore accesses the particle array in
 arbitrary order, resulting in a lot of unfavorable page misses. In the
-memory organization of , the particles are accessed in a virtually
+memory organization of |es|, the particles are accessed in a virtually
 linear order. Because the force calculation goes through the cells in a
 linear fashion, all accesses to a single cell occur close in time, for
 the force calculation of the cell itself as well as for its neighbors.
