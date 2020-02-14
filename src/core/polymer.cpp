@@ -71,11 +71,11 @@ template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
  *  @return true if valid position, false if not.
  */
 static bool
-is_valid_position(Utils::Vector3d const *pos,
-                  std::vector<std::vector<Utils::Vector3d>> const *positions,
+is_valid_position(Utils::Vector3d const &pos,
+                  std::vector<std::vector<Utils::Vector3d>> const &positions,
                   PartCfg &partCfg, double const min_distance,
                   int const respect_constraints) {
-  Utils::Vector3d const folded_pos = folded_position(*pos, box_geo);
+  Utils::Vector3d const folded_pos = folded_position(pos, box_geo);
   // check if constraint is violated
   if (respect_constraints) {
     for (auto &c : Constraints::constraints) {
@@ -96,15 +96,15 @@ is_valid_position(Utils::Vector3d const *pos,
 
   if (min_distance > 0) {
     // check for collision with existing particles
-    if (distto(partCfg, *pos, -1) < min_distance) {
+    if (distto(partCfg, pos, -1) < min_distance) {
       return false;
     }
     // check for collision with buffered positions
     double buff_mindist = std::numeric_limits<double>::infinity();
     double h;
-    for (auto const &p : *positions) {
+    for (auto const &p : positions) {
       for (auto const &m : p) {
-        h = (folded_position(*pos, box_geo) - folded_position(m, box_geo))
+        h = (folded_position(pos, box_geo) - folded_position(m, box_geo))
                 .norm2();
         buff_mindist = std::min(h, buff_mindist);
       }
@@ -137,8 +137,8 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
   if ((not start_positions.empty()) and
       std::any_of(start_positions.begin(), start_positions.end(),
                   [&positions, &partCfg, min_distance,
-                   respect_constraints](Utils::Vector3d v) {
-                    return not is_valid_position(&v, &positions, partCfg,
+                   respect_constraints](Utils::Vector3d const &v) {
+                    return not is_valid_position(v, positions, partCfg,
                                                  min_distance,
                                                  respect_constraints);
                   }))
@@ -151,7 +151,7 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
       do {
         trial_pos = random_position(rng);
         attempts_mono++;
-      } while ((not is_valid_position(&trial_pos, &positions, partCfg,
+      } while ((not is_valid_position(trial_pos, positions, partCfg,
                                       min_distance, respect_constraints)) and
                (attempts_mono < max_tries));
       if (attempts_mono == max_tries) {
@@ -186,7 +186,7 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
                           bond_angle, -last_vec);
         }
         attempts_mono++;
-      } while ((not is_valid_position(&trial_pos, &positions, partCfg,
+      } while ((not is_valid_position(trial_pos, positions, partCfg,
                                       min_distance, respect_constraints)) and
                (attempts_mono < max_tries));
 
