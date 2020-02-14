@@ -502,7 +502,7 @@ public:
                 f += to_vector3d(force_field->get((*bc).cell)) * weight;
               }
             };
-    distribute_property_at_pos(pos, force_at_node);
+    interpolate_bspline_at_pos(pos, force_at_node);
     return f * m_density;
   };
 
