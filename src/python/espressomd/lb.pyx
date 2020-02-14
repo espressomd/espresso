@@ -133,6 +133,67 @@ cdef class HydrodynamicInteraction(Actor):
         cdef Vector3d v = lb_lbfluid_get_interpolated_velocity(p) * lb_lbfluid_get_lattice_speed()
         return make_array_locked(v)
 
+    def get_interpolated_to_be_applied_force(self, pos):
+        """Get LB fluid force, which will be applied next time step, at specified position.
+
+        Parameters
+        ----------
+        pos : (3,) array_like of :obj:`float`
+              The position at which force is requested.
+
+        Returns
+        -------
+        f : (3,) array_like :obj:`float`
+            The LB fluid force at ``pos``.
+
+        """
+        cdef Vector3d p
+
+        for i in range(3):
+            p[i] = pos[i]
+        cdef Vector3d f = lb_lbfluid_get_interpolated_to_be_applied_force(p)
+        return make_array_locked(f)
+
+    def get_interpolated_last_applied_force(self, pos):
+        """Get LB fluid force, which was applied within the last time step, at specified position.
+
+        Parameters
+        ----------
+        pos : (3,) array_like of :obj:`float`
+              The position at which force is requested.
+
+        Returns
+        -------
+        f : (3,) array_like :obj:`float`
+            The LB fluid force at ``pos``.
+
+        """
+        cdef Vector3d p
+
+        for i in range(3):
+            p[i] = pos[i]
+        cdef Vector3d f = lb_lbfluid_get_interpolated_last_applied_force(p)
+        return make_array_locked(f)
+
+    def add_force_at_pos(self, pos, force):
+        """Adds a force to the fluid at given position
+
+        Parameters
+        ----------
+        pos : (3,) array_like of :obj:`float`
+              The position at which the force will be added.
+        force : (3,) array_like of :obj:`float`
+              The force vector which will be dirtibuted at the position.
+
+        """
+        cdef Vector3d p
+        cdef Vector3d f
+
+        for i in range(3):
+            p[i] = pos[i]
+            f[i] = force[i]
+        lb_lbfluid_add_force_at_pos(p, f)
+
     def print_vtk_velocity(self, path, bb1=None, bb2=None):
         cdef vector[int] bb1_vec
         cdef vector[int] bb2_vec

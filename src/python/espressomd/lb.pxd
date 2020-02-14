@@ -81,6 +81,9 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     double lb_lbfluid_get_lattice_speed() except +
     void check_tau_time_step_consistency(double tau, double time_s) except +
     const Vector3d lb_lbfluid_get_interpolated_velocity(Vector3d & p) except +
+    const Vector3d lb_lbfluid_get_interpolated_to_be_applied_force(Vector3d & p) except +
+    const Vector3d lb_lbfluid_get_interpolated_last_applied_force(Vector3d & p) except +
+    const Vector3d lb_lbfluid_add_force_at_pos(Vector3d & p, Vector3d & f) except +
 
 cdef extern from "grid_based_algorithms/lb_particle_coupling.hpp":
     void lb_lbcoupling_set_rng_state(stdint.uint64_t) except +
