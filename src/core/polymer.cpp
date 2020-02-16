@@ -177,6 +177,7 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
   // create remaining monomers' positions by backtracking.
   for (int p = 0; p < n_polymers; ++p) {
     for (int attempts_poly = 0; attempts_poly < max_tries; attempts_poly++) {
+      int rejections = 0;
       while (positions[p].size() < beads_per_chain) {
         auto pos = draw_valid_monomer_position(p, positions[p].size());
 
@@ -186,6 +187,11 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
         } else if (not positions[p].empty()) {
           /* Go back one position and try again */
           positions[p].pop_back();
+          rejections++;
+          if (rejections > max_tries) {
+            /* Give up for this try. */
+            break;
+          }
         } else {
           /* Give up for this try. */
           break;
