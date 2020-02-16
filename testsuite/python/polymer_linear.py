@@ -185,7 +185,6 @@ class LinearPolymerPositions(ut.TestCase):
 
         z_components = positions[:, :, 2][0]
         for z in z_components:
-            print(z)
             self.assertGreaterEqual(z, 0.5 * self.box_l)
 
         # assert that illegal start position raises error
