@@ -232,7 +232,6 @@ cdef class System:
         """
 
         def __set__(self, _periodic):
-            global periodic
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
