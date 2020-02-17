@@ -22,9 +22,7 @@
 cimport numpy as np
 from espressomd.utils cimport *
 from .utils cimport Vector9d
-from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "<array>" namespace "std" nogil:
     cdef cppclass array4 "std::array<double, 4>":

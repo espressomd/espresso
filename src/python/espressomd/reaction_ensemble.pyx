@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from libcpp.vector cimport vector
-from libcpp.string cimport string
 from libcpp.memory cimport unique_ptr
 from cython.operator cimport dereference as deref
 import numpy as np

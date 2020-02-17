@@ -22,7 +22,7 @@ cimport numpy as np
 from espressomd.utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from espressomd.utils import array_locked
 from libcpp cimport bool
-from libcpp.memory cimport unique_ptr
+from libcpp.vector cimport vector  # import std::vector as vector
 from libc cimport stdint
 
 include "myconfig.pxi"

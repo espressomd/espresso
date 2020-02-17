@@ -24,9 +24,7 @@ from . cimport particle_data
 from . import utils
 from . import code_info
 from . import particle_data
-from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
 from .interactions import *
 from espressomd.interactions cimport *
 import numpy as np
