@@ -17,13 +17,12 @@
 """Code shared by charge and dipole methods based on the SCAFACOS library."""
 
 
-from espressomd.actors cimport Actor
+from .actors cimport Actor
 from libcpp.string cimport string  # import std::string
-cimport electrostatics
-cimport magnetostatics
-from espressomd.utils import to_char_pointer, to_str
-
-from espressomd.utils cimport handle_errors
+from . cimport electrostatics
+from . cimport magnetostatics
+from .utils import to_char_pointer, to_str
+from .utils cimport handle_errors
 
 
 include "myconfig.pxi"

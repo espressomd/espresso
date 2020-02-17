@@ -19,14 +19,13 @@
 include "myconfig.pxi"
 from .utils import requires_experimental_features
 import numpy as np
-from globals cimport temperature
 from .actors cimport Actor
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from .utils import is_valid_type, to_str
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):

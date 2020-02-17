@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 from .highlander import ThereCanOnlyBeOne
-from .utils import handle_errors
+from .utils cimport handle_errors
 
 cdef class Actor:
 

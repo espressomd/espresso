@@ -20,19 +20,19 @@ include "myconfig.pxi"
 
 cimport numpy as np
 import numpy as np
-from . cimport utils
-from espressomd.utils cimport *
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, n_part, n_rigidbonds, max_seen_particle_type, mpi_bcast_parameter
+from .globals cimport max_seen_particle, max_seen_particle_type, n_part, \
+    n_rigidbonds
 import collections
 import functools
 import types
-from espressomd.utils import nesting_level, array_locked, is_valid_type
-from espressomd.utils cimport make_array_locked
+from .utils import nesting_level, array_locked, is_valid_type
+from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
+from .utils cimport Vector3i, Vector3d, Vector4d, List
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -56,7 +56,7 @@ cdef class ParticleHandle:
         self._id = _id
 
     cdef int update_particle_data(self) except -1:
-        self.particle_data = get_particle_data_ptr(get_particle_data(self._id))
+        self.particle_data = &get_particle_data(self._id)
 
     def __str__(self):
         res = collections.OrderedDict()

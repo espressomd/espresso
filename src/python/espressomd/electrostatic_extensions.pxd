@@ -16,14 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Handling of electrostatics
 
 include "myconfig.pxi"
-from espressomd.system cimport *
-from espressomd.utils cimport *
-from espressomd.electrostatics cimport *
-from libcpp cimport vector
-from utils cimport Vector3d
+from .electrostatics cimport *
+from libcpp.vector cimport vector
+from libcpp cimport bool
+from .utils cimport Vector3d
 
 IF ELECTROSTATICS and P3M:
 

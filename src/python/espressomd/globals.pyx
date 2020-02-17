@@ -16,16 +16,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import numpy as np
 
-cimport grid
-from globals cimport time_step
-from globals cimport mpi_set_time_step
-from globals cimport min_global_cut
-from globals cimport sim_time
-from globals cimport timing_samples
-from globals cimport forcecap_set
-from globals cimport forcecap_get
-from espressomd.utils import array_locked, is_valid_type
-from espressomd.utils cimport Vector3d, make_array_locked
+from .grid cimport box_geo
+from .globals cimport time_step
+from .globals cimport mpi_set_time_step
+from .globals cimport min_global_cut
+from .globals cimport sim_time
+from .globals cimport timing_samples
+from .globals cimport forcecap_set
+from .globals cimport forcecap_get
+from .utils import array_locked
+from .utils cimport Vector3d, make_array_locked
 
 cdef class Globals:
     property box_l:
@@ -38,11 +38,11 @@ cdef class Globals:
                     raise ValueError(
                         "Box length must be > 0  in all directions")
                 temp_box_l[i] = _box_l[i]
-            grid.box_geo.set_length(temp_box_l)
+            box_geo.set_length(temp_box_l)
             mpi_bcast_parameter(FIELD_BOXL)
 
         def __get__(self):
-            return make_array_locked(< Vector3d > grid.box_geo.length())
+            return make_array_locked(< Vector3d > box_geo.length())
 
     property time_step:
         def __set__(self, time_step):
@@ -65,7 +65,7 @@ cdef class Globals:
     property periodicity:
         def __set__(self, _periodic):
             for i in range(3):
-                grid.box_geo.set_periodic(i, _periodic[i])
+                box_geo.set_periodic(i, _periodic[i])
 
             mpi_bcast_parameter(FIELD_PERIODIC)
 
@@ -73,7 +73,7 @@ cdef class Globals:
             periodicity = np.zeros(3)
 
             for i in range(3):
-                periodicity[i] = grid.box_geo.periodic(i)
+                periodicity[i] = box_geo.periodic(i)
 
             return array_locked(periodicity)
 

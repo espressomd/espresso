@@ -19,25 +19,21 @@
 # For C-extern Analysis
 include "myconfig.pxi"
 from . cimport analyze
-from . cimport utils
-from . cimport particle_data
-from . import utils
-from . import code_info
-from . import particle_data
-from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
-from .interactions import *
-from espressomd.interactions cimport *
+from .interactions cimport BONDED_IA_NONE
+from .interactions cimport bonded_ia_params
 import numpy as np
 cimport numpy as np
-from globals cimport n_configs
-
-from .utils import array_locked
+from .globals import Globals
 
 from collections import OrderedDict
 from .system import System
-from espressomd.utils import is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport handle_errors, check_type_or_throw_except
+from .utils cimport create_nparray_from_double_array, \
+    create_nparray_from_int_list, \
+    create_int_list_from_python_object
 
 
 class Analysis:
@@ -54,7 +50,7 @@ class Analysis:
     def append(self):
         """Append configuration for averaged analysis."""
         assert analyze.n_part, "No particles to append!"
-        if analyze.n_configs > 0:
+        if n_configs > 0:
             assert analyze.n_part_conf == analyze.n_part, \
                 "All configurations stored must have the same length"
 
@@ -846,7 +842,7 @@ class Analysis:
                 n_conf = n_configs
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         cdef vector[double] rdf
         rdf.resize(r_bins)
@@ -921,7 +917,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
         assert not log_flag or r_min != 0.0, "r_min cannot include zero"

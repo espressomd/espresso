@@ -18,8 +18,7 @@
 #
 include "myconfig.pxi"
 from libcpp cimport bool
-from interactions cimport ImmersedBoundaries
-from utils cimport Vector3i
+from .utils cimport Vector3i
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -48,7 +47,6 @@ cdef extern from "global.hpp":
     void mpi_bcast_parameter(int p)
 
 cdef extern from "communication.hpp":
-    extern int n_nodes
     void mpi_set_time_step(double time_step) except +
 
 cdef extern from "integrate.hpp":
@@ -75,28 +73,12 @@ cdef extern from "particle_data.hpp":
     extern int n_part
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-    double dpd_gamma
-    double dpd_r_cut
     extern double max_cut
     extern int max_seen_particle
     extern int max_seen_particle_type
-    extern double max_cut_nonbonded
     extern double min_global_cut
     double recalc_maximal_cutoff_bonded()
     double recalc_maximal_cutoff_nonbonded()
-
-cdef extern from "thermostat.hpp":
-    extern double nptiso_gamma0
-    extern double nptiso_gammav
-    extern double temperature
-    extern int thermo_switch
-
-cdef extern from "dpd.hpp":
-    extern int dpd_wf
-    extern double dpd_tgamma
-    extern double dpd_tr_cut
-    extern int dpd_twf
-
 
 cdef extern from "cells.hpp":
     ctypedef struct CellStructure:
@@ -123,12 +105,6 @@ cdef extern from "npt.hpp":
         double p_diff
         double piston
     extern nptiso_struct nptiso
-
-cdef extern from "statistics.hpp":
-    extern int n_configs
-
-cdef extern from "immersed_boundaries.hpp":
-    extern ImmersedBoundaries immersed_boundaries
 
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects

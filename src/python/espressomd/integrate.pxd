@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from libcpp.string cimport string  # import std::string as string
-from libcpp.vector cimport vector  # import std::vector as vector
 from libcpp cimport bool as cbool
 
 include "myconfig.pxi"
@@ -42,22 +40,6 @@ IF NPT:
 cdef inline int _integrate(int nSteps, cbool recalc_forces, int reuse_forces):
     with nogil:
         return python_integrate(nSteps, recalc_forces, reuse_forces)
-
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError":
-    cdef cppclass ErrorLevel:
-        pass
-
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling::RuntimeError::ErrorLevel":
-    cdef ErrorLevel WARNING
-    cdef ErrorLevel ERROR
-
-cdef extern from "RuntimeError.hpp" namespace "ErrorHandling":
-    cdef cppclass RuntimeError:
-        string format()
-        ErrorLevel level()
-
-cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
-    cdef vector[RuntimeError]mpi_gather_runtime_errors()
 
 cdef extern from "communication.hpp":
     int mpi_steepest_descent(int max_steps)
