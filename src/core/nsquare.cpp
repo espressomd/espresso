@@ -38,22 +38,34 @@ static Cell *nsq_id_to_cell(int id) {
 
 static std::vector<GhostCommunication>
 nsq_prepare_comm(boost::mpi::communicator const &comm) {
-  /* no need for comm for only 1 node */
-  if (comm.size() == 1) {
-    return {};
-  }
+  std::vector<GhostCommunication> comms;
 
-  std::vector<GhostCommunication> comms(comm.size(), GhostCommunication{comm});
   /* every node has its dedicated comm step */
   for (int n = 0; n < comm.size(); n++) {
+    GhostCommunication c;
+    c.type = GHOST_BCST;
+
     if (comm.rank() == n) {
-      comms[n].send_lists.push_back(&cells[n]);
+      c.send_lists.push_back(&cells[n]);
     } else {
-      comms[n].recv_lists.push_back(&cells[n]);
+      c.recv_lists.push_back(&cells[n]);
     }
 
-    comms[n].send_to = n;
-    comms[n].recv_from = n;
+    c.send_to = n;
+
+    comms.emplace_back(std::move(c));
+  }
+
+  return comms;
+}
+
+static auto nsq_reverse_comms(std::vector<GhostCommunication> comms) {
+  for (auto &c : comms) {
+    c.type = GHOST_RDCE;
+    if (c.comm.rank() != c.send_to)
+      std::swap(c.send_lists, c.recv_lists);
+    else
+      c.recv_lists = c.send_lists;
   }
 
   return comms;
@@ -110,15 +122,7 @@ void nsq_topology_init(CellPList *old) {
 
   /* create communicators */
   auto comms_exchange = nsq_prepare_comm(comm_cart);
-  auto comms_collect = comms_exchange;
-
-  /* here we just decide what to transfer where */
-  if (n_nodes > 1) {
-    for (int n = 0; n < n_nodes; n++) {
-      comms_exchange[n].type = GHOST_BCST;
-      comms_collect[n].type = GHOST_RDCE;
-    }
-  }
+  auto comms_collect = nsq_reverse_comms(comms_exchange);
 
   cell_structure.exchange_ghosts_comm =
       GhostCommunicator{std::move(comms_exchange)};

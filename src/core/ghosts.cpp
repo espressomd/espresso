@@ -323,14 +323,15 @@ void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
     case GHOST_RDCE:
       if (send_to == ghost_comm.comm.rank())
         boost::mpi::reduce(ghost_comm.comm,
-                           reinterpret_cast<double *>(send_buffer.data()),
+                           reinterpret_cast<const double *>(send_buffer.data()),
                            send_buffer.size() / sizeof(double),
                            reinterpret_cast<double *>(recv_buffer.data()),
                            std::plus<double>{}, send_to);
       else
-        boost::mpi::reduce(
-            ghost_comm.comm, reinterpret_cast<double *>(send_buffer.data()),
-            send_buffer.size() / sizeof(double), std::plus<double>{}, send_to);
+        boost::mpi::reduce(ghost_comm.comm,
+                           reinterpret_cast<const double *>(send_buffer.data()),
+                           send_buffer.size() / sizeof(double),
+                           std::plus<double>{}, send_to);
       break;
     }
 
