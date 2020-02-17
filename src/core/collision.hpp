@@ -42,6 +42,7 @@
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "integrate.hpp"
+#include "random.hpp"
 #include "virtual_sites.hpp"
 
 class Collision_parameters {
@@ -53,7 +54,7 @@ public:
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int mode;
   /// distance at which particles are bound
-  double distance;
+//  double distance;
   // Square of distance at which particle are bound
   double distance2;
 
@@ -62,7 +63,7 @@ public:
   /// bond type used between virtual sites
   int bond_vs;
   /// particle type for virtual sites created on collision
-  int vs_particle_type;
+//  int vs_particle_type;
 
   /** Raise exception on collision */
   bool exception_on_collision;
@@ -127,7 +128,7 @@ bool validate_collision_parameters();
 /** @brief Add the collision between the given particle ids to the collision
  *  queue
  */
-void queue_collision(int part1, int part2);
+void queue_collision(std::vector<int> particles);
 
 /** @brief Check additional criteria for the glue_to_surface collision mode */
 inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
@@ -141,14 +142,16 @@ inline bool particle_type_criterion(Particle const &p1, Particle const &p2) {
   int count_multiples = 1;
   if(p1.p.type == p2.p.type)
     count_multiples = 2;
-  if(std::count(particle_type.begin(),particle_type.end(),p1.type) == count_multiples)
-    return (count_multiples == 2 || std::count(particle_type.begin(),particle_type.end(),p2.type));
+  if(std::count(collision_params.particle_type.begin(),
+                collision_params.particle_type.end(),p1.p.type) == count_multiples)
+    return (count_multiples == 2 || std::count(collision_params.particle_type.begin(),
+                                               collision_params.particle_type.end(),p2.p.type) > 0);
   return 0;
 }
 
 inline bool collision_detection_criterion(Particle const &p1, Particle const &p2){
   if(collision_params.rate > 0)
-    return d_random > collision_params.rate * time_step;
+    return d_random() < collision_params.rate * time_step;
   /* TODO implement other criteria */
 }
 
@@ -159,7 +162,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     return;
 
   // Check, if the particle types match the criteria
-  if (particle_type_criterion)
+  if (!particle_type_criterion(p1,p2))
     return;
 
   // Check, if there's already a bond between the particles
@@ -169,7 +172,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
   if (pair_bond_exists_on(p2, p1, collision_params.bond_centers))
     return;
 
-  if(collision_detection_criterion(p1, p2))
+  if(!collision_detection_criterion(p1, p2))
     return;
 
   /* If we're still here, there is no previous bond between the particles,
@@ -179,7 +182,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
   if (p1.l.ghost && p2.l.ghost) {
     return;
   }
-  queue_collision(p1.p.identity, p2.p.identity);
+  queue_collision({p1.p.identity, p2.p.identity});
 }
 
 #endif

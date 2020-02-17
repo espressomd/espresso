@@ -48,8 +48,8 @@ class CollisionDetection(ScriptInterfaceHelper):
 
     def __init__(self, *args, **kwargs):
         # If no mode is specified at construction, use off.
-        if "mode" not in kwargs:
-            kwargs["mode"] = "off"
+#        if "mode" not in kwargs:
+#            kwargs["mode"] = "off"
         super().__init__()
         self.set_params(**kwargs)
 
@@ -116,22 +116,22 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         """
 
-        if not ("mode" in kwargs):
-            raise Exception(
-                "Collision mode must be specified via the mode keyword argument")
+#        if not ("mode" in kwargs):
+#            raise Exception(
+#                "Collision mode must be specified via the mode keyword argument")
 
         # Completeness of parameter set
-        if not (set(kwargs.keys()) == set(
-                self._params_for_mode(kwargs["mode"]))):
-            raise Exception("Parameter set does not match mode. ",
-                            kwargs["mode"], "requires ",
-                            self._params_for_mode(kwargs["mode"]))
+#        if not (set(kwargs.keys()) == set(
+#                self._params_for_mode(kwargs["mode"]))):
+#            raise Exception("Parameter set does not match mode. ",
+#                            kwargs["mode"], "requires ",
+#                            self._params_for_mode(kwargs["mode"]))
 
         # Mode
-        kwargs["mode"] = self._int_mode[kwargs["mode"]]
+#        kwargs["mode"] = self._int_mode[kwargs["mode"]]
 
         # Convert bonds to bond ids
-        for name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
+        for name in ["bond_type", "vs_bond_type"]:
             if name in kwargs:
                 if isinstance(kwargs[name], BondedInteraction):
                     kwargs[name] = kwargs[name]._bond_id
@@ -169,11 +169,11 @@ class CollisionDetection(ScriptInterfaceHelper):
         name = to_str(name)
         # Convert int mode parameter to string
         res = value
-        if name == "mode":
-            res = self._str_mode(value)
+#        if name == "mode":
+#            res = self._str_mode(value)
 
         # Convert bond parameters from bond ids to into BondedInteractions
-        if name in ["bond_centers", "bond_vs", "bond_three_particle_binding"]:
+        if name in ["bond_type", "vs_bond_type"]:
             if value == -1:  # Not defined
                 res = None
             else:
@@ -184,21 +184,21 @@ class CollisionDetection(ScriptInterfaceHelper):
         """The parameter names expected for a given collision mode
 
         """
-        if mode == "off":
-            return ("mode",)
-        if mode == "bind_centers":
-            return ("mode", "bond_centers", "distance")
-        if mode == "bind_at_point_of_collision":
-            return ("mode", "bond_centers", "bond_vs",
-                    "part_type_vs", "distance", "vs_placement")
-        if mode == "glue_to_surface":
-            return ("mode", "bond_centers", "bond_vs", "part_type_vs",
-                    "part_type_to_be_glued", "part_type_to_attach_vs_to",
-                    "part_type_after_glueing", "distance",
-                    "distance_glued_particle_to_vs")
-        if mode == "bind_three_particles":
-            return ("mode", "bond_centers", "distance", "bond_three_particles",
-                    "three_particle_binding_angle_resolution")
+#        if mode == "off":
+#            return ("mode",)
+#        if mode == "bind_centers":
+#            return ("mode", "bond_centers", "distance")
+#        if mode == "bind_at_point_of_collision":
+#           return ("mode", "bond_centers", "bond_vs",
+#                    "part_type_vs", "distance", "vs_placement")
+#        if mode == "glue_to_surface":
+#            return ("mode", "bond_centers", "bond_vs", "part_type_vs",
+#                    "part_type_to_be_glued", "part_type_to_attach_vs_to",
+#                    "part_type_after_glueing", "distance",
+#                    "distance_glued_particle_to_vs")
+#        if mode == "bind_three_particles":
+#            return ("mode", "bond_centers", "distance", "bond_three_particles",
+#                    "three_particle_binding_angle_resolution")
         raise Exception("Mode not handled: " + mode.__str__())
 
     _int_mode = {
@@ -212,9 +212,9 @@ class CollisionDetection(ScriptInterfaceHelper):
         """String mode name from int ones provided by the core
 
         """
-        for key in self._int_mode:
-            if self._int_mode[key] == int_mode:
-                return key
+#        for key in self._int_mode:
+#            if self._int_mode[key] == int_mode:
+#                return key
         raise Exception("Unknown integer collision mode %d" % int_mode)
 
     # Pickle support
