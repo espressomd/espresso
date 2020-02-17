@@ -407,7 +407,7 @@ public:
   void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) const {
     Utils::Interpolation::bspline_3d<2>(
         pos, f, Utils::Vector3d{1.0, 1.0, 1.0}, // grid spacing
-        Utils::Vector3d{0.0, 0.0, 0.0});        // offset
+        Utils::Vector3d::broadcast(.5));        // offset
   }
 
   // Velocity
@@ -448,7 +448,7 @@ public:
             v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
           }
         });
-    return v * 8.0;
+    return v;
   };
 
   // Local force
