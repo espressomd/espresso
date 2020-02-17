@@ -25,8 +25,8 @@ from libcpp cimport bool as cbool
 from libc cimport stdint
 
 include "myconfig.pxi"
-from espressomd.system cimport *
 cimport numpy as np
+
 # force include of config.hpp
 cdef extern from "config.hpp":
     pass
@@ -546,7 +546,7 @@ cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
 cdef extern from "immersed_boundary/ibm_tribend.hpp":
-    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
+    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const cbool flat)
 
 IF ROTATION:
     cdef extern from "bonded_interactions/harmonic_dumbbell.hpp":
