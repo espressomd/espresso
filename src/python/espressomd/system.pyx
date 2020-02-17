@@ -48,6 +48,7 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
+from .utils cimport handle_errors
 from globals cimport max_seen_particle
 from .globals import Globals
 from espressomd.utils import array_locked, is_valid_type
@@ -519,4 +520,5 @@ cdef class System:
         """
         self.check_valid_type(type)
         number = number_of_particles_with_type(type)
+        handle_errors("")
         return int(number)
