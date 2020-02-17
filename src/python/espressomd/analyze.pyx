@@ -32,7 +32,8 @@ from globals cimport n_configs
 from collections import OrderedDict
 from .system import System
 from .utils import array_locked, is_valid_type
-from .utils cimport handle_errors, check_type_or_throw_except, \
+from .utils cimport Vector3i, Vector3d, Vector9d, List, handle_errors, \
+    check_type_or_throw_except, \
     create_nparray_from_double_array, \
     create_nparray_from_int_list, \
     create_int_list_from_python_object

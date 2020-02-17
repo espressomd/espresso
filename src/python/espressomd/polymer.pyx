@@ -22,8 +22,8 @@ from . cimport polymer
 import numpy as np
 from espressomd import System
 from espressomd.interactions import BondedInteraction
-from espressomd.utils import check_type_or_throw_except, array_locked
-from espressomd.utils cimport make_Vector3d
+from .utils cimport make_Vector3d, check_type_or_throw_except
+from .utils import array_locked
 
 
 def validate_params(_params, default):

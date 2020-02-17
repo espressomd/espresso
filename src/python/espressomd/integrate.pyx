@@ -19,7 +19,7 @@
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
 import espressomd.code_info
-from espressomd.utils cimport check_type_or_throw_except, handle_errors
+from espressomd.utils cimport handle_errors, check_type_or_throw_except
 cimport globals
 
 cdef class IntegratorHandle:

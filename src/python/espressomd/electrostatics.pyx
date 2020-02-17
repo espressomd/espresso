@@ -26,8 +26,8 @@ import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from .utils import is_valid_type, to_str
 from . cimport checks
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle

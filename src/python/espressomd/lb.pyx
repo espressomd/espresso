@@ -29,7 +29,7 @@ from . import cuda_init
 from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
-from .utils cimport make_array_locked, numeric_limits
+from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
 cimport globals
 
 

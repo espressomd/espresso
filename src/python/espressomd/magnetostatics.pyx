@@ -25,8 +25,8 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from .utils import is_valid_type, to_str
 
 IF DIPOLES == 1:
     cdef class MagnetostaticInteraction(Actor):

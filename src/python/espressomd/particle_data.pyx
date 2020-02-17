@@ -20,8 +20,6 @@ include "myconfig.pxi"
 
 cimport numpy as np
 import numpy as np
-from . cimport utils
-from espressomd.utils cimport *
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
@@ -31,8 +29,8 @@ from globals cimport max_seen_particle, time_step, n_part, n_rigidbonds, max_see
 import collections
 import functools
 import types
-from espressomd.utils import nesting_level, array_locked, is_valid_type
-from espressomd.utils cimport make_array_locked
+from .utils import nesting_level, array_locked, is_valid_type
+from .utils cimport make_array_locked, make_const_span, Vector3i, Vector3d, Vector4d, List, check_type_or_throw_except
 from .grid cimport box_geo, folded_position, unfolded_position
 
 

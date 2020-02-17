@@ -21,8 +21,8 @@ from . cimport cellsystem
 from . cimport integrate
 from globals cimport *
 import numpy as np
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from .utils cimport handle_errors
+from .utils import is_valid_type
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True,

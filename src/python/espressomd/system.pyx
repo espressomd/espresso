@@ -49,7 +49,6 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .comfixed import ComFixed
 from globals cimport max_seen_particle
 from .globals import Globals
-from espressomd.utils import array_locked, is_valid_type
 IF VIRTUAL_SITES:
     from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 

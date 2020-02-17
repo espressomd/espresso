@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from espressomd.utils import to_str
+from .utils import to_str
 
 
 def major():

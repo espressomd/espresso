@@ -20,10 +20,9 @@ from libcpp.string cimport string
 import collections
 
 include "myconfig.pxi"
-from . import utils
-from espressomd.utils import is_valid_type
 from globals cimport immersed_boundaries
-from .utils import requires_experimental_features
+from .utils import requires_experimental_features, is_valid_type
+from .utils cimport check_type_or_throw_except
 
 
 cdef class NonBondedInteraction:
@@ -2124,7 +2123,7 @@ class ThermalizedBond(BondedInteraction):
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermalized bond")
         if self.params["seed"] is not None:
-            utils.check_type_or_throw_except(
+            check_type_or_throw_except(
                 self.params["seed"], 1, int, "seed must be a positive integer")
             if self.params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
