@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import unittest as ut
 import numpy as np
+import random
 import espressomd
 from espressomd import polymer
 import espressomd.shapes
@@ -33,10 +34,9 @@ class LinearPolymerPositions(ut.TestCase):
     """
 
     box_l = 15
-    seed = 23
+    seed = random.randint(0, 1000)
 
     system = espressomd.System(box_l=[box_l, box_l, box_l])
-    np.random.seed(1234)
 
     def assertShape(self, positions, n_poly, n_mono):
         """
