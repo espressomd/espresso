@@ -133,18 +133,8 @@ enum : unsigned {
 /*@{*/
 
 struct GhostCommunication {
-  boost::mpi::communicator comm;
-
-private:
-  GhostCommunication() = default;
-
-public:
-  explicit GhostCommunication(boost::mpi::communicator comm)
-      : GhostCommunication() {
-    this->comm = std::move(comm);
-  }
-
   unsigned type = GHOSTTRANS_NONE;
+  boost::mpi::communicator comm;
   /** Node to communicate with (to use with all MPI operations). */
   int send_to = -1;
   int recv_from = -1;

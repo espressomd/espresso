@@ -226,6 +226,29 @@ std::vector<ParticleList *> dd_fill_comm_cell_lists(const int *lc,
   return ret;
 }
 
+/**
+ * @brief Return true if boundary.
+ *
+ * @param dir Direction
+ * @param lr Left- or Right.
+ */
+template <class T>
+bool is_boundary(LocalBox<T> const &local_box, int dir, int lr) {
+  return (local_geo.boundary()[2 * dir + lr] != 0);
+}
+
+/**
+ * @brief Return true if we have a left and a right neighbor in direction.
+ * @param dir Direction to check
+ * @return True if there is a left and a right neighbor.
+ */
+static bool is_both_sided(int dir) {
+  /* This always true if the direction is periodic, otherwise only if
+   * we are not at either boundary. */
+  return box_geo.periodic(dir) or
+         (is_boundary(local_geo, dir, 0) and is_boundary(local_geo, dir, 1));
+}
+
 /** Create communicators for cell structure domain decomposition. (see \ref
  *  GhostCommunicator)
  */
@@ -252,7 +275,7 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
   }
 
   /* We fill in num communication steps. */
-  std::vector<GhostCommunication> comm(num, GhostCommunication(communicator));
+  std::vector<GhostCommunication> comm(num);
 
   cnt = 0;
   /* direction loop: x, y, z */
@@ -266,6 +289,10 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
        communication, simply by taking the lr loop only over one
        value */
     for (lr = 0; lr < 2; lr++) {
+      Utils::Vector3d shift{};
+      /* prepare folding of ghost positions */
+      shift[dir] = local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+
       if (cart_info.dims[dir] == 1) {
         /* just copy cells on a single node */
         if (box_geo.periodic(dir) ||
@@ -276,8 +303,7 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
           comm[cnt].recv_from = communicator.rank();
 
           /* prepare folding of ghost positions */
-          comm[cnt].shift[dir] =
-              local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+          comm[cnt].shift = shift;
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -296,10 +322,10 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
               (local_geo.boundary()[2 * dir + lr] == 0))
             if ((cart_info.coords[dir] + i) % 2 == 0) {
               comm[cnt].type = GHOST_SEND;
+              comm[cnt].comm = communicator;
               comm[cnt].send_to = node_neighbors[2 * dir + lr];
               /* prepare folding of ghost positions */
-              comm[cnt].shift[dir] =
-                  local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+              comm[cnt].shift = shift;
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
               comm[cnt].send_lists = dd_fill_comm_cell_lists(lc, hc);
@@ -309,6 +335,7 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
               (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((cart_info.coords[dir] + (1 - i)) % 2 == 0) {
               comm[cnt].type = GHOST_RECV;
+              comm[cnt].comm = communicator;
               comm[cnt].recv_from = node_neighbors[2 * dir + (1 - lr)];
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);

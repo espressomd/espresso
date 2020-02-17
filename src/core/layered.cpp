@@ -113,7 +113,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
     if (!LAYERED_BTM_NEIGHBOR)
       n -= 2;
 
-    std::vector<GhostCommunication> comms(n, GhostCommunication{comm_cart});
+    std::vector<GhostCommunication> comms(n);
 
     int c = 0;
 
@@ -122,6 +122,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comms[c].type = GHOST_SEND;
+        comms[c].comm = comm_cart;
         comms[c].send_to = btm;
         if (reverse) {
           comms[c].send_lists.push_back(&cells[0]);
@@ -141,6 +142,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
          as for odd n_nodes maybe we send AND receive. */
       if (top % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comms[c].type = GHOST_RECV;
+        comms[c].comm = comm_cart;
         comms[c].recv_from = top;
         if (reverse) {
           comms[c].recv_lists.push_back(&cells[n_layers]);
@@ -156,6 +158,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
       /* send */
       if (this_node % 2 == even_odd && LAYERED_TOP_NEIGHBOR) {
         comms[c].type = GHOST_SEND;
+        comms[c].comm = comm_cart;
         comms[c].send_to = top;
         if (reverse) {
           comms[c].send_lists.push_back(&cells[n_layers + 1]);
@@ -175,6 +178,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
          as for odd n_nodes maybe we send AND receive. */
       if (btm % 2 == even_odd && LAYERED_BTM_NEIGHBOR) {
         comms[c].type = GHOST_RECV;
+        comms[c].comm = comm_cart;
         comms[c].recv_from = btm;
         if (reverse) {
           comms[c].recv_lists.push_back(&cells[1]);
@@ -190,7 +194,7 @@ static std::vector<GhostCommunication> layered_prepare_comm(int reverse) {
   /* one node => local transfers, either 2 (up and down, periodic) or zero*/
 
   auto const n = (layered_flags & LAYERED_PERIODIC) ? 2 : 0;
-  std::vector<GhostCommunication> comms(n, GhostCommunication{comm_cart});
+  std::vector<GhostCommunication> comms(n);
 
   if (n != 0) {
     /* two cells: from and to */
