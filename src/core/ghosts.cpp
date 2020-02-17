@@ -76,10 +76,10 @@ static size_t calc_transmit_size(std::vector<ParticleList *> const &part_lists,
   return n_part * calc_transmit_size(data_parts);
 }
 
-static void prepare_send_buffer(CommBuf &send_buffer,
-                                const GhostCommunication &ghost_comm,
+static void prepare_send_buffer(const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate send buffer */
+  CommBuf &send_buffer = ghost_comm.send_buffer;
   send_buffer.resize(calc_transmit_size(ghost_comm.send_lists, data_parts));
   send_buffer.bonds().clear();
 
@@ -146,17 +146,17 @@ static void prepare_ghost_cell(ParticleList *cell, int size) {
   }
 }
 
-static void prepare_recv_buffer(CommBuf &recv_buffer,
-                                const GhostCommunication &ghost_comm,
+static void prepare_recv_buffer(const GhostCommunication &ghost_comm,
                                 unsigned int data_parts) {
   /* reallocate recv buffer */
-  recv_buffer.resize(calc_transmit_size(ghost_comm.recv_lists, data_parts));
+  ghost_comm.recv_buffer.resize(
+      calc_transmit_size(ghost_comm.recv_lists, data_parts));
 }
 
-static void put_recv_buffer(CommBuf &recv_buffer,
-                            const GhostCommunication &ghost_comm,
+static void put_recv_buffer(const GhostCommunication &ghost_comm,
                             unsigned int data_parts) {
   /* put back data */
+  CommBuf &recv_buffer = ghost_comm.recv_buffer;
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
   auto bond_buffer = recv_buffer.bonds().begin();
 
@@ -195,10 +195,10 @@ static void put_recv_buffer(CommBuf &recv_buffer,
   recv_buffer.bonds().clear();
 }
 
-static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
-                                        const GhostCommunication &ghost_comm) {
+static void add_forces_from_recv_buffer(const GhostCommunication &ghost_comm) {
   /* put back data */
-  auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
+  auto archiver =
+      Utils::MemcpyIArchive{Utils::make_span(ghost_comm.recv_buffer)};
   for (auto &part_list : ghost_comm.recv_lists) {
     for (Particle &part : part_list->particles()) {
       ParticleForce pf;
@@ -245,8 +245,6 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
 }
 
 void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
-  static CommBuf send_buffer, recv_buffer;
-
   for (auto const &ghost_comm : gcr->communications()) {
     int const comm_type = ghost_comm.type;
 
@@ -256,13 +254,16 @@ void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
     }
 
     /* prepare send buffer if necessary */
-    prepare_send_buffer(send_buffer, ghost_comm, data_parts);
+    prepare_send_buffer(ghost_comm, data_parts);
 
     /* recv buffer for recv and multinode operations to this node */
-    prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
+    prepare_recv_buffer(ghost_comm, data_parts);
 
     auto const send_to = ghost_comm.send_to;
     auto const recv_from = ghost_comm.recv_from;
+
+    CommBuf &send_buffer = ghost_comm.send_buffer;
+    CommBuf &recv_buffer = ghost_comm.recv_buffer;
 
     /* transfer data */
     // Use two send/recvs in order to avoid, having to serialize CommBuf
@@ -307,8 +308,8 @@ void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
     /* forces have to be added, the rest overwritten. Exception is RDCE,
      * where the addition is integrated into the communication. */
     if (data_parts == GHOSTTRANS_FORCE && comm_type != GHOST_RDCE)
-      add_forces_from_recv_buffer(recv_buffer, ghost_comm);
+      add_forces_from_recv_buffer(ghost_comm);
     else
-      put_recv_buffer(recv_buffer, ghost_comm, data_parts);
+      put_recv_buffer(ghost_comm, data_parts);
   }
 }

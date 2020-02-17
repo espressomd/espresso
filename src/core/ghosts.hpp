@@ -175,6 +175,9 @@ struct GhostCommunication {
   /** Position shift for ghost particles. The shift is done on the sender side.
    */
   Utils::Vector3d shift = {};
+
+  /** Buffers for MPI serialization */
+  mutable CommBuf send_buffer, recv_buffer;
 };
 
 /** Properties for a ghost communication. A ghost communication is defined */
