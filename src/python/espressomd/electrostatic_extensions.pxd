@@ -18,7 +18,7 @@
 #
 
 include "myconfig.pxi"
-from espressomd.electrostatics cimport *
+from .electrostatics cimport *
 from libcpp.vector cimport vector
 from libcpp cimport bool
 from .utils cimport Vector3d

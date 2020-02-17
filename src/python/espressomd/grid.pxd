@@ -16,7 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from libcpp cimport bool
 
-from utils cimport Vector3i, Vector3d
+from .utils cimport Vector3i, Vector3d
 
 cdef extern from "grid.hpp":
     Vector3i node_grid

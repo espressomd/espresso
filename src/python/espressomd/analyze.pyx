@@ -19,23 +19,19 @@
 # For C-extern Analysis
 include "myconfig.pxi"
 from . cimport analyze
-from . cimport particle_data
-from . import code_info
-from . import particle_data
 from libcpp.vector cimport vector  # import std::vector as vector
-from .interactions import *
-from espressomd.interactions cimport *
+from .interactions cimport BONDED_IA_NONE
+from .interactions cimport bonded_ia_params
 import numpy as np
 cimport numpy as np
-from globals cimport n_configs
 from .globals import Globals
 
 from collections import OrderedDict
 from .system import System
 from .utils import array_locked, is_valid_type
-from .utils cimport Vector3i, Vector3d, Vector9d, List, handle_errors, \
-    check_type_or_throw_except, \
-    create_nparray_from_double_array, \
+from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport handle_errors, check_type_or_throw_except
+from .utils cimport create_nparray_from_double_array, \
     create_nparray_from_int_list, \
     create_int_list_from_python_object
 
@@ -54,7 +50,7 @@ class Analysis:
     def append(self):
         """Append configuration for averaged analysis."""
         assert analyze.n_part, "No particles to append!"
-        if analyze.n_configs > 0:
+        if n_configs > 0:
             assert analyze.n_part_conf == analyze.n_part, \
                 "All configurations stored must have the same length"
 

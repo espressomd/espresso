@@ -14,8 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import espressomd.interactions
-from espressomd import has_features
+from . import interactions
+from .__init__ import has_features
 
 # Dict with Drude type infos
 drude_dict = {}
@@ -203,7 +203,7 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
         #...exclusions with core
         qd = drude_dict[td]["q"]  # Drude charge
         qc = drude_dict[td]["qc"]  # Core charge
-        subtr_sr_bond = espressomd.interactions.BondedCoulombSRBond(
+        subtr_sr_bond = interactions.BondedCoulombSRBond(
             q1q2=-qd * qc)
         system.bonded_inter.add(subtr_sr_bond)
         drude_dict[td]["subtr_sr_bonds_drude-core"] = subtr_sr_bond
@@ -250,7 +250,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
             #...excluding the Drude core partner
             if drude_dict[td]["core_type"] != tc:
                 qd = drude_dict[td]["q"]  # Drude charge
-                subtr_sr_bond = espressomd.interactions.BondedCoulombSRBond(
+                subtr_sr_bond = interactions.BondedCoulombSRBond(
                     q1q2=-qd * qp)
                 system.bonded_inter.add(subtr_sr_bond)
                 drude_dict[td]["subtr_sr_bonds_intramol"][

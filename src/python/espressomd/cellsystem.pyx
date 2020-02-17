@@ -16,19 +16,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from grid cimport node_grid
-from . cimport cellsystem
+from .grid cimport node_grid
 from . cimport integrate
-from globals cimport *
+from .globals cimport FIELD_SKIN, FIELD_NODEGRID, FIELD_MAXNUMCELLS, FIELD_MINNUMCELLS
+from .globals cimport max_cut, verlet_reuse, n_layers, dd, cell_structure, \
+    min_num_cells, max_num_cells, skin
+from .globals cimport mpi_bcast_parameter, calc_processor_min_num_cells
 import numpy as np
 from .utils cimport handle_errors
 from .utils import is_valid_type
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True,
-                                 fully_connected=[False,
-                                                  False,
-                                                  False]):
+                                 fully_connected=[False, False, False]):
         """
         Activates domain decomposition cell system.
 

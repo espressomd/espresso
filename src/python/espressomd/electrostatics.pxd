@@ -19,8 +19,8 @@
 
 include "myconfig.pxi"
 cimport numpy as np
-from espressomd.utils import is_valid_type, to_str
-from espressomd.utils cimport handle_errors
+from .utils import is_valid_type, to_str
+from .utils cimport handle_errors
 from libcpp cimport bool
 
 cdef extern from "SystemInterface.hpp":

@@ -20,7 +20,7 @@ from libcpp.string cimport string
 import collections
 
 include "myconfig.pxi"
-from globals cimport immersed_boundaries
+from .globals cimport immersed_boundaries
 from .utils import requires_experimental_features, is_valid_type
 from .utils cimport check_type_or_throw_except
 

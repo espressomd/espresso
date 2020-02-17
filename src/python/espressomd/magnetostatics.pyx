@@ -19,7 +19,6 @@
 include "myconfig.pxi"
 from .utils import requires_experimental_features
 import numpy as np
-from globals cimport temperature
 from .actors cimport Actor
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector

@@ -25,12 +25,16 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist, FIELD_SWIMMING_PARTICLES_EXIST, mpi_bcast_parameter
+from .globals cimport FIELD_SWIMMING_PARTICLES_EXIST
+from .globals cimport max_seen_particle, max_seen_particle_type, time_step, \
+    n_part, n_rigidbonds, swimming_particles_exist
+from .globals cimport mpi_bcast_parameter
 import collections
 import functools
 import types
 from .utils import nesting_level, array_locked, is_valid_type
-from .utils cimport make_array_locked, make_const_span, Vector3i, Vector3d, Vector4d, List, check_type_or_throw_except
+from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
+from .utils cimport Vector3i, Vector3d, Vector4d, List
 from .grid cimport box_geo, folded_position, unfolded_position
 
 

@@ -19,11 +19,10 @@
 from libcpp cimport bool
 include "myconfig.pxi"
 
-from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport get_mi_vector, box_geo
+from .grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -32,7 +31,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
+from .utils cimport make_array_locked, make_Vector3d, Vector3d
 from .lb cimport lb_lbfluid_get_tau
 from .lb cimport lb_lbfluid_get_lattice_switch
 from .lb cimport NONE
@@ -41,24 +40,21 @@ from .cellsystem import CellSystem
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
-
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
-from .utils cimport handle_errors
-from globals cimport max_seen_particle
 from .globals import Globals
+from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
+from .globals cimport max_seen_particle_type, integ_switch, max_oif_objects, sim_time
+from .globals cimport recalc_maximal_cutoff_bonded, recalc_maximal_cutoff_nonbonded, mpi_bcast_parameter
+from .utils cimport handle_errors
 IF VIRTUAL_SITES:
-    from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
+    from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
-
-import sys
-import random  # for true random numbers from os.urandom()
-cimport tuning
 
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
@@ -407,7 +403,7 @@ cdef class System:
     def _is_valid_type(self, current_type):
         return not (isinstance(current_type, int)
                     or current_type < 0
-                    or current_type > globals.max_seen_particle_type)
+                    or current_type > max_seen_particle_type)
 
     def check_valid_type(self, current_type):
         if self._is_valid_type(current_type):

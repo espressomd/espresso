@@ -18,9 +18,8 @@
 #
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
-import espressomd.code_info
-from espressomd.utils cimport handle_errors, check_type_or_throw_except
-cimport globals
+from .utils cimport handle_errors, check_type_or_throw_except
+from . cimport globals
 
 cdef class IntegratorHandle:
     """
