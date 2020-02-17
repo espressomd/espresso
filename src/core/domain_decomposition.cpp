@@ -254,32 +254,16 @@ static bool is_both_sided(int dir) {
  */
 std::vector<GhostCommunication>
 dd_prepare_comm(const boost::mpi::communicator &communicator) {
-  int dir, lr, i, cnt, num;
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
   auto const cart_info = Utils::Mpi::cart_get<3>(communicator);
   auto const node_neighbors = calc_node_neighbors(communicator);
 
-  /* calculate number of communications */
-  num = 0;
-  for (dir = 0; dir < 3; dir++) {
-    for (lr = 0; lr < 2; lr++) {
-      /* No communication for border of non periodic direction */
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + lr] == 0)) {
-        if (cart_info.dims[dir] == 1)
-          num++;
-        else
-          num += 2;
-      }
-    }
-  }
-
   /* We fill in num communication steps. */
-  std::vector<GhostCommunication> comm(num);
+  std::vector<GhostCommunication> comm;
 
-  cnt = 0;
   /* direction loop: x, y, z */
-  for (dir = 0; dir < 3; dir++) {
+  for (int dir = 0; dir < 3; dir++) {
     lc[(dir + 1) % 3] = 1 - done[(dir + 1) % 3];
     lc[(dir + 2) % 3] = 1 - done[(dir + 2) % 3];
     hc[(dir + 1) % 3] = dd.cell_grid[(dir + 1) % 3] + done[(dir + 1) % 3];
@@ -288,59 +272,59 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
     /* here we could in principle build in a one sided ghost
        communication, simply by taking the lr loop only over one
        value */
-    for (lr = 0; lr < 2; lr++) {
+    for (int lr = 0; lr < 2; lr++) {
       Utils::Vector3d shift{};
       /* prepare folding of ghost positions */
       shift[dir] = local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+
+      /* fill send comm cells */
+      lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
+      auto const send_lists = dd_fill_comm_cell_lists(lc, hc);
+
+      /* fill recv comm cells */
+      lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
+      auto const recv_lists = dd_fill_comm_cell_lists(lc, hc);
 
       if (cart_info.dims[dir] == 1) {
         /* just copy cells on a single node */
         if (box_geo.periodic(dir) ||
             (local_geo.boundary()[2 * dir + lr] == 0)) {
 
-          comm[cnt].type = GHOST_LOCL;
-          comm[cnt].send_to = communicator.rank();
-          comm[cnt].recv_from = communicator.rank();
+          GhostCommunication c;
+          c.type = GHOST_LOCL;
+          c.shift = shift;
+          c.send_lists = send_lists;
+          c.recv_lists = recv_lists;
 
-          /* prepare folding of ghost positions */
-          comm[cnt].shift = shift;
-
-          /* fill send comm cells */
-          lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
-          comm[cnt].send_lists = dd_fill_comm_cell_lists(lc, hc);
-
-          /* fill recv comm cells */
-          lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
-          comm[cnt].recv_lists = dd_fill_comm_cell_lists(lc, hc);
-
-          cnt++;
+          comm.emplace_back(std::move(c));
         }
       } else {
         /* i: send/recv loop */
-        for (i = 0; i < 2; i++) {
+        for (int i = 0; i < 2; i++) {
           if (box_geo.periodic(dir) ||
               (local_geo.boundary()[2 * dir + lr] == 0))
             if ((cart_info.coords[dir] + i) % 2 == 0) {
-              comm[cnt].type = GHOST_SEND;
-              comm[cnt].comm = communicator;
-              comm[cnt].send_to = node_neighbors[2 * dir + lr];
-              /* prepare folding of ghost positions */
-              comm[cnt].shift = shift;
 
-              lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
-              comm[cnt].send_lists = dd_fill_comm_cell_lists(lc, hc);
-              cnt++;
+              GhostCommunication c;
+              c.type = GHOST_SEND;
+              c.comm = communicator;
+              c.send_to = node_neighbors[2 * dir + lr];
+              c.shift = shift;
+              c.send_lists = send_lists;
+
+              comm.emplace_back(std::move(c));
             }
           if (box_geo.periodic(dir) ||
               (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((cart_info.coords[dir] + (1 - i)) % 2 == 0) {
-              comm[cnt].type = GHOST_RECV;
-              comm[cnt].comm = communicator;
-              comm[cnt].recv_from = node_neighbors[2 * dir + (1 - lr)];
+              GhostCommunication c;
 
-              lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
-              comm[cnt].recv_lists = dd_fill_comm_cell_lists(lc, hc);
-              cnt++;
+              c.type = GHOST_RECV;
+              c.comm = communicator;
+              c.recv_from = node_neighbors[2 * dir + (1 - lr)];
+              c.recv_lists = recv_lists;
+
+              comm.emplace_back(std::move(c));
             }
         }
       }

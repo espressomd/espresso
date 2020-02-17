@@ -46,35 +46,6 @@
 /** Tag for ghosts communications. */
 #define REQ_GHOST_SEND 100
 
-/**
- * Class that stores marshalled data for ghost communications.
- * To store and retrieve data, use the adapter classes below.
- */
-class CommBuf {
-public:
-  /** Returns a pointer to the non-bond storage.
-   */
-  char *data() { return buf.data(); }
-
-  /** Returns the number of elements in the non-bond storage.
-   */
-  size_t size() { return buf.size(); }
-
-  /** Resizes the underlying storage s.t. the object is capable
-   * of holding "new_size" chars.
-   * @param new_size new size
-   */
-  void resize(size_t new_size) { buf.resize(new_size); }
-
-  /** Returns a reference to the bond storage.
-   */
-  std::vector<int> &bonds() { return bondbuf; }
-
-private:
-  std::vector<char> buf;    //< Buffer for everything but bonds
-  std::vector<int> bondbuf; //< Buffer for bond lists
-};
-
 static size_t calc_transmit_size(unsigned data_parts) {
   size_t size = {};
   if (data_parts & GHOSTTRANS_PROPRTS) {
@@ -276,9 +247,7 @@ static void cell_cell_transfer(const GhostCommunication &ghost_comm,
 void ghost_communicator(const GhostCommunicator *gcr, unsigned int data_parts) {
   static CommBuf send_buffer, recv_buffer;
 
-  for (auto it = gcr->communications().begin();
-       it != gcr->communications().end(); ++it) {
-    GhostCommunication const &ghost_comm = *it;
+  for (auto const &ghost_comm : gcr->communications()) {
     int const comm_type = ghost_comm.type;
 
     if (comm_type == GHOST_LOCL) {

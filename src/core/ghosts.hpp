@@ -132,6 +132,35 @@ enum : unsigned {
 /************************************************************/
 /*@{*/
 
+/**
+ * Class that stores marshalled data for ghost communications.
+ * To store and retrieve data, use the adapter classes below.
+ */
+class CommBuf {
+public:
+  /** Returns a pointer to the non-bond storage.
+   */
+  char *data() { return buf.data(); }
+
+  /** Returns the number of elements in the non-bond storage.
+   */
+  size_t size() { return buf.size(); }
+
+  /** Resizes the underlying storage s.t. the object is capable
+   * of holding "new_size" chars.
+   * @param new_size new size
+   */
+  void resize(size_t new_size) { buf.resize(new_size); }
+
+  /** Returns a reference to the bond storage.
+   */
+  std::vector<int> &bonds() { return bondbuf; }
+
+private:
+  std::vector<char> buf;    //< Buffer for everything but bonds
+  std::vector<int> bondbuf; //< Buffer for bond lists
+};
+
 struct GhostCommunication {
   unsigned type = GHOSTTRANS_NONE;
   boost::mpi::communicator comm;
