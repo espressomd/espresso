@@ -447,6 +447,10 @@ public:
                     m_velocity_adaptor_id);
             v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
           }
+          else {
+        printf("Node %d %d %d\n",node[0],node[1],node[2]);
+        throw std::runtime_error("Access to LB velocity field  failed.");
+      }
         });
     return v;
   };
@@ -464,6 +468,10 @@ public:
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
         force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
+      }
+      else {
+        printf("Node %d %d %d\n",node[0],node[1],node[2]);
+        throw std::runtime_error("Access to LB force to be applied failed.");
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
