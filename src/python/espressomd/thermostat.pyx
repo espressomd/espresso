@@ -18,11 +18,12 @@
 #
 from functools import wraps
 include "myconfig.pxi"
-from .globals cimport(
-    FIELD_BROWNIAN_GAMMA, FIELD_BROWNIAN_GAMMA_ROTATION, FIELD_LANGEVIN_GAMMA,
-    FIELD_LANGEVIN_GAMMA_ROTATION, FIELD_NPTISO_G0, FIELD_NPTISO_GV,
+from .globals cimport FIELD_BROWNIAN_GAMMA, FIELD_LANGEVIN_GAMMA, \
     FIELD_TEMPERATURE, FIELD_THERMO_SWITCH, FIELD_THERMO_VIRTUAL
-)
+IF NPT:
+    from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
+IF ROTATION:
+    from .globals cimport FIELD_LANGEVIN_GAMMA_ROTATION, FIELD_BROWNIAN_GAMMA_ROTATION
 from .globals cimport nptiso
 from .globals cimport mpi_bcast_parameter
 import numpy as np
