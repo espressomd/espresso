@@ -94,3 +94,17 @@ for i in range(10000):
 
 print("reaction 0 has acceptance rate: ", RE.get_acceptance_rate_reaction(0))
 print("reaction 1 has acceptance rate: ", RE.get_acceptance_rate_reaction(1))
+
+
+if args.mode == "reaction_ensemble":
+    # demonstrate setting up of a reaction
+    # 1 B + 7 C <=> 1 D + 3 E + 2 F
+    K_diss2 = 0.1
+    type_B = 3
+    type_C = 4
+    type_D = 5
+    type_E = 6
+    type_F = 7
+    RE.add_reaction(gamma=K_diss2, reactant_types=[type_B, type_C], reactant_coefficients=[1, 7],
+                product_types=[type_D, type_E, type_F], product_coefficients=[1, 3, 2],
+                default_charges={type_B: 0, type_C: 0, type_D: 0, type_E: 0, type_F: 0})
