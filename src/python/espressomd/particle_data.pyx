@@ -56,7 +56,7 @@ cdef class ParticleHandle:
         self._id = _id
 
     cdef int update_particle_data(self) except -1:
-        self.particle_data = get_particle_data_ptr(get_particle_data(self._id))
+        self.particle_data = &get_particle_data(self._id)
 
     def __str__(self):
         res = collections.OrderedDict()
