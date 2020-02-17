@@ -20,7 +20,6 @@
 
 include "myconfig.pxi"
 from espressomd.system cimport *
-from espressomd.utils cimport *
 
 IF DIPOLES and DP3M:
 

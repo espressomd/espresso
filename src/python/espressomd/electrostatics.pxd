@@ -21,8 +21,8 @@
 include "myconfig.pxi"
 from espressomd.system cimport *
 cimport numpy as np
-from espressomd.utils cimport *
 from espressomd.utils import is_valid_type, to_str
+from espressomd.utils cimport handle_errors
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:

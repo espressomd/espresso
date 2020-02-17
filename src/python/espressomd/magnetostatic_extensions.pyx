@@ -20,6 +20,7 @@
 from . cimport utils
 include "myconfig.pxi"
 from .actors import Actor
+from espressomd.utils cimport handle_errors, check_range_or_except, check_type_or_throw_except
 
 IF DIPOLES and DP3M:
     class MagnetostaticExtension(Actor):

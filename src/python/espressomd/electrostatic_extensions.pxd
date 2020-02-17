@@ -20,9 +20,9 @@
 
 include "myconfig.pxi"
 from espressomd.system cimport *
-from espressomd.utils cimport *
+from espressomd.utils cimport check_range_or_except, check_type_or_throw_except
 from espressomd.electrostatics cimport *
-from libcpp cimport vector
+from libcpp.vector cimport vector
 from utils cimport Vector3d
 
 IF ELECTROSTATICS and P3M:

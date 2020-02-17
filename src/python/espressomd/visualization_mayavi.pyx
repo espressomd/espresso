@@ -26,6 +26,7 @@ from .system cimport *
 from .interactions import NonBondedInteractions
 from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
 from .grid cimport get_mi_vector, box_geo
+from .utils cimport make_array_locked
 
 include "myconfig.pxi"
 

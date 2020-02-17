@@ -19,9 +19,7 @@
 # For C-extern Analysis
 include "myconfig.pxi"
 from . cimport analyze
-from . cimport utils
 from . cimport particle_data
-from . import utils
 from . import code_info
 from . import particle_data
 from libcpp.vector cimport vector  # import std::vector as vector
@@ -31,11 +29,13 @@ import numpy as np
 cimport numpy as np
 from globals cimport n_configs
 
-from .utils import array_locked
-
 from collections import OrderedDict
 from .system import System
-from espressomd.utils import is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport handle_errors, check_type_or_throw_except, \
+    create_nparray_from_double_array, \
+    create_nparray_from_int_list, \
+    create_int_list_from_python_object
 
 
 class Analysis:

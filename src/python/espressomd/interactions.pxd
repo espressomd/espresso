@@ -20,6 +20,7 @@
 # Handling of interactions
 
 from libcpp.string cimport string
+from libcpp.vector cimport vector
 from libcpp cimport bool as cbool
 from libc cimport stdint
 
@@ -29,8 +30,6 @@ cimport numpy as np
 # force include of config.hpp
 cdef extern from "config.hpp":
     pass
-
-from espressomd.utils cimport *
 
 cdef extern from "TabulatedPotential.hpp":
     struct TabulatedPotential:
