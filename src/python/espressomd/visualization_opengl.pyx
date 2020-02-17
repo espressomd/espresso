@@ -17,7 +17,7 @@
 import OpenGL.GLUT
 import OpenGL.GLU
 import OpenGL.GL
-from math import *
+import math
 import numpy as np
 import ctypes
 import os
@@ -2021,7 +2021,7 @@ def rotation_helper(d):
     # the rotation axis is the cross product between z and d
     vz = np.cross([0.0, 0.0, 1.0], d)
     # get the angle using a dot product
-    angle = 180.0 / np.pi * acos(d[2] / np.linalg.norm(d))
+    angle = 180.0 / np.pi * math.acos(d[2] / np.linalg.norm(d))
 
     return angle, vz[0], vz[1]
 
@@ -2218,7 +2218,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     if v == 0:
         ax = 57.2957795
     else:
-        ax = 57.2957795 * acos(d[2] / v)
+        ax = 57.2957795 * math.acos(d[2] / v)
 
     if d[2] < 0.0:
         ax = -ax
@@ -2575,8 +2575,8 @@ class Camera:
         return m
 
     def rotate_vector(self, vec, ang, axe):
-        sinhalf = sin(ang / 2)
-        coshalf = cos(ang / 2)
+        sinhalf = math.sin(ang / 2)
+        coshalf = math.cos(ang / 2)
 
         rx = axe[0] * sinhalf
         ry = axe[1] * sinhalf
