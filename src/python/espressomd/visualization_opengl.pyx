@@ -1220,9 +1220,9 @@ class openGLLive:
                         for imz in range(-self.specs['periodic_images'][2],
                                          self.specs['periodic_images'][2] + 1):
                             if imx != 0 or imy != 0 or imz != 0:
-                                im = np.array([imx, imy, imz])
-                                draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], self.particles['pos'][b[1]] +
-                                              im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
+                                draw_cylinder(self.particles['pos'][b[0]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
+                                              self.particles['pos'][b[1]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
+                                              radius, col, mat, self.specs['quality_bonds'])
             else:
                 # SPLIT BOND
                 l = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
@@ -1256,11 +1256,10 @@ class openGLLive:
                             for imz in range(-self.specs['periodic_images'][2],
                                              self.specs['periodic_images'][2] + 1):
                                 if imx != 0 or imy != 0 or imz != 0:
-                                    im = np.array([imx, imy, imz])
-                                    draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], s0 + im *
-                                                  self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
-                                    draw_cylinder(self.particles['pos'][b[1]] + im * self.imPos[dim], s1 + im *
-                                                  self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
+                                    draw_cylinder(self.particles['pos'][b[0]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
+                                                  s0 + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2], radius, col, mat, self.specs['quality_bonds'])
+                                    draw_cylinder(self.particles['pos'][b[1]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
+                                                  s1 + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2], radius, col, mat, self.specs['quality_bonds'])
 
     def _redraw_sphere(self, pos, radius, quality):
         OpenGL.GL.glPushMatrix()
