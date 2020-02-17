@@ -28,6 +28,7 @@ from espressomd.interactions cimport *
 import numpy as np
 cimport numpy as np
 from globals cimport n_configs
+from .globals import Globals
 
 from collections import OrderedDict
 from .system import System
@@ -845,7 +846,7 @@ class Analysis:
                 n_conf = n_configs
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         cdef vector[double] rdf
         rdf.resize(r_bins)
@@ -920,7 +921,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
         assert not log_flag or r_min != 0.0, "r_min cannot include zero"
