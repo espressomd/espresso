@@ -27,8 +27,8 @@ TIME_STEP = 0.01
 AGRID = .5 
 GRID_SIZE = 6
 KVISC = 4
-DENS = 2.1 
-F = 0.05
+DENS = 2.3
+F = 0.01
 GAMMA = 5
 
 
@@ -64,30 +64,30 @@ class Momentum(object):
         np.testing.assert_allclose(
             self.system.analysis.linear_momentum(), [0., 0., 0.])
 
-        applied_force = self.system.volume() * np.array(
+        ext_fluid_force = self.system.volume() * np.array(
             LB_PARAMS['ext_force_density'])
 
         p = self.system.part.add(
-            pos=(0, 0, 0), ext_force=-applied_force, v=[.1, .2, .3])
+            pos=self.system.box_l/2, ext_force=-ext_fluid_force, v=[0.1,.2,.3])
         initial_momentum = np.array(self.system.analysis.linear_momentum())
         np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
-
-        f_half_compensation = np.array(
-            self.lbf.ext_force_density *
-            TIME_STEP *
-            self.system.volume() /
-            2)
+        boundary_warning = False
         while True: 
-            self.system.integrator.run(1000)
+            self.system.integrator.run(1)
+            if not boundary_warning and (np.any(p.pos % self.system.box_l <.5 *AGRID)):
+                print("Close to boundary",p.pos)
+                boundary_warning = True
+              
             measured_momentum = self.system.analysis.linear_momentum()
 
-            stokes_force_compensation = p.f * TIME_STEP / 2 * AGRID**3 
-            print(measured_momentum + f_half_compensation)
+            coupling_force = -(p.f - p.ext_force)
+            compensation = -TIME_STEP/2 * coupling_force
+            print(measured_momentum + compensation)
             # fluid force is opposed to particle force
 
-            np.testing.assert_allclose(measured_momentum + f_half_compensation + stokes_force_compensation, 
-                                       initial_momentum, rtol=0.05)
-            if np.linalg.norm(stokes_force_compensation) < 1E-6 \
+            np.testing.assert_allclose(measured_momentum + compensation, 
+                                       initial_momentum, atol=0.02)
+            if np.linalg.norm(coupling_force) < 1E-6 \
                and np.all(np.abs(p.pos) > 1.1 * self.system.box_l):
                 break
 
