@@ -231,7 +231,7 @@ std::vector<ParticleList *> dd_fill_comm_cell_lists(const int *lc,
  */
 std::vector<GhostCommunication>
 dd_prepare_comm(const boost::mpi::communicator &communicator) {
-  int dir, lr, i, cnt, num, n_comm_cells[3];
+  int dir, lr, i, cnt, num;
   int lc[3], hc[3], done[3] = {0, 0, 0};
 
   auto const cart_info = Utils::Mpi::cart_get<3>(communicator);
@@ -253,11 +253,6 @@ dd_prepare_comm(const boost::mpi::communicator &communicator) {
 
   /* We fill in num communication steps. */
   std::vector<GhostCommunication> comm(num, GhostCommunication(communicator));
-
-  /* number of cells to communicate in a direction */
-  n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];
-  n_comm_cells[1] = dd.cell_grid[2] * dd.ghost_cell_grid[0];
-  n_comm_cells[2] = dd.ghost_cell_grid[0] * dd.ghost_cell_grid[1];
 
   cnt = 0;
   /* direction loop: x, y, z */
