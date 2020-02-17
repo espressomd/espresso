@@ -60,7 +60,8 @@ void VirtualSitesRelative::update(bool recalc_positions) const {
 
 void VirtualSitesRelative::update_virtual_particle_quaternion(
     Particle &p) const {
-  const Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
+  const Particle *p_real =
+      get_local_particle_data(p.p.vs_relative.to_particle_id);
   if (!p_real) {
     throw std::runtime_error(
         "virtual_sites_relative.cpp - update_mol_pos_particle(): No real "
@@ -73,7 +74,8 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
   // First obtain the real particle responsible for this virtual particle:
   // Find the 1st real particle in the topology for the virtual particle's
   // mol_id
-  const Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
+  const Particle *p_real =
+      get_local_particle_data(p.p.vs_relative.to_particle_id);
   // Check, if a real particle was found
   if (!p_real) {
     runtimeErrorMsg()
@@ -106,7 +108,7 @@ void VirtualSitesRelative::update_pos(Particle &p) const {
 
 void VirtualSitesRelative::update_vel(Particle &p) const {
   // First obtain the real particle responsible for this virtual particle:
-  Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
+  Particle *p_real = get_local_particle_data(p.p.vs_relative.to_particle_id);
   // Check, if a real particle was found
   if (!p_real) {
     runtimeErrorMsg()
@@ -137,7 +139,8 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
     // We only care about virtual particles
     if (p.p.is_virtual) {
       // First obtain the real particle responsible for this virtual particle:
-      Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
+      Particle *p_real =
+          get_local_particle_data(p.p.vs_relative.to_particle_id);
 
       // The rules for transferring forces are:
       // F_realParticle +=F_virtualParticle
@@ -166,7 +169,8 @@ void VirtualSitesRelative::pressure_and_stress_tensor_contribution(
     update_pos(p);
 
     // First obtain the real particle responsible for this virtual particle:
-    const Particle *p_real = local_particles[p.p.vs_relative.to_particle_id];
+    const Particle *p_real =
+        get_local_particle_data(p.p.vs_relative.to_particle_id);
 
     // Get distance vector pointing from real to virtual particle, respecting
     // periodic boundary i

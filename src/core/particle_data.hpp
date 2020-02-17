@@ -87,10 +87,24 @@ extern int n_part;
 /** flag that active swimming particles exist */
 extern bool swimming_particles_exist;
 
-/** id->particle mapping on all nodes. This is used to find partners
- *  of bonded interactions.
- */
 extern std::vector<Particle *> local_particles;
+
+/**
+ * @brief Find local particles by id.
+ *
+ * If a particles is present on this mpi rank, either
+ * as a local particles or as a ghost, a pointer to it
+ * is returned, otherwise null.
+ *
+ * @param id of the particle to look up.
+ *
+ * @return Pointer to particle or nullptr.
+ **/
+inline Particle *get_local_particle_data(int id) { return local_particles[id]; }
+
+inline void set_local_particle_data(int id, Particle *p) {
+  local_particles[id] = p;
+}
 
 /************************************************
  * Functions

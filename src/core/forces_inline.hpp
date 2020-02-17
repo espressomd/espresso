@@ -412,7 +412,7 @@ inline void add_bonded_force(Particle *const p1) {
     bool bond_broken = true;
 
     if (n_partners) {
-      p2 = local_particles[p1->bl.e[i++]];
+      p2 = get_local_particle_data(p1->bl.e[i++]);
       if (!p2) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
         return;
@@ -420,7 +420,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 3 eventually */
       if (n_partners >= 2) {
-        p3 = local_particles[p1->bl.e[i++]];
+        p3 = get_local_particle_data(p1->bl.e[i++]);
         if (!p3) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "
@@ -432,7 +432,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 4 eventually */
       if (n_partners >= 3) {
-        p4 = local_particles[p1->bl.e[i++]];
+        p4 = get_local_particle_data(p1->bl.e[i++]);
         if (!p4) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "

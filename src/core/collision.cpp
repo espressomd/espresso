@@ -66,7 +66,7 @@ Collision_parameters collision_params;
 
 namespace {
 Particle &get_part(int id) {
-  return assert(local_particles[id]), *local_particles[id];
+  return assert(get_local_particle_data(id)), *local_particles[id];
 }
 } // namespace
 
@@ -382,7 +382,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     // Create bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
     // Only add bond if vs was created on this node
-    if (local_particles[current_vs_pid - 1])
+    if (get_local_particle_data(current_vs_pid - 1))
       local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
     break;
   }
@@ -390,9 +390,9 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     // Create 1st bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
     // Only add bond if vs was created on this node
-    if (local_particles[current_vs_pid - 1])
+    if (get_local_particle_data(current_vs_pid - 1))
       local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
-    if (local_particles[current_vs_pid - 2])
+    if (get_local_particle_data(current_vs_pid - 2))
       local_add_particle_bond(get_part(current_vs_pid - 2), bondG);
     break;
   }
@@ -471,9 +471,9 @@ void three_particle_binding_domain_decomposition(
   for (auto &c : gathered_queue) {
     // If we have both particles, at least as ghosts, Get the corresponding cell
     // indices
-    if ((local_particles[c.pp1]) && (local_particles[c.pp2])) {
-      Particle &p1 = *local_particles[c.pp1];
-      Particle &p2 = *local_particles[c.pp2];
+    if (get_local_particle_data(c.pp1) && get_local_particle_data(c.pp2)) {
+      Particle &p1 = *get_local_particle_data(c.pp1);
+      Particle &p2 = *get_local_particle_data(c.pp2);
       auto cell1 = find_current_cell(p1);
       auto cell2 = find_current_cell(p2);
 
@@ -504,7 +504,7 @@ void handle_collisions() {
   if (bind_centers()) {
     for (auto &c : local_collision_queue) {
       // put the bond to the non-ghost particle; at least one partner always is
-      if (local_particles[c.pp1]->l.ghost) {
+      if (get_local_particle_data(c.pp1)->l.ghost) {
         std::swap(c.pp1, c.pp2);
       }
       int bondG[2];
@@ -537,8 +537,8 @@ void handle_collisions() {
     for (auto &c : gathered_queue) {
 
       // Get particle pointers
-      Particle *p1 = local_particles[c.pp1];
-      Particle *p2 = local_particles[c.pp2];
+      Particle *p1 = get_local_particle_data(c.pp1);
+      Particle *p2 = get_local_particle_data(c.pp2);
 
       // Only nodes take part in particle creation and binding
       // that see both particles
@@ -587,8 +587,8 @@ void handle_collisions() {
                                               p->identity());
               // Particle storage locations may have changed due to
               // added particle
-              p1 = local_particles[c.pp1];
-              p2 = local_particles[c.pp2];
+              p1 = get_local_particle_data(c.pp1);
+              p2 = get_local_particle_data(c.pp2);
             } else {
               added_particle(current_vs_pid);
             }
@@ -651,8 +651,8 @@ void handle_collisions() {
                                             attach_vs_to.identity());
             // Particle storage locations may have changed due to
             // added particle
-            p1 = local_particles[c.pp1];
-            p2 = local_particles[c.pp2];
+            p1 = get_local_particle_data(c.pp1);
+            p2 = get_local_particle_data(c.pp2);
             current_vs_pid++;
           } else { // Just update the books
             added_particle(current_vs_pid);

@@ -212,8 +212,8 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (local_particles[part.p.identity] == nullptr) {
-            local_particles[part.p.identity] = &part;
+          if (get_local_particle_data(part.p.identity) == nullptr) {
+            set_local_particle_data(part.p.identity, &part);
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
