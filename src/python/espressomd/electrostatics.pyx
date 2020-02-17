@@ -18,16 +18,14 @@
 #
 from cython.operator cimport dereference
 include "myconfig.pxi"
-from espressomd cimport actors
-from . import actors
-cimport grid
-cimport globals
+from .actors cimport Actor
+from .grid cimport box_geo
 import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from .utils import is_valid_type, to_str
 from . cimport checks
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -52,7 +50,7 @@ IF ELECTROSTATICS == 1:
                     you are doing.
                     """)
 
-    cdef class ElectrostaticInteraction(actors.Actor):
+    cdef class ElectrostaticInteraction(Actor):
         def _tune(self):
             raise Exception(
                 "Subclasses of ElectrostaticInteraction must define the "
@@ -639,7 +637,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                grid.box_geo.length()[2], coulomb.prefactor,
+                box_geo.length()[2], coulomb.prefactor,
                 self._params["maxPWerror"], self._params["far_switch_radius"],
                 self._params["bessel_cutoff"])
 
@@ -682,7 +680,7 @@ IF ELECTROSTATICS:
 
             # Explicit constructor needed due to multiple inheritance
             def __init__(self, *args, **kwargs):
-                actors.Actor.__init__(self, *args, **kwargs)
+                Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
                 check_neutrality(self._params)

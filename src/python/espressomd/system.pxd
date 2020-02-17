@@ -17,17 +17,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 include "myconfig.pxi"
-import particle_data
-from libcpp.vector cimport vector
 from libcpp cimport bool
 
 cdef extern from "grid.hpp":
     cdef void rescale_boxl(int dir, double d_new)
-
-
-from libcpp.string cimport string  # import std::string as string
-from libcpp.vector cimport vector  # import std::vector as vector
-ctypedef vector[string] string_vec
 
 cdef extern from "rotate_system.hpp":
     void rotate_system(double phi, double theta, double alpha)

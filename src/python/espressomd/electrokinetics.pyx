@@ -26,9 +26,9 @@ from . import utils
 import os
 import tempfile
 import shutil
-from .utils cimport Vector6d
+from .utils import is_valid_type
+from .utils cimport Vector3i, Vector6d, handle_errors
 import numpy as np
-from espressomd.utils import is_valid_type
 
 IF ELECTROKINETICS:
     cdef class Electrokinetics(HydrodynamicInteraction):

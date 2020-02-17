@@ -14,10 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from espressomd.utils import to_char_pointer, to_str, handle_errors
 import numpy as np
-from espressomd.utils import is_valid_type, array_locked
-from espressomd.utils cimport Vector3d, make_array_locked
+from .utils import to_char_pointer, to_str
+from .utils cimport Vector3d, make_array_locked, handle_errors
 
 cdef class PObjectId:
     """Python interface to a core ObjectId object."""

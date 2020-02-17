@@ -16,11 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Handling of electrostatics
 
 include "myconfig.pxi"
-from espressomd.system cimport *
-from espressomd.utils cimport *
 
 IF DIPOLES and DP3M:
 
