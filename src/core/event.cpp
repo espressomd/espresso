@@ -439,7 +439,7 @@ unsigned global_ghost_flags() {
   }
 
 #ifdef COLLISION_DETECTION
-  if (collision_params.mode) {
+  if (collision_params.active) {
     data_parts |= GHOSTTRANS_BONDS;
   }
 #endif

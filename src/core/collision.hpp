@@ -48,36 +48,15 @@
 class Collision_parameters {
 public:
   Collision_parameters()
-      : mode(COLLISION_MODE_OFF), distance(0.), distance2(0.), bond_centers(-1),
-        bond_vs(-1), bond_three_particles(-1){};
+      : active(0), distance(0.), distance_cutoff(0.), rate(0.),
+        bond_type(-1), vs_bond_type(-1), bond_three_particles(-1){};
 
   /// collision handling mode, a combination of constants COLLISION_MODE_*
-  int mode;
-  /// distance at which particles are bound
-//  double distance;
-  // Square of distance at which particle are bound
-  double distance2;
-
-  /// bond type used between centers of colliding particles
-  int bond_centers;
-  /// bond type used between virtual sites
-  int bond_vs;
-  /// particle type for virtual sites created on collision
-//  int vs_particle_type;
+  int active;
 
   /** Raise exception on collision */
   bool exception_on_collision;
 
-  /// For mode "glue to surface": The distance from the particle which is to be
-  /// glued to the new virtual site
-  double dist_glued_part_to_vs;
-  /// For mode "glue to surface": The particle type being glued
-  int part_type_to_be_glued;
-  /// For mode "glue to surface": The particle type to which the virtual site is
-  /// attached
-  int part_type_to_attach_vs_to;
-  /// Particle type to which the newly glued particle is converted
-  int part_type_after_glueing;
   /// First bond type (for zero degrees) used for the three-particle bond
   /// (angle potential)
   int bond_three_particles;
@@ -85,12 +64,6 @@ public:
   /// different angle bonds with different equilibrium angles
   /// Are expected to have ids immediately following to bond_three_particles
   int three_particle_angle_resolution;
-  /** Placement of virtual sites for MODE_VS.
-   *  0=on same particle as related to,
-   *  1=on collision partner,
-   *  0.5=in the middle between
-   */
-  double vs_placement;
 
   double distance;
 
@@ -130,14 +103,6 @@ bool validate_collision_parameters();
  */
 void queue_collision(std::vector<int> particles);
 
-/** @brief Check additional criteria for the glue_to_surface collision mode */
-inline bool glue_to_surface_criterion(Particle const &p1, Particle const &p2) {
-  return (((p1.p.type == collision_params.part_type_to_be_glued) &&
-           (p2.p.type == collision_params.part_type_to_attach_vs_to)) ||
-          ((p2.p.type == collision_params.part_type_to_be_glued) &&
-           (p1.p.type == collision_params.part_type_to_attach_vs_to)));
-}
-
 inline bool particle_type_criterion(Particle const &p1, Particle const &p2) {
   int count_multiples = 1;
   if(p1.p.type == p2.p.type)
@@ -170,10 +135,10 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     return;
 
   // Check, if there's already a bond between the particles
-  if (pair_bond_exists_on(p1, p2, collision_params.bond_centers))
+  if (pair_bond_exists_on(p1, p2, collision_params.bond_type))
     return;
 
-  if (pair_bond_exists_on(p2, p1, collision_params.bond_centers))
+  if (pair_bond_exists_on(p2, p1, collision_params.bond_type))
     return;
 
   if(!collision_detection_criterion(p1, p2))

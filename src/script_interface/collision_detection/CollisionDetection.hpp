@@ -54,8 +54,8 @@ public:
          // collision_params.part_type_to_attach_vs_to},
          //{"part_type_after_glueing",
          // collision_params.part_type_after_glueing}});
+         {"active", collision_params.active},
          {"distance", collision_params.distance},
-         {"distance_cutoff", collision_params.distance_cutoff},
          {"rate", collision_params.rate},
          {"particle_type", collision_params.particle_type},
          {"particle_type_after_collision", collision_params.particle_type_after_collision},

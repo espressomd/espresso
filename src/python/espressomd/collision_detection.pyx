@@ -135,6 +135,8 @@ class CollisionDetection(ScriptInterfaceHelper):
             if name in kwargs:
                 if isinstance(kwargs[name], BondedInteraction):
                     kwargs[name] = kwargs[name]._bond_id
+        if not 'active' in kwargs and len(kwargs) > 0:
+          kwargs['active'] = 1
         super().set_params(**kwargs)
         self.validate()
         handle_errors("Validation of collision detection failed")

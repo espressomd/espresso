@@ -70,175 +70,110 @@ Particle &get_part(int id) {
 }
 } // namespace
 
-/** @brief Return true if a bond between the centers of the colliding particles
- * needs to be placed. At this point, all modes need this */
-inline bool bind_centers() {
-  // Note that the glue to surface mode adds bonds between the centers
-  // but does so later in the process. This is needed to guarantee that
-  // a particle can only be glued once, even if queued twice in a single
-  // time step
-  return collision_params.mode != COLLISION_MODE_OFF &&
-         collision_params.mode != COLLISION_MODE_GLUE_TO_SURF;
-}
 
 bool validate_collision_parameters() {
-  // If mode is OFF, no further checks
-  return true;/*
-  if (collision_params.mode == COLLISION_MODE_OFF) {
+  // If collision detection is deactivated, no further checks
+  if (!collision_params.active) {
     return true;
   }
+
   // Validate distance
-  if (collision_params.mode != COLLISION_MODE_OFF) {
-    if (collision_params.distance <= 0.) {
-      runtimeErrorMsg() << "collision_detection distance must be >0";
-      return false;
-    }
+  if (collision_params.distance <= 0.) {
+    runtimeErrorMsg() << "collision_detection distance must be > 0.";
+    return false;
+  }
 
-    // Cache square of cutoff
-    collision_params.distance2 = Utils::sqr(collision_params.distance);
+  // Cache square of cutoff
+  collision_params.distance_cutoff = Utils::sqr(collision_params.distance);
 
-    if (collision_params.distance > min_global_cut) {
-      runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
-                           "must be larger or equal the collision detection "
-                           "distance.";
-    }
+  if (collision_params.distance > min_global_cut) {
+    runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
+                         "must be larger or equal the collision detection "
+                         "distance.";
+    return false;
+  }
+
+  if (collision_params.rate < 0.) {
+    runtimeErrorMsg() << "The rate at which a collision will form a bond needs "
+                         "to be lager than 0.";
+    return false;
+  }
+
+  if (collision_params.particle_type.size() <= 1) {
+    runtimeErrorMsg() << "At least two, not necessary different, particle types "
+                         "are needed fot the collision detection.";
+    return false;
+  }
+
+  if (collision_params.particle_type.size() < 
+      collision_params.particle_type_after_collision.size()) {
+    runtimeErrorMsg() << "The size of the vs_particle_type_after_collision array "
+                         "needs to be equal or less than the size of the "
+                         "particle_type array.";
+    return false;
   }
 
 #ifndef VIRTUAL_SITES_RELATIVE
-  // The collision modes involving virtual sites also require the creation of a
-  // bond between the colliding
-  // If we don't have virtual sites, virtual site binding isn't possible.
-  if ((collision_params.mode & COLLISION_MODE_VS) ||
-      (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF)) {
-    runtimeErrorMsg() << "Virtual sites based collision modes require "
+  // Check if VIRTUAL_SITES is needed
+  if (!collision_params.vs_particle_type.empty()) {
+    runtimeErrorMsg() << "Virtual sites based collisions require "
                          "the VIRTUAL_SITES feature";
     return false;
   }
 #endif
 
-// Check vs placement parameter
-#ifdef VIRTUAL_SITES
-  if (collision_params.mode & COLLISION_MODE_VS) {
-    if ((collision_params.vs_placement < 0) ||
-        (collision_params.vs_placement > 1)) {
-      runtimeErrorMsg() << "The collision detection vs_placement parameter "
+  // Check vs parameters
+  if (collision_params.particle_type.size() < 
+      collision_params.vs_particle_type.size()) {
+    runtimeErrorMsg() << "The size of the vs_particle_type array needs to be "
+                         "equal or less than the size of the particle_type array.";
+    return false;
+  }
+
+  if (collision_params.vs_particle_type.size() != 
+      collision_params.distance_vs_particle.size()) {
+    runtimeErrorMsg() << "Every virtual site created needs a distance to "
+                         "its real particle specified (vs_particle_type array "
+                         "does not match distance_vs_particle array).";
+    return false;
+  }
+
+  for (auto d: collision_params.distance_vs_particle) {
+    if(d < 0.0 or d > 1.0){
+      runtimeErrorMsg() << "The distance of the vitual sites amd the particle "
                            "needs to be between 0 and 1.";
       return false;
     }
   }
-#endif
 
-  // Check if bonded ia exist
-  if ((collision_params.mode & COLLISION_MODE_BOND) &&
-      (collision_params.bond_centers >= bonded_ia_params.size())) {
+  if (collision_params.bond_type < 0) {
+    runtimeErrorMsg() << "The collision bond type needs to be defined.";
+    return false;
+  }
+
+  if (collision_params.bond_type >= bonded_ia_params.size()) {
     runtimeErrorMsg() << "The bond type to be used for binding particle "
-                         "centers does not exist";
+                         "centers does not exist.";
     return false;
   }
 
-  if ((collision_params.mode & COLLISION_MODE_VS) &&
-      (collision_params.bond_vs >= bonded_ia_params.size())) {
-    runtimeErrorMsg()
-        << "The bond type to be used for binding virtual sites does not exist";
+  if (!collision_params.vs_particle_type.size() >= 1) {
+    if (collision_params.vs_bond_type < 0) {
+      runtimeErrorMsg() << "The collision bond type of the virtual sites needs "
+                           "to be defined when creating virtual sites.";
+      return false;
+    }
+    if (collision_params.vs_bond_type >= bonded_ia_params.size()) {
+    runtimeErrorMsg() << "The bond type to be used for binding the virtual"
+                         "particles does not exist.";
     return false;
-  }
-
-  if ((collision_params.mode & COLLISION_MODE_BOND) &&
-      collision_params.bond_centers == -1) {
-    runtimeErrorMsg() << "The bond_centers parameter is unknown. Did you add "
-                         "the interaction using system.bonded_inter.add?";
-    return false;
-  }
-
-  // If the bond type to bind particle centers is not a pair bond...
-  // Check that the bonds have the right number of partners
-  if ((collision_params.mode & COLLISION_MODE_BOND) &&
-      (bonded_ia_params[collision_params.bond_centers].num != 1)) {
-    runtimeErrorMsg() << "The bond type to be used for binding particle "
-                         "centers needs to be a pair bond";
-    return false;
-  }
-
-  // The bond between the virtual sites can be pair or triple
-  if ((collision_params.mode & COLLISION_MODE_VS) &&
-      !(bonded_ia_params[collision_params.bond_vs].num == 1 ||
-        bonded_ia_params[collision_params.bond_vs].num == 2)) {
-    runtimeErrorMsg() << "The bond type to be used for binding virtual sites "
-                         "needs to be a pair or three-particle bond";
-    return false;
-  }
-
-  if (collision_params.mode & COLLISION_MODE_BIND_THREE_PARTICLES) {
-    if (collision_params.bond_three_particles +
-            collision_params.three_particle_angle_resolution >
-        bonded_ia_params.size()) {
-      runtimeErrorMsg()
-          << "Insufficient bonds defined for three particle binding.";
-      return false;
     }
-
-    for (int i = collision_params.bond_three_particles;
-         i < collision_params.bond_three_particles +
-                 collision_params.three_particle_angle_resolution;
-         i++) {
-      if (bonded_ia_params[i].num != 2) {
-        runtimeErrorMsg()
-            << "The bonds for three particle binding need to be angle bonds.";
-        return false;
-      }
-    }
-  }
-
-  // Create particle types
-
-  if (collision_params.mode & COLLISION_MODE_VS) {
-    if (collision_params.vs_particle_type < 0) {
-      runtimeErrorMsg() << "Collision detection particle type for virtual "
-                           "sites needs to be >=0";
-      return false;
-    }
-    if (this_node == 0)
-      make_particle_type_exist(collision_params.vs_particle_type);
-  }
-
-  if (collision_params.mode & COLLISION_MODE_GLUE_TO_SURF) {
-    if (collision_params.vs_particle_type < 0) {
-      runtimeErrorMsg() << "Collision detection particle type for virtual "
-                           "sites needs to be >=0";
-      return false;
-    }
-    if (this_node == 0)
-      make_particle_type_exist(collision_params.vs_particle_type);
-
-    if (collision_params.part_type_to_be_glued < 0) {
-      runtimeErrorMsg()
-          << "Collision detection particle type to be glued needs to be >=0";
-      return false;
-    }
-    if (this_node == 0)
-      make_particle_type_exist(collision_params.part_type_to_be_glued);
-
-    if (collision_params.part_type_to_attach_vs_to < 0) {
-      runtimeErrorMsg() << "Collision detection particle type to attach the "
-                           "virtual site to  needs to be >=0";
-      return false;
-    }
-    if (this_node == 0)
-      make_particle_type_exist(collision_params.part_type_to_attach_vs_to);
-
-    if (collision_params.part_type_after_glueing < 0) {
-      runtimeErrorMsg()
-          << "Collision detection particle type after gluing needs to be >=0";
-      return false;
-    }
-    if (this_node == 0)
-      make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
   recalc_forces = true;
   rebuild_verletlist = true;
 
-  return true;*/
+  return true;
 }
 
 void prepare_local_collision_queue() { local_collision_queue.clear(); }
@@ -257,34 +192,6 @@ void queue_collision(const std::vector<int> particles) {
   c.pp = particles;
   c.idx = indices;
   local_collision_queue.push_back(c);
-}
-
-/** @brief Calculate position of vs for GLUE_TO_SURFACE mode
- *    Returns id of particle to bind vs to */
-const Particle &glue_to_surface_calc_vs_pos(const Particle &p1,
-                                            const Particle &p2,
-                                            Utils::Vector3d &pos) {
-  double c;
-  auto const vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
-  const double dist_betw_part = vec21.norm();
-
-  // Find out, which is the particle to be glued.
-  if ((p1.p.type == collision_params.part_type_to_be_glued) &&
-      (p2.p.type == collision_params.part_type_to_attach_vs_to)) {
-    c = 1 - collision_params.dist_glued_part_to_vs / dist_betw_part;
-  } else if ((p2.p.type == collision_params.part_type_to_be_glued) &&
-             (p1.p.type == collision_params.part_type_to_attach_vs_to)) {
-    c = collision_params.dist_glued_part_to_vs / dist_betw_part;
-  } else {
-    throw std::runtime_error("This should never be thrown. Bug.");
-  }
-  for (int i = 0; i < 3; i++) {
-    pos[i] = p2.r.p[i] + vec21[i] * c;
-  }
-  if (p1.p.type == collision_params.part_type_to_attach_vs_to)
-    return p1;
-
-  return p2;
 }
 
 void bind_at_point_of_collision_calc_vs_pos(std::vector<Particle*> p,
@@ -412,20 +319,6 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid/*,
   }*/
   }
 }
-
-/*void glue_to_surface_bind_part_to_vs(const Particle *const p1,
-                                     const Particle *const p2,
-                                     const int vs_pid_plus_one,
-                                     const collision_struct &c) {
-  // Create bond between the virtual particles
-  const int bondG[] = {collision_params.bond_vs, vs_pid_plus_one - 1};
-
-  if (p1->p.type == collision_params.part_type_after_glueing) {
-    local_add_particle_bond(get_part(p1->p.identity), bondG);
-  } else {
-    local_add_particle_bond(get_part(p2->p.identity), bondG);
-  }
-}*/
 
 #endif
 
@@ -558,10 +451,6 @@ void handle_collisions() {
         // Get particle pointers
         std::vector<Particle *> particles = {local_particles[c.pp[0]], local_particles[c.pp[1]]};
 
-
-        // Only nodes take part in particle creation and binding
-        // that see both particles
-                                                                                  
         // If we cannot access both particles, both are ghosts,
         // ore one is ghost and one is not accessible
         // we only increase the counter for the ext id to use based on the
@@ -655,13 +544,13 @@ void handle_collisions() {
     }
   }    // are we in one of the vs_based methods
 #endif // defined VIRTUAL_SITES_RELATIVE
-
+  /* TODO
   // three-particle-binding part
   if (collision_params.mode & (COLLISION_MODE_BIND_THREE_PARTICLES)) {
     auto gathered_queue = gather_global_collision_queue();
     three_particle_binding_domain_decomposition(gathered_queue);
   } // if TPB
-
+  */
   local_collision_queue.clear();
 }
 
