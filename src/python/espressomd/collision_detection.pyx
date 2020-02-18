@@ -15,7 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from .script_interface import ScriptInterfaceHelper, script_interface_register
-from .utils import handle_errors, to_str
+from .utils import to_str
+from .utils cimport handle_errors
 from .interactions import BondedInteraction, BondedInteractions
 
 

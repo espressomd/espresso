@@ -16,13 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Handling of electrostatics
 
 include "myconfig.pxi"
-from espressomd.system cimport *
 cimport numpy as np
-from espressomd.utils cimport *
-from espressomd.utils import is_valid_type, to_str
+from .utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from libcpp cimport bool
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:

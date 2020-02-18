@@ -30,7 +30,7 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument("--wall", action="store_const", dest="shape", const="Wall",
                    default="Wall")
 for shape in ("Sphere", "Ellipsoid", "Cylinder", "SpheroCylinder",
-              "Stomatocyte", "SimplePore", "SlitPore", "HollowCone"):
+              "Stomatocyte", "SimplePore", "SlitPore", "HollowConicalFrustum"):
     group.add_argument("--" + shape.lower(), action="store_const",
                        dest="shape", const=shape)
 args = parser.parse_args()
@@ -43,8 +43,7 @@ espressomd.assert_features(required_features)
 
 box_l = 50.0
 system = espressomd.System(box_l=[box_l] * 3)
-system.set_random_state_PRNG()
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 
 system.time_step = 0.0001
 system.cell_system.skin = 0.3
@@ -102,10 +101,10 @@ if args.shape == "Slitpore":
         pore_length=20, pore_mouth=30, pore_width=5), particle_type=0,
         penetrable=True)
 
-if args.shape == "HollowCone":
-    system.constraints.add(shape=espressomd.shapes.HollowCone(
-        inner_radius=5, outer_radius=20, opening_angle=np.pi / 4.0,
-        axis=[1.0, 0.0, 0.0], center=[25, 25, 25], width=2, direction=1),
+if args.shape == "HollowConicalFrustum":
+    system.constraints.add(shape=espressomd.shapes.HollowConicalFrustum(
+        r1=12, r2=8, length=15.0, thickness=3,
+        axis=[0.0, 0.0, 1.0], center=[25, 25, 25], direction=1),
         particle_type=0, penetrable=True)
 
 

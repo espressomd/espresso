@@ -44,7 +44,6 @@ class ObservableTests(ut.TestCase):
     n_parts = 5
     box_l = 5.
     system = espressomd.System(box_l=3 * [box_l])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
     system.cell_system.skin = 0.2 * box_l

@@ -31,9 +31,7 @@ kT = 1.37
 dt = 0.05
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 
 p = system.part.add(pos=(0, 0, 0), id=0)
 system.time_step = dt

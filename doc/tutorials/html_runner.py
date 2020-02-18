@@ -82,7 +82,7 @@ for filepath in new_cells:
     # strip first component in relative paths
     code = re.sub('(?<=[\'\"])\.\./', './', code)
     # create new cells
-    filename = os.path.relpath(filepath)
+    filename = os.path.relpath(os.path.realpath(filepath))
     if len(filename) > len(filepath):
         filename = filepath
     cell_md = nbformat.v4.new_markdown_cell(source='Solution from ' + filename)

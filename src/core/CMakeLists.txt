@@ -6,7 +6,6 @@ set(EspressoCore_SRC
   communication.cpp
   constraints.cpp
   debug.cpp
-  diamond.cpp
   domain_decomposition.cpp
   dpd.cpp
   energy.cpp
@@ -32,7 +31,6 @@ set(EspressoCore_SRC
   polymer.cpp
   polynom.cpp
   pressure.cpp
-  random.cpp
   rattle.cpp
   reaction_ensemble.cpp
   rotate_system.cpp

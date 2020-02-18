@@ -20,17 +20,16 @@
 # Handling of interactions
 
 from libcpp.string cimport string
+from libcpp.vector cimport vector
 from libcpp cimport bool as cbool
 from libc cimport stdint
 
 include "myconfig.pxi"
-from espressomd.system cimport *
 cimport numpy as np
+
 # force include of config.hpp
 cdef extern from "config.hpp":
     pass
-
-from espressomd.utils cimport *
 
 cdef extern from "TabulatedPotential.hpp":
     struct TabulatedPotential:
@@ -544,10 +543,13 @@ cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
         void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
 
+cdef extern from "immersed_boundaries.hpp":
+    extern ImmersedBoundaries immersed_boundaries
+
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
 cdef extern from "immersed_boundary/ibm_tribend.hpp":
-    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
+    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const cbool flat)
 
 IF ROTATION:
     cdef extern from "bonded_interactions/harmonic_dumbbell.hpp":

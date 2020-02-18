@@ -24,7 +24,6 @@ import numpy as np
 
 class TabulatedTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
     s.box_l = 3 * [10]
     s.time_step = 0.01
     s.cell_system.skin = 0.4

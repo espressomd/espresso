@@ -22,7 +22,6 @@ import espressomd
 @utx.skipIfMissingFeatures(["LENNARD_JONES"])
 class PairTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.s.time_step = 0.1

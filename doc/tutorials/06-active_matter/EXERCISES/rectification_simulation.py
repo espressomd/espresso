@@ -29,7 +29,8 @@ import argparse
 
 import espressomd
 from espressomd import assert_features
-from espressomd.shapes import Cylinder, Wall, HollowCone
+import espressomd.shapes
+from espressomd.shapes import Cylinder, Wall
 
 
 assert_features(["ENGINE", "LENNARD_JONES", "ROTATION", "MASS"])
@@ -128,7 +129,7 @@ system.constraints.add(shape=wall, particle_type=1)
 
 ...
 
-hollow_cone = HollowCone(...)
+hollow_cone = espressomd.shapes.HollowConicalFrustum(...)
 system.constraints.add(shape=hollow_cone, particle_type=1)
 
 ##########################################################################

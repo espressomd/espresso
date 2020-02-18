@@ -19,25 +19,21 @@
 # For C-extern Analysis
 include "myconfig.pxi"
 from . cimport analyze
-from . cimport utils
-from . cimport particle_data
-from . import utils
-from . import code_info
-from . import particle_data
-from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
-from .interactions import *
-from espressomd.interactions cimport *
+from .interactions cimport BONDED_IA_NONE
+from .interactions cimport bonded_ia_params
 import numpy as np
 cimport numpy as np
-from globals cimport n_configs
-
-from .utils import array_locked
+from .globals import Globals
 
 from collections import OrderedDict
 from .system import System
-from espressomd.utils import is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport handle_errors, check_type_or_throw_except
+from .utils cimport create_nparray_from_double_array, \
+    create_nparray_from_int_list, \
+    create_int_list_from_python_object
 
 
 class Analysis:
@@ -54,7 +50,7 @@ class Analysis:
     def append(self):
         """Append configuration for averaged analysis."""
         assert analyze.n_part, "No particles to append!"
-        if analyze.n_configs > 0:
+        if n_configs > 0:
             assert analyze.n_part_conf == analyze.n_part, \
                 "All configurations stored must have the same length"
 
@@ -273,106 +269,6 @@ class Analysis:
         ids = analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
 
         return create_nparray_from_int_list(ids)
-
-    def cylindrical_average(self, center=None, axis=None,
-                            length=None, radius=None,
-                            bins_axial=None, bins_radial=None,
-                            types=[-1]):
-        """
-        Calculate the particle distribution using cylindrical binning.
-
-        Parameters
-        ----------
-        center : (3,) array_like of :obj:`float`
-            Coordinates of the centre of the cylinder.
-        axis : (3,) array_like of :obj:`float`
-            Axis vectory of the cylinder, does not need to be normalized.
-        length : :obj:`float`
-            Length of the cylinder.
-        radius : :obj:`float`
-            Radius of the cylinder.
-        bins_axial : :obj:`int`
-            Number of axial bins.
-        bins_radial : :obj:`int`
-            Number of radial bins.
-        types : lists of :obj:`int`
-            Particle :attr:`~espressomd.particle_data.ParticleHandle.type`
-
-        Returns
-        -------
-        list of lists
-            columns indicate ``index_radial``, ``index_axial``, ``pos_radial``,
-            ``pos_axial``, ``binvolume``, ``density``, ``v_radial``,
-            ``v_axial``, ``density``, ``v_radial`` and ``v_axial``.
-            Note that the columns ``density``, ``v_radial`` and ``v_axial``
-            appear for each type indicated in ``types``, in the same order.
-
-        """
-
-        # Check the input types
-        check_type_or_throw_except(
-            center, 3, float, "center has to be 3 floats")
-        check_type_or_throw_except(
-            axis, 3, float, "direction has to be 3 floats")
-        check_type_or_throw_except(
-            length, 1, float, "length has to be a float")
-        check_type_or_throw_except(
-            radius, 1, float, "radius has to be a float")
-        check_type_or_throw_except(
-            bins_axial, 1, int, "bins_axial has to be an int")
-        check_type_or_throw_except(
-            bins_radial, 1, int, "bins_radial has to be an int")
-
-        # Convert Python types to C++ types
-        cdef vector[double] c_center = center
-        cdef vector[double] c_direction = axis
-        cdef double c_length = length
-        cdef double c_radius = radius
-        cdef int c_bins_axial = bins_axial
-        cdef int c_bins_radial = bins_radial
-        cdef vector[int] c_types = types
-
-        cdef map[string, vector[vector[vector[double]]]] distribution
-        analyze.calc_cylindrical_average(
-            analyze.partCfg(), c_center, c_direction, c_length,
-            c_radius, c_bins_axial, c_bins_radial, c_types, distribution)
-
-        cdef double binwd_axial = c_length / c_bins_axial
-        cdef double binwd_radial = c_radius / c_bins_radial
-        cdef double binvolume, pos_radial, pos_axial
-
-        cdef vector[string] names = [b"density", b"v_r", b"v_t"]
-
-        buffer = np.empty(
-            [bins_radial * bins_axial, 5 + c_types.size() * names.size()])
-
-        cdef int index_radial, index_axial
-        cdef unsigned int type_id, name
-        for index_radial in range(0, bins_radial):
-            for index_axial in range(0, bins_axial):
-                pos_radial = (index_radial + .5) * binwd_radial
-                pos_axial = (index_axial + .5) * binwd_axial - .5 * c_length
-
-                if index_radial == 0:
-                    binvolume = np.pi * binwd_radial * binwd_radial * c_length
-                else:
-                    binvolume = np.pi * \
-                        (index_radial * index_radial + 2 * index_radial) * \
-                        binwd_radial * binwd_radial * c_length
-
-                buffer[index_axial + bins_axial *
-                       index_radial, 0] = index_radial
-                buffer[index_axial + bins_axial *
-                       index_radial, 1] = index_axial
-                buffer[index_axial + bins_axial * index_radial, 2] = pos_radial
-                buffer[index_axial + bins_axial * index_radial, 3] = pos_axial
-                buffer[index_axial + bins_axial * index_radial, 4] = binvolume
-                for type_id in range(0, c_types.size()):
-                    for name in range(0, names.size()):
-                        buffer[index_axial + bins_axial * index_radial, 5 + name + type_id * names.size()] \
-                            = distribution[names[name]][type_id][index_radial][index_axial]
-
-        return buffer
 
     def pressure(self, v_comp=False):
         """Calculate the instantaneous pressure (in parallel). This is only
@@ -946,7 +842,7 @@ class Analysis:
                 n_conf = n_configs
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         cdef vector[double] rdf
         rdf.resize(r_bins)
@@ -1021,7 +917,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
         assert not log_flag or r_min != 0.0, "r_min cannot include zero"

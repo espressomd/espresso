@@ -34,10 +34,7 @@ import numpy as np
 
 box_l = 50.0
 system = espressomd.System(box_l=[box_l] * 3)
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
-
-# if no seed is provided espresso generates a seed
+np.random.seed(seed=42)
 
 system.time_step = 0.01
 system.cell_system.skin = 10.0
@@ -71,12 +68,12 @@ system.bonded_inter.add(fene)
 # start it next to the wall to test it!
 start = np.array([1, 1, 1 + wall_offset])
 
-# polymer.positions will avoid violating the constraints
+# polymer.linear_polymer_positions will avoid violating the constraints
 
-positions = polymer.positions(n_polymers=1, beads_per_chain=50,
-                              bond_length=1.0, seed=1234,
-                              min_distance=0.9,
-                              respect_constraints=True)
+positions = polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=50,
+                                             bond_length=1.0, seed=1234,
+                                             min_distance=0.9,
+                                             respect_constraints=True)
 for i, pos in enumerate(positions[0]):
     id = len(system.part)
     system.part.add(id=id, pos=pos)

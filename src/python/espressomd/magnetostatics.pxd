@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 include "myconfig.pxi"
 
-
 IF DIPOLES == 1:
     cdef extern from "communication.hpp":
         void mpi_bcast_coulomb_params()
