@@ -23,13 +23,8 @@
 #include "ParticleCache.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
 
 #include "serialization/Particle.hpp"
-#include <utils/SkipIterator.hpp>
-
-#include <boost/iterator/indirect_iterator.hpp>
-#include <boost/range/iterator_range.hpp>
 
 /**
  * @brief Proxy class that gets a particle range from #local_particles.

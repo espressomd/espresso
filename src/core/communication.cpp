@@ -54,6 +54,7 @@
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
+#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
