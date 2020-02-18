@@ -20,10 +20,10 @@
 
 /* Unit tests for the MpiCallbacks class. */
 
-#include <random>
 #include <vector>
 
 #include "ParticleCache.hpp"
+#include "random.hpp"
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
@@ -64,7 +64,7 @@ void check_merge(unsigned size, unsigned split) {
   boost::container::flat_set<int> u, v;
   using value_type = typename boost::container::flat_set<int>::value_type;
 
-  std::mt19937 mersenne_engine(size);
+  auto mersenne_engine = Random::mt19937(size);
   std::uniform_int_distribution<int> dist;
 
   for (int i = 0; i < size; i++) {

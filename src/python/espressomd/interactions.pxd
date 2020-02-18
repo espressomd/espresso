@@ -20,17 +20,16 @@
 # Handling of interactions
 
 from libcpp.string cimport string
+from libcpp.vector cimport vector
 from libcpp cimport bool as cbool
 from libc cimport stdint
 
 include "myconfig.pxi"
-from espressomd.system cimport *
 cimport numpy as np
+
 # force include of config.hpp
 cdef extern from "config.hpp":
     pass
-
-from espressomd.utils cimport *
 
 cdef extern from "TabulatedPotential.hpp":
     struct TabulatedPotential:
@@ -527,8 +526,10 @@ cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
     int oif_local_forces_set_params(int bond_type, double r0, double ks, double kslin, double phi0, double kb, double A01, double A02, double kal, double kvisc)
+
 cdef extern from "bonded_interactions/thermalized_bond.hpp":
     int thermalized_bond_set_params(int bond_type, double temp_com, double gamma_com, double temp_distance, double gamma_distance, double r_cut)
+cdef extern from "thermostat.hpp":
     void thermalized_bond_set_rng_state(stdint.uint64_t counter)
     cbool thermalized_bond_is_seed_required()
     stdint.uint64_t thermalized_bond_get_rng_state()
@@ -542,10 +543,13 @@ cdef extern from "immersed_boundary/ImmersedBoundaries.hpp":
     cppclass ImmersedBoundaries:
         void volume_conservation_set_params(const int bond_type, const int softID, const double kappaV)
 
+cdef extern from "immersed_boundaries.hpp":
+    extern ImmersedBoundaries immersed_boundaries
+
 cdef extern from "immersed_boundary/ibm_triel.hpp":
     int IBM_Triel_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const double max, const tElasticLaw elasticLaw, const double k1, const double k2)
 cdef extern from "immersed_boundary/ibm_tribend.hpp":
-    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const bool flat)
+    int IBM_Tribend_SetParams(const int bond_type, const int ind1, const int ind2, const int ind3, const int ind4, const double kb, const cbool flat)
 
 IF ROTATION:
     cdef extern from "bonded_interactions/harmonic_dumbbell.hpp":

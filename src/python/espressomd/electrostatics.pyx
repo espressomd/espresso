@@ -18,16 +18,14 @@
 #
 from cython.operator cimport dereference
 include "myconfig.pxi"
-from espressomd cimport actors
-from . import actors
-cimport grid
-cimport globals
+from .actors cimport Actor
+from .grid cimport box_geo
 import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from .utils import is_valid_type, to_str
 from . cimport checks
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -52,7 +50,7 @@ IF ELECTROSTATICS == 1:
                     you are doing.
                     """)
 
-    cdef class ElectrostaticInteraction(actors.Actor):
+    cdef class ElectrostaticInteraction(Actor):
         def _tune(self):
             raise Exception(
                 "Subclasses of ElectrostaticInteraction must define the "
@@ -103,10 +101,10 @@ IF ELECTROSTATICS:
                 raise ValueError("r_cut should be a non-negative double")
 
         def valid_keys(self):
-            return "prefactor", "kappa", "r_cut", "check_neutrality"
+            return ["prefactor", "kappa", "r_cut", "check_neutrality"]
 
         def required_keys(self):
-            return "prefactor", "kappa", "r_cut"
+            return ["prefactor", "kappa", "r_cut"]
 
         def _set_params_in_es_core(self):
             set_prefactor(self._params["prefactor"])
@@ -160,10 +158,11 @@ IF ELECTROSTATICS:
                 raise ValueError("r_cut should be a non-negative double")
 
         def valid_keys(self):
-            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
+            return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",
+                    "check_neutrality"]
 
         def required_keys(self):
-            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
+            return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"]
 
         def _set_params_in_es_core(self):
             set_prefactor(self._params["prefactor"])
@@ -199,6 +198,7 @@ IF P3M == 1:
 
         Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
         summation method to calculate potentials in N-body simulation.
+        See :ref:`Coulomb P3M` for more details.
 
         Parameters
         ----------
@@ -221,7 +221,7 @@ IF P3M == 1:
             The real space cutoff.
         tune : :obj:`bool`, optional
             Used to activate/deactivate the tuning method on activation.
-            Defaults to True.
+            Defaults to ``True``.
         check_neutrality : :obj:`bool`, optional
             Raise a warning if the system is not electrically neutral when
             set to ``True`` (default).
@@ -350,6 +350,7 @@ IF P3M == 1:
 
             Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
             summation method to calculate potentials in N-body simulation.
+            See :ref:`Coulomb P3M on GPU` for more details.
 
             Parameters
             ----------
@@ -372,7 +373,7 @@ IF P3M == 1:
                 The real space cutoff
             tune : :obj:`bool`, optional
                 Used to activate/deactivate the tuning method on activation.
-                Defaults to True.
+                Defaults to ``True``.
             check_neutrality : :obj:`bool`, optional
                 Raise a warning if the system is not electrically neutral when
                 set to ``True`` (default).
@@ -492,7 +493,7 @@ IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
         """
         Electrostatics solver for systems with one periodic direction.
-        See :ref:`MMM1D Theory` for more details.
+        See :ref:`MMM1D` for more details.
 
         Parameters
         ----------
@@ -504,7 +505,7 @@ IF ELECTROSTATICS:
             Radius where near-field and far-field calculation are switched.
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
-            Specify whether to automatically tune ore not. The default is True.
+            Specify whether to automatically tune or not. Defaults to ``True``.
 
         """
 
@@ -528,7 +529,8 @@ IF ELECTROSTATICS:
                     "check_neutrality": True}
 
         def valid_keys(self):
-            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune", "check_neutrality"
+            return ["prefactor", "maxPWerror", "far_switch_radius",
+                    "bessel_cutoff", "tune", "check_neutrality"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -568,7 +570,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1DGPU(ElectrostaticInteraction):
         """
         Electrostatics solver with GPU support for systems with one periodic
-        direction. See :ref:`MMM1D Theory` for more details.
+        direction. See :ref:`MMM1D on GPU` for more details.
 
         Parameters
         ----------
@@ -580,7 +582,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             Radius where near-field and far-field calculation are switched
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
-            Specify whether to automatically tune ore not. The default is True.
+            Specify whether to automatically tune or not. Defaults to ``True``.
         """
         cdef Mmm1dgpuForce * thisptr
         cdef EspressoSystemInterface * interface
@@ -618,7 +620,8 @@ IF ELECTROSTATICS and MMM1D_GPU:
                     "check_neutrality": True}
 
         def valid_keys(self):
-            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune", "check_neutrality"
+            return ["prefactor", "maxPWerror", "far_switch_radius",
+                    "bessel_cutoff", "tune", "check_neutrality"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -634,7 +637,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                grid.box_geo.length()[2], coulomb.prefactor,
+                box_geo.length()[2], coulomb.prefactor,
                 self._params["maxPWerror"], self._params["far_switch_radius"],
                 self._params["bessel_cutoff"])
 
@@ -661,13 +664,23 @@ IF ELECTROSTATICS:
 
             """
             Calculate the Coulomb interaction using the ScaFaCoS library.
+            See :ref:`ScaFaCoS electrostatics` for more details.
+
+            Parameters
+            ----------
+            prefactor : :obj:`float`
+                Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
+            method_name : :obj:`str`
+                Name of the ScaFaCoS method to use.
+            method_params : :obj:`dict`
+                Dictionary containing the method-specific parameters.
             """
 
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance
             def __init__(self, *args, **kwargs):
-                actors.Actor.__init__(self, *args, **kwargs)
+                Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
                 check_neutrality(self._params)

@@ -31,7 +31,6 @@ class BrownianDynamics(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.set_domain_decomposition(use_verlet_lists=True)
     system.cell_system.skin = 0
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
     system.periodicity = [0, 0, 0]
     system.integrator.set_brownian_dynamics()
 

@@ -20,19 +20,19 @@ include "myconfig.pxi"
 
 cimport numpy as np
 import numpy as np
-from . cimport utils
-from espressomd.utils cimport *
 from . cimport particle_data
 from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from globals cimport max_seen_particle, time_step, n_part, n_rigidbonds, max_seen_particle_type, swimming_particles_exist, FIELD_SWIMMING_PARTICLES_EXIST, mpi_bcast_parameter
+from .globals cimport max_seen_particle, max_seen_particle_type, n_part, \
+    n_rigidbonds
 import collections
 import functools
 import types
-from espressomd.utils import nesting_level, array_locked, is_valid_type
-from espressomd.utils cimport make_array_locked
+from .utils import nesting_level, array_locked, is_valid_type
+from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
+from .utils cimport Vector3i, Vector3d, Vector4d, List
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -56,7 +56,7 @@ cdef class ParticleHandle:
         self._id = _id
 
     cdef int update_particle_data(self) except -1:
-        self.particle_data = get_particle_data_ptr(get_particle_data(self._id))
+        self.particle_data = &get_particle_data(self._id)
 
     def __str__(self):
         res = collections.OrderedDict()
@@ -1180,8 +1180,8 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _params):
-                global swimming_particles_exist
                 cdef particle_parameters_swimming swim
+
                 swim.swimming = True
                 swim.v_swim = 0.0
                 swim.f_swim = 0.0
@@ -1223,10 +1223,6 @@ cdef class ParticleHandle:
                         check_type_or_throw_except(
                             _params['dipole_length'], 1, float, "dipole_length has to be a float.")
                         swim.dipole_length = _params['dipole_length']
-
-                if swim.f_swim != 0 or swim.v_swim != 0:
-                    swimming_particles_exist = True
-                    mpi_bcast_parameter(FIELD_SWIMMING_PARTICLES_EXIST)
 
                 set_particle_swimming(self._id, swim)
 
@@ -1530,8 +1526,8 @@ cdef class _ParticleSliceImpl:
     """Handles slice inputs.
 
     This base class should not be used directly. Use
-    :class:`espressomd.ParticleSlice` instead, which contains all the particle
-    properties.
+    :class:`espressomd.particle_data.ParticleSlice` instead, which contains
+    all the particle properties.
 
     """
 
@@ -1673,7 +1669,7 @@ cdef class _ParticleSliceImpl:
 
         See Also
         --------
-        add
+        :meth:`espressomd.particle_data.ParticleList.add`
 
         """
         for id in self.id_selection:
@@ -1683,7 +1679,7 @@ cdef class _ParticleSliceImpl:
 class ParticleSlice(_ParticleSliceImpl):
 
     """
-    Handles slice inputs e.g. part[0:2]. Sets values for selected slices or
+    Handles slice inputs e.g. ``part[0:2]``. Sets values for selected slices or
     returns values as a single list.
 
     """
@@ -1697,8 +1693,8 @@ class ParticleSlice(_ParticleSliceImpl):
 
 cdef class ParticleList:
     """
-    Provides access to the particles via [i], where i is the particle id.
-    Returns a :class:`ParticleHandle` object.
+    Provides access to the particles via ``[i]``, where ``i`` is the particle
+    id. Returns a :class:`espressomd.particle_data.ParticleHandle` object.
 
     """
 
@@ -1715,13 +1711,18 @@ cdef class ParticleList:
     # __getstate__ and __setstate__ define the pickle interaction
     def __getstate__(self):
         """Attributes to pickle.
-        Content of particle_attributes, minus a few exceptions dip, director:
-        Setting only the director will overwrite the orientation of the
-        particle around the axis parallel to dipole moment/director.
-        Quaternions contain the full info id: The particle id is used as the
-        storage key when pickling all particles via ParticleList, and the
-        interface (rightly) does not support changing of the id after the
-        particle was created.
+
+        Content of ``particle_attributes``, minus a few exceptions:
+
+        - :attr:`~ParticleHandle.dip`, :attr:`~ParticleHandle.director`:
+          Setting only the director will overwrite the orientation of the
+          particle around the axis parallel to dipole moment/director.
+          Quaternions contain the full info.
+        - :attr:`~ParticleHandle.id`: The particle id is used as the
+          storage key when pickling all particles via :class:`ParticleList`,
+          and the interface (rightly) does not support changing of the id
+          after the particle was created.
+        - :attr:`~ParticleHandle.image_box`, :attr:`~ParticleHandle.node`
 
         """
 

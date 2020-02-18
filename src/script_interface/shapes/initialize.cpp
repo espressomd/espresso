@@ -20,7 +20,7 @@
 #include "initialize.hpp"
 #include "Cylinder.hpp"
 #include "Ellipsoid.hpp"
-#include "HollowCone.hpp"
+#include "HollowConicalFrustum.hpp"
 #include "NoWhere.hpp"
 #include "Rhomboid.hpp"
 #include "ScriptInterface.hpp"
@@ -35,6 +35,8 @@
 namespace ScriptInterface {
 namespace Shapes {
 void initialize() {
+  ScriptInterface::register_new<ScriptInterface::Shapes::HollowConicalFrustum>(
+      "Shapes::HollowConicalFrustum");
   ScriptInterface::register_new<ScriptInterface::Shapes::NoWhere>(
       "Shapes::NoWhere");
   ScriptInterface::register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
@@ -46,8 +48,6 @@ void initialize() {
       "Shapes::Cylinder");
   ScriptInterface::register_new<ScriptInterface::Shapes::SpheroCylinder>(
       "Shapes::SpheroCylinder");
-  ScriptInterface::register_new<ScriptInterface::Shapes::HollowCone>(
-      "Shapes::HollowCone");
   ScriptInterface::register_new<ScriptInterface::Shapes::Rhomboid>(
       "Shapes::Rhomboid");
   ScriptInterface::register_new<ScriptInterface::Shapes::Slitpore>(

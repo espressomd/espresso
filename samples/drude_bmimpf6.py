@@ -76,7 +76,6 @@ print("\n-->Ion pairs:", n_ionpairs, "Box size:", box_l)
 
 system = espressomd.System(box_l=[box_l, box_l, box_l])
 system.virtual_sites = VirtualSitesRelative(have_velocity=True)
-system.set_random_state_PRNG()
 
 if args.visu:
     d_scale = 0.988 * 0.5

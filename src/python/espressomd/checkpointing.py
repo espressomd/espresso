@@ -21,7 +21,7 @@ import inspect
 import os
 import re
 import signal
-from espressomd.utils import is_valid_type
+from .utils import is_valid_type
 
 try:
     import cPickle as pickle

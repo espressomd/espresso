@@ -22,7 +22,6 @@
 /* Unit tests for the ErrorHandling::RuntimeErrorCollector class. */
 
 #include <algorithm>
-#include <iostream>
 #include <memory>
 
 #include <boost/mpi.hpp>

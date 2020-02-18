@@ -26,8 +26,6 @@
  *  Random number generation using Philox.
  */
 
-#include "errorhandling.hpp"
-
 #include <Random123/philox.h>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -35,8 +33,6 @@
 #include <utils/uniform.hpp>
 
 #include <random>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
 /*
@@ -92,7 +88,7 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
 }
 
 /**
- * @brief Uniform noise.
+ * @brief Generator for random uniform noise.
  *
  * Mean = 0, variance = 1 / 12.
  * This uses the Philox PRNG, the state is controlled
@@ -101,38 +97,30 @@ Utils::Vector<uint64_t, 4> philox_4_uint64s(uint64_t counter, int key1,
  * not correlated between two calls along the same counter
  * sequence.
  *
+ * @tparam salt RNG salt
+ * @tparam N    Size of the noise vector
+ *
+ * @return Vector of uniform random numbers.
  */
-template <RNGSalt salt> double noise(uint64_t counter, int key1, int key2 = 0) {
+template <RNGSalt salt, size_t N = 3,
+          std::enable_if_t<(N > 1) and (N <= 4), int> = 0>
+auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
 
-  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
-
-  using Utils::uniform;
-  return uniform(noise[0]) - 0.5;
+  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
+  Utils::VectorXd<N> noise{};
+  std::transform(integers.begin(), integers.begin() + N, noise.begin(),
+                 [](size_t value) { return Utils::uniform(value) - 0.5; });
+  return noise;
 }
 
-/**
- * @brief 3d uniform vector noise.
- *
- * Mean = 0, variance = 1 / 12.
- * This uses the Philox PRNG, the state is controlled
- * by the counter, the salt and two keys.
- * If any of the keys and salt differ, the noise is
- * not correlated between two calls along the same counter
- * sequence.
- *
- */
-template <RNGSalt salt>
-Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
+template <RNGSalt salt, size_t N, std::enable_if_t<N == 1, int> = 0>
+auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
 
-  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
-
-  using Utils::uniform;
-  return Utils::Vector3d{uniform(noise[0]), uniform(noise[1]),
-                         uniform(noise[2])} -
-         Utils::Vector3d::broadcast(0.5);
+  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
+  return Utils::uniform(integers[0]) - 0.5;
 }
 
-/** @brief Generator for Gaussian random 3d vector.
+/** @brief Generator for Gaussian noise.
  *
  * Mean = 0, standard deviation = 1.0.
  * Based on the Philox RNG using 4x64 bits.
@@ -146,101 +134,62 @@ Utils::Vector3d v_noise(uint64_t counter, int key1, int key2 = 0) {
  * @param counter counter for the random number generation
  * @param key1 key for random number generation
  * @param key2 key for random number generation
- * @tparam salt (decorrelates different thermostat types)
+ * @tparam salt decorrelates different thermostat types
  *
- * @return 3D vector of Gaussian random numbers.
+ * @return Vector of Gaussian random numbers.
  *
  */
-template <RNGSalt salt>
-inline Utils::Vector3d v_noise_g(uint64_t counter, int key1, int key2 = 0) {
+template <RNGSalt salt, size_t N = 3,
+          class = std::enable_if_t<(N >= 1) and (N <= 4)>>
+auto noise_gaussian(uint64_t counter, int key1, int key2 = 0) {
 
-  auto const noise = philox_4_uint64s<salt>(counter, key1, key2);
-  using Utils::uniform;
-  Utils::Vector4d u{uniform(noise[0]), uniform(noise[1]), uniform(noise[2]),
-                    uniform(noise[3])};
-
-  // Replace zeros from uniformly distributed numbers (see doc string)
+  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
   static const double epsilon = std::numeric_limits<double>::min();
-  for (int i = 0; i < 4; i++)
-    if (u[i] < epsilon)
-      u[i] = epsilon;
 
-  // Box muller transform code adapted from
+  constexpr size_t M = (N <= 2) ? 2 : 4;
+  Utils::VectorXd<M> u{};
+  std::transform(integers.begin(), integers.begin() + M, u.begin(),
+                 [](size_t value) {
+                   auto u = Utils::uniform(value);
+                   return (u < epsilon) ? epsilon : u;
+                 });
+
+  // Box-Muller transform code adapted from
   // https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
-
-  static const double two_pi = 2.0 * Utils::pi();
-  return {sqrt(-2.0 * log(u[0])) * cos(two_pi * u[1]),
-          sqrt(-2.0 * log(u[0])) * sin(two_pi * u[1]),
-          sqrt(-2.0 * log(u[2])) * cos(two_pi * u[3])};
-}
-
-extern std::mt19937 generator;
-extern std::uniform_real_distribution<double> uniform_real_distribution;
-extern bool user_has_seeded;
-inline void unseeded_error() {
-  runtimeErrorMsg() << "Please seed the random number generator.\nESPResSo "
-                       "can choose one for you with set_random_state_PRNG().";
-}
-
-/**
- * @brief checks the seeded state and throws error if unseeded
- */
-inline void check_user_has_seeded() {
-  static bool unseeded_error_thrown = false;
-  if (!user_has_seeded && !unseeded_error_thrown) {
-    unseeded_error_thrown = true;
-    unseeded_error();
+  // optimizations: the modulo is cached (logarithms are expensive), the
+  // sin/cos are evaluated simultaneously by gcc or separately by Clang
+  Utils::VectorXd<N> noise{};
+  constexpr double two_pi = 2.0 * Utils::pi();
+  auto const modulo = sqrt(-2.0 * log(u[0]));
+  auto const angle = two_pi * u[1];
+  noise[0] = modulo * cos(angle);
+  if (N > 1) {
+    noise[1] = modulo * sin(angle);
   }
+  if (N > 2) {
+    auto const modulo = sqrt(-2.0 * log(u[2]));
+    auto const angle = two_pi * u[3];
+    noise[2] = modulo * cos(angle);
+    if (N > 3) {
+      noise[3] = modulo * sin(angle);
+    }
+  }
+  return noise;
 }
 
-/**
- * @brief Set seed of random number generators on each node.
+/** Mersenne Twister with warmup.
+ *  The first 100'000 values of Mersenne Twister generators are often heavily
+ *  correlated @cite panneton06a. This utility function discards the first
+ *  1'000'000 values.
  *
- * @param cnt   Unused.
- * @param seeds A vector of seeds, must be at least n_nodes long.
+ *  @param seed RNG seed
  */
-void mpi_random_seed(int cnt, std::vector<int> &seeds);
-
-/**
- * @brief Gets a string representation of the state of all the nodes.
- */
-std::string mpi_random_get_stat();
-
-/**
- * @brief Set the seeds on all the node to the state represented
- *        by the string.
- * The string representation must be one that was returned by
- * @ref mpi_random_get_stat.
- */
-void mpi_random_set_stat(const std::vector<std::string> &stat);
-
-/**
- * @brief Get the state size of the random number generator
- */
-int get_state_size_of_generator();
-
-/**
- * @brief Initialize PRNG with MPI rank as seed.
- */
-void init_random();
-
-/**
- * @brief Initialize PRNG with user-provided seed.
- *
- * @param seed seed
- */
-void init_random_seed(int seed);
+template <typename T> std::mt19937 mt19937(T &&seed) {
+  std::mt19937 generator(seed);
+  generator.discard(1'000'000);
+  return generator;
+}
 
 } // namespace Random
-
-/**
- * @brief Draws a random real number from the uniform distribution in the
- * range [0,1) using the Mersenne twister.
- */
-inline double d_random() {
-  using namespace Random;
-  check_user_has_seeded();
-  return uniform_real_distribution(generator);
-}
 
 #endif

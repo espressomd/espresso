@@ -20,6 +20,7 @@
 from . cimport utils
 include "myconfig.pxi"
 from .actors import Actor
+from .utils cimport handle_errors, check_range_or_except, check_type_or_throw_except
 
 IF DIPOLES and DP3M:
     class MagnetostaticExtension(Actor):
@@ -28,26 +29,24 @@ IF DIPOLES and DP3M:
 
     class DLC(MagnetostaticExtension):
 
-        """Provide the Dipolar Layer Correction (DLC) method.
-
-        DLC works like ELC for electrostatics
-        (:class:`espressomd.electrostatic_extensions.ELC`),
-        but applied to magnetic dipoles.
+        """
+        Electrostatics solver for systems with two periodic dimensions.
+        See :ref:`Dipolar Layer Correction (DLC)` for more details.
 
         Notes
         -----
         At present, the empty gap (volume without any particles), is assumed to be
         along the z-axis. As a reference for the DLC method, see :cite:`brodka04a`.
 
-        Attributes
+        Parameters
         ----------
-        far_cut : :obj:`float`
-            Cutoff of the exponential sum.
         gap_size : :obj:`float`
-            Size of the empty gap. Note that DLC relies on the user to make sure that
-            this condition is fulfilled.
+            Size of the empty gap. Note that DLC relies on the user to make
+            sure that this condition is fulfilled.
         maxPWerror : :obj:`float`
             Maximal pairwise error of the potential and force.
+        far_cut : :obj:`float`, optional
+            Cutoff of the exponential sum.
 
         """
 
@@ -66,7 +65,7 @@ IF DIPOLES and DP3M:
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut"
+            return ["maxPWerror", "gap_size", "far_cut"]
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]

@@ -45,6 +45,7 @@ if [ "${?}" = "0" ]; then
     grep -rPno --include='*.html' --exclude-dir=_modules "${regex_sphinx_broken_link}" doc/sphinx/html/ | sort | uniq | while read -r line; do
         # extract link target
         reference=$(echo "${line}" | sed -r 's|^.+<span class="pre">(.+)</span></code>$|\1|' | sed 's/()$//')
+        lineno=$(echo "${line}" | cut -d ':' -f 2)
         # skip if broken link refers to a standard Python type or to a
         # class/function from an imported module other than espressomd
         is_standard_type_or_module="false"
@@ -63,7 +64,7 @@ if [ "${?}" = "0" ]; then
         fi
         found="true"
         # locate the .rst file containing the broken link
-        filepath_html=$(echo "${line}" | sed -r 's/^(.+?):[0-9]+:<code.+$/\1/')
+        filepath_html=$(echo "${line}" | cut -d ':' -f 1)
         filepath_rst=$(echo "${filepath_html}" | sed 's|/html/|/|')
         filepath_rst="${filepath_rst%.html}.rst"
         if [ -f "${filepath_rst}" ]; then
@@ -84,8 +85,8 @@ if [ "${?}" = "0" ]; then
                 fi
             fi
         fi
-        # if not in a .rst file, show the .html file without line number
-        echo "${filepath_html}:\`${reference}\`" | tee -a doc_warnings.log~
+        # if not in a .rst file, show the .html file
+        echo "${filepath_html}:${lineno}:\`${reference}\`" | tee -a doc_warnings.log~
     done
     # generate log file
     n_warnings=$(wc -l < doc_warnings.log~)

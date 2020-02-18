@@ -30,7 +30,6 @@ from numpy import random
 @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     np.random.seed(42)
 

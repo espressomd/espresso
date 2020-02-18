@@ -24,8 +24,6 @@ from espressomd import polymer
 from espressomd import interactions
 
 system = espressomd.System(box_l=[100.0, 100.0, 100.0])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
@@ -34,10 +32,10 @@ system.cell_system.skin = 0.4
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-positions = polymer.positions(n_polymers=5,
-                              beads_per_chain=50,
-                              bond_length=1.0,
-                              seed=1234)
+positions = polymer.linear_polymer_positions(n_polymers=5,
+                                             beads_per_chain=50,
+                                             bond_length=1.0,
+                                             seed=1234)
 for polymer in positions:
     for i, pos in enumerate(polymer):
         id = len(system.part)

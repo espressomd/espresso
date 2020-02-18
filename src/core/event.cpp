@@ -92,11 +92,6 @@ void on_program_start() {
   cuda_init();
 #endif
 
-  /*
-    call the initialization of the modules here
-  */
-  Random::init_random();
-
   init_node_grid();
 
   /* initially go for domain decomposition */

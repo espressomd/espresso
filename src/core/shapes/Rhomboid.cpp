@@ -161,7 +161,7 @@ void Rhomboid::calculate_dist(const Utils::Vector3d &pos, double &dist,
     if (c_dot_axb > 0.0) {
       d *= -1;
     }
-    auto tmp = axb.norm();
+    auto const tmp = axb.norm();
     d /= tmp;
     dist = d * m_direction;
     if (c_dot_axb < 0.0) {

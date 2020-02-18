@@ -52,7 +52,7 @@ def configure_and_import(filepath,
     - pass command line arguments during import to emulate shell execution
     - disable the OpenGL/Mayavi modules if they are not compiled
     - disable the matplotlib GUI using a text-based backend
-    - use random seeds for the RNG in NumPy and ESPResSo
+    - use random seeds for the RNG in NumPy
     - temporarily move to the directory where the script is located
 
     Parameters
@@ -112,7 +112,7 @@ def configure_and_import(filepath,
     # disable OpenGL/Mayavi GUI using MagicMock()
     if mock_visualizers:
         code = mock_es_visualization(code)
-    # use random seeds for ES and NumPy RNGs
+    # use random seeds for NumPy RNG
     if random_seeds:
         code = set_random_seeds(code)
     # save changes to a new file
@@ -261,14 +261,13 @@ class GetPrngSeedEspressomdSystem(ast.NodeVisitor):
     """
     Find all assignments of :class:`espressomd.system.System` in the global
     namespace. Assignments made in classes or function raise an error. Detect
-    random seed setup in the numpy and :class:`espressomd.system.System` PRNGs.
+    random seed setup of the numpy PRNG.
     """
 
     def __init__(self):
         self.numpy_random_aliases = set()
         self.es_system_aliases = set()
         self.variable_system_aliases = set()
-        self.system_seeds = []
         self.numpy_seeds = []
         self.abort_message = None
         self.error_msg_multi_assign = "Cannot parse {} in a multiple assignment (line {})"
@@ -357,33 +356,6 @@ class GetPrngSeedEspressomdSystem(ast.NodeVisitor):
                 "Cannot process espressomd.System assignments in " + self.abort_message
             self.variable_system_aliases.add(varname)
 
-    def detect_es_system_assign_seed(self, node):
-        def is_seed(target):
-            if isinstance(target, ast.Attribute) \
-                    and hasattr(target.value, "id") \
-                    and target.value.id in self.variable_system_aliases \
-                    and target.attr in ("seed", "random_number_generator_state"):
-                return True
-        for target in node.targets:
-            if is_seed(target):
-                assert len(node.targets) == 1, self.error_msg_multi_assign.format(
-                    "espressomd.System.seed", node.lineno)
-                assert self.abort_message is None, \
-                    "Cannot process espressomd.System assignments in " + self.abort_message
-                self.system_seeds.append(
-                    (node.lineno, target.value.id, target.attr))
-            elif isinstance(target, ast.Tuple) and any(map(is_seed, target.elts)):
-                raise AssertionError(self.error_msg_multi_assign.format(
-                    "espressomd.System.seed", node.lineno))
-
-    def detect_es_system_expr_seed(self, node):
-        if hasattr(node.value, "func") and hasattr(node.value.func, "value") \
-                and hasattr(node.value.func.value, "id") \
-                and node.value.func.value.id in self.variable_system_aliases \
-                and node.value.func.attr == "set_random_state_PRNG":
-            self.system_seeds.append((node.lineno, node.value.func.value.id,
-                                      node.value.func.attr))
-
     def detect_np_random_expr_seed(self, node):
         if hasattr(node.value, "func") and hasattr(node.value.func, "value") \
                 and (hasattr(node.value.func.value, "id") and node.value.func.value.id in self.numpy_random_aliases
@@ -397,10 +369,8 @@ class GetPrngSeedEspressomdSystem(ast.NodeVisitor):
 
     def visit_Assign(self, node):
         self.detect_es_system_instances(node)
-        self.detect_es_system_assign_seed(node)
 
     def visit_Expr(self, node):
-        self.detect_es_system_expr_seed(node)
         self.detect_np_random_expr_seed(node)
 
     def visit_ClassDef(self, node):
@@ -421,7 +391,7 @@ class GetPrngSeedEspressomdSystem(ast.NodeVisitor):
 
 def set_random_seeds(code):
     """
-    Remove random number generator seeds (ESPResSo + numpy), such that
+    Remove numpy random number generator seeds, such that
     the sample/tutorial always starts with different random seeds.
     """
     code = protect_ipython_magics(code)
@@ -429,13 +399,6 @@ def set_random_seeds(code):
     visitor = GetPrngSeedEspressomdSystem()
     visitor.visit(tree)
     lines = code.split("\n")
-    # delete ESPResSo system seed
-    for lineno, varname, seed_attribute in visitor.system_seeds:
-        old_stmt = varname + "." + seed_attribute
-        new_stmt = varname + ".set_random_state_PRNG(); _random_seed_es__original"
-        if seed_attribute == "set_random_state_PRNG":
-            new_stmt += " = "
-        lines[lineno - 1] = lines[lineno - 1].replace(old_stmt, new_stmt, 1)
     # delete explicit NumPy seed
     for lineno in visitor.numpy_seeds:
         old_stmt = ".seed"

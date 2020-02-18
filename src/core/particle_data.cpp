@@ -388,7 +388,6 @@ void add_id_to_type_map(int part_id, int type);
 
 int max_seen_particle = -1;
 int n_part = 0;
-bool swimming_particles_exist = false;
 /**
  * @brief id -> rank
  */
@@ -1366,7 +1365,7 @@ void remove_id_from_map(int part_id, int type) {
 int get_random_p_id(int type, int random_index_in_type_map) {
   if (random_index_in_type_map + 1 > particle_type_map.at(type).size())
     throw std::runtime_error("The provided index exceeds the number of "
-                             "particles listed in the type_map");
+                             "particle types listed in the particle_type_map");
   return *std::next(particle_type_map[type].begin(), random_index_in_type_map);
 }
 
@@ -1376,6 +1375,9 @@ void add_id_to_type_map(int part_id, int type) {
 }
 
 int number_of_particles_with_type(int type) {
+  if (particle_type_map.count(type) == 0)
+    throw std::runtime_error("The provided particle type does not exist in "
+                             "the particle_type_map");
   return static_cast<int>(particle_type_map.at(type).size());
 }
 

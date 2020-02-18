@@ -19,11 +19,10 @@
 from libcpp cimport bool
 include "myconfig.pxi"
 
-from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport get_mi_vector, box_geo
+from .grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -32,7 +31,7 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
+from .utils cimport make_array_locked, make_Vector3d, Vector3d
 from .lb cimport lb_lbfluid_get_tau
 from .lb cimport lb_lbfluid_get_lattice_switch
 from .lb cimport NONE
@@ -41,24 +40,21 @@ from .cellsystem import CellSystem
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
-
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
-from globals cimport max_seen_particle
 from .globals import Globals
-from espressomd.utils import array_locked, is_valid_type
+from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
+from .globals cimport max_seen_particle_type, integ_switch, max_oif_objects, sim_time
+from .globals cimport recalc_maximal_cutoff_bonded, recalc_maximal_cutoff_nonbonded, mpi_bcast_parameter
+from .utils cimport handle_errors
 IF VIRTUAL_SITES:
-    from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
+    from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
-
-import sys
-import random  # for true random numbers from os.urandom()
-cimport tuning
 
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
@@ -115,7 +111,6 @@ cdef class System:
         lbboundaries
         ekboundaries
         collision_detection
-        __seed
         cuda_init_handle
         comfixed
         _active_virtual_sites_handle
@@ -234,7 +229,6 @@ cdef class System:
         """
 
         def __set__(self, _periodic):
-            global periodic
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
@@ -296,82 +290,6 @@ cdef class System:
 
         def __get__(self):
             return self.globals.min_global_cut
-
-    def _get_PRNG_state_size(self):
-        """
-        Returns the state size of the pseudo random number generator.
-        """
-
-        return get_state_size_of_generator()
-
-    def set_random_state_PRNG(self):
-        """
-        Sets the state of the pseudo random number generator using real random numbers.
-        """
-
-        _state_size_plus_one = self._get_PRNG_state_size() + 1
-        states = string_vec(n_nodes)
-        rng = random.SystemRandom()  # true RNG that uses os.urandom()
-        for i in range(n_nodes):
-            states_on_node_i = []
-            for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(
-                    rng.randint(0, numeric_limits[int].max()))
-            states[i] = (" ".join(map(str, states_on_node_i))).encode('utf-8')
-        mpi_random_set_stat(states)
-
-    property seed:
-        """
-        Sets the seed of the pseudo random number with a list of seeds which is
-        as long as the number of used nodes.
-        """
-
-        def __set__(self, _seed):
-            cdef vector[int] seed_array
-            self.__seed = _seed
-            if(is_valid_type(_seed, int) and n_nodes == 1):
-                seed_array.resize(1)
-                seed_array[0] = int(_seed)
-                mpi_random_seed(0, seed_array)
-            elif(hasattr(_seed, "__iter__")):
-                if(len(_seed) < n_nodes or len(_seed) > n_nodes):
-                    raise ValueError(
-                        "The list needs to contain one seed value per node")
-                seed_array.resize(len(_seed))
-                for i in range(len(_seed)):
-                    seed_array[i] = int(_seed[i])
-                mpi_random_seed(n_nodes, seed_array)
-            else:
-                raise ValueError(
-                    "The seed has to be an integer or a list of integers with one integer per node")
-
-        def __get__(self):
-            return self.__seed
-
-    property random_number_generator_state:
-        """Sets the random number generator state in the core. This is of
-        interest for deterministic checkpointing.
-        """
-
-        def __set__(self, rng_state):
-            _state_size_plus_one = self._get_PRNG_state_size() + 1
-            if(len(rng_state) == n_nodes * _state_size_plus_one):
-                states = string_vec(n_nodes)
-                for i in range(n_nodes):
-                    states[i] = (" ".join(map(str,
-                                              rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
-                                          )).encode('utf-8')
-                mpi_random_set_stat(states)
-            else:
-                raise ValueError(
-                    "Wrong number of arguments: Usage: 'system.random_number_generator_state = "
-                    "[<state(1)>, ..., <state(n_nodes*(state_size+1))>], where each <state(i)> "
-                    "is an integer. The state size of the PRNG can be obtained by calling "
-                    "system._get_PRNG_state_size().")
-
-        def __get__(self):
-            rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
-            return rng_state
 
     IF VIRTUAL_SITES:
         property virtual_sites:
@@ -480,7 +398,7 @@ cdef class System:
     def _is_valid_type(self, current_type):
         return not (isinstance(current_type, int)
                     or current_type < 0
-                    or current_type > globals.max_seen_particle_type)
+                    or current_type > max_seen_particle_type)
 
     def check_valid_type(self, current_type):
         if self._is_valid_type(current_type):
@@ -518,4 +436,5 @@ cdef class System:
         """
         self.check_valid_type(type)
         number = number_of_particles_with_type(type)
+        handle_errors("")
         return int(number)

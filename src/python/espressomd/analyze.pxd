@@ -20,11 +20,8 @@
 # For C-extern Analysis
 
 cimport numpy as np
-from espressomd.utils cimport *
-from .utils cimport Vector9d
-from libcpp.string cimport string  # import std::string as string
+from .utils cimport Vector3i, Vector3d, Vector9d, List
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "<array>" namespace "std" nogil:
     cdef cppclass array4 "std::array<double, 4>":
@@ -79,10 +76,6 @@ cdef extern from "statistics.hpp":
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg &, int part_type)
-    cdef int calc_cylindrical_average(
-        PartCfg &, vector[double] center, vector[double] direction,
-        double length, double radius, int bins_axial, int bins_radial,
-        vector[int] types, map[string, vector[vector[vector[double]]]] & distribution)
 
     void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                   double r_min, double r_max, int r_bins, vector[double] rdf)

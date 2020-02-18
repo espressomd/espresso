@@ -27,7 +27,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
 #include <string>
 
 #include <thrust/device_ptr.h>

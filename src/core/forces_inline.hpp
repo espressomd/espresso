@@ -35,6 +35,7 @@
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
+#include "errorhandling.hpp"
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"

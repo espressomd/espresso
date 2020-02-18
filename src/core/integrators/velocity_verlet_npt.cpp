@@ -23,6 +23,7 @@
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -124,9 +125,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
         } else {
           p.r.p[j] += p.m.v[j] * time_step;
         }
-#ifdef EXTERNAL_FORCES
       }
-#endif
     }
   }
 

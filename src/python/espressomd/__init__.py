@@ -20,11 +20,11 @@
 # Define the espressomd package
 
 # Initialize MPI, start the main loop on the slaves
-import espressomd._init
+from . import _init
 
-from espressomd.system import System
-from espressomd.code_info import features, all_features
-from espressomd.cuda_init import gpu_available
+from .system import System
+from .code_info import features, all_features
+from .cuda_init import gpu_available
 
 
 class FeaturesError(Exception):
