@@ -51,9 +51,11 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/variant.hpp>
 
+#include <boost/range/numeric.hpp>
 #include <cmath>
 #include <unordered_map>
 #include <unordered_set>
+#include <utils/keys.hpp>
 /************************************************
  * defines
  ************************************************/
@@ -1480,4 +1482,24 @@ bool particle_exists(int part_id) {
   if (particle_node.empty())
     build_particle_node();
   return particle_node.count(part_id);
+}
+
+std::vector<int> get_particle_ids() {
+  if (particle_node.empty())
+    build_particle_node();
+
+  auto ids = Utils::keys(particle_node);
+  boost::sort(ids);
+
+  return ids;
+}
+
+int get_maximal_particle_id() {
+  if (particle_node.empty())
+    build_particle_node();
+
+  return boost::accumulate(particle_node, -1,
+                           [](int max, const std::pair<int, int> &kv) {
+                             return std::max(max, kv.first);
+                           });
 }
