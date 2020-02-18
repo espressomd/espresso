@@ -1877,8 +1877,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         ids = get_particle_ids()
 
         for i in ids:
-            if particle_exists(i):
-                yield self[i]
+            yield self[i]
 
     def exists(self, idx):
         if is_valid_type(idx, int):
