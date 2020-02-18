@@ -528,9 +528,6 @@ void handle_collisions() {
     MPI_Allreduce(MPI_IN_PLACE, &max_seen_particle, 1, MPI_INT, MPI_MAX,
                   comm_cart);
 
-    // Make sure, the local_particles array is long enough
-    realloc_local_particles(max_seen_particle);
-
     int current_vs_pid = max_seen_particle + 1;
 
     // Iterate over global collision queue

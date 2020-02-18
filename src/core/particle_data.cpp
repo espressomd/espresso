@@ -495,20 +495,6 @@ void clear_particle_node() { particle_node.clear(); }
  * organizational functions
  ************************************************/
 
-/** resize \ref local_particles.
-    \param part the highest existing particle
-*/
-void realloc_local_particles(int part) {
-  constexpr auto INCREMENT = 8;
-
-  if (part >= local_particles.size()) {
-    /* increase vector size by round up part + 1 in granularity INCREMENT and
-     * set new memory to nullptr */
-    local_particles.resize(INCREMENT * ((part + INCREMENT) / INCREMENT),
-                           nullptr);
-  }
-}
-
 void update_local_particles(ParticleList *pl) {
   Particle *p = pl->part;
   int n = pl->n, i;
@@ -1133,8 +1119,6 @@ void added_particle(int part) {
   n_part++;
 
   if (part > max_seen_particle) {
-    realloc_local_particles(part);
-
     max_seen_particle = part;
   }
 }

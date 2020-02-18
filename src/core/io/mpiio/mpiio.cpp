@@ -377,9 +377,6 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   // Determine nlocalpart (prefix of rank+1 - own prefix) on every node.
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
-  // Prepare ESPResSo data structures
-  local_particles.resize(nglobalpart);
-  std::fill(local_particles.begin(), local_particles.end(), nullptr);
   n_part = nglobalpart;
   max_seen_particle = nglobalpart;
 

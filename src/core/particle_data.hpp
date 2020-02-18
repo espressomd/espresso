@@ -87,8 +87,6 @@ extern int n_part;
 /** flag that active swimming particles exist */
 extern bool swimming_particles_exist;
 
-extern std::vector<Particle *> local_particles;
-
 /**
  * @brief Find local particles by id.
  *
@@ -103,11 +101,26 @@ extern std::vector<Particle *> local_particles;
 inline Particle *get_local_particle_data(int id) {
   extern std::vector<Particle *> local_particles;
 
+  if (id >= local_particles.size())
+    return nullptr;
+
   return local_particles[id];
 }
 
+/**
+ * @brief Update local particle index.
+ *
+ * Update the entry for a particle in the local particle
+ * index.
+ *
+ * @param id of the particle to up-date.
+ * @param p Pointer to the particle.
+ **/
 inline void set_local_particle_data(int id, Particle *p) {
   extern std::vector<Particle *> local_particles;
+
+  if (id >= local_particles.size())
+    local_particles.resize(id + 1);
 
   local_particles[id] = p;
 }
@@ -180,9 +193,6 @@ void update_local_particles(ParticleList *pl);
  *  at the beginning of the integration.
  */
 void clear_particle_node();
-
-/** Realloc \ref local_particles. */
-void realloc_local_particles(int part);
 
 /**
  * @brief Get particle data.
