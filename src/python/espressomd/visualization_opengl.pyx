@@ -1196,8 +1196,7 @@ class openGLLive:
                 v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
-        b2 = self.system.box_l[0] / 2.0
-        box_l2_sqr = pow(b2, 2.0)
+        box_l_2 = self.system.box_l / 2.0
         for b in self.bonds:
             col = self._modulo_indexing(self.specs['bond_type_colors'], b[2])
             mat = self.materials[self._modulo_indexing(
@@ -1207,9 +1206,9 @@ class openGLLive:
             xA = self.particles['pos'][b[0]]
             xB = self.particles['pos'][b[1]]
             dx = xB - xA
-            bondLen_sqr = dx[0] * dx[0] + dx[1] * dx[1] + dx[2] * dx[2]
 
-            if bondLen_sqr < box_l2_sqr:
+            if abs(dx[0]) < box_l_2[0] and abs(
+                    dx[1]) < box_l_2[1] and abs(dx[2]) < box_l_2[2]:
                 # BOND COMPLETELY INSIDE BOX
                 draw_cylinder(xA, xB, radius, col, mat,
                               self.specs['quality_bonds'])
@@ -1223,42 +1222,29 @@ class openGLLive:
                                     draw_cylinder(xA + offset, xB + offset,
                                                   radius, col, mat, self.specs['quality_bonds'])
             else:
-                # SPLIT BOND
-                l = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
-                l0 = self.particles['pos'][b[0]]
-                hits = 0
-                for i in range(6):
-                    lineBoxNDot = float(np.dot(l, self.box_n[i]))
-                    if lineBoxNDot == 0:
-                        continue
-                    s = l0 - \
-                        np.dot(l0 - self.box_p[i],
-                               self.box_n[i]) / lineBoxNDot * l
-                    if self._is_inside_box(s):
-                        if lineBoxNDot < 0:
-                            s0 = s
-                        else:
-                            s1 = s
-                        hits += 1
-                        if hits >= 2:
-                            break
-                if hits >= 2:
-                    draw_cylinder(self.particles['pos'][b[0]], s0, radius, col,
-                                  mat, self.specs['quality_bonds'])
-                    draw_cylinder(self.particles['pos'][b[1]], s1, radius, col,
-                                  mat, self.specs['quality_bonds'])
+                # BOND CROSSES THE BOX BOUNDARIES
+                d = self._cut_bond(xA, dx)
+                if d is np.inf:
+                    continue
 
-                    if self.has_images:
-                        for imx in self.image_vectors[0]:
-                            for imy in self.image_vectors[1]:
-                                for imz in self.image_vectors[2]:
-                                    if imx != 0 or imy != 0 or imz != 0:
-                                        offset = [imx, imy, imz] * \
-                                            self.system.box_l
-                                        draw_cylinder(xA + offset, s0 + offset, radius, col, mat,
-                                                      self.specs['quality_bonds'])
-                                        draw_cylinder(xB + offset, s1 + offset, radius, col, mat,
-                                                      self.specs['quality_bonds'])
+                sA = xA + d * dx
+                sB = xB - (1 - d) * dx
+                draw_cylinder(xA, sA, radius, col, mat,
+                              self.specs['quality_bonds'])
+                draw_cylinder(xB, sB, radius, col, mat,
+                              self.specs['quality_bonds'])
+
+                if self.has_images:
+                    for imx in self.image_vectors[0]:
+                        for imy in self.image_vectors[1]:
+                            for imz in self.image_vectors[2]:
+                                if imx != 0 or imy != 0 or imz != 0:
+                                    offset = [imx, imy, imz] * \
+                                        self.system.box_l
+                                    draw_cylinder(xA + offset, sA + offset, radius, col, mat,
+                                                  self.specs['quality_bonds'])
+                                    draw_cylinder(xB + offset, sB + offset, radius, col, mat,
+                                                  self.specs['quality_bonds'])
 
     def _redraw_sphere(self, pos, radius, quality):
         OpenGL.GL.glPushMatrix()
@@ -1267,12 +1253,44 @@ class openGLLive:
         OpenGL.GL.OpenGL.GL.glPopMatrix()
 
     # HELPER TO DRAW PERIODIC BONDS
-    def _is_inside_box(self, p):
-        eps = 1e-5
+    def _cut_bond(self, xA, dx):
+        """
+        Algorithm for the line-plane intersection problem. Given the unfolded
+        positions of two particles, determine: 1) the box image that minimizes
+        the folded bond length, 2) which side of the simulation box is crossed
+        by the bond, 3) how much of the bond is inside the unit cell starting
+        from the first particle. That scalar is returned by the function, and
+        can be used to calculate the coordinates of the line-plane
+        intersection point. The algorithm can be found at
+        https://en.wikipedia.org/w/index.php?title=Line%E2%80%93plane_intersection&oldid=940427752#Algebraic_form
+        """
+        # corner case: the two particles occupy the same position
+        if np.dot(dx, dx) < 1e-9:
+            return np.inf
+        # find the box image that minimizes the unfolded bond length
+        shift = np.rint(dx / self.system.box_l)
+        # get the unfolded bond vector
+        dx -= shift * self.system.box_l
+        # find which side of the simulation box is crossed by the bond
+        best_d = np.inf
+        best_i = 0
         for i in range(3):
-            if p[i] < -eps or p[i] > eps + self.last_box_l[i]:
-                return False
-        return True
+            if dx[i] == 0:
+                continue  # corner case: bond is parallel to a face
+            elif dx[i] > 0:
+                p0_i = self.system.box_l[i]
+            else:
+                p0_i = 0
+            # calculate the length of the bond that is inside the box using
+            # an optimized version of `np.dot(p0 - x0, n) / np.dot(dx, n)`
+            # where the dot products decay to an array access, because `n`
+            # is always a unit vector in rectangular boxes and its sign
+            # is canceled out by the division
+            d = (p0_i - xA[i]) / dx[i]
+            if d < best_d:
+                best_d = d
+                best_i = i
+        return best_d
 
     # ARROWS IN A PLANE FOR LB VELOCITIES
     def _draw_lb_vel(self):
