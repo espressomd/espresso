@@ -46,6 +46,7 @@
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "partCfg_global.hpp"
+#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"

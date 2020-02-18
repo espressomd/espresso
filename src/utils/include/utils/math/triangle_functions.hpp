@@ -21,6 +21,8 @@
 
 #include "utils/Vector.hpp"
 
+#include <boost/algorithm/clamp.hpp>
+
 #include <cmath>
 
 namespace Utils {
@@ -48,54 +50,46 @@ inline double area_triangle(const Vector3d &P1, const Vector3d &P2,
   return 0.5 * get_n_triangle(P1, P2, P3).norm();
 }
 
-/** This function returns the angle between the triangle p1,p2,p3 and p2,p3,p4.
- *  Be careful, the angle depends on the orientation of the triangles! You need
- *  to be sure that the orientation (direction of normal vector) of p1p2p3
- *  is given by the cross product p2p1 x p2p3. The orientation of p2p3p4 must
- *  be given by p2p3 x p2p4.
- *
- *  Example: p1 = (0,0,1), p2 = (0,0,0), p3=(1,0,0), p4=(0,1,0). The
- *  orientation of p1p2p3 should be in the direction (0,1,0) and indeed: p2p1 x
- *  p2p3 = (0,0,1)x(1,0,0) = (0,1,0) This function is called in the beginning
- *  of the simulation when creating bonds depending on the angle between the
- *  triangles, the bending_force. Here, we determine the orientations by
- *  looping over the triangles and checking the correct orientation. So if you
- *  have the access to the order of particles, you are safe to call this
- *  function with exactly this order. Otherwise you need to check the
- *  orientations.
- */
-template <typename T1, typename T2, typename T3, typename T4>
-double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
-                           const T4 &P4) {
+/** @brief Returns the angle between two triangles in 3D space
+
+
+Returns the angle between two triangles in 3D space given by points P1P2P3 and
+P2P3P4. Note, that the common edge is given as the second and the third
+argument. Here, the angle can have values from 0 to 2 * PI, depending on the
+orientation of the two triangles. So the angle can be convex or concave. For
+each triangle, an inward direction has been defined as the direction of one of
+the two normal vectors. Particularly, for triangle P1P2P3 it is the vector N1 =
+P2P1 x P2P3 and for triangle P2P3P4 it is N2 = P2P3 x P2P4. The method first
+computes the angle between N1 and N2, which gives always value between 0 and PI
+and then it checks whether this value must be corrected to a value between PI
+and 2 * PI.
+
+As an example, consider 4 points A,B,C,D in space given by coordinates A =
+[1,1,1], B = [2,1,1], C = [1,2,1], D = [1,1,2]. We want to determine the angle
+between triangles ABC and ACD. In case that the orientations of the triangle ABC
+is [0,0,1] and orientation of ACD is [1,0,0], then the resulting angle must be
+PI/2.0. To get correct result, note that the common edge is AC, and one must
+call the method as angle_btw_triangles(B,A,C,D). With this call we have ensured
+that N1 = AB x AC (which coincides with [0,0,1]) and N2 = AC x AD (which
+coincides with [1,0,0]). Alternatively, if the orientations of the two triangles
+were the oppisite, the correct call would be angle_btw_triangles(B,C,A,D) so
+that N1 = CB x CA and N2 = CA x CD.
+
+*/
+inline double angle_btw_triangles(const Vector3d &P1, const Vector3d &P2,
+                                  const Vector3d &P3, const Vector3d &P4) {
   auto const normal1 = get_n_triangle(P2, P1, P3);
   auto const normal2 = get_n_triangle(P2, P3, P4);
-
-  double tmp11;
-  // Now we compute the scalar product of n1 and n2 divided by the norms of n1
-  // and n2
-  // tmp11 = dot(3,normal1,normal2);         // tmp11 = n1.n2
-  tmp11 = normal1 * normal2; // tmp11 = n1.n2
-
-  tmp11 *= fabs(tmp11);                         // tmp11 = (n1.n2)^2
-  tmp11 /= (normal1.norm2() * normal2.norm2()); // tmp11 = (n1.n2/(|n1||n2|))^2
-  if (tmp11 > 0) {
-    tmp11 = std::sqrt(tmp11);
-  } else {
-    tmp11 = -std::sqrt(-tmp11);
-  }
-
-  if (tmp11 >= 1.) {
-    tmp11 = 0.0;
-  } else if (tmp11 <= -1.) {
-    tmp11 = M_PI;
-  }
-  auto const phi =
-      M_PI - std::acos(tmp11); // The angle between the faces (not considering
-                               // the orientation, always less or equal to Pi)
-                               // is equal to Pi minus angle between the normals
+  auto const cosine = boost::algorithm::clamp(
+      normal1 * normal2 / std::sqrt(normal1.norm2() * normal2.norm2()), -1.0,
+      1.0);
+  // The angle between the faces (not considering
+  // the orientation, always less or equal to Pi)
+  // is equal to Pi minus angle between the normals
+  auto const phi = M_PI - std::acos(cosine);
 
   // Now we need to determine, if the angle between two triangles is less than
-  // Pi or more than Pi. To do this we check,
+  // Pi or more than Pi. To do this, we check
   // if the point P4 lies in the halfspace given by triangle P1P2P3 and the
   // normal to this triangle. If yes, we have
   // angle less than Pi, if not, we have angle more than Pi.
@@ -104,8 +98,7 @@ double angle_btw_triangles(const T1 &P1, const T2 &P2, const T3 &P3,
   // Point P1 lies in the plane, therefore d = -(n_x*P1_x + n_y*P1_y + n_z*P1_z)
   // Point P4 lies in the halfspace given by normal iff n_x*P4_x + n_y*P4_y +
   // n_z*P4_z + d >= 0
-  tmp11 = -(normal1[0] * P1[0] + normal1[1] * P1[1] + normal1[2] * P1[2]);
-  if (normal1[0] * P4[0] + normal1[1] * P4[1] + normal1[2] * P4[2] + tmp11 < 0)
+  if (normal1 * P4 - normal1 * P1 < 0)
     return 2 * M_PI - phi;
 
   return phi;

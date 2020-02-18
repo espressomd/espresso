@@ -150,7 +150,7 @@ inline void add_bonded_virials(Particle const &p1) {
     }
 
     /* fetch particle 2 */
-    Particle const *const p2 = local_particles[p1.bl.e[i++]];
+    Particle const *const p2 = get_local_particle_data(p1.bl.e[i++]);
     if (!p2) {
       // for harmonic spring:
       // if cutoff was defined and p2 is not there it is anyway outside the
@@ -197,8 +197,8 @@ inline void add_three_body_bonded_stress(Particle const &p1) {
       i += 1 + iaparams.num;
       continue;
     }
-    Particle const &p2 = *local_particles[p1.bl.e[i + 1]];
-    Particle const &p3 = *local_particles[p1.bl.e[i + 2]];
+    Particle const &p2 = *get_local_particle_data(p1.bl.e[i + 1]);
+    Particle const &p3 = *get_local_particle_data(p1.bl.e[i + 2]);
 
     auto const dx21 = -get_mi_vector(p1.r.p, p2.r.p, box_geo);
     auto const dx31 = get_mi_vector(p3.r.p, p1.r.p, box_geo);

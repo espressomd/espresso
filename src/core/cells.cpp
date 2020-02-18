@@ -228,8 +228,8 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
     local_particles. */
 static void invalidate_ghosts() {
   for (auto const &p : cell_structure.ghost_cells().particles()) {
-    if (local_particles[p.identity()] == &p) {
-      local_particles[p.identity()] = {};
+    if (get_local_particle_data(p.identity()) == &p) {
+      set_local_particle_data(p.identity(), nullptr);
     }
   }
 

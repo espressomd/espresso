@@ -314,8 +314,8 @@ struct UpdateVisitor : public boost::static_visitor<void> {
   }
   /* Plain messages are just called. */
   template <typename Message> void operator()(const Message &msg) const {
-    assert(local_particles[id]);
-    msg(*local_particles[id]);
+    assert(get_local_particle_data(id));
+    msg(*get_local_particle_data(id));
   }
 };
 } // namespace
@@ -496,25 +496,11 @@ void clear_particle_node() { particle_node.clear(); }
  * organizational functions
  ************************************************/
 
-/** resize \ref local_particles.
-    \param part the highest existing particle
-*/
-void realloc_local_particles(int part) {
-  constexpr auto INCREMENT = 8;
-
-  if (part >= local_particles.size()) {
-    /* increase vector size by round up part + 1 in granularity INCREMENT and
-     * set new memory to nullptr */
-    local_particles.resize(INCREMENT * ((part + INCREMENT) / INCREMENT),
-                           nullptr);
-  }
-}
-
 void update_local_particles(ParticleList *pl) {
   Particle *p = pl->part;
   int n = pl->n, i;
   for (i = 0; i < n; i++)
-    local_particles[p[i].p.identity] = &p[i];
+    set_local_particle_data(p[i].p.identity, &p[i]);
 }
 
 void append_unindexed_particle(ParticleList *l, Particle &&part) {
@@ -531,7 +517,7 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   if (re)
     update_local_particles(l);
   else
-    local_particles[p->p.identity] = p;
+    set_local_particle_data(p->p.identity, p);
   return p;
 }
 
@@ -568,7 +554,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   if (re) {
     update_local_particles(dl);
   } else {
-    local_particles[dst->p.identity] = dst;
+    set_local_particle_data(dst->p.identity, dst);
   }
   if (src != end) {
     new (src) Particle(std::move(*end));
@@ -577,7 +563,7 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
-    local_particles[src->p.identity] = src;
+    set_local_particle_data(src->p.identity, src);
   }
   return dst;
 }
@@ -603,7 +589,7 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
   Particle p = std::move(*src);
 
   assert(p.p.identity <= max_seen_particle);
-  local_particles[p.p.identity] = nullptr;
+  set_local_particle_data(p.p.identity, nullptr);
 
   if (src != end) {
     new (src) Particle(std::move(*end));
@@ -612,7 +598,7 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
   if (sl->resize(sl->n - 1)) {
     update_local_particles(sl);
   } else if (src != end) {
-    local_particles[src->p.identity] = src;
+    set_local_particle_data(src->p.identity, src);
   }
   return p;
 }
@@ -626,7 +612,7 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
 boost::optional<const Particle &> get_particle_data_local(int id) {
-  auto p = local_particles[id];
+  auto p = get_local_particle_data(id);
 
   if (p and (not p->l.ghost)) {
     return *p;
@@ -641,8 +627,8 @@ const Particle &get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
 
   if (pnode == this_node) {
-    assert(local_particles[part]);
-    return *local_particles[part];
+    assert(get_local_particle_data(part));
+    return *get_local_particle_data(part);
   }
 
   /* Query the cache */
@@ -665,8 +651,8 @@ void mpi_get_particles_slave(int, int) {
 
   std::vector<Particle> parts(ids.size());
   std::transform(ids.begin(), ids.end(), parts.begin(), [](int id) {
-    assert(local_particles[id]);
-    return *local_particles[id];
+    assert(get_local_particle_data(id));
+    return *get_local_particle_data(id);
   });
 
   Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
@@ -703,8 +689,8 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
   /* Copy local particles */
   std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
                  parts.begin(), [](int id) {
-                   assert(local_particles[id]);
-                   return *local_particles[id];
+                   assert(get_local_particle_data(id));
+                   return *get_local_particle_data(id);
                  });
 
   std::vector<int> node_sizes(comm_cart.size());
@@ -1094,7 +1080,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
     return append_indexed_particle(cell, std::move(new_part));
   }
 
-  auto pt = local_particles[id];
+  auto pt = get_local_particle_data(id);
   pt->r.p = pp;
   pt->l.i = i;
 
@@ -1134,8 +1120,6 @@ void added_particle(int part) {
   n_part++;
 
   if (part > max_seen_particle) {
-    realloc_local_particles(part);
-
     max_seen_particle = part;
   }
 }
@@ -1196,7 +1180,7 @@ void local_change_exclusion(int part1, int part2, int _delete) {
   }
 
   /* part1, if here */
-  auto part = local_particles[part1];
+  auto part = get_local_particle_data(part1);
   if (part) {
     if (_delete)
       try_delete_exclusion(part, part2);
@@ -1205,7 +1189,7 @@ void local_change_exclusion(int part1, int part2, int _delete) {
   }
 
   /* part2, if here */
-  part = local_particles[part2];
+  part = get_local_particle_data(part2);
   if (part) {
     if (_delete)
       try_delete_exclusion(part, part1);
@@ -1237,7 +1221,7 @@ void send_particles(ParticleList *particles, int node) {
 
   /* remove particles from this nodes local list and free data */
   for (int pc = 0; pc < particles->n; pc++) {
-    local_particles[particles->part[pc].p.identity] = nullptr;
+    set_local_particle_data(particles->part[pc].p.identity, nullptr);
     free_particle(&particles->part[pc]);
   }
 

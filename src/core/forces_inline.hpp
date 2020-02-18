@@ -412,7 +412,7 @@ inline void add_bonded_force(Particle *const p1) {
     bool bond_broken = true;
 
     if (n_partners) {
-      p2 = local_particles[p1->bl.e[i++]];
+      p2 = get_local_particle_data(p1->bl.e[i++]);
       if (!p2) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
         return;
@@ -420,7 +420,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 3 eventually */
       if (n_partners >= 2) {
-        p3 = local_particles[p1->bl.e[i++]];
+        p3 = get_local_particle_data(p1->bl.e[i++]);
         if (!p3) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "
@@ -432,7 +432,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 4 eventually */
       if (n_partners >= 3) {
-        p4 = local_particles[p1->bl.e[i++]];
+        p4 = get_local_particle_data(p1->bl.e[i++]);
         if (!p4) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "
@@ -489,11 +489,9 @@ inline void add_bonded_force(Particle *const p1) {
             angle_cossquare_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
-#ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
         bond_broken = false;
         break;
-#endif
       case BONDED_IA_TABULATED_ANGLE:
         std::tie(force1, force2, force3) =
             tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
@@ -516,14 +514,12 @@ inline void add_bonded_force(Particle *const p1) {
     } // 2 partners (angle bonds...)
     else if (n_partners == 3) {
       switch (type) {
-#ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
         // in OIF nomenclature, particles p2 and p3 are common to both triangles
         std::tie(force1, force2, force3, force4) =
             calc_oif_local(*p1, *p2, *p3, *p4, iaparams);
         bond_broken = false;
         break;
-#endif
       // IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIBEND:
         std::tie(force1, force2, force3, force4) =
@@ -605,9 +601,7 @@ inline void add_bonded_force(Particle *const p1) {
       case BONDED_IA_TABULATED_DIHEDRAL:
       case BONDED_IA_DIHEDRAL:
       case BONDED_IA_IBM_TRIBEND:
-#ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
-#endif
         p1->f.f += force1;
         p2->f.f += force2;
         p3->f.f += force3;
