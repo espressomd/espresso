@@ -87,4 +87,4 @@ BOOST_AUTO_TEST_CASE(angle_triangles) {
                     epsilon);
   BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, c, a, d) - 3 * M_PI / 2.0),
                     epsilon);
-};
+}
