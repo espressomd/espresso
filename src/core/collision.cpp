@@ -66,7 +66,14 @@ Collision_parameters collision_params;
 
 namespace {
 Particle &get_part(int id) {
-  return assert(get_local_particle_data(id)), *get_local_particle_data(id);
+  auto const p = get_local_particle_data(id);
+
+  if (not p) {
+    throw std::runtime_error("Could not handle collision because particle " +
+                             std::to_string(id) + " was not found.");
+  }
+
+  return *p;
 }
 } // namespace
 
