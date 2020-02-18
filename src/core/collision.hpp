@@ -155,6 +155,10 @@ inline bool collision_detection_criterion(Particle const &p1, Particle const &p2
   /* TODO implement other criteria */
 }
 
+inline bool virtual_site_criterion(Particle const &p1, Particle const &p2){
+  return ((p1.p.is_virtual or p2.p.is_virtual) and !collision_params.vs_particle_type.empty());
+}
+
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(Particle const &p1, Particle const &p2,
                              const double &dist_betw_part2) {
@@ -173,6 +177,9 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     return;
 
   if(!collision_detection_criterion(p1, p2))
+    return;
+
+  if(virtual_site_criterion(p1,p2))
     return;
 
   /* If we're still here, there is no previous bond between the particles,
