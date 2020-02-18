@@ -121,7 +121,7 @@ class CollisionDetection(ScriptInterfaceHelper):
                 if isinstance(kwargs[name], BondedInteraction):
                     kwargs[name] = kwargs[name]._bond_id
         if not 'active' in kwargs and len(kwargs) > 0:
-          kwargs['active'] = 1
+            kwargs['active'] = 1
         super().set_params(**kwargs)
         self.validate()
         handle_errors("Validation of collision detection failed")
@@ -164,7 +164,6 @@ class CollisionDetection(ScriptInterfaceHelper):
             else:
                 res = BondedInteractions()[value]
         return res
-
 
     # Pickle support
     def __reduce__(self):

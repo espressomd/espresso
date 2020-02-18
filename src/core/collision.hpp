@@ -48,8 +48,8 @@
 class Collision_parameters {
 public:
   Collision_parameters()
-      : active(0), distance(0.), distance2(0.), rate(0.),
-        bond_type(-1), vs_bond_type(-1), bond_three_particles(-1){};
+      : active(0), distance(0.), distance2(0.), rate(0.), bond_type(-1),
+        vs_bond_type(-1), bond_three_particles(-1){};
 
   /// collision handling mode, a combination of constants COLLISION_MODE_*
   int active;
@@ -105,23 +105,27 @@ void queue_collision(std::vector<int> particles);
 
 inline bool particle_type_criterion(Particle const &p1, Particle const &p2) {
   int count_multiples = 1;
-  if(p1.p.type == p2.p.type)
+  if (p1.p.type == p2.p.type)
     count_multiples = 2;
-  if(std::count(collision_params.particle_type.begin(),
-                collision_params.particle_type.end(),p1.p.type) == count_multiples)
-    return (count_multiples == 2 || std::count(collision_params.particle_type.begin(),
-                                               collision_params.particle_type.end(),p2.p.type) > 0);
+  if (std::count(collision_params.particle_type.begin(),
+                 collision_params.particle_type.end(),
+                 p1.p.type) == count_multiples)
+    return (count_multiples == 2 ||
+            std::count(collision_params.particle_type.begin(),
+                       collision_params.particle_type.end(), p2.p.type) > 0);
   return 0;
 }
 
-inline bool collision_detection_criterion(Particle const &p1, Particle const &p2){
-  if(collision_params.rate > 0)
+inline bool collision_detection_criterion(Particle const &p1,
+                                          Particle const &p2) {
+  if (collision_params.rate > 0)
     return d_random() < collision_params.rate * time_step;
   /* TODO implement other criteria */
 }
 
-inline bool virtual_site_criterion(Particle const &p1, Particle const &p2){
-  return ((p1.p.is_virtual or p2.p.is_virtual) and !collision_params.vs_particle_type.empty());
+inline bool virtual_site_criterion(Particle const &p1, Particle const &p2) {
+  return ((p1.p.is_virtual or p2.p.is_virtual) and
+          !collision_params.vs_particle_type.empty());
 }
 
 /** @brief Detect (and queue) a collision between the given particles. */
@@ -131,7 +135,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     return;
 
   // Check, if the particle types match the criteria
-  if (!particle_type_criterion(p1,p2))
+  if (!particle_type_criterion(p1, p2))
     return;
 
   // Check, if there's already a bond between the particles
@@ -141,10 +145,10 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
   if (pair_bond_exists_on(p2, p1, collision_params.bond_type))
     return;
 
-  if(!collision_detection_criterion(p1, p2))
+  if (!collision_detection_criterion(p1, p2))
     return;
 
-  if(virtual_site_criterion(p1,p2))
+  if (virtual_site_criterion(p1, p2))
     return;
 
   /* If we're still here, there is no previous bond between the particles,
