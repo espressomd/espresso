@@ -92,6 +92,7 @@
 #include "ParticleList.hpp"
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/range/algorithm/copy.hpp>
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
