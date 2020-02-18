@@ -1903,7 +1903,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         remove_all_particles()
 
     def __str__(self):
-        return "ParticleList([" + ",".join(get_particle_ids())  + "])"
+        return "ParticleList([" + ",".join(get_particle_ids()) + "])"
 
     def writevtk(self, fname, types='all'):
         """
@@ -2001,7 +2001,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         ids = get_particle_ids()
 
         for i in ids:
-            for j in ids[i+1:]:
+            for j in ids[i + 1:]:
                 yield (self[i], self[j])
 
     def select(self, *args, **kwargs):
