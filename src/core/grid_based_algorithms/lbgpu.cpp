@@ -36,6 +36,7 @@
 #include "grid_based_algorithms/lbgpu.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "particle_data.hpp"
 #include "statistics.hpp"
 
 #include <utils/constants.hpp>

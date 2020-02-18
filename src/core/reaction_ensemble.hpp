@@ -20,7 +20,9 @@
 #define REACTION_ENSEMBLE_H
 
 #include "energy.hpp"
+#include "particle_data.hpp"
 #include "random.hpp"
+
 #include <map>
 #include <string>
 #include <utils/Accumulator.hpp>

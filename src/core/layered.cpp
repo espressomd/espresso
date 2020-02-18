@@ -29,6 +29,7 @@
 #include "errorhandling.hpp"
 #include "ghosts.hpp"
 #include "global.hpp"
+#include "particle_data.hpp"
 
 #include <mpi.h>
 
