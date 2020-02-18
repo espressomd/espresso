@@ -17,10 +17,12 @@
 import espressomd
 import numpy as np
 import unittest as ut
+
 from tests_common import abspath
+import unittest_decorators as utx
 
 
-@utx.skipIfMissingFeatures(["MEMBRANE_COLLISION"])
+@utx.skipIfMissingFeatures(["MEMBRANE_COLLISION", "MASS"])
 class OifVolumeConservation(ut.TestCase):
 
     """Loads a soft elastic sphere via object_in_fluid, stretches it and checks
