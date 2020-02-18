@@ -100,9 +100,15 @@ extern std::vector<Particle *> local_particles;
  *
  * @return Pointer to particle or nullptr.
  **/
-inline Particle *get_local_particle_data(int id) { return local_particles[id]; }
+inline Particle *get_local_particle_data(int id) {
+  extern std::vector<Particle *> local_particles;
+
+  return local_particles[id];
+}
 
 inline void set_local_particle_data(int id, Particle *p) {
+  extern std::vector<Particle *> local_particles;
+
   local_particles[id] = p;
 }
 

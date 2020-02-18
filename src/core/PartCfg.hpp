@@ -35,33 +35,8 @@
  * @brief Proxy class that gets a particle range from #local_particles.
  */
 class GetLocalParts {
-  class SkipIfNullOrGhost {
-  public:
-    bool operator()(Particle const *p_ptr) const {
-      return (p_ptr == nullptr) or (p_ptr->l.ghost);
-    }
-  };
-
-  using skip_it = Utils::SkipIterator<Particle **, SkipIfNullOrGhost>;
-  using iterator = boost::indirect_iterator<skip_it>;
-  using Range = boost::iterator_range<iterator>;
-
 public:
-  Range operator()() const {
-    if (local_particles.empty()) {
-      auto begin = skip_it(nullptr, nullptr, SkipIfNullOrGhost());
-      return {make_indirect_iterator(begin), make_indirect_iterator(begin)};
-    }
-
-    auto begin = skip_it(local_particles.data(),
-                         local_particles.data() + max_seen_particle + 1,
-                         SkipIfNullOrGhost());
-    auto end = skip_it(local_particles.data() + max_seen_particle + 1,
-                       local_particles.data() + max_seen_particle + 1,
-                       SkipIfNullOrGhost());
-
-    return {make_indirect_iterator(begin), make_indirect_iterator(end)};
-  }
+  auto operator()() const { return cell_structure.local_cells().particles(); }
 };
 
 /** Unfold coordinates to physical position. */

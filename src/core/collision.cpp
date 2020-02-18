@@ -66,7 +66,7 @@ Collision_parameters collision_params;
 
 namespace {
 Particle &get_part(int id) {
-  return assert(get_local_particle_data(id)), *local_particles[id];
+  return assert(get_local_particle_data(id)), *get_local_particle_data(id);
 }
 } // namespace
 
