@@ -47,9 +47,6 @@ class CollisionDetection(ScriptInterfaceHelper):
     _so_name = "CollisionDetection::CollisionDetection"
 
     def __init__(self, *args, **kwargs):
-        # If no mode is specified at construction, use off.
-#        if "mode" not in kwargs:
-#            kwargs["mode"] = "off"
         super().__init__()
         self.set_params(**kwargs)
 
@@ -76,34 +73,36 @@ class CollisionDetection(ScriptInterfaceHelper):
 
         Parameters
         ----------
-        mode : :obj:`str`, \{"off", "bind_centers", "bind_at_point_of_collision", "bind_three_particles", "glue_to_surface"\}
-            Collision detection mode
-
         distance : :obj:`float`
             Distance below which a pair of particles is considered in the
             collision detection
 
-        bond_centers : :obj:`espressomd.interactions.BondedInteraction`
+        bond_type : :obj:`espressomd.interactions.BondedInteraction`
             Bond to add between the colliding particles
 
-        bond_vs : :obj:`espressomd.interactions.BondedInteraction`
-            Bond to add between virtual sites (for modes using virtual sites)
+        vs_bond_type : :obj:`espressomd.interactions.BondedInteraction`
+            Bond to add between virtual sites. If only one virtual site would be
+            created, then the virtal site and the real particle, which does not hold
+            this virtual site, will also connected via this bond.
 
-        part_type_vs : :obj:`int`
-            Particle type of the virtual sites being created on collision
-            (virtual sites based modes)
+        rate : :obj:`float`
+            The rate at collision is accepted to form bonds.
 
-        part_type_to_be_glued : :obj:`int`
-            particle type for ``"glue_to_surface"`` mode. See user guide.
+        particle_type : array_like :obj:`int`
+            The particle types, which will be checked for collision. At least two
+            particle types need to be defined. If one want a collision of same type
+            particles, the type can be added twice.
 
-        part_type_to_attach_vs_to : :obj:`int`
-            particle type for ``"glue_to_surface"`` mode. See user guide.
+        vs_particle_type : aray_like :obj:`int`
+            The virtual sites to be created between the colliding particles. This is
+            be used to 'glue' the particles together, so that their relative orientation
+            will remain the same. The entries of this array match the entries of the
+            `particle_type` array, so that for each particle type there can be a
+            different type of virtual site created.
 
-        part_type_after_glueing : :obj:`int`
-            particle type for ``"glue_to_surface"`` mode. See user guide.
-
-        distance_glued_particle_to_vs : :obj:`float`
-            Distance for ``"glue_to_surface"`` mode. See user guide.
+        distance_vs_particle : aray_like :obj:`float`
+            The relative distance (0<= d <= 1) at which the virtual site will be created.
+            This distance needs to be set for each virtual site type created.
 
         bond_three_particles : :obj:`espressomd.interactions.BondedInteraction`
             First angular bond for the ``"bind_three_particles"`` mode. See
@@ -115,20 +114,6 @@ class CollisionDetection(ScriptInterfaceHelper):
             angles
 
         """
-
-#        if not ("mode" in kwargs):
-#            raise Exception(
-#                "Collision mode must be specified via the mode keyword argument")
-
-        # Completeness of parameter set
-#        if not (set(kwargs.keys()) == set(
-#                self._params_for_mode(kwargs["mode"]))):
-#            raise Exception("Parameter set does not match mode. ",
-#                            kwargs["mode"], "requires ",
-#                            self._params_for_mode(kwargs["mode"]))
-
-        # Mode
-#        kwargs["mode"] = self._int_mode[kwargs["mode"]]
 
         # Convert bonds to bond ids
         for name in ["bond_type", "vs_bond_type"]:
@@ -156,7 +141,7 @@ class CollisionDetection(ScriptInterfaceHelper):
             res[k] = self._convert_param(k, res[k])
 
         # Filter key-value pairs according to active mode
-        return {k: res[k] for k in self._params_for_mode(res["mode"])}
+        return res
 
     def _convert_param(self, name, value):
         """
@@ -171,8 +156,6 @@ class CollisionDetection(ScriptInterfaceHelper):
         name = to_str(name)
         # Convert int mode parameter to string
         res = value
-#        if name == "mode":
-#            res = self._str_mode(value)
 
         # Convert bond parameters from bond ids to into BondedInteractions
         if name in ["bond_type", "vs_bond_type"]:
@@ -182,42 +165,6 @@ class CollisionDetection(ScriptInterfaceHelper):
                 res = BondedInteractions()[value]
         return res
 
-    def _params_for_mode(self, mode):
-        """The parameter names expected for a given collision mode
-
-        """
-#        if mode == "off":
-#            return ("mode",)
-#        if mode == "bind_centers":
-#            return ("mode", "bond_centers", "distance")
-#        if mode == "bind_at_point_of_collision":
-#           return ("mode", "bond_centers", "bond_vs",
-#                    "part_type_vs", "distance", "vs_placement")
-#        if mode == "glue_to_surface":
-#            return ("mode", "bond_centers", "bond_vs", "part_type_vs",
-#                    "part_type_to_be_glued", "part_type_to_attach_vs_to",
-#                    "part_type_after_glueing", "distance",
-#                    "distance_glued_particle_to_vs")
-#        if mode == "bind_three_particles":
-#            return ("mode", "bond_centers", "distance", "bond_three_particles",
-#                    "three_particle_binding_angle_resolution")
-        raise Exception("Mode not handled: " + mode.__str__())
-
-    _int_mode = {
-        "off": int(COLLISION_MODE_OFF),
-        "bind_centers": int(COLLISION_MODE_BOND),
-        "bind_at_point_of_collision": int(COLLISION_MODE_VS),
-        "glue_to_surface": int(COLLISION_MODE_GLUE_TO_SURF),
-        "bind_three_particles": int(COLLISION_MODE_BIND_THREE_PARTICLES)}
-
-    def _str_mode(self, int_mode):
-        """String mode name from int ones provided by the core
-
-        """
-#        for key in self._int_mode:
-#            if self._int_mode[key] == int_mode:
-#                return key
-        raise Exception("Unknown integer collision mode %d" % int_mode)
 
     # Pickle support
     def __reduce__(self):

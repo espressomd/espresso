@@ -48,7 +48,7 @@
 class Collision_parameters {
 public:
   Collision_parameters()
-      : active(0), distance(0.), distance_cutoff(0.), rate(0.),
+      : active(0), distance(0.), distance2(0.), rate(0.),
         bond_type(-1), vs_bond_type(-1), bond_three_particles(-1){};
 
   /// collision handling mode, a combination of constants COLLISION_MODE_*
@@ -67,7 +67,7 @@ public:
 
   double distance;
 
-  double distance_cutoff;
+  double distance2;
 
   double rate;
 
@@ -127,7 +127,7 @@ inline bool virtual_site_criterion(Particle const &p1, Particle const &p2){
 /** @brief Detect (and queue) a collision between the given particles. */
 inline void detect_collision(Particle const &p1, Particle const &p2,
                              const double &dist_betw_part2) {
-  if (dist_betw_part2 > collision_params.distance)
+  if (dist_betw_part2 > collision_params.distance2)
     return;
 
   // Check, if the particle types match the criteria
@@ -161,7 +161,7 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
 
 inline double collision_detection_cutoff() {
 #ifdef COLLISION_DETECTION
-  return collision_params.distance_cutoff;
+  return collision_params.distance2;
 #endif
   return 0.;
 }
