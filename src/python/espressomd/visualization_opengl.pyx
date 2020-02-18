@@ -413,6 +413,8 @@ class openGLLive:
 
         # HAS PERIODIC IMAGES
         self.has_images = any(i != 0 for i in self.specs['periodic_images'])
+        self.image_vectors = [
+            list(range(-i, i + 1)) for i in self.specs['periodic_images']]
 
         # INITS
         self.system = system
@@ -1141,15 +1143,13 @@ class openGLLive:
                 self.particles['pos'][pid], radius, self.specs['quality_particles'])
 
             if self.has_images:
-                for imx in range(-self.specs['periodic_images'][0],
-                                 self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1],
-                                     self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2],
-                                         self.specs['periodic_images'][2] + 1):
+                for imx in self.image_vectors[0]:
+                    for imy in self.image_vectors[1]:
+                        for imz in self.image_vectors[2]:
                             if imx != 0 or imy != 0 or imz != 0:
-                                self._redraw_sphere(
-                                    self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
+                                offset = [imx, imy, imz] * self.system.box_l
+                                self._redraw_sphere(self.particles['pos'][pid] + offset,
+                                                    radius, self.specs['quality_particles'])
 
             IF EXTERNAL_FORCES:
                 if self.specs['ext_force_arrows'] or pid == self.dragId:
@@ -1195,7 +1195,6 @@ class openGLLive:
                 v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
-        pIds = range(len(self.particles['pos']))
         b2 = self.system.box_l[0] / 2.0
         box_l2_sqr = pow(b2, 2.0)
         for b in self.bonds:
@@ -1204,25 +1203,24 @@ class openGLLive:
                 self.specs['bond_type_materials'], b[2])]
             radius = self._modulo_indexing(
                 self.specs['bond_type_radius'], b[2])
-            d = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
-            bondLen_sqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
+            xA = self.particles['pos'][b[0]]
+            xB = self.particles['pos'][b[1]]
+            dx = xB - xA
+            bondLen_sqr = dx[0] * dx[0] + dx[1] * dx[1] + dx[2] * dx[2]
 
             if bondLen_sqr < box_l2_sqr:
                 # BOND COMPLETELY INSIDE BOX
-                draw_cylinder(
-                    self.particles['pos'][
-                        b[0]], self.particles['pos'][b[1]], radius,
-                    col, mat, self.specs['quality_bonds'])
-                for imx in range(-self.specs['periodic_images'][0],
-                                 self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1],
-                                     self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2],
-                                         self.specs['periodic_images'][2] + 1):
-                            if imx != 0 or imy != 0 or imz != 0:
-                                draw_cylinder(self.particles['pos'][b[0]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
-                                              self.particles['pos'][b[1]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
-                                              radius, col, mat, self.specs['quality_bonds'])
+                draw_cylinder(xA, xB, radius, col, mat,
+                              self.specs['quality_bonds'])
+                if self.has_images:
+                    for imx in self.image_vectors[0]:
+                        for imy in self.image_vectors[1]:
+                            for imz in self.image_vectors[2]:
+                                if imx != 0 or imy != 0 or imz != 0:
+                                    offset = [imx, imy, imz] * \
+                                        self.system.box_l
+                                    draw_cylinder(xA + offset, xB + offset,
+                                                  radius, col, mat, self.specs['quality_bonds'])
             else:
                 # SPLIT BOND
                 l = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
@@ -1249,17 +1247,17 @@ class openGLLive:
                     draw_cylinder(self.particles['pos'][b[1]], s1, radius, col,
                                   mat, self.specs['quality_bonds'])
 
-                    for imx in range(-self.specs['periodic_images'][0],
-                                     self.specs['periodic_images'][0] + 1):
-                        for imy in range(-self.specs['periodic_images'][1],
-                                         self.specs['periodic_images'][1] + 1):
-                            for imz in range(-self.specs['periodic_images'][2],
-                                             self.specs['periodic_images'][2] + 1):
-                                if imx != 0 or imy != 0 or imz != 0:
-                                    draw_cylinder(self.particles['pos'][b[0]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
-                                                  s0 + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2], radius, col, mat, self.specs['quality_bonds'])
-                                    draw_cylinder(self.particles['pos'][b[1]] + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2],
-                                                  s1 + imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2], radius, col, mat, self.specs['quality_bonds'])
+                    if self.has_images:
+                        for imx in self.image_vectors[0]:
+                            for imy in self.image_vectors[1]:
+                                for imz in self.image_vectors[2]:
+                                    if imx != 0 or imy != 0 or imz != 0:
+                                        offset = [imx, imy, imz] * \
+                                            self.system.box_l
+                                        draw_cylinder(xA + offset, s0 + offset, radius, col, mat,
+                                                      self.specs['quality_bonds'])
+                                        draw_cylinder(xB + offset, s1 + offset, radius, col, mat,
+                                                      self.specs['quality_bonds'])
 
     def _redraw_sphere(self, pos, radius, quality):
         OpenGL.GL.glPushMatrix()
@@ -1617,9 +1615,6 @@ class openGLLive:
         self.triggerSetParticleDrag = False
 
         self.depth = 0
-
-        self.imPos = [np.array([self.system.box_l[0], 0, 0]), np.array(
-            [0, self.system.box_l[1], 0]), np.array([0, 0, self.system.box_l[2]])]
 
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
