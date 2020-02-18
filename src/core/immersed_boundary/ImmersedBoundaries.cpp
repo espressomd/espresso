@@ -168,7 +168,7 @@ void ImmersedBoundaries::calc_volumes() {
           if (type == BONDED_IA_IBM_TRIEL) {
             // Our particle is the leading particle of a triel
             // Get second and third particle of the triangle
-            Particle const *const p2 = local_particles[p1.bl.e[j + 1]];
+            Particle const *const p2 = get_local_particle_data(p1.bl.e[j + 1]);
             if (!p2) {
               runtimeErrorMsg()
                   << "{IBM_calc_volumes: 078 bond broken between particles "
@@ -176,7 +176,7 @@ void ImmersedBoundaries::calc_volumes() {
                   << " (particles not stored on the same node)} ";
               return;
             }
-            Particle const *const p3 = local_particles[p1.bl.e[j + 2]];
+            Particle const *const p3 = get_local_particle_data(p1.bl.e[j + 2]);
             if (!p3) {
               runtimeErrorMsg()
                   << "{IBM_calc_volumes: 078 bond broken between particles "
@@ -277,8 +277,8 @@ void ImmersedBoundaries::calc_volume_force() {
           if (type == BONDED_IA_IBM_TRIEL) {
             // Our particle is the leading particle of a triel
             // Get second and third particle of the triangle
-            Particle &p2 = *local_particles[p1.bl.e[j + 1]];
-            Particle &p3 = *local_particles[p1.bl.e[j + 2]];
+            Particle &p2 = *get_local_particle_data(p1.bl.e[j + 1]);
+            Particle &p3 = *get_local_particle_data(p1.bl.e[j + 2]);
 
             // Unfold position of first node.
             // This is to get a continuous trajectory with no jumps when box

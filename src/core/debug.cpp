@@ -61,12 +61,12 @@ void check_particle_consistency() {
           errexit();
         }
       }
-      if (local_particles[p.p.identity] != &p) {
+      if (get_local_particle_data(p.p.identity) != &p) {
         fprintf(stderr,
                 "%d: check_particle_consistency: ERROR: address "
                 "mismatch for part id %d: local: %p cell: %p in cell %d\n",
                 this_node, p.p.identity,
-                static_cast<void *>(local_particles[p.p.identity]),
+                static_cast<void *>(get_local_particle_data(p.p.identity)),
                 static_cast<void const *>(&p), c);
         errexit();
       }
@@ -86,13 +86,13 @@ void check_particle_consistency() {
 
   /* checks: local particle id */
   for (n = 0; n < max_seen_particle + 1; n++) {
-    if (local_particles[n] != nullptr) {
+    if (get_local_particle_data(n) != nullptr) {
       local_part_cnt++;
-      if (local_particles[n]->p.identity != n) {
+      if (get_local_particle_data(n)->p.identity != n) {
         fprintf(stderr,
                 "%d: check_particle_consistency: ERROR: "
                 "local_particles part %d has corrupted id %d\n",
-                this_node, n, local_particles[n]->p.identity);
+                this_node, n, get_local_particle_data(n)->p.identity);
         errexit();
       }
     }
@@ -119,7 +119,7 @@ void check_particle_consistency() {
     }
 
     for (int p = 0; p < n_part; p++)
-      if (local_particles[p])
+      if (get_local_particle_data(p))
         fprintf(stderr, "%d: got particle %d in local_particles\n", this_node,
                 p);
 

@@ -85,10 +85,43 @@ extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
-/** id->particle mapping on all nodes. This is used to find partners
- *  of bonded interactions.
- */
-extern std::vector<Particle *> local_particles;
+/**
+ * @brief Find local particles by id.
+ *
+ * If a particles is present on this mpi rank, either
+ * as a local particles or as a ghost, a pointer to it
+ * is returned, otherwise null.
+ *
+ * @param id of the particle to look up.
+ *
+ * @return Pointer to particle or nullptr.
+ **/
+inline Particle *get_local_particle_data(int id) {
+  extern std::vector<Particle *> local_particles;
+
+  if (id >= local_particles.size())
+    return nullptr;
+
+  return local_particles[id];
+}
+
+/**
+ * @brief Update local particle index.
+ *
+ * Update the entry for a particle in the local particle
+ * index.
+ *
+ * @param id of the particle to up-date.
+ * @param p Pointer to the particle.
+ **/
+inline void set_local_particle_data(int id, Particle *p) {
+  extern std::vector<Particle *> local_particles;
+
+  if (id >= local_particles.size())
+    local_particles.resize(id + 1);
+
+  local_particles[id] = p;
+}
 
 /************************************************
  * Functions
@@ -158,9 +191,6 @@ void update_local_particles(ParticleList *pl);
  *  at the beginning of the integration.
  */
 void clear_particle_node();
-
-/** Realloc \ref local_particles. */
-void realloc_local_particles(int part);
 
 /**
  * @brief Get particle data.

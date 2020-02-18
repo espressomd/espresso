@@ -377,9 +377,6 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   // Determine nlocalpart (prefix of rank+1 - own prefix) on every node.
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
-  // Prepare ESPResSo data structures
-  local_particles.resize(nglobalpart);
-  std::fill(local_particles.begin(), local_particles.end(), nullptr);
   n_part = nglobalpart;
   max_seen_particle = nglobalpart;
 
@@ -410,7 +407,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                           MPI_INT);
 
     for (int i = 0; i < nlocalpart; ++i)
-      local_particles[id[i]]->p.type = type[i];
+      get_local_particle_data(id[i])->p.type = type[i];
   }
 
   if (fields & MPIIO_OUT_VEL) {
@@ -422,7 +419,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i)
       for (int k = 0; k < 3; ++k)
-        local_particles[id[i]]->m.v[k] = vel[3 * i + k];
+        get_local_particle_data(id[i])->m.v[k] = vel[3 * i + k];
   }
 
   if (fields & MPIIO_OUT_BND) {
@@ -445,7 +442,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i) {
       int blen = boff[i + 1] - boff[i];
-      auto &bl = local_particles[id[i]]->bl;
+      auto &bl = get_local_particle_data(id[i])->bl;
       bl.resize(blen);
       std::copy_n(bond.begin() + boff[i], blen, bl.begin());
     }
