@@ -367,11 +367,10 @@ public:
             m_pdf_field_id, m_last_applied_force_field_id,
             m_force_to_be_applied_id, m_boundary_handling_id);
 
-//    m_time_loop->add() << timeloop::BeforeFunction(communication,
-//                                                   "communication")
-m_time_loop->add()                        << timeloop::Sweep(
-                              Boundaries::getBlockSweep(m_boundary_handling_id),
-                              "boundary handling");
+    //    m_time_loop->add() << timeloop::BeforeFunction(communication,
+    //                                                   "communication")
+    m_time_loop->add() << timeloop::Sweep(
+        Boundaries::getBlockSweep(m_boundary_handling_id), "boundary handling");
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
                                           "Reset force fields");
     //        << timeloop::AfterFunction(communication, "communication");
@@ -446,11 +445,10 @@ m_time_loop->add()                        << timeloop::Sweep(
                 (*bc).block->template getData<VelocityAdaptor>(
                     m_velocity_adaptor_id);
             v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
+          } else {
+            printf("Node %d %d %d\n", node[0], node[1], node[2]);
+            throw std::runtime_error("Access to LB velocity field  failed.");
           }
-          else {
-        printf("Node %d %d %d\n",node[0],node[1],node[2]);
-        throw std::runtime_error("Access to LB velocity field  failed.");
-      }
         });
     return v;
   };
@@ -468,9 +466,8 @@ m_time_loop->add()                        << timeloop::Sweep(
         auto force_field = (*bc).block->template getData<VectorField>(
             m_force_to_be_applied_id);
         force_field->get((*bc).cell) += to_vector3(force * weight / m_density);
-      }
-      else {
-        printf("Node %d %d %d\n",node[0],node[1],node[2]);
+      } else {
+        printf("Node %d %d %d\n", node[0], node[1], node[2]);
         throw std::runtime_error("Access to LB force to be applied failed.");
       }
     };

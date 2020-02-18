@@ -11,8 +11,8 @@
 
 #include "boost/mpi.hpp"
 #include "grid.hpp"
-#include "grid_based_algorithms/LbWalberla_impl.hpp"
 #include "grid_based_algorithms/LbWalberlaD3Q19TRT.hpp"
+#include "grid_based_algorithms/LbWalberla_impl.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "utils/Vector.hpp"
@@ -32,7 +32,6 @@ double tau = 0.34;
 double skin = 0.01;
 double density = 2.5;
 Vector3i node_grid;
-
 
 BOOST_AUTO_TEST_CASE(viscosity_test) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,

@@ -42,8 +42,9 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   // handled from Python in a parallel simulation
   try {
 
-    lb_walberla_instance = std::make_unique<walberla::LbWalberlaD3Q19TRT>(walberla::LbWalberlaD3Q19TRT{
-        viscosity, density, agrid, tau, box_dimensions, node_grid, 2});
+    lb_walberla_instance = std::make_unique<walberla::LbWalberlaD3Q19TRT>(
+        walberla::LbWalberlaD3Q19TRT{viscosity, density, agrid, tau,
+                                     box_dimensions, node_grid, 2});
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
     lb_walberla_instance.reset(nullptr);
