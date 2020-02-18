@@ -12,6 +12,7 @@
 #include "boost/mpi.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/LbWalberla_impl.hpp"
+#include "grid_based_algorithms/LbWalberlaD3Q19TRT.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 #include "utils/Vector.hpp"
@@ -19,6 +20,7 @@
 
 using Utils::Vector3d;
 using Utils::Vector3i;
+using walberla::LbWalberlaD3Q19TRT;
 
 double viscosity = 3;
 Vector3d box_dimensions = {10, 12, 14};
@@ -31,11 +33,6 @@ double skin = 0.01;
 double density = 2.5;
 Vector3i node_grid;
 
-using LatticeModelD3Q19TRT = walberla::lbm::D3Q19<
-    walberla::lbm::collision_model::TRT, false,
-    walberla::lbm::force_model::GuoField<
-        walberla::GhostLayerField<walberla::Vector3<walberla::real_t>, 1>>>;
-using LbWalberlaD3Q19TRT = walberla::LbWalberla<LatticeModelD3Q19TRT>;
 
 BOOST_AUTO_TEST_CASE(viscosity_test) {
   LbWalberlaD3Q19TRT lb = LbWalberlaD3Q19TRT(viscosity, density, agrid, tau,

@@ -42,11 +42,8 @@ void init_lb_walberla(double viscosity, double density, double agrid,
   // handled from Python in a parallel simulation
   try {
 
-    auto d3q19trt = new walberla::LbWalberlaD3Q19TRT{
-        viscosity, density, agrid, tau, box_dimensions, node_grid, 2};
-    d3q19trt->construct_lattice_model(viscosity);
-    d3q19trt->setup_with_valid_lattice_model();
-    lb_walberla_instance.reset(d3q19trt);
+    lb_walberla_instance = std::make_unique<walberla::LbWalberlaD3Q19TRT>(walberla::LbWalberlaD3Q19TRT{
+        viscosity, density, agrid, tau, box_dimensions, node_grid, 2});
   } catch (const std::exception &e) {
     runtimeErrorMsg() << "Error during Walberla initialization: " << e.what();
     lb_walberla_instance.reset(nullptr);

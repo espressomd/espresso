@@ -367,9 +367,9 @@ public:
             m_pdf_field_id, m_last_applied_force_field_id,
             m_force_to_be_applied_id, m_boundary_handling_id);
 
-    m_time_loop->add() << timeloop::BeforeFunction(communication,
-                                                   "communication")
-                       << timeloop::Sweep(
+//    m_time_loop->add() << timeloop::BeforeFunction(communication,
+//                                                   "communication")
+m_time_loop->add()                        << timeloop::Sweep(
                               Boundaries::getBlockSweep(m_boundary_handling_id),
                               "boundary handling");
     m_time_loop->add() << timeloop::Sweep(makeSharedSweep(m_reset_force),
