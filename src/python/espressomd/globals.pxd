@@ -36,7 +36,6 @@ cdef extern from "global.hpp":
     int FIELD_TEMPERATURE
     int FIELD_LANGEVIN_GAMMA
     int FIELD_BROWNIAN_GAMMA
-    int FIELD_SWIMMING_PARTICLES_EXIST
     IF ROTATION:
         int FIELD_LANGEVIN_GAMMA_ROTATION
         int FIELD_BROWNIAN_GAMMA_ROTATION
@@ -72,7 +71,6 @@ cdef extern from "domain_decomposition.hpp":
 
 cdef extern from "particle_data.hpp":
     extern int n_part
-    extern bool swimming_particles_exist
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern double max_cut

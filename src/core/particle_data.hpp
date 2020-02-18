@@ -84,8 +84,6 @@ enum {
 extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
-/** flag that active swimming particles exist */
-extern bool swimming_particles_exist;
 
 /**
  * @brief Find local particles by id.

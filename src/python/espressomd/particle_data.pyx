@@ -25,10 +25,8 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from .globals cimport FIELD_SWIMMING_PARTICLES_EXIST
-from .globals cimport max_seen_particle, max_seen_particle_type, time_step, \
-    n_part, n_rigidbonds, swimming_particles_exist
-from .globals cimport mpi_bcast_parameter
+from .globals cimport max_seen_particle, max_seen_particle_type, n_part, \
+    n_rigidbonds
 import collections
 import functools
 import types
@@ -1182,8 +1180,8 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, _params):
-                global swimming_particles_exist
                 cdef particle_parameters_swimming swim
+
                 swim.swimming = True
                 swim.v_swim = 0.0
                 swim.f_swim = 0.0
@@ -1225,10 +1223,6 @@ cdef class ParticleHandle:
                         check_type_or_throw_except(
                             _params['dipole_length'], 1, float, "dipole_length has to be a float.")
                         swim.dipole_length = _params['dipole_length']
-
-                if swim.f_swim != 0 or swim.v_swim != 0:
-                    swimming_particles_exist = True
-                    mpi_bcast_parameter(FIELD_SWIMMING_PARTICLES_EXIST)
 
                 set_particle_swimming(self._id, swim)
 
