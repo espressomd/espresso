@@ -292,7 +292,8 @@ void bind_at_point_of_collision_calc_vs_pos(std::vector<Particle*> p,
                                             std::vector<Utils::Vector3d> &pos) {
   auto const vec = get_mi_vector(p[0]->r.p, p[1]->r.p, box_geo);
   pos[0] = p[0]->r.p - vec * collision_params.distance_vs_particle[indices[0]];
-  pos[1] = p[1]->r.p + vec * collision_params.distance_vs_particle[indices[1]];
+  if(pos.size()>1)
+    pos[1] = p[1]->r.p + vec * collision_params.distance_vs_particle[indices[1]];
 }
 
 // Considers three particles for three_particle_binding and performs
@@ -551,85 +552,92 @@ void handle_collisions() {
 
     // Iterate over global collision queue
     for (auto &c : gathered_queue) {
+        if(collision_params.vs_particle_type[c.idx[0]] ||
+           collision_params.vs_particle_type[c.idx[1]]){
 
-      // Get particle pointers
-      std::vector<Particle *> particles = {local_particles[c.pp[0]], local_particles[c.pp[1]]};
+        // Get particle pointers
+        std::vector<Particle *> particles = {local_particles[c.pp[0]], local_particles[c.pp[1]]};
 
 
-      // Only nodes take part in particle creation and binding
-      // that see both particles
-                                                                                
-      // If we cannot access both particles, both are ghosts,
-      // ore one is ghost and one is not accessible
-      // we only increase the counter for the ext id to use based on the
-      // number of particles created by other nodes
-      if (((!particles[0] or particles[0]->l.ghost) and 
-           (!particles[1] or particles[1]->l.ghost)) or 
-          !particles[0] or !particles[1]) {
-        // Increase local counters
-        added_particle(current_vs_pid);
-        current_vs_pid++;
-        if(collision_params.vs_particle_type.size() > 1){
-          // only increase the particle counter further if more than one vs is created
+        // Only nodes take part in particle creation and binding
+        // that see both particles
+                                                                                  
+        // If we cannot access both particles, both are ghosts,
+        // ore one is ghost and one is not accessible
+        // we only increase the counter for the ext id to use based on the
+        // number of particles created by other nodes
+        if (((!particles[0] or particles[0]->l.ghost) and 
+             (!particles[1] or particles[1]->l.ghost)) or 
+            !particles[0] or !particles[1]) {
+          // Increase local counters
           added_particle(current_vs_pid);
           current_vs_pid++;
-        }
-        // change ghost particle types
-        for(int i = 0; i<particles.size(); i++){
-          if (particles[i])
-            if (collision_params.particle_type_after_collision[c.idx[i]]) {
-              particles[i]->p.type = collision_params.particle_type_after_collision[c.idx[i]];
-            }
-        }
-
-      } else { // We consider the pair because one particle
-               // is local to the node and the other is local or ghost
-
-
-        // Check how many virtual sides we need
-        std::vector<Utils::Vector3d> pos(c.idx.size(), {0.0,0.0,0.0});
-
-        // Create the virtual sides
-        if(pos.size() == 0){
-          continue;
-        }else if(pos.size() == 1){
-          // TODO
-        }else if(pos.size() == 2){
-          bind_at_point_of_collision_calc_vs_pos(particles, c.idx, pos);
-        }else{
-          throw std::runtime_error("Unknown behavior of the colliding paticles. Bug.");
-        }
-
-        auto handle_particle = [&](Particle *p, Utils::Vector3d const &pos) {
-          if (not p->l.ghost) {
-            place_vs_and_relate_to_particle(current_vs_pid, pos,
-                                            p->identity());
-            // Particle storage locations may have changed due to
-            // added particle
-            particles[0] = local_particles[c.pp[0]];
-            particles[1] = local_particles[c.pp[1]];
-          } else {
+          if(collision_params.vs_particle_type.size() > 1){
+            // only increase the particle counter further if more than one vs is created
             added_particle(current_vs_pid);
+            current_vs_pid++;
           }
-        };
+          // change ghost particle types
+          for(int i = 0; i<particles.size(); i++){
+            if (particles[i])
+              if (collision_params.particle_type_after_collision[c.idx[i]]) {
+                particles[i]->p.type = collision_params.particle_type_after_collision[c.idx[i]];
+              }
+          }
 
-        for (int i=0; i<c.idx.size(); i++){
-          // place virtual sites on the node where the base particle is not a
-          // ghost
-          handle_particle(particles[i], pos[i]);
-          // Increment counter
-          current_vs_pid++;
-        }
+        } else { // We consider the pair because one particle
+                 // is local to the node and the other is local or ghost
+
+          if(!collision_params.vs_particle_type[c.idx[0]]){
+            std::swap(particles[0],particles[1]);
+            std::swap(c.idx[0],c.idx[1]);
+            std::swap(c.pp[0],c.pp[1]);
+          }
+
+          // Check how many virtual sides we need
+          std::vector<Utils::Vector3d> pos;
+          for(auto index : c.idx)
+            if(collision_params.vs_particle_type[index])
+              pos.push_back({0.0,0.0,0.0});
+
+          // Create the virtual sides
+          if(pos.size() <= 2){
+            bind_at_point_of_collision_calc_vs_pos(particles, c.idx, pos);
+          }else{
+            throw std::runtime_error("Unknown behavior of the colliding paticles. Bug.");
+          }
+
+          auto handle_particle = [&](Particle *p, Utils::Vector3d const &pos) {
+            if (not p->l.ghost) {
+              place_vs_and_relate_to_particle(current_vs_pid, pos,
+                                              p->identity());
+              // Particle storage locations may have changed due to
+              // added particle
+              particles[0] = local_particles[c.pp[0]];
+              particles[1] = local_particles[c.pp[1]];
+            } else {
+              added_particle(current_vs_pid);
+            }
+          };
+
+          for (int i=0; i<pos.size(); i++){
+            // place virtual sites on the node where the base particle is not a
+            // ghost
+            handle_particle(particles[i], pos[i]);
+            // Increment counter
+            current_vs_pid++;
+          }
 
 
-        if(pos.size() == 2){
-          // Create a bonde between the virtual sides
-          bind_at_poc_create_bond_between_vs(current_vs_pid);
-        }else{
-          // Create a bond between the virtual side and the other particle if only one virtual side is used
-          // TODO maybe?
-        }
-      } // we considered the pair
+          if(pos.size() == 2){
+            // Create a bonde between the virtual sides
+            bind_at_poc_create_bond_between_vs(current_vs_pid);
+          }else if(pos.size() == 1){
+            int bond[] = {collision_params.vs_bond_type, current_vs_pid - 1};
+            local_add_particle_bond(*particles[0], bond);
+          }
+        } // we considered the pair
+      }
     }   // Loop over all collisions in the queue
 #ifdef ADDITIONAL_CHECKS
     if (!Utils::Mpi::all_compare(comm_cart, current_vs_pid)) {
