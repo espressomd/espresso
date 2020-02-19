@@ -48,17 +48,6 @@ struct MinimalImageDistance {
   }
 };
 
-struct LayeredMinimalImageDistance {
-  const BoxGeometry box;
-
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p, box);
-    mi_dist[2] = p1.r.p[2] - p2.r.p[2];
-
-    return Distance(mi_dist);
-  }
-};
-
 struct EuclidianDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
     return Distance(p1.r.p - p2.r.p);

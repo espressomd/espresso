@@ -130,7 +130,6 @@ Details about the cell system can be obtained by :meth:`espressomd.System().cell
     * ``cell_size``       Box-length of a cell.
     * ``local_box_l``     Local simulation box length of the nodes.
     * ``max_cut``         Maximal cutoff of real space interactions.
-    * ``n_layers``        Number of layers in cell structure LAYERED
     * ``n_nodes``         Number of nodes.
     * ``type``            The current type of the cell system.
     * ``verlet_reuse``    Average number of integration steps the Verlet list is re-used.
@@ -199,28 +198,6 @@ this node is twice as high. For 3 processors, the interactions are 0-0,
 
 Therefore it is highly recommended that you use nsquared only with an
 odd number of nodes, if with multiple processors at all.
-
-.. _Layered cell system:
-
-Layered cell system
-~~~~~~~~~~~~~~~~~~~
-
-Invoking :py:meth:`~espressomd.cellsystem.CellSystem.set_layered`
-selects the layered cell system, which is specifically designed for
-the needs of the MMM2D algorithm. Basically it consists of a nsquared
-algorithm in x and y, but a domain decomposition along z, i.e. the
-system is cut into equally sized layers along the z axis. The current
-implementation allows for the CPUs to align only along the z axis,
-therefore the processor grid has to have the form 1x1xN. However, each
-processor may be responsible for several layers, which is determined by
-``n_layers``, i.e. the system is split into N\* layers along the z axis. Since in x
-and y direction there are no processor boundaries, the implementation is
-basically just a stripped down version of the domain decomposition
-cellsystem. ::
-
-    system = espressomd.System()
-
-    system.cell_system.set_layered(n_layers=4)
 
 .. _Thermostats:
 

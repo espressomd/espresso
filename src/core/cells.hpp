@@ -36,9 +36,6 @@
  *    regardless their spatial position (see \ref nsquare.hpp). This is
  *    suitable for long range interactions that cannot be treated by a
  *    special method like P3M (see \ref p3m.hpp).
- *  - layered: in x and y directions, it uses a nsquared type of
- *    interaction calculation, but in z it has a domain decomposition
- *    into layers.
  */
 
 #include <utility>
