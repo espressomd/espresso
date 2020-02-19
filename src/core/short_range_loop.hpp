@@ -89,14 +89,6 @@ void decide_distance(CellIterator first, CellIterator last,
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
     break;
-  case CELL_STRUCTURE_LAYERED:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel),
-        LayeredMinimalImageDistance{box_geo},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
   }
 }
 

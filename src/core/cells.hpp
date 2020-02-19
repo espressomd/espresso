@@ -62,9 +62,7 @@ enum {
   /** cell structure domain decomposition */
   CELL_STRUCTURE_DOMDEC = 1,
   /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2,
-  /** cell structure layered */
-  CELL_STRUCTURE_LAYERED = 3
+  CELL_STRUCTURE_NSQUARE = 2
 };
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global

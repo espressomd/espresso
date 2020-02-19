@@ -21,7 +21,6 @@ set(EspressoCore_SRC
   event.cpp
   integrate.cpp
   integrators/velocity_verlet_npt.cpp
-  layered.cpp
   metadynamics.cpp
   integrators/steepest_descent.cpp
   npt.cpp

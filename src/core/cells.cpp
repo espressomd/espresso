@@ -35,7 +35,6 @@
 #include "ghosts.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
@@ -106,16 +105,6 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
           return get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
         });
     break;
-  case CELL_STRUCTURE_LAYERED:
-    Algorithm::link_cell(
-        boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
-        boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
-        Utils::NoOp{}, pair_kernel, [](Particle const &p1, Particle const &p2) {
-          auto vec21 = get_mi_vector(p1.r.p, p2.r.p, box_geo);
-          vec21[2] = p1.r.p[2] - p2.r.p[2];
-
-          return vec21.norm2();
-        });
   }
 
   /* Sort pairs */
@@ -169,9 +158,6 @@ static void topology_release(int cs) {
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_release();
     break;
-  case CELL_STRUCTURE_LAYERED:
-    layered_topology_release();
-    break;
   default:
     fprintf(stderr,
             "INTERNAL ERROR: attempting to sort the particles in an "
@@ -200,9 +186,6 @@ void topology_init(int cs, double range, CellPList local) {
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init(&local);
     break;
-  case CELL_STRUCTURE_LAYERED:
-    layered_topology_init(&local, node_grid, range);
-    break;
   default:
     fprintf(stderr,
             "INTERNAL ERROR: attempting to sort the particles in an "
@@ -216,7 +199,6 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
-  case CELL_STRUCTURE_LAYERED:
     return boost::mpi::all_reduce(comm_cart, local_resort,
                                   std::bit_or<unsigned>());
   default:
@@ -369,9 +351,6 @@ void cells_resort_particles(int global_flag) {
       sort_and_fold_parts(cell_structure, cell_structure.local_cells());
 
   switch (cell_structure.type) {
-  case CELL_STRUCTURE_LAYERED: {
-    layered_exchange_and_sort_particles(global_flag, &displaced_parts);
-  } break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_exchange_particles(global_flag, &displaced_parts);
     break;
@@ -414,10 +393,6 @@ void cells_on_geometry_change(int flags) {
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
     dd_on_geometry_change(flags, node_grid, range);
-    break;
-  case CELL_STRUCTURE_LAYERED:
-    /* there is no fast version, always redo everything. */
-    cells_re_init(CELL_STRUCTURE_LAYERED, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
     break;
