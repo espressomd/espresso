@@ -48,17 +48,6 @@ struct MinimalImageDistance {
   }
 };
 
-struct LayeredMinimalImageDistance {
-  const BoxGeometry box;
-
-  Distance operator()(Particle const &p1, Particle const &p2) const {
-    auto mi_dist = get_mi_vector(p1.r.p, p2.r.p, box);
-    mi_dist[2] = p1.r.p[2] - p2.r.p[2];
-
-    return Distance(mi_dist);
-  }
-};
-
 struct EuclidianDistance {
   Distance operator()(Particle const &p1, Particle const &p2) const {
     return Distance(p1.r.p - p2.r.p);
@@ -86,14 +75,6 @@ void decide_distance(CellIterator first, CellIterator last,
     Algorithm::for_each_pair(
         first, last, std::forward<ParticleKernel>(particle_kernel),
         std::forward<PairKernel>(pair_kernel), MinimalImageDistance{box_geo},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-    break;
-  case CELL_STRUCTURE_LAYERED:
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel),
-        LayeredMinimalImageDistance{box_geo},
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
     break;

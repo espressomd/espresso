@@ -31,7 +31,6 @@ cdef extern from "cells.hpp":
     int CELL_STRUCTURE_CURRENT
     int CELL_STRUCTURE_DOMDEC
     int CELL_STRUCTURE_NSQUARE
-    int CELL_STRUCTURE_LAYERED
 
     ctypedef struct CellStructure:
         int type
@@ -40,10 +39,6 @@ cdef extern from "cells.hpp":
     CellStructure cell_structure
 
     vector[pair[int, int]] mpi_get_pairs(double distance)
-
-cdef extern from "layered.hpp":
-    int determine_n_layers
-    int n_layers_ "n_layers"
 
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)

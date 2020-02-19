@@ -102,24 +102,6 @@ class PairTest(ut.TestCase):
         self.s.integrator.run(100)
         self.check()
 
-    def test_layered(self):
-        self.s.cell_system.set_layered()
-        self.s.periodicity = [1, 1, 1]
-
-        self.s.integrator.run(0)
-        self.check()
-        self.s.integrator.run(100)
-        self.check()
-
-    def test_layered_partial_z(self):
-        self.s.cell_system.set_layered()
-        self.s.periodicity = [1, 1, 0]
-
-        self.s.integrator.run(0)
-        self.check()
-        self.s.integrator.run(100)
-        self.check()
-
 
 if __name__ == "__main__":
     ut.main()

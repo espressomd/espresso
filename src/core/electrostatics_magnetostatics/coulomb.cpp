@@ -23,6 +23,7 @@
 double coulomb_cutoff;
 
 #ifdef ELECTROSTATICS
+#include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
@@ -35,7 +36,6 @@ double coulomb_cutoff;
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "integrate.hpp"
-#include "layered.hpp"
 #include "npt.hpp"
 
 #include <utils/constants.hpp>

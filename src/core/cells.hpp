@@ -36,9 +36,6 @@
  *    regardless their spatial position (see \ref nsquare.hpp). This is
  *    suitable for long range interactions that cannot be treated by a
  *    special method like P3M (see \ref p3m.hpp).
- *  - layered: in x and y directions, it uses a nsquared type of
- *    interaction calculation, but in z it has a domain decomposition
- *    into layers.
  */
 
 #include <utility>
@@ -62,9 +59,7 @@ enum {
   /** cell structure domain decomposition */
   CELL_STRUCTURE_DOMDEC = 1,
   /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2,
-  /** cell structure layered */
-  CELL_STRUCTURE_LAYERED = 3
+  CELL_STRUCTURE_NSQUARE = 2
 };
 
 /** \name Flags for exchange_and_sort_particles: whether to do a global

@@ -58,8 +58,6 @@ enum Fields {
   FIELD_MAXPART,
   /** index of \ref min_num_cells  */
   FIELD_MINNUMCELLS,
-  /** index of \ref n_layers */
-  FIELD_NLAYERS,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
