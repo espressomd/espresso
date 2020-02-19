@@ -14,7 +14,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from .script_interface import ScriptInterfaceHelper, script_interface_register
+
+import collections.abc
+
+from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectRegistry
 from .utils import requires_experimental_features
 
 
@@ -266,3 +269,73 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
     .. image:: figures/conical_frustum.png
     """
     _so_name = "Shapes::HollowConicalFrustum"
+
+
+@script_interface_register
+class Union(Shape, ScriptObjectRegistry):
+    """A union of shapes.
+
+    This shape represents a union of shapes where the distance to the union
+    is defined by the smallest distance to any shape contained in the union.
+
+    """
+    _so_name = "Shapes::Union"
+
+    def add(self, shape):
+        """
+        Add a shape to the union.
+
+        Parameters
+        ----------
+        shape : array_like / instance of :class:`espressomd.shapes.Shape`
+            Shape instance(s) to be added to the union.
+
+        """
+
+        def _add(self, shape):
+            if isinstance(shape, Shape):
+                self.call_method("add", shape=shape)
+            else:
+                raise ValueError("Only shapes can be added.")
+
+        if isinstance(shape, collections.abc.Iterable):
+            for s in shape:
+                _add(self, s)
+        else:
+            _add(self, shape)
+
+    def remove(self, shape):
+        """
+        Remove a shape from the union.
+
+        Parameters
+        ----------
+        shape : array_like / instance of :class:`espressomd.shapes.Shape`
+            Shape instance(s) to be removed from the union.
+
+        """
+
+        def _remove(self, shape):
+            if isinstance(shape, Shape):
+                self.call_method("remove", shape=shape)
+            else:
+                raise ValueError("Only shapes can be removed.")
+        if isinstance(shape, collections.abc.Iterable):
+            for s in shape:
+                _remove(self, s)
+        else:
+            _remove(self, shape)
+
+    def clear(self):
+        """
+        Remove all shapes from the union.
+
+        """
+        self.call_method("clear")
+
+    def size(self):
+        """
+        Number of shapes contained in the union.
+
+        """
+        return self.call_method("size")
