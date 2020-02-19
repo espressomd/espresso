@@ -25,6 +25,9 @@
  *
  */
 
+#include <boost/range/adaptor/reversed.hpp>
+#include <boost/range/algorithm.hpp>
+
 #include "grid_based_algorithms/lb_boundaries.hpp"
 
 #include "communication.hpp"
@@ -38,7 +41,9 @@
 #include "lbboundaries/LBBoundary.hpp"
 
 #include <utils/index.hpp>
+
 using Utils::get_linear_index;
+
 #include <utils/constants.hpp>
 
 #include <algorithm>
@@ -58,11 +63,92 @@ void add(const std::shared_ptr<LBBoundary> &b) {
 }
 
 void remove(const std::shared_ptr<LBBoundary> &b) {
-  auto &lbb = lbboundaries;
-
-  lbboundaries.erase(std::remove(lbb.begin(), lbb.end(), b), lbb.end());
+  lbboundaries.erase(std::remove(lbboundaries.begin(), lbboundaries.end(), b),
+                     lbboundaries.end());
 
   on_lbboundary_change();
+}
+
+void ek_init_boundaries() {
+#if defined(CUDA) && defined(EK_BOUNDARIES)
+  int number_of_boundnodes = 0;
+
+  std::vector<ekfloat> host_wallcharge_species_density;
+  float node_wallcharge = 0.0f;
+  int wallcharge_species = -1, charged_boundaries = 0;
+  bool node_charged = false;
+
+  for (auto &lbboundary : lbboundaries) {
+    lbboundary->set_net_charge(0.0);
+  }
+
+  if (ek_initialized) {
+    host_wallcharge_species_density.resize(ek_parameters.number_of_nodes);
+    for (auto &lbboundary : lbboundaries) {
+      if (lbboundary->charge_density() != 0.0) {
+        charged_boundaries = 1;
+        break;
+      }
+    }
+
+    for (int n = 0; n < int(ek_parameters.number_of_species); n++)
+      if (ek_parameters.valency[n] != 0.0) {
+        wallcharge_species = n;
+        break;
+      }
+
+    ek_gather_wallcharge_species_density(host_wallcharge_species_density.data(),
+                                         wallcharge_species);
+
+    if (wallcharge_species == -1 && charged_boundaries) {
+      runtimeErrorMsg()
+          << "no charged species available to create wall charge\n";
+    }
+
+    for (int z = 0; z < int(lbpar_gpu.dim_z); z++) {
+      for (int y = 0; y < int(lbpar_gpu.dim_y); y++) {
+        for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
+          auto const pos = static_cast<double>(lbpar_gpu.agrid) *
+                           (Utils::Vector3d{1. * x, 1. * y, 1. * z} +
+                            Utils::Vector3d::broadcast(0.5));
+          node_charged = false;
+          node_wallcharge = 0.0f;
+
+          std::vector<std::shared_ptr<LBBoundary>> boundaries;
+          std::copy_if(lbboundaries.begin(), lbboundaries.end(),
+                       std::back_inserter(boundaries), [&pos](auto const lbb) {
+                         return not lbb->shape().is_inside(pos);
+                       });
+          for (auto lbb : boundaries) {
+            if ((*lbb).charge_density() != 0.0f) {
+              node_charged = true;
+              node_wallcharge += (*lbb).charge_density() * ek_parameters.agrid *
+                                 ek_parameters.agrid * ek_parameters.agrid;
+              (*lbb).set_net_charge(
+                  (*lbb).net_charge() +
+                  (*lbb).charge_density() * ek_parameters.agrid *
+                      ek_parameters.agrid * ek_parameters.agrid);
+            }
+          }
+          if (not boundaries.empty()) {
+            number_of_boundnodes++;
+          }
+          ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
+
+          if (wallcharge_species != -1) {
+            if (node_charged)
+              host_wallcharge_species_density[ek_parameters.dim_y *
+                                                  ek_parameters.dim_x * z +
+                                              ek_parameters.dim_x * y + x] =
+                  node_wallcharge / ek_parameters.valency[wallcharge_species];
+          }
+        }
+      }
+    }
+    ek_init_species_density_wallcharge(host_wallcharge_species_density.data(),
+                                       wallcharge_species);
+  }
+#endif
 }
 
 /** Initialize boundary conditions for all constraints in the system. */
@@ -72,48 +158,12 @@ void lb_init_boundaries() {
     if (this_node != 0) {
       return;
     }
-
+    ek_init_boundaries();
     int number_of_boundnodes = 0;
     std::vector<int> host_boundary_node_list;
     std::vector<int> host_boundary_index_list;
     size_t size_of_index;
-    int boundary_number =
-        -1; // the number the boundary will actually belong to.
 
-#ifdef EK_BOUNDARIES
-    std::vector<ekfloat> host_wallcharge_species_density;
-    float node_wallcharge = 0.0f;
-    int wallcharge_species = -1, charged_boundaries = 0;
-    bool node_charged = false;
-
-    for (auto &lbboundarie : lbboundaries) {
-      (*lbboundarie).set_net_charge(0.0);
-    }
-
-    if (ek_initialized) {
-      host_wallcharge_species_density.resize(ek_parameters.number_of_nodes);
-      for (auto &lbboundarie : lbboundaries) {
-        if ((*lbboundarie).charge_density() != 0.0) {
-          charged_boundaries = 1;
-          break;
-        }
-      }
-
-      for (int n = 0; n < int(ek_parameters.number_of_species); n++)
-        if (ek_parameters.valency[n] != 0.0) {
-          wallcharge_species = n;
-          break;
-        }
-
-      ek_gather_wallcharge_species_density(
-          host_wallcharge_species_density.data(), wallcharge_species);
-
-      if (wallcharge_species == -1 && charged_boundaries) {
-        runtimeErrorMsg()
-            << "no charged species available to create wall charge\n";
-      }
-    }
-#endif
     for (int z = 0; z < int(lbpar_gpu.dim_z); z++) {
       for (int y = 0; y < int(lbpar_gpu.dim_y); y++) {
         for (int x = 0; x < int(lbpar_gpu.dim_x); x++) {
@@ -121,71 +171,28 @@ void lb_init_boundaries() {
                            (Utils::Vector3d{1. * x, 1. * y, 1. * z} +
                             Utils::Vector3d::broadcast(0.5));
 
-          double dist = 1e99;
-          double dist_tmp = 0.0;
-          Utils::Vector3d dist_vec{};
+          // take last boundary containing the node
+          auto const boundary = boost::find_if(
+              lbboundaries | boost::adaptors::reversed, [&pos](auto const lbb) {
+                return not lbb->shape().is_inside(pos);
+              });
 
-#ifdef EK_BOUNDARIES
-          if (ek_initialized) {
-            node_charged = false;
-            node_wallcharge = 0.0f;
-          }
-#endif
-
-          int n = 0;
-          for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();
-               ++lbb, n++) {
-            (**lbb).calc_dist(pos, dist_tmp, dist_vec);
-
-            if (dist > dist_tmp || n == 0) {
-              dist = dist_tmp;
-              boundary_number = n;
-            }
-#ifdef EK_BOUNDARIES
-            if (ek_initialized) {
-              if (dist_tmp <= 0 && (**lbb).charge_density() != 0.0f) {
-                node_charged = true;
-                node_wallcharge += (**lbb).charge_density() *
-                                   ek_parameters.agrid * ek_parameters.agrid *
-                                   ek_parameters.agrid;
-                (**lbb).set_net_charge(
-                    (**lbb).net_charge() +
-                    (**lbb).charge_density() * ek_parameters.agrid *
-                        ek_parameters.agrid * ek_parameters.agrid);
-              }
-            }
-#endif
-          }
-          if (dist <= 0 && boundary_number >= 0 && (!lbboundaries.empty())) {
+          if (boundary != boost::rend(lbboundaries)) {
             size_of_index = (number_of_boundnodes + 1) * sizeof(int);
             host_boundary_node_list.resize(size_of_index);
             host_boundary_index_list.resize(size_of_index);
             host_boundary_node_list[number_of_boundnodes] =
                 x + lbpar_gpu.dim_x * y + lbpar_gpu.dim_x * lbpar_gpu.dim_y * z;
+            auto const boundary_number =
+                std::distance(lbboundaries.begin(), boundary.base()) - 1;
             host_boundary_index_list[number_of_boundnodes] =
                 boundary_number + 1;
             number_of_boundnodes++;
           }
-
-          lbpar_gpu.number_of_boundnodes = number_of_boundnodes;
-
-#ifdef EK_BOUNDARIES
-          if (ek_initialized) {
-            ek_parameters.number_of_boundary_nodes = number_of_boundnodes;
-
-            if (wallcharge_species != -1) {
-              if (node_charged)
-                host_wallcharge_species_density[ek_parameters.dim_y *
-                                                    ek_parameters.dim_x * z +
-                                                ek_parameters.dim_x * y + x] =
-                    node_wallcharge / ek_parameters.valency[wallcharge_species];
-            }
-          }
-#endif
         }
       }
     }
-
+    lbpar_gpu.number_of_boundnodes = number_of_boundnodes;
     /**call of cuda fkt*/
     std::vector<float> boundary_velocity(3 * (lbboundaries.size() + 1));
     int n = 0;
@@ -205,63 +212,35 @@ void lb_init_boundaries() {
                            host_boundary_index_list.data(),
                            boundary_velocity.data());
 
-#ifdef EK_BOUNDARIES
-    if (ek_initialized) {
-      ek_init_species_density_wallcharge(host_wallcharge_species_density.data(),
-                                         wallcharge_species);
-    }
-#endif
-
 #endif /* defined ( CUDA) && defined (LB_BOUNDARIES_GPU) */
   } else if (lattice_switch == ActiveLB::CPU) {
 #if defined(LB_BOUNDARIES)
-    Utils::Vector3i offset;
-    int the_boundary = -1;
+    auto const lblattice = lb_lbfluid_get_lattice();
+
+    boost::for_each(lbfields, [](auto &f) { f.boundary = 0; });
 
     auto const node_pos = calc_node_pos(comm_cart);
-
-    const auto lblattice = lb_lbfluid_get_lattice();
-    offset[0] = node_pos[0] * lblattice.grid[0];
-    offset[1] = node_pos[1] * lblattice.grid[1];
-    offset[2] = node_pos[2] * lblattice.grid[2];
-
-    for (int n = 0; n < lblattice.halo_grid_volume; n++) {
-      lbfields.at(n).boundary = 0;
-    }
-
-    if (lblattice.halo_grid_volume == 0)
-      return;
+    auto const offset = Utils::hadamard_product(node_pos, lblattice.grid);
 
     for (int z = 0; z < lblattice.grid[2] + 2; z++) {
       for (int y = 0; y < lblattice.grid[1] + 2; y++) {
         for (int x = 0; x < lblattice.grid[0] + 2; x++) {
-          Utils::Vector3d pos;
-          pos[0] = (offset[0] + (x - 0.5)) * lblattice.agrid;
-          pos[1] = (offset[1] + (y - 0.5)) * lblattice.agrid;
-          pos[2] = (offset[2] + (z - 0.5)) * lblattice.agrid;
+          auto const pos =
+              (offset + Utils::Vector3d{x - 0.5, y - 0.5, z - 0.5}) *
+              lblattice.agrid;
 
-          double dist = 1e99;
-          double dist_tmp = 0.0;
-          Utils::Vector3d dist_vec{};
-
-          int n = 0;
-          for (auto it = lbboundaries.begin(); it != lbboundaries.end();
-               ++it, ++n) {
-            (**it).calc_dist(pos, dist_tmp, dist_vec);
-
-            if (dist_tmp < dist || n == 0) {
-              dist = dist_tmp;
-              the_boundary = n;
-            }
-          }
-
-          if (dist <= 0 && the_boundary >= 0 &&
-              not LBBoundaries::lbboundaries.empty()) {
+          auto const boundary = boost::find_if(
+              lbboundaries | boost::adaptors::reversed, [&pos](auto const lbb) {
+                return not lbb->shape().is_inside(pos);
+              });
+          if (boundary != boost::rend(lbboundaries)) {
             auto const index = get_linear_index(x, y, z, lblattice.halo_grid);
+            auto const boundary_number =
+                std::distance(lbboundaries.begin(), boundary.base()) - 1;
             auto &node = lbfields[index];
-            node.boundary = the_boundary + 1;
+            node.boundary = boundary_number + 1;
             node.slip_velocity =
-                LBBoundaries::lbboundaries[the_boundary]->velocity() *
+                (*boundary)->velocity() *
                 (lb_lbfluid_get_tau() / lb_lbfluid_get_agrid());
           } else {
             lbfields[get_linear_index(x, y, z, lblattice.halo_grid)].boundary =
@@ -277,9 +256,10 @@ void lb_init_boundaries() {
 Utils::Vector3d lbboundary_get_force(LBBoundary const *lbb) {
   Utils::Vector3d force{};
 #if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
-  auto const it = std::find_if(
-      lbboundaries.begin(), lbboundaries.end(),
-      [lbb](std::shared_ptr<LBBoundary> const &i) { return i.get() == lbb; });
+  auto const it =
+      boost::find_if(lbboundaries, [lbb](std::shared_ptr<LBBoundary> const &i) {
+        return i.get() == lbb;
+      });
   if (it == lbboundaries.end())
     throw std::runtime_error("You probably tried to get the force of an "
                              "lbboundary that was not added to "

@@ -51,6 +51,7 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.SpheroCylinder`
     - :class:`espressomd.shapes.Stomatocyte`
     - :class:`espressomd.shapes.HollowConicalFrustum`
+    - :class:`espressomd.shapes.Union`
 
 
 .. _Adding shape-based constraints to the system:
@@ -436,6 +437,11 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
    :align: center
    :height: 6.00000cm
 
+
+:class:`espressomd.shapes.Union`
+A meta-shape which is the union of given shapes. Note that only the regions where
+all shapes have a "positive distance" (see :ref:`Available options`) can be used for the
+union. The distance to the union is defined as the minimum distance to any contained shape.
 
 For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
 ``pore`` and ``stomatocyte``, constraints are able to be penetrated if
