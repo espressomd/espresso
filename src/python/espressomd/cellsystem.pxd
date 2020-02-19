@@ -17,8 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# @TODO: shouldn't these global definitions be used via global_variables?
-
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair

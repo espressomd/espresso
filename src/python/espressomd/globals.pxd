@@ -54,7 +54,6 @@ cdef extern from "integrate.hpp":
     extern double sim_time
     extern double verlet_reuse
     extern double skin
-    extern bool set_py_interrupt
 
 cdef extern from "particle_data.hpp":
     extern int n_part
@@ -69,18 +68,8 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds
 
-
 cdef extern from "tuning.hpp":
     extern int timing_samples
-
-
-cdef extern from "npt.hpp":
-    ctypedef struct nptiso_struct:
-        double p_ext
-        double p_inst
-        double p_diff
-        double piston
-    extern nptiso_struct nptiso
 
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int max_oif_objects

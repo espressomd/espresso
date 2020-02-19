@@ -19,7 +19,7 @@
 from cpython.exc cimport PyErr_CheckSignals, PyErr_SetInterrupt
 include "myconfig.pxi"
 from .utils cimport handle_errors, check_type_or_throw_except
-from . cimport globals
+from . cimport integrate
 
 cdef class IntegratorHandle:
     """
@@ -194,9 +194,9 @@ cdef class Integrator:
 
         _integrate(steps, recalc_forces, reuse_forces)
 
-        if globals.set_py_interrupt:
+        if integrate.set_py_interrupt:
             PyErr_SetInterrupt()
-            globals.set_py_interrupt = False
+            integrate.set_py_interrupt = False
             PyErr_CheckSignals()
 
         handle_errors("Encountered errors during integrate")
