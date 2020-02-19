@@ -26,7 +26,6 @@ from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
-from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
 from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked

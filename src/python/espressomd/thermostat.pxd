@@ -74,3 +74,11 @@ cdef extern from "Globals.hpp":
     cdef extern langevin_thermostat_struct langevin
     cdef extern brownian_thermostat_struct brownian
     cdef extern npt_iso_thermostat_struct npt_iso
+
+cdef extern from "npt.hpp":
+    ctypedef struct nptiso_struct:
+        double p_ext
+        double p_inst
+        double p_diff
+        double piston
+    extern nptiso_struct nptiso

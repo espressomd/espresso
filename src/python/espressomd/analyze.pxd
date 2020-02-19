@@ -19,7 +19,6 @@
 
 # For C-extern Analysis
 
-cimport numpy as np
 from .utils cimport Vector3i, Vector3d, Vector9d, List
 from libcpp.vector cimport vector  # import std::vector as vector
 

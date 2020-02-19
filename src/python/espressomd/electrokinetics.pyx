@@ -23,7 +23,6 @@ IF CUDA:
     from .lb cimport lb_lbfluid_set_lattice_switch
     from .lb cimport GPU
 from . import utils
-import os
 import tempfile
 import shutil
 from .utils import is_valid_type

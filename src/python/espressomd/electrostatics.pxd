@@ -18,7 +18,6 @@
 #
 
 include "myconfig.pxi"
-cimport numpy as np
 from .utils import is_valid_type, to_str
 from .utils cimport handle_errors
 from libcpp cimport bool
@@ -118,7 +117,6 @@ IF ELECTROSTATICS:
                 alpha = params["alpha"]
                 p3m_gpu_init(cao, mesh, alpha)
 
-        # Convert C arguments into numpy array
         cdef inline python_p3m_set_mesh_offset(mesh_off):
             cdef double mesh_offset[3]
             mesh_offset[0] = mesh_off[0]

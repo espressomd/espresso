@@ -29,7 +29,6 @@ import matplotlib
 from matplotlib.pyplot import imsave
 
 include "myconfig.pxi"
-from copy import deepcopy
 import espressomd
 from .particle_data import ParticleHandle
 from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
