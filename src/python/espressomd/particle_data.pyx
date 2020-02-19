@@ -25,7 +25,7 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from .globals cimport max_seen_particle, max_seen_particle_type, n_part, \
+from .globals cimport max_seen_particle_type, n_part, \
     n_rigidbonds
 import collections
 import functools
@@ -1562,7 +1562,7 @@ cdef class _ParticleSliceImpl:
 
         # We start with a full list of possible particle ids and then
         # remove ids of non-existing particles
-        id_list = np.arange(max_seen_particle + 1, dtype=int)
+        id_list = np.arange(get_maximal_particle_id() + 1, dtype=int)
         id_list = id_list[slice_]
 
         # Generate a mask which will remove ids of non-existing particles
@@ -1818,7 +1818,7 @@ cdef class ParticleList:
         # Handling of particle id
         if "id" not in P:
             # Generate particle id
-            P["id"] = max_seen_particle + 1
+            P["id"] = get_maximal_particle_id() + 1
         else:
             if particle_exists(P["id"]):
                 raise Exception("Particle %d already exists." % P["id"])
@@ -1874,9 +1874,10 @@ Set quat and scalar dipole moment (dipm) instead.")
 
     # Iteration over all existing particles
     def __iter__(self):
-        for i in range(max_seen_particle + 1):
-            if particle_exists(i):
-                yield self[i]
+        ids = get_particle_ids()
+
+        for i in ids:
+            yield self[i]
 
     def exists(self, idx):
         if is_valid_type(idx, int):
@@ -1901,12 +1902,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         remove_all_particles()
 
     def __str__(self):
-        res = ""
-        for i in range(max_seen_particle + 1):
-            if self.exists(i):
-                res += str(self[i]) + ", "
-        # Remove final comma
-        return "ParticleList([" + res[:-2] + "])"
+        return "ParticleList([" + ",".join(get_particle_ids()) + "])"
 
     def writevtk(self, fname, types='all'):
         """
@@ -1975,7 +1971,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         """
 
         def __get__(self):
-            return max_seen_particle
+            return get_maximal_particle_id()
 
     property n_part_types:
         """
@@ -1995,27 +1991,16 @@ Set quat and scalar dipole moment (dipm) instead.")
         def __get__(self):
             return n_rigidbonds
 
-    # property max_part:
-    #     def __get__(self):
-    #         return max_seen_particle
-
-    # # property n_part:
-    #     def __get__(self):
-    #         return n_part
-
     def pairs(self):
         """
         Generator returns all pairs of particles.
 
         """
 
-        cdef int i
-        cdef int j
-        for i in range(max_seen_particle + 1):
-            for j in range(i + 1, max_seen_particle + 1, 1):
-                if not (particle_exists(i) and particle_exists(j)):
-                    continue
+        ids = get_particle_ids()
 
+        for i in ids:
+            for j in ids[i + 1:]:
                 yield (self[i], self[j])
 
     def select(self, *args, **kwargs):

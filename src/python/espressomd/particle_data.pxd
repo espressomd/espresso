@@ -194,6 +194,10 @@ cdef extern from "particle_data.hpp":
 
     const particle & get_particle_data(int id) except +
 
+    vector[int] get_particle_ids() except +
+
+    int get_maximal_particle_id()
+
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         void vs_relate_to(int part_num, int relate_to)

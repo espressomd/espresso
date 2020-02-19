@@ -625,4 +625,16 @@ bool particle_exists(int part);
  */
 int get_particle_node(int id);
 
+/**
+ * @brief Get all particle ids.
+ *
+ * @return Sorted ids of all existing particles.
+ */
+std::vector<int> get_particle_ids();
+
+/**
+ * @brief Get maximal particle id.
+ */
+int get_maximal_particle_id();
+
 #endif

@@ -74,7 +74,6 @@ cdef extern from "particle_data.hpp":
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern double max_cut
-    extern int max_seen_particle
     extern int max_seen_particle_type
     extern double min_global_cut
     double recalc_maximal_cutoff_bonded()
