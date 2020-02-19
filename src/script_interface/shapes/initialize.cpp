@@ -30,6 +30,7 @@
 #include "SpheroCylinder.hpp"
 #include "Stomatocyte.hpp"
 #include "Torus.hpp"
+#include "Union.hpp"
 #include "Wall.hpp"
 
 namespace ScriptInterface {
@@ -37,6 +38,8 @@ namespace Shapes {
 void initialize() {
   ScriptInterface::register_new<ScriptInterface::Shapes::HollowConicalFrustum>(
       "Shapes::HollowConicalFrustum");
+  ScriptInterface::register_new<ScriptInterface::Shapes::Union>(
+      "Shapes::Union");
   ScriptInterface::register_new<ScriptInterface::Shapes::NoWhere>(
       "Shapes::NoWhere");
   ScriptInterface::register_new<ScriptInterface::Shapes::Wall>("Shapes::Wall");
