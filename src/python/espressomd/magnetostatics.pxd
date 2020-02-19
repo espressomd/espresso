@@ -53,7 +53,6 @@ IF DIPOLES == 1:
     IF(DIPOLAR_BARNES_HUT == 1):
         cdef extern from "actor/DipolarBarnesHut.hpp":
             void activate_dipolar_barnes_hut(float epssq, float itolsq)
-            # void activate_dipolar_barnes_hut()
             void deactivate_dipolar_barnes_hut()
 
 IF DP3M == 1:
@@ -71,7 +70,4 @@ IF DP3M == 1:
         ctypedef struct dp3m_data_struct:
             P3MParameters params
 
-        # links intern C-struct with python object
         cdef extern dp3m_data_struct dp3m
-
-        # Convert C arguments into numpy array

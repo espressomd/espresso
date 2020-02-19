@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Here we create something to handle particles
-cimport numpy as np
 from .utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from libcpp cimport bool
 from libcpp.vector cimport vector  # import std::vector as vector

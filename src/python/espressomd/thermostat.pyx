@@ -26,7 +26,6 @@ IF ROTATION:
     from .globals cimport FIELD_LANGEVIN_GAMMA_ROTATION, FIELD_BROWNIAN_GAMMA_ROTATION
 from .thermostat cimport nptiso
 from .globals cimport mpi_bcast_parameter
-import numpy as np
 from . cimport utils
 from .lb import HydrodynamicInteraction
 from .lb cimport lb_lbcoupling_set_gamma

@@ -18,7 +18,6 @@
 #
 include "myconfig.pxi"
 from .utils import requires_experimental_features
-import numpy as np
 from .actors cimport Actor
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
@@ -442,4 +441,3 @@ IF DIPOLES == 1:
                 self.set_magnetostatics_prefactor()
                 activate_dipolar_barnes_hut(
                     self._params["epssq"], self._params["itolsq"])
-                # activate_dipolar_barnes_hut()

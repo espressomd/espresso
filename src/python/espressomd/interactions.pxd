@@ -25,7 +25,6 @@ from libcpp cimport bool as cbool
 from libc cimport stdint
 
 include "myconfig.pxi"
-cimport numpy as np
 
 # force include of config.hpp
 cdef extern from "config.hpp":
