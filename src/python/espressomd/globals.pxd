@@ -18,7 +18,6 @@
 #
 include "myconfig.pxi"
 from libcpp cimport bool
-from .utils cimport Vector3i
 
 cdef extern from "global.hpp":
     int FIELD_BOXL
@@ -57,18 +56,6 @@ cdef extern from "integrate.hpp":
     extern double skin
     extern bool set_py_interrupt
 
-cdef extern from "domain_decomposition.hpp":
-    ctypedef struct  DomainDecomposition:
-        int cell_grid[3]
-        double cell_size[3]
-        bool fully_connected[3]
-
-    extern DomainDecomposition dd
-    extern int max_num_cells
-    extern int min_num_cells
-    int calc_processor_min_num_cells(const Vector3i & grid)
-
-
 cdef extern from "particle_data.hpp":
     extern int n_part
 
@@ -78,16 +65,6 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern double min_global_cut
     double recalc_maximal_cutoff_bonded()
     double recalc_maximal_cutoff_nonbonded()
-
-cdef extern from "cells.hpp":
-    ctypedef struct CellStructure:
-        int type
-        bool use_verlet_list
-
-    CellStructure cell_structure
-
-cdef extern from "layered.hpp":
-    extern int n_layers
 
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds

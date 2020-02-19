@@ -19,9 +19,10 @@
 from .grid cimport node_grid
 from . cimport integrate
 from .globals cimport FIELD_SKIN, FIELD_NODEGRID, FIELD_MAXNUMCELLS, FIELD_MINNUMCELLS
-from .globals cimport max_cut, verlet_reuse, n_layers, dd, cell_structure, \
-    min_num_cells, max_num_cells, skin
-from .globals cimport mpi_bcast_parameter, calc_processor_min_num_cells
+from .globals cimport max_cut, verlet_reuse, skin
+from .globals cimport mpi_bcast_parameter
+from .cellsystem cimport dd, cell_structure, min_num_cells, max_num_cells, n_layers_
+from .cellsystem cimport calc_processor_min_num_cells
 import numpy as np
 from .utils cimport handle_errors
 from .utils import is_valid_type
@@ -117,7 +118,7 @@ cdef class CellSystem:
 
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
-            s["n_layers"] = n_layers
+            s["n_layers"] = n_layers_
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
@@ -144,7 +145,7 @@ cdef class CellSystem:
 
         if cell_structure.type == CELL_STRUCTURE_LAYERED:
             s["type"] = "layered"
-            s["n_layers"] = n_layers
+            s["n_layers"] = n_layers_
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
