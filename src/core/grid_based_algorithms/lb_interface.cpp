@@ -596,15 +596,16 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
 
 void lb_lbnode_set_pop(const Utils::Vector3i &ind,
                        const Utils::Vector19d &p_pop) {
-  if (lattice_switch == ActiveLB::WALBERLA) {
-    //#ifdef LB_WALBERLA
-    //    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
-    //                                             p_pop);
-    //#endif
-    throw std::runtime_error("Not implemented");
-  } else {
-    throw NoLBActive();
-  }
+  throw std::runtime_error("Not implemented");
+  //  if (lattice_switch == ActiveLB::WALBERLA) {
+  //#ifdef LB_WALBERLA
+  //    ::Communication::mpiCallbacks().call_all(Walberla::set_node_pop, ind,
+  //                                             p_pop);
+  //#endif
+  //    throw std::runtime_error("Not implemented");
+  //  } else {
+  //    throw NoLBActive();
+  //  }
 }
 
 ActiveLB lb_lbfluid_get_lattice_switch() { return lattice_switch; }

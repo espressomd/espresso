@@ -6,7 +6,6 @@
 #include "grid_based_algorithms/lb_walberla_instance.hpp"
 namespace LBBoundaries {
 Utils::Vector3d LBBoundary::get_force() const {
-#if defined(LB_BOUNDARIES) || defined(LB_BOUNDARIES_GPU)
   if (lattice_switch == ActiveLB::WALBERLA) {
 #ifdef LB_WALBERLA
     auto const grid = lb_walberla()->get_grid_dimensions();
@@ -32,14 +31,9 @@ Utils::Vector3d LBBoundary::get_force() const {
     }         // loop over lb cells
     return boost::mpi::all_reduce(comm_cart, force,
                                   std::plus<Utils::Vector3d>());
-#else
-    return {0, 0, 0};
-#endif
-  } else
-    throw std::runtime_error("No LB active");
-#else
-  throw std::runtime_error("Needs LB_BOUNDARIES or LB_BOUNDARIES_GPU.");
-#endif
+  #endif
+  } 
+  throw std::runtime_error("LB Boundary code called with inactive LB");
 }
 } // namespace LBBoundaries
 #endif
