@@ -136,7 +136,7 @@ void lb_lbfluid_invalidate_particle_allocation() {}
 uint64_t lb_lbfluid_get_rng_state() { return rng_counter_fluid->value(); }
 
 void lb_lbfluid_set_rng_state(uint64_t counter) {
-  rng_counter_fluid.reset(new Utils::Counter<uint64_t>(counter));
+  rng_counter_fluid = std::make_unique<Utils::Counter<uint64_t>>(counter);
 }
 
 double lb_lbfluid_get_viscosity() {
