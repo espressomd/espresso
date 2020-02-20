@@ -17,7 +17,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
-import math
+# import math WALBERLA TODO
 
 import espressomd.lb
 import espressomd.lbboundaries
