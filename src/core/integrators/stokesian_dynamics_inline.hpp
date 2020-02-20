@@ -45,7 +45,6 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
                           p.m.omega.norm() * time_step);
 #endif
 
-
     // Verlet criterion check
     if (Utils::sqr(p.r.p[0] - p.l.p_old[0]) +
             Utils::sqr(p.r.p[1] - p.l.p_old[1]) +

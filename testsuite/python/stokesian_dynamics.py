@@ -18,7 +18,6 @@ class StokesianDynamicsSetupTest(ut.TestCase):
 
         self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
-        
 
         from espressomd.thermostat import flags
         self.system.thermostat.set_sd(viscosity=1.0,
@@ -37,7 +36,6 @@ class StokesianDynamicsSetupTest(ut.TestCase):
         with (self.assertRaises(Exception)): 
             self.system.integrator.set_sd()
 
-        
         self.system.periodicity = [0, 0, 0]
         self.system.integrator.set_sd()
         with (self.assertRaises(Exception)):
@@ -113,8 +111,8 @@ class StokesianDiffusionTest(ut.TestCase):
     eta = 1.0
 
     def setUp(self):
-        #self.system.actors.clear()
-        #self.system.part.clear()
+        # self.system.actors.clear()
+        # self.system.part.clear()
         self.system.box_l = [10] * 3
         self.system.periodicity = [0, 0, 0]
 
@@ -148,8 +146,7 @@ class StokesianDiffusionTest(ut.TestCase):
         msd = np.linalg.norm(pos - pos[0, :], axis=1)**2
         costheta = np.dot(orientation[:, :], orientation[0, :])
 
-
-        #translational diffusion coefficient
+        # translational diffusion coefficient
         D_expected = self.kT / (6 * np.pi * self.eta * self.R)
 
         # NOTE on steps per slice
@@ -162,18 +159,19 @@ class StokesianDiffusionTest(ut.TestCase):
 
         squared_displacement_per_slice = np.empty(n_slices)
         for i in range(n_slices):
-            squared_displacement_per_slice[i] = np.linalg.norm(pos[i * n_steps_per_slice] - pos[(i+1) * n_steps_per_slice])**2
-        D_measured = np.mean(squared_displacement_per_slice) / (6 * n_steps_per_slice * self.system.time_step)
+            squared_displacement_per_slice[i] = np.linalg.norm(
+                pos[i * n_steps_per_slice] - pos[(i + 1) * n_steps_per_slice])**2
+        D_measured = np.mean(squared_displacement_per_slice) / \
+            (6 * n_steps_per_slice * self.system.time_step)
         self.assertAlmostEqual(D_expected, D_measured, delta=D_expected * 0.2)
 
-
-        #rotational diffusion coefficient
+        # rotational diffusion coefficient
         Dr_expected = self.kT / (8 * np.pi * self.eta * self.R**3)
         tr_expected = int(1 / (2 * Dr_expected))
         fit = scipy.optimize.curve_fit(lambda t, Dr: np.exp(-2 * Dr * t),
                                        t[:2 * tr_expected],
                                        costheta[:2 * tr_expected],
-                                       p0 = 1e-5)
+                                       p0=1e-5)
         Dr_measured = fit[0][0]
         self.assertAlmostEqual(
             Dr_expected,
@@ -183,8 +181,6 @@ class StokesianDiffusionTest(ut.TestCase):
     def tearDown(self):
         self.system.actors.clear()
         self.system.part.clear()
-
-
 
 
 if __name__ == '__main__':

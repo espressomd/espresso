@@ -36,7 +36,7 @@ struct SD_particle_data {
   int type = 0;
 
   /* particle radius */
-  double r = -1; 
+  double r = -1;
 
   /* particle position */
   Utils::Vector3d pos = {0., 0., 0.};
@@ -50,7 +50,7 @@ struct SD_particle_data {
 #endif
 
   /* external force */
-  Utils::Vector3d ext_force = {0.0, 0.0, 0.0}; 
+  Utils::Vector3d ext_force = {0.0, 0.0, 0.0};
 
   /* external torque */
   Utils::Vector3d ext_torque = {0.0, 0.0, 0.0};
