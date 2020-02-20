@@ -20,7 +20,7 @@ import espressomd
 import espressomd.lb
 from espressomd.shapes import Wall
 import espressomd.lbboundaries
-#from itertools import product TODO WALBERLA
+# from itertools import product TODO WALBERLA
 
 
 class LBBoundariesBase:
