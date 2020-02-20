@@ -270,15 +270,19 @@ void propagate_vel_pos_sd() {
 
 #if defined(BLAS) && defined(LAPACK)
       case CPU:
+        //v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
+        //              sd_kT / time_step, offset, sd_seed, sd_flags);
         v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                      sd_kT / time_step, offset, sd_seed, sd_flags);
+                      std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
         break;
 #endif
 
 #ifdef CUDA
       case GPU:
+        //v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
+        //              sd_kT / time_step, offset, sd_seed, sd_flags);
         v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-                      sd_kT / time_step, offset, sd_seed, sd_flags);
+                      std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
         break;
 #endif
 

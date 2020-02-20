@@ -1005,7 +1005,7 @@ struct lubrication {
 
 template <typename T>
 struct thermalizer {
-    T kT;
+    T sqrt_kT_Dt;
     std::size_t offset;
     std::size_t seed;
 #ifdef __CUDACC__
@@ -1014,10 +1014,23 @@ struct thermalizer {
     T operator()(std::size_t index) {
         uint4 rnd_ints = curand_Philox4x32_10(make_uint4(offset >> 32, seed >> 32, index >> 32, index),
                                               make_uint2(offset, seed));
+
         T rnd = _curand_uniform_double_hq(rnd_ints.w, rnd_ints.x);
-        return 12 * kT * std::sqrt(T{12.0}) * (rnd - 0.5);
-        // 12 * kT * time_step is the desired variance
-        // the rest is a random number with unit variance and zero mean
+        return std::sqrt(T{2.0}) * sqrt_kT_Dt * std::sqrt(T{12.0}) * (rnd - 0.5);
+
+        // \sqrt(12) * (rnd - 0.5) is a uniformly distributed random number
+        // with zero mean and unit variance.
+        
+        // \sqrt(2 * kT * \Delta t) is the desired standard deviation for 
+        // random displacement. 
+
+        // NOTE: Here, we do not compute a random displacement but a random 
+        // velocity, therefore the standard deviation has been divided by 
+        // the time step (see sd_interface.cpp).
+        
+        // why use the _curand_uniform_double_hq function?
+        // I don't think it is meant to be used outside of the
+        // curand_kernel.h file.
     }
 };
 
@@ -1048,7 +1061,7 @@ struct solver {
     std::vector<T> calc_vel(std::vector<T> const &x_host,
                             std::vector<T> const &f_host,
                             std::vector<T> const &a_host,
-                            T kT,
+                            T sqrt_kT_Dt,
                             std::size_t offset,
                             std::size_t seed,
                             int const flg = SELF_MOBILITY | PAIR_MOBILITY | FTS) {
@@ -1141,15 +1154,38 @@ struct solver {
         vector_type<T> einf(n_part * 5, T{0.0});
 
         device_matrix<T, Policy> rfu_inv;
-        device_matrix<T, Policy> rfu_inv_sqrt;
-        thrust::tie(rfu_inv, rfu_inv_sqrt) = rfu.inverse_and_cholesky();
+        device_matrix<T, Policy> rfu_sqrt;
+        thrust::tie(rfu_inv, rfu_sqrt) = rfu.inverse_and_cholesky();
+        
+        vector_type<T> frnd(n_part * 6, T{0.0});
+        
+        // Stochastic force
+        if (sqrt_kT_Dt > 0.0) {
 
-        vector_type<T> u = rfu_inv * (fext + rfe * einf) + uinf;
+            // This method is combined from two locations, 
+            // namely
+            // Banchio, Brady 2003 https://doi.org/10.1063/1.1571819
+            // equation (6)
+            //  -- and -- 
+            // Brady, Bossis 1988 
+            // https://doi.org/10.1146/annurev.fl.20.010188.000551
+            // equation (3)
+            
+            // We adopt the more detailed method of the 2003 paper.
 
-        if (kT > 0.0) {
+            // However, the matrix A in that paper is NOT a byproduct of the
+            // matrix inversion of R_{FU} as they claim. (We get the 
+            // decomposition of R_{FU} but not of its inverse)
+
+            // Luckily, with the decomposition of R_{FU} we CAN compute an
+            // appropriate random force with the variance given by the
+            // 1988 paper (as opposed to random displacement).             
+        
             vector_type<T> psi(f_host.size());
             thrust::tabulate(Policy::par(), psi.begin(), psi.end(),
-                             thermalizer<T>{kT, offset, seed});
+                             thermalizer<T>{sqrt_kT_Dt, offset, seed});
+            
+            frnd = rfu_sqrt * psi;
 
             // There is possibly an additional term for the thermalization
             //
@@ -1157,8 +1193,9 @@ struct solver {
             //
             // But this seems to be omitted in most cases in the literature.
             // It is also very unclear how to actually calculate it.
-            u = u + rfu_inv_sqrt * psi;
         }
+
+        vector_type<T> u = rfu_inv * (fext + rfe * einf + frnd) + uinf;
 
         // return the change in velocity due to HI
         std::vector<T> out(u.size());
