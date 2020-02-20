@@ -142,9 +142,9 @@ class LBShearCommon:
 
         # speed of sound of the LB fluid in MD units (agrid/tau is due to
         # LB->MD unit conversion)
-        speed_of_sound = 1. / math.sqrt(3.) * self.lbf.agrid / self.lbf.tau
+#        speed_of_sound = 1. / math.sqrt(3.) * self.lbf.agrid / self.lbf.tau
         # equation of state for the LB fluid
-        p_eq = speed_of_sound**2.0 * DENS
+#        p_eq = speed_of_sound**2.0 * DENS
         # see Eq. 1.15 and 1.29 in
         # Krüger, Timm, et al. "The lattice Boltzmann method." Springer International Publishing 10 (2017): 978-3.
         # and
@@ -155,7 +155,7 @@ class LBShearCommon:
         # '*' denotes the outer product and 'u' is the velocity field
         # NOTE: the so called stress property of the fluid is actually the
         # pressure tensor not the viscous stress tensor!
-        shear_rate = SHEAR_VELOCITY / H
+#        shear_rate = SHEAR_VELOCITY / H
         dynamic_viscosity = self.lbf.viscosity * DENS
 #        p_expected = p_eq * np.identity(3) - dynamic_viscosity * shear_rate * (
 #            np.outer(shear_plane_normal, shear_direction) + np.transpose(np.outer(shear_plane_normal, shear_direction)))
