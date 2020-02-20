@@ -143,7 +143,6 @@ class StokesianDiffusionTest(ut.TestCase):
             orientation[i + 1, :] = self.system.part[0].director
 
         t = np.arange(0, intsteps + 1)
-        msd = np.linalg.norm(pos - pos[0, :], axis=1)**2
         costheta = np.dot(orientation[:, :], orientation[0, :])
 
         # translational diffusion coefficient
