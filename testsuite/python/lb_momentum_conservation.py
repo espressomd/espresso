@@ -68,20 +68,21 @@ class Momentum(object):
             LB_PARAMS['ext_force_density'])
 
         p = self.system.part.add(
-            pos=self.system.box_l/2, ext_force=-ext_fluid_force, v=[0.1,.2,.3])
+            pos=self.system.box_l / 2, ext_force=-ext_fluid_force, v=[0.1, .2, .3])
         initial_momentum = np.array(self.system.analysis.linear_momentum())
         np.testing.assert_allclose(initial_momentum, np.copy(p.v) * p.mass)
         boundary_warning = False
         while True: 
             self.system.integrator.run(1)
-            if not boundary_warning and (np.any(p.pos % self.system.box_l <.5 *AGRID)):
-                print("Close to boundary",p.pos)
+            if not boundary_warning and (
+                    np.any(p.pos % self.system.box_l < .5 * AGRID)):
+                print("Close to boundary", p.pos)
                 boundary_warning = True
-              
+
             measured_momentum = self.system.analysis.linear_momentum()
 
             coupling_force = -(p.f - p.ext_force)
-            compensation = -TIME_STEP/2 * coupling_force
+            compensation = -TIME_STEP / 2 * coupling_force
             print(measured_momentum + compensation)
             # fluid force is opposed to particle force
 

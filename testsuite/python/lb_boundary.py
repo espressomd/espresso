@@ -101,6 +101,7 @@ class LBBoundariesBase:
 #
 #
 
+
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):
