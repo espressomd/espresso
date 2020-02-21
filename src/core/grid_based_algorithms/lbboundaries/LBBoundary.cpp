@@ -31,8 +31,8 @@ Utils::Vector3d LBBoundary::get_force() const {
     }         // loop over lb cells
     return boost::mpi::all_reduce(comm_cart, force,
                                   std::plus<Utils::Vector3d>());
-  #endif
-  } 
+#endif
+  }
   throw std::runtime_error("LB Boundary code called with inactive LB");
 }
 } // namespace LBBoundaries
