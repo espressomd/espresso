@@ -423,26 +423,28 @@ intel:18:
     - icp
   when: manual
 
-check_sphinx:
-  <<: *global_job_definition
-  stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
-  needs:
-    - cuda10-maxset
-  when: on_success
-  script:
-    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
-    - cd ${CI_PROJECT_DIR}/build
-    - make -t && rm src/python/espressomd/visualization.* && make sphinx
-    - bash ../maintainer/CI/doc_warnings.sh
-  artifacts:
-    paths:
-    - build/doc/sphinx
-    expire_in: 1 week
-  tags:
-    - docker
-    - linux
-    - cuda
+# WALBERLA TODO
+#check_sphinx:
+#  <<: *global_job_definition
+#  stage: additional_checks
+#  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+#  needs:
+#    - cuda10-maxset
+#  when: on_success
+#  script:
+#    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
+#    - cd ${CI_PROJECT_DIR}/build
+#    - make -t && rm src/python/espressomd/visualization.* && make sphinx
+#    - bash ../maintainer/CI/doc_warnings.sh
+#  artifacts:
+#    paths:
+#    - build/doc/sphinx
+#    expire_in: 1 week
+#  tags:
+#    - docker
+#    - linux
+#    - cuda
+#
 
 run_tutorials:
   <<: *global_job_definition
