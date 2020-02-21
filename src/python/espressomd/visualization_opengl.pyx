@@ -993,9 +993,9 @@ class openGLLive:
 
         # CLIP BORDERS OF SIMULATION BOX
         for i in range(6):
-            OpenGL.GL.glEnable(OpenGL.GL.OpenGL.GL.GL_CLIP_PLANE0 + i)
+            OpenGL.GL.glEnable(OpenGL.GL.GL_CLIP_PLANE0 + i)
             OpenGL.GL.glClipPlane(
-                OpenGL.GL.OpenGL.GL.GL_CLIP_PLANE0 + i,
+                OpenGL.GL.GL_CLIP_PLANE0 + i,
                 self.box_eqn[i])
 
         # NEEDS ADDITIONAL CLIP PLANES
@@ -1247,9 +1247,9 @@ class openGLLive:
 
     def _redraw_sphere(self, pos, radius, quality):
         OpenGL.GL.glPushMatrix()
-        OpenGL.GL.OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
+        OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
         OpenGL.GL.glCallList(self.dl_sphere)
-        OpenGL.GL.OpenGL.GL.glPopMatrix()
+        OpenGL.GL.glPopMatrix()
 
     # HELPER TO DRAW PERIODIC BONDS
     def _cut_bond(self, xA, dx):
@@ -1443,7 +1443,7 @@ class openGLLive:
     # CALLED ION WINDOW POSITION/SIZE CHANGE
     def _reshape_window(self, w, h):
         OpenGL.GL.glViewport(0, 0, w, h)
-        OpenGL.GL.glMatrixMode(OpenGL.GL.OpenGL.GL.GL_PROJECTION)
+        OpenGL.GL.glMatrixMode(OpenGL.GL.GL_PROJECTION)
         OpenGL.GL.glLoadIdentity()
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(
             self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
@@ -1951,7 +1951,7 @@ def draw_box(p0, s, color, material, width):
     OpenGL.GL.glLineWidth(width)
     set_solid_material(color, material)
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(p0[0], p0[1], p0[2])
+    OpenGL.GL.glTranslatef(p0[0], p0[1], p0[2])
     OpenGL.GL.glBegin(OpenGL.GL.GL_LINE_LOOP)
     OpenGL.GL.glVertex3f(0.0, 0.0, 0.0)
     OpenGL.GL.glVertex3f(s[0], 0.0, 0.0)
@@ -1975,12 +1975,12 @@ def draw_box(p0, s, color, material, width):
     OpenGL.GL.glVertex3f(0.0, s[1], s[2])
     OpenGL.GL.glEnd()
 
-    OpenGL.GL.OpenGL.GL.glPopMatrix()
+    OpenGL.GL.glPopMatrix()
 
 
 def draw_sphere(pos, radius, color, material, quality):
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
+    OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
     set_solid_material(color, material)
     OpenGL.GLUT.glutSolidSphere(radius, quality, quality)
     OpenGL.GL.glPopMatrix()
@@ -2015,7 +2015,7 @@ def draw_cylinder(posA, posB, radius, color, material, quality,
 
     # angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
-    OpenGL.GL.OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
+    OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
 
     ax, rx, ry = rotation_helper(d)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
@@ -2023,11 +2023,11 @@ def draw_cylinder(posA, posB, radius, color, material, quality,
 
     if draw_caps:
         OpenGL.GLU.gluDisk(quadric, 0, radius, quality, quality)
-        OpenGL.GL.OpenGL.GL.glTranslatef(0, 0, length)
+        OpenGL.GL.glTranslatef(0, 0, length)
         OpenGL.GLU.gluDisk(quadric, 0, radius, quality, quality)
 
     OpenGL.GLU.gluDeleteQuadric(quadric)
-    OpenGL.GL.OpenGL.GL.glPopMatrix()
+    OpenGL.GL.glPopMatrix()
 
 
 def rotation_helper(d):
@@ -2043,10 +2043,10 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material,
                    quality):
     set_solid_material(color, material)
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
+    OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
     OpenGL.GL.glScalef(semiaxis_a, semiaxis_b, semiaxis_c)
     OpenGL.GLUT.glutSolidSphere(1, quality, quality)
-    OpenGL.GL.OpenGL.GL.glPopMatrix()
+    OpenGL.GL.glPopMatrix()
 
 
 def get_extra_clip_plane():
@@ -2072,11 +2072,11 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     quadric = OpenGL.GLU.gluNewQuadric()
 
     # basic position and orientation
-    OpenGL.GL.OpenGL.GL.glTranslate(center[0], center[1], center[2])
+    OpenGL.GL.glTranslate(center[0], center[1], center[2])
     ax, rx, ry = rotation_helper(axis)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
     # cylinder
-    OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
+    OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
     OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
                            smoothing_radius, quality, quality)
     # torus segment
@@ -2089,7 +2089,7 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
         quality)
     OpenGL.GL.glDisable(clip_plane)
     # wall
-    OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
+    OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
     OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
                               2.0 * max_box_l, quality, 1, 0, 360)
     # torus segment
@@ -2240,7 +2240,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     rx = -d[1] * d[2]
     ry = d[0] * d[2]
     length = np.linalg.norm(d)
-    OpenGL.GL.OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
+    OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
 
     # First hemispherical cap
@@ -2252,7 +2252,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     # Cylinder
     OpenGL.GLU.gluCylinder(quadric, radius, radius, length, quality, quality)
     # Second hemispherical cap
-    OpenGL.GL.OpenGL.GL.glTranslatef(0, 0, v)
+    OpenGL.GL.glTranslatef(0, 0, v)
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
     OpenGL.GLU.gluSphere(quadric, radius, quality, quality)
@@ -2270,7 +2270,7 @@ def draw_arrow(pos, d, radius, color, material, quality):
     ax, rx, ry = rotation_helper(d)
 
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(pos2[0], pos2[1], pos2[2])
+    OpenGL.GL.glTranslatef(pos2[0], pos2[1], pos2[2])
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
     OpenGL.GLUT.glutSolidCone(radius * 3, radius * 3, quality, quality)
     OpenGL.GL.glPopMatrix()
