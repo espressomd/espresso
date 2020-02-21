@@ -478,7 +478,7 @@ class openGLLive:
 
         # COLLECT ALL ACTIVE NONBONDED INTERACTIONS
         all_non_bonded_inters = [x for x in dir(self.system.non_bonded_inter[0, 0]) if not x.startswith(
-            '__') and not x == 'type1' and not x == 'type2']
+            '__') and x != 'type1' and x != 'type2']
         for t1 in all_types:
             for t2 in all_types:
                 for check_nb in all_non_bonded_inters:
@@ -582,8 +582,7 @@ class openGLLive:
                 self.update()
 
                 if self.paused:
-                    # sleep(0) is worse
-                    time.sleep(0.0001)
+                    time.sleep(0.0001)  # sleep(0) is worse
                 else:
                     try:
                         self.system.integrator.run(integ_steps)
@@ -1580,14 +1579,14 @@ class openGLLive:
 
     def _id_to_fcolor(self, pid):
         pid += 1
-        return [int(pid / (256 * 256)) / 255.0, int((pid %
-                                                     (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
+        return [int(pid / 256**2) / 255.0, int((pid %
+                                                     256**2) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
 
     def _fcolor_to_id(self, fcol):
         if (fcol == [0, 0, 0]).all():
             return -1
         else:
-            return 256 * 256 * int(fcol[0] * 255) + 256 * \
+            return 256**2 * int(fcol[0] * 255) + 256 * \
                 int(fcol[1] * 255) + int(fcol[2] * 255) - 1
 
     def _set_particle_drag(self, pos, pos_old):
@@ -2084,7 +2083,7 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
     OpenGL.GLUT.glutSolidTorus(
         smoothing_radius,
-        (radius + smoothing_radius),
+        radius + smoothing_radius,
         quality,
         quality)
     OpenGL.GL.glDisable(clip_plane)
@@ -2098,7 +2097,7 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
     OpenGL.GLUT.glutSolidTorus(
         smoothing_radius,
-        (radius + smoothing_radius),
+        radius + smoothing_radius,
         quality,
         quality)
     OpenGL.GL.glDisable(clip_plane)
@@ -2675,8 +2674,8 @@ class Quaternion:
             (self[1] * q[1]) - (self[2] * q[2])
         x = (self[0] * q[3]) + (self[3] * q[0]) + \
             (self[1] * q[2]) - (self[2] * q[1])
-        y = (self[1] * q[3]) + (self[3] * q[1]) + (
-            self[2] * q[0]) - (self[0] * q[2])
-        z = (self[2] * q[3]) + (self[3] * q[2]) + (
-            self[0] * q[1]) - (self[1] * q[0])
+        y = (self[1] * q[3]) + (self[3] * q[1]) + \
+            (self[2] * q[0]) - (self[0] * q[2])
+        z = (self[2] * q[3]) + (self[3] * q[2]) + \
+            (self[0] * q[1]) - (self[1] * q[0])
         return Quaternion(x, y, z, w)
