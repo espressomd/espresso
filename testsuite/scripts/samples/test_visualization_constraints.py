@@ -37,6 +37,11 @@ sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
 class Sample(ut.TestCase):
     system = sample.system
 
+    def test_has_constraint(self):
+        self.assertEqual(len(self.system.constraints), 1)
+        constraint_name = type(self.system.constraints[0].shape).__name__
+        self.assertEqual(constraint_name, sample.args.shape)
+
 
 if __name__ == "__main__":
     ut.main()
