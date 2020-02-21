@@ -543,13 +543,15 @@ check_with_odd_no_of_processors:
     - linux
     - icp
 
-deploy_sphinx_documentation:
-  extends: .deploy_base
-  dependencies:
-    - check_sphinx
-  script:
-    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+# WALBERLA TODO
+#deploy_sphinx_documentation:
+#  extends: .deploy_base
+#  dependencies:
+#    - check_sphinx
+#  script:
+#    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
+#      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+#
 
 deploy_doxygen_documentation:
   extends: .deploy_base
