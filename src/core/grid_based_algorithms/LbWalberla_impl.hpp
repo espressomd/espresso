@@ -80,9 +80,10 @@ and resets force_to_be_applied to the global external force
 template <typename PdfField, typename ForceField, typename BoundaryHandling>
 class ResetForce {
 public:
-  ResetForce(BlockDataID pdf_field_id, BlockDataID last_applied_force_field_id,
-             BlockDataID force_to_be_applied_id,
-             BlockDataID boundary_handling_id)
+  ResetForce(const BlockDataID &pdf_field_id,
+             const BlockDataID &last_applied_force_field_id,
+             const BlockDataID &force_to_be_applied_id,
+             const BlockDataID &boundary_handling_id)
       : m_pdf_field_id(pdf_field_id),
         m_last_applied_force_field_id(last_applied_force_field_id),
         m_force_to_be_applied_id(force_to_be_applied_id),
@@ -122,8 +123,10 @@ public:
   }
 
 private:
-  BlockDataID m_pdf_field_id, m_last_applied_force_field_id,
-      m_force_to_be_applied_id, m_boundary_handling_id;
+  const BlockDataID m_pdf_field_id;
+  const BlockDataID m_last_applied_force_field_id;
+  const BlockDataID m_force_to_be_applied_id;
+  const BlockDataID m_boundary_handling_id;
   Vector3<real_t> m_ext_force;
 };
 
