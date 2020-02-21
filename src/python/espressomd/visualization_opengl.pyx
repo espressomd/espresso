@@ -477,8 +477,9 @@ class openGLLive:
         all_types.update(constraint_types)
 
         # COLLECT ALL ACTIVE NONBONDED INTERACTIONS
-        all_non_bonded_inters = [x for x in dir(self.system.non_bonded_inter[0, 0]) if not x.startswith(
-            '__') and x != 'type1' and x != 'type2']
+        all_non_bonded_inters = [
+            x for x in dir(self.system.non_bonded_inter[0, 0])
+            if not x.startswith('__') and x != 'type1' and x != 'type2']
         for t1 in all_types:
             for t2 in all_types:
                 for check_nb in all_non_bonded_inters:
@@ -911,13 +912,8 @@ class openGLLive:
                         for p in b[1:]:
                             self.bonds.append([i, p, t])
 
-    def _draw_text(
-            self,
-            x,
-            y,
-            text,
-            color,
-            font=OpenGL.GLUT.GLUT_BITMAP_9_BY_15):
+    def _draw_text(self, x, y, text, color,
+                   font=OpenGL.GLUT.GLUT_BITMAP_9_BY_15):
         OpenGL.GL.glColor(color)
         OpenGL.GL.glWindowPos2f(x, y)
         for ch in text:
@@ -931,12 +927,12 @@ class openGLLive:
         if self.specs['draw_axis']:
             axis_fac = 0.2
             axis_r = np.min(self.system.box_l) / 50.0
-            draw_arrow([0, 0, 0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r, [
-                       1, 0, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
-            draw_arrow([0, 0, 0], [0, self.system.box_l[2] * axis_fac, 0], axis_r, [
-                       0, 1, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
-            draw_arrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [
-                       0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow([0, 0, 0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r,
+                       [1, 0, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow([0, 0, 0], [0, self.system.box_l[2] * axis_fac, 0], axis_r,
+                       [0, 1, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r,
+                       [0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
         if self.specs['draw_bonds']:
             self._draw_bonds()
@@ -955,14 +951,13 @@ class openGLLive:
             self._draw_lb_grid()
 
     def _draw_system_box(self):
-        draw_box([0, 0, 0], self.system.box_l,
-                 self.invBackgroundCol, self.materials['medium'], 2.0 * self.line_width_fac)
+        draw_box([0, 0, 0], self.system.box_l, self.invBackgroundCol,
+                 self.materials['medium'], 2.0 * self.line_width_fac)
 
     def _draw_nodes(self):
         for n in self.node_box_origins:
-            draw_box(
-                n, self.local_box_l, self.node_box_color,
-                self.materials['transparent1'], 1.5 * self.line_width_fac)
+            draw_box(n, self.local_box_l, self.node_box_color,
+                     self.materials['transparent1'], 1.5 * self.line_width_fac)
 
     def _draw_cells(self):
         for n in self.node_box_origins:
@@ -1000,16 +995,22 @@ class openGLLive:
         # NEEDS ADDITIONAL CLIP PLANES
         for s in self.shapes['Shapes::SimplePore']:
             draw_simple_pore(
-                s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self._modulo_indexing(
+                s[0], s[1], s[2], s[3], s[4], max(self.system.box_l),
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[5]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[5])],
+                self.specs['quality_constraints'])
 
         # NEEDS ADDITIONAL CLIP PLANES
         for s in self.shapes['Shapes::SpheroCylinder']:
             draw_sphero_cylinder(
-                s[0], s[1], s[2], self._modulo_indexing(
+                s[0], s[1], s[2],
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[3]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[3])],
+                self.specs['quality_constraints'])
 
         # RESET CLIP BORDERS
         for i in range(6):
@@ -1020,33 +1021,52 @@ class openGLLive:
 
         for s in self.shapes['Shapes::Ellipsoid']:
             draw_ellipsoid(
-                s[0], s[1], s[2], s[3], self._modulo_indexing(
+                s[0], s[1], s[2], s[3],
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[4]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[4])],
+                self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
-            draw_sphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
+            draw_sphere(
+                s[0], s[1],
+                self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[2]),
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[2])],
+                self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Slitpore']:
             draw_slitpore(
-                s[0], s[1], s[2], s[3], s[4], s[5], max(self.system.box_l), self._modulo_indexing(
+                s[0], s[1], s[2], s[3], s[4], s[5], max(self.system.box_l),
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[6]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[6])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[6])],
+                self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             draw_plane(
-                s[0], self._modulo_indexing(
+                s[0],
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[1]),
                 self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for s in self.shapes['Shapes::Cylinder']:
-            draw_cylinder(s[0], s[1], s[2], self._modulo_indexing(self.specs['constraint_type_colors'], s[3]), self.materials[self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'], True)
+            draw_cylinder(
+                s[0], s[1], s[2], self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[3]),
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[3])],
+                self.specs['quality_constraints'], True)
 
         for s in self.shapes['Shapes::Misc']:
-            draw_points(s[0], self.specs['rasterize_pointsize'], self._modulo_indexing(
-                self.specs['constraint_type_colors'], s[1]), self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
+            draw_points(
+                s[0], self.specs['rasterize_pointsize'],
+                self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[1]),
+                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for i in range(6):
             OpenGL.GL.glDisable(OpenGL.GL.GL_CLIP_PLANE0 + i)
@@ -1056,7 +1076,6 @@ class openGLLive:
             try:
                 radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()[
                     'sigma'] * 0.5
-
                 if radius == 0:
                     radius = self.system.non_bonded_inter[ptype, ptype].wca.get_params()[
                         'sigma'] * 0.5
@@ -1168,19 +1187,24 @@ class openGLLive:
                             reset_material = True
 
             if self.specs['velocity_arrows']:
-                self._draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs[
-                    'velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
+                self._draw_arrow_property(
+                    pid, ptype, self.specs['velocity_arrows_type_scale'],
+                    self.specs['velocity_arrows_type_colors'],
+                    self.specs['velocity_arrows_type_radii'], 'velocity')
                 reset_material = True
 
             if self.specs['force_arrows']:
                 self._draw_arrow_property(
                     pid, ptype, self.specs['force_arrows_type_scale'],
-                    self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
+                    self.specs['force_arrows_type_colors'],
+                    self.specs['force_arrows_type_radii'], 'force')
                 reset_material = True
 
             if self.specs['director_arrows']:
-                self._draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs[
-                    'director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
+                self._draw_arrow_property(
+                    pid, ptype, self.specs['director_arrows_type_scale'],
+                    self.specs['director_arrows_type_colors'],
+                    self.specs['director_arrows_type_radii'], 'director')
                 reset_material = True
 
     def _draw_arrow_property(self, pid, ptype, type_scale, type_colors,
@@ -1190,8 +1214,9 @@ class openGLLive:
             v = self.particles[prop][pid]
             col = self._modulo_indexing(type_colors, ptype)
             radius = self._modulo_indexing(type_radii, ptype)
-            draw_arrow(self.particles['pos'][pid], np.array(
-                v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow(
+                self.particles['pos'][pid], np.array(v, dtype=float) * sc,
+                radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
         box_l_2 = self.system.box_l / 2.0
@@ -1579,8 +1604,8 @@ class openGLLive:
 
     def _id_to_fcolor(self, pid):
         pid += 1
-        return [int(pid / 256**2) / 255.0, int((pid %
-                                                     256**2) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
+        return [int(pid / 256**2) / 255.0, int((pid % 256**2) / 256) / 255.0,
+                (pid % 256) / 255.0, 1.0]
 
     def _fcolor_to_id(self, fcol):
         if (fcol == [0, 0, 0]).all():
@@ -1686,8 +1711,9 @@ class openGLLive:
             if self.specs['draw_cells']:
                 self._update_cells()
 
-        self.box_n = [np.array([1, 0, 0]), np.array([0, 1, 0]), np.array(
-            [0, 0, 1]), np.array([-1, 0, 0]), np.array([0, -1, 0]), np.array([0, 0, -1])]
+        self.box_n = [np.array([1, 0, 0]), np.array([0, 1, 0]),
+                      np.array([0, 0, 1]), np.array([-1, 0, 0]),
+                      np.array([0, -1, 0]), np.array([0, 0, -1])]
         self.box_p = [np.array([0, 0, 0]), np.array([0, 0, 0]), np.array([0, 0, 0]), np.array(
             self.system.box_l), np.array(self.system.box_l), np.array(self.system.box_l)]
         self.box_eqn = []
@@ -1813,8 +1839,8 @@ class openGLLive:
 
         cr = np.array(self.specs['camera_right'])
 
-        self.camera.set_camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
-                               box_diag / 17.0, center=box_center)
+        self.camera.set_camera(camPos=np.array(cp), camTarget=ct, camRight=cr,
+                               moveSpeed=0.5 * box_diag / 17.0, center=box_center)
         self._set_camera_spotlight()
 
     def _init_opengl(self):
@@ -1827,8 +1853,9 @@ class openGLLive:
 
         OpenGL.GLUT.glutCreateWindow(b"ESPResSo visualization")
 
-        OpenGL.GL.glClearColor(self.specs['background_color'][0], self.specs[
-            'background_color'][1], self.specs['background_color'][2], 1.)
+        OpenGL.GL.glClearColor(self.specs['background_color'][0],
+                               self.specs['background_color'][1],
+                               self.specs['background_color'][2], 1.)
 
         OpenGL.GL.glEnable(OpenGL.GL.GL_BLEND)
         OpenGL.GL.glBlendFunc(
@@ -1857,8 +1884,8 @@ class openGLLive:
 
         # LIGHT0
         if self.specs['light_pos'] != 'auto':
-            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_POSITION, np.array(
-                self.specs['light_pos']).tolist())
+            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_POSITION,
+                                np.array(self.specs['light_pos']).tolist())
         else:
             OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_POSITION,
                                 (np.array(self.system.box_l) * 1.1).tolist())
