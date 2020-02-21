@@ -2027,6 +2027,7 @@ def draw_cylinder(posA, posB, radius, color, material, quality,
         OpenGL.GL.OpenGL.GL.glTranslatef(0, 0, length)
         OpenGL.GLU.gluDisk(quadric, 0, radius, quality, quality)
 
+    OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.OpenGL.GL.glPopMatrix()
 
 
@@ -2107,6 +2108,7 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
                               2.0 * max_box_l, quality, 1, 0, 360)
 
+    OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()
 
 
@@ -2215,6 +2217,7 @@ def draw_slitpore(
 
     OpenGL.GL.glDisable(clip_plane)
 
+    OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()
 
 
@@ -2256,6 +2259,7 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     OpenGL.GLU.gluSphere(quadric, radius, quality, quality)
     OpenGL.GL.glDisable(clip_plane)
 
+    OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()
 
 
