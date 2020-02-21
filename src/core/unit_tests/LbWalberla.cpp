@@ -29,7 +29,6 @@ Vector3i grid_dimensions{int(box_dimensions[0] / agrid),
                          int(box_dimensions[1] / agrid),
                          int(box_dimensions[2] / agrid)};
 double tau = 0.34;
-double skin = 0.01;
 double density = 2.5;
 Vector3i node_grid;
 
