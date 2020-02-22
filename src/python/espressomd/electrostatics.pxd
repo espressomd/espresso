@@ -210,9 +210,6 @@ IF ELECTROSTATICS:
         int MMM1D_sanity_checks()
         int mmm1d_tune(char ** log)
 
-    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-        int coulomb_set_prefactor(double prefactor)
-
     cdef inline pyMMM1D_tune():
         cdef char * log = NULL
         cdef int resp
@@ -254,6 +251,5 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
             float force_benchmark(SystemInterface & s)
 
-            void check_periodicity()
             void activate()
             void deactivate()

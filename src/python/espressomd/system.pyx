@@ -32,9 +32,6 @@ from . import particle_data
 from . import cuda_init
 from . import code_info
 from .utils cimport make_array_locked, make_Vector3d, Vector3d
-from .lb cimport lb_lbfluid_get_tau
-from .lb cimport lb_lbfluid_get_lattice_switch
-from .lb cimport NONE
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
 from .analyze import Analysis
