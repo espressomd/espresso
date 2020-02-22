@@ -47,9 +47,9 @@ if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
 from .comfixed import ComFixed
 from .globals import Globals
 from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
-from .globals cimport max_seen_particle_type, integ_switch, max_oif_objects, sim_time
+from .globals cimport integ_switch, max_oif_objects, sim_time
 from .globals cimport recalc_maximal_cutoff_bonded, recalc_maximal_cutoff_nonbonded, mpi_bcast_parameter
-from .utils cimport handle_errors
+from .utils cimport handle_errors, check_type_or_throw_except
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -395,15 +395,6 @@ cdef class System:
             """
             auto_exclusions(distance)
 
-    def _is_valid_type(self, current_type):
-        return not (isinstance(current_type, int)
-                    or current_type < 0
-                    or current_type > max_seen_particle_type)
-
-    def check_valid_type(self, current_type):
-        if self._is_valid_type(current_type):
-            raise ValueError("type", current_type, "does not exist!")
-
     def setup_type_map(self, type_list=None):
         """
         For using ESPResSo conveniently for simulations in the grand canonical
@@ -425,7 +416,7 @@ cdef class System:
         """
         Parameters
         ----------
-        current_type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
+        type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
             Particle type to count the number for.
 
         Returns
@@ -434,7 +425,7 @@ cdef class System:
             The number of particles which have the given type.
 
         """
-        self.check_valid_type(type)
+        check_type_or_throw_except(type, 1, int, "type must be 1 int")
         number = number_of_particles_with_type(type)
         handle_errors("")
         return int(number)
