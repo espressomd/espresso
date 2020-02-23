@@ -35,7 +35,6 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         Variant()
         Variant(const Variant & )
         Variant & operator = (const Variant &)
-        int which()
 
     bool is_type[T](const Variant &)
     bool is_none(const Variant &)

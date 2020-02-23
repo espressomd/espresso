@@ -83,8 +83,6 @@ cdef extern from "particle_data.hpp":
 
     void set_particle_f(int part, const Vector3d & F)
 
-    void set_particle_solvation(int part, double * solvation)
-
     IF ROTATION:
         void set_particle_rotation(int part, int rot)
 
@@ -114,12 +112,8 @@ cdef extern from "particle_data.hpp":
         void set_particle_omega_lab(int part, Vector3d omega)
         void set_particle_omega_body(int part, Vector3d omega)
         void set_particle_torque_lab(int part, Vector3d torque)
-        void set_particle_torque_body(int part, Vector3d torque)
         void pointer_to_omega_body(const particle * p, const double * & res)
         Vector3d get_torque_body(const particle p)
-
-    IF MASS:
-        void pointer_to_mass(particle * p, double * & res)
 
     IF DIPOLES:
         void set_particle_dip(int part, double dip[3])

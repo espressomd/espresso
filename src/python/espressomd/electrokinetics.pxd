@@ -79,10 +79,8 @@ IF ELECTROKINETICS and CUDA:
         cdef extern EK_parameters ek_parameters
 
         # EK functions
-        void ek_integrate()
         void ek_print_parameters()
         void ek_print_lbpar()
-        void lb_set_ek_pointer(EK_parameters * pointeradress)
         unsigned int ek_calculate_boundary_mass()
         int ek_print_vtk_density(int species, char * filename)
         int ek_print_vtk_flux(int species, char * filename)
@@ -102,7 +100,6 @@ IF ELECTROKINETICS and CUDA:
         int ek_set_bulk_viscosity(double bulk_viscosity)
         int ek_set_gamma_odd(double gamma_odd)
         int ek_set_gamma_even(double gamma_even)
-        int ek_set_lb_force_density(double * ext_force_density)
         int ek_set_density(int species, double density)
         int ek_set_D(int species, double D)
         int ek_set_valency(int species, double valency)
@@ -123,8 +120,4 @@ IF ELECTROKINETICS and CUDA:
         int ek_load_checkpoint(char * filename)
 
         int ek_set_electrostatics_coupling(bool electrostatics_coupling)
-        void ek_calculate_electrostatic_coupling()
         int ek_print_vtk_particle_potential(char * filename)
-
-        IF EK_BOUNDARIES:
-            void ek_init_species_density_wallcharge(ekfloat * wallcharge_species_density, int wallcharge_species)
