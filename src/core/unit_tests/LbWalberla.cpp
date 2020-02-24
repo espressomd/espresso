@@ -161,6 +161,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
   box_geo.set_length(box_dimensions);
 
   std::vector<Vector3d> corners;
+  std::vector<Vector3i> corners_ext;
   auto const local_domain = lb.get_local_domain();
   auto const my_left = local_domain.first;
   auto const my_right = local_domain.second;
@@ -170,7 +171,31 @@ BOOST_AUTO_TEST_CASE(velocity) {
       for (double z : {0, 1}) {
         corners.push_back(
             my_left + hadamard_product(local_domain_size, Vector3d{x, y, z}));
+        for (int dx : {0, 1})
+          for (int dy : {0, 1})
+            for (int dz : {0, 1}) {
+              corners_ext.push_back(
+                  Vector3i{(int) my_left[0], (int)my_left[1], (int)my_left[2]} +
+                  hadamard_product(Vector3i{(int) local_domain_size[0],
+                                            (int) local_domain_size[1],
+                                            (int) local_domain_size[2]} - Vector3i{2,2,2},
+                                   Vector3i{int(x), int(y), int(z)}) + 
+                  hadamard_product(Vector3i{1,1,1}, Vector3i{dx,dy,dz}));
+            }
       }
+
+  Vector3d vel = {0.2,-1.6,4.3};
+  // set velocity at extended corners
+  for (Vector3i node : corners_ext) {
+    if (lb.node_in_local_halo(node)) {
+      BOOST_CHECK(lb.set_node_velocity(node, vel));
+    }
+  }
+
+  if(comm_cart.size() > 1){
+    MPI_Barrier(comm_cart);
+    lb.ghost_communication();
+  }
 
   // check corners
   for (Vector3d pos : corners) {
@@ -181,7 +206,9 @@ BOOST_AUTO_TEST_CASE(velocity) {
     // All corners should be in local halo
     BOOST_CHECK(lb.pos_in_local_halo(pos));
     // velocity should be accessible
-    BOOST_CHECK(lb.get_velocity_at_pos(pos));
+    auto res = lb.get_velocity_at_pos(pos);
+    BOOST_CHECK(res);
+    BOOST_CHECK_SMALL((*res - vel).norm(), 1E-10);
   }
 
   // Corners + offsets
@@ -196,8 +223,9 @@ BOOST_AUTO_TEST_CASE(velocity) {
       auto const pos = corner + offset;
       // Should be in local halo
       BOOST_CHECK(lb.pos_in_local_halo(pos));
-      // Velocity should be accessible
-      BOOST_CHECK(lb.get_velocity_at_pos(pos));
+      // Velocity should equal the value set before
+      auto res = lb.get_velocity_at_pos(pos);
+      BOOST_CHECK_SMALL((*res - vel).norm(), 1E-10);
       // Positions >= my_left and < my_right
       bool in_local_domain = true;
       for (int i = 0; i < 3; i++)

@@ -13,6 +13,8 @@ class LbWalberlaBase {
 public:
   virtual void integrate() = 0;
 
+  virtual void ghost_communication() = 0;
+
   // Velocity
   virtual boost::optional<Utils::Vector3d>
   get_node_velocity(const Utils::Vector3i node) const = 0;

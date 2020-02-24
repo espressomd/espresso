@@ -402,6 +402,16 @@ public:
 
   void integrate() override { m_time_loop->singleStep(); };
 
+  void ghost_communication() override {
+    blockforest::communication::UniformBufferedScheme<
+        typename stencil::D3Q27>
+        communication(m_blocks);
+    communication.addPackInfo(
+        std::make_shared<field::communication::PackInfo<PdfField>>(
+            m_pdf_field_id));
+    communication();
+  }
+
   template <typename Function>
   void interpolate_bspline_at_pos(Utils::Vector3d pos, Function f) const {
     Utils::Interpolation::bspline_3d<2>(
