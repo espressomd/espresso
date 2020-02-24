@@ -52,7 +52,7 @@ public:
       Utils::Vector3d vec;
       (*s).calculate_dist(pos, d, vec);
       if (d < 0.0)
-        throw std::runtime_error(
+        throw std::domain_error(
             "Distance to Union not well-defined for given position!");
       if (d < res.first) {
         return std::make_pair(d, vec);
