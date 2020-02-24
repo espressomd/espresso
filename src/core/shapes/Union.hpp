@@ -20,6 +20,8 @@
 #ifndef SHAPES_UNION
 #define SHAPES_UNION
 
+#include <boost/algorithm/cxx11/all_of.hpp>
+
 #include <memory>
 
 #include "Shape.hpp"
@@ -64,6 +66,11 @@ public:
                         std::make_pair(std::numeric_limits<double>::infinity(),
                                        Utils::Vector3d{}),
                         dist_compare);
+  }
+
+  bool is_inside(Utils::Vector3d const &pos) const override {
+    return boost::algorithm::all_of(
+        m_shapes, [&pos](auto const &s) { return s->is_inside(pos); });
   }
 
 private:
