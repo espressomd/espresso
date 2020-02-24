@@ -886,12 +886,18 @@ class openGLLive:
         for i in range(int(res[0])):
             for j in range(int(res[1])):
                 for k in range(int(res[2])):
-                    p = np.array([i, j, k]) * sp
-                    dist, vec = shape.call_method(
-                        "calc_distance", position=p.tolist())
-                    if not np.isnan(vec).any() and not np.isnan(
-                            dist) and abs(dist) < sp:
-                        points.append((p - vec).tolist())
+                    # some shapes may not have a well-defined distance function in the whole domain
+                    # and may throw upon asking for a distance
+                    try:
+                        p = np.array([i, j, k]) * sp
+                        dist, vec = shape.call_method(
+                            "calc_distance", position=p.tolist())
+                        if not np.isnan(vec).any() and not np.isnan(
+                                dist) and abs(dist) < sp:
+                            points.append((p - vec).tolist())
+                    # domain error translates to ValueError (cython)
+                    except ValueError:
+                        continue
         return points
 
     # GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
