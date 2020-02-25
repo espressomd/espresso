@@ -214,11 +214,16 @@ protected:
   boost::optional<BlockAndCell>
   get_block_and_cell(const Utils::Vector3i &node,
                      bool consider_ghost_layers) const {
+    Utils::Vector3i f_node;
+    for (int i=0; i<3; i++){
+      f_node[i] = (node[i] + m_grid_dimensions[i]) % m_grid_dimensions[i];
+    }
     // Get block and local cell
-    Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
+    Cell global_cell{uint_c(f_node[0]), uint_c(f_node[1]), uint_c(f_node[2])};
     auto block = m_blocks->getBlock(global_cell, 0);
     // Return if we don't have the cell
     if (consider_ghost_layers and !block) {
+      global_cell = Cell({uint_c(node[0]), uint_c(node[1]), uint_c(node[2])});
       // Try to find a block which has the cell as ghost layer
       for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
         if (b->getAABB()
