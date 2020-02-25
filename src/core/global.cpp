@@ -93,9 +93,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_MAXNUMCELLS,
      {&max_num_cells, Datafield::Type::INT, 1,
       "max_num_cells"}}, /* 10 from cells.cpp */
-    {FIELD_MAXPART,
-     {&max_seen_particle, Datafield::Type::INT, 1,
-      "max_part"}}, /* 11 from particle_data.cpp */
     {FIELD_MINNUMCELLS,
      {&min_num_cells, Datafield::Type::INT, 1,
       "min_num_cells"}}, /* 14  from cells.cpp */

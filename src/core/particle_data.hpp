@@ -75,13 +75,6 @@ enum {
  * exported variables
  ************************************************/
 
-/** Highest particle number seen so far. If you leave out some
- *  particle numbers, this number might be higher than the
- *  true number of particles. On the other hand, if you start
- *  your particle numbers at 0, the total number of particles
- *  is larger by 1.
- */
-extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 
@@ -121,6 +114,21 @@ inline void set_local_particle_data(int id, Particle *p) {
     local_particles.resize(id + 1);
 
   local_particles[id] = p;
+}
+
+/**
+ * @brief Get the maximal particle ever seen on this node.
+ *
+ * This returns the highest particle id ever encountered on
+ * this node, or -1 if there are no particles on this node.
+ */
+inline int get_local_max_seen_particle() {
+  extern std::vector<Particle *> local_particles;
+
+  auto it = std::find_if(local_particles.rbegin(), local_particles.rend(),
+                         [](const Particle *p) { return p != nullptr; });
+
+  return (it != local_particles.rend()) ? (*it)->identity() : -1;
 }
 
 /************************************************
@@ -504,19 +512,6 @@ void local_rescale_particles(int dir, double scale);
  *               of all bond partners (secondary atoms of the bond).
  */
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
-
-/** Synchronous send of a particle buffer to another node.
- *  The other node MUST call \ref recv_particles when this is called.
- *  The particles data is freed.
- */
-void send_particles(ParticleList *particles, int node);
-
-/** Synchronous receive of a particle buffer from another node.
- *  The other node MUST call \ref send_particles when this is called.
- *  Particles needs to initialized, it is reallocated to the correct
- *  size and the content is overwritten.
- */
-void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be

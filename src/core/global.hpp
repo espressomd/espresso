@@ -54,8 +54,6 @@ enum Fields {
   FIELD_INTEG_SWITCH,
   /** index of \ref max_num_cells  */
   FIELD_MAXNUMCELLS,
-  /** index of \ref max_seen_particle */
-  FIELD_MAXPART,
   /** index of \ref min_num_cells  */
   FIELD_MINNUMCELLS,
   /** index of \ref n_rigidbonds */
