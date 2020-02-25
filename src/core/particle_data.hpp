@@ -123,6 +123,21 @@ inline void set_local_particle_data(int id, Particle *p) {
   local_particles[id] = p;
 }
 
+/**
+ * @brief Get the maximal particle ever seen on this node.
+ *
+ * This returns the highest particle id ever encountered on
+ * this node, or -1 if there are no particles on this node.
+ */
+inline int get_local_max_seen_particle() {
+  extern std::vector<Particle *> local_particles;
+
+  auto it = std::find_if(local_particles.rbegin(), local_particles.rend(),
+                         [](const Particle *p) { return p != nullptr; });
+
+  return (it != local_particles.rend()) ? (*it)->identity() : -1;
+}
+
 /************************************************
  * Functions
  ************************************************/
