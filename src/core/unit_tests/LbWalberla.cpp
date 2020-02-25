@@ -174,16 +174,17 @@ BOOST_AUTO_TEST_CASE(velocity) {
           for (int dy : {0, 1})
             for (int dz : {0, 1}) {
               corners_ext.push_back(
-                  Vector3i{(int) my_left[0], (int)my_left[1], (int)my_left[2]} +
-                  hadamard_product(Vector3i{(int) local_domain_size[0],
-                                            (int) local_domain_size[1],
-                                            (int) local_domain_size[2]} - Vector3i{2,2,2},
-                                   Vector3i{int(x), int(y), int(z)}) + 
-                  hadamard_product(Vector3i{1,1,1}, Vector3i{dx,dy,dz}));
+                  Vector3i{(int)my_left[0], (int)my_left[1], (int)my_left[2]} +
+                  hadamard_product(Vector3i{(int)local_domain_size[0],
+                                            (int)local_domain_size[1],
+                                            (int)local_domain_size[2]} -
+                                       Vector3i{2, 2, 2},
+                                   Vector3i{int(x), int(y), int(z)}) +
+                  hadamard_product(Vector3i{1, 1, 1}, Vector3i{dx, dy, dz}));
             }
       }
 
-  Vector3d vel = {0.2,-1.6,4.3};
+  Vector3d vel = {0.2, -1.6, 4.3};
   // set velocity at extended corners
   for (Vector3i node : corners_ext) {
     if (lb.node_in_local_halo(node)) {
@@ -191,7 +192,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
     }
   }
 
-  if(comm_cart.size() > 1){
+  if (comm_cart.size() > 1) {
     MPI_Barrier(comm_cart);
     lb.ghost_communication();
   }

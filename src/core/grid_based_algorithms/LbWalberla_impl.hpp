@@ -218,7 +218,7 @@ protected:
   get_block_and_cell(const Utils::Vector3i &node,
                      bool consider_ghost_layers) const {
     Utils::Vector3i f_node;
-    for (int i=0; i<3; i++){
+    for (int i = 0; i < 3; i++) {
       f_node[i] = (node[i] + m_grid_dimensions[i]) % m_grid_dimensions[i];
     }
     // Get block and local cell
@@ -364,8 +364,7 @@ public:
         m_blocks->getBlockStorage(), 1);
 
     // sets up the communication
-    blockforest::communication::UniformBufferedScheme<
-        typename stencil::D3Q27>
+    blockforest::communication::UniformBufferedScheme<typename stencil::D3Q27>
         communication(m_blocks);
     communication.addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
@@ -411,8 +410,7 @@ public:
   void integrate() override { m_time_loop->singleStep(); };
 
   void ghost_communication() override {
-    blockforest::communication::UniformBufferedScheme<
-        typename stencil::D3Q27>
+    blockforest::communication::UniformBufferedScheme<typename stencil::D3Q27>
         communication(m_blocks);
     communication.addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
