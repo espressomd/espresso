@@ -318,7 +318,7 @@ thermalization of the particle coupling. The magnitude of the frictional couplin
 the parameter ``gamma``.
 To enable the LB thermostat, use::
 
-    sys.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+    system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
 
 No other thermostatting mechanism is necessary
