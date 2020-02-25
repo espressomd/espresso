@@ -362,7 +362,7 @@ public:
 
     // sets up the communication
     blockforest::communication::UniformBufferedScheme<
-        typename LatticeModel::CommunicationStencil>
+        typename stencil::D3Q27>
         communication(m_blocks);
     communication.addPackInfo(
         std::make_shared<field::communication::PackInfo<PdfField>>(
