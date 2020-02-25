@@ -22,13 +22,13 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 
-#include "auto_parameters/AutoParameters.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <memory>
 
 #include "Observable.hpp"
 #include "core/observables/CylindricalLBProfileObservable.hpp"
-#include "get_value.hpp"
+#include "script_interface/get_value.hpp"
 
 namespace ScriptInterface {
 namespace Observables {

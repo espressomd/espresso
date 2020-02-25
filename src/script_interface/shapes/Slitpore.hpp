@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_SHAPES_SLITPORE_HPP
 #define SCRIPT_INTERFACE_SHAPES_SLITPORE_HPP
 
-#include "Shape.hpp"
-#include "core/shapes/Slitpore.hpp"
+#include "script_interface/shapes/Shape.hpp"
+#include <shapes/Slitpore.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

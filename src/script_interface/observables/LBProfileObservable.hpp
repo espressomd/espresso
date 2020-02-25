@@ -22,7 +22,7 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_LBPROFILEOBSERVABLE_HPP
 
-#include "auto_parameters/AutoParameters.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <memory>
 

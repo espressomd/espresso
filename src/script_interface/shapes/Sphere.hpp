@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_SHAPES_SPHERE_HPP
 
 #include "Shape.hpp"
-#include "core/shapes/Sphere.hpp"
+#include <shapes/Sphere.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

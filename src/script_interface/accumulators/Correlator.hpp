@@ -23,11 +23,11 @@
 #define SCRIPT_INTERFACE_CORRELATORS_CORRELATOR_HPP
 
 #include "AccumulatorBase.hpp"
-#include "ScriptInterface.hpp"
-#include "auto_parameters/AutoParameters.hpp"
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include "core/accumulators/Correlator.hpp"
-#include "observables/Observable.hpp"
+#include "script_interface/observables/Observable.hpp"
 
 #include "utils/Vector.hpp"
 #include "utils/as_const.hpp"
