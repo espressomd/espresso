@@ -95,8 +95,6 @@ typedef struct {
   float bonded, non_bonded, coulomb, dipolar;
 } CUDA_energy;
 
-extern CUDA_particle_data *particle_data_host;
-
 /** Global variables associated with all of the particles and not with
  *  one individual particle.
  */
@@ -115,7 +113,6 @@ void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
 
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host();
-CUDA_global_part_vars *gpu_get_global_particle_vars_pointer();
 CUDA_particle_data *gpu_get_particle_pointer();
 float *gpu_get_particle_force_pointer();
 #ifdef ROTATION

@@ -36,7 +36,6 @@
 #endif
 
 static CUDA_global_part_vars global_part_vars_host = {};
-__device__ __constant__ CUDA_global_part_vars global_part_vars_device[1];
 
 /** struct for particle force */
 static float *particle_forces_device = nullptr;
@@ -47,7 +46,7 @@ static CUDA_particle_data *particle_data_device = nullptr;
 /** struct for energies */
 static CUDA_energy *energy_device = nullptr;
 
-CUDA_particle_data *particle_data_host = nullptr;
+std::vector<CUDA_particle_data> particle_data_host;
 std::vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
@@ -99,7 +98,6 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 }
 
 __device__ unsigned int getThreadIndex() {
-
   return blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
          threadIdx.x;
 }
@@ -108,34 +106,13 @@ __device__ unsigned int getThreadIndex() {
  * @param[out] particle_forces_device    Local particle force
  * @param[out] particle_torques_device   Local particle torque
  */
-__global__ void init_particle_force(float *particle_forces_device,
-                                    float *particle_torques_device) {
-
-  unsigned int part_index = getThreadIndex();
-
-  if (part_index < global_part_vars_device->number_of_particles) {
-    particle_forces_device[3 * part_index + 0] = 0.0f;
-    particle_forces_device[3 * part_index + 1] = 0.0f;
-    particle_forces_device[3 * part_index + 2] = 0.0f;
-
-#ifdef ROTATION
-    particle_torques_device[3 * part_index] = 0.0f;
-    particle_torques_device[3 * part_index + 1] = 0.0f;
-    particle_torques_device[3 * part_index + 2] = 0.0f;
-#endif
-  }
-}
-
-/** Kernel for the initialisation of the particle force array
- * @param[out] particle_forces_device    Local particle force
- * @param[out] particle_torques_device   Local particle torque
- */
 __global__ void reset_particle_force(float *particle_forces_device,
-                                     float *particle_torques_device) {
+                                     float *particle_torques_device,
+                                     size_t number_of_particles) {
 
   unsigned int part_index = getThreadIndex();
 
-  if (part_index < global_part_vars_device->number_of_particles) {
+  if (part_index < number_of_particles) {
     particle_forces_device[3 * part_index + 0] = 0.0f;
     particle_forces_device[3 * part_index + 1] = 0.0f;
     particle_forces_device[3 * part_index + 2] = 0.0f;
@@ -145,6 +122,25 @@ __global__ void reset_particle_force(float *particle_forces_device,
     particle_torques_device[3 * part_index + 2] = 0.0f;
 #endif
   }
+}
+
+static void launch_reset_particle_force(float *particle_forces_device,
+                                        float *particle_torques_device,
+                                        size_t number_of_particles) {
+  /* values for the particle kernel */
+  int threads_per_block_particles = 64;
+  int blocks_per_grid_particles_y = 4;
+  int blocks_per_grid_particles_x =
+      (number_of_particles +
+       threads_per_block_particles * blocks_per_grid_particles_y - 1) /
+      (threads_per_block_particles * blocks_per_grid_particles_y);
+  dim3 dim_grid_particles =
+      make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
+
+  KERNELCALL(reset_particle_force, dim_grid_particles,
+             threads_per_block_particles, particle_forces_device,
+             particle_torques_device,
+             gpu_get_global_particle_vars_pointer_host()->number_of_particles);
 }
 
 /** change number of particles to be communicated to the GPU
@@ -165,16 +161,9 @@ void gpu_change_number_of_part_to_comm() {
 
     global_part_vars_host.number_of_particles = n_part;
 
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
-                                     &global_part_vars_host,
-                                     sizeof(CUDA_global_part_vars)));
-
     // if the arrays exists free them to prevent memory leaks
     particle_forces_host.clear();
-    if (particle_data_host) {
-      cuda_safe_mem(cudaFreeHost(particle_data_host));
-      particle_data_host = nullptr;
-    }
+
     if (particle_forces_device) {
       cudaFree(particle_forces_device);
       particle_forces_device = nullptr;
@@ -196,12 +185,8 @@ void gpu_change_number_of_part_to_comm() {
 #endif
 
     if (global_part_vars_host.number_of_particles) {
-
       /* pinned memory mode - use special function to get OS-pinned memory*/
-      cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
-                                  global_part_vars_host.number_of_particles *
-                                      sizeof(CUDA_particle_data),
-                                  cudaHostAllocWriteCombined));
+      particle_data_host.resize(global_part_vars_host.number_of_particles);
       particle_forces_host.resize(3 *
                                   global_part_vars_host.number_of_particles);
 #if (defined DIPOLES || defined ROTATION)
@@ -221,20 +206,6 @@ void gpu_change_number_of_part_to_comm() {
       cuda_safe_mem(cudaMalloc((void **)&particle_data_device,
                                global_part_vars_host.number_of_particles *
                                    sizeof(CUDA_particle_data)));
-
-      /* values for the particle kernel */
-      int threads_per_block_particles = 64;
-      int blocks_per_grid_particles_y = 4;
-      int blocks_per_grid_particles_x =
-          (global_part_vars_host.number_of_particles +
-           threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-          (threads_per_block_particles * blocks_per_grid_particles_y);
-      dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x,
-                                           blocks_per_grid_particles_y, 1);
-
-      KERNELCALL(init_particle_force, dim_grid_particles,
-                 threads_per_block_particles, particle_forces_device,
-                 particle_torques_device);
     }
   }
 }
@@ -279,9 +250,6 @@ CUDA_particle_data *gpu_get_particle_pointer() { return particle_data_device; }
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host() {
   return &global_part_vars_host;
 }
-CUDA_global_part_vars *gpu_get_global_particle_vars_pointer() {
-  return global_part_vars_device;
-}
 float *gpu_get_particle_force_pointer() { return particle_forces_device; }
 CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
 float *gpu_get_particle_torque_pointer() { return particle_torques_device; }
@@ -289,14 +257,17 @@ float *gpu_get_particle_torque_pointer() { return particle_torques_device; }
 void copy_part_data_to_gpu(ParticleRange particles) {
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
-    cuda_mpi_get_particles(particles, particle_data_host);
+    cuda_mpi_get_particles(particles, particle_data_host.data());
 
     /* get espressomd particle values */
-    if (this_node == 0)
-      cudaMemcpyAsync(particle_data_device, particle_data_host,
-                      global_part_vars_host.number_of_particles *
-                          sizeof(CUDA_particle_data),
+    if (this_node == 0) {
+      launch_reset_particle_force(particle_forces_device,
+                                  particle_torques_device,
+                                  global_part_vars_host.number_of_particles);
+      cudaMemcpyAsync(particle_data_device, particle_data_host.data(),
+                      particle_data_host.size() * sizeof(CUDA_particle_data),
                       cudaMemcpyHostToDevice, stream[0]);
+    }
   }
 }
 
@@ -330,11 +301,6 @@ void copy_forces_from_GPU(ParticleRange particles) {
       dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x,
                                            blocks_per_grid_particles_y, 1);
 
-      /* reset part forces with zero*/
-
-      KERNELCALL(reset_particle_force, dim_grid_particles,
-                 threads_per_block_particles, particle_forces_device,
-                 particle_torques_device);
       cudaDeviceSynchronize();
     }
 
