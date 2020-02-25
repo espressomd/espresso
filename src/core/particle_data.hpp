@@ -632,4 +632,9 @@ std::vector<int> get_particle_ids();
  */
 int get_maximal_particle_id();
 
+/**
+ * @brief Get number of particles.
+ */
+int get_n_part();
+
 #endif

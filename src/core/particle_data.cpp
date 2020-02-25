@@ -1451,3 +1451,10 @@ int get_maximal_particle_id() {
                              return std::max(max, kv.first);
                            });
 }
+
+int get_n_part() {
+  if (particle_node.empty())
+    build_particle_node();
+
+  return static_cast<int>(particle_node.size());
+}

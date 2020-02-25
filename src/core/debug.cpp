@@ -118,7 +118,7 @@ void check_particle_consistency() {
                 cell_structure.local_cells().cell[c]->part[p].p.identity, c);
     }
 
-    for (int p = 0; p < n_part; p++)
+    for (int p = 0; p < get_local_max_seen_particle(); p++)
       if (get_local_particle_data(p))
         fprintf(stderr, "%d: got particle %d in local_particles\n", this_node,
                 p);
