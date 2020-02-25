@@ -1282,11 +1282,12 @@ void auto_exclusions(int distance) {
      exclusions, but this is only done once and the overhead is as much as for
      setting the bonds, which the user apparently accepted.
   */
-  for (auto &p : partCfg()) {
-    auto const id = p.identity();
-    for (int j = 0; j < partners[id].n; j++)
-      if (id < partners[id].e[j])
-        change_exclusion(id, partners[id].e[j], 0);
+  for (auto &kv : partners) {
+    auto const id = kv.first;
+    auto const partner_list = kv.second;
+    for (int j = 0; j < partner_list.n; j++)
+      if (id < partner_list.e[j])
+        change_exclusion(id, partner_list.e[j], 0);
   }
 }
 #endif
