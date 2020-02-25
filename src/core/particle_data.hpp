@@ -75,13 +75,6 @@ enum {
  * exported variables
  ************************************************/
 
-/** Highest particle number seen so far. If you leave out some
- *  particle numbers, this number might be higher than the
- *  true number of particles. On the other hand, if you start
- *  your particle numbers at 0, the total number of particles
- *  is larger by 1.
- */
-extern int max_seen_particle;
 /** total number of particles on all nodes. */
 extern int n_part;
 

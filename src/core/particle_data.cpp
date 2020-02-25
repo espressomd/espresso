@@ -998,10 +998,6 @@ int remove_particle(int p_id) {
 
   particle_node.erase(p_id);
 
-  if (p_id == get_maximal_particle_id()) {
-    max_seen_particle--;
-    mpi_bcast_parameter(FIELD_MAXPART);
-  }
   return ES_OK;
 }
 
@@ -1086,7 +1082,6 @@ void local_remove_all_particles() {
   Cell *cell;
   int c;
   n_part = 0;
-  max_seen_particle = -1;
   std::fill(local_particles.begin(), local_particles.end(), nullptr);
 
   for (c = 0; c < cell_structure.local_cells().n; c++) {
@@ -1111,13 +1106,7 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
-void added_particle(int part) {
-  n_part++;
-
-  if (part > max_seen_particle) {
-    max_seen_particle = part;
-  }
-}
+void added_particle(int part) { n_part++; }
 
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond) {
   boost::copy(bond, std::back_inserter(p.bl));
