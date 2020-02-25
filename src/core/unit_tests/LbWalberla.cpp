@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
   Vector3d vel = {0.2, -1.6, 4.3};
   // set velocity at extended corners
   for (Vector3i node : corners_ext) {
-    if (lb.node_in_local_halo(node)) {
+    if (lb.node_in_local_domain(node)) {
       BOOST_CHECK(lb.set_node_velocity(node, vel));
     }
   }
