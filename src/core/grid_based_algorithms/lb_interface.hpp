@@ -236,8 +236,8 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
 void lb_lbfluid_print_boundary(const std::string &filename);
 void lb_lbfluid_print_velocity(const std::string &filename);
 
-void lb_lbfluid_save_checkpoint(const std::string &filename, int binary);
-void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
+void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
+void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);
 
 /**
  * @brief Checks whether the given node index is within the LB lattice.
