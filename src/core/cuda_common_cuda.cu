@@ -35,6 +35,34 @@
 #error CU-file includes mpi.h! This should not happen!
 #endif
 
+template <class T> struct cuda_host_allocator {
+  typedef T value_type;
+  cuda_host_allocator() noexcept = default; // default ctor not required
+  template <class U>
+  explicit cuda_host_allocator(const cuda_host_allocator<U> &) {}
+  template <class U> bool operator==(const cuda_host_allocator<U> &) const {
+    return true;
+  }
+  template <class U> bool operator!=(const cuda_host_allocator<U> &) const {
+    return false;
+  }
+
+  T *allocate(const size_t n) const {
+    T *result(0);
+    cudaError_t error = cudaMallocHost(reinterpret_cast<void **>(&result),
+                                       n * sizeof(value_type));
+
+    if (error) {
+      throw std::bad_alloc();
+    }
+
+    return result;
+  }
+  void deallocate(T *const p, size_t) const noexcept { cudaFreeHost(p); }
+};
+
+template <class T> using pinned_vector = std::vector<T, cuda_host_allocator<T>>;
+
 static CUDA_global_part_vars global_part_vars_host = {};
 
 /** struct for particle force */
@@ -46,7 +74,7 @@ static CUDA_particle_data *particle_data_device = nullptr;
 /** struct for energies */
 static CUDA_energy *energy_device = nullptr;
 
-std::vector<CUDA_particle_data> particle_data_host;
+pinned_vector<CUDA_particle_data> particle_data_host;
 std::vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
