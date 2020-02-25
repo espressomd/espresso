@@ -87,8 +87,7 @@ or a position coordinate when used with a vector ``pos``.
 For example, ::
 
     >>> import espressomd
-    >>> system = espressomd.System()
-    >>> system.box_l = [100, 100, 100]
+    >>> system = espressomd.System(box_l=[100, 100, 100])
     >>> for i in range(10):
     ...     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
     >>> system.analysis.dist_to(id=4)
@@ -126,9 +125,7 @@ group.
 
 Two arrays are returned corresponding to the normalized distribution and the bins midpoints, for example ::
 
-    >>> system = espressomd.System()
-    >>> box_l = 10.
-    >>> system.box_l = [box_l, box_l, box_l]
+    >>> system = espressomd.System(box_l=[10, 10, 10])
     >>> for i in range(5):
     ...     system.part.add(id=i, pos=i * system.box_l, type=0)
     >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],

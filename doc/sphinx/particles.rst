@@ -308,10 +308,10 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     import espressomd
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
 
-    s = espressomd.System()
-    s.virtual_sites = VirtualSitesRelative(have_velocity=True, have_quaternion=False)
+    system = espressomd.System()
+    system.virtual_sites = VirtualSitesRelative(have_velocity=True, have_quaternion=False)
     # or
-    s.virtual_sites = VirtualSitesOff()
+    system.virtual_sites = VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
 The ``have_velocity`` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
