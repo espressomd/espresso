@@ -520,19 +520,6 @@ void local_rescale_particles(int dir, double scale);
  */
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
 
-/** Synchronous send of a particle buffer to another node.
- *  The other node MUST call \ref recv_particles when this is called.
- *  The particles data is freed.
- */
-void send_particles(ParticleList *particles, int node);
-
-/** Synchronous receive of a particle buffer from another node.
- *  The other node MUST call \ref send_particles when this is called.
- *  Particles needs to initialized, it is reallocated to the correct
- *  size and the content is overwritten.
- */
-void recv_particles(ParticleList *particles, int node);
-
 #ifdef EXCLUSIONS
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
  *  calculated.

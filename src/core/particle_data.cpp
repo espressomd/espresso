@@ -1210,27 +1210,7 @@ void try_delete_exclusion(Particle *part, int part2) {
 }
 #endif
 
-void send_particles(ParticleList *particles, int node) {
-
-  comm_cart.send(node, REQ_SNDRCV_PART, *particles);
-
-  /* remove particles from this nodes local list and free data */
-  for (int pc = 0; pc < particles->n; pc++) {
-    set_local_particle_data(particles->part[pc].p.identity, nullptr);
-    free_particle(&particles->part[pc]);
-  }
-
-  particles->clear();
-}
-
-void recv_particles(ParticleList *particles, int node) {
-  comm_cart.recv(node, REQ_SNDRCV_PART, *particles);
-
-  update_local_particles(particles);
-}
-
 #ifdef EXCLUSIONS
-
 namespace {
 /* keep a unique list for particle i. Particle j is only added if it is not i
    and not already in the list. */
