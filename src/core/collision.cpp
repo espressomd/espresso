@@ -532,10 +532,10 @@ void handle_collisions() {
     auto gathered_queue = gather_global_collision_queue();
 
     // Sync max_seen_part
-    MPI_Allreduce(MPI_IN_PLACE, &max_seen_particle, 1, MPI_INT, MPI_MAX,
-                  comm_cart);
+    auto const global_max_seen_particle = boost::mpi::all_reduce(
+        comm_cart, get_local_max_seen_particle(), boost::mpi::maximum<int>());
 
-    int current_vs_pid = max_seen_particle + 1;
+    int current_vs_pid = global_max_seen_particle + 1;
 
     // Iterate over global collision queue
     for (auto &c : gathered_queue) {
@@ -669,9 +669,6 @@ void handle_collisions() {
 #ifdef ADDITIONAL_CHECKS
     if (!Utils::Mpi::all_compare(comm_cart, current_vs_pid)) {
       throw std::runtime_error("Nodes disagree about current_vs_pid");
-    }
-    if (!Utils::Mpi::all_compare(comm_cart, max_seen_particle)) {
-      throw std::runtime_error("Nodes disagree about max_seen_particle");
     }
 #endif
 

@@ -474,7 +474,7 @@ void build_particle_node() {
  *  @brief Get the mpi rank which owns the particle with id.
  */
 int get_particle_node(int id) {
-  if ((id < 0) or (id > max_seen_particle))
+  if ((id < 0) or (id > get_maximal_particle_id()))
     throw std::runtime_error("Invalid particle id!");
 
   if (particle_node.empty())
@@ -512,8 +512,6 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   auto const re = l->resize(l->n + 1);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
 
-  assert(p->p.identity <= max_seen_particle);
-
   if (re)
     update_local_particles(l);
   else
@@ -548,8 +546,6 @@ Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   Particle *end = &sl->part[sl->n - 1];
 
   new (dst) Particle(std::move(*src));
-
-  assert(dst->p.identity <= max_seen_particle);
 
   if (re) {
     update_local_particles(dl);
@@ -588,7 +584,6 @@ Particle extract_indexed_particle(ParticleList *sl, int i) {
 
   Particle p = std::move(*src);
 
-  assert(p.p.identity <= max_seen_particle);
   set_local_particle_data(p.p.identity, nullptr);
 
   if (src != end) {
@@ -1003,7 +998,7 @@ int remove_particle(int p_id) {
 
   particle_node.erase(p_id);
 
-  if (p_id == max_seen_particle) {
+  if (p_id == get_maximal_particle_id()) {
     max_seen_particle--;
     mpi_bcast_parameter(FIELD_MAXPART);
   }
