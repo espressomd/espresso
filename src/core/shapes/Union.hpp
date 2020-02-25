@@ -20,6 +20,8 @@
 #ifndef SHAPES_UNION
 #define SHAPES_UNION
 
+#include <boost/algorithm/cxx11/all_of.hpp>
+
 #include <memory>
 
 #include "Shape.hpp"
@@ -52,7 +54,7 @@ public:
       Utils::Vector3d vec;
       (*s).calculate_dist(pos, d, vec);
       if (d < 0.0)
-        throw std::runtime_error(
+        throw std::domain_error(
             "Distance to Union not well-defined for given position!");
       if (d < res.first) {
         return std::make_pair(d, vec);
@@ -64,6 +66,11 @@ public:
                         std::make_pair(std::numeric_limits<double>::infinity(),
                                        Utils::Vector3d{}),
                         dist_compare);
+  }
+
+  bool is_inside(Utils::Vector3d const &pos) const override {
+    return boost::algorithm::all_of(
+        m_shapes, [&pos](auto const &s) { return s->is_inside(pos); });
   }
 
 private:
