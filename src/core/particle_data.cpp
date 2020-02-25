@@ -1258,8 +1258,6 @@ int change_exclusion(int part1, int part2, int _delete) {
 void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 
 void auto_exclusions(int distance) {
-  int count, p, i, j, p1, p2, p3, dist1, dist2;
-
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as an interleaved list */
   std::unordered_map<int, IntList> partners;
@@ -1269,11 +1267,11 @@ void auto_exclusions(int distance) {
 
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
-    p1 = part1.p.identity;
-    for (i = 0; i < part1.bl.n;) {
+    auto const p1 = part1.p.identity;
+    for (int i = 0; i < part1.bl.n;) {
       Bonded_ia_parameters const &ia_params = bonded_ia_params[part1.bl.e[i++]];
       if (ia_params.num == 1) {
-        p2 = part1.bl.e[i++];
+        auto const p2 = part1.bl.e[i++];
         /* you never know what the user does, may bond a particle to itself...?
          */
         if (p2 != p1) {
@@ -1288,17 +1286,18 @@ void auto_exclusions(int distance) {
   /* calculate transient connectivity. For each of the current neighbors,
      also exclude their close enough neighbors.
   */
-  for (count = 1; count < distance; count++) {
-    for (p1 = 0; p1 <= max_seen_particle; p1++) {
-      for (i = 0; i < partners[p1].n; i += 2) {
-        p2 = partners[p1].e[i];
-        dist1 = partners[p1].e[i + 1];
+  for (int count = 1; count < distance; count++) {
+    for (auto const &p : partCfg()) {
+      auto const p1 = p.identity();
+      for (int i = 0; i < partners[p1].n; i += 2) {
+        auto const p2 = partners[p1].e[i];
+        auto const dist1 = partners[p1].e[i + 1];
         if (dist1 > distance)
           continue;
         /* loop over all partners of the partner */
-        for (j = 0; j < partners[p2].n; j += 2) {
-          p3 = partners[p2].e[j];
-          dist2 = dist1 + partners[p2].e[j + 1];
+        for (int j = 0; j < partners[p2].n; j += 2) {
+          auto const p3 = partners[p2].e[j];
+          auto const dist2 = dist1 + partners[p2].e[j + 1];
           if (dist2 > distance)
             continue;
           add_partner(&partners[p1], p1, p3, dist2);
@@ -1314,13 +1313,13 @@ void auto_exclusions(int distance) {
      exclusions, but this is only done once and the overhead is as much as for
      setting the bonds, which the user apparently accepted.
   */
-  for (p = 0; p <= max_seen_particle; p++) {
-    for (j = 0; j < partners[p].n; j++)
-      if (p < partners[p].e[j])
-        change_exclusion(p, partners[p].e[j], 0);
+  for (auto &p : partCfg()) {
+    auto const id = p.identity();
+    for (int j = 0; j < partners[id].n; j++)
+      if (id < partners[id].e[j])
+        change_exclusion(id, partners[id].e[j], 0);
   }
 }
-
 #endif
 
 void init_type_map(int type) {
