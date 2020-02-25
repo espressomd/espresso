@@ -107,7 +107,7 @@ maxset-walberla:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
   script:
-    - export myconfig=maxset-walberla with_walberla=true python_version=3
+    - export myconfig=maxset-walberla with_walberla=true with_coverage=true python_version=3
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -423,26 +423,28 @@ intel:18:
     - icp
   when: manual
 
-check_sphinx:
-  <<: *global_job_definition
-  stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
-  needs:
-    - cuda10-maxset
-  when: on_success
-  script:
-    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
-    - cd ${CI_PROJECT_DIR}/build
-    - make -t && rm src/python/espressomd/visualization.* && make sphinx
-    - bash ../maintainer/CI/doc_warnings.sh
-  artifacts:
-    paths:
-    - build/doc/sphinx
-    expire_in: 1 week
-  tags:
-    - docker
-    - linux
-    - cuda
+# WALBERLA TODO
+#check_sphinx:
+#  <<: *global_job_definition
+#  stage: additional_checks
+#  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+#  needs:
+#    - cuda10-maxset
+#  when: on_success
+#  script:
+#    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' ${CI_PROJECT_DIR}/src/python/espressomd/visualization.pyx
+#    - cd ${CI_PROJECT_DIR}/build
+#    - make -t && rm src/python/espressomd/visualization.* && make sphinx
+#    - bash ../maintainer/CI/doc_warnings.sh
+#  artifacts:
+#    paths:
+#    - build/doc/sphinx
+#    expire_in: 1 week
+#  tags:
+#    - docker
+#    - linux
+#    - cuda
+#
 
 run_tutorials:
   <<: *global_job_definition
@@ -541,13 +543,15 @@ check_with_odd_no_of_processors:
     - linux
     - icp
 
-deploy_sphinx_documentation:
-  extends: .deploy_base
-  dependencies:
-    - check_sphinx
-  script:
-    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
-      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+# WALBERLA TODO
+#deploy_sphinx_documentation:
+#  extends: .deploy_base
+#  dependencies:
+#    - check_sphinx
+#  script:
+#    - cd ${CI_PROJECT_DIR}/build/doc/sphinx/html && 
+#      rsync -avz --delete -e "ssh -i ${HOME}/.ssh/espresso_rsa" ./ espresso@elk.icp.uni-stuttgart.de:/home/espresso/public_html/html/doc
+#
 
 deploy_doxygen_documentation:
   extends: .deploy_base
