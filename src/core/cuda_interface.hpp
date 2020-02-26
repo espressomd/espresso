@@ -145,8 +145,6 @@ void cuda_mpi_send_forces(const ParticleRange &particles,
                           Utils::Span<float> host_forces,
                           Utils::Span<float> host_torques);
 void cuda_bcast_global_part_params();
-void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
-void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
 #endif /* ifdef CUDA */
 
 #endif /* ifdef CUDA_INTERFACE_HPP */

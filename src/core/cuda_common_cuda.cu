@@ -322,15 +322,6 @@ void copy_energy_from_GPU() {
 }
 
 /** @name Generic copy functions from and to device */
-/*@{*/
-void cuda_copy_to_device(void *host_data, void *device_data, size_t n) {
-  cuda_safe_mem(cudaMemcpy(host_data, device_data, n, cudaMemcpyHostToDevice));
-}
-
-void cuda_copy_to_host(void *host_device, void *device_host, size_t n) {
-  cuda_safe_mem(
-      cudaMemcpy(host_device, device_host, n, cudaMemcpyDeviceToHost));
-}
 
 void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
   if (cudaSuccess != CU_err) {
