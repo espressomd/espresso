@@ -135,11 +135,6 @@ void lb_lbfluid_set_kT(double kT);
 void lb_lbfluid_sanity_checks();
 
 /**
- * @brief Invalidate the particle allocation on the GPU.
- */
-void lb_lbfluid_invalidate_particle_allocation();
-
-/**
  * @brief Set the LB density for a single node.
  */
 void lb_lbnode_set_density(const Utils::Vector3i &ind, double density);

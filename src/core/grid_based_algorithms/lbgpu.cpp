@@ -44,8 +44,6 @@
 #include <cmath>
 #include <cstdlib>
 
-LB_particle_allocation_state lb_reinit_particles_gpu;
-
 LB_parameters_gpu lbpar_gpu = {
     // rho
     0.0,

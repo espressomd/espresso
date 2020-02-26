@@ -214,9 +214,6 @@ void on_particle_change() {
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
 
-#ifdef CUDA
-  lb_lbfluid_invalidate_particle_allocation();
-#endif
   invalidate_obs();
 
   /* the particle information is no longer valid */

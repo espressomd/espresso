@@ -118,12 +118,6 @@ void lb_lbfluid_on_integration_start() {
   }
 }
 
-void lb_lbfluid_invalidate_particle_allocation() {
-#ifdef CUDA
-  lb_reinit_particles_gpu.invalidate();
-#endif
-}
-
 /** (Re-)initialize the fluid. */
 void lb_lbfluid_reinit_parameters() {
   if (lattice_switch == ActiveLB::GPU) {
