@@ -138,8 +138,9 @@ void gpu_change_number_of_part_to_comm() {
 
   if (global_part_vars_host.number_of_particles != n_part &&
       global_part_vars_host.communication_enabled == 1 && this_node == 0) {
+    -0
 
-    global_part_vars_host.number_of_particles = n_part;
+     global_part_vars_host.number_of_particles = n_part;
 
     // if the arrays exists free them to prevent memory leaks
     particle_forces_host.clear();
@@ -224,7 +225,7 @@ float *gpu_get_particle_torque_pointer() {
 void copy_part_data_to_gpu(ParticleRange particles) {
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
-    cuda_mpi_get_particles(particles, particle_data_host.data());
+    cuda_mpi_get_particles(particles, particle_data_host);
 
     /* get espressomd particle values */
     if (this_node == 0) {

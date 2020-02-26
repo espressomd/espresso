@@ -84,8 +84,9 @@ static void pack_particles(ParticleRange particles,
   }
 }
 
-void cuda_mpi_get_particles(const ParticleRange &particles,
-                            CUDA_particle_data *particle_data_host) {
+void cuda_mpi_get_particles(
+    const ParticleRange &particles,
+    pinned_vector<CUDA_particle_data> &particle_data_host) {
   auto const n_part = particles.size();
 
   if (this_node > 0) {
@@ -96,10 +97,12 @@ void cuda_mpi_get_particles(const ParticleRange &particles,
 
     Utils::Mpi::gather_buffer(buffer.data(), buffer.size(), comm_cart);
   } else {
-    /* Pack own particles */
-    pack_particles(particles, particle_data_host);
+    particle_data_host.resize(n_part);
 
-    Utils::Mpi::gather_buffer(particle_data_host, n_part, comm_cart);
+    /* Pack own particles */
+    pack_particles(particles, particle_data_host.data());
+
+    Utils::Mpi::gather_buffer(particle_data_host, comm_cart);
   }
 }
 
