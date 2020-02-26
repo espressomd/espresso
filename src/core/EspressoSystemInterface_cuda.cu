@@ -20,7 +20,6 @@
 #include "cuda_wrapper.hpp"
 
 #include "EspressoSystemInterface.hpp"
-#include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"

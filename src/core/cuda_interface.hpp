@@ -107,7 +107,7 @@ typedef struct {
   unsigned int communication_enabled;
 } CUDA_global_part_vars;
 
-void copy_forces_from_GPU(ParticleRange particles);
+void copy_forces_from_GPU(ParticleRange &particles);
 void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();

@@ -22,6 +22,7 @@
 #include "config.hpp"
 #include "debug.hpp"
 
+#include "ParticleRange.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
@@ -278,7 +279,7 @@ void copy_part_data_to_gpu(ParticleRange particles) {
 
 /** setup and call kernel to copy particle forces to host
  */
-void copy_forces_from_GPU(ParticleRange particles) {
+void copy_forces_from_GPU(const ParticleRange &particles) {
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
 
