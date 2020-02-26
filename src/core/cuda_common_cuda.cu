@@ -84,13 +84,13 @@ T *raw_data_pointer(thrust::device_vector<T, A> &vec) {
   return thrust::raw_pointer_cast(vec.data());
 }
 
-template <class T, class A>
-size_t byte_size(thrust::device_vector<T, A> const &vec) {
-  return vec.size() * sizeof(T);
+template <class SpanLike> size_t byte_size(SpanLike const &v) {
+  return v.size() * sizeof(typename SpanLike::value_type);
 }
-
-/** struct for particle force */
-static device_vector<float> particle_forces_device;
+z
+    /** struct for particle force */
+    static device_vector<float>
+        particle_forces_device;
 static device_vector<float> particle_torques_device;
 
 /** struct for particle position and velocity */
@@ -99,10 +99,10 @@ static device_vector<CUDA_particle_data> particle_data_device;
 static CUDA_energy *energy_device = nullptr;
 
 pinned_vector<CUDA_particle_data> particle_data_host;
-std::vector<float> particle_forces_host;
+host_vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
-std::vector<float> particle_torques_host;
+host_vector<float> particle_torques_host;
 
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
@@ -124,6 +124,18 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
   }
 }
 
+void resize_buffers(size_t number_of_particles) {
+  particle_data_host.resize(number_of_particles);
+  particle_forces_host.resize(3 * number_of_particles);
+#ifdef ROTATION
+  particle_torques_host.resize(3 * number_of_particles);
+  particle_torques_device.resize(3 * number_of_particles);
+#endif
+
+  particle_forces_device.resize(3 * number_of_particles);
+  particle_data_device.resize(number_of_particles);
+}
+
 /** change number of particles to be communicated to the GPU
  *  Note that in addition to calling this function the parameters must be
  * broadcast with either:
@@ -138,37 +150,9 @@ void gpu_change_number_of_part_to_comm() {
 
   if (global_part_vars_host.number_of_particles != n_part &&
       global_part_vars_host.communication_enabled == 1 && this_node == 0) {
-    -0
+    global_part_vars_host.number_of_particles = n_part;
 
-     global_part_vars_host.number_of_particles = n_part;
-
-    // if the arrays exists free them to prevent memory leaks
-    particle_forces_host.clear();
-    particle_forces_device.clear();
-    particle_torques_device.clear();
-    particle_data_device.clear();
-#ifdef ROTATION
-    particle_torques_host.clear();
-#endif
-
-    if (global_part_vars_host.number_of_particles) {
-      /* pinned memory mode - use special function to get OS-pinned memory*/
-      particle_data_host.resize(global_part_vars_host.number_of_particles);
-      particle_forces_host.resize(3 *
-                                  global_part_vars_host.number_of_particles);
-#if (defined DIPOLES || defined ROTATION)
-      particle_torques_host.resize(3 *
-                                   global_part_vars_host.number_of_particles);
-#endif
-
-      particle_forces_device.resize(3 *
-                                    global_part_vars_host.number_of_particles);
-#ifdef ROTATION
-      particle_torques_device.resize(3 *
-                                     global_part_vars_host.number_of_particles);
-#endif
-      particle_data_device.resize(global_part_vars_host.number_of_particles);
-    }
+    resize_buffers(global_part_vars_host.number_of_particles);
   }
 }
 
@@ -223,8 +207,7 @@ float *gpu_get_particle_torque_pointer() {
 }
 
 void copy_part_data_to_gpu(ParticleRange particles) {
-  if (global_part_vars_host.communication_enabled == 1 &&
-      global_part_vars_host.number_of_particles) {
+  if (global_part_vars_host.communication_enabled == 1) {
     cuda_mpi_get_particles(particles, particle_data_host);
 
     /* get espressomd particle values */
@@ -244,22 +227,13 @@ void copy_part_data_to_gpu(ParticleRange particles) {
 /** setup and call kernel to copy particle forces to host
  */
 void copy_forces_from_GPU(ParticleRange &particles) {
-  if (global_part_vars_host.communication_enabled == 1 &&
-      global_part_vars_host.number_of_particles) {
+  if (global_part_vars_host.communication_enabled == 1) {
 
     /* Copy result from device memory to host memory*/
     if (this_node == 0) {
-      cuda_safe_mem(cudaMemcpy(
-          &(particle_forces_host[0]), raw_data_pointer(particle_forces_device),
-          3 * global_part_vars_host.number_of_particles * sizeof(float),
-          cudaMemcpyDeviceToHost));
-#ifdef ROTATION
-      cuda_safe_mem(cudaMemcpy(&(particle_torques_host[0]),
-                               raw_data_pointer(particle_torques_device),
-                               global_part_vars_host.number_of_particles * 3 *
-                                   sizeof(float),
-                               cudaMemcpyDeviceToHost));
-#endif
+      particle_forces_host = particle_forces_device;
+      particle_torques_host = particle_torques_device;
+
       cudaDeviceSynchronize();
     }
     using Utils::make_span;
@@ -270,7 +244,6 @@ void copy_forces_from_GPU(ParticleRange &particles) {
 
 void clear_energy_on_GPU() {
   if (!global_part_vars_host.communication_enabled)
-    // || !global_part_vars_host.number_of_particles )
     return;
   if (energy_device == nullptr)
     cuda_safe_mem(cudaMalloc((void **)&energy_device, sizeof(CUDA_energy)));
@@ -278,8 +251,7 @@ void clear_energy_on_GPU() {
 }
 
 void copy_energy_from_GPU() {
-  if (!global_part_vars_host.communication_enabled ||
-      !global_part_vars_host.number_of_particles)
+  if (!global_part_vars_host.communication_enabled)
     return;
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
                            cudaMemcpyDeviceToHost));
