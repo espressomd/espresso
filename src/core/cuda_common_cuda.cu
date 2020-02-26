@@ -155,60 +155,13 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
   }
 }
 
-__device__ unsigned int getThreadIndex() {
-  return blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
-         threadIdx.x;
-}
-
-/** Kernel for the initialisation of the particle force array
- * @param[out] particle_forces_device    Local particle force
- * @param[out] particle_torques_device   Local particle torque
- */
-__global__ void reset_particle_force(float *particle_forces_device,
-                                     float *particle_torques_device,
-                                     size_t number_of_particles) {
-
-  unsigned int part_index = getThreadIndex();
-
-  if (part_index < number_of_particles) {
-    particle_forces_device[3 * part_index + 0] = 0.0f;
-    particle_forces_device[3 * part_index + 1] = 0.0f;
-    particle_forces_device[3 * part_index + 2] = 0.0f;
-#ifdef ROTATION
-    particle_torques_device[3 * part_index + 0] = 0.0f;
-    particle_torques_device[3 * part_index + 1] = 0.0f;
-    particle_torques_device[3 * part_index + 2] = 0.0f;
-#endif
-  }
-}
-
-static void launch_reset_particle_force(float *particle_forces_device,
-                                        float *particle_torques_device,
-                                        size_t number_of_particles) {
-  /* values for the particle kernel */
-  int threads_per_block_particles = 64;
-  int blocks_per_grid_particles_y = 4;
-  int blocks_per_grid_particles_x =
-      (number_of_particles +
-       threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-      (threads_per_block_particles * blocks_per_grid_particles_y);
-  dim3 dim_grid_particles =
-      make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
-
-  KERNELCALL(reset_particle_force, dim_grid_particles,
-             threads_per_block_particles, particle_forces_device,
-             particle_torques_device,
-             gpu_get_global_particle_vars_pointer_host()->number_of_particles);
-}
-
 /** change number of particles to be communicated to the GPU
  *  Note that in addition to calling this function the parameters must be
  * broadcast with either:
- * 1) cuda_bcast_global_part_params(); (when just being executed on the master
- * node) or
- * 2) MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
- * sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart); (when executed on all
- * nodes)
+ * 1) cuda_bcast_global_part_params(); (when just being executed on the
+ * master node) or 2) MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
+ * sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart); (when executed on
+ * all nodes)
  */
 void gpu_change_number_of_part_to_comm() {
   // we only run the function if there are new particles which have been created
@@ -338,17 +291,6 @@ void copy_forces_from_GPU(ParticleRange particles) {
                                    sizeof(float),
                                cudaMemcpyDeviceToHost));
 #endif
-
-      /* values for the particle kernel */
-      int threads_per_block_particles = 64;
-      int blocks_per_grid_particles_y = 4;
-      int blocks_per_grid_particles_x =
-          (global_part_vars_host.number_of_particles +
-           threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-          (threads_per_block_particles * blocks_per_grid_particles_y);
-      dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x,
-                                           blocks_per_grid_particles_y, 1);
-
       cudaDeviceSynchronize();
     }
 
