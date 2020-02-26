@@ -43,8 +43,12 @@
  * @tparam T Type to allocate memory for.
  */
 template <class T> struct cuda_host_allocator {
-  typedef T value_type;
-  cuda_host_allocator() noexcept = default; // default ctor not required
+  using value_type = T;
+  using pointer = T *;
+  using reference = T &;
+  using const_reference = std::add_const_t<reference>;
+
+  cuda_host_allocator() noexcept = default;
   template <class U>
   explicit cuda_host_allocator(const cuda_host_allocator<U> &) {}
   template <class U> bool operator==(const cuda_host_allocator<U> &) const {
@@ -103,7 +107,8 @@ struct cuda_device_allocator : public thrust::device_allocator<T> {
   }
 };
 
-template <class T> using pinned_vector = std::vector<T, cuda_host_allocator<T>>;
+template <class T>
+using host_vector = thrust::host_vector<T, cuda_host_allocator<T>>;
 
 template <class T>
 using device_vector = thrust::device_vector<T, cuda_device_allocator<T>>;
@@ -129,7 +134,7 @@ static device_vector<CUDA_particle_data> particle_data_device;
 /** struct for energies */
 static CUDA_energy *energy_device = nullptr;
 
-pinned_vector<CUDA_particle_data> particle_data_host;
+host_vector<CUDA_particle_data> particle_data_host;
 std::vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
@@ -274,7 +279,6 @@ void copy_part_data_to_gpu(ParticleRange particles) {
 /** setup and call kernel to copy particle forces to host
  */
 void copy_forces_from_GPU(ParticleRange particles) {
-
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
 
@@ -293,9 +297,9 @@ void copy_forces_from_GPU(ParticleRange particles) {
 #endif
       cudaDeviceSynchronize();
     }
-
-    cuda_mpi_send_forces(particles, particle_forces_host,
-                         particle_torques_host);
+    using Utils::make_span;
+    cuda_mpi_send_forces(particles, make_span(particle_forces_host),
+                         make_span(particle_torques_host));
   }
 }
 

@@ -118,8 +118,8 @@ void cuda_mpi_get_particles(ParticleRange particles,
  *                this is only touched if ROTATION is active.
  */
 static void add_forces_and_torques(ParticleRange particles,
-                                   const std::vector<float> &forces,
-                                   const std::vector<float> &torques) {
+                                   Utils::Span<const float> forces,
+                                   Utils::Span<const float> torques) {
   int i = 0;
   for (auto &part : particles) {
     for (int j = 0; j < 3; j++) {
@@ -133,8 +133,8 @@ static void add_forces_and_torques(ParticleRange particles,
 }
 
 void cuda_mpi_send_forces(ParticleRange particles,
-                          std::vector<float> &host_forces,
-                          std::vector<float> &host_torques) {
+                          Utils::Span<float> host_forces,
+                          Utils::Span<float> host_torques) {
   auto const n_elements = 3 * particles.size();
 
   if (this_node > 0) {
