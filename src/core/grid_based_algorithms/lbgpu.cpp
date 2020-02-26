@@ -122,13 +122,6 @@ void lattice_boltzmann_update_gpu() {
   }
 }
 
-/** (Re-)allocation of the memory needed for the particles (CPU part) */
-void lb_realloc_particles_gpu() {
-  lbpar_gpu.number_of_particles = n_part;
-
-  lb_realloc_particles_GPU_leftovers(&lbpar_gpu);
-}
-
 /** (Re-)initialize the fluid according to the given value of rho. */
 void lb_reinit_fluid_gpu() {
 
@@ -226,8 +219,6 @@ void lb_reinit_parameters_gpu() {
 void lb_init_gpu() {
   /** set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
-
-  lb_realloc_particles_gpu();
 
   lb_init_GPU(&lbpar_gpu);
 

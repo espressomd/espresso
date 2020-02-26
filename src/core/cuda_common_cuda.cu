@@ -87,10 +87,9 @@ T *raw_data_pointer(thrust::device_vector<T, A> &vec) {
 template <class SpanLike> size_t byte_size(SpanLike const &v) {
   return v.size() * sizeof(typename SpanLike::value_type);
 }
-z
-    /** struct for particle force */
-    static device_vector<float>
-        particle_forces_device;
+
+/** struct for particle force */
+static device_vector<float> particle_forces_device;
 static device_vector<float> particle_torques_device;
 
 /** struct for particle position and velocity */
@@ -126,34 +125,15 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
 
 void resize_buffers(size_t number_of_particles) {
   particle_data_host.resize(number_of_particles);
+  particle_data_device.resize(number_of_particles);
+
   particle_forces_host.resize(3 * number_of_particles);
+  particle_forces_device.resize(3 * number_of_particles);
+
 #ifdef ROTATION
   particle_torques_host.resize(3 * number_of_particles);
   particle_torques_device.resize(3 * number_of_particles);
 #endif
-
-  particle_forces_device.resize(3 * number_of_particles);
-  particle_data_device.resize(number_of_particles);
-}
-
-/** change number of particles to be communicated to the GPU
- *  Note that in addition to calling this function the parameters must be
- * broadcast with either:
- * 1) cuda_bcast_global_part_params(); (when just being executed on the
- * master node) or 2) MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
- * sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart); (when executed on
- * all nodes)
- */
-void gpu_change_number_of_part_to_comm() {
-  // we only run the function if there are new particles which have been created
-  // since the last call of this function
-
-  if (global_part_vars_host.number_of_particles != n_part &&
-      global_part_vars_host.communication_enabled == 1 && this_node == 0) {
-    global_part_vars_host.number_of_particles = n_part;
-
-    resize_buffers(global_part_vars_host.number_of_particles);
-  }
 }
 
 /** setup and call particle reallocation from the host
@@ -189,11 +169,10 @@ void gpu_init_particle_comm() {
     }
   }
   global_part_vars_host.communication_enabled = 1;
-  gpu_change_number_of_part_to_comm();
 }
 
-CUDA_particle_data *gpu_get_particle_pointer() {
-  return raw_data_pointer(particle_data_device);
+Utils::Span<CUDA_particle_data> gpu_get_particle_pointer() {
+  return {raw_data_pointer(particle_data_device), particle_data_device.size()};
 }
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host() {
   return &global_part_vars_host;
@@ -210,6 +189,8 @@ void copy_part_data_to_gpu(ParticleRange particles) {
   if (global_part_vars_host.communication_enabled == 1) {
     cuda_mpi_get_particles(particles, particle_data_host);
 
+    resize_buffers(particle_data_host.size());
+
     /* get espressomd particle values */
     if (this_node == 0) {
       cudaMemsetAsync(raw_data_pointer(particle_forces_device), 0x0,
@@ -217,8 +198,7 @@ void copy_part_data_to_gpu(ParticleRange particles) {
       cudaMemsetAsync(raw_data_pointer(particle_torques_device), 0x0,
                       byte_size(particle_torques_device), stream[0]);
       cudaMemcpyAsync(raw_data_pointer(particle_data_device),
-                      particle_data_host.data(),
-                      particle_data_host.size() * sizeof(CUDA_particle_data),
+                      particle_data_host.data(), byte_size(particle_data_host),
                       cudaMemcpyHostToDevice, stream[0]);
     }
   }

@@ -169,7 +169,8 @@ void EspressoSystemInterface::reallocDeviceMemory(int n) {
 }
 
 void EspressoSystemInterface::split_particle_struct() {
-  int n = gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+  auto device_particles = gpu_get_particle_pointer();
+  int n = device_particles.size();
   if (n == 0)
     return;
 
@@ -178,27 +179,27 @@ void EspressoSystemInterface::split_particle_struct() {
 
   if (m_needsQGpu && m_needsRGpu)
     hipLaunchKernelGGL(split_kernel_rq, dim3(grid), dim3(block), 0, 0,
-                       gpu_get_particle_pointer(), m_r_gpu_begin, m_q_gpu_begin,
+                       device_particles.data(), m_r_gpu_begin, m_q_gpu_begin,
                        n);
   if (m_needsQGpu && !m_needsRGpu)
     hipLaunchKernelGGL(split_kernel_q, dim3(grid), dim3(block), 0, 0,
-                       gpu_get_particle_pointer(), m_q_gpu_begin, n);
+                       device_particles.data(), m_q_gpu_begin, n);
   if (!m_needsQGpu && m_needsRGpu)
     hipLaunchKernelGGL(split_kernel_r, dim3(grid), dim3(block), 0, 0,
-                       gpu_get_particle_pointer(), m_r_gpu_begin, n);
+                       device_particles.data(), m_r_gpu_begin, n);
 #ifdef CUDA
   if (m_needsVGpu)
     hipLaunchKernelGGL(split_kernel_v, dim3(grid), dim3(block), 0, 0,
-                       gpu_get_particle_pointer(), m_v_gpu_begin, n);
+                       device_particles.data(), m_v_gpu_begin, n);
 #endif
 #ifdef DIPOLES
   if (m_needsDipGpu)
     hipLaunchKernelGGL(split_kernel_dip, dim3(grid), dim3(block), 0, 0,
-                       gpu_get_particle_pointer(), m_dip_gpu_begin, n);
+                       device_particles.data(), m_dip_gpu_begin, n);
 
 #endif
 
   if (m_needsDirectorGpu)
     hipLaunchKernelGGL(split_kernel_director, dim3(grid), dim3(block), 0, 0,
-                       gpu_get_particle_pointer(), m_director_gpu_begin, n);
+                       device_particles.data(), m_director_gpu_begin, n);
 }

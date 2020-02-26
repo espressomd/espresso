@@ -100,8 +100,6 @@ typedef struct {
  *  one individual particle.
  */
 typedef struct {
-  unsigned int number_of_particles;
-
   /** Boolean flag to indicate if particle info should be communicated
    *  between the cpu and gpu
    */
@@ -114,7 +112,7 @@ void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
 
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host();
-CUDA_particle_data *gpu_get_particle_pointer();
+Utils::Span<CUDA_particle_data> gpu_get_particle_pointer();
 float *gpu_get_particle_force_pointer();
 #ifdef ROTATION
 float *gpu_get_particle_torque_pointer();
@@ -122,7 +120,6 @@ float *gpu_get_particle_torque_pointer();
 
 CUDA_energy *gpu_get_energy_pointer();
 float *gpu_get_particle_torque_pointer();
-void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 
 void cuda_mpi_get_particles(

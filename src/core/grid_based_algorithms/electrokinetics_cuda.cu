@@ -2133,8 +2133,10 @@ void ek_calculate_electrostatic_coupling() {
                           (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
+  auto device_particles = gpu_get_particle_pointer();
+
   KERNELCALL(ek_spread_particle_force, dim_grid, threads_per_block,
-             gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
+             device_particles.data(), gpu_get_particle_force_pointer(),
              ek_lbparameters_gpu);
 }
 
@@ -2169,7 +2171,7 @@ void ek_integrate_electrostatics() {
                         (threads_per_block * blocks_per_grid_y);
     dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    particle_data_gpu = gpu_get_particle_pointer();
+    particle_data_gpu = gpu_get_particle_pointer().data();
 
     KERNELCALL(ek_gather_particle_charge_density, dim_grid, threads_per_block,
                particle_data_gpu, ek_lbparameters_gpu);
@@ -3965,7 +3967,7 @@ struct ek_charge_of_particle {
 };
 
 ekfloat ek_get_particle_charge() {
-  particle_data_gpu = gpu_get_particle_pointer();
+  particle_data_gpu = gpu_get_particle_pointer().data();
   thrust::device_ptr<CUDA_particle_data> ptr(particle_data_gpu);
   ekfloat particle_charge = thrust::transform_reduce(
       ptr, ptr + lbpar_gpu.number_of_particles, ek_charge_of_particle(), 0.0f,

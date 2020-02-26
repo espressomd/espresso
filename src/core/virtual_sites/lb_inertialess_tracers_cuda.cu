@@ -100,8 +100,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
   // (2) Copy forces to the GPU
   // (3) interpolate on the LBM grid and spread forces
 
-  const int numParticles =
-      gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+  const int numParticles = gpu_get_particle_pointer().size();
 
   // Storage only needed on master and allocated only once at the first time
   // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
@@ -125,7 +124,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
     int threads_per_block_particles = 64;
     int blocks_per_grid_particles_y = 4;
     int blocks_per_grid_particles_x =
-        (lbpar_gpu.number_of_particles +
+        (numParticles +
          threads_per_block_particles * blocks_per_grid_particles_y - 1) /
         (threads_per_block_particles * blocks_per_grid_particles_y);
     dim3 dim_grid_particles =
@@ -273,8 +272,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
   // (2) transfer velocities back to CPU
   // (3) spread velocities to local cells via MPI
 
-  const int numParticles =
-      gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+  const int numParticles = gpu_get_particle_pointer().size();
 
   // **** GPU stuff only on master ****
   if (this_node == 0 && numParticles > 0) {
@@ -282,7 +280,7 @@ void ParticleVelocitiesFromLB_GPU(ParticleRange particles) {
     int threads_per_block_particles = 64;
     int blocks_per_grid_particles_y = 4;
     int blocks_per_grid_particles_x =
-        (lbpar_gpu.number_of_particles +
+        (numParticles +
          threads_per_block_particles * blocks_per_grid_particles_y - 1) /
         (threads_per_block_particles * blocks_per_grid_particles_y);
     dim3 dim_grid_particles =

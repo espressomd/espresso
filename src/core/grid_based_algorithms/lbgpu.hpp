@@ -197,10 +197,6 @@ void lb_reinit_fluid_gpu();
 /** Reset the forces on the fluid nodes */
 void reset_LB_force_densities_GPU(bool buffer = true);
 
-/** (Re-)initialize the particle array */
-void lb_realloc_particles_gpu();
-void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu);
-
 void lb_init_GPU(LB_parameters_gpu *lbpar_gpu);
 void lb_integrate_GPU();
 

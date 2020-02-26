@@ -175,8 +175,7 @@ protected:
     if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
       gpu_init_particle_comm();
       cuda_bcast_global_part_params();
-      reallocDeviceMemory(
-          gpu_get_global_particle_vars_pointer_host()->number_of_particles);
+      reallocDeviceMemory(gpu_get_particle_pointer().size());
     }
   };
   void reallocDeviceMemory(int n);
