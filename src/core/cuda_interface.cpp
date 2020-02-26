@@ -132,7 +132,7 @@ static void add_forces_and_torques(ParticleRange particles,
   }
 }
 
-void cuda_mpi_send_forces(ParticleRange particles,
+void cuda_mpi_send_forces(const ParticleRange &particles,
                           Utils::Span<float> host_forces,
                           Utils::Span<float> host_torques) {
   auto const n_elements = 3 * particles.size();

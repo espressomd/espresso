@@ -141,7 +141,7 @@ void copy_part_data_to_gpu(ParticleRange particles);
  *
  * This is a collective call.
  */
-void cuda_mpi_send_forces(ParticleRange particles,
+void cuda_mpi_send_forces(const ParticleRange &particles,
                           Utils::Span<float> host_forces,
                           Utils::Span<float> host_torques);
 void cuda_bcast_global_part_params();
