@@ -30,48 +30,11 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
+#include "CudaHostAllocator.hpp"
+
 #include <thrust/device_allocator.h>
 #include <thrust/device_vector.h>
 #include <utils/constants.hpp>
-
-/**
- * @brief Allocator that uses CUDA to allocate CPU memory.
- *
- * Using the CUDA allocator can have performance benefits,
- * because it returns pinned memory that is suitable for
- * DMA.
- *
- * @tparam T Type to allocate memory for.
- */
-template <class T> struct cuda_host_allocator {
-  using value_type = T;
-  using pointer = T *;
-  using reference = T &;
-  using const_reference = std::add_const_t<reference>;
-
-  cuda_host_allocator() noexcept = default;
-  template <class U>
-  explicit cuda_host_allocator(const cuda_host_allocator<U> &) {}
-  template <class U> bool operator==(const cuda_host_allocator<U> &) const {
-    return true;
-  }
-  template <class U> bool operator!=(const cuda_host_allocator<U> &) const {
-    return false;
-  }
-
-  T *allocate(const size_t n) const {
-    T *result(0);
-    cudaError_t error = cudaMallocHost(reinterpret_cast<void **>(&result),
-                                       n * sizeof(value_type));
-
-    if (error) {
-      throw std::bad_alloc();
-    }
-
-    return result;
-  }
-  void deallocate(T *const p, size_t) const noexcept { cudaFreeHost(p); }
-};
 
 /**
  * @brief Wrapper around thrust::device_allocator.
@@ -109,7 +72,7 @@ struct cuda_device_allocator : public thrust::device_allocator<T> {
 };
 
 template <class T>
-using host_vector = thrust::host_vector<T, cuda_host_allocator<T>>;
+using host_vector = thrust::host_vector<T, CudaHostAllocator<T>>;
 
 template <class T>
 using device_vector = thrust::device_vector<T, cuda_device_allocator<T>>;
@@ -135,7 +98,7 @@ static device_vector<CUDA_particle_data> particle_data_device;
 /** struct for energies */
 static CUDA_energy *energy_device = nullptr;
 
-host_vector<CUDA_particle_data> particle_data_host;
+pinned_vector<CUDA_particle_data> particle_data_host;
 std::vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
@@ -279,7 +242,7 @@ void copy_part_data_to_gpu(ParticleRange particles) {
 
 /** setup and call kernel to copy particle forces to host
  */
-void copy_forces_from_GPU(const ParticleRange &particles) {
+void copy_forces_from_GPU(ParticleRange &particles) {
   if (global_part_vars_host.communication_enabled == 1 &&
       global_part_vars_host.number_of_particles) {
 

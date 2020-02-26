@@ -84,7 +84,7 @@ static void pack_particles(ParticleRange particles,
   }
 }
 
-void cuda_mpi_get_particles(ParticleRange particles,
+void cuda_mpi_get_particles(const ParticleRange &particles,
                             CUDA_particle_data *particle_data_host) {
   auto const n_part = particles.size();
 
@@ -169,5 +169,7 @@ void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
   if (energy.n_dipolar >= 2)
     energy.dipolar[1] += energy_host.dipolar;
 }
+
+void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }
 
 #endif /* ifdef CUDA */

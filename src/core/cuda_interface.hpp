@@ -124,8 +124,8 @@ float *gpu_get_particle_torque_pointer();
 void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 
-void cuda_mpi_get_particles(ParticleRange particles,
-                            CUDA_particle_data *host_result);
+void cuda_mpi_get_particles(const ParticleRange &particles,
+                            CUDA_particle_data *particle_data_host);
 void copy_part_data_to_gpu(ParticleRange particles);
 
 /**
