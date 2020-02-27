@@ -27,8 +27,6 @@
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include "CudaDeviceAllocator.hpp"
 #include "CudaHostAllocator.hpp"
@@ -181,9 +179,9 @@ void copy_forces_from_GPU(ParticleRange &particles) {
 
       cudaDeviceSynchronize();
     }
-    using Utils::make_span;
-    cuda_mpi_send_forces(particles, make_span(particle_forces_host),
-                         make_span(particle_torques_host));
+    cuda_mpi_send_forces(
+        particles, {particle_forces_host.data(), particle_forces_host.size()},
+        {particle_torques_host.data(), particle_torques_host.size()});
   }
 }
 
