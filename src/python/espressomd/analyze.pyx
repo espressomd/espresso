@@ -36,6 +36,7 @@ from .utils cimport create_nparray_from_double_array, \
     create_int_list_from_python_object
 from .particle_data cimport get_n_part
 
+
 class Analysis:
 
     def __init__(self, system):
@@ -325,8 +326,8 @@ class Analysis:
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
-                p["bonded", i] = analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
-                total_bonded += analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
+                p["bonded", i] = analyze.obsstat_bonded( & analyze.total_pressure, i)[0]
+                total_bonded += analyze.obsstat_bonded( & analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -341,12 +342,12 @@ class Analysis:
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                p["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
-                total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
-                total_intra += analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_intra", i, j] = analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_inter", i, j] = analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
-                total_inter += analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded", i, j] = analyze.obsstat_nonbonded( & analyze.total_pressure, i, j)[0]
+                total_non_bonded += analyze.obsstat_nonbonded( & analyze.total_pressure, i, j)[0]
+                total_intra += analyze.obsstat_nonbonded_intra( & analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_intra", i, j] = analyze.obsstat_nonbonded_intra( & analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_inter", i, j] = analyze.obsstat_nonbonded_inter( & analyze.total_pressure_non_bonded, i, j)[0]
+                total_inter += analyze.obsstat_nonbonded_inter( & analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
@@ -440,7 +441,7 @@ class Analysis:
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
-                    analyze.obsstat_bonded(& analyze.total_p_tensor, i), 9),
+                    analyze.obsstat_bonded( & analyze.total_p_tensor, i), 9),
                     (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
@@ -546,7 +547,7 @@ class Analysis:
         e = OrderedDict()
 
         if analyze.total_energy.init_status == 0:
-            analyze.init_energies(& analyze.total_energy)
+            analyze.init_energies( & analyze.total_energy)
             analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
 
@@ -568,8 +569,8 @@ class Analysis:
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
-                e["bonded", i] = analyze.obsstat_bonded(& analyze.total_energy, i)[0]
-                total_bonded += analyze.obsstat_bonded(& analyze.total_energy, i)[0]
+                e["bonded", i] = analyze.obsstat_bonded( & analyze.total_energy, i)[0]
+                total_bonded += analyze.obsstat_bonded( & analyze.total_energy, i)[0]
         e["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -584,9 +585,9 @@ class Analysis:
         for i in range(analyze.max_seen_particle_type):
             for j in range(analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                e["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
+                e["non_bonded", i, j] = analyze.obsstat_nonbonded( & analyze.total_energy, i, j)[0]
                 if i <= j:
-                    total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
+                    total_non_bonded += analyze.obsstat_nonbonded( & analyze.total_energy, i, j)[0]
         #       total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
         #       e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
         #       e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]

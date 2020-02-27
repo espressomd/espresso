@@ -1077,19 +1077,13 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
 }
 
 void local_remove_all_particles() {
-  Cell *cell;
-  int c;
-  std::fill(local_particles.begin(), local_particles.end(), nullptr);
+  local_particles.clear();
 
-  for (c = 0; c < cell_structure.local_cells().n; c++) {
-    Particle *p;
-    int i, np;
-    cell = cell_structure.local_cells().cell[c];
-    p = cell->part;
-    np = cell->n;
-    for (i = 0; i < np; i++)
-      free_particle(&p[i]);
-    cell->n = 0;
+  for (auto c : cell_structure.local_cells()) {
+    for (auto &p : c->particles())
+      free_particle(&p);
+
+    c->clear();
   }
 }
 
