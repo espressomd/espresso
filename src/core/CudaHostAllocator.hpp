@@ -1,11 +1,10 @@
 #ifndef ESPRESSO_CUDA_HOST_ALLOCATOR_HPP
 #define ESPRESSO_CUDA_HOST_ALLOCATOR_HPP
 
-#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
-void cuda_malloc_host(void **p, size_t n);
+void cuda_malloc_host(void **p, std::size_t n);
 void cuda_free_host(void *p);
 
 /**
@@ -32,15 +31,15 @@ template <class T> struct CudaHostAllocator {
     return false;
   }
 
-  T *allocate(const size_t n) const {
-    T *result(0);
+  T *allocate(const std::size_t n) const {
+    T *result{};
 
     cuda_malloc_host(reinterpret_cast<void **>(&result),
                      n * sizeof(value_type));
 
     return result;
   }
-  void deallocate(T *const p, size_t) const noexcept { cuda_free_host(p); }
+  void deallocate(T *const p, std::size_t) const noexcept { cuda_free_host(p); }
 };
 
 template <class T> using pinned_vector = std::vector<T, CudaHostAllocator<T>>;

@@ -16,10 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "cuda_wrapper.hpp"
 
 #include "config.hpp"
+
 #include "debug.hpp"
 
 #include "ParticleRange.hpp"
@@ -33,9 +33,6 @@
 
 #include <thrust/device_vector.h>
 #include <utils/constants.hpp>
-
-template <class T>
-using host_vector = thrust::host_vector<T, CudaHostAllocator<T>>;
 
 template <class T>
 using device_vector = thrust::device_vector<T, CudaDeviceAllocator<T>>;
@@ -61,10 +58,10 @@ static device_vector<CUDA_particle_data> particle_data_device;
 static CUDA_energy *energy_device = nullptr;
 
 pinned_vector<CUDA_particle_data> particle_data_host;
-host_vector<float> particle_forces_host;
+pinned_vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
-host_vector<float> particle_torques_host;
+pinned_vector<float> particle_torques_host;
 
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
@@ -158,8 +155,10 @@ void copy_part_data_to_gpu(ParticleRange particles) {
     if (this_node == 0) {
       cudaMemsetAsync(raw_data_pointer(particle_forces_device), 0x0,
                       byte_size(particle_forces_device), stream[0]);
+#ifdef ROTATION
       cudaMemsetAsync(raw_data_pointer(particle_torques_device), 0x0,
                       byte_size(particle_torques_device), stream[0]);
+#endif
       cudaMemcpyAsync(raw_data_pointer(particle_data_device),
                       particle_data_host.data(), byte_size(particle_data_host),
                       cudaMemcpyHostToDevice, stream[0]);
@@ -174,8 +173,13 @@ void copy_forces_from_GPU(ParticleRange &particles) {
 
     /* Copy result from device memory to host memory*/
     if (this_node == 0) {
-      particle_forces_host = particle_forces_device;
-      particle_torques_host = particle_torques_device;
+      thrust::copy(particle_forces_device.begin(), particle_forces_device.end(),
+                   particle_forces_host.begin());
+#ifdef ROTATION
+      thrust::copy(particle_torques_device.begin(),
+                   particle_torques_device.end(),
+                   particle_torques_host.begin());
+#endif
 
       cudaDeviceSynchronize();
     }

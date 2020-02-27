@@ -1,6 +1,10 @@
 #include "CudaHostAllocator.hpp"
 
-void cuda_malloc_host(void **p, size_t n) {
+#include "cuda_wrapper.hpp"
+
+#include <stdexcept>
+
+void cuda_malloc_host(void **p, std::size_t n) {
   cudaError_t error = cudaMallocHost(p, n);
 
   if (error) {
