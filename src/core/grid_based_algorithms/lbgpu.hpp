@@ -95,7 +95,6 @@ struct LB_parameters_gpu {
   unsigned int dim_z;
 
   unsigned int number_of_nodes;
-  unsigned int number_of_particles;
 #ifdef LB_BOUNDARIES_GPU
   unsigned int number_of_boundnodes;
 #endif

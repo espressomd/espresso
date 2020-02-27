@@ -77,8 +77,6 @@ LB_parameters_gpu lbpar_gpu = {
     0,
     // number_of_nodes
     0,
-    // number_of_particles
-    0,
 #ifdef LB_BOUNDARIES_GPU
     // number_of_boundnodes
     0,
