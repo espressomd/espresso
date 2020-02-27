@@ -17,6 +17,7 @@
 import OpenGL.GLUT
 import OpenGL.GLU
 import OpenGL.GL
+import OpenGL.GLE
 import math
 import numpy as np
 import ctypes
@@ -2107,36 +2108,62 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glTranslate(center[0], center[1], center[2])
     ax, rx, ry = rotation_helper(axis)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
-    # cylinder
-    OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
-    OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
-                           smoothing_radius, quality, quality)
-    # torus segment
-    OpenGL.GL.glEnable(clip_plane)
-    OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
-    OpenGL.GLUT.glutSolidTorus(
-        smoothing_radius,
-        radius + smoothing_radius,
-        quality,
-        quality)
-    OpenGL.GL.glDisable(clip_plane)
-    # wall
-    OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
-    OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                              2.0 * max_box_l, quality, 1, 0, 360)
-    # torus segment
-    OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
-    OpenGL.GL.glEnable(clip_plane)
-    OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
-    OpenGL.GLUT.glutSolidTorus(
-        smoothing_radius,
-        radius + smoothing_radius,
-        quality,
-        quality)
-    OpenGL.GL.glDisable(clip_plane)
-    # wall
-    OpenGL.GL.glTranslate(0, 0, smoothing_radius)
-    OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
+
+    # if available, use the GL Extrusion library
+    if bool(OpenGL.GLE.gleSpiral):
+        n = max(10, quality // 3)
+        contour = [[0.5 * max_box_l, -0.5 * length]]
+        for theta in np.linspace(0, 0.5 * np.pi, n):
+            contour.append([(1. - np.sin(theta)) * smoothing_radius,
+                            -0.5 * length + (1. - np.cos(theta)) * smoothing_radius])
+        for theta in np.linspace(0.5 * np.pi, np.pi, n):
+            contour.append([(1. - np.sin(theta)) * smoothing_radius,
+                            0.5 * length - (1. + np.cos(theta)) * smoothing_radius])
+        contour.append([0.5 * max_box_l, 0.5 * length])
+
+        normals = np.diff(np.array(contour), axis=0)
+        normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
+        normals = np.roll(normals, 1, axis=1)
+        normals[:, 0] *= -1
+
+        OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
+        OpenGL.GLE.gleSetNumSides(max(90, 3 * quality))
+        OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], radius, 0., 0., 0..
+                             [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]],
+                             0., 360)
+
+    # else draw using primitives and clip planes
+    else:
+        # cylinder
+        OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
+        OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
+                               smoothing_radius, quality, quality)
+        # torus segment
+        OpenGL.GL.glEnable(clip_plane)
+        OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
+        OpenGL.GLUT.glutSolidTorus(
+            smoothing_radius,
+            radius + smoothing_radius,
+            quality,
+            quality)
+        OpenGL.GL.glDisable(clip_plane)
+        # wall
+        OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
+        OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
+                                  2.0 * max_box_l, quality, 1, 0, 360)
+        # torus segment
+        OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
+        OpenGL.GL.glEnable(clip_plane)
+        OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
+        OpenGL.GLUT.glutSolidTorus(
+            smoothing_radius,
+            radius + smoothing_radius,
+            quality,
+            quality)
+        OpenGL.GL.glDisable(clip_plane)
+        # wall
+        OpenGL.GL.glTranslate(0, 0, smoothing_radius)
+        OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
                               2.0 * max_box_l, quality, 1, 0, 360)
 
     OpenGL.GLU.gluDeleteQuadric(quadric)
