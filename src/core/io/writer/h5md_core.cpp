@@ -95,17 +95,10 @@ void File::InitFile() {
     MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
   else
     m_hdf5_comm = MPI_COMM_WORLD;
+
   if (m_write_ordered && this_node != 0)
     return;
 
-  if (n_part <= 0) {
-    throw std::runtime_error("Please first set up particles before "
-                             "initializing the H5md object."); // this is
-                                                               // important
-                                                               // since n_part
-                                                               // is used for
-                                                               // chunking
-  }
   boost::filesystem::path script_path(m_scriptname);
   m_absolute_script_path = boost::filesystem::canonical(script_path);
   init_filestructure();
@@ -181,12 +174,10 @@ void File::create_datasets(bool only_load) {
       int creation_size_dataset = 0; // creation size of all datasets is 0. Make
                                      // sure to call ExtendDataset before
                                      // writing to dataset
-      int chunk_size = 1;
-      if (descr.dim > 1) {
-        // we deal now with a particle based property, change chunk. Important
-        // for IO performance!
-        chunk_size = n_part;
-      }
+      // we deal now with a particle based property, change chunk. Important
+      // for IO performance!
+      int chunk_size = (descr.dim > 1) ? 1000 : 1;
+
       auto dims = create_dims(descr.dim, creation_size_dataset);
       auto chunk_dims = create_chunk_dims(descr.dim, chunk_size, 1);
       auto maxdims = create_maxdims(descr.dim);
