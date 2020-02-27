@@ -30,52 +30,17 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "particle_data.hpp"
 
+#include "CudaDeviceAllocator.hpp"
 #include "CudaHostAllocator.hpp"
 
-#include <thrust/device_allocator.h>
 #include <thrust/device_vector.h>
 #include <utils/constants.hpp>
-
-/**
- * @brief Wrapper around thrust::device_allocator.
- *
- * This is a thin wrapper around the thrust default device
- * allocator, which does ignore errors on deallocation. This
- * allows device containers with static lifetime, which might
- * be destroyed after the cuda api is finalized, which causes
- * the thrust allocator to throw. The implementation catches
- * all thrust::system::system_error during deallocation, otherwise
- * it works exactly as thrust::device_allocator.
- *
- * @tparam T Type to allocate memory for.
- */
-template <class T>
-struct cuda_device_allocator : public thrust::device_allocator<T> {
-  using base_type = thrust::device_allocator<T>;
-  using pointer = typename base_type::pointer;
-  using size_type = typename base_type::size_type;
-  using const_pointer = typename base_type::const_pointer;
-
-  using base_type::address;
-  using base_type::allocate;
-  using base_type::base_type;
-  using base_type::max_size;
-  using base_type::rebind;
-
-  void deallocate(pointer p, size_type cnt) {
-    try {
-      base_type::deallocate(p, cnt);
-    } catch (thrust::system::system_error const &) {
-      ;
-    }
-  }
-};
 
 template <class T>
 using host_vector = thrust::host_vector<T, CudaHostAllocator<T>>;
 
 template <class T>
-using device_vector = thrust::device_vector<T, cuda_device_allocator<T>>;
+using device_vector = thrust::device_vector<T, CudaDeviceAllocator<T>>;
 
 static CUDA_global_part_vars global_part_vars_host = {};
 
