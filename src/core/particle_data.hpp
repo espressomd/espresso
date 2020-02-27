@@ -71,13 +71,6 @@ enum {
 #define COORD_FIXED(coord) (0)
 #endif
 
-/************************************************
- * exported variables
- ************************************************/
-
-/** total number of particles on all nodes. */
-extern int n_part;
-
 /**
  * @brief Find local particles by id.
  *

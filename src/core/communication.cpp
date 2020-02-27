@@ -278,8 +278,6 @@ void mpi_remove_particle(int pnode, int part) {
 
 void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
-    n_part--;
-
     if (pnode == this_node) {
       local_remove_particle(part);
     } else {

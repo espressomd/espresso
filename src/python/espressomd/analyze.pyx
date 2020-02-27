@@ -34,7 +34,7 @@ from .utils cimport handle_errors, check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array, \
     create_nparray_from_int_list, \
     create_int_list_from_python_object
-
+from .particle_data cimport get_n_part
 
 class Analysis:
 
@@ -49,9 +49,9 @@ class Analysis:
 
     def append(self):
         """Append configuration for averaged analysis."""
-        assert analyze.n_part, "No particles to append!"
+        assert get_n_part(), "No particles to append!"
         if n_configs > 0:
-            assert analyze.n_part_conf == analyze.n_part, \
+            assert analyze.n_part_conf == get_n_part(), \
                 "All configurations stored must have the same length"
 
         analyze.analyze_append(analyze.partCfg())

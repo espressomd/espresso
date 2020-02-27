@@ -190,6 +190,7 @@ cdef extern from "particle_data.hpp":
     vector[int] get_particle_ids() except +
 
     int get_maximal_particle_id()
+    int get_n_part()
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:

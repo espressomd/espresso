@@ -388,8 +388,6 @@ std::unordered_map<int, std::unordered_set<int>> particle_type_map{};
 void remove_id_from_map(int part_id, int type);
 void add_id_to_type_map(int part_id, int type);
 
-int max_seen_particle = -1;
-int n_part = 0;
 /**
  * @brief id -> rank
  */
@@ -1081,7 +1079,6 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
 void local_remove_all_particles() {
   Cell *cell;
   int c;
-  n_part = 0;
   std::fill(local_particles.begin(), local_particles.end(), nullptr);
 
   for (c = 0; c < cell_structure.local_cells().n; c++) {
@@ -1106,7 +1103,7 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
-void added_particle(int part) { n_part++; }
+void added_particle(int part) {}
 
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond) {
   boost::copy(bond, std::back_inserter(p.bl));
