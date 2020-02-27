@@ -1103,8 +1103,6 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
-void added_particle(int part) {}
-
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond) {
   boost::copy(bond, std::back_inserter(p.bl));
 }

@@ -369,7 +369,6 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
 void place_vs_and_relate_to_particle(const int current_vs_pid,
                                      const Utils::Vector3d &pos,
                                      int relate_to) {
-  added_particle(current_vs_pid);
   Particle new_part;
   new_part.p.identity = current_vs_pid;
   new_part.r.p = pos;
@@ -554,11 +553,9 @@ void handle_collisions() {
       if (((!p1 or p1->l.ghost) and (!p2 or p2->l.ghost)) or !p1 or !p2) {
         // Increase local counters
         if (collision_params.mode & COLLISION_MODE_VS) {
-          added_particle(current_vs_pid);
           current_vs_pid++;
         }
         // For glue to surface, we have only one vs
-        added_particle(current_vs_pid);
         current_vs_pid++;
         if (collision_params.mode == COLLISION_MODE_GLUE_TO_SURF) {
           if (p1)
@@ -593,8 +590,6 @@ void handle_collisions() {
               // added particle
               p1 = get_local_particle_data(c.pp1);
               p2 = get_local_particle_data(c.pp2);
-            } else {
-              added_particle(current_vs_pid);
             }
           };
 
@@ -621,8 +616,6 @@ void handle_collisions() {
               collision_params.part_type_to_be_glued) {
             if ((p1->p.type == collision_params.part_type_after_glueing) ||
                 (p2->p.type == collision_params.part_type_after_glueing)) {
-
-              added_particle(current_vs_pid);
               current_vs_pid++;
               continue;
             }
@@ -659,7 +652,6 @@ void handle_collisions() {
             p2 = get_local_particle_data(c.pp2);
             current_vs_pid++;
           } else { // Just update the books
-            added_particle(current_vs_pid);
             current_vs_pid++;
           }
           glue_to_surface_bind_part_to_vs(p1, p2, current_vs_pid, c);
