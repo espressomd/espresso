@@ -169,11 +169,7 @@ if(WITH_COVERAGE)
   endif()
 endif()
 
-target_link_libraries(EspressoCore PUBLIC EspressoConfig utils)
-target_link_libraries(EspressoCore PUBLIC Boost::serialization Boost::mpi
-                                          MPI::MPI_CXX Random123)
-target_link_libraries(EspressoCore PRIVATE Profiler)
-target_link_libraries(EspressoCore PUBLIC shapes)
+target_link_libraries(EspressoCore PUBLIC EspressoConfig utils Boost::serialization Boost::mpi MPI::MPI_CXX Random123 shapes PRIVATE Profiler)
 
 if(FFTW3_FOUND)
   target_include_directories(EspressoCore PRIVATE SYSTEM ${FFTW3_INCLUDE_DIR})
@@ -186,6 +182,12 @@ endif(SCAFACOS)
 
 # Subdirectories
 add_subdirectory(io)
+if(H5MD)
+target_link_libraries(EspressoCore PUBLIC ${HDF5_LIBRARIES} Boost::filesystem h5xx)
+target_sources(EspressoCore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/io/writer/h5md_core.cpp)
+target_include_directories(EspressoCore SYSTEM PUBLIC ${HDF5_INCLUDE_DIRS} ${CMAKE_CURRRENT_SOURCE_DIR}/io/writer)
+target_compile_definitions(EspressoCore PUBLIC H5XX_USE_MPI)
+endif(H5MD)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)

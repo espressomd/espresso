@@ -1,49 +1,26 @@
-set(EspressoScriptInterface_SRC
-    "${CMAKE_CURRENT_SOURCE_DIR}/accumulators/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/collision_detection/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/constraints/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/cluster_analysis/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/lbboundaries/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/observables/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/pair_criteria/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mpiio/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ParallelScriptInterface.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/ScriptInterfaceBase.cpp")
+add_library(
+  ScriptInterface SHARED
+  initialize.cpp
+  ScriptInterfaceBase.cpp
+  ParallelScriptInterface.cpp)
 
-if(H5MD)
-  list(APPEND EspressoScriptInterface_SRC
-       "${CMAKE_CURRENT_SOURCE_DIR}/h5md/initialize.cpp"
-       "${CMAKE_CURRENT_SOURCE_DIR}/h5md/h5md.cpp")
-endif(H5MD)
+add_subdirectory(accumulators)
+add_subdirectory(collision_detection)
+add_subdirectory(constraints)
+add_subdirectory(cluster_analysis)
+add_subdirectory(lbboundaries)
+add_subdirectory(virtual_sites)
+add_subdirectory(observables)
+add_subdirectory(pair_criteria)
+add_subdirectory(mpiio)
+add_subdirectory(shapes)
+add_subdirectory(h5md)
 
-if(WITH_COVERAGE)
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-  else()
-    set(CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} --coverage -fprofile-arcs -ftest-coverage")
-    link_libraries(gcov)
-  endif()
-endif()
-
-add_library(EspressoScriptInterface SHARED ${EspressoScriptInterface_SRC})
-install(TARGETS EspressoScriptInterface
+install(TARGETS ScriptInterface
         LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+
 target_link_libraries(
-  EspressoScriptInterface
-  PRIVATE EspressoConfig
-  PUBLIC EspressoCore core_cluster_analysis mpiio)
+  ScriptInterface PRIVATE EspressoConfig EspressoCore
+  PUBLIC mpiio utils MPI::MPI_CXX shapes core_cluster_analysis)
 
-target_link_libraries(EspressoScriptInterface PRIVATE shapes)
-
-if(HDF5_FOUND)
-  target_link_libraries(EspressoScriptInterface PRIVATE H5mdCore)
-endif()
-
-target_include_directories(EspressoScriptInterface
-                           PUBLIC ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)
