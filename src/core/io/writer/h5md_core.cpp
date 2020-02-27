@@ -24,7 +24,6 @@
 #include "communication.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
-#include "particle_data.hpp"
 #include "version.hpp"
 
 #include <fstream>
@@ -91,10 +90,12 @@ void File::InitFile() {
   m_backup_filename = m_filename + ".bak";
   // use a separate mpi communicator if we want to write out ordered data. This
   // is in order to avoid  blocking by collective functions
+  auto world = boost::mpi::communicator();
+
   if (m_write_ordered)
-    MPI_Comm_split(MPI_COMM_WORLD, this_node, 0, &m_hdf5_comm);
+    m_hdf5_comm = world.split(world.rank(), 0);
   else
-    m_hdf5_comm = MPI_COMM_WORLD;
+    m_hdf5_comm = world;
 
   if (m_write_ordered && this_node != 0)
     return;
@@ -350,12 +351,17 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 void File::Write(int write_dat, PartCfg &partCfg,
                  const ParticleRange &particles) {
   int num_particles_to_be_written = 0;
-  if (m_write_ordered && this_node == 0)
-    num_particles_to_be_written = n_part;
-  else if (m_write_ordered && this_node != 0)
+  int n_part = 0;
+  if (m_write_ordered && this_node == 0) {
+    num_particles_to_be_written = partCfg.size();
+    n_part = partCfg.size();
+  } else if (m_write_ordered && this_node != 0)
     return;
-  else if (!m_write_ordered)
-    num_particles_to_be_written = cells_get_n_particles();
+  else if (!m_write_ordered) {
+    num_particles_to_be_written = particles.size();
+    n_part = boost::mpi::all_reduce(m_hdf5_comm, num_particles_to_be_written,
+                                    std::plus<int>());
+  }
 
   bool write_species = write_dat & W_TYPE;
   bool write_pos = write_dat & W_POS;
