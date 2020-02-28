@@ -783,23 +783,47 @@ class openGLLive:
 
         # Collect shapes and interaction type (for coloring) from constraints
         primitive_shapes = [
-            'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid', 'Shapes::HollowConicalFrustum',
-            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere',
-            'Shapes::SpheroCylinder']
+            'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
+            'Shapes::HollowConicalFrustum', 'Shapes::SimplePore',
+            'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
 
-        coll_shape_obj = collections.defaultdict(list)
-        for c in self.system.constraints:
-            if type(c) == espressomd.constraints.ShapeBasedConstraint:
-                t = c.get_parameter('particle_type')
-                s = c.get_parameter('shape')
-                n = s.name()
-                if n in primitive_shapes:
-                    coll_shape_obj[n].append([s, t])
-                    # primitive visualization of HollowConicalFrustum requires gleSpiral!
-                    if n == 'Shapes::HollowConicalFrustum' and not bool(OpenGL.GLE.gleSpiral):
-                        coll_shape_obj['Shapes::Misc'].append([s, t])
+        def get_shapes_from_union(union):
+            """Helper function to (recursively) get all shapes from a union.
+
+            """
+            shapes = []
+            for shape in union:
+                print(shape)
+                if shape.name() == 'Shapes::Union':
+                    shapes.extend(get_shapes_from_union(shape))
                 else:
-                    coll_shape_obj['Shapes::Misc'].append([s, t])
+                    shapes.append(shape)
+            return shapes
+
+        def update_shapes_collection(collection, shape, ptype):
+            """Helper function to create a collection of shape objects.
+
+            """
+            name = shape.name()
+            if name in primitive_shapes:
+                collection[name].append([shape, ptype])
+                # primitive visualization of HollowConicalFrustum requires gleSpiral!
+                if name == 'Shapes::HollowConicalFrustum' and not bool(OpenGL.GLE.gleSpiral):
+                    collection['Shapes::Misc'].append([shape, ptype])
+            else:
+                coll_shape_obj['Shapes::Misc'].append([shape, ptype])
+
+        # actually create the collection of shape objects (using the two helper functions)
+        coll_shape_obj = collections.defaultdict(list)
+        for constraint in self.system.constraints:
+            if type(constraint) == espressomd.constraints.ShapeBasedConstraint:
+                ptype = constraint.get_parameter('particle_type')
+                shape = constraint.get_parameter('shape')
+                if shape.name() == 'Shapes::Union':
+                    for sub_shape in get_shapes_from_union(shape):
+                        update_shapes_collection(coll_shape_obj, sub_shape, ptype)
+                else:
+                    update_shapes_collection(coll_shape_obj, shape, ptype)
 
         if self.specs['LB_draw_boundaries']:
             ni = 0
