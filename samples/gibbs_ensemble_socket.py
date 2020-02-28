@@ -41,6 +41,9 @@ import random
 import matplotlib.pyplot as plt
 import argparse
 
+from espressomd import assert_features
+assert_features("LENNARD_JONES")
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--seed', type=int, nargs=1)
 parser.add_argument('-S', '--steps', type=int, nargs=1)

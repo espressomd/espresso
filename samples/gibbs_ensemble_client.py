@@ -29,6 +29,8 @@ import pickle
 import struct
 import argparse
 
+espressomd.assert_features("LENNARD_JONES")
+
 seed = None
 init_box_l = None
 particle_number = None
