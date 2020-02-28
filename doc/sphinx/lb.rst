@@ -103,7 +103,7 @@ Checkpointing LB
     lb.load_checkpoint(path, binary)
 
 The first command saves all of the LB fluid nodes' populations to an ascii
-(``binary=0``) or binary (``binary=1``) format respectively. The load command
+(``binary=False``) or binary (``binary=True``) format respectively. The load command
 loads the populations from a checkpoint file written with
 ``lb.save_checkpoint``. In both cases ``path`` specifies the location of the
 checkpoint file. This is useful for restarting a simulation either on the same
