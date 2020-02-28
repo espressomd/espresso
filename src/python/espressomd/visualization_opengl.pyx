@@ -206,6 +206,11 @@ class openGLLive:
     spotlight_focus : :obj:`float`, optional
         Focus (spot exponent) for the spotlight from 0 (uniform) to 128.
 
+    Notes
+    -----
+    The visualization of some constraints is either improved by or even relies
+    on the presence of an installed OpenGL Extrusion library on your system.
+
     """
 
     # MATERIALS
@@ -787,17 +792,18 @@ class openGLLive:
             'Shapes::HollowConicalFrustum', 'Shapes::SimplePore',
             'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
 
-        def get_shapes_from_union(union):
-            """Helper function to (recursively) get all shapes from a union.
+        def get_shapes(shapes_list):
+            """Return a list of shapes, where all unions have been unpacked.
 
             """
             shapes = []
-            for shape in union:
-                print(shape)
-                if shape.name() == 'Shapes::Union':
-                    shapes.extend(get_shapes_from_union(shape))
-                else:
-                    shapes.append(shape)
+            try:
+                # recursively unpack unions
+                for shape in shapes_list:
+                    shapes.extend(get_shapes(shape))
+            except BaseException:
+                # otherwise just append the shape
+                shapes.append(shapes_list)
             return shapes
 
         def update_shapes_collection(collection, shape, ptype):
@@ -807,23 +813,22 @@ class openGLLive:
             name = shape.name()
             if name in primitive_shapes:
                 collection[name].append([shape, ptype])
-                # primitive visualization of HollowConicalFrustum requires gleSpiral!
-                if name == 'Shapes::HollowConicalFrustum' and not bool(OpenGL.GLE.gleSpiral):
+                # visualization of HollowConicalFrustum requires gleSpiral!
+                if name == 'Shapes::HollowConicalFrustum' \
+                        and not bool(OpenGL.GLE.gleSpiral):
                     collection['Shapes::Misc'].append([shape, ptype])
             else:
                 coll_shape_obj['Shapes::Misc'].append([shape, ptype])
 
-        # actually create the collection of shape objects (using the two helper functions)
+        # actually create shape objects collection using the helper functions
         coll_shape_obj = collections.defaultdict(list)
         for constraint in self.system.constraints:
-            if type(constraint) == espressomd.constraints.ShapeBasedConstraint:
+            if isinstance(constraint,
+                          espressomd.constraints.ShapeBasedConstraint):
                 ptype = constraint.get_parameter('particle_type')
                 shape = constraint.get_parameter('shape')
-                if shape.name() == 'Shapes::Union':
-                    for sub_shape in get_shapes_from_union(shape):
-                        update_shapes_collection(coll_shape_obj, sub_shape, ptype)
-                else:
-                    update_shapes_collection(coll_shape_obj, shape, ptype)
+                for sub_shape in get_shapes(shape):
+                    update_shapes_collection(coll_shape_obj, sub_shape, ptype)
 
         if self.specs['LB_draw_boundaries']:
             ni = 0
@@ -866,7 +871,8 @@ class openGLLive:
             length = np.array(s[0].get_parameter('length'))
             thickness = np.array(s[0].get_parameter('thickness'))
             axis = np.array(s[0].get_parameter('axis'))
-            self.shapes['Shapes::HollowConicalFrustum'].append([center, r1, r2, length, thickness, axis, s[1]])
+            self.shapes['Shapes::HollowConicalFrustum'].append(
+                [center, r1, r2, length, thickness, axis, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
@@ -2140,7 +2146,8 @@ def get_extra_clip_plane():
         return OpenGL.GL.GL_CLIP_PLANE0 + 6
 
 
-def draw_hollow_conical_frustum(center, r1, r2, length, thickness, axis, color, material, quality):
+def draw_hollow_conical_frustum(center, r1, r2, length, thickness, axis, color,
+                                material, quality):
     # if available, use the GL Extrusion library
     if bool(OpenGL.GLE.gleSpiral):
         set_solid_material(color, material)
@@ -2158,9 +2165,11 @@ def draw_hollow_conical_frustum(center, r1, r2, length, thickness, axis, color, 
 
         contour = []
         for theta in np.linspace(-0.5 * np.pi, 0.5 * np.pi, n):
-            contour.append([np.sin(theta) * 0.5 * thickness, np.cos(theta) * 0.5 * thickness + 0.5 * l])
+            contour.append([np.sin(theta) * 0.5 * thickness,
+                            np.cos(theta) * 0.5 * thickness + 0.5 * l])
         for theta in np.linspace(0.5 * np.pi, -0.5 * np.pi, n):
-            contour.append([np.sin(theta) * 0.5 * thickness, -np.cos(theta) * 0.5 * thickness - 0.5 * l])
+            contour.append([np.sin(theta) * 0.5 * thickness,
+                            -np.cos(theta) * 0.5 * thickness - 0.5 * l])
         contour = np.matmul(np.array(contour),
                             np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
                                       [np.sin(rotation_angle), np.cos(rotation_angle)]]))
@@ -2244,7 +2253,7 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
         # wall
         OpenGL.GL.glTranslate(0, 0, smoothing_radius)
         OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                              2.0 * max_box_l, quality, 1, 0, 360)
+                                  2.0 * max_box_l, quality, 1, 0, 360)
 
     OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()
