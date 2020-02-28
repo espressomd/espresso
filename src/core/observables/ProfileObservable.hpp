@@ -30,12 +30,13 @@ public:
                     double min_z, double max_z, int n_x_bins, int n_y_bins,
                     int n_z_bins)
       : min_x(min_x), max_x(max_x), min_y(min_y), max_y(max_y), min_z(min_z),
-        max_z(max_z), n_x_bins(n_x_bins), n_y_bins(n_y_bins),
-        n_z_bins(n_z_bins) {}
+        max_z(max_z), n_x_bins(static_cast<size_t>(n_x_bins)),
+        n_y_bins(static_cast<size_t>(n_y_bins)),
+        n_z_bins(static_cast<size_t>(n_z_bins)) {}
   double min_x, max_x;
   double min_y, max_y;
   double min_z, max_z;
-  int n_x_bins, n_y_bins, n_z_bins;
+  size_t n_x_bins, n_y_bins, n_z_bins;
   std::vector<size_t> shape() const override { return {n_x_bins, n_y_bins, n_z_bins}; }
 };
 

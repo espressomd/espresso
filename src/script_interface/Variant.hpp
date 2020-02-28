@@ -43,7 +43,7 @@ constexpr const None none{};
  * @brief Possible types for parameters.
  */
 using Variant = boost::make_recursive_variant<
-    None, bool, int, double, std::string, std::vector<int>, std::vector<double>,
+    None, bool, int, size_t, double, std::string, std::vector<int>, std::vector<double>,
     ObjectId, std::vector<boost::recursive_variant_>, Utils::Vector2d,
     Utils::Vector3d, Utils::Vector4d>::type;
 

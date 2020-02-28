@@ -31,9 +31,7 @@ public:
 
   std::vector<double>
   evaluate(Utils::Span<const Particle *const> particles) const override {
-    std::array<size_t, 3> n_bins{{static_cast<size_t>(n_x_bins),
-                                  static_cast<size_t>(n_y_bins),
-                                  static_cast<size_t>(n_z_bins)}};
+    std::array<size_t, 3> n_bins{{n_x_bins, n_y_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
          std::make_pair(min_z, max_z)}};

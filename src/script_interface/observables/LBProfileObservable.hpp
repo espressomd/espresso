@@ -43,19 +43,19 @@ public:
     this->add_parameters(
         {{"n_x_bins",
           [this](const Variant &v) {
-            profile_observable()->n_x_bins = get_value<int>(v);
+            profile_observable()->n_x_bins = static_cast<size_t>(get_value<int>(v));
           },
-          [this]() { return profile_observable()->n_x_bins; }},
+          [this]() { return static_cast<int>(profile_observable()->n_x_bins); }},
          {"n_y_bins",
           [this](const Variant &v) {
-            profile_observable()->n_y_bins = get_value<int>(v);
+            profile_observable()->n_y_bins = static_cast<size_t>(get_value<int>(v));
           },
-          [this]() { return profile_observable()->n_y_bins; }},
+          [this]() { return static_cast<int>(profile_observable()->n_y_bins); }},
          {"n_z_bins",
           [this](const Variant &v) {
-            profile_observable()->n_z_bins = get_value<int>(v);
+            profile_observable()->n_z_bins = static_cast<size_t>(get_value<int>(v));
           },
-          [this]() { return profile_observable()->n_z_bins; }},
+          [this]() { return static_cast<int>(profile_observable()->n_z_bins); }},
          {"min_x",
           [this](const Variant &v) {
             profile_observable()->min_x = get_value<double>(v);

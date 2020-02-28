@@ -38,7 +38,7 @@ public:
   evaluate(Utils::Span<const Particle *const> particles) const override {
     std::vector<double> res(n_values());
 
-    for (int i = 0, end = n_values(); i < end; i++) {
+    for (size_t i = 0, end = n_values(); i < end; i++) {
       auto const v =
           get_mi_vector(particles[i]->r.p, particles[i + 1]->r.p, box_geo);
       res[i] = v.norm();
