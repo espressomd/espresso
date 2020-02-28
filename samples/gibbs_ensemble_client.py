@@ -19,7 +19,7 @@
 """
 Client part of the Gibbs ensemble simulation. This script handles the
 simulation boxes and communicates the energies to the host. The Monte-Carlo
-part of the simulation is done by the `gibbs_ensemble_socket.py` script.
+part of the simulation is done by the :file:`gibbs_ensemble_socket.py` script.
 """
 
 import espressomd
