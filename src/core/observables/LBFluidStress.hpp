@@ -27,7 +27,7 @@
 namespace Observables {
 class LBFluidStress : public Observable {
 public:
-  int n_values() const override { return 6; }
+  std::vector<size_t> shape() const override { return {6}; }
   std::vector<double> operator()() const override {
 
     auto const unit_conversion =

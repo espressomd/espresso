@@ -59,7 +59,7 @@ public:
 
     return angles;
   }
-  int n_values() const override { return ids().size() - 2; }
+  std::vector<size_t> shape() const override { return {ids().size() - 2}; }
 };
 
 } // Namespace Observables

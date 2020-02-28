@@ -48,7 +48,7 @@ public:
     histogram.normalize();
     return histogram.get_histogram();
   }
-  int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
+  std::vector<size_t> shape() const override { return {n_r_bins, n_phi_bins, n_z_bins, 3}; }
 };
 
 } // Namespace Observables
