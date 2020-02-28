@@ -83,16 +83,24 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
   }
 }
 
+template <class T> void resize_or_replace(device_vector<T> &vec, size_t n) {
+  if (vec.capacity() == 0) {
+    vec = device_vector<T>(n);
+  } else {
+    vec.resize(n);
+  }
+}
+
 void resize_buffers(size_t number_of_particles) {
   particle_data_host.resize(number_of_particles);
-  particle_data_device.resize(number_of_particles);
+  resize_or_replace(particle_data_device, number_of_particles);
 
   particle_forces_host.resize(3 * number_of_particles);
-  particle_forces_device.resize(3 * number_of_particles);
+  resize_or_replace(particle_forces_device, 3 * number_of_particles);
 
 #ifdef ROTATION
   particle_torques_host.resize(3 * number_of_particles);
-  particle_torques_device.resize(3 * number_of_particles);
+  resize_or_replace(particle_torques_device, 3 * number_of_particles);
 #endif
 }
 
@@ -170,9 +178,8 @@ void copy_part_data_to_gpu(ParticleRange particles) {
  */
 void copy_forces_from_GPU(ParticleRange &particles) {
   if (global_part_vars_host.communication_enabled == 1) {
-
     /* Copy result from device memory to host memory*/
-    if (this_node == 0) {
+    if (this_node == 0 && (not particle_forces_device.empty())) {
       thrust::copy(particle_forces_device.begin(), particle_forces_device.end(),
                    particle_forces_host.begin());
 #ifdef ROTATION
@@ -180,9 +187,8 @@ void copy_forces_from_GPU(ParticleRange &particles) {
                    particle_torques_device.end(),
                    particle_torques_host.begin());
 #endif
-
-      cudaDeviceSynchronize();
     }
+
     cuda_mpi_send_forces(
         particles, {particle_forces_host.data(), particle_forces_host.size()},
         {particle_torques_host.data(), particle_torques_host.size()});
