@@ -38,11 +38,12 @@ public:
   virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
-    if (method == "calculate") {
+    if (method == "calculate_flat_array") {
       return observable()->operator()();
     }
-    if (method == "n_values") {
-      return observable()->n_values();
+    if (method == "shape") {
+      auto const shape = observable()->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
     }
     return {};
   }

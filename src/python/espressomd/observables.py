@@ -14,14 +14,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
-    _so_bind_methods = ("calculate", "n_values")
+    _so_bind_methods = ("calculate_flat_array", "shape")
     _so_creation_policy = "LOCAL"
+    def calculate(self):
+        return np.array(self.calculate_flat_array()).reshape(self.shape())
 
 
 @script_interface_register

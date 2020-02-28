@@ -136,11 +136,12 @@ public:
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
-    if (method == "calculate") {
+    if (method == "calculate_flat_array") {
       return profile_observable()->operator()();
     }
-    if (method == "n_values") {
-      return profile_observable()->n_values();
+    if (method == "shape") {
+      auto const shape = profile_observable()->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
     }
     return {};
   }
