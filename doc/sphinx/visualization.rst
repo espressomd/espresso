@@ -119,6 +119,15 @@ Optional keywords:
     * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
 
+.. note::
+
+  The visualization of some constraints is either improved by (:class:`espressomd.shapes.SimplePore`)
+  or even relies on (:class:`espressomd.shapes.HollowConicalFrustum`) the presence of an installed
+  `OpenGL Extrusion library` on your system. Typically, the library will be available through the
+  default package manager of your operating system. On Ubuntu the required package is called ``libgle3-dev``,
+  on Fedora ``libgle`` -- just to name two examples.
+
+
 .. _Running the visualizer:
 
 Running the visualizer

@@ -17,6 +17,7 @@
 import OpenGL.GLUT
 import OpenGL.GLU
 import OpenGL.GL
+import OpenGL.GLE
 import math
 import numpy as np
 import ctypes
@@ -204,6 +205,11 @@ class openGLLive:
         Brightness (inverse constant attenuation) of the spotlight.
     spotlight_focus : :obj:`float`, optional
         Focus (spot exponent) for the spotlight from 0 (uniform) to 128.
+
+    Notes
+    -----
+    The visualization of some constraints is either improved by or even relies
+    on the presence of an installed OpenGL Extrusion library on your system.
 
     """
 
@@ -783,19 +789,46 @@ class openGLLive:
         # Collect shapes and interaction type (for coloring) from constraints
         primitive_shapes = [
             'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
-            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere',
-            'Shapes::SpheroCylinder']
+            'Shapes::HollowConicalFrustum', 'Shapes::SimplePore',
+            'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
 
+        def get_shapes(shapes_list):
+            """Return a list of shapes, where all unions have been unpacked.
+
+            """
+            shapes = []
+            try:
+                # recursively unpack unions
+                for shape in shapes_list:
+                    shapes.extend(get_shapes(shape))
+            except BaseException:
+                # otherwise just append the shape
+                shapes.append(shapes_list)
+            return shapes
+
+        def update_shapes_collection(collection, shape, ptype):
+            """Helper function to create a collection of shape objects.
+
+            """
+            name = shape.name()
+            if name in primitive_shapes:
+                collection[name].append([shape, ptype])
+                # visualization of HollowConicalFrustum requires gleSpiral!
+                if name == 'Shapes::HollowConicalFrustum' \
+                        and not bool(OpenGL.GLE.gleSpiral):
+                    collection['Shapes::Misc'].append([shape, ptype])
+            else:
+                coll_shape_obj['Shapes::Misc'].append([shape, ptype])
+
+        # actually create shape objects collection using the helper functions
         coll_shape_obj = collections.defaultdict(list)
-        for c in self.system.constraints:
-            if type(c) == espressomd.constraints.ShapeBasedConstraint:
-                t = c.get_parameter('particle_type')
-                s = c.get_parameter('shape')
-                n = s.name()
-                if n in primitive_shapes:
-                    coll_shape_obj[n].append([s, t])
-                else:
-                    coll_shape_obj['Shapes::Misc'].append([s, t])
+        for constraint in self.system.constraints:
+            if isinstance(constraint,
+                          espressomd.constraints.ShapeBasedConstraint):
+                ptype = constraint.get_parameter('particle_type')
+                shape = constraint.get_parameter('shape')
+                for sub_shape in get_shapes(shape):
+                    update_shapes_collection(coll_shape_obj, sub_shape, ptype)
 
         if self.specs['LB_draw_boundaries']:
             ni = 0
@@ -830,6 +863,16 @@ class openGLLive:
             b = np.array(s[0].get_parameter('b'))
             c = np.array(s[0].get_parameter('b'))
             self.shapes['Shapes::Ellipsoid'].append([pos, a, b, c, s[1]])
+
+        for s in coll_shape_obj['Shapes::HollowConicalFrustum']:
+            center = np.array(s[0].get_parameter('center'))
+            r1 = np.array(s[0].get_parameter('r1'))
+            r2 = np.array(s[0].get_parameter('r2'))
+            length = np.array(s[0].get_parameter('length'))
+            thickness = np.array(s[0].get_parameter('thickness'))
+            axis = np.array(s[0].get_parameter('axis'))
+            self.shapes['Shapes::HollowConicalFrustum'].append(
+                [center, r1, r2, length, thickness, axis, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
@@ -886,12 +929,18 @@ class openGLLive:
         for i in range(int(res[0])):
             for j in range(int(res[1])):
                 for k in range(int(res[2])):
-                    p = np.array([i, j, k]) * sp
-                    dist, vec = shape.call_method(
-                        "calc_distance", position=p.tolist())
-                    if not np.isnan(vec).any() and not np.isnan(
-                            dist) and abs(dist) < sp:
-                        points.append((p - vec).tolist())
+                    # some shapes may not have a well-defined distance function in the whole domain
+                    # and may throw upon asking for a distance
+                    try:
+                        p = np.array([i, j, k]) * sp
+                        dist, vec = shape.call_method(
+                            "calc_distance", position=p.tolist())
+                        if not np.isnan(vec).any() and not np.isnan(
+                                dist) and abs(dist) < sp:
+                            points.append((p - vec).tolist())
+                    # domain error translates to ValueError (cython)
+                    except ValueError:
+                        continue
         return points
 
     # GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
@@ -1026,6 +1075,15 @@ class openGLLive:
                     self.specs['constraint_type_colors'], s[4]),
                 self.materials[self._modulo_indexing(
                     self.specs['constraint_type_materials'], s[4])],
+                self.specs['quality_constraints'])
+
+        for s in self.shapes['Shapes::HollowConicalFrustum']:
+            draw_hollow_conical_frustum(
+                s[0], s[1], s[2], s[3], s[4], s[5],
+                self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[6]),
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[6])],
                 self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
@@ -2088,11 +2146,49 @@ def get_extra_clip_plane():
         return OpenGL.GL.GL_CLIP_PLANE0 + 6
 
 
+def draw_hollow_conical_frustum(center, r1, r2, length, thickness, axis, color,
+                                material, quality):
+    # if available, use the GL Extrusion library
+    if bool(OpenGL.GLE.gleSpiral):
+        set_solid_material(color, material)
+        OpenGL.GL.glPushMatrix()
+        quadric = OpenGL.GLU.gluNewQuadric()
+
+        # basic position and orientation
+        OpenGL.GL.glTranslate(center[0], center[1], center[2])
+        ax, rx, ry = rotation_helper(axis)
+        OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
+
+        n = max(20, quality)
+        rotation_angle = np.arctan((r1 - r2) / length)
+        l = length / np.cos(rotation_angle)
+
+        contour = []
+        for theta in np.linspace(-0.5 * np.pi, 0.5 * np.pi, n):
+            contour.append([np.sin(theta) * 0.5 * thickness,
+                            np.cos(theta) * 0.5 * thickness + 0.5 * l])
+        for theta in np.linspace(0.5 * np.pi, -0.5 * np.pi, n):
+            contour.append([np.sin(theta) * 0.5 * thickness,
+                            -np.cos(theta) * 0.5 * thickness - 0.5 * l])
+        contour = np.matmul(np.array(contour),
+                            np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
+                                      [np.sin(rotation_angle), np.cos(rotation_angle)]]))
+
+        normals = np.diff(np.array(contour), axis=0)
+        normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
+        normals = np.roll(normals, 1, axis=1)
+
+        OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
+        OpenGL.GLE.gleSetNumSides(max(90, 3 * quality))
+        OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], 0.5 * (r1 + r2), 0., 0., 0.,
+                             [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
+
+        OpenGL.GLU.gluDeleteQuadric(quadric)
+        OpenGL.GL.glPopMatrix()
+
+
 def draw_simple_pore(center, axis, length, radius, smoothing_radius,
                      max_box_l, color, material, quality):
-
-    clip_plane = get_extra_clip_plane()
-
     set_solid_material(color, material)
     OpenGL.GL.glPushMatrix()
     quadric = OpenGL.GLU.gluNewQuadric()
@@ -2101,37 +2197,63 @@ def draw_simple_pore(center, axis, length, radius, smoothing_radius,
     OpenGL.GL.glTranslate(center[0], center[1], center[2])
     ax, rx, ry = rotation_helper(axis)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
-    # cylinder
-    OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
-    OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
-                           smoothing_radius, quality, quality)
-    # torus segment
-    OpenGL.GL.glEnable(clip_plane)
-    OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
-    OpenGL.GLUT.glutSolidTorus(
-        smoothing_radius,
-        radius + smoothing_radius,
-        quality,
-        quality)
-    OpenGL.GL.glDisable(clip_plane)
-    # wall
-    OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
-    OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                              2.0 * max_box_l, quality, 1, 0, 360)
-    # torus segment
-    OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
-    OpenGL.GL.glEnable(clip_plane)
-    OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
-    OpenGL.GLUT.glutSolidTorus(
-        smoothing_radius,
-        radius + smoothing_radius,
-        quality,
-        quality)
-    OpenGL.GL.glDisable(clip_plane)
-    # wall
-    OpenGL.GL.glTranslate(0, 0, smoothing_radius)
-    OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                              2.0 * max_box_l, quality, 1, 0, 360)
+
+    # if available, use the GL Extrusion library
+    if bool(OpenGL.GLE.gleSpiral):
+        n = max(10, quality // 3)
+        contour = [[0.5 * max_box_l, -0.5 * length]]
+        for theta in np.linspace(0, 0.5 * np.pi, n):
+            contour.append([(1. - np.sin(theta)) * smoothing_radius,
+                            -0.5 * length + (1. - np.cos(theta)) * smoothing_radius])
+        for theta in np.linspace(0.5 * np.pi, np.pi, n):
+            contour.append([(1. - np.sin(theta)) * smoothing_radius,
+                            0.5 * length - (1. + np.cos(theta)) * smoothing_radius])
+        contour.append([0.5 * max_box_l, 0.5 * length])
+
+        normals = np.diff(np.array(contour), axis=0)
+        normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
+        normals = np.roll(normals, 1, axis=1)
+        normals[:, 0] *= -1
+
+        OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
+        OpenGL.GLE.gleSetNumSides(max(90, 3 * quality))
+        OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], radius, 0., 0., 0.,
+                             [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
+
+    # else draw using primitives and clip planes
+    else:
+        clip_plane = get_extra_clip_plane()
+        # cylinder
+        OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
+        OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
+                               smoothing_radius, quality, quality)
+        # torus segment
+        OpenGL.GL.glEnable(clip_plane)
+        OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
+        OpenGL.GLUT.glutSolidTorus(
+            smoothing_radius,
+            radius + smoothing_radius,
+            quality,
+            quality)
+        OpenGL.GL.glDisable(clip_plane)
+        # wall
+        OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
+        OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
+                                  2.0 * max_box_l, quality, 1, 0, 360)
+        # torus segment
+        OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
+        OpenGL.GL.glEnable(clip_plane)
+        OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
+        OpenGL.GLUT.glutSolidTorus(
+            smoothing_radius,
+            radius + smoothing_radius,
+            quality,
+            quality)
+        OpenGL.GL.glDisable(clip_plane)
+        # wall
+        OpenGL.GL.glTranslate(0, 0, smoothing_radius)
+        OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
+                                  2.0 * max_box_l, quality, 1, 0, 360)
 
     OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()

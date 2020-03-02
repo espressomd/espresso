@@ -20,7 +20,7 @@
 #define SCRIPT_INTERFACE_TORUS_WALL_HPP
 
 #include "Shape.hpp"
-#include "core/shapes/Torus.hpp"
+#include <shapes/Torus.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

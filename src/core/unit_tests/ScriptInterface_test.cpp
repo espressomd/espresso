@@ -25,7 +25,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 using std::map;
 using std::string;

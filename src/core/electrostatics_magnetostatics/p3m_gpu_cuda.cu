@@ -65,7 +65,6 @@
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/int_pow.hpp>
 using Utils::int_pow;
@@ -474,10 +473,10 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
     parts_per_block++;
   }
 
-  if ((n_part % parts_per_block) == 0)
-    n_blocks = std::max<int>(1, n_part / parts_per_block);
+  if ((p3m_gpu_data.n_part % parts_per_block) == 0)
+    n_blocks = std::max<int>(1, p3m_gpu_data.n_part / parts_per_block);
   else
-    n_blocks = n_part / parts_per_block + 1;
+    n_blocks = p3m_gpu_data.n_part / parts_per_block + 1;
 
   grid.x = n_blocks;
   grid.y = 1;
@@ -549,8 +548,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     espressoSystemInterface.requestParticleStructGpu();
 
     int reinit_if = 0, mesh_changed = 0;
-    p3m_gpu_data.n_part =
-        gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+    p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
 
     if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
       p3m_gpu_data.alpha = alpha;
@@ -690,14 +688,11 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
  *  \brief The long range part of the P3M algorithm.
  */
 void p3m_gpu_add_farfield_force() {
-  CUDA_particle_data *lb_particle_gpu;
-  float *lb_particle_force_gpu;
+  auto device_particles = gpu_get_particle_pointer();
+  CUDA_particle_data *lb_particle_gpu = device_particles.data();
+  p3m_gpu_data.n_part = device_particles.size();
 
-  lb_particle_gpu = gpu_get_particle_pointer();
-  lb_particle_force_gpu = gpu_get_particle_force_pointer();
-
-  p3m_gpu_data.n_part =
-      gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+  float *lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
   if (p3m_gpu_data.n_part == 0)
     return;

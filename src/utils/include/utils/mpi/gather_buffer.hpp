@@ -89,9 +89,9 @@ int gather_buffer(T *buffer, int n_elem, boost::mpi::communicator comm,
  * @param comm The MPI communicator.
  * @param root The rank where the data should be gathered.
  */
-template <typename T>
-void gather_buffer(std::vector<T> &buffer, boost::mpi::communicator comm,
-                   int root = 0) {
+template <typename T, class Allocator>
+void gather_buffer(std::vector<T, Allocator> &buffer,
+                   boost::mpi::communicator comm, int root = 0) {
   auto const n_elem = buffer.size();
 
   if (comm.rank() == root) {

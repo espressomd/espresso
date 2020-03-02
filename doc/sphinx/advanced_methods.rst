@@ -98,12 +98,12 @@ Several modes are available for different types of binding.
 
         n_angle_bonds = 181  # 0 to 180 degrees in one degree steps
         for i in range(0, res, 1):
-            self.s.bonded_inter[i] = Angle_Harmonic(
+            self.system.bonded_inter[i] = Angle_Harmonic(
                 bend=1, phi0=float(i) / (res - 1) * np.pi)
 
         # Create the bond passed to bond_centers here and add it to the system
 
-        self.s.collision_detection.set_params(mode="bind_three_particles",
+        self.system.collision_detection.set_params(mode="bind_three_particles",
             bond_centers=<BOND_CENTERS>, bond_three_particles=0,
             three_particle_binding_angle_resolution=res, distance=<CUTOFF>)
 
@@ -188,7 +188,7 @@ The bending modulus is ``kb``.
 where ``softID`` identifies the soft particle and ``kv`` is a volumetric spring constant.
 Note that the :class:`espressomd.interactions.IBM_VolCons` ``bond`` does not need a bond partner. It is added to a particle as follows::
 
-    s.part[0].add_bond((Volcons,))
+    system.part[0].add_bond((Volcons,))
 
 The comma is needed to force Python to create a tuple containing a single item.
 
@@ -1326,13 +1326,13 @@ Initialization
 ::
 
     import espressomd
-    sys = espressomd.System(box_l=[10.0, 10.0, 10.0])
-    sys.time_step = 0.0
-    sys.cell_system.skin = 0.4
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.time_step = 0.0
+    system.cell_system.skin = 0.4
     ek = espressomd.electrokinetics.Electrokinetics(agrid=1.0, lb_density=1.0,
         viscosity=1.0, friction=1.0, T=1.0, prefactor=1.0,
         stencil='linkcentered', advection=True, fluid_coupling='friction')
-    sys.actors.add(ek)
+    system.actors.add(ek)
 
 .. note:: Features ``ELECTROKINETICS`` and ``CUDA`` required
 

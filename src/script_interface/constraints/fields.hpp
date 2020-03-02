@@ -24,7 +24,7 @@
 #include "core/field_coupling/fields/Interpolated.hpp"
 #include "core/field_coupling/fields/PlaneWave.hpp"
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include <boost/multi_array.hpp>
 

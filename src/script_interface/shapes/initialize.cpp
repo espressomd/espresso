@@ -23,7 +23,6 @@
 #include "HollowConicalFrustum.hpp"
 #include "NoWhere.hpp"
 #include "Rhomboid.hpp"
-#include "ScriptInterface.hpp"
 #include "SimplePore.hpp"
 #include "Slitpore.hpp"
 #include "Sphere.hpp"
@@ -32,6 +31,7 @@
 #include "Torus.hpp"
 #include "Union.hpp"
 #include "Wall.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {

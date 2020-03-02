@@ -42,7 +42,7 @@ void check_particle_consistency() {
     cell_part_cnt += cell->n;
     for (int n = 0; n < cell->n; n++) {
       auto const &p = cell->part[n];
-      if (p.p.identity < 0 || p.p.identity > max_seen_particle) {
+      if (p.p.identity < 0 || p.p.identity > get_local_max_seen_particle()) {
         fprintf(stderr,
                 "%d: check_particle_consistency: ERROR: Cell %d Part "
                 "%d has corrupted id=%d\n",
@@ -85,7 +85,7 @@ void check_particle_consistency() {
   }
 
   /* checks: local particle id */
-  for (n = 0; n < max_seen_particle + 1; n++) {
+  for (n = 0; n < get_local_max_seen_particle() + 1; n++) {
     if (get_local_particle_data(n) != nullptr) {
       local_part_cnt++;
       if (get_local_particle_data(n)->p.identity != n) {
@@ -118,7 +118,7 @@ void check_particle_consistency() {
                 cell_structure.local_cells().cell[c]->part[p].p.identity, c);
     }
 
-    for (int p = 0; p < n_part; p++)
+    for (int p = 0; p < get_local_max_seen_particle(); p++)
       if (get_local_particle_data(p))
         fprintf(stderr, "%d: got particle %d in local_particles\n", this_node,
                 p);

@@ -20,7 +20,7 @@ class ShapeTests(ut.TestCase):
             position=[1, 2, 6.5])[0], 3.5)
 
         # negative distances are not well-defined for a union of shapes
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             union.calc_distance(position=[1, 2, 11.5])
         union.clear()
         self.assertEqual(union.size(), 0)

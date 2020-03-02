@@ -69,7 +69,7 @@ cdef extern from "thermostat.hpp":
     IF DPD:
         stdint.uint64_t dpd_get_rng_state()
 
-cdef extern from "Globals.hpp":
+cdef extern from "script_interface/Globals.hpp":
     # links intern C-struct with python object
     cdef extern langevin_thermostat_struct langevin
     cdef extern brownian_thermostat_struct brownian
