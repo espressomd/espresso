@@ -71,8 +71,6 @@ endif(CUDA)
 
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
-add_custom_target(print2 ${CMAKE_COMMAND} -E echo
-                         $<$<BOOL:H5MD>:Boost::filesystem h5xx>)
 target_compile_options(
   EspressoCore
   PUBLIC
@@ -109,9 +107,6 @@ target_include_directories(
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
 
 target_compile_definitions(EspressoCore PUBLIC "$<$<BOOL:H5MD>:H5XX_USE_MPI>")
-target_sources(
-  EspressoCore
-  PUBLIC "$<$<BOOL:H5MD>:${CMAKE_CURRENT_SOURCE_DIR}/io/writer/h5md_core.cpp>")
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)
