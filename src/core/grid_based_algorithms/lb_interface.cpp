@@ -112,23 +112,10 @@ void lb_lbfluid_sanity_checks() {
 
 void lb_lbfluid_on_integration_start() {
   lb_lbfluid_sanity_checks();
-  if (lattice_switch == ActiveLB::GPU) {
-#ifdef CUDA
-    if (this_node == 0 and lb_reinit_particles_gpu()) {
-      lb_realloc_particles_gpu();
-      lb_reinit_particles_gpu.validate();
-    }
-#endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  if (lattice_switch == ActiveLB::CPU) {
     halo_communication(&update_halo_comm,
                        reinterpret_cast<char *>(lbfluid[0].data()));
   }
-}
-
-void lb_lbfluid_invalidate_particle_allocation() {
-#ifdef CUDA
-  lb_reinit_particles_gpu.invalidate();
-#endif
 }
 
 /** (Re-)initialize the fluid. */

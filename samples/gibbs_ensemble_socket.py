@@ -19,7 +19,7 @@
 """
 Simulate a Gibbs-ensemble of a Lennard-Jones fluid at a fixed temperature.
 This script does the Monte-Carlo part of the Gibbs-ensemble, however for the
-energy calculation of the systems, two instances of the `gibbs_ensemble_client.py`
+energy calculation of the systems, two instances of the :file:`gibbs_ensemble_client.py`
 script are executed, which each run a different instance of ESPResSo.
 
 The Gibbs-ensemble implemented in these scripts closely refers to chapter 8 of
@@ -40,6 +40,9 @@ import struct
 import random
 import matplotlib.pyplot as plt
 import argparse
+
+from espressomd import assert_features
+assert_features("LENNARD_JONES")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-s', '--seed', type=int, nargs=1)

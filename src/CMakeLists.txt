@@ -26,9 +26,10 @@ if(WITH_TESTS)
   add_dependencies(check check_unit_tests)
 endif(WITH_TESTS)
 
+add_subdirectory(utils)
+add_subdirectory(shapes)
 add_subdirectory(core)
 add_subdirectory(config)
-add_subdirectory(utils)
 
 add_subdirectory(profiler)
 

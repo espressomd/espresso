@@ -18,8 +18,8 @@
  */
 #include "config.hpp"
 
-#include "ScriptInterface.hpp"
 #include "initialize.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "ActiveVirtualSitesHandle.hpp"
 #include "VirtualSitesInertialessTracers.hpp"

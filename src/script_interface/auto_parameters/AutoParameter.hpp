@@ -23,10 +23,10 @@
 #include <memory>
 #include <utility>
 
-#include "Variant.hpp"
-#include "get_value.hpp"
+#include "script_interface/Variant.hpp"
+#include "script_interface/get_value.hpp"
 
-#include "utils/make_function.hpp"
+#include <utils/make_function.hpp>
 
 namespace ScriptInterface {
 /**

@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Rhomboid.hpp"
+#include <shapes/Rhomboid.hpp>
 
 #include <cmath>
 

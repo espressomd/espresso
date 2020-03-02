@@ -25,7 +25,7 @@
 #include "core/field_coupling/couplings/Scaled.hpp"
 #include "core/field_coupling/couplings/Viscous.hpp"
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {

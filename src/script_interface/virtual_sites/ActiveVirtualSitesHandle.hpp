@@ -23,10 +23,10 @@
 #define SCRIPT_INTERFACE_VIRTUAL_SITES_ACTIVE_VIRTUAL_SITES_HANDLE_HPP
 
 #include "VirtualSites.hpp"
-#include "auto_parameters/AutoParameters.hpp"
 #include "config.hpp"
 #include "core/virtual_sites.hpp"
 #include "errorhandling.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #ifdef VIRTUAL_SITES
 

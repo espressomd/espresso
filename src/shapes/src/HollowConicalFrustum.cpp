@@ -18,7 +18,7 @@
  */
 #include <boost/algorithm/clamp.hpp>
 
-#include "HollowConicalFrustum.hpp"
+#include <shapes/HollowConicalFrustum.hpp>
 #include <utils/Vector.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 

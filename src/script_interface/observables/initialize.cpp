@@ -25,8 +25,8 @@
 #include "PidObservable.hpp"
 #include "PidProfileObservable.hpp"
 #include "ProfileObservable.hpp"
-#include "ScriptInterface.hpp"
 #include "config.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "core/observables/BondAngles.hpp"
 #include "core/observables/BondDihedrals.hpp"

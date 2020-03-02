@@ -18,7 +18,7 @@
  */
 
 #include "initialize.hpp"
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "LBBoundaries.hpp"
 #include "LBBoundary.hpp"

@@ -22,7 +22,7 @@
 
 #include <boost/range/algorithm/find.hpp>
 
-#include "auto_parameters/AutoParameters.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 using ScriptInterface::AutoParameters;
 
