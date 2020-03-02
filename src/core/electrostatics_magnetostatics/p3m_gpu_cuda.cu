@@ -549,8 +549,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     espressoSystemInterface.requestParticleStructGpu();
 
     int reinit_if = 0, mesh_changed = 0;
-    p3m_gpu_data.n_part =
-        gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+    p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
 
     if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
       p3m_gpu_data.alpha = alpha;
@@ -690,14 +689,11 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
  *  \brief The long range part of the P3M algorithm.
  */
 void p3m_gpu_add_farfield_force() {
-  CUDA_particle_data *lb_particle_gpu;
-  float *lb_particle_force_gpu;
+  auto device_particles = gpu_get_particle_pointer();
+  CUDA_particle_data *lb_particle_gpu = device_particles.data();
+  p3m_gpu_data.n_part = device_particles.size();
 
-  lb_particle_gpu = gpu_get_particle_pointer();
-  lb_particle_force_gpu = gpu_get_particle_force_pointer();
-
-  p3m_gpu_data.n_part =
-      gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+  float *lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
   if (p3m_gpu_data.n_part == 0)
     return;

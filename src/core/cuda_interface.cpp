@@ -30,12 +30,6 @@
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
-#ifdef ENGINE
-static void cuda_mpi_send_v_cs_slave(ParticleRange particles);
-#endif
-
-void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }
-
 /* TODO: We should only transfer data for enabled methods,
          not for those that are barely compiled in. (fw)
 */
@@ -90,8 +84,9 @@ static void pack_particles(ParticleRange particles,
   }
 }
 
-void cuda_mpi_get_particles(ParticleRange particles,
-                            CUDA_particle_data *particle_data_host) {
+void cuda_mpi_get_particles(
+    const ParticleRange &particles,
+    pinned_vector<CUDA_particle_data> &particle_data_host) {
   auto const n_part = particles.size();
 
   if (this_node > 0) {
@@ -102,10 +97,12 @@ void cuda_mpi_get_particles(ParticleRange particles,
 
     Utils::Mpi::gather_buffer(buffer.data(), buffer.size(), comm_cart);
   } else {
-    /* Pack own particles */
-    pack_particles(particles, particle_data_host);
+    particle_data_host.resize(n_part);
 
-    Utils::Mpi::gather_buffer(particle_data_host, n_part, comm_cart);
+    /* Pack own particles */
+    pack_particles(particles, particle_data_host.data());
+
+    Utils::Mpi::gather_buffer(particle_data_host, comm_cart);
   }
 }
 
@@ -118,8 +115,8 @@ void cuda_mpi_get_particles(ParticleRange particles,
  *                this is only touched if ROTATION is active.
  */
 static void add_forces_and_torques(ParticleRange particles,
-                                   const std::vector<float> &forces,
-                                   const std::vector<float> &torques) {
+                                   Utils::Span<const float> forces,
+                                   Utils::Span<const float> torques) {
   int i = 0;
   for (auto &part : particles) {
     for (int j = 0; j < 3; j++) {
@@ -132,9 +129,9 @@ static void add_forces_and_torques(ParticleRange particles,
   }
 }
 
-void cuda_mpi_send_forces(ParticleRange particles,
-                          std::vector<float> &host_forces,
-                          std::vector<float> &host_torques) {
+void cuda_mpi_send_forces(const ParticleRange &particles,
+                          Utils::Span<float> host_forces,
+                          Utils::Span<float> host_torques) {
   auto const n_elements = 3 * particles.size();
 
   if (this_node > 0) {
@@ -175,5 +172,7 @@ void copy_CUDA_energy_to_energy(CUDA_energy energy_host) {
   if (energy.n_dipolar >= 2)
     energy.dipolar[1] += energy_host.dipolar;
 }
+
+void cuda_bcast_global_part_params() { mpi_bcast_cuda_global_part_vars(); }
 
 #endif /* ifdef CUDA */
