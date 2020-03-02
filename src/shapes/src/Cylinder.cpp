@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Cylinder.hpp"
 #include <cmath>
+#include <shapes/Cylinder.hpp>
 
 namespace Shapes {
 

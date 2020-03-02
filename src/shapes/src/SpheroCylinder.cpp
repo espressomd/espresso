@@ -19,8 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SpheroCylinder.hpp"
 #include <cmath>
+#include <shapes/SpheroCylinder.hpp>
 
 namespace Shapes {
 

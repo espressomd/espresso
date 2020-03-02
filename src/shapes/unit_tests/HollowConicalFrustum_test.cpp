@@ -22,44 +22,43 @@
 #include <cmath>
 #include <limits>
 
-#define BOOST_TEST_MODULE Wall test
+#define BOOST_TEST_MODULE Cone test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
-
-#include "shapes/Wall.hpp"
-
-bool check_distance_function(const Shapes::Shape &s) {
-  for (int i = 0; i < 100; i++)
-    for (int j = 0; j < 100; j++)
-      for (int k = 0; k < 100; k++) {
-        Utils::Vector3d pos = {i * 0.1, j * 0.1, k * 0.1};
-        Utils::Vector3d dist{};
-        double d;
-
-        s.calculate_dist(pos, d, dist);
-        /* trivial test */
-        if ((dist.norm2() - d * d) > 1e-12) {
-          return false;
-        }
-
-        /* check if the returned closest point really is on the surface */
-        pos -= dist;
-
-        s.calculate_dist(pos, d, dist);
-        if (std::abs(d) > 1e-12) {
-          return false;
-        }
-      }
-
-  return true;
-}
+#include <shapes/HollowConicalFrustum.hpp>
+#include <utils/Vector.hpp>
 
 BOOST_AUTO_TEST_CASE(dist_function) {
-  Shapes::Wall w;
-  w.set_normal(Utils::Vector3d{3., 5., 7.});
-  w.d() = 0.2;
+  constexpr double L = 8.0;
+  constexpr double R1 = 2.0;
 
-  BOOST_CHECK(check_distance_function(w));
+  Shapes::HollowConicalFrustum c;
+  c.set_r1(R1);
+  c.set_r2(3.0);
+  c.set_length(L);
+  c.set_axis(Utils::Vector3d{0, 0, 1});
+
+  auto pos = Utils::Vector3d{0.0, 0.0, L / 2.0};
+  Utils::Vector3d vec;
+  double dist;
+
+  c.calculate_dist(pos, dist, vec);
+  BOOST_CHECK_CLOSE(dist, 2.0, 1e-7);
+  BOOST_CHECK_CLOSE(dist, vec.norm(), 1e-7);
+
+  pos = {{R1, 0.0, L / 2.0}};
+  c.calculate_dist(pos, dist, vec);
+  BOOST_CHECK_CLOSE(dist, 0.0, 1e-7);
+  BOOST_CHECK_CLOSE(dist, vec.norm(), 1e-7);
+
+  pos = {{3.0, 0.0, -L / 2.0}};
+  c.calculate_dist(pos, dist, vec);
+  BOOST_CHECK_CLOSE(dist, 0.0, 1e-7);
+  BOOST_CHECK_CLOSE(dist, vec.norm(), 1e-7);
+
+  c.set_thickness(1.0);
+  c.set_r2(R1);
+  pos = {{R1 + 1.0, 0.0, L / 2.0}};
+  c.calculate_dist(pos, dist, vec);
+  BOOST_CHECK_CLOSE(dist, .5, 1e-7);
 }
-
-/* @todo  Functional unit test of the distance function */

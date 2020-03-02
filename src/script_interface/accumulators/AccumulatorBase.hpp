@@ -19,8 +19,8 @@
 #ifndef SCRIPTINTERFACE_ACCUMULATORS_ACCUMULATORBASE_HPP
 #define SCRIPTINTERFACE_ACCUMULATORS_ACCUMULATORBASE_HPP
 
-#include "ScriptInterface.hpp"
 #include "core/accumulators/AccumulatorBase.hpp"
+#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 
 namespace ScriptInterface {

@@ -22,11 +22,11 @@
 #ifndef ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
 #define ESPRESSO_SCRIPTINTERFACE_MPIIO_HPP
 
-#include "ScriptInterface.hpp"
-#include "auto_parameters/AutoParameters.hpp"
 #include "config.hpp"
-#include "get_value.hpp"
 #include "io/mpiio/mpiio.hpp"
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/get_value.hpp"
 #include <core/cells.hpp>
 
 #define field_value(use, v) ((use) ? (v) : 0u)

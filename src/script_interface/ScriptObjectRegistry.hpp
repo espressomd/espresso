@@ -22,7 +22,7 @@
 #ifndef SCRIPT_INTERFACE_REGISTRY_HPP
 #define SCRIPT_INTERFACE_REGISTRY_HPP
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 

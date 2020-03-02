@@ -25,7 +25,7 @@
 #include <utility>
 
 #include "MpiCallbacks.hpp"
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 

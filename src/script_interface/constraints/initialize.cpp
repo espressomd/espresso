@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "initialize.hpp"
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "Constraints.hpp"
 
