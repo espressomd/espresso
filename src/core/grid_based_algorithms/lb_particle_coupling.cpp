@@ -195,7 +195,41 @@ bool in_local_domain(Vector<T, 3> const &pos, LocalBox<T> const &local_box,
 bool in_local_halo(Vector3d const &pos) {
   auto const halo = 0.5 * lb_lbfluid_get_agrid();
 
-  return in_local_domain(pos, local_geo, halo);
+  if (in_local_domain(pos, local_geo, halo))
+    return true;
+
+  std::vector<Vector3d> re_folded_positions;
+  Vector<int,3> folded_axis = Vector<int,3>{0,0,0};
+  // Determine which axis needs folding
+  for (int i = 0; i < 3; i++) {
+    Vector3d re_folded_pos = pos;
+    if (pos[i] < halo) {
+      folded_axis[i] = 1;
+    } else if(pos[i] > box_geo.m_length[i] - halo) {
+      folded_axis[i] = -1;
+    }
+  }
+
+  // Fill folded position vector
+  if( folded_axis != Vector<int,3>{0,0,0}) {
+    for (auto x : {0,1})
+    for (auto y : {0,1})
+    for (auto z : {0,1}){
+      auto added_pos = Vector3d{
+                            pos[0] + x * folded_axis[0] * box_geo.m_length[0],
+                            pos[1] + y * folded_axis[1] * box_geo.m_length[1],
+                            pos[2] + z * folded_axis[2] * box_geo.m_length[2]};
+      if(std::count(re_folded_positions.begin(), re_folded_positions.end(),added_pos) == 0)
+        re_folded_positions.push_back(added_pos);
+    }
+  }
+
+  for (auto p : re_folded_positions) {
+    if (in_local_domain(p, local_geo, halo))
+      return true;
+  }
+
+  return false;
 }
 
 #ifdef ENGINE
