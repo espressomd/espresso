@@ -214,6 +214,18 @@ protected:
     IBlock *block;
     Cell cell;
   };
+  IBlock *
+  get_block_from_node_extended(const Utils::Vector3i &node) const {
+    for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+      if (b->getAABB()
+              .getExtended(m_n_ghost_layers)
+              .contains(real_c(node[0]), real_c(node[1]), real_c(node[2]))) {
+        return &(*b);
+      }
+    }
+    // Cell not in local blocks
+    return {};
+  }
   boost::optional<BlockAndCell>
   get_block_and_cell(const Utils::Vector3i &node,
                      bool consider_ghost_layers) const {
@@ -228,12 +240,43 @@ protected:
     if (consider_ghost_layers and !block) {
       global_cell = Cell({uint_c(node[0]), uint_c(node[1]), uint_c(node[2])});
       // Try to find a block which has the cell as ghost layer
-      for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
-        if (b->getAABB()
-                .getExtended(m_n_ghost_layers)
-                .contains(real_c(node[0]), real_c(node[1]), real_c(node[2]))) {
-          block = &(*b);
-          break;
+      block = get_block_from_node_extended(node);
+
+      if (!block) {
+        std::vector<Utils::Vector3i> re_folded_nodes;
+        Utils::Vector3i folded_axis = Utils::Vector3i{0,0,0};
+        re_folded_nodes.push_back(f_node);
+        // Determine which axis needs folding
+        for (int i = 0; i < 3; i++) {
+          if (f_node[i] < m_n_ghost_layers){
+            folded_axis[i] = 1;
+          } else if (f_node[i] > m_grid_dimensions[i] - m_n_ghost_layers) {
+            folded_axis[i] = -1;
+          }
+        }
+
+        // Fill folded nodes vector
+        if( folded_axis != Utils::Vector3i{0,0,0}) {
+          for (auto x : {0,1})
+          for (auto y : {0,1})
+          for (auto z : {0,1}){
+            auto added_node = Utils::Vector3i{
+                                  f_node[0] + x * folded_axis[0] * m_grid_dimensions[0],
+                                  f_node[1] + y * folded_axis[1] * m_grid_dimensions[1],
+                                  f_node[2] + z * folded_axis[2] * m_grid_dimensions[2]};
+            if(std::count(re_folded_nodes.begin(), re_folded_nodes.end(),added_node) == 0)
+              re_folded_nodes.push_back(added_node);
+          }
+        }
+
+        for (auto re_folded_node : re_folded_nodes){
+          block = get_block_from_node_extended(re_folded_node);
+          if (block) {
+            global_cell = Cell({uint_c(re_folded_node[0]),
+                                uint_c(re_folded_node[1]),
+                                uint_c(re_folded_node[2])});
+            break;
+          }
         }
       }
     }
@@ -248,7 +291,7 @@ protected:
 
   IBlock *get_block(const Utils::Vector3d &pos,
                     bool consider_ghost_layers) const {
-    // Get block and local cell
+    // Get block
     auto block =
         m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
     if (consider_ghost_layers and !block) {
@@ -258,6 +301,53 @@ protected:
         if (ab.contains(pos[0], pos[1], pos[2])) {
           block = &(*b);
           break;
+        }
+      }
+
+      if (!block) {
+        Utils::Vector3d f_pos = pos;
+        Utils::Vector3i folded_axis = Utils::Vector3i{0,0,0};
+        std::vector<Utils::Vector3d> re_folded_positions;
+        for (int i = 0; i < 3; i++) {
+          if (f_pos[i] < 0) f_pos[i] += m_grid_dimensions[i];
+          else if (f_pos[i] > m_grid_dimensions[i]) f_pos[i] -= m_grid_dimensions[i];
+        }
+        re_folded_positions.push_back(f_pos);
+
+        // Determine which axis needs folding
+        for (int i = 0; i < 3; i++) {
+          if (f_pos[i] < m_n_ghost_layers - 1.0){
+            folded_axis[i] = 1;
+          } else if (f_pos[i] > m_grid_dimensions[i] - m_n_ghost_layers + 1.0) {
+            folded_axis[i] = -1;
+          }
+        }
+
+        // Fill folded position vector
+        if( folded_axis != Utils::Vector3i{0,0,0}) {
+          for (auto x : {0,1})
+          for (auto y : {0,1})
+          for (auto z : {0,1}){
+            auto added_pos = Utils::Vector3d{
+                                 f_pos[0] + x * folded_axis[0] * m_grid_dimensions[0],
+                                 f_pos[1] + y * folded_axis[1] * m_grid_dimensions[1],
+                                 f_pos[2] + z * folded_axis[2] * m_grid_dimensions[2]};
+            if(std::count(re_folded_positions.begin(), re_folded_positions.end(),added_pos) == 0)
+              re_folded_positions.push_back(added_pos);
+          }
+        }
+
+        for (auto re_folded_pos : re_folded_positions){
+          for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
+            auto ab = b->getAABB().getExtended(1.0 * n_ghost_layers());
+            if (ab.contains(re_folded_pos[0], re_folded_pos[1], re_folded_pos[2])) {
+              block = &(*b);
+              break;
+            }
+          }
+          if (block) {
+            break;
+          }
         }
       }
     }
@@ -463,10 +553,10 @@ public:
             v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
           } else {
             printf("Node %d %d %d\n", node[0], node[1], node[2]);
-            throw std::runtime_error("Access to LB velocity field  failed.");
+            throw std::runtime_error("Access to LB velocity field failed.");
           }
         });
-    return v;
+    return {v};
   };
 
   // Local force
@@ -508,7 +598,7 @@ public:
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
-    return f * m_density;
+    return {f * m_density};
   };
 
   boost::optional<Utils::Vector3d>
@@ -528,7 +618,7 @@ public:
       }
     };
     interpolate_bspline_at_pos(pos, force_at_node);
-    return f * m_density;
+    return {f * m_density};
   };
 
   // Density
@@ -649,7 +739,8 @@ public:
   };
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
-        m_blocks->getDomainCellBB();
+//        m_blocks->getDomainCellBB();
+          m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(1.0 * n_ghost_layers()));
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
 
       Boundaries *boundary_handling =
