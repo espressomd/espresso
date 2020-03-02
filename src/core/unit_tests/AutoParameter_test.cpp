@@ -20,7 +20,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "auto_parameters/AutoParameter.hpp"
+#include "script_interface/auto_parameters/AutoParameter.hpp"
 
 BOOST_AUTO_TEST_CASE(direct_binding) {
   using namespace ScriptInterface;

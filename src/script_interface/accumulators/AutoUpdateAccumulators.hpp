@@ -21,9 +21,9 @@
 #define SCRIPT_INTERFACE_ACCUMULATOR_AUTOUPDATEACCUMULATORS_HPP
 
 #include "AccumulatorBase.hpp"
-#include "ScriptInterface.hpp"
-#include "ScriptObjectRegistry.hpp"
 #include "core/accumulators.hpp"
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/ScriptObjectRegistry.hpp"
 
 namespace ScriptInterface {
 namespace Accumulators {

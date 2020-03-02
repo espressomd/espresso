@@ -23,9 +23,9 @@
 #define SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
 
 #include "AccumulatorBase.hpp"
-#include "ScriptInterface.hpp"
 #include "core/accumulators/MeanVarianceCalculator.hpp"
 #include "observables/Observable.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "utils/as_const.hpp"
 

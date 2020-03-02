@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Sphere.hpp"
+#include <shapes/Sphere.hpp>
 
 #include <utils/math/sqr.hpp>
 

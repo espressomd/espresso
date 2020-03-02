@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Ellipsoid.hpp"
+#include <shapes/Ellipsoid.hpp>
 
 #include <utils/math/sqr.hpp>
 

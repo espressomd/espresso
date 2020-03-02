@@ -42,7 +42,6 @@ cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "statistics.hpp":
-    int n_part
     int n_part_conf
     int n_configs
 

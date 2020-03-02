@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "Torus.hpp"
 #include <cmath>
+#include <shapes/Torus.hpp>
 #include <utils/math/sqr.hpp>
 
 namespace Shapes {

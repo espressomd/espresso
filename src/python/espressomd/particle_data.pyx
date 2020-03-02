@@ -25,7 +25,7 @@ from .interactions import BondedInteraction
 from .interactions import BondedInteractions
 from .interactions cimport bonded_ia_params
 from copy import copy
-from .globals cimport max_seen_particle_type, n_part, n_rigidbonds
+from .globals cimport max_seen_particle_type, n_rigidbonds
 import collections
 import functools
 from .utils import nesting_level, array_locked, is_valid_type
@@ -1755,7 +1755,7 @@ cdef class ParticleList:
                 self[pid].exclusions = exclusions[pid]
 
     def __len__(self):
-        return n_part
+        return get_n_part()
 
     def add(self, *args, **kwargs):
         """

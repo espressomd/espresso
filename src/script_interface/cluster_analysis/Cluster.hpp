@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_HPP
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_HPP
 
-#include "ScriptInterface.hpp"
 #include "core/cluster_analysis/Cluster.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include <utils/Factory.hpp>
 
