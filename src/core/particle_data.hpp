@@ -71,13 +71,6 @@ enum {
 #define COORD_FIXED(coord) (0)
 #endif
 
-/************************************************
- * exported variables
- ************************************************/
-
-/** total number of particles on all nodes. */
-extern int n_part;
-
 /**
  * @brief Find local particles by id.
  *
@@ -474,12 +467,6 @@ void remove_all_bonds_to(int part);
  */
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 
-/** Used by \ref mpi_place_particle, should not be used elsewhere.
- *  Called if on a different node a new particle was added.
- *  @param part the identity of the particle added
- */
-void added_particle(int part);
-
 /** Used for example by \ref mpi_send_exclusion.
  *  Locally add an exclusion to a particle.
  *  @param part1 the identity of the first exclusion partner
@@ -631,5 +618,10 @@ std::vector<int> get_particle_ids();
  * @brief Get maximal particle id.
  */
 int get_maximal_particle_id();
+
+/**
+ * @brief Get number of particles.
+ */
+int get_n_part();
 
 #endif

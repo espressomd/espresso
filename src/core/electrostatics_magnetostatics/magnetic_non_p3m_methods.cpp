@@ -165,6 +165,8 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
     return 0;
   }
 
+  auto const n_part = particles.size();
+
   x.resize(n_part);
   y.resize(n_part);
   z.resize(n_part);

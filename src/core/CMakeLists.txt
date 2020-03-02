@@ -53,6 +53,7 @@ if(CUDA)
       cuda_init.cpp
       cuda_init_cuda.cu
       cuda_interface.cpp
+      CudaHostAllocator.cu
       electrostatics_magnetostatics/p3m_gpu_cuda.cu
       electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
       EspressoSystemInterface_cuda.cu

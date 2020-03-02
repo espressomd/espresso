@@ -55,7 +55,8 @@ void mpi_bcast_lb_particle_coupling() {
 void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
-  if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
+  if (lattice_switch != ActiveLB::NONE && this_node == 0 &&
+      lb_particle_coupling.gamma > 0.) {
     runtimeWarningMsg()
         << "Recalculating forces, so the LB coupling forces are not "
            "included in the particle force the first time step. This "

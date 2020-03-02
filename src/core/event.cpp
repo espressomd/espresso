@@ -70,10 +70,6 @@ static bool reinit_thermo = true;
 static int reinit_electrostatics = false;
 static int reinit_magnetostatics = false;
 
-#ifdef CUDA
-static int reinit_particle_comm_gpu = true;
-#endif
-
 #if defined(OPEN_MPI) &&                                                       \
     (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION <= 1 ||                     \
      OMPI_MAJOR_VERSION == 3 &&                                                \
@@ -88,7 +84,6 @@ static int reinit_particle_comm_gpu = true;
 #endif
 
 void on_program_start() {
-
 #ifdef CUDA
   cuda_init();
 #endif
@@ -122,11 +117,8 @@ void on_integration_start() {
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
+
 #ifdef CUDA
-  if (reinit_particle_comm_gpu) {
-    gpu_change_number_of_part_to_comm();
-    reinit_particle_comm_gpu = false;
-  }
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
 #endif
@@ -222,12 +214,6 @@ void on_particle_change() {
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
 
-#ifdef CUDA
-  lb_lbfluid_invalidate_particle_allocation();
-#endif
-#ifdef CUDA
-  reinit_particle_comm_gpu = true;
-#endif
   invalidate_obs();
 
   /* the particle information is no longer valid */
@@ -253,9 +239,6 @@ void on_coulomb_change() {
      since the required cutoff might have reduced. */
   on_short_range_ia_change();
 
-#ifdef CUDA
-  reinit_particle_comm_gpu = true;
-#endif
   recalc_forces = true;
 }
 
