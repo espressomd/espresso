@@ -87,7 +87,7 @@ target_compile_options(
 target_link_libraries(
   EspressoCore
   PRIVATE EspressoConfig shapes Profiler
-          "$<$<BOOL:FFTW3_FOUND>:${FFTW3_LIBRARIES}>"
+          "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           "$<$<BOOL:${SCAFACOS}>:Scafacos>"
   PUBLIC
     utils
@@ -95,19 +95,19 @@ target_link_libraries(
     Random123
     Boost::serialization
     Boost::mpi
-    "$<$<BOOL:H5MD>:${HDF5_LIBRARIES}>"
-    "$<$<BOOL:H5MD>:Boost::filesystem>"
-    "$<$<BOOL:H5MD>:h5xx>"
+    "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
+    "$<$<BOOL:${H5MD}>:Boost::filesystem>"
+    "$<$<BOOL:${H5MD}>:h5xx>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
 
 target_include_directories(
   EspressoCore
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
-         "$<$<BOOL:H5MD>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>" SYSTEM
-  PUBLIC "$<$<BOOL:H5MD>:${HDF5_INCLUDE_DIRS}>" SYSTEM
+         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>" SYSTEM
+  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
 
-target_compile_definitions(EspressoCore PUBLIC "$<$<BOOL:H5MD>:H5XX_USE_MPI>")
+target_compile_definitions(EspressoCore PUBLIC "$<$<BOOL:${H5MD}>:H5XX_USE_MPI>")
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)
