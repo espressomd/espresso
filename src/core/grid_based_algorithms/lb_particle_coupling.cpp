@@ -281,6 +281,8 @@ void lb_lbcoupling_calc_particle_lattice_ia(
           return {};
         };
 
+        std::vector<int> applied_particle_identities;
+
         auto couple_particle = [&](Particle &p) -> void {
           // We only couple ghosts, if the physical particle is not on the node
           if (p.l.ghost and not local_particles[p.p.identity]->l.ghost)
@@ -297,11 +299,13 @@ void lb_lbcoupling_calc_particle_lattice_ia(
                 p, noise_amplitude * f_random(p.identity()));
             /* add force to the particle */
             p.f.f += force;
+            applied_particle_identities.push_back(p.p.identity);
             /* Particle is not in our domain, but adds to the force
              * density in our domain, only calculate contribution to
              * the LB force density. */
           } else if (in_local_halo(pos)) {
             lb_viscous_coupling(p, noise_amplitude * f_random(p.identity()));
+            applied_particle_identities.push_back(p.p.identity);
           }
 
 #ifdef ENGINE
@@ -315,7 +319,9 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         }
 
         for (auto &p : more_particles) {
-          couple_particle(p);
+          if(std::count(applied_particle_identities.begin(), applied_particle_identities.end(), p.p.identity)==0) {
+            couple_particle(p);
+          }
         }
 
         break;
