@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
 #define SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
 
-#include "auto_parameters/AutoParameters.hpp"
-#include "core/shapes/Shape.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include <shapes/Shape.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

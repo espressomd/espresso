@@ -20,7 +20,7 @@
 #ifndef ESPRESSO_HOLLOW_CONICAL_FRUSTUM_HPP
 #define ESPRESSO_HOLLOW_CONICAL_FRUSTUM_HPP
 #include "Shape.hpp"
-#include "core/shapes/HollowConicalFrustum.hpp"
+#include <shapes/HollowConicalFrustum.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

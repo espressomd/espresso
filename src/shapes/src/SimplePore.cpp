@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "SimplePore.hpp"
+#include <shapes/SimplePore.hpp>
 
 #include <cassert>
 

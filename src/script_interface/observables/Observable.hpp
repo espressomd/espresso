@@ -22,7 +22,7 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include <memory>
 #include <stdexcept>

@@ -27,7 +27,7 @@
 
 #include "MpiCallbacks.hpp"
 
-#include "ParallelScriptInterface.hpp"
+#include "script_interface/ParallelScriptInterface.hpp"
 
 namespace mpi = boost::mpi;
 std::unique_ptr<Communication::MpiCallbacks> callbacks;

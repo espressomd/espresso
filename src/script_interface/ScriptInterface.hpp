@@ -27,9 +27,9 @@
 #include "Variant.hpp"
 
 #include "ScriptInterfaceBase.hpp"
-#include "auto_parameters/AutoParameters.hpp"
 #include "get_value.hpp"
 #include "initialize.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "utils/Factory.hpp"
 
 /** @namespace ScriptInterface

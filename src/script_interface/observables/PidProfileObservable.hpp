@@ -22,7 +22,7 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
-#include "auto_parameters/AutoParameters.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 #include <memory>
 
 #include "core/observables/DensityProfile.hpp"

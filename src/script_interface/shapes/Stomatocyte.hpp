@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_SHAPES_STOMATOCYTE_HPP
 
 #include "Shape.hpp"
-#include "core/shapes/Stomatocyte.hpp"
+#include <shapes/Stomatocyte.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {
