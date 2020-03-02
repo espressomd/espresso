@@ -153,13 +153,13 @@ BOOST_AUTO_TEST_CASE(velocity) {
       const Vector3d v{{double(node[0]) + 1, -1, 2.5 - double(node[2])}};
       BOOST_CHECK(!lb.set_node_velocity(node, v));
       BOOST_CHECK(!lb.get_node_velocity(node));
-      BOOST_CHECK(!lb.get_velocity_at_pos(pos));
       BOOST_CHECK(!lb.set_node_velocity(node, Vector3d{{0, 0, 0}}));
     }
   }
   box_geo.set_length(box_dimensions);
 
-  std::vector<Vector3d> corners;
+  std::vector<Vector3d> local_corners;
+  std::vector<Vector3d> global_corners;
   std::vector<Vector3i> corners_ext;
   auto const local_domain = lb.get_local_domain();
   auto const my_left = local_domain.first;
@@ -168,8 +168,10 @@ BOOST_AUTO_TEST_CASE(velocity) {
   for (double x : {0, 1})
     for (double y : {0, 1})
       for (double z : {0, 1}) {
-        corners.push_back(
+        local_corners.push_back(
             my_left + hadamard_product(local_domain_size, Vector3d{x, y, z}));
+        global_corners.push_back(
+            hadamard_product(grid_dimensions, Vector3d{x, y, z}));
         for (int dx : {0, 1})
           for (int dy : {0, 1})
             for (int dz : {0, 1}) {
@@ -198,7 +200,7 @@ BOOST_AUTO_TEST_CASE(velocity) {
   }
 
   // check corners
-  for (Vector3d pos : corners) {
+  for (Vector3d pos : local_corners) {
     // Left corners should be in local domain
     if (pos == my_left) {
       BOOST_CHECK(lb.pos_in_local_domain(pos));
@@ -218,13 +220,14 @@ BOOST_AUTO_TEST_CASE(velocity) {
       for (double z : {-1, 1}) {
         offsets.push_back(0.99 * Vector3d{x, y, z});
       }
-  for (auto corner : corners)
+  for (auto corner : local_corners)
     for (auto offset : offsets) {
       auto const pos = corner + offset;
       // Should be in local halo
       BOOST_CHECK(lb.pos_in_local_halo(pos));
       // Velocity should equal the value set before
       auto res = lb.get_velocity_at_pos(pos);
+      BOOST_CHECK(res);
       BOOST_CHECK_SMALL((*res - vel).norm(), 1E-10);
       // Positions >= my_left and < my_right
       bool in_local_domain = true;
@@ -239,6 +242,40 @@ BOOST_AUTO_TEST_CASE(velocity) {
         BOOST_CHECK(lb.pos_in_local_halo(pos));
       }
     }
+
+  for (auto corner : global_corners) {
+    // only check on processes which have the corners
+    if (my_left == Vector3d{0,0,0} or
+        my_right == Vector3d{(double) grid_dimensions[0],
+                             (double) grid_dimensions[1],
+                             (double) grid_dimensions[2]}) {
+      auto pos = corner;
+      for (auto &p : pos){
+        if (p == 0.0)
+          p += 0.01;
+        else
+          p -= 0.01;
+      }
+      // Should be in local halo
+      BOOST_CHECK(lb.pos_in_local_halo(pos));
+      // Velocity should equal the value set before
+      auto res = lb.get_velocity_at_pos(pos);
+      BOOST_CHECK(res);
+      BOOST_CHECK_SMALL((*res - vel).norm(), 1E-10);
+      // Positions >= my_left and < my_right
+      bool in_local_domain = true;
+      for (int i = 0; i < 3; i++)
+        if (pos[i] < my_left[i] or pos[i] >= my_right[i])
+          in_local_domain = false;
+
+      if (in_local_domain)
+        BOOST_CHECK(lb.pos_in_local_domain(pos));
+      else {
+        BOOST_CHECK(!lb.pos_in_local_domain(pos));
+        BOOST_CHECK(lb.pos_in_local_halo(pos));
+      }
+    }
+  }
 }
 
 BOOST_AUTO_TEST_CASE(total_momentum) {
