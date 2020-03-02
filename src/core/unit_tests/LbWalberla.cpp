@@ -245,10 +245,9 @@ BOOST_AUTO_TEST_CASE(velocity) {
 
   for (auto corner : global_corners) {
     // All node do have the global corners on 1,2,4 or 8 processes.
-    if (n_nodes == 1 or n_nodes == 2 or 
-        n_nodes == 4 or n_nodes == 8) {
+    if (n_nodes == 1 or n_nodes == 2 or n_nodes == 4 or n_nodes == 8) {
       auto pos = corner;
-      for (auto &p : pos){
+      for (auto &p : pos) {
         if (p == 0.0)
           p += 0.01;
         else

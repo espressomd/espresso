@@ -215,8 +215,7 @@ protected:
     Cell cell;
   };
   template <typename PosVector>
-  IBlock *
-  get_block_extended(const PosVector &pos) const {
+  IBlock *get_block_extended(const PosVector &pos) const {
     for (auto b = m_blocks->begin(); b != m_blocks->end(); ++b) {
       if (b->getAABB()
               .getExtended(m_n_ghost_layers)
@@ -228,13 +227,14 @@ protected:
     return {};
   }
   template <typename PosVector>
-  std::vector<PosVector> get_folded_positions_vector(const PosVector &pos) const {
+  std::vector<PosVector>
+  get_folded_positions_vector(const PosVector &pos) const {
     std::vector<PosVector> re_folded_positions;
-    Utils::Vector3i folded_axis = Utils::Vector3i{0,0,0};
+    Utils::Vector3i folded_axis = Utils::Vector3i{0, 0, 0};
     re_folded_positions.push_back(pos);
     // Determine which axis needs folding
     for (int i = 0; i < 3; i++) {
-      if (pos[i] < m_n_ghost_layers - 1.0){
+      if (pos[i] < m_n_ghost_layers - 1.0) {
         folded_axis[i] = 1;
       } else if (pos[i] > m_grid_dimensions[i] - m_n_ghost_layers + 0.5) {
         folded_axis[i] = -1;
@@ -242,17 +242,18 @@ protected:
     }
 
     // Fill folded position vector
-    if( folded_axis != Utils::Vector3i{0,0,0}) {
-      for (auto x : {0,1})
-      for (auto y : {0,1})
-      for (auto z : {0,1}){
-        auto added_pos = PosVector{
-                             pos[0] + x * folded_axis[0] * m_grid_dimensions[0],
-                             pos[1] + y * folded_axis[1] * m_grid_dimensions[1],
-                             pos[2] + z * folded_axis[2] * m_grid_dimensions[2]};
-        if(std::count(re_folded_positions.begin(), re_folded_positions.end(),added_pos) == 0)
-          re_folded_positions.push_back(added_pos);
-      }
+    if (folded_axis != Utils::Vector3i{0, 0, 0}) {
+      for (auto x : {0, 1})
+        for (auto y : {0, 1})
+          for (auto z : {0, 1}) {
+            auto added_pos =
+                PosVector{pos[0] + x * folded_axis[0] * m_grid_dimensions[0],
+                          pos[1] + y * folded_axis[1] * m_grid_dimensions[1],
+                          pos[2] + z * folded_axis[2] * m_grid_dimensions[2]};
+            if (std::count(re_folded_positions.begin(),
+                           re_folded_positions.end(), added_pos) == 0)
+              re_folded_positions.push_back(added_pos);
+          }
     }
     return re_folded_positions;
   }
@@ -275,12 +276,12 @@ protected:
       if (!block) {
         auto re_folded_nodes = get_folded_positions_vector(f_node);
 
-        for (auto re_folded_node : re_folded_nodes){
+        for (auto re_folded_node : re_folded_nodes) {
           block = get_block_extended(re_folded_node);
           if (block) {
-            global_cell = Cell({uint_c(re_folded_node[0]),
-                                uint_c(re_folded_node[1]),
-                                uint_c(re_folded_node[2])});
+            global_cell =
+                Cell({uint_c(re_folded_node[0]), uint_c(re_folded_node[1]),
+                      uint_c(re_folded_node[2])});
             break;
           }
         }
@@ -305,12 +306,14 @@ protected:
       if (!block) {
         Utils::Vector3d f_pos = pos;
         for (int i = 0; i < 3; i++) {
-          if (f_pos[i] < 0) f_pos[i] += m_grid_dimensions[i];
-          else if (f_pos[i] > m_grid_dimensions[i]) f_pos[i] -= m_grid_dimensions[i];
+          if (f_pos[i] < 0)
+            f_pos[i] += m_grid_dimensions[i];
+          else if (f_pos[i] > m_grid_dimensions[i])
+            f_pos[i] -= m_grid_dimensions[i];
         }
 
         auto re_folded_positions = get_folded_positions_vector(f_pos);
-        for (auto re_folded_pos : re_folded_positions){
+        for (auto re_folded_pos : re_folded_positions) {
           block = get_block_extended(re_folded_pos);
           if (block) {
             break;
@@ -706,8 +709,8 @@ public:
   };
   void clear_boundaries() override {
     const CellInterval &domain_bb_in_global_cell_coordinates =
-//        m_blocks->getDomainCellBB();
-          m_blocks->getCellBBFromAABB(m_blocks->begin()->getAABB().getExtended(1.0 * n_ghost_layers()));
+        m_blocks->getCellBBFromAABB(
+            m_blocks->begin()->getAABB().getExtended(1.0 * n_ghost_layers()));
     for (auto block = m_blocks->begin(); block != m_blocks->end(); ++block) {
 
       Boundaries *boundary_handling =
