@@ -244,11 +244,9 @@ BOOST_AUTO_TEST_CASE(velocity) {
     }
 
   for (auto corner : global_corners) {
-    // only check on processes which have the corners
-    if (my_left == Vector3d{0,0,0} or
-        my_right == Vector3d{(double) grid_dimensions[0],
-                             (double) grid_dimensions[1],
-                             (double) grid_dimensions[2]}) {
+    // All node do have the global corners on 1,2,4 or 8 processes.
+    if (n_nodes == 1 or n_nodes == 2 or 
+        n_nodes == 4 or n_nodes == 8) {
       auto pos = corner;
       for (auto &p : pos){
         if (p == 0.0)
