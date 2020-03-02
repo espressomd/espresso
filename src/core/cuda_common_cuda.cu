@@ -83,6 +83,21 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
   }
 }
 
+/**
+ * @brief Resize a @ref device_vector.
+ *
+ * Due to a bug in thrust (https://github.com/thrust/thrust/issues/939),
+ * resizing or appending to default constructed containers causes undefined
+ * behavior by dereferencing a null-pointer for certain types. This
+ * function is used instead of the resize member function to side-step
+ * the problem. This is done by replacing the existing vector by a new
+ * one constructed with the desired size if resizing from capacity zero.
+ * Behaves as-if vec.resize(n) was called.
+ *
+ * @tparam T Type contained in the vector.
+ * @param vec Vector To resize.
+ * @param n Desired new size of the element.
+ */
 template <class T> void resize_or_replace(device_vector<T> &vec, size_t n) {
   if (vec.capacity() == 0) {
     vec = device_vector<T>(n);
