@@ -65,7 +65,6 @@
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/int_pow.hpp>
 using Utils::int_pow;
@@ -474,10 +473,10 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
     parts_per_block++;
   }
 
-  if ((n_part % parts_per_block) == 0)
-    n_blocks = std::max<int>(1, n_part / parts_per_block);
+  if ((p3m_gpu_data.n_part % parts_per_block) == 0)
+    n_blocks = std::max<int>(1, p3m_gpu_data.n_part / parts_per_block);
   else
-    n_blocks = n_part / parts_per_block + 1;
+    n_blocks = p3m_gpu_data.n_part / parts_per_block + 1;
 
   grid.x = n_blocks;
   grid.y = 1;

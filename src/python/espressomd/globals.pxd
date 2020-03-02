@@ -55,9 +55,6 @@ cdef extern from "integrate.hpp":
     extern double verlet_reuse
     extern double skin
 
-cdef extern from "particle_data.hpp":
-    extern int n_part
-
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern double max_cut
     extern int max_seen_particle_type

@@ -377,8 +377,6 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   // Determine nlocalpart (prefix of rank+1 - own prefix) on every node.
   read_prefs(fnam + ".pref", rank, size, nglobalpart, &pref, &nlocalpart);
 
-  n_part = nglobalpart;
-
   // 1.id on all nodes:
   // Read nlocalpart ints at defined prefix.
   std::vector<int> id(nlocalpart);
