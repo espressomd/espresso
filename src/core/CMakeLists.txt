@@ -131,6 +131,7 @@ if(CUDA)
       cuda_init.cpp
       cuda_init_cuda.cu
       cuda_interface.cpp
+      CudaHostAllocator.cu
       EspressoSystemInterface_cuda.cu
       actor/DipolarBarnesHut_cuda.cu
       actor/DipolarDirectSum_cuda.cu

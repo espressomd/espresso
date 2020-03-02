@@ -19,7 +19,9 @@ import unittest as ut
 import importlib_wrapper
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/gibbs_ensemble_socket.py", cmd_arguments=["-S", "1000", "-C", "@SAMPLES_DIR@/gibbs_ensemble_client.py", "-E", "@CMAKE_BINARY_DIR@/pypresso"])
+    "@SAMPLES_DIR@/gibbs_ensemble_socket.py",
+    cmd_arguments=["-S", "1000", "-C", "@SAMPLES_DIR@/gibbs_ensemble_client.py",
+                   "-E", "@CMAKE_BINARY_DIR@/pypresso"])
 
 
 @skipIfMissingFeatures
