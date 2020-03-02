@@ -131,9 +131,6 @@ using UpdatePropertyMessage = boost::variant
 #ifdef MASS
         , UpdateProperty<double, &Prop::mass>
 #endif
-#ifdef SHANCHEN
-        , UpdateProperty<std::array<double, 2 * LB_COMPONENTS>, &Prop::solvation>
-#endif
 #ifdef ROTATIONAL_INERTIA
         , UpdateProperty<Utils::Vector3d, &Prop::rinertia>
 #endif
