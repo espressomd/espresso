@@ -42,7 +42,6 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
-#include "metadynamics.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "partCfg_global.hpp"
@@ -121,10 +120,6 @@ void on_integration_start() {
 #ifdef CUDA
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-#endif
-
-#ifdef METADYNAMICS
-  meta_init();
 #endif
 
   // Here we initialize volume conservation
