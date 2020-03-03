@@ -70,29 +70,17 @@ void IBM_ForcesIntoFluid_CPU() {
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
 
   // Loop over local cells
-  for (int c = 0; c < cell_structure.local_cells().n; c++) {
-    Cell *cell = cell_structure.local_cells().cell[c];
-    Particle *p = cell->part;
-    const int np = cell->n;
-
-    for (int i = 0; i < np; i++)
-      if (p[i].p.is_virtual)
-        CoupleIBMParticleToFluid(&p[i]);
+  for (auto &p : cell_structure.local_cells().particles()) {
+    if (p.p.is_virtual)
+      CoupleIBMParticleToFluid(&p);
   }
 
-  // Loop over ghost cells
-  for (int c = 0; c < cell_structure.ghost_cells().n; c++) {
-    Cell *cell = cell_structure.ghost_cells().cell[c];
-    Particle *p = cell->part;
-    const int np = cell->n;
-
-    for (int i = 0; i < np; i++) {
-      // for ghost particles we have to check if they lie
-      // in the range of the local lattice nodes
-      if (in_local_domain(p[i].r.p)) {
-        if (p[i].p.is_virtual)
-          CoupleIBMParticleToFluid(&p[i]);
-      }
+  for (auto &p : cell_structure.ghost_cells().particles()) {
+    // for ghost particles we have to check if they lie
+    // in the range of the local lattice nodes
+    if (in_local_domain(p.r.p)) {
+      if (p.p.is_virtual)
+        CoupleIBMParticleToFluid(&p);
     }
   }
 }
@@ -113,32 +101,29 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
   // Do update: Euler
   const double skin2 = Utils::sqr(0.5 * skin);
   // Loop over particles in local cells
-  for (int c = 0; c < cell_structure.local_cells().n; c++) {
-    const Cell *const cell = cell_structure.local_cells().cell[c];
-    Particle *const p = cell->part;
-    for (int j = 0; j < cell->n; j++)
-      if (p[j].p.is_virtual) {
+  for (auto &p : particles) {
+    if (p.p.is_virtual) {
 #ifdef EXTERNAL_FORCES
-        if (!(p[j].p.ext_flag & 2))
+      if (!(p.p.ext_flag & 2))
 #endif
-          p[j].r.p[0] = p[j].r.p[0] + p[j].m.v[0] * time_step;
+        p.r.p[0] = p.r.p[0] + p.m.v[0] * time_step;
 #ifdef EXTERNAL_FORCES
-        if (!(p[j].p.ext_flag & 4))
+      if (!(p.p.ext_flag & 4))
 #endif
-          p[j].r.p[1] = p[j].r.p[1] + p[j].m.v[1] * time_step;
+        p.r.p[1] = p.r.p[1] + p.m.v[1] * time_step;
 #ifdef EXTERNAL_FORCES
-        if (!(p[j].p.ext_flag & 8))
+      if (!(p.p.ext_flag & 8))
 #endif
-          p[j].r.p[2] = p[j].r.p[2] + p[j].m.v[2] * time_step;
+        p.r.p[2] = p.r.p[2] + p.m.v[2] * time_step;
 
-        // Check if the particle might have crossed a box border (criterion see
-        // e-mail Axel 28.8.2014)
-        // if possible, use resort_particles = Cells::RESORT_LOCAL)
-        const double dist2 = (p[j].r.p - p[j].l.p_old).norm2();
-        if (dist2 > skin2) {
-          set_resort_particles(Cells::RESORT_LOCAL);
-        }
+      // Check if the particle might have crossed a box border (criterion see
+      // e-mail Axel 28.8.2014)
+      // if possible, use resort_particles = Cells::RESORT_LOCAL)
+      const double dist2 = (p.r.p - p.l.p_old).norm2();
+      if (dist2 > skin2) {
+        set_resort_particles(Cells::RESORT_LOCAL);
       }
+    }
   }
 }
 
@@ -266,8 +251,8 @@ void GetIBMInterpolatedVelocity(const Utils::Vector3d &pos, double *v,
   v[2] *= lbpar.agrid / lbpar.tau;
 }
 
-/** Build a cache structure which contains a flag for each LB node whether that
- *  node is a halo node or not.
+/** Build a cache structure which contains a flag for each LB node whether
+ * that node is a halo node or not.
  */
 bool IsHalo(const int indexCheck) {
   // First call --> build cache
@@ -294,58 +279,52 @@ bool IsHalo(const int indexCheck) {
   return isHaloCache[indexCheck];
 }
 
-/** Get particle velocities from LB and set the velocity field in the particles
- *  data structure.
+/** Get particle velocities from LB and set the velocity field in the
+ * particles data structure.
  */
 void ParticleVelocitiesFromLB_CPU() {
   // Loop over particles in local cells.
-  // Here all contributions are included: velocity, external force and particle
-  // force.
-  for (int c = 0; c < cell_structure.local_cells().n; c++) {
-    const Cell *const cell = cell_structure.local_cells().cell[c];
-    Particle *const p = cell->part;
-    for (int j = 0; j < cell->n; j++)
-      if (p[j].p.is_virtual) {
-        double dummy[3];
-        // Get interpolated velocity and store in the force (!) field
-        // for later communication (see below)
-        GetIBMInterpolatedVelocity(p[j].r.p, p[j].f.f.data(), dummy);
-      }
+  // Here all contributions are included: velocity, external force and
+  // particle force.
+  for (auto &p : cell_structure.local_cells().particles()) {
+    if (p.p.is_virtual) {
+      double dummy[3];
+      // Get interpolated velocity and store in the force (!) field
+      // for later communication (see below)
+      GetIBMInterpolatedVelocity(p.r.p, p.f.f.data(), dummy);
+    }
   }
 
   // Loop over particles in ghost cells
   // Here we only add the particle forces stemming from the ghosts
-  for (int c = 0; c < cell_structure.ghost_cells().n; c++) {
-    const Cell *const cell = cell_structure.ghost_cells().cell[c];
-    Particle *const p = cell->part;
-    for (int j = 0; j < cell->n; j++)
-      // This criterion include the halo on the left, but excludes the halo on
-      // the right
-      // Try if we have to use *1.5 on the right
-      if (in_local_domain(p[j].r.p)) {
-        if (p[j].p.is_virtual) {
-          double dummy[3];
-          double force[3] = {0, 0,
-                             0}; // The force stemming from the ghost particle
-          GetIBMInterpolatedVelocity(p[j].r.p, dummy, force);
+  for (auto &p : cell_structure.ghost_cells().particles()) {
+    // This criterion include the halo on the left, but excludes the halo on
+    // the right
+    // Try if we have to use *1.5 on the right
+    if (in_local_domain(p.r.p)) {
+      if (p.p.is_virtual) {
+        double dummy[3];
+        double force[3] = {0, 0,
+                           0}; // The force stemming from the ghost particle
+        GetIBMInterpolatedVelocity(p.r.p, dummy, force);
 
-          // Rescale and store in the force field of the particle (for
-          // communication, see below)
-          p[j].f.f[0] = force[0] * lbpar.agrid / lbpar.tau;
-          p[j].f.f[1] = force[1] * lbpar.agrid / lbpar.tau;
-          p[j].f.f[2] = force[2] * lbpar.agrid / lbpar.tau;
-        } else {
-          p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0;
-        } // Reset, necessary because we add all forces below. Also needs to be
-          // done for the real particles!
-
+        // Rescale and store in the force field of the particle (for
+        // communication, see below)
+        p.f.f[0] = force[0] * lbpar.agrid / lbpar.tau;
+        p.f.f[1] = force[1] * lbpar.agrid / lbpar.tau;
+        p.f.f[2] = force[2] * lbpar.agrid / lbpar.tau;
       } else {
-        p[j].f.f[0] = p[j].f.f[1] = p[j].f.f[2] = 0;
-      } // Reset, necessary because we add all forces below
+        p.f.f[0] = p.f.f[1] = p.f.f[2] = 0;
+      } // Reset, necessary because we add all forces below. Also needs to
+        // be done for the real particles!
+
+    } else {
+      p.f.f[0] = p.f.f[1] = p.f.f[2] = 0;
+    } // Reset, necessary because we add all forces below
   }
 
-  // Now the local particles contain a velocity (stored in the force field) and
-  // the ghosts contain the rest of the velocity in their respective force
+  // Now the local particles contain a velocity (stored in the force field)
+  // and the ghosts contain the rest of the velocity in their respective force
   // fields.
   // We need to add these. Since we have stored them in the force, not the
   // velocity fields, we can use the standard force communicator and then
@@ -358,16 +337,12 @@ void ParticleVelocitiesFromLB_CPU() {
                      GHOSTTRANS_FORCE);
 
   // Transfer to velocity field
-  for (int c = 0; c < cell_structure.local_cells().n; c++) {
-    const Cell *const cell = cell_structure.local_cells().cell[c];
-    Particle *const p = cell->part;
-    for (int j = 0; j < cell->n; j++)
-      if (p[j].p.is_virtual) {
-        p[j].m.v[0] = p[j].f.f[0];
-        p[j].m.v[1] = p[j].f.f[1];
-        p[j].m.v[2] = p[j].f.f[2];
-      }
+  for (auto &p : cell_structure.local_cells().particles()) {
+    if (p.p.is_virtual) {
+      p.m.v[0] = p.f.f[0];
+      p.m.v[1] = p.f.f[1];
+      p.m.v[2] = p.f.f[2];
+    }
   }
 }
-
 #endif
