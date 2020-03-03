@@ -24,7 +24,8 @@
 
 #define BOOST_TEST_MODULE Cone test
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/included/unit_test.hpp>
+
+#include <boost/test/unit_test.hpp>
 #include <shapes/HollowConicalFrustum.hpp>
 #include <utils/Vector.hpp>
 
@@ -32,6 +33,8 @@ BOOST_AUTO_TEST_CASE(dist_function) {
   constexpr double L = 8.0;
   constexpr double R1 = 2.0;
   constexpr double R2 = 3.0;
+
+  constexpr double eps = 100 * std::numeric_limits<double>::epsilon();
 
   {
     Shapes::HollowConicalFrustum c;
@@ -45,24 +48,24 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     double dist;
 
     c.calculate_dist(pos, dist, vec);
-    BOOST_TEST(dist == 2.0, boost::test_tools::tolerance(1e-7));
-    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+    BOOST_CHECK_CLOSE(dist, 2.0, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     pos = {{R1, 0.0, L / 2.0}};
     c.calculate_dist(pos, dist, vec);
-    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
-    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+    BOOST_CHECK_SMALL(dist, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     pos = {{3.0, 0.0, -L / 2.0}};
     c.calculate_dist(pos, dist, vec);
-    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
-    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+    BOOST_CHECK_SMALL(dist, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     c.set_thickness(1.0);
     c.set_r2(R1);
     pos = {{R1 + 1.0, 0.0, L / 2.0}};
     c.calculate_dist(pos, dist, vec);
-    BOOST_TEST(dist == .5, boost::test_tools::tolerance(1e-7));
+    BOOST_CHECK_CLOSE(dist, .5, eps);
   }
   {
     Shapes::HollowConicalFrustum c;
@@ -76,17 +79,17 @@ BOOST_AUTO_TEST_CASE(dist_function) {
     double dist;
 
     c.calculate_dist(pos, dist, vec);
-    BOOST_TEST(dist == 2.0, boost::test_tools::tolerance(1e-7));
-    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+    BOOST_CHECK_CLOSE(dist, 2.0, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     pos = {{L / 2.0, R1, 0.0}};
     c.calculate_dist(pos, dist, vec);
-    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
-    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+    BOOST_CHECK_SMALL(dist, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
 
     pos = {{-L / 2.0, R2, 0.0}};
     c.calculate_dist(pos, dist, vec);
-    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
-    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+    BOOST_CHECK_SMALL(dist, eps);
+    BOOST_CHECK_CLOSE(dist, vec.norm(), eps);
   }
 }
