@@ -24,41 +24,69 @@
 
 #define BOOST_TEST_MODULE Cone test
 #define BOOST_TEST_DYN_LINK
-#include <boost/test/unit_test.hpp>
+#include <boost/test/included/unit_test.hpp>
 #include <shapes/HollowConicalFrustum.hpp>
 #include <utils/Vector.hpp>
 
 BOOST_AUTO_TEST_CASE(dist_function) {
   constexpr double L = 8.0;
   constexpr double R1 = 2.0;
+  constexpr double R2 = 3.0;
 
-  Shapes::HollowConicalFrustum c;
-  c.set_r1(R1);
-  c.set_r2(3.0);
-  c.set_length(L);
-  c.set_axis(Utils::Vector3d{0, 0, 1});
+  {
+    Shapes::HollowConicalFrustum c;
+    c.set_r1(R1);
+    c.set_r2(R2);
+    c.set_length(L);
+    c.set_axis(Utils::Vector3d{0, 0, 1});
 
-  auto pos = Utils::Vector3d{0.0, 0.0, L / 2.0};
-  Utils::Vector3d vec;
-  double dist;
+    auto pos = Utils::Vector3d{0.0, 0.0, L / 2.0};
+    Utils::Vector3d vec;
+    double dist;
 
-  c.calculate_dist(pos, dist, vec);
-  BOOST_CHECK_CLOSE(dist, 2.0, 1e-7);
-  BOOST_CHECK_CLOSE(dist, vec.norm(), 1e-7);
+    c.calculate_dist(pos, dist, vec);
+    BOOST_TEST(dist == 2.0, boost::test_tools::tolerance(1e-7));
+    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
 
-  pos = {{R1, 0.0, L / 2.0}};
-  c.calculate_dist(pos, dist, vec);
-  BOOST_CHECK_CLOSE(dist, 0.0, 1e-7);
-  BOOST_CHECK_CLOSE(dist, vec.norm(), 1e-7);
+    pos = {{R1, 0.0, L / 2.0}};
+    c.calculate_dist(pos, dist, vec);
+    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
+    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
 
-  pos = {{3.0, 0.0, -L / 2.0}};
-  c.calculate_dist(pos, dist, vec);
-  BOOST_CHECK_CLOSE(dist, 0.0, 1e-7);
-  BOOST_CHECK_CLOSE(dist, vec.norm(), 1e-7);
+    pos = {{3.0, 0.0, -L / 2.0}};
+    c.calculate_dist(pos, dist, vec);
+    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
+    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
 
-  c.set_thickness(1.0);
-  c.set_r2(R1);
-  pos = {{R1 + 1.0, 0.0, L / 2.0}};
-  c.calculate_dist(pos, dist, vec);
-  BOOST_CHECK_CLOSE(dist, .5, 1e-7);
+    c.set_thickness(1.0);
+    c.set_r2(R1);
+    pos = {{R1 + 1.0, 0.0, L / 2.0}};
+    c.calculate_dist(pos, dist, vec);
+    BOOST_TEST(dist == .5, boost::test_tools::tolerance(1e-7));
+  }
+  {
+    Shapes::HollowConicalFrustum c;
+    c.set_r1(R1);
+    c.set_r2(R2);
+    c.set_length(L);
+    c.set_axis(Utils::Vector3d{1, 0, 0});
+
+    auto pos = Utils::Vector3d{L / 2.0, 0.0, 0.0};
+    Utils::Vector3d vec;
+    double dist;
+
+    c.calculate_dist(pos, dist, vec);
+    BOOST_TEST(dist == 2.0, boost::test_tools::tolerance(1e-7));
+    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+
+    pos = {{L / 2.0, R1, 0.0}};
+    c.calculate_dist(pos, dist, vec);
+    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
+    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+
+    pos = {{-L / 2.0, R2, 0.0}};
+    c.calculate_dist(pos, dist, vec);
+    BOOST_TEST(dist == 0.0, boost::test_tools::tolerance(1e-7));
+    BOOST_TEST(dist == vec.norm(), boost::test_tools::tolerance(1e-7));
+  }
 }
