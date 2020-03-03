@@ -65,6 +65,9 @@ public:
   auto capacity() const { return max; }
 
   Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
+  Utils::Span<const Particle> particles() const {
+    return {part, static_cast<size_t>(n)};
+  }
 
   /** granularity of the particle buffers in particles */
   static constexpr int INCREMENT = 8;

@@ -432,9 +432,7 @@ std::vector<collision_struct> gather_global_collision_queue() {
 static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
                                              Particle &p2) {
   auto handle_cell = [&p1, &p2](Cell *c) {
-    for (int p_id = 0; p_id < c->n; p_id++) {
-      auto &P = c->part[p_id];
-
+    for (auto &P : c->particles()) {
       // Skip collided particles themselves
       if ((P.p.identity == p1.p.identity) || (P.p.identity == p2.p.identity)) {
         continue;

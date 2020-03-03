@@ -1029,12 +1029,14 @@ void local_remove_particle(int part) {
   Cell *cell = nullptr;
   int position = -1;
   for (auto c : cell_structure.local_cells()) {
-    for (int i = 0; i < c->n; i++) {
-      auto &p = c->part[i];
+    auto parts = c->particles();
+
+    for (unsigned i = 0; i < parts.size(); i++) {
+      auto &p = parts[i];
 
       if (p.identity() == part) {
         cell = c;
-        position = i;
+        position = static_cast<int>(i);
       } else {
         remove_all_bonds_to(p, part);
       }
@@ -1042,7 +1044,6 @@ void local_remove_particle(int part) {
   }
 
   assert(cell && (position >= 0));
-
   extract_indexed_particle(cell, position);
 }
 

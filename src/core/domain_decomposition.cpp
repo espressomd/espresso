@@ -580,8 +580,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
 /************************************************************/
 void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
                       const double range) {
-  int c, p;
-
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
    * but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
@@ -609,19 +607,19 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   dd_init_cell_interactions(grid);
 
   /* copy particles */
-  for (c = 0; c < old->n; c++) {
-    Particle *part = old->cell[c]->part;
-    int np = old->cell[c]->n;
-    for (p = 0; p < np; p++) {
-      Cell *nc = dd_save_position_to_cell(part[p].r.p);
+  for (int c = 0; c < old->n; c++) {
+    for (auto &p : old->cell[c]->particles()) {
+      Cell *nc = dd_save_position_to_cell(p.r.p);
+
       /* particle does not belong to this node. Just stow away
          somewhere for the moment */
       if (nc == nullptr)
         nc = cell_structure.m_local_cells[0];
-      append_unindexed_particle(nc, std::move(part[p]));
+      append_unindexed_particle(nc, std::move(p));
     }
   }
-  for (c = 0; c < cell_structure.m_local_cells.size(); c++) {
+
+  for (int c = 0; c < cell_structure.m_local_cells.size(); c++) {
     update_local_particles(cell_structure.m_local_cells[c]);
   }
 }
