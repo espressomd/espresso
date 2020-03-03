@@ -27,6 +27,8 @@
 
 #include "config.hpp"
 
+extern int this_node;
+
 #ifdef CUDA
 #include <boost/optional.hpp>
 #include <cassert>

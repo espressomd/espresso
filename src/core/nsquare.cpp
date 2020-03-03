@@ -133,7 +133,7 @@ void nsq_topology_init(CellPList *old) {
   }
 
   /* copy particles */
-  for(auto &p: old->particles()) {
+  for (auto &p : old->particles()) {
     append_unindexed_particle(local, std::move(p));
   }
 
