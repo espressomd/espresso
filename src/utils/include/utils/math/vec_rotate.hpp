@@ -60,7 +60,7 @@ inline Vector3d vec_rotate(const Vector3d &axis, double alpha,
 inline std::tuple<double, Vector3d>
 rotation_params(Vector3d const &vec, Vector3d const &target_vec) {
   auto const theta =
-      std::acos(vec * target_vec) / (vec.norm() * target_vec.norm());
+      std::acos(vec * target_vec / (vec.norm() * target_vec.norm()));
   auto const rotation_axis = Utils::vector_product(vec, target_vec).normalize();
   return std::make_tuple(theta, rotation_axis);
 }
