@@ -619,8 +619,8 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
     }
   }
 
-  for (int c = 0; c < cell_structure.m_local_cells.size(); c++) {
-    update_local_particles(cell_structure.m_local_cells[c]);
+  for (auto &c : cell_structure.m_local_cells) {
+    update_local_particles(c);
   }
 }
 
