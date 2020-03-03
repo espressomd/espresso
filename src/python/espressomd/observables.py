@@ -41,6 +41,10 @@ class ComPosition(Observable):
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
 
+    Returns
+    -------
+    (3,) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::ComPosition"
 
@@ -59,6 +63,10 @@ class ComVelocity(Observable):
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
 
+    Returns
+    -------
+    (3,) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::ComVelocity"
 
@@ -74,6 +82,10 @@ class Current(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::Current"
@@ -107,6 +119,10 @@ class DensityProfile(Observable):
     max_z : :obj:`float`
             Maximum ``z`` to consider.
 
+    Returns
+    -------
+    (3,) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::DensityProfile"
 
@@ -122,6 +138,10 @@ class DipoleMoment(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (3,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::DipoleMoment"
@@ -155,6 +175,12 @@ class FluxDensityProfile(Observable):
     max_z : :obj:`float`
             Maximum ``z`` to consider.
 
+    Returns
+    -------
+    (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the x, y and z
+        components of the flux density.
+
     """
     _so_name = "Observables::FluxDensityProfile"
 
@@ -187,6 +213,12 @@ class ForceDensityProfile(Observable):
     max_z : :obj:`float`
             Maximum ``z`` to consider.
 
+    Returns
+    -------
+    (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the x, y and z
+        components of the force.
+
     """
     _so_name = "Observables::ForceDensityProfile"
 
@@ -197,7 +229,7 @@ class LBVelocityProfile(Observable):
     """Calculates the LB fluid velocity profile.
 
     This observable samples the fluid in on a regular grid defined by the variables
-    ``sampling*``. Note that a small delta leads to a large number of sample
+    ``sampling_*``. Note that a small delta leads to a large number of sample
     points and carries a performance cost.
 
     .. WARNING::
@@ -239,6 +271,12 @@ class LBVelocityProfile(Observable):
     allow_empty_bins : :obj:`bool`, default=False
         Whether or not to allow bins that will not be sampled at all.
 
+    Returns
+    -------
+    (``n_x_bins``, ``n_y_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the x, y and z
+        components of the LB velocity.
+
     """
     _so_name = "Observables::LBVelocityProfile"
 
@@ -251,6 +289,10 @@ class LBFluidStress(Observable):
     Parameters
     ----------
     None
+
+    Returns
+    -------
+    (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::LBFluidStress"
@@ -268,6 +310,10 @@ class MagneticDipoleMoment(Observable):
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
 
+    Returns
+    -------
+    (3,) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::MagneticDipoleMoment"
 
@@ -277,7 +323,7 @@ class ParticleAngularVelocities(Observable):
 
     """Calculates the angular velocity (omega) in the spaced-fixed frame of reference
 
-    Output format: :math:`\\omega^x_1,\\ \\omega^y_1,\\ \\omega^z_1,\\ \\omega^x_2,\\ \\omega^y_2,\\ \\omega^z_2, \\dots\\ \\omega^x_n,\\ \\omega^y_n,\\ \\omega^z_n`.
+    Output format: :math:`(\\omega^x_1,\\ \\omega^y_1,\\ \\omega^z_1),\\ (\\omega^x_2,\\ \\omega^y_2,\\ \\omega^z_2), \\dots,\\ (\\omega^x_n,\\ \\omega^y_n,\\ \\omega^z_n)`.
 
     The particles are ordered according to the list of ids passed to the observable.
 
@@ -285,6 +331,10 @@ class ParticleAngularVelocities(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleAngularVelocities"
@@ -298,10 +348,18 @@ class ParticleBodyAngularVelocities(Observable):
     For each particle, the body-fixed frame of reference is obtained from the particle's
     orientation stored in the quaternions.
 
+    Output format: :math:`(\\omega^x_1,\\ \\omega^y_1,\\ \\omega^z_1),\\ (\\omega^x_2,\\ \\omega^y_2,\\ \\omega^z_2), \\dots,\\ (\\omega^x_n,\\ \\omega^y_n,\\ \\omega^z_n)`.
+
+    The particles are ordered according to the list of ids passed to the observable.
+
     Parameters
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleBodyAngularVelocities"
@@ -315,7 +373,7 @@ class ParticleBodyVelocities(Observable):
     For each particle, the body-fixed frame of reference is obtained from the particle's
     orientation stored in the quaternions.
 
-    Output format: :math:`v_{x1},\\ v_{y1},\\ v_{z1},\\ v_{x2},\\ v_{y2},\\ v_{z2},\\ \\dots\\ v_{xn},\\ v_{yn},\\ v_{zn}`.
+    Output format: :math:`(v^x_1,\\ v^y_1,\\ v^z_1),\\ (v^x_2,\\ v^y_2,\\ v^z_2),\\ \\dots,\\ (v^x_n,\\ v^y_n,\\ v^z_n)`.
 
     The particles are ordered according to the list of ids passed to the observable.
 
@@ -323,6 +381,10 @@ class ParticleBodyVelocities(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleBodyVelocities"
@@ -333,7 +395,7 @@ class ParticleForces(Observable):
 
     """Calculates the particle forces for particles with given ids.
 
-    Output format: :math:`f_{x1},\\ f_{y1},\\ f_{z1},\\ f_{x2},\\ f_{y2},\ f_{z2},\\ \\dots\\ f_{xn},\\ f_{yn},\\ f_{zn}`.
+    Output format: :math:`(f^x_1,\\ f^y_1,\\ f^z_1),\\ (f^x_2,\\ f^y_2,\\ f^z_2),\\ \\dots,\\ (f^x_n,\\ f^y_n,\\ f^z_n)`.
 
     The particles are ordered according to the list of ids passed to the observable.
 
@@ -341,6 +403,10 @@ class ParticleForces(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleForces"
@@ -351,7 +417,7 @@ class ParticlePositions(Observable):
 
     """Calculates the particle positions for particles with given ids.
 
-    Output format: :math:`x_1,\\ y_1,\\ z_1,\\ x_2,\\ y_2,\\ z_2,\\ \\dots\\ x_n,\\ y_n,\\ z_n`.
+    Output format: :math:`(x_1,\\ y_1,\\ z_1),\\ (x_2,\\ y_2,\\ z_2),\\ \\dots,\\ (x_n,\\ y_n,\\ z_n)`.
 
     The particles are ordered according to the list of ids passed to the observable.
 
@@ -359,6 +425,10 @@ class ParticlePositions(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticlePositions"
@@ -369,7 +439,7 @@ class ParticleVelocities(Observable):
 
     """Calculates the particle velocities for particles with given ids.
 
-    Output format: :math:`v_{x1},\\ v_{y1},\\ v_{z1},\\ v_{x2},\\ v_{y2},\\ v_{z2},\\ \\dots\\ v_{xn},\\ v_{yn},\\ v_{zn}`.
+    Output format: :math:`(v^x_1,\\ v^y_1,\\ v^z_1),\\ (v^x_2,\\ v^y_2,\\ v^z_2),\\ \\dots,\\ (v^x_n,\\ v^y_n,\\ v^z_n)`.
 
     The particles are ordered according to the list of ids passed to the observable.
 
@@ -377,6 +447,10 @@ class ParticleVelocities(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleVelocities"
@@ -392,6 +466,10 @@ class ParticleDistances(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N - 1,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::ParticleDistances"
@@ -411,6 +489,10 @@ class TotalForce(Observable):
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
 
+    Returns
+    -------
+    (3,) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::TotalForce"
 
@@ -425,6 +507,10 @@ class BondAngles(Observable):
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
+
+    Returns
+    -------
+    (N - 2,) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::BondAngles"
@@ -443,6 +529,10 @@ class CosPersistenceAngles(Observable):
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
 
+    Returns
+    -------
+    (N - 2,) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::CosPersistenceAngles"
 
@@ -458,6 +548,10 @@ class BondDihedrals(Observable):
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
 
+    Returns
+    -------
+    (N - 3,) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::BondDihedrals"
 
@@ -465,7 +559,11 @@ class BondDihedrals(Observable):
 @script_interface_register
 class StressTensor(Observable):
 
-    """Calculates the total stress tensor. See :ref:`stress tensor`)
+    """Calculates the total stress tensor. See :ref:`stress tensor`.
+
+    Returns
+    -------
+    (3, 3) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::StressTensor"
@@ -481,6 +579,10 @@ class DPDStress(Observable):
     ----------
     None
 
+    Returns
+    -------
+    (3, 3) :obj:`ndarray` of :obj:`float`
+
     """
     _so_name = "Observables::DPDStress"
 
@@ -488,7 +590,7 @@ class DPDStress(Observable):
 @script_interface_register
 class CylindricalDensityProfile(Observable):
 
-    """Calculates the particle density in polar coordinates.
+    """Calculates the particle density in cylindrical coordinates.
 
     Parameters
     ----------
@@ -516,6 +618,10 @@ class CylindricalDensityProfile(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
+
+    Returns
+    -------
+    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``) :obj:`ndarray` of :obj:`float`
 
     """
     _so_name = "Observables::CylindricalDensityProfile"
@@ -524,7 +630,7 @@ class CylindricalDensityProfile(Observable):
 @script_interface_register
 class CylindricalFluxDensityProfile(Observable):
 
-    """Calculates the particle flux density in polar coordinates.
+    """Calculates the particle flux density in cylindrical coordinates.
 
     Parameters
     ----------
@@ -552,6 +658,12 @@ class CylindricalFluxDensityProfile(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
+
+    Returns
+    -------
+    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the radial distance,
+        azimuth and axial coordinate of the particle flux density field.
 
     """
     _so_name = "Observables::CylindricalFluxDensityProfile"
@@ -560,7 +672,8 @@ class CylindricalFluxDensityProfile(Observable):
 @script_interface_register
 class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
 
-    """Calculates the LB fluid flux density at the particle positions in polar coordinates.
+    """Calculates the LB fluid flux density at the particle positions in
+    cylindrical coordinates.
 
     Parameters
     ----------
@@ -588,6 +701,12 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
+
+    Returns
+    -------
+    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the radial distance,
+        azimuth and axial coordinate of the LB flux density field.
 
     """
     _so_name = "Observables::CylindricalLBFluxDensityProfileAtParticlePositions"
@@ -596,7 +715,8 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
 @script_interface_register
 class CylindricalLBVelocityProfileAtParticlePositions(Observable):
 
-    """Calculates the LB fluid velocity at the particle positions in polar coordinates.
+    """Calculates the LB fluid velocity at the particle positions in
+    cylindrical coordinates.
 
     Parameters
     ----------
@@ -624,6 +744,12 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
               Maximum ``phi`` to consider.
     max_z : :obj:`float`
             Maximum ``z`` to consider.
+
+    Returns
+    -------
+    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the radial distance,
+        azimuth and axial coordinate of the LB velocity field.
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfileAtParticlePositions"
@@ -632,7 +758,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
 @script_interface_register
 class CylindricalVelocityProfile(Observable):
 
-    """Calculates the particle velocity profile in polar coordinates.
+    """Calculates the particle velocity profile in cylindrical coordinates.
 
     Parameters
     ----------
@@ -661,6 +787,12 @@ class CylindricalVelocityProfile(Observable):
     max_z : :obj:`float`
             Maximum ``z`` to consider.
 
+    Returns
+    -------
+    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the radial distance,
+        azimuth and axial coordinate of the particle velocity field.
+
     """
     _so_name = "Observables::CylindricalVelocityProfile"
 
@@ -668,11 +800,11 @@ class CylindricalVelocityProfile(Observable):
 @script_interface_register
 class CylindricalLBVelocityProfile(Observable):
 
-    """Calculates the LB fluid velocity profile in polar coordinates.
+    """Calculates the LB fluid velocity profile in cylindrical coordinates.
 
-    This observable samples the fluid in on a regular grid defined by the variables
-    ``sampling*``. Note that a small delta leads to a large number of sample
-    points and carries a performance cost.
+    This observable samples the fluid in on a regular grid defined by variable
+    ``sampling_density``. Note that a small delta leads to a large number of
+    sample points and carries a performance cost.
 
     Parameters
     ----------
@@ -700,6 +832,12 @@ class CylindricalLBVelocityProfile(Observable):
             Maximum ``z`` to consider.
     sampling_density : :obj:`float`
         Samples per unit volume for the LB velocity interpolation.
+
+    Returns
+    -------
+    (``n_r_bins``, ``n_phi_bins``, ``n_z_bins``, 3) :obj:`ndarray` of :obj:`float`
+        The fourth component contains the histogram for the radial distance,
+        azimuth and axial coordinate of the LB velocity field.
 
     """
     _so_name = "Observables::CylindricalLBVelocityProfile"

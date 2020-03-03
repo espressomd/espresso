@@ -1063,9 +1063,6 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-/** calculates the average stress of all nodes by iterating
- * over all nodes and dividing by the number_of_nodes.
- */
 const Utils::Vector6d lb_lbfluid_get_stress() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
