@@ -145,7 +145,7 @@ public:
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
-    if (method == "calculate_flat_array") {
+    if (method == "_calculate") {
       return profile_observable()->operator()();
     }
     if (method == "shape") {
