@@ -39,7 +39,6 @@
 #define NPT
 
 #define DPD
-#define METADYNAMICS
 
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS

@@ -150,11 +150,6 @@ void force_calc(CellStructure &cell_structure) {
   lb_lbcoupling_calc_particle_lattice_ia(thermo_virtual, particles,
                                          ghost_particles);
 
-#ifdef METADYNAMICS
-  /* Metadynamics main function */
-  meta_perform(particles);
-#endif
-
 #ifdef CUDA
   copy_forces_from_GPU(particles);
 #endif
