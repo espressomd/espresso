@@ -224,9 +224,6 @@ class TestLB:
 
         obs = LBFluidStress()
         obs_stress = obs.calculate()
-        obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
-                               [obs_stress[1], obs_stress[2], obs_stress[4]],
-                               [obs_stress[3], obs_stress[4], obs_stress[5]]])
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
         np.testing.assert_allclose(
             np.copy(self.lbf.stress),
