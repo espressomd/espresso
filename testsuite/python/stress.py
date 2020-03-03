@@ -243,7 +243,7 @@ class Stress(ut.TestCase):
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(
             StressTensor().calculate(),
-            system.analysis.stress_tensor()["total"].reshape(9),
+            system.analysis.stress_tensor()["total"],
             atol=1E-10)
 
 
@@ -313,8 +313,8 @@ class StressFENE(ut.TestCase):
 
         # Compare stress tensor observable to stress tensor from analysis
         np.testing.assert_allclose(
-            np.array(StressTensor().calculate()),
-            system.analysis.stress_tensor()["total"].reshape(9),
+            StressTensor().calculate(),
+            system.analysis.stress_tensor()["total"],
             rtol=0, atol=1E-10)
 
         system.part.clear()

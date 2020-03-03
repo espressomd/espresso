@@ -28,7 +28,7 @@ namespace Observables {
 class DipoleMoment : public PidObservable {
 public:
   using PidObservable::PidObservable;
-  int n_values() const override { return 3; };
+  std::vector<size_t> shape() const override { return {3}; }
 
   std::vector<double>
   evaluate(Utils::Span<const Particle *const> particles) const override {

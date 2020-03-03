@@ -379,9 +379,10 @@ The first step of the core analysis is to create an observable.
 An observable in the sense of the core analysis can be considered as a
 rule how to compute a certain set of numbers from a given state of the
 system or a role how to collect data from other observables. Any
-observable is represented as a single array of double values. Any more
-complex shape (tensor, complex number, …) must be compatible to this
-prerequisite. Every observable however documents the storage order.
+observable is represented as a single array of double values in the core.
+Any more complex shape (tensor, complex number, …) must be compatible to this
+prerequisite. Every observable however documents the storage order and returns
+a reshaped numpy array.
 
 The observables can be used in parallel simulations. However,
 not all observables carry out their calculations in parallel.

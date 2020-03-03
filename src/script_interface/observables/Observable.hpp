@@ -41,8 +41,9 @@ public:
     if (method == "calculate") {
       return observable()->operator()();
     }
-    if (method == "n_values") {
-      return observable()->n_values();
+    if (method == "shape") {
+      auto const shape = observable()->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
     }
     return {};
   }

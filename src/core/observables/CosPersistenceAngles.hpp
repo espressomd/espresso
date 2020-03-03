@@ -44,14 +44,14 @@ public:
       return get_mi_vector(particles[index + 1]->r.p, particles[index]->r.p,
                            box_geo);
     };
-    for (int i = 0; i < no_of_bonds; ++i) {
+    for (size_t i = 0; i < no_of_bonds; ++i) {
       auto const tmp = get_bond_vector(i);
       bond_vectors[i] = tmp / tmp.norm();
     }
     // calculate angles between neighbouring bonds, next neighbours, etc...
-    for (int i = 0; i < no_of_angles; ++i) {
+    for (size_t i = 0; i < no_of_angles; ++i) {
       auto average = 0.0;
-      for (int j = 0; j < no_of_angles - i; ++j) {
+      for (size_t j = 0; j < no_of_angles - i; ++j) {
         average += bond_vectors[j] * bond_vectors[j + i + 1];
       }
       angles[i] = average / (no_of_angles - i);
@@ -59,7 +59,7 @@ public:
 
     return angles;
   }
-  int n_values() const override { return ids().size() - 2; }
+  std::vector<size_t> shape() const override { return {ids().size() - 2}; }
 };
 
 } // Namespace Observables
