@@ -23,6 +23,7 @@ class Observable(ScriptInterfaceHelper):
     _so_name = "Observables::Observable"
     _so_bind_methods = ("calculate_flat_array", "shape")
     _so_creation_policy = "LOCAL"
+
     def calculate(self):
         return np.array(self.calculate_flat_array()).reshape(self.shape())
 
@@ -39,7 +40,7 @@ class ComPosition(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -61,7 +62,7 @@ class ComVelocity(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -81,7 +82,7 @@ class Current(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -99,25 +100,25 @@ class DensityProfile(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     n_x_bins : :obj:`int`
-               Number of bins in ``x`` direction.
+        Number of bins in ``x`` direction.
     n_y_bins : :obj:`int`
-                 Number of bins in ``y`` direction.
+        Number of bins in ``y`` direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_x : :obj:`float`
-            Minimum ``x`` to consider.
+        Minimum ``x`` to consider.
     min_y : :obj:`float`
-              Minimum ``y`` to consider.
+        Minimum ``y`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_x : :obj:`float`
-            Maximum ``x`` to consider.
+        Maximum ``x`` to consider.
     max_y : :obj:`float`
-              Maximum ``y`` to consider.
+        Maximum ``y`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -137,7 +138,7 @@ class DipoleMoment(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -155,25 +156,25 @@ class FluxDensityProfile(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     n_x_bins : :obj:`int`
-               Number of bins in ``x`` direction.
+        Number of bins in ``x`` direction.
     n_y_bins : :obj:`int`
-                 Number of bins in ``y`` direction.
+        Number of bins in ``y`` direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_x : :obj:`float`
-            Minimum ``x`` to consider.
+        Minimum ``x`` to consider.
     min_y : :obj:`float`
-              Minimum ``y`` to consider.
+        Minimum ``y`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_x : :obj:`float`
-            Maximum ``x`` to consider.
+        Maximum ``x`` to consider.
     max_y : :obj:`float`
-              Maximum ``y`` to consider.
+        Maximum ``y`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -193,25 +194,25 @@ class ForceDensityProfile(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     n_x_bins : :obj:`int`
-               Number of bins in ``x`` direction.
+        Number of bins in ``x`` direction.
     n_y_bins : :obj:`int`
-                 Number of bins in ``y`` direction.
+        Number of bins in ``y`` direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_x : :obj:`float`
-            Minimum ``x`` to consider.
+        Minimum ``x`` to consider.
     min_y : :obj:`float`
-              Minimum ``y`` to consider.
+        Minimum ``y`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_x : :obj:`float`
-            Maximum ``x`` to consider.
+        Maximum ``x`` to consider.
     max_y : :obj:`float`
-              Maximum ``y`` to consider.
+        Maximum ``y`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -308,7 +309,7 @@ class MagneticDipoleMoment(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -330,7 +331,7 @@ class ParticleAngularVelocities(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -355,7 +356,7 @@ class ParticleBodyAngularVelocities(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -380,7 +381,7 @@ class ParticleBodyVelocities(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -402,7 +403,7 @@ class ParticleForces(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -424,7 +425,7 @@ class ParticlePositions(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -446,7 +447,7 @@ class ParticleVelocities(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -465,7 +466,7 @@ class ParticleDistances(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -487,7 +488,7 @@ class TotalForce(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -506,7 +507,7 @@ class BondAngles(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -527,7 +528,7 @@ class CosPersistenceAngles(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -546,7 +547,7 @@ class BondDihedrals(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
 
     Returns
     -------
@@ -595,29 +596,29 @@ class CylindricalDensityProfile(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+        Position of the center of the polar coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+        Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
-               Number of bins in radial direction.
+        Number of bins in radial direction.
     n_phi_bins : :obj:`int`
-                 Number of bins for the azimuthal direction.
+        Number of bins for the azimuthal direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_r : :obj:`float`
-            Minimum ``r`` to consider.
+        Minimum ``r`` to consider.
     min_phi : :obj:`float`
-              Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_r : :obj:`float`
-            Maximum ``r`` to consider.
+        Maximum ``r`` to consider.
     max_phi : :obj:`float`
-              Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -635,29 +636,29 @@ class CylindricalFluxDensityProfile(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+        Position of the center of the polar coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+        Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
-               Number of bins in radial direction.
+        Number of bins in radial direction.
     n_phi_bins : :obj:`int`
-                 Number of bins for the azimuthal direction.
+        Number of bins for the azimuthal direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_r : :obj:`float`
-            Minimum ``r`` to consider.
+        Minimum ``r`` to consider.
     min_phi : :obj:`float`
-              Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_r : :obj:`float`
-            Maximum ``r`` to consider.
+        Maximum ``r`` to consider.
     max_phi : :obj:`float`
-              Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -678,29 +679,29 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+        Position of the center of the polar coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+        Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
-               Number of bins in radial direction.
+        Number of bins in radial direction.
     n_phi_bins : :obj:`int`
-                 Number of bins for the azimuthal direction.
+        Number of bins for the azimuthal direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_r : :obj:`float`
-            Minimum ``r`` to consider.
+        Minimum ``r`` to consider.
     min_phi : :obj:`float`
-              Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_r : :obj:`float`
-            Maximum ``r`` to consider.
+        Maximum ``r`` to consider.
     max_phi : :obj:`float`
-              Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -721,29 +722,29 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+        Position of the center of the polar coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+        Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
-               Number of bins in radial direction.
+        Number of bins in radial direction.
     n_phi_bins : :obj:`int`
-                 Number of bins for the azimuthal direction.
+        Number of bins for the azimuthal direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_r : :obj:`float`
-            Minimum ``r`` to consider.
+        Minimum ``r`` to consider.
     min_phi : :obj:`float`
-              Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_r : :obj:`float`
-            Maximum ``r`` to consider.
+        Maximum ``r`` to consider.
     max_phi : :obj:`float`
-              Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -763,29 +764,29 @@ class CylindricalVelocityProfile(Observable):
     Parameters
     ----------
     ids : array_like of :obj:`int`
-          The ids of (existing) particles to take into account.
+        The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+        Position of the center of the polar coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+        Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
-               Number of bins in radial direction.
+        Number of bins in radial direction.
     n_phi_bins : :obj:`int`
-                 Number of bins for the azimuthal direction.
+        Number of bins for the azimuthal direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_r : :obj:`float`
-            Minimum ``r`` to consider.
+        Minimum ``r`` to consider.
     min_phi : :obj:`float`
-              Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_r : :obj:`float`
-            Maximum ``r`` to consider.
+        Maximum ``r`` to consider.
     max_phi : :obj:`float`
-              Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
 
     Returns
     -------
@@ -809,27 +810,27 @@ class CylindricalLBVelocityProfile(Observable):
     Parameters
     ----------
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+        Position of the center of the polar coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+        Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
     n_r_bins : :obj:`int`
-               Number of bins in radial direction.
+        Number of bins in radial direction.
     n_phi_bins : :obj:`int`
-                 Number of bins for the azimuthal direction.
+        Number of bins for the azimuthal direction.
     n_z_bins : :obj:`int`
-               Number of bins in ``z`` direction.
+        Number of bins in ``z`` direction.
     min_r : :obj:`float`
-            Minimum ``r`` to consider.
+        Minimum ``r`` to consider.
     min_phi : :obj:`float`
-              Minimum ``phi`` to consider.
+        Minimum ``phi`` to consider.
     min_z : :obj:`float`
-            Minimum ``z`` to consider.
+        Minimum ``z`` to consider.
     max_r : :obj:`float`
-            Maximum ``r`` to consider.
+        Maximum ``r`` to consider.
     max_phi : :obj:`float`
-              Maximum ``phi`` to consider.
+        Maximum ``phi`` to consider.
     max_z : :obj:`float`
-            Maximum ``z`` to consider.
+        Maximum ``z`` to consider.
     sampling_density : :obj:`float`
         Samples per unit volume for the LB velocity interpolation.
 

@@ -46,19 +46,28 @@ public:
           [this]() { return pid_profile_observable()->ids(); }},
          {"n_x_bins",
           [this](const Variant &v) {
-            pid_profile_observable()->n_x_bins = static_cast<size_t>(get_value<int>(v));
+            pid_profile_observable()->n_x_bins =
+                static_cast<size_t>(get_value<int>(v));
           },
-          [this]() { return static_cast<int>(pid_profile_observable()->n_x_bins); }},
+          [this]() {
+            return static_cast<int>(pid_profile_observable()->n_x_bins);
+          }},
          {"n_y_bins",
           [this](const Variant &v) {
-            pid_profile_observable()->n_y_bins = static_cast<size_t>(get_value<int>(v));
+            pid_profile_observable()->n_y_bins =
+                static_cast<size_t>(get_value<int>(v));
           },
-          [this]() { return static_cast<int>(pid_profile_observable()->n_y_bins); }},
+          [this]() {
+            return static_cast<int>(pid_profile_observable()->n_y_bins);
+          }},
          {"n_z_bins",
           [this](const Variant &v) {
-            pid_profile_observable()->n_z_bins = static_cast<size_t>(get_value<int>(v));
+            pid_profile_observable()->n_z_bins =
+                static_cast<size_t>(get_value<int>(v));
           },
-          [this]() { return static_cast<int>(pid_profile_observable()->n_z_bins); }},
+          [this]() {
+            return static_cast<int>(pid_profile_observable()->n_z_bins);
+          }},
          {"min_x",
           [this](const Variant &v) {
             pid_profile_observable()->min_x = get_value<double>(v);

@@ -63,19 +63,31 @@ public:
          [this]() { return cylindrical_pid_profile_observable()->axis; }},
         {"n_r_bins",
          [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_r_bins = static_cast<size_t>(get_value<int>(v));
+           cylindrical_pid_profile_observable()->n_r_bins =
+               static_cast<size_t>(get_value<int>(v));
          },
-         [this]() { return static_cast<int>(cylindrical_pid_profile_observable()->n_r_bins); }},
+         [this]() {
+           return static_cast<int>(
+               cylindrical_pid_profile_observable()->n_r_bins);
+         }},
         {"n_phi_bins",
          [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_phi_bins = static_cast<size_t>(get_value<int>(v));
+           cylindrical_pid_profile_observable()->n_phi_bins =
+               static_cast<size_t>(get_value<int>(v));
          },
-         [this]() { return static_cast<int>(cylindrical_pid_profile_observable()->n_phi_bins); }},
+         [this]() {
+           return static_cast<int>(
+               cylindrical_pid_profile_observable()->n_phi_bins);
+         }},
         {"n_z_bins",
          [this](const Variant &v) {
-           cylindrical_pid_profile_observable()->n_z_bins = static_cast<size_t>(get_value<int>(v));
+           cylindrical_pid_profile_observable()->n_z_bins =
+               static_cast<size_t>(get_value<int>(v));
          },
-         [this]() { return static_cast<int>(cylindrical_pid_profile_observable()->n_z_bins); }},
+         [this]() {
+           return static_cast<int>(
+               cylindrical_pid_profile_observable()->n_z_bins);
+         }},
         {"min_r",
          [this](const Variant &v) {
            cylindrical_pid_profile_observable()->min_r = get_value<double>(v);

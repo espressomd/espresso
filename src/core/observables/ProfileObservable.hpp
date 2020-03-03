@@ -37,7 +37,9 @@ public:
   double min_y, max_y;
   double min_z, max_z;
   size_t n_x_bins, n_y_bins, n_z_bins;
-  std::vector<size_t> shape() const override { return {n_x_bins, n_y_bins, n_z_bins}; }
+  std::vector<size_t> shape() const override {
+    return {n_x_bins, n_y_bins, n_z_bins};
+  }
 };
 
 } // Namespace Observables

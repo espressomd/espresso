@@ -194,7 +194,9 @@ class ObservableTests(ut.TestCase):
                     res_obs_chain = obs_chain.calculate()
                     # checks
                     self.assertEqual(np.prod(res_obs_single.shape), 1)
-                    self.assertEqual(np.prod(res_obs_chain.shape), self.n_parts - 3)
+                    self.assertEqual(
+                        np.prod(res_obs_chain.shape),
+                        self.n_parts - 3)
                     self.assertAlmostEqual(res_obs_single[0], dih1, places=9)
                     np.testing.assert_array_almost_equal(
                         res_obs_chain, [dih1, dih2], decimal=9,

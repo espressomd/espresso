@@ -28,7 +28,9 @@ namespace Observables {
 class ForceDensityProfile : public PidProfileObservable {
 public:
   using PidProfileObservable::PidProfileObservable;
-  std::vector<size_t> shape() const override { return {n_x_bins, n_y_bins, n_z_bins, 3}; }
+  std::vector<size_t> shape() const override {
+    return {n_x_bins, n_y_bins, n_z_bins, 3};
+  }
 
   std::vector<double>
   evaluate(Utils::Span<const Particle *const> particles) const override {

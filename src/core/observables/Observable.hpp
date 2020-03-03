@@ -49,7 +49,8 @@ public:
   /** Size of the flat array returned by the observable */
   int n_values() const {
     auto const v = shape();
-    return static_cast<int>(std::accumulate(v.begin(), v.end(), 1, std::multiplies<>()));
+    return static_cast<int>(
+        std::accumulate(v.begin(), v.end(), 1, std::multiplies<>()));
   }
 
   /** Dimensions needed to reshape the flat array returned by the observable */
