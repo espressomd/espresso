@@ -19,6 +19,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "Particle.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "cuda_interface.hpp"
 #include "grid.hpp"
 

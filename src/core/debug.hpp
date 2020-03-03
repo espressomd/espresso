@@ -24,8 +24,6 @@
  *  Implementation in debug.cpp.
  */
 
-#include "config.hpp"
-
 /** this performs a lot of tests which will very likely detect corruptions of
  *  \ref local_particles and the cell structure.
  */
@@ -38,5 +36,3 @@ void check_particle_consistency();
  * they should be.
  */
 void check_particle_sorting();
-
-extern int this_node;

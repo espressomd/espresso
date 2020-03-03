@@ -30,7 +30,7 @@ unit_test(NAME ParallelScriptInterface_test SRC ParallelScriptInterface_test.cpp
 unit_test(NAME AutoParameters_test SRC AutoParameters_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME AutoParameter_test SRC AutoParameter_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME Variant_test SRC Variant_test.cpp DEPENDS ScriptInterface)
-unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp)
+unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS utils)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS utils)
 unit_test(NAME verlet_ia_test SRC verlet_ia_test.cpp DEPENDS utils)
 unit_test(NAME ParticleCache_test SRC ParticleCache_test.cpp DEPENDS utils Boost::mpi MPI::MPI_CXX Boost::serialization Random123 NUM_PROC 2)

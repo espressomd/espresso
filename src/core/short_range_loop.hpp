@@ -36,7 +36,7 @@ struct Distance {
       : vec21(vec21), dist2(vec21.norm2()) {}
 
   Utils::Vector3d vec21;
-  const double dist2;
+  double dist2;
 };
 
 namespace detail {
