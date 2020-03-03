@@ -279,9 +279,9 @@ unsigned const &get_resort_particles() { return resort_particles; }
 /*************************************************/
 
 int cells_get_n_particles() {
-  return std::accumulate(cell_structure.m_local_cells.begin(),
-                         cell_structure.m_local_cells.end(), 0,
-                         [](int n, const Cell *c) { return n + c->n; });
+  return std::accumulate(
+      cell_structure.m_local_cells.begin(), cell_structure.m_local_cells.end(),
+      0, [](int n, const Cell *c) { return n + c->particles().size(); });
 }
 
 /*************************************************/

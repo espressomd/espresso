@@ -34,6 +34,8 @@
 #include <thrust/device_vector.h>
 #include <utils/constants.hpp>
 
+extern int this_node;
+
 template <class T>
 using device_vector = thrust::device_vector<T, CudaDeviceAllocator<T>>;
 
