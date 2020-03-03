@@ -443,9 +443,6 @@ General features
 
    .. seealso:: :ref:`Virtual sites`
 
--  ``METADYNAMICS``
-
-
 -  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
 
 -  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.

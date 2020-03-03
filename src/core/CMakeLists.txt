@@ -20,7 +20,6 @@ set(EspressoCore_SRC
     immersed_boundaries.cpp
     event.cpp
     integrate.cpp
-    metadynamics.cpp
     npt.cpp
     nsquare.cpp
     partCfg_global.cpp
