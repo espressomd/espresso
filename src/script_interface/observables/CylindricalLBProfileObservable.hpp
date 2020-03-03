@@ -133,7 +133,7 @@ public:
 
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
-    if (method == "_calculate") {
+    if (method == "calculate") {
       return cylindrical_profile_observable()->operator()();
     }
     if (method == "shape") {
