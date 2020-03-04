@@ -182,7 +182,7 @@ int integrate(int n_steps, int reuse_forces) {
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update(true);
+    virtual_sites()->update();
 #endif
 
     // Communication step: distribute ghost positions
@@ -239,7 +239,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update(true);
+    virtual_sites()->update();
 #endif
 
     // Communication step: distribute ghost positions
@@ -292,8 +292,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef VIRTUAL_SITES
-  // VIRTUAL_SITES update vel
-  virtual_sites()->update(false); // Recalc positions = false
+  virtual_sites()->update();
 #endif
 
   /* verlet list statistics */

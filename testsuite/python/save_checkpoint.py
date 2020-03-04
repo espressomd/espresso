@@ -160,8 +160,7 @@ if 'LB.OFF' in modes:
                          max_displacement=0.01)
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
-    system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-        have_velocity=True, have_quaternion=True)
+    system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(have_quaternion=True)
     system.part[1].vs_auto_relate_to(0)
 
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:

@@ -32,8 +32,7 @@ import espressomd.rotation
 
 
 system = espressomd.System(box_l=[10.0] * 3)
-system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-    have_velocity=True)
+system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative()
 system.time_step = 0.01
 system.thermostat.set_langevin(kT=1.0, gamma=20.0, seed=42)
 

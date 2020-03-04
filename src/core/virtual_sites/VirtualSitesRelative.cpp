@@ -144,12 +144,9 @@ auto constraint_stress(
 }
 } // namespace
 
-void VirtualSitesRelative::update(bool recalc_positions) const {
+void VirtualSitesRelative::update() const {
   // Ghost update logic
-  auto const data_parts =
-      (recalc_positions ? GHOSTTRANS_POSITION : GHOSTTRANS_NONE) |
-      (get_have_velocity() ? (GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM)
-                           : GHOSTTRANS_NONE);
+  auto const data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM;
 
   ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
 
@@ -159,22 +156,19 @@ void VirtualSitesRelative::update(bool recalc_positions) const {
 
     const Particle *p_ref = get_reference_particle(p.p.vs_relative);
 
-    if (recalc_positions) {
-      auto const new_pos = position(p_ref, p.p.vs_relative);
-      /* The shift has to respect periodic boundaries: if the reference
-       * particles is not in the same image box, we potentially avoid to shift
-       * to the other side of the box. */
-      p.r.p += get_mi_vector(new_pos, p.r.p, box_geo);
+    auto const new_pos = position(p_ref, p.p.vs_relative);
+    /* The shift has to respect periodic boundaries: if the reference
+     * particles is not in the same image box, we potentially avoid to shift
+     * to the other side of the box. */
+    p.r.p += get_mi_vector(new_pos, p.r.p, box_geo);
 
-      if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-        set_resort_particles(Cells::RESORT_LOCAL);
-    }
-
-    if (get_have_velocity())
-      p.m.v = velocity(p_ref, p.p.vs_relative);
+    p.m.v = velocity(p_ref, p.p.vs_relative);
 
     if (get_have_quaternion())
       p.r.quat = orientation(p_ref, p.p.vs_relative);
+
+    if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
+      set_resort_particles(Cells::RESORT_LOCAL);
   } // namespace
 }
 

@@ -32,7 +32,7 @@ class VirtualSitesRelative : public VirtualSites {
 public:
   VirtualSitesRelative() = default;
   /** @copydoc VirtualSites::update */
-  void update(bool recalc_positions) const override;
+  void update() const override;
   /** @copydoc VirtualSites::back_transfer_forces_and_torques */
   void back_transfer_forces_and_torques() const override;
   /** @copydoc VirtualSites::stress_tensor */

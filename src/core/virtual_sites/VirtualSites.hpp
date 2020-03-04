@@ -38,12 +38,13 @@
 /** @brief Base class for virtual sites implementations */
 class VirtualSites {
 public:
-  VirtualSites() : m_have_velocity(true), m_have_quaternion(false){};
-  /** @brief Update positions and/or velocities of virtual sites.
-   *  Velocities are only updated if get_have_velocity() returns true.
-   *  @param recalc_positions  Skip the recalculation of positions if false.
+  VirtualSites() = default;
+  virtual ~VirtualSites() = default;
+
+  /**
+   * @brief Update positions and velocities of virtual sites.
    */
-  virtual void update(bool recalc_positions) const {}
+  virtual void update() const {}
   /** Back-transfer forces (and torques) to non-virtual particles. */
   virtual void back_transfer_forces_and_torques() const {}
   /** @brief Called after force calculation (and before rattle/shake) */
@@ -51,20 +52,14 @@ public:
   virtual void after_lb_propagation(){};
   /** @brief Pressure contribution. */
   virtual Utils::Matrix<double, 3, 3> stress_tensor() const { return {}; };
-  /** @brief Enable/disable velocity calculations for vs. */
-  void set_have_velocity(const bool &v) { m_have_velocity = v; };
-  const bool &get_have_velocity() const { return m_have_velocity; };
   /** @brief Enable/disable quaternion calculations for vs.*/
   void set_have_quaternion(const bool &have_quaternion) {
     m_have_quaternion = have_quaternion;
   };
   bool get_have_quaternion() const { return m_have_quaternion; };
 
-  virtual ~VirtualSites() = default;
-
 private:
-  bool m_have_velocity;
-  bool m_have_quaternion;
+  bool m_have_quaternion = false;
 };
 
 #endif
