@@ -34,12 +34,7 @@ class VirtualSites : public AutoParameters<VirtualSites> {
 public:
   VirtualSites() {
     add_parameters(
-        {{"have_velocity",
-          [this](const Variant &v) {
-            virtual_sites()->set_have_velocity(get_value<bool>(v));
-          },
-          [this]() { return virtual_sites()->get_have_velocity(); }},
-         {"have_quaternion",
+        {{"have_quaternion",
           [this](const Variant &v) {
             virtual_sites()->set_have_quaternion(get_value<bool>(v));
           },

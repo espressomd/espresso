@@ -29,6 +29,7 @@
 #include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
+#include <boost/range/algorithm/copy.hpp>
 
 #include "short_range_loop.hpp"
 
@@ -127,8 +128,12 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   calc_long_range_virials(cell_structure.local_cells().particles());
 
 #ifdef VIRTUAL_SITES
-  virtual_sites()->pressure_and_stress_tensor_contribution(
-      virials.virtual_sites, p_tensor.virtual_sites);
+  {
+    auto const vs_stress = virtual_sites()->stress_tensor();
+
+    *virials.virtual_sites += trace(vs_stress);
+    boost::copy(flatten(vs_stress), p_tensor.virtual_sites);
+  }
 #endif
 
   for (int n = 1; n < virials.data.n; n++)
@@ -190,7 +195,7 @@ void init_virials(Observable_stat *stat) {
   Dipole::pressure_n();
 #endif
 #ifdef VIRTUAL_SITES
-  n_vs = virtual_sites()->n_pressure_contribs();
+  n_vs = 1;
 #endif
 
   // Allocate memory for the data
@@ -228,7 +233,7 @@ void init_p_tensor(Observable_stat *stat) {
   auto const n_dipolar = 0;
 #endif
 #ifdef VIRTUAL_SITES
-  n_vs = virtual_sites()->n_pressure_contribs();
+  n_vs = 1;
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,

@@ -320,6 +320,9 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
 }
 
 void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
+  if (GHOSTTRANS_NONE == data_parts)
+    return;
+
   static CommBuf send_buffer, recv_buffer;
 
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {

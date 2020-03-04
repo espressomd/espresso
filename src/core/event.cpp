@@ -423,7 +423,7 @@ unsigned global_ghost_flags() {
 
 void update_dependent_particles() {
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update(true);
+  virtual_sites()->update();
   cells_update_ghosts(global_ghost_flags());
 #endif
 
