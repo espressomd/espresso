@@ -131,7 +131,7 @@ ParticleForce constraint_force(
  *
  * @param f Force on the virtual site.
  * @param p_ref Reference particle.
- * @param vs_real Parameters.
+ * @param vs_rel Parameters.
  * @return Constraint force.
  */
 auto constraint_stress(

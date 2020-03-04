@@ -178,7 +178,7 @@ template <class T, size_t N> T trace(Matrix<T, N, N> const &m) {
  * @brief Flatten a matrix to a linear vector.
  *
  * @param m Input Matrix
- * @return Flat vector with elements of @ref m.
+ * @return Flat vector with elements of the matrix.
  */
 template <class T, size_t N, size_t M>
 Vector<T, N * M> flatten(Matrix<T, N, M> const &m) {
