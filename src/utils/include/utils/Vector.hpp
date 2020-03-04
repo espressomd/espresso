@@ -167,7 +167,7 @@ template <class T, size_t N, size_t M> using Matrix = Vector<Vector<T, M>, N>;
  * @return Trace of matrix.
  */
 template <class T, size_t N> T trace(Matrix<T, N, N> const &m) {
-  T tr = T{};
+  auto tr = T{};
   for (size_t i = 0; i < N; i++)
     tr += m[i][i];
 
