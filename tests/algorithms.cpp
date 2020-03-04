@@ -10,19 +10,19 @@ BOOST_AUTO_TEST_CASE(algorithms) {
   std::vector<int> values{1, 2, 3, 4};
   {
     auto one = [](auto const &p) { return 1; };
-    auto const res = Algorithms::weighted_average(values, identity, one);
+    auto const res = Algorithms::WeightedAverage()(values, identity, one);
     BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0) /
                            values.size());
   }
   {
     auto plus_one = [](auto const &p) { return p + 1; };
-    auto const res = Algorithms::weighted_average(values, identity, plus_one);
+    auto const res = Algorithms::WeightedAverage()(values, identity, plus_one);
     BOOST_CHECK(res == (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5) / 14);
-    auto const res2 = Algorithms::weighted_sum(values, identity, plus_one);
+    auto const res2 = Algorithms::WeightedSum()(values, identity, plus_one);
     BOOST_CHECK(res2 == (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5));
   }
   {
-    auto const res = Algorithms::average(values, identity);
+    auto const res = Algorithms::Average()(values, identity);
     BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0) /
                            values.size());
   }
