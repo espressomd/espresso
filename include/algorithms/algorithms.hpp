@@ -24,8 +24,8 @@ auto weighted_sum(ParticleRange const &particles, ValueOp value_op,
 } // namespace detail
 
 template <class ParticleRange, class ValueOp, class WeightOp>
-auto weighted_sum(ParticleRange const &particles, ValueOp value_op,
-                  WeightOp weight_op) {
+auto weighted_sum(ParticleRange const &particles, ValueOp &&value_op,
+                  WeightOp &&weight_op) {
   return detail::weighted_sum(particles, std::forward<ValueOp>(value_op),
                               std::forward<WeightOp>(weight_op))
       .first;

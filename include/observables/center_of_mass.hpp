@@ -7,11 +7,12 @@
 namespace Observables {
 
 struct CenterOfMass {
-  template<class ParticleRange>
+  template <class ParticleRange>
   auto operator()(ParticleRange const &particles) {
-    return Algorithms::weighted_average(particles, Traits::Position(), Traits::Mass());
+    return Algorithms::weighted_average(particles, Traits::Particle::Position(),
+                                        Traits::Particle::Mass());
   }
 };
 
-}
+} // namespace Observables
 #endif

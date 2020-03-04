@@ -19,7 +19,9 @@ struct Velocity {
 };
 
 struct Mass {
-  auto operator()(::Particle::Particle const &p) { return p.m; }
+  auto operator()(::Particle::Particle const &p) {
+    return p.is_virtual ? 0.0 : p.m;
+  }
 };
 } // namespace Particle
 } // namespace Traits

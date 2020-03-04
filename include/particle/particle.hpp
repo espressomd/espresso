@@ -8,7 +8,8 @@ struct Particle {
   double x; // position
   double v; // velocity
   double m; // mass
+  bool is_virtual = false;
 };
 
-}
+} // namespace Particle
 #endif // OBSERVABLES_PARTICLE_HPP
