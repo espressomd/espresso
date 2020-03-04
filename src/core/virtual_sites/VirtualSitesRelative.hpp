@@ -23,9 +23,9 @@
 #include "config.hpp"
 #ifdef VIRTUAL_SITES_RELATIVE
 
-#include "Particle.hpp"
-#include "communication.hpp"
-#include "virtual_sites.hpp"
+#include "VirtualSites.hpp"
+
+#include <utils/Vector.hpp>
 
 /** @brief Virtual sites implementation for rigid bodies */
 class VirtualSitesRelative : public VirtualSites {
