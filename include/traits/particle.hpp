@@ -1,35 +1,26 @@
 #ifndef TRAITS_HPP
 #define TRAITS_HPP
 
+#include <particle/particle.hpp>
+
 namespace Traits {
+namespace Particle {
 
 struct Charge {
-  template<class Particle>
-  auto operator()(Particle const& p) {
-    return p.q;
-  }
+  auto operator()(::Particle::Particle const &p) { return p.q; }
 };
 
 struct Position {
-  template<class Particle>
-  auto operator()(Particle const& p) {
-    return p.x;
-  }
+  auto operator()(::Particle::Particle const &p) { return p.x; }
 };
 
 struct Velocity {
-  template<class Particle>
-  auto operator()(Particle const& p) {
-    return p.v;
-  }
+  auto operator()(::Particle::Particle const &p) { return p.v; }
 };
 
 struct Mass {
-  template<class Particle>
-  auto operator()(Particle const& p) {
-    return p.m;
-  }
+  auto operator()(::Particle::Particle const &p) { return p.m; }
 };
-}
-
+} // namespace Particle
+} // namespace Traits
 #endif
