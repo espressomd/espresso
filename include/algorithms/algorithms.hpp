@@ -24,6 +24,9 @@ struct WeightedSum {
   }
 };
 
+struct One {
+  template <class Particle> auto operator()(Particle const &p) { return 1; }
+};
 } // namespace detail
 
 struct WeightedSum {
@@ -50,9 +53,9 @@ struct WeightedAverage {
 
 struct Average {
   template <class ParticleRange, class ValueOp>
-  auto operator()(ParticleRange const &particles, ValueOp value_op) {
+  auto operator()(ParticleRange const &particles, ValueOp &&value_op) {
     auto one = [](auto const &p) { return 1; };
-    return WeightedAverage()(particles, value_op, one);
+    return WeightedAverage()(particles, value_op, detail::One());
   }
 };
 
