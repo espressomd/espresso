@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 #include <limits>
 
-#include <algorithms/algorithms.hpp>
+#include <observables/algorithms.hpp>
 
 BOOST_AUTO_TEST_CASE(algorithms) {
   auto identity = [](auto const &p) { return p; };

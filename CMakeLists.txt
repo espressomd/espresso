@@ -3,18 +3,12 @@ project(observables LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 enable_testing()
 
+option(BUILD_TESTING "Build tests" ON)
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 
-add_library(traits INTERFACE)
-target_include_directories(traits INTERFACE ${CMAKE_SOURCE_DIR}/include/)
-add_library(particle INTERFACE)
-target_include_directories(particle INTERFACE ${CMAKE_SOURCE_DIR}/include/)
-add_library(algorithms INTERFACE)
-target_include_directories(algorithms INTERFACE ${CMAKE_SOURCE_DIR}/include/)
 add_library(observables INTERFACE)
 target_include_directories(observables INTERFACE ${CMAKE_SOURCE_DIR}/include/)
-add_library(fluid INTERFACE)
-target_include_directories(fluid INTERFACE ${CMAKE_SOURCE_DIR}/include/)
 
 if(BUILD_TESTING)
     add_subdirectory(tests)

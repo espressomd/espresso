@@ -1,9 +1,8 @@
 #ifndef INCLUDE_OBSERVABLES_DIPOLE_MOMENT_HPP
 #define INCLUDE_OBSERVABLES_DIPOLE_MOMENT_HPP
 
-#include <algorithms/algorithms.hpp>
+#include <observables/algorithms.hpp>
 #include <observables/observable.hpp>
-#include <traits/particle.hpp>
 
 namespace Observables {
 
