@@ -2,10 +2,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <fluid/fluid.hpp>
-#include <particle/particle.hpp>
-#include <traits/fluid.hpp>
-#include <traits/particle.hpp>
+#include <observables/fluid.hpp>
+#include <observables/particle.hpp>
 
 BOOST_AUTO_TEST_CASE(particle_traits) {
   Particle::Particle p{1.5, 2.0, 4.2, 5.1};

@@ -1,9 +1,9 @@
 #ifndef OBSERVABLES_CENTER_OF_MASS_HPP
 #define OBSERVABLES_CENTER_OF_MASS_HPP
 
-#include <algorithms/algorithms.hpp>
+#include <observables/algorithms.hpp>
 #include <observables/observable.hpp>
-#include <traits/particle.hpp>
+#include <observables/particle.hpp>
 
 namespace Observables {
 

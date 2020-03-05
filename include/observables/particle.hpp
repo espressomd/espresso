@@ -1,7 +1,16 @@
-#ifndef TRAITS_HPP
-#define TRAITS_HPP
+#ifndef OBSERVABLES_PARTICLE_HPP
+#define OBSERVABLES_PARTICLE_HPP
 
-#include <particle/particle.hpp>
+namespace Particle {
+
+struct Particle {
+  double q; // charge
+  double x; // position
+  double v; // velocity
+  double m; // mass
+  bool is_virtual = false;
+};
+} // namespace Particle
 
 namespace Traits {
 namespace Particle {
@@ -25,4 +34,5 @@ struct Mass {
 };
 } // namespace Particle
 } // namespace Traits
-#endif
+
+#endif // OBSERVABLES_PARTICLE_HPP

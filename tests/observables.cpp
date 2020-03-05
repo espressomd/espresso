@@ -5,7 +5,7 @@
 #include <observables/center_of_mass.hpp>
 #include <observables/current.hpp>
 #include <observables/dipole_moment.hpp>
-#include <particle/particle.hpp>
+#include <observables/particle.hpp>
 
 BOOST_AUTO_TEST_CASE(observables) {
   Particle::Particle p1{1.5 /* charge */, 2.0 /* position */,

@@ -1,7 +1,13 @@
-#ifndef OBSERVABLES_FLUID_HPP
-#define OBSERVABLES_FLUID_HPP
+#ifndef INCLUDE_FLUID_FLUID_HPP
+#define INCLUDE_FLUID_FLUID_HPP
 
-#include <fluid/fluid.hpp>
+namespace Fluid {
+
+struct FluidNode {
+  double v;
+};
+
+} // namespace Fluid
 
 namespace Traits {
 namespace Fluid {
@@ -13,4 +19,4 @@ struct Velocity {
 } // namespace Fluid
 } // namespace Traits
 
-#endif // OBSERVABLES_FLUID_HPP
+#endif // INCLUDE_FLUID_FLUID_HPP

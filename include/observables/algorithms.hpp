@@ -54,8 +54,7 @@ struct WeightedAverage {
 struct Average {
   template <class ParticleRange, class ValueOp>
   auto operator()(ParticleRange const &particles, ValueOp &&value_op) {
-    auto one = [](auto const &p) { return 1; };
-    return WeightedAverage()(particles, value_op, detail::One());
+    return WeightedAverage()(particles, value_op, detail::One{});
   }
 };
 
