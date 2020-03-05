@@ -444,8 +444,7 @@ class openGLLive:
 
         self.keyboard_manager = KeyboardManager()
         self.mouse_manager = MouseManager()
-        self.camera = Camera()
-        self._init_camera()
+        self.camera = self._init_camera()
 
         self.timers = []
         self.particles = {}
@@ -1518,23 +1517,21 @@ class openGLLive:
                                self.specs['background_color'][1],
                                self.specs['background_color'][2], 1.)
 
-        print(part_id)
         return part_id, depth
 
     def _id_to_fcolor(self, part_id):
         part_id += 1
-        return [int(part_id / 256 ** 2) / 255.0,
-                int((part_id % 256 ** 2) / 256) / 255.0,
+        return [int(part_id / 256**2) / 255.0,
+                int((part_id % 256**2) / 256) / 255.0,
                 (part_id % 256) / 255.0, 1.0]
 
     def _fcolor_to_id(self, fcolor):
-        print(fcolor)
         if (fcolor == [0, 0, 0]).all():
             return -1
         else:
-            return 256 ** 2 * int(fcolor[0] * 255) + \
-                   256 *      int(fcolor[1] * 255) + \
-                              int(fcolor[2] * 255) - 1
+            return int(fcolor[0] * 255) * 256**2 + \
+                   int(fcolor[1] * 255) * 256 + \
+                   int(fcolor[2] * 255) - 1
 
     def _set_particle_drag(self, pos, pos_old):
         part_id, depth = self._get_particle_id(pos, pos_old)
@@ -1711,9 +1708,9 @@ class openGLLive:
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             'q', KeyboardFireEvent.Hold, self.camera.rotate_system_XL, True))
         self.keyboard_manager.register_button(KeyboardButtonEvent(
-            'z', KeyboardFireEvent.Hold, self.camera.rotate_system_YR, True))
+            'c', KeyboardFireEvent.Hold, self.camera.rotate_system_YR, True))
         self.keyboard_manager.register_button(KeyboardButtonEvent(
-            'c', KeyboardFireEvent.Hold, self.camera.rotate_system_YL, True))
+            'z', KeyboardFireEvent.Hold, self.camera.rotate_system_YL, True))
         self.keyboard_manager.register_button(KeyboardButtonEvent(
             'r', KeyboardFireEvent.Hold, self.camera.rotate_system_ZR, True))
         self.keyboard_manager.register_button(KeyboardButtonEvent(
@@ -1737,7 +1734,7 @@ class openGLLive:
     # LIGHT AT CENTRAL display METHOD AND TRIGGER CHANGES
     def _set_camera_spotlight(self):
         if self.specs['spotlight_enabled']:
-            p = self.camera.camPos
+            p = self.camera.cam_pos
             fp = [p[0], p[1], p[2], 1]
             OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT1, OpenGL.GL.GL_POSITION, fp)
             OpenGL.GL.glLightfv(
@@ -1761,9 +1758,9 @@ class openGLLive:
 
         cr = np.array(self.specs['camera_right'])
 
-        self.camera.set_camera(camPos=np.array(cp), camTarget=ct, camRight=cr,
-                               moveSpeed=0.5 * box_diag / 17.0, center=box_center)
         self._set_camera_spotlight()
+
+        return Camera(cam_pos=np.array(cp), cam_target=ct, cam_right=cr, move_speed=0.5 * box_diag / 17.0, center=box_center)
 
     def _init_opengl(self):
         OpenGL.GLUT.glutInit(self.specs['name'])
@@ -2620,142 +2617,118 @@ class KeyboardManager:
 
 class Camera:
 
-    def __init__(self):
-        pass
-
-    def set_camera(self, camPos=np.array([0, 0, 1]), camTarget=np.array([0, 0, 0]), camRight=np.array(
-                   [1.0, 0.0, 0.0]), moveSpeed=0.5, rotSpeed=0.001, globalRotSpeed=3.0, center=np.array([0, 0, 0])):
-        self.moveSpeed = moveSpeed
-        self.lookSpeed = rotSpeed
-        self.globalRotSpeed = globalRotSpeed
-
+    def __init__(self, cam_pos=np.array([0, 0, 1]), cam_target=np.array([0, 0, 0]), cam_right=np.array([1.0, 0.0, 0.0]), move_speed=0.5, global_rot_speed=3.0, center=np.array([0, 0, 0])):
+        self.cam_pos = cam_pos
+        self.move_speed = move_speed
+        self.global_rot_speed = global_rot_speed
         self.center = center
 
         self.modelview = np.identity(4, np.float32)
 
-        t = camPos - camTarget
+        t = cam_pos - cam_target
         r = np.linalg.norm(t)
 
         self.state_target = -t / r
-        self.state_right = camRight / np.linalg.norm(camRight)
+        self.state_right = cam_right / np.linalg.norm(cam_right)
         self.state_up = np.cross(self.state_right, self.state_target)
-
         self.state_pos = np.array([0, 0, r])
 
         self.update_modelview()
 
     def move_forward(self):
-        self.state_pos[2] += self.moveSpeed
+        self.state_pos[2] += self.move_speed
         self.update_modelview()
 
     def move_backward(self):
-        self.state_pos[2] -= self.moveSpeed
+        self.state_pos[2] -= self.move_speed
         self.update_modelview()
 
     def move_up(self):
-        self.state_pos[1] += self.moveSpeed
+        self.state_pos[1] += self.move_speed
         self.update_modelview()
 
     def move_down(self):
-        self.state_pos[1] -= self.moveSpeed
+        self.state_pos[1] -= self.move_speed
         self.update_modelview()
 
     def move_left(self):
-        self.state_pos[0] -= self.moveSpeed
+        self.state_pos[0] -= self.move_speed
         self.update_modelview()
 
     def move_right(self):
-        self.state_pos[0] += self.moveSpeed
+        self.state_pos[0] += self.move_speed
         self.update_modelview()
 
     def rotate_system_XL(self):
-        self.rotate_system_y(0.01 * self.globalRotSpeed)
+        self.rotate_system_y(0.01 * self.global_rot_speed)
 
     def rotate_system_XR(self):
-        self.rotate_system_y(-0.01 * self.globalRotSpeed)
+        self.rotate_system_y(-0.01 * self.global_rot_speed)
 
     def rotate_system_YL(self):
-        self.rotate_system_z(0.01 * self.globalRotSpeed)
+        self.rotate_system_z(0.01 * self.global_rot_speed)
 
     def rotate_system_YR(self):
-        self.rotate_system_z(-0.01 * self.globalRotSpeed)
+        self.rotate_system_z(-0.01 * self.global_rot_speed)
 
     def rotate_system_ZL(self):
-        self.rotate_system_x(0.01 * self.globalRotSpeed)
+        self.rotate_system_x(0.01 * self.global_rot_speed)
 
     def rotate_system_ZR(self):
-        self.rotate_system_x(-0.01 * self.globalRotSpeed)
+        self.rotate_system_x(-0.01 * self.global_rot_speed)
 
-    def rotate_camera(self, mousePos, mousePosOld, mouseButtonState):
-        dm = mousePos - mousePosOld
+    def rotate_camera(self, mouse_pos, mouse_pos_old, mouse_button_state):
+        dm = mouse_pos - mouse_pos_old
 
-        if mouseButtonState[OpenGL.GLUT.GLUT_LEFT_BUTTON] == OpenGL.GLUT.GLUT_DOWN:
+        if mouse_button_state[OpenGL.GLUT.GLUT_LEFT_BUTTON] == OpenGL.GLUT.GLUT_DOWN:
             if dm[0] != 0:
-                self.rotate_system_y(dm[0] * 0.001 * self.globalRotSpeed)
+                self.rotate_system_y(-0.001 * dm[0] * self.global_rot_speed)
             if dm[1] != 0:
-                self.rotate_system_x(dm[1] * 0.001 * self.globalRotSpeed)
-        elif mouseButtonState[OpenGL.GLUT.GLUT_RIGHT_BUTTON] == OpenGL.GLUT.GLUT_DOWN:
-            self.state_pos[0] -= 0.05 * dm[0] * self.moveSpeed
-            self.state_pos[1] += 0.05 * dm[1] * self.moveSpeed
+                self.rotate_system_x(-0.001 * dm[1] * self.global_rot_speed)
+        elif mouse_button_state[OpenGL.GLUT.GLUT_RIGHT_BUTTON] == OpenGL.GLUT.GLUT_DOWN:
+            self.state_pos[0] -= 0.05 * dm[0] * self.move_speed
+            self.state_pos[1] += 0.05 * dm[1] * self.move_speed
             self.update_modelview()
-        elif mouseButtonState[OpenGL.GLUT.GLUT_MIDDLE_BUTTON] == OpenGL.GLUT.GLUT_DOWN:
-            self.state_pos[2] += 0.05 * dm[1] * self.moveSpeed
-            self.rotate_system_z(dm[0] * 0.001 * self.globalRotSpeed)
-
-    def normalize(self, vec):
-        vec = self.normalized(vec)
-
-    def normalized(self, vec):
-        return vec / np.linalg.norm(vec)
+        elif mouse_button_state[OpenGL.GLUT.GLUT_MIDDLE_BUTTON] == OpenGL.GLUT.GLUT_DOWN:
+            self.state_pos[2] += 0.05 * dm[1] * self.move_speed
+            self.rotate_system_z(dm[0] * 0.001 * self.global_rot_speed)
 
     def get_camera_rotation_matrix(self, target_vec, up_vec):
-        n = self.normalized(target_vec)
-        u = self.normalized(up_vec)
-        u = np.cross(u, target_vec)
-        v = np.cross(n, u)
-        m = np.identity(4, np.float32)
-        m[0][0] = u[0]
-        m[0][1] = v[0]
-        m[0][2] = n[0]
-        m[1][0] = u[1]
-        m[1][1] = v[1]
-        m[1][2] = n[1]
-        m[2][0] = u[2]
-        m[2][1] = v[2]
-        m[2][2] = n[2]
-        return m
+        normalized_target_vec = target_vec / np.linalg.norm(target_vec)
+        normalized_up_vec = up_vec / np.linalg.norm(up_vec)
+        perpendicular_normal = np.cross(normalized_up_vec, target_vec)
 
-    def rotate_vector(self, vec, ang, axe):
-        sinhalf = math.sin(ang / 2)
-        coshalf = math.cos(ang / 2)
+        rotation_matrix = np.identity(4, np.float32)
+        rotation_matrix[:3, :3] = np.array(
+            [perpendicular_normal,
+             np.cross(normalized_target_vec, perpendicular_normal),
+             normalized_target_vec]).T
 
-        rx = axe[0] * sinhalf
-        ry = axe[1] * sinhalf
-        rz = axe[2] * sinhalf
-        rw = coshalf
+        return rotation_matrix
 
-        rot = Quaternion(rx, ry, rz, rw)
-        conq = rot.conjugated()
-        w1 = conq.mult_v(vec)
-        w = w1.mult_q(rot)
+    def rotate_vector(self, vector, phi, axis):
+        """
+        Rotate vector around (unit vector) axis by angle phi.
+        Uses Rodrigues' rotation formula.
 
-        vec[0] = w[0]
-        vec[1] = w[1]
-        vec[2] = w[2]
+        """
+        rotated = vector * np.cos(phi) + np.cross(axis, vector) * np.sin(phi) \
+                  + axis * np.dot(axis, vector) * (1 - np.cos(phi))
+        return rotated
 
-    def rotate_system_z(self, da):
-        self.rotate_vector(self.state_right, da, self.state_target)
-        self.rotate_vector(self.state_up, da, self.state_target)
-        self.update_modelview()
-
-    def rotate_system_x(self, da):
-        self.rotate_vector(self.state_target, da, self.state_right)
+    def rotate_system_x(self, angle):
+        self.state_target = self.rotate_vector(self.state_target, angle, self.state_right)
         self.state_up = np.cross(self.state_right, self.state_target)
         self.update_modelview()
 
-    def rotate_system_y(self, da):
-        self.rotate_vector(self.state_target, da, self.state_up)
+    def rotate_system_y(self, angle):
+        self.state_target = self.rotate_vector(self.state_target, angle, self.state_up)
         self.state_right = np.cross(self.state_target, self.state_up)
+        self.update_modelview()
+
+    def rotate_system_z(self, angle):
+        self.state_right = self.rotate_vector(self.state_right, angle, self.state_target)
+        self.state_up = self.rotate_vector(self.state_up, angle, self.state_target)
         self.update_modelview()
 
     def update_modelview(self):
@@ -2766,9 +2739,7 @@ class Camera:
 
         # Center Box
         trans = np.identity(4, np.float32)
-        trans[3][0] = -self.center[0]
-        trans[3][1] = -self.center[1]
-        trans[3][2] = -self.center[2]
+        trans[3, :3] -= self.center
 
         # Camera rotation
         rotate_cam = self.get_camera_rotation_matrix(
@@ -2776,42 +2747,10 @@ class Camera:
 
         # System translation
         trans_cam = np.identity(4, np.float32)
-        trans_cam[3][0] = -self.state_pos[0]
-        trans_cam[3][1] = -self.state_pos[1]
-        trans_cam[3][2] = -self.state_pos[2]
+        trans_cam[3, :3] -= self.state_pos
 
         self.modelview = trans.dot(rotate_cam.dot(trans_cam))
 
-        cXYZ = -1 * np.mat(self.modelview[:3, :3]) * \
+        c_xyz = -1 * np.mat(self.modelview[:3, :3]) * \
             np.mat(self.modelview[3, :3]).T
-        self.camPos = np.array([cXYZ[0, 0], cXYZ[1, 0], cXYZ[2, 0]])
-
-
-class Quaternion:
-
-    def __init__(self, x, y, z, w):
-        self.array = np.array([x, y, z, w], np.float32)
-
-    def __getitem__(self, x):
-        return self.array[x]
-
-    def conjugated(self):
-        return Quaternion(-self[0], -self[1], -self[2], self[3])
-
-    def mult_v(self, v):
-        w = - (self[0] * v[0]) - (self[1] * v[1]) - (self[2] * v[2])
-        x = (self[3] * v[0]) + (self[1] * v[2]) - (self[2] * v[1])
-        y = (self[3] * v[1]) + (self[2] * v[0]) - (self[0] * v[2])
-        z = (self[3] * v[2]) + (self[0] * v[1]) - (self[1] * v[0])
-        return Quaternion(x, y, z, w)
-
-    def mult_q(self, q):
-        w = - (self[3] * q[3]) - (self[0] * q[0]) - \
-            (self[1] * q[1]) - (self[2] * q[2])
-        x = (self[0] * q[3]) + (self[3] * q[0]) + \
-            (self[1] * q[2]) - (self[2] * q[1])
-        y = (self[1] * q[3]) + (self[3] * q[1]) + \
-            (self[2] * q[0]) - (self[0] * q[2])
-        z = (self[2] * q[3]) + (self[3] * q[2]) + \
-            (self[0] * q[1]) - (self[1] * q[0])
-        return Quaternion(x, y, z, w)
+        self.cam_pos = np.array([c_xyz[0, 0], c_xyz[1, 0], c_xyz[2, 0]])
