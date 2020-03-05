@@ -1,0 +1,11 @@
+image: gitlab.icp.uni-stuttgart.de:4567/fweik/observables
+
+variables:
+  CXX: clang++
+
+test:
+  script:
+    - mkdir build && cd build
+    - cmake -DBUILD_TESTS=ON ..
+    - make
+    - make test
