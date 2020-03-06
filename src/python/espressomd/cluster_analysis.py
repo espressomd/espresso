@@ -80,15 +80,6 @@ class ClusterStructure(ScriptInterfaceHelper):
     pair_criterion: classes derived from ``_PairCriterion``
         Criterion to decide whether two particles are neighbors.
 
-    clusters: behaves like a read-only dictionary
-        Access to individual clusters in the cluster structure either via
-        ``cluster[i]``, where ``i`` is a (non-consecutive) integer cluster id
-        or via iteration::
-
-            for pair in clusters:
-
-        where pair contains the numeric id and the corresponding cluster object.
-
     """
     _so_name = "ClusterAnalysis::ClusterStructure"
     _so_creation_policy = "LOCAL"
