@@ -488,10 +488,6 @@ Fluid dynamics and fluid structure interaction
 
 -  ``EK_DOUBLE_PREC``
 
--  ``OIF_LOCAL_FORCES``
-
--  ``OIF_GLOBAL_FORCES``
-
 
 .. _Interaction features:
 

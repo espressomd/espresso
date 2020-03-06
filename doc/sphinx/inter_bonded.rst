@@ -466,11 +466,6 @@ modeling objects are described in section :ref:`Object-in-fluid`.
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-.. note::
-
-    Requires ``OIF_GLOBAL_FORCES`` feature.
-
-
 OIF local forces are available through the :class:`espressomd.interactions.OifLocalForces` class.
 
 This type of interaction is available for closed 3D immersed objects flowing in the LB flow.
@@ -597,11 +592,6 @@ larger than :math:`\pi`, then the inner angle is concave.
 
 OIF global forces
 ~~~~~~~~~~~~~~~~~
-
-.. note::
-
-    Requires ``OIF_GLOBAL_FORCES`` feature.
-
 
 OIF global forces are available through the
 :class:`espressomd.interactions.OifGlobalForces` class.
