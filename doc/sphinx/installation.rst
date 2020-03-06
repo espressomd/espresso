@@ -286,80 +286,6 @@ invocation is implementation dependent, but in many cases, such as
 where ``<N>`` is the number of processors to be used.
 
 
-.. _Configuring:
-
-Configuring
------------
-
-.. _myconfig.hpp\: Activating and deactivating features:
-
-:file:`myconfig.hpp`: Activating and deactivating features
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-|es| has a large number of features that can be compiled into the binary.
-However, it is not recommended to actually compile in all possible
-features, as this will slow down |es| significantly. Instead, compile in only
-the features that are actually required. A strong gain in speed can be
-achieved by disabling all non-bonded interactions except for a single
-one, e.g. ``LENNARD_JONES``. For developers, it is also possible to turn on or off a
-number of debugging messages. The features and debug messages can be
-controlled via a configuration header file that contains C-preprocessor
-declarations. Subsection :ref:`Features` describes all available features. If a
-file named :file:`myconfig.hpp` is present in the build directory when ``cmake``
-is run, all features defined in it will be compiled in. If no such file exists,
-the configuration file :file:`src/config/myconfig-default.hpp` will be used
-instead, which turns on the default features.
-
-When you distinguish between the build and the source directory, the
-configuration header can be put in either of these. Note, however, that
-when a configuration header is found in both directories, the one in the
-build directory will be used.
-
-By default, the configuration header is called :file:`myconfig.hpp`.
-The configuration header can be used to compile different binary
-versions of with a different set of features from the same source
-directory. Suppose that you have a source directory :file:`$srcdir` and two
-build directories :file:`$builddir1` and :file:`$builddir2` that contain
-different configuration headers:
-
-*  :file:`$builddir1/myconfig.hpp`:
-
-  .. code-block:: c++
-
-    #define ELECTROSTATICS
-    #define LENNARD_JONES
-
-*  :file:`$builddir2/myconfig.hpp`:
-
-  .. code-block:: c++
-
-    #define LJCOS
-
-Then you can simply compile two different versions of |es| via:
-
-.. code-block:: bash
-
-    cd builddir1
-    cmake ..
-    make
-
-    cd builddir2
-    cmake ..
-    make
-
-To see what features were activated in :file:`myconfig.hpp`, run:
-
-.. code-block:: bash
-
-    ./pypresso
-
-and then in the Python interpreter:
-
-.. code-block:: python
-
-    import espressomd
-    print(espressomd.features())
-
 .. _Features:
 
 Features
@@ -376,6 +302,7 @@ activate ``FEATURE``, add the following line to the header file:
 .. code-block:: c++
 
     #define FEATURE
+
 
 .. _General features:
 
@@ -407,7 +334,7 @@ General features
    .. seealso:: :ref:`Setting up particles`
 
    .. note::
-      Note, that when the feature is activated, every particle has three
+      When this feature is activated, every particle has three
       additional degrees of freedom, which for example means that the
       kinetic energy changes at constant temperature is twice as large.
 
@@ -459,8 +386,8 @@ integrator or thermostat:
 
 -  ``PARTICLE_ANISOTROPY``
 
-.. _Fluid dynamics and fluid structure interaction:
 
+.. _Fluid dynamics and fluid structure interaction:
 
 Fluid dynamics and fluid structure interaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -555,11 +482,10 @@ Finally, there is a flag for debugging:
       detected during compilation.
 
 
-
 Features marked as experimental
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
+Some of the above features are marked as EXPERIMENTAL. Activating these features can have unexpected side effects and some of them have known issues. If you activate any of these features, you should understand the corresponding source code and do extensive testing. Furthermore, it is necessary to define ``EXPERIMENTAL_FEATURES`` in :file:`myconfig.hpp`.
 
 
 External features
@@ -583,10 +509,86 @@ using a CMake flag (see :ref:`Options and Variables`).
   :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
 
 
+
+.. _Configuring:
+
+Configuring
+-----------
+
+.. _myconfig.hpp\: Activating and deactivating features:
+
+:file:`myconfig.hpp`: Activating and deactivating features
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+|es| has a large number of features that can be compiled into the binary.
+However, it is not recommended to actually compile in all possible
+features, as this will slow down |es| significantly. Instead, compile in only
+the features that are actually required. A strong gain in speed can be
+achieved by disabling all non-bonded interactions except for a single
+one, e.g. ``LENNARD_JONES``. For developers, it is also possible to turn on or off a
+number of debugging messages. The features and debug messages can be
+controlled via a configuration header file that contains C-preprocessor
+declarations. Subsection :ref:`Features` describes all available features. If a
+file named :file:`myconfig.hpp` is present in the build directory when ``cmake``
+is run, all features defined in it will be compiled in. If no such file exists,
+the configuration file :file:`src/config/myconfig-default.hpp` will be used
+instead, which turns on the default features.
+
+When you distinguish between the build and the source directory, the
+configuration header can be put in either of these. Note, however, that
+when a configuration header is found in both directories, the one in the
+build directory will be used.
+
+By default, the configuration header is called :file:`myconfig.hpp`.
+The configuration header can be used to compile different binary
+versions of with a different set of features from the same source
+directory. Suppose that you have a source directory :file:`$srcdir` and two
+build directories :file:`$builddir1` and :file:`$builddir2` that contain
+different configuration headers:
+
+*  :file:`$builddir1/myconfig.hpp`:
+
+  .. code-block:: c++
+
+    #define ELECTROSTATICS
+    #define LENNARD_JONES
+
+*  :file:`$builddir2/myconfig.hpp`:
+
+  .. code-block:: c++
+
+    #define LJCOS
+
+Then you can simply compile two different versions of |es| via:
+
+.. code-block:: bash
+
+    cd builddir1
+    cmake ..
+    make
+
+    cd builddir2
+    cmake ..
+    make
+
+To see what features were activated in :file:`myconfig.hpp`, run:
+
+.. code-block:: bash
+
+    ./pypresso
+
+and then in the Python interpreter:
+
+.. code-block:: python
+
+    import espressomd
+    print(espressomd.features())
+
+
 .. _cmake:
 
-cmake
-^^^^^
+``cmake``
+^^^^^^^^^
 
 In order to build the first step is to create a build directory in which
 cmake can be executed. In cmake, the *source directory* (that contains
@@ -615,10 +617,11 @@ are ever modified by the build process.
 
 Afterwards |es| can be run via calling :file:`./pypresso` from the command line.
 
+
 .. _ccmake:
 
-ccmake
-^^^^^^
+``ccmake``
+^^^^^^^^^^
 
 Optionally and for easier use, the curses interface to cmake can be used
 to configure |es| interactively.
@@ -681,10 +684,8 @@ build directory and create a new one.
 
 
 
-.. _make\: Compiling, testing and installing:
-
-``make``: Compiling, testing and installing
--------------------------------------------
+Compiling, testing and installing
+---------------------------------
 
 The command ``make`` is mainly used to compile the source code, but it
 can do a number of other things. The generic syntax of the ``make``
@@ -743,6 +744,9 @@ compilation process significantly.
 Running |es|
 ------------
 
+Executing a simulation script
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 |es| is implemented as a Python module. This means that you need to write a
 python script for any task you want to perform with |es|. In this chapter,
 the basic structure of the interface will be explained. For a practical
@@ -762,6 +766,9 @@ The ``pypresso`` script is just a wrapper in order to expose the |es| python
 module to the system's python interpreter by modifying the ``$PYTHONPATH``.
 Please see the following chapter :ref:`Setting up the system` describing how
 to actually write a simulation script for |es|.
+
+Running an interactive notebook
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Running the Jupyter interpreter requires using the ``ipypresso`` script, which
 is also located in the build directory (its name comes from the IPython
