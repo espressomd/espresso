@@ -265,12 +265,11 @@ Description of sample script
 .. note::
 
     The following features are required:
-    ``LB``, ``LB_BOUNDARIES``,
+    ``LB_BOUNDARIES``,
     ``EXTERNAL_FORCES``,
-    ``MASS``, ``OIF_LOCAL_FORCES``,
-    ``OIF_GLOBAL_FORCES``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
+    ``MASS``, ``SOFT_SPHERE``, ``MEMBRANE_COLLISION``
 
-The script described in this section is available in :file:`samples/object-in-fluid/two-cells.py` and also at
+The script described in this section is available in :file:`samples/object-in-fluid/motivation.py` and also at
 `http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso
 <https://web.archive.org/web/20180719231829/http://cell-in-fluid.fri.uniza.sk/en/content/oif-espresso>`_.
 
