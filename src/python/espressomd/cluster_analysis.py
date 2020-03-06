@@ -25,22 +25,22 @@ class Cluster(ScriptInterfaceHelper):
 
     Methods
     -------
-    particle_ids():
+    particle_ids()
         Returns list of particle ids in the cluster
 
-    particles():
+    particles()
         Returns an instance of ParticleSlice containing the particles in the cluster
 
-    size():
+    size()
         Returns the number of particles in the cluster
 
-    center_of_mass():
+    center_of_mass()
         center of mass of the cluster
 
-    longest_distance():
+    longest_distance()
         Longest distance between any combination of two particles in the cluster
 
-    fractal_dimension(dr=None):
+    fractal_dimension(dr=None)
         estimates the cluster's fractal dimension by fitting the number of
         particles :math:`n` in spheres of growing radius around the center of mass
         to :math:`c*r_g^d`, where :math:`r_g` is the radius of gyration of the
