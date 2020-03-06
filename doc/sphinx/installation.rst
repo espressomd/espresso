@@ -456,10 +456,6 @@ General features
 
 -  ``COLLISION_DETECTION`` Allows particles to be bound on collision.
 
--  ``H5MD`` Allows to write data to H5MD formatted hdf5 files.
-
-   .. seealso:: :ref:`Writing H5MD-files`
-
 In addition, there are switches that enable additional features in the
 integrator or thermostat:
 
@@ -581,6 +577,27 @@ Some of the above features are marked as EXPERIMENTAL. Activating these features
 
 
 
+External features
+^^^^^^^^^^^^^^^^^
+
+External features cannot be added to the :file:`myconfig.hpp` file by the user.
+They are added by CMake if the corresponding dependency was found on the
+system. Some of these external features are optional and must be activated
+using a CMake flag (see :ref:`Options and Variables`).
+
+- ``CUDA`` Enables GPU-specific features.
+
+- ``FFTW`` Enables features relying on the fast Fourier transforms, e.g. P3M.
+
+- ``H5MD`` Write data to H5MD-formatted hdf5 files (see :ref:`Writing H5MD-files`)
+
+- ``SCAFACOS`` Enables features relying on the ScaFaCoS library (see
+  :ref:`ScaFaCoS electrostatics`, :ref:`ScaFaCoS magnetostatics`).
+
+- ``GSL`` Enables features relying on the GNU Scientific Library, e.g.
+  :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
+
+
 .. _cmake:
 
 cmake
@@ -659,7 +676,7 @@ options are available:
 
 * ``WITH_TESTS``: Enable tests
 
-* ``WITH_SCAFACOS``: Build with Scafacos support
+* ``WITH_SCAFACOS``: Build with ScaFaCoS support
 
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers

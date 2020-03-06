@@ -119,6 +119,10 @@ For additional methods of the checkpointing class, see :class:`espressomd.checkp
 Writing H5MD-files
 ------------------
 
+.. note::
+
+    Requires ``H5MD`` external feature, enabled with ``-DWITH_HDF5=ON``.
+
 For large amounts of data it's a good idea to store it in the hdf5 (H5MD
 is based on hdf5) file format (see https://www.hdfgroup.org/ for
 details). Currently |es| supports some basic functions for writing simulation
