@@ -136,16 +136,16 @@ class Clusters:
 
     """Access to the clusters in the cluster structure.
 
-       Access is as follows:
+    Access is as follows:
 
-       * Number of clusters: len(clusters)
-       * Access a cluster via its id: clusters[id]
-       * Iterate over clusters::
+    * Number of clusters: len(clusters)
+    * Access a cluster via its id: clusters[id]
+    * Iterate over clusters::
 
-            for c in clusters:
+          for c in clusters:
 
-         where c will be a tuple containing the cluster id and the cluster object
-     """
+      where c will be a tuple containing the cluster id and the cluster object
+    """
 
     def __init__(self, cluster_structure):
         self.cluster_structure = cluster_structure

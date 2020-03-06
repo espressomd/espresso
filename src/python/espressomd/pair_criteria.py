@@ -46,13 +46,13 @@ class _PairCriterion(ScriptInterfaceHelper):
 class DistanceCriterion(_PairCriterion):
 
     """Pair criterion returning true, if particles are closer than a cutoff.
-       Periodic boundaries are treated via minimum image convention.
+    Periodic boundaries are treated via minimum image convention.
 
-       The following parameters can be passed to the constructor, changed via set_params()
-       and retrieved via get_params()
+    The following parameters can be passed to the constructor, changed via set_params()
+    and retrieved via get_params()
 
-       cut_off : :obj:`float`
-           distance cut off for the criterion
+    cut_off : :obj:`float`
+        distance cut off for the criterion
     """
     _so_name = "PairCriteria::DistanceCriterion"
     _so_creation_policy = "LOCAL"
@@ -63,14 +63,14 @@ class EnergyCriterion(_PairCriterion):
 
     """Pair criterion returning true, if the short range energy between the particles is >= the cutoff
 
-       Be aware that the short range energy contains the short range part of dipolar and electrostatic interactions,
-       but not the long range part.
+    Be aware that the short range energy contains the short range part of dipolar and electrostatic interactions,
+    but not the long range part.
 
-       The following parameters can be passed to the constructor, changed via set_params()
-       and retrieved via get_params()
+    The following parameters can be passed to the constructor, changed via set_params()
+    and retrieved via get_params()
 
-       cut_off : :obj:`float`
-           energy cut off for the criterion
+    cut_off : :obj:`float`
+        energy cut off for the criterion
     """
     _so_name = "PairCriteria::EnergyCriterion"
     _so_creation_policy = "LOCAL"
@@ -81,11 +81,11 @@ class BondCriterion(_PairCriterion):
 
     """Pair criterion returning true, if a pair bond of given type exists between them
 
-       The following parameters can be passed to the constructor, changed via set_params()
-       and retrieved via get_params()
+    The following parameters can be passed to the constructor, changed via set_params()
+    and retrieved via get_params()
 
-       bond_type : :obj:`int`
-           numeric type of the bond
+    bond_type : :obj:`int`
+        numeric type of the bond
     """
     _so_name = "PairCriteria::BondCriterion"
     _so_creation_policy = "LOCAL"
