@@ -26,18 +26,18 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    obs : Instance of :class:`espressomd.observables.Observable`.
+    obs : :class:`espressomd.observables.Observable`
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
 
     Methods
     -------
-    update
+    update()
         Update the accumulator (get the current values from the observable).
-    get_mean
+    get_mean()
         Returns the samples mean values of the respective observable with which the
         accumulator was initialized.
-    get_variance
+    get_variance()
         Returns the samples variance for the observable.
 
     """
@@ -58,17 +58,17 @@ class TimeSeries(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    obs : Instance of :class:`espressomd.observables.Observable`.
+    obs : :class:`espressomd.observables.Observable`
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
 
     Methods
     -------
-    update
+    update()
         Update the accumulator (get the current values from the observable).
-    time_series
+    time_series()
         Returns the recorded values of the observable.
-    clear
+    clear()
         Clear the data
 
     """
