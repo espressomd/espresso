@@ -46,6 +46,10 @@ class Cluster(ScriptInterfaceHelper):
         to :math:`c*r_g^d`, where :math:`r_g` is the radius of gyration of the
         particles within the sphere, and :math:`d` is the fractal dimension.
 
+        .. note::
+
+            Requires ``GSL`` external feature, enabled with ``-DWITH_GSL=ON``.
+
         Parameters
         ----------
         dr:
