@@ -2,22 +2,22 @@ configure_tutorial_target(
   TARGET tutorial_06
   DEPENDS
   06-active_matter.ipynb
-  FIGURES/friction.svg
-  FIGURES/pusher-puller.svg
-  FIGURES/enhanced.svg
-  FIGURES/geometry.svg
-  FIGURES/rectify.svg
-  FIGURES/rectification.svg
-  FIGURES/flow_field.svg
-  EXERCISES/enhanced_diffusion.py
-  EXERCISES/flow_field.py
-  EXERCISES/rectification_geometry.py
-  EXERCISES/rectification_simulation.py
-  SOLUTIONS/enhanced_diffusion.py
-  SOLUTIONS/flow_field.py
-  SOLUTIONS/rectification_geometry.py
-  SOLUTIONS/rectification_simulation.py
-  SOLUTIONS/solutions.txt
+  figures/friction.svg
+  figures/pusher-puller.svg
+  figures/enhanced.svg
+  figures/geometry.svg
+  figures/rectify.svg
+  figures/rectification.svg
+  figures/flow_field.svg
+  exercises/enhanced_diffusion.py
+  exercises/flow_field.py
+  exercises/rectification_geometry.py
+  exercises/rectification_simulation.py
+  solutions/enhanced_diffusion.py
+  solutions/flow_field.py
+  solutions/rectification_geometry.py
+  solutions/rectification_simulation.py
+  solutions/solutions.txt
 )
 
 nb_export(TARGET tutorial_06 SUFFIX "" FILE "06-active_matter.ipynb" HTML_RUN)

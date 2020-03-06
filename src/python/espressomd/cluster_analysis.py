@@ -21,40 +21,42 @@ from .particle_data import ParticleHandle, ParticleSlice
 @script_interface_register
 class Cluster(ScriptInterfaceHelper):
 
-    """Class representing a cluster of particles
+    """Class representing a cluster of particles.
 
     Methods
     -------
-    particle_ids():
+    particle_ids()
         Returns list of particle ids in the cluster
 
-    particles():
-        Returns an instance of ParticleSlice containing the particles in the cluster
-
-    size():
+    size()
         Returns the number of particles in the cluster
 
-    center_of_mass():
-        center of mass of the cluster
+    center_of_mass()
+        Center of mass of the cluster
 
-    longest_distance():
+    longest_distance()
         Longest distance between any combination of two particles in the cluster
 
-    fractal_dimension(dr=None):
-        estimates the cluster's fractal dimension by fitting the number of
+    fractal_dimension(dr=None)
+        Estimates the cluster's fractal dimension by fitting the number of
         particles :math:`n` in spheres of growing radius around the center of mass
         to :math:`c*r_g^d`, where :math:`r_g` is the radius of gyration of the
         particles within the sphere, and :math:`d` is the fractal dimension.
 
+        .. note::
+
+            Requires ``GSL`` external feature, enabled with ``-DWITH_GSL=ON``.
+
         Parameters
         ----------
-        dr:
+        dr: :obj:`float`
             Minimum increment for the radius of the spheres.
 
         Returns
         -------
         :obj:`tuple`:
-            Fractal_dimension, mean_square_residual.
+            Fractal dimension and mean square residual.
+
     """
     _so_name = "ClusterAnalysis::Cluster"
     _so_bind_methods = ("particle_ids", "size", "longest_distance",
@@ -63,6 +65,14 @@ class Cluster(ScriptInterfaceHelper):
     _so_creation_policy = "LOCAL"
 
     def particles(self):
+        """
+        Get particles in the cluster.
+
+        Returns
+        -------
+        :class:`espressomd.particle_data.ParticleSlice`
+
+        """
         return ParticleSlice(self.particle_ids())
 
 
@@ -71,19 +81,10 @@ class ClusterStructure(ScriptInterfaceHelper):
 
     """Cluster structure of a simulation system, and access to cluster analysis
 
-    Attributes
+    Parameters
     ----------
-    pair_criterion: classes derived from ``_PairCriterion``
+    pair_criterion: :class:`espressomd.pair_criteria._PairCriterion`
         Criterion to decide whether two particles are neighbors.
-
-    clusters: behaves like a read-only dictionary
-        Access to individual clusters in the cluster structure either via
-        ``cluster[i]``, where ``i`` is a (non-consecutive) integer cluster id
-        or via iteration::
-
-            for pair in clusters:
-
-        where pair contains the numeric id and the corresponding cluster object.
 
     """
     _so_name = "ClusterAnalysis::ClusterStructure"
@@ -122,18 +123,25 @@ class ClusterStructure(ScriptInterfaceHelper):
         return self.call_method("cluster_ids")
 
     def cid_for_particle(self, p):
-        """Returns cluster id for the particle (passed as ParticleHandle or particle id)"""
+        """Returns cluster id for the particle.
+
+        Parameters
+        ----------
+        p : :obj:`espressomd.particle_data.ParticleHandle` or :obj:`int` containing the particle id
+            Particle.
+
+        """
         if isinstance(p, ParticleHandle):
             return self.call_method("cid_for_particle", pid=p.id)
         if isinstance(p, int):
             return self.call_method("cid_for_particle", pid=p)
-        else:
-            raise TypeError(
-                "The particle has to be passed as instance of Particle handle or as an integer particle id")
+        raise TypeError(
+            "The particle has to be passed as instance of ParticleHandle or as an integer particle id")
 
     @property
     def clusters(self):
-        """Gives access to the clusters in the cluster structure via an instance of :any:`Clusters`."""
+        """Gives access to the clusters in the cluster structure via an
+        instance of :class:`Clusters`."""
         return self._clusters
 
 
@@ -141,16 +149,17 @@ class Clusters:
 
     """Access to the clusters in the cluster structure.
 
-       Access is as follows:
+    Access is as follows:
 
-       * Number of clusters: len(clusters)
-       * Access a cluster via its id: clusters[id]
-       * Iterate over clusters::
+    * number of clusters: ``len(clusters)``
+    * access a cluster via its id: ``clusters[id]``
+    * iterate over clusters::
 
-            for c in clusters:
+          for c in clusters:
 
-         where c will be a tuple containing the cluster id and the cluster object
-     """
+      where ``c`` will be a tuple containing the cluster id and the cluster object.
+
+    """
 
     def __init__(self, cluster_structure):
         self.cluster_structure = cluster_structure

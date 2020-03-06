@@ -1315,11 +1315,11 @@ cdef class ParticleHandle:
         """
         Checks the validity of the given bond:
 
-            - If the bondtype is given as an object or a numerical id
-            - If all partners are of type :obj:`int`
-            - If the number of partners satisfies the bond
-            - If the bond type used exists (is lower than ``n_bonded_ia``)
-            - If the number of bond partners fits the bond type
+        - If the bondtype is given as an object or a numerical id
+        - If all partners are of type :obj:`int`
+        - If the number of partners satisfies the bond
+        - If the bond type used exists (is lower than ``n_bonded_ia``)
+        - If the number of bond partners fits the bond type
 
         Throws an exception if any of these are not met.
 
@@ -1416,7 +1416,8 @@ cdef class ParticleHandle:
 
         Parameters
         ----------
-        _bond : bond to be deleted
+        _bond :
+            bond to be deleted
 
         See Also
         --------

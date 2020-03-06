@@ -259,7 +259,7 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
     r2: :obj:`float`
         Radius r2.
     length: :obj:`float`
-        Length of the conical frustum along `axis`.
+        Length of the conical frustum along ``axis``.
     axis: (3,) array_like of :obj:`float`
         Symmetry axis.
     center: (3,) array_like of :obj:`float`
