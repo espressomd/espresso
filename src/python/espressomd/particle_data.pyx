@@ -1416,7 +1416,8 @@ cdef class ParticleHandle:
 
         Parameters
         ----------
-        _bond : bond to be deleted
+        _bond :
+            bond to be deleted
 
         See Also
         --------
