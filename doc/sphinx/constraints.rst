@@ -245,8 +245,8 @@ Pictured is an example constraint with an ``Ellipsoid`` shape created with ::
 :class:`espressomd.shapes.Cylinder`
     A cylinder
 
-The resulting surface is a cylinder with center ``center`` and radius ``radius``.
-The ``length`` parameter is **half** of the cylinder length.
+The resulting surface is a cylinder with center ``center``, radius ``radius``
+and length ``length``.
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
@@ -402,7 +402,7 @@ Pictured is an example constraint with a ``Slitpore`` shape created with ::
 
 The resulting surface is a cylinder capped by hemispheres on both ends.
 Similar to :class:`espressomd.shapes.Cylinder`, it is positioned at ``center`` and has a radius ``radius``.
-The ``length`` parameter is **half** of the cylinder length, and does not include the contribution from the hemispherical ends.
+The ``length`` parameter is the cylinder length, and does not include the contribution from the hemispherical ends.
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
