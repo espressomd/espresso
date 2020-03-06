@@ -278,7 +278,7 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 
 ::
 
-    rhomboid = Rhomboid(pos=[5.0, 5.0, 5.0],
+    rhomboid = Rhomboid(corner=[5.0, 5.0, 5.0],
                         a=[1.0, 1.0, 0.0],
                         b=[0.0, 0.0, 1.0],
                         c=[0.0, 1.0, 0.0],
