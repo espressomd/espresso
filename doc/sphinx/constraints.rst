@@ -294,6 +294,8 @@ adjacent edges, defined by the three vectors connecting the corner with its thre
 
 Length and radius of the cylindrical pore can be set via the corresponding parameters (``length`` and ``radius``). The parameter ``center`` defines the central point of the pore. The orientation of the pore is given by the vector ``axis``, which points along the cylinder's symmetry axis.
 The pore openings are smoothed with torus segments, the radius of which can be set using the parameter ``smoothing_radius``.
+In the OpenGL visualizer, these torus segments are rendered as a half-torus instead of a quarter-torus.
+You can safely ignore this visual artifact, in the force/energy calculation, only a quarter-torus is used.
 
 
 .. figure:: figures/shape-simplepore.png
