@@ -14,7 +14,6 @@ struct Particle {
 } // namespace Testing
 
 namespace Observables {
-namespace Properties {
 template <> struct traits<Testing::Particle> {
   using Particle = Testing::Particle;
 
@@ -23,13 +22,12 @@ template <> struct traits<Testing::Particle> {
   double mass(Particle const &) const { return 1.; }
   double charge(Particle const &) const { return 0.; }
 };
-} // namespace Properties
 } // namespace Observables
 
 /* Check that the Properties::* functors correctly map to
  * the default traits */
 BOOST_AUTO_TEST_CASE(properties_) {
-  using namespace Observables::Properties;
+  using namespace Observables;
 
   Testing::Particle p;
 

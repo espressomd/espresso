@@ -5,7 +5,7 @@
 
 #include <observables/algorithms.hpp>
 
-using namespace Observables::Algorithms;
+using namespace Observables;
 
 BOOST_AUTO_TEST_CASE(algorithms) {
   auto identity = [](auto const &p) { return p; };

@@ -4,8 +4,6 @@
 
 #include <observables/observable.hpp>
 
-using namespace Observables::Observable;
-
 namespace Testing {
 template <class T> struct strip_args {
   template <class... Args> decltype(auto) operator()(Args...) const {
@@ -17,8 +15,9 @@ template <class T> struct strip_args {
 BOOST_AUTO_TEST_CASE(product_) {
   using Testing::strip_args;
 
-  auto prod = Product<strip_args<std::integral_constant<int, 2>>,
-                      strip_args<std::integral_constant<int, 3>>>{};
+  auto prod =
+      Observables::Product<strip_args<std::integral_constant<int, 2>>,
+                           strip_args<std::integral_constant<int, 3>>>{};
 
   BOOST_CHECK_EQUAL((prod.template operator()<int, int>(0)), 2 * 3);
 }

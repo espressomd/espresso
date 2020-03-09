@@ -2,7 +2,6 @@
 #define OBSERVABLES_PROPERTIES_HPP
 
 namespace Observables {
-namespace Properties {
 template <class DoF> struct traits;
 
 struct Position {
@@ -36,7 +35,6 @@ struct Charge {
     return particle_traits.charge(p);
   }
 };
-} // namespace Properties
 } // namespace Observables
 
 #endif // OBSERVABLES_PROPERTIES_HPP
