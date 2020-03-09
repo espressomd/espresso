@@ -4,7 +4,6 @@
 #include <utility>
 
 namespace Observables {
-namespace Algorithms {
 namespace detail {
 struct WeightedSum {
   template <class ParticleRange, class ValueOp, class WeightOp>
@@ -53,6 +52,5 @@ struct Average {
                              [](auto const &) { return 1; });
   }
 };
-} // namespace Algorithms
 } // namespace Observables
 #endif // ALGORITHMS_HPP

@@ -4,7 +4,6 @@
 #include "properties.hpp"
 
 namespace Observables {
-namespace Observable {
 /**
  * @brief Meta-Observable that returns the product of two
  *        other observables.
@@ -20,7 +19,7 @@ template <class Left, class Right> struct Product : Left, Right {
   Product(Left left = {}, Right right = {})
       : Left(std::move(left)), Right(std::move(right)) {}
 
-  template <class Particle, class Traits = Properties::traits<Particle>>
+  template <class Particle, class Traits = traits<Particle>>
   decltype(auto) operator()(Particle const &p,
                             Traits const &traits = {}) const {
     return Left::template operator()<Particle, Traits>(p, traits) *
@@ -28,11 +27,9 @@ template <class Left, class Right> struct Product : Left, Right {
   }
 };
 
-using Momentum = Product<Properties::Mass, Properties::Velocity>;
-template <class Observable>
-using Flux = Product<Observable, Properties::Velocity>;
-using ElectricCurrent = Flux<Properties::Charge>;
-} // namespace Observable
+using Momentum = Product<Mass, Velocity>;
+template <class Observable> using Flux = Product<Observable, Velocity>;
+using ElectricCurrent = Flux<Charge>;
 } // namespace Observables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP
