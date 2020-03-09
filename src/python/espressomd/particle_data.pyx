@@ -884,7 +884,7 @@ cdef class ParticleHandle:
                     cdef Vector3d gamma
 
                     # We accept a single number by just repeating it
-                    if not isinstance(_gamma, collections.Iterable):
+                    if not isinstance(_gamma, collections.abc.Iterable):
                         _gamma = 3 * [_gamma]
 
                     check_type_or_throw_except(
@@ -942,7 +942,8 @@ cdef class ParticleHandle:
                     def __set__(self, _gamma_rot):
                         cdef Vector3d gamma_rot
                         # We accept a single number by just repeating it
-                        if not isinstance(_gamma_rot, collections.Iterable):
+                        if not isinstance(
+                                _gamma_rot, collections.abc.Iterable):
                             _gamma_rot = 3 * [_gamma_rot]
 
                         check_type_or_throw_except(
