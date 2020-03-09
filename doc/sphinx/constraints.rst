@@ -81,10 +81,11 @@ that constraint.
 There are two additional optional parameters
 to fine tune the behavior of the constraint. If ``penetrable`` is set to
 ``True`` then particles can move through the constraint. In this case the
-other option ``only_positive`` controls whether the particle is subjected to the
-interaction potential of the wall. If set to ``False``, then the constraint
-will only act in the direction of the normal vector.
-
+other option ``only_positive`` controls where the particle is subjected to the
+interaction potential (see :ref:`Available options`).
+If the ``penetrable`` option is ignored or is set to ``False``, the
+constraint cannot be violated, i.e. no
+particle can go through the constraint surface (|es| will exit if it does).
 If we wanted to add a non-penetrable pore constraint to our simulation,
 we could do the following::
 
@@ -95,7 +96,8 @@ we could do the following::
     system.constraints.add(pore_constraint)
 
 Interactions between the pore and other particles are then defined
-as usual (:ref:`Non-bonded interactions`).
+as usual (:ref:`Non-bonded interactions`) to prevent particles from crossing
+the shape surface.
 
 .. _Deleting a constraint:
 
@@ -481,11 +483,6 @@ Pictured is an example constraint with a ``Hollowcone`` shape created with ::
     system.constraints.add(shape=hollowcone, particle_type=0, penetrable=True)
 
 
-For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
-``pore`` and ``stomatocyte``, constraints are able to be penetrated if
-``penetrable`` is set to ``True``. Otherwise, when the ``penetrable`` option is
-ignored or is set to ``False``, the constraint cannot be violated, i.e. no
-particle can go through the constraint surface (|es| will exit if it does).
 
 .. _Available options:
 
@@ -563,8 +560,8 @@ the exception of a planar wall. For this, the is no ``direction`` option, but
 the ``normal`` vector of the wall points in the direction that is considered to
 yield positive distances.  Outside its use in constraints, shapes can also be
 used as a way to define LB boundary nodes. In this case, negative distances
-define nodes which are part of a boundary, please refer to :ref:`Using shapes
-as lattice-Boltzmann boundary`.
+define nodes which are part of a boundary (please refer to :ref:`Using shapes
+as lattice-Boltzmann boundary`).
 
 
 .. _External Fields:
