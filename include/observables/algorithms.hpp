@@ -3,10 +3,9 @@
 #include <numeric>
 #include <utility>
 
+namespace Observables {
 namespace Algorithms {
-
 namespace detail {
-
 struct WeightedSum {
   template <class ParticleRange, class ValueOp, class WeightOp>
   auto operator()(ParticleRange const &particles, ValueOp value_op,
@@ -22,10 +21,6 @@ struct WeightedSum {
     return std::accumulate(std::begin(particles), std::end(particles),
                            std::pair<value_op_type, weight_op_type>(), func);
   }
-};
-
-struct One {
-  template <class Particle> auto operator()(Particle const &p) { return 1; }
 };
 } // namespace detail
 
@@ -54,9 +49,10 @@ struct WeightedAverage {
 struct Average {
   template <class ParticleRange, class ValueOp>
   auto operator()(ParticleRange const &particles, ValueOp &&value_op) {
-    return WeightedAverage()(particles, value_op, detail::One{});
+    return WeightedAverage()(particles, value_op,
+                             [](auto const &) { return 1; });
   }
 };
-
 } // namespace Algorithms
+} // namespace Observables
 #endif // ALGORITHMS_HPP
