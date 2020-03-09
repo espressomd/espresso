@@ -431,7 +431,7 @@ inline Utils::Vector4d bd_random_walk_rot(BrownianThermostat const &brownian,
         sigma_pos = Utils::Vector3d{};
       }
     } else {
-      // Defaut values for both
+      // Default values for both
       sigma_pos = brownian.sigma_pos_rotation;
     }
   }

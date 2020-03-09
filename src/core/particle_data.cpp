@@ -997,7 +997,7 @@ int remove_particle(int p_id) {
 }
 
 /**
- * @brief Remove all bonds on particle involing other particle.
+ * @brief Remove all bonds on particle involving another particle.
  *
  * @param p Particle whose bond list is modified.
  * @param id Bonds involving this id are removed.
