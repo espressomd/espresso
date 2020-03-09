@@ -212,7 +212,7 @@ class LBVelocityProfile(Observable):
     """Calculates the LB fluid velocity profile.
 
     This observable samples the fluid in on a regular grid defined by the variables
-    ``sampling*``. Note that a small delta leads to a large number of sample
+    ``sampling_*``. Note that a small delta leads to a large number of sample
     points and carries a performance cost.
 
     .. WARNING::
@@ -461,7 +461,7 @@ class BondDihedrals(Observable):
 @script_interface_register
 class StressTensor(Observable):
 
-    """Calculates the total stress tensor. See :ref:`stress tensor`)
+    """Calculates the total stress tensor. See :ref:`stress tensor`.
 
     """
     _so_name = "Observables::StressTensor"
@@ -484,16 +484,16 @@ class DPDStress(Observable):
 @script_interface_register
 class CylindricalDensityProfile(Observable):
 
-    """Calculates the particle density in polar coordinates.
+    """Calculates the particle density in cylindrical coordinates.
 
     Parameters
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+             Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+           Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -520,16 +520,16 @@ class CylindricalDensityProfile(Observable):
 @script_interface_register
 class CylindricalFluxDensityProfile(Observable):
 
-    """Calculates the particle flux density in polar coordinates.
+    """Calculates the particle flux density in cylindrical coordinates.
 
     Parameters
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+             Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+           Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -556,16 +556,17 @@ class CylindricalFluxDensityProfile(Observable):
 @script_interface_register
 class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
 
-    """Calculates the LB fluid flux density at the particle positions in polar coordinates.
+    """Calculates the LB fluid flux density at the particle positions in
+    cylindrical coordinates.
 
     Parameters
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+             Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+           Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -592,16 +593,17 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
 @script_interface_register
 class CylindricalLBVelocityProfileAtParticlePositions(Observable):
 
-    """Calculates the LB fluid velocity at the particle positions in polar coordinates.
+    """Calculates the LB fluid velocity at the particle positions in
+    cylindrical coordinates.
 
     Parameters
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+             Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+           Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -628,16 +630,16 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
 @script_interface_register
 class CylindricalVelocityProfile(Observable):
 
-    """Calculates the particle velocity profile in polar coordinates.
+    """Calculates the particle velocity profile in cylindrical coordinates.
 
     Parameters
     ----------
     ids : array_like of :obj:`int`
           The ids of (existing) particles to take into account.
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+             Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+           Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
@@ -664,18 +666,18 @@ class CylindricalVelocityProfile(Observable):
 @script_interface_register
 class CylindricalLBVelocityProfile(Observable):
 
-    """Calculates the LB fluid velocity profile in polar coordinates.
+    """Calculates the LB fluid velocity profile in cylindrical coordinates.
 
-    This observable samples the fluid in on a regular grid defined by the variables
-    ``sampling*``. Note that a small delta leads to a large number of sample
-    points and carries a performance cost.
+    This observable samples the fluid in on a regular grid defined by variable
+    ``sampling_density``. Note that a small delta leads to a large number of
+    sample points and carries a performance cost.
 
     Parameters
     ----------
     center : (3,) array_like of :obj:`float`
-             Position of the center of the polar coordinate system for the histogram.
+             Position of the center of the cylindrical coordinate system for the histogram.
     axis : (3,) array_like of :obj:`float`
-           Orientation vector of the ``z``-axis of the polar coordinate system for the histogram.
+           Orientation vector of the ``z``-axis of the cylindrical coordinate system for the histogram.
     n_r_bins : :obj:`int`
                Number of bins in radial direction.
     n_phi_bins : :obj:`int`
