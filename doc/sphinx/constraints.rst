@@ -79,13 +79,13 @@ The extra argument ``particle_type`` specifies the non-bonded interaction to be 
 that constraint.
 
 There are two additional optional parameters
-to fine tune the behavior of the constraint. If ``penetrable`` is set to
+to fine-tune the behavior of the constraint. If ``penetrable`` is set to
 ``True`` then particles can move through the constraint. In this case the
 other option ``only_positive`` controls where the particle is subjected to the
 interaction potential (see :ref:`Available options`).
 If the ``penetrable`` option is ignored or is set to ``False``, the
 constraint cannot be violated, i.e. no
-particle can go through the constraint surface (|es| will exit if it does).
+particle can go through the constraint surface (|es| will exit if any does).
 If we wanted to add a non-penetrable pore constraint to our simulation,
 we could do the following::
 
@@ -163,7 +163,7 @@ Available shapes
 
 :class:`espressomd.shapes`
 
-Python Syntax::
+Python syntax::
 
     import espressomd from espressomd.shapes import <SHAPE>
     system = espressomd.System()
@@ -556,9 +556,9 @@ make sense.
    :height: 8.00000cm
 
 Most shapes have a clear interpretation of what is inside versus outside with
-the exception of a planar wall. For this, the is no ``direction`` option, but
+the exception of a planar wall. For this, there is no ``direction`` option, but
 the ``normal`` vector of the wall points in the direction that is considered to
-yield positive distances.  Outside its use in constraints, shapes can also be
+yield positive distances.  Outside their use in constraints, shapes can also be
 used as a way to define LB boundary nodes. In this case, negative distances
 define nodes which are part of a boundary (please refer to :ref:`Using shapes
 as lattice-Boltzmann boundary`).
