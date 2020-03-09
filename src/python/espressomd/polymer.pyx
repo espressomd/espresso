@@ -219,7 +219,7 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
             "bond argument must be an instance of espressomd.interaction.BondedInteraction")
     if not isinstance(system, System):
         raise TypeError(
-            "System argument must be an instance of a espressom System")
+            "System argument must be an instance of an espressomd System")
 
     check_type_or_throw_except(
         MPC, 1, int, "MPC must be one int")
