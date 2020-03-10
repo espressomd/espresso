@@ -29,7 +29,7 @@ if(PYTHONINTERP_FOUND)
     endif()
   endif()
 else()
-  message(STATUS "To find NumPy Python interpretator is required to be found.")
+  message(STATUS "To find NumPy, the Python interpreter must be found first.")
 endif()
 
 include(FindPackageHandleStandardArgs)
