@@ -70,7 +70,9 @@ foreach(cython_file ${cython_SRC})
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()
       add_custom_command(OUTPUT ${outputpath}
-                         COMMAND ${CYTHON_EXECUTABLE} ${CYTHON_FLAGS} --cplus
+                         COMMAND ${CYTHON_EXECUTABLE}
+                         "$<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>"
+                         -3 --cplus
                          --directive embedsignature=True
                          --directive binding=True
                          -I ${CMAKE_CURRENT_SOURCE_DIR}

@@ -252,13 +252,6 @@ if(WITH_PYTHON)
       OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif(NOT PYTHON_INSTDIR)
 
-  set(CYTHON_FLAGS "-3"
-      CACHE STRING "Flags used by the Cython compiler during all build types.")
-
-  if(WARNINGS_ARE_ERRORS)
-    set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
-  endif()
-
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
 
