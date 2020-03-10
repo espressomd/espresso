@@ -120,10 +120,6 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 # Libraries
 #
 
-if(WITH_CUDA)
-  find_package(CUDACompiler REQUIRED)
-endif(WITH_CUDA)
-
 find_package(PythonInterp 3.3 REQUIRED)
 
 if(WITH_PYTHON)
@@ -284,6 +280,11 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+# CUDA compiler
+if(WITH_CUDA)
+  find_package(CUDACompiler REQUIRED)
+endif(WITH_CUDA)
 
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
