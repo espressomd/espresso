@@ -59,8 +59,8 @@ cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
     extern double max_cut
     extern int max_seen_particle_type
     extern double min_global_cut
-    double recalc_maximal_cutoff_bonded()
-    double recalc_maximal_cutoff_nonbonded()
+    double maximal_cutoff_bonded()
+    double maximal_cutoff_nonbonded()
 
 cdef extern from "rattle.hpp":
     extern int n_rigidbonds

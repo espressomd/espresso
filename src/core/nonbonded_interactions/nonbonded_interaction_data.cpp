@@ -180,7 +180,7 @@ static double recalc_maximal_cutoff(const IA_parameters &data) {
   return max_cut_current;
 }
 
-double recalc_maximal_cutoff_nonbonded() {
+double maximal_cutoff_nonbonded() {
   auto max_cut_nonbonded = INACTIVE_CUTOFF;
 
   for (auto &data : ia_params) {
@@ -194,8 +194,8 @@ double recalc_maximal_cutoff_nonbonded() {
 void recalc_maximal_cutoff() {
   max_cut = min_global_cut;
   auto const max_cut_long_range = recalc_long_range_cutoff();
-  auto const max_cut_bonded = recalc_maximal_cutoff_bonded();
-  auto const max_cut_nonbonded = recalc_maximal_cutoff_nonbonded();
+  auto const max_cut_bonded = maximal_cutoff_bonded();
+  auto const max_cut_nonbonded = maximal_cutoff_nonbonded();
 
   max_cut = std::max(max_cut, max_cut_long_range);
   max_cut = std::max(max_cut, max_cut_bonded);

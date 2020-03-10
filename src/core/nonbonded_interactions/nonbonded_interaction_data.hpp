@@ -280,10 +280,10 @@ extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded
  *  interactions).
  */
-double recalc_maximal_cutoff_nonbonded();
+double maximal_cutoff_nonbonded();
 /** Maximal interaction cutoff (bonded interactions).
  */
-double recalc_maximal_cutoff_bonded();
+double maximal_cutoff_bonded();
 
 /** Minimal global interaction cutoff. Particles with a distance
  *  smaller than this are guaranteed to be available on the same node
