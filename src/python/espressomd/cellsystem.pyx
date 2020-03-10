@@ -19,7 +19,7 @@
 from .grid cimport node_grid
 from . cimport integrate
 from .globals cimport FIELD_SKIN, FIELD_NODEGRID, FIELD_MAXNUMCELLS, FIELD_MINNUMCELLS
-from .globals cimport max_cut, verlet_reuse, skin
+from .globals cimport verlet_reuse, skin
 from .globals cimport mpi_bcast_parameter
 from .cellsystem cimport dd, cell_structure, min_num_cells, max_num_cells
 from .cellsystem cimport calc_processor_min_num_cells
@@ -76,7 +76,6 @@ cdef class CellSystem:
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["max_cut"] = max_cut
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])

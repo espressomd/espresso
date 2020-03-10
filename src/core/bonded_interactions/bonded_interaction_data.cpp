@@ -77,7 +77,7 @@ auto cutoff(int type, Bond_parameters const &bp) {
   }
 }
 
-double recalc_maximal_cutoff_bonded() {
+double maximal_cutoff_bonded() {
   auto const max_cut_bonded =
       boost::accumulate(bonded_ia_params, -1.,
                         [](auto max_cut, Bonded_ia_parameters const &bond) {

@@ -45,7 +45,7 @@ from .comfixed import ComFixed
 from .globals import Globals
 from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
 from .globals cimport integ_switch, max_oif_objects, sim_time
-from .globals cimport recalc_maximal_cutoff_bonded, recalc_maximal_cutoff_nonbonded, mpi_bcast_parameter
+from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
 from .utils cimport handle_errors, check_type_or_throw_except
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
@@ -275,11 +275,11 @@ cdef class System:
 
     property max_cut_nonbonded:
         def __get__(self):
-            return recalc_maximal_cutoff_nonbonded()
+            return maximal_cutoff_nonbonded()
 
     property max_cut_bonded:
         def __get__(self):
-            return recalc_maximal_cutoff_bonded()
+            return maximal_cutoff_bonded()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
