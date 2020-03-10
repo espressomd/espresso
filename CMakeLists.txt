@@ -240,24 +240,10 @@ find_package(PythonInterp 3.5 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
-  execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} -c
-            "import distutils.sysconfig as cg; print(cg.get_python_inc())"
-    OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  find_package(PythonHeaders REQUIRED)
   find_package(NumPy REQUIRED)
-  if(NOT PYTHON_INSTDIR)
-    execute_process(
-      COMMAND
-        ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
-      OUTPUT_VARIABLE PYTHON_INSTDIR
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif(NOT PYTHON_INSTDIR)
-
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
-
 
 find_package(FFTW3)
 if(FFTW3_FOUND)
