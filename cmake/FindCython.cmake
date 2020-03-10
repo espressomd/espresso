@@ -51,8 +51,6 @@ if(CYTHON_STATUS EQUAL 0)
 
   if(${CYTHON_VERSION} VERSION_LESS ${CYTHON_REQUIRED_VERSION})
     message(FATAL_ERROR "Espresso needs at least Cython version ${CYTHON_REQUIRED_VERSION}, found version ${CYTHON_VERSION}")
-  else()
-    message(STATUS "Found Cython version ${CYTHON_VERSION}")
   endif()
 else()
   message(FATAL_ERROR "Espresso needs at least Cython version ${CYTHON_REQUIRED_VERSION}, but could not find it")
