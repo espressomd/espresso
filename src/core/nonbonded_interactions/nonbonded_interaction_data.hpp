@@ -275,8 +275,6 @@ extern std::vector<IA_parameters> ia_params;
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
 
-/** Maximal interaction cutoff (real space/short range interactions). */
-extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded
  *  interactions).
  */
@@ -344,11 +342,9 @@ void make_particle_type_exist_local(int type);
  */
 void realloc_ia_params(int nsize);
 
-/** Calculate the maximal cutoff of all real space interactions.
- *  These are: bonded, non bonded + real space electrostatics.
- *  The result is stored in the global variable \ref max_cut.
+/** Calculate the maximal cutoff of all pair interactions.
  */
-void recalc_maximal_cutoff();
+double maximal_cutoff();
 
 /**
  * @brief Reset all interaction parameters to their defaults.

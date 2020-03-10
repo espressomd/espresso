@@ -352,6 +352,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
+    auto const max_cut = maximal_cutoff();
     if (max_cut <= 0.0) {
       runtimeErrorMsg()
           << "cannot automatically determine skin, please set it manually";

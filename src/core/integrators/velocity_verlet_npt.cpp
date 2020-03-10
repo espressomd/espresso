@@ -149,7 +149,6 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
   /* fast box length update */
   grid_changed_box_l(box_geo);
-  recalc_maximal_cutoff();
   cells_on_geometry_change(CELL_FLAG_FAST);
 }
 

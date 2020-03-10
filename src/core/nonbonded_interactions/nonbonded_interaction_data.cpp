@@ -48,8 +48,6 @@ std::vector<IA_parameters> ia_params;
 
 double min_global_cut = INACTIVE_CUTOFF;
 
-double max_cut = INACTIVE_CUTOFF;
-
 /*****************************************
  * function prototypes
  *****************************************/
@@ -191,8 +189,8 @@ double maximal_cutoff_nonbonded() {
   return max_cut_nonbonded;
 }
 
-void recalc_maximal_cutoff() {
-  max_cut = min_global_cut;
+double maximal_cutoff() {
+  auto max_cut = min_global_cut;
   auto const max_cut_long_range = recalc_long_range_cutoff();
   auto const max_cut_bonded = maximal_cutoff_bonded();
   auto const max_cut_nonbonded = maximal_cutoff_nonbonded();
@@ -200,6 +198,8 @@ void recalc_maximal_cutoff() {
   max_cut = std::max(max_cut, max_cut_long_range);
   max_cut = std::max(max_cut, max_cut_bonded);
   max_cut = std::max(max_cut, max_cut_nonbonded);
+
+  return max_cut;
 }
 
 /** This function increases the LOCAL ia_params field for non-bonded

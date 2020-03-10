@@ -56,7 +56,6 @@ cdef extern from "integrate.hpp":
     extern double skin
 
 cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-    extern double max_cut
     extern int max_seen_particle_type
     extern double min_global_cut
     double maximal_cutoff_bonded()

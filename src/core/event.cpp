@@ -240,7 +240,6 @@ void on_coulomb_change() {
 void on_short_range_ia_change() {
   invalidate_obs();
 
-  recalc_maximal_cutoff();
   cells_on_geometry_change(0);
 
   recalc_forces = true;
@@ -272,11 +271,9 @@ void on_resort_particles(const ParticleRange &particles) {
 }
 
 void on_boxl_change() {
-
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
-  recalc_maximal_cutoff();
   cells_on_geometry_change(0);
 
 /* Now give methods a chance to react to the change in box length */
@@ -326,7 +323,6 @@ void on_parameter_change(int field) {
     on_boxl_change();
     break;
   case FIELD_MIN_GLOBAL_CUT:
-    recalc_maximal_cutoff();
     cells_on_geometry_change(0);
     break;
   case FIELD_SKIN:
