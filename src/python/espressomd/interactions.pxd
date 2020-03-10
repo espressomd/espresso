@@ -40,6 +40,7 @@ cdef extern from "TabulatedPotential.hpp":
 cdef extern from "dpd.hpp":
     cdef struct DPDParameters:
         double gamma
+        double k
         double cutoff
         int wf
         double pref
@@ -282,7 +283,7 @@ IF GAUSSIAN:
 IF DPD:
     cdef extern from "dpd.hpp":
         int dpd_set_params(int part_type_a, int part_type_b,
-                           double gamma, double r_c, int wf,
+                           double gamma, double k, double r_c, int wf,
                            double tgamma, double tr_c, int twf)
 
 IF HAT:
