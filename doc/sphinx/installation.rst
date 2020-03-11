@@ -616,6 +616,10 @@ having multiple build directories you can build several variants of |es|,
 each variant having different activated features, and for as many
 platforms as you want.
 
+Once you've run ``ccmake``, you can list the configured variables with
+``cmake -LAH -N | less`` (uses a pager) or with ``ccmake ..`` and pressing
+key ``t`` to toggle the advanced mode on (uses the curses interface).
+
 **Example:**
 
 When the source directory is :file:`srcdir` (the files where unpacked to this
@@ -684,8 +688,8 @@ options are available:
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the :file:`CMakeLists.txt` file is set to ON the corresponding
-option is created if the value of the option is set to OFF the
+When the value in the :file:`CMakeLists.txt` file is set to ON, the corresponding
+option is created; if the value of the option is set to OFF, the
 corresponding option is not created. These options can also be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
