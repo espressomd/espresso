@@ -27,6 +27,7 @@ if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
 endif()
 
 set(CMAKE_CUDA_COMPILER ${CMAKE_CXX_COMPILER})
+set(CMAKE_CUDA_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
 set(CUDA 1)
 
 execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${CMAKE_CXX_FLAGS}
@@ -47,8 +48,8 @@ message(STATUS "Found CUDA-capable host compiler: ${CMAKE_CUDA_COMPILER}")
 message(STATUS "Found CUDA version: ${CUDA_VERSION}")
 message(STATUS "Found CUDA installation: ${CUDA_DIR}")
 
-if(CUDA_VERSION VERSION_LESS 7.0)
-  message(FATAL_ERROR "CUDA version does not match requirements.")
+if(CUDA_VERSION VERSION_LESS ${CMAKE_CUDA_STANDARD})
+  message(FATAL_ERROR "${CMAKE_CUDA_COMPILER} was built for CUDA ${CUDA_VERSION}: version does not match requirements (CUDA ${CMAKE_CUDA_STANDARD}).")
 endif()
 
 find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
@@ -78,4 +79,6 @@ function(add_gpu_library)
 endfunction()
 
 include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerClang REQUIRED_VARS CMAKE_CUDA_COMPILER )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerClang
+                                   REQUIRED_VARS CMAKE_CUDA_COMPILER
+                                   VERSION_VAR CMAKE_CUDA_COMPILER_VERSION )

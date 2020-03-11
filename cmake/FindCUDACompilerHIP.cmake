@@ -25,6 +25,15 @@ set(CMAKE_CUDA_COMPILER ${HIP_HIPCC_EXECUTABLE})
 set(CUDA 1)
 set(HIP 1)
 
+execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
+                OUTPUT_VARIABLE HIPCC_VERSION_STRING)
+
+string(REGEX
+       REPLACE "^.*HCC [Cc]lang version ([0-9\.]+).*\$"
+               "\\1"
+               CMAKE_CUDA_COMPILER_VERSION
+               "${HIPCC_VERSION_STRING}")
+
 set(HCC_PATH "${HIP_ROOT_DIR}")
 
 list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -I${ROCM_HOME}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++${CMAKE_CXX_STANDARD}")
@@ -42,4 +51,6 @@ function(add_gpu_library)
 endfunction()
 
 include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerHIP REQUIRED_VARS CMAKE_CUDA_COMPILER )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerHIP
+                                   REQUIRED_VARS CMAKE_CUDA_COMPILER
+                                   VERSION_VAR CMAKE_CUDA_COMPILER_VERSION )

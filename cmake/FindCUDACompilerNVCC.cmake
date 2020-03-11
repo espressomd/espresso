@@ -24,6 +24,15 @@
 set(CMAKE_CUDA_COMPILER ${CUDA_NVCC_EXECUTABLE})
 set(CUDA 1)
 
+execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
+                OUTPUT_VARIABLE NVCC_VERSION_STRING)
+
+string(REGEX
+       REPLACE "^.*Cuda compilation tools, release [0-9\.]+, V([0-9\.]+).*\$"
+               "\\1"
+               CMAKE_CUDA_COMPILER_VERSION
+               "${NVCC_VERSION_STRING}")
+
 if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
   get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
   get_filename_component(NVCC_EXECUTABLE_DIRNAME "${NVCC_EXECUTABLE_DIRNAME}" DIRECTORY)
@@ -54,4 +63,6 @@ function(add_gpu_library)
 endfunction()
 
 include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerNVCC REQUIRED_VARS CMAKE_CUDA_COMPILER )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerNVCC
+                                   REQUIRED_VARS CMAKE_CUDA_COMPILER
+                                   VERSION_VAR CMAKE_CUDA_COMPILER_VERSION )
