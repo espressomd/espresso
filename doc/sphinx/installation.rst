@@ -689,11 +689,6 @@ For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
 ``-D ROCM_HOME=<path_to_rocm>`` variable becomes available, with default value
 ``ROCM_HOME=/opt/rocm``.
 
-In the rare event when working with cmake and you want to have a totally
-clean build (for example because you switched the compiler), remove the
-build directory and create a new one.
-
-
 
 Compiling, testing and installing
 ---------------------------------
