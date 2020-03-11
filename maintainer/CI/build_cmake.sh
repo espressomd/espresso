@@ -130,7 +130,10 @@ if [ "${with_coverage}" = true ]; then
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"
-cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
+cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags}"
+if [ "${with_cuda}" = true ]; then
+  cmake_params="${cmake_params} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
+fi
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
 if [ "${with_ccache}" = true ]; then
