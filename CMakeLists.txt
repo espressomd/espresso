@@ -30,7 +30,11 @@ if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
   cmake_policy(SET CMP0074 NEW)
 endif()
 
+# C++ standard
 enable_language(CXX)
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(PROJECT_VERSION "4.2-dev")
 
@@ -122,6 +126,11 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 #
 # Libraries
 #
+
+# CUDA compiler
+if(WITH_CUDA)
+  find_package(CUDACompiler REQUIRED)
+endif(WITH_CUDA)
 
 find_package(PythonInterp 3.5 REQUIRED)
 
@@ -278,16 +287,6 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 #
 # Flags
 #
-
-# C++ standard
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-# CUDA compiler
-if(WITH_CUDA)
-  find_package(CUDACompiler REQUIRED)
-endif(WITH_CUDA)
 
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
