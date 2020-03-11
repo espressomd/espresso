@@ -74,7 +74,6 @@ else()
     list(APPEND HIP_HCC_FLAGS "-pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments")
     if(WARNINGS_ARE_ERRORS)
       list(APPEND HIP_HCC_FLAGS "-Werror")
-      set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
     endif()
 
     find_library(ROCFFT_LIB name "rocfft" PATHS "${ROCM_HOME}/lib")
