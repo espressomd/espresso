@@ -58,7 +58,7 @@ set(CMAKE_FIND_FRAMEWORK LAST)
 
 option(WITH_PYTHON "Build with Python bindings"  ON)
 option(WITH_GSL    "Build with GSL support"  ON)
-option(WITH_CUDA   "Build with GPU support"  ON)
+option(WITH_CUDA   "Build with GPU support"  OFF)
 option(WITH_HDF5   "Build with HDF5 support" ON)
 option(WITH_TESTS  "Enable tests"            ON)
 option(WITH_SCAFACOS "Build with Scafacos support" OFF)
