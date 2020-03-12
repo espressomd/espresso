@@ -1255,7 +1255,7 @@ class openGLLive:
                 self.specs['LB_arrow_quality'])
 
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
-    # COLORS, MATERIALS ETC..
+    # COLORS, MATERIALS ETC.
     def _modulo_indexing(self, l, t):
         return l[t % len(l)]
 
@@ -1388,7 +1388,7 @@ class openGLLive:
                             txt, self.text_color)
             y += 1
 
-    # CALLED ION WINDOW POSITION/SIZE CHANGE
+    # CALLED ON WINDOW POSITION/SIZE CHANGE
     def _reshape_window(self, w, h):
         OpenGL.GL.glViewport(0, 0, w, h)
         OpenGL.GL.glMatrixMode(OpenGL.GL.GL_PROJECTION)
@@ -2012,8 +2012,6 @@ class HollowConicalFrustum(Shape):
     def _draw_using_gle(self):
         set_solid_material(self.color, self.material)
         OpenGL.GL.glPushMatrix()
-        quadric = OpenGL.GLU.gluNewQuadric()
-
         # basic position and orientation
         OpenGL.GL.glTranslate(self.center[0], self.center[1], self.center[2])
         ax, rx, ry = rotation_helper(self.axis)
@@ -2043,8 +2041,6 @@ class HollowConicalFrustum(Shape):
         OpenGL.GLE.gleSetNumSides(max(90, 3 * self.quality))
         OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], 0.5 * (self.radius_1 + self.radius_2), 0., 0., 0.,
                              [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
-
-        OpenGL.GLU.gluDeleteQuadric(quadric)
         OpenGL.GL.glPopMatrix()
 
 
@@ -2074,7 +2070,6 @@ class SimplePore(Shape):
         """
         set_solid_material(self.color, self.material)
         OpenGL.GL.glPushMatrix()
-        quadric = OpenGL.GLU.gluNewQuadric()
         # basic position and orientation
         OpenGL.GL.glTranslate(self.center[0], self.center[1], self.center[2])
         ax, rx, ry = rotation_helper(self.axis)
@@ -2083,9 +2078,8 @@ class SimplePore(Shape):
         if bool(OpenGL.GLE.gleSpiral):
             self._draw_using_gle()
         else:
-            self._draw_using_primitives(quadric)
+            self._draw_using_primitives()
 
-        OpenGL.GLU.gluDeleteQuadric(quadric)
         OpenGL.GL.glPopMatrix()
 
     def _draw_using_gle(self):
@@ -2111,10 +2105,11 @@ class SimplePore(Shape):
             OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], self.radius, 0., 0., 0.,
                                  [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
 
-    def _draw_using_primitives(self, quadric):
+    def _draw_using_primitives(self):
         clip_plane = get_extra_clip_plane()
         # cylinder
         OpenGL.GL.glTranslate(0, 0, -0.5 * self.length + self.smoothing_radius)
+        quadric = OpenGL.GLU.gluNewQuadric()
         OpenGL.GLU.gluCylinder(quadric, self.radius, self.radius, self.length - 2 *
                                self.smoothing_radius, self.quality, self.quality)
         # torus segment
@@ -2144,6 +2139,8 @@ class SimplePore(Shape):
         OpenGL.GL.glTranslate(0, 0, self.smoothing_radius)
         OpenGL.GLU.gluPartialDisk(quadric, self.radius + self.smoothing_radius,
                                   2.0 * self.max_box_l, self.quality, 1, 0, 360)
+
+        OpenGL.GLU.gluDeleteQuadric(quadric)
 
 
 class Slitpore(Shape):
