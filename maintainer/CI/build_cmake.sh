@@ -214,7 +214,7 @@ if [ "${with_static_analysis}" = true ]; then
 fi
 
 if [ "${with_cuda}" = true ]; then
-    :
+    cmake_params="-DWITH_CUDA=ON ${cmake_params}"
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi

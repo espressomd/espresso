@@ -75,7 +75,7 @@ style_doxygen:
     - mkdir build
     - cd build
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake ..
+    - cmake .. -DWITH_CUDA=OFF
     - bash ../maintainer/CI/dox_warnings.sh
   tags:
     - docker
@@ -97,7 +97,7 @@ maxset:
   <<: *global_job_definition
   stage: build
   script:
-    - export myconfig=maxset with_coverage=true
+    - export with_cuda=false myconfig=maxset with_coverage=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -107,7 +107,7 @@ no_rotation:
   <<: *global_job_definition
   stage: build
   script:
-    - export myconfig=no_rotation with_coverage=true
+    - export with_cuda=false myconfig=no_rotation with_coverage=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -171,7 +171,7 @@ cuda10-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=maxset with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export myconfig=maxset with_cuda=true with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - export cmake_params="-DIPYTHON_EXECUTABLE=$(which jupyter)"
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -188,7 +188,7 @@ cuda9-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
   script:
-    - export myconfig=maxset with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
+    - export myconfig=maxset with_cuda=true with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - sed -i 's/ or "DISPLAY" in os.environ/ or True/' src/python/espressomd/visualization.pyx
     - bash maintainer/CI/build_cmake.sh
   artifacts:
@@ -206,7 +206,7 @@ tutorials-samples-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -219,7 +219,7 @@ tutorials-samples-default:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=default with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=default with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -234,7 +234,7 @@ tutorials-samples-empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=empty with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=empty with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -249,7 +249,7 @@ tutorials-samples-no-gpu:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 hide_gpu=true
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -263,7 +263,7 @@ installation:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
-    - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export srcdir=${CI_PROJECT_DIR} test_timeout=1800
     - bash maintainer/CI/build_cmake.sh
     - cd build
@@ -294,7 +294,7 @@ empty:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
   script:
-    - export myconfig=empty with_static_analysis=true
+    - export myconfig=empty with_cuda=true cmake_params="-DWITH_CUDA_COMPILER=clang" with_static_analysis=true
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -306,7 +306,7 @@ ubuntu:wo-dependencies:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:wo-dependencies
   script:
-    - export myconfig=maxset make_check_unit_tests=false make_check_python=false
+    - export myconfig=maxset with_cuda=false make_check_unit_tests=false make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -319,7 +319,7 @@ rocm-maxset:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm-python3:latest
   script:
-    - export myconfig=maxset
+    - export myconfig=maxset with_cuda=true cmake_params="-DWITH_CUDA_COMPILER=hip"
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
@@ -389,7 +389,7 @@ clang:6.0:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
   script:
-    - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900
+    - export myconfig=maxset with_cuda=true cmake_params="-DWITH_CUDA_COMPILER=clang" with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h
   tags:
@@ -403,7 +403,7 @@ intel:18:
   stage: build
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/intel-python3:18
   script:
-    - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
+    - export myconfig=maxset with_cuda=true with_coverage=false I_MPI_SHM_LMT=shm
     - export cxx_flags=-O2
     - bash maintainer/CI/build_cmake.sh
   tags:
