@@ -16,13 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from espressomd.system cimport *
 # Here we create something to handle particles
-cimport numpy as np
-from espressomd.utils cimport Vector4d, Vector3d, Vector3i, List, Span
-from espressomd.utils import array_locked
+from .utils cimport Vector4d, Vector3d, Vector3i, List, Span
 from libcpp cimport bool
-from libcpp.memory cimport unique_ptr
+from libcpp.vector cimport vector  # import std::vector as vector
 from libc cimport stdint
 
 include "myconfig.pxi"
@@ -86,8 +83,6 @@ cdef extern from "particle_data.hpp":
 
     void set_particle_f(int part, const Vector3d & F)
 
-    void set_particle_solvation(int part, double * solvation)
-
     IF ROTATION:
         void set_particle_rotation(int part, int rot)
 
@@ -117,12 +112,8 @@ cdef extern from "particle_data.hpp":
         void set_particle_omega_lab(int part, Vector3d omega)
         void set_particle_omega_body(int part, Vector3d omega)
         void set_particle_torque_lab(int part, Vector3d torque)
-        void set_particle_torque_body(int part, Vector3d torque)
         void pointer_to_omega_body(const particle * p, const double * & res)
         Vector3d get_torque_body(const particle p)
-
-    IF MASS:
-        void pointer_to_mass(particle * p, double * & res)
 
     IF DIPOLES:
         void set_particle_dip(int part, double dip[3])
@@ -196,13 +187,10 @@ cdef extern from "particle_data.hpp":
 
     const particle & get_particle_data(int id) except +
 
-# This ugly function is only needed because of a bug in cython:
-# c.f. https://github.com/cython/cython/blob/f568e1463e4dc9d45325713cce740ace182d7874/Cython/Utility/ModuleSetupCode.c#L424
-# c.f. https://github.com/cython/cython/issues/1519
-# It was fixed in cython 0.26, once we require that version, we can remove
-# this.
-cdef inline const particle * get_particle_data_ptr(const particle & p):
-    return & p
+    vector[int] get_particle_ids() except +
+
+    int get_maximal_particle_id()
+    int get_n_part()
 
 cdef extern from "virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:

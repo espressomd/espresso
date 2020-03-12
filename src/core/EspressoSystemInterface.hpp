@@ -151,7 +151,7 @@ public:
 
   unsigned int npart_gpu() override {
 #ifdef CUDA
-    return m_gpu_npart;
+    return gpu_get_particle_pointer().size();
 #else
     return 0;
 #endif
@@ -160,8 +160,8 @@ public:
 protected:
   static EspressoSystemInterface *m_instance;
   EspressoSystemInterface()
-      : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(nullptr),
-        m_r_gpu_end(nullptr), m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr),
+      : m_gpu(false), m_r_gpu_begin(nullptr), m_r_gpu_end(nullptr),
+        m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr),
         m_v_gpu_begin(nullptr), m_v_gpu_end(nullptr), m_q_gpu_begin(nullptr),
         m_q_gpu_end(nullptr), m_director_gpu_begin(nullptr),
         m_director_gpu_end(nullptr), m_needsParticleStructGpu(false),
@@ -175,8 +175,7 @@ protected:
     if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
       gpu_init_particle_comm();
       cuda_bcast_global_part_params();
-      reallocDeviceMemory(
-          gpu_get_global_particle_vars_pointer_host()->number_of_particles);
+      reallocDeviceMemory(gpu_get_particle_pointer().size());
     }
   };
   void reallocDeviceMemory(int n);

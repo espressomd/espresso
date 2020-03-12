@@ -30,7 +30,6 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "layered.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
@@ -94,15 +93,9 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_MAXNUMCELLS,
      {&max_num_cells, Datafield::Type::INT, 1,
       "max_num_cells"}}, /* 10 from cells.cpp */
-    {FIELD_MAXPART,
-     {&max_seen_particle, Datafield::Type::INT, 1,
-      "max_part"}}, /* 11 from particle_data.cpp */
     {FIELD_MINNUMCELLS,
      {&min_num_cells, Datafield::Type::INT, 1,
       "min_num_cells"}}, /* 14  from cells.cpp */
-    {FIELD_NLAYERS,
-     {&n_layers, Datafield::Type::INT, 1,
-      "n_layers"}}, /* 15 from layered.cpp */
     {FIELD_RIGIDBONDS,
      {&n_rigidbonds, Datafield::Type::INT, 1,
       "n_rigidbonds"}}, /* 19 from rattle.cpp */
@@ -150,9 +143,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_MIN_GLOBAL_CUT,
      {&min_global_cut, Datafield::Type::DOUBLE, 1,
       "min_global_cut"}}, /* 43 from interaction_data.cpp */
-    {FIELD_SWIMMING_PARTICLES_EXIST,
-     {&swimming_particles_exist, Datafield::Type::BOOL, 1,
-      "swimming_particles_exist"}}, /* from particle_data.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA_ROTATION,
      {&langevin.gamma_rotation, Datafield::Type::DOUBLE, 1,
@@ -162,10 +152,8 @@ const std::unordered_map<int, Datafield> fields{
      {langevin.gamma_rotation.data(), Datafield::Type::DOUBLE, 3,
       "langevin.gamma_rotation"}}, /* 55 from thermostat.cpp */
 #endif
-#ifdef OIF_GLOBAL_FORCES
     {FIELD_MAX_OIF_OBJECTS,
      {&max_oif_objects, Datafield::Type::INT, 1, "max_oif_objects"}},
-#endif
     {FIELD_THERMALIZEDBONDS,
      {&n_thermalized_bonds, Datafield::Type::INT, 1,
       "n_thermalized_bonds"}}, /* 56 from thermalized_bond.cpp */

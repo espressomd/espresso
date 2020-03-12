@@ -18,7 +18,7 @@ import unittest as ut
 import unittest_decorators as utx
 import espressomd
 import espressomd.lb
-from espressomd.shapes import Wall
+import espressomd.shapes
 import espressomd.lbboundaries
 # from itertools import product TODO WALBERLA
 
@@ -27,8 +27,8 @@ class LBBoundariesBase:
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
 
-    wall_shape1 = Wall(normal=[1., 0., 0.], dist=2.5)
-    wall_shape2 = Wall(normal=[-1., 0., 0.], dist=-7.5)
+    wall_shape1 = espressomd.shapes.Wall(normal=[1., 0., 0.], dist=2.5)
+    wall_shape2 = espressomd.shapes.Wall(normal=[-1., 0., 0.], dist=-7.5)
 
     def test_add(self):
         boundary = espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1)
@@ -76,6 +76,7 @@ class LBBoundariesBase:
 
         self.assertTrue(lbb.empty())
 
+<<<<<<< HEAD
 # WALBERLA TODO
 #    def test_boundary_flags(self):
 #        lbb = self.system.lbboundaries
@@ -100,6 +101,38 @@ class LBBoundariesBase:
 #            self.assertEqual(lbf[i].is_boundary, False)
 #
 #
+=======
+    def check_boundary_flags(self, boundarynumbers):
+        rng = range(20)
+
+        for i in product(range(0, 5), rng, rng):
+            self.assertEqual(self.lbf[i].boundary, boundarynumbers[0])
+
+        for i in product(range(5, 15), rng, rng):
+            self.assertEqual(self.lbf[i].boundary, boundarynumbers[1])
+
+        for i in product(range(15, 20), rng, rng):
+            self.assertEqual(self.lbf[i].boundary, boundarynumbers[2])
+
+        self.system.lbboundaries.clear()
+        for i in product(rng, rng, rng):
+            self.assertEqual(self.lbf[i].boundary, 0)
+
+    def test_boundary_flags(self):
+        lbb = self.system.lbboundaries
+
+        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape1))
+        lbb.add(espressomd.lbboundaries.LBBoundary(shape=self.wall_shape2))
+
+        self.check_boundary_flags([1, 0, 2])
+
+    def test_union(self):
+        union = espressomd.shapes.Union()
+        union.add([self.wall_shape1, self.wall_shape2])
+        self.system.lbboundaries.add(
+            espressomd.lbboundaries.LBBoundary(shape=union))
+        self.check_boundary_flags([1, 0, 1])
+>>>>>>> upstream/python
 
 
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])

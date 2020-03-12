@@ -44,12 +44,8 @@ extern double time_step_half;
 extern double time_step_squared;
 extern double time_step_squared_half;
 
-/** Old time step needed for rescaling of forces. */
-extern double old_time_step;
 /** Actual simulation time (only on MASTER NODE). */
 extern double sim_time;
-/** Maximal interaction cutoff. */
-extern double max_cut;
 /** Verlet list skin. */
 extern double skin;
 /** True iff the user has changed the skin setting. */

@@ -49,7 +49,7 @@ public:
     return res;
   }
 
-  int n_values() const override { return 3 * ids().size(); }
+  std::vector<size_t> shape() const override { return {ids().size(), 3}; }
 };
 
 } // Namespace Observables

@@ -69,6 +69,7 @@ std::vector<EspressoGpuDevice> cuda_gather_gpus() {
       EspressoGpuDevice device;
       if (cuda_get_device_props(i, device) == ES_OK) {
         strncpy(device.proc_name, proc_name, 64);
+        device.node = this_node;
         devices.push_back(device);
       }
     }

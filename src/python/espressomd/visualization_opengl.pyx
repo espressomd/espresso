@@ -17,7 +17,8 @@
 import OpenGL.GLUT
 import OpenGL.GLU
 import OpenGL.GL
-from math import *
+import OpenGL.GLE
+import math
 import numpy as np
 import ctypes
 import os
@@ -29,10 +30,9 @@ import matplotlib
 from matplotlib.pyplot import imsave
 
 include "myconfig.pxi"
-from copy import deepcopy
 import espressomd
-from espressomd.particle_data import ParticleHandle
-from espressomd.interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
+from .particle_data import ParticleHandle
+from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
 
 
 class openGLLive:
@@ -205,6 +205,11 @@ class openGLLive:
         Brightness (inverse constant attenuation) of the spotlight.
     spotlight_focus : :obj:`float`, optional
         Focus (spot exponent) for the spotlight from 0 (uniform) to 128.
+
+    Notes
+    -----
+    The visualization of some constraints is either improved by or even relies
+    on the presence of an installed OpenGL Extrusion library on your system.
 
     """
 
@@ -414,6 +419,8 @@ class openGLLive:
 
         # HAS PERIODIC IMAGES
         self.has_images = any(i != 0 for i in self.specs['periodic_images'])
+        self.image_vectors = [
+            list(range(-i, i + 1)) for i in self.specs['periodic_images']]
 
         # INITS
         self.system = system
@@ -476,8 +483,9 @@ class openGLLive:
         all_types.update(constraint_types)
 
         # COLLECT ALL ACTIVE NONBONDED INTERACTIONS
-        all_non_bonded_inters = [x for x in dir(self.system.non_bonded_inter[0, 0]) if not x.startswith(
-            '__') and not x == 'type1' and not x == 'type2']
+        all_non_bonded_inters = [
+            x for x in dir(self.system.non_bonded_inter[0, 0])
+            if not x.startswith('__') and x != 'type1' and x != 'type2']
         for t1 in all_types:
             for t2 in all_types:
                 for check_nb in all_non_bonded_inters:
@@ -581,8 +589,7 @@ class openGLLive:
                 self.update()
 
                 if self.paused:
-                    # sleep(0) is worse
-                    time.sleep(0.0001)
+                    time.sleep(0.0001)  # sleep(0) is worse
                 else:
                     try:
                         self.system.integrator.run(integ_steps)
@@ -782,19 +789,46 @@ class openGLLive:
         # Collect shapes and interaction type (for coloring) from constraints
         primitive_shapes = [
             'Shapes::Wall', 'Shapes::Cylinder', 'Shapes::Ellipsoid',
-            'Shapes::SimplePore', 'Shapes::Slitpore', 'Shapes::Sphere',
-            'Shapes::SpheroCylinder']
+            'Shapes::HollowConicalFrustum', 'Shapes::SimplePore',
+            'Shapes::Slitpore', 'Shapes::Sphere', 'Shapes::SpheroCylinder']
 
+        def get_shapes(shapes_list):
+            """Return a list of shapes, where all unions have been unpacked.
+
+            """
+            shapes = []
+            try:
+                # recursively unpack unions
+                for shape in shapes_list:
+                    shapes.extend(get_shapes(shape))
+            except BaseException:
+                # otherwise just append the shape
+                shapes.append(shapes_list)
+            return shapes
+
+        def update_shapes_collection(collection, shape, ptype):
+            """Helper function to create a collection of shape objects.
+
+            """
+            name = shape.name()
+            if name in primitive_shapes:
+                collection[name].append([shape, ptype])
+                # visualization of HollowConicalFrustum requires gleSpiral!
+                if name == 'Shapes::HollowConicalFrustum' \
+                        and not bool(OpenGL.GLE.gleSpiral):
+                    collection['Shapes::Misc'].append([shape, ptype])
+            else:
+                coll_shape_obj['Shapes::Misc'].append([shape, ptype])
+
+        # actually create shape objects collection using the helper functions
         coll_shape_obj = collections.defaultdict(list)
-        for c in self.system.constraints:
-            if type(c) == espressomd.constraints.ShapeBasedConstraint:
-                t = c.get_parameter('particle_type')
-                s = c.get_parameter('shape')
-                n = s.name()
-                if n in primitive_shapes:
-                    coll_shape_obj[n].append([s, t])
-                else:
-                    coll_shape_obj['Shapes::Misc'].append([s, t])
+        for constraint in self.system.constraints:
+            if isinstance(constraint,
+                          espressomd.constraints.ShapeBasedConstraint):
+                ptype = constraint.get_parameter('particle_type')
+                shape = constraint.get_parameter('shape')
+                for sub_shape in get_shapes(shape):
+                    update_shapes_collection(coll_shape_obj, sub_shape, ptype)
 
         if self.specs['LB_draw_boundaries']:
             ni = 0
@@ -829,6 +863,16 @@ class openGLLive:
             b = np.array(s[0].get_parameter('b'))
             c = np.array(s[0].get_parameter('b'))
             self.shapes['Shapes::Ellipsoid'].append([pos, a, b, c, s[1]])
+
+        for s in coll_shape_obj['Shapes::HollowConicalFrustum']:
+            center = np.array(s[0].get_parameter('center'))
+            r1 = np.array(s[0].get_parameter('r1'))
+            r2 = np.array(s[0].get_parameter('r2'))
+            length = np.array(s[0].get_parameter('length'))
+            thickness = np.array(s[0].get_parameter('thickness'))
+            axis = np.array(s[0].get_parameter('axis'))
+            self.shapes['Shapes::HollowConicalFrustum'].append(
+                [center, r1, r2, length, thickness, axis, s[1]])
 
         for s in coll_shape_obj['Shapes::Sphere']:
             pos = np.array(s[0].get_parameter('center'))
@@ -885,12 +929,18 @@ class openGLLive:
         for i in range(int(res[0])):
             for j in range(int(res[1])):
                 for k in range(int(res[2])):
-                    p = np.array([i, j, k]) * sp
-                    dist, vec = shape.call_method(
-                        "calc_distance", position=p.tolist())
-                    if not np.isnan(vec).any() and not np.isnan(
-                            dist) and abs(dist) < sp:
-                        points.append((p - vec).tolist())
+                    # some shapes may not have a well-defined distance function in the whole domain
+                    # and may throw upon asking for a distance
+                    try:
+                        p = np.array([i, j, k]) * sp
+                        dist, vec = shape.call_method(
+                            "calc_distance", position=p.tolist())
+                        if not np.isnan(vec).any() and not np.isnan(
+                                dist) and abs(dist) < sp:
+                            points.append((p - vec).tolist())
+                    # domain error translates to ValueError (cython)
+                    except ValueError:
+                        continue
         return points
 
     # GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
@@ -911,13 +961,8 @@ class openGLLive:
                         for p in b[1:]:
                             self.bonds.append([i, p, t])
 
-    def _draw_text(
-            self,
-            x,
-            y,
-            text,
-            color,
-            font=OpenGL.GLUT.GLUT_BITMAP_9_BY_15):
+    def _draw_text(self, x, y, text, color,
+                   font=OpenGL.GLUT.GLUT_BITMAP_9_BY_15):
         OpenGL.GL.glColor(color)
         OpenGL.GL.glWindowPos2f(x, y)
         for ch in text:
@@ -931,12 +976,12 @@ class openGLLive:
         if self.specs['draw_axis']:
             axis_fac = 0.2
             axis_r = np.min(self.system.box_l) / 50.0
-            draw_arrow([0, 0, 0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r, [
-                       1, 0, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
-            draw_arrow([0, 0, 0], [0, self.system.box_l[2] * axis_fac, 0], axis_r, [
-                       0, 1, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
-            draw_arrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r, [
-                       0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow([0, 0, 0], [self.system.box_l[0] * axis_fac, 0, 0], axis_r,
+                       [1, 0, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow([0, 0, 0], [0, self.system.box_l[2] * axis_fac, 0], axis_r,
+                       [0, 1, 0, 1], self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow([0, 0, 0], [0, 0, self.system.box_l[2] * axis_fac], axis_r,
+                       [0, 0, 1, 1], self.materials['chrome'], self.specs['quality_arrows'])
 
         if self.specs['draw_bonds']:
             self._draw_bonds()
@@ -955,14 +1000,13 @@ class openGLLive:
             self._draw_lb_grid()
 
     def _draw_system_box(self):
-        draw_box([0, 0, 0], self.system.box_l,
-                 self.invBackgroundCol, self.materials['medium'], 2.0 * self.line_width_fac)
+        draw_box([0, 0, 0], self.system.box_l, self.invBackgroundCol,
+                 self.materials['medium'], 2.0 * self.line_width_fac)
 
     def _draw_nodes(self):
         for n in self.node_box_origins:
-            draw_box(
-                n, self.local_box_l, self.node_box_color,
-                self.materials['transparent1'], 1.5 * self.line_width_fac)
+            draw_box(n, self.local_box_l, self.node_box_color,
+                     self.materials['transparent1'], 1.5 * self.line_width_fac)
 
     def _draw_cells(self):
         for n in self.node_box_origins:
@@ -992,24 +1036,30 @@ class openGLLive:
 
         # CLIP BORDERS OF SIMULATION BOX
         for i in range(6):
-            OpenGL.GL.glEnable(OpenGL.GL.OpenGL.GL.GL_CLIP_PLANE0 + i)
+            OpenGL.GL.glEnable(OpenGL.GL.GL_CLIP_PLANE0 + i)
             OpenGL.GL.glClipPlane(
-                OpenGL.GL.OpenGL.GL.GL_CLIP_PLANE0 + i,
+                OpenGL.GL.GL_CLIP_PLANE0 + i,
                 self.box_eqn[i])
 
         # NEEDS ADDITIONAL CLIP PLANES
         for s in self.shapes['Shapes::SimplePore']:
             draw_simple_pore(
-                s[0], s[1], s[2], s[3], s[4], max(self.system.box_l), self._modulo_indexing(
+                s[0], s[1], s[2], s[3], s[4], max(self.system.box_l),
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[5]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[5])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[5])],
+                self.specs['quality_constraints'])
 
         # NEEDS ADDITIONAL CLIP PLANES
         for s in self.shapes['Shapes::SpheroCylinder']:
             draw_sphero_cylinder(
-                s[0], s[1], s[2], self._modulo_indexing(
+                s[0], s[1], s[2],
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[3]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[3])],
+                self.specs['quality_constraints'])
 
         # RESET CLIP BORDERS
         for i in range(6):
@@ -1020,33 +1070,61 @@ class openGLLive:
 
         for s in self.shapes['Shapes::Ellipsoid']:
             draw_ellipsoid(
-                s[0], s[1], s[2], s[3], self._modulo_indexing(
+                s[0], s[1], s[2], s[3],
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[4]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[4])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[4])],
+                self.specs['quality_constraints'])
+
+        for s in self.shapes['Shapes::HollowConicalFrustum']:
+            draw_hollow_conical_frustum(
+                s[0], s[1], s[2], s[3], s[4], s[5],
+                self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[6]),
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[6])],
+                self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Sphere']:
-            draw_sphere(s[0], s[1], self._modulo_indexing(self.specs['constraint_type_colors'], s[2]), self.materials[self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[2])], self.specs['quality_constraints'])
+            draw_sphere(
+                s[0], s[1],
+                self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[2]),
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[2])],
+                self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Slitpore']:
             draw_slitpore(
-                s[0], s[1], s[2], s[3], s[4], s[5], max(self.system.box_l), self._modulo_indexing(
+                s[0], s[1], s[2], s[3], s[4], s[5], max(self.system.box_l),
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[6]),
-                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[6])], self.specs['quality_constraints'])
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[6])],
+                self.specs['quality_constraints'])
 
         for s in self.shapes['Shapes::Wall']:
             draw_plane(
-                s[0], self._modulo_indexing(
+                s[0],
+                self._modulo_indexing(
                     self.specs['constraint_type_colors'], s[1]),
                 self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for s in self.shapes['Shapes::Cylinder']:
-            draw_cylinder(s[0], s[1], s[2], self._modulo_indexing(self.specs['constraint_type_colors'], s[3]), self.materials[self._modulo_indexing(
-                self.specs['constraint_type_materials'], s[3])], self.specs['quality_constraints'], True)
+            draw_cylinder(
+                s[0], s[1], s[2], self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[3]),
+                self.materials[self._modulo_indexing(
+                    self.specs['constraint_type_materials'], s[3])],
+                self.specs['quality_constraints'], True)
 
         for s in self.shapes['Shapes::Misc']:
-            draw_points(s[0], self.specs['rasterize_pointsize'], self._modulo_indexing(
-                self.specs['constraint_type_colors'], s[1]), self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
+            draw_points(
+                s[0], self.specs['rasterize_pointsize'],
+                self._modulo_indexing(
+                    self.specs['constraint_type_colors'], s[1]),
+                self.materials[self._modulo_indexing(self.specs['constraint_type_materials'], s[1])])
 
         for i in range(6):
             OpenGL.GL.glDisable(OpenGL.GL.GL_CLIP_PLANE0 + i)
@@ -1056,7 +1134,6 @@ class openGLLive:
             try:
                 radius = self.system.non_bonded_inter[ptype, ptype].lennard_jones.get_params()[
                     'sigma'] * 0.5
-
                 if radius == 0:
                     radius = self.system.non_bonded_inter[ptype, ptype].wca.get_params()[
                         'sigma'] * 0.5
@@ -1142,15 +1219,13 @@ class openGLLive:
                 self.particles['pos'][pid], radius, self.specs['quality_particles'])
 
             if self.has_images:
-                for imx in range(-self.specs['periodic_images'][0],
-                                 self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1],
-                                     self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2],
-                                         self.specs['periodic_images'][2] + 1):
+                for imx in self.image_vectors[0]:
+                    for imy in self.image_vectors[1]:
+                        for imz in self.image_vectors[2]:
                             if imx != 0 or imy != 0 or imz != 0:
-                                self._redraw_sphere(
-                                    self.particles['pos'][pid] + (imx * self.imPos[0] + imy * self.imPos[1] + imz * self.imPos[2]), radius, self.specs['quality_particles'])
+                                offset = [imx, imy, imz] * self.system.box_l
+                                self._redraw_sphere(self.particles['pos'][pid] + offset,
+                                                    radius, self.specs['quality_particles'])
 
             IF EXTERNAL_FORCES:
                 if self.specs['ext_force_arrows'] or pid == self.dragId:
@@ -1170,19 +1245,24 @@ class openGLLive:
                             reset_material = True
 
             if self.specs['velocity_arrows']:
-                self._draw_arrow_property(pid, ptype, self.specs['velocity_arrows_type_scale'], self.specs[
-                    'velocity_arrows_type_colors'], self.specs['velocity_arrows_type_radii'], 'velocity')
+                self._draw_arrow_property(
+                    pid, ptype, self.specs['velocity_arrows_type_scale'],
+                    self.specs['velocity_arrows_type_colors'],
+                    self.specs['velocity_arrows_type_radii'], 'velocity')
                 reset_material = True
 
             if self.specs['force_arrows']:
                 self._draw_arrow_property(
                     pid, ptype, self.specs['force_arrows_type_scale'],
-                    self.specs['force_arrows_type_colors'], self.specs['force_arrows_type_radii'], 'force')
+                    self.specs['force_arrows_type_colors'],
+                    self.specs['force_arrows_type_radii'], 'force')
                 reset_material = True
 
             if self.specs['director_arrows']:
-                self._draw_arrow_property(pid, ptype, self.specs['director_arrows_type_scale'], self.specs[
-                    'director_arrows_type_colors'], self.specs['director_arrows_type_radii'], 'director')
+                self._draw_arrow_property(
+                    pid, ptype, self.specs['director_arrows_type_scale'],
+                    self.specs['director_arrows_type_colors'],
+                    self.specs['director_arrows_type_radii'], 'director')
                 reset_material = True
 
     def _draw_arrow_property(self, pid, ptype, type_scale, type_colors,
@@ -1192,90 +1272,106 @@ class openGLLive:
             v = self.particles[prop][pid]
             col = self._modulo_indexing(type_colors, ptype)
             radius = self._modulo_indexing(type_radii, ptype)
-            draw_arrow(self.particles['pos'][pid], np.array(
-                v, dtype=float) * sc, radius, col, self.materials['chrome'], self.specs['quality_arrows'])
+            draw_arrow(
+                self.particles['pos'][pid], np.array(v, dtype=float) * sc,
+                radius, col, self.materials['chrome'], self.specs['quality_arrows'])
 
     def _draw_bonds(self):
-        pIds = range(len(self.particles['pos']))
-        b2 = self.system.box_l[0] / 2.0
-        box_l2_sqr = pow(b2, 2.0)
+        box_l_2 = self.system.box_l / 2.0
         for b in self.bonds:
             col = self._modulo_indexing(self.specs['bond_type_colors'], b[2])
             mat = self.materials[self._modulo_indexing(
                 self.specs['bond_type_materials'], b[2])]
             radius = self._modulo_indexing(
                 self.specs['bond_type_radius'], b[2])
-            d = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
-            bondLen_sqr = d[0] * d[0] + d[1] * d[1] + d[2] * d[2]
+            xA = self.particles['pos'][b[0]]
+            xB = self.particles['pos'][b[1]]
+            dx = xB - xA
 
-            if bondLen_sqr < box_l2_sqr:
+            if abs(dx[0]) < box_l_2[0] and abs(
+                    dx[1]) < box_l_2[1] and abs(dx[2]) < box_l_2[2]:
                 # BOND COMPLETELY INSIDE BOX
-                draw_cylinder(
-                    self.particles['pos'][
-                        b[0]], self.particles['pos'][b[1]], radius,
-                    col, mat, self.specs['quality_bonds'])
-                for imx in range(-self.specs['periodic_images'][0],
-                                 self.specs['periodic_images'][0] + 1):
-                    for imy in range(-self.specs['periodic_images'][1],
-                                     self.specs['periodic_images'][1] + 1):
-                        for imz in range(-self.specs['periodic_images'][2],
-                                         self.specs['periodic_images'][2] + 1):
-                            if imx != 0 or imy != 0 or imz != 0:
-                                im = np.array([imx, imy, imz])
-                                draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], self.particles['pos'][b[1]] +
-                                              im * self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
-            else:
-                # SPLIT BOND
-                l = self.particles['pos'][b[0]] - self.particles['pos'][b[1]]
-                l0 = self.particles['pos'][b[0]]
-                hits = 0
-                for i in range(6):
-                    lineBoxNDot = float(np.dot(l, self.box_n[i]))
-                    if lineBoxNDot == 0:
-                        continue
-                    s = l0 - \
-                        np.dot(l0 - self.box_p[i],
-                               self.box_n[i]) / lineBoxNDot * l
-                    if self._is_inside_box(s):
-                        if lineBoxNDot < 0:
-                            s0 = s
-                        else:
-                            s1 = s
-                        hits += 1
-                        if hits >= 2:
-                            break
-                if hits >= 2:
-                    draw_cylinder(self.particles['pos'][b[0]], s0, radius, col,
-                                  mat, self.specs['quality_bonds'])
-                    draw_cylinder(self.particles['pos'][b[1]], s1, radius, col,
-                                  mat, self.specs['quality_bonds'])
-
-                    for imx in range(-self.specs['periodic_images'][0],
-                                     self.specs['periodic_images'][0] + 1):
-                        for imy in range(-self.specs['periodic_images'][1],
-                                         self.specs['periodic_images'][1] + 1):
-                            for imz in range(-self.specs['periodic_images'][2],
-                                             self.specs['periodic_images'][2] + 1):
+                draw_cylinder(xA, xB, radius, col, mat,
+                              self.specs['quality_bonds'])
+                if self.has_images:
+                    for imx in self.image_vectors[0]:
+                        for imy in self.image_vectors[1]:
+                            for imz in self.image_vectors[2]:
                                 if imx != 0 or imy != 0 or imz != 0:
-                                    im = np.array([imx, imy, imz])
-                                    draw_cylinder(self.particles['pos'][b[0]] + im * self.imPos[dim], s0 + im *
-                                                  self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
-                                    draw_cylinder(self.particles['pos'][b[1]] + im * self.imPos[dim], s1 + im *
-                                                  self.imPos[dim], radius, col, mat, self.specs['quality_bonds'])
+                                    offset = [imx, imy, imz] * \
+                                        self.system.box_l
+                                    draw_cylinder(xA + offset, xB + offset,
+                                                  radius, col, mat, self.specs['quality_bonds'])
+            else:
+                # BOND CROSSES THE BOX BOUNDARIES
+                d = self._cut_bond(xA, dx)
+                if d is np.inf:
+                    continue
+
+                sA = xA + d * dx
+                sB = xB - (1 - d) * dx
+                draw_cylinder(xA, sA, radius, col, mat,
+                              self.specs['quality_bonds'])
+                draw_cylinder(xB, sB, radius, col, mat,
+                              self.specs['quality_bonds'])
+
+                if self.has_images:
+                    for imx in self.image_vectors[0]:
+                        for imy in self.image_vectors[1]:
+                            for imz in self.image_vectors[2]:
+                                if imx != 0 or imy != 0 or imz != 0:
+                                    offset = [imx, imy, imz] * \
+                                        self.system.box_l
+                                    draw_cylinder(xA + offset, sA + offset, radius, col, mat,
+                                                  self.specs['quality_bonds'])
+                                    draw_cylinder(xB + offset, sB + offset, radius, col, mat,
+                                                  self.specs['quality_bonds'])
 
     def _redraw_sphere(self, pos, radius, quality):
         OpenGL.GL.glPushMatrix()
-        OpenGL.GL.OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
+        OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
         OpenGL.GL.glCallList(self.dl_sphere)
-        OpenGL.GL.OpenGL.GL.glPopMatrix()
+        OpenGL.GL.glPopMatrix()
 
     # HELPER TO DRAW PERIODIC BONDS
-    def _is_inside_box(self, p):
-        eps = 1e-5
+    def _cut_bond(self, xA, dx):
+        """
+        Algorithm for the line-plane intersection problem. Given the unfolded
+        positions of two particles, determine: 1) the box image that minimizes
+        the folded bond length, 2) which side of the simulation box is crossed
+        by the bond, 3) how much of the bond is inside the unit cell starting
+        from the first particle. That scalar is returned by the function, and
+        can be used to calculate the coordinates of the line-plane
+        intersection point. The algorithm can be found at
+        https://en.wikipedia.org/w/index.php?title=Line%E2%80%93plane_intersection&oldid=940427752#Algebraic_form
+        """
+        # corner case: the two particles occupy the same position
+        if np.dot(dx, dx) < 1e-9:
+            return np.inf
+        # find the box image that minimizes the unfolded bond length
+        shift = np.rint(dx / self.system.box_l)
+        # get the unfolded bond vector
+        dx -= shift * self.system.box_l
+        # find which side of the simulation box is crossed by the bond
+        best_d = np.inf
+        best_i = 0
         for i in range(3):
-            if p[i] < -eps or p[i] > eps + self.last_box_l[i]:
-                return False
-        return True
+            if dx[i] == 0:
+                continue  # corner case: bond is parallel to a face
+            elif dx[i] > 0:
+                p0_i = self.system.box_l[i]
+            else:
+                p0_i = 0
+            # calculate the length of the bond that is inside the box using
+            # an optimized version of `np.dot(p0 - x0, n) / np.dot(dx, n)`
+            # where the dot products decay to an array access, because `n`
+            # is always a unit vector in rectangular boxes and its sign
+            # is canceled out by the division
+            d = (p0_i - xA[i]) / dx[i]
+            if d < best_d:
+                best_d = d
+                best_i = i
+        return best_d
 
     # ARROWS IN A PLANE FOR LB VELOCITIES
     def _draw_lb_vel(self):
@@ -1429,7 +1525,7 @@ class openGLLive:
     # CALLED ION WINDOW POSITION/SIZE CHANGE
     def _reshape_window(self, w, h):
         OpenGL.GL.glViewport(0, 0, w, h)
-        OpenGL.GL.glMatrixMode(OpenGL.GL.OpenGL.GL.GL_PROJECTION)
+        OpenGL.GL.glMatrixMode(OpenGL.GL.GL_PROJECTION)
         OpenGL.GL.glLoadIdentity()
         box_diag = pow(pow(self.system.box_l[0], 2) + pow(
             self.system.box_l[1], 2) + pow(self.system.box_l[1], 2), 0.5)
@@ -1566,14 +1662,14 @@ class openGLLive:
 
     def _id_to_fcolor(self, pid):
         pid += 1
-        return [int(pid / (256 * 256)) / 255.0, int((pid %
-                                                     (256 * 256)) / 256) / 255.0, (pid % 256) / 255.0, 1.0]
+        return [int(pid / 256**2) / 255.0, int((pid % 256**2) / 256) / 255.0,
+                (pid % 256) / 255.0, 1.0]
 
     def _fcolor_to_id(self, fcol):
         if (fcol == [0, 0, 0]).all():
             return -1
         else:
-            return 256 * 256 * int(fcol[0] * 255) + 256 * \
+            return 256**2 * int(fcol[0] * 255) + 256 * \
                 int(fcol[1] * 255) + int(fcol[2] * 255) - 1
 
     def _set_particle_drag(self, pos, pos_old):
@@ -1619,9 +1715,6 @@ class openGLLive:
         self.triggerSetParticleDrag = False
 
         self.depth = 0
-
-        self.imPos = [np.array([self.system.box_l[0], 0, 0]), np.array(
-            [0, self.system.box_l[1], 0]), np.array([0, 0, self.system.box_l[2]])]
 
         # LOOK FOR LB ACTOR
         if self.specs['LB_draw_velocity_plane'] or self.specs['LB_draw_nodes'] or self.specs['LB_draw_node_boundaries']:
@@ -1677,8 +1770,9 @@ class openGLLive:
             if self.specs['draw_cells']:
                 self._update_cells()
 
-        self.box_n = [np.array([1, 0, 0]), np.array([0, 1, 0]), np.array(
-            [0, 0, 1]), np.array([-1, 0, 0]), np.array([0, -1, 0]), np.array([0, 0, -1])]
+        self.box_n = [np.array([1, 0, 0]), np.array([0, 1, 0]),
+                      np.array([0, 0, 1]), np.array([-1, 0, 0]),
+                      np.array([0, -1, 0]), np.array([0, 0, -1])]
         self.box_p = [np.array([0, 0, 0]), np.array([0, 0, 0]), np.array([0, 0, 0]), np.array(
             self.system.box_l), np.array(self.system.box_l), np.array(self.system.box_l)]
         self.box_eqn = []
@@ -1804,8 +1898,8 @@ class openGLLive:
 
         cr = np.array(self.specs['camera_right'])
 
-        self.camera.set_camera(camPos=np.array(cp), camTarget=ct, camRight=cr, moveSpeed=0.5 *
-                               box_diag / 17.0, center=box_center)
+        self.camera.set_camera(camPos=np.array(cp), camTarget=ct, camRight=cr,
+                               moveSpeed=0.5 * box_diag / 17.0, center=box_center)
         self._set_camera_spotlight()
 
     def _init_opengl(self):
@@ -1818,8 +1912,9 @@ class openGLLive:
 
         OpenGL.GLUT.glutCreateWindow(b"ESPResSo visualization")
 
-        OpenGL.GL.glClearColor(self.specs['background_color'][0], self.specs[
-            'background_color'][1], self.specs['background_color'][2], 1.)
+        OpenGL.GL.glClearColor(self.specs['background_color'][0],
+                               self.specs['background_color'][1],
+                               self.specs['background_color'][2], 1.)
 
         OpenGL.GL.glEnable(OpenGL.GL.GL_BLEND)
         OpenGL.GL.glBlendFunc(
@@ -1848,8 +1943,8 @@ class openGLLive:
 
         # LIGHT0
         if self.specs['light_pos'] != 'auto':
-            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_POSITION, np.array(
-                self.specs['light_pos']).tolist())
+            OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_POSITION,
+                                np.array(self.specs['light_pos']).tolist())
         else:
             OpenGL.GL.glLightfv(OpenGL.GL.GL_LIGHT0, OpenGL.GL.GL_POSITION,
                                 (np.array(self.system.box_l) * 1.1).tolist())
@@ -1941,7 +2036,7 @@ def draw_box(p0, s, color, material, width):
     OpenGL.GL.glLineWidth(width)
     set_solid_material(color, material)
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(p0[0], p0[1], p0[2])
+    OpenGL.GL.glTranslatef(p0[0], p0[1], p0[2])
     OpenGL.GL.glBegin(OpenGL.GL.GL_LINE_LOOP)
     OpenGL.GL.glVertex3f(0.0, 0.0, 0.0)
     OpenGL.GL.glVertex3f(s[0], 0.0, 0.0)
@@ -1965,12 +2060,12 @@ def draw_box(p0, s, color, material, width):
     OpenGL.GL.glVertex3f(0.0, s[1], s[2])
     OpenGL.GL.glEnd()
 
-    OpenGL.GL.OpenGL.GL.glPopMatrix()
+    OpenGL.GL.glPopMatrix()
 
 
 def draw_sphere(pos, radius, color, material, quality):
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
+    OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
     set_solid_material(color, material)
     OpenGL.GLUT.glutSolidSphere(radius, quality, quality)
     OpenGL.GL.glPopMatrix()
@@ -2005,7 +2100,7 @@ def draw_cylinder(posA, posB, radius, color, material, quality,
 
     # angle,t,length = calcAngle(d)
     length = np.linalg.norm(d)
-    OpenGL.GL.OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
+    OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
 
     ax, rx, ry = rotation_helper(d)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
@@ -2013,17 +2108,18 @@ def draw_cylinder(posA, posB, radius, color, material, quality,
 
     if draw_caps:
         OpenGL.GLU.gluDisk(quadric, 0, radius, quality, quality)
-        OpenGL.GL.OpenGL.GL.glTranslatef(0, 0, length)
+        OpenGL.GL.glTranslatef(0, 0, length)
         OpenGL.GLU.gluDisk(quadric, 0, radius, quality, quality)
 
-    OpenGL.GL.OpenGL.GL.glPopMatrix()
+    OpenGL.GLU.gluDeleteQuadric(quadric)
+    OpenGL.GL.glPopMatrix()
 
 
 def rotation_helper(d):
     # the rotation axis is the cross product between z and d
     vz = np.cross([0.0, 0.0, 1.0], d)
     # get the angle using a dot product
-    angle = 180.0 / np.pi * acos(d[2] / np.linalg.norm(d))
+    angle = 180.0 / np.pi * math.acos(d[2] / np.linalg.norm(d))
 
     return angle, vz[0], vz[1]
 
@@ -2032,10 +2128,10 @@ def draw_ellipsoid(pos, semiaxis_a, semiaxis_b, semiaxis_c, color, material,
                    quality):
     set_solid_material(color, material)
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
+    OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
     OpenGL.GL.glScalef(semiaxis_a, semiaxis_b, semiaxis_c)
     OpenGL.GLUT.glutSolidSphere(1, quality, quality)
-    OpenGL.GL.OpenGL.GL.glPopMatrix()
+    OpenGL.GL.glPopMatrix()
 
 
 def get_extra_clip_plane():
@@ -2051,51 +2147,116 @@ def get_extra_clip_plane():
         return OpenGL.GL.GL_CLIP_PLANE0 + 6
 
 
+def draw_hollow_conical_frustum(center, r1, r2, length, thickness, axis, color,
+                                material, quality):
+    # if available, use the GL Extrusion library
+    if bool(OpenGL.GLE.gleSpiral):
+        set_solid_material(color, material)
+        OpenGL.GL.glPushMatrix()
+        quadric = OpenGL.GLU.gluNewQuadric()
+
+        # basic position and orientation
+        OpenGL.GL.glTranslate(center[0], center[1], center[2])
+        ax, rx, ry = rotation_helper(axis)
+        OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
+
+        n = max(20, quality)
+        rotation_angle = np.arctan((r1 - r2) / length)
+        l = length / np.cos(rotation_angle)
+
+        contour = []
+        for theta in np.linspace(-0.5 * np.pi, 0.5 * np.pi, n):
+            contour.append([np.sin(theta) * 0.5 * thickness,
+                            np.cos(theta) * 0.5 * thickness + 0.5 * l])
+        for theta in np.linspace(0.5 * np.pi, -0.5 * np.pi, n):
+            contour.append([np.sin(theta) * 0.5 * thickness,
+                            -np.cos(theta) * 0.5 * thickness - 0.5 * l])
+        contour = np.matmul(np.array(contour),
+                            np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
+                                      [np.sin(rotation_angle), np.cos(rotation_angle)]]))
+
+        normals = np.diff(np.array(contour), axis=0)
+        normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
+        normals = np.roll(normals, 1, axis=1)
+
+        OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
+        OpenGL.GLE.gleSetNumSides(max(90, 3 * quality))
+        OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], 0.5 * (r1 + r2), 0., 0., 0.,
+                             [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
+
+        OpenGL.GLU.gluDeleteQuadric(quadric)
+        OpenGL.GL.glPopMatrix()
+
+
 def draw_simple_pore(center, axis, length, radius, smoothing_radius,
                      max_box_l, color, material, quality):
-
-    clip_plane = get_extra_clip_plane()
-
     set_solid_material(color, material)
     OpenGL.GL.glPushMatrix()
     quadric = OpenGL.GLU.gluNewQuadric()
 
     # basic position and orientation
-    OpenGL.GL.OpenGL.GL.glTranslate(center[0], center[1], center[2])
+    OpenGL.GL.glTranslate(center[0], center[1], center[2])
     ax, rx, ry = rotation_helper(axis)
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
-    # cylinder
-    OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
-    OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
-                           smoothing_radius, quality, quality)
-    # torus segment
-    OpenGL.GL.glEnable(clip_plane)
-    OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
-    OpenGL.GLUT.glutSolidTorus(
-        smoothing_radius,
-        (radius + smoothing_radius),
-        quality,
-        quality)
-    OpenGL.GL.glDisable(clip_plane)
-    # wall
-    OpenGL.GL.OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
-    OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                              2.0 * max_box_l, quality, 1, 0, 360)
-    # torus segment
-    OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
-    OpenGL.GL.glEnable(clip_plane)
-    OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
-    OpenGL.GLUT.glutSolidTorus(
-        smoothing_radius,
-        (radius + smoothing_radius),
-        quality,
-        quality)
-    OpenGL.GL.glDisable(clip_plane)
-    # wall
-    OpenGL.GL.glTranslate(0, 0, smoothing_radius)
-    OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
-                              2.0 * max_box_l, quality, 1, 0, 360)
 
+    # if available, use the GL Extrusion library
+    if bool(OpenGL.GLE.gleSpiral):
+        n = max(10, quality // 3)
+        contour = [[0.5 * max_box_l, -0.5 * length]]
+        for theta in np.linspace(0, 0.5 * np.pi, n):
+            contour.append([(1. - np.sin(theta)) * smoothing_radius,
+                            -0.5 * length + (1. - np.cos(theta)) * smoothing_radius])
+        for theta in np.linspace(0.5 * np.pi, np.pi, n):
+            contour.append([(1. - np.sin(theta)) * smoothing_radius,
+                            0.5 * length - (1. + np.cos(theta)) * smoothing_radius])
+        contour.append([0.5 * max_box_l, 0.5 * length])
+
+        normals = np.diff(np.array(contour), axis=0)
+        normals /= np.linalg.norm(normals, ord=2, axis=1, keepdims=True)
+        normals = np.roll(normals, 1, axis=1)
+        normals[:, 0] *= -1
+
+        OpenGL.GLE.gleSetJoinStyle(OpenGL.GLE.TUBE_JN_ANGLE)
+        OpenGL.GLE.gleSetNumSides(max(90, 3 * quality))
+        OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], radius, 0., 0., 0.,
+                             [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
+
+    # else draw using primitives and clip planes
+    else:
+        clip_plane = get_extra_clip_plane()
+        # cylinder
+        OpenGL.GL.glTranslate(0, 0, -0.5 * length + smoothing_radius)
+        OpenGL.GLU.gluCylinder(quadric, radius, radius, length - 2 *
+                               smoothing_radius, quality, quality)
+        # torus segment
+        OpenGL.GL.glEnable(clip_plane)
+        OpenGL.GL.glClipPlane(clip_plane, (0, 0, -1, 0))
+        OpenGL.GLUT.glutSolidTorus(
+            smoothing_radius,
+            radius + smoothing_radius,
+            quality,
+            quality)
+        OpenGL.GL.glDisable(clip_plane)
+        # wall
+        OpenGL.GL.glTranslate(0, 0, -smoothing_radius)
+        OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
+                                  2.0 * max_box_l, quality, 1, 0, 360)
+        # torus segment
+        OpenGL.GL.glTranslate(0, 0, length - smoothing_radius)
+        OpenGL.GL.glEnable(clip_plane)
+        OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
+        OpenGL.GLUT.glutSolidTorus(
+            smoothing_radius,
+            radius + smoothing_radius,
+            quality,
+            quality)
+        OpenGL.GL.glDisable(clip_plane)
+        # wall
+        OpenGL.GL.glTranslate(0, 0, smoothing_radius)
+        OpenGL.GLU.gluPartialDisk(quadric, radius + smoothing_radius,
+                                  2.0 * max_box_l, quality, 1, 0, 360)
+
+    OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()
 
 
@@ -2204,6 +2365,7 @@ def draw_slitpore(
 
     OpenGL.GL.glDisable(clip_plane)
 
+    OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()
 
 
@@ -2220,14 +2382,14 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     if v == 0:
         ax = 57.2957795
     else:
-        ax = 57.2957795 * acos(d[2] / v)
+        ax = 57.2957795 * math.acos(d[2] / v)
 
     if d[2] < 0.0:
         ax = -ax
     rx = -d[1] * d[2]
     ry = d[0] * d[2]
     length = np.linalg.norm(d)
-    OpenGL.GL.OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
+    OpenGL.GL.glTranslatef(posA[0], posA[1], posA[2])
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
 
     # First hemispherical cap
@@ -2239,12 +2401,13 @@ def draw_sphero_cylinder(posA, posB, radius, color, material, quality):
     # Cylinder
     OpenGL.GLU.gluCylinder(quadric, radius, radius, length, quality, quality)
     # Second hemispherical cap
-    OpenGL.GL.OpenGL.GL.glTranslatef(0, 0, v)
+    OpenGL.GL.glTranslatef(0, 0, v)
     OpenGL.GL.glEnable(clip_plane)
     OpenGL.GL.glClipPlane(clip_plane, (0, 0, 1, 0))
     OpenGL.GLU.gluSphere(quadric, radius, quality, quality)
     OpenGL.GL.glDisable(clip_plane)
 
+    OpenGL.GLU.gluDeleteQuadric(quadric)
     OpenGL.GL.glPopMatrix()
 
 
@@ -2256,7 +2419,7 @@ def draw_arrow(pos, d, radius, color, material, quality):
     ax, rx, ry = rotation_helper(d)
 
     OpenGL.GL.glPushMatrix()
-    OpenGL.GL.OpenGL.GL.glTranslatef(pos2[0], pos2[1], pos2[2])
+    OpenGL.GL.glTranslatef(pos2[0], pos2[1], pos2[2])
     OpenGL.GL.glRotatef(ax, rx, ry, 0.0)
     OpenGL.GLUT.glutSolidCone(radius * 3, radius * 3, quality, quality)
     OpenGL.GL.glPopMatrix()
@@ -2577,8 +2740,8 @@ class Camera:
         return m
 
     def rotate_vector(self, vec, ang, axe):
-        sinhalf = sin(ang / 2)
-        coshalf = cos(ang / 2)
+        sinhalf = math.sin(ang / 2)
+        coshalf = math.cos(ang / 2)
 
         rx = axe[0] * sinhalf
         ry = axe[1] * sinhalf
@@ -2661,8 +2824,8 @@ class Quaternion:
             (self[1] * q[1]) - (self[2] * q[2])
         x = (self[0] * q[3]) + (self[3] * q[0]) + \
             (self[1] * q[2]) - (self[2] * q[1])
-        y = (self[1] * q[3]) + (self[3] * q[1]) + (
-            self[2] * q[0]) - (self[0] * q[2])
-        z = (self[2] * q[3]) + (self[3] * q[2]) + (
-            self[0] * q[1]) - (self[1] * q[0])
+        y = (self[1] * q[3]) + (self[3] * q[1]) + \
+            (self[2] * q[0]) - (self[0] * q[2])
+        z = (self[2] * q[3]) + (self[3] * q[2]) + \
+            (self[0] * q[1]) - (self[1] * q[0])
         return Quaternion(x, y, z, w)

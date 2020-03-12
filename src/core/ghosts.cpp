@@ -132,7 +132,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      int np = part_list->n;
+      int np = part_list->particles().size();
       archiver << np;
     } else {
       for (Particle &part : part_list->particles()) {
@@ -212,8 +212,8 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (local_particles[part.p.identity] == nullptr) {
-            local_particles[part.p.identity] = &part;
+          if (get_local_particle_data(part.p.identity) == nullptr) {
+            set_local_particle_data(part.p.identity, &part);
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
@@ -259,16 +259,20 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
   /* transfer data */
   int const offset = ghost_comm.part_lists.size() / 2;
   for (int pl = 0; pl < offset; pl++) {
-    Cell *src_list = ghost_comm.part_lists[pl];
+    const Cell *src_list = ghost_comm.part_lists[pl];
     Cell *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, src_list->n);
+      prepare_ghost_cell(dst_list, src_list->particles().size());
     } else {
-      int const np = src_list->n;
-      for (int p = 0; p < np; p++) {
-        Particle const &part1 = src_list->part[p];
-        Particle &part2 = dst_list->part[p];
+      auto src_part = src_list->particles();
+      auto dst_part = dst_list->particles();
+      assert(src_part.size() == dst_part.size());
+
+      for (size_t i = 0; i < src_part.size(); i++) {
+        auto const &part1 = src_part[i];
+        auto &part2 = dst_part[i];
+
         if (data_parts & GHOSTTRANS_PROPRTS) {
           part2.p = part1.p;
         }
@@ -316,6 +320,9 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
 }
 
 void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
+  if (GHOSTTRANS_NONE == data_parts)
+    return;
+
   static CommBuf send_buffer, recv_buffer;
 
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {

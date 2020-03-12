@@ -23,6 +23,7 @@
 double coulomb_cutoff;
 
 #ifdef ELECTROSTATICS
+#include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
@@ -34,7 +35,6 @@ double coulomb_cutoff;
 #include "electrostatics_magnetostatics/scafacos.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
-#include "layered.hpp"
 #include "npt.hpp"
 
 #include <utils/constants.hpp>
@@ -209,7 +209,8 @@ void on_coulomb_change() {
 #ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
+    if (this_node == 0)
+      p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
     break;
 #endif
   case COULOMB_ELC_P3M:

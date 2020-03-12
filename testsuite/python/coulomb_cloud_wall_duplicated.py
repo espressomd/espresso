@@ -32,8 +32,7 @@ class CoulombCloudWall(ut.TestCase):
     """This compares p3m, p3m_gpu electrostatic forces and energy against
     stored data."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
-    np.random.seed(S.seed)
+    np.random.seed(seed=42)
 
     forces = {}
     tolerance = 1E-3

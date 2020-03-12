@@ -58,14 +58,5 @@ if has_features("VIRTUAL_SITES_RELATIVE"):
         """Virtual sites implementation placing virtual sites relative to other
         particles. See :ref:`Rigid arrangements of particles` for details.
 
-        Attributes can be set on the instance or passed to the constructor as
-        keyword arguments.
-
-        Attributes
-        ----------
-        have_velocity : :obj:`bool`
-            Determines whether the velocity of the virtual sites is calculated.
-            This carries a performance cost.
-
         """
         _so_name = "VirtualSites::VirtualSitesRelative"

@@ -14,8 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import espressomd.interactions
-from espressomd import has_features
+from . import interactions
+from .__init__ import has_features
 
 # Dict with Drude type infos
 drude_dict = {}
@@ -35,29 +35,35 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     """
     Adds a Drude particle with specified id, type, and mass to the system.
     Checks if different Drude particles have different types.
-    Collects types/charges/polarizations/Thole factors for intramol. core-Drude short-range exclusion and Thole interaction.
+    Collects types/charges/polarizations/Thole factors for intramolecular
+    core-Drude short-range exclusion and Thole interaction.
 
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.system.System`
-    harmonic_bond: This method adds this harmonic bond to between Drude particle and core
-    thermalized_bond: This method adds this thermalized_bond to between Drude particle and core
-    p_core: The existing core particle
+    system : :class:`espressomd.system.System`
+    harmonic_bond: :class:`espressomd.interactions.HarmonicBond`
+        Add this harmonic bond to between Drude particle and core
+    thermalized_bond: :class:`espressomd.interactions.ThermalizedBond`
+        Add this thermalized_bond to between Drude particle and core
+    p_core: :class:`espressomd.particle_data.ParticleHandle`
+        The existing core particle
     id_drude: :obj:`int`
-              This method creates the Drude particle and assigns this id.
+        This method creates the Drude particle and assigns this id.
     type_drude: :obj:`int`
-                The type of the newly created Drude particle
+        The type of the newly created Drude particle
     alpha : :obj:`float`
-            The polarizability in units of inverse volume. Related to the charge of the Drude particle.
+        The polarizability in units of inverse volume. Related to the charge
+        of the Drude particle.
     mass_drude : :obj:`float`
-                 The mass of the newly created Drude particle
+        The mass of the newly created Drude particle
     coulomb_prefactor : :obj:`float`
-                        Required to calculate the charge of the Drude particle.
+        Required to calculate the charge of the Drude particle.
     thole_damping : :obj:`float`
-                    Thole damping factor of the Drude pair. Comes to effect if add_all_thole() method is used.
+        Thole damping factor of the Drude pair. Comes to effect if
+        :meth:`add_all_thole()` method is used.
     verbose : :obj:`bool`
-             Turns on verbosity.
+        Turns on verbosity.
 
     """
 
@@ -132,13 +138,13 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.system.System`
+    system : :class:`espressomd.system.System`
     t1 : :obj:`int`
         Type 1
     t2 : :obj:`int`
         Type 2
     verbose : :obj:`bool`
-             Turns on verbosity.
+        Turns on verbosity.
 
     """
 
@@ -155,14 +161,15 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
 
 def add_all_thole(system, verbose=False):
     """
-    Calls add_thole_pair_damping() for all necessary combinations to create the interactions.
+    Calls :meth:`add_thole_pair_damping()` for all necessary combinations to
+    create the interactions.
 
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.system.System`
+    system : :class:`espressomd.system.System`
     verbose : :obj:`bool`
-             Turns on verbosity.
+        Turns on verbosity.
 
     """
 
@@ -191,9 +198,9 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.system.System`
+    system : :class:`espressomd.system.System`
     verbose: :obj:`bool`
-             Turns on verbosity.
+        Turns on verbosity.
 
     """
 
@@ -203,7 +210,7 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
         #...exclusions with core
         qd = drude_dict[td]["q"]  # Drude charge
         qc = drude_dict[td]["qc"]  # Core charge
-        subtr_sr_bond = espressomd.interactions.BondedCoulombSRBond(
+        subtr_sr_bond = interactions.BondedCoulombSRBond(
             q1q2=-qd * qc)
         system.bonded_inter.add(subtr_sr_bond)
         drude_dict[td]["subtr_sr_bonds_drude-core"] = subtr_sr_bond
@@ -232,12 +239,15 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.system.System`
-    mol_drude_types : List of types of Drude particles within the molecule
-    mol_core_types : List of types of core particles within the molecule
-    mol_core_partial_charges : List of partial charges of core particles within the molecule
+    system : :class:`espressomd.system.System`
+    mol_drude_types :
+        List of types of Drude particles within the molecule
+    mol_core_types :
+        List of types of core particles within the molecule
+    mol_core_partial_charges :
+        List of partial charges of core particles within the molecule
     verbose : :obj:`bool`
-             Turns on verbosity.
+        Turns on verbosity.
 
     """
 
@@ -250,7 +260,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
             #...excluding the Drude core partner
             if drude_dict[td]["core_type"] != tc:
                 qd = drude_dict[td]["q"]  # Drude charge
-                subtr_sr_bond = espressomd.interactions.BondedCoulombSRBond(
+                subtr_sr_bond = interactions.BondedCoulombSRBond(
                     q1q2=-qd * qp)
                 system.bonded_inter.add(subtr_sr_bond)
                 drude_dict[td]["subtr_sr_bonds_intramol"][
@@ -268,11 +278,13 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids, verbose=False):
     Attributes
     ----------
 
-    system : Instance of :attr:`espressomd.system.System`
-    drude_ids : IDs of Drude particles within a molecule.
-    core_ids : IDs of core particles within a molecule.
+    system : :class:`espressomd.system.System`
+    drude_ids :
+        IDs of Drude particles within a molecule.
+    core_ids :
+        IDs of core particles within a molecule.
     verbose : :obj:`bool`
-             Turns on verbosity.
+        Turns on verbosity.
 
     """
 

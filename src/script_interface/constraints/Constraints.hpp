@@ -24,9 +24,9 @@
 
 #include "Constraint.hpp"
 
-#include "ScriptObjectRegistry.hpp"
 #include "core/constraints.hpp"
 #include "script_interface/ScriptInterface.hpp"
+#include "script_interface/ScriptObjectRegistry.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {

@@ -19,25 +19,22 @@
 # For C-extern Analysis
 include "myconfig.pxi"
 from . cimport analyze
-from . cimport utils
-from . cimport particle_data
-from . import utils
-from . import code_info
-from . import particle_data
-from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
-from .interactions import *
-from espressomd.interactions cimport *
+from .interactions cimport BONDED_IA_NONE
+from .interactions cimport bonded_ia_params
 import numpy as np
 cimport numpy as np
-from globals cimport n_configs
-
-from .utils import array_locked
+from .globals import Globals
 
 from collections import OrderedDict
 from .system import System
-from espressomd.utils import is_valid_type
+from .utils import array_locked, is_valid_type
+from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport handle_errors, check_type_or_throw_except
+from .utils cimport create_nparray_from_double_array, \
+    create_nparray_from_int_list, \
+    create_int_list_from_python_object
+from .particle_data cimport get_n_part
 
 
 class Analysis:
@@ -53,9 +50,9 @@ class Analysis:
 
     def append(self):
         """Append configuration for averaged analysis."""
-        assert analyze.n_part, "No particles to append!"
-        if analyze.n_configs > 0:
-            assert analyze.n_part_conf == analyze.n_part, \
+        assert get_n_part(), "No particles to append!"
+        if n_configs > 0:
+            assert analyze.n_part_conf == get_n_part(), \
                 "All configurations stored must have the same length"
 
         analyze.analyze_append(analyze.partCfg())
@@ -329,8 +326,8 @@ class Analysis:
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
-                p["bonded", i] = analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
-                total_bonded += analyze.obsstat_bonded(& analyze.total_pressure, i)[0]
+                p["bonded", i] = analyze.obsstat_bonded( & analyze.total_pressure, i)[0]
+                total_bonded += analyze.obsstat_bonded( & analyze.total_pressure, i)[0]
         p["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -345,12 +342,12 @@ class Analysis:
         for i in range(analyze.max_seen_particle_type):
             for j in range(i, analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                p["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
-                total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_pressure, i, j)[0]
-                total_intra += analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_intra", i, j] = analyze.obsstat_nonbonded_intra(& analyze.total_pressure_non_bonded, i, j)[0]
-                p["non_bonded_inter", i, j] = analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
-                total_inter += analyze.obsstat_nonbonded_inter(& analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded", i, j] = analyze.obsstat_nonbonded( & analyze.total_pressure, i, j)[0]
+                total_non_bonded += analyze.obsstat_nonbonded( & analyze.total_pressure, i, j)[0]
+                total_intra += analyze.obsstat_nonbonded_intra( & analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_intra", i, j] = analyze.obsstat_nonbonded_intra( & analyze.total_pressure_non_bonded, i, j)[0]
+                p["non_bonded_inter", i, j] = analyze.obsstat_nonbonded_inter( & analyze.total_pressure_non_bonded, i, j)[0]
+                total_inter += analyze.obsstat_nonbonded_inter( & analyze.total_pressure_non_bonded, i, j)[0]
         p["non_bonded_intra"] = total_intra
         p["non_bonded_inter"] = total_inter
         p["non_bonded"] = total_non_bonded
@@ -444,7 +441,7 @@ class Analysis:
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
                 p["bonded", i] = np.reshape(create_nparray_from_double_array(
-                    analyze.obsstat_bonded(& analyze.total_p_tensor, i), 9),
+                    analyze.obsstat_bonded( & analyze.total_p_tensor, i), 9),
                     (3, 3))
                 total_bonded += p["bonded", i]
         p["bonded"] = total_bonded
@@ -550,7 +547,7 @@ class Analysis:
         e = OrderedDict()
 
         if analyze.total_energy.init_status == 0:
-            analyze.init_energies(& analyze.total_energy)
+            analyze.init_energies( & analyze.total_energy)
             analyze.master_energy_calc()
             handle_errors("calc_long_range_energies failed")
 
@@ -572,8 +569,8 @@ class Analysis:
         total_bonded = 0
         for i in range(bonded_ia_params.size()):
             if bonded_ia_params[i].type != BONDED_IA_NONE:
-                e["bonded", i] = analyze.obsstat_bonded(& analyze.total_energy, i)[0]
-                total_bonded += analyze.obsstat_bonded(& analyze.total_energy, i)[0]
+                e["bonded", i] = analyze.obsstat_bonded( & analyze.total_energy, i)[0]
+                total_bonded += analyze.obsstat_bonded( & analyze.total_energy, i)[0]
         e["bonded"] = total_bonded
 
         # Non-Bonded interactions, total as well as intra and inter molecular
@@ -588,9 +585,9 @@ class Analysis:
         for i in range(analyze.max_seen_particle_type):
             for j in range(analyze.max_seen_particle_type):
                 #      if checkIfParticlesInteract(i, j):
-                e["non_bonded", i, j] = analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
+                e["non_bonded", i, j] = analyze.obsstat_nonbonded( & analyze.total_energy, i, j)[0]
                 if i <= j:
-                    total_non_bonded += analyze.obsstat_nonbonded(& analyze.total_energy, i, j)[0]
+                    total_non_bonded += analyze.obsstat_nonbonded( & analyze.total_energy, i, j)[0]
         #       total_intra +=analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
         #       e["non_bonded_intra",i,j] =analyze.obsstat_nonbonded_intra(&analyze.total_energy_non_bonded, i, j)[0]
         #       e["nonBondedInter",i,j] =analyze.obsstat_nonbonded_inter(&analyze.total_energy_non_bonded, i, j)[0]
@@ -846,7 +843,7 @@ class Analysis:
                 n_conf = n_configs
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         cdef vector[double] rdf
         rdf.resize(r_bins)
@@ -921,7 +918,7 @@ class Analysis:
             raise ValueError("type_list_b has to be a list!")
 
         if r_max is None:
-            r_max = min_box_l / 2.0
+            r_max = min(Globals().box_l) / 2
 
         assert r_min >= 0.0, "r_min was chosen too small!"
         assert not log_flag or r_min != 0.0, "r_min cannot include zero"

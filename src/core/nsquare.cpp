@@ -27,6 +27,7 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "ghosts.hpp"
+#include "particle_data.hpp"
 
 #include <mpi.h>
 
@@ -132,12 +133,10 @@ void nsq_topology_init(CellPList *old) {
   }
 
   /* copy particles */
-  for (int c = 0; c < old->n; c++) {
-    auto part = old->cell[c]->part;
-    auto np = old->cell[c]->n;
-    for (int p = 0; p < np; p++)
-      append_unindexed_particle(local, std::move(part[p]));
+  for (auto &p : old->particles()) {
+    append_unindexed_particle(local, std::move(p));
   }
+
   update_local_particles(local);
 }
 

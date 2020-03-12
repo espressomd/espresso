@@ -595,7 +595,7 @@ void ReactionAlgorithm::hide_particle(int p_id, int previous_type) {
  * avoid the id range becoming excessively huge.
  */
 int ReactionAlgorithm::delete_particle(int p_id) {
-  int old_max_seen_id = max_seen_particle;
+  int old_max_seen_id = get_maximal_particle_id();
   if (p_id == old_max_seen_id) {
     // last particle, just delete
     remove_particle(p_id);
@@ -694,7 +694,7 @@ int ReactionAlgorithm::create_particle(int desired_type) {
     p_id = *p_id_iter;
     m_empty_p_ids_smaller_than_max_seen_particle.erase(p_id_iter);
   } else {
-    p_id = max_seen_particle + 1;
+    p_id = get_maximal_particle_id() + 1;
   }
   Utils::Vector3d pos_vec;
 
@@ -1648,10 +1648,10 @@ int WangLandauReactionEnsemble::load_wang_landau_checkpoint(
 }
 
 int ConstantpHEnsemble::get_random_valid_p_id() {
-  int random_p_id = i_random(max_seen_particle + 1);
+  int random_p_id = i_random(get_maximal_particle_id() + 1);
   // draw random p_ids till we draw a pid which exists
   while (not particle_exists(random_p_id))
-    random_p_id = i_random(max_seen_particle + 1);
+    random_p_id = i_random(get_maximal_particle_id() + 1);
   return random_p_id;
 }
 

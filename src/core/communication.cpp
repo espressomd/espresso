@@ -53,6 +53,7 @@
 #include "nonbonded_interactions/nonbonded_tab.hpp"
 #include "npt.hpp"
 #include "partCfg_global.hpp"
+#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "rotation.hpp"
 #include "statistics.hpp"
@@ -254,8 +255,6 @@ void mpi_place_particle_slave(int pnode, int part) {
 
 boost::optional<int> mpi_place_new_particle_slave(int part,
                                                   Utils::Vector3d const &pos) {
-  added_particle(part);
-
   auto p = local_place_particle(part, pos, 1);
 
   on_particle_change();
@@ -282,8 +281,6 @@ void mpi_remove_particle(int pnode, int part) {
 
 void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
-    n_part--;
-
     if (pnode == this_node) {
       local_remove_particle(part);
     } else {

@@ -1191,6 +1191,9 @@ void setBHPrecision(float *epssq, float *itolsq) {
 // An allocation of the GPU device memory and an initialization where it is
 // needed.
 void allocBHmemCopy(int nbodies, BHData *bh_data) {
+  if (bh_data->nbodies == nbodies)
+    return;
+
   bh_data->nbodies = nbodies;
 
   int devID = -1;

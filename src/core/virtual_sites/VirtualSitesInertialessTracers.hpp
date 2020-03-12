@@ -28,8 +28,6 @@
  * instantaneously transferred to the fluid
  */
 class VirtualSitesInertialessTracers : public VirtualSites {
-  void update(bool recalc_positions) const override{};
-  void back_transfer_forces_and_torques() const override{};
   void after_force_calc() override;
   void after_lb_propagation() override;
 };

@@ -52,7 +52,6 @@ class ReactionEnsembleTest(ut.TestCase):
     product_coefficients = [1, 1]
     nubar = 1
     system = espressomd.System(box_l=np.ones(3) * (N0 / c0)**(1.0 / 3.0))
-    system.seed = system.cell_system.get_state()['n_nodes'] * [67]
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     volume = np.prod(system.box_l)  # cuboid box

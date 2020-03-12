@@ -42,7 +42,6 @@ class SimplePoreConstraint(ut.TestCase):
 
     def test_stability(self):
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         box_yz = 15.
         box_x = 20.
         s.box_l = [box_x, box_yz, box_yz]

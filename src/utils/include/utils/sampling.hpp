@@ -44,8 +44,8 @@ std::vector<Vector3d>
 get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
                                    std::pair<double, double> const &phi_limits,
                                    std::pair<double, double> const &z_limits,
-                                   int n_r_bins, int n_phi_bins, int n_z_bins,
-                                   double sampling_density) {
+                                   size_t n_r_bins, size_t n_phi_bins,
+                                   size_t n_z_bins, double sampling_density) {
   auto const delta_r = (r_limits.second - r_limits.first) / n_r_bins;
   auto const delta_phi = (phi_limits.second - phi_limits.first) / n_phi_bins;
 
@@ -55,7 +55,7 @@ get_cylindrical_sampling_positions(std::pair<double, double> const &r_limits,
   auto const smallest_bin_volume =
       pi() * pow(r_limits.first + delta_r, 2.0) * delta_phi / (2.0 * pi());
   auto const min_n_samples = std::max(
-      n_z_bins, static_cast<int>(smallest_bin_volume * sampling_density));
+      n_z_bins, static_cast<size_t>(smallest_bin_volume * sampling_density));
   auto const delta_z = (z_limits.second - z_limits.first) / min_n_samples;
 
   auto const r_range =

@@ -24,7 +24,7 @@
 
 #include "config.hpp"
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "Observable.hpp"
 #ifdef DPD

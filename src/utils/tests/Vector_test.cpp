@@ -381,3 +381,19 @@ BOOST_AUTO_TEST_CASE(diag_matrix) {
     for (int j = 0; j < 3; j++)
       BOOST_CHECK_EQUAL(result[i][j], (i == j) ? v[i] : 0);
 }
+
+BOOST_AUTO_TEST_CASE(trace_) {
+  auto const A = Utils::Matrix<int, 3, 3>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+  auto const result = trace(A);
+  auto const expected = A[0][0] + A[1][1] + A[2][2];
+
+  BOOST_CHECK_EQUAL(expected, result);
+}
+
+BOOST_AUTO_TEST_CASE(flatten_) {
+  auto const A = Utils::Matrix<int, 2, 2>{{1, 2}, {3, 4}};
+  auto const result = flatten(A);
+  auto const expected = Utils::Vector<int, 4>{1, 3, 2, 4};
+
+  BOOST_CHECK(result == expected);
+}

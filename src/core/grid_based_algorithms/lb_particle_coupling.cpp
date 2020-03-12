@@ -20,6 +20,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "config.hpp"
+#include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -52,7 +53,8 @@ void mpi_bcast_lb_particle_coupling() {
 void lb_lbcoupling_activate() { lb_particle_coupling.couple_to_md = true; }
 
 void lb_lbcoupling_deactivate() {
-  if (lattice_switch != ActiveLB::NONE && this_node == 0 && n_part) {
+  if (lattice_switch != ActiveLB::NONE && this_node == 0 &&
+      lb_particle_coupling.gamma > 0.) {
     runtimeWarningMsg()
         << "Recalculating forces, so the LB coupling forces are not "
            "included in the particle force the first time step. This "
@@ -248,6 +250,7 @@ void lb_lbcoupling_calc_particle_lattice_ia(
         };
 
         auto couple_particle = [&](Particle &p) -> void {
+          extern std::vector<Particle *> local_particles;
           // We only couple ghosts, if the physical particle is not on the node
           if (p.l.ghost and not local_particles[p.p.identity]->l.ghost)
             return;

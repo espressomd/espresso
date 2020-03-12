@@ -55,7 +55,7 @@ void master_energy_calc();
    all nodes. */
 void energy_calc(double *result, double time);
 
-/** Calculate long range energies (P3M, MMM2d...). */
+/** Calculate long range energies (P3M, ...). */
 void calc_long_range_energies(const ParticleRange &particles);
 
 /** Calculate the total energy */

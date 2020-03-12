@@ -19,12 +19,12 @@
 #ifndef SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARY_HPP
 #define SCRIPT_INTERFACE_LBBOUNDARIES_LBBOUNDARY_HPP
 
-#include "ScriptInterface.hpp"
-#include "auto_parameters/AutoParameters.hpp"
 #include "core/communication.hpp"
 #include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/grid_based_algorithms/lbboundaries/LBBoundary.hpp"
-#include "shapes/Shape.hpp"
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
+#include "script_interface/shapes/Shape.hpp"
 
 namespace ScriptInterface {
 namespace LBBoundaries {

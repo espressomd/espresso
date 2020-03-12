@@ -24,127 +24,51 @@
 
 #include "debug.hpp"
 
-#include <cstdio>
-
 #include "cells.hpp"
-#include "errorhandling.hpp"
-#include "grid.hpp"
 #include "particle_data.hpp"
 
+#include <stdexcept>
+
 void check_particle_consistency() {
-  int n, c;
-  int cell_part_cnt = 0, ghost_part_cnt = 0, local_part_cnt = 0;
-  int cell_err_cnt = 0;
+  auto local_cells = cell_structure.local_cells();
+  auto const cell_part_cnt = local_cells.particles().size();
 
-  /* checks: part_id, part_pos, local_particles id */
-  for (c = 0; c < cell_structure.local_cells().n; c++) {
-    auto const cell = cell_structure.local_cells().cell[c];
-    cell_part_cnt += cell->n;
-    for (int n = 0; n < cell->n; n++) {
-      auto const &p = cell->part[n];
-      if (p.p.identity < 0 || p.p.identity > max_seen_particle) {
-        fprintf(stderr,
-                "%d: check_particle_consistency: ERROR: Cell %d Part "
-                "%d has corrupted id=%d\n",
-                this_node, c, n, p.p.identity);
-        errexit();
-      }
-      for (int dir = 0; dir < 3; dir++) {
-        if (box_geo.periodic(dir) &&
-            (p.r.p[dir] < -ROUND_ERROR_PREC * box_geo.length()[dir] ||
-             p.r.p[dir] - box_geo.length()[dir] >
-                 ROUND_ERROR_PREC * box_geo.length()[dir])) {
-          fprintf(stderr,
-                  "%d: check_particle_consistency: ERROR: illegal "
-                  "pos[%d]=%f of part %d id=%d in cell %d\n",
-                  this_node, dir, p.r.p[dir], n, p.p.identity, c);
-          errexit();
-        }
-      }
-      if (local_particles[p.p.identity] != &p) {
-        fprintf(stderr,
-                "%d: check_particle_consistency: ERROR: address "
-                "mismatch for part id %d: local: %p cell: %p in cell %d\n",
-                this_node, p.p.identity,
-                static_cast<void *>(local_particles[p.p.identity]),
-                static_cast<void const *>(&p), c);
-        errexit();
-      }
+  for (auto const &p : local_cells.particles()) {
+    auto const id = p.identity();
+
+    if (id < 0 || id > get_local_max_seen_particle()) {
+      throw std::runtime_error("Particle id out of bounds.");
     }
-  }
 
-  for (c = 0; c < cell_structure.ghost_cells().n; c++) {
-    auto const cell = cell_structure.ghost_cells().cell[c];
-    if (cell->n > 0) {
-      ghost_part_cnt += cell->n;
-      fprintf(stderr,
-              "%d: check_particle_consistency: WARNING: ghost_cell %d "
-              "contains %d particles!\n",
-              this_node, c, cell->n);
+    if (get_local_particle_data(id) != &p) {
+      throw std::runtime_error("Invalid local particle index entry.");
     }
   }
 
   /* checks: local particle id */
-  for (n = 0; n < max_seen_particle + 1; n++) {
-    if (local_particles[n] != nullptr) {
+  int local_part_cnt = 0;
+  for (int n = 0; n < get_local_max_seen_particle() + 1; n++) {
+    if (get_local_particle_data(n) != nullptr) {
       local_part_cnt++;
-      if (local_particles[n]->p.identity != n) {
-        fprintf(stderr,
-                "%d: check_particle_consistency: ERROR: "
-                "local_particles part %d has corrupted id %d\n",
-                this_node, n, local_particles[n]->p.identity);
-        errexit();
+      if (get_local_particle_data(n)->p.identity != n) {
+        throw std::runtime_error("local_particles part has corrupted id.");
       }
     }
   }
 
-  /* EXIT on severe errors */
-  if (cell_err_cnt > 0) {
-    fprintf(stderr,
-            "%d: check_particle_consistency: %d ERRORS detected in "
-            "cell structure!\n",
-            this_node, cell_err_cnt);
-    errexit();
-  }
   if (local_part_cnt != cell_part_cnt) {
-    fprintf(stderr,
-            "%d: check_particle_consistency: ERROR: %d parts in cells "
-            "but %d parts in local_particles\n",
-            this_node, cell_part_cnt, local_part_cnt);
-
-    for (c = 0; c < cell_structure.local_cells().n; c++) {
-      for (int p = 0; p < cell_structure.local_cells().cell[c]->n; p++)
-        fprintf(stderr, "%d: got particle %d in cell %d\n", this_node,
-                cell_structure.local_cells().cell[c]->part[p].p.identity, c);
-    }
-
-    for (int p = 0; p < n_part; p++)
-      if (local_particles[p])
-        fprintf(stderr, "%d: got particle %d in local_particles\n", this_node,
-                p);
-
-    if (ghost_part_cnt == 0)
-      errexit();
-  }
-  if (ghost_part_cnt > 0) {
-    fprintf(stderr,
-            "%d: check_particle_consistency: ERROR: Found %d illegal "
-            "ghost particles!\n",
-            this_node, ghost_part_cnt);
-    errexit();
+    throw std::runtime_error(
+        std::to_string(cell_part_cnt) + " parts in cells but " +
+        std::to_string(local_part_cnt) + " parts in local_particles");
   }
 }
 
 void check_particle_sorting() {
-  for (int c = 0; c < cell_structure.local_cells().n; c++) {
-    auto const cell = cell_structure.local_cells().cell[c];
-    for (int n = 0; n < cell->n; n++) {
-      auto const p = cell->part[n];
+  for (auto cell : cell_structure.local_cells()) {
+    for (auto const &p : cell->particles()) {
       if (cell_structure.particle_to_cell(p) != cell) {
-        fprintf(stderr, "%d: misplaced part id %d. %p != %p\n", this_node,
-                p.p.identity, (void *)cell,
-                (void *)cell_structure.particle_to_cell(p));
-        errexit();
+        throw std::runtime_error("misplaced particle with id " +
+                                 std::to_string(p.identity()));
       }
     }
   }

@@ -52,14 +52,14 @@ Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
       dpd.rng_get(), (pid1 < pid2) ? pid2 : pid1, (pid1 < pid2) ? pid1 : pid2);
 }
 
-int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
-                   int wf, double tgamma, double tr_c, int twf) {
+int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
+                   double r_c, int wf, double tgamma, double tr_c, int twf) {
   IA_parameters &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
 
   ia_params.dpd_radial = DPDParameters{
-      gamma, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
+      gamma, k, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
   ia_params.dpd_trans = DPDParameters{
-      tgamma, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
+      tgamma, k, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -91,17 +91,17 @@ void dpd_update_params(double pref_scale) {
   }
 }
 
-static double weight(int type, double r_cut, double r) {
+static double weight(int type, double r_cut, double k, double r) {
   if (type == 0) {
     return 1.;
   }
-  return 1. - r / r_cut;
+  return 1. - pow((r / r_cut), k);
 }
 
 Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
                         double dist, Vector3d const &noise) {
   if (dist < params.cutoff) {
-    auto const omega = weight(params.wf, params.cutoff, dist);
+    auto const omega = weight(params.wf, params.cutoff, params.k, dist);
     auto const omega2 = Utils::sqr(omega);
 
     auto const f_d = params.gamma * omega2 * v;

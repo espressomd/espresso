@@ -41,7 +41,6 @@ modes = {x for mode in set("@TEST_COMBINATION@".upper().split('-'))
 # use a box with 3 different dimensions
 system = espressomd.System(box_l=[12.0, 14.0, 16.0])
 system.cell_system.skin = 0.1
-system.seed = system.cell_system.get_state()["n_nodes"] * [1234]
 system.time_step = 0.01
 system.min_global_cut = 2.0
 
@@ -165,7 +164,7 @@ if 'LB.OFF' in modes:
 
 if espressomd.has_features(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE']):
     system.virtual_sites = espressomd.virtual_sites.VirtualSitesRelative(
-        have_velocity=True, have_quaternion=True)
+        have_quaternion=True)
     system.part[1].vs_auto_relate_to(0)
 
 if espressomd.has_features(['LENNARD_JONES']) and 'LJ' in modes:

@@ -54,12 +54,8 @@ enum Fields {
   FIELD_INTEG_SWITCH,
   /** index of \ref max_num_cells  */
   FIELD_MAXNUMCELLS,
-  /** index of \ref max_seen_particle */
-  FIELD_MAXPART,
   /** index of \ref min_num_cells  */
   FIELD_MINNUMCELLS,
-  /** index of \ref n_layers */
-  FIELD_NLAYERS,
   /** index of \ref n_rigidbonds */
   FIELD_RIGIDBONDS,
   /** index of \ref node_grid */
@@ -98,7 +94,6 @@ enum Fields {
   FIELD_THERMALIZEDBONDS,
   FIELD_FORCE_CAP,
   FIELD_THERMO_VIRTUAL,
-  FIELD_SWIMMING_PARTICLES_EXIST,
   /** index of \ref BrownianThermostat::gamma */
   FIELD_BROWNIAN_GAMMA,
   /** index of \ref BrownianThermostat::gamma_rotation */

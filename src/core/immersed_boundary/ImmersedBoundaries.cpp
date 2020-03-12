@@ -125,97 +125,91 @@ void ImmersedBoundaries::calc_volumes() {
   std::vector<double> tempVol(MaxNumIBM);
 
   // Loop over all particles on local node
-  for (int c = 0; c < cell_structure.local_cells().n; c++) {
-    const Cell *const cell = cell_structure.local_cells().cell[c];
+  for (auto const &p1 : cell_structure.local_cells().particles()) {
+    // Check if particle has a BONDED_IA_IBM_TRIEL and a
+    // BONDED_IA_IBM_VOLUME_CONSERVATION Basically this loops over all
+    // triangles, not all particles First round to check for volume
+    // conservation and virtual Loop over all bonds of this particle Actually
+    // j loops over the bond-list, i.e. the bond partners (see
+    // Particle.hpp)
+    int softID = -1;
+    int j = 0;
+    while (j < p1.bl.n) {
+      const int type_num = p1.bl.e[j];
+      const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
+      const int type = iaparams.type;
+      if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
+        if (p1.p.is_virtual)
+          softID = iaparams.p.ibmVolConsParameters.softID;
+        else {
+          printf("Error. Encountered non-virtual particle with "
+                 "VOLUME_CONSERVATION_IBM\n");
+          std::abort();
+        }
+      }
+      // Iterate, increase by the number of partners of this bond + 1 for bond
+      // type
+      j += iaparams.num + 1;
+    }
 
-    for (int i = 0; i < cell->n; i++) {
-      Particle &p1 = cell->part[i];
-
-      // Check if particle has a BONDED_IA_IBM_TRIEL and a
-      // BONDED_IA_IBM_VOLUME_CONSERVATION Basically this loops over all
-      // triangles, not all particles First round to check for volume
-      // conservation and virtual Loop over all bonds of this particle Actually
-      // j loops over the bond-list, i.e. the bond partners (see
-      // Particle.hpp)
-      int softID = -1;
-      int j = 0;
+    // Second round for triel
+    if (softID > -1) {
+      j = 0;
       while (j < p1.bl.n) {
         const int type_num = p1.bl.e[j];
         const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
         const int type = iaparams.type;
-        if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
-          if (p1.p.is_virtual)
-            softID = iaparams.p.ibmVolConsParameters.softID;
-          else {
-            printf("Error. Encountered non-virtual particle with "
-                   "VOLUME_CONSERVATION_IBM\n");
-            std::abort();
+
+        if (type == BONDED_IA_IBM_TRIEL) {
+          // Our particle is the leading particle of a triel
+          // Get second and third particle of the triangle
+          Particle const *const p2 = get_local_particle_data(p1.bl.e[j + 1]);
+          if (!p2) {
+            runtimeErrorMsg()
+                << "{IBM_calc_volumes: 078 bond broken between particles "
+                << p1.p.identity << " and " << p1.bl.e[j + 1]
+                << " (particles not stored on the same node)} ";
+            return;
           }
+          Particle const *const p3 = get_local_particle_data(p1.bl.e[j + 2]);
+          if (!p3) {
+            runtimeErrorMsg()
+                << "{IBM_calc_volumes: 078 bond broken between particles "
+                << p1.p.identity << " and " << p1.bl.e[j + 2]
+                << " (particles not stored on the same node)} ";
+            return;
+          }
+
+          // Unfold position of first node.
+          // This is to get a continuous trajectory with no jumps when box
+          // boundaries are crossed.
+          auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+          auto const x2 = x1 + get_mi_vector(p2->r.p, x1, box_geo);
+          auto const x3 = x1 + get_mi_vector(p3->r.p, x1, box_geo);
+
+          // Volume of this tetrahedron
+          // See @cite zhang01b
+          // The volume can be negative, but it is not necessarily the "signed
+          // volume" in the above paper (the sign of the real "signed volume"
+          // must be calculated using the normal vector; the result of the
+          // calculation here is simply a term in the sum required to
+          // calculate the volume of a particle). Again, see the paper. This
+          // should be equivalent to the formulation using vector identities
+          // in @cite kruger12a
+
+          const double v321 = x3[0] * x2[1] * x1[2];
+          const double v231 = x2[0] * x3[1] * x1[2];
+          const double v312 = x3[0] * x1[1] * x2[2];
+          const double v132 = x1[0] * x3[1] * x2[2];
+          const double v213 = x2[0] * x1[1] * x3[2];
+          const double v123 = x1[0] * x2[1] * x3[2];
+
+          tempVol[softID] +=
+              1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
         }
-        // Iterate, increase by the number of partners of this bond + 1 for bond
-        // type
+        // Iterate, increase by the number of partners of this bond + 1 for
+        // bond type
         j += iaparams.num + 1;
-      }
-
-      // Second round for triel
-      if (softID > -1) {
-        j = 0;
-        while (j < p1.bl.n) {
-          const int type_num = p1.bl.e[j];
-          const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
-          const int type = iaparams.type;
-
-          if (type == BONDED_IA_IBM_TRIEL) {
-            // Our particle is the leading particle of a triel
-            // Get second and third particle of the triangle
-            Particle const *const p2 = local_particles[p1.bl.e[j + 1]];
-            if (!p2) {
-              runtimeErrorMsg()
-                  << "{IBM_calc_volumes: 078 bond broken between particles "
-                  << p1.p.identity << " and " << p1.bl.e[j + 1]
-                  << " (particles not stored on the same node)} ";
-              return;
-            }
-            Particle const *const p3 = local_particles[p1.bl.e[j + 2]];
-            if (!p3) {
-              runtimeErrorMsg()
-                  << "{IBM_calc_volumes: 078 bond broken between particles "
-                  << p1.p.identity << " and " << p1.bl.e[j + 2]
-                  << " (particles not stored on the same node)} ";
-              return;
-            }
-
-            // Unfold position of first node.
-            // This is to get a continuous trajectory with no jumps when box
-            // boundaries are crossed.
-            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-            auto const x2 = x1 + get_mi_vector(p2->r.p, x1, box_geo);
-            auto const x3 = x1 + get_mi_vector(p3->r.p, x1, box_geo);
-
-            // Volume of this tetrahedron
-            // See @cite zhang01b
-            // The volume can be negative, but it is not necessarily the "signed
-            // volume" in the above paper (the sign of the real "signed volume"
-            // must be calculated using the normal vector; the result of the
-            // calculation here is simply a term in the sum required to
-            // calculate the volume of a particle). Again, see the paper. This
-            // should be equivalent to the formulation using vector identities
-            // in @cite kruger12a
-
-            const double v321 = x3[0] * x2[1] * x1[2];
-            const double v231 = x2[0] * x3[1] * x1[2];
-            const double v312 = x3[0] * x1[1] * x2[2];
-            const double v132 = x1[0] * x3[1] * x2[2];
-            const double v213 = x2[0] * x1[1] * x3[2];
-            const double v123 = x1[0] * x2[1] * x3[2];
-
-            tempVol[softID] +=
-                1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
-          }
-          // Iterate, increase by the number of partners of this bond + 1 for
-          // bond type
-          j += iaparams.num + 1;
-        }
       }
     }
   }
@@ -231,107 +225,102 @@ void ImmersedBoundaries::calc_volumes() {
 /** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force() {
   // Loop over all particles on local node
-  for (int c = 0; c < cell_structure.local_cells().n; c++) {
-    const Cell *const cell = cell_structure.local_cells().cell[c];
+  for (auto &p1 : cell_structure.local_cells().particles()) {
 
-    for (int i = 0; i < cell->n; i++) {
-      Particle &p1 = cell->part[i];
+    // Check if particle has a BONDED_IA_IBM_TRIEL and a
+    // BONDED_IA_IBM_VOLUME_CONSERVATION. Basically this loops over all
+    // triangles, not all particles. First round to check for volume
+    // conservation and virtual. Loop over all bonds of this particle.
+    // Actually j loops over the bond-list, i.e. the bond partners (see
+    // Particle.hpp).
+    int softID = -1;
+    double volRef = 0.;
+    double kappaV = 0.;
+    int j = 0;
+    while (j < p1.bl.n) {
+      const int type_num = p1.bl.e[j];
+      const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
+      const int type = iaparams.type;
+      if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
+        if (!p1.p.is_virtual) {
+          printf("Error. Encountered non-virtual particle with "
+                 "VOLUME_CONSERVATION_IBM\n");
+          std::abort();
+        }
+        softID = iaparams.p.ibmVolConsParameters.softID;
+        volRef = iaparams.p.ibmVolConsParameters.volRef;
+        kappaV = iaparams.p.ibmVolConsParameters.kappaV;
+      }
+      // Iterate, increase by the number of partners of this bond + 1 for bond
+      // type
+      j += iaparams.num + 1;
+    }
 
-      // Check if particle has a BONDED_IA_IBM_TRIEL and a
-      // BONDED_IA_IBM_VOLUME_CONSERVATION. Basically this loops over all
-      // triangles, not all particles. First round to check for volume
-      // conservation and virtual. Loop over all bonds of this particle.
-      // Actually j loops over the bond-list, i.e. the bond partners (see
-      // Particle.hpp).
-      int softID = -1;
-      double volRef = 0.;
-      double kappaV = 0.;
-      int j = 0;
+    // Second round for triel
+    if (softID > -1) {
+      j = 0;
       while (j < p1.bl.n) {
         const int type_num = p1.bl.e[j];
         const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
         const int type = iaparams.type;
-        if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
-          if (!p1.p.is_virtual) {
-            printf("Error. Encountered non-virtual particle with "
-                   "VOLUME_CONSERVATION_IBM\n");
-            std::abort();
+
+        if (type == BONDED_IA_IBM_TRIEL) {
+          // Our particle is the leading particle of a triel
+          // Get second and third particle of the triangle
+          Particle &p2 = *get_local_particle_data(p1.bl.e[j + 1]);
+          Particle &p3 = *get_local_particle_data(p1.bl.e[j + 2]);
+
+          // Unfold position of first node.
+          // This is to get a continuous trajectory with no jumps when box
+          // boundaries are crossed.
+          auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+
+          // Unfolding seems to work only for the first particle of a triel
+          // so get the others from relative vectors considering PBC
+          auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
+          auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
+
+          // Now we have the true and good coordinates
+          // Compute force according to eq. (C.46) in @cite kruger12a.
+          // It is the same as deriving Achim's equation w.r.t x
+          /*                        const double fact = kappaV * 1/6. *
+          (IBMVolumesCurrent[softID] - volRef) / IBMVolumesCurrent[softID];
+
+           double x2[3];
+          double x3[3];
+
+          for (int i=0; i < 3; i++)
+          {
+            x2[i] = x1[i] + a12[i];
+            x3[i] = x1[i] + a13[i];
           }
-          softID = iaparams.p.ibmVolConsParameters.softID;
-          volRef = iaparams.p.ibmVolConsParameters.volRef;
-          kappaV = iaparams.p.ibmVolConsParameters.kappaV;
+
+           double n[3];
+           vector_product(x3, x2, n);
+           for (int k=0; k < 3; k++) p1.f.f[k] += fact*n[k];
+           vector_product(x1, x3, n);
+           for (int k=0; k < 3; k++) p2.f.f[k] += fact*n[k];
+           vector_product(x2, x1, n);
+           for (int k=0; k < 3; k++) p3.f.f[k] += fact*n[k];*/
+
+          // This is eq. (9) in @cite dupin08a. I guess the result will be
+          // very similar as the code above.
+          auto const n = vector_product(a12, a13);
+          const double ln = n.norm();
+          const double A = 0.5 * ln;
+          const double fact = kappaV * (VolumesCurrent[softID] - volRef) /
+                              VolumesCurrent[softID];
+
+          auto const nHat = n / ln;
+          auto const force = -fact * A * nHat;
+
+          p1.f.f += force;
+          p2.f.f += force;
+          p3.f.f += force;
         }
-        // Iterate, increase by the number of partners of this bond + 1 for bond
-        // type
+        // Iterate, increase by the number of partners of this bond + 1 for
+        // bond type.
         j += iaparams.num + 1;
-      }
-
-      // Second round for triel
-      if (softID > -1) {
-        j = 0;
-        while (j < p1.bl.n) {
-          const int type_num = p1.bl.e[j];
-          const Bonded_ia_parameters &iaparams = bonded_ia_params[type_num];
-          const int type = iaparams.type;
-
-          if (type == BONDED_IA_IBM_TRIEL) {
-            // Our particle is the leading particle of a triel
-            // Get second and third particle of the triangle
-            Particle &p2 = *local_particles[p1.bl.e[j + 1]];
-            Particle &p3 = *local_particles[p1.bl.e[j + 2]];
-
-            // Unfold position of first node.
-            // This is to get a continuous trajectory with no jumps when box
-            // boundaries are crossed.
-            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-
-            // Unfolding seems to work only for the first particle of a triel
-            // so get the others from relative vectors considering PBC
-            auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
-            auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
-
-            // Now we have the true and good coordinates
-            // Compute force according to eq. (C.46) in @cite kruger12a.
-            // It is the same as deriving Achim's equation w.r.t x
-            /*                        const double fact = kappaV * 1/6. *
-            (IBMVolumesCurrent[softID] - volRef) / IBMVolumesCurrent[softID];
-
-             double x2[3];
-            double x3[3];
-
-            for (int i=0; i < 3; i++)
-            {
-              x2[i] = x1[i] + a12[i];
-              x3[i] = x1[i] + a13[i];
-            }
-
-             double n[3];
-             vector_product(x3, x2, n);
-             for (int k=0; k < 3; k++) p1.f.f[k] += fact*n[k];
-             vector_product(x1, x3, n);
-             for (int k=0; k < 3; k++) p2.f.f[k] += fact*n[k];
-             vector_product(x2, x1, n);
-             for (int k=0; k < 3; k++) p3.f.f[k] += fact*n[k];*/
-
-            // This is eq. (9) in @cite dupin08a. I guess the result will be
-            // very similar as the code above.
-            auto const n = vector_product(a12, a13);
-            const double ln = n.norm();
-            const double A = 0.5 * ln;
-            const double fact = kappaV * (VolumesCurrent[softID] - volRef) /
-                                VolumesCurrent[softID];
-
-            auto const nHat = n / ln;
-            auto const force = -fact * A * nHat;
-
-            p1.f.f += force;
-            p2.f.f += force;
-            p3.f.f += force;
-          }
-          // Iterate, increase by the number of partners of this bond + 1 for
-          // bond type.
-          j += iaparams.num + 1;
-        }
       }
     }
   }

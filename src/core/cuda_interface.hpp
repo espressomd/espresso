@@ -23,6 +23,7 @@
 
 #ifdef CUDA
 
+#include "CudaHostAllocator.hpp"
 #include "ParticleRange.hpp"
 
 #include <utils/Span.hpp>
@@ -95,28 +96,23 @@ typedef struct {
   float bonded, non_bonded, coulomb, dipolar;
 } CUDA_energy;
 
-extern CUDA_particle_data *particle_data_host;
-
 /** Global variables associated with all of the particles and not with
  *  one individual particle.
  */
 typedef struct {
-  unsigned int number_of_particles;
-
   /** Boolean flag to indicate if particle info should be communicated
    *  between the cpu and gpu
    */
   unsigned int communication_enabled;
 } CUDA_global_part_vars;
 
-void copy_forces_from_GPU(ParticleRange particles);
+void copy_forces_from_GPU(ParticleRange &particles);
 void copy_energy_from_GPU();
 void copy_CUDA_energy_to_energy(CUDA_energy energy_host);
 void clear_energy_on_GPU();
 
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host();
-CUDA_global_part_vars *gpu_get_global_particle_vars_pointer();
-CUDA_particle_data *gpu_get_particle_pointer();
+Utils::Span<CUDA_particle_data> gpu_get_particle_pointer();
 float *gpu_get_particle_force_pointer();
 #ifdef ROTATION
 float *gpu_get_particle_torque_pointer();
@@ -124,11 +120,11 @@ float *gpu_get_particle_torque_pointer();
 
 CUDA_energy *gpu_get_energy_pointer();
 float *gpu_get_particle_torque_pointer();
-void gpu_change_number_of_part_to_comm();
 void gpu_init_particle_comm();
 
-void cuda_mpi_get_particles(ParticleRange particles,
-                            CUDA_particle_data *host_result);
+void cuda_mpi_get_particles(
+    const ParticleRange &particles,
+    pinned_vector<CUDA_particle_data> &particle_data_host);
 void copy_part_data_to_gpu(ParticleRange particles);
 
 /**
@@ -144,12 +140,10 @@ void copy_part_data_to_gpu(ParticleRange particles);
  *
  * This is a collective call.
  */
-void cuda_mpi_send_forces(ParticleRange particles,
-                          std::vector<float> &host_forces,
-                          std::vector<float> &host_torques);
+void cuda_mpi_send_forces(const ParticleRange &particles,
+                          Utils::Span<float> host_forces,
+                          Utils::Span<float> host_torques);
 void cuda_bcast_global_part_params();
-void cuda_copy_to_device(void *host_data, void *device_data, size_t n);
-void cuda_copy_to_host(void *host_device, void *device_host, size_t n);
 #endif /* ifdef CUDA */
 
 #endif /* ifdef CUDA_INTERFACE_HPP */

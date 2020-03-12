@@ -71,26 +71,58 @@ enum {
 #define COORD_FIXED(coord) (0)
 #endif
 
-/************************************************
- * exported variables
- ************************************************/
+/**
+ * @brief Find local particles by id.
+ *
+ * If a particles is present on this mpi rank, either
+ * as a local particles or as a ghost, a pointer to it
+ * is returned, otherwise null.
+ *
+ * @param id of the particle to look up.
+ *
+ * @return Pointer to particle or nullptr.
+ **/
+inline Particle *get_local_particle_data(int id) {
+  extern std::vector<Particle *> local_particles;
 
-/** Highest particle number seen so far. If you leave out some
- *  particle numbers, this number might be higher than the
- *  true number of particles. On the other hand, if you start
- *  your particle numbers at 0, the total number of particles
- *  is larger by 1.
- */
-extern int max_seen_particle;
-/** total number of particles on all nodes. */
-extern int n_part;
-/** flag that active swimming particles exist */
-extern bool swimming_particles_exist;
+  if (id >= local_particles.size())
+    return nullptr;
 
-/** id->particle mapping on all nodes. This is used to find partners
- *  of bonded interactions.
+  return local_particles[id];
+}
+
+/**
+ * @brief Update local particle index.
+ *
+ * Update the entry for a particle in the local particle
+ * index.
+ *
+ * @param id of the particle to up-date.
+ * @param p Pointer to the particle.
+ **/
+inline void set_local_particle_data(int id, Particle *p) {
+  extern std::vector<Particle *> local_particles;
+
+  if (id >= local_particles.size())
+    local_particles.resize(id + 1);
+
+  local_particles[id] = p;
+}
+
+/**
+ * @brief Get the maximal particle ever seen on this node.
+ *
+ * This returns the highest particle id ever encountered on
+ * this node, or -1 if there are no particles on this node.
  */
-extern std::vector<Particle *> local_particles;
+inline int get_local_max_seen_particle() {
+  extern std::vector<Particle *> local_particles;
+
+  auto it = std::find_if(local_particles.rbegin(), local_particles.rend(),
+                         [](const Particle *p) { return p != nullptr; });
+
+  return (it != local_particles.rend()) ? (*it)->identity() : -1;
+}
 
 /************************************************
  * Functions
@@ -160,9 +192,6 @@ void update_local_particles(ParticleList *pl);
  *  at the beginning of the integration.
  */
 void clear_particle_node();
-
-/** Realloc \ref local_particles. */
-void realloc_local_particles(int part);
 
 /**
  * @brief Get particle data.
@@ -438,12 +467,6 @@ void remove_all_bonds_to(int part);
  */
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 
-/** Used by \ref mpi_place_particle, should not be used elsewhere.
- *  Called if on a different node a new particle was added.
- *  @param part the identity of the particle added
- */
-void added_particle(int part);
-
 /** Used for example by \ref mpi_send_exclusion.
  *  Locally add an exclusion to a particle.
  *  @param part1 the identity of the first exclusion partner
@@ -476,19 +499,6 @@ void local_rescale_particles(int dir, double scale);
  *               of all bond partners (secondary atoms of the bond).
  */
 void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
-
-/** Synchronous send of a particle buffer to another node.
- *  The other node MUST call \ref recv_particles when this is called.
- *  The particles data is freed.
- */
-void send_particles(ParticleList *particles, int node);
-
-/** Synchronous receive of a particle buffer from another node.
- *  The other node MUST call \ref send_particles when this is called.
- *  Particles needs to initialized, it is reallocated to the correct
- *  size and the content is overwritten.
- */
-void recv_particles(ParticleList *particles, int node);
 
 #ifdef EXCLUSIONS
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
@@ -596,5 +606,22 @@ bool particle_exists(int part);
  *  @return The MPI rank the particle is on.
  */
 int get_particle_node(int id);
+
+/**
+ * @brief Get all particle ids.
+ *
+ * @return Sorted ids of all existing particles.
+ */
+std::vector<int> get_particle_ids();
+
+/**
+ * @brief Get maximal particle id.
+ */
+int get_maximal_particle_id();
+
+/**
+ * @brief Get number of particles.
+ */
+int get_n_part();
 
 #endif

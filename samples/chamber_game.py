@@ -58,7 +58,6 @@ except BaseException:
 
 box = np.array([1500.0, 500.0, 150.0])
 system = espressomd.System(box_l=box)
-system.set_random_state_PRNG()
 
 # PARAMETERS
 

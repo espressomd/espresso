@@ -16,19 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from grid cimport node_grid
-from . cimport cellsystem
+from .grid cimport node_grid
 from . cimport integrate
-from globals cimport *
+from .globals cimport FIELD_SKIN, FIELD_NODEGRID, FIELD_MAXNUMCELLS, FIELD_MINNUMCELLS
+from .globals cimport verlet_reuse, skin
+from .globals cimport mpi_bcast_parameter
+from .cellsystem cimport dd, cell_structure, min_num_cells, max_num_cells
+from .cellsystem cimport calc_processor_min_num_cells
 import numpy as np
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type
+from .utils cimport handle_errors
+from .utils import is_valid_type
 
 cdef class CellSystem:
     def set_domain_decomposition(self, use_verlet_lists=True,
-                                 fully_connected=[False,
-                                                  False,
-                                                  False]):
+                                 fully_connected=[False, False, False]):
         """
         Activates domain decomposition cell system.
 
@@ -66,66 +67,15 @@ cdef class CellSystem:
         # return mpi_gather_runtime_errors(interp, TCL_OK)
         return True
 
-    def set_layered(self, n_layers=None, use_verlet_lists=True):
-        """
-        Activates the layered cell system.
-
-        Parameters
-        ----------
-
-        n_layers: :obj:`int`, optional, positive
-            Sets the number of layers in the z-direction.
-        use_verlet_lists : :obj:`bool`, optional
-            Activates or deactivates the usage of the Verlet
-            lists for this algorithm.
-
-        """
-        cell_structure.use_verlet_list = use_verlet_lists
-
-        if n_layers:
-            if not is_valid_type(n_layers, int):
-                raise ValueError("layer height should be positive")
-
-            if not n_layers > 0:
-                raise ValueError("the number of layers has to be >0")
-
-            global n_layers_
-            n_layers_ = int(n_layers)
-            global determine_n_layers
-            determine_n_layers = 0
-
-        if (node_grid[0] != 1 or node_grid[1] != 1):
-            node_grid[0] = node_grid[1] = 1
-            node_grid[2] = n_nodes
-            mpi_err = mpi_bcast_parameter(FIELD_NODEGRID)
-            handle_errors("mpi_bcast_parameter failed")
-        else:
-            mpi_err = 0
-
-        if not mpi_err:
-            mpi_bcast_cell_structure(CELL_STRUCTURE_LAYERED)
-
-        # @TODO: gathering should be interface independent
-        # return mpi_gather_runtime_errors(interp, TCL_OK)
-
-        if mpi_err:
-            raise Exception("Broadcasting the node grid failed")
-        return True
-
     def get_state(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.type == CELL_STRUCTURE_LAYERED:
-            s["type"] = "layered"
-            s["n_layers"] = n_layers
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
             s["type"] = "nsquare"
 
         s["skin"] = skin
-        s["max_cut"] = max_cut
-        s["n_layers"] = n_layers_
         s["verlet_reuse"] = verlet_reuse
         s["n_nodes"] = n_nodes
         s["node_grid"] = np.array([node_grid[0], node_grid[1], node_grid[2]])
@@ -142,9 +92,6 @@ cdef class CellSystem:
     def __getstate__(self):
         s = {"use_verlet_list": cell_structure.use_verlet_list}
 
-        if cell_structure.type == CELL_STRUCTURE_LAYERED:
-            s["type"] = "layered"
-            s["n_layers"] = n_layers
         if cell_structure.type == CELL_STRUCTURE_DOMDEC:
             s["type"] = "domain_decomposition"
         if cell_structure.type == CELL_STRUCTURE_NSQUARE:
@@ -163,10 +110,7 @@ cdef class CellSystem:
             if key == "use_verlet_list":
                 use_verlet_lists = d[key]
             elif key == "type":
-                if d[key] == "layered":
-                    self.set_layered(
-                        n_layers=d['n_layers'], use_verlet_lists=use_verlet_lists)
-                elif d[key] == "domain_decomposition":
+                if d[key] == "domain_decomposition":
                     self.set_domain_decomposition(
                         use_verlet_lists=use_verlet_lists)
                 elif d[key] == "nsquare":

@@ -30,7 +30,6 @@ from numpy import random
 @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
 class VirtualSites(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     np.random.seed(42)
 
@@ -78,9 +77,8 @@ class VirtualSites(ut.TestCase):
         self.assertIsInstance(self.system.virtual_sites, VirtualSitesOff)
 
         # Switch implementation
-        self.system.virtual_sites = VirtualSitesRelative(have_velocity=False)
+        self.system.virtual_sites = VirtualSitesRelative()
         self.assertIsInstance(self.system.virtual_sites, VirtualSitesRelative)
-        self.assertFalse(self.system.virtual_sites.have_velocity)
 
     def test_vs_quat(self):
         self.system.part.clear()
@@ -129,7 +127,7 @@ class VirtualSites(ut.TestCase):
     def test_pos_vel_forces(self):
         system = self.system
         system.cell_system.skin = 0.3
-        system.virtual_sites = VirtualSitesRelative(have_velocity=True)
+        system.virtual_sites = VirtualSitesRelative()
         system.box_l = [10, 10, 10]
         system.part.clear()
         system.time_step = 0.004
@@ -204,21 +202,12 @@ class VirtualSites(ut.TestCase):
             # Check
             self.assertLessEqual(np.linalg.norm(t_exp - t), 1E-6)
 
-        # Check virtual sites without velocity
-        system.virtual_sites.have_velocity = False
-
-        # Velocity should not change
-        v2 = np.copy(system.part[2].v)
-        system.part[1].v = [17, -13.5, 2]
-        system.integrator.run(0, recalc_forces=True)
-        np.testing.assert_array_equal(v2, np.copy(system.part[2].v))
-
     def run_test_lj(self):
         """This fills the system with vs-based dumbells, adds a lj potential,
           integrates and verifies forces. This is to make sure that no pairs
           get lost or are outdated in the short range loop"""
         system = self.system
-        system.virtual_sites = VirtualSitesRelative(have_velocity=True)
+        system.virtual_sites = VirtualSitesRelative()
         # Parameters
         n = 90
         phi = 0.6
@@ -321,10 +310,12 @@ class VirtualSites(ut.TestCase):
         system.time_step = 0.01
         system.cell_system.skin = 0.1
         system.min_global_cut = 0.2
-        # Should not have one if vs are turned off
+        # Should not have a pressure
         system.virtual_sites = VirtualSitesOff()
-        self.assertNotIn("virtual_sites", system.analysis.pressure())
-        self.assertNotIn("virtual_sites", system.analysis.stress_tensor())
+        stress_vs = system.analysis.stress_tensor()["virtual_sites", 0]
+        p_vs = system.analysis.pressure()["virtual_sites", 0]
+        np.testing.assert_allclose(stress_vs, 0., atol=1e-10)
+        np.testing.assert_allclose(p_vs, 0., atol=1e-10)
 
         # vs relative contrib
         system.virtual_sites = VirtualSitesRelative()

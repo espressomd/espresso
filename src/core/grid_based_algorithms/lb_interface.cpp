@@ -96,6 +96,7 @@ void lb_lbfluid_sanity_checks() {
   if (lattice_switch == ActiveLB::NONE)
     return;
 
+<<<<<<< HEAD
   // LB GPU interface functions only work on the head node.
   extern double time_step;
   lb_boundary_mach_check();
@@ -126,6 +127,25 @@ void lb_lbfluid_sanity_checks() {
           "Walberla and Espresso disagree about domain decomposition.");
     }
 #endif
+=======
+void lb_lbfluid_on_integration_start() {
+  lb_lbfluid_sanity_checks();
+  if (lattice_switch == ActiveLB::CPU) {
+    halo_communication(&update_halo_comm,
+                       reinterpret_cast<char *>(lbfluid[0].data()));
+  }
+}
+
+/** (Re-)initialize the fluid. */
+void lb_lbfluid_reinit_parameters() {
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    if (this_node == 0)
+      lb_reinit_parameters_gpu();
+#endif
+  } else if (lattice_switch == ActiveLB::CPU) {
+    lb_reinit_parameters(lbpar);
+>>>>>>> upstream/python
   }
 }
 
@@ -338,9 +358,42 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
   throw std::runtime_error("Not implemented");
 }
 
+<<<<<<< HEAD
 void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
+=======
+void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
+  if (lattice_switch == ActiveLB::GPU) {
+#ifdef CUDA
+    std::vector<float> host_checkpoint_vd(19 * lbpar_gpu.number_of_nodes);
+    lb_save_checkpoint_GPU(host_checkpoint_vd.data());
+    if (!binary) {
+      std::fstream cpfile(filename, std::ios::out);
+      cpfile << std::fixed;
+      cpfile.precision(8);
+      cpfile << lbpar_gpu.dim_x << " ";
+      cpfile << lbpar_gpu.dim_y << " ";
+      cpfile << lbpar_gpu.dim_z << "\n";
+      for (int n = 0; n < (19 * int(lbpar_gpu.number_of_nodes)); n++) {
+        cpfile << host_checkpoint_vd[n] << "\n";
+      }
+      cpfile.close();
+    } else {
+      std::fstream cpfile(filename, std::ios::out | std::ios::binary);
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_x),
+                   sizeof(lbpar_gpu.dim_x));
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_y),
+                   sizeof(lbpar_gpu.dim_y));
+      cpfile.write(reinterpret_cast<char *>(&lbpar_gpu.dim_z),
+                   sizeof(lbpar_gpu.dim_z));
+      cpfile.write(reinterpret_cast<char *>(host_checkpoint_vd.data()),
+                   19 * sizeof(float) * lbpar_gpu.number_of_nodes);
+      cpfile.close();
+    }
+#endif //  CUDA
+  } else if (lattice_switch == ActiveLB::CPU) {
+>>>>>>> upstream/python
     std::fstream cpfile;
     if (binary) {
       cpfile.open(filename, std::ios::out | std::ios::binary);
@@ -384,7 +437,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
 #endif
 }
 
-void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
+void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   int res;
   std::string err_msg = "Error while reading LB checkpoint: ";
 #ifdef LB_WALBERLA
@@ -540,9 +593,6 @@ const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-/** calculates the average stress of all nodes by iterating
- * over all nodes and dividing by the number_of_nodes.
- */
 const Utils::Vector6d lb_lbfluid_get_stress() {
   if (lattice_switch == ActiveLB::WALBERLA) {
     throw std::runtime_error("Not implemented yet");

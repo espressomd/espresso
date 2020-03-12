@@ -17,15 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 from functools import wraps
-from . cimport thermostat
 include "myconfig.pxi"
-from globals cimport *
-import numpy as np
+from .globals cimport FIELD_BROWNIAN_GAMMA, FIELD_LANGEVIN_GAMMA, \
+    FIELD_TEMPERATURE, FIELD_THERMO_SWITCH, FIELD_THERMO_VIRTUAL
+IF NPT:
+    from .globals cimport FIELD_NPTISO_G0, FIELD_NPTISO_GV
+IF ROTATION:
+    from .globals cimport FIELD_LANGEVIN_GAMMA_ROTATION, FIELD_BROWNIAN_GAMMA_ROTATION
+from .thermostat cimport nptiso
+from .globals cimport mpi_bcast_parameter
 from . cimport utils
-from .lb cimport *
 from .lb import HydrodynamicInteraction
 from .lb cimport lb_lbcoupling_set_gamma
 from .lb cimport lb_lbcoupling_get_gamma
+from .lb cimport lb_lbcoupling_set_rng_state
+from .lb cimport lb_lbcoupling_get_rng_state
+from .lb cimport lb_lbcoupling_is_seed_required
+from .lb cimport lb_lbfluid_get_kT
 
 
 def AssertThermostatType(*allowedthermostats):

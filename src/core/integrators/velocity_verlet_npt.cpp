@@ -23,6 +23,7 @@
 #include "ParticleRange.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
@@ -124,9 +125,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
         } else {
           p.r.p[j] += p.m.v[j] * time_step;
         }
-#ifdef EXTERNAL_FORCES
       }
-#endif
     }
   }
 
@@ -150,7 +149,6 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
 
   /* fast box length update */
   grid_changed_box_l(box_geo);
-  recalc_maximal_cutoff();
   cells_on_geometry_change(CELL_FLAG_FAST);
 }
 

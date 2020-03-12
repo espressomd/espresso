@@ -79,11 +79,11 @@ template <typename T> auto square_matrix(size_t N) {
 } // namespace
 
 /** Draw a large sample of 3D vectors from PRNGs and compute statistics.
- *  Parameter @p noise_function is a generator that returns @f N @f vectors
- *  of size @f M_i @f. The following statistics are evaluated: @f N @f means
- *  and @f N @f variances (samples are uncorrelated across axes, so pooling
+ *  Parameter @p noise_function is a generator that returns @f$ N @f$ vectors
+ *  of size @f$ M_i @f$. The following statistics are evaluated: @f$ N @f$ means
+ *  and @f$ N @f$ variances (samples are uncorrelated across axes, so pooling
  *  them is fine), and a covariance and a correlation matrix of size
- *  @f \sum M_i @f.
+ *  @f$ \sum M_i @f$.
  */
 std::tuple<std::vector<double>, std::vector<double>,
            std::vector<std::vector<double>>, std::vector<std::vector<double>>>

@@ -30,9 +30,7 @@ public:
 
   std::vector<double>
   evaluate(Utils::Span<const Particle *const> particles) const override {
-    std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
-                                  static_cast<size_t>(n_phi_bins),
-                                  static_cast<size_t>(n_z_bins)}};
+    std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
@@ -48,7 +46,9 @@ public:
     histogram.normalize();
     return histogram.get_histogram();
   }
-  int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
+  std::vector<size_t> shape() const override {
+    return {n_r_bins, n_phi_bins, n_z_bins, 3};
+  }
 };
 
 } // Namespace Observables

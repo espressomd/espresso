@@ -23,9 +23,9 @@
 #define SCRIPT_INTERFACE_ACCUMULATORS_ACCUMULATOR_HPP
 
 #include "AccumulatorBase.hpp"
-#include "ScriptInterface.hpp"
 #include "core/accumulators/MeanVarianceCalculator.hpp"
 #include "observables/Observable.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "utils/as_const.hpp"
 
@@ -69,6 +69,10 @@ public:
 
     if (method == "get_variance")
       return mean_variance_calculator()->get_variance();
+    if (method == "shape") {
+      auto const shape = m_accumulator->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
+    }
     return {};
   }
 
