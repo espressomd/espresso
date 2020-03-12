@@ -1267,7 +1267,7 @@ class openGLLive:
             return np.array(
                 self.specs['particle_charge_colors'][0]) * c + (1 - c) * np.array([1, 1, 1])
         else:
-            c = 1.0 * q / self.maxq
+            c = 1.0 * q / self.max_q
 
             return np.array(
                 self.specs['particle_charge_colors'][1]) * c + (1 - c) * np.array([1, 1, 1])
