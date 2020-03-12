@@ -755,11 +755,6 @@ class openGLLive:
         for p, v in zip(col_pos, lb_vels):
             self.lb_plane_vel.append([p, v])
 
-    def _edges_from_pn(self, p, n, diag):
-        v1, v2 = self._get_tangents(n)
-        edges = [p + diag * v1, p + diag * v2, p - diag * v1, p - diag * v2]
-        return edges
-
     def _update_cells(self):
         self.cell_box_origins = []
         cell_system_state = self.system.cell_system.get_state()
@@ -859,37 +854,6 @@ class openGLLive:
                                 shape_mapping[sub_shape.name()](*arguments))
                         except KeyError:
                             self.shapes.append(Shape(*arguments))
-
-    def _get_tangents(self, n):
-        n = np.array(n)
-        v1 = np.random.randn(3)
-        v1 -= v1.dot(n) * n / np.linalg.norm(n)**2
-        v2 = np.cross(n, v1)
-        v1 /= np.linalg.norm(v1)
-        v2 /= np.linalg.norm(v2)
-        return v1, v2
-
-    def _rasterize_brute_force(self, shape):
-        sp = max(self.system.box_l) / self.specs['rasterize_resolution']
-        res = np.array(self.system.box_l) / sp
-
-        points = []
-        for i in range(int(res[0])):
-            for j in range(int(res[1])):
-                for k in range(int(res[2])):
-                    # some shapes may not have a well-defined distance function in the whole domain
-                    # and may throw upon asking for a distance
-                    try:
-                        p = np.array([i, j, k]) * sp
-                        dist, vec = shape.call_method(
-                            "calc_distance", position=p.tolist())
-                        if not np.isnan(vec).any() and not np.isnan(
-                                dist) and abs(dist) < sp:
-                            points.append((p - vec).tolist())
-                    # domain error translates to ValueError (cython)
-                    except ValueError:
-                        continue
-        return points
 
     # GET THE BOND DATA, SO FAR CALLED ONCE UPON INITIALIZATION
     def _update_bonds(self):
@@ -1107,7 +1071,8 @@ class openGLLive:
                             arrow_radius = self._modulo_indexing(
                                 self.specs['ext_force_arrows_type_radii'], part_type)
                             draw_arrow(self.particles['pos'][part_id], np.array(
-                                self.particles['ext_force'][part_id]) * sc, arrow_radius, arrow_col, self.materials['chrome'], self.specs['quality_arrows'])
+                                self.particles['ext_force'][part_id]) * sc, arrow_radius, arrow_col,
+                                self.materials['chrome'], self.specs['quality_arrows'])
                             reset_material = True
 
             if self.specs['velocity_arrows']:
@@ -1894,6 +1859,8 @@ class Shape:
         self.box_l = box_l
         self.rasterize_resolution = rasterize_resolution
         self.pointsize = rasterize_pointsize
+        # get and store points of rasterized surface
+        self.rasterized_surface_points = self._rasterize_shape()
 
     def draw(self):
         """
@@ -1902,33 +1869,35 @@ class Shape:
         draw method.
 
         """
+        set_solid_material(self.color, self.material)
+        OpenGL.GL.glPointSize(self.pointsize)
+        OpenGL.GL.glBegin(OpenGL.GL.GL_POINTS)
+        for point in self.rasterized_surface_points:
+            OpenGL.GL.glVertex3f(point[0], point[1], point[2])
+        OpenGL.GL.glEnd()
+
+    def _rasterize_shape(self):
         # rasterize brute force
-        sp = max(self.box_l) / self.rasterize_resolution
-        res = np.array(self.box_l) / sp
+        spacing = max(self.box_l) / self.rasterize_resolution
+        resolution = np.array(self.box_l) / spacing
 
         points = []
-        for i in range(int(res[0])):
-            for j in range(int(res[1])):
-                for k in range(int(res[2])):
+        for i in range(int(resolution[0])):
+            for j in range(int(resolution[1])):
+                for k in range(int(resolution[2])):
                     # some shapes may not have a well-defined distance function in the whole domain
                     # and may throw upon asking for a distance
                     try:
-                        p = np.array([i, j, k]) * sp
+                        p = np.array([i, j, k]) * spacing
                         dist, vec = self.shape.call_method(
                             "calc_distance", position=p.tolist())
                         if not np.isnan(vec).any() and not np.isnan(
-                                dist) and abs(dist) < sp:
+                                dist) and abs(dist) < spacing:
                             points.append((p - vec).tolist())
                     # domain error translates to ValueError (cython)
                     except ValueError:
                         continue
-
-        set_solid_material(self.color, self.material)
-        OpenGL.GL.glPointSize(self.pointsize)
-        OpenGL.GL.glBegin(OpenGL.GL.GL_POINTS)
-        for p in points:
-            OpenGL.GL.glVertex3f(p[0], p[1], p[2])
-        OpenGL.GL.glEnd()
+        return points
 
 
 class Cylinder(Shape):
@@ -2041,6 +2010,7 @@ class HollowConicalFrustum(Shape):
         OpenGL.GLE.gleSetNumSides(max(90, 3 * self.quality))
         OpenGL.GLE.gleSpiral(contour, normals, [0, 0, 1], 0.5 * (self.radius_1 + self.radius_2), 0., 0., 0.,
                              [[1, 0, 0], [0, 1, 0]], [[0, 0, 0], [0, 0, 0]], 0., 360)
+
         OpenGL.GL.glPopMatrix()
 
 
