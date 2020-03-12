@@ -58,7 +58,7 @@ class TimeSeriesTest(ut.TestCase):
 
         for result, expected in zip(time_series.time_series(), positions):
             np.testing.assert_array_equal(
-                np.array(result).reshape((N_PART, 3)), expected)
+                result, expected)
 
         time_series.clear()
         self.assertEqual(len(time_series.time_series()), 0)
