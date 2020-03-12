@@ -44,10 +44,15 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     _so_name = "Accumulators::MeanVarianceCalculator"
     _so_bind_methods = (
         "update",
-        "get_mean",
-        "get_variance"
+        "shape",
     )
     _so_creation_policy = "LOCAL"
+
+    def get_mean(self):
+        return np.array(self.call_method("get_mean")).reshape(self.shape())
+
+    def get_variance(self):
+        return np.array(self.call_method("get_variance")).reshape(self.shape())
 
 
 @script_interface_register
@@ -75,10 +80,13 @@ class TimeSeries(ScriptInterfaceHelper):
     _so_name = "Accumulators::TimeSeries"
     _so_bind_methods = (
         "update",
-        "time_series",
+        "shape",
         "clear"
     )
     _so_creation_policy = "LOCAL"
+
+    def time_series(self):
+        return np.array(self.call_method("time_series")).reshape(self.shape())
 
 
 @script_interface_register

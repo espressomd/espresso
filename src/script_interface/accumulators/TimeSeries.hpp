@@ -63,6 +63,10 @@ public:
       m_accumulator->clear();
     }
 
+    if (method == "shape") {
+      auto const shape = m_accumulator->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
+    }
     return {};
   }
 
