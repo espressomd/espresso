@@ -48,8 +48,8 @@ message(STATUS "Found CUDA-capable host compiler: ${CMAKE_CUDA_COMPILER}")
 message(STATUS "Found CUDA version: ${CUDA_VERSION}")
 message(STATUS "Found CUDA installation: ${CUDA_DIR}")
 
-if(CUDA_VERSION VERSION_LESS ${CMAKE_CUDA_STANDARD})
-  message(FATAL_ERROR "${CMAKE_CUDA_COMPILER} was built for CUDA ${CUDA_VERSION}: version does not match requirements (CUDA ${CMAKE_CUDA_STANDARD}).")
+if(CUDA_VERSION VERSION_LESS ${MINIMAL_CUDA_VERSION})
+  message(FATAL_ERROR "${CMAKE_CUDA_COMPILER} was built for CUDA ${CUDA_VERSION}: version does not match requirements (CUDA ${MINIMAL_CUDA_VERSION}).")
 endif()
 
 find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)

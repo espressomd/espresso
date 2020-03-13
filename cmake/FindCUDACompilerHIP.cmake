@@ -34,7 +34,7 @@ string(REGEX
                CMAKE_CUDA_COMPILER_VERSION
                "${HIPCC_VERSION_STRING}")
 
-list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -I${ROCM_HOME}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++${CMAKE_CXX_STANDARD}")
+list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -I${ROCM_HOME}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++${CMAKE_CUDA_STANDARD}")
 list(APPEND HIP_HCC_FLAGS "-pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments")
 if(WARNINGS_ARE_ERRORS)
   list(APPEND HIP_HCC_FLAGS "-Werror")
