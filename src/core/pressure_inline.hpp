@@ -25,6 +25,7 @@
 #ifndef CORE_PRESSURE_INLINE_HPP
 #define CORE_PRESSURE_INLINE_HPP
 
+#include "exclusions.hpp"
 #include "forces_inline.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
