@@ -391,9 +391,9 @@ std::unordered_map<int, int> particle_node;
 
 int delete_bond(Particle *part, const int *bond);
 
-void try_delete_exclusion(Particle *part, int part2);
+void delete_exclusion(Particle *part, int part2);
 
-void try_add_exclusion(Particle *part, int part2);
+void add_exclusion(Particle *part, int part2);
 
 void auto_exclusion(int distance);
 
@@ -955,51 +955,6 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
-void add_bond(Particle &p, Utils::Span<const int> bond) {
-  boost::copy(bond, std::back_inserter(p.bl));
-}
-
-int delete_bond(Particle *part, const int *bond) {
-  IntList *bl = &part->bl;
-  int i, j, type, partners;
-
-  // Empty bond means: delete all bonds
-  if (!bond) {
-    bl->clear();
-
-    return ES_OK;
-  }
-
-  // Go over the bond list to find the bond to delete
-  for (i = 0; i < bl->n;) {
-    type = bl->e[i];
-    partners = bonded_ia_params[type].num;
-
-    // If the bond type does not match the one, we want to delete, skip
-    if (type != bond[0])
-      i += 1 + partners;
-    else {
-      // Go over the bond partners
-      for (j = 1; j <= partners; j++) {
-        // Leave the loop early, if the bond to delete and the bond with in the
-        // particle don't match
-        if (bond[j] != bl->e[i + j])
-          break;
-      }
-      // If we did not exit from the loop early, all parameters matched
-      // and we go on with deleting
-      if (j > partners) {
-        // New length of bond list
-        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-
-        return ES_OK;
-      }
-      i += 1 + partners;
-    }
-  }
-  return ES_ERROR;
-}
-
 #ifdef EXCLUSIONS
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
@@ -1014,39 +969,21 @@ void local_change_exclusion(int part1, int part2, int _delete) {
   auto part = get_local_particle_data(part1);
   if (part) {
     if (_delete)
-      try_delete_exclusion(part, part2);
+      delete_exclusion(part, part2);
     else
-      try_add_exclusion(part, part2);
+      add_exclusion(part, part2);
   }
 
   /* part2, if here */
   part = get_local_particle_data(part2);
   if (part) {
     if (_delete)
-      try_delete_exclusion(part, part1);
+      delete_exclusion(part, part1);
     else
-      try_add_exclusion(part, part1);
+      add_exclusion(part, part1);
   }
 }
 
-void try_add_exclusion(Particle *part, int part2) {
-  for (int i = 0; i < part->el.n; i++)
-    if (part->el.e[i] == part2)
-      return;
-
-  part->el.push_back(part2);
-}
-
-void try_delete_exclusion(Particle *part, int part2) {
-  IntList &el = part->el;
-
-  if (!el.empty()) {
-    el.erase(std::remove(el.begin(), el.end(), part2), el.end());
-  };
-}
-#endif
-
-#ifdef EXCLUSIONS
 namespace {
 /* keep a unique list for particle i. Particle j is only added if it is not i
    and not already in the list. */

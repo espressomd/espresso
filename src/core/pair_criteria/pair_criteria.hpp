@@ -21,6 +21,8 @@
 
 #include "Particle.hpp"
 #include "energy_inline.hpp"
+#include "particle_data.hpp"
+
 #include <stdexcept>
 
 namespace PairCriteria {

@@ -384,24 +384,6 @@ void local_remove_all_particles();
  */
 void local_rescale_particles(int dir, double scale);
 
-#ifdef EXCLUSIONS
-/** Determine if the non-bonded interactions between @p p1 and @p p2 should be
- *  calculated.
- */
-inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
-  /* check for particle 2 in particle 1's exclusion list. The exclusion list is
-   * symmetric, so this is sufficient. */
-  return std::none_of(p1.el.begin(), p1.el.end(),
-                      [&p2](int id) { return p2.p.identity == id; });
-}
-#endif
-
-/** Remove exclusion from particle if possible */
-void try_delete_exclusion(Particle *part, int part2);
-
-/** Insert an exclusion if not already set */
-void try_add_exclusion(Particle *part, int part2);
-
 /** Automatically add the next \<distance\> neighbors in each molecule to the
  *  exclusion list.
  *  This uses the bond topology obtained directly from the particles.
