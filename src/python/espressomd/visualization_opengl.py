@@ -29,10 +29,8 @@ import OpenGL.GLUT
 import numpy as np
 from matplotlib.pyplot import imsave
 
-include "myconfig.pxi"
 import espressomd
 from .particle_data import ParticleHandle
-from .interactions cimport BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL
 
 
 class openGLLive:
@@ -350,14 +348,14 @@ class openGLLive:
                 self.specs[key] = kwargs[key]
 
         # DEPENDENCIES
-        IF not EXTERNAL_FORCES:
+        if not espressomd.has_features('EXTERNAL_FORCES'):
             self.specs['drag_enabled'] = False
             self.specs['ext_force_arrows'] = False
 
-        IF not ROTATION:
+        if not espressomd.has_features('ROTATION'):
             self.specs['director_arrows'] = False
 
-        IF not LB_BOUNDARIES and not LB_BOUNDARIES_GPU:
+        if not espressomd.has_features('LB_BOUNDARIES') and not espressomd.has_features('LB_BOUNDARIES_GPU'):
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_node_boundaries'] = False
 
@@ -374,11 +372,11 @@ class openGLLive:
             'ext_force': self.specs['ext_force_arrows'] or
             self.specs['drag_enabled']}
 
-        IF ELECTROSTATICS:
+        if espressomd.has_features('ELECTROSTATICS'):
             self.has_particle_data['charge'] = \
                 self.specs['particle_coloring'] == 'auto' or \
                 self.specs['particle_coloring'] == 'charge'
-        ELSE:
+        else:
             self.has_particle_data['charge'] = False
         self.has_particle_data['director'] = self.specs['director_arrows']
         self.has_particle_data['node'] = self.specs['particle_coloring'] == 'node'
@@ -863,9 +861,7 @@ class openGLLive:
                 for bond in particle.bonds:
                     # b[0]: Bond, b[1:] Partners
                     bond_type = bond[0].type_number()
-                    if len(bond) == 4 and \
-                            bond_type in (BONDED_IA_DIHEDRAL,
-                                          BONDED_IA_TABULATED_DIHEDRAL):
+                    if len(bond) == 4:
                         self.bonds.append([i, bond[1], bond_type])
                         self.bonds.append([i, bond[2], bond_type])
                         self.bonds.append([bond[2], bond[3], bond_type])
@@ -1056,7 +1052,7 @@ class openGLLive:
                                 self._redraw_sphere(self.particles['pos'][part_id] + offset,
                                                     radius, self.specs['quality_particles'])
 
-            IF EXTERNAL_FORCES:
+            if espressomd.has_features('EXTERNAL_FORCES'):
                 if self.specs['ext_force_arrows'] or part_id == self.drag_id:
                     if any(
                             v != 0 for v in self.particles['ext_force'][part_id]):
@@ -1557,7 +1553,7 @@ class openGLLive:
                 self.specs['LB_draw_nodes'] or \
                 self.specs['LB_draw_node_boundaries']:
             lb_types = [espressomd.lb.LBFluid]
-            IF CUDA:
+            if espressomd.has_features('CUDA'):
                 lb_types.append(espressomd.lb.LBFluidGPU)
             for a in self.system.actors:
                 if isinstance(a, tuple(lb_types)):
