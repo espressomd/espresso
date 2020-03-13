@@ -32,8 +32,7 @@ import espressomd
 from .particle_data import ParticleHandle
 
 
-class openGLLive:
-
+class openGLLive():
     """
     This class provides live visualization using pyOpenGL.
     Use the update method to push your current simulation state after
@@ -452,6 +451,10 @@ class openGLLive:
         self.draw_elapsed = 0
         self.draw_timer = 0
 
+        self.trigger_set_particle_drag = False
+        self.trigger_reset_particle_drag = False
+        self.drag_id = -1
+
         # LIST OF [[px,py],[string]] FOR USER DEFINED TEXT
         self.user_texts = []
 
@@ -583,10 +586,11 @@ class openGLLive:
         # SAVE TO IMAGE
         imsave(path, data)
 
-    def run(self, integ_steps=1):
+    def run(self, integration_steps=1):
         """Convenience method with a simple integration thread.
 
         """
+
         def main():
             while True:
 
@@ -596,7 +600,7 @@ class openGLLive:
                     time.sleep(0.0001)  # sleep(0) is worse
                 else:
                     try:
-                        self.system.integrator.run(integ_steps)
+                        self.system.integrator.run(integration_steps)
                     except Exception as e:
                         print(e)
                         os._exit(1)
@@ -616,7 +620,6 @@ class openGLLive:
         self._init_controls()
         self._init_OpenGL_callbacks()
         self._init_timers()
-        self._init_camera()
 
         # START THE BLOCKING MAIN LOOP
         self.glut_main_loop_started = True
@@ -1212,7 +1215,8 @@ class openGLLive:
 
     # USE MODULO IF THERE ARE MORE PARTICLE TYPES THAN TYPE DEFINITIONS FOR
     # COLORS, MATERIALS ETC.
-    def _modulo_indexing(self, l, t):
+    @staticmethod
+    def _modulo_indexing(l, t):
         return l[t % len(l)]
 
     # FADE PARTICLE CHARGE COLOR FROM WHITE (q=0) to PLUSCOLOR (q=q_max) RESP
@@ -1428,7 +1432,8 @@ class openGLLive:
             index += 1
 
         # HANDLE INPUT WITH 60FPS
-        def timed_handle_input():
+        # pylint: disable=unused-argument
+        def timed_handle_input(data):
             self.keyboard_manager.handle_input()
             OpenGL.GLUT.glutTimerFunc(17, timed_handle_input, -1)
 
@@ -1488,8 +1493,8 @@ class openGLLive:
     @staticmethod
     def _id_to_fcolor(part_id):
         part_id += 1
-        return [int(part_id / 256**2) / 255.0,
-                int((part_id % 256**2) / 256) / 255.0,
+        return [int(part_id / 256 ** 2) / 255.0,
+                int((part_id % 256 ** 2) / 256) / 255.0,
                 (part_id % 256) / 255.0, 1.0]
 
     @staticmethod
@@ -1497,11 +1502,12 @@ class openGLLive:
         if (fcolor == [0, 0, 0]).all():
             return -1
         else:
-            return int(fcolor[0] * 255) * 256**2 + \
+            return int(fcolor[0] * 255) * 256 ** 2 + \
                 int(fcolor[1] * 255) * 256 + \
                 int(fcolor[2] * 255) - 1
 
-    def _set_particle_drag(self, pos):
+    # pylint: disable=unused-argument
+    def _set_particle_drag(self, pos, pos_old):
         part_id, depth = self._get_particle_id(pos)
         self.drag_id = part_id
 
@@ -1510,7 +1516,8 @@ class openGLLive:
             self.extForceOld = self.particles['ext_force'][self.drag_id][:]
             self.depth = depth
 
-    def _reset_particle_drag(self):
+    # pylint: disable=unused-argument
+    def _reset_particle_drag(self, pos, pos_old):
         if self.drag_id != -1:
             self.trigger_reset_particle_drag = True
 
@@ -1637,9 +1644,9 @@ class openGLLive:
 
         # CYCLE THROUGH PARTICLES
         self.keyboard_manager.register_button(KeyboardButtonEvent(
-            OpenGL.GLUT.GLUT_KEY_LEFT, KeyboardFireEvent.Pressed, self._previous_particle_info, False))
+            OpenGL.GLUT.GLUT_KEY_LEFT, KeyboardFireEvent.Pressed, self._previous_particle_info))
         self.keyboard_manager.register_button(KeyboardButtonEvent(
-            OpenGL.GLUT.GLUT_KEY_RIGHT, KeyboardFireEvent.Pressed, self._next_particle_info, False))
+            OpenGL.GLUT.GLUT_KEY_RIGHT, KeyboardFireEvent.Pressed, self._next_particle_info))
 
         # <SPACE> PAUSE INTEGRATION THREAD
         self.keyboard_manager.register_button(KeyboardButtonEvent(
@@ -1836,7 +1843,7 @@ class openGLLive:
 
 # END OF MAIN CLASS
 
-class Shape:
+class Shape():
     """
     Shape base class in the visualizer context.
 
@@ -1852,8 +1859,8 @@ class Shape:
         self.box_l = box_l
         self.rasterize_resolution = rasterize_resolution
         self.pointsize = rasterize_pointsize
-        # get and store points of rasterized surface
-        self.rasterized_surface_points = self._rasterize_shape()
+
+        self.rasterized_surface_points = None
 
     def draw(self):
         """
@@ -1862,6 +1869,10 @@ class Shape:
         draw method.
 
         """
+        # get and store points of rasterized surface if not already present
+        if self.rasterized_surface_points is None:
+            self.rasterized_surface_points = self._rasterize_shape()
+
         set_solid_material(self.color, self.material)
         OpenGL.GL.glPointSize(self.pointsize)
         OpenGL.GL.glBegin(OpenGL.GL.GL_POINTS)
