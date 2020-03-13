@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import collections
 import ctypes
 import math
 import os
@@ -355,7 +354,8 @@ class openGLLive:
         if not espressomd.has_features('ROTATION'):
             self.specs['director_arrows'] = False
 
-        if not espressomd.has_features('LB_BOUNDARIES') and not espressomd.has_features('LB_BOUNDARIES_GPU'):
+        if not espressomd.has_features('LB_BOUNDARIES') and \
+                not espressomd.has_features('LB_BOUNDARIES_GPU'):
             self.specs['LB_draw_boundaries'] = False
             self.specs['LB_draw_node_boundaries'] = False
 
@@ -738,7 +738,6 @@ class openGLLive:
                 self.lb_plane_vel.append([pp, lb_vel])
 
     def _update_lb_velocity_plane_gpu(self):
-        agrid = self.lb_params['agrid']
         ng = self.specs['LB_plane_ngrid']
         col_pos = []
         for xi in range(ng):
@@ -1040,8 +1039,7 @@ class openGLLive:
                     radius, self.specs['quality_particles'], self.specs['quality_particles'])
                 OpenGL.GL.glEndList()
 
-            self._redraw_sphere(
-                self.particles['pos'][part_id], radius, self.specs['quality_particles'])
+            self._redraw_sphere(self.particles['pos'][part_id])
 
             if self.has_images:
                 for imx in self.image_vectors[0]:
@@ -1049,8 +1047,8 @@ class openGLLive:
                         for imz in self.image_vectors[2]:
                             if imx != 0 or imy != 0 or imz != 0:
                                 offset = [imx, imy, imz] * self.system.box_l
-                                self._redraw_sphere(self.particles['pos'][part_id] + offset,
-                                                    radius, self.specs['quality_particles'])
+                                self._redraw_sphere(
+                                    self.particles['pos'][part_id] + offset)
 
             if espressomd.has_features('EXTERNAL_FORCES'):
                 if self.specs['ext_force_arrows'] or part_id == self.drag_id:
@@ -1154,14 +1152,14 @@ class openGLLive:
                                     draw_cylinder(x_b + offset, s_b + offset, radius, col, mat,
                                                   self.specs['quality_bonds'])
 
-    def _redraw_sphere(self, pos, radius, quality):
+    def _redraw_sphere(self, pos):
         OpenGL.GL.glPushMatrix()
         OpenGL.GL.glTranslatef(pos[0], pos[1], pos[2])
         OpenGL.GL.glCallList(self.dl_sphere)
         OpenGL.GL.glPopMatrix()
 
     # HELPER TO DRAW PERIODIC BONDS
-    def _cut_bond(self, xA, dx):
+    def _cut_bond(self, x_a, dx):
         """
         Algorithm for the line-plane intersection problem. Given the unfolded
         positions of two particles, determine: 1) the box image that minimizes
@@ -1181,7 +1179,6 @@ class openGLLive:
         dx -= shift * self.system.box_l
         # find which side of the simulation box is crossed by the bond
         best_d = np.inf
-        best_i = 0
         for i in range(3):
             if dx[i] == 0:
                 continue  # corner case: bond is parallel to a face
@@ -1194,10 +1191,9 @@ class openGLLive:
             # where the dot products decay to an array access, because `n`
             # is always a unit vector in rectangular boxes and its sign
             # is canceled out by the division
-            d = (p0_i - xA[i]) / dx[i]
+            d = (p0_i - x_a[i]) / dx[i]
             if d < best_d:
                 best_d = d
-                best_i = i
         return best_d
 
     # ARROWS IN A PLANE FOR LB VELOCITIES
@@ -1206,7 +1202,6 @@ class openGLLive:
         for lbl in self.lb_plane_vel:
             p = lbl[0]
             v = lbl[1]
-            c = np.linalg.norm(v)
             draw_arrow(
                 p, v *
                 self.specs['LB_vel_scale'],
@@ -1332,7 +1327,7 @@ class openGLLive:
                 if chars_per_line < 20:
                     break
                 ls = 0
-                for li in range(n_lines):
+                for _ in range(n_lines):
                     y += 1
                     line_txt = txt[ls:ls + chars_per_line]
                     self._draw_text(
@@ -1370,13 +1365,13 @@ class openGLLive:
                 self._display_all()
             return
 
-        def keyboard_up(button, x, y):
+        def keyboard_up(button):
             if type(button) is bytes:
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_up(button)
             return
 
-        def keyboard_down(button, x, y):
+        def keyboard_down(button):
             if type(button) is bytes:
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_down(button)
@@ -1433,7 +1428,7 @@ class openGLLive:
             index += 1
 
         # HANDLE INPUT WITH 60FPS
-        def timed_handle_input(data):
+        def timed_handle_input():
             self.keyboard_manager.handle_input()
             OpenGL.GLUT.glutTimerFunc(17, timed_handle_input, -1)
 
@@ -1456,7 +1451,7 @@ class openGLLive:
                                       mouse_button_state)
 
     # DRAW SCENE AGAIN WITHOUT LIGHT TO IDENTIFY PARTICLE ID BY PIXEL COLOR
-    def _get_particle_id(self, pos, pos_old):
+    def _get_particle_id(self, pos):
 
         OpenGL.GL.glClearColor(0.0, 0.0, 0.0, 1.0)
         OpenGL.GL.glClear(
@@ -1490,13 +1485,15 @@ class openGLLive:
 
         return part_id, depth
 
-    def _id_to_fcolor(self, part_id):
+    @staticmethod
+    def _id_to_fcolor(part_id):
         part_id += 1
         return [int(part_id / 256**2) / 255.0,
                 int((part_id % 256**2) / 256) / 255.0,
                 (part_id % 256) / 255.0, 1.0]
 
-    def _fcolor_to_id(self, fcolor):
+    @staticmethod
+    def _fcolor_to_id(fcolor):
         if (fcolor == [0, 0, 0]).all():
             return -1
         else:
@@ -1504,8 +1501,8 @@ class openGLLive:
                 int(fcolor[1] * 255) * 256 + \
                 int(fcolor[2] * 255) - 1
 
-    def _set_particle_drag(self, pos, pos_old):
-        part_id, depth = self._get_particle_id(pos, pos_old)
+    def _set_particle_drag(self, pos):
+        part_id, depth = self._get_particle_id(pos)
         self.drag_id = part_id
 
         if part_id != -1:
@@ -1513,12 +1510,12 @@ class openGLLive:
             self.extForceOld = self.particles['ext_force'][self.drag_id][:]
             self.depth = depth
 
-    def _reset_particle_drag(self, pos, pos_old):
+    def _reset_particle_drag(self):
         if self.drag_id != -1:
             self.trigger_reset_particle_drag = True
 
-    def _get_particle_info(self, pos, pos_old):
-        part_id, depth = self._get_particle_id(pos, pos_old)
+    def _get_particle_info(self, pos):
+        part_id, _ = self._get_particle_id(pos)
         if self.show_system_info:
             self.show_system_info = False
         elif part_id == -1 and self.info_id == -1:
@@ -2336,7 +2333,8 @@ class Wall(Shape):
         self.edges = self._edges_from_pn(self.distance * np.array(self.normal),
                                          self.normal, 2 * self.box_diag)
 
-    def _get_tangents(self, n):
+    @staticmethod
+    def _get_tangents(n):
         n = np.array(n)
         v1 = np.random.randn(3)
         v1 -= v1.dot(n) * n / np.linalg.norm(n)**2
@@ -2356,7 +2354,7 @@ class Wall(Shape):
 
 # OPENGL DRAW WRAPPERS
 
-def set_solid_material(color, material=[0.6, 1.0, 0.1, 0.4, 1.0]):
+def set_solid_material(color, material=(0.6, 1.0, 0.1, 0.4, 1.0)):
     OpenGL.GL.glMaterialfv(OpenGL.GL.GL_FRONT_AND_BACK, OpenGL.GL.GL_AMBIENT, [
         color[0] * material[0], color[1] * material[0], color[2] * material[0], material[4]])
     OpenGL.GL.glMaterialfv(OpenGL.GL.GL_FRONT_AND_BACK, OpenGL.GL.GL_DIFFUSE, [

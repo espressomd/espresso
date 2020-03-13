@@ -101,15 +101,15 @@ class Billiards:
 
 pool = Billiards()
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('4', KeyboardFireEvent.Hold, pool.decreaseAngle))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('6', KeyboardFireEvent.Hold, pool.increaseAngle))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('2', KeyboardFireEvent.Hold, pool.decreaseImpulse))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('8', KeyboardFireEvent.Hold, pool.increaseImpulse))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, pool.fire))
 
 
