@@ -346,11 +346,6 @@ int remove_particle(int part);
 /** Remove all particles. */
 void remove_all_particles();
 
-/** For all local particles, remove bonds incorporating the specified particle.
- *  @param part     identity of the particle to free from bonds
- */
-void remove_all_bonds_to(int part);
-
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
  *  Move a particle to a new position. If it does not exist, it is created.
  *  The position must be on the local node!
@@ -389,13 +384,6 @@ void local_remove_all_particles();
  */
 void local_rescale_particles(int dir, double scale);
 
-/** @brief Add bond to local particle.
- *  @param p     identity of principal atom of the bond.
- *  @param bond  field containing the bond type number and the identity
- *               of all bond partners (secondary atoms of the bond).
- */
-void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
-
 #ifdef EXCLUSIONS
 /** Determine if the non-bonded interactions between @p p1 and @p p2 should be
  *  calculated.
@@ -407,9 +395,6 @@ inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
                       [&p2](int id) { return p2.p.identity == id; });
 }
 #endif
-
-/** Remove bond from particle if possible */
-int try_delete_bond(Particle *part, const int *bond);
 
 /** Remove exclusion from particle if possible */
 void try_delete_exclusion(Particle *part, int part2);

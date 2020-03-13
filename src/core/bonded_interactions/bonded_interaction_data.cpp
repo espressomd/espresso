@@ -129,3 +129,20 @@ int virtual_set_params(int bond_type) {
 
   return ES_OK;
 }
+
+void remove_all_bonds_to(Particle &p, int id) {
+  IntList *bl = &p.bl;
+  int i, j, partners;
+
+  for (i = 0; i < bl->n;) {
+    partners = bonded_ia_params[bl->e[i]].num;
+    for (j = 1; j <= partners; j++)
+      if (bl->e[i + j] == id)
+        break;
+    if (j <= partners) {
+      bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
+    } else
+      i += 1 + partners;
+  }
+  assert(i == bl->n);
+}

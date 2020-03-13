@@ -176,7 +176,7 @@ struct RemoveBond {
     std::vector<int> bond;
 
     void operator()(Particle &p) const {
-      try_delete_bond(&p, bond.data());
+      delete_bond(&p, bond.data());
     }
 
     template<class Archive>
@@ -203,7 +203,7 @@ struct AddBond {
     std::vector<int> bond;
 
     void operator()(Particle &p) const {
-        local_add_particle_bond(p, bond);
+        add_bond(p, bond);
     }
 
     template<class Archive>
@@ -389,7 +389,7 @@ std::unordered_map<int, int> particle_node;
  * local functions
  ************************************************/
 
-int try_delete_bond(Particle *part, const int *bond);
+int delete_bond(Particle *part, const int *bond);
 
 void try_delete_exclusion(Particle *part, int part2);
 
@@ -883,35 +883,6 @@ int remove_particle(int p_id) {
   return ES_OK;
 }
 
-/**
- * @brief Remove all bonds on particle involving another particle.
- *
- * @param p Particle whose bond list is modified.
- * @param id Bonds involving this id are removed.
- */
-static void remove_all_bonds_to(Particle &p, int id) {
-  IntList *bl = &p.bl;
-  int i, j, partners;
-
-  for (i = 0; i < bl->n;) {
-    partners = bonded_ia_params[bl->e[i]].num;
-    for (j = 1; j <= partners; j++)
-      if (bl->e[i + j] == id)
-        break;
-    if (j <= partners) {
-      bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-    } else
-      i += 1 + partners;
-  }
-  assert(i == bl->n);
-}
-
-void remove_all_bonds_to(int identity) {
-  for (auto &p : cell_structure.local_cells().particles()) {
-    remove_all_bonds_to(p, identity);
-  }
-}
-
 void local_remove_particle(int part) {
   Cell *cell = nullptr;
   int position = -1;
@@ -930,8 +901,10 @@ void local_remove_particle(int part) {
     }
   }
 
-  assert(cell && (position >= 0));
-  extract_indexed_particle(cell, position);
+  /* If we found the particle, remove it. */
+  if (cell && (position >= 0)) {
+    extract_indexed_particle(cell, position);
+  }
 }
 
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
@@ -982,11 +955,11 @@ void local_rescale_particles(int dir, double scale) {
   }
 }
 
-void local_add_particle_bond(Particle &p, Utils::Span<const int> bond) {
+void add_bond(Particle &p, Utils::Span<const int> bond) {
   boost::copy(bond, std::back_inserter(p.bl));
 }
 
-int try_delete_bond(Particle *part, const int *bond) {
+int delete_bond(Particle *part, const int *bond) {
   IntList *bl = &part->bl;
   int i, j, type, partners;
 
