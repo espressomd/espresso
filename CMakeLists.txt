@@ -19,6 +19,7 @@
 #
 
 cmake_minimum_required(VERSION 3.4)
+message(STATUS "CMake version: ${CMAKE_VERSION}")
 include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
