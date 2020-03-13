@@ -37,6 +37,7 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "particle_index.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
 #include "serialization/ParticleList.hpp"
@@ -56,12 +57,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utils/keys.hpp>
-/************************************************
- * defines
- ************************************************/
-
-/** my magic MPI code for send/recv_particles */
-#define REQ_SNDRCV_PART 0xaa
 
 namespace {
 /**
@@ -390,8 +385,6 @@ void add_id_to_type_map(int part_id, int type);
  */
 std::unordered_map<int, int> particle_node;
 
-std::vector<Particle *> local_particles;
-
 /************************************************
  * local functions
  ************************************************/
@@ -486,112 +479,6 @@ int get_particle_node(int id) {
 }
 
 void clear_particle_node() { particle_node.clear(); }
-
-/************************************************
- * organizational functions
- ************************************************/
-
-void update_local_particles(ParticleList *pl) {
-  Particle *p = pl->part;
-  int n = pl->n, i;
-  for (i = 0; i < n; i++)
-    set_local_particle_data(p[i].p.identity, &p[i]);
-}
-
-void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  l->resize(l->n + 1);
-  new (&(l->part[l->n - 1])) Particle(std::move(part));
-}
-
-Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = l->resize(l->n + 1);
-  auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
-
-  if (re)
-    update_local_particles(l);
-  else
-    set_local_particle_data(p->p.identity, p);
-  return p;
-}
-
-Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-
-  dl->resize(dl->n + 1);
-  auto dst = &dl->part[dl->n - 1];
-  auto src = &sl->part[i];
-  auto end = &sl->part[sl->n - 1];
-
-  new (dst) Particle(std::move(*src));
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  sl->resize(sl->n - 1);
-  return dst;
-}
-
-Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-  int re = dl->resize(dl->n + 1);
-  Particle *dst = &dl->part[dl->n - 1];
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  new (dst) Particle(std::move(*src));
-
-  if (re) {
-    update_local_particles(dl);
-  } else {
-    set_local_particle_data(dst->p.identity, dst);
-  }
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (sl->resize(sl->n - 1)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    set_local_particle_data(src->p.identity, src);
-  }
-  return dst;
-}
-
-/**
- * @brief Extract an indexed particle from a list.
- *
- * Removes a particle from a particle list and
- * from the particle index.
- *
- * @param i Index of particle to remove,
- *          needs to be valid.
- * @param sl List to remove the particle from,
- *           needs to be non-empty.
- * @return The extracted particle.
- */
-Particle extract_indexed_particle(ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  Particle p = std::move(*src);
-
-  set_local_particle_data(p.p.identity, nullptr);
-
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (sl->resize(sl->n - 1)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    set_local_particle_data(src->p.identity, src);
-  }
-  return p;
-}
 
 namespace {
 /* Limit cache to 100 MiB */
@@ -1075,11 +962,11 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
 }
 
 void local_remove_all_particles() {
-  local_particles.clear();
-
   for (auto c : cell_structure.local_cells()) {
-    for (auto &p : c->particles())
+    for (auto &p : c->particles()) {
+      set_local_particle_data(p.identity(), nullptr);
       free_particle(&p);
+    }
 
     c->clear();
   }

@@ -31,7 +31,7 @@
 #include "ghosts.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <mpi.h>
 #include <utils/Span.hpp>

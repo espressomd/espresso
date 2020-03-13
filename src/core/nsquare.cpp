@@ -27,7 +27,7 @@
 #include "communication.hpp"
 #include "constraints.hpp"
 #include "ghosts.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <mpi.h>
 

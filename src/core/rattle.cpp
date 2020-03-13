@@ -32,7 +32,7 @@ int n_rigidbonds = 0;
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <utils/constants.hpp>
 

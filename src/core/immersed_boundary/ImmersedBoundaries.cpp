@@ -25,7 +25,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <utils/constants.hpp>
 
