@@ -1,5 +1,5 @@
 # Copyright (C) 2009-2019 The ESPResSo project
-# Copyright (C) 2009,2010 
+# Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.
@@ -40,9 +40,10 @@ set(PROJECT_VERSION "4.1.2")
 # CMake internal vars
 #
 
-# Cmake modules/macros are in a subdirectory to keep this file cleaner
+# CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# Select the build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
