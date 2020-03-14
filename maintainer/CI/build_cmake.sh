@@ -74,11 +74,9 @@ set_default_value() {
 
 
 # handle environment variables
-set_default_value insource false
 set_default_value srcdir "$(pwd)"
 set_default_value cmake_params ""
 set_default_value with_fftw true
-set_default_value with_python_interface true
 set_default_value with_coverage false
 set_default_value with_ubsan false
 set_default_value with_asan false
@@ -128,32 +126,21 @@ if [ "${hide_gpu}" = true ]; then
     export CUDA_VISIBLE_DEVICES=""
 fi
 
-if [ "${insource}" = true ]; then
-    builddir="${srcdir}"
-elif [ -z "${builddir}" ]; then
-    builddir="${srcdir}/build"
-fi
+builddir="${srcdir}/build"
 
-outp insource srcdir builddir \
+outp srcdir builddir \
     make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
     cmake_params with_fftw \
-    with_python_interface with_coverage \
+    with_coverage \
     with_ubsan with_asan \
     check_odd_only \
     with_static_analysis myconfig \
     build_procs check_procs \
     with_cuda with_ccache
 
-if [ "${insource}" = false ]; then
-    if [ ! -d "${builddir}" ]; then
-        echo "Creating ${builddir}..."
-        mkdir -p "${builddir}"
-    fi
-fi
-
-if [ "${insource}" = false ]; then
-    cd "${builddir}"
-fi
+echo "Creating ${builddir}..."
+mkdir -p "${builddir}"
+cd "${builddir}"
 
 # load MPI module if necessary
 if [ -f "/etc/os-release" ]; then
@@ -168,12 +155,6 @@ if [ "${with_fftw}" = true ]; then
     :
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON ${cmake_params}"
-fi
-
-if [ "${with_python_interface}" = true ]; then
-    cmake_params="-DWITH_PYTHON=ON ${cmake_params}"
-else
-    cmake_params="-DWITH_PYTHON=OFF ${cmake_params}"
 fi
 
 if [ "${with_coverage}" = true ]; then

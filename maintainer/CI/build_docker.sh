@@ -19,10 +19,8 @@
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
 cat > "${ENV_FILE}" <<EOF
-insource=${insource}
 cmake_params=${cmake_params}
 with_fftw=${with_fftw}
-with_python_interface=true
 with_coverage=false
 with_cuda=false
 myconfig=${myconfig}
@@ -32,8 +30,7 @@ build_type="Debug"
 EOF
 
 if [ -z "${image}" ]; then
-    image="ubuntu"
+    image="ubuntu-python3"
 fi
 
-image="espressomd/espresso-${image}:latest"
-docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
+docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "espressomd/espresso-${image}:latest" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
