@@ -74,8 +74,8 @@ install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 target_compile_options(
   EspressoCore
   PUBLIC
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CONFIG:Release>>:-g>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CONFIG:Release>>:-O0>"
+    "$<$<BOOL:${WITH_COVERAGE}>:-g>"
+    "$<IF:$<AND:$<BOOL:${WITH_COVERAGE}>,$<CONFIG:Release>>,-O0,-Og>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fprofile-instr-generate>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fcoverage-mapping>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:--coverage>"

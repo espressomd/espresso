@@ -47,7 +47,7 @@ set(PROJECT_VERSION "4.2-dev")
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel Coverage." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 # On Mac OS X, first look for other packages, then frameworks
@@ -70,7 +70,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
    OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  option(WITH_COVERAGE "Generate code coverage report" OFF)
+  if(CMAKE_BUILD_TYPE STREQUAL Coverage)
+    option(WITH_COVERAGE "Generate code coverage report" ON)
+  else()
+    option(WITH_COVERAGE "Generate code coverage report" OFF)
+  endif()
   option(WITH_ASAN "Build with address sanitizer" OFF)
   option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
 endif()

@@ -107,33 +107,12 @@ else
     run_checks=false
 fi
 
-# If there are no user-provided flags, default
-# ones are added according to ${with_coverage}
-nvcc_flags="${cxx_flags}"
-if [ -z "${cxx_flags}" ]; then
-    if [ "${with_coverage}" = true ]; then
-        cxx_flags="-Og"
-        nvcc_flags="-O3"
-    else
-        if [ "${run_checks}" = true ]; then
-            cxx_flags="-O3"
-            nvcc_flags="-O3"
-        else
-            cxx_flags="-O0"
-            nvcc_flags="-O0"
-        fi
-    fi
-fi
-
 if [ "${with_coverage}" = true ]; then
+    build_type="Coverage"
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"
-cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags}"
-if [ "${with_cuda}" = true ]; then
-  cmake_params="${cmake_params} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
-fi
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
 if [ "${with_ccache}" = true ]; then
