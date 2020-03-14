@@ -1,5 +1,5 @@
 # Copyright (C) 2009-2019 The ESPResSo project
-# Copyright (C) 2009,2010 
+# Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
 # This file is part of ESPResSo.
@@ -44,9 +44,10 @@ set(PROJECT_VERSION "4.2-dev")
 # CMake internal vars
 #
 
-# Cmake modules/macros are in a subdirectory to keep this file cleaner
+# CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
+# Select the build type
 option_enum(varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release" possible_values "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
 
 # On Mac OS X, first look for other packages, then frameworks
