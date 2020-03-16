@@ -55,9 +55,9 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "integrate.hpp"
 #include "mpiio.hpp"
 #include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <mpi.h>
 
@@ -65,7 +65,6 @@
 #include <cstring>
 #include <string>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <vector>
 
 namespace Mpiio {

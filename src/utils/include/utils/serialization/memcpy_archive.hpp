@@ -33,7 +33,7 @@ namespace Utils {
  *         serializable with a static size, e.g. is
  *         suitable for memcpy serialization. Only
  *         specialize this to std::true_type if it is
- *         guarantueed that serializing this type always
+ *         guaranteed that serializing this type always
  *         returns the same number of bytes, independent
  *         of object state.
  *

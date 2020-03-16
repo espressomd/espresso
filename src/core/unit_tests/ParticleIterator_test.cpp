@@ -68,11 +68,6 @@ BOOST_AUTO_TEST_CASE(completeness) {
     cells[i % cells.size()]->part.emplace_back(i);
   }
 
-  /* Set the size */
-  for (auto &c : cells) {
-    c->n = c->part.size();
-  }
-
   std::vector<int> counts(n_part, 0);
 
   auto begin = iterator(cells.begin(), cells.end(), 0);
@@ -94,9 +89,7 @@ BOOST_AUTO_TEST_CASE(skip_empty) {
   auto cells = make_cells(3);
 
   cells[0]->part.emplace_back(0);
-  cells[0]->n = 1;
   cells[2]->part.emplace_back(1);
-  cells[2]->n = 1;
 
   auto begin = iterator(cells.begin(), cells.end(), 0);
 
@@ -115,11 +108,6 @@ BOOST_AUTO_TEST_CASE(order) {
   /* Fill the cells */
   for (int i = 0; i < n_cells; i++) {
     cells[i % cells.size()]->part.emplace_back(i);
-  }
-
-  /* Set the size */
-  for (auto &c : cells) {
-    c->n = c->part.size();
   }
 
   auto begin = iterator(cells.begin(), cells.end(), 0);
@@ -145,11 +133,6 @@ BOOST_AUTO_TEST_CASE(distance_overload) {
   /* Fill the cells */
   for (int i = 0; i < n_cells; i++) {
     cells[i % cells.size()]->part.emplace_back(i);
-  }
-
-  /* Set the size */
-  for (auto &c : cells) {
-    c->n = c->part.size();
   }
 
   auto begin = iterator(cells.begin(), cells.end(), 0);

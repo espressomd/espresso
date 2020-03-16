@@ -542,146 +542,141 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
  * We use real to complex FFTs, so the size of the reciprocal mesh
  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
  */
-
 void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
-  if (this_node == 0) {
-    espressoSystemInterface.requestParticleStructGpu();
+  espressoSystemInterface.requestParticleStructGpu();
 
-    int reinit_if = 0, mesh_changed = 0;
-    p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
+  int reinit_if = 0, mesh_changed = 0;
+  p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
-      p3m_gpu_data.alpha = alpha;
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
+    p3m_gpu_data.alpha = alpha;
+    reinit_if = 1;
+  }
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
-      p3m_gpu_data.cao = cao;
-      p3m_gpu_data.pos_shift = (REAL_TYPE)((p3m_gpu_data.cao - 1) / 2);
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
+    p3m_gpu_data.cao = cao;
+    p3m_gpu_data.pos_shift = (REAL_TYPE)((p3m_gpu_data.cao - 1) / 2);
+    reinit_if = 1;
+  }
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh[0] != mesh[0]) ||
-        (p3m_gpu_data.mesh[1] != mesh[1]) ||
-        (p3m_gpu_data.mesh[2] != mesh[2])) {
-      std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
-      mesh_changed = 1;
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh[0] != mesh[0]) ||
+      (p3m_gpu_data.mesh[1] != mesh[1]) || (p3m_gpu_data.mesh[2] != mesh[2])) {
+    std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
+    mesh_changed = 1;
+    reinit_if = 1;
+  }
 
-    auto const box_l = box_geo.length();
+  auto const box_l = box_geo.length();
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
-        (p3m_gpu_data.box[1] != box_l[1]) ||
-        (p3m_gpu_data.box[2] != box_l[2])) {
-      std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
+      (p3m_gpu_data.box[1] != box_l[1]) || (p3m_gpu_data.box[2] != box_l[2])) {
+    std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
+    reinit_if = 1;
+  }
 
-    p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
-    p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * p3m_gpu_data.mesh_z_padded;
+  p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
+  p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * p3m_gpu_data.mesh_z_padded;
 
-    for (int i = 0; i < 3; i++) {
-      p3m_gpu_data.hi[i] = p3m_gpu_data.mesh[i] / p3m_gpu_data.box[i];
-    }
+  for (int i = 0; i < 3; i++) {
+    p3m_gpu_data.hi[i] = p3m_gpu_data.mesh[i] / p3m_gpu_data.box[i];
+  }
 
-    if ((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
-      cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
-      p3m_gpu_data.charge_mesh = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
-      p3m_gpu_data.force_mesh_x = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_y));
-      p3m_gpu_data.force_mesh_y = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_z));
-      p3m_gpu_data.force_mesh_z = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.G_hat));
-      p3m_gpu_data.G_hat = 0;
+  if ((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
+    cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
+    p3m_gpu_data.charge_mesh = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
+    p3m_gpu_data.force_mesh_x = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_y));
+    p3m_gpu_data.force_mesh_y = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_z));
+    p3m_gpu_data.force_mesh_z = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.G_hat));
+    p3m_gpu_data.G_hat = 0;
 
-      cufftDestroy(p3m_gpu_fft_plans.forw_plan);
-      cufftDestroy(p3m_gpu_fft_plans.back_plan);
+    cufftDestroy(p3m_gpu_fft_plans.forw_plan);
+    cufftDestroy(p3m_gpu_fft_plans.back_plan);
 
-      p3m_gpu_data_initialized = 0;
-    }
+    p3m_gpu_data_initialized = 0;
+  }
 
-    if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
+  if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
 #if defined(__HIPCC__) and not defined(__CUDACC__)
-      // rocFFT gives wrong P3M results for mesh sizes whose prime factors are
-      // not 2, 3 or 5. So we check for the other supported prime factors and
-      // throw an error if they are used with HIP.
-      if (mesh[0] % 7 == 0 || mesh[0] % 11 == 0 || mesh[0] % 13 == 0 ||
-          mesh[1] % 7 == 0 || mesh[1] % 11 == 0 || mesh[1] % 13 == 0 ||
-          mesh[2] % 7 == 0 || mesh[2] % 11 == 0 || mesh[2] % 13 == 0) {
-        throw std::runtime_error("Mesh size not supported");
-      }
+    // rocFFT gives wrong P3M results for mesh sizes whose prime factors are
+    // not 2, 3 or 5. So we check for the other supported prime factors and
+    // throw an error if they are used with HIP.
+    if (mesh[0] % 7 == 0 || mesh[0] % 11 == 0 || mesh[0] % 13 == 0 ||
+        mesh[1] % 7 == 0 || mesh[1] % 11 == 0 || mesh[1] % 13 == 0 ||
+        mesh[2] % 7 == 0 || mesh[2] % 11 == 0 || mesh[2] % 13 == 0) {
+      throw std::runtime_error("Mesh size not supported");
+    }
 #endif
 
-      /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
-      const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
-                             (p3m_gpu_data.mesh[2] / 2 + 1);
+    /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
+    const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
+                           (p3m_gpu_data.mesh[2] / 2 + 1);
 
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
-                               cmesh_size * sizeof(REAL_TYPE)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
+                             cmesh_size * sizeof(REAL_TYPE)));
 
-      if (cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
-                      FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
-          cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
-                      FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
-        throw std::runtime_error("Unable to create fft plan");
-      }
+    if (cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
+                    FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
+        cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
+                    FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
+      throw std::runtime_error("Unable to create fft plan");
     }
-
-    if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&
-        (p3m_gpu_data.mesh_size > 0)) {
-      dim3 grid(1, 1, 1);
-      dim3 block(1, 1, 1);
-      block.x = 512 / mesh[0] + 1;
-      block.y = mesh[1];
-      block.z = 1;
-      grid.x = mesh[0] / block.x + 1;
-      grid.z = mesh[2] / 2 + 1;
-
-      switch (p3m_gpu_data.cao) {
-      case 1:
-        KERNELCALL(calculate_influence_function_device<1>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 2:
-        KERNELCALL(calculate_influence_function_device<2>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 3:
-        KERNELCALL(calculate_influence_function_device<3>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 4:
-        KERNELCALL(calculate_influence_function_device<4>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 5:
-        KERNELCALL(calculate_influence_function_device<5>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 6:
-        KERNELCALL(calculate_influence_function_device<6>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 7:
-        KERNELCALL(calculate_influence_function_device<7>, grid, block,
-                   p3m_gpu_data);
-        break;
-      }
-    }
-    if (p3m_gpu_data.mesh_size > 0)
-      p3m_gpu_data_initialized = 1;
   }
+
+  if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&
+      (p3m_gpu_data.mesh_size > 0)) {
+    dim3 grid(1, 1, 1);
+    dim3 block(1, 1, 1);
+    block.x = 512 / mesh[0] + 1;
+    block.y = mesh[1];
+    block.z = 1;
+    grid.x = mesh[0] / block.x + 1;
+    grid.z = mesh[2] / 2 + 1;
+
+    switch (p3m_gpu_data.cao) {
+    case 1:
+      KERNELCALL(calculate_influence_function_device<1>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 2:
+      KERNELCALL(calculate_influence_function_device<2>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 3:
+      KERNELCALL(calculate_influence_function_device<3>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 4:
+      KERNELCALL(calculate_influence_function_device<4>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 5:
+      KERNELCALL(calculate_influence_function_device<5>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 6:
+      KERNELCALL(calculate_influence_function_device<6>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 7:
+      KERNELCALL(calculate_influence_function_device<7>, grid, block,
+                 p3m_gpu_data);
+      break;
+    }
+  }
+  if (p3m_gpu_data.mesh_size > 0)
+    p3m_gpu_data_initialized = 1;
 }
 
 /**

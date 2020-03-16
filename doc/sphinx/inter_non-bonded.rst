@@ -529,12 +529,13 @@ The parameters can be set via::
     system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
 
 This command defines an interaction between particles of the types ``type1`` and ``type2``
-that contains velocity-dependent friction and noise according 
-to a temperature set by :py:meth:`espressomd.thermostat.Thermostat.set_dpd()`. 
+that contains velocity-dependent friction and noise according
+to a temperature set by :py:meth:`espressomd.thermostat.Thermostat.set_dpd()`.
 The parameters for the interaction are
 
 * ``gamma``
 * ``weight_function``
+* ``k``
 * ``r_cut``
 * ``trans_gamma``
 * ``trans_weight_function``
@@ -556,9 +557,9 @@ for the dissipative force and
 .. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma_\parallel w_\parallel (r_{ij}) }  \eta_{ij}(t) \hat{r}_{ij}
 
 for the random force. This introduces the friction coefficient :math:`\gamma_\parallel` (parameter ``gamma``) and the weight function
-:math:`w_\parallel`. The thermal energy :math:`k_B T` is not set by the interaction, 
-but by the DPD thermostat (:py:meth:`espressomd.thermostat.Thermostat.set_dpd()`) 
-to be equal for all particles. The weight function can be specified via the ``weight_function`` switch. 
+:math:`w_\parallel`. The thermal energy :math:`k_B T` is not set by the interaction,
+but by the DPD thermostat (:py:meth:`espressomd.thermostat.Thermostat.set_dpd()`)
+to be equal for all particles. The weight function can be specified via the ``weight_function`` switch.
 The possible values for ``weight_function`` are 0 and 1, corresponding to the
 order of :math:`w_\parallel`:
 
@@ -567,22 +568,26 @@ order of :math:`w_\parallel`:
    w_\parallel (r_{ij}) =  \left\{
    \begin{array}{clcr}
                 1                      & , \; \text{weight_function} = 0 \\
-                {( 1 - \frac{r_{ij}}{r^\text{cut}_\parallel}} )^2 & , \; \text{weight_function} = 1
+                {( 1 - (\frac{r_{ij}}{r^\text{cut}_\parallel})^k} )^2 & , \; \text{weight_function} = 1
       \end{array}
       \right.
-      
+
 Both weight functions are set to zero for :math:`r_{ij}>r^\text{cut}_\parallel` (parameter ``r_cut``).
+
+In case the ``weight_function`` 1 is selected the parameter ``k`` can be chosen. :math:`k = 1` is the
+default and recovers the linear ramp. :math:`k > 1` enhances the dissipative nature of the interaction
+and thus yields higher Schmidt numbers :cite:`yaghoubi2015a`.
 
 The random force has the properties
 
 .. math:: <\eta_{ij}(t)> = 0 , <\eta_{ij}^\alpha(t)\eta_{kl}^\beta(t')> = \delta_{\alpha\beta} \delta_{ik}\delta_{jl}\delta(t-t')
 
-and is numerically discretized to a random number :math:`\overline{\eta}` for each spatial 
+and is numerically discretized to a random number :math:`\overline{\eta}` for each spatial
 component for each particle pair drawn from a uniform distribution
 with properties
 
 .. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
-    
+
 For the perpendicular part, the dissipative and random force are calculated analogously
 
 .. math:: \vec{F}_{ij}^{D} = -\gamma_\bot w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}

@@ -859,6 +859,7 @@ IF DPD:
             return {
                 "weight_function": ia_params.dpd_radial.wf,
                 "gamma": ia_params.dpd_radial.gamma,
+                "k": ia_params.dpd_radial.k,
                 "r_cut": ia_params.dpd_radial.cutoff,
                 "trans_weight_function": ia_params.dpd_trans.wf,
                 "trans_gamma": ia_params.dpd_trans.gamma,
@@ -879,6 +880,8 @@ IF DPD:
                 either 0 (constant) or 1 (linear)
             gamma : :obj:`float`
                 Friction coefficient of the parallel part
+            k : :obj:`float`
+                Exponent in the modified weight function
             r_cut : :obj:`float`
                 Cutoff of the parallel part
             trans_weight_function : :obj:`int`, \{0, 1\}
@@ -896,6 +899,7 @@ IF DPD:
             if dpd_set_params(self._part_types[0],
                               self._part_types[1],
                               self._params["gamma"],
+                              self._params["k"],
                               self._params["r_cut"],
                               self._params["weight_function"],
                               self._params["trans_gamma"],
@@ -907,6 +911,7 @@ IF DPD:
             return {
                 "weight_function": 0,
                 "gamma": 0.0,
+                "k": 1.0,
                 "r_cut": -1.0,
                 "trans_weight_function": 0,
                 "trans_gamma": 0.0,
@@ -916,7 +921,7 @@ IF DPD:
             return "DPD"
 
         def valid_keys(self):
-            return {"weight_function", "gamma", "r_cut",
+            return {"weight_function", "gamma", "k", "r_cut",
                     "trans_weight_function", "trans_gamma", "trans_r_cut"}
 
         def required_keys(self):

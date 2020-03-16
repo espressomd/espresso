@@ -38,6 +38,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -45,8 +46,6 @@
 #include <boost/iterator/indirect_iterator.hpp>
 
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 /** list of all cells. */
 std::vector<Cell> cells;
@@ -279,9 +278,9 @@ unsigned const &get_resort_particles() { return resort_particles; }
 /*************************************************/
 
 int cells_get_n_particles() {
-  return std::accumulate(cell_structure.m_local_cells.begin(),
-                         cell_structure.m_local_cells.end(), 0,
-                         [](int n, const Cell *c) { return n + c->n; });
+  return std::accumulate(
+      cell_structure.m_local_cells.begin(), cell_structure.m_local_cells.end(),
+      0, [](int n, const Cell *c) { return n + c->particles().size(); });
 }
 
 /*************************************************/
@@ -387,6 +386,7 @@ void cells_resort_particles(int global_flag) {
 
 void cells_on_geometry_change(int flags) {
   /* Consider skin only if there are actually interactions */
+  auto const max_cut = maximal_cutoff();
   auto const range = (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
   cell_structure.min_range = range;
 

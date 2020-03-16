@@ -884,7 +884,7 @@ cdef class ParticleHandle:
                     cdef Vector3d gamma
 
                     # We accept a single number by just repeating it
-                    if not isinstance(_gamma, collections.Iterable):
+                    if not isinstance(_gamma, collections.abc.Iterable):
                         _gamma = 3 * [_gamma]
 
                     check_type_or_throw_except(
@@ -942,7 +942,8 @@ cdef class ParticleHandle:
                     def __set__(self, _gamma_rot):
                         cdef Vector3d gamma_rot
                         # We accept a single number by just repeating it
-                        if not isinstance(_gamma_rot, collections.Iterable):
+                        if not isinstance(
+                                _gamma_rot, collections.abc.Iterable):
                             _gamma_rot = 3 * [_gamma_rot]
 
                         check_type_or_throw_except(
@@ -1315,11 +1316,11 @@ cdef class ParticleHandle:
         """
         Checks the validity of the given bond:
 
-            - If the bondtype is given as an object or a numerical id
-            - If all partners are of type :obj:`int`
-            - If the number of partners satisfies the bond
-            - If the bond type used exists (is lower than ``n_bonded_ia``)
-            - If the number of bond partners fits the bond type
+        - If the bondtype is given as an object or a numerical id
+        - If all partners are of type :obj:`int`
+        - If the number of partners satisfies the bond
+        - If the bond type used exists (is lower than ``n_bonded_ia``)
+        - If the number of bond partners fits the bond type
 
         Throws an exception if any of these are not met.
 
@@ -1416,7 +1417,8 @@ cdef class ParticleHandle:
 
         Parameters
         ----------
-        _bond : bond to be deleted
+        _bond :
+            bond to be deleted
 
         See Also
         --------

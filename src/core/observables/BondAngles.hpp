@@ -40,7 +40,7 @@ public:
     std::vector<double> res(n_values());
     auto v1 = get_mi_vector(particles[1]->r.p, particles[0]->r.p, box_geo);
     auto n1 = v1.norm();
-    for (int i = 0, end = n_values(); i < end; i++) {
+    for (size_t i = 0, end = n_values(); i < end; i++) {
       auto v2 =
           get_mi_vector(particles[i + 2]->r.p, particles[i + 1]->r.p, box_geo);
       auto n2 = v2.norm();
@@ -61,7 +61,7 @@ public:
     }
     return res;
   }
-  int n_values() const override { return ids().size() - 2; }
+  std::vector<size_t> shape() const override { return {ids().size() - 2}; }
 };
 
 } // Namespace Observables

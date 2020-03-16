@@ -37,6 +37,7 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
+#include "particle_index.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
 #include "serialization/ParticleList.hpp"
@@ -56,12 +57,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utils/keys.hpp>
-/************************************************
- * defines
- ************************************************/
-
-/** my magic MPI code for send/recv_particles */
-#define REQ_SNDRCV_PART 0xaa
 
 namespace {
 /**
@@ -181,7 +176,7 @@ struct RemoveBond {
     std::vector<int> bond;
 
     void operator()(Particle &p) const {
-      try_delete_bond(&p, bond.data());
+      delete_bond(&p, bond.data());
     }
 
     template<class Archive>
@@ -208,7 +203,7 @@ struct AddBond {
     std::vector<int> bond;
 
     void operator()(Particle &p) const {
-        local_add_particle_bond(p, bond);
+        add_bond(p, bond);
     }
 
     template<class Archive>
@@ -390,17 +385,15 @@ void add_id_to_type_map(int part_id, int type);
  */
 std::unordered_map<int, int> particle_node;
 
-std::vector<Particle *> local_particles;
-
 /************************************************
  * local functions
  ************************************************/
 
-int try_delete_bond(Particle *part, const int *bond);
+int delete_bond(Particle *part, const int *bond);
 
-void try_delete_exclusion(Particle *part, int part2);
+void delete_exclusion(Particle *part, int part2);
 
-void try_add_exclusion(Particle *part, int part2);
+void add_exclusion(Particle *part, int part2);
 
 void auto_exclusion(int distance);
 
@@ -486,112 +479,6 @@ int get_particle_node(int id) {
 }
 
 void clear_particle_node() { particle_node.clear(); }
-
-/************************************************
- * organizational functions
- ************************************************/
-
-void update_local_particles(ParticleList *pl) {
-  Particle *p = pl->part;
-  int n = pl->n, i;
-  for (i = 0; i < n; i++)
-    set_local_particle_data(p[i].p.identity, &p[i]);
-}
-
-void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  l->resize(l->n + 1);
-  new (&(l->part[l->n - 1])) Particle(std::move(part));
-}
-
-Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
-  auto const re = l->resize(l->n + 1);
-  auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));
-
-  if (re)
-    update_local_particles(l);
-  else
-    set_local_particle_data(p->p.identity, p);
-  return p;
-}
-
-Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-
-  dl->resize(dl->n + 1);
-  auto dst = &dl->part[dl->n - 1];
-  auto src = &sl->part[i];
-  auto end = &sl->part[sl->n - 1];
-
-  new (dst) Particle(std::move(*src));
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  sl->resize(sl->n - 1);
-  return dst;
-}
-
-Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-  int re = dl->resize(dl->n + 1);
-  Particle *dst = &dl->part[dl->n - 1];
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  new (dst) Particle(std::move(*src));
-
-  if (re) {
-    update_local_particles(dl);
-  } else {
-    set_local_particle_data(dst->p.identity, dst);
-  }
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (sl->resize(sl->n - 1)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    set_local_particle_data(src->p.identity, src);
-  }
-  return dst;
-}
-
-/**
- * @brief Extract an indexed particle from a list.
- *
- * Removes a particle from a particle list and
- * from the particle index.
- *
- * @param i Index of particle to remove,
- *          needs to be valid.
- * @param sl List to remove the particle from,
- *           needs to be non-empty.
- * @return The extracted particle.
- */
-Particle extract_indexed_particle(ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  Particle p = std::move(*src);
-
-  set_local_particle_data(p.p.identity, nullptr);
-
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (sl->resize(sl->n - 1)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    set_local_particle_data(src->p.identity, src);
-  }
-  return p;
-}
 
 namespace {
 /* Limit cache to 100 MiB */
@@ -996,54 +883,28 @@ int remove_particle(int p_id) {
   return ES_OK;
 }
 
-/**
- * @brief Remove all bonds on particle involing other particle.
- *
- * @param p Particle whose bond list is modified.
- * @param id Bonds involving this id are removed.
- */
-static void remove_all_bonds_to(Particle &p, int id) {
-  IntList *bl = &p.bl;
-  int i, j, partners;
-
-  for (i = 0; i < bl->n;) {
-    partners = bonded_ia_params[bl->e[i]].num;
-    for (j = 1; j <= partners; j++)
-      if (bl->e[i + j] == id)
-        break;
-    if (j <= partners) {
-      bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-    } else
-      i += 1 + partners;
-  }
-  assert(i == bl->n);
-}
-
-void remove_all_bonds_to(int identity) {
-  for (auto &p : cell_structure.local_cells().particles()) {
-    remove_all_bonds_to(p, identity);
-  }
-}
-
 void local_remove_particle(int part) {
   Cell *cell = nullptr;
   int position = -1;
   for (auto c : cell_structure.local_cells()) {
-    for (int i = 0; i < c->n; i++) {
-      auto &p = c->part[i];
+    auto parts = c->particles();
+
+    for (unsigned i = 0; i < parts.size(); i++) {
+      auto &p = parts[i];
 
       if (p.identity() == part) {
         cell = c;
-        position = i;
+        position = static_cast<int>(i);
       } else {
         remove_all_bonds_to(p, part);
       }
     }
   }
 
-  assert(cell && (position >= 0));
-
-  extract_indexed_particle(cell, position);
+  /* If we found the particle, remove it. */
+  if (cell && (position >= 0)) {
+    extract_indexed_particle(cell, position);
+  }
 }
 
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
@@ -1074,11 +935,11 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
 }
 
 void local_remove_all_particles() {
-  local_particles.clear();
-
   for (auto c : cell_structure.local_cells()) {
-    for (auto &p : c->particles())
+    for (auto &p : c->particles()) {
+      set_local_particle_data(p.identity(), nullptr);
       free_particle(&p);
+    }
 
     c->clear();
   }
@@ -1092,51 +953,6 @@ void local_rescale_particles(int dir, double scale) {
       p.r.p *= scale;
     }
   }
-}
-
-void local_add_particle_bond(Particle &p, Utils::Span<const int> bond) {
-  boost::copy(bond, std::back_inserter(p.bl));
-}
-
-int try_delete_bond(Particle *part, const int *bond) {
-  IntList *bl = &part->bl;
-  int i, j, type, partners;
-
-  // Empty bond means: delete all bonds
-  if (!bond) {
-    bl->clear();
-
-    return ES_OK;
-  }
-
-  // Go over the bond list to find the bond to delete
-  for (i = 0; i < bl->n;) {
-    type = bl->e[i];
-    partners = bonded_ia_params[type].num;
-
-    // If the bond type does not match the one, we want to delete, skip
-    if (type != bond[0])
-      i += 1 + partners;
-    else {
-      // Go over the bond partners
-      for (j = 1; j <= partners; j++) {
-        // Leave the loop early, if the bond to delete and the bond with in the
-        // particle don't match
-        if (bond[j] != bl->e[i + j])
-          break;
-      }
-      // If we did not exit from the loop early, all parameters matched
-      // and we go on with deleting
-      if (j > partners) {
-        // New length of bond list
-        bl->erase(bl->begin() + i, bl->begin() + i + 1 + partners);
-
-        return ES_OK;
-      }
-      i += 1 + partners;
-    }
-  }
-  return ES_ERROR;
 }
 
 #ifdef EXCLUSIONS
@@ -1153,39 +969,21 @@ void local_change_exclusion(int part1, int part2, int _delete) {
   auto part = get_local_particle_data(part1);
   if (part) {
     if (_delete)
-      try_delete_exclusion(part, part2);
+      delete_exclusion(part, part2);
     else
-      try_add_exclusion(part, part2);
+      add_exclusion(part, part2);
   }
 
   /* part2, if here */
   part = get_local_particle_data(part2);
   if (part) {
     if (_delete)
-      try_delete_exclusion(part, part1);
+      delete_exclusion(part, part1);
     else
-      try_add_exclusion(part, part1);
+      add_exclusion(part, part1);
   }
 }
 
-void try_add_exclusion(Particle *part, int part2) {
-  for (int i = 0; i < part->el.n; i++)
-    if (part->el.e[i] == part2)
-      return;
-
-  part->el.push_back(part2);
-}
-
-void try_delete_exclusion(Particle *part, int part2) {
-  IntList &el = part->el;
-
-  if (!el.empty()) {
-    el.erase(std::remove(el.begin(), el.end(), part2), el.end());
-  };
-}
-#endif
-
-#ifdef EXCLUSIONS
 namespace {
 /* keep a unique list for particle i. Particle j is only added if it is not i
    and not already in the list. */

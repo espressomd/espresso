@@ -182,7 +182,7 @@ int integrate(int n_steps, int reuse_forces) {
     lb_lbcoupling_deactivate();
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update(true);
+    virtual_sites()->update();
 #endif
 
     // Communication step: distribute ghost positions
@@ -239,7 +239,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef VIRTUAL_SITES
-    virtual_sites()->update(true);
+    virtual_sites()->update();
 #endif
 
     // Communication step: distribute ghost positions
@@ -292,8 +292,7 @@ int integrate(int n_steps, int reuse_forces) {
 #endif
 
 #ifdef VIRTUAL_SITES
-  // VIRTUAL_SITES update vel
-  virtual_sites()->update(false); // Recalc positions = false
+  virtual_sites()->update();
 #endif
 
   /* verlet list statistics */
@@ -353,6 +352,7 @@ int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {
 
   /* if skin wasn't set, do an educated guess now */
   if (!skin_set) {
+    auto const max_cut = maximal_cutoff();
     if (max_cut <= 0.0) {
       runtimeErrorMsg()
           << "cannot automatically determine skin, please set it manually";

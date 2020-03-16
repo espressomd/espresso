@@ -88,7 +88,7 @@ enum Resort : unsigned {
 /** \name Flags for cells_on_geometry_change */
 /*@{*/
 
-/** Flag for cells_on_geometry_change: the prozcessor grid has changed. */
+/** Flag for cells_on_geometry_change: the processor grid has changed. */
 #define CELL_FLAG_GRIDCHANGED 1
 /** Flag for cells_on_geometry_change: skip shrinking of cells. */
 #define CELL_FLAG_FAST 2

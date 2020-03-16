@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(angle_triangles) {
   one must call the method as angle_btw_triangles(B,A,C,D). With this call we
   have ensured that N1 = AB x AC (which coincides with [0,0,1]) and N2 = AC x AD
   (which coincides with [1,0,0]). Alternatively, if the orientations of the two
-  triangles were the oppisite, the correct call would be
+  triangles were the opposite, the correct call would be
   angle_btw_triangles(B,C,A,D) so that N1 = CB x CA and N2 = CA x CD.
   */
 

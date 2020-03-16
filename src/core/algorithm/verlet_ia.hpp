@@ -42,7 +42,7 @@ void update_and_kernel(CellIterator first, CellIterator last,
 
       /* Pairs in this cell */
       for (int j = i + 1; j < first->n; j++) {
-        auto dist = distance_function(p1, first->part[j]);
+        auto const dist = distance_function(p1, first->part[j]);
         if (verlet_criterion(p1, first->part[j], dist)) {
           pair_kernel(p1, first->part[j], dist);
           first->m_verlet_list.emplace_back(&p1, &(first->part[j]));
@@ -75,7 +75,7 @@ void kernel(CellIterator first, CellIterator last,
     }
 
     for (auto &pair : first->m_verlet_list) {
-      auto dist = distance_function(*pair.first, *pair.second);
+      auto const dist = distance_function(*pair.first, *pair.second);
       pair_kernel(*pair.first, *pair.second, dist);
     }
   }

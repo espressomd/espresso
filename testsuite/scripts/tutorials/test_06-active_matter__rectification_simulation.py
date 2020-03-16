@@ -21,7 +21,7 @@ import os
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/06-active_matter/SOLUTIONS/rectification_simulation.py",
+    "@TUTORIALS_DIR@/06-active_matter/solutions/rectification_simulation.py",
     cmd_arguments=[6.0], PROD_STEPS=100, PROD_LENGTH=150)
 
 

@@ -24,10 +24,7 @@
 #include "VirtualSites.hpp"
 
 /** @brief Do-nothing virtual-sites implementation */
-class VirtualSitesOff : public VirtualSites {
-  void update(bool) const override{};
-  void back_transfer_forces_and_torques() const override{};
-};
+class VirtualSitesOff : public VirtualSites {};
 
 #endif
 #endif

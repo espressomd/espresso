@@ -52,6 +52,7 @@ visualizer = espressomd.visualization_opengl.openGLLive(
     system,
     background_color=[1, 1, 1],
     drag_enabled=True,
+    quality_constraints=200,
     rasterize_resolution=50.0,
     rasterize_pointsize=5,
     camera_position=[150, 25, 25],
@@ -104,7 +105,7 @@ elif args.shape == "Slitpore":
 elif args.shape == "HollowConicalFrustum":
     system.constraints.add(shape=espressomd.shapes.HollowConicalFrustum(
         r1=12, r2=8, length=15.0, thickness=3,
-        axis=[0.0, 0.0, 1.0], center=[25, 25, 25], direction=1),
+        axis=[0.0, 1.0, 1.0], center=[25, 25, 25], direction=1),
         particle_type=0, penetrable=True)
 
 else:

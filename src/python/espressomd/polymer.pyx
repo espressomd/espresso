@@ -180,14 +180,14 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
 
     Parameters
     ----------
-    system : instance of :obj:`espressomd.system.System`, required
+    system : :class:`espressomd.system.System`, required
         System to which the particles will be added.
-    bond : instance of :obj:`espressomd.interactions.BondedInteraction`, required if ``no_bonds == False``
+    bond : :class:`espressomd.interactions.BondedInteraction`, required if ``no_bonds == False``
         The bond to be created between monomers. Should be compatible with the 
         spacing ``system.box_l[0]*(0.25 * sqrt(3))/(MPC + 1)`` between monomers.
     no_bonds : :obj:`bool`, optional
         If True, the particles will only be placed in the system but not connected by bonds. 
-        In that case, the `bond` argument can be omitted. Defaults to ``False``.
+        In that case, the ``bond`` argument can be omitted. Defaults to ``False``.
     MPC : :obj:`int`, optional
         Monomers per chain, where chain refers to the connection 
         between the 8 lattice nodes of the diamond lattice.
@@ -219,7 +219,7 @@ def setup_diamond_polymer(system=None, bond=None, MPC=0,
             "bond argument must be an instance of espressomd.interaction.BondedInteraction")
     if not isinstance(system, System):
         raise TypeError(
-            "System argument must be an instance of a espressom System")
+            "System argument must be an instance of an espressomd System")
 
     check_type_or_throw_except(
         MPC, 1, int, "MPC must be one int")

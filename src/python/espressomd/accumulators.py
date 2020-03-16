@@ -26,28 +26,33 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    obs : Instance of :class:`espressomd.observables.Observable`.
+    obs : :class:`espressomd.observables.Observable`
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
 
     Methods
     -------
-    update
+    update()
         Update the accumulator (get the current values from the observable).
-    get_mean
+    get_mean()
         Returns the samples mean values of the respective observable with which the
         accumulator was initialized.
-    get_variance
+    get_variance()
         Returns the samples variance for the observable.
 
     """
     _so_name = "Accumulators::MeanVarianceCalculator"
     _so_bind_methods = (
         "update",
-        "get_mean",
-        "get_variance"
+        "shape",
     )
     _so_creation_policy = "LOCAL"
+
+    def get_mean(self):
+        return np.array(self.call_method("get_mean")).reshape(self.shape())
+
+    def get_variance(self):
+        return np.array(self.call_method("get_variance")).reshape(self.shape())
 
 
 @script_interface_register
@@ -58,27 +63,30 @@ class TimeSeries(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    obs : Instance of :class:`espressomd.observables.Observable`.
+    obs : :class:`espressomd.observables.Observable`
     delta_N : :obj:`int`
         Number of timesteps between subsequent samples for the auto update mechanism.
 
     Methods
     -------
-    update
+    update()
         Update the accumulator (get the current values from the observable).
-    time_series
+    time_series()
         Returns the recorded values of the observable.
-    clear
+    clear()
         Clear the data
 
     """
     _so_name = "Accumulators::TimeSeries"
     _so_bind_methods = (
         "update",
-        "time_series",
+        "shape",
         "clear"
     )
     _so_creation_policy = "LOCAL"
+
+    def time_series(self):
+        return np.array(self.call_method("time_series")).reshape(self.shape())
 
 
 @script_interface_register

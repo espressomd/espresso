@@ -276,13 +276,10 @@ void mpi_remove_particle(int pnode, int part) {
 
 void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
-    if (pnode == this_node) {
-      local_remove_particle(part);
-    } else {
-      remove_all_bonds_to(part);
-    }
-  } else
+    local_remove_particle(part);
+  } else {
     local_remove_all_particles();
+  }
 
   on_particle_change();
 }

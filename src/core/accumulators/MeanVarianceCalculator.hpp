@@ -40,6 +40,7 @@ public:
      via the interface. */
   std::string get_internal_state() const;
   void set_internal_state(std::string const &);
+  std::vector<std::size_t> shape() const { return m_obs->shape(); }
 
 private:
   std::shared_ptr<Observables::Observable> m_obs;

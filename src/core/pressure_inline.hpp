@@ -25,6 +25,7 @@
 #ifndef CORE_PRESSURE_INLINE_HPP
 #define CORE_PRESSURE_INLINE_HPP
 
+#include "exclusions.hpp"
 #include "forces_inline.hpp"
 #include "integrate.hpp"
 #include "npt.hpp"
@@ -73,17 +74,17 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
   }
 
 #ifdef ELECTROSTATICS
-  /* real space Coulomb */
-  auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
+  {
+    /* real space Coulomb */
+    auto const p_coulomb = Coulomb::pair_pressure(p1, p2, d, dist);
 
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      p_tensor.coulomb[i * 3 + j] += p_coulomb[i][j];
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        p_tensor.coulomb[i * 3 + j] += p_coulomb[i][j];
+      }
     }
-  }
 
-  for (int i = 0; i < 3; i++) {
-    virials.coulomb[0] += p_coulomb[i][i];
+    virials.coulomb[0] += trace(p_coulomb);
   }
 #endif /*ifdef ELECTROSTATICS */
 

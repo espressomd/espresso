@@ -67,11 +67,10 @@ inline void
 velocity_verlet_propagate_vel_final(const ParticleRange &particles) {
 
   for (auto &p : particles) {
-#ifdef VIRTUAL_SITES
     // Virtual sites are not propagated during integration
     if (p.p.is_virtual)
       continue;
-#endif
+
     for (int j = 0; j < 3; j++) {
       if (!(p.p.ext_flag & COORD_FIXED(j))) {
         /* Propagate velocity: v(t+dt) = v(t+0.5*dt) + 0.5*dt * a(t+dt) */
