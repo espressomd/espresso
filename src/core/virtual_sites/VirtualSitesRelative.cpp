@@ -30,6 +30,7 @@
 
 #include <utils/math/quaternion.hpp>
 #include <utils/math/sqr.hpp>
+#include <utils/math/tensor_product.hpp>
 
 namespace {
 /**
