@@ -283,7 +283,11 @@ else
     start "TEST"
 
     if [ "${HIP_PLATFORM}" != "hcc" ]; then
-      mpiexec -n ${check_procs} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
+      check_proc_particle_test=${check_procs}
+      if [ "${check_proc_particle_test}" -gt 4 ]; then
+        check_proc_particle_test=4
+      fi
+      mpiexec -n ${check_proc_particle_test} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
     fi
 
     end "TEST"
