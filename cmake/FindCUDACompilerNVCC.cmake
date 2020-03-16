@@ -47,7 +47,7 @@ set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
 set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG")
 set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -O2 -Xptxas=-O2 -Xcompiler=-Os -DNDEBUG")
 set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -O2 -g -Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG")
-set(CUDA_NVCC_FLAGS_COVERAGE "${CUDA_NVCC_FLAGS_COVERAGE} -O3 -g -Xptxas=-O3 -Xcompiler=-O0,-g")
+set(CUDA_NVCC_FLAGS_COVERAGE "${CUDA_NVCC_FLAGS_COVERAGE} -O3 -g -Xptxas=-O3 -Xcompiler=-Og,-g")
 
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52 -std=c++${CMAKE_CUDA_STANDARD}")
 if(WARNINGS_ARE_ERRORS)
