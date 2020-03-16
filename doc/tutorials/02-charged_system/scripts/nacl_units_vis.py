@@ -59,9 +59,9 @@ def decreaseTemp():
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+visualizer.keyboard_manager.register_button(visualization_opengl.KeyboardButtonEvent(
     't', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+visualizer.keyboard_manager.register_button(visualization_opengl.KeyboardButtonEvent(
     'g', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 
 
