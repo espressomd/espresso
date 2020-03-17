@@ -195,7 +195,7 @@ class BrownianDynamics(ut.TestCase):
         system.part.clear()
         p = system.part.add(pos=(0, 0, 0), id=0)
         system.time_step = dt
-        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=42)
+        system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=1)
         system.cell_system.skin = 0.4
 
         pos_obs = ParticlePositions(ids=(p.id,))
@@ -218,8 +218,7 @@ class BrownianDynamics(ut.TestCase):
             return 2. * kT / gamma * x
 
         for i in range(2, 6):
-            np.testing.assert_allclose(
-                msd[i], expected_msd(tau[i]), rtol=0.02)
+            np.testing.assert_allclose(msd[i], expected_msd(tau[i]), rtol=0.02)
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES")
     def test_07__virtual(self):

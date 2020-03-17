@@ -88,6 +88,12 @@ extern double temperature;
 /** True if the thermostat should act on virtual particles. */
 extern bool thermo_virtual;
 
+extern Utils::Counter<uint64_t> thermostat_counter;
+
+uint64_t get_thermostat_counter();
+
+void set_thermostat_counter(uint64_t value);
+
 /************************************************
  * parameter structs
  ************************************************/
@@ -95,20 +101,12 @@ extern bool thermo_virtual;
 struct BaseThermostat {
 public:
   /** Initialize or re-initialize the RNG counter with a seed. */
-  void rng_initialize(uint32_t const seed) {
-    m_rng_seed = seed;
-  }
-  /** Increment the RNG counter */
-  void rng_increment() { rng_counter.increment(); }
-  /** Get current value of the RNG */
-  uint64_t rng_get() const { return rng_counter.value(); }
+  void rng_initialize(uint32_t const seed) { m_rng_seed = seed; }
   /** Is the RNG counter initialized */
   bool rng_is_initialized() const { return !!m_rng_seed; }
   uint32_t rng_seed() const { return m_rng_seed.value(); }
 
 private:
-  /** RNG counter. */
-  Utils::Counter<uint64_t> rng_counter;
   /** RNG seed */
   boost::optional<uint32_t> m_rng_seed;
 };
@@ -329,7 +327,6 @@ struct DPDThermostat : public BaseThermostat {};
  */
 #define NEW_THERMOSTAT(thermostat)                                             \
   bool thermostat##_is_seed_required();                                        \
-  void thermostat##_rng_counter_increment();                                   \
   void thermostat##_set_rng_state(uint32_t counter);                           \
   uint32_t thermostat##_get_rng_state();
 
@@ -370,7 +367,7 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
     if (npt_iso.pref_noise_0 > 0.0) {
       return npt_iso.pref_rescale_0 * vel +
              npt_iso.pref_noise_0 *
-                 Random::noise_uniform<salt>(npt_iso.rng_get(),
+                 Random::noise_uniform<salt>(thermostat_counter.value(),
                                              npt_iso.rng_seed(), p_identity);
     }
     return npt_iso.pref_rescale_0 * vel;
@@ -388,7 +385,7 @@ inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
       return npt_iso.pref_rescale_V * p_diff +
              npt_iso.pref_noise_V *
                  Random::noise_uniform<RNGSalt::NPTISOV, 1>(
-                     npt_iso.rng_get(), npt_iso.rng_seed(), 0);
+                     thermostat_counter.value(), npt_iso.rng_seed(), 0);
     }
     return npt_iso.pref_rescale_V * p_diff;
   }

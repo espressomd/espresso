@@ -92,9 +92,6 @@ void notify_sig_int() {
 }
 } // namespace
 
-/** Thermostats increment the RNG counter here. */
-void philox_counter_increment();
-
 void integrator_sanity_checks() {
   if (time_step < 0.0) {
     runtimeErrorMsg() << "time_step not set";
@@ -227,8 +224,7 @@ int integrate(int n_steps, int reuse_forces) {
     if (early_exit)
       break;
 
-    /* Propagate philox rng counters */
-    philox_counter_increment();
+    thermostat_counter.increment();
 
 #ifdef BOND_CONSTRAINT
     /* Correct those particle positions that participate in a rigid/constrained
@@ -311,28 +307,6 @@ int integrate(int n_steps, int reuse_forces) {
   }
 #endif
   return integrated_steps;
-}
-
-void philox_counter_increment() {
-  if (thermo_switch & THERMO_LANGEVIN) {
-    langevin_rng_counter_increment();
-  }
-  if (thermo_switch & THERMO_BROWNIAN) {
-    brownian_rng_counter_increment();
-  }
-#ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO) {
-    npt_iso_rng_counter_increment();
-  }
-#endif
-#ifdef DPD
-  if (thermo_switch & THERMO_DPD) {
-    dpd_rng_counter_increment();
-  }
-#endif
-  if (n_thermalized_bonds) {
-    thermalized_bond_rng_counter_increment();
-  }
 }
 
 int python_integrate(int n_steps, bool recalc_forces, bool reuse_forces_par) {

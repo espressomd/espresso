@@ -35,6 +35,9 @@
 
 extern double time_step;
 extern double temperature;
+void reset_thermostat_counter() {
+  thermostat_counter = Utils::Counter<uint64_t>{0ul};
+}
 
 // multiply by 100 because BOOST_CHECK_CLOSE takes a percentage tolerance,
 // and by 6 to account for error accumulation in thermostat functions
@@ -66,6 +69,7 @@ template <typename T> T thermostat_factory() {
 BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
   time_step = 0.1;
   temperature = 3.0;
+  reset_thermostat_counter();
   auto const brownian = thermostat_factory<BrownianThermostat>();
   auto const dispersion =
       hadamard_division(particle_factory().f.f, brownian.gamma);
@@ -175,6 +179,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_dynamics) {
 BOOST_AUTO_TEST_CASE(test_langevin_dynamics) {
   time_step = 0.1;
   temperature = 3.0;
+  reset_thermostat_counter();
   auto const langevin = thermostat_factory<LangevinThermostat>();
   auto const prefactor_squared = 24.0 * temperature / time_step;
 
@@ -213,6 +218,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   time_step = 1.0;
   temperature = 2.0;
   constexpr size_t const sample_size = 1'000'000;
+  reset_thermostat_counter();
   auto thermostat = thermostat_factory<LangevinThermostat>();
   auto p1 = particle_factory();
   auto p2 = particle_factory();
@@ -222,7 +228,7 @@ BOOST_AUTO_TEST_CASE(test_noise_statistics) {
   auto const correlation = std::get<3>(noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [&p1, &p2, &thermostat]() -> std::vector<VariantVectorXd> {
-            thermostat.rng_increment();
+            thermostat_counter.increment();
             return {{friction_thermo_langevin(thermostat, p1),
                      -friction_thermo_langevin(thermostat, p1),
                      friction_thermo_langevin(thermostat, p2)}};
@@ -247,6 +253,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   time_step = 1.0;
   temperature = 2.0;
   constexpr size_t const sample_size = 500'000;
+  reset_thermostat_counter();
   auto thermostat = thermostat_factory<BrownianThermostat>();
   auto p = particle_factory();
 #ifdef ROTATION
@@ -256,7 +263,7 @@ BOOST_AUTO_TEST_CASE(test_brownian_randomness) {
   auto const correlation = std::get<3>(
       noise_statistics(std::function<std::vector<VariantVectorXd>()>(
                            [&p, &thermostat]() -> std::vector<VariantVectorXd> {
-                             thermostat.rng_increment();
+                             thermostat_counter.increment();
                              return {{
                                  bd_random_walk(thermostat, p, time_step),
                                  bd_random_walk_vel(thermostat, p),
@@ -278,13 +285,14 @@ BOOST_AUTO_TEST_CASE(test_langevin_randomness) {
   time_step = 1.0;
   temperature = 2.0;
   constexpr size_t const sample_size = 500'000;
+  reset_thermostat_counter();
   auto thermostat = thermostat_factory<LangevinThermostat>();
   auto p = particle_factory();
 
   auto const correlation = std::get<3>(noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [&p, &thermostat]() -> std::vector<VariantVectorXd> {
-            thermostat.rng_increment();
+            thermostat_counter.increment();
             return {{
                 friction_thermo_langevin(thermostat, p),
 #ifdef ROTATION
@@ -307,6 +315,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   time_step = 1.0;
   temperature = 2.0;
   constexpr size_t const sample_size = 500'000;
+  reset_thermostat_counter();
   IsotropicNptThermostat thermostat{};
   thermostat.rng_initialize(0);
   thermostat.gamma0 = 2.0;
@@ -317,7 +326,7 @@ BOOST_AUTO_TEST_CASE(test_npt_iso_randomness) {
   auto const correlation = std::get<3>(noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [&p, &thermostat]() -> std::vector<VariantVectorXd> {
-            thermostat.rng_increment();
+            thermostat_counter.increment();
             return {{
                 friction_therm0_nptiso<1>(thermostat, p.m.v, 0),
                 friction_therm0_nptiso<2>(thermostat, p.m.v, 0),

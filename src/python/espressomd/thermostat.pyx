@@ -94,9 +94,13 @@ cdef class Thermostat:
     def __getstate__(self):
         # Attributes to pickle.
         thermolist = self.get_state()
-        return thermolist
+        counter_state = get_thermostat_counter()
+        return (thermolist, counter_state)
 
-    def __setstate__(self, thermolist):
+    def __setstate__(self, state):
+        thermolist, counter_state = state
+        set_thermostat_counter(counter_state)
+
         if thermolist == []:
             return
 
@@ -142,7 +146,7 @@ cdef class Thermostat:
             lang_dict["type"] = "LANGEVIN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
-            lang_dict["seed"] = int(langevin_get_rng_state())
+            lang_dict["seed"] = langevin_get_rng_state()
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [langevin.gamma[0],
                                       langevin.gamma[1],
@@ -165,7 +169,7 @@ cdef class Thermostat:
             lang_dict["type"] = "BROWNIAN"
             lang_dict["kT"] = temperature
             lang_dict["act_on_virtual"] = thermo_virtual
-            lang_dict["seed"] = int(brownian_get_rng_state())
+            lang_dict["seed"] = brownian_get_rng_state()
             IF PARTICLE_ANISOTROPY:
                 lang_dict["gamma"] = [brownian.gamma[0],
                                       brownian.gamma[1],
@@ -195,7 +199,7 @@ cdef class Thermostat:
             npt_dict = {}
             npt_dict["type"] = "NPT_ISO"
             npt_dict["kT"] = temperature
-            npt_dict["seed"] = int(npt_iso_get_rng_state())
+            npt_dict["seed"] = npt_iso_get_rng_state()
             npt_dict["gamma0"] = npt_iso.gamma0
             npt_dict["gammav"] = npt_iso.gammav
             npt_dict.update(nptiso)
@@ -205,7 +209,7 @@ cdef class Thermostat:
                 dpd_dict = {}
                 dpd_dict["type"] = "DPD"
                 dpd_dict["kT"] = temperature
-                dpd_dict["seed"] = int(dpd_get_rng_state())
+                dpd_dict["seed"] = dpd_get_rng_state()
                 thermo_list.append(dpd_dict)
         if (thermo_switch & THERMO_SD):
             IF STOKESIAN_DYNAMICS:
@@ -286,7 +290,7 @@ cdef class Thermostat:
             If ``True`` the thermostat will act on virtual sites, default is
             ``False``.
         seed : :obj:`int`
-            Initial counter value (or seed) of the philox RNG.
+            Seed of the philox RNG.
             Required on first activation of the Langevin thermostat.
             Must be positive.
 
@@ -436,7 +440,7 @@ cdef class Thermostat:
             If ``True`` the thermostat will act on virtual sites, default is
             ``False``.
         seed : :obj:`int`
-            Initial counter value (or seed) of the philox RNG.
+            Seed of the philox RNG.
             Required on first activation of the Brownian thermostat.
             Must be positive.
 
@@ -580,7 +584,7 @@ cdef class Thermostat:
         ----------
         LB_fluid : :class:`~espressomd.lb.LBFluid` or :class:`~espressomd.lb.LBFluidGPU`
         seed : :obj:`int`
-            Seed for the random number generator, required if kT > 0.
+            Seed of the philox RNG, required if kT > 0.
             Must be positive.
         act_on_virtual : :obj:`bool`, optional
             If ``True`` the thermostat will act on virtual sites (default).
@@ -631,7 +635,7 @@ cdef class Thermostat:
             gammav : :obj:`float`
                 Artificial friction coefficient for the volume fluctuations.
             seed : :obj:`int`
-                Initial counter value (or seed) of the philox RNG.
+                Seed of the philox RNG.
                 Required on first activation of the Langevin thermostat.
                 Must be positive.
 
@@ -678,7 +682,7 @@ cdef class Thermostat:
             kT : :obj:`float`
                 Thermal energy of the heat bath.
             seed : :obj:`int`
-                Initial counter value (or seed) of the philox RNG.
+                Seed of the philox RNG.
                 Required on first activation of the DPD thermostat.
                 Must be positive.
 
@@ -721,7 +725,7 @@ cdef class Thermostat:
             kT : :obj:`float`, optional
                 Temperature
             seed : :obj:`int`, optional
-                Seed for the random number generator
+                Seed of the philox RNG, required if kT > 0.
 
             """
 

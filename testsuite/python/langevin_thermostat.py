@@ -87,7 +87,7 @@ class LangevinThermostat(ut.TestCase):
         system.part.add(pos=[0, 0, 0])
         system.integrator.run(1)
         force2 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.any(np.not_equal(force1, force2)), True)
+        np.testing.assert_equal(np.all(np.not_equal(force1, force2)), True)
 
         # Different seed should give a different force
         system.part.clear()
@@ -95,20 +95,26 @@ class LangevinThermostat(ut.TestCase):
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
         force3 = np.copy(system.part[0].f)
-        np.testing.assert_equal(np.any(np.not_equal(force2, force3)), True)
+        np.testing.assert_equal(np.all(np.not_equal(force2, force3)), True)
 
-        # Same seed should give the same force
+        # Same seed should not give the same force (with a different counter
+        # state)
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
-        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
         system.integrator.run(1)
         force4 = np.copy(system.part[0].f)
+        np.testing.assert_equal(np.all(np.not_equal(force3, force4)), True)
+
+        # Seed offset should not give the same force with a lag
         system.part.clear()
         system.part.add(pos=[0, 0, 0])
         system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
         system.integrator.run(1)
+        system.part[0].pos = system.part[0].v = [0, 0, 0]
+        system.integrator.run(1)
         force5 = np.copy(system.part[0].f)
-        np.testing.assert_almost_equal(force4, force5)
+        np.testing.assert_equal(np.all(np.not_equal(force4, force5)), True)
 
     def test_02__friction_trans(self):
         """Tests the translational friction-only part of the thermostat."""
@@ -209,7 +215,7 @@ class LangevinThermostat(ut.TestCase):
 
         kT = 1.1
         gamma = 3.5
-        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=41)
+        system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=33)
 
         # Warmup
         system.integrator.run(20)

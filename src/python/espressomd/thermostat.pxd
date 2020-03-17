@@ -74,6 +74,9 @@ cdef extern from "thermostat.hpp":
     IF DPD:
         stdint.uint32_t dpd_get_rng_state()
 
+    stdint.uint64_t get_thermostat_counter()
+    void set_thermostat_counter(stdint.uint64_t value)
+
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
         void set_sd_kT(double kT)
