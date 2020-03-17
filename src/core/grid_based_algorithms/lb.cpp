@@ -841,7 +841,7 @@ lb_thermalize_modes(Lattice::index_t index, const std::array<T, 19> &modes,
     using rng_type = r123::Philox4x64;
     using ctr_type = rng_type::ctr_type;
 
-    const r123::Philox4x64::ctr_type c{
+    const ctr_type c{
         {rng_counter->value(), static_cast<uint64_t>(RNGSalt::FLUID)}};
     const T rootdensity =
         std::sqrt(std::fabs(modes[0] + lb_parameters.density));

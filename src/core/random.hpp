@@ -42,7 +42,7 @@
  * noise on the particle coupling and the fluid
  * thermalization.
  */
-enum class RNGSalt : uint64_t {
+enum class RNGSalt : uint32_t {
   FLUID = 0,
   PARTICLES,
   LANGEVIN,
@@ -70,17 +70,18 @@ namespace Random {
  *
  */
 template <RNGSalt salt>
-auto philox_4_uint64s(uint64_t counter, int key1, int key2 = 0) {
+auto philox_4_uint64s(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
   using rng_type = r123::Philox4x64;
   using ctr_type = rng_type::ctr_type;
   using key_type = rng_type::key_type;
 
-  const ctr_type c{{counter, static_cast<uint64_t>(salt)}};
+  const ctr_type c{counter};
 
   auto const id1 = static_cast<uint32_t>(key1);
   auto const id2 = static_cast<uint32_t>(key2);
-  const key_type k{id1, id2};
+  const key_type k{Utils::u32_to_u64(id1, id2),
+                   Utils::u32_to_u64(static_cast<uint32_t>(salt), seed)};
 
   return rng_type{}(c, k);
 }
@@ -102,9 +103,9 @@ auto philox_4_uint64s(uint64_t counter, int key1, int key2 = 0) {
  */
 template <RNGSalt salt, size_t N = 3,
           std::enable_if_t<(N > 1) and (N <= 4), int> = 0>
-auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
+auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
-  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
+  auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
   Utils::VectorXd<N> noise{};
   std::transform(integers.begin(), integers.begin() + N, noise.begin(),
                  [](size_t value) { return Utils::uniform(value) - 0.5; });
@@ -112,9 +113,9 @@ auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
 }
 
 template <RNGSalt salt, size_t N, std::enable_if_t<N == 1, int> = 0>
-auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
+auto noise_uniform(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
-  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
+  auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
   return Utils::uniform(integers[0]) - 0.5;
 }
 
@@ -139,9 +140,9 @@ auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
  */
 template <RNGSalt salt, size_t N = 3,
           class = std::enable_if_t<(N >= 1) and (N <= 4)>>
-auto noise_gaussian(uint64_t counter, int key1, int key2 = 0) {
+auto noise_gaussian(uint64_t counter, uint32_t seed, int key1, int key2 = 0) {
 
-  auto const integers = philox_4_uint64s<salt>(counter, key1, key2);
+  auto const integers = philox_4_uint64s<salt>(counter, seed, key1, key2);
   static const double epsilon = std::numeric_limits<double>::min();
 
   constexpr size_t M = (N <= 2) ? 2 : 4;
