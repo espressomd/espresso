@@ -95,29 +95,23 @@ extern bool thermo_virtual;
 struct BaseThermostat {
 public:
   /** Initialize or re-initialize the RNG counter with a seed. */
-  void rng_initialize(uint64_t const seed) {
-    rng_counter = Utils::Counter<uint64_t>(seed);
-  }
+  void rng_initialize(uint32_t const seed) { m_rng_seed = seed; }
   /** Increment the RNG counter */
-  void rng_increment() {
-    if (!rng_counter) {
-      throw "The RNG counter is not initialized";
-    }
-    rng_counter.get().increment();
-  }
+  void rng_increment() { m_rng_counter.increment(); }
   /** Get current value of the RNG */
-  uint64_t rng_get() const {
-    if (!rng_counter) {
-      throw "The RNG counter is not initialized";
-    }
-    return rng_counter.get().value();
+  uint64_t rng_counter() const { return m_rng_counter.value(); }
+  void set_rng_counter(uint64_t value) {
+    m_rng_counter = Utils::Counter<uint64_t>(0u, value);
   }
   /** Is the RNG counter initialized */
-  bool rng_is_initialized() const { return static_cast<bool>(rng_counter); }
+  bool rng_is_initialized() const { return !!m_rng_seed; }
+  uint32_t rng_seed() const { return m_rng_seed.value(); }
 
 private:
   /** RNG counter. */
-  boost::optional<Utils::Counter<uint64_t>> rng_counter;
+  Utils::Counter<uint64_t> m_rng_counter;
+  /** RNG seed */
+  boost::optional<uint32_t> m_rng_seed;
 };
 
 /** %Thermostat for Langevin dynamics. */
@@ -337,8 +331,10 @@ struct DPDThermostat : public BaseThermostat {};
 #define NEW_THERMOSTAT(thermostat)                                             \
   bool thermostat##_is_seed_required();                                        \
   void thermostat##_rng_counter_increment();                                   \
-  void thermostat##_set_rng_state(uint64_t counter);                           \
-  uint64_t thermostat##_get_rng_state();
+  void thermostat##_set_rng_seed(uint32_t const seed);                         \
+  void thermostat##_set_rng_counter(uint64_t const seed);                      \
+  uint32_t thermostat##_get_rng_seed();                                        \
+  uint64_t thermostat##_get_rng_counter();
 
 NEW_THERMOSTAT(langevin)
 NEW_THERMOSTAT(brownian)
@@ -352,6 +348,9 @@ NEW_THERMOSTAT(dpd)
 extern LangevinThermostat langevin;
 extern BrownianThermostat brownian;
 extern IsotropicNptThermostat npt_iso;
+#ifdef DPD
+extern DPDThermostat dpd;
+#endif
 
 /** Initialize constants of the thermostat at the start of integration */
 void thermo_init();
@@ -377,7 +376,8 @@ friction_therm0_nptiso(IsotropicNptThermostat const &npt_iso,
     if (npt_iso.pref_noise_0 > 0.0) {
       return npt_iso.pref_rescale_0 * vel +
              npt_iso.pref_noise_0 *
-                 Random::noise_uniform<salt>(npt_iso.rng_get(), p_identity);
+                 Random::noise_uniform<salt>(npt_iso.rng_counter(),
+                                             npt_iso.rng_seed(), p_identity);
     }
     return npt_iso.pref_rescale_0 * vel;
   }
@@ -392,8 +392,9 @@ inline double friction_thermV_nptiso(IsotropicNptThermostat const &npt_iso,
   if (thermo_switch & THERMO_NPT_ISO) {
     if (npt_iso.pref_noise_V > 0.0) {
       return npt_iso.pref_rescale_V * p_diff +
-             npt_iso.pref_noise_V * Random::noise_uniform<RNGSalt::NPTISOV, 1>(
-                                        npt_iso.rng_get(), 0);
+             npt_iso.pref_noise_V *
+                 Random::noise_uniform<RNGSalt::NPTISOV, 1>(
+                     npt_iso.rng_counter(), npt_iso.rng_seed(), 0);
     }
     return npt_iso.pref_rescale_V * p_diff;
   }

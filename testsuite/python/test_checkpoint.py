@@ -165,6 +165,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['type'], 'LANGEVIN')
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
+        self.assertEqual(thmst['counter'], 0)
         self.assertFalse(thmst['act_on_virtual'])
         np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
         if espressomd.has_features('ROTATION'):
@@ -177,6 +178,7 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(thmst['type'], 'BROWNIAN')
         self.assertEqual(thmst['kT'], 1.0)
         self.assertEqual(thmst['seed'], 42)
+        self.assertEqual(thmst['counter'], 0)
         self.assertFalse(thmst['act_on_virtual'])
         np.testing.assert_array_equal(thmst['gamma'], 3 * [2.0])
         if espressomd.has_features('ROTATION'):
@@ -188,7 +190,8 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.get_state()[0]
         self.assertEqual(thmst['type'], 'DPD')
         self.assertEqual(thmst['kT'], 1.0)
-        self.assertEqual(thmst['seed'], 42 + 6)
+        self.assertEqual(thmst['seed'], 42)
+        self.assertEqual(thmst['counter'], 6)
 
     @utx.skipIfMissingFeatures('NPT')
     @ut.skipIf('THERM.NPT' not in modes, 'NPT thermostat not in modes')
@@ -196,6 +199,7 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.get_state()[0]
         self.assertEqual(thmst['type'], 'NPT_ISO')
         self.assertEqual(thmst['seed'], 42)
+        self.assertEqual(thmst['counter'], 0)
         self.assertEqual(thmst['gamma0'], 2.0)
         self.assertEqual(thmst['gammav'], 0.1)
 
@@ -298,7 +302,8 @@ class CheckpointTest(ut.TestCase):
         if 'THERM.LB' not in modes:
             state = system.part[1].bonds[1][0].params
             reference = {'temp_com': 0., 'gamma_com': 0., 'temp_distance': 0.2,
-                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51}
+                         'gamma_distance': 0.5, 'r_cut': 2.0, 'seed': 51,
+                         '_counter': 0}
             for key in reference:
                 self.assertAlmostEqual(state[key], reference[key], delta=1E-10)
 

@@ -44,15 +44,17 @@ using Thermostat::GammaType;
  * @param thermostat        The thermostat global variable
  */
 #define REGISTER_THERMOSTAT_CALLBACKS(thermostat)                              \
-  void mpi_bcast_##thermostat##_rng_counter_slave(const uint64_t seed) {       \
+  void mpi_##thermostat##_set_rng_seed(uint32_t const seed) {                  \
     (thermostat).rng_initialize(seed);                                         \
   }                                                                            \
                                                                                \
-  REGISTER_CALLBACK(mpi_bcast_##thermostat##_rng_counter_slave)                \
+  REGISTER_CALLBACK(mpi_##thermostat##_set_rng_seed)                           \
                                                                                \
-  void mpi_bcast_##thermostat##_rng_counter(const uint64_t seed) {             \
-    mpi_call(mpi_bcast_##thermostat##_rng_counter_slave, seed);                \
+  void thermostat##_set_rng_seed(uint32_t const seed) {                        \
+    mpi_call_all(mpi_##thermostat##_set_rng_seed, seed);                       \
   }                                                                            \
+                                                                               \
+  uint32_t thermostat##_get_rng_seed() { return (thermostat).rng_seed(); }     \
                                                                                \
   void thermostat##_rng_counter_increment() { (thermostat).rng_increment(); }  \
                                                                                \
@@ -61,12 +63,17 @@ using Thermostat::GammaType;
     return !(thermostat).rng_is_initialized();                                 \
   }                                                                            \
                                                                                \
-  void thermostat##_set_rng_state(const uint64_t seed) {                       \
-    mpi_bcast_##thermostat##_rng_counter(seed);                                \
-    (thermostat).rng_initialize(seed);                                         \
+  void mpi_##thermostat##_set_rng_counter(uint64_t const value) {              \
+    (thermostat).set_rng_counter(value);                                       \
   }                                                                            \
                                                                                \
-  uint64_t thermostat##_get_rng_state() { return (thermostat).rng_get(); }
+  REGISTER_CALLBACK(mpi_##thermostat##_set_rng_counter)                        \
+                                                                               \
+  void thermostat##_set_rng_counter(uint64_t const value) {                    \
+    mpi_call_all(mpi_##thermostat##_set_rng_counter, value);                   \
+  }                                                                            \
+                                                                               \
+  uint64_t thermostat##_get_rng_counter() { return (thermostat).rng_counter(); }
 
 LangevinThermostat langevin = {};
 BrownianThermostat brownian = {};

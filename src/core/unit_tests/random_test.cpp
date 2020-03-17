@@ -69,7 +69,8 @@ BOOST_AUTO_TEST_CASE(test_noise_uniform_1d) {
   std::tie(means, variances, covariance, correlation) = noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [counter = 0]() mutable -> std::vector<VariantVectorXd> {
-            return {{Random::noise_uniform<RNGSalt::NPTISOV, 1>(counter++, 0)}};
+            return {
+                {Random::noise_uniform<RNGSalt::NPTISOV, 1>(counter++, 0, 0)}};
           }),
       sample_size);
   // check pooled mean and variance
@@ -87,7 +88,8 @@ BOOST_AUTO_TEST_CASE(test_noise_uniform_3d) {
   std::tie(means, variances, covariance, correlation) = noise_statistics(
       std::function<std::vector<VariantVectorXd>()>(
           [counter = 0]() mutable -> std::vector<VariantVectorXd> {
-            return {{Random::noise_uniform<RNGSalt::LANGEVIN>(counter++, 0)}};
+            return {
+                {Random::noise_uniform<RNGSalt::LANGEVIN>(counter++, 0, 0)}};
           }),
       sample_size);
   // check pooled mean and variance
@@ -114,7 +116,7 @@ BOOST_AUTO_TEST_CASE(test_noise_gaussian_4d) {
       std::function<std::vector<VariantVectorXd>()>(
           [counter = 0]() mutable -> std::vector<VariantVectorXd> {
             return {{Random::noise_gaussian<RNGSalt::BROWNIAN_WALK, 4>(
-                counter++, 0)}};
+                counter++, 0, 0)}};
           }),
       sample_size);
   // check pooled mean and variance
@@ -132,4 +134,58 @@ BOOST_AUTO_TEST_CASE(test_noise_gaussian_4d) {
   BOOST_CHECK_SMALL(std::abs(correlation[x][t]), 2e-3);
   BOOST_CHECK_SMALL(std::abs(correlation[y][t]), 2e-3);
   BOOST_CHECK_SMALL(std::abs(correlation[z][t]), 2e-3);
+}
+
+BOOST_AUTO_TEST_CASE(test_uncorrelated_consecutive_ids) {
+  // setup: 2 particles with the same seed and consecutive ids
+  // check thermostats with pid offset by 2 aren't cross-correlated with lag 2
+  constexpr size_t const sample_size = 100'000;
+  constexpr size_t const x = 0, y = 1, z = 2;
+  constexpr size_t seed = 0;
+  constexpr int pid = 1;
+  constexpr int pid_offset = 2;
+
+  auto const correlation = std::get<3>(noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [counter = 0]() mutable -> std::vector<VariantVectorXd> {
+            counter++;
+            return {
+                {Random::noise_uniform<RNGSalt::NPTISOV, 1>(counter, seed, pid),
+                 Random::noise_uniform<RNGSalt::NPTISOV, 1>(counter, seed,
+                                                            pid + pid_offset),
+                 Random::noise_uniform<RNGSalt::NPTISOV, 1>(
+                     counter + pid_offset, seed, pid)}};
+          }),
+      sample_size));
+  // check correlation
+  BOOST_CHECK_SMALL(std::abs(correlation[x][y]), 3e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[x][z]), 3e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[y][z]), 3e-3);
+}
+
+BOOST_AUTO_TEST_CASE(test_uncorrelated_consecutive_seeds) {
+  // setup: 2 particles with the same id with 2 rngs with consecutive seeds
+  // check thermostats with seed offset by 2 aren't cross-correlated with lag 2
+  constexpr size_t const sample_size = 100'000;
+  constexpr size_t const x = 0, y = 1, z = 2;
+  constexpr int pid = 1;
+  constexpr size_t seed = 0;
+  constexpr size_t seed_offset = 2;
+
+  auto const correlation = std::get<3>(noise_statistics(
+      std::function<std::vector<VariantVectorXd>()>(
+          [counter = 0]() mutable -> std::vector<VariantVectorXd> {
+            counter++;
+            return {
+                {Random::noise_uniform<RNGSalt::NPTISOV, 1>(counter, seed, pid),
+                 Random::noise_uniform<RNGSalt::NPTISOV, 1>(
+                     counter, seed + seed_offset, pid),
+                 Random::noise_uniform<RNGSalt::NPTISOV, 1>(
+                     counter + seed_offset, seed, pid)}};
+          }),
+      sample_size));
+  // check correlation
+  BOOST_CHECK_SMALL(std::abs(correlation[x][y]), 3e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[x][z]), 3e-3);
+  BOOST_CHECK_SMALL(std::abs(correlation[y][z]), 3e-3);
 }

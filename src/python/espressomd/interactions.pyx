@@ -2099,13 +2099,13 @@ class ThermalizedBond(BondedInteraction):
 
     def valid_keys(self):
         return {"temp_com", "gamma_com", "temp_distance",
-                "gamma_distance", "r_cut", "seed"}
+                "gamma_distance", "r_cut", "seed", "_counter"}
 
     def required_keys(self):
         return {"temp_com", "gamma_com", "temp_distance", "gamma_distance"}
 
     def set_default_params(self):
-        self._params = {"r_cut": 0., "seed": None}
+        self._params = {"r_cut": 0., "seed": None, "_counter": None}
 
     def _get_params_from_es_core(self):
         return \
@@ -2119,7 +2119,8 @@ class ThermalizedBond(BondedInteraction):
                  bonded_ia_params[
                      self._bond_id].p.thermalized_bond.gamma_distance,
              "r_cut": bonded_ia_params[self._bond_id].p.thermalized_bond.r_cut,
-             "seed": thermalized_bond_get_rng_state()
+             "_counter": thermalized_bond_get_rng_counter(),
+             "seed": thermalized_bond_get_rng_seed()
              }
 
     def _set_params_in_es_core(self):
@@ -2131,7 +2132,9 @@ class ThermalizedBond(BondedInteraction):
                 self.params["seed"], 1, int, "seed must be a positive integer")
             if self.params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
-            thermalized_bond_set_rng_state(self.params["seed"])
+            thermalized_bond_set_rng_seed(self.params["seed"])
+        if self.params.get("_counter") is not None:
+            thermalized_bond_set_rng_counter(self.params["_counter"])
 
         thermalized_bond_set_params(
             self._bond_id, self._params["temp_com"], self._params["gamma_com"],
