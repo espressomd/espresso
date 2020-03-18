@@ -19,11 +19,12 @@
 #ifndef _BONDED_INTERACTION_DATA_HPP
 #define _BONDED_INTERACTION_DATA_HPP
 
-#include <boost/optional.hpp>
-
 #include "Particle.hpp"
 #include "TabulatedPotential.hpp"
-#include <utils/Counter.hpp>
+
+#include <utils/Span.hpp>
+
+#include <boost/optional.hpp>
 
 /** @file
  *  Data structures for bonded interactions.
@@ -475,6 +476,24 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
   return (p1.bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
          (p2.bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
 }
+
+/** @brief Add bond to local particle.
+ *  @param p     identity of principal atom of the bond.
+ *  @param bond  field containing the bond type number and the identity
+ *               of all bond partners (secondary atoms of the bond).
+ */
+void add_bond(Particle &p, Utils::Span<const int> bond);
+
+/** Remove bond from particle. */
+int delete_bond(Particle *part, const int *bond);
+
+/**
+ * @brief Remove all bonds on particle involving another particle.
+ *
+ * @param p Particle whose bond list is modified.
+ * @param id Bonds involving this id are removed.
+ */
+void remove_all_bonds_to(Particle &p, int id);
 
 /** Calculate the maximal cutoff of bonded interactions, required to
  *  determine the cell size for communication.

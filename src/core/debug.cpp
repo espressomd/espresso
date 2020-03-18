@@ -25,7 +25,7 @@
 #include "debug.hpp"
 
 #include "cells.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <stdexcept>
 

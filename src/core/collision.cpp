@@ -27,8 +27,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "rotation.hpp"
+#include "particle_index.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
 #include <utils/mpi/all_compare.hpp>
@@ -362,7 +361,7 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // First, fill bond data structure
   const Utils::Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
 
-  local_add_particle_bond(p, bondT);
+  add_bond(p, bondT);
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -389,7 +388,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
     // Only add bond if vs was created on this node
     if (get_local_particle_data(current_vs_pid - 1))
-      local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
+      add_bond(get_part(current_vs_pid - 1), bondG);
     break;
   }
   case 2: {
@@ -397,9 +396,9 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
     // Only add bond if vs was created on this node
     if (get_local_particle_data(current_vs_pid - 1))
-      local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
+      add_bond(get_part(current_vs_pid - 1), bondG);
     if (get_local_particle_data(current_vs_pid - 2))
-      local_add_particle_bond(get_part(current_vs_pid - 2), bondG);
+      add_bond(get_part(current_vs_pid - 2), bondG);
     break;
   }
   }
@@ -413,9 +412,9 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
   const int bondG[] = {collision_params.bond_vs, vs_pid_plus_one - 1};
 
   if (p1->p.type == collision_params.part_type_after_glueing) {
-    local_add_particle_bond(get_part(p1->p.identity), bondG);
+    add_bond(get_part(p1->p.identity), bondG);
   } else {
-    local_add_particle_bond(get_part(p2->p.identity), bondG);
+    add_bond(get_part(p2->p.identity), bondG);
   }
 }
 
@@ -514,7 +513,7 @@ void handle_collisions() {
       int bondG[2];
       bondG[0] = collision_params.bond_centers;
       bondG[1] = c.pp2;
-      local_add_particle_bond(get_part(c.pp1), bondG);
+      add_bond(get_part(c.pp1), bondG);
     }
   }
 
@@ -629,7 +628,7 @@ void handle_collisions() {
             int bondG[2];
             bondG[0] = collision_params.bond_centers;
             bondG[1] = c.pp2;
-            local_add_particle_bond(get_part(c.pp1), bondG);
+            add_bond(get_part(c.pp1), bondG);
           }
 
           // Change type of particle being attached, to make it inert

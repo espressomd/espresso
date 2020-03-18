@@ -377,28 +377,28 @@ def explode():
 
 
 # KEYBOARD CONTROLS
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('i', KeyboardFireEvent.Pressed, move_up_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('k', KeyboardFireEvent.Pressed, move_down_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('i', KeyboardFireEvent.Released, move_updown_reset))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('k', KeyboardFireEvent.Released, move_updown_reset))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Pressed, move_left_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('l', KeyboardFireEvent.Pressed, move_right_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Released, move_leftright_reset))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('l', KeyboardFireEvent.Released, move_leftright_reset))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('b', KeyboardFireEvent.Pressed, restart))
 
 # MAIN LOOP

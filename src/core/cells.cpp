@@ -38,6 +38,7 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -45,8 +46,6 @@
 #include <boost/iterator/indirect_iterator.hpp>
 
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 
 /** list of all cells. */
 std::vector<Cell> cells;

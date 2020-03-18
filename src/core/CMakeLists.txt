@@ -24,6 +24,7 @@ set(EspressoCore_SRC
     nsquare.cpp
     partCfg_global.cpp
     particle_data.cpp
+    particle_index.cpp
     polymer.cpp
     polynom.cpp
     pressure.cpp
@@ -41,7 +42,7 @@ set(EspressoCore_SRC
     thermostat.cpp
     tuning.cpp
     virtual_sites.cpp
-)
+    exclusions.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
