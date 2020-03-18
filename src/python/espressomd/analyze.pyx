@@ -111,59 +111,6 @@ class Analysis:
         return analyze.mindist(analyze.partCfg(), set1, set2)
 
     #
-    # Distance to particle or point
-    #
-
-    def dist_to(self, id=None, pos=None):
-        """
-        Calculate the minimal distance to either a particle or an arbitrary
-        point in space.
-
-        Parameters
-        ----------
-        id : :obj:`int`, optional
-            Calculate distance to particle with
-            :attr:`~espressomd.particle_data.ParticleHandle.id` ``id``.
-        pos : array of :obj:`float`, optional
-            Calculate distance to position ``pos``.
-
-        Returns
-        -------
-        :obj:`float`
-            The calculated distance.
-
-        """
-
-        if id is None and pos is None:
-            raise ValueError(
-                "Either id or pos have to be specified")
-
-        if (id is not None) and (pos is not None):
-            raise ValueError(
-                "Only one of id or pos may be specified")
-
-        assert len(self._system.part), "no particles in the system"
-
-        # Get position
-        cdef Vector3d cpos
-        # If particle id specified
-        if id is not None:
-            if not is_valid_type(id, int):
-                raise TypeError("Id has to be an integer")
-            if id not in self._system.part[:].id:
-                raise ValueError(
-                    "Id has to be an index of an existing particle")
-            _pos = self._system.part[id].pos
-            for i in range(3):
-                cpos[i] = _pos[i]
-            _id = id
-        else:
-            for i in range(3):
-                cpos[i] = pos[i]
-            _id = -1
-        return analyze.distto(analyze.partCfg(), cpos, _id)
-
-    #
     # Analyze Linear Momentum
     #
 

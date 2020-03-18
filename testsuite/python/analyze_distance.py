@@ -101,7 +101,7 @@ class AnalyzeDistance(ut.TestCase):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
             np.testing.assert_allclose(
-                self.system.analysis.dist_to(pos=[i, i, i]),
+                self.system.dist_to(pos=[i, i, i]),
                 self.dist_to_pos([i, i, i]))
 
     def test_dist_to_id(self):
@@ -109,7 +109,7 @@ class AnalyzeDistance(ut.TestCase):
         for i in range(5):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
-            self.assertAlmostEqual(self.system.analysis.dist_to(id=i),
+            self.assertAlmostEqual(self.system.dist_to(id=i),
                                    self.dist_to_id(i))
 
 

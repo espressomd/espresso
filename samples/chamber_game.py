@@ -268,7 +268,7 @@ while n < bubbles_n:
     testid = len(system.part) - 1
     n += 1
 
-    if system.analysis.dist_to(id=testid) < bubble_sigma * 0.5:
+    if system.dist_to(id=testid) < bubble_sigma * 0.5:
         system.part[testid].remove()
         n -= 1
 

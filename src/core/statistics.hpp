@@ -70,6 +70,7 @@ IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
                const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
+ *  @param partCfg particle selection
  *  @param pos  point
  *  @param pid  if a valid particle id, this particle is omitted from
  *              minimization (this is a good idea if @p pos is the

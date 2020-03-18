@@ -47,6 +47,7 @@ from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
 from .globals cimport integ_switch, max_oif_objects, sim_time
 from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
 from .utils cimport handle_errors, check_type_or_throw_except
+from .utils import is_valid_type
 IF VIRTUAL_SITES:
     from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
@@ -358,6 +359,63 @@ cdef class System:
         cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
 
         return make_array_locked(mi_vec)
+
+    def dist_to(self, id=None, pos=None):
+        """
+        Calculate the minimal distance to either a particle or an arbitrary
+        point in space.
+
+        Parameters
+        ----------
+        id : :obj:`int`, optional
+            Calculate distance to particle with
+            :attr:`~espressomd.particle_data.ParticleHandle.id` ``id``.
+        pos : (3,) array of :obj:`float`, optional
+            Calculate distance to position ``pos``.
+
+        Returns
+        -------
+        :obj:`float`
+            The calculated distance.
+
+        Example
+        -------
+        >>> import espressomd
+        >>> system = espressomd.System(box_l=[100, 100, 100])
+        >>> for i in range(10):
+        ...     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
+        >>> system.dist_to(id=4)
+        7.0
+        >>> system.dist_to(pos=[0, 0, 0])
+        1.4142135623730951
+
+        """
+
+        if id is None and pos is None:
+            raise ValueError("Either id or pos have to be specified")
+
+        if (id is not None) and (pos is not None):
+            raise ValueError("Only one of id or pos may be specified")
+
+        assert len(self.part), "no particles in the system"
+
+        # Get position
+        cdef Vector3d cpos
+        # If particle id specified
+        if id is not None:
+            if not is_valid_type(id, int):
+                raise TypeError("Particle id has to be an integer")
+            if id not in self.part[:].id:
+                raise ValueError("Particle id {} doesn't exist".format(id))
+            _pos = self.part[id].pos
+            for i in range(3):
+                cpos[i] = _pos[i]
+            _id = id
+        else:
+            for i in range(3):
+                cpos[i] = pos[i]
+            _id = -1
+        return distto(partCfg(), cpos, _id)
 
     def rotate_system(self, **kwargs):
         """Rotate the particles in the system about the center of mass.

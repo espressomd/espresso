@@ -48,7 +48,7 @@ class AnalyzeDistributions(ut.TestCase):
     def calc_min_distribution(self, bins):
         dist = []
         for i in range(self.num_part):
-            dist.append(self.system.analysis.dist_to(id=i))
+            dist.append(self.system.dist_to(id=i))
         hist = np.histogram(dist, bins=bins, density=False)[0]
         return hist / (float(np.sum(hist)))
 
