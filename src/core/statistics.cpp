@@ -81,7 +81,8 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
        * versa. */
       if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
           ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
-        mindist2 = std::min(mindist2, min_distance2(jt->r.p, it->r.p));
+        mindist2 = std::min(mindist2,
+                            get_mi_vector(jt->r.p, it->r.p, box_geo).norm2());
   }
 
   return std::sqrt(mindist2);

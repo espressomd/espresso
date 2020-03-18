@@ -186,12 +186,6 @@ std::vector<double> calc_structurefactor(PartCfg &, int const *p_types,
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);
 
-template <typename T>
-double min_distance2(Utils::Vector<T, 3> const &pos1,
-                     Utils::Vector<T, 3> const &pos2) {
-  return get_mi_vector(pos1, pos2, box_geo).norm2();
-}
-
 /** Calculate the center of mass of a special type of the current configuration.
  *  \param part_type  type of the particle
  */

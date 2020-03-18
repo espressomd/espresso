@@ -57,25 +57,6 @@ class Analysis:
 
         analyze.analyze_append(analyze.partCfg())
 
-    #
-    # Minimal distance between particles
-    #
-
-    def min_dist2(self, p1, p2):
-        """Minimal distance between two three-dimensional coordinates p1 and p2.
-
-        Parameters
-        ----------
-        p1, p2 : arrays of :obj:`float`
-
-        """
-        cdef Vector3d p1c
-        cdef Vector3d p2c
-        for i in range(3):
-            p1c[i] = p1[i]
-            p2c[i] = p2[i]
-        return analyze.min_distance2(p1c, p2c)
-
     def min_dist(self, p1='default', p2='default'):
         """Minimal distance between two sets of particle types.
 
