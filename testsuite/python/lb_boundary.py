@@ -109,6 +109,7 @@ class LBBoundariesBase:
 #        self.check_boundary_flags([1, 0, 1])
 #
 
+
 @utx.skipIfMissingFeatures(["LB_BOUNDARIES"])
 @utx.skipIfMissingFeatures(["LB_WALBERLA"])
 class LBBoundariesWalberla(ut.TestCase, LBBoundariesBase):

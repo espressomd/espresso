@@ -384,7 +384,8 @@ class openGLLive():
         self.highlighted_particle = {}
         self.particle_attributes = []
         for d in dir(ParticleHandle):
-            if type(getattr(ParticleHandle, d)) == type(ParticleHandle.pos):
+            if isinstance(getattr(ParticleHandle, d),
+                          type(ParticleHandle.pos)):
                 if d not in ["pos_folded"]:
                     self.particle_attributes.append(d)
         self.max_len_attr = max([len(a) for a in self.particle_attributes])
@@ -1370,13 +1371,13 @@ class openGLLive():
             return
 
         def keyboard_up(button):
-            if type(button) is bytes:
+            if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_up(button)
             return
 
         def keyboard_down(button):
-            if type(button) is bytes:
+            if isinstance(button, bytes):
                 button = button.decode("utf-8")
             self.keyboard_manager.keyboard_down(button)
             return
