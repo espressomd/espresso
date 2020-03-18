@@ -51,8 +51,8 @@ class Analysis:
     def append(self):
         """Append configuration for averaged analysis."""
         assert get_n_part(), "No particles to append!"
-        if n_configs > 0:
-            assert analyze.n_part_conf == get_n_part(), \
+        if get_n_configs() > 0:
+            assert analyze.get_n_part_conf() == get_n_part(), \
                 "All configurations stored must have the same length"
 
         analyze.analyze_append(analyze.partCfg())
@@ -835,12 +835,12 @@ class Analysis:
             type_list_b = type_list_a
 
         if rdf_type != 'rdf':
-            if n_configs == 0:
+            if get_n_configs() == 0:
                 raise ValueError("No configurations founds!\n",
                                  "Use `analyze.append()` to save configurations,",
                                  "or `analyze.rdf('rdf')` to only look at current RDF!""")
             if n_conf is None:
-                n_conf = n_configs
+                n_conf = get_n_configs()
 
         if r_max is None:
             r_max = min(Globals().box_l) / 2

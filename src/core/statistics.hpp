@@ -41,9 +41,9 @@
  */
 /************************************************************/
 /*@{*/
-extern std::vector<std::vector<double>> configs;
-extern int n_configs;
-extern int n_part_conf;
+extern std::vector<std::vector<Utils::Vector3d>> configs;
+int get_n_configs();
+int get_n_part_conf();
 /*@}*/
 
 /** \name Exported Functions */
