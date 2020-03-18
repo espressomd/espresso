@@ -26,8 +26,6 @@
  *  Random number generation using Philox.
  */
 
-#include "errorhandling.hpp"
-
 #include <Random123/philox.h>
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
@@ -35,8 +33,6 @@
 #include <utils/uniform.hpp>
 
 #include <random>
-#include <stdexcept>
-#include <string>
 #include <vector>
 
 /*
@@ -138,7 +134,7 @@ auto noise_uniform(uint64_t counter, int key1, int key2 = 0) {
  * @param counter counter for the random number generation
  * @param key1 key for random number generation
  * @param key2 key for random number generation
- * @tparam salt (decorrelates different thermostat types)
+ * @tparam salt decorrelates different thermostat types
  *
  * @return Vector of Gaussian random numbers.
  *
@@ -181,73 +177,19 @@ auto noise_gaussian(uint64_t counter, int key1, int key2 = 0) {
   return noise;
 }
 
-extern std::mt19937 generator;
-extern std::uniform_real_distribution<double> uniform_real_distribution;
-extern bool user_has_seeded;
-inline void unseeded_error() {
-  runtimeErrorMsg() << "Please seed the random number generator.\nESPResSo "
-                       "can choose one for you with set_random_state_PRNG().";
-}
-
-/**
- * @brief checks the seeded state and throws error if unseeded
- */
-inline void check_user_has_seeded() {
-  static bool unseeded_error_thrown = false;
-  if (!user_has_seeded && !unseeded_error_thrown) {
-    unseeded_error_thrown = true;
-    unseeded_error();
-  }
-}
-
-/**
- * @brief Set seed of random number generators on each node.
+/** Mersenne Twister with warmup.
+ *  The first 100'000 values of Mersenne Twister generators are often heavily
+ *  correlated @cite panneton06a. This utility function discards the first
+ *  1'000'000 values.
  *
- * @param cnt   Unused.
- * @param seeds A vector of seeds, must be at least n_nodes long.
+ *  @param seed RNG seed
  */
-void mpi_random_seed(int cnt, std::vector<int> &seeds);
-
-/**
- * @brief Gets a string representation of the state of all the nodes.
- */
-std::string mpi_random_get_stat();
-
-/**
- * @brief Set the seeds on all the node to the state represented
- *        by the string.
- * The string representation must be one that was returned by
- * @ref mpi_random_get_stat.
- */
-void mpi_random_set_stat(const std::vector<std::string> &stat);
-
-/**
- * @brief Get the state size of the random number generator
- */
-int get_state_size_of_generator();
-
-/**
- * @brief Initialize PRNG with MPI rank as seed.
- */
-void init_random();
-
-/**
- * @brief Initialize PRNG with user-provided seed.
- *
- * @param seed seed
- */
-void init_random_seed(int seed);
+template <typename T> std::mt19937 mt19937(T &&seed) {
+  std::mt19937 generator(seed);
+  generator.discard(1'000'000);
+  return generator;
+}
 
 } // namespace Random
-
-/**
- * @brief Draws a random real number from the uniform distribution in the
- * range [0,1) using the Mersenne twister.
- */
-inline double d_random() {
-  using namespace Random;
-  check_user_has_seeded();
-  return uniform_real_distribution(generator);
-}
 
 #endif

@@ -37,7 +37,6 @@ class DPDThermostat(ut.TestCase):
     s.cell_system.skin = 0.4
 
     def setUp(self):
-        self.s.seed = range(self.s.cell_system.get_state()["n_nodes"])
         np.random.seed(16)
 
     def tearDown(self):
@@ -279,6 +278,43 @@ class DPDThermostat(ut.TestCase):
             np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
         np.testing.assert_array_equal(
             np.copy(s.part[0].f), -np.copy(s.part[1].f))
+
+    def test_parabolic_weight_function(self):
+        s = self.s
+        kT = 0.
+        gamma = 1.42
+        kappa = 7.8
+        r_cut = 1.2
+        s.thermostat.set_dpd(kT=kT, seed=42)
+        s.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=1, gamma=gamma, k=kappa, r_cut=r_cut,
+            trans_weight_function=1, trans_gamma=0.0, trans_r_cut=0.0)
+
+        def calc_omega(dist, r_cut):
+            return (1. - (dist / r_cut) ** kappa)
+
+        s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
+        v = np.array([.5, 0., 0.])
+        s.part.add(id=1, pos=[3, 5, 5], type=0, v=v)
+
+        # Outside of both cutoffs, forces should be 0
+        for f in s.part[:].f:
+            np.testing.assert_array_equal(f, [0., 0., 0.])
+
+        # Place the particle at different positions to test the parabolic
+        # weight function
+        for dist in np.arange(0.1, 1.2, 50):
+
+            s.part[1].pos = [5. + dist, 5., 5.]
+            s.integrator.run(0)
+            omega = calc_omega(dist, r_cut)**2
+
+            # The particle is moved along the x-direction. Hence, we are
+            # testing the x element.
+            np.testing.assert_allclose(
+                np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
+            np.testing.assert_array_equal(
+                np.copy(s.part[0].f), -np.copy(s.part[1].f))
 
     def test_ghosts_have_v(self):
         s = self.s

@@ -19,12 +19,8 @@
 
 # For C-extern Analysis
 
-cimport numpy as np
-from espressomd.utils cimport *
-from .utils cimport Vector9d
-from libcpp.string cimport string  # import std::string as string
+from .utils cimport Vector3i, Vector3d, Vector9d, List
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "<array>" namespace "std" nogil:
     cdef cppclass array4 "std::array<double, 4>":
@@ -46,7 +42,6 @@ cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "statistics.hpp":
-    int n_part
     int n_part_conf
     int n_configs
 

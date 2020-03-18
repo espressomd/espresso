@@ -43,7 +43,8 @@ cdef List[int] create_int_list_from_python_object(obj):
 
     Parameters
     ----------
-    obj : python object which supports subscripts
+    obj :
+        python object which supports subscripts
 
     """
     cdef List[int] il
@@ -302,7 +303,8 @@ def is_valid_type(value, t):
 
 
 def requires_experimental_features(reason):
-    """Class decorator which makes instantiation conditional on EXPERIMENTAL_FEATURES being defined in myconfig.hpp."""
+    """Class decorator which makes instantiation conditional on
+    ``EXPERIMENTAL_FEATURES`` being defined in myconfig.hpp."""
 
     def exception_raiser(self, *args, **kwargs):
         raise Exception(

@@ -61,6 +61,7 @@
 #define cudaMemcpyToSymbol hipMemcpyToSymbol
 #define cudaMemGetInfo hipMemGetInfo
 #define cudaMemset hipMemset
+#define cudaMemsetAsync hipMemsetAsync
 #define cudaSetDevice hipSetDevice
 #define cudaStreamCreate hipStreamCreate
 #define cudaStreamDestroy hipStreamDestroy

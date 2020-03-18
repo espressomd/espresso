@@ -66,3 +66,25 @@ BOOST_AUTO_TEST_CASE(normal_) {
     BOOST_CHECK_SMALL(normal * P1P3, epsilon);
   }
 }
+
+BOOST_AUTO_TEST_CASE(angle_triangles) {
+  /* Notes from @icimrak from Github #3385
+  As an example, consider 4 points A,B,C,D in space given by coordinates A =
+  [1,1,1], B = [2,1,1], C = [1,2,1], D = [1,1,2]. We want to determine the angle
+  between triangles ABC and ACD. In case that the orientations of the triangle
+  ABC is [0,0,1] and orientation of ACD is [1,0,0], then the resulting angle
+  must be PI/2.0. To get correct result, note that the common edge is AC, and
+  one must call the method as angle_btw_triangles(B,A,C,D). With this call we
+  have ensured that N1 = AB x AC (which coincides with [0,0,1]) and N2 = AC x AD
+  (which coincides with [1,0,0]). Alternatively, if the orientations of the two
+  triangles were the opposite, the correct call would be
+  angle_btw_triangles(B,C,A,D) so that N1 = CB x CA and N2 = CA x CD.
+  */
+
+  const Utils::Vector3d a{1, 1, 1}, b{2, 1, 1}, c{1, 2, 1}, d{1, 1, 2};
+  using Utils::angle_btw_triangles;
+  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, a, c, d) - M_PI / 2.0),
+                    epsilon);
+  BOOST_CHECK_SMALL(std::abs(angle_btw_triangles(b, c, a, d) - 3 * M_PI / 2.0),
+                    epsilon);
+}

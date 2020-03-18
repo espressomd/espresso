@@ -33,6 +33,7 @@
 #include <utils/statistics/RunningAverage.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
+#include <nonbonded_interactions/nonbonded_interaction_data.hpp>
 
 int timing_samples = 10;
 
@@ -98,6 +99,7 @@ void tune_skin(double min_skin, double max_skin, double tol, int int_steps,
   double time_a, time_b;
   double min_cell_size =
       std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
+  auto const max_cut = maximal_cutoff();
   double const max_permissible_skin =
       std::nextafter(min_cell_size - max_cut, 0.);
 

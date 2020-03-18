@@ -23,38 +23,20 @@
 #include "config.hpp"
 #ifdef VIRTUAL_SITES_RELATIVE
 
-#include "Particle.hpp"
-#include "communication.hpp"
-#include "virtual_sites.hpp"
+#include "VirtualSites.hpp"
+
+#include <utils/Vector.hpp>
 
 /** @brief Virtual sites implementation for rigid bodies */
 class VirtualSitesRelative : public VirtualSites {
 public:
   VirtualSitesRelative() = default;
   /** @copydoc VirtualSites::update */
-  void update(bool recalc_positions) const override;
+  void update() const override;
   /** @copydoc VirtualSites::back_transfer_forces_and_torques */
   void back_transfer_forces_and_torques() const override;
-  /** @copydoc VirtualSites::n_pressure_contribs */
-  int n_pressure_contribs() const override { return 1; };
-  /** @copydoc VirtualSites::pressure_and_stress_tensor_contribution */
-  void
-  pressure_and_stress_tensor_contribution(double *pressure,
-                                          double *stress_tensor) const override;
-
-private:
-  /** Update the position of the given virtual particle as defined by the real
-   *  particles in the same molecule
-   */
-  void update_pos(Particle &p) const;
-  /** Update the velocity of the given virtual particle as defined by the real
-   *  particles in the same molecule
-   */
-  void update_vel(Particle &p) const;
-  /** @brief Update the orientation of the virtual particles with respect
-   *  to the real particle.
-   */
-  void update_virtual_particle_quaternion(Particle &p) const;
+  /** @copydoc VirtualSites::stress_tensor */
+  Utils::Matrix<double, 3, 3> stress_tensor() const override;
 };
 
 #endif

@@ -31,8 +31,7 @@ required_features = ["NPT", "LENNARD_JONES"]
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=3 * [10])
-system.set_random_state_PRNG()
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 
 visualizer = espressomd.visualization_opengl.openGLLive(
     system, background_color=[1, 1, 1], bond_type_radius=[0.2])

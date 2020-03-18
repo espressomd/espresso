@@ -41,10 +41,10 @@
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
-#include "metadynamics.hpp"
 #include "npt.hpp"
 #include "nsquare.hpp"
 #include "partCfg_global.hpp"
+#include "particle_data.hpp"
 #include "pressure.hpp"
 #include "random.hpp"
 #include "rattle.hpp"
@@ -68,10 +68,6 @@ static bool reinit_thermo = true;
 static int reinit_electrostatics = false;
 static int reinit_magnetostatics = false;
 
-#ifdef CUDA
-static int reinit_particle_comm_gpu = true;
-#endif
-
 #if defined(OPEN_MPI) &&                                                       \
     (OMPI_MAJOR_VERSION == 2 && OMPI_MINOR_VERSION <= 1 ||                     \
      OMPI_MAJOR_VERSION == 3 &&                                                \
@@ -86,15 +82,9 @@ static int reinit_particle_comm_gpu = true;
 #endif
 
 void on_program_start() {
-
 #ifdef CUDA
   cuda_init();
 #endif
-
-  /*
-    call the initialization of the modules here
-  */
-  Random::init_random();
 
   init_node_grid();
 
@@ -125,17 +115,10 @@ void on_integration_start() {
   /********************************************/
   /* end sanity checks                        */
   /********************************************/
+
 #ifdef CUDA
-  if (reinit_particle_comm_gpu) {
-    gpu_change_number_of_part_to_comm();
-    reinit_particle_comm_gpu = false;
-  }
   MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
-#endif
-
-#ifdef METADYNAMICS
-  meta_init();
 #endif
 
   // Here we initialize volume conservation
@@ -219,12 +202,6 @@ void on_particle_change() {
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
 
-#ifdef CUDA
-  lb_lbfluid_invalidate_particle_allocation();
-#endif
-#ifdef CUDA
-  reinit_particle_comm_gpu = true;
-#endif
   invalidate_obs();
 
   /* the particle information is no longer valid */
@@ -250,16 +227,12 @@ void on_coulomb_change() {
      since the required cutoff might have reduced. */
   on_short_range_ia_change();
 
-#ifdef CUDA
-  reinit_particle_comm_gpu = true;
-#endif
   recalc_forces = true;
 }
 
 void on_short_range_ia_change() {
   invalidate_obs();
 
-  recalc_maximal_cutoff();
   cells_on_geometry_change(0);
 
   recalc_forces = true;
@@ -291,11 +264,9 @@ void on_resort_particles(const ParticleRange &particles) {
 }
 
 void on_boxl_change() {
-
   grid_changed_box_l(box_geo);
   /* Electrostatics cutoffs mostly depend on the system size,
      therefore recalculate them. */
-  recalc_maximal_cutoff();
   cells_on_geometry_change(0);
 
 /* Now give methods a chance to react to the change in box length */
@@ -349,7 +320,6 @@ void on_parameter_change(int field) {
     on_boxl_change();
     break;
   case FIELD_MIN_GLOBAL_CUT:
-    recalc_maximal_cutoff();
     cells_on_geometry_change(0);
     break;
   case FIELD_SKIN:
@@ -452,7 +422,7 @@ unsigned global_ghost_flags() {
 
 void update_dependent_particles() {
 #ifdef VIRTUAL_SITES
-  virtual_sites()->update(true);
+  virtual_sites()->update();
   cells_update_ghosts(global_ghost_flags());
 #endif
 

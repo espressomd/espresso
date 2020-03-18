@@ -22,8 +22,8 @@
 #include <memory>
 
 #include "config.hpp"
-#include "shapes/NoWhere.hpp"
-#include "shapes/Shape.hpp"
+#include <shapes/NoWhere.hpp>
+#include <shapes/Shape.hpp>
 #include <utils/Vector.hpp>
 
 namespace LBBoundaries {

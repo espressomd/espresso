@@ -22,13 +22,13 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALLBPROFILEOBSERVABLE_HPP
 
-#include "auto_parameters/AutoParameters.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include <memory>
 
 #include "Observable.hpp"
 #include "core/observables/CylindricalLBProfileObservable.hpp"
-#include "get_value.hpp"
+#include "script_interface/get_value.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -57,19 +57,29 @@ public:
          [this]() { return cylindrical_profile_observable()->axis; }},
         {"n_r_bins",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->n_r_bins = get_value<int>(v);
+           cylindrical_profile_observable()->n_r_bins =
+               static_cast<size_t>(get_value<int>(v));
          },
-         [this]() { return cylindrical_profile_observable()->n_r_bins; }},
+         [this]() {
+           return static_cast<int>(cylindrical_profile_observable()->n_r_bins);
+         }},
         {"n_phi_bins",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->n_phi_bins = get_value<int>(v);
+           cylindrical_profile_observable()->n_phi_bins =
+               static_cast<size_t>(get_value<int>(v));
          },
-         [this]() { return cylindrical_profile_observable()->n_phi_bins; }},
+         [this]() {
+           return static_cast<int>(
+               cylindrical_profile_observable()->n_phi_bins);
+         }},
         {"n_z_bins",
          [this](const Variant &v) {
-           cylindrical_profile_observable()->n_z_bins = get_value<int>(v);
+           cylindrical_profile_observable()->n_z_bins =
+               static_cast<size_t>(get_value<int>(v));
          },
-         [this]() { return cylindrical_profile_observable()->n_z_bins; }},
+         [this]() {
+           return static_cast<int>(cylindrical_profile_observable()->n_z_bins);
+         }},
         {"min_r",
          [this](const Variant &v) {
            cylindrical_profile_observable()->min_r = get_value<double>(v);
@@ -126,8 +136,9 @@ public:
     if (method == "calculate") {
       return cylindrical_profile_observable()->operator()();
     }
-    if (method == "n_values") {
-      return cylindrical_profile_observable()->n_values();
+    if (method == "shape") {
+      auto const shape = cylindrical_profile_observable()->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
     }
     return {};
   }

@@ -38,14 +38,14 @@ public:
   evaluate(Utils::Span<const Particle *const> particles) const override {
     std::vector<double> res(n_values());
 
-    for (int i = 0, end = n_values(); i < end; i++) {
+    for (size_t i = 0, end = n_values(); i < end; i++) {
       auto const v =
           get_mi_vector(particles[i]->r.p, particles[i + 1]->r.p, box_geo);
       res[i] = v.norm();
     }
     return res;
   }
-  int n_values() const override { return ids().size() - 1; }
+  std::vector<size_t> shape() const override { return {ids().size() - 1}; }
 };
 
 } // Namespace Observables

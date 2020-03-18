@@ -32,7 +32,7 @@ int n_rigidbonds = 0;
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <utils/constants.hpp>
 
@@ -114,7 +114,7 @@ void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
     while (k < p1.bl.n) {
       Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
       if (ia_params.type == BONDED_IA_RIGID_BOND) {
-        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        Particle *const pp2 = get_local_particle_data(p1.bl.e[k++]);
         if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
                             << p1.p.identity << " and " << p1.bl.e[k - 1]
@@ -219,7 +219,7 @@ void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
     while (k < p1.bl.n) {
       Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
       if (ia_params.type == BONDED_IA_RIGID_BOND) {
-        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        Particle *const pp2 = get_local_particle_data(p1.bl.e[k++]);
         if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
                             << p1.p.identity << " and " << p1.bl.e[k - 1]

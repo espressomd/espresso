@@ -30,8 +30,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-#include <iostream>
-
 #ifndef ACTOR_DIPOLARBARNESHUT_HPP
 #define ACTOR_DIPOLARBARNESHUT_HPP
 
@@ -56,11 +54,11 @@ public:
     if (!s.requestDipGpu())
       std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!"
                 << std::endl;
-
-    allocBHmemCopy(s.npart_gpu(), &m_bh_data);
   };
 
   void computeForces(SystemInterface &s) override {
+    allocBHmemCopy(s.npart_gpu(), &m_bh_data);
+
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);
@@ -75,6 +73,8 @@ public:
     }
   };
   void computeEnergy(SystemInterface &s) override {
+    allocBHmemCopy(s.npart_gpu(), &m_bh_data);
+
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
     buildBoxBH(m_bh_data.blocks);

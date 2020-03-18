@@ -74,7 +74,7 @@ Vector<T, 4> convert_director_to_quaternion(Vector<T, 3> const &d) {
   auto const d_xy = std::sqrt(d[0] * d[0] + d[1] * d[1]);
   T theta2, phi2;
   if (d_xy == 0) {
-    // Here the director is co-linear with the z-azis
+    // Here the director is co-linear with the z-axis
     // We need to distinguish between (0, 0, +d_z) and (0, 0, -d_z)
     theta2 = (d[2] > 0) ? 0 : Utils::pi<T>() / 2;
     phi2 = 0;

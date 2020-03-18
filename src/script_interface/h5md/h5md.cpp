@@ -28,7 +28,6 @@
 
 namespace ScriptInterface {
 namespace Writer {
-
 Variant H5mdScript::call_method(const std::string &name,
                                 const VariantMap &parameters) {
   if (name == "init_file")

@@ -30,7 +30,7 @@ struct ParticleIterator : public boost::iterator_facade<
                    int part_id)
       : m_cell(cell), m_end(end), m_part_id(part_id) {
     /* Jump to first actual particle */
-    if ((m_cell != m_end) && (*m_cell)->n == 0) {
+    if ((m_cell != m_end) && (*m_cell)->particles().empty()) {
       increment();
     }
   }
@@ -46,13 +46,13 @@ private:
       return 0;
 
     /* Remaining parts in this cell */
-    auto dist = ((*begin.m_cell)->n - begin.m_part_id);
+    auto dist = ((*begin.m_cell)->particles().size() - begin.m_part_id);
     /* Now add the size of all cells between the next
        one and the last one */
     auto it = std::next(begin.m_cell);
 
     while (it != end.m_cell) {
-      dist += (*it)->n;
+      dist += (*it)->particles().size();
       ++it;
     }
 
@@ -70,8 +70,8 @@ private:
        and if we are not at the last particle in the
        cell we can just increment the particle id.
     */
-    if ((m_cell != m_end) && ((*m_cell)->n > 0) &&
-        (m_part_id < ((*m_cell)->n - 1))) {
+    if ((m_cell != m_end) && (not(*m_cell)->particles().empty()) &&
+        (m_part_id < ((*m_cell)->particles().size() - 1))) {
       /* Next part in same cell */
       ++m_part_id;
     } else {
@@ -81,7 +81,7 @@ private:
         ++m_cell;
 
       /* Find next cell with particles */
-      while ((m_cell != m_end) && ((*m_cell)->n == 0)) {
+      while ((m_cell != m_end) && ((*m_cell)->particles().empty())) {
         ++m_cell;
       }
     }
@@ -91,7 +91,7 @@ private:
     return (m_cell == (rhs.m_cell)) && (m_part_id == rhs.m_part_id);
   }
 
-  Particle &dereference() const { return (*m_cell)->part[m_part_id]; }
+  Particle &dereference() const { return (*m_cell)->particles()[m_part_id]; }
 
   BidirectionalIterator m_cell, m_end;
   int m_part_id;

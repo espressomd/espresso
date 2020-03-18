@@ -19,6 +19,7 @@
 #include "EspressoSystemInterface.hpp"
 #include "Particle.hpp"
 #include "cells.hpp"
+#include "communication.hpp"
 #include "cuda_interface.hpp"
 #include "grid.hpp"
 
@@ -33,8 +34,7 @@ void EspressoSystemInterface::gatherParticles() {
   if (m_gpu) {
     if (gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
       copy_part_data_to_gpu(cell_structure.local_cells().particles());
-      reallocDeviceMemory(
-          gpu_get_global_particle_vars_pointer_host()->number_of_particles);
+      reallocDeviceMemory(gpu_get_particle_pointer().size());
       if (m_splitParticleStructGpu && (this_node == 0))
         split_particle_struct();
     }

@@ -35,7 +35,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define NPT
 
 #define DPD
-#define METADYNAMICS
 
 #define LB_BOUNDARIES
 #define LB_ELECTROHYDRODYNAMICS
@@ -76,7 +75,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
-#define OIF_GLOBAL_FORCES
-#define OIF_LOCAL_FORCES
 
 #define ADDITIONAL_CHECKS

@@ -26,13 +26,12 @@ Setting up a LB fluid
 The following minimal example illustrates how to use the LBM in |es|::
 
     import espressomd
-    sys = espressomd.System()
-    sys.box_l = [10, 20, 30]
-    sys.time_step = 0.01
-    sys.cell_system.skin = 0.4
+    system = espressomd.System(box_l=[10, 20, 30])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
     lb = espressomd.lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
-    sys.actors.add(lb)
-    sys.integrator.run(100)
+    system.actors.add(lb)
+    system.integrator.run(100)
 
 To use the GPU accelerated variant, replace line 5 in the example above by::
 
@@ -103,7 +102,7 @@ Checkpointing LB
     lb.load_checkpoint(path, binary)
 
 The first command saves all of the LB fluid nodes' populations to an ascii
-(``binary=0``) or binary (``binary=1``) format respectively. The load command
+(``binary=False``) or binary (``binary=True``) format respectively. The load command
 loads the populations from a checkpoint file written with
 ``lb.save_checkpoint``. In both cases ``path`` specifies the location of the
 checkpoint file. This is useful for restarting a simulation either on the same
@@ -119,7 +118,7 @@ the center of mass, causing errors in the calculation of velocities and
 diffusion coefficients. The correct way to restart an LB simulation is to first
 load in the particles with the correct forces, and use::
 
-    sys.integrator.run(steps=number_of_steps, reuse_forces=True)
+    system.integrator.run(steps=number_of_steps, reuse_forces=True)
 
 upon the first call ``integrator.run``. This causes the
 old forces to be reused and thus conserves momentum.
@@ -168,7 +167,7 @@ multiple particles can interact via hydrodynamic interactions. As friction in mo
 accompanied by fluctuations, the particle-fluid coupling has to be activated through
 the :ref:`LB thermostat` (See more detailed description there). A short example is::
 
-    sys.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
+    system.thermostat.set_lb(LB_fluid=lbf, seed=123, gamma=1.5)
 
 where ``lbf`` is an instance of either :class:`espressomd.lb.LBFluid` or :class:`espressomd.lb.LBFluidGPU`, 
 ``gamma`` the friction coefficient and ``seed`` the seed for the random number generator involved 
@@ -268,13 +267,12 @@ information on CUDA support see section :ref:`GPU Acceleration with CUDA`.
 The following minimal example demonstrates how to use the GPU implementation of the LBM in analogy to the example for the CPU given in section :ref:`Setting up a LB fluid`::
 
     import espressomd
-    sys = espressomd.System()
-    sys.box_l = [10, 20, 30]
-    sys.time_step = 0.01
-    sys.cell_system.skin = 0.4
+    system = espressomd.System(box_l=[10, 20, 30])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
     lb = espressomd.lb.LBFluidGPU(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
-    sys.actors.add(lb)
-    sys.integrator.run(100)
+    system.actors.add(lb)
+    system.integrator.run(100)
 
 For boundary conditions analogous to the CPU
 implementation, the feature ``LB_BOUNDARIES_GPU`` has to be activated.
@@ -349,13 +347,12 @@ The following example sets up a system consisting of a spherical boundary in the
 
     from espressomd import System, lb, lbboundaries, shapes
 
-    sys = System()
-    sys.box_l = [64, 64, 64]
-    sys.time_step = 0.01
-    sys.cell_system.skin = 0.4
+    system = System(box_l=[64, 64, 64])
+    system.time_step = 0.01
+    system.cell_system.skin = 0.4
 
     lb = lb.LBFluid(agrid=1.0, dens=1.0, visc=1.0, tau=0.01)
-    sys.actors.add(lb)
+    system.actors.add(lb)
 
     v = [0, 0, 0.01]  # the boundary slip
     walls = [None] * 4
@@ -377,9 +374,9 @@ The following example sets up a system consisting of a spherical boundary in the
 
     sphere_shape = shapes.Sphere(radius=5.5, center=[33, 33, 33], direction=1)
     sphere = lbboundaries.LBBoundary(shape=sphere_shape)
-    sys.lbboundaries.add(sphere)
+    system.lbboundaries.add(sphere)
 
-    sys.integrator.run(4000)
+    system.integrator.run(4000)
 
     print(sphere.get_force())
 

@@ -64,7 +64,6 @@ class VirtualSitesTracersCommon:
         self.system.virtual_sites = VirtualSitesInertialessTracers()
         self.assertIsInstance(
             self.system.virtual_sites, VirtualSitesInertialessTracers)
-        self.assertTrue(self.system.virtual_sites.have_velocity)
 
     def test_advection(self):
         self.reset_lb(ext_force_density=[0.1, 0, 0])

@@ -28,8 +28,6 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
 #include <utils/constants.hpp>
 
@@ -164,6 +162,8 @@ magnetic_dipolar_direct_sum_calculations(bool force_flag, bool energy_flag,
                     "calculations() with all flags zero\n");
     return 0;
   }
+
+  auto const n_part = particles.size();
 
   x.resize(n_part);
   y.resize(n_part);

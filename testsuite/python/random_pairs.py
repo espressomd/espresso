@@ -82,10 +82,6 @@ class RandomPairTest(ut.TestCase):
         self.system.cell_system.set_domain_decomposition()
         self.check_pairs(n2_pairs)
 
-    def check_layered(self, n2_pairs):
-        self.system.cell_system.set_layered()
-        self.check_pairs(n2_pairs)
-
     def check_n_squared(self, n2_pairs):
         self.system.cell_system.set_n_square()
         self.check_pairs(n2_pairs)
@@ -98,7 +94,6 @@ class RandomPairTest(ut.TestCase):
             n2_pairs = self.pairs_n2(1.5)
 
             self.check_dd(n2_pairs)
-            self.check_layered(n2_pairs)
             self.check_n_squared(n2_pairs)
 
 

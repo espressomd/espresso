@@ -83,28 +83,12 @@ class importlib_wrapper(ut.TestCase):
         self.assertEqual(str_out, str_exp)
 
     def test_set_random_seeds(self):
-        # ESPResSo seed
-        str_es_sys = "import espressomd.System as S\nsystem = S(box_l=[1]*3)\n"
-        str_inp = str_es_sys + "system.set_random_state_PRNG()"
-        str_exp = str_es_sys + "system.set_random_state_PRNG(); _random_seed_es__original = ()"
-        str_out = iw.set_random_seeds(str_inp)
-        self.assertEqual(str_out, str_exp)
-        str_inp = str_es_sys + "system.random_number_generator_state = 7 * [0]"
-        str_exp = str_es_sys + "system.set_random_state_PRNG();" + \
-            " _random_seed_es__original = 7 * [0]"
-        str_out = iw.set_random_seeds(str_inp)
-        self.assertEqual(str_out, str_exp)
-        str_inp = str_es_sys + "system.seed = 42"
-        str_exp = str_es_sys + "system.set_random_state_PRNG();" + \
-            " _random_seed_es__original = 42"
-        str_out = iw.set_random_seeds(str_inp)
-        self.assertEqual(str_out, str_exp)
         # NumPy seed
         str_np = "import numpy as np\n"
         str_lambda = "(lambda *args, **kwargs: None)"
-        str_inp = str_np + "np.random.seed(seed=system.seed)"
+        str_inp = str_np + "np.random.seed(seed=42)"
         str_exp = str_np + "np.random.seed;_random_seed_np = " + \
-            str_lambda + "(seed=system.seed)"
+            str_lambda + "(seed=42)"
         str_out = iw.set_random_seeds(str_inp)
         self.assertEqual(str_out, str_exp)
         str_np = "import numpy.random as npr\n"
@@ -349,9 +333,6 @@ except ImportError:
             'sys5 = s2()',
             'sys6 = s3()',
             'sys7 = s4()',
-            'sys3.seed = 5',
-            'sys5.random_number_generator_state = 5',
-            'sys7.set_random_state_PRNG(5)',
             'import numpy as np',
             'import numpy.random as npr1',
             'from numpy import random as npr2',
@@ -370,13 +351,7 @@ except ImportError:
         expected_es_sys_objs = set('sys' + str(i) for i in range(1, 8))
         self.assertEqual(v.variable_system_aliases, expected_es_sys_objs)
         # find all seeds setup
-        expected_es_sys_seeds = [
-            (14, 'sys3', 'seed'),
-            (15, 'sys5', 'random_number_generator_state'),
-            (16, 'sys7', 'set_random_state_PRNG'),
-        ]
-        self.assertEqual(v.system_seeds, expected_es_sys_seeds)
-        self.assertEqual(v.numpy_seeds, [20, 21, 22])
+        self.assertEqual(v.numpy_seeds, [17, 18, 19])
         # test exceptions
         str_es_sys_list = [
             'import espressomd.System',
@@ -388,7 +363,6 @@ except ImportError:
             's, var = System(), 5',
             'class A:\n\ts = System()',
             'def A():\n\ts = System()',
-            's = System()\ns.seed, var = 1, 5',
         ]
         for str_es_sys in str_es_sys_list:
             for str_stmt in exception_stmt:

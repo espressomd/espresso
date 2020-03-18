@@ -29,7 +29,6 @@ espressomd.assert_features(required_features)
 
 box = [40, 30, 20]
 system = espressomd.System(box_l=box)
-system.set_random_state_PRNG()
 visualizer = openGLLive(
     system,
     window_size=[800, 800],

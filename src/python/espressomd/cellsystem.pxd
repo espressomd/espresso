@@ -17,12 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# @TODO: shouldn't these global definitions be used via global_variables?
-
 from libcpp cimport bool
 from libcpp.vector cimport vector
 from libcpp.pair cimport pair
-
 from .utils cimport Vector3i
 
 cdef extern from "communication.hpp":
@@ -34,13 +31,25 @@ cdef extern from "cells.hpp":
     int CELL_STRUCTURE_CURRENT
     int CELL_STRUCTURE_DOMDEC
     int CELL_STRUCTURE_NSQUARE
-    int CELL_STRUCTURE_LAYERED
+
+    ctypedef struct CellStructure:
+        int type
+        bool use_verlet_list
+
+    CellStructure cell_structure
 
     vector[pair[int, int]] mpi_get_pairs(double distance)
 
-cdef extern from "layered.hpp":
-    int determine_n_layers
-    int n_layers_ "n_layers"
-
 cdef extern from "tuning.hpp":
     cdef void c_tune_skin "tune_skin" (double min_skin, double max_skin, double tol, int int_steps, bool adjust_max_skin)
+
+cdef extern from "domain_decomposition.hpp":
+    ctypedef struct  DomainDecomposition:
+        int cell_grid[3]
+        double cell_size[3]
+        bool fully_connected[3]
+
+    extern DomainDecomposition dd
+    extern int max_num_cells
+    extern int min_num_cells
+    int calc_processor_min_num_cells(const Vector3i & grid)

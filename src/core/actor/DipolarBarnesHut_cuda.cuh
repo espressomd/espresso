@@ -25,9 +25,6 @@
 
 #ifdef DIPOLAR_BARNES_HUT
 
-#include <cstdio>
-#include <iostream>
-
 typedef float dds_float;
 
 typedef struct {

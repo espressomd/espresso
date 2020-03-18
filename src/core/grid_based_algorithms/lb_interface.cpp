@@ -338,7 +338,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
   throw std::runtime_error("Not implemented");
 }
 
-void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
+void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
 #ifdef LB_WALBERLA
   if (lattice_switch == ActiveLB::WALBERLA) {
     std::fstream cpfile;
@@ -384,7 +384,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
 #endif
 }
 
-void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
+void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   int res;
   std::string err_msg = "Error while reading LB checkpoint: ";
 #ifdef LB_WALBERLA

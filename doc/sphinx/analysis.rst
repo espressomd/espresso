@@ -87,8 +87,7 @@ or a position coordinate when used with a vector ``pos``.
 For example, ::
 
     >>> import espressomd
-    >>> system = espressomd.System()
-    >>> system.box_l = [100, 100, 100]
+    >>> system = espressomd.System(box_l=[100, 100, 100])
     >>> for i in range(10):
     ...     system.part.add(id=i, pos=[1.0, 1.0, i**2], type=0)
     >>> system.analysis.dist_to(id=4)
@@ -126,9 +125,7 @@ group.
 
 Two arrays are returned corresponding to the normalized distribution and the bins midpoints, for example ::
 
-    >>> system = espressomd.System()
-    >>> box_l = 10.
-    >>> system.box_l = [box_l, box_l, box_l]
+    >>> system = espressomd.System(box_l=[10, 10, 10])
     >>> for i in range(5):
     ...     system.part.add(id=i, pos=i * system.box_l, type=0)
     >>> bins, count = system.analysis.distribution(type_list_a=[0], type_list_b=[0],
@@ -138,51 +135,6 @@ Two arrays are returned corresponding to the normalized distribution and the bin
     [ 0.5  1.5  2.5  3.5  4.5  5.5  6.5  7.5  8.5  9.5]
     >>> print(count)
     [ 1.  0.  0.  0.  0.  0.  0.  0.  0.  0.]
-
-..
-    .. _Radial density map:
-
-    Radial density map
-    ~~~~~~~~~~~~~~~~~~
-    .. todo:: This feature is not implemented
-
-    analyze radial_density_map
-
-    Returns the radial density of particles around a given axis. Parameters
-    are:
-
-    -  histogram bins in x direction.
-
-    -  histogram bins in y direction.
-
-    -  range for analysis in x direction.
-
-    -  range for analysis in y direction.
-
-    -  rotate around given axis. (x, y, or z)
-
-    -  rotate around given point.
-
-    -  only analyze beads of given types.
-
-    -  histogram bins in angle theta.
-
-    This command does not do what you might expect. Here is an overview of
-    the currently identified properties.
-
-    #. is the number of bins along the axis of rotation.
-
-    #. is the number of bins in the radial direction.
-
-    #. The center point () of the cylinder is located in the lower cap,
-       i.e., is the height of the cylinder with respect to this center
-       point.
-
-    #. The bins are distributed along starting from 0 ().
-
-    #. The seem to average with respect to the center of mass of the
-       particles in the individual bins rather than with respect to the
-       central axis, which one would think is natural.
 
 
 .. _Radial distribution function:
@@ -220,38 +172,6 @@ Returns the spherically averaged structure factor :math:`S(q)` of
 particles specified in ``sf_types``. :math:`S(q)` is calculated for all possible
 wave vectors :math:`\frac{2\pi}{L} \leq q \leq \frac{2\pi}{L}` up to ``sf_order``.
 
-..
-    .. _Van-Hove autocorrelation function:
-
-    Van-Hove autocorrelation function :math:`G(r,t)`
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    .. todo:: This feature is not implemented
-
-    analyze vanhove
-
-    Returns the van Hove auto correlation function :math:`G(r,t)` and the
-    mean square displacement :math:`msd(t)` for particles of type for the
-    configurations stored in the array configs. This tool assumes that the
-    configurations stored with (see section ) are stored at equidistant time
-    intervals. :math:`G(r,t)` is calculated for each multiple of this time
-    intervals. For each time t the distribution of particle displacements is
-    calculated according to the specification given by , and . Optional
-    argument defines the maximum value of :math:`t` for which :math:`G(r,t)`
-    is calculated. If it is omitted or set to zero, maximum possible value
-    is used. If the particles perform a random walk (a normal diffusion
-    process) :math:`G(r,t)/r^2` is a Gaussian distribution for all times.
-    Deviations of this behavior hint on another diffusion process or on the
-    fact that your system has not reached the diffusive regime. In this case
-    it is also very questionable to calculate a diffusion constant from the
-    mean square displacement via the Stokes-Einstein relation.
-
-    The output corresponds to the blockfile format (see section ):
-
-    { msd { …} } { vanhove { { …} { …} } }
-
-    The :math:`G(r,t)` are normalized such that the integral over space
-    always yields :math:`1`.
-
 
 .. _Center of mass:
 
@@ -278,35 +198,6 @@ Gyration tensor
 :meth:`espressomd.analyze.Analysis.gyration_tensor`
 
 Analyze the gyration tensor of particles of a given type, or of all particles in the system if no type is given. Returns a dictionary containing the squared radius of gyration, three shape descriptors (asphericity, acylindricity, and relative shape anisotropy), eigenvalues of the gyration tensor and their corresponding eigenvectors. The eigenvalues are sorted in descending order.
-
-..
-    .. _Aggregation:
-
-    Aggregation
-    ~~~~~~~~~~~
-    .. todo:: This feature is not implemented
-
-    analyze aggregation
-
-    Returns the aggregate size distribution for the molecules in the
-    molecule id range to . If any monomers in two different molecules are
-    closer than they are considered to be in the same aggregate. One can use
-    the optional parameter to specify a minimum number of contacts such that
-    only molecules having at least contacts will be considered to be in the
-    same aggregate. The second optional parameter enables one to consider
-    aggregation state of only oppositely charged particles.
-
-
-	.. _Temperature of the LB fluid:
-
-	Temperature of the LB fluid
-	~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	.. todo:: This feature is not implemented
-
-	This command returns the temperature of the lattice-Boltzmann (LB)
-	fluid, see Chapter [sec:lb], by averaging over the fluid nodes. In case
-	or are compiled in and boundaries are defined, only the available fluid
-	volume is taken into account.
 
 
 .. _Pressure:
@@ -376,12 +267,12 @@ where the first summand is the short ranged part and the second summand is the l
 
 The short ranged part is given by:
 
-.. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ \mathrm{erfc}(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} + \\ \frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
+.. math :: p^\text{Coulomb, P3M, dir}_{(k,l)}= \frac{1}{4\pi \varepsilon_0 \varepsilon_r} \frac{1}{2V} \sum_{\vec{n}}^* \sum_{i,j=1}^N q_i q_j \left( \frac{ \mathrm{erfc}(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^3} + \\ \frac{2\beta \pi^{-1/2} \exp(-(\beta |\vec{r}_j-\vec{r}_i+\vec{n}|)^2)}{|\vec{r}_j-\vec{r}_i+\vec{n}|^2} \right) (\vec{r}_j-\vec{r}_i+\vec{n})_k (\vec{r}_j-\vec{r}_i+\vec{n})_l,
 
 where :math:`\beta` is the P3M splitting parameter, :math:`\vec{n}` identifies the periodic images, the asterisk denotes that terms with :math:`\vec{n}=\vec{0}` and i=j are omitted.
 The long ranged (k-space) part is given by:
 
-.. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \epsilon_0 \epsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
+.. math :: p^\text{Coulomb, P3M, rec}_{(k,l)}= \frac{1}{4\pi \varepsilon_0 \varepsilon_r} \frac{1}{2 \pi V^2} \sum_{\vec{k} \neq \vec{0}} \frac{\exp(-\pi^2 \vec{k}^2/\beta^2)}{\vec{k}^2} |S(\vec{k})|^2 \cdot (\delta_{k,l}-2\frac{1+\pi^2\vec{k}^2/\beta^2}{\vec{k}^2} \vec{k}_k \vec{k}_l),
 
 where :math:`S(\vec{k})` is the Fourier transformed charge density. Compared to Essmann we do not have the contribution :math:`p^\text{corr}_{k,l}` since we want to calculate the pressure that arises from all particles in the system.
 
@@ -457,88 +348,6 @@ in :cite:`doi86a`.
 Note that the hydrodynamic radius is sometimes defined in a similar fashion but with a denominator of :math:`N^2` instead of :math:`N(N-1)` in the prefactor.
 Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give numerically different values for finite polymers.
 
-..
-	.. _Internal distances:
-
-	Internal distances
-	^^^^^^^^^^^^^^^^^^
-	.. todo:: This feature is not implemented
-
-	analyze
-
-	Returns the averaged internal distances within the chains (over all
-	pairs of particles). If is used, the values are averaged over all stored
-	configurations (see section ).
-
-	{ … }
-
-	The index corresponds to the number of beads between the two monomers
-	considered (0 = next neighbors, 1 = one monomer in between, …).
-
-
-	.. _Internal distances II (specific monomer):
-
-	Internal distances II (specific monomer)
-	^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-	.. todo:: This feature is not implemented
-
-	analyze
-
-	In contrast to , it does not average over the whole chain, but rather
-	takes the chain monomer at position (default: :math:`0`, the first
-	monomer on the chain) to be the reference point to which all internal
-	distances are calculated. If is used, the values will be averaged over
-	all stored configurations (see section ).
-
-	{ … }
-
-
-	.. _Bond lengths:
-
-	Bond lengths
-	^^^^^^^^^^^^
-	.. todo:: This feature is not implemented
-
-	analyze
-
-	Analyzes the bond lengths of the chains in the system. Returns its
-	average, the standard deviation, the maximum and the minimum. If you
-	want to look only at specific chains, use the optional arguments,
-	:math:`\var{chain\_start} =
-	2*\var{MPC}` and :math:`\var{n\_chains} = 1` to only include the third
-	chain's monomers. If is used, the value will be averaged over all stored
-	configurations (see section ). This function assumes linear chain
-	topology and does not check if the bonds really exist!
-
-	{ }
-
-
-	.. _Form factor:
-
-	Form factor
-	^^^^^^^^^^^
-	.. todo:: This feature is not implemented
-
-	| analyze
-
-	Computes the spherically averaged form factor of a single chain, which
-	is defined by
-
-	.. math::
-
-	   S(q) = \frac{1}{\var{chain\_length}} \sum_{i,j=1}^{\var{chain\_length}}
-		 \frac{\sin(q r_{ij})}{q r_{ij}}
-
-	of a single chain, averaged over all chains for :math:`\var{qbin}+1`
-	logarithmically spaced q-vectors :math:`\var{qmin}, \dots ,\var{qmax}`
-	where :math:`\var{qmin}>0` and :math:`\var{qmax}>\var{qmin}`. If is
-	used, the form factor will be averaged over all stored configurations
-	(see section ).
-
-	{ { } }
-
-	with :math:`q \in \{\var{qmin},\dots,\var{qmax}\}`.
-
 
 .. _Observables and correlators:
 
@@ -570,9 +379,10 @@ The first step of the core analysis is to create an observable.
 An observable in the sense of the core analysis can be considered as a
 rule how to compute a certain set of numbers from a given state of the
 system or a role how to collect data from other observables. Any
-observable is represented as a single array of double values. Any more
-complex shape (tensor, complex number, …) must be compatible to this
-prerequisite. Every observable however documents the storage order.
+observable is represented as a single array of double values in the core.
+Any more complex shape (tensor, complex number, …) must be compatible to this
+prerequisite. Every observable however documents the storage order and returns
+a reshaped numpy array.
 
 The observables can be used in parallel simulations. However,
 not all observables carry out their calculations in parallel.

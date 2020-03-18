@@ -16,73 +16,60 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 #include "cuda_wrapper.hpp"
 
 #include "config.hpp"
+
 #include "debug.hpp"
 
+#include "ParticleRange.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
 
+#include "CudaDeviceAllocator.hpp"
+#include "CudaHostAllocator.hpp"
+
+#include <thrust/device_vector.h>
 #include <utils/constants.hpp>
 
-#if defined(OMPI_MPI_H) || defined(_MPI_H)
-#error CU-file includes mpi.h! This should not happen!
-#endif
+extern int this_node;
+
+template <class T>
+using device_vector = thrust::device_vector<T, CudaDeviceAllocator<T>>;
 
 static CUDA_global_part_vars global_part_vars_host = {};
-__device__ __constant__ CUDA_global_part_vars global_part_vars_device[1];
+
+template <class T, class A>
+T *raw_data_pointer(thrust::device_vector<T, A> &vec) {
+  return thrust::raw_pointer_cast(vec.data());
+}
+
+template <class SpanLike> size_t byte_size(SpanLike const &v) {
+  return v.size() * sizeof(typename SpanLike::value_type);
+}
 
 /** struct for particle force */
-static float *particle_forces_device = nullptr;
-static float *particle_torques_device = nullptr;
+static device_vector<float> particle_forces_device;
+static device_vector<float> particle_torques_device;
 
 /** struct for particle position and velocity */
-static CUDA_particle_data *particle_data_device = nullptr;
+static device_vector<CUDA_particle_data> particle_data_device;
 /** struct for energies */
 static CUDA_energy *energy_device = nullptr;
 
-CUDA_particle_data *particle_data_host = nullptr;
-std::vector<float> particle_forces_host;
+pinned_vector<CUDA_particle_data> particle_data_host;
+pinned_vector<float> particle_forces_host;
 CUDA_energy energy_host;
 
-std::vector<float> particle_torques_host;
+pinned_vector<float> particle_torques_host;
 
 /**cuda streams for parallel computing on cpu and gpu */
 cudaStream_t stream[1];
 
 cudaError_t _err;
 cudaError_t CU_err;
-
-void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
-  if (cudaSuccess != CU_err) {
-    fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
-    printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
-    if (CU_err == cudaErrorInvalidValue)
-      fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n",
-              file, line);
-    errexit();
-  } else {
-    CU_err = cudaGetLastError();
-    if (CU_err != cudaSuccess) {
-      fprintf(stderr,
-              "Error found during memory operation. Possibly however "
-              "from a failed operation before. %s:%u.\n",
-              file, line);
-      printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
-      if (CU_err == cudaErrorInvalidValue)
-        fprintf(stderr,
-                "You may have tried to allocate zero memory before %s:%u.\n",
-                file, line);
-      errexit();
-    }
-  }
-}
 
 void _cuda_check_errors(const dim3 &block, const dim3 &grid,
                         const char *function, const char *file,
@@ -98,145 +85,40 @@ void _cuda_check_errors(const dim3 &block, const dim3 &grid,
   }
 }
 
-__device__ unsigned int getThreadIndex() {
-
-  return blockIdx.y * gridDim.x * blockDim.x + blockDim.x * blockIdx.x +
-         threadIdx.x;
-}
-
-/** Kernel for the initialisation of the particle force array
- * @param[out] particle_forces_device    Local particle force
- * @param[out] particle_torques_device   Local particle torque
+/**
+ * @brief Resize a @ref device_vector.
+ *
+ * Due to a bug in thrust (https://github.com/thrust/thrust/issues/939),
+ * resizing or appending to default constructed containers causes undefined
+ * behavior by dereferencing a null-pointer for certain types. This
+ * function is used instead of the resize member function to side-step
+ * the problem. This is done by replacing the existing vector by a new
+ * one constructed with the desired size if resizing from capacity zero.
+ * Behaves as-if vec.resize(n) was called.
+ *
+ * @tparam T Type contained in the vector.
+ * @param vec Vector To resize.
+ * @param n Desired new size of the element.
  */
-__global__ void init_particle_force(float *particle_forces_device,
-                                    float *particle_torques_device) {
-
-  unsigned int part_index = getThreadIndex();
-
-  if (part_index < global_part_vars_device->number_of_particles) {
-    particle_forces_device[3 * part_index + 0] = 0.0f;
-    particle_forces_device[3 * part_index + 1] = 0.0f;
-    particle_forces_device[3 * part_index + 2] = 0.0f;
-
-#ifdef ROTATION
-    particle_torques_device[3 * part_index] = 0.0f;
-    particle_torques_device[3 * part_index + 1] = 0.0f;
-    particle_torques_device[3 * part_index + 2] = 0.0f;
-#endif
+template <class T> void resize_or_replace(device_vector<T> &vec, size_t n) {
+  if (vec.capacity() == 0) {
+    vec = device_vector<T>(n);
+  } else {
+    vec.resize(n);
   }
 }
 
-/** Kernel for the initialisation of the particle force array
- * @param[out] particle_forces_device    Local particle force
- * @param[out] particle_torques_device   Local particle torque
- */
-__global__ void reset_particle_force(float *particle_forces_device,
-                                     float *particle_torques_device) {
+void resize_buffers(size_t number_of_particles) {
+  particle_data_host.resize(number_of_particles);
+  resize_or_replace(particle_data_device, number_of_particles);
 
-  unsigned int part_index = getThreadIndex();
-
-  if (part_index < global_part_vars_device->number_of_particles) {
-    particle_forces_device[3 * part_index + 0] = 0.0f;
-    particle_forces_device[3 * part_index + 1] = 0.0f;
-    particle_forces_device[3 * part_index + 2] = 0.0f;
-#ifdef ROTATION
-    particle_torques_device[3 * part_index + 0] = 0.0f;
-    particle_torques_device[3 * part_index + 1] = 0.0f;
-    particle_torques_device[3 * part_index + 2] = 0.0f;
-#endif
-  }
-}
-
-/** change number of particles to be communicated to the GPU
- *  Note that in addition to calling this function the parameters must be
- * broadcast with either:
- * 1) cuda_bcast_global_part_params(); (when just being executed on the master
- * node) or
- * 2) MPI_Bcast(gpu_get_global_particle_vars_pointer_host(),
- * sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart); (when executed on all
- * nodes)
- */
-void gpu_change_number_of_part_to_comm() {
-  // we only run the function if there are new particles which have been created
-  // since the last call of this function
-
-  if (global_part_vars_host.number_of_particles != n_part &&
-      global_part_vars_host.communication_enabled == 1 && this_node == 0) {
-
-    global_part_vars_host.number_of_particles = n_part;
-
-    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(global_part_vars_device),
-                                     &global_part_vars_host,
-                                     sizeof(CUDA_global_part_vars)));
-
-    // if the arrays exists free them to prevent memory leaks
-    particle_forces_host.clear();
-    if (particle_data_host) {
-      cuda_safe_mem(cudaFreeHost(particle_data_host));
-      particle_data_host = nullptr;
-    }
-    if (particle_forces_device) {
-      cudaFree(particle_forces_device);
-      particle_forces_device = nullptr;
-    }
-    if (particle_data_device) {
-      cudaFree(particle_data_device);
-      particle_data_device = nullptr;
-    }
+  particle_forces_host.resize(3 * number_of_particles);
+  resize_or_replace(particle_forces_device, 3 * number_of_particles);
 
 #ifdef ROTATION
-    particle_torques_host.clear();
+  particle_torques_host.resize(3 * number_of_particles);
+  resize_or_replace(particle_torques_device, 3 * number_of_particles);
 #endif
-
-#ifdef ROTATION
-    if (particle_torques_device) {
-      cuda_safe_mem(cudaFree(particle_torques_device));
-      particle_torques_device = nullptr;
-    }
-#endif
-
-    if (global_part_vars_host.number_of_particles) {
-
-      /* pinned memory mode - use special function to get OS-pinned memory*/
-      cuda_safe_mem(cudaHostAlloc((void **)&particle_data_host,
-                                  global_part_vars_host.number_of_particles *
-                                      sizeof(CUDA_particle_data),
-                                  cudaHostAllocWriteCombined));
-      particle_forces_host.resize(3 *
-                                  global_part_vars_host.number_of_particles);
-#if (defined DIPOLES || defined ROTATION)
-      particle_torques_host.resize(3 *
-                                   global_part_vars_host.number_of_particles);
-#endif
-
-      cuda_safe_mem(cudaMalloc((void **)&particle_forces_device,
-                               3 * global_part_vars_host.number_of_particles *
-                                   sizeof(float)));
-#ifdef ROTATION
-      cuda_safe_mem(cudaMalloc((void **)&particle_torques_device,
-                               3 * global_part_vars_host.number_of_particles *
-                                   sizeof(float)));
-#endif
-
-      cuda_safe_mem(cudaMalloc((void **)&particle_data_device,
-                               global_part_vars_host.number_of_particles *
-                                   sizeof(CUDA_particle_data)));
-
-      /* values for the particle kernel */
-      int threads_per_block_particles = 64;
-      int blocks_per_grid_particles_y = 4;
-      int blocks_per_grid_particles_x =
-          (global_part_vars_host.number_of_particles +
-           threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-          (threads_per_block_particles * blocks_per_grid_particles_y);
-      dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x,
-                                           blocks_per_grid_particles_y, 1);
-
-      KERNELCALL(init_particle_force, dim_grid_particles,
-                 threads_per_block_particles, particle_forces_device,
-                 particle_torques_device);
-    }
-  }
 }
 
 /** setup and call particle reallocation from the host
@@ -272,80 +154,66 @@ void gpu_init_particle_comm() {
     }
   }
   global_part_vars_host.communication_enabled = 1;
-  gpu_change_number_of_part_to_comm();
 }
 
-CUDA_particle_data *gpu_get_particle_pointer() { return particle_data_device; }
+Utils::Span<CUDA_particle_data> gpu_get_particle_pointer() {
+  return {raw_data_pointer(particle_data_device), particle_data_device.size()};
+}
 CUDA_global_part_vars *gpu_get_global_particle_vars_pointer_host() {
   return &global_part_vars_host;
 }
-CUDA_global_part_vars *gpu_get_global_particle_vars_pointer() {
-  return global_part_vars_device;
+float *gpu_get_particle_force_pointer() {
+  return raw_data_pointer(particle_forces_device);
 }
-float *gpu_get_particle_force_pointer() { return particle_forces_device; }
 CUDA_energy *gpu_get_energy_pointer() { return energy_device; }
-float *gpu_get_particle_torque_pointer() { return particle_torques_device; }
+float *gpu_get_particle_torque_pointer() {
+  return raw_data_pointer(particle_torques_device);
+}
 
 void copy_part_data_to_gpu(ParticleRange particles) {
-  if (global_part_vars_host.communication_enabled == 1 &&
-      global_part_vars_host.number_of_particles) {
+  if (global_part_vars_host.communication_enabled == 1) {
     cuda_mpi_get_particles(particles, particle_data_host);
 
+    resize_buffers(particle_data_host.size());
+
     /* get espressomd particle values */
-    if (this_node == 0)
-      cudaMemcpyAsync(particle_data_device, particle_data_host,
-                      global_part_vars_host.number_of_particles *
-                          sizeof(CUDA_particle_data),
+    if (this_node == 0) {
+      cudaMemsetAsync(raw_data_pointer(particle_forces_device), 0x0,
+                      byte_size(particle_forces_device), stream[0]);
+#ifdef ROTATION
+      cudaMemsetAsync(raw_data_pointer(particle_torques_device), 0x0,
+                      byte_size(particle_torques_device), stream[0]);
+#endif
+      cudaMemcpyAsync(raw_data_pointer(particle_data_device),
+                      particle_data_host.data(), byte_size(particle_data_host),
                       cudaMemcpyHostToDevice, stream[0]);
+    }
   }
 }
 
 /** setup and call kernel to copy particle forces to host
  */
-void copy_forces_from_GPU(ParticleRange particles) {
-
-  if (global_part_vars_host.communication_enabled == 1 &&
-      global_part_vars_host.number_of_particles) {
-
+void copy_forces_from_GPU(ParticleRange &particles) {
+  if (global_part_vars_host.communication_enabled == 1) {
     /* Copy result from device memory to host memory*/
-    if (this_node == 0) {
-      cuda_safe_mem(cudaMemcpy(
-          &(particle_forces_host[0]), particle_forces_device,
-          3 * global_part_vars_host.number_of_particles * sizeof(float),
-          cudaMemcpyDeviceToHost));
+    if (this_node == 0 && (not particle_forces_device.empty())) {
+      thrust::copy(particle_forces_device.begin(), particle_forces_device.end(),
+                   particle_forces_host.begin());
 #ifdef ROTATION
-      cuda_safe_mem(cudaMemcpy(
-          &(particle_torques_host[0]), particle_torques_device,
-          global_part_vars_host.number_of_particles * 3 * sizeof(float),
-          cudaMemcpyDeviceToHost));
+      thrust::copy(particle_torques_device.begin(),
+                   particle_torques_device.end(),
+                   particle_torques_host.begin());
 #endif
-
-      /* values for the particle kernel */
-      int threads_per_block_particles = 64;
-      int blocks_per_grid_particles_y = 4;
-      int blocks_per_grid_particles_x =
-          (global_part_vars_host.number_of_particles +
-           threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-          (threads_per_block_particles * blocks_per_grid_particles_y);
-      dim3 dim_grid_particles = make_uint3(blocks_per_grid_particles_x,
-                                           blocks_per_grid_particles_y, 1);
-
-      /* reset part forces with zero*/
-
-      KERNELCALL(reset_particle_force, dim_grid_particles,
-                 threads_per_block_particles, particle_forces_device,
-                 particle_torques_device);
-      cudaDeviceSynchronize();
     }
 
-    cuda_mpi_send_forces(particles, particle_forces_host,
-                         particle_torques_host);
+    cuda_mpi_send_forces(
+        particles, {particle_forces_host.data(), particle_forces_host.size()},
+        {particle_torques_host.data(), particle_torques_host.size()});
   }
 }
 
 void clear_energy_on_GPU() {
   if (!global_part_vars_host.communication_enabled)
-    // || !global_part_vars_host.number_of_particles )
     return;
   if (energy_device == nullptr)
     cuda_safe_mem(cudaMalloc((void **)&energy_device, sizeof(CUDA_energy)));
@@ -353,8 +221,7 @@ void clear_energy_on_GPU() {
 }
 
 void copy_energy_from_GPU() {
-  if (!global_part_vars_host.communication_enabled ||
-      !global_part_vars_host.number_of_particles)
+  if (!global_part_vars_host.communication_enabled)
     return;
   cuda_safe_mem(cudaMemcpy(&energy_host, energy_device, sizeof(CUDA_energy),
                            cudaMemcpyDeviceToHost));
@@ -362,13 +229,30 @@ void copy_energy_from_GPU() {
 }
 
 /** @name Generic copy functions from and to device */
-/*@{*/
-void cuda_copy_to_device(void *host_data, void *device_data, size_t n) {
-  cuda_safe_mem(cudaMemcpy(host_data, device_data, n, cudaMemcpyHostToDevice));
+
+void _cuda_safe_mem(cudaError_t CU_err, const char *file, unsigned int line) {
+  if (cudaSuccess != CU_err) {
+    fprintf(stderr, "Cuda Memory error at %s:%u.\n", file, line);
+    printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+    if (CU_err == cudaErrorInvalidValue)
+      fprintf(stderr, "You may have tried to allocate zero memory at %s:%u.\n",
+              file, line);
+    errexit();
+  } else {
+    CU_err = cudaGetLastError();
+    if (CU_err != cudaSuccess) {
+      fprintf(stderr,
+              "Error found during memory operation. Possibly however "
+              "from a failed operation before. %s:%u.\n",
+              file, line);
+      printf("CUDA error: %s\n", cudaGetErrorString(CU_err));
+      if (CU_err == cudaErrorInvalidValue)
+        fprintf(stderr,
+                "You may have tried to allocate zero memory before %s:%u.\n",
+                file, line);
+      errexit();
+    }
+  }
 }
 
-void cuda_copy_to_host(void *host_device, void *device_host, size_t n) {
-  cuda_safe_mem(
-      cudaMemcpy(host_device, device_host, n, cudaMemcpyDeviceToHost));
-}
 /*@}*/

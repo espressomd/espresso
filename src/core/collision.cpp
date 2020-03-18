@@ -27,8 +27,7 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
-#include "rotation.hpp"
+#include "particle_index.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
 #include <utils/mpi/all_compare.hpp>
@@ -66,7 +65,14 @@ Collision_parameters collision_params;
 
 namespace {
 Particle &get_part(int id) {
-  return assert(local_particles[id]), *local_particles[id];
+  auto const p = get_local_particle_data(id);
+
+  if (not p) {
+    throw std::runtime_error("Could not handle collision because particle " +
+                             std::to_string(id) + " was not found.");
+  }
+
+  return *p;
 }
 } // namespace
 
@@ -355,14 +361,13 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // First, fill bond data structure
   const Utils::Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
 
-  local_add_particle_bond(p, bondT);
+  add_bond(p, bondT);
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
 void place_vs_and_relate_to_particle(const int current_vs_pid,
                                      const Utils::Vector3d &pos,
                                      int relate_to) {
-  added_particle(current_vs_pid);
   Particle new_part;
   new_part.p.identity = current_vs_pid;
   new_part.r.p = pos;
@@ -382,18 +387,18 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     // Create bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
     // Only add bond if vs was created on this node
-    if (local_particles[current_vs_pid - 1])
-      local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
+    if (get_local_particle_data(current_vs_pid - 1))
+      add_bond(get_part(current_vs_pid - 1), bondG);
     break;
   }
   case 2: {
     // Create 1st bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
     // Only add bond if vs was created on this node
-    if (local_particles[current_vs_pid - 1])
-      local_add_particle_bond(get_part(current_vs_pid - 1), bondG);
-    if (local_particles[current_vs_pid - 2])
-      local_add_particle_bond(get_part(current_vs_pid - 2), bondG);
+    if (get_local_particle_data(current_vs_pid - 1))
+      add_bond(get_part(current_vs_pid - 1), bondG);
+    if (get_local_particle_data(current_vs_pid - 2))
+      add_bond(get_part(current_vs_pid - 2), bondG);
     break;
   }
   }
@@ -407,9 +412,9 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
   const int bondG[] = {collision_params.bond_vs, vs_pid_plus_one - 1};
 
   if (p1->p.type == collision_params.part_type_after_glueing) {
-    local_add_particle_bond(get_part(p1->p.identity), bondG);
+    add_bond(get_part(p1->p.identity), bondG);
   } else {
-    local_add_particle_bond(get_part(p2->p.identity), bondG);
+    add_bond(get_part(p2->p.identity), bondG);
   }
 }
 
@@ -426,9 +431,7 @@ std::vector<collision_struct> gather_global_collision_queue() {
 static void three_particle_binding_do_search(Cell *basecell, Particle &p1,
                                              Particle &p2) {
   auto handle_cell = [&p1, &p2](Cell *c) {
-    for (int p_id = 0; p_id < c->n; p_id++) {
-      auto &P = c->part[p_id];
-
+    for (auto &P : c->particles()) {
       // Skip collided particles themselves
       if ((P.p.identity == p1.p.identity) || (P.p.identity == p2.p.identity)) {
         continue;
@@ -471,9 +474,9 @@ void three_particle_binding_domain_decomposition(
   for (auto &c : gathered_queue) {
     // If we have both particles, at least as ghosts, Get the corresponding cell
     // indices
-    if ((local_particles[c.pp1]) && (local_particles[c.pp2])) {
-      Particle &p1 = *local_particles[c.pp1];
-      Particle &p2 = *local_particles[c.pp2];
+    if (get_local_particle_data(c.pp1) && get_local_particle_data(c.pp2)) {
+      Particle &p1 = *get_local_particle_data(c.pp1);
+      Particle &p2 = *get_local_particle_data(c.pp2);
       auto cell1 = find_current_cell(p1);
       auto cell2 = find_current_cell(p2);
 
@@ -504,13 +507,13 @@ void handle_collisions() {
   if (bind_centers()) {
     for (auto &c : local_collision_queue) {
       // put the bond to the non-ghost particle; at least one partner always is
-      if (local_particles[c.pp1]->l.ghost) {
+      if (get_local_particle_data(c.pp1)->l.ghost) {
         std::swap(c.pp1, c.pp2);
       }
       int bondG[2];
       bondG[0] = collision_params.bond_centers;
       bondG[1] = c.pp2;
-      local_add_particle_bond(get_part(c.pp1), bondG);
+      add_bond(get_part(c.pp1), bondG);
     }
   }
 
@@ -525,36 +528,31 @@ void handle_collisions() {
     auto gathered_queue = gather_global_collision_queue();
 
     // Sync max_seen_part
-    MPI_Allreduce(MPI_IN_PLACE, &max_seen_particle, 1, MPI_INT, MPI_MAX,
-                  comm_cart);
+    auto const global_max_seen_particle = boost::mpi::all_reduce(
+        comm_cart, get_local_max_seen_particle(), boost::mpi::maximum<int>());
 
-    // Make sure, the local_particles array is long enough
-    realloc_local_particles(max_seen_particle);
-
-    int current_vs_pid = max_seen_particle + 1;
+    int current_vs_pid = global_max_seen_particle + 1;
 
     // Iterate over global collision queue
     for (auto &c : gathered_queue) {
 
       // Get particle pointers
-      Particle *p1 = local_particles[c.pp1];
-      Particle *p2 = local_particles[c.pp2];
+      Particle *p1 = get_local_particle_data(c.pp1);
+      Particle *p2 = get_local_particle_data(c.pp2);
 
       // Only nodes take part in particle creation and binding
       // that see both particles
 
       // If we cannot access both particles, both are ghosts,
-      // ore one is ghost and one is not accessible
+      // or one is ghost and one is not accessible
       // we only increase the counter for the ext id to use based on the
       // number of particles created by other nodes
       if (((!p1 or p1->l.ghost) and (!p2 or p2->l.ghost)) or !p1 or !p2) {
         // Increase local counters
         if (collision_params.mode & COLLISION_MODE_VS) {
-          added_particle(current_vs_pid);
           current_vs_pid++;
         }
         // For glue to surface, we have only one vs
-        added_particle(current_vs_pid);
         current_vs_pid++;
         if (collision_params.mode == COLLISION_MODE_GLUE_TO_SURF) {
           if (p1)
@@ -587,10 +585,8 @@ void handle_collisions() {
                                               p->identity());
               // Particle storage locations may have changed due to
               // added particle
-              p1 = local_particles[c.pp1];
-              p2 = local_particles[c.pp2];
-            } else {
-              added_particle(current_vs_pid);
+              p1 = get_local_particle_data(c.pp1);
+              p2 = get_local_particle_data(c.pp2);
             }
           };
 
@@ -617,8 +613,6 @@ void handle_collisions() {
               collision_params.part_type_to_be_glued) {
             if ((p1->p.type == collision_params.part_type_after_glueing) ||
                 (p2->p.type == collision_params.part_type_after_glueing)) {
-
-              added_particle(current_vs_pid);
               current_vs_pid++;
               continue;
             }
@@ -634,7 +628,7 @@ void handle_collisions() {
             int bondG[2];
             bondG[0] = collision_params.bond_centers;
             bondG[1] = c.pp2;
-            local_add_particle_bond(get_part(c.pp1), bondG);
+            add_bond(get_part(c.pp1), bondG);
           }
 
           // Change type of particle being attached, to make it inert
@@ -651,11 +645,10 @@ void handle_collisions() {
                                             attach_vs_to.identity());
             // Particle storage locations may have changed due to
             // added particle
-            p1 = local_particles[c.pp1];
-            p2 = local_particles[c.pp2];
+            p1 = get_local_particle_data(c.pp1);
+            p2 = get_local_particle_data(c.pp2);
             current_vs_pid++;
           } else { // Just update the books
-            added_particle(current_vs_pid);
             current_vs_pid++;
           }
           glue_to_surface_bind_part_to_vs(p1, p2, current_vs_pid, c);
@@ -665,9 +658,6 @@ void handle_collisions() {
 #ifdef ADDITIONAL_CHECKS
     if (!Utils::Mpi::all_compare(comm_cart, current_vs_pid)) {
       throw std::runtime_error("Nodes disagree about current_vs_pid");
-    }
-    if (!Utils::Mpi::all_compare(comm_cart, max_seen_particle)) {
-      throw std::runtime_error("Nodes disagree about max_seen_particle");
     }
 #endif
 

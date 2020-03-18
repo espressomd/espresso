@@ -19,6 +19,9 @@
 #
 
 cmake_minimum_required(VERSION 3.10)
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.13)
+    cmake_policy(SET CMP0076 NEW)
+endif()
 include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
@@ -122,147 +125,14 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 # Libraries
 #
 
-if(WITH_CUDA)
-  if(EXISTS "$ENV{NVCC}" AND NOT CUDA_NVCC_EXECUTABLE)
-    set(CUDA_NVCC_EXECUTABLE $ENV{NVCC} CACHE FILEPATH "Path to CUDA compiler.")
-  endif()
-  if(CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
-    message(STATUS "Found CUDA-capable host compiler: ${CUDA_NVCC_EXECUTABLE}")
-    set(CUDA 1)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-       OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
-      execute_process(COMMAND ${CUDA_NVCC_EXECUTABLE} ${CMAKE_CXX_FLAGS}
-                              --verbose
-                      ERROR_VARIABLE CUDA_DIR_STRING)
-      string(REGEX
-             REPLACE "^.*Found CUDA installation: ([^,]+).*\$"
-                     "\\1"
-                     CUDA_DIR
-                     "${CUDA_DIR_STRING}")
-      string(REGEX
-             REPLACE "^.*Found CUDA installation: .* version ([0-9]+).*\$"
-                     "\\1"
-                     CUDA_VERSION
-                     "${CUDA_DIR_STRING}")
-      message(STATUS "Found CUDA version: ${CUDA_VERSION}")
-      message(STATUS "Found CUDA installation: ${CUDA_DIR}")
-      if(CUDA_VERSION VERSION_LESS 7.0)
-        message(FATAL_ERROR "CUDA version does not match requirements.")
-      endif()
-    else()
-        set(CUDA_DIR "/usr/local/cuda")
-    endif()
-    find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
-    find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
-
-    function(add_gpu_library)
-      set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
-      set(oneValueArgs)
-      set(multiValueArgs)
-      cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
-      list(REMOVE_AT ARG_UNPARSED_ARGUMENTS 0)
-      set_source_files_properties(${ARG_UNPARSED_ARGUMENTS} PROPERTIES LANGUAGE "CXX" COMPILE_FLAGS "${CUDA_NVCC_FLAGS}")
-      add_library(${ARGV})
-      set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE "CXX")
-      target_link_libraries(${ARGV0} PRIVATE ${CUDA_LIBRARY} ${CUDART_LIBRARY})
-      target_link_libraries(${ARGV0} PRIVATE ${CUFFT_LIBRARY})
-
-      foreach(file ${ARG_UNPARSED_ARGUMENTS})
-        if(${file} MATCHES "\\.cu$")
-                if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 3.8.9)
-                  set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--cuda-gpu-arch=sm_30 --cuda-gpu-arch=sm_52")
-                else()
-                  set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--cuda-gpu-arch=sm_30")
-                endif()
-        endif()
-      endforeach()
-    endfunction()
-  else()
-    list(APPEND CMAKE_MODULE_PATH "/opt/rocm/hip/cmake")
-    find_package(HIP 1.5.18494 QUIET MODULE)
-    if(HIP_FOUND)
-      set(HCC_PATH "${HIP_ROOT_DIR}")
-      find_package(HIP MODULE)
-      message(STATUS "Found HIP compiler: ${HIP_HIPCC_EXECUTABLE}")
-      set(CUDA 1)
-      set(HIP 1)
-      list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++14")
-      list(APPEND HIP_HCC_FLAGS "-pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments")
-      if(WARNINGS_ARE_ERRORS)
-        list(APPEND HIP_HCC_FLAGS "-Werror")
-      endif()
-
-      find_library(ROCFFT_LIB name "rocfft" PATHS "${HIP_ROOT_DIR}/lib")
-
-      function(add_gpu_library)
-        hip_add_library(${ARGV})
-        set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE HIP)
-        target_link_libraries(${ARGV0} PRIVATE "${ROCFFT_LIB}")
-      endfunction()
-    else()
-      find_package(CUDA 9.0)
-      if(CUDA_FOUND)
-        if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
-          get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
-          get_filename_component(NVCC_EXECUTABLE_DIRNAME "${NVCC_EXECUTABLE_DIRNAME}" DIRECTORY)
-          message(WARNING "Your nvcc (${CUDA_NVCC_EXECUTABLE}) does not appear to match your CUDA libraries (in ${CUDA_TOOLKIT_ROOT_DIR}). While Espresso will still compile, you might get unexpected crashes. Please point CUDA_TOOLKIT_ROOT_DIR to your CUDA toolkit path, e.g. by adding -DCUDA_TOOLKIT_ROOT_DIR=${NVCC_EXECUTABLE_DIRNAME} to your cmake command.")
-        endif()
-        set(CUDA 1)
-
-        set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
-
-        set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
-        set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -DNDEBUG")
-        set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -Os -DNDEBUG")
-        set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -g -O2")
-        set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52")
-        list(APPEND CUDA_NVCC_FLAGS "-std=c++14")
-        SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
-
-        if (CMAKE_OSX_SYSROOT)
-          set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -isysroot -Xcompiler ${CMAKE_OSX_SYSROOT}")
-        endif()
-
-        function(add_gpu_library)
-          cuda_add_library(${ARGV})
-          set_property(TARGET ${ARGV0} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-          target_link_libraries(${ARGV0} PRIVATE ${CUDA_CUFFT_LIBRARIES})
-        endfunction()
-
-      endif(CUDA_FOUND)
-    endif()
-  endif()
-endif(WITH_CUDA)
-
 find_package(PythonInterp 3.5 REQUIRED)
 
 if(WITH_PYTHON)
   find_package(Cython 0.26 REQUIRED)
-  execute_process(
-    COMMAND ${PYTHON_EXECUTABLE} -c
-            "import distutils.sysconfig as cg; print(cg.get_python_inc())"
-    OUTPUT_VARIABLE PYTHON_INCLUDE_DIRS
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  find_package(PythonHeaders REQUIRED)
   find_package(NumPy REQUIRED)
-  if(NOT PYTHON_INSTDIR)
-    execute_process(
-      COMMAND
-        ${PYTHON_EXECUTABLE} -c
-        "import distutils.sysconfig as cg; print(cg.get_python_lib(prefix='${CMAKE_INSTALL_PREFIX}', plat_specific=True, standard_lib=False).replace('${CMAKE_INSTALL_PREFIX}/', '', 1))"
-      OUTPUT_VARIABLE PYTHON_INSTDIR
-      OUTPUT_STRIP_TRAILING_WHITESPACE)
-  endif(NOT PYTHON_INSTDIR)
-
-  set(CYTHON_FLAGS "-3"
-      CACHE STRING "Flags used by the Cython compiler during all build types.")
-
-  if(WARNINGS_ARE_ERRORS)
-    set(CYTHON_FLAGS "--warning-errors;${CYTHON_FLAGS}")
-  endif()
-
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
 endif(WITH_PYTHON)
-
 
 find_package(FFTW3)
 if(FFTW3_FOUND)
@@ -416,14 +286,16 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# CUDA compiler
+if(WITH_CUDA)
+  find_package(CUDACompiler REQUIRED)
+endif(WITH_CUDA)
+
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
 if(WARNINGS_ARE_ERRORS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-  if(NOT CUDA_NVCC_EXECUTABLE STREQUAL CMAKE_CXX_COMPILER)
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler -Werror")
-  endif()
 endif(WARNINGS_ARE_ERRORS)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
@@ -493,28 +365,8 @@ endif()
 #######################################################################
 
 if(WITH_CLANG_TIDY)
-  string(REGEX
-          REPLACE "^([1-9]+)\\.[0-9]+.*$"
-          "\\1"
-          CLANG_MAJOR_VERSION
-          "${CMAKE_CXX_COMPILER_VERSION}")
-  string(REGEX
-         REPLACE "^[1-9]+\\.([0-9]+).*$"
-                 "\\1"
-                 CLANG_MINOR_VERSION
-                 "${CMAKE_CXX_COMPILER_VERSION}")
-  find_program(CLANG_TIDY_EXE
-               NAMES "clang-tidy-${CLANG_MAJOR_VERSION}.${CLANG_MINOR_VERSION}" "clang-tidy-${CLANG_MAJOR_VERSION}" "clang-tidy"
-               DOC "Path to clang-tidy executable")
-  if(NOT CLANG_TIDY_EXE)
-    message(STATUS "clang-tidy not found.")
-  else()
-    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
-    set(
-      CMAKE_CXX_CLANG_TIDY
-      "${CLANG_TIDY_EXE}"
-    )
-  endif()
+  find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
 endif()
 
 if(WITH_TESTS)

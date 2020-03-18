@@ -108,8 +108,8 @@
  *                                       and pressure analysis
  *
  *  * In bonded_interaction_data.cpp:
- *    - in function @ref recalc_maximal_cutoff_bonded(): add a case for the new
- *      interaction which makes sure that @ref max_cut is as large as
+ *    - in function @ref maximal_cutoff_bonded(): add a case for the new
+ *      interaction which makes sure that the cutoff is as large as
  *      the interaction range of the new interaction. This is only relevant to
  *      pairwise bonds and dihedral bonds. The range can be calculated by a
  *      formula, so it is not strictly necessary that the maximal interaction

@@ -95,8 +95,6 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4

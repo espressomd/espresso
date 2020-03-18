@@ -1,2 +1,2 @@
-add_subdirectory(writer)
 add_subdirectory(mpiio)
+add_subdirectory(writer)

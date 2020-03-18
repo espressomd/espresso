@@ -25,7 +25,6 @@ BOX_L = 50.
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeDistance(ut.TestCase):
     system = espressomd.System(box_l=3 * [BOX_L])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
 
     def setUp(self):

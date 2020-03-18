@@ -24,7 +24,6 @@ import espressomd.lb as lb
 class LBEHTest(object):
     from espressomd import lb
     s = espressomd.System(box_l=[6.0, 6.0, 6.0])
-    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
     def test(self):
         self.params = {'time_step': 0.01,

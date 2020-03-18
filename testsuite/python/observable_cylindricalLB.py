@@ -143,11 +143,7 @@ class CylindricalLBObservableCommon:
             local_params['axis'] = [0.0, 0.0, 1.0]
         p = espressomd.observables.CylindricalLBFluxDensityProfileAtParticlePositions(
             **local_params)
-        core_hist = np.array(p.calculate()).reshape(
-            self.params['n_r_bins'],
-            self.params['n_phi_bins'],
-            self.params['n_z_bins'],
-            3)
+        core_hist = p.calculate()
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
@@ -168,7 +164,7 @@ class CylindricalLBObservableCommon:
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(p.n_values(), len(np_hist.flatten()) * 3)
+        self.assertEqual(np.prod(p.shape()), len(np_hist.flatten()) * 3)
 
     def LB_velocity_profile_at_particle_positions_test(self):
         self.set_fluid_velocity()
@@ -183,11 +179,7 @@ class CylindricalLBObservableCommon:
             local_params['axis'] = [0.0, 0.0, 1.0]
         p = espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions(
             **local_params)
-        core_hist = np.array(p.calculate()).reshape(
-            self.params['n_r_bins'],
-            self.params['n_phi_bins'],
-            self.params['n_z_bins'],
-            3)
+        core_hist = p.calculate()
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
@@ -210,7 +202,7 @@ class CylindricalLBObservableCommon:
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(p.n_values(), len(np_hist.flatten()) * 3)
+        self.assertEqual(np.prod(p.shape()), len(np_hist.flatten()) * 3)
 
     def perform_tests(self):
         self.LB_fluxdensity_profile_test()

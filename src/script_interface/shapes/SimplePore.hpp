@@ -21,7 +21,7 @@
 #define SCRIPT_INTERFACE_SHAPES_SIMPLE_PORE_HPP
 
 #include "Shape.hpp"
-#include "core/shapes/SimplePore.hpp"
+#include <shapes/SimplePore.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

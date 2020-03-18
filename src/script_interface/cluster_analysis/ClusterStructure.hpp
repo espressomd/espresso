@@ -22,9 +22,9 @@
 #ifndef SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 #define SCRIPT_INTERFACE_CLUSTER_ANALYSIS_CLUSTER_STRUCTURE_HPP
 
-#include "../pair_criteria/pair_criteria.hpp"
-#include "ScriptInterface.hpp"
 #include "core/cluster_analysis/ClusterStructure.hpp"
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/pair_criteria/pair_criteria.hpp"
 
 #include <utils/Factory.hpp>
 

@@ -60,13 +60,7 @@ class ThermoTest(ut.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # Handle a random generator seeding
-        seed1 = 15
-        np.random.seed(seed1)
-        seed2 = 42
-        # The Espresso system configuration
-        cls.system.seed = [
-            s * seed2 for s in range(cls.system.cell_system.get_state()["n_nodes"])]
+        np.random.seed(seed=15)
         cls.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
         cls.system.cell_system.skin = 5.0
 

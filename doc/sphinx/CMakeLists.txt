@@ -73,7 +73,6 @@ if(SPHINX_FOUND)
         COMMAND
         ${SPHINX_API_DOC_EXE}
             -f
-            -P
             -o ${SPHINX_BASE}
             ${SPHINX_PYTHON_DIR}
             ${EXCLUDE}

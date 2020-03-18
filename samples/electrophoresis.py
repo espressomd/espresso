@@ -76,8 +76,8 @@ system.bonded_inter.add(angle_harmonic_bond)
 
 # create monomer beads and bonds
 ##########################################################################
-init_polymer_pos = espressomd.polymer.positions(n_polymers=1, beads_per_chain=N_MONOMERS, bond_length=2.0,
-                                                seed=2, bond_angle=np.pi, min_distance=1.8, start_positions=np.array([system.box_l / 2.0]))
+init_polymer_pos = espressomd.polymer.linear_polymer_positions(n_polymers=1, beads_per_chain=N_MONOMERS, bond_length=2.0,
+                                                               seed=2, bond_angle=np.pi, min_distance=1.8, start_positions=np.array([system.box_l / 2.0]))
 
 system.part.add(pos=init_polymer_pos[0], q=-np.ones(N_MONOMERS))
 

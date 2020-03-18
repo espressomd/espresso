@@ -18,7 +18,6 @@
  */
 #include <algorithm>
 #include <functional>
-#include <iostream>
 #include <vector>
 
 #define BOOST_TEST_MODULE link_cell test
