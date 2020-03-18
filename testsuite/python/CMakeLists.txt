@@ -118,13 +118,13 @@ python_test(FILE langevin_thermostat.py MAX_NUM_PROC 1)
 python_test(FILE brownian_dynamics.py MAX_NUM_PROC 1)
 python_test(FILE nsquare.py MAX_NUM_PROC 4)
 python_test(FILE virtual_sites_relative.py MAX_NUM_PROC 2)
-#python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 2 LABELS gpu) TODO WALBERLA 
+#python_test(FILE virtual_sites_tracers_walberla.py MAX_NUM_PROC 1 LABELS gpu) TODO WALBERLA 
 python_test(FILE domain_decomposition.py MAX_NUM_PROC 4)
 python_test(FILE integrator_npt.py MAX_NUM_PROC 4)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1 LABELS long)
-python_test(FILE lb.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE lb_walberla.py MAX_NUM_PROC 2)
+python_test(FILE lb.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE lb_walberla.py MAX_NUM_PROC 1)
 python_test(FILE force_cap.py MAX_NUM_PROC 2)
 python_test(FILE dpd.py MAX_NUM_PROC 4)
 python_test(FILE hat.py MAX_NUM_PROC 4)
@@ -151,10 +151,10 @@ python_test(FILE wang_landau_reaction_ensemble.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE array_properties.py MAX_NUM_PROC 4)
 python_test(FILE analyze_distribution.py MAX_NUM_PROC 1)
 python_test(FILE observable_profile.py MAX_NUM_PROC 4)
-python_test(FILE observable_profileLB.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE observable_profileLB.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE rotate_system.py MAX_NUM_PROC 4)
 python_test(FILE random_pairs.py MAX_NUM_PROC 4)
-python_test(FILE lb_electrohydrodynamics.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE lb_electrohydrodynamics.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE cluster_analysis.py MAX_NUM_PROC 4)
 python_test(FILE pair_criteria.py MAX_NUM_PROC 4)
 python_test(FILE actor.py MAX_NUM_PROC 1)
@@ -163,20 +163,20 @@ python_test(FILE thermalized_bond.py MAX_NUM_PROC 4)
 python_test(FILE thole.py MAX_NUM_PROC 4)
 #python_test(FILE lb_boundary_velocity.py MAX_NUM_PROC 1) # WALBERLA TODO
 python_test(FILE lb_boundary_volume_force.py MAX_NUM_PROC 1) # Walberla todo
-python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 2 LABELS gpu)
-python_test(FILE lb_poiseuille.py MAX_NUM_PROC 2 LABELS gpu)
-#python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 2 LABELS gpu) WALBERLA TODO
-python_test(FILE lb_interpolation.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE lb_thermo_virtual.py MAX_NUM_PROC 1 LABELS gpu)
+python_test(FILE lb_poiseuille.py MAX_NUM_PROC 1 LABELS gpu)
+#python_test(FILE lb_poiseuille_cylinder.py MAX_NUM_PROC 1 LABELS gpu) WALBERLA TODO
+python_test(FILE lb_interpolation.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE analyze_gyration_tensor.py MAX_NUM_PROC 1)
 python_test(FILE oif_volume_conservation.py MAX_NUM_PROC 2)
 python_test(FILE simple_pore.py MAX_NUM_PROC 1)
 python_test(FILE field_test.py MAX_NUM_PROC 1)
-python_test(FILE lb_boundary.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE lb_boundary.py MAX_NUM_PROC 1 LABELS gpu)
 # python_test(FILE lb_streaming.py MAX_NUM_PROC 4 LABELS gpu) TODO WALBERLA
-python_test(FILE lb_shear.py MAX_NUM_PROC 2 LABELS gpu)
-#python_test(FILE lb_thermostat.py MAX_NUM_PROC 2 LABELS gpu) TODO WALBERLA
+python_test(FILE lb_shear.py MAX_NUM_PROC 1 LABELS gpu)
+#python_test(FILE lb_thermostat.py MAX_NUM_PROC 1 LABELS gpu) TODO WALBERLA
 # python_test(FILE lb_buoyancy_force.py MAX_NUM_PROC 1 LABELS gpu) # WALBERLA TODO
-#python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 2 LABELS gpu) WALBERLA TODO
+#python_test(FILE lb_momentum_conservation.py MAX_NUM_PROC 1 LABELS gpu) WALBERLA TODO
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py MAX_NUM_PROC 1)
 #python_test(FILE lb_density.py MAX_NUM_PROC 2) # TODO WALBERLA
@@ -187,7 +187,7 @@ python_test(FILE features.py MAX_NUM_PROC 1)
 python_test(FILE galilei.py MAX_NUM_PROC 32)
 python_test(FILE time_series.py MAX_NUM_PROC 1)
 python_test(FILE linear_momentum.py)
-python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 LABELS gpu)
+python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 1 LABELS gpu)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2 LABELS gpu)
 python_test(FILE elc.py MAX_NUM_PROC 2)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
