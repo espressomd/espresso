@@ -36,13 +36,3 @@ cdef bool skin_set
 cdef extern from "particle_data.hpp":
     int init_type_map(int type) except +
     int number_of_particles_with_type(int type) except +
-
-cdef extern from "PartCfg.hpp":
-    cppclass PartCfg:
-        pass
-
-cdef extern from "partCfg_global.hpp":
-    PartCfg & partCfg()
-
-cdef extern from "statistics.hpp":
-    cdef double distto(PartCfg &, const Vector3d & pos, int pid)
