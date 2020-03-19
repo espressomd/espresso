@@ -260,32 +260,13 @@ protected:
   boost::optional<BlockAndCell>
   get_block_and_cell(const Utils::Vector3i &node,
                      bool consider_ghost_layers) const {
-    Utils::Vector3i f_node;
-    for (int i = 0; i < 3; i++) {
-      f_node[i] = (node[i] + m_grid_dimensions[i]) % m_grid_dimensions[i];
-    }
     // Get block and local cell
-    Cell global_cell{uint_c(f_node[0]), uint_c(f_node[1]), uint_c(f_node[2])};
+    Cell global_cell{uint_c(node[0]), uint_c(node[1]), uint_c(node[2])};
     auto block = m_blocks->getBlock(global_cell, 0);
     // Return if we don't have the cell
     if (consider_ghost_layers and !block) {
-      global_cell = Cell({uint_c(node[0]), uint_c(node[1]), uint_c(node[2])});
       // Try to find a block which has the cell as ghost layer
       block = get_block_extended(node);
-
-      if (!block) {
-        auto re_folded_nodes = get_folded_positions_vector(f_node);
-
-        for (auto re_folded_node : re_folded_nodes) {
-          block = get_block_extended(re_folded_node);
-          if (block) {
-            global_cell =
-                Cell({uint_c(re_folded_node[0]), uint_c(re_folded_node[1]),
-                      uint_c(re_folded_node[2])});
-            break;
-          }
-        }
-      }
     }
     if (!block)
       return {boost::none};
@@ -303,25 +284,7 @@ protected:
         m_blocks->getBlock(real_c(pos[0]), real_c(pos[1]), real_c(pos[2]));
     if (consider_ghost_layers and !block) {
       block = get_block_extended(pos);
-      if (!block) {
-        Utils::Vector3d f_pos = pos;
-        for (int i = 0; i < 3; i++) {
-          if (f_pos[i] < 0)
-            f_pos[i] += m_grid_dimensions[i];
-          else if (f_pos[i] > m_grid_dimensions[i])
-            f_pos[i] -= m_grid_dimensions[i];
-        }
-
-        auto re_folded_positions = get_folded_positions_vector(f_pos);
-        for (auto re_folded_pos : re_folded_positions) {
-          block = get_block_extended(re_folded_pos);
-          if (block) {
-            break;
-          }
-        }
-      }
     }
-
     return block;
   };
 
@@ -514,16 +477,21 @@ public:
       return {boost::none};
     Utils::Vector3d v{0.0, 0.0, 0.0};
     interpolate_bspline_at_pos(
-        pos, [this, &v](const std::array<int, 3> node, double weight) {
-          auto const bc = get_block_and_cell(to_vector3i(node), true);
-          if (bc) {
-            auto const &vel_adaptor =
-                (*bc).block->template getData<VelocityAdaptor>(
-                    m_velocity_adaptor_id);
-            v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
-          } else {
-            printf("Node %d %d %d\n", node[0], node[1], node[2]);
-            throw std::runtime_error("Access to LB velocity field failed.");
+        pos, [this, &v,pos](const std::array<int, 3> node, double weight) {
+      // Nodes with zero weight might not be accessible, because they can be
+      // outside ghost layers
+      if (weight != 0) {
+        auto const bc = get_block_and_cell(to_vector3i(node), true);
+      if (bc) {
+        auto const &vel_adaptor =
+            (*bc).block->template getData<VelocityAdaptor>(
+                m_velocity_adaptor_id);
+        v += to_vector3d(vel_adaptor->get((*bc).cell)) * weight;
+      } else {
+        printf("Pos: %g %g %g, Node %d %d %d\n", pos[0], pos[1], pos[2],
+               node[0], node[1], node[2]);
+        throw std::runtime_error("Access to LB velocity field failed.");
+      }
           }
         });
     return {v};

@@ -55,6 +55,9 @@
 #ifdef CUDA
 #define LB_BOUNDARIES_GPU
 #endif
+#define LB_WALBERLA
+
+
 
 // Electrokinetics
 #ifdef CUDA
