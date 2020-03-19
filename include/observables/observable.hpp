@@ -1,6 +1,7 @@
 #ifndef INCLUDE_OBSERVABLES_OBSERVABLE_HPP
 #define INCLUDE_OBSERVABLES_OBSERVABLE_HPP
 
+#include "algorithms.hpp"
 #include "properties.hpp"
 
 namespace Observables {
@@ -28,8 +29,8 @@ template <class Left, class Right> struct Product : Left, Right {
 };
 
 using Momentum = Product<Mass, Velocity>;
-template <class Observable> using Flux = Product<Observable, Velocity>;
-using ElectricCurrent = Flux<Charge>;
+template<class ParticleRange>
+using AverageMomentum = Average<ParticleRange, Momentum>;
 } // namespace Observables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP

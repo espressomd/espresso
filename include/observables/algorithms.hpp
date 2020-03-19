@@ -5,16 +5,22 @@
 
 namespace Observables {
 namespace detail {
+struct One {
+  template<class Particle>
+  auto operator()(Particle const &p) {
+    return 1;
+  }
+};
+
+template <class ParticleRange, class ValueOp, class WeightOp>
 struct WeightedSum {
-  template <class ParticleRange, class ValueOp, class WeightOp>
-  auto operator()(ParticleRange const &particles, ValueOp value_op,
-                  WeightOp weight_op) {
+  auto operator()(ParticleRange const &particles) {
     using particle_type = typename ParticleRange::value_type;
-    using value_op_type = decltype(value_op(std::declval<particle_type>()));
-    using weight_op_type = decltype(weight_op(std::declval<particle_type>()));
-    auto func = [&value_op, &weight_op](auto sum, auto const &p) {
-      auto const w = weight_op(p);
-      return std::make_pair(sum.first + value_op(p) * w, sum.second + w);
+    using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
+    using weight_op_type = decltype(WeightOp{}(std::declval<particle_type>()));
+    auto func = [](auto sum, auto const &p) {
+      auto const w = WeightOp{}(p);
+      return std::make_pair(sum.first + ValueOp{}(p) * w, sum.second + w);
     };
 
     return std::accumulate(std::begin(particles), std::end(particles),
@@ -23,33 +29,28 @@ struct WeightedSum {
 };
 } // namespace detail
 
+template <class ParticleRange, class ValueOp, class WeightOp>
 struct WeightedSum {
-  template <class ParticleRange, class ValueOp, class WeightOp>
-  auto operator()(ParticleRange const &particles, ValueOp &&value_op,
-                  WeightOp &&weight_op) {
-    return detail::WeightedSum()(particles, std::forward<ValueOp>(value_op),
-                                 std::forward<WeightOp>(weight_op))
+  auto operator()(ParticleRange const &particles) {
+    return detail::WeightedSum<ParticleRange, ValueOp, WeightOp>()(particles)
         .first;
   }
 };
 
+template <class ParticleRange, class ValueOp, class WeightOp>
 struct WeightedAverage {
-  template <class ParticleRange, class ValueOp, class WeightOp>
-  auto operator()(ParticleRange const &particles, ValueOp &&value_op,
-                  WeightOp &&weight_op) {
+  auto operator()(ParticleRange const &particles) {
 
     auto const ws =
-        detail::WeightedSum()(particles, std::forward<ValueOp>(value_op),
-                              std::forward<WeightOp>(weight_op));
+        detail::WeightedSum<ParticleRange, ValueOp, WeightOp>()(particles);
     return ws.first / ws.second;
   }
 };
 
+template <class ParticleRange, class ValueOp>
 struct Average {
-  template <class ParticleRange, class ValueOp>
-  auto operator()(ParticleRange const &particles, ValueOp &&value_op) {
-    return WeightedAverage()(particles, value_op,
-                             [](auto const &) { return 1; });
+  auto operator()(ParticleRange const &particles) {
+    return WeightedAverage<ParticleRange, ValueOp, detail::One>()(particles);
   }
 };
 } // namespace Observables
