@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE observables_test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
+#include <vector>
 
 #include <observables/observable.hpp>
 
@@ -28,4 +29,22 @@ BOOST_AUTO_TEST_CASE(obs) {
   using namespace Observables;
   Testing::Particle p;
   BOOST_CHECK_EQUAL(Momentum{}(p), Mass{}(p)*Velocity{}(p));
+  std::vector<Testing::Particle> parts{p, Testing::Particle{}};
+  parts[1].mass = 5.;
+  {
+    auto const res = AverageMomentum<decltype(parts)>{}(parts);
+    BOOST_CHECK(res == 0.5 * (Momentum{}(parts[0]) + Momentum{}(parts[1])));
+  }
+  {
+    auto const res = CenterOfMass<decltype(parts)>{}(parts);
+    BOOST_CHECK(res == (Mass{}(parts[0]) * Position{}(parts[0]) +
+                        Mass{}(parts[1]) * Position{}(parts[1])) /
+                           (Mass{}(parts[0]) + Mass{}(parts[1])));
+  }
+  {
+    auto const res = CenterOfMassVelocity<decltype(parts)>{}(parts);
+    BOOST_CHECK(res == (Mass{}(parts[0]) * Velocity{}(parts[0]) +
+                        Mass{}(parts[1]) * Velocity{}(parts[1])) /
+                           (Mass{}(parts[0]) + Mass{}(parts[1])));
+  }
 }

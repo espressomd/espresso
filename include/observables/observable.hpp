@@ -29,8 +29,12 @@ template <class Left, class Right> struct Product : Left, Right {
 };
 
 using Momentum = Product<Mass, Velocity>;
-template<class ParticleRange>
+template <class ParticleRange>
 using AverageMomentum = Average<ParticleRange, Momentum>;
+template <class ParticleRange>
+using CenterOfMass = WeightedAverage<ParticleRange, Position, Mass>;
+template <class ParticleRange>
+using CenterOfMassVelocity = WeightedAverage<ParticleRange, Velocity, Mass>;
 } // namespace Observables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP

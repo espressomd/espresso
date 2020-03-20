@@ -6,10 +6,7 @@
 namespace Observables {
 namespace detail {
 struct One {
-  template<class Particle>
-  auto operator()(Particle const &p) {
-    return 1;
-  }
+  template <class Particle> auto operator()(Particle const &p) { return 1; }
 };
 
 template <class ParticleRange, class ValueOp, class WeightOp>
@@ -20,7 +17,7 @@ struct WeightedSum {
     using weight_op_type = decltype(WeightOp{}(std::declval<particle_type>()));
     auto func = [](auto sum, auto const &p) {
       auto const w = WeightOp{}(p);
-      return std::make_pair(sum.first + ValueOp{}(p) * w, sum.second + w);
+      return std::make_pair(sum.first + ValueOp{}(p)*w, sum.second + w);
     };
 
     return std::accumulate(std::begin(particles), std::end(particles),
@@ -47,8 +44,7 @@ struct WeightedAverage {
   }
 };
 
-template <class ParticleRange, class ValueOp>
-struct Average {
+template <class ParticleRange, class ValueOp> struct Average {
   auto operator()(ParticleRange const &particles) {
     return WeightedAverage<ParticleRange, ValueOp, detail::One>()(particles);
   }
