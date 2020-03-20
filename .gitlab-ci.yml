@@ -357,11 +357,6 @@ ubuntu:i386:
 ubuntu:ppc64le:
   <<: *arch_definition
 
-ubuntu:s390x:
-  <<: *arch_definition
-  variables:
-    LD_BIND_NOW: none
-
 ### Builds with OS X
 
 osx:
