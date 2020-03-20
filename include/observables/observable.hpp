@@ -37,6 +37,7 @@ template <class ParticleRange>
 using CenterOfMassVelocity = WeightedAverage<ParticleRange, Velocity, Mass>;
 template <class ParticleRange>
 using Current = WeightedSum<ParticleRange, Velocity, Charge>;
+template <class ParticleRange> using TotalForce = Sum<ParticleRange, Force>;
 } // namespace Observables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP

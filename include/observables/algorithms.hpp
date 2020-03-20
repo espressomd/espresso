@@ -34,6 +34,13 @@ struct WeightedSum {
   }
 };
 
+template <class ParticleRange, class ValueOp> struct Sum {
+  auto operator()(ParticleRange const &particles) {
+    return detail::WeightedSum<ParticleRange, ValueOp, detail::One>()(particles)
+        .first;
+  }
+};
+
 template <class ParticleRange, class ValueOp, class WeightOp>
 struct WeightedAverage {
   auto operator()(ParticleRange const &particles) {

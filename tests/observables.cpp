@@ -48,12 +48,18 @@ BOOST_AUTO_TEST_CASE(obs) {
                            (Mass{}(parts[0]) + Mass{}(parts[1])));
   }
   {
-    auto const res = Current<decltype(parts)>{}(parts);
     parts[0].charge = -1.0;
     parts[1].charge = 1.0;
+    auto const res = Current<decltype(parts)>{}(parts);
     BOOST_CHECK(res == std::accumulate(parts.begin(), parts.end(), 0.0,
                                        [](auto const &val, auto const &p) {
                                          return val + Velocity{}(p)*Charge{}(p);
                                        }));
+  }
+  {
+    parts[0].m_force = 1.3;
+    parts[1].m_force = 1.8;
+    auto const res = TotalForce<decltype(parts)>{}(parts);
+    BOOST_CHECK(res == Force{}(parts[0]) + Force{}(parts[1]));
   }
 }

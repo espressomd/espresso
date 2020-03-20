@@ -42,4 +42,8 @@ BOOST_AUTO_TEST_CASE(algorithms) {
     BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0) /
                            values.size());
   }
+  {
+    auto const res = Sum<decltype(values), Testing::Identity>{}(values);
+    BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0));
+  }
 }
