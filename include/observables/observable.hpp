@@ -29,17 +29,12 @@ template <class Left, class Right> struct Product : Left, Right {
 };
 
 using Momentum = Product<Mass, Velocity>;
-template <class ParticleRange>
-using AverageMomentum = Average<ParticleRange, Momentum>;
-template <class ParticleRange>
-using CenterOfMassPosition = WeightedAverage<ParticleRange, Position, Mass>;
-template <class ParticleRange>
-using CenterOfMassVelocity = WeightedAverage<ParticleRange, Velocity, Mass>;
-template <class ParticleRange>
-using Current = WeightedSum<ParticleRange, Velocity, Charge>;
-template <class ParticleRange> using TotalForce = Sum<ParticleRange, Force>;
-template <class ParticleRange>
-using Positions = Collect<ParticleRange, Position>;
+using AverageMomentum = Average<Momentum>;
+using CenterOfMassPosition = WeightedAverage<Position, Mass>;
+using CenterOfMassVelocity = WeightedAverage<Velocity, Mass>;
+using Current = WeightedSum<Velocity, Charge>;
+using TotalForce = Sum<Force>;
+using Positions = Collect<Position>;
 } // namespace Observables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP

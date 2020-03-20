@@ -22,34 +22,30 @@ struct PlusOne {
 BOOST_AUTO_TEST_CASE(algorithms) {
   std::vector<int> values{1, 2, 3, 4};
   {
-    auto const res =
-        WeightedAverage<decltype(values), Testing::Identity, Testing::One>()(
-            values);
+    auto const res = WeightedAverage<Testing::Identity, Testing::One>()(values);
     BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0) /
                            values.size());
   }
   {
-    auto const res = WeightedAverage<decltype(values), Testing::Identity,
-                                     Testing::PlusOne>()(values);
+    auto const res =
+        WeightedAverage<Testing::Identity, Testing::PlusOne>()(values);
     BOOST_CHECK(res == (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5) / 14);
     auto const res2 =
-        WeightedSum<decltype(values), Testing::Identity, Testing::PlusOne>()(
-            values);
+        WeightedSum<Testing::Identity, Testing::PlusOne>()(values);
     BOOST_CHECK(res2 == (1 * 2 + 2 * 3 + 3 * 4 + 4 * 5));
   }
   {
-    auto const res = Average<decltype(values), Testing::Identity>()(values);
+    auto const res = Average<Testing::Identity>()(values);
     BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0) /
                            values.size());
   }
   {
-    auto const res = Sum<decltype(values), Testing::Identity>{}(values);
+    auto const res = Sum<Testing::Identity>{}(values);
     BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0));
   }
   {
     std::vector<int> res;
-    Collect<decltype(values), Testing::Identity>{}(values,
-                                                   std::back_inserter(res));
+    Collect<Testing::Identity>{}(values, std::back_inserter(res));
     BOOST_CHECK(res == values);
   }
 }

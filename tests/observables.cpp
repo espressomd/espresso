@@ -32,17 +32,17 @@ BOOST_AUTO_TEST_CASE(obs) {
   std::vector<Testing::Particle> parts{p, Testing::Particle{}};
   parts[1].mass = 5.;
   {
-    auto const res = AverageMomentum<decltype(parts)>{}(parts);
+    auto const res = AverageMomentum{}(parts);
     BOOST_CHECK(res == 0.5 * (Momentum{}(parts[0]) + Momentum{}(parts[1])));
   }
   {
-    auto const res = CenterOfMassPosition<decltype(parts)>{}(parts);
+    auto const res = CenterOfMassPosition{}(parts);
     BOOST_CHECK(res == (Mass{}(parts[0]) * Position{}(parts[0]) +
                         Mass{}(parts[1]) * Position{}(parts[1])) /
                            (Mass{}(parts[0]) + Mass{}(parts[1])));
   }
   {
-    auto const res = CenterOfMassVelocity<decltype(parts)>{}(parts);
+    auto const res = CenterOfMassVelocity{}(parts);
     BOOST_CHECK(res == (Mass{}(parts[0]) * Velocity{}(parts[0]) +
                         Mass{}(parts[1]) * Velocity{}(parts[1])) /
                            (Mass{}(parts[0]) + Mass{}(parts[1])));
@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(obs) {
   {
     parts[0].charge = -1.0;
     parts[1].charge = 1.0;
-    auto const res = Current<decltype(parts)>{}(parts);
+    auto const res = Current{}(parts);
     BOOST_CHECK(res == std::accumulate(parts.begin(), parts.end(), 0.0,
                                        [](auto const &val, auto const &p) {
                                          return val + Velocity{}(p)*Charge{}(p);
@@ -59,12 +59,12 @@ BOOST_AUTO_TEST_CASE(obs) {
   {
     parts[0].m_force = 1.3;
     parts[1].m_force = 1.8;
-    auto const res = TotalForce<decltype(parts)>{}(parts);
+    auto const res = TotalForce{}(parts);
     BOOST_CHECK(res == Force{}(parts[0]) + Force{}(parts[1]));
   }
   {
     std::vector<double> res;
-    Positions<decltype(parts)>{}(parts, std::back_inserter(res));
+    Positions{}(parts, std::back_inserter(res));
     BOOST_CHECK(res[0] == Position{}(parts[0]));
     BOOST_CHECK(res[1] == Position{}(parts[1]));
   }

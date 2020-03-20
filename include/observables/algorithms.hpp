@@ -9,8 +9,8 @@ struct One {
   template <class Particle> auto operator()(Particle const &p) { return 1; }
 };
 
-template <class ParticleRange, class ValueOp, class WeightOp>
-struct WeightedSum {
+template <class ValueOp, class WeightOp> struct WeightedSum {
+  template <class ParticleRange>
   auto operator()(ParticleRange const &particles) {
     using particle_type = typename ParticleRange::value_type;
     using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
@@ -26,39 +26,37 @@ struct WeightedSum {
 };
 } // namespace detail
 
-template <class ParticleRange, class ValueOp, class WeightOp>
-struct WeightedSum {
+template <class ValueOp, class WeightOp> struct WeightedSum {
+  template <class ParticleRange>
   auto operator()(ParticleRange const &particles) {
-    return detail::WeightedSum<ParticleRange, ValueOp, WeightOp>()(particles)
-        .first;
+    return detail::WeightedSum<ValueOp, WeightOp>()(particles).first;
   }
 };
 
-template <class ParticleRange, class ValueOp> struct Sum {
+template <class ValueOp> struct Sum {
+  template <class ParticleRange>
   auto operator()(ParticleRange const &particles) {
-    return detail::WeightedSum<ParticleRange, ValueOp, detail::One>()(particles)
-        .first;
+    return detail::WeightedSum<ValueOp, detail::One>()(particles).first;
   }
 };
 
-template <class ParticleRange, class ValueOp, class WeightOp>
-struct WeightedAverage {
+template <class ValueOp, class WeightOp> struct WeightedAverage {
+  template <class ParticleRange>
   auto operator()(ParticleRange const &particles) {
-
-    auto const ws =
-        detail::WeightedSum<ParticleRange, ValueOp, WeightOp>()(particles);
+    auto const ws = detail::WeightedSum<ValueOp, WeightOp>()(particles);
     return ws.first / ws.second;
   }
 };
 
-template <class ParticleRange, class ValueOp> struct Average {
+template <class ValueOp> struct Average {
+  template <class ParticleRange>
   auto operator()(ParticleRange const &particles) {
-    return WeightedAverage<ParticleRange, ValueOp, detail::One>()(particles);
+    return WeightedAverage<ValueOp, detail::One>()(particles);
   }
 };
 
-template <class ParticleRange, class ValueOp> struct Collect {
-  template <class OutputIterator>
+template <class ValueOp> struct Collect {
+  template <class ParticleRange, class OutputIterator>
   void operator()(ParticleRange const &particles, OutputIterator out) {
     std::transform(std::begin(particles), std::end(particles), out,
                    [](auto const &p) { return ValueOp{}(p); });
