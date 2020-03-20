@@ -42,8 +42,8 @@ cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "statistics.hpp":
-    int n_part_conf
-    int n_configs
+    int get_n_part_conf()
+    int get_n_configs()
 
     ctypedef struct Observable_stat:
         int init_status
@@ -65,9 +65,7 @@ cdef extern from "statistics.hpp":
     cdef vector[double] calc_structurefactor(PartCfg & , int * p_types, int n_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
-    cdef double min_distance2(Vector3d pos1, Vector3d pos2)
     cdef List[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)
-    cdef double distto(PartCfg &, const Vector3d & pos, int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
