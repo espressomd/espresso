@@ -35,6 +35,14 @@ struct Charge {
     return particle_traits.charge(p);
   }
 };
+
+struct Force {
+  template <class Particle, class Traits = traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.force(p);
+  }
+};
 } // namespace Observables
 
 #endif // OBSERVABLES_PROPERTIES_HPP

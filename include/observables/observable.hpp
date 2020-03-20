@@ -1,6 +1,7 @@
 #ifndef INCLUDE_OBSERVABLES_OBSERVABLE_HPP
 #define INCLUDE_OBSERVABLES_OBSERVABLE_HPP
 
+#include "algorithms.hpp"
 #include "properties.hpp"
 
 namespace Observables {
@@ -28,8 +29,12 @@ template <class Left, class Right> struct Product : Left, Right {
 };
 
 using Momentum = Product<Mass, Velocity>;
-template <class Observable> using Flux = Product<Observable, Velocity>;
-using ElectricCurrent = Flux<Charge>;
+using AverageMomentum = Average<Momentum>;
+using CenterOfMassPosition = WeightedAverage<Position, Mass>;
+using CenterOfMassVelocity = WeightedAverage<Velocity, Mass>;
+using Current = WeightedSum<Velocity, Charge>;
+using TotalForce = Sum<Force>;
+using Positions = Collect<Position>;
 } // namespace Observables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP
