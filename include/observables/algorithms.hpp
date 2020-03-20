@@ -1,5 +1,6 @@
 #ifndef ALGORITHMS_HPP
 #define ALGORITHMS_HPP
+#include <algorithm>
 #include <numeric>
 #include <utility>
 
