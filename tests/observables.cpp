@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE(obs) {
     BOOST_CHECK(res == 0.5 * (Momentum{}(parts[0]) + Momentum{}(parts[1])));
   }
   {
-    auto const res = CenterOfMass<decltype(parts)>{}(parts);
+    auto const res = CenterOfMassPosition<decltype(parts)>{}(parts);
     BOOST_CHECK(res == (Mass{}(parts[0]) * Position{}(parts[0]) +
                         Mass{}(parts[1]) * Position{}(parts[1])) /
                            (Mass{}(parts[0]) + Mass{}(parts[1])));
@@ -61,5 +61,11 @@ BOOST_AUTO_TEST_CASE(obs) {
     parts[1].m_force = 1.8;
     auto const res = TotalForce<decltype(parts)>{}(parts);
     BOOST_CHECK(res == Force{}(parts[0]) + Force{}(parts[1]));
+  }
+  {
+    std::vector<double> res;
+    Positions<decltype(parts)>{}(parts, std::back_inserter(res));
+    BOOST_CHECK(res[0] == Position{}(parts[0]));
+    BOOST_CHECK(res[1] == Position{}(parts[1]));
   }
 }

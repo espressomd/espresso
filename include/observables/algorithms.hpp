@@ -56,5 +56,13 @@ template <class ParticleRange, class ValueOp> struct Average {
     return WeightedAverage<ParticleRange, ValueOp, detail::One>()(particles);
   }
 };
+
+template <class ParticleRange, class ValueOp> struct Collect {
+  template <class OutputIterator>
+  void operator()(ParticleRange const &particles, OutputIterator out) {
+    std::transform(std::begin(particles), std::end(particles), out,
+                   [](auto const &p) { return ValueOp{}(p); });
+  }
+};
 } // namespace Observables
 #endif // ALGORITHMS_HPP
