@@ -7,6 +7,7 @@ struct Particle {
   double m_vel = 2.;
   double m_force = 2.1;
   double mass = 3.;
+  double charge = 0.0;
   auto const &force() const { return m_force; }
   auto const &velocity() const { return m_vel; }
 };
@@ -19,7 +20,7 @@ template <> struct traits<Testing::Particle> {
   double position(Particle const &p) const { return p.position; }
   double velocity(Particle const &p) const { return p.velocity(); }
   double mass(Particle const &p) const { return p.mass; }
-  double charge(Particle const &) const { return 0.; }
+  double charge(Particle const &p) const { return p.charge; }
   double force(Particle const &p) const { return p.force(); }
 };
 } // namespace Observables
