@@ -110,7 +110,7 @@ class AnalyzeDistance(ut.TestCase):
                         for p in parts]),
                 np.min([self.system.distance(p.pos, [i, i, i]) for p in parts]))
 
-    def test_distance_to_id(self):
+    def test_distance_to_part(self):
         parts = self.system.part
         # try five times
         for i in range(5):

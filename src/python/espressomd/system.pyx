@@ -345,8 +345,8 @@ cdef class System:
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
-        """Return the scalar distance between particles or between a particle
-        and a point, respecting periodic boundaries.
+        """Return the scalar distance between particles, between a particle
+        and a point or between two points, respecting periodic boundaries.
 
         Parameters
         ----------
@@ -357,11 +357,11 @@ cdef class System:
 
         """
         res = self.distance_vec(p1, p2)
-        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+        return np.linalg.norm(res)
 
     def distance_vec(self, p1, p2):
-        """Return the distance vector between particles or between a particle
-        and a point, respecting periodic boundaries.
+        """Return the distance vector between particles, between a particle
+        and a point or between two points, respecting periodic boundaries.
 
         Parameters
         ----------
