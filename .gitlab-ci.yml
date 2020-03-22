@@ -357,11 +357,6 @@ ubuntu:i386:
 ubuntu:ppc64le:
   <<: *arch_definition
 
-ubuntu:s390x:
-  <<: *arch_definition
-  variables:
-    LD_BIND_NOW: none
-
 ### Builds with OS X
 
 osx:
@@ -398,10 +393,10 @@ clang:6.0:
     - cuda
     - ptrace
 
-intel:18:
+intel:19:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/intel-python3:18
+  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/intel-python3:19
   script:
     - export myconfig=maxset with_coverage=false I_MPI_SHM_LMT=shm
     - export cxx_flags=-O2
