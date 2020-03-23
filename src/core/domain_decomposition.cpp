@@ -618,6 +618,8 @@ void dd_topology_release() {
 }
 
 namespace {
+
+
 /**
  * @brief Move particles into the cell system if it belongs to this node.
  *
@@ -690,6 +692,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
 
 void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
   auto const node_neighbors = calc_node_neighbors(comm_cart);
+  static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
@@ -699,20 +702,17 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
          the same, and we need only one communication */
     }
     if (grid[dir] == 2) {
-      ParticleList send_buf, recv_buf;
-      move_left_or_right(*pl, send_buf, send_buf, dir);
+      move_left_or_right(*pl, send_buf_l, send_buf_l, dir);
 
-      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
-                           node_neighbors[2 * dir], 0, recv_buf);
+      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf_l,
+                           node_neighbors[2 * dir], 0, recv_buf_l);
 
-      send_buf.clear();
+      send_buf_l.clear();
 
-      move_if_local(recv_buf, *pl);
+      move_if_local(recv_buf_l, *pl);
     } else {
       using boost::mpi::request;
       using Utils::Mpi::isendrecv;
-
-      ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
 

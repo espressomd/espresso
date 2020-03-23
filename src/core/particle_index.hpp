@@ -65,14 +65,6 @@ void update_local_particles(ParticleList *pl);
 
 /** Append a particle at the end of a particle list.
  *  Reallocate particles if necessary!
- *  This procedure does not care for \ref local_particles.
- *  \param l List to append the particle to.
- *  \param part  Particle to append.
- */
-void append_unindexed_particle(ParticleList *l, Particle &&part);
-
-/** Append a particle at the end of a particle list.
- *  Reallocate particles if necessary!
  *  This procedure cares for \ref local_particles.
  *  \param plist List to append the particle to.
  *  \param part  Particle to append.

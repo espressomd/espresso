@@ -9,11 +9,6 @@ void update_local_particles(ParticleList *pl) {
     set_local_particle_data(p[i].p.identity, &p[i]);
 }
 
-void append_unindexed_particle(ParticleList *l, Particle &&part) {
-  l->resize(l->n + 1);
-  new (&(l->part[l->n - 1])) Particle(std::move(part));
-}
-
 Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   auto const re = l->resize(l->n + 1);
   auto p = new (&(l->part[l->n - 1])) Particle(std::move(part));

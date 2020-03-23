@@ -327,8 +327,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
       auto target_cell = cs.particle_to_cell(p);
 
       if (target_cell == nullptr) {
-        append_unindexed_particle(&displaced_parts,
-                                  extract_indexed_particle(c, i));
+        displaced_parts.push_back(extract_indexed_particle(c, i));
 
         if (i < c->n) {
           i--;
