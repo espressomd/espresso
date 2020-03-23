@@ -95,7 +95,7 @@ class StokesianDynamicsTest(ut.TestCase):
                 idx = np.abs(y - y_ref).argmin()
                 dist = np.sqrt((x_ref - x[idx])**2 + (y_ref - y[idx])**2)
                 self.assertLess(dist, 0.5)
-    
+
     # The exact same test, only rescaled
     # lengths -> factor 4.5
     # time -> factor 2.5
@@ -105,8 +105,8 @@ class StokesianDynamicsTest(ut.TestCase):
 
         self.system.time_step = 1.0
         self.system.part.add(pos=[-5 * l_factor, 0, 0], rotation=[1, 1, 1])
-        self.system.part.add(pos=[ 0 * l_factor, 0, 0], rotation=[1, 1, 1])
-        self.system.part.add(pos=[ 7 * l_factor, 0, 0], rotation=[1, 1, 1])
+        self.system.part.add(pos=[0 * l_factor, 0, 0], rotation=[1, 1, 1])
+        self.system.part.add(pos=[7 * l_factor, 0, 0], rotation=[1, 1, 1])
 
         from espressomd.thermostat import flags
         self.system.thermostat.set_sd(viscosity=1.0 / (t_factor * l_factor),
@@ -114,10 +114,11 @@ class StokesianDynamicsTest(ut.TestCase):
                                       radii={0: 1.0 * l_factor},
                                       flags=flags.SELF_MOBILITY | flags.PAIR_MOBILITY | flags.FTS)
 
-        gravity = constraints.Gravity(g=[0, -1.0 * l_factor / (t_factor**2), 0])
+        gravity = constraints.Gravity(
+            g=[0, -1.0 * l_factor / (t_factor**2), 0])
         self.system.constraints.add(gravity)
         self.system.time_step = 1.0 * t_factor
-        
+
         intsteps = int(8000 * t_factor / self.system.time_step)
         pos = np.empty([intsteps + 1, 3 * len(self.system.part)])
 
@@ -140,7 +141,7 @@ class StokesianDynamicsTest(ut.TestCase):
                 idx = np.abs(y - y_ref).argmin()
                 dist = np.sqrt((x_ref - x[idx])**2 + (y_ref - y[idx])**2)
                 self.assertLess(dist, 0.5 * l_factor)
-    
+
     # The exact same test, only with
     # different time step
     def test_3(self):
@@ -255,7 +256,7 @@ class StokesianDiffusionTest(ut.TestCase):
 
         for i in range(n_slices):
             costheta_per_slice[i] = np.dot(orientation[i * n_steps_per_slice, :],
-                                           orientation[(i+1) * n_steps_per_slice, :])
+                                           orientation[(i + 1) * n_steps_per_slice, :])
         Dr_measured = -np.log(np.mean(costheta_per_slice)) / \
             (2 * n_steps_per_slice * self.system.time_step)
         self.assertAlmostEqual(
