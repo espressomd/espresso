@@ -19,6 +19,8 @@
 inline Particle *get_local_particle_data(int id) {
   extern std::vector<Particle *> local_particles;
 
+  assert(id >= 0);
+
   if (id >= local_particles.size())
     return nullptr;
 
@@ -31,11 +33,13 @@ inline Particle *get_local_particle_data(int id) {
  * Update the entry for a particle in the local particle
  * index.
  *
- * @param id of the particle to up-date.
  * @param p Pointer to the particle.
  **/
 inline void set_local_particle_data(int id, Particle *p) {
   extern std::vector<Particle *> local_particles;
+
+  assert(id >= 0);
+  assert(not p or id == p->identity());
 
   if (id >= local_particles.size())
     local_particles.resize(id + 1);

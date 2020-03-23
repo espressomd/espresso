@@ -188,11 +188,12 @@ struct CellStructure {
   Particle *add_local_particle(Particle &&p);
 
   /**
-   * @brief Remove and return a particle.
+   * @brief Remove a particle.
+   *
+   * Removes a particle and all bonds pointing
+   * to it. This is a colective call.
    *
    * @param p Particle id to remove.
-   * @return The particle if it belonged to this node
-   *         otherwise none.
    */
   void remove_particle(int id);
 

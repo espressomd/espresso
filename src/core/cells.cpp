@@ -516,6 +516,7 @@ void CellStructure::remove_particle(int id) {
   /* If we found the particle, remove it. */
   if (cell && (position >= 0)) {
     cell->extract(position);
+    set_local_particle_data(id, nullptr);
     update_local_particles(cell);
   }
 }
