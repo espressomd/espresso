@@ -91,7 +91,6 @@ class ek_charged_plate(ut.TestCase):
             if abs(expected_force - particle_force[0]) > force_difference:
                 force_difference = abs(expected_force - particle_force[0])
 
-        print("Force deviation: {}".format(force_difference))
         self.assertLess(force_difference, 1.0e-04,
                         "Force accuracy in X not achieved, allowed deviation: "
                         "1.0e-04, measured: {}".format(force_difference))
@@ -123,7 +122,6 @@ class ek_charged_plate(ut.TestCase):
             if abs(expected_force - particle_force[1]) > force_difference:
                 force_difference = abs(expected_force - particle_force[1])
 
-        print("Force deviation: {}".format(force_difference))
         self.assertLess(force_difference, 1.0e-04,
                         "Force accuracy in Y not achieved, allowed deviation: "
                         "1.0e-04, measured: {}".format(force_difference))
@@ -155,7 +153,6 @@ class ek_charged_plate(ut.TestCase):
             if abs(expected_force - particle_force[2]) > force_difference:
                 force_difference = abs(expected_force - particle_force[2])
 
-        print("Force deviation: {}".format(force_difference))
         self.assertLess(force_difference, 1.0e-04,
                         "Force accuracy in Z not achieved, allowed deviation: "
                         "1.0e-04, measured: {}".format(force_difference))

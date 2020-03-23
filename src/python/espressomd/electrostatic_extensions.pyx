@@ -19,10 +19,10 @@
 
 from . cimport utils
 include "myconfig.pxi"
-from espressomd cimport actors
+from . cimport actors
 from . import actors
 import numpy as np
-from espressomd.utils cimport handle_errors
+from .utils cimport handle_errors, check_type_or_throw_except, check_range_or_except
 
 IF ELECTROSTATICS and P3M:
     from espressomd.electrostatics import check_neutrality
@@ -33,54 +33,55 @@ IF ELECTROSTATICS and P3M:
     cdef class ELC(ElectrostaticExtensions):
         """
         Electrostatics solver for systems with two periodic dimensions.
+        See :ref:`Electrostatic Layer Correction (ELC)` for more details.
 
         Parameters
         ----------
         gap_size : :obj:`float`, required
-            The gap size gives the height of the empty region between the system box
-            and the neighboring artificial images. |es| does not
-            make sure that the gap is actually empty, this is the users
-            responsibility. The method will compute fine if the condition is not
-            fulfilled, however, the error bound will not be reached. Therefore you
-            should really make sure that the gap region is empty (e.g. with wall
-            constraints).
+            The gap size gives the height :math:`h` of the empty region between
+            the system box and the neighboring artificial images. |es| does not
+            make sure that the gap is actually empty, this is the user's
+            responsibility. The method will run even if the condition is not
+            fulfilled, however, the error bound will not be reached. Therefore
+            you should really make sure that the gap region is empty (e.g.
+            with wall constraints).
         maxPWerror : :obj:`float`, required
-            The maximal pairwise error sets the least upper bound (LUB) error of
-            the force between any two charges without prefactors (see the papers).
-            The algorithm tries to find parameters to meet this LUB requirements or
-            will throw an error if there are none.
+            The maximal pairwise error sets the least upper bound (LUB) error
+            of the force between any two charges without prefactors (see the
+            papers). The algorithm tries to find parameters to meet this LUB
+            requirements or will throw an error if there are none.
         delta_mid_top : :obj:`float`, optional
-            This parameter sets the dielectric contrast
-            between the upper boundary and the simulation
-            box :math:`\\Delta_t`.
+            Dielectric contrast :math:`\\Delta_t` between the upper boundary
+            and the simulation box.
         delta_mid_bottom : :obj:`float`, optional
-            This parameter sets the dielectric contrast
-            between the lower boundary and the simulation
-            box :math:`\\Delta_b`.
+            Dielectric contrast :math:`\\Delta_b` between the lower boundary
+            and the simulation box.
         const_pot : :obj:`bool`, optional
-            Selector parameter for setting a constant
-            electric potential between the top and bottom
+            Activate a constant electric potential between the top and bottom
             of the simulation box.
         pot_diff : :obj:`float`, optional
-            If ``const_pot mode`` is enabled this parameter
-            controls the applied voltage.
-        neutralize : :obj:`int`, optional
-            By default, ELC just as P3M adds a homogeneous neutralizing background
-            to the system in case of a net charge. However, unlike in three dimensions,
-            this background adds a parabolic potential across the
-            slab :cite:`ballenegger09a`. Therefore, under normal circumstance, you will
-            probably want to disable the neutralization for non-neutral systems.
-            This corresponds then to a formal regularization of the forces and
-            energies :cite:`ballenegger09a`. Also, if you add neutralizing walls
-            explicitly as constraints, you have to disable the neutralization.
-            When using a dielectric contrast or full metallic walls
-            (``delta_mid_top != 0`` or ``delta_mid_bot != 0`` or ``const_pot=True``),
-            ``neutralize`` is overwritten and switched off internally. Note that
-            the special case of non-neutral systems with a *non-metallic*
-            dielectric jump (eg. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``)
-            is not covered by the algorithm and will throw an error.
+            If ``const_pot`` is enabled, this parameter controls the applied
+            voltage between the boundaries of the simulation box in the
+            *z*-direction (at :math:`z = 0` and :math:`z = L_z - h`).
+        neutralize : :obj:`bool`, optional
+            By default, *ELC* just as P3M adds a homogeneous neutralizing
+            background to the system in case of a net charge. However, unlike
+            in three dimensions, this background adds a parabolic potential
+            across the slab :cite:`ballenegger09a`. Therefore, under normal
+            circumstances, you will probably want to disable the neutralization
+            for non-neutral systems. This corresponds then to a formal
+            regularization of the forces and energies :cite:`ballenegger09a`.
+            Also, if you add neutralizing walls explicitly as constraints, you
+            have to disable the neutralization. When using a dielectric
+            contrast or full metallic walls (``delta_mid_top != 0`` or
+            ``delta_mid_bot != 0`` or ``const_pot=True``), ``neutralize`` is
+            overwritten and switched off internally. Note that the special
+            case of non-neutral systems with a *non-metallic* dielectric jump
+            (e.g. ``delta_mid_top`` or ``delta_mid_bot`` in ``]-1,1[``) is not
+            covered by the algorithm and will throw an error.
         far_cut : :obj:`float`, optional
-            Cut off radius, use with care, intended for testing purposes.
+            Cutoff radius, use with care, intended for testing purposes. When
+            setting the cutoff directly, the maximal pairwise error is ignored.
         """
 
         def validate_params(self):
@@ -97,7 +98,9 @@ IF ELECTROSTATICS and P3M:
                 self._params["neutralize"], 1, type(True), "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut", "neutralize", "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff", "check_neutrality"
+            return ["maxPWerror", "gap_size", "far_cut", "neutralize",
+                    "delta_mid_top", "delta_mid_bot", "const_pot", "pot_diff",
+                    "check_neutrality"]
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]
@@ -149,9 +152,36 @@ IF ELECTROSTATICS and P3M:
 
     cdef class ICC(ElectrostaticExtensions):
         """
-        Interface to the induced charge calculation scheme for dielectric interfaces
+        Interface to the induced charge calculation scheme for dielectric
+        interfaces. See :ref:`Dielectric interfaces with the ICC algorithm`
+        for more details.
 
-        See :ref:`Dielectric interfaces with the ICC algorithm`
+        Parameters
+        ----------
+        n_icc : :obj:`int`
+            Total number of ICC Particles.
+        first_id : :obj:`int`, optional
+            ID of the first ICC Particle.
+        convergence : :obj:`float`, optional
+            Abort criteria of the iteration. It corresponds to the maximum relative
+            change of any of the interface particle's charge.
+        relaxation : :obj:`float`, optional
+            SOR relaxation parameter.
+        ext_field : :obj:`float`, optional
+            Homogeneous electric field added to the calculation of dielectric boundary forces.
+        max_iterations : :obj:`int`, optional
+            Maximal number of iterations.
+        eps_out : :obj:`float`, optional
+            Relative permittivity of the outer region (where the particles are).
+        normals : (``n_icc``, 3) array_like :obj:`float`
+            Normal vectors pointing into the outer region.
+        areas : (``n_icc``, ) array_like :obj:`float`
+            Areas of the discretized surface.
+        sigmas : (``n_icc``, ) array_like :obj:`float`, optional
+            Additional surface charge density in the absence of any charge
+            induction.
+        epsilons : (``n_icc``, ) array_like :obj:`float`, optional
+            Dielectric constant associated to the areas.
 
         """
 
@@ -188,32 +218,36 @@ IF ELECTROSTATICS and P3M:
             check_type_or_throw_except(
                 self._params["eps_out"], 1, float, "")
 
+            n_icc = self._params["n_icc"]
+
             # Required list input
             self._params["normals"] = np.array(self._params["normals"])
-            if self._params["normals"].size != self._params["n_icc"] * 3:
+            if self._params["normals"].size != n_icc * 3:
                 raise ValueError(
-                    "Expecting normal list with " + self._params["n_icc"] * 3 + " entries.")
-            check_type_or_throw_except(self._params["normals"], self._params[
-                "n_icc"], np.ndarray, "Error in normal list.")
+                    "Expecting normal list with " + str(n_icc * 3) + " entries.")
+            check_type_or_throw_except(self._params["normals"], n_icc,
+                                       np.ndarray, "Error in normal list.")
 
             check_type_or_throw_except(
-                self._params["areas"], self._params["n_icc"], float, "Error in area list.")
+                self._params["areas"], n_icc, float, "Error in area list.")
 
             # Not Required
             if "sigmas" in self._params.keys():
                 check_type_or_throw_except(
-                    self._params["sigmas"], self._params["n_icc"], float, "Error in sigma list.")
+                    self._params["sigmas"], n_icc, float, "Error in sigma list.")
             else:
-                self._params["sigmas"] = np.zeros(self._params["n_icc"])
+                self._params["sigmas"] = np.zeros(n_icc)
 
             if "epsilons" in self._params.keys():
                 check_type_or_throw_except(
-                    self._params["epsilons"], self._params["n_icc"], float, "Error in epsilon list.")
+                    self._params["epsilons"], n_icc, float, "Error in epsilon list.")
             else:
-                self._params["epsilons"] = np.zeros(self._params["n_icc"])
+                self._params["epsilons"] = np.zeros(n_icc)
 
         def valid_keys(self):
-            return "n_icc", "convergence", "relaxation", "ext_field", "max_iterations", "first_id", "eps_out", "normals", "areas", "sigmas", "epsilons", "check_neutrality"
+            return ["n_icc", "convergence", "relaxation", "ext_field",
+                    "max_iterations", "first_id", "eps_out", "normals",
+                    "areas", "sigmas", "epsilons", "check_neutrality"]
 
         def required_keys(self):
             return ["n_icc", "normals", "areas"]

@@ -29,11 +29,10 @@ from tests_common import abspath
 @utx.skipIfMissingFeatures("ELECTROSTATICS")
 class CoulombCloudWall(ut.TestCase):
 
-    """This compares p3m, p3m_gpu, scafacos_p3m and scafacos_p2nfft
-       electrostatic forces and energy against stored data."""
+    """This compares p3m, p3m_gpu electrostatic forces and energy against
+    stored data."""
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
-    np.random.seed(S.seed)
+    np.random.seed(seed=42)
 
     forces = {}
     tolerance = 1E-3
@@ -65,6 +64,7 @@ class CoulombCloudWall(ut.TestCase):
 
     def compare(self, method_name, energy=True):
         # Compare forces and energy now in the system to stored ones
+
         # Force
         force_abs_diff = 0.
         for p in self.S.part:
@@ -73,12 +73,13 @@ class CoulombCloudWall(ut.TestCase):
 
         # Energy
         if energy:
-            energy_abs_diff = abs(
-                self.S.analysis.energy()["total"] - self.reference_energy)
-            self.assertTrue(energy_abs_diff <= self.tolerance, "Absolute energy difference " +
-                            str(energy_abs_diff) + " too large for " + method_name)
-        self.assertTrue(force_abs_diff <= self.tolerance, "Absolute force difference " +
-                        str(force_abs_diff) + " too large for method " + method_name)
+            self.assertAlmostEqual(
+                self.S.analysis.energy()["total"], self.reference_energy,
+                delta=self.tolerance,
+                msg="Absolute energy difference too large for " + method_name)
+        self.assertLess(
+            force_abs_diff, self.tolerance,
+            msg="Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
 
@@ -106,8 +107,8 @@ class CoulombCloudWall(ut.TestCase):
         self.compare("p3m_gpu", energy=False)
 
     def test_zz_deactivation(self):
-        # Is the energy 0, if no methods active
-        self.assertTrue(self.S.analysis.energy()["total"] == 0.0)
+        # The energy is 0 if no method is active
+        self.assertEqual(self.S.analysis.energy()["total"], 0.0)
 
 
 if __name__ == "__main__":

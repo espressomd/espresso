@@ -69,10 +69,9 @@ cdef extern from "grid_based_algorithms/lb_interface.hpp":
     void lb_lbfluid_print_vtk_boundary(string filename) except +
     void lb_lbfluid_print_velocity(string filename) except +
     void lb_lbfluid_print_boundary(string filename) except +
-    void lb_lbfluid_save_checkpoint(string filename, int binary) except +
-    void lb_lbfluid_load_checkpoint(string filename, int binary) except +
+    void lb_lbfluid_save_checkpoint(string filename, bool binary) except +
+    void lb_lbfluid_load_checkpoint(string filename, bool binary) except +
     void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) except +
-    ActiveLB lb_lbfluid_get_lattice_switch() except +
     Vector6d lb_lbfluid_get_stress() except +
     bool lb_lbnode_is_index_valid(const Vector3i & ind) except +
     Vector3i lb_lbfluid_get_shape() except +

@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+from tests_common import assert_params_match
+
 import espressomd
 
 
@@ -26,24 +28,13 @@ class ParticleProperties(ut.TestCase):
     # Particle id to work on
     pid = 17
 
-    # Error tolerance when comparing arrays/tuples...
-    tol = 1E-9
-
-    def bondsMatch(self, inType, outType, inParams, outParams):
+    def bondsMatch(self, inType, outBond, inParams, outParams, msg_long):
         """Check, if the bond type set and gotten back as well as the bond
         parameters set and gotten back match. Only check keys present in
         ``inParams``.
         """
-        if inType != outType:
-            return False
-
-        for k in list(inParams.keys()):
-            if k not in outParams:
-                return False
-            if outParams[k] != inParams[k]:
-                return False
-
-        return True
+        self.assertEqual(outBond, inType, msg="Bonded interaction mismatch")
+        assert_params_match(self, inParams, outParams, msg_long)
 
     def parameterKeys(self, bondObject):
         """
@@ -114,19 +105,10 @@ class ParticleProperties(ut.TestCase):
             tnIn = bondClass(**params).type_number()
             tnOut = outBond.type_number()
             outParams = outBond.params
-            self.assertTrue(
-                self.bondsMatch(
-                    tnIn,
-                    tnOut,
-                    params,
-                    outParams),
-                bondClass(**params).type_name() +
-                ": value set and value gotten back differ for bond id " +
-                str(bondId) +
-                ": " +
-                params.__str__() +
-                " vs. " +
-                outParams.__str__())
+            self.bondsMatch(
+                tnIn, tnOut, params, outParams,
+                "{}: value set and value gotten back differ for bond id {}: {} vs. {}"
+                .format(bondClass(**params).type_name(), bondId, params, outParams))
             self.parameterKeys(outBond)
 
         return func

@@ -22,8 +22,8 @@
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_CONSTRAINT_HPP
 
-#include "ScriptInterface.hpp"
 #include "core/constraints/Constraint.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace Constraints {

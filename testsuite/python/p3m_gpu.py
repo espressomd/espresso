@@ -19,7 +19,7 @@
 import espressomd
 import unittest as ut
 import unittest_decorators as utx
-from tests_common import params_match
+from tests_common import assert_params_match
 
 
 @utx.skipIfMissingGPU()
@@ -30,7 +30,6 @@ class P3MGPU_test(ut.TestCase):
         from espressomd.electrostatics import P3MGPU
 
         es = espressomd.System(box_l=[10.0, 10.0, 10.0])
-        es.seed = es.cell_system.get_state()['n_nodes'] * [1234]
         test_params = {}
         test_params["prefactor"] = 2
         test_params["cao"] = 2
@@ -43,7 +42,7 @@ class P3MGPU_test(ut.TestCase):
 
         p3m = P3MGPU(**test_params)
         es.actors.add(p3m)
-        self.assertTrue(params_match(test_params, p3m.get_params()))
+        assert_params_match(self, test_params, p3m.get_params())
 
 
 if __name__ == "__main__":

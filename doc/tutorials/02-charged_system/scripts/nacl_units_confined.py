@@ -21,13 +21,13 @@
 import espressomd
 from espressomd import electrostatics, electrostatic_extensions, assert_features
 from espressomd.shapes import Wall
+from espressomd.minimize_energy import steepest_descent
 import numpy
 
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-numpy.random.seed(system.seed)
+numpy.random.seed(seed=42)
 
 print("\n--->Setup system")
 
@@ -123,9 +123,8 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total=", energy['total'])
-system.minimize_energy.init(
-    f_max=10, gamma=50.0, max_steps=1000, max_displacement=0.2)
-system.minimize_energy.minimize()
+steepest_descent(system, f_max=10, gamma=50.0, max_steps=1000,
+                 max_displacement=0.2)
 energy = system.analysis.energy()
 print("After Minimization: E_total=", energy['total'])
 

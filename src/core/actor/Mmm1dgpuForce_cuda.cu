@@ -22,6 +22,8 @@
 #include "actor/Mmm1dgpuForce.hpp"
 #include "cuda_utils.hpp"
 
+#include <iostream>
+
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
@@ -31,6 +33,7 @@
 // the code is mostly multi-GPU capable, but ESPResSo is not yet
 const int deviceCount = 1;
 float multigpu_factors[] = {1.0};
+#undef cudaSetDevice
 #define cudaSetDevice(d)
 
 #include "EspressoSystemInterface.hpp"

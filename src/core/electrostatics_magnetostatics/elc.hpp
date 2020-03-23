@@ -48,7 +48,10 @@ typedef struct {
    *  that this condition is fulfilled.
    */
   double gap_size;
-  /** @copybrief MMM2D_struct::far_calculated */
+  /** Flag whether #far_cut was set by the user, or calculated by ESPResSo.
+   *  In the latter case, the cutoff will be adapted if important parameters,
+   *  such as the box dimensions, change.
+   */
   bool far_calculated;
   /** Flag whether the box is neutralized by a homogeneous background.
    *  If true, use a homogeneous neutralizing background for nonneutral
@@ -57,17 +60,16 @@ typedef struct {
    */
   bool neutralize;
 
-  /// @copybrief MMM2D_struct::dielectric_contrast_on
+  /// flag whether there is any dielectric contrast in the system.
   bool dielectric_contrast_on;
 
-  /// @copybrief MMM2D_struct::delta_mid_top
+  /// dielectric contrast in the upper part of the simulation cell.
   double delta_mid_top;
-  /// @copybrief MMM2D_struct::delta_mid_bot
+  /// dielectric contrast in the lower part of the simulation cell.
   double delta_mid_bot;
-
-  /// @copybrief MMM2D_struct::const_pot
+  /// @brief Flag whether a const. potential is applied.
   bool const_pot;
-  /// @copybrief MMM2D_struct::pot_diff
+  /// @brief Const. potential.
   double pot_diff;
 
   /** Minimal distance of two charges for which the far formula is used.

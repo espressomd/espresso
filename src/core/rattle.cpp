@@ -32,9 +32,7 @@ int n_rigidbonds = 0;
 #include "errorhandling.hpp"
 #include "global.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
-#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <utils/constants.hpp>
 
@@ -104,7 +102,7 @@ void init_correction_vector(const ParticleRange &particles) {
   for (auto &p : particles)
     reset_force(p);
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : cell_structure.ghost_cells().particles())
     reset_force(p);
 }
 
@@ -116,7 +114,7 @@ void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
     while (k < p1.bl.n) {
       Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
       if (ia_params.type == BONDED_IA_RIGID_BOND) {
-        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        Particle *const pp2 = get_local_particle_data(p1.bl.e[k++]);
         if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
                             << p1.p.identity << " and " << p1.bl.e[k - 1]
@@ -162,7 +160,7 @@ void app_pos_correction(const ParticleRange &particles) {
 }
 
 void correct_pos_shake(ParticleRange const &particles) {
-  cells_update_ghosts();
+  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
   int repeat_, cnt = 0;
   int repeat = 1;
 
@@ -175,7 +173,7 @@ void correct_pos_shake(ParticleRange const &particles) {
     app_pos_correction(cell_structure.local_cells().particles());
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION);
+                       GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else
@@ -221,7 +219,7 @@ void compute_vel_corr_vec(int *repeat_, const ParticleRange &particles) {
     while (k < p1.bl.n) {
       Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
       if (ia_params.type == BONDED_IA_RIGID_BOND) {
-        Particle *const pp2 = local_particles[p1.bl.e[k++]];
+        Particle *const pp2 = get_local_particle_data(p1.bl.e[k++]);
         if (!pp2) {
           runtimeErrorMsg() << "rigid bond broken between particles "
                             << p1.p.identity << " and " << p1.bl.e[k - 1]
@@ -278,7 +276,8 @@ void revert_force(const ParticleRange &particles,
 }
 
 void correct_vel_shake() {
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_POSITION);
+  ghost_communicator(&cell_structure.exchange_ghosts_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
 
   int repeat_, repeat = 1, cnt = 0;
   /**transfer the current forces to r.p_old of the particle structure so that
@@ -296,7 +295,7 @@ void correct_vel_shake() {
                        GHOSTTRANS_FORCE);
     apply_vel_corr(particles);
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION);
+                       GHOSTTRANS_MOMENTUM);
     if (this_node == 0)
       MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
     else

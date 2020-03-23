@@ -21,19 +21,16 @@
 /** \file
  *  Implementation of \ref thermostat.hpp.
  */
-#include "thermostat.hpp"
+#include <boost/mpi.hpp>
+
+#include <utils/u32_to_u64.hpp>
+
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
 #include "dpd.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "npt.hpp"
-
-#include "utils/u32_to_u64.hpp"
-#include <boost/mpi.hpp>
-
-#include <fstream>
-#include <iostream>
-#include <unistd.h>
+#include "thermostat.hpp"
 
 int thermo_switch = THERMO_OFF;
 double temperature = 0.0;
@@ -41,101 +38,54 @@ bool thermo_virtual = true;
 
 using Thermostat::GammaType;
 
-namespace {
-/** @name Langevin parameters sentinels.
- *  These functions return the sentinel value for the Langevin
- *  parameters, indicating that they have not been set yet.
+/**
+ * @brief Register a thermostat's MPI callbacks
+ *
+ * @param thermostat        The thermostat global variable
  */
-/*@{*/
-constexpr double sentinel(double) { return -1.0; }
-Utils::Vector3d sentinel(Utils::Vector3d) { return {-1.0, -1.0, -1.0}; }
-/*@}*/
-} // namespace
+#define REGISTER_THERMOSTAT_CALLBACKS(thermostat)                              \
+  void mpi_bcast_##thermostat##_rng_counter_slave(const uint64_t seed) {       \
+    thermostat.rng_initialize(seed);                                           \
+  }                                                                            \
+                                                                               \
+  REGISTER_CALLBACK(mpi_bcast_##thermostat##_rng_counter_slave)                \
+                                                                               \
+  void mpi_bcast_##thermostat##_rng_counter(const uint64_t seed) {             \
+    mpi_call(mpi_bcast_##thermostat##_rng_counter_slave, seed);                \
+  }                                                                            \
+                                                                               \
+  void thermostat##_rng_counter_increment() { thermostat.rng_increment(); }    \
+                                                                               \
+  bool thermostat##_is_seed_required() {                                       \
+    /* Seed is required if rng is not initialized */                           \
+    return !thermostat.rng_is_initialized();                                   \
+  }                                                                            \
+                                                                               \
+  void thermostat##_set_rng_state(const uint64_t seed) {                       \
+    mpi_bcast_##thermostat##_rng_counter(seed);                                \
+    thermostat.rng_initialize(seed);                                           \
+  }                                                                            \
+                                                                               \
+  uint64_t thermostat##_get_rng_state() { return thermostat.rng_get(); }
 
-GammaType langevin_gamma = sentinel(GammaType{});
-GammaType langevin_gamma_rotation = sentinel(GammaType{});
-GammaType langevin_pref1;
-GammaType langevin_pref2;
-GammaType langevin_pref2_rotation;
-
-/* NPT ISOTROPIC THERMOSTAT */
-double nptiso_gamma0 = 0.0;
-double nptiso_gammav = 0.0;
-
-/** @name Langevin buffers
- *  Buffers for the workaround for the correlated random values which cool the
- *  system, and require a magical heat up whenever reentering the integrator.
- */
-/*@{*/
-static GammaType langevin_pref2_buffer;
-static GammaType langevin_pref2_rotation_buffer;
-/*@}*/
-
-#ifdef NPT
-double nptiso_pref1;
-double nptiso_pref2;
-double nptiso_pref3;
-double nptiso_pref4;
+LangevinThermostat langevin = {};
+BrownianThermostat brownian = {};
+IsotropicNptThermostat npt_iso = {};
+ThermalizedBondThermostat thermalized_bond = {};
+#ifdef DPD
+DPDThermostat dpd = {};
 #endif
 
-std::unique_ptr<Utils::Counter<uint64_t>> langevin_rng_counter;
-
-void mpi_bcast_langevin_rng_counter_slave(const uint64_t counter) {
-  langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
-}
-
-REGISTER_CALLBACK(mpi_bcast_langevin_rng_counter_slave)
-
-void mpi_bcast_langevin_rng_counter(const uint64_t counter) {
-  mpi_call(mpi_bcast_langevin_rng_counter_slave, counter);
-}
-
-void langevin_rng_counter_increment() {
-  if (thermo_switch & THERMO_LANGEVIN)
-    langevin_rng_counter->increment();
-}
-
-bool langevin_is_seed_required() {
-  /* Seed is required if rng is not initialized */
-  return langevin_rng_counter == nullptr;
-}
-
-void langevin_set_rng_state(const uint64_t counter) {
-  mpi_bcast_langevin_rng_counter(counter);
-  langevin_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
-}
-
-uint64_t langevin_get_rng_state() { return langevin_rng_counter->value(); }
-
-void thermo_init_langevin() {
-  langevin_pref1 = -langevin_gamma;
-  langevin_pref2 = sqrt(24.0 * temperature / time_step * langevin_gamma);
-
-  /* If gamma_rotation is not set explicitly, use the linear one. */
-  if (langevin_gamma_rotation < GammaType{}) {
-    langevin_gamma_rotation = langevin_gamma;
-  }
-
-  langevin_pref2_rotation =
-      sqrt(24.0 * temperature * langevin_gamma_rotation / time_step);
-}
-
-#ifdef NPT
-void thermo_init_npt_isotropic() {
-  if (nptiso.piston != 0.0) {
-    nptiso_pref1 = -nptiso_gamma0 * 0.5 * time_step;
-
-    nptiso_pref2 = sqrt(12.0 * temperature * nptiso_gamma0 * time_step);
-    nptiso_pref3 = -nptiso_gammav * (1.0 / nptiso.piston) * 0.5 * time_step;
-    nptiso_pref4 = sqrt(12.0 * temperature * nptiso_gammav * time_step);
-  } else {
-    thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
-  }
-}
+REGISTER_THERMOSTAT_CALLBACKS(langevin)
+REGISTER_THERMOSTAT_CALLBACKS(brownian)
+REGISTER_THERMOSTAT_CALLBACKS(npt_iso)
+REGISTER_THERMOSTAT_CALLBACKS(thermalized_bond)
+#ifdef DPD
+REGISTER_THERMOSTAT_CALLBACKS(dpd)
 #endif
 
 void thermo_init() {
-  // Init thermalized bond despite of thermostat
+  // initialize thermalized bond regardless of the current thermostat
   if (n_thermalized_bonds) {
     thermalized_bond_init();
   }
@@ -143,13 +93,20 @@ void thermo_init() {
     return;
   }
   if (thermo_switch & THERMO_LANGEVIN)
-    thermo_init_langevin();
+    langevin.recalc_prefactors();
 #ifdef DPD
   if (thermo_switch & THERMO_DPD)
     dpd_init();
 #endif
 #ifdef NPT
-  if (thermo_switch & THERMO_NPT_ISO)
-    thermo_init_npt_isotropic();
+  if (thermo_switch & THERMO_NPT_ISO) {
+    if (nptiso.piston == 0.0) {
+      thermo_switch = (thermo_switch ^ THERMO_NPT_ISO);
+    } else {
+      npt_iso.recalc_prefactors(nptiso.piston);
+    }
+  }
 #endif
+  if (thermo_switch & THERMO_BROWNIAN)
+    brownian.recalc_prefactors();
 }

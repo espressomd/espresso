@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_SHAPES_ELLIPSOID_HPP
 
 #include "Shape.hpp"
-#include "core/shapes/Ellipsoid.hpp"
+#include <shapes/Ellipsoid.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

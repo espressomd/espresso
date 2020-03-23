@@ -46,7 +46,6 @@ class LBMassCommon:
     system.cell_system.skin = 0.4 * AGRID
 
     def prepare(self):
-        self.system.set_random_state_PRNG()
         self.system.actors.clear()
         self.system.actors.add(self.lbf)
         self.system.thermostat.set_lb(LB_fluid=self.lbf, seed=3, gamma=2.0)

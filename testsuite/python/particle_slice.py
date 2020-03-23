@@ -34,35 +34,39 @@ class ParticleSliceTest(ut.TestCase):
 
         if has_features(["EXTERNAL_FORCES"]):
             self.system.part[1].fix = self.state[1]
-            self.assertTrue(np.array_equal(
-                self.system.part[0].fix, self.state[0]))
-            self.assertTrue(np.array_equal(
-                self.system.part[1].fix, self.state[1]))
-            self.assertTrue(np.array_equal(
-                self.system.part[:2].fix, self.state))
+            np.testing.assert_array_equal(
+                np.copy(self.system.part[0].fix), self.state[0])
+            np.testing.assert_array_equal(
+                np.copy(self.system.part[1].fix), self.state[1])
+            np.testing.assert_array_equal(
+                np.copy(self.system.part[:2].fix), self.state)
         xs = self.system.part[:].pos
         for i in range(len(xs)):
-            self.assertTrue(np.array_equal(xs[i], self.system.part[i].pos))
+            np.testing.assert_array_equal(
+                xs[i], np.copy(self.system.part[i].pos))
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_1_set_different_values(self):
         self.state[0] = [1, 0, 0]
         self.state[1] = [1, 0, 0]
         self.system.part[:2].fix = self.state
-        self.assertTrue(np.array_equal(self.system.part[:2].fix, self.state))
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[:2].fix), self.state)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_2_set_same_value(self):
         self.state[0] = [0, 1, 0]
         self.state[1] = [0, 1, 0]
         self.system.part[:2].fix = self.state[1]
-        self.assertTrue(np.array_equal(self.system.part[:2].fix, self.state))
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[:2].fix), self.state)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_3_set_one_value(self):
         self.state[1] = [0, 0, 1]
         self.system.part[1:2].fix = self.state[1]
-        self.assertTrue(np.array_equal(self.system.part[:2].fix, self.state))
+        np.testing.assert_array_equal(
+            np.copy(self.system.part[:2].fix), self.state)
 
     @utx.skipIfMissingFeatures(["EXTERNAL_FORCES"])
     def test_4_str(self):
@@ -235,55 +239,48 @@ class ParticleSliceTest(ut.TestCase):
         self.system.part[:].delete_all_bonds()
         self.assertEqual(self.system.part[:].bonds, [(), (), (), ()])
 
-    def cmp_array_like(self, A, B):
-        return all(a.tolist() == b for a, b in zip(A, B))
-
     @utx.skipIfMissingFeatures(["EXCLUSIONS"])
     def test_exclusions(self):
+
+        def assert_exclusions_equal(B):
+            A = self.system.part[:].exclusions
+            self.assertEqual([x.tolist() for x in A], B)
 
         # Setter
         # int
         self.system.part[:].exclusions = []
         b = 1
         self.system.part[2].exclusions = b
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [2], [1], []]))
+        assert_exclusions_equal([[], [2], [1], []])
 
         # single list
         self.system.part[:].exclusions = []
         b = [1]
         self.system.part[2].exclusions = b
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [2], [1], []]))
+        assert_exclusions_equal([[], [2], [1], []])
 
         # tuple
         self.system.part[:].exclusions = []
         b = (0, 1)
         self.system.part[2].exclusions = b
-        self.assertTrue(
-            self.cmp_array_like(self.system.part[:].exclusions, [[2], [2], [0, 1], []]))
+        assert_exclusions_equal([[2], [2], [0, 1], []])
 
         # list
         self.system.part[:].exclusions = []
         b = [0, 1]
         self.system.part[2].exclusions = b
-        self.assertTrue(
-            self.cmp_array_like(self.system.part[:].exclusions, [[2], [2], [0, 1], []]))
+        assert_exclusions_equal([[2], [2], [0, 1], []])
 
         # Add/Del exclusions
         self.system.part[:].exclusions = []
         self.system.part[2].add_exclusion(1)
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [2], [1], []]))
+        assert_exclusions_equal([[], [2], [1], []])
         self.system.part[2].add_exclusion(0)
-        self.assertTrue(
-            self.cmp_array_like(self.system.part[:].exclusions, [[2], [2], [1, 0], []]))
+        assert_exclusions_equal([[2], [2], [1, 0], []])
         self.system.part[2].delete_exclusion(0)
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [2], [1], []]))
+        assert_exclusions_equal([[], [2], [1], []])
         self.system.part[2].delete_exclusion(1)
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [], [], []]))
+        assert_exclusions_equal([[], [], [], []])
 
         # Slices
 
@@ -291,44 +288,36 @@ class ParticleSliceTest(ut.TestCase):
         self.system.part[:].exclusions = []
         b = [1]
         self.system.part[2:].exclusions = b
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [2, 3], [1], [1]]))
+        assert_exclusions_equal([[], [2, 3], [1], [1]])
 
         # list for all
         self.system.part[:].exclusions = []
         b = [0, 1]
         self.system.part[2:].exclusions = b
-        self.assertTrue(
-            self.cmp_array_like(self.system.part[:].exclusions, [[2, 3], [2, 3], [0, 1], [0, 1]]))
+        assert_exclusions_equal([[2, 3], [2, 3], [0, 1], [0, 1]])
 
         # single list for each
         self.system.part[:].exclusions = []
         b = [[0], [0]]
         self.system.part[2:].exclusions = b
-        self.assertTrue(
-            self.cmp_array_like(self.system.part[:].exclusions, [[2, 3], [], [0], [0]]))
+        assert_exclusions_equal([[2, 3], [], [0], [0]])
 
         # multi list for each
         self.system.part[:].exclusions = []
         b = [[0, 1], [0, 1]]
         self.system.part[2:].exclusions = b
-        self.assertTrue(
-            self.cmp_array_like(self.system.part[:].exclusions, [[2, 3], [2, 3], [0, 1], [0, 1]]))
+        assert_exclusions_equal([[2, 3], [2, 3], [0, 1], [0, 1]])
 
         # Add/Del exclusions
         self.system.part[:].exclusions = []
         self.system.part[2:].add_exclusion(1)
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [2, 3], [1], [1]]))
+        assert_exclusions_equal([[], [2, 3], [1], [1]])
         self.system.part[2:].add_exclusion(0)
-        self.assertTrue(
-            self.cmp_array_like(self.system.part[:].exclusions, [[2, 3], [2, 3], [1, 0], [1, 0]]))
+        assert_exclusions_equal([[2, 3], [2, 3], [1, 0], [1, 0]])
         self.system.part[2:].delete_exclusion(0)
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [2, 3], [1], [1]]))
+        assert_exclusions_equal([[], [2, 3], [1], [1]])
         self.system.part[2:].delete_exclusion(1)
-        self.assertTrue(self.cmp_array_like(
-            self.system.part[:].exclusions, [[], [], [], []]))
+        assert_exclusions_equal([[], [], [], []])
 
     @utx.skipIfMissingFeatures("VIRTUAL_SITES_RELATIVE")
     def test_vs_relative(self):
@@ -385,7 +374,7 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(self.system.part[1].type, 1)
 
     def test_empty(self):
-        self.assertTrue(np.array_equal(self.system.part[0:0].pos, np.empty(0)))
+        np.testing.assert_array_equal(self.system.part[0:0].pos, np.empty(0))
 
     def test_len(self):
         self.assertEqual(len(self.system.part[0:0]), 0)

@@ -21,10 +21,10 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "Variant.hpp"
+#include "script_interface/Variant.hpp"
 using namespace ScriptInterface;
 
-#include "get_value.hpp"
+#include "script_interface/get_value.hpp"
 
 BOOST_AUTO_TEST_CASE(is_a) {
   BOOST_CHECK(is_type<None>(Variant(None{})));

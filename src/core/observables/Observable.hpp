@@ -21,6 +21,7 @@
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include <fstream>
+#include <numeric>
 #include <string>
 #include <vector>
 
@@ -42,12 +43,18 @@ class Observable {
 public:
   Observable() = default;
   virtual ~Observable() = default;
-  /** Calculate the set of values measured by the observable
-   */
+  /** Calculate the set of values measured by the observable */
   virtual std::vector<double> operator()() const = 0;
 
-  /** Size of the array returned by the observable */
-  virtual int n_values() const = 0;
+  /** Size of the flat array returned by the observable */
+  int n_values() const {
+    auto const v = shape();
+    return static_cast<int>(
+        std::accumulate(v.begin(), v.end(), 1, std::multiplies<>()));
+  }
+
+  /** Dimensions needed to reshape the flat array returned by the observable */
+  virtual std::vector<size_t> shape() const = 0;
 };
 
 } // Namespace Observables

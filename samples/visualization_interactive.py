@@ -31,7 +31,6 @@ print("Press u/j to change temperature")
 
 box_l = 10.0
 system = espressomd.System(box_l=[box_l] * 3)
-system.set_random_state_PRNG()
 visualizer = visualization_opengl.openGLLive(
     system, drag_enabled=True, drag_force=100)
 
@@ -82,10 +81,10 @@ def decreaseTemp():
 
 
 # Register button callbacks
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     visualization_opengl.KeyboardButtonEvent(
         'u', visualization_opengl.KeyboardFireEvent.Hold, increaseTemp))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     visualization_opengl.KeyboardButtonEvent(
         'j', visualization_opengl.KeyboardFireEvent.Hold, decreaseTemp))
 

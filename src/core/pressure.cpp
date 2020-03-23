@@ -29,6 +29,7 @@
 #include "npt.hpp"
 #include "pressure_inline.hpp"
 #include "virtual_sites.hpp"
+#include <boost/range/algorithm/copy.hpp>
 
 #include "short_range_loop.hpp"
 
@@ -63,14 +64,10 @@ nptiso_struct nptiso = {0.0,
                         0};
 
 /************************************************************/
-/* callbacks for setmd                                      */
-/************************************************************/
-
-/************************************************************/
 /* local prototypes                                         */
 /************************************************************/
 
-/** Calculate long range virials (P3M, MMM2d...). */
+/** Calculate long range virials (P3M, ...). */
 void calc_long_range_virials(const ParticleRange &particles);
 
 /** Initializes a virials Observable stat. */
@@ -121,18 +118,22 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
   short_range_loop(
       [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
-      [](Particle &p1, Particle &p2, Distance &d) {
+      [](Particle &p1, Particle &p2, Distance const &d) {
         add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2));
       });
 
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials(local_cells.particles());
+  calc_long_range_virials(cell_structure.local_cells().particles());
 
 #ifdef VIRTUAL_SITES
-  virtual_sites()->pressure_and_stress_tensor_contribution(
-      virials.virtual_sites, p_tensor.virtual_sites);
+  {
+    auto const vs_stress = virtual_sites()->stress_tensor();
+
+    *virials.virtual_sites += trace(vs_stress);
+    boost::copy(flatten(vs_stress), p_tensor.virtual_sites);
+  }
 #endif
 
   for (int n = 1; n < virials.data.n; n++)
@@ -194,7 +195,7 @@ void init_virials(Observable_stat *stat) {
   Dipole::pressure_n();
 #endif
 #ifdef VIRTUAL_SITES
-  n_vs = virtual_sites()->n_pressure_contribs();
+  n_vs = 1;
 #endif
 
   // Allocate memory for the data
@@ -232,7 +233,7 @@ void init_p_tensor(Observable_stat *stat) {
   auto const n_dipolar = 0;
 #endif
 #ifdef VIRTUAL_SITES
-  n_vs = virtual_sites()->n_pressure_contribs();
+  n_vs = 1;
 #endif
 
   obsstat_realloc_and_clear(stat, n_pre, bonded_ia_params.size(), n_non_bonded,

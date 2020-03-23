@@ -95,8 +95,6 @@ lj_cap = 20
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l, box_l, box_l])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
@@ -132,8 +130,6 @@ n_part = int(volume * density)
 
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
-
-system.analysis.dist_to(0)
 
 act_min_dist = system.analysis.min_dist()
 

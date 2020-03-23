@@ -27,24 +27,23 @@ from libcpp cimport bool
 
 from boost cimport string_ref
 
-from utils cimport Span
+from .utils cimport Span
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     void initialize()
     cdef cppclass Variant:
         Variant()
         Variant(const Variant & )
         Variant & operator = (const Variant &)
-        int which()
 
     bool is_type[T](const Variant &)
     bool is_none(const Variant &)
     ctypedef unordered_map[string, Variant] VariantMap
 
-cdef extern from "get_value.hpp" namespace "ScriptInterface":
+cdef extern from "script_interface/get_value.hpp" namespace "ScriptInterface":
     T get_value[T](const Variant T)
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface":
     cdef cppclass ObjectId:
         ObjectId()
         string to_string()
@@ -69,13 +68,13 @@ cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface":
         @staticmethod
         shared_ptr[ScriptInterfaceBase] unserialize(const string & state) except +
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase":
     cdef cppclass CreationPolicy:
         pass
     shared_ptr[ScriptInterfaceBase] make_shared(const string & name, CreationPolicy policy) except +
     weak_ptr[ScriptInterfaceBase] get_instance(ObjectId id) except +
 
-cdef extern from "ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
+cdef extern from "script_interface/ScriptInterface.hpp" namespace "ScriptInterface::ScriptInterfaceBase::CreationPolicy":
     CreationPolicy LOCAL
     CreationPolicy GLOBAL
 

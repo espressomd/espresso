@@ -38,7 +38,6 @@ Controls:
 
 # ESPRESSO
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 table_dim = [2.24, 1.12]
 system.box_l = [table_dim[0], 3, table_dim[1]]
 
@@ -102,15 +101,15 @@ class Billiards:
 
 pool = Billiards()
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('4', KeyboardFireEvent.Hold, pool.decreaseAngle))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('6', KeyboardFireEvent.Hold, pool.increaseAngle))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('2', KeyboardFireEvent.Hold, pool.decreaseImpulse))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('8', KeyboardFireEvent.Hold, pool.increaseImpulse))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('5', KeyboardFireEvent.Pressed, pool.fire))
 
 
@@ -216,8 +215,8 @@ def main():
             N = i + 1
             t = order[pid - 1]
             pos = sp + a1 * (N - j) + a2 * j
-            system.part.add(
-                id=pid, pos=pos, mass=ball_mass, type=t, fix=[0, 1, 0])
+            system.part.add(id=pid, pos=pos, mass=ball_mass,
+                            type=t, fix=[False, True, False])
             spawnpos.append(pos)
             pid += 1
 

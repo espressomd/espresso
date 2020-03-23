@@ -30,9 +30,7 @@ import numpy as np
 #############################################################
 
 system = espressomd.System(box_l=[100, 100, 100])
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
@@ -45,10 +43,10 @@ fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
 
-positions = polymer.positions(n_polymers=1,
-                              beads_per_chain=50,
-                              bond_length=1.0,
-                              seed=3210)
+positions = polymer.linear_polymer_positions(n_polymers=1,
+                                             beads_per_chain=50,
+                                             bond_length=1.0,
+                                             seed=3210)
 for i, pos in enumerate(positions[0]):
     id = len(system.part)
     system.part.add(id=id, pos=pos)

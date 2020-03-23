@@ -28,7 +28,6 @@ required_features = ["LB_BOUNDARIES"]
 espressomd.assert_features(required_features)
 
 system = espressomd.System(box_l=[10.0, 10.0, 5.0])
-system.set_random_state_PRNG()
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 

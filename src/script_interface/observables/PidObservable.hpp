@@ -23,20 +23,21 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_PIDOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_PIDOBSERVABLE_HPP
 
-#include "ScriptInterface.hpp"
-#include "auto_parameters/AutoParameters.hpp"
+#include "script_interface/ScriptInterface.hpp"
+#include "script_interface/auto_parameters/AutoParameters.hpp"
 
 #include "Observable.hpp"
 #include "core/observables/PidObservable.hpp"
 
 #include <memory>
 #include <type_traits>
+#include <vector>
 
 namespace ScriptInterface {
 namespace Observables {
 
 /** Base class for script interfaces to particle-based observables
- *  @tparam CorePidObs Any core class derived from  @ref
+ *  @tparam CorePidObs Any core class derived from @ref
  *                     ::Observables::PidObservable "Observables::PidObservable"
  */
 template <typename CorePidObs>

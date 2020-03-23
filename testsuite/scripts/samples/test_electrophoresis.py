@@ -20,29 +20,28 @@ import importlib_wrapper
 import numpy as np
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/electrophoresis.py")
+    "@SAMPLES_DIR@/electrophoresis.py", N_SAMPLES=400)
 
 
 @skipIfMissingFeatures
 class Sample(ut.TestCase):
     system = sample.system
 
-    @ut.skipIf(tuple(map(int, np.__version__.split("."))) < (1, 10),
-               "not supported for numpy < v1.10")
     def test_persistence_length(self):
-        value = np.mean(sample.fit[0])
-        self.assertTrue(5. < value < 110., "length = {:.0f}".format(value))
+        # These two values differ due to undersampling, they converge
+        # to the same value around N_SAMPLES=1000
+        self.assertAlmostEqual(sample.persistence_length, 30., delta=3)
+        self.assertAlmostEqual(sample.persistence_length_obs, 34.8, delta=3)
 
     def test_mobility(self):
-        value = sample.mu
-        self.assertLess(abs(value), 0.45, "mobility = {:.2f}".format(value))
+        self.assertAlmostEqual(sample.mu, 1.02, delta=0.02)
 
     def test_electrophoresis_gradient(self):
         # the force is applied along the x-axis
-        gradient = np.mean(np.gradient(sample.COM.T, axis=1), axis=1)
-        self.assertLess(abs(gradient[0] + 1e-2), 2e-3)
-        self.assertLess(abs(gradient[1]), 2e-3)
-        self.assertLess(abs(gradient[2]), 2e-3)
+        com_vel = np.average(sample.COM_v, axis=0)
+        self.assertGreater(abs(com_vel[0]), .9)
+        self.assertLess(abs(com_vel[1]), .1)
+        self.assertLess(abs(com_vel[2]), .1)
 
 
 if __name__ == "__main__":

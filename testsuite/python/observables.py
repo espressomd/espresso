@@ -105,10 +105,10 @@ class Observables(ut.TestCase):
 
             # Data from observable
             observable = obs_name(ids=id_list)
-            obs_data = np.reshape(observable.calculate(), part_data.shape)
+            obs_data = observable.calculate()
 
             # Check
-            self.assertEqual(observable.n_values(), len(part_data.flatten()))
+            self.assertEqual(obs_data.shape, part_data.shape)
             np.testing.assert_equal(id_list, observable.ids)
 
             np.testing.assert_array_almost_equal(
@@ -148,15 +148,15 @@ class Observables(ut.TestCase):
         obs_data = obs.calculate()
         part_data = np.array([p.convert_vector_space_to_body(p.v)
                               for p in self.system.part])
-        np.testing.assert_array_almost_equal(part_data.flatten(), obs_data,
+        self.assertEqual(obs_data.shape, part_data.shape)
+        np.testing.assert_array_almost_equal(part_data, obs_data,
                                              err_msg="Data did not agree for observable ParticleBodyVelocities and particle derived values.",
                                              decimal=9)
 
     def test_stress_tensor(self):
-        s = self.system.analysis.stress_tensor()["total"].reshape(9)
-        obs_data = np.array(espressomd.observables.StressTensor().calculate())
-        self.assertEqual(
-            espressomd.observables.StressTensor().n_values(), len(s))
+        s = self.system.analysis.stress_tensor()["total"]
+        obs_data = espressomd.observables.StressTensor().calculate()
+        self.assertEqual(obs_data.shape, s.shape)
         np.testing.assert_array_almost_equal(
             s,
             obs_data,
@@ -168,8 +168,7 @@ class Observables(ut.TestCase):
         obs_data = espressomd.observables.Current(
             ids=self.system.part[:].id).calculate()
         part_data = self.system.part[:].q.dot(self.system.part[:].v)
-        self.assertEqual(espressomd.observables.Current(
-            ids=range(self.N_PART)).n_values(), len(part_data.flatten()))
+        self.assertEqual(obs_data.shape, part_data.shape)
         np.testing.assert_array_almost_equal(
             obs_data, part_data, err_msg="Data did not agree for observable 'Current'", decimal=9)
 
@@ -178,7 +177,7 @@ class Observables(ut.TestCase):
         obs = espressomd.observables.DipoleMoment(ids=self.system.part[:].id)
         obs_data = obs.calculate()
         part_data = self.system.part[:].q.dot(self.system.part[:].pos)
-        self.assertEqual(obs.n_values(), len(part_data.flatten()))
+        self.assertEqual(obs_data.shape, part_data.shape)
         np.testing.assert_array_almost_equal(
             obs_data, part_data, err_msg="Data did not agree for observable 'DipoleMoment'", decimal=9)
 
@@ -195,7 +194,7 @@ class Observables(ut.TestCase):
 
         np.testing.assert_allclose(
             np.sum(particles.f, axis=0),
-            espressomd.observables.ComForce(ids=id_list).calculate())
+            espressomd.observables.TotalForce(ids=id_list).calculate())
 
 
 if __name__ == "__main__":

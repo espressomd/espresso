@@ -18,9 +18,7 @@
 #
 """
 Simulate a Lennard-Jones liquid with charges. The P3M method is used to
-calculate electrostatic interactions. The ELC method can be optionally
-added to subtract the electrostatic contribution from the *z*-direction.
-For more details, see :ref:`Electrostatic Layer Correction (ELC)`.
+calculate electrostatic interactions.
 """
 import numpy as np
 import espressomd
@@ -29,7 +27,6 @@ required_features = ["P3M", "WCA"]
 espressomd.assert_features(required_features)
 
 from espressomd import electrostatics
-from espressomd import electrostatic_extensions
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -38,8 +35,6 @@ group.add_argument("--cpu", action="store_const", dest="mode",
                    const="cpu", help="P3M on CPU", default="cpu")
 group.add_argument("--gpu", action="store_const", dest="mode",
                    const="gpu", help="P3M on GPU")
-group.add_argument("--elc", action="store_const", dest="mode",
-                   const="elc", help="P3M and ELC on CPU")
 args = parser.parse_args()
 
 
@@ -64,9 +59,7 @@ wca_sig = 1.0
 # Integration parameters
 #############################################################
 system = espressomd.System(box_l=[box_l] * 3)
-system.set_random_state_PRNG()
-#system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.random.seed(seed=system.seed)
+np.random.seed(seed=42)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
@@ -102,8 +95,6 @@ n_part = int(volume * density)
 
 for i in range(n_part):
     system.part.add(id=i, pos=np.random.random(3) * system.box_l)
-
-system.analysis.dist_to(0)
 
 print("Simulate {} particles in a cubic box {} at density {}."
       .format(n_part, box_l, density).strip())
@@ -141,10 +132,6 @@ print("\nSCRIPT--->P3M parameter:\n")
 p3m_params = p3m.get_params()
 for key in list(p3m_params.keys()):
     print("{} = {}".format(key, p3m_params[key]))
-
-if args.mode == "elc":
-    elc = electrostatic_extensions.ELC(maxPWerror=1.0, gap_size=1.0)
-    system.actors.add(elc)
 
 print(system.actors)
 

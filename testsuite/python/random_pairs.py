@@ -51,7 +51,7 @@ class RandomPairTest(ut.TestCase):
                 self.all_pairs.append((pair[0].id, pair[1].id))
 
         self.all_pairs = set(self.all_pairs)
-        self.assertTrue(len(self.all_pairs))
+        self.assertGreater(len(self.all_pairs), 0)
 
     def tearDown(self):
         self.system.part.clear()
@@ -75,15 +75,11 @@ class RandomPairTest(ut.TestCase):
     def check_pairs(self, n2_pairs):
         cs_pairs = self.system.cell_system.get_pairs_(1.5)
         self.check_duplicates(cs_pairs)
-        self.assertTrue(len(cs_pairs))
+        self.assertGreater(len(cs_pairs), 0)
         self.assertEqual(n2_pairs ^ set(cs_pairs), set())
 
     def check_dd(self, n2_pairs):
         self.system.cell_system.set_domain_decomposition()
-        self.check_pairs(n2_pairs)
-
-    def check_layered(self, n2_pairs):
-        self.system.cell_system.set_layered()
         self.check_pairs(n2_pairs)
 
     def check_n_squared(self, n2_pairs):
@@ -98,7 +94,6 @@ class RandomPairTest(ut.TestCase):
             n2_pairs = self.pairs_n2(1.5)
 
             self.check_dd(n2_pairs)
-            self.check_layered(n2_pairs)
             self.check_n_squared(n2_pairs)
 
 

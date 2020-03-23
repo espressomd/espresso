@@ -466,11 +466,6 @@ modeling objects are described in section :ref:`Object-in-fluid`.
 OIF local forces
 ~~~~~~~~~~~~~~~~
 
-.. note::
-
-    Requires ``OIF_GLOBAL_FORCES`` feature.
-
-
 OIF local forces are available through the :class:`espressomd.interactions.OifLocalForces` class.
 
 This type of interaction is available for closed 3D immersed objects flowing in the LB flow.
@@ -598,11 +593,6 @@ larger than :math:`\pi`, then the inner angle is concave.
 OIF global forces
 ~~~~~~~~~~~~~~~~~
 
-.. note::
-
-    Requires ``OIF_GLOBAL_FORCES`` feature.
-
-
 OIF global forces are available through the
 :class:`espressomd.interactions.OifGlobalForces` class.
 
@@ -668,32 +658,4 @@ defined
 Triangle 012 must have correct orientation, that is the normal vector
 defined by a vector product :math:`01\times02`. The orientation must
 point inside the immersed object.
-
-Out direction
-~~~~~~~~~~~~~
-
-OIF out direction is available through the
-:class:`espressomd.interactions.OifOutDirection` class.
-
-
-
-This type of interaction is primarily for closed 3D immersed objects to
-compute the input for membrane collision. After creating the interaction
-
-::
-
-    out_direction_interaction = OifOutDirection()
-
-it is important how the bond is created. Particles need to be mentioned
-in the correct order. Command
-
-::
-
-    p0.add_bond((out_direction_interaction, p1.part_id, p2.part_id, p3.part_id))
-
-calculates the outward normal vector of triangle defined by particles 1,
-2, 3 (these should be selected in such a way that particle 0 lies
-approximately at its centroid). In order for the direction to be outward
-with respect to the underlying object, the triangle 123 needs to be
-properly oriented (as explained in paragraph `Volume conservation`_).
 

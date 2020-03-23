@@ -29,8 +29,6 @@ class ProfileObservablesTest(ut.TestCase):
     system.time_step = 0.01
     system.part.add(id=0, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
     system.part.add(id=1, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
-    flat_index = np.ravel_multi_index((0, 0, 1), (2, 2, 2))
-    flat_index_3d = np.ravel_multi_index((0, 0, 1, 2), (2, 2, 2, 3))
     bin_volume = 5.0**3
     kwargs = {'ids': [0, 1],
               'n_x_bins': 2,
@@ -45,9 +43,9 @@ class ProfileObservablesTest(ut.TestCase):
 
     def test_density_profile(self):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
-        self.assertEqual(density_profile.calculate()[
-                         self.flat_index], 2.0 / self.bin_volume)
-        self.assertEqual(density_profile.n_values(),
+        obs_data = density_profile.calculate()
+        self.assertEqual(obs_data[0, 0, 1], 2.0 / self.bin_volume)
+        self.assertEqual(np.prod(obs_data.shape),
                          self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
@@ -57,18 +55,18 @@ class ProfileObservablesTest(ut.TestCase):
         self.system.part[0].ext_force = [0.0, 0.0, 1.0]
         self.system.part[1].ext_force = [0.0, 0.0, 1.0]
         self.system.integrator.run(0)
-        self.assertEqual(density_profile.calculate()[
-                         self.flat_index_3d], 2.0 / self.bin_volume)
-        self.assertEqual(density_profile.n_values(),
+        obs_data = density_profile.calculate()
+        self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
+        self.assertEqual(np.prod(obs_data.shape),
                          3 * self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 
     def test_flux_density_profile(self):
         density_profile = espressomd.observables.FluxDensityProfile(
             **self.kwargs)
         self.system.integrator.run(0)
-        self.assertEqual(density_profile.calculate()[
-                         self.flat_index_3d], 2.0 / self.bin_volume)
-        self.assertEqual(density_profile.n_values(),
+        obs_data = density_profile.calculate()
+        self.assertEqual(obs_data[0, 0, 1, 2], 2.0 / self.bin_volume)
+        self.assertEqual(np.prod(obs_data.shape),
                          3 * self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 
 

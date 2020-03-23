@@ -20,8 +20,10 @@
 #define REACTION_ENSEMBLE_H
 
 #include "energy.hpp"
+#include "particle_data.hpp"
+#include "random.hpp"
+
 #include <map>
-#include <random>
 #include <string>
 #include <utils/Accumulator.hpp>
 
@@ -111,9 +113,8 @@ class ReactionAlgorithm {
 
 public:
   ReactionAlgorithm(int seed)
-      : m_seeder({seed, seed, seed}), m_generator(m_seeder),
+      : m_generator(Random::mt19937(std::seed_seq({seed, seed, seed}))),
         m_normal_distribution(0.0, 1.0), m_uniform_real_distribution(0.0, 1.0) {
-    m_generator.discard(1'000'000);
   }
 
   virtual ~ReactionAlgorithm() = default;
@@ -198,7 +199,6 @@ protected:
   bool all_reactant_particles_exist(int reaction_id);
 
 private:
-  std::seed_seq m_seeder;
   std::mt19937 m_generator;
   std::normal_distribution<double> m_normal_distribution;
   std::uniform_real_distribution<double> m_uniform_real_distribution;

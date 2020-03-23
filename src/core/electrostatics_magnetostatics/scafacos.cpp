@@ -23,11 +23,11 @@
 
 #if defined(SCAFACOS)
 
+#include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/min_element.hpp>
 
 #include <algorithm>
 #include <cassert>
-#include <iostream>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -86,7 +86,7 @@ int ScafacosData::update_particle_data() {
 #endif
   }
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : cell_structure.local_cells().particles()) {
     auto const pos = folded_position(p.r.p, box_geo);
     positions.push_back(pos[0]);
     positions.push_back(pos[1]);
@@ -113,7 +113,7 @@ void ScafacosData::update_particle_forces() const {
   if (positions.empty())
     return;
 
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : cell_structure.local_cells().particles()) {
     if (!dipolar()) {
       p.f.f += coulomb.prefactor * p.p.q *
                Utils::Vector3d(Utils::Span<const double>(&(fields[it]), 3));
@@ -320,7 +320,8 @@ void tune() {
 }
 
 static void set_params_safe(const std::string &method,
-                            const std::string &params, bool dipolar_ia) {
+                            const std::string &params, bool dipolar_ia,
+                            int n_part) {
   if (scafacos) {
     delete scafacos;
     scafacos = 0;
@@ -377,8 +378,7 @@ double get_r_cut() {
 
 void set_parameters(const std::string &method, const std::string &params,
                     bool dipolar_ia) {
-  mpi_call(set_params_safe, method, params, dipolar_ia);
-  set_params_safe(method, params, dipolar_ia);
+  mpi_call_all(set_params_safe, method, params, dipolar_ia, get_n_part());
 }
 
 bool dipolar() {
@@ -414,9 +414,8 @@ void update_system_params() {
   int per[3] = {box_geo.periodic(0) != 0, box_geo.periodic(1) != 0,
                 box_geo.periodic(2) != 0};
 
-  int tmp;
-  MPI_Allreduce(&n_part, &tmp, 1, MPI_INT, MPI_MAX, comm_cart);
-  n_part = tmp;
+  auto const n_part = boost::mpi::all_reduce(comm_cart, cells_get_n_particles(),
+                                             std::plus<int>());
   scafacos->set_common_parameters(box_geo.length().data(), per, n_part);
 }
 

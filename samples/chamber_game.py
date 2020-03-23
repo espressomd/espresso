@@ -29,6 +29,7 @@ import time
 
 import espressomd
 import espressomd.shapes
+import espressomd.minimize_energy
 from espressomd.visualization_opengl import openGLLive, KeyboardButtonEvent, KeyboardFireEvent
 
 required_features = ["LENNARD_JONES", "WCA", "MASS",
@@ -57,7 +58,6 @@ except BaseException:
 
 box = np.array([1500.0, 500.0, 150.0])
 system = espressomd.System(box_l=box)
-system.set_random_state_PRNG()
 
 # PARAMETERS
 
@@ -179,7 +179,7 @@ for i in range(snake_n):
         p_head = system.part.add(
             pos=snake_startpos,
             type=snake_head_type,
-            fix=[0, 0, 1],
+            fix=[False, False, True],
             mass=snake_head_mass,
             temp=temperature_snake,
             gamma=gamma_snake_head)
@@ -191,7 +191,7 @@ for i in range(snake_n):
                + (i - 1) * snake_bead_sigma),
             bonds=(harmonic_bead if (i > 1) else harmonic_head, i - 1),
             type=snake_bead_type,
-            fix=[0, 0, 1],
+            fix=[False, False, True],
             mass=snake_bead_mass,
             temp=temperature_snake,
             gamma=gamma_snake_bead)
@@ -261,14 +261,15 @@ while n < bubbles_n:
     system.part.add(
         pos=bpos,
         type=bubble_type,
-        fix=[0, 0, 1],
+        fix=[False, False, True],
         mass=bubble_mass,
         temp=temperature_bubbles,
         gamma=gamma_bubbles)
     testid = len(system.part) - 1
     n += 1
 
-    if system.analysis.dist_to(id=testid) < bubble_sigma * 0.5:
+    if np.min([system.distance(system.part[testid], p.pos)
+               for p in system.part if p.id != testid]) < bubble_sigma * 0.5:
         system.part[testid].remove()
         n -= 1
 
@@ -280,7 +281,7 @@ bpos = [np.random.random() * (pore_xl - snake_head_sigma * 4) +
 p_temp_inc = system.part.add(
     pos=bpos,
     type=temp_change_inc_type,
-    fix=[1, 1, 1])
+    fix=[True, True, True])
 
 bpos = [pore_xr
         + np.random.random() * (pore_xr - pore_xl - snake_head_sigma * 4)
@@ -290,15 +291,15 @@ bpos = [pore_xr
 p_temp_dec = system.part.add(
     pos=bpos,
     type=temp_change_dec_type,
-    fix=[1, 1, 1])
+    fix=[True, True, True])
 
 # MINIMIZE ENERGY
 
 energy = system.analysis.energy()
 #print("Before Minimization: E_total = {}".format(energy['total']))
-system.minimize_energy.init(f_max=100, gamma=30.0,
-                            max_steps=10000, max_displacement=0.01)
-system.minimize_energy.minimize()
+espressomd.minimize_energy.steepest_descent(system, f_max=100, gamma=30.0,
+                                            max_steps=10000,
+                                            max_displacement=0.01)
 energy = system.analysis.energy()
 #print("After Minimization: E_total = {}".format(energy['total']))
 
@@ -377,28 +378,28 @@ def explode():
 
 
 # KEYBOARD CONTROLS
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('i', KeyboardFireEvent.Pressed, move_up_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('k', KeyboardFireEvent.Pressed, move_down_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('i', KeyboardFireEvent.Released, move_updown_reset))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('k', KeyboardFireEvent.Released, move_updown_reset))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Pressed, move_left_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('l', KeyboardFireEvent.Pressed, move_right_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Released, move_leftright_reset))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('l', KeyboardFireEvent.Released, move_leftright_reset))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('b', KeyboardFireEvent.Pressed, restart))
 
 # MAIN LOOP

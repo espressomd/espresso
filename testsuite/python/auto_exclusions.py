@@ -45,16 +45,16 @@ class AutoExclusions(ut.TestCase):
         for p in range(1, 9):
             excl = s.part[p].exclusions
             self.assertEqual(len(excl), 2)
-            self.assertTrue((p - 1) in excl)
-            self.assertTrue((p + 1) in excl)
+            self.assertIn(p - 1, excl)
+            self.assertIn(p + 1, excl)
 
         excl = s.part[0].exclusions
         self.assertEqual(len(excl), 1)
-        self.assertTrue(1 in excl)
+        self.assertIn(1, excl)
 
         excl = s.part[9].exclusions
         self.assertEqual(len(excl), 1)
-        self.assertTrue(8 in excl)
+        self.assertIn(8, excl)
 
     def test_ring(self):
         bond = espressomd.interactions.Virtual()
@@ -73,8 +73,8 @@ class AutoExclusions(ut.TestCase):
             excl = s.part[p].exclusions
             self.assertEqual(len(excl), 4)
             for i in range(1, 3):
-                self.assertTrue((p - i) % 10 in excl)
-                self.assertTrue((p + i) % 10 in excl)
+                self.assertIn((p - i) % 10, excl)
+                self.assertIn((p + i) % 10, excl)
 
 
 if __name__ == "__main__":

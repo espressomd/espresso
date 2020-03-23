@@ -20,16 +20,18 @@
 #define UTILS_MATH_BSPLINE_HPP
 
 #include "sqr.hpp"
+#include <utils/device_qualifier.hpp>
 
-#include <cassert>
 #include <stdexcept>
+#include <type_traits>
 
 namespace Utils {
-template <int order, typename T = double> inline T bspline(int i, T x) {
-  static_assert(order <= 7, "");
-  assert(i < order);
-  assert(x >= -0.5);
-  assert(x <= 0.5);
+template <int order, typename T>
+DEVICE_QUALIFIER auto bspline(int i, T x)
+    -> std::enable_if_t<(order > 0) && (order <= 7), T> {
+  DEVICE_ASSERT(i < order);
+  DEVICE_ASSERT(x >= -0.5);
+  DEVICE_ASSERT(x <= 0.5);
 
   switch (order) {
   case 1:
@@ -159,10 +161,11 @@ template <int order, typename T = double> inline T bspline(int i, T x) {
   }
   }
 
-  throw std::runtime_error("Internal interpolation error.");
+  DEVICE_THROW(std::runtime_error("Internal interpolation error."));
+  return T{};
 }
 
-inline double bspline(int k, int i, double x) {
+template <class T> auto bspline(int i, T x, int k) {
   switch (k) {
   case 1:
     return bspline<1>(i, x);
@@ -185,9 +188,9 @@ inline double bspline(int k, int i, double x) {
 
 template <int order, typename T = double> inline T bspline_d(int i, T x) {
   static_assert(order <= 7, "");
-  assert(i < order);
-  assert(x >= -0.5);
-  assert(x <= 0.5);
+  DEVICE_ASSERT(i < order);
+  DEVICE_ASSERT(x >= -0.5);
+  DEVICE_ASSERT(x <= 0.5);
 
   switch (order - 1) {
   case 0:

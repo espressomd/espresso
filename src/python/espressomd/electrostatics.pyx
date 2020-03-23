@@ -18,16 +18,14 @@
 #
 from cython.operator cimport dereference
 include "myconfig.pxi"
-from espressomd cimport actors
-from . import actors
-cimport grid
-cimport globals
+from .actors cimport Actor
+from .grid cimport box_geo
 import numpy as np
 IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
-from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from .utils import is_valid_type, to_str
 from . cimport checks
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -52,7 +50,7 @@ IF ELECTROSTATICS == 1:
                     you are doing.
                     """)
 
-    cdef class ElectrostaticInteraction(actors.Actor):
+    cdef class ElectrostaticInteraction(Actor):
         def _tune(self):
             raise Exception(
                 "Subclasses of ElectrostaticInteraction must define the "
@@ -103,10 +101,10 @@ IF ELECTROSTATICS:
                 raise ValueError("r_cut should be a non-negative double")
 
         def valid_keys(self):
-            return "prefactor", "kappa", "r_cut", "check_neutrality"
+            return ["prefactor", "kappa", "r_cut", "check_neutrality"]
 
         def required_keys(self):
-            return "prefactor", "kappa", "r_cut"
+            return ["prefactor", "kappa", "r_cut"]
 
         def _set_params_in_es_core(self):
             set_prefactor(self._params["prefactor"])
@@ -160,10 +158,11 @@ IF ELECTROSTATICS:
                 raise ValueError("r_cut should be a non-negative double")
 
         def valid_keys(self):
-            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut", "check_neutrality"
+            return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut",
+                    "check_neutrality"]
 
         def required_keys(self):
-            return "prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"
+            return ["prefactor", "kappa", "epsilon1", "epsilon2", "r_cut"]
 
         def _set_params_in_es_core(self):
             set_prefactor(self._params["prefactor"])
@@ -199,6 +198,7 @@ IF P3M == 1:
 
         Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
         summation method to calculate potentials in N-body simulation.
+        See :ref:`Coulomb P3M` for more details.
 
         Parameters
         ----------
@@ -221,7 +221,7 @@ IF P3M == 1:
             The real space cutoff.
         tune : :obj:`bool`, optional
             Used to activate/deactivate the tuning method on activation.
-            Defaults to True.
+            Defaults to ``True``.
         check_neutrality : :obj:`bool`, optional
             Raise a warning if the system is not electrically neutral when
             set to ``True`` (default).
@@ -350,6 +350,7 @@ IF P3M == 1:
 
             Particle--Particle--Particle--Mesh (P3M) is a Fourier-based Ewald
             summation method to calculate potentials in N-body simulation.
+            See :ref:`Coulomb P3M on GPU` for more details.
 
             Parameters
             ----------
@@ -372,7 +373,7 @@ IF P3M == 1:
                 The real space cutoff
             tune : :obj:`bool`, optional
                 Used to activate/deactivate the tuning method on activation.
-                Defaults to True.
+                Defaults to ``True``.
             check_neutrality : :obj:`bool`, optional
                 Raise a warning if the system is not electrically neutral when
                 set to ``True`` (default).
@@ -492,7 +493,7 @@ IF ELECTROSTATICS:
     cdef class MMM1D(ElectrostaticInteraction):
         """
         Electrostatics solver for systems with one periodic direction.
-        See :ref:`MMM1D Theory` for more details.
+        See :ref:`MMM1D` for more details.
 
         Parameters
         ----------
@@ -504,7 +505,7 @@ IF ELECTROSTATICS:
             Radius where near-field and far-field calculation are switched.
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
-            Specify whether to automatically tune ore not. The default is True.
+            Specify whether to automatically tune or not. Defaults to ``True``.
 
         """
 
@@ -528,7 +529,8 @@ IF ELECTROSTATICS:
                     "check_neutrality": True}
 
         def valid_keys(self):
-            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune", "check_neutrality"
+            return ["prefactor", "maxPWerror", "far_switch_radius",
+                    "bessel_cutoff", "tune", "check_neutrality"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -568,7 +570,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
     cdef class MMM1DGPU(ElectrostaticInteraction):
         """
         Electrostatics solver with GPU support for systems with one periodic
-        direction. See :ref:`MMM1D Theory` for more details.
+        direction. See :ref:`MMM1D on GPU` for more details.
 
         Parameters
         ----------
@@ -580,7 +582,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             Radius where near-field and far-field calculation are switched
         bessel_cutoff : :obj:`int`, optional
         tune : :obj:`bool`, optional
-            Specify whether to automatically tune ore not. The default is True.
+            Specify whether to automatically tune or not. Defaults to ``True``.
         """
         cdef Mmm1dgpuForce * thisptr
         cdef EspressoSystemInterface * interface
@@ -618,7 +620,8 @@ IF ELECTROSTATICS and MMM1D_GPU:
                     "check_neutrality": True}
 
         def valid_keys(self):
-            return "prefactor", "maxPWerror", "far_switch_radius", "bessel_cutoff", "tune", "check_neutrality"
+            return ["prefactor", "maxPWerror", "far_switch_radius",
+                    "bessel_cutoff", "tune", "check_neutrality"]
 
         def required_keys(self):
             return ["prefactor", "maxPWerror"]
@@ -634,7 +637,7 @@ IF ELECTROSTATICS and MMM1D_GPU:
             default_params = self.default_params()
 
             self.thisptr.set_params(
-                grid.box_geo.length()[2], coulomb.prefactor,
+                box_geo.length()[2], coulomb.prefactor,
                 self._params["maxPWerror"], self._params["far_switch_radius"],
                 self._params["bessel_cutoff"])
 
@@ -656,148 +659,28 @@ IF ELECTROSTATICS and MMM1D_GPU:
             dereference(self.thisptr).deactivate()
 
 IF ELECTROSTATICS:
-    cdef class MMM2D(ElectrostaticInteraction):
-        """
-        Electrostatics solver for systems with two periodic dimensions.
-        More detail are in the user guide :ref:`MMM2D Theory`
-
-        Parameters
-        ----------
-        prefactor : :obj:`float`
-            Electrostatics prefactor (see :eq:`coulomb_prefactor`).
-        maxWPerror : :obj:`float`
-            Maximal pairwise error.
-        dielectric : :obj:`bool`, optional
-            Selector parameter for setting the dielectric constants manually
-            (top, mid, bottom), mutually exclusive with dielectric-contrast
-        top : :obj:`float`, optional
-            If dielectric is specified this parameter sets the dielectric
-            constant *above* the simulation box
-            :math:`\\varepsilon_\\mathrm{top}`
-        mid : :obj:`float`, optional
-            If dielectric is specified this parameter sets the dielectric
-            constant *in* the simulation box :math:`\\varepsilon_\\mathrm{mid}`.
-        bottom : :obj:`float`, optional
-            If dielectric is specified this parameter sets the dielectric
-            constant *below* the simulation box
-            :math:`\\varepsilon_\\mathrm{bot}`.
-        dielectric_contrast_on : :obj:`bool`, optional
-            Selector parameter for setting a dielectric contrast between the
-            upper simulation boundary and the simulation box, and between the
-            lower simulation boundary and the simulation box, respectively.
-        delta_mid_top : :obj:`float`, optional
-            If dielectric-contrast mode is selected, then this parameter sets
-            the dielectric contrast between the upper boundary and the
-            simulation box :math:`\\Delta_t`.
-        delta_mid_bottom : :obj:`float`, optional
-            If dielectric-contrast mode is selected, then this parameter sets
-            the dielectric contrast between the lower boundary and the
-            simulation box :math:`\\Delta_b`.
-        const_pot : :obj:`bool`, optional
-            Selector parameter for setting a constant electric potential
-            between the top and bottom of the simulation box.
-        pot_diff : :obj:`float`, optional
-            If const_pot mode is selected this parameter controls the applied
-            voltage.
-        far_cut : :obj:`float`, optional
-            Cut off radius, use with care, intended for testing purposes.
-
-        """
-
-        def validate_params(self):
-            default_params = self.default_params()
-            if self._params["prefactor"] <= 0:
-                raise ValueError("prefactor should be a positive float")
-            if self._params["maxPWerror"] < 0 and self._params["maxPWerror"] != default_params["maxPWerror"]:
-                raise ValueError("maxPWerror should be a positive double")
-            if self._params["dielectric"] == 1 and (
-                    self._params["top"] < 0 or self._params["mid"] < 0 or self._params["bot"] < 0):
-                raise ValueError("Dielectric constants should be > 0!")
-            if self._params["dielectric_contrast_on"] == 1 and (
-                    self._params["delta_mid_top"] == default_params["delta_mid_top"] or self._params["delta_mid_bot"] == default_params["delta_mid_bot"]):
-                raise ValueError("Dielectric contrast not set!")
-            if self._params["dielectric"] and self._params["dielectric_contrast_on"]:
-                raise ValueError(
-                    "dielectric and dielectric_contrast are mutually exclusive!")
-
-        def default_params(self):
-            return {"prefactor": -1,
-                    "maxPWerror": -1,
-                    "far_cut": -1,
-                    "top": 0,
-                    "mid": 0,
-                    "bot": 0,
-                    "dielectric": False,
-                    "dielectric_contrast_on": False,
-                    "const_pot": False,
-                    "delta_mid_top": 0,
-                    "delta_mid_bot": 0,
-                    "pot_diff": 0,
-                    "check_neutrality": True}
-
-        def required_keys(self):
-            return ["prefactor", "maxPWerror"]
-
-        def valid_keys(self):
-            return "prefactor", "maxPWerror", "top", "mid", "bot", "delta_mid_top", "delta_mid_bot", "pot_diff", "dielectric", "dielectric_contrast_on", "const_pot", "far_cut", "check_neutrality"
-
-        def _get_params_from_es_core(self):
-            params = {}
-            params.update(mmm2d_params)
-            params["prefactor"] = coulomb.prefactor
-            if params["dielectric_contrast_on"] or params["const_pot"]:
-                params["dielectric"] = True
-            else:
-                params["dielectric"] = False
-            return params
-
-        def _set_params_in_es_core(self):
-            set_prefactor(self._params["prefactor"])
-            if self._params["dielectric"]:
-                self._params["delta_mid_top"] = (
-                    self._params["mid"] - self._params["top"]) / (self._params["mid"] + self._params["top"])
-                self._params["delta_mid_bot"] = (
-                    self._params["mid"] - self._params["bot"]) / (self._params["mid"] + self._params["bot"])
-
-            if self._params["const_pot"]:
-                self._params["delta_mid_top"] = -1
-                self._params["delta_mid_bot"] = -1
-
-            res = MMM2D_set_params(self._params["maxPWerror"],
-                                   self._params["far_cut"],
-                                   self._params["delta_mid_top"],
-                                   self._params["delta_mid_bot"],
-                                   self._params["const_pot"],
-                                   self._params["pot_diff"])
-            handle_errors("MMM2d setup")
-            if res:
-                raise Exception("MMM2D setup failed")
-
-        def _activate_method(self):
-            check_neutrality(self._params)
-            coulomb.method = COULOMB_MMM2D
-            self._set_params_in_es_core()
-            MMM2D_init()
-            handle_errors("MMM2d setup")
-            res = MMM2D_sanity_checks()
-            handle_errors("MMM2d setup")
-            if res:
-                raise Exception("MMM2D sanity checks failed.")
-            mpi_bcast_coulomb_params()
-            handle_errors("MMM2d setup")
-
     IF SCAFACOS == 1:
         class Scafacos(ScafacosConnector, ElectrostaticInteraction):
 
             """
             Calculate the Coulomb interaction using the ScaFaCoS library.
+            See :ref:`ScaFaCoS electrostatics` for more details.
+
+            Parameters
+            ----------
+            prefactor : :obj:`float`
+                Coulomb prefactor as defined in :eq:`coulomb_prefactor`.
+            method_name : :obj:`str`
+                Name of the ScaFaCoS method to use.
+            method_params : :obj:`dict`
+                Dictionary containing the method-specific parameters.
             """
 
             dipolar = False
 
             # Explicit constructor needed due to multiple inheritance
             def __init__(self, *args, **kwargs):
-                actors.Actor.__init__(self, *args, **kwargs)
+                Actor.__init__(self, *args, **kwargs)
 
             def _activate_method(self):
                 check_neutrality(self._params)

@@ -23,7 +23,6 @@ import numpy as np
 
 class NSquare(ut.TestCase):
     S = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    S.seed = S.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.S.part.clear()
@@ -44,7 +43,7 @@ class NSquare(ut.TestCase):
 
         # Check that the particles are evenly distributed
         for node_parts in part_dist:
-            self.assertLess(abs(node_parts - n_part_avg), 2)
+            self.assertAlmostEqual(node_parts, n_part_avg, delta=2)
 
         # Check that we can still access all the particles
         # This basically checks if part_node and local_particles

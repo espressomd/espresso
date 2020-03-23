@@ -20,7 +20,7 @@ import importlib_wrapper
 import os
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/06-active_matter/SOLUTIONS/enhanced_diffusion.py",
+    "@TUTORIALS_DIR@/06-active_matter/solutions/enhanced_diffusion.py",
     cmd_arguments=[5.0], SAMP_STEPS=500, SAMP_LENGTH=100)
 
 

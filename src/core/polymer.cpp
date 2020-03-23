@@ -27,35 +27,31 @@
  *  The corresponding header file is polymer.hpp.
  */
 
-#include <cmath>
-#include <cstddef>
+#include "polymer.hpp"
 
-#include "PartCfg.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "communication.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
-#include "global.hpp"
-#include "integrate.hpp"
-#include "polymer.hpp"
 #include "random.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/constants.hpp>
-#include <utils/math/sqr.hpp>
 #include <utils/math/vec_rotate.hpp>
 
-Utils::Vector3d random_position(std::function<double()> const &generate_rn) {
+#include <cmath>
+#include <stdexcept>
+
+template <class RNG> static Utils::Vector3d random_position(RNG &rng) {
   Utils::Vector3d v;
   for (int i = 0; i < 3; ++i)
-    v[i] = box_geo.length()[i] * generate_rn();
+    v[i] = box_geo.length()[i] * rng();
   return v;
 }
 
-Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn) {
+template <class RNG> static Utils::Vector3d random_unit_vector(RNG &rng) {
   Utils::Vector3d v;
-  double const phi = acos(1. - 2. * generate_rn());
-  double const theta = 2. * Utils::pi() * generate_rn();
+  double const phi = acos(1. - 2. * rng());
+  double const theta = 2. * Utils::pi() * rng();
   v[0] = sin(phi) * cos(theta);
   v[1] = sin(phi) * sin(theta);
   v[2] = cos(phi);
@@ -63,31 +59,26 @@ Utils::Vector3d random_unit_vector(std::function<double()> const &generate_rn) {
   return v;
 }
 
-double mindist(PartCfg &partCfg, Utils::Vector3d const &pos) {
-  if (partCfg.empty()) {
-    return std::min(std::min(box_geo.length()[0], box_geo.length()[1]),
-                    box_geo.length()[2]);
-  }
-
-  auto const mindist = std::accumulate(
-      partCfg.begin(), partCfg.end(), std::numeric_limits<double>::infinity(),
-      [&pos](double mindist, Particle const &p) {
-        return std::min(mindist, get_mi_vector(pos, p.r.p, box_geo).norm2());
-      });
-
-  if (mindist < std::numeric_limits<double>::infinity())
-    return std::sqrt(mindist);
-  return -1.0;
-}
-
-bool is_valid_position(
-    Utils::Vector3d const *pos,
-    std::vector<std::vector<Utils::Vector3d>> const *positions,
-    PartCfg &partCfg, double const min_distance,
-    int const respect_constraints) {
-  Utils::Vector3d const folded_pos = folded_position(*pos, box_geo);
+/** Determines whether a given position @p pos is valid, i.e., it doesn't
+ *  collide with existing or buffered particles, nor with existing constraints
+ *  (if @c respect_constraints).
+ *  @param pos                   the trial position in question
+ *  @param positions             buffered positions to respect
+ *  @param partCfg               existing particles to respect
+ *  @param min_distance          threshold for the minimum distance between
+ *                               trial position and buffered/existing particles
+ *  @param respect_constraints   whether to respect constraints
+ *  @return true if valid position, false if not.
+ */
+static bool
+is_valid_position(Utils::Vector3d const &pos,
+                  std::vector<std::vector<Utils::Vector3d>> const &positions,
+                  PartCfg &partCfg, double const min_distance,
+                  int const respect_constraints) {
   // check if constraint is violated
   if (respect_constraints) {
+    Utils::Vector3d const folded_pos = folded_position(pos, box_geo);
+
     for (auto &c : Constraints::constraints) {
       auto cs =
           std::dynamic_pointer_cast<const Constraints::ShapeBasedConstraint>(c);
@@ -106,21 +97,16 @@ bool is_valid_position(
 
   if (min_distance > 0) {
     // check for collision with existing particles
-    if (mindist(partCfg, *pos) < min_distance) {
+    if (distto(partCfg, pos, -1) < min_distance) {
       return false;
     }
-    // check for collision with buffered positions
-    double buff_mindist = std::numeric_limits<double>::infinity();
-    double h;
-    for (auto const p : *positions) {
-      for (auto m : p) {
-        h = (folded_position(*pos, box_geo) - folded_position(m, box_geo))
-                .norm2();
-        buff_mindist = std::min(h, buff_mindist);
+
+    for (auto const &p : positions) {
+      for (auto const &m : p) {
+        if (get_mi_vector(pos, m, box_geo).norm() < min_distance) {
+          return false;
+        }
       }
-    }
-    if (std::sqrt(buff_mindist) < min_distance) {
-      return false;
     }
   }
   return true;
@@ -133,93 +119,96 @@ draw_polymer_positions(PartCfg &partCfg, int const n_polymers,
                        double const min_distance, int const max_tries,
                        int const use_bond_angle, double const bond_angle,
                        int const respect_constraints, int const seed) {
-  std::vector<std::vector<Utils::Vector3d>> positions(
-      n_polymers, std::vector<Utils::Vector3d>(beads_per_chain));
+  auto rng = [mt = Random::mt19937(static_cast<unsigned>(seed)),
+              dist = std::uniform_real_distribution<double>(
+                  0.0, 1.0)]() mutable { return dist(mt); };
 
-  std::mt19937 mt(seed);
-  std::uniform_real_distribution<double> dist(0.0, 1.0);
+  std::vector<std::vector<Utils::Vector3d>> positions(n_polymers);
+  for (auto &p : positions) {
+    p.reserve(beads_per_chain);
+  }
 
-  Utils::Vector3d trial_pos;
-  int attempts_mono, attempts_poly;
+  auto is_valid_pos = [&positions, &partCfg, min_distance,
+                       respect_constraints](Utils::Vector3d const &v) {
+    return is_valid_position(v, positions, partCfg, min_distance,
+                             respect_constraints);
+  };
 
-  // make sure that if given, all starting positions are valid
-  if ((not start_positions.empty()) and
-      std::any_of(start_positions.begin(), start_positions.end(),
-                  [&positions, &partCfg, min_distance,
-                   respect_constraints](Utils::Vector3d v) {
-                    return not is_valid_position(&v, &positions, partCfg,
-                                                 min_distance,
-                                                 respect_constraints);
-                  }))
-    throw std::runtime_error("Invalid start positions.");
-  // use (if none given, random) starting positions for every first monomer
-  for (int p = 0; p < n_polymers; ++p) {
-    attempts_mono = 0;
-    // first monomer for all polymers
-    if (start_positions.empty()) {
-      do {
-        trial_pos = random_position([&]() { return dist(mt); });
-        attempts_mono++;
-      } while ((not is_valid_position(&trial_pos, &positions, partCfg,
-                                      min_distance, respect_constraints)) and
-               (attempts_mono < max_tries));
-      if (attempts_mono == max_tries) {
-        throw std::runtime_error("Failed to create polymer start positions.");
-      }
-      positions[p][0] = trial_pos;
+  for (size_t p = 0; p < start_positions.size(); p++) {
+    if (is_valid_pos(start_positions[p])) {
+      positions[p].push_back(start_positions[p]);
     } else {
-      positions[p][0] = start_positions[p];
+      throw std::runtime_error("Invalid start positions.");
     }
   }
 
-  // create remaining monomers' positions
-  for (int p = 0; p < n_polymers; ++p) {
-    attempts_poly = 0;
-    for (int m = 1; m < beads_per_chain; ++m) {
-      attempts_mono = 0;
-      do {
-        if (m == 0) {
-          // m == 0 is only true after a failed attempt to position a polymer
-          trial_pos = random_position([&]() { return dist(mt); });
-        } else if (not use_bond_angle or m < 2) {
-          // random step, also necessary if angle is set, placing the second
-          // bead
-          trial_pos =
-              positions[p][m - 1] +
-              bond_length * random_unit_vector([&]() { return dist(mt); });
-        } else {
-          // use prescribed angle
-          Utils::Vector3d last_vec = positions[p][m - 1] - positions[p][m - 2];
-          trial_pos = positions[p][m - 1] +
-                      Utils::vec_rotate(
-                          vector_product(last_vec, random_unit_vector([&]() {
-                                           return dist(mt);
-                                         })),
-                          bond_angle, -last_vec);
-        }
-        attempts_mono++;
-      } while ((not is_valid_position(&trial_pos, &positions, partCfg,
-                                      min_distance, respect_constraints)) and
-               (attempts_mono < max_tries));
+  /* Draw a monomer position, obeying angle and starting position
+   * constraints where appropriate. */
+  auto draw_monomer_position = [&](int p, int m) {
+    if (m == 0) {
+      return (p < start_positions.size()) ? start_positions[p]
+                                          : random_position(rng);
+    }
 
-      if (attempts_mono == max_tries) {
-        if (attempts_poly < max_tries) {
-          // if start positions have to be respected: fail ...
-          if (start_positions.empty()) {
-            throw std::runtime_error("Failed to create polymer positions with "
-                                     "given start positions.");
-          }
-          // ... otherwise retry to position the whole polymer
-          attempts_poly++;
-          m = -1;
-        } else {
-          // ... but only if max_tries has not been exceeded.
-          throw std::runtime_error("Failed to create polymer positions.");
-        }
-      } else {
-        positions[p][m] = trial_pos;
+    if (not use_bond_angle or m < 2) {
+      return positions[p][m - 1] + bond_length * random_unit_vector(rng);
+    }
+
+    auto const last_vec = positions[p][m - 1] - positions[p][m - 2];
+    return positions[p][m - 1] +
+           Utils::vec_rotate(vector_product(last_vec, random_unit_vector(rng)),
+                             bond_angle, -last_vec);
+  };
+
+  /* Try up to max_tries times to draw a valid position */
+  auto draw_valid_monomer_position =
+      [&](int p, int m) -> boost::optional<Utils::Vector3d> {
+    for (unsigned _ = 0; _ < max_tries; _++) {
+      auto const trial_pos = draw_monomer_position(p, m);
+
+      if (is_valid_pos(trial_pos)) {
+        return trial_pos;
       }
     }
+
+    return {};
+  };
+
+  // create remaining monomers' positions by backtracking.
+  for (int p = 0; p < n_polymers; ++p) {
+    for (int attempts_poly = 0; attempts_poly < max_tries; attempts_poly++) {
+      int rejections = 0;
+      while (positions[p].size() < beads_per_chain) {
+        auto pos = draw_valid_monomer_position(p, positions[p].size());
+
+        if (pos) {
+          /* Move on one position */
+          positions[p].push_back(*pos);
+        } else if (not positions[p].empty()) {
+          /* Go back one position and try again */
+          positions[p].pop_back();
+          rejections++;
+          if (rejections > max_tries) {
+            /* Give up for this try. */
+            break;
+          }
+        } else {
+          /* Give up for this try. */
+          break;
+        }
+      }
+
+      /* If the polymer has not full length, we  try again. Otherwise we can
+       * move on to the next polymer. */
+      if (positions[p].size() == beads_per_chain) {
+        break;
+      }
+    }
+
+    /* We did not get a complete polymer, but have exceeded the maximal
+     * number of tries, which means failure. */
+    if (positions[p].size() < beads_per_chain)
+      throw std::runtime_error("Failed to create polymer positions.");
   }
   return positions;
 }

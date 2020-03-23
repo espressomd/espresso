@@ -23,12 +23,12 @@
 double coulomb_cutoff;
 
 #ifdef ELECTROSTATICS
+#include "cells.hpp"
 #include "communication.hpp"
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/icc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/p3m_gpu.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
@@ -36,7 +36,6 @@ double coulomb_cutoff;
 #include "errorhandling.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
 #include "integrate.hpp"
-#include "layered.hpp"
 #include "npt.hpp"
 
 #include <utils/constants.hpp>
@@ -75,17 +74,13 @@ void calc_pressure_long_range(Observable_stat &virials,
     break;
   case COULOMB_P3M: {
     p3m_charge_assign(particles);
-    virials.coulomb[1] = p3m_calc_kspace_forces(false, true, particles);
-    p3m_charge_assign(particles);
-    p3m_calc_kspace_stress(p_tensor.coulomb + 9);
+    auto const p3m_stress = p3m_calc_kspace_stress();
+    std::copy_n(p3m_stress.data(), 9, p_tensor.coulomb + 9);
+    virials.coulomb[1] = p3m_stress[0] + p3m_stress[4] + p3m_stress[8];
+
     break;
   }
 #endif
-  case COULOMB_MMM2D:
-    fprintf(
-        stderr,
-        "WARNING: pressure calculated, but MMM2D pressure not implemented\n");
-    break;
   case COULOMB_MMM1D:
   case COULOMB_MMM1D_GPU:
     fprintf(
@@ -101,10 +96,6 @@ void sanity_checks(int &state) {
   switch (coulomb.method) {
   case COULOMB_MMM1D:
     if (MMM1D_sanity_checks())
-      state = 0;
-    break;
-  case COULOMB_MMM2D:
-    if (MMM2D_sanity_checks())
       state = 0;
     break;
 #ifdef P3M
@@ -126,8 +117,6 @@ double cutoff(const Utils::Vector3d &box_l) {
   switch (coulomb.method) {
   case COULOMB_MMM1D:
     return std::numeric_limits<double>::infinity();
-  case COULOMB_MMM2D:
-    return std::numeric_limits<double>::min();
 #ifdef P3M
   case COULOMB_ELC_P3M:
     return std::max(elc_params.space_layer, p3m.params.r_cut_iL * box_l[0]);
@@ -171,9 +160,6 @@ void deactivate() {
   case COULOMB_MMM1D:
     mmm1d_params.maxPWerror = 1e40;
     break;
-  case COULOMB_MMM2D:
-    mmm2d_params.far_cut = 0;
-    break;
   default:
     break;
   }
@@ -199,7 +185,7 @@ void integrate_sanity_check() {
 }
 
 void update_dependent_particles() {
-  iccp3m_iteration(local_cells.particles(),
+  iccp3m_iteration(cell_structure.local_cells().particles(),
                    cell_structure.ghost_cells().particles());
 }
 
@@ -224,7 +210,8 @@ void on_coulomb_change() {
 #ifdef P3M
 #ifdef CUDA
   case COULOMB_P3M_GPU:
-    p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
+    if (this_node == 0)
+      p3m_gpu_init(p3m.params.cao, p3m.params.mesh, p3m.params.alpha);
     break;
 #endif
   case COULOMB_ELC_P3M:
@@ -236,9 +223,6 @@ void on_coulomb_change() {
 #endif
   case COULOMB_MMM1D:
     MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
     break;
   default:
     break;
@@ -271,9 +255,6 @@ void on_boxl_change() {
   case COULOMB_MMM1D:
     MMM1D_init();
     break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
-    break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     Scafacos::update_system_params();
@@ -300,9 +281,6 @@ void init() {
 #endif
   case COULOMB_MMM1D:
     MMM1D_init();
-    break;
-  case COULOMB_MMM2D:
-    MMM2D_init();
     break;
   default:
     break;
@@ -350,10 +328,6 @@ void calc_long_range_force(const ParticleRange &particles) {
       p3m_calc_kspace_forces(true, false, particles);
     break;
 #endif
-  case COULOMB_MMM2D:
-    MMM2D_add_far_force(particles);
-    MMM2D_dielectric_layers_force_contribution();
-    break;
 #ifdef SCAFACOS
   case COULOMB_SCAFACOS:
     assert(!Scafacos::dipolar());
@@ -419,10 +393,6 @@ void calc_energy_long_range(Observable_stat &energy,
     energy.coulomb[1] += Scafacos::long_range_energy();
     break;
 #endif
-  case COULOMB_MMM2D:
-    *energy.coulomb += MMM2D_far_energy(particles);
-    *energy.coulomb += MMM2D_dielectric_layers_energy_contribution();
-    break;
   default:
     break;
   }
@@ -518,9 +488,6 @@ void bcast_coulomb_params() {
   case COULOMB_MMM1D:
   case COULOMB_MMM1D_GPU:
     MPI_Bcast(&mmm1d_params, sizeof(MMM1D_struct), MPI_BYTE, 0, comm_cart);
-    break;
-  case COULOMB_MMM2D:
-    MPI_Bcast(&mmm2d_params, sizeof(MMM2D_struct), MPI_BYTE, 0, comm_cart);
     break;
   case COULOMB_RF:
     MPI_Bcast(&rf_params, sizeof(Reaction_field_params), MPI_BYTE, 0,

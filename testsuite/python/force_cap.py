@@ -31,7 +31,6 @@ class ForceCap(ut.TestCase):
 
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
     s.cell_system.skin = 0.0
-    s.seed = range(s.cell_system.get_state()["n_nodes"])
 
     np.random.seed(42)
 

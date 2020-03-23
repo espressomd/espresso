@@ -35,8 +35,7 @@ extern int n_thermalized_bonds;
 #include "bonded_interaction_data.hpp"
 #include "integrate.hpp"
 #include "random.hpp"
-
-extern std::unique_ptr<Utils::Counter<uint64_t>> thermalized_bond_rng_counter;
+#include "thermostat.hpp"
 
 /** Set the parameters of a thermalized bond
  *
@@ -46,14 +45,6 @@ extern std::unique_ptr<Utils::Counter<uint64_t>> thermalized_bond_rng_counter;
 int thermalized_bond_set_params(int bond_type, double temp_com,
                                 double gamma_com, double temp_distance,
                                 double gamma_distance, double r_cut);
-
-/* Used in integration step */
-void thermalized_bond_rng_counter_increment();
-
-/* Interface */
-bool thermalized_bond_is_seed_required();
-uint64_t thermalized_bond_get_rng_state();
-void thermalized_bond_set_rng_state(uint64_t counter);
 
 void thermalized_bond_update_params(double pref_scale);
 void thermalized_bond_init();
@@ -82,10 +73,11 @@ thermalized_bond_forces(Particle const &p1, Particle const &p2,
   auto const com_vel = mass_tot_inv * (p1.p.mass * p1.m.v + p2.p.mass * p2.m.v);
   auto const dist_vel = p2.m.v - p1.m.v;
 
+  extern ThermalizedBondThermostat thermalized_bond;
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
-  auto const noise = Random::v_noise<RNGSalt::THERMALIZED_BOND>(
-      thermalized_bond_rng_counter->value(), p1.p.identity, p2.p.identity);
+  auto const noise = Random::noise_uniform<RNGSalt::THERMALIZED_BOND>(
+      thermalized_bond.rng_get(), p1.p.identity, p2.p.identity);
 
   for (int i = 0; i < 3; i++) {
     double force_lv_com, force_lv_dist;

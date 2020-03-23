@@ -191,6 +191,26 @@ BOOST_AUTO_TEST_CASE(reduce_callback) {
   }
 }
 
+BOOST_AUTO_TEST_CASE(ignore_callback) {
+  called = false;
+  auto cb = []() -> int { return called = true, -1; };
+
+  auto const fp = static_cast<int (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(Communication::Result::ignore, fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    cbs.call(Communication::Result::ignore, fp);
+  } else {
+    cbs.loop();
+  }
+
+  BOOST_CHECK(called);
+}
+
 BOOST_AUTO_TEST_CASE(one_rank_callback) {
   auto cb = []() -> boost::optional<int> {
     boost::mpi::communicator world;
@@ -211,6 +231,32 @@ BOOST_AUTO_TEST_CASE(one_rank_callback) {
   if (0 == world.rank()) {
     BOOST_CHECK_EQUAL(cbs.call(Communication::Result::one_rank, fp),
                       world.size() - 1);
+  } else {
+    cbs.loop();
+  }
+}
+
+BOOST_AUTO_TEST_CASE(master_rank_callback) {
+  auto cb = []() -> int {
+    boost::mpi::communicator world;
+    if (world.rank() == 0) {
+      return world.size();
+    }
+
+    return -1;
+  };
+
+  auto const fp = static_cast<int (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(Communication::Result::master_rank,
+                                          fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::master_rank, fp),
+                      world.size());
   } else {
     cbs.loop();
   }

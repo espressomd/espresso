@@ -20,7 +20,7 @@
 #include "initialize.hpp"
 #include "Cluster.hpp"
 #include "ClusterStructure.hpp"
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace ClusterAnalysis {

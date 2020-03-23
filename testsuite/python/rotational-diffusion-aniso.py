@@ -22,14 +22,14 @@ import espressomd
 import tests_common
 
 
-@utx.skipIfMissingFeatures(["PARTICLE_ANISOTROPY",
+@utx.skipIfMissingFeatures(["ROTATION", "PARTICLE_ANISOTROPY",
                             "ROTATIONAL_INERTIA", "DIPOLES"])
 class RotDiffAniso(ut.TestCase):
     longMessage = True
+    round_error_prec = 1E-14
     # Handle for espresso system
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     system.cell_system.skin = 5.0
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     # The NVT thermostat parameters
     kT = 0.0
@@ -43,11 +43,15 @@ class RotDiffAniso(ut.TestCase):
     def setUp(self):
         self.system.time = 0.0
         self.system.part.clear()
+        if "BROWNIAN_DYNAMICS" in espressomd.features():
+            self.system.thermostat.turn_off()
+            # the default integrator is supposed implicitly
+            self.system.integrator.set_nvt()
 
-    def rot_diffusion_param_setup(self, n):
+    def add_particles_setup(self, n):
         """
-        Setup the parameters for the rotational diffusion
-        test check_rot_diffusion().
+        Adding particles according to the
+        previously set parameters.
 
         Parameters
         ----------
@@ -56,18 +60,21 @@ class RotDiffAniso(ut.TestCase):
 
         """
 
-        # Time
-        # The time step should be less than t0 ~ mass / gamma
-        self.system.time_step = 3E-3
+        for ind in range(n):
+            part_pos = np.random.random(3) * self.box
+            self.system.part.add(rotation=(1, 1, 1), id=ind,
+                                 pos=part_pos)
+            self.system.part[ind].rinertia = self.J
+            if espressomd.has_features("ROTATION"):
+                self.system.part[ind].omega_body = [0.0, 0.0, 0.0]
 
-        # Space
-        box = 10.0
-        self.system.box_l = box, box, box
-        self.system.periodicity = [0, 0, 0]
+    def set_anisotropic_param(self):
+        """
+        Select parameters for anisotropic particles.
+
+        """
 
         # NVT thermostat
-        # Just some temperature range to cover by the test:
-        self.kT = np.random.uniform(1.0, 1.5)
         # Note: here & hereinafter specific variations in the random parameter
         # ranges are related to the test execution duration to achieve the
         # required statistical averages faster. The friction gamma_global should
@@ -84,7 +91,7 @@ class RotDiffAniso(ut.TestCase):
         # eq. (10.2.26) [N. Pottier, doi:10.1007/s10955-010-0114-6 (2010)].
         self.gamma_global = 1E2 * np.random.uniform(0.35, 1.05, (3))
 
-        # Particles
+        # Particles' properties
         # As far as the problem characteristic time is t0 ~ J / gamma
         # and the Langevin equation finite-difference approximation is stable
         # only for time_step << t0, it is needed to set the moment of inertia
@@ -94,11 +101,46 @@ class RotDiffAniso(ut.TestCase):
         # too much of the CPU time: the in silico time should clock over the
         # t0.
         self.J = np.random.uniform(1.5, 16.5, (3))
-        for ind in range(n):
-            part_pos = np.random.random(3) * box
-            self.system.part.add(rotation=(1, 1, 1), id=ind, rinertia=self.J,
-                                 pos=part_pos)
-            self.system.part[ind].omega_body = [0.0, 0.0, 0.0]
+
+    def set_isotropic_param(self):
+        """
+        Select parameters for isotropic particles.
+
+        Parameters
+        ----------
+
+        """
+
+        # NVT thermostat
+        # see the comments in set_anisotropic_param()
+        self.gamma_global[0] = 1E2 * np.random.uniform(0.35, 1.05)
+        self.gamma_global[1] = self.gamma_global[0]
+        self.gamma_global[2] = self.gamma_global[0]
+        # Particles' properties
+        # see the comments in set_anisotropic_param()
+        self.J[0] = np.random.uniform(1.5, 16.5)
+        self.J[1] = self.J[0]
+        self.J[2] = self.J[0]
+
+    def rot_diffusion_param_setup(self):
+        """
+        Setup the parameters for the rotational diffusion
+        test check_rot_diffusion().
+
+        """
+
+        # Time
+        # The time step should be less than t0 ~ mass / gamma
+        self.system.time_step = 3E-3
+
+        # Space
+        self.box = 10.0
+        self.system.box_l = 3 * [self.box]
+        self.system.periodicity = [0, 0, 0]
+
+        # NVT thermostat
+        # Just some temperature range to cover by the test:
+        self.kT = np.random.uniform(0.5, 1.5)
 
     def check_rot_diffusion(self, n):
         """
@@ -239,6 +281,11 @@ class RotDiffAniso(ut.TestCase):
                     if i != j:
                         D1D1 += D[i] * D[j]
             D1D1 /= 6.0
+            # Technical workaround of a digital arithmetic issue for isotropic
+            # particle
+            if np.absolute((D0**2 - D1D1) / (D0**2 + D1D1)
+                           ) < self.round_error_prec:
+                D1D1 *= (1.0 - 2.0 * self.round_error_prec)
             # Eq. (32) [Perrin1936].
             dcosjj2_validate = 1. / 3. + (1. / 3.) * (1. + (D - D0) / (2. * np.sqrt(D0**2 - D1D1))) \
                 * np.exp(-6. * (D0 - np.sqrt(D0**2 - D1D1)) * self.system.time) \
@@ -302,13 +349,41 @@ class RotDiffAniso(ut.TestCase):
                                 'rotational diffusion is too large: {2}'
                                 .format(i, j, dcosij2_dev[i, j]))
 
+    # Langevin Dynamics / Anisotropic
     def test_case_00(self):
-        n = 300
-        self.rot_diffusion_param_setup(n)
+        n = 800
+        self.rot_diffusion_param_setup()
+        self.set_anisotropic_param()
+        self.add_particles_setup(n)
         self.system.thermostat.set_langevin(
             kT=self.kT, gamma=self.gamma_global, seed=42)
         # Actual integration and validation run
         self.check_rot_diffusion(n)
+
+    # Langevin Dynamics / Isotropic
+    def test_case_01(self):
+        n = 800
+        self.rot_diffusion_param_setup()
+        self.set_isotropic_param()
+        self.add_particles_setup(n)
+        self.system.thermostat.set_langevin(
+            kT=self.kT, gamma=self.gamma_global, seed=42)
+        # Actual integration and validation run
+        self.check_rot_diffusion(n)
+
+    if "BROWNIAN_DYNAMICS" in espressomd.features():
+        # Brownian Dynamics / Isotropic
+        def test_case_10(self):
+            n = 800
+            self.system.thermostat.turn_off()
+            self.rot_diffusion_param_setup()
+            self.set_isotropic_param()
+            self.add_particles_setup(n)
+            self.system.thermostat.set_brownian(
+                kT=self.kT, gamma=self.gamma_global, seed=42)
+            self.system.integrator.set_brownian_dynamics()
+            # Actual integration and validation run
+            self.check_rot_diffusion(n)
 
 
 if __name__ == '__main__':

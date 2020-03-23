@@ -112,23 +112,10 @@ void lb_lbfluid_sanity_checks() {
 
 void lb_lbfluid_on_integration_start() {
   lb_lbfluid_sanity_checks();
-  if (lattice_switch == ActiveLB::GPU) {
-#ifdef CUDA
-    if (this_node == 0 and lb_reinit_particles_gpu()) {
-      lb_realloc_particles_gpu();
-      lb_reinit_particles_gpu.validate();
-    }
-#endif
-  } else if (lattice_switch == ActiveLB::CPU) {
+  if (lattice_switch == ActiveLB::CPU) {
     halo_communication(&update_halo_comm,
                        reinterpret_cast<char *>(lbfluid[0].data()));
   }
-}
-
-void lb_lbfluid_invalidate_particle_allocation() {
-#ifdef CUDA
-  lb_reinit_particles_gpu.invalidate();
-#endif
 }
 
 /** (Re-)initialize the fluid. */
@@ -732,7 +719,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
   fclose(fp);
 }
 
-void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
+void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     std::vector<float> host_checkpoint_vd(19 * lbpar_gpu.number_of_nodes);
@@ -801,7 +788,7 @@ void lb_lbfluid_save_checkpoint(const std::string &filename, int binary) {
   }
 }
 
-void lb_lbfluid_load_checkpoint(const std::string &filename, int binary) {
+void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary) {
   int res;
   std::string err_msg = "Error while reading LB checkpoint: ";
   if (lattice_switch == ActiveLB::GPU) {
@@ -1076,9 +1063,6 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
   throw NoLBActive();
 }
 
-/** calculates the average stress of all nodes by iterating
- * over all nodes and dividing by the number_of_nodes.
- */
 const Utils::Vector6d lb_lbfluid_get_stress() {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA

@@ -19,12 +19,8 @@
 
 # For C-extern Analysis
 
-cimport numpy as np
-from espressomd.utils cimport *
-from .utils cimport Vector9d
-from libcpp.string cimport string  # import std::string as string
+from .utils cimport Vector3i, Vector3d, Vector9d, List
 from libcpp.vector cimport vector  # import std::vector as vector
-from libcpp.map cimport map  # import std::map as map
 
 cdef extern from "<array>" namespace "std" nogil:
     cdef cppclass array4 "std::array<double, 4>":
@@ -46,9 +42,8 @@ cdef extern from "particle_data.hpp":
     int max_seen_particle_type
 
 cdef extern from "statistics.hpp":
-    int n_part
-    int n_part_conf
-    int n_configs
+    int get_n_part_conf()
+    int get_n_configs()
 
     ctypedef struct Observable_stat:
         int init_status
@@ -70,19 +65,13 @@ cdef extern from "statistics.hpp":
     cdef vector[double] calc_structurefactor(PartCfg & , int * p_types, int n_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
-    cdef double min_distance2(Vector3d pos1, Vector3d pos2)
     cdef List[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)
-    cdef double distto(PartCfg &, const Vector3d & pos, int pid)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
     cdef vector[double] centerofmass(PartCfg &, int part_type)
-    cdef int calc_cylindrical_average(
-        PartCfg &, vector[double] center, vector[double] direction,
-        double length, double radius, int bins_axial, int bins_radial,
-        vector[int] types, map[string, vector[vector[vector[double]]]] & distribution)
 
     void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
                   double r_min, double r_max, int r_bins, vector[double] rdf)
@@ -103,12 +92,9 @@ cdef extern from "statistics.hpp":
         double * dist)
 
 cdef extern from "statistics_chain.hpp":
-    int chain_start
-    int chain_n_chains
-    int chain_length
-    array4 calc_re(PartCfg & )
-    array4 calc_rg(PartCfg & ) except +
-    array2 calc_rh(PartCfg & )
+    array4 calc_re(PartCfg &, int, int, int)
+    array4 calc_rg(PartCfg &, int, int, int) except +
+    array2 calc_rh(PartCfg &, int, int, int)
 
 cdef extern from "pressure.hpp":
     cdef Observable_stat total_pressure

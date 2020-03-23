@@ -23,7 +23,7 @@
 
 #include "p3m-common.hpp"
 
-#ifdef P3M
+#if defined(P3M) || defined(DP3M)
 
 #include <utils/Span.hpp>
 
@@ -78,6 +78,5 @@ public:
     spread_grid(Utils::make_span(&mesh, 1), comm, dim);
   }
 };
-
 #endif
 #endif // ESPRESSO_P3M_SEND_MESH_HPP

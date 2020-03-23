@@ -30,7 +30,6 @@ class RigidBondTest(ut.TestCase):
         target_acc = 1E-3
         tol = 1.2 * target_acc
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         s.box_l = [10, 10, 10]
         s.cell_system.skin = 0.4
         s.time_step = 0.01
@@ -46,7 +45,7 @@ class RigidBondTest(ut.TestCase):
         for i in range(1, 5):
             d = s.distance(s.part[i], s.part[i - 1])
             v_d = s.distance_vec(s.part[i], s.part[i - 1])
-            self.assertLess(abs(d - 1.2), tol)
+            self.assertAlmostEqual(d, 1.2, delta=tol)
             # Velocity projection on distance vector
             vel_proj = np.dot(s.part[i].v - s.part[i - 1].v, v_d) / d
             self.assertLess(vel_proj, tol)

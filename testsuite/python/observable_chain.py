@@ -44,7 +44,6 @@ class ObservableTests(ut.TestCase):
     n_parts = 5
     box_l = 5.
     system = espressomd.System(box_l=3 * [box_l])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     system.periodicity = [1, 1, 1]
     system.time_step = 0.01
     system.cell_system.skin = 0.2 * box_l
@@ -83,8 +82,8 @@ class ObservableTests(ut.TestCase):
             res_obs_single = obs_single.calculate()
             res_obs_chain = obs_chain.calculate()
             # checks
-            self.assertEqual(obs_single.n_values(), 1)
-            self.assertEqual(obs_chain.n_values(), self.n_parts - 1)
+            self.assertEqual(np.prod(res_obs_single.shape), 1)
+            self.assertEqual(np.prod(res_obs_chain.shape), self.n_parts - 1)
             self.assertAlmostEqual(res_obs_single[0], distances[0], places=9)
             np.testing.assert_array_almost_equal(
                 res_obs_chain, distances, decimal=9,
@@ -121,8 +120,8 @@ class ObservableTests(ut.TestCase):
             res_obs_single = obs_single.calculate()
             res_obs_chain = obs_chain.calculate()
             # checks
-            self.assertEqual(obs_single.n_values(), 1)
-            self.assertEqual(obs_chain.n_values(), self.n_parts - 2)
+            self.assertEqual(np.prod(res_obs_single.shape), 1)
+            self.assertEqual(np.prod(res_obs_chain.shape), self.n_parts - 2)
             self.assertAlmostEqual(res_obs_single[0], angles[0], places=9)
             np.testing.assert_array_almost_equal(
                 res_obs_chain, angles, decimal=9,
@@ -194,8 +193,10 @@ class ObservableTests(ut.TestCase):
                     res_obs_single = obs_single.calculate()
                     res_obs_chain = obs_chain.calculate()
                     # checks
-                    self.assertEqual(obs_single.n_values(), 1)
-                    self.assertEqual(obs_chain.n_values(), self.n_parts - 3)
+                    self.assertEqual(np.prod(res_obs_single.shape), 1)
+                    self.assertEqual(
+                        np.prod(res_obs_chain.shape),
+                        self.n_parts - 3)
                     self.assertAlmostEqual(res_obs_single[0], dih1, places=9)
                     np.testing.assert_array_almost_equal(
                         res_obs_chain, [dih1, dih2], decimal=9,

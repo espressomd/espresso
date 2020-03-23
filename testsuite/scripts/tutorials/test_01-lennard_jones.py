@@ -17,9 +17,11 @@
 
 import unittest as ut
 import importlib_wrapper
+import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/01-lennard_jones/01-lennard_jones.py")
+    "@TUTORIALS_DIR@/01-lennard_jones/01-lennard_jones.py",
+    substitutions=lambda code: code.replace('r_star = ', 'r_star = r #', 1))
 
 
 @skipIfMissingFeatures
@@ -28,6 +30,10 @@ class Tutorial(ut.TestCase):
 
     def test_global_variables(self):
         self.assertLess(tutorial.standard_error_total_energy, 2.5)
+
+    def test_rdf_curve(self):
+        self.assertGreater(
+            np.corrcoef(tutorial.avg_rdf, tutorial.theo_rdf)[1, 0], 0.985)
 
 
 if __name__ == "__main__":

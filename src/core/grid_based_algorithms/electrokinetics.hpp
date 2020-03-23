@@ -165,7 +165,6 @@ void ek_calculate_electrostatic_coupling();
 int ek_set_bulk_viscosity(double bulk_viscosity);
 int ek_set_gamma_odd(double gamma_odd);
 int ek_set_gamma_even(double gamma_even);
-int ek_set_lb_force_density(double *ext_force_density);
 int ek_set_density(int species, double density);
 int ek_set_D(int species, double D);
 int ek_set_valency(int species, double valency);

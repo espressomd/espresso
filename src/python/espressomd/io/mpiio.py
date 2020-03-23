@@ -38,14 +38,14 @@ class Mpiio:
         Outputs binary data using MPI-IO to several files starting with prefix.
         Suffixes are:
 
-            - head: Information about fields that are dumped,
-            - pref: Information about processes: 1 int per process,
-            - id: Particle ids: 1 int per particle,
-            - pos: Position information (if dumped): 3 doubles per particle,
-            - vel: Velocity information (if dumped): 3 doubles per particle,
-            - typ: Type information (if dumped): 1 int per particle,
-            - bond: Bond information (if dumped): variable amount of data,
-            - boff: Bond offset information (if bonds are dumped): 1 int per particle.
+        - head: Information about fields that are dumped,
+        - pref: Information about processes: 1 int per process,
+        - id: Particle ids: 1 int per particle,
+        - pos: Position information (if dumped): 3 doubles per particle,
+        - vel: Velocity information (if dumped): 3 doubles per particle,
+        - typ: Type information (if dumped): 1 int per particle,
+        - bond: Bond information (if dumped): variable amount of data,
+        - boff: Bond offset information (if bonds are dumped): 1 int per particle.
 
         .. note::
             Do not read the files on a machine with a different architecture!

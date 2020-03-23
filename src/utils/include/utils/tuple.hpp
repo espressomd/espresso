@@ -19,6 +19,9 @@
 #ifndef ESPRESSO_TUPLE_HPP
 #define ESPRESSO_TUPLE_HPP
 
+#include <utils/get.hpp>
+#include <utils/type_traits.hpp>
+
 /**
  * @file
  * Algorithms for tuple-like inhomogeneous containers.
@@ -72,6 +75,107 @@ template <class F, class Tuple> void for_each(F &&f, Tuple &&t) {
       std::forward<F>(f), std::forward<Tuple>(t),
       std::make_index_sequence<
           std::tuple_size<std::remove_reference_t<Tuple>>::value>{});
+}
+
+namespace detail {
+template <size_t I, size_t N> struct find_if_impl {
+  template <class Pred, class Tuple, class F>
+  static constexpr bool eval(Pred &&pred, Tuple const &t, F &&f) {
+    using Utils::get;
+    auto const &e = get<I>(t);
+
+    if (pred(e)) {
+      (void)f(e);
+      return true;
+    }
+
+    return find_if_impl<I + 1, N>::eval(std::forward<Pred>(pred), t,
+                                        std::forward<F>(f));
+  }
+};
+
+template <size_t N> struct find_if_impl<N, N> {
+  template <class Pred, class Tuple, class F>
+  static constexpr bool eval(Pred, Tuple, F) {
+    return false;
+  }
+};
+} // namespace detail
+
+/**
+ * @brief Find first element in tuple for which a predicate holds,
+ *        and call a Callable with the element.
+ *
+ * Any return value of the Callable is ignored.
+ *
+ * @tparam Pred Must be callable with all types occurring as elements
+ *              in Tuple, returning a value convertible to bool.
+ * @tparam Tuple a tuple-like type supporting Utils::get
+ * @tparam F Must be callable with all types occurring as elements
+ *           in Tuple.
+ * @param pred The predicate.
+ * @param t Tuple for search in.
+ * @param f Is called for first found element.
+ * @return true iff the predicate was true for at least one element.
+ */
+template <class Pred, class Tuple, class F>
+constexpr auto find_if(Pred &&pred, Tuple const &t, F &&f) {
+  return detail::find_if_impl<0, Utils::tuple_size<Tuple>::value>::eval(
+      std::forward<Pred>(pred), t, std::forward<F>(f));
+}
+
+namespace detail {
+template <template <class> class Predicate, size_t I, size_t N>
+struct filter_impl {
+  template <class Tuple>
+  constexpr static auto get(Tuple const &t, std::true_type) {
+    using Utils::get;
+
+    return std::make_tuple(get<I>(t));
+  }
+
+  template <class Tuple>
+  constexpr static auto get(Tuple const &t, std::false_type) {
+    return std::make_tuple();
+  }
+
+  template <class Tuple> constexpr static auto eval(Tuple const &t) {
+    using Utils::tuple_element_t;
+    using element_type = tuple_element_t<I, Tuple>;
+    constexpr bool pred = Predicate<element_type>::value;
+
+    return std::tuple_cat(
+        get(t, std::conditional_t<pred, std::true_type, std::false_type>{}),
+        filter_impl<Predicate, I + 1, N>::eval(t));
+  }
+};
+
+template <template <class> class Predicate, size_t I>
+struct filter_impl<Predicate, I, I> {
+  template <class Tuple> constexpr static auto eval(Tuple const &) {
+    return std::make_tuple();
+  }
+};
+
+} // namespace detail
+
+/**
+ * @brief Filter a tuple by a static predicate.
+ *
+ * E.g. filter(std::is_integral, std::make_tuple(1, 1.5, 2u))
+ *       -> std::tuple<int, unsigned>(1, 2u).
+ *
+ *       @tparam Predicate Metafunction that returns a bool for each type.
+ *       @tparam Tuple tuple-like type that implements the tuple interface.
+ *       @param in The input tuple-like
+ *
+ *       @return std::tuple with the elements selected by the predicate.
+ */
+template <template <class> class Predicate, class Tuple>
+constexpr auto filter(Tuple const &in) {
+  using Utils::tuple_size;
+
+  return detail::filter_impl<Predicate, 0, tuple_size<Tuple>::value>::eval(in);
 }
 } // namespace Utils
 

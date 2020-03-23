@@ -21,8 +21,7 @@ Set up a diamond-structured polymer network.
 """
 import espressomd
 espressomd.assert_features(["WCA"])
-from espressomd import interactions
-from espressomd import diamond
+from espressomd import interactions, polymer
 from espressomd.io.writer import vtf  # pylint: disable=import-error
 
 import numpy as np
@@ -31,9 +30,7 @@ import numpy as np
 #############################################################
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.set_random_state_PRNG()
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-np.seed = system.seed
+np.random.seed(seed=42)
 system.time_step = 0.01
 system.cell_system.skin = 0.4
 system.cell_system.set_n_square(use_verlet_lists=False)
@@ -67,8 +64,7 @@ system.box_l = 3 * [a]
 print("box now at ", system.box_l)
 
 # We can now call diamond to place the monomers, crosslinks and bonds.
-diamond.Diamond(a=a, bond_length=bond_length, MPC=MPC)
-
+polymer.setup_diamond_polymer(system=system, bond=fene, MPC=MPC)
 
 #############################################################
 #      Warmup                                               #

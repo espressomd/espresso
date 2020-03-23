@@ -20,10 +20,8 @@ from libcpp.string cimport string
 import collections
 
 include "myconfig.pxi"
-from . import utils
-from espressomd.utils import is_valid_type
-from globals cimport immersed_boundaries
-from .utils import requires_experimental_features
+from .utils import requires_experimental_features, is_valid_type
+from .utils cimport check_type_or_throw_except
 
 
 cdef class NonBondedInteraction:
@@ -861,6 +859,7 @@ IF DPD:
             return {
                 "weight_function": ia_params.dpd_radial.wf,
                 "gamma": ia_params.dpd_radial.gamma,
+                "k": ia_params.dpd_radial.k,
                 "r_cut": ia_params.dpd_radial.cutoff,
                 "trans_weight_function": ia_params.dpd_trans.wf,
                 "trans_gamma": ia_params.dpd_trans.gamma,
@@ -881,6 +880,8 @@ IF DPD:
                 either 0 (constant) or 1 (linear)
             gamma : :obj:`float`
                 Friction coefficient of the parallel part
+            k : :obj:`float`
+                Exponent in the modified weight function
             r_cut : :obj:`float`
                 Cutoff of the parallel part
             trans_weight_function : :obj:`int`, \{0, 1\}
@@ -898,6 +899,7 @@ IF DPD:
             if dpd_set_params(self._part_types[0],
                               self._part_types[1],
                               self._params["gamma"],
+                              self._params["k"],
                               self._params["r_cut"],
                               self._params["weight_function"],
                               self._params["trans_gamma"],
@@ -909,6 +911,7 @@ IF DPD:
             return {
                 "weight_function": 0,
                 "gamma": 0.0,
+                "k": 1.0,
                 "r_cut": -1.0,
                 "trans_weight_function": 0,
                 "trans_gamma": 0.0,
@@ -918,7 +921,7 @@ IF DPD:
             return "DPD"
 
         def valid_keys(self):
-            return {"weight_function", "gamma", "r_cut",
+            return {"weight_function", "gamma", "k", "r_cut",
                     "trans_weight_function", "trans_gamma", "trans_r_cut"}
 
         def required_keys(self):
@@ -1383,49 +1386,6 @@ IF SOFT_SPHERE == 1:
             return {"a", "n", "cutoff"}
 
 
-IF MEMBRANE_COLLISION == 1:
-
-    cdef class MembraneCollisionInteraction(NonBondedInteraction):
-
-        def validate_params(self):
-            if self._params["cutoff"] < 0:
-                raise ValueError("Membrane Collision cutoff has to be >=0")
-            return True
-
-        def _get_params_from_es_core(self):
-            cdef IA_parameters * ia_params
-            ia_params = get_ia_param_safe(
-                self._part_types[0], self._part_types[1])
-            return {
-                "a": ia_params.membrane.a,
-                "n": ia_params.membrane.n,
-                "cutoff": ia_params.membrane.cut,
-                "offset": ia_params.membrane.offset}
-
-        def is_active(self):
-            return (self._params["a"] > 0)
-
-        def _set_params_in_es_core(self):
-            if membrane_collision_set_params(self._part_types[0],
-                                             self._part_types[1],
-                                             self._params["a"],
-                                             self._params["n"],
-                                             self._params["cutoff"],
-                                             self._params["offset"]):
-                raise Exception("Could not set Membrane Collision parameters")
-
-        def default_params(self):
-            return {"offset": 0.}
-
-        def type_name(self):
-            return "MembraneCollision"
-
-        def valid_keys(self):
-            return {"a", "n", "cutoff", "offset"}
-
-        def required_keys(self):
-            return {"a", "n", "cutoff"}
-
 IF HERTZIAN == 1:
 
     cdef class HertzianInteraction(NonBondedInteraction):
@@ -1608,7 +1568,6 @@ class NonBondedInteractionHandle:
     hertzian = None
     gaussian = None
     tabulated = None
-    membrane_collision = None
     gay_berne = None
     dpd = None
     hat = None
@@ -1625,9 +1584,6 @@ class NonBondedInteractionHandle:
             self.lennard_jones = LennardJonesInteraction(_type1, _type2)
         IF WCA:
             self.wca = WCAInteraction(_type1, _type2)
-        IF MEMBRANE_COLLISION:
-            self.membrane_collision = MembraneCollisionInteraction(
-                _type1, _type2)
         IF SOFT_SPHERE:
             self.soft_sphere = SoftSphereInteraction(_type1, _type2)
         IF LENNARD_JONES_GENERIC:
@@ -2171,7 +2127,7 @@ class ThermalizedBond(BondedInteraction):
             raise ValueError(
                 "A seed has to be given as keyword argument on first activation of the thermalized bond")
         if self.params["seed"] is not None:
-            utils.check_type_or_throw_except(
+            check_type_or_throw_except(
                 self.params["seed"], 1, int, "seed must be a positive integer")
             if self.params["seed"] < 0:
                 raise ValueError("seed must be a positive integer")
@@ -3293,43 +3249,6 @@ class OifLocalForces(BondedInteraction):
             self._params["kvisc"])
 
 
-IF MEMBRANE_COLLISION == 1:
-
-    class OifOutDirection(BondedInteraction):
-
-        """
-        Determine the surface normals of triangles on a mesh.
-        Takes no parameter.
-
-        """
-
-        def type_number(self):
-            return BONDED_IA_OIF_OUT_DIRECTION
-
-        def type_name(self):
-            return "OIF_OUT_DIRECTION"
-
-        def valid_keys(self):
-            return set()
-
-        def required_keys(self):
-            return set()
-
-        def set_default_params(self):
-            self._params = {}
-
-        def _get_params_from_es_core(self):
-            return {}
-
-        def _set_params_in_es_core(self):
-            oif_out_direction_set_params(
-                self._bond_id)
-
-ELSE:
-    class OifOutDirection(BondedInteractionNotDefined):
-        name = "OIF_OUT_DIRECTION"
-
-
 class QuarticBond(BondedInteraction):
 
     """
@@ -3404,7 +3323,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_ANGLE_COSSQUARE): AngleCossquare,
     int(BONDED_IA_OIF_GLOBAL_FORCES): OifGlobalForces,
     int(BONDED_IA_OIF_LOCAL_FORCES): OifLocalForces,
-    int(BONDED_IA_OIF_OUT_DIRECTION): OifOutDirection,
     int(BONDED_IA_IBM_TRIEL): IBM_Triel,
     int(BONDED_IA_IBM_TRIBEND): IBM_Tribend,
     int(BONDED_IA_IBM_VOLUME_CONSERVATION): IBM_VolCons,

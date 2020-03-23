@@ -74,11 +74,6 @@ struct ParticleProperties {
   static constexpr Utils::Vector3d rinertia = {1., 1., 1.};
 #endif
 
-#ifdef MEMBRANE_COLLISION
-  /** parameters for membrane collision mechanisms */
-  Utils::Vector3d out_direction = {0., 0., 0.};
-#endif
-
   /** bitfield for the particle axes of rotation */
 #ifdef ROTATION
   uint8_t rotation = ROTATION_FIXED;
@@ -167,6 +162,9 @@ struct ParticleProperties {
   /** External torque, apply if \ref ParticleProperties::ext_flag == 16. */
   Utils::Vector3d ext_torque = {0, 0, 0};
 #endif
+#else
+  static constexpr const uint8_t ext_flag =
+      0; // no external forces and fixed coordinates
 #endif
 
 #ifdef ENGINE

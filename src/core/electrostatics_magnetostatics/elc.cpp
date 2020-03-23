@@ -1294,8 +1294,26 @@ void ELC_P3M_self_forces(const ParticleRange &particles) {
 
 ////////////////////////////////////////////////////////////////////////////////////
 
+namespace {
+void assign_image_charge(const Particle &p) {
+  if (p.r.p[2] < elc_params.space_layer) {
+    auto const q_eff = elc_params.delta_mid_bot * p.p.q;
+    auto const pos = Utils::Vector3d{p.r.p[0], p.r.p[1], -p.r.p[2]};
+
+    p3m_assign_charge(q_eff, pos, -1);
+  }
+
+  if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
+    auto const q_eff = elc_params.delta_mid_top * p.p.q;
+    auto const pos =
+        Utils::Vector3d{p.r.p[0], p.r.p[1], 2 * elc_params.h - p.r.p[2]};
+
+    p3m_assign_charge(q_eff, pos, -1);
+  }
+}
+} // namespace
+
 void ELC_p3m_charge_assign_both(const ParticleRange &particles) {
-  Utils::Vector3d pos;
   /* charged particle counter, charge fraction counter */
   int cp_cnt = 0;
   /* prepare local FFT mesh */
@@ -1305,55 +1323,22 @@ void ELC_p3m_charge_assign_both(const ParticleRange &particles) {
   for (auto &p : particles) {
     if (p.p.q != 0.0) {
       p3m_assign_charge(p.p.q, p.r.p, cp_cnt);
-
-      if (p.r.p[2] < elc_params.space_layer) {
-        double q = elc_params.delta_mid_bot * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = -p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
-
-      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        double q = elc_params.delta_mid_top * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = 2 * elc_params.h - p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
+      assign_image_charge(p);
 
       cp_cnt++;
     }
   }
-#ifdef P3M_STORE_CA_FRAC
   p3m_shrink_wrap_charge_grid(cp_cnt);
-#endif
 }
 
 void ELC_p3m_charge_assign_image(const ParticleRange &particles) {
-  Utils::Vector3d pos;
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : particles) {
     if (p.p.q != 0.0) {
-
-      if (p.r.p[2] < elc_params.space_layer) {
-        double q = elc_params.delta_mid_bot * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = -p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
-
-      if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
-        double q = elc_params.delta_mid_top * p.p.q;
-        pos[0] = p.r.p[0];
-        pos[1] = p.r.p[1];
-        pos[2] = 2 * elc_params.h - p.r.p[2];
-        p3m_assign_charge(q, pos, -1);
-      }
+      assign_image_charge(p);
     }
   }
 }

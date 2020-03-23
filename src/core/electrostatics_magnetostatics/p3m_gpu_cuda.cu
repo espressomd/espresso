@@ -65,13 +65,13 @@
 #include "EspressoSystemInterface.hpp"
 #include "electrostatics_magnetostatics/coulomb.hpp"
 #include "global.hpp"
-#include "particle_data.hpp"
 
 #include <utils/math/int_pow.hpp>
 using Utils::int_pow;
 #include <utils/math/sinc.hpp>
 #include <utils/math/sqr.hpp>
 using Utils::sqr;
+#include <utils/math/bspline.hpp>
 
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
@@ -117,148 +117,6 @@ struct p3m_gpu_fft_plans_t {
 } p3m_gpu_fft_plans;
 
 static char p3m_gpu_data_initialized = 0;
-
-template <int cao_value, typename T> __device__ T caf(int i, T x) {
-  switch (cao_value) {
-  case 1:
-    return 1.0;
-  case 2: {
-    switch (i) {
-    case 0:
-      return 0.5 - x;
-    case 1:
-      return 0.5 + x;
-    default:
-      return 0.0;
-    }
-  }
-  case 3: {
-    switch (i) {
-    case 0:
-      return 0.5 * sqr(0.5 - x);
-    case 1:
-      return 0.75 - sqr(x);
-    case 2:
-      return 0.5 * sqr(0.5 + x);
-    default:
-      return 0.0;
-    }
-  case 4: {
-    switch (i) {
-    case 0:
-      return (1.0 + x * (-6.0 + x * (12.0 - x * 8.0))) / 48.0;
-    case 1:
-      return (23.0 + x * (-30.0 + x * (-12.0 + x * 24.0))) / 48.0;
-    case 2:
-      return (23.0 + x * (30.0 + x * (-12.0 - x * 24.0))) / 48.0;
-    case 3:
-      return (1.0 + x * (6.0 + x * (12.0 + x * 8.0))) / 48.0;
-    default:
-      return 0.0;
-    }
-  }
-  case 5: {
-    switch (i) {
-    case 0:
-      return (1.0 + x * (-8.0 + x * (24.0 + x * (-32.0 + x * 16.0)))) / 384.0;
-    case 1:
-      return (19.0 + x * (-44.0 + x * (24.0 + x * (16.0 - x * 16.0)))) / 96.0;
-    case 2:
-      return (115.0 + x * x * (-120.0 + x * x * 48.0)) / 192.0;
-    case 3:
-      return (19.0 + x * (44.0 + x * (24.0 + x * (-16.0 - x * 16.0)))) / 96.0;
-    case 4:
-      return (1.0 + x * (8.0 + x * (24.0 + x * (32.0 + x * 16.0)))) / 384.0;
-    default:
-      return 0.0;
-    }
-  }
-  case 6: {
-    switch (i) {
-    case 0:
-      return (1.0 +
-              x * (-10.0 + x * (40.0 + x * (-80.0 + x * (80.0 - x * 32.0))))) /
-             3840.0;
-    case 1:
-      return (237.0 +
-              x * (-750.0 +
-                   x * (840.0 + x * (-240.0 + x * (-240.0 + x * 160.0))))) /
-             3840.0;
-    case 2:
-      return (841.0 +
-              x * (-770.0 +
-                   x * (-440.0 + x * (560.0 + x * (80.0 - x * 160.0))))) /
-             1920.0;
-    case 3:
-      return (841.0 +
-              x * (+770.0 +
-                   x * (-440.0 + x * (-560.0 + x * (80.0 + x * 160.0))))) /
-             1920.0;
-    case 4:
-      return (237.0 +
-              x * (750.0 +
-                   x * (840.0 + x * (240.0 + x * (-240.0 - x * 160.0))))) /
-             3840.0;
-    case 5:
-      return (1.0 +
-              x * (10.0 + x * (40.0 + x * (80.0 + x * (80.0 + x * 32.0))))) /
-             3840.0;
-    default:
-      return 0.0;
-    }
-  }
-  case 7: {
-    switch (i) {
-    case 0:
-      return (1.0 +
-              x * (-12.0 +
-                   x * (60.0 + x * (-160.0 +
-                                    x * (240.0 + x * (-192.0 + x * 64.0)))))) /
-             46080.0;
-    case 1:
-      return (361.0 + x * (-1416.0 +
-                           x * (2220.0 +
-                                x * (-1600.0 +
-                                     x * (240.0 + x * (384.0 - x * 192.0)))))) /
-             23040.0;
-    case 2:
-      return (10543.0 +
-              x * (-17340.0 +
-                   x * (4740.0 +
-                        x * (6880.0 +
-                             x * (-4080.0 + x * (-960.0 + x * 960.0)))))) /
-             46080.0;
-    case 3:
-      return (5887.0 + x * x * (-4620.0 + x * x * (1680.0 - x * x * 320.0))) /
-             11520.0;
-    case 4:
-      return (10543.0 +
-              x * (17340.0 +
-                   x * (4740.0 +
-                        x * (-6880.0 +
-                             x * (-4080.0 + x * (960.0 + x * 960.0)))))) /
-             46080.0;
-    case 5:
-      return (361.0 +
-              x * (1416.0 +
-                   x * (2220.0 +
-                        x * (1600.0 +
-                             x * (240.0 + x * (-384.0 - x * 192.0)))))) /
-             23040.0;
-    case 6:
-      return (1.0 +
-              x * (12.0 +
-                   x * (60.0 +
-                        x * (160.0 + x * (240.0 + x * (192.0 + x * 64.0)))))) /
-             46080.0;
-    default:
-      return 0.0;
-    }
-  }
-  }
-  }
-  return 0.0;
-}
 
 template <int cao>
 __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
@@ -449,7 +307,7 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
       weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
-          caf<cao>(cao_id_x, m_pos[threadIdx.y]);
+          Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
     }
 
     __syncthreads();
@@ -460,9 +318,10 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
                   weights[3 * cao * part_in_block + 3 * threadIdx.z + 2] * p.q);
 
   } else {
-    atomicAdd(&(charge_mesh[ind]), caf<cao>(cao_id_x, m_pos[0]) *
-                                       caf<cao>(threadIdx.y, m_pos[1]) *
-                                       caf<cao>(threadIdx.z, m_pos[2]) * p.q);
+    atomicAdd(&(charge_mesh[ind]),
+              Utils::bspline<cao>(cao_id_x, m_pos[0]) *
+                  Utils::bspline<cao>(threadIdx.y, m_pos[1]) *
+                  Utils::bspline<cao>(threadIdx.z, m_pos[2]) * p.q);
   }
 }
 
@@ -578,7 +437,7 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   if (shared) {
     if ((threadIdx.y < 3) && (threadIdx.z == 0)) {
       weights[3 * cao * part_in_block + 3 * cao_id_x + threadIdx.y] =
-          caf<cao>(cao_id_x, m_pos[threadIdx.y]);
+          Utils::bspline<cao>(cao_id_x, m_pos[threadIdx.y]);
     }
 
     __syncthreads();
@@ -587,8 +446,9 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
         weights[3 * cao * part_in_block + 3 * threadIdx.y + 1] *
         weights[3 * cao * part_in_block + 3 * threadIdx.z + 2] * p.q;
   } else {
-    c = -prefactor * caf<cao>(cao_id_x, m_pos[0]) *
-        caf<cao>(threadIdx.y, m_pos[1]) * caf<cao>(threadIdx.z, m_pos[2]) * p.q;
+    c = -prefactor * Utils::bspline<cao>(cao_id_x, m_pos[0]) *
+        Utils::bspline<cao>(threadIdx.y, m_pos[1]) *
+        Utils::bspline<cao>(threadIdx.z, m_pos[2]) * p.q;
   }
 
   const REAL_TYPE *force_mesh_x = (REAL_TYPE *)par.force_mesh_x;
@@ -613,10 +473,10 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
     parts_per_block++;
   }
 
-  if ((n_part % parts_per_block) == 0)
-    n_blocks = std::max<int>(1, n_part / parts_per_block);
+  if ((p3m_gpu_data.n_part % parts_per_block) == 0)
+    n_blocks = std::max<int>(1, p3m_gpu_data.n_part / parts_per_block);
   else
-    n_blocks = n_part / parts_per_block + 1;
+    n_blocks = p3m_gpu_data.n_part / parts_per_block + 1;
 
   grid.x = n_blocks;
   grid.y = 1;
@@ -682,161 +542,152 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
  * We use real to complex FFTs, so the size of the reciprocal mesh
  * is (cuFFT convention) Nx x Ny x [ Nz /2 + 1 ].
  */
-
 void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
-  if (this_node == 0) {
-    espressoSystemInterface.requestParticleStructGpu();
+  espressoSystemInterface.requestParticleStructGpu();
 
-    int reinit_if = 0, mesh_changed = 0;
-    p3m_gpu_data.n_part =
-        gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+  int reinit_if = 0, mesh_changed = 0;
+  p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
-      p3m_gpu_data.alpha = alpha;
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
+    p3m_gpu_data.alpha = alpha;
+    reinit_if = 1;
+  }
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
-      p3m_gpu_data.cao = cao;
-      p3m_gpu_data.pos_shift = (REAL_TYPE)((p3m_gpu_data.cao - 1) / 2);
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
+    p3m_gpu_data.cao = cao;
+    p3m_gpu_data.pos_shift = (REAL_TYPE)((p3m_gpu_data.cao - 1) / 2);
+    reinit_if = 1;
+  }
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh[0] != mesh[0]) ||
-        (p3m_gpu_data.mesh[1] != mesh[1]) ||
-        (p3m_gpu_data.mesh[2] != mesh[2])) {
-      std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
-      mesh_changed = 1;
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh[0] != mesh[0]) ||
+      (p3m_gpu_data.mesh[1] != mesh[1]) || (p3m_gpu_data.mesh[2] != mesh[2])) {
+    std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
+    mesh_changed = 1;
+    reinit_if = 1;
+  }
 
-    auto const box_l = box_geo.length();
+  auto const box_l = box_geo.length();
 
-    if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
-        (p3m_gpu_data.box[1] != box_l[1]) ||
-        (p3m_gpu_data.box[2] != box_l[2])) {
-      std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
-      reinit_if = 1;
-    }
+  if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
+      (p3m_gpu_data.box[1] != box_l[1]) || (p3m_gpu_data.box[2] != box_l[2])) {
+    std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
+    reinit_if = 1;
+  }
 
-    p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
-    p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * p3m_gpu_data.mesh_z_padded;
+  p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
+  p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * p3m_gpu_data.mesh_z_padded;
 
-    for (int i = 0; i < 3; i++) {
-      p3m_gpu_data.hi[i] = p3m_gpu_data.mesh[i] / p3m_gpu_data.box[i];
-    }
+  for (int i = 0; i < 3; i++) {
+    p3m_gpu_data.hi[i] = p3m_gpu_data.mesh[i] / p3m_gpu_data.box[i];
+  }
 
-    if ((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
-      cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
-      p3m_gpu_data.charge_mesh = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
-      p3m_gpu_data.force_mesh_x = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_y));
-      p3m_gpu_data.force_mesh_y = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_z));
-      p3m_gpu_data.force_mesh_z = 0;
-      cuda_safe_mem(cudaFree(p3m_gpu_data.G_hat));
-      p3m_gpu_data.G_hat = 0;
+  if ((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
+    cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
+    p3m_gpu_data.charge_mesh = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
+    p3m_gpu_data.force_mesh_x = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_y));
+    p3m_gpu_data.force_mesh_y = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_z));
+    p3m_gpu_data.force_mesh_z = 0;
+    cuda_safe_mem(cudaFree(p3m_gpu_data.G_hat));
+    p3m_gpu_data.G_hat = 0;
 
-      cufftDestroy(p3m_gpu_fft_plans.forw_plan);
-      cufftDestroy(p3m_gpu_fft_plans.back_plan);
+    cufftDestroy(p3m_gpu_fft_plans.forw_plan);
+    cufftDestroy(p3m_gpu_fft_plans.back_plan);
 
-      p3m_gpu_data_initialized = 0;
-    }
+    p3m_gpu_data_initialized = 0;
+  }
 
-    if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
+  if ((p3m_gpu_data_initialized == 0) && (p3m_gpu_data.mesh_size > 0)) {
 #if defined(__HIPCC__) and not defined(__CUDACC__)
-      // rocFFT gives wrong P3M results for mesh sizes whose prime factors are
-      // not 2, 3 or 5. So we check for the other supported prime factors and
-      // throw an error if they are used with HIP.
-      if (mesh[0] % 7 == 0 || mesh[0] % 11 == 0 || mesh[0] % 13 == 0 ||
-          mesh[1] % 7 == 0 || mesh[1] % 11 == 0 || mesh[1] % 13 == 0 ||
-          mesh[2] % 7 == 0 || mesh[2] % 11 == 0 || mesh[2] % 13 == 0) {
-        throw std::runtime_error("Mesh size not supported");
-      }
+    // rocFFT gives wrong P3M results for mesh sizes whose prime factors are
+    // not 2, 3 or 5. So we check for the other supported prime factors and
+    // throw an error if they are used with HIP.
+    if (mesh[0] % 7 == 0 || mesh[0] % 11 == 0 || mesh[0] % 13 == 0 ||
+        mesh[1] % 7 == 0 || mesh[1] % 11 == 0 || mesh[1] % 13 == 0 ||
+        mesh[2] % 7 == 0 || mesh[2] % 11 == 0 || mesh[2] % 13 == 0) {
+      throw std::runtime_error("Mesh size not supported");
+    }
 #endif
 
-      /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
-      const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
-                             (p3m_gpu_data.mesh[2] / 2 + 1);
+    /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
+    const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
+                           (p3m_gpu_data.mesh[2] / 2 + 1);
 
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z),
-                               cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
-      cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
-                               cmesh_size * sizeof(REAL_TYPE)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.charge_mesh),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_x),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_y),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.force_mesh_z),
+                             cmesh_size * sizeof(FFT_TYPE_COMPLEX)));
+    cuda_safe_mem(cudaMalloc((void **)&(p3m_gpu_data.G_hat),
+                             cmesh_size * sizeof(REAL_TYPE)));
 
-      if (cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
-                      FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
-          cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
-                      FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
-        throw std::runtime_error("Unable to create fft plan");
-      }
+    if (cufftPlan3d(&(p3m_gpu_fft_plans.forw_plan), mesh[0], mesh[1], mesh[2],
+                    FFT_PLAN_FORW_FLAG) != CUFFT_SUCCESS ||
+        cufftPlan3d(&(p3m_gpu_fft_plans.back_plan), mesh[0], mesh[1], mesh[2],
+                    FFT_PLAN_BACK_FLAG) != CUFFT_SUCCESS) {
+      throw std::runtime_error("Unable to create fft plan");
     }
-
-    if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&
-        (p3m_gpu_data.mesh_size > 0)) {
-      dim3 grid(1, 1, 1);
-      dim3 block(1, 1, 1);
-      block.x = 512 / mesh[0] + 1;
-      block.y = mesh[1];
-      block.z = 1;
-      grid.x = mesh[0] / block.x + 1;
-      grid.z = mesh[2] / 2 + 1;
-
-      switch (p3m_gpu_data.cao) {
-      case 1:
-        KERNELCALL(calculate_influence_function_device<1>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 2:
-        KERNELCALL(calculate_influence_function_device<2>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 3:
-        KERNELCALL(calculate_influence_function_device<3>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 4:
-        KERNELCALL(calculate_influence_function_device<4>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 5:
-        KERNELCALL(calculate_influence_function_device<5>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 6:
-        KERNELCALL(calculate_influence_function_device<6>, grid, block,
-                   p3m_gpu_data);
-        break;
-      case 7:
-        KERNELCALL(calculate_influence_function_device<7>, grid, block,
-                   p3m_gpu_data);
-        break;
-      }
-    }
-    if (p3m_gpu_data.mesh_size > 0)
-      p3m_gpu_data_initialized = 1;
   }
+
+  if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&
+      (p3m_gpu_data.mesh_size > 0)) {
+    dim3 grid(1, 1, 1);
+    dim3 block(1, 1, 1);
+    block.x = 512 / mesh[0] + 1;
+    block.y = mesh[1];
+    block.z = 1;
+    grid.x = mesh[0] / block.x + 1;
+    grid.z = mesh[2] / 2 + 1;
+
+    switch (p3m_gpu_data.cao) {
+    case 1:
+      KERNELCALL(calculate_influence_function_device<1>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 2:
+      KERNELCALL(calculate_influence_function_device<2>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 3:
+      KERNELCALL(calculate_influence_function_device<3>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 4:
+      KERNELCALL(calculate_influence_function_device<4>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 5:
+      KERNELCALL(calculate_influence_function_device<5>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 6:
+      KERNELCALL(calculate_influence_function_device<6>, grid, block,
+                 p3m_gpu_data);
+      break;
+    case 7:
+      KERNELCALL(calculate_influence_function_device<7>, grid, block,
+                 p3m_gpu_data);
+      break;
+    }
+  }
+  if (p3m_gpu_data.mesh_size > 0)
+    p3m_gpu_data_initialized = 1;
 }
 
 /**
  *  \brief The long range part of the P3M algorithm.
  */
 void p3m_gpu_add_farfield_force() {
-  CUDA_particle_data *lb_particle_gpu;
-  float *lb_particle_force_gpu;
+  auto device_particles = gpu_get_particle_pointer();
+  CUDA_particle_data *lb_particle_gpu = device_particles.data();
+  p3m_gpu_data.n_part = device_particles.size();
 
-  lb_particle_gpu = gpu_get_particle_pointer();
-  lb_particle_force_gpu = gpu_get_particle_force_pointer();
-
-  p3m_gpu_data.n_part =
-      gpu_get_global_particle_vars_pointer_host()->number_of_particles;
+  float *lb_particle_force_gpu = gpu_get_particle_force_pointer();
 
   if (p3m_gpu_data.n_part == 0)
     return;

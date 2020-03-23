@@ -47,7 +47,6 @@ class Scafacos1d2d(ut.TestCase):
         skin = 0.5
 
         s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-        s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
         # give Espresso some parameters
         s.time_step = 0.01
         s.cell_system.skin = skin

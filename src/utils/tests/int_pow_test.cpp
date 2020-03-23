@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(even) {
   const double x = 3.14159;
 
   BOOST_CHECK(1 == int_pow<0>(x));
-  BOOST_CHECK_CLOSE(x * x, int_pow<2>(x), eps);
+  BOOST_CHECK_CLOSE(x * x, int_pow<2>(x), 100. * eps);
   BOOST_CHECK_CLOSE((x * x) * (x * x), int_pow<4>(x), 100. * eps);
 }
 
@@ -48,7 +48,7 @@ BOOST_AUTO_TEST_CASE(odd) {
   const double x = 3.14159;
 
   BOOST_CHECK(x == int_pow<1>(x));
-  BOOST_CHECK_CLOSE((x * x) * x, int_pow<3>(x), eps);
+  BOOST_CHECK_CLOSE((x * x) * x, int_pow<3>(x), 100. * eps);
   BOOST_CHECK_CLOSE((x * x) * (x * x) * x, int_pow<5>(x), 100. * eps);
 }
 

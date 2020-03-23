@@ -24,6 +24,7 @@ espressomd.assert_features(['LENNARD_JONES'])
 import espressomd.accumulators
 import espressomd.observables
 import espressomd.polymer
+import espressomd.minimize_energy
 
 # Setup constant
 TIME_STEP = 0.01
@@ -54,10 +55,10 @@ for index, N in enumerate(N_MONOMERS):
     system.actors.clear()
     system.auto_update_accumulators.clear()
     # Setup polymer of part_id 0 with fene bond
-    positions = espressomd.polymer.positions(n_polymers=1,
-                                             beads_per_chain=N,
-                                             bond_length=1, seed=5642,
-                                             min_distance=0.9)
+    positions = espressomd.polymer.linear_polymer_positions(n_polymers=1,
+                                                            beads_per_chain=N,
+                                                            bond_length=1, seed=5642,
+                                                            min_distance=0.9)
     for i, pos in enumerate(positions[0]):
         pid = len(system.part)
         system.part.add(id=pid, pos=pos)
@@ -66,12 +67,12 @@ for index, N in enumerate(N_MONOMERS):
 
     logging.info("Warming up the polymer chain.")
     system.time_step = 0.002
-    system.minimize_energy.init(
+    espressomd.minimize_energy.steepest_descent(
+        system,
         f_max=1.0,
         gamma=10,
         max_steps=2000,
         max_displacement=0.01)
-    system.minimize_energy.minimize()
     logging.info("Warmup finished.")
 
     logging.info("Equilibration.")

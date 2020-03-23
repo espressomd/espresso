@@ -33,7 +33,7 @@ class SigintTest(ut.TestCase):
         self.process.send_signal(signal.SIGINT)
         # Wait for the signal to arrive and one integration step to be finished
         time.sleep(1)
-        self.assertFalse(self.process.poll() is None)
+        self.assertIsNotNone(self.process.poll())
 
 
 if __name__ == '__main__':

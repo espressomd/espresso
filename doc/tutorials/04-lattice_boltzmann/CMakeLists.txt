@@ -1,15 +1,24 @@
-configure_file(04-lattice_boltzmann_part4.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-lattice_boltzmann_part4.ipynb COPYONLY)
-configure_file(04-lattice_boltzmann_part3.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-lattice_boltzmann_part3.ipynb COPYONLY)
-configure_file(04-lattice_boltzmann_part2.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-lattice_boltzmann_part2.ipynb COPYONLY)
-configure_file(04-lattice_boltzmann_part1.ipynb ${CMAKE_CURRENT_BINARY_DIR}/04-lattice_boltzmann_part1.ipynb COPYONLY)
-configure_file(scripts/04-lattice_boltzmann_part3_solution.py ${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part3_solution.py COPYONLY)
-configure_file(scripts/04-lattice_boltzmann_part4_solution.py ${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution.py COPYONLY)
-configure_file(figures/latticeboltzmann-momentumexchange.png ${CMAKE_CURRENT_BINARY_DIR}/figures/latticeboltzmann-momentumexchange.png COPYONLY)
-configure_file(figures/latticeboltzmann-grid.png ${CMAKE_CURRENT_BINARY_DIR}/figures/latticeboltzmann-grid.png COPYONLY)
+configure_tutorial_target(
+  TARGET tutorial_04
+  DEPENDS
+  04-lattice_boltzmann_part1.ipynb
+  04-lattice_boltzmann_part2.ipynb
+  04-lattice_boltzmann_part3.ipynb
+  04-lattice_boltzmann_part4.ipynb
+  figures/latticeboltzmann-grid.png
+  figures/latticeboltzmann-momentumexchange.png
+  scripts/04-lattice_boltzmann_part3_solution.py
+  scripts/04-lattice_boltzmann_part4_solution.py
+)
 
-add_custom_target(tutorials_04)
+add_custom_command(
+  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/04-lattice_boltzmann_part4_solution.py"
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.cmake"
+  COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_SOURCE_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.cmake"
+)
 
-nb_export(TUTORIAL tutorials_04_1 FILE "04-lattice_boltzmann_part1.ipynb" HTML_RUN)
-nb_export(TUTORIAL tutorials_04_2 FILE "04-lattice_boltzmann_part2.ipynb" HTML_RUN)
-nb_export(TUTORIAL tutorials_04_3 FILE "04-lattice_boltzmann_part3.ipynb" HTML_RUN)
-nb_export(TUTORIAL tutorials_04_4 FILE "04-lattice_boltzmann_part4.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_04 SUFFIX "1" FILE "04-lattice_boltzmann_part1.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_04 SUFFIX "2" FILE "04-lattice_boltzmann_part2.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_04 SUFFIX "3" FILE "04-lattice_boltzmann_part3.ipynb" HTML_RUN)
+nb_export(TARGET tutorial_04 SUFFIX "4" FILE "04-lattice_boltzmann_part4.ipynb" HTML_RUN ADD_SCRIPTS "${CMAKE_CURRENT_BINARY_DIR}/scripts/04-lattice_boltzmann_part4_solution_cut.py")

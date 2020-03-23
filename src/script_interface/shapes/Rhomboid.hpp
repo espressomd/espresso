@@ -23,7 +23,7 @@
 #define SCRIPT_INTERFACE_SHAPES_RHOMBOID_HPP
 
 #include "Shape.hpp"
-#include "core/shapes/Rhomboid.hpp"
+#include <shapes/Rhomboid.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

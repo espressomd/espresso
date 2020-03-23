@@ -70,7 +70,9 @@ foreach(cython_file ${cython_SRC})
       message( FATAL_ERROR "Internal error empty basename of file ${cython_file}")
   else()
       add_custom_command(OUTPUT ${outputpath}
-                         COMMAND ${CYTHON_EXECUTABLE} ${CYTHON_FLAGS} --cplus
+                         COMMAND ${CYTHON_EXECUTABLE}
+                         "$<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>"
+                         -3 --cplus
                          --directive embedsignature=True
                          --directive binding=True
                          -I ${CMAKE_CURRENT_SOURCE_DIR}
@@ -105,7 +107,7 @@ foreach(cython_file ${cython_SRC})
           set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS "-Wno-pedantic -Wno-unused-variable")
       endif()
       set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
-      target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore EspressoScriptInterface)
+      target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore ScriptInterface)
       target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIR})
       add_dependencies(espressomd ${target})
       install(TARGETS ${target} LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)

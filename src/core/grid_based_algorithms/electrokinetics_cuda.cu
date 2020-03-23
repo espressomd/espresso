@@ -27,7 +27,6 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
 #include <string>
 
 #include <thrust/device_ptr.h>
@@ -1837,13 +1836,14 @@ __global__ void ek_gather_species_charge_density() {
 
 __global__ void
 ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
+                                  size_t number_of_particles,
                                   LB_parameters_gpu *ek_lbparameters_gpu) {
   unsigned int index = ek_getThreadIndex();
   int lowernode[3];
   float cellpos[3];
   float gridpos;
 
-  if (index < ek_lbparameters_gpu->number_of_particles) {
+  if (index < number_of_particles) {
     gridpos = particle_data[index].p[0] / ek_parameters_gpu->agrid - 0.5f;
     lowernode[0] = (int)floorf(gridpos);
     cellpos[0] = gridpos - lowernode[0];
@@ -1922,7 +1922,7 @@ ek_gather_particle_charge_density(CUDA_particle_data *particle_data,
 
 __global__ void
 ek_spread_particle_force(CUDA_particle_data *particle_data,
-                         float *particle_forces,
+                         size_t number_of_particles, float *particle_forces,
                          LB_parameters_gpu *ek_lbparameters_gpu) {
 
   unsigned int index = ek_getThreadIndex();
@@ -1930,7 +1930,7 @@ ek_spread_particle_force(CUDA_particle_data *particle_data,
   float cellpos[3];
   float gridpos;
 
-  if (index < ek_lbparameters_gpu->number_of_particles) {
+  if (index < number_of_particles) {
     gridpos = particle_data[index].p[0] / ek_parameters_gpu->agrid - 0.5f;
     lowernode[0] = (int)floorf(gridpos);
     cellpos[0] = gridpos - (float)(lowernode[0]);
@@ -2129,14 +2129,15 @@ void ek_calculate_electrostatic_coupling() {
   if ((!ek_parameters.es_coupling) || (!ek_initialized))
     return;
 
-  int blocks_per_grid_x = (lbpar_gpu.number_of_particles +
-                           threads_per_block * blocks_per_grid_y - 1) /
-                          (threads_per_block * blocks_per_grid_y);
+  auto device_particles = gpu_get_particle_pointer();
+  int blocks_per_grid_x =
+      (device_particles.size() + threads_per_block * blocks_per_grid_y - 1) /
+      (threads_per_block * blocks_per_grid_y);
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(ek_spread_particle_force, dim_grid, threads_per_block,
-             gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-             ek_lbparameters_gpu);
+             device_particles.data(), device_particles.size(),
+             gpu_get_particle_force_pointer(), ek_lbparameters_gpu);
 }
 
 void ek_integrate_electrostatics() {
@@ -2162,18 +2163,19 @@ void ek_integrate_electrostatics() {
                ek_parameters.charge_potential_buffer);
   }
 
-  if (lbpar_gpu.number_of_particles !=
-      0) // TODO make it an if number_of_charged_particles != 0
+  auto device_particles = gpu_get_particle_pointer();
+  if (not device_particles
+              .empty()) // TODO make it an if number_of_charged_particles != 0
   {
-    blocks_per_grid_x = (lbpar_gpu.number_of_particles +
-                         threads_per_block * blocks_per_grid_y - 1) /
-                        (threads_per_block * blocks_per_grid_y);
+    blocks_per_grid_x =
+        (device_particles.size() + threads_per_block * blocks_per_grid_y - 1) /
+        (threads_per_block * blocks_per_grid_y);
     dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    particle_data_gpu = gpu_get_particle_pointer();
+    particle_data_gpu = device_particles.data();
 
     KERNELCALL(ek_gather_particle_charge_density, dim_grid, threads_per_block,
-               particle_data_gpu, ek_lbparameters_gpu);
+               particle_data_gpu, device_particles.size(), ek_lbparameters_gpu);
   }
 
   electrostatics->calculatePotential();
@@ -3804,8 +3806,6 @@ void ek_print_lbpar() {
   printf("    unsigned int dim_y = %d;\n", lbpar_gpu.dim_y);
   printf("    unsigned int dim_z = %d;\n", lbpar_gpu.dim_z);
   printf("    unsigned int number_of_nodes = %d;\n", lbpar_gpu.number_of_nodes);
-  printf("    unsigned int number_of_particles = %d;\n",
-         lbpar_gpu.number_of_particles);
   printf("    int calc_val = %d;\n", lbpar_gpu.calc_val);
   printf("    int external_force_density = %d;\n",
          lbpar_gpu.external_force_density);
@@ -3966,11 +3966,11 @@ struct ek_charge_of_particle {
 };
 
 ekfloat ek_get_particle_charge() {
-  particle_data_gpu = gpu_get_particle_pointer();
-  thrust::device_ptr<CUDA_particle_data> ptr(particle_data_gpu);
+  auto device_particles = gpu_get_particle_pointer();
   ekfloat particle_charge = thrust::transform_reduce(
-      ptr, ptr + lbpar_gpu.number_of_particles, ek_charge_of_particle(), 0.0f,
-      thrust::plus<ekfloat>());
+      thrust::device_ptr<CUDA_particle_data>(device_particles.begin()),
+      thrust::device_ptr<CUDA_particle_data>(device_particles.end()),
+      ek_charge_of_particle(), 0.0f, thrust::plus<ekfloat>());
   return particle_charge;
 }
 
