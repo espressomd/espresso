@@ -502,3 +502,11 @@ Particle *CellStructure::add_particle(Particle &&p) {
 
   return append_indexed_particle(cell, std::move(p));
 }
+
+Particle *CellStructure::get_local_particle(int id) {
+  return get_local_particle_data(id);
+}
+
+const Particle *CellStructure::get_local_particle(int id) const {
+  return get_local_particle_data(id);
+}

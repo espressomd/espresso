@@ -195,6 +195,16 @@ struct CellStructure {
    *         otherwise none.
    */
   boost::optional<Particle> extract_particle(int id);
+
+  /**
+   * @brief Get a local particle by id.
+   *
+   * @param id Particle to get.
+   * @return Pointer to particle if it is local,
+   *         nullptr otherwise.
+   */
+  Particle *get_local_particle(int id);
+  const Particle *get_local_particle(int id) const;
 };
 
 /*@}*/
