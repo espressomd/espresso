@@ -39,7 +39,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
-#include "particle_index.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -213,7 +212,7 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
 static void invalidate_ghosts() {
   for (auto const &p : cell_structure.ghost_cells().particles()) {
     if (cell_structure.get_local_particle(p.identity()) == &p) {
-      set_local_particle_data(p.identity(), nullptr);
+      cell_structure.update_particle_index(p.identity(), nullptr);
     }
   }
 
@@ -369,7 +368,7 @@ void cells_resort_particles(int global_flag) {
       cell_structure, cell_structure.local_cells(), modified_cells);
 
   for (auto const &p : displaced_parts) {
-    set_local_particle_data(p.identity(), nullptr);
+    cell_structure.update_particle_index(p.identity(), nullptr);
   }
 
   switch (cell_structure.type) {
@@ -384,20 +383,22 @@ void cells_resort_particles(int global_flag) {
 
   boost::sort(modified_cells);
   for (auto cell : modified_cells | boost::adaptors::uniqued) {
-    update_local_particles(cell);
+    cell_structure.update_particle_index(cell);
   }
 
   if (0 != displaced_parts.n) {
+    auto sort_cell = cell_structure.m_local_cells[0];
+
     for (int i = 0; i < displaced_parts.n; i++) {
       auto &part = displaced_parts.part[i];
       runtimeErrorMsg() << "Particle " << part.identity()
                         << " moved more than"
                            " one local box length in one timestep.";
-      resort_particles = Cells::RESORT_GLOBAL;
-      auto sort_cell = cell_structure.m_local_cells[0];
-      append_indexed_particle(sort_cell, std::move(part));
-      update_local_particles(sort_cell);
+      sort_cell->push_back(std::move(part));
     }
+
+    resort_particles = Cells::RESORT_GLOBAL;
+    cell_structure.update_particle_index(sort_cell);
   } else {
 #ifdef ADDITIONAL_CHECKS
     /* at the end of the day, everything should be consistent again */
@@ -470,7 +471,7 @@ void cells_update_ghosts(unsigned data_parts) {
      * have them. */
     for (auto &part : cell_structure.ghost_cells().particles()) {
       if (cell_structure.get_local_particle(part.p.identity) == nullptr) {
-        set_local_particle_data(part.p.identity, &part);
+        cell_structure.update_particle_index(part.identity(), &part);
       }
     }
 
@@ -514,15 +515,18 @@ void CellStructure::remove_particle(int id) {
   /* If we found the particle, remove it. */
   if (cell && (position >= 0)) {
     cell->extract(position);
-    set_local_particle_data(id, nullptr);
-    update_local_particles(cell);
+    cell_structure.update_particle_index(id, nullptr);
+    cell_structure.update_particle_index(cell);
   }
 }
 
 Particle *CellStructure::add_local_particle(Particle &&p) {
   auto const sort_cell = cell_structure.particle_to_cell(p);
   if (sort_cell) {
-    return append_indexed_particle(sort_cell, std::move(p));
+    sort_cell->push_back(std::move(p));
+    update_particle_index(sort_cell);
+
+    return &sort_cell->back();
   }
 
   return {};
@@ -532,34 +536,33 @@ Particle *CellStructure::add_particle(Particle &&p) {
   auto const sort_cell = cell_structure.particle_to_cell(p);
   /* There is always at least one cell, so if the particle
    * does not belong to a cell on this node we can put it there. */
-  auto const cell = sort_cell ? sort_cell : local_cells()[0];
+  auto cell = sort_cell ? sort_cell : local_cells()[0];
 
   /* If the particle isn't local a global resort may be
    * needed, otherwise a local resort if sufficient. */
   set_resort_particles(sort_cell ? Cells::RESORT_LOCAL : Cells::RESORT_GLOBAL);
 
-  return append_indexed_particle(cell, std::move(p));
-}
+  cell->push_back(std::move(p));
+  update_particle_index(cell);
 
-Particle *CellStructure::get_local_particle(int id) {
-  return get_local_particle_data(id);
-}
-
-const Particle *CellStructure::get_local_particle(int id) const {
-  return get_local_particle_data(id);
+  return &cell->back();
 }
 
 int CellStructure::get_max_local_particle_id() const {
-  return get_local_max_seen_particle();
+  auto it = std::find_if(m_particle_index.rbegin(), m_particle_index.rend(),
+                         [](const Particle *p) { return p != nullptr; });
+
+  return (it != m_particle_index.rend()) ? (*it)->identity() : -1;
 }
 
 void CellStructure::remove_all_particles() {
-  for (auto c : cell_structure.local_cells()) {
+  for (auto c : m_local_cells) {
     for (auto &p : c->particles()) {
-      set_local_particle_data(p.identity(), nullptr);
       free_particle(&p);
     }
 
     c->clear();
   }
+
+  m_particle_index.clear();
 }

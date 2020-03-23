@@ -125,6 +125,75 @@ struct CellPList {
  *  be stored in separate structures.
  */
 struct CellStructure {
+private:
+  std::vector<Particle *> m_particle_index;
+
+public:
+  /**
+   * @brief Update local particle index.
+   *
+   * Update the entry for a particle in the local particle
+   * index.
+   *
+   * @param id Entry tto update.
+   * @param p Pointer to the particle.
+   **/
+  void update_particle_index(int id, Particle *p) {
+    assert(id >= 0);
+    assert(not p or id == p->identity());
+
+    if (id >= m_particle_index.size())
+      m_particle_index.resize(id + 1);
+
+    m_particle_index[id] = p;
+  }
+
+  /**
+   * @brief Update local particle index.
+   *
+   * @param pl List of particle whose index entries should be updated.
+   */
+  void update_particle_index(ParticleList &pl) {
+    for (auto &p : pl) {
+      update_particle_index(p.identity(), std::addressof(p));
+    }
+  }
+
+  /**
+   * @brief Update local particle index.
+   *
+   * @param pl List of particle whose index entries should be updated.
+   */
+  void update_particle_index(ParticleList *pl) {
+    assert(pl), update_particle_index(*pl);
+  }
+
+  /**
+   * @brief Get a local particle by id.
+   *
+   * @param id Particle to get.
+   * @return Pointer to particle if it is local,
+   *         nullptr otherwise.
+   */
+  Particle *get_local_particle(int id) {
+    assert(id >= 0);
+
+    if (id >= m_particle_index.size())
+      return nullptr;
+
+    return m_particle_index[id];
+  }
+
+  /** @overload get_local_particle */
+  const Particle *get_local_particle(int id) const {
+    assert(id >= 0);
+
+    if (id >= m_particle_index.size())
+      return nullptr;
+
+    return m_particle_index[id];
+  }
+
   std::vector<Cell *> m_local_cells = {};
   std::vector<Cell *> m_ghost_cells = {};
 
@@ -196,16 +265,6 @@ struct CellStructure {
    * @param p Particle id to remove.
    */
   void remove_particle(int id);
-
-  /**
-   * @brief Get a local particle by id.
-   *
-   * @param id Particle to get.
-   * @return Pointer to particle if it is local,
-   *         nullptr otherwise.
-   */
-  Particle *get_local_particle(int id);
-  const Particle *get_local_particle(int id) const;
 
   /**
    * @brief Get the maximal particle id on this node.
