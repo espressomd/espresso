@@ -136,7 +136,7 @@ void nsq_topology_init(CellPList *old) {
 }
 
 void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
-                            std::vector<const Cell *> &modified_cells) {
+                            std::vector<Cell *> &modified_cells) {
   if (not global_flag) {
     assert(displaced_parts->n == 0);
     return;

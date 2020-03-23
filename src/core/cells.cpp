@@ -303,7 +303,6 @@ void fold_and_reset(Particle &p) {
 
   p.l.p_old = p.r.p;
 }
-} // namespace
 
 /**
  * @brief Sort and fold particles.
@@ -318,7 +317,7 @@ void fold_and_reset(Particle &p) {
  * @returns List of Particles that do not belong on this node.
  */
 ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells,
-                                 std::vector<const Cell *> &modified_cells) {
+                                 std::vector<Cell *> &modified_cells) {
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
@@ -357,6 +356,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells,
 
   return displaced_parts;
 }
+} // namespace
 
 void cells_resort_particles(int global_flag) {
   invalidate_ghosts();
@@ -364,7 +364,7 @@ void cells_resort_particles(int global_flag) {
   clear_particle_node();
   n_verlet_updates++;
 
-  static std::vector<const Cell *> modified_cells;
+  static std::vector<Cell *> modified_cells;
   modified_cells.clear();
 
   ParticleList displaced_parts = sort_and_fold_parts(
