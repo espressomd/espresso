@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <vector>
 
+#include "thrust_wrapper.hpp"
 #include "device_matrix.hpp"
 #include "multi_array.hpp"
 
@@ -13,6 +14,52 @@
 #define DEVICE_FUNC
 #define KERNEL_ABORT abort()
 #endif
+
+/** \file
+ *  This file contains computations required for Stokesioan Dynamics, namely
+ *  the particle's translational and angular velocities are computed from the 
+ *  particle's positions and radii and the forces and torques that are acting
+ *  on the particles.
+ *
+ *  In its current implementation, the neccessary subroutines are implemented
+ *  as functors. The main functor is called solver, which wraps up the
+ *  functionality of all the other functors in this file. For details, please
+ *  see the description of the solver functor.
+ *
+ *  For details on the thermalization, please see the description of the
+ *  thermalizer functor.
+ *
+ *  The general Stokesian Dynamics method also allows to incorporate one
+ *  stress tensor per particle which gives the stress that is imposed on a
+ *  particle by the surrounding fluid (such as to deform the particle).
+ *  However, ESPResSo makes no use of that, leaving only forces and torques
+ *  to be passed to the SD routine.
+ *
+ *  To understand the Stokesian Dynamics method, it is recommended to read
+ *  Durlofski et al. (1987), because it describes the method that is
+ *  implemented here, apart from the thermalization.
+ *  (F-T-version or F-T-S-version?)
+ *      "Dynamic simulation of hydrodynamically interacting suspensions"
+ *      https://core.ac.uk/download/pdf/4895234.pdf
+ *
+ *  All references to formulae in this file refer to the aforementioned paper,
+ *  unless otherwise noted.
+ *
+ *  As they state in the paragraph below equation (2.17) it may be useful to
+ *  also read Jeffrey et al. (1984) to better understand the notation used to
+ *  compute the grand mobility matrix in this Stokesian Dynamics method.
+ *      "Calculation of the resistance and mobility functions for two unequal
+ *      rigid spheres in low-Reynolds-number flow"
+ *      https://doi.org/10.1017/S0022112084000355
+ *
+ *
+ *  Also, the figures in
+ *      https://doi.org/10.1016/j.jcp.2015.01.019
+ *  might help with an intuitive understanding of dipole, stokeslet and rotlet
+ *  flow (missing out only on the stresslet flow).
+ *
+ */
+
 
 namespace sd {
 
@@ -41,11 +88,13 @@ struct check_dist {
         T dr = std::sqrt(dx * dx + dy * dy + dz * dz);
         T dr_inv = 1 / dr;
 
+        // TODO: Rueckmeldung auslagern
         if (dr <= a(part_id(0, i)) + a(part_id(1, i))) {
-            printf("Particles %lu and %lu overlapped! (distance %f < %f)\n",
-                   part_id(0, i), part_id(1, i), dr,
-                   a(part_id(0, i)) + a(part_id(1, i)));
-            KERNEL_ABORT;
+            // printf("Particles %lu and %lu overlapped! (distance %f < %f)\n",
+            //       part_id(0, i), part_id(1, i), dr,
+            //       a(part_id(0, i)) + a(part_id(1, i)));
+            // KERNEL_ABORT; // TODO Fix this
+            dr = NAN;
         }
 
         pd(0, i) = dx * dr_inv;
@@ -54,6 +103,9 @@ struct check_dist {
         pd(3, i) = dr;
     }
 };
+
+
+
 
 // The expression for the mobility matrix is given in Appendix A of
 //
@@ -67,6 +119,44 @@ struct check_dist {
 //
 //   Kim, S. and Mifflin, R.T., Physics of Fluids 28, 2033 (1985)
 //   https://doi.org/10.1063/1.865384
+
+
+
+
+
+/** The mobility functors fill in the elements of the grand mobility matrix.
+ *  The goal is to have a numerical representation of the grand mobility
+ *  matrix that can be found in equations (A 1) to (A 3).
+ *  There are two mobility functors. One with isself=true and one with
+ *  isself=false. They are described below.
+ *
+ *  To achieve this goal, all the sub-tensors a_mn, b_mn, c_mn, g_mn, h_mn and
+ *  m_mn have to be computed. (m and n are used here instead of alpha and
+ *  beta). The subscript indices denote single particles.
+ *  This is done using the detailed description of the grand mobility matrix
+ *  in equation (A 2).
+ *
+ *  In this source file, those sub-tensors are merged into larger sub-tensors
+ *  of the grand mobility matrix. They are called mob_a, mob_b, mob_c, mob_gt,
+ *  mob_ht and mob_m, respectively. (The blocks of the grand mobility matrix in
+ *  (A 1) with common letters)
+ *
+ *  Those blocks are further merged. mob_a, mob_b and its mirror, and mob_c
+ *  are merged into zmuf in the source code. mob_gt and mob_ht are merged into
+ *  zmus. And mob_m is represented by zmes. To make that clear, compare
+ *  equations (A 1) and (2.17). (Not entirely correct!! Blocks are organized
+ *  in (UF) Blocks per particle)
+ *
+ *  The functor with isself=true computes the self-contributions of the grand
+ *  mobility matrix, i.e. the sub-tensors a_mn, c_mn and m_mn that lie on the
+ *  diagonal. For those sub-tensors, x_11 and y_11 from equation (A 3) have to
+ *  be plugged into equation (A 2) (choose the one with matching superscript).
+ *
+ *  The functor with isself=false computes all the other contributions. Because
+ *  there is always two particles involved for each contribution, they depend
+ *  on the distance between the particle centers. For these expressions, x_12
+ *  and y_12 from equation (A 3) have to be plugged into equation (A 2).
+ */
 template <typename Policy, typename T, bool isself>
 struct mobility;
 
@@ -79,7 +169,16 @@ struct mobility<Policy, T, true> {
 
     // Determine the self contribution
     // This is independent of dr_inv, dx, dy, dz
+    // (that is, the distance between particle centers)
     DEVICE_FUNC void operator()(std::size_t part_id) {
+        // Fill the self mobility terms 
+        // These are the sub-tensors of the grand mobility matrix as shown
+        // in equation (A 1) that are located on the diagonal.
+        // This functor fills in the sub-tensors for one single particle and
+        // has to be executed for each particle.
+
+        // mob_a, mob_c and mob_m are templates for those sub-tensors that just
+        // have to be rescaled by a constant factor.
         static constexpr multi_array<T, 3, 3> const mob_a = {
             // clang-format off
             1, 0, 0,
@@ -104,14 +203,23 @@ struct mobility<Policy, T, true> {
             // clang-format on
         };
 
-        // Fill the self mobility terms
+
+        // Compute where the self mobility submatrices of the current particle
+        // are located in the grand mobility matrix.
+        // For velocities/forces, there are 6 independent components.
+        // (3 translation and 3 rotation)
+        // For shear rate/stresslets there are 5 independent components.
         std::size_t const ph1 = 6 * part_id;
         std::size_t const ph2 = ph1 + 3;
         std::size_t const ph3 = 5 * part_id;
 
-        T const visc1 = T{M_1_PI / 6. / eta / a(part_id)};
+        // These are the non-dimensionalizations as stated in the paragraph
+        // below equation (A 1).
+        T const visc1 = T{M_1_PI / 6. / eta / a(part_id)}; 
         T const visc2 = T{visc1 / a(part_id)};
         T const visc3 = T{visc2 / a(part_id)};
+
+        // Now put the entries into the grand mobility matrix.
         for (std::size_t i = 0; i < 3; ++i) {
             zmuf(ph1 + i, ph1 + i) = visc1 * mob_a(i, i);
             zmuf(ph2 + i, ph2 + i) = visc3 * mob_c(i, i);
@@ -136,6 +244,7 @@ struct mobility<Policy, T, false> {
 
     // Determine the pair contribution
     DEVICE_FUNC void operator()(std::size_t pair_id) {
+        // Kronecker-Delta
         static constexpr multi_array<T, 3, 3> const delta = {
             // clang-format off
             1, 0, 0,
@@ -144,6 +253,7 @@ struct mobility<Policy, T, false> {
             // clang-format on
         };
 
+        // Levi-Civita tensor
         static constexpr multi_array<T, 3, 3, 3> const eps = {
             // clang-format off
             0, 0, 0,   0, 0, 1,   0,-1, 0,
@@ -152,29 +262,56 @@ struct mobility<Policy, T, false> {
             // clang-format on
         };
 
+        // Lookup table for the linearization of the shear rate tensor E and
+        // the stresslet tensor S in equation (A 1).
         static constexpr multi_array<std::size_t, 2, 5> const mesid = {
             // clang-format off
             0, 0, 0, 1, 1,
             2, 1, 2, 2, 2
             // clang-format on
         };
+        
+        // particle ids of the involved particles
+        std::size_t ph1 = part_id(0, pair_id);
+        std::size_t ph2 = part_id(1, pair_id);
+        // These are the non-dimensionalizations as stated in the paragraph
+        // below equation (A 1).
+        // However, modified, so that the case with two unequal spheres is
+        // covered.
+        T a12 = T{.5} * (a(ph1) + a(ph2));
+        T const visc1 = T{M_1_PI / 6. / eta / a12};
+        T const visc2 = T{visc1 / a12};
+        T const visc3 = T{visc2 / a12};
 
+        // Components of unit vector along particle connection line as
+        // described in paragraph below equation (A 1).
         T dx = pd(0, pair_id);
         T dy = pd(1, pair_id);
         T dz = pd(2, pair_id);
-        T dr_inv = 1.0 / pd(3, pair_id);
+        // Non-dimensionalized inverted distance between particles 1/r
+        T dr_inv = a12 / pd(3, pair_id);
 
+        // Combine components into unit vector along particle connection line
         multi_array<T, 3> e = {dx, dy, dz};
+        
+        // Debug stuff: print out e // ok
+        //printf("Unit vector between particles: %f %f %f\n", e(0), e(1), e(2));
+        
+        // This creates a lookup-table for the many e_i * e_j like 
+        // multiplications in equation (A 2). 
         auto ee = outer(e, e);
 
+        // Several powers of inverted inter-particle distance
         T dr_inv2 = dr_inv * dr_inv;
         T dr_inv3 = dr_inv2 * dr_inv;
         T dr_inv4 = dr_inv3 * dr_inv;
         T dr_inv5 = dr_inv4 * dr_inv;
 
+        //printf("dr_inv = %f\n",dr_inv); // ok
+
         // The following scalar mobility functions can be found in
         // equation (A 3).
-        T x12a = T{3. / 2} * dr_inv - dr_inv3;
+        T x12a = T{3. / 2.} * dr_inv - dr_inv3;
         T y12a = T{3. / 4.} * dr_inv + T{1. / 2.} * dr_inv3;
 
         T y12b = T{-3. / 4.} * dr_inv2;
@@ -183,7 +320,7 @@ struct mobility<Policy, T, false> {
         T y12c = T{-3. / 8.} * dr_inv3;
 
         T x12g = T{9. / 4.} * dr_inv2 - T{18. / 5.} * dr_inv4;
-        T y12g = T{6. / 5.} * dr_inv4;
+        T y12g = T{6. / 5.} * dr_inv4;                        
 
         T y12h = T{-1.0 * 9. / 8.} * dr_inv3;
 
@@ -197,7 +334,10 @@ struct mobility<Policy, T, false> {
         multi_array<T, 3, 3> mob_c;
         for (std::size_t i = 0; i < 3; ++i) {
             for (std::size_t j = 0; j < 3; ++j) {
-                std::size_t k = (3 - i - j) % 3;
+                // if i and j are different from one another, this returns the
+                // "other" index missing in the set {0, 1, 2}
+                std::size_t k = (3 - i - j) % 3; 
+
                 mob_a(i, j) = x12a * ee(i, j) + y12a * (delta(i, j) - ee(i, j));
                 mob_b(i, j) = y12b * eps(i, j, k) * e(k);
                 mob_c(i, j) = x12c * ee(i, j) + y12c * (delta(i, j) - ee(i, j));
@@ -305,10 +445,12 @@ struct mobility<Policy, T, false> {
         }
 
         // Fill the pair mobility terms
-        std::size_t ph1 = part_id(0, pair_id);
-        std::size_t ph2 = part_id(1, pair_id);
-        T a12 = T{.5} * (a(ph1) + a(ph2));
 
+        // Compute where the various submatrices of the current particle pair
+        // are located in the grand mobility matrix.
+        // For velocities/forces, there are 6 independent components.
+        // (3 translation and 3 rotation)
+        // For shear rate/stresslets there are 5 independent components.
         std::size_t ph5 = 5 * ph1;
         std::size_t ph6 = 5 * ph2;
 
@@ -318,14 +460,13 @@ struct mobility<Policy, T, false> {
         std::size_t ph3 = ph1 + 3;
         std::size_t ph4 = ph2 + 3;
 
-        T const visc1 = T{M_1_PI / 6. / eta / a12};
-        T const visc2 = T{visc1 / a12};
-        T const visc3 = T{visc2 / a12};
+        // Now copy values into the correct locations in the "big" matrix
+        // and apply scaling
         for (std::size_t i = 0; i < 3; ++i) {
             for (std::size_t j = 0; j < 3; ++j) {
                 zmuf(ph1 + i, ph2 + j) = visc1 * mob_a(i, j);
                 zmuf(ph3 + i, ph2 + j) = visc2 * mob_b(i, j);
-                zmuf(ph1 + i, ph4 + j) =
+                zmuf(ph1 + i, ph4 + j) = 
                     -visc2 * mob_b(j, i); // mob_b transpose
                 zmuf(ph3 + i, ph4 + j) = visc3 * mob_c(i, j);
 
@@ -337,9 +478,13 @@ struct mobility<Policy, T, false> {
             }
 
             for (std::size_t j = 0; j < 5; ++j) {
-                zmus(ph1 + i, ph6 + j) = visc3 * mob_gt(i, j);
-                zmus(ph2 + i, ph5 + j) = T{-1.0} * visc3 * mob_gt(i, j);
+                // The paragraph under equation (A 1) claims that we would need
+                // exponent n=3, but n=2 yields correct results.
+                // Needs to be analytically verified.
+                zmus(ph1 + i, ph6 + j) = visc2 * mob_gt(i, j);  
+                zmus(ph2 + i, ph5 + j) = T{-1.0} * visc2 * mob_gt(i, j);  
 
+                // We don't know whether this is the correct exponent.
                 zmus(ph3 + i, ph6 + j) = visc3 * mob_ht(i, j);
                 zmus(ph4 + i, ph5 + j) = visc3 * mob_ht(i, j);
             }
@@ -347,6 +492,7 @@ struct mobility<Policy, T, false> {
 
         for (std::size_t i = 0; i < 5; ++i) {
             for (std::size_t j = 0; j < 5; ++j) {
+                // We don't know whether this is the correct exponent.
                 zmes(ph5 + i, ph6 + j) = visc3 * mob_m(i, j);
                 zmes(ph6 + i, ph5 + j) = visc3 * mob_m(j, i);
             }
@@ -354,6 +500,13 @@ struct mobility<Policy, T, false> {
     }
 };
 
+
+
+/** The lubrication functor adds pair wise interactions to the resistance
+ *  matrix. This section of code has not been thoroughly commented yet.
+ *  Therefore, compare to the part about lubrication, starting with the
+ *  paragraph above equation (2.18).
+ */
 template <typename Policy, typename T>
 struct lubrication {
     device_matrix_view<T, Policy> rfu, rfe, rse;
@@ -1018,10 +1171,10 @@ struct thermalizer {
         T rnd = _curand_uniform_double_hq(rnd_ints.w, rnd_ints.x);
         return std::sqrt(T{2.0}) * sqrt_kT_Dt * std::sqrt(T{12.0}) * (rnd - 0.5);
 
-        // \sqrt(12) * (rnd - 0.5) is a uniformly distributed random number
+        // sqrt(12) * (rnd - 0.5) is a uniformly distributed random number
         // with zero mean and unit variance.
         
-        // \sqrt(2 * kT * \Delta t) is the desired standard deviation for 
+        // sqrt(2 * kT * \Delta t) is the desired standard deviation for 
         // random displacement. 
 
         // NOTE: Here, we do not compute a random displacement but a random 
@@ -1031,9 +1184,63 @@ struct thermalizer {
         // why use the _curand_uniform_double_hq function?
         // I don't think it is meant to be used outside of the
         // curand_kernel.h file.
+        // Apparently it works, so keep it for now.
     }
 };
 
+/** Functor that takes all the relevant particle data (i.e. positions, radii,
+    external forces and torques) and computes the translational and angular
+    velocities. These can be used to propagate the system.
+
+    The basic idea of the method is as follows: The Stokes equation is linear,
+    i.e. the relations between force and motion (velocity) is purely linear.
+    All forces and torques that act on individual particles are merged into
+    one large vector. All velocities and angular velocities of individual
+    particles are merged into one vector alike.
+    The relationship between force and velocity is now given by the so-called
+    grand mobility matrix, or its inverse, the resistance matrix:
+
+            \vec{U} = M_{UF} \vec{F}
+
+    where \vec{U} is the force, \vec{F} the velocities and M the grand
+    mobility matrix. The subscript UF indicates that this tensor describes
+    the relationship between forces and velocities.
+    The mobility matrix depends on the positions of all particles and therefore
+    is only valid for the momentary configuration. It needs to be recalculated
+    each time step.
+
+    To obtain the velocities, the mobility matrix must be applied to the forces
+    that act on the particles, giving the velocities.
+
+    These are the steps that are taken to compute the mobility matrix:
+      -# Starting point is an empty mobility matrix.
+      -# All self mobility terms are added. Its translational part is widely
+         known as Stoke's Law.
+      -# All pair mobility terms are added.
+      -# The mobility matrix is inverted to become a resistance matrix.
+      -# Lubrication corrections are added to the resistance matrix. They are
+         necessary for particles in close vicinity because simplifications
+         have been made to efficiently cover long range interactions.
+      -# In the end, the finished resistance matrix is inverted again. The
+         result is the finished mobility matrix that includes the short-ranged
+         lubrication interactions.
+
+    The thermalisation is achieved by a generalization of the 
+    Einstein-Smoluchowski equation, which relates mobility and diffusion: 
+
+            D = \mu k_B T
+
+    where \mu is the mobility and D is the diffusion coefficient. The mean 
+    square displacement during a time step of length \Delta t, and along one
+    degree of freedom is given by
+
+            \langle x^2 \rangle / \Delta t = 2 D
+
+    That way we can determine the distribution of the random displacement
+    that our system experiences along one of its many degrees of freedom. In
+    our case, \mu is a matrix and we need its square root. The latter is 
+    obtained via cholesky decomposition.
+ */
 template <typename Policy, typename T>
 struct solver {
     static_assert(policy::is_policy<Policy>::value,
@@ -1044,9 +1251,12 @@ struct solver {
 
     template <typename U>
     using vector_type = typename Policy::template vector<U>;
-
+    
+    /** viscosity of the Stokes fluid */
     T const eta;
+    /** number of particles */
     std::size_t const n_part;
+    /** number of pairs of particles = n_part*(n_part-1)/2 */
     std::size_t const n_pair;
 
     device_matrix<T, Policy> zmuf;
@@ -1071,6 +1281,7 @@ struct solver {
         vector_type<T> a(a_host.begin(), a_host.end());
 
         // TODO: More efficient!
+        // generate lookup table of all pairs
         device_matrix<std::size_t, Policy> part_id(2, n_pair);
         std::size_t k = 0;
         for (std::size_t i = 0; i < n_part; ++i) {
@@ -1082,31 +1293,51 @@ struct solver {
         }
 
         device_matrix<T, Policy> pd(4, n_pair);
-        thrust::counting_iterator<std::size_t> begin(0UL);
+        thrust_wrapper::counting_iterator<std::size_t> begin(0UL);
 
         // check_dist
-        thrust::for_each(Policy::par(), begin, begin + n_pair,
+        thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                          check_dist<Policy, T>{x, a, pd, part_id});
 
         // self mobility term
         if (flg & SELF_MOBILITY) {
-            thrust::for_each(
+            thrust_wrapper::for_each(
                 Policy::par(), begin, begin + n_part,
                 mobility<Policy, T, true>{zmuf, zmus, zmes, a, eta, flg});
         }
 
         // pair mobility term
         if (flg & PAIR_MOBILITY) {
-            thrust::for_each(Policy::par(), begin, begin + n_pair,
-                             mobility<Policy, T, false>{zmuf, zmus, zmes, pd,
-                                                        part_id, a, eta, flg});
+            thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
+                                     mobility<Policy, T, false>{zmuf, zmus, zmes, pd,
+                                                                part_id, a, eta, flg});
         }
+
+
+        
+//        printf("zmuf:\n");
+//        for (int i=0; i<zmuf.rows(); i++) {
+//            for (int j=0; j<zmuf.cols(); j++) {
+//                printf("%f ",zmuf(i,j));
+//            }
+//            printf("\n");
+//        }
+//        printf("\n");
 
         // Invert the grand-mobility tensor.  This is done in several steps
         // which minimize the computation time.
 
         // Invert R1 = Muf ^ -1 => zmuf = zmuf ^ -1
         zmuf = zmuf.inverse();
+
+//        printf("zmuf:\n");
+//        for (int i=0; i<zmuf.rows(); i++) {
+//            for (int j=0; j<zmuf.cols(); j++) {
+//                printf("%f ",zmuf(i,j));
+//            }
+//            printf("\n");
+//        }
+//        printf("\n");
 
         if (flg & FTS) {
             // Compute R2 = Mus(t) * R1 => rsu = zmus(t) * zmuf
@@ -1129,11 +1360,20 @@ struct solver {
         device_matrix<T, Policy> rfe = zmus;
         device_matrix<T, Policy> rse = zmes;
 
+//        printf("rfu:\n");
+//        for (int i=0; i<rfu.rows(); i++) {
+//            for (int j=0; j<rfu.cols(); j++) {
+//                printf("%f ",rfu(i,j));
+//            }
+//            printf("\n");
+//        }
+//        printf("\n");
+        
         // Lubrication corrections
         if (flg & LUBRICATION) {
-            thrust::for_each(Policy::par(), begin, begin + n_pair,
-                             lubrication<Policy, T>{rfu, rfe, rse, pd, part_id,
-                                                    a, eta, flg});
+            thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
+                                     lubrication<Policy, T>{rfu, rfe, rse, pd, part_id,
+                                                            a, eta, flg});
 
             for (std::size_t i = 0; i < 6 * n_part; ++i) {
                 for (std::size_t j = 0; j < i; ++j) {
@@ -1147,44 +1387,51 @@ struct solver {
                 }
             }
         }
+        
 
         assert(f_host.size() == 6 * n_part);
         vector_type<T> fext(f_host.begin(), f_host.end());
+        
+        // initialize ambient flow
         vector_type<T> uinf(n_part * 6, T{0.0});
+        // initialize ambient shear flow
         vector_type<T> einf(n_part * 5, T{0.0});
 
         device_matrix<T, Policy> rfu_inv;
         device_matrix<T, Policy> rfu_sqrt;
-        thrust::tie(rfu_inv, rfu_sqrt) = rfu.inverse_and_cholesky();
-        
+        thrust_wrapper::tie(rfu_inv, rfu_sqrt) = rfu.inverse_and_cholesky();
+
         vector_type<T> frnd(n_part * 6, T{0.0});
-        
-        // Stochastic force
+
+        // Thermalization with stochastic force
         if (sqrt_kT_Dt > 0.0) {
 
-            // This method is combined from two locations, 
+            // This method is combined from two locations,
             // namely
-            // Banchio, Brady 2003 https://doi.org/10.1063/1.1571819
+            // Banchio, Brady 2002 https://doi.org/10.1063/1.1571819
             // equation (6)
-            //  -- and -- 
-            // Brady, Bossis 1988 
+            //  -- and --
+            // Brady, Bossis 1988
             // https://doi.org/10.1146/annurev.fl.20.010188.000551
             // equation (3)
-            
-            // We adopt the more detailed method of the 2003 paper.
+
+            // We adopt the more detailed method of the 2002 paper.
 
             // However, the matrix A in that paper is NOT a byproduct of the
-            // matrix inversion of R_{FU} as they claim. (We get the 
+            // matrix inversion of R_{FU} as they claim. (We get the
             // decomposition of R_{FU} but not of its inverse)
+            // Also, the random displacement between formulas (5) and (6) is
+            // wrong, since the square root needs to include kT and Delta t
+            // as well.
 
             // Luckily, with the decomposition of R_{FU} we CAN compute an
             // appropriate random force with the variance given by the
-            // 1988 paper (as opposed to random displacement).             
-        
+            // 1988 paper (as opposed to random displacement).
+
             vector_type<T> psi(f_host.size());
-            thrust::tabulate(Policy::par(), psi.begin(), psi.end(),
+            thrust_wrapper::tabulate(Policy::par(), psi.begin(), psi.end(),
                              thermalizer<T>{sqrt_kT_Dt, offset, seed});
-            
+
             frnd = rfu_sqrt * psi;
 
             // There is possibly an additional term for the thermalization
@@ -1195,11 +1442,13 @@ struct solver {
             // It is also very unclear how to actually calculate it.
         }
 
+        // uncomment when not debugging!!
         vector_type<T> u = rfu_inv * (fext + rfe * einf + frnd) + uinf;
 
-        // return the change in velocity due to HI
+        // return the velocities due to hydrodynamic interactions
         std::vector<T> out(u.size());
-        thrust::copy(u.begin(), u.end(), out.begin());
+        thrust_wrapper::copy(u.begin(), u.end(), out.begin());
+
         return out;
     }
 };

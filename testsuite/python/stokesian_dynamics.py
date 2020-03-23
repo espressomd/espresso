@@ -55,10 +55,12 @@ class StokesianDynamicsTest(ut.TestCase):
     def setUp(self):
         self.system.box_l = [10] * 3
         self.system.periodicity = [0, 0, 0]
-
-        self.system.time_step = 1.0
         self.system.cell_system.skin = 0.4
 
+        self.system.integrator.set_sd()
+
+    def test_1(self):
+        self.system.time_step = 1.0
         self.system.part.add(pos=[-5, 0, 0], rotation=[1, 1, 1])
         self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
         self.system.part.add(pos=[7, 0, 0], rotation=[1, 1, 1])
@@ -68,12 +70,93 @@ class StokesianDynamicsTest(ut.TestCase):
                                       device="cpu",
                                       radii={0: 1.0},
                                       flags=flags.SELF_MOBILITY | flags.PAIR_MOBILITY | flags.FTS)
-        self.system.integrator.set_sd()
 
         gravity = constraints.Gravity(g=[0, -1, 0])
         self.system.constraints.add(gravity)
+        intsteps = int(8000 / self.system.time_step)
+        pos = np.empty([intsteps + 1, 3 * len(self.system.part)])
 
-    def test(self):
+        pos[0, :] = self.system.part[:].pos.flatten()
+        for i in range(intsteps):
+            self.system.integrator.run(1)
+            for n, p in enumerate(self.system.part):
+                pos[i + 1, 3 * n:3 * n + 3] = p.pos
+
+        for i in range(self.data.shape[0]):
+            for n in range(3):
+                x_ref = self.data[i, 2 * n]
+                y_ref = self.data[i, 2 * n + 1]
+                x = pos[:, 3 * n]
+                y = pos[:, 3 * n + 1]
+
+                if y_ref < -555:
+                    continue
+
+                idx = np.abs(y - y_ref).argmin()
+                dist = np.sqrt((x_ref - x[idx])**2 + (y_ref - y[idx])**2)
+                self.assertLess(dist, 0.5)
+    
+    # The exact same test, only rescaled
+    # lengths -> factor 4.5
+    # time -> factor 2.5
+    def test_2(self):
+        l_factor = 4.5
+        t_factor = 2.5
+
+        self.system.time_step = 1.0
+        self.system.part.add(pos=[-5 * l_factor, 0, 0], rotation=[1, 1, 1])
+        self.system.part.add(pos=[ 0 * l_factor, 0, 0], rotation=[1, 1, 1])
+        self.system.part.add(pos=[ 7 * l_factor, 0, 0], rotation=[1, 1, 1])
+
+        from espressomd.thermostat import flags
+        self.system.thermostat.set_sd(viscosity=1.0 / (t_factor * l_factor),
+                                      device="cpu",
+                                      radii={0: 1.0 * l_factor},
+                                      flags=flags.SELF_MOBILITY | flags.PAIR_MOBILITY | flags.FTS)
+
+        gravity = constraints.Gravity(g=[0, -1.0 * l_factor / (t_factor**2), 0])
+        self.system.constraints.add(gravity)
+        self.system.time_step = 1.0 * t_factor
+        
+        intsteps = int(8000 * t_factor / self.system.time_step)
+        pos = np.empty([intsteps + 1, 3 * len(self.system.part)])
+
+        pos[0, :] = self.system.part[:].pos.flatten()
+        for i in range(intsteps):
+            self.system.integrator.run(1)
+            for n, p in enumerate(self.system.part):
+                pos[i + 1, 3 * n:3 * n + 3] = p.pos
+
+        for i in range(self.data.shape[0]):
+            for n in range(3):
+                x_ref = self.data[i, 2 * n] * l_factor
+                y_ref = self.data[i, 2 * n + 1] * l_factor
+                x = pos[:, 3 * n]
+                y = pos[:, 3 * n + 1]
+
+                if y_ref < -555 * l_factor:
+                    continue
+
+                idx = np.abs(y - y_ref).argmin()
+                dist = np.sqrt((x_ref - x[idx])**2 + (y_ref - y[idx])**2)
+                self.assertLess(dist, 0.5 * l_factor)
+    
+    # The exact same test, only with
+    # different time step
+    def test_3(self):
+        self.system.time_step = 0.7
+        self.system.part.add(pos=[-5, 0, 0], rotation=[1, 1, 1])
+        self.system.part.add(pos=[0, 0, 0], rotation=[1, 1, 1])
+        self.system.part.add(pos=[7, 0, 0], rotation=[1, 1, 1])
+
+        from espressomd.thermostat import flags
+        self.system.thermostat.set_sd(viscosity=1.0,
+                                      device="cpu",
+                                      radii={0: 1.0},
+                                      flags=flags.SELF_MOBILITY | flags.PAIR_MOBILITY | flags.FTS)
+
+        gravity = constraints.Gravity(g=[0, -1, 0])
+        self.system.constraints.add(gravity)
         intsteps = int(8000 / self.system.time_step)
         pos = np.empty([intsteps + 1, 3 * len(self.system.part)])
 
@@ -98,7 +181,7 @@ class StokesianDynamicsTest(ut.TestCase):
                 self.assertLess(dist, 0.5)
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.constraints.clear()
         self.system.part.clear()
 
 
@@ -108,11 +191,9 @@ class StokesianDiffusionTest(ut.TestCase):
 
     kT = 1e-4
     R = 1.5
-    eta = 1.0
+    eta = 2.4
 
     def setUp(self):
-        # self.system.actors.clear()
-        # self.system.part.clear()
         self.system.box_l = [10] * 3
         self.system.periodicity = [0, 0, 0]
 
@@ -126,7 +207,7 @@ class StokesianDiffusionTest(ut.TestCase):
                                       device="cpu",
                                       radii={0: self.R},
                                       kT=self.kT,
-                                      seed=0,
+                                      seed=42,
                                       flags=flags.SELF_MOBILITY | flags.PAIR_MOBILITY | flags.FTS)
         self.system.integrator.set_sd()
 
@@ -148,11 +229,11 @@ class StokesianDiffusionTest(ut.TestCase):
         # translational diffusion coefficient
         D_expected = self.kT / (6 * np.pi * self.eta * self.R)
 
-        # NOTE on steps per slice
+        # NOTE on steps_per_slice:
         # The shorter these trajectories are, the more trajectories we get
         # and the more accurate the result is. 
         # However since we want to test that diffusion works for 
-        # "long" trajectories we can't go too low.
+        # "long" trajectories we won't go too low.
         n_steps_per_slice = 200
         n_slices = int(intsteps / n_steps_per_slice)
 
@@ -162,23 +243,28 @@ class StokesianDiffusionTest(ut.TestCase):
                 pos[i * n_steps_per_slice] - pos[(i + 1) * n_steps_per_slice])**2
         D_measured = np.mean(squared_displacement_per_slice) / \
             (6 * n_steps_per_slice * self.system.time_step)
-        self.assertAlmostEqual(D_expected, D_measured, delta=D_expected * 0.2)
+        self.assertAlmostEqual(D_expected, D_measured, delta=D_expected * 0.1)
 
         # rotational diffusion coefficient
         Dr_expected = self.kT / (8 * np.pi * self.eta * self.R**3)
-        tr_expected = int(1 / (2 * Dr_expected))
-        fit = scipy.optimize.curve_fit(lambda t, Dr: np.exp(-2 * Dr * t),
-                                       t[:2 * tr_expected],
-                                       costheta[:2 * tr_expected],
-                                       p0=1e-5)
-        Dr_measured = fit[0][0]
+        n_steps_per_slice = 200
+        n_slices = int(intsteps / n_steps_per_slice)
+
+        # This is the displacement equivalent to measure rotational diffusion
+        costheta_per_slice = np.empty(n_slices)
+
+        for i in range(n_slices):
+            costheta_per_slice[i] = np.dot(orientation[i * n_steps_per_slice, :],
+                                           orientation[(i+1) * n_steps_per_slice, :])
+        Dr_measured = -np.log(np.mean(costheta_per_slice)) / \
+            (2 * n_steps_per_slice * self.system.time_step)
         self.assertAlmostEqual(
             Dr_expected,
             Dr_measured,
-            delta=Dr_expected * 1)
+            delta=Dr_expected * 0.1)
 
     def tearDown(self):
-        self.system.actors.clear()
+        self.system.constraints.clear()
         self.system.part.clear()
 
 

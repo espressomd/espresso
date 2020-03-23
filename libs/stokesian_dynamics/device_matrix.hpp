@@ -4,6 +4,7 @@
 #include <limits>
 #include <type_traits>
 
+#include "thrust_wrapper.hpp"
 #include <thrust/device_vector.h>
 #include <thrust/execution_policy.h>
 #include <thrust/functional.h>
@@ -29,14 +30,16 @@ namespace policy {
 
 struct host {
     template <typename T>
-    using vector = thrust::host_vector<T>;
-    static auto par() -> decltype(thrust::host) { return thrust::host; }
+    using vector = thrust_wrapper::host_vector<T>;
+    static auto par() -> decltype(thrust_wrapper::host) 
+      { return thrust_wrapper::host; }
 };
 
 struct device {
     template <typename T>
-    using vector = thrust::device_vector<T>;
-    static auto par() -> decltype(thrust::device) { return thrust::device; }
+    using vector = thrust_wrapper::device_vector<T>;
+    static auto par() -> decltype(thrust_wrapper::device) 
+      { return thrust_wrapper::device; }
 };
 
 template <typename...>
@@ -51,13 +54,13 @@ struct is_policy<Policy, void_t<typename Policy::template vector<class T>,
 
 } // namespace policy
 
-DEVICE_FUNC inline thrust::tuple<std::size_t, std::size_t>
+DEVICE_FUNC inline thrust_wrapper::tuple<std::size_t, std::size_t>
 unravel_index(std::size_t index, std::size_t lda) {
     std::size_t i, j;
     i = index % lda;
     index /= lda;
     j = index;
-    return thrust::make_tuple(i, j);
+    return thrust_wrapper::make_tuple(i, j);
     ;
 }
 
@@ -200,16 +203,16 @@ struct cusolver<policy::device, double> {
 
         assert(lwork != -1);
 
-        thrust::device_vector<double> workspace(lwork);
-        thrust::device_vector<int> info(1);
+        thrust_wrapper::device_vector<double> workspace(lwork);
+        thrust_wrapper::device_vector<int> info(1);
         stat = cusolverDnDpotrf(handle, CUBLAS_FILL_MODE_UPPER, N, A, N,
-                                thrust::raw_pointer_cast(workspace.data()),
-                                lwork, thrust::raw_pointer_cast(info.data()));
+                                thrust_wrapper::raw_pointer_cast(workspace.data()),
+                                lwork, thrust_wrapper::raw_pointer_cast(info.data()));
         assert(CUSOLVER_STATUS_SUCCESS == stat);
         assert(info[0] == 0);
 
         stat = cusolverDnDpotrs(handle, CUBLAS_FILL_MODE_UPPER, N, N, A, N, B,
-                                N, thrust::raw_pointer_cast(info.data()));
+                                N, thrust_wrapper::raw_pointer_cast(info.data()));
         assert(CUSOLVER_STATUS_SUCCESS == stat);
         assert(info[0] == 0);
 
@@ -245,7 +248,8 @@ struct IdentityGenerator {
 
     DEVICE_FUNC T operator()(std::size_t index) {
         std::size_t i, j;
-        thrust::tie(i, j) = unravel_index(index, lda);
+
+        thrust_wrapper::tie(i, j) = unravel_index(index, lda);
         return T(i == j ? 1.0 : 0.0);
     }
 };
@@ -254,6 +258,10 @@ struct IdentityGenerator {
 
 /// \endcond
 
+
+/** Matrix datatype with arithemtic operations that can run on a THRUST DEVICE.
+ *  Depends on cuBLAS routines.
+ */
 template <typename T, typename Policy = policy::host>
 class device_matrix {
     static_assert(policy::is_policy<Policy>::value,
@@ -292,7 +300,7 @@ public:
 
     void fill(value_type const &value) noexcept(
         std::is_nothrow_copy_assignable<value_type>::value) {
-        thrust::fill(Policy::par(), m_data.begin(), m_data.end(), value);
+        thrust_wrapper::fill(Policy::par(), m_data.begin(), m_data.end(), value);
     }
 
     void
@@ -319,9 +327,9 @@ public:
         assert(m_cols == B.m_rows);
         device_matrix C(m_rows, B.m_cols);
         internal::cublas<Policy, value_type>::gemm(
-            thrust::raw_pointer_cast(data()),
-            thrust::raw_pointer_cast(B.data()),
-            thrust::raw_pointer_cast(C.data()), m_rows, m_cols, B.m_cols);
+            thrust_wrapper::raw_pointer_cast(data()),
+            thrust_wrapper::raw_pointer_cast(B.data()),
+            thrust_wrapper::raw_pointer_cast(C.data()), m_rows, m_cols, B.m_cols);
         return C;
     }
 
@@ -333,9 +341,9 @@ public:
         assert(m_cols == x.size());
         storage_type y(m_rows);
         internal::cublas<Policy, value_type>::gemv(
-            thrust::raw_pointer_cast(data()),
-            thrust::raw_pointer_cast(x.data()),
-            thrust::raw_pointer_cast(y.data()), m_rows, m_cols);
+            thrust_wrapper::raw_pointer_cast(data()),
+            thrust_wrapper::raw_pointer_cast(x.data()),
+            thrust_wrapper::raw_pointer_cast(y.data()), m_rows, m_cols);
         return y;
     }
 
@@ -347,8 +355,9 @@ public:
         assert(m_rows == B.m_rows);
         assert(m_cols == B.m_cols);
         device_matrix C(m_rows, m_cols);
-        thrust::transform(Policy::par(), data(), data() + size(), B.data(),
-                          C.data(), thrust::plus<value_type>{});
+        thrust_wrapper::transform(Policy::par(), data(), data() + size(), 
+                                  B.data(), C.data(), 
+                                  thrust_wrapper::plus<value_type>{});
         return C;
     }
 
@@ -360,8 +369,9 @@ public:
         assert(m_rows == B.m_rows);
         assert(m_cols == B.m_cols);
         device_matrix C(m_rows, m_cols);
-        thrust::transform(Policy::par(), data(), data() + size(), B.data(),
-                          C.data(), thrust::minus<value_type>{});
+        thrust_wrapper::transform(Policy::par(), data(), data() + size(), 
+                                  B.data(), C.data(), 
+                                  thrust_wrapper::minus<value_type>{});
         return C;
     }
 
@@ -370,8 +380,9 @@ public:
         static_assert(std::is_arithmetic<T>::value,
                       "Data type of device_matrix must be arithmetic for "
                       "arithmetic operations");
-        thrust::transform(Policy::par(), data(), data() + size(), data(),
-                          thrust::negate<value_type>{});
+        thrust_wrapper::transform(Policy::par(), data(), data() + size(), 
+                                  data(), 
+                                  thrust_wrapper::negate<value_type>{});
         return *this;
     }
 
@@ -383,7 +394,8 @@ public:
     /// Compare for exact bit-wise equality
     bool operator==(device_matrix const &B) const {
         return m_rows == B.m_rows && m_cols == B.m_cols &&
-               thrust::equal(Policy::par(), data(), data() + size(), B.data());
+               thrust_wrapper::equal(Policy::par(), data(), 
+                                     data() + size(), B.data());
     }
 
     /// Compare for equality with threshold \p epsilon.
@@ -396,8 +408,8 @@ public:
                       "Data type of device_matrix must be arithmetic for "
                       "arithmetic operations");
         return m_rows == B.m_rows && m_cols == B.m_cols &&
-               thrust::equal(Policy::par(), data(), data() + size(), B.data(),
-                             internal::almostEqual<value_type>{epsilon});
+               thrust_wrapper::equal(Policy::par(), data(), data() + size(), 
+                      B.data(), internal::almostEqual<value_type>{epsilon});
     }
 
     /// \}
@@ -412,13 +424,13 @@ public:
                       "BLAS/LAPACK operations");
         device_matrix C(m_cols, m_rows);
         internal::cublas<Policy, value_type>::geam(
-            thrust::raw_pointer_cast(data()),
-            thrust::raw_pointer_cast(C.data()), m_rows, m_cols);
+            thrust_wrapper::raw_pointer_cast(data()),
+            thrust_wrapper::raw_pointer_cast(C.data()), m_rows, m_cols);
         return C;
     }
 
     /// Compute the inverse and the Cholesky decomposition.
-    thrust::tuple<device_matrix, device_matrix> inverse_and_cholesky() const {
+    thrust_wrapper::tuple<device_matrix, device_matrix> inverse_and_cholesky() const {
         static_assert(std::is_same<T, double>::value,
                       "Data type of device_matrix must be floating point for "
                       "BLAS/LAPACK operations");
@@ -426,16 +438,28 @@ public:
         device_matrix A = *this;
         device_matrix B = device_matrix::Identity(m_rows, m_cols);
 
-        internal::cusolver<Policy, double>::potrf(
-            thrust::raw_pointer_cast(A.data()),
-            thrust::raw_pointer_cast(B.data()), m_rows);
+        // debugging stuff
+//        double *raw_data = thrust_wrapper::raw_pointer_cast(B.data());
+//        printf("A.data: \n");
+//        for (int i=0; i<m_rows; i++) {
+//          for (int j=0; j<m_cols; j++) {
+//            printf("%f ",*raw_data);
+//            raw_data++;
+//          }
+//          printf("\n");
+//        }
+        
 
-        return thrust::make_tuple(B, A);
+        internal::cusolver<Policy, double>::potrf(
+            thrust_wrapper::raw_pointer_cast(A.data()),
+            thrust_wrapper::raw_pointer_cast(B.data()), m_rows);
+
+        return thrust_wrapper::make_tuple(B, A);
     }
 
     /// Compute the inverse.
     device_matrix inverse() const {
-        return thrust::get<0>(inverse_and_cholesky());
+        return thrust_wrapper::get<0>(inverse_and_cholesky());
     }
 
     /// \}
@@ -449,14 +473,28 @@ public:
                       "Data type of device_matrix must be floating point for "
                       "BLAS/LAPACK operations");
         device_matrix I(rows, cols);
-        thrust::tabulate(Policy::par(), I.data(), I.data() + I.size(),
-                         internal::IdentityGenerator<value_type>{rows});
+        thrust_wrapper::tabulate(Policy::par(), I.data(), I.data() + I.size(),
+                                 internal::IdentityGenerator<value_type>{rows});
         return I;
     }
 
     /// \}
 };
 
+
+/** Simpler version of device_matrix that doesn't provide the arithmetic
+ *  operations. Can run on a THRUST DEVICE. 
+ *  For initialization, it needs another device_matrix object. The data is
+ *  shared between the original matrix and this matrix. device_matrix_view can
+ *  be seen as a "reference" to the original matrix data. More accurately, it
+ *  is a separate object that has different routines by which the same region
+ *  of memory can be viewed.
+ *
+ *  Interestingly, by clever abuse of the rows and cols parameters and the data
+ *  pointer, certain areas (e.g. blocks) of the referenced matrix can be
+ *  accessed conveniently through a device_matrix_view object. 
+ *  (This is not used in SD though?)
+ */
 template <typename T, typename Policy>
 class device_matrix_view {
 public:
@@ -482,7 +520,7 @@ public:
 
     device_matrix_view(device_matrix<T, Policy> &v)
         : m_rows(v.rows()), m_cols(v.cols()),
-          m_data(thrust::raw_pointer_cast(v.data())) {}
+          m_data(thrust_wrapper::raw_pointer_cast(v.data())) {}
 
     DEVICE_FUNC reference operator()(size_type row, size_type col) noexcept {
         return m_data[row + col * m_rows];
@@ -523,7 +561,7 @@ public:
         : m_size(size), m_data(data) {}
 
     device_vector_view(storage_type &v)
-        : m_size(v.size()), m_data(thrust::raw_pointer_cast(v.data())) {}
+        : m_size(v.size()), m_data(thrust_wrapper::raw_pointer_cast(v.data())) {}
 
     DEVICE_FUNC reference operator()(size_type i) noexcept { return m_data[i]; }
 
@@ -536,7 +574,8 @@ public:
     DEVICE_FUNC size_type size() const noexcept { return m_size; }
 };
 
-/// Vector addition
+/* // trying to move this to thrust_wrapper.hpp
+/// Vector addition 
 template <typename T>
 thrust::device_vector<T> operator+(thrust::device_vector<T> const &x,
                                    thrust::device_vector<T> const &y) {
@@ -556,9 +595,17 @@ thrust::host_vector<T> operator+(thrust::host_vector<T> const &x,
                       thrust::plus<T>{});
     return z;
 }
+*/
 
+
+/*
+#ifdef SD_THRUST
+// These cannot be moved to thrust_wrapper, because device_matrix appears
+// Hence, the ifdef
+// Just for debugging anyway?
 template <typename T>
-std::ostream &operator<<(std::ostream &os, thrust::device_vector<T> const &v) {
+std::ostream &operator<<(std::ostream &os, 
+                         thrust_wrapper::device_vector<T> const &v) {
     os << '{';
     for (std::size_t i = 0; i < v.size(); ++i) {
         os << std::setw(12) << v[i];
@@ -571,7 +618,8 @@ std::ostream &operator<<(std::ostream &os, thrust::device_vector<T> const &v) {
 }
 
 template <typename T>
-std::ostream &operator<<(std::ostream &os, thrust::host_vector<T> const &v) {
+std::ostream &operator<<(std::ostream &os, 
+                         thrust_wrapper::host_vector<T> const &v) {
     os << '{';
     for (std::size_t i = 0; i < v.size(); ++i) {
         os << std::setw(12) << v[i];
@@ -605,6 +653,7 @@ std::ostream &operator<<(std::ostream &os, device_matrix<T, Policy> const &m) {
     os << '}';
     return os;
 }
-
+#endif
+*/
 #undef DEVICE_FUNC
 #undef MAYBE_UNUSED
