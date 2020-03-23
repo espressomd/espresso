@@ -276,7 +276,7 @@ void mpi_remove_particle(int pnode, int part) {
 
 void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
-    local_remove_particle(part);
+    cell_structure.extract_particle(part);
   } else {
     local_remove_all_particles();
   }

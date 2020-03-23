@@ -27,6 +27,7 @@
 #include "cells.hpp"
 #include "Particle.hpp"
 #include "algorithm/link_cell.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
@@ -452,4 +453,30 @@ Cell *find_current_cell(const Particle &p) {
   }
 
   return cell_structure.particle_to_cell(p);
+}
+
+boost::optional<Particle> CellStructure::extract_particle(int id) {
+  Cell *cell = nullptr;
+  int position = -1;
+  for (auto c : cell_structure.local_cells()) {
+    auto parts = c->particles();
+
+    for (unsigned i = 0; i < parts.size(); i++) {
+      auto &p = parts[i];
+
+      if (p.identity() == id) {
+        cell = c;
+        position = static_cast<int>(i);
+      } else {
+        remove_all_bonds_to(p, id);
+      }
+    }
+  }
+
+  /* If we found the particle, remove it. */
+  if (cell && (position >= 0)) {
+    return extract_indexed_particle(cell, position);
+  }
+
+  return {};
 }

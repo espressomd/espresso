@@ -367,12 +367,6 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
 void local_change_exclusion(int part1, int part2, int _delete);
 
 /** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Remove a particle on this node.
- *  @param part the identity of the particle to remove
- */
-void local_remove_particle(int part);
-
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
  *  Locally remove all particles.
  */
 void local_remove_all_particles();

@@ -883,30 +883,6 @@ int remove_particle(int p_id) {
   return ES_OK;
 }
 
-void local_remove_particle(int part) {
-  Cell *cell = nullptr;
-  int position = -1;
-  for (auto c : cell_structure.local_cells()) {
-    auto parts = c->particles();
-
-    for (unsigned i = 0; i < parts.size(); i++) {
-      auto &p = parts[i];
-
-      if (p.identity() == part) {
-        cell = c;
-        position = static_cast<int>(i);
-      } else {
-        remove_all_bonds_to(p, part);
-      }
-    }
-  }
-
-  /* If we found the particle, remove it. */
-  if (cell && (position >= 0)) {
-    extract_indexed_particle(cell, position);
-  }
-}
-
 Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   auto pp = Utils::Vector3d{pos[0], pos[1], pos[2]};
   auto i = Utils::Vector3i{};

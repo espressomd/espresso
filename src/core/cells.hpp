@@ -38,15 +38,16 @@
  *    special method like P3M (see \ref p3m.hpp).
  */
 
-#include <utility>
-#include <vector>
-
 #include "Particle.hpp"
 #include "ParticleIterator.hpp"
 #include "ghosts.hpp"
 
 #include "Cell.hpp"
 #include "ParticleRange.hpp"
+
+#include <boost/optional.hpp>
+#include <utility>
+#include <vector>
 
 /** Cell Structure */
 enum {
@@ -155,6 +156,24 @@ struct CellStructure {
    *          if the particle does not belong on this node.
    */
   Cell *(*particle_to_cell)(const Particle &p) = nullptr;
+
+  /**
+   * @brief Add a particle.
+   *
+   * Moves a particle into the cell system.
+   *
+   * @param p Particle to add.
+   */
+  // Particle *add_particle(Particle &&p);
+
+  /**
+   * @brief Remove and return a particle.
+   *
+   * @param p Particle id to remove.
+   * @return The particle if it belonged to this node
+   *         otherwise none.
+   */
+  boost::optional<Particle> extract_particle(int id);
 };
 
 /*@}*/
