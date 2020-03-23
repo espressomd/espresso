@@ -98,11 +98,7 @@ public:
    * @brief Number of entries.
    */
   int size() const { return n; }
-
-  /**
-   * @brief Size larger than zero.
-   */
-  bool empty() const { return size() > 0; }
+  bool empty() const { return size() <= 0; }
 
   /**
    * @brief Add a particle at the end of the list.
