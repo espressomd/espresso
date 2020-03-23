@@ -84,8 +84,7 @@ public:
    *
    * This version does \em not care for the bond information to be freed if
    * necessary.
-   *     @param size the size to provide at least. It is rounded
-   *     up to multiples of @ref ParticleList::INCREMENT.
+   *     @param size the size to provide at least.
    *     @return true iff particle addresses have changed
    */
   int resize(int size) { return realloc(this->n = size); }

@@ -207,8 +207,8 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
   }
 }
 
-/** Go through ghost cells and remove the ghost entries from \ref
-    local_particles. */
+/** Go through ghost cells and remove the ghost entries from the
+    local particle index. */
 static void invalidate_ghosts() {
   for (auto const &p : cell_structure.ghost_cells().particles()) {
     if (cell_structure.get_local_particle(p.identity()) == &p) {
@@ -497,7 +497,7 @@ Cell *find_current_cell(const Particle &p) {
 void CellStructure::remove_particle(int id) {
   Cell *cell = nullptr;
   int position = -1;
-  for (auto c : cell_structure.local_cells()) {
+  for (auto c : m_local_cells) {
     auto parts = c->particles();
 
     for (unsigned i = 0; i < parts.size(); i++) {
@@ -515,13 +515,13 @@ void CellStructure::remove_particle(int id) {
   /* If we found the particle, remove it. */
   if (cell && (position >= 0)) {
     cell->extract(position);
-    cell_structure.update_particle_index(id, nullptr);
-    cell_structure.update_particle_index(cell);
+    update_particle_index(id, nullptr);
+    update_particle_index(cell);
   }
 }
 
 Particle *CellStructure::add_local_particle(Particle &&p) {
-  auto const sort_cell = cell_structure.particle_to_cell(p);
+  auto const sort_cell = particle_to_cell(p);
   if (sort_cell) {
     sort_cell->push_back(std::move(p));
     update_particle_index(sort_cell);

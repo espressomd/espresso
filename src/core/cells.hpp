@@ -262,7 +262,7 @@ public:
    * Removes a particle and all bonds pointing
    * to it. This is a colective call.
    *
-   * @param p Particle id to remove.
+   * @param id Id of particle to remove.
    */
   void remove_particle(int id);
 
