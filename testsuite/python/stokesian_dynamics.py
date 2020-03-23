@@ -4,7 +4,6 @@ import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 from tests_common import abspath
-import scipy.optimize
 
 s = espressomd.System(box_l=[1.0, 1.0, 1.0])
 
@@ -223,9 +222,6 @@ class StokesianDiffusionTest(ut.TestCase):
             self.system.integrator.run(1)
             pos[i + 1, :] = self.system.part[0].pos
             orientation[i + 1, :] = self.system.part[0].director
-
-        t = np.arange(0, intsteps + 1)
-        costheta = np.dot(orientation[:, :], orientation[0, :])
 
         # translational diffusion coefficient
         D_expected = self.kT / (6 * np.pi * self.eta * self.R)
