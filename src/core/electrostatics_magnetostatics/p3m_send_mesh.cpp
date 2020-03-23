@@ -20,7 +20,8 @@
  */
 #include "p3m_send_mesh.hpp"
 
-#ifdef P3M
+#if defined(P3M) || defined(DP3M)
+
 #include "fft.hpp"
 
 #include <utils/mpi/cart_comm.hpp>
@@ -168,7 +169,7 @@ void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
     /* un pack recv block */
     if (s_size[s_dir] > 0) {
       for (size_t i = 0; i < meshes.size(); i++) {
-        fft_unpack_block(recv_grid.data() + i * r_size[s_dir], meshes[i],
+        fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
                          s_ld[s_dir], s_dim[s_dir], dim, 1);
       }
     }

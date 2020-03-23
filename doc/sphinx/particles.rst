@@ -202,7 +202,7 @@ Setting up polymer chains
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you want to have polymers in your system, you can use the function
-:func:`espressomd.polymer.positions()` to determine suitable positions.
+:func:`espressomd.polymer.linear_polymer_positions()` to determine suitable positions.
 
 Required arguments are the desired number of polymers ``n_polymers``, the
 number of monomers per polymer chain ``beads_per_chain``, and the parameter
@@ -212,7 +212,7 @@ Determining suitable particle positions pseudo-randomly requires the use of
 a pseudo-random number generator, which has to be seeded. This ``seed``
 is therefore also a mandatory parameter.
 
-The function :func:`espressomd.polymer.positions()` returns a
+The function :func:`espressomd.polymer.linear_polymer_positions()` returns a
 three-dimensional numpy array, namely a list of polymers containing the
 positions of monomers (x, y, z). A quick example of how to set up polymers::
 
@@ -220,9 +220,9 @@ positions of monomers (x, y, z). A quick example of how to set up polymers::
      from espressomd import polymer
 
      system = espressomd.System([50, 50, 50])
-     polymers = polymer.positions(n_polymers=10,
-                                  beads_per_chain=25,
-                                  bond_length=0.9, seed=23)
+     polymers = polymer.linear_polymer_positions(n_polymers=10,
+                                                 beads_per_chain=25,
+                                                 bond_length=0.9, seed=23)
      for p in polymers:
          for i, m in enumerate(p):
             id = len(system.part)
@@ -258,19 +258,19 @@ with internal constraints, using Lagrange multipliers.
 Setting up diamond polymer networks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-::
-
-    from espressomd import diamond
-
-Creates a diamond-structured polymer network with 8 tetra-functional nodes
-connected by :math:`2*8` polymer chains of length (MPC) in a unit cell
-of length :math:`a`. The diamond command creates 16*MPC+8 many particles
+:func:`espressomd.polymer.setup_diamond_polymer()` creates a diamond-structured 
+polymer network with 8 tetra-functional nodes
+connected by :math:`2*8` polymer chains of length ``MPC`` with the system box as 
+the unit cell. The box therefore has to be cubic.
+The diamond command creates ``16*MPC+8`` many particles
 which are connected via the provided bond type (the term plus 8 stems from adding 8 nodes which are connecting the chains).
-Chain monomers are placed at a mutual distance along the
-vector connecting network nodes. The polymer is created starting from
-particle ID 0. Nodes are assigned type 0, monomers (both charged and
-uncharged) are type 1 and counterions type 2. For inter-particle bonds
-interaction :math:`0` is taken which must be a two-particle bond.
+Chain monomers are placed at constant distance to each other 
+along the vector connecting network nodes. The distance between monomers is
+``system.box_l[0]*(0.25 * sqrt(3))/(MPC + 1)``, which should be taken into account
+when choosing the connecting bond.
+The starting particle id, the charges of monomers, the frequency 
+of charged monomers in the chains as well as the types of the node particles, 
+the charged and the uncharged chain particles can be set via keyword arguments, see :func:`espressomd.polymer.setup_diamond_polymer()`.
 
 .. _diamond:
 .. figure:: figures/diamond.png
@@ -278,39 +278,11 @@ interaction :math:`0` is taken which must be a two-particle bond.
    :align: center
    :height: 6.00000cm
 
-   Diamond-like polymer network with MPC=15.
-
-See :class:`espressomd.diamond.Diamond` for more details. For simulating compressed or stretched gels the function
+   Diamond-like polymer network with ``MPC=15``.
+   
+For simulating compressed or stretched gels the function
 :meth:`espressomd.system.System.change_volume_and_rescale_particles` may be used.
 
-..
-    .. _Cross-linking polymers:
-
-    Cross-linking polymers
-    ~~~~~~~~~~~~~~~~~~~~~~
-
-    .. todo:: This is not implemented in Python
-
-    Attempts to end-crosslink the current configuration of equally long
-    polymers with monomers each, returning how many ends are successfully
-    connected.
-
-    specifies the first monomer of the chains to be linked. It has to be
-    specified if the polymers do not start at id 0.
-
-    Set the radius around each monomer which is searched for possible new
-    monomers to connect to. defaults to :math:`1.9`.
-
-    The minimal distance of two interconnecting links. It defaults to
-    :math:`2`.
-
-    The minimal distance for an interconnection along the same chain. It
-    defaults to :math:`0`. If set to , no interchain connections are
-    created.
-
-    Sets the bond type for the connections to .
-
-    If not specified, defaults to :math:`30000`.
 
 .. _Virtual sites:
 
@@ -336,13 +308,12 @@ To switch the active scheme, the attribute :attr:`espressomd.system.System.virtu
     import espressomd
     from espressomd.virtual_sites import VirtualSitesOff, VirtualSitesRelative
 
-    s = espressomd.System()
-    s.virtual_sites = VirtualSitesRelative(have_velocity=True, have_quaternion=False)
+    system = espressomd.System()
+    system.virtual_sites = VirtualSitesRelative(have_quaternion=False)
     # or
-    s.virtual_sites = VirtualSitesOff()
+    system.virtual_sites = VirtualSitesOff()
 
 By default, :class:`espressomd.virtual_sites.VirtualSitesOff` is selected. This means that virtual particles are not touched during integration.
-The ``have_velocity`` parameter determines whether or not the velocity of virtual sites is calculated, which carries a performance cost.
 The ``have_quaternion`` parameter determines whether the quaternion of the virtual particle is updated (useful in combination with the
 :attr:`espressomd.particle_data.ParticleHandle.vs_quat` property of the virtual particle which defines the orientation of the virtual particle
 in the body fixed frame of the related real particle.

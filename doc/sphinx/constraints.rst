@@ -44,19 +44,20 @@ Available shapes are listed below.
     - :class:`espressomd.shapes.Wall`
     - :class:`espressomd.shapes.Cylinder`
     - :class:`espressomd.shapes.Ellipsoid`
-    - :class:`espressomd.shapes.HollowCone`
     - :class:`espressomd.shapes.Rhomboid`
     - :class:`espressomd.shapes.SimplePore`
     - :class:`espressomd.shapes.Slitpore`
     - :class:`espressomd.shapes.Sphere`
     - :class:`espressomd.shapes.SpheroCylinder`
     - :class:`espressomd.shapes.Stomatocyte`
+    - :class:`espressomd.shapes.HollowConicalFrustum`
+    - :class:`espressomd.shapes.Union`
 
 
 .. _Adding shape-based constraints to the system:
 
 Adding shape-based constraints to the system
---------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Usually you want to use constraints based on a shape.
 The module :mod:`espressomd.constraints` provides the class
@@ -79,12 +80,13 @@ The extra argument ``particle_type`` specifies the non-bonded interaction to be 
 that constraint.
 
 There are two additional optional parameters
-to fine tune the behavior of the constraint. If ``penetrable`` is set to
+to fine-tune the behavior of the constraint. If ``penetrable`` is set to
 ``True`` then particles can move through the constraint. In this case the
-other option ``only_positive`` controls whether the particle is subjected to the
-interaction potential of the wall. If set to ``False``, then the constraint
-will only act in the direction of the normal vector.
-
+other option ``only_positive`` controls where the particle is subjected to the
+interaction potential (see :ref:`Available options`).
+If the ``penetrable`` option is ignored or is set to ``False``, the
+constraint cannot be violated, i.e. no
+particle can go through the constraint surface (|es| will exit if any does).
 If we wanted to add a non-penetrable pore constraint to our simulation,
 we could do the following::
 
@@ -95,12 +97,13 @@ we could do the following::
     system.constraints.add(pore_constraint)
 
 Interactions between the pore and other particles are then defined
-as usual (:ref:`Non-bonded interactions`).
+as usual (:ref:`Non-bonded interactions`) to prevent particles from crossing
+the shape surface.
 
 .. _Deleting a constraint:
 
 Deleting a constraint
-~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^
 
 Constraints can be removed in a similar fashion using :meth:`espressomd.constraints.Constraints.remove` ::
 
@@ -112,7 +115,7 @@ This command will delete the specified constraint.
 .. _Getting the currently defined constraints:
 
 Getting the currently defined constraints
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 One can iterate through constraints, for example ::
 
@@ -125,7 +128,7 @@ will print the shape information for all defined constraints.
 .. _Getting the force on a constraint:
 
 Getting the force on a constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`espressomd.constraints.ShapeBasedConstraint.total_force`
 
@@ -144,7 +147,7 @@ For example the pressure from wall ::
 .. _Getting the minimal distance to a constraint:
 
 Getting the minimal distance to a constraint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :meth:`espressomd.constraints.ShapeBasedConstraint.min_dist`
 
@@ -154,14 +157,14 @@ pore, slitpore). Negative distances mean that the position is
 within the area that particles should not access. Helpful to find
 initial configurations.
 
-.. _Available Shapes:
+.. _Available shapes:
 
-Available Shapes
-~~~~~~~~~~~~~~~~
+Available shapes
+^^^^^^^^^^^^^^^^
 
 :class:`espressomd.shapes`
 
-Python Syntax::
+Python syntax::
 
     import espressomd from espressomd.shapes import <SHAPE>
     system = espressomd.System()
@@ -178,12 +181,14 @@ The following shapes can be used as constraints.
    symplectic integrators. Often, the total energy of the system increases exponentially.
 
 
-:class:`espressomd.shapes.Wall`
-    An infinite plane.
+Wall
+""""
 
-The resulting surface is a plane defined by the normal vector ``normal``
+:class:`espressomd.shapes.Wall`
+
+An infinite plane defined by the normal vector ``normal``
 and the distance ``dist`` from the origin (in the direction of the normal vector).
-The force acts in direction of the normal.
+The force acts in the direction of the normal.
 Note that ``dist`` describes the distance from the origin in units of the normal
 vector so that the product of ``dist`` and ``normal`` is a point on the surface.
 Therefore negative distances are quite common!
@@ -203,10 +208,12 @@ are only calculated if the particle is on the side of the wall in which the
 normal vector is pointing.
 
 
-:class:`espressomd.shapes.Sphere`
-    A sphere.
+Sphere
+""""""
 
-The resulting surface is a sphere with center ``center`` and radius ``radius``.
+:class:`espressomd.shapes.Sphere`
+
+A sphere with center ``center`` and radius ``radius``.
 The direction ``direction`` determines the force direction, ``-1`` for inward
 and ``+1`` for outward.
 
@@ -223,11 +230,15 @@ Pictured is an example constraint with a ``Sphere`` shape created with ::
     system.constraints.add(shape=sphere, particle_type=0)
 
 
-:class:`espressomd.shapes.Ellipsoid`
-    An ellipsoid.
+Ellipsoid
+"""""""""
 
-The resulting surface is an ellipsoid of revolution with center ``center``, semiaxis ``a`` along the symmetry axis and equatorial semiaxes ``b``. The symmetry axis is aligned parallel to the x-axis.
-The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward. The distance to the surface is determined iteratively via Newton's method.
+:class:`espressomd.shapes.Ellipsoid`
+
+An ellipsoid with center ``center``, semiaxis ``a`` along the symmetry axis and
+equatorial semiaxes ``b``. The symmetry axis is aligned parallel to the x-axis.
+The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
+The distance to the surface is determined iteratively via Newton's method.
 
 .. _shape-ellipsoid:
 
@@ -242,11 +253,12 @@ Pictured is an example constraint with an ``Ellipsoid`` shape created with ::
     system.constraints.add(shape=ellipsoid, particle_type=0)
 
 
-:class:`espressomd.shapes.Cylinder`
-    A cylinder
+Cylinder
+""""""""
 
-The resulting surface is a cylinder with center ``center`` and radius ``radius``.
-The ``length`` parameter is **half** of the cylinder length.
+:class:`espressomd.shapes.Cylinder`
+
+A cylinder with center ``center``, radius ``radius`` and length ``length``.
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
@@ -266,18 +278,20 @@ Pictured is an example constraint with a ``Cylinder`` shape created with ::
                         length=30)
     system.constraints.add(shape=cylinder, particle_type=0)
 
-:class:`espressomd.shapes.Rhomboid`
-    A rhomboid or parallelepiped.
 
-The resulting surface is a rhomboid, defined by one corner located at ``corner``
+Rhomboid
+""""""""
+
+:class:`espressomd.shapes.Rhomboid`
+
+A rhomboid or parallelepiped, defined by one corner located at ``corner``
 and three adjacent edges, defined by the three vectors connecting the
-corner ``corner`` with its three neighboring corners:
-``a`` ``[ax ay az ]``; ``b`` ``[bx by bz]`` and ``c`` ``[cx cy cz]``.
+corner ``corner`` with its three neighboring corners: ``a``, ``b`` and ``c``.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
 ::
 
-    rhomboid = Rhomboid(pos=[5.0, 5.0, 5.0],
+    rhomboid = Rhomboid(corner=[5.0, 5.0, 5.0],
                         a=[1.0, 1.0, 0.0],
                         b=[0.0, 0.0, 1.0],
                         c=[0.0, 1.0, 0.0],
@@ -287,13 +301,21 @@ The direction ``direction`` determines the force direction, ``-1`` for inward an
 creates a rhomboid defined by one corner located at ``[5.0, 5.0, 5.0]`` and three
 adjacent edges, defined by the three vectors connecting the corner with its three neighboring corners, ``(1,1,0)`` , ``(0,0,1)`` and ``(0,1,0)``.
 
+
+SimplePore
+""""""""""
+
 :class:`espressomd.shapes.SimplePore`
-    Two parallel infinite planes, connected by a cylindrical orifice. The cylinder is connected to the
-    planes by torus segments with an adjustable radius.
 
+Two parallel infinite planes, connected by a cylindrical orifice. The cylinder
+is connected to the planes by torus segments with an adjustable radius.
 
-Length and radius of the cylindrical pore can be set via the corresponding parameters (``length`` and ``radius``). The parameter ``center`` defines the central point of the pore. The orientation of the pore is given by the vector ``axis``, which points along the cylinder's symmetry axis.
+Length and radius of the cylindrical pore can be set via the corresponding parameters
+(``length`` and ``radius``). The parameter ``center`` defines the central point of the pore.
+The orientation of the pore is given by the vector ``axis``, which points along the cylinder's symmetry axis.
 The pore openings are smoothed with torus segments, the radius of which can be set using the parameter ``smoothing_radius``.
+In the OpenGL visualizer, these torus segments are rendered as a half-torus instead of a quarter-torus.
+You can safely ignore this visual artifact, in the force/energy calculation, only a quarter-torus is used.
 
 
 .. figure:: figures/shape-simplepore.png
@@ -311,10 +333,12 @@ Pictured is an example constraint with a ``SimplePore`` shape created with ::
     system.constraints.add(shape=pore, particle_type=0, penetrable=True)
 
 
-:class:`espressomd.shapes.Stomatocyte`
-    A stomatocyte.
+Stomatocyte
+"""""""""""
 
-The resulting surface is a stomatocyte shaped boundary.
+:class:`espressomd.shapes.Stomatocyte`
+
+A stomatocyte-shaped boundary surface.
 This command should be used with care.
 The position can be any point in the simulation box and is set via the (3,) array_like parameter ``center``.
 The orientation of the (cylindrically symmetric) stomatocyte is given by an ``axis`` (a (3,) array_like of :obj:`float`),
@@ -322,7 +346,7 @@ which points in the direction of the symmetry axis and does not need to be norma
 The parameters: ``outer_radius``, ``inner_radius``, and ``layer_width``, specify the shape of the stomatocyte.
 Here inappropriate choices of these parameters can yield undesired results.
 The width ``layer_width`` is used as a scaling parameter.
-That is, a stomatocyte given by ``outer_radius``:``inner_radius``:``layer_width`` = 7:3:1
+That is, a stomatocyte given by ``outer_radius:inner_radius:layer_width`` = 7:3:1
 is half the size of the stomatocyte given by 7:3:2.
 Not all choices of the parameters give reasonable values for the shape of the stomatocyte,
 but the combination 7:3:1 is a good point to start from when trying to modify the shape.
@@ -350,11 +374,12 @@ Pictured is an example constraint with a ``Stomatocyte`` shape (with a closeup o
     system.constraints.add(shape=stomatocyte, particle_type=0, penetrable=True)
 
 
+Slitpore
+""""""""
 
 :class:`espressomd.shapes.Slitpore`
-   Channel-like surface
 
-The resulting surface is T-shape channel that extends in the z-direction.
+A T-shaped channel that extends in the *z*-direction.
 The cross sectional geometry is depicted in Fig. :ref:`schematic <figure-slitpore>`.
 It is translationally invariant in y direction.
 
@@ -362,7 +387,7 @@ The region is described as a pore (lower vertical part of the "T"-shape) and a c
 
 .. _figure-slitpore:
 
-.. figure:: figures/slitpore.pdf
+.. figure:: figures/slitpore.png
    :alt: Schematic for the slitpore shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
@@ -397,12 +422,14 @@ Pictured is an example constraint with a ``Slitpore`` shape created with ::
     system.constraints.add(shape=slitpore, particle_type=0, penetrable=True)
 
 
-:class:`espressomd.shapes.SpheroCylinder`
-    A capsule, pill, or spherocylinder.
+SpheroCylinder
+""""""""""""""
 
-The resulting surface is a cylinder capped by hemispheres on both ends.
+:class:`espressomd.shapes.SpheroCylinder`
+
+A cylinder capped by hemispheres on both ends. Generates a capsule, pill, or spherocylinder depending on the choice of parameters.
 Similar to :class:`espressomd.shapes.Cylinder`, it is positioned at ``center`` and has a radius ``radius``.
-The ``length`` parameter is **half** of the cylinder length, and does not include the contribution from the hemispherical ends.
+The ``length`` parameter is the cylinder length, and does not include the contribution from the hemispherical ends.
 The ``axis`` parameter is a vector along the cylinder axis, which is normalized in the program.
 The direction ``direction`` determines the force direction, ``-1`` for inward and ``+1`` for outward.
 
@@ -422,50 +449,39 @@ Pictured is an example constraint with a ``SpheroCylinder`` shape created with :
     system.constraints.add(shape=spherocylinder, particle_type=0)
 
 
-:class:`espressomd.shapes.HollowCone`
-   A hollow cone.
+HollowConicalFrustum
+""""""""""""""""""""
 
-The resulting surface is a section of a hollow cone.
-The parameters ``inner_radius`` and ``outer_radius`` specifies the two radii .
-The parameter ``opening_angle`` specifies the opening angle of the cone (in radians, between 0 and :math:`\pi/2` ), and thus also determines the length.
+:class:`espressomd.shapes.HollowConicalFrustum`
 
-The orientation of the (cylindrically symmetric) cone is specified with the parameter ``axis`` (a (3,) array_like of :obj:`float`),
-which points in the direction of the symmetry axis, and does not need to be normalized.
+A hollow cone with round corners. The specific parameters
+are described in the shape's class :class:`espressomd.shapes.HollowConicalFrustum`.
 
-The position is specified via the (3,) array_like ``center`` and can be any point in the simulation box.
+.. figure:: figures/shape-conical_frustum.png
+   :alt: Conical frustum shape schematic.
+   :align: center
+   :height: 6.00000cm
 
-The ``width`` specifies the width.
-This shape supports the ``direction`` parameter, ``+1`` for outward and ``-1`` for inward.
-
-.. figure:: figures/shape-hollowcone.png
-   :alt:  Example constraint with a  ``Hollowcone`` shape.
+.. figure:: figures/conical_frustum.png
+   :alt: Schematic for the conical frustum shape showing geometrical parameters
    :align: center
    :height: 6.00000cm
 
 
-Pictured is an example constraint with a ``Hollowcone`` shape created with ::
+Union
+"""""
 
-    hollowcone = HollowCone(inner_radius=5,
-                            outer_radius=20,
-                            opening_angle=np.pi/4.0,
-                            axis=[1.0, 0.0, 0.0],
-                            center=[25, 25, 25],
-                            width=2,
-                            direction=1)
-    system.constraints.add(shape=hollowcone, particle_type=0, penetrable=True)
+:class:`espressomd.shapes.Union`
 
-
-For the shapes ``wall``, ``sphere``, ``cylinder``, ``rhomboid``,
-``pore`` and ``stomatocyte``, constraints are able to be penetrated if
-``penetrable`` is set to ``True``. Otherwise, when the ``penetrable`` option is
-ignored or is set to ``False``, the constraint cannot be violated, i.e. no
-particle can go through the constraint surface (|es| will exit if it does).
+A meta-shape which is the union of given shapes. Note that only the regions where
+all shapes have a "positive distance" (see :ref:`Available options`) can be used for the
+union. The distance to the union is defined as the minimum distance to any contained shape.
 
 
 .. _Available options:
 
 Available options
-~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^
 
 There are some options to help control the behaviour of shaped-based
 constraints. Some of the options, like ``direction`` need to be specified for
@@ -534,38 +550,24 @@ make sense.
    :height: 8.00000cm
 
 Most shapes have a clear interpretation of what is inside versus outside with
-the exception of a planar wall. For this, the is no ``direction`` option, but
+the exception of a planar wall. For this, there is no ``direction`` option, but
 the ``normal`` vector of the wall points in the direction that is considered to
-yield positive distances.  Outside its use in constraints, shapes can also be
+yield positive distances.  Outside their use in constraints, shapes can also be
 used as a way to define LB boundary nodes. In this case, negative distances
-define nodes which are part of a boundary, please refer to :ref:`Using shapes
-as lattice-Boltzmann boundary`.
+define nodes which are part of a boundary (please refer to :ref:`Using shapes
+as lattice-Boltzmann boundary`).
 
-
-..
-    .. _Creating a harmonic trap:
-
-    Creating a harmonic trap
-    ------------------------
-
-    .. todo:: This feature is not yet implemented.
-
-    Calculates a spring force for all particles, where the equilibrium
-    position of the spring is at and its force constant is . A more
-    flexible trap can be constructed with constraints, but this one runs on
-    the GPU.
 
 .. _External Fields:
 
-
 External Fields
---------------------------
+---------------
 
 There is a variety of external fields, which differ by how their
 values are obtained and how they couple to particles.
 
 Constant fields
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 These are fields that are constant in space or simple linear functions
 of the position.  The available fields are:
@@ -584,7 +586,7 @@ here.
 
 
 Interpolated Force and Potential fields
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The values of these fields are obtained by interpolating table data,
 which has to be provided by the user. The fields differ by how

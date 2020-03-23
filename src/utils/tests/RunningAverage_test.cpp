@@ -20,7 +20,6 @@
  */
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <numeric>
 

@@ -26,6 +26,8 @@
 
 #include "virtual_sites/VirtualSites.hpp"
 
+#include <memory>
+
 /** @brief get active virtual sites implementation */
 const std::shared_ptr<VirtualSites> &virtual_sites();
 

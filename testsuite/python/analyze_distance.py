@@ -25,7 +25,6 @@ BOX_L = 50.
 @utx.skipIfMissingFeatures("LENNARD_JONES")
 class AnalyzeDistance(ut.TestCase):
     system = espressomd.System(box_l=3 * [BOX_L])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
     np.random.seed(1234)
 
     def setUp(self):
@@ -92,26 +91,39 @@ class AnalyzeDistance(ut.TestCase):
         for i in range(1, 10, 2):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
-            self.assertTrue(
-                np.allclose(self.system.analysis.nbhood([i, i, i], i * 2),
-                            self.nbhood([i, i, i], i * 2)))
+            np.testing.assert_allclose(
+                self.system.analysis.nbhood([i, i, i], i * 2),
+                self.nbhood([i, i, i], i * 2))
 
-    def test_dist_to_pos(self):
+    def test_distance_to_pos(self):
+        parts = self.system.part
         # try five times
         for i in range(5):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
-            self.assertTrue(
-                np.allclose(self.system.analysis.dist_to(pos=[i, i, i]),
-                            self.dist_to_pos([i, i, i])))
+            self.assertAlmostEqual(
+                np.min([self.system.distance([i, i, i], p.pos)
+                        for p in parts]),
+                self.dist_to_pos([i, i, i]), delta=1e-10)
+            self.assertEqual(
+                np.min([self.system.distance([i, i, i], p.pos)
+                        for p in parts]),
+                np.min([self.system.distance(p.pos, [i, i, i]) for p in parts]))
 
-    def test_dist_to_id(self):
+    def test_distance_to_part(self):
+        parts = self.system.part
         # try five times
         for i in range(5):
             self.system.part[:].pos = np.random.random(
                 (len(self.system.part), 3)) * BOX_L
-            self.assertAlmostEqual(self.system.analysis.dist_to(id=i),
-                                   self.dist_to_id(i))
+            self.assertAlmostEqual(
+                np.min([self.system.distance(parts[i], p.pos)
+                        for p in parts if p.id != i]),
+                self.dist_to_id(i), delta=1e-10)
+            self.assertEqual(
+                np.min([self.system.distance(parts[i], p.pos)
+                        for p in parts if p.id != i]),
+                np.min([self.system.distance(p.pos, parts[i]) for p in parts if p.id != i]))
 
 
 if __name__ == "__main__":

@@ -21,6 +21,7 @@
 import espressomd
 from espressomd import assert_features, electrostatics, electrostatic_extensions
 from espressomd.shapes import Wall
+from espressomd.minimize_energy import steepest_descent
 from espressomd import visualization_opengl
 import numpy
 from threading import Thread
@@ -28,8 +29,7 @@ from threading import Thread
 assert_features(["ELECTROSTATICS", "MASS", "LENNARD_JONES"])
 
 system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-numpy.random.seed(system.seed)
+numpy.random.seed(seed=42)
 
 print("\n--->Setup system")
 
@@ -126,9 +126,8 @@ for s in [["Cl", "Na"], ["Cl", "Cl"], ["Na", "Na"],
     system.non_bonded_inter[types[s[0]], types[s[1]]].lennard_jones.set_params(
         epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
-system.minimize_energy.init(
-    f_max=10, gamma=10, max_steps=2000, max_displacement=0.1)
-system.minimize_energy.minimize()
+steepest_descent(system, f_max=10, gamma=10, max_steps=2000,
+                 max_displacement=0.1)
 
 print("\n--->Tuning Electrostatics")
 p3m = electrostatics.P3M(prefactor=l_bjerrum, accuracy=1e-2)
@@ -154,9 +153,9 @@ def decreaseElectricField():
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+visualizer.keyboard_manager.register_button(visualization_opengl.KeyboardButtonEvent(
     'u', visualization_opengl.KeyboardFireEvent.Hold, increaseElectricField))
-visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+visualizer.keyboard_manager.register_button(visualization_opengl.KeyboardButtonEvent(
     'j', visualization_opengl.KeyboardFireEvent.Hold, decreaseElectricField))
 
 

@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import unittest as ut
+from tests_common import assert_params_match
 
 import espressomd
 import espressomd.interactions
@@ -25,24 +26,13 @@ import espressomd.interactions
 class Non_bonded_interactionsTests(ut.TestCase):
     system = espressomd.System(box_l=[20.0, 20.0, 20.0])
 
-    def intersMatch(self, inType, outType, inParams, outParams):
+    def intersMatch(self, inType, outInter, inParams, outParams, msg_long):
         """Check, if the interaction type set and gotten back as well as the
         bond parameters set and gotten back match. Only check keys present in
         ``inParams``.
         """
-        if inType != outType:
-            print("Type mismatch:", inType, outType)
-            return False
-
-        for k in list(inParams.keys()):
-            if k not in outParams:
-                print(k, "missing from returned parameters")
-                return False
-            if outParams[k] != inParams[k]:
-                print("Mismatch in parameter ", k, inParams[k], outParams[k])
-                return False
-
-        return True
+        self.assertIsInstance(outInter, inType)
+        assert_params_match(self, inParams, outParams, msg_long)
 
     def parameterKeys(self, interObject):
         """
@@ -116,21 +106,11 @@ class Non_bonded_interactionsTests(ut.TestCase):
                 self.system.non_bonded_inter[partType1, partType2], interName)
             outParams = outInter.get_params()
 
-            self.assertTrue(
-                self.intersMatch(
-                    interClass,
-                    type(outInter),
-                    params,
-                    outParams),
-                interClass(**params).type_name() +
-                ": value set and value gotten back differ for particle types " +
-                str(partType1) +
-                " and " +
-                str(partType2) +
-                ": " +
-                params.__str__() +
-                " vs. " +
-                outParams.__str__())
+            self.intersMatch(
+                interClass, outInter, params, outParams,
+                "{}: value set and value gotten back differ for particle types {} and {}: {} vs. {}"
+                .format(interClass(**params).type_name(), partType1, partType2,
+                        params, outParams))
             self.parameterKeys(outInter)
 
         return func

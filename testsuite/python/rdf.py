@@ -24,7 +24,6 @@ import numpy as np
 
 class RdfTest(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.s.box_l = 3 * [10]
@@ -60,7 +59,7 @@ class RdfTest(ut.TestCase):
         parts_in_bin = rdf[1] * rv * rho
 
         # All but the last bin should contain 2 particles
-        self.assertTrue(np.allclose(parts_in_bin[:-1], 2.0))
+        np.testing.assert_allclose(parts_in_bin[:-1], 2.0)
 
     def test_mixed(self):
         s = self.s
@@ -83,17 +82,17 @@ class RdfTest(ut.TestCase):
 
         parts_in_bin = rdf01[1] * rv * rho
 
-        # Every odd bin should contain two parts
-        self.assertTrue(np.allclose(parts_in_bin[0:-1:2], 2.0, rtol=1e-1))
+        # Every even bin should contain two parts
+        np.testing.assert_allclose(parts_in_bin[0:-1:2], 2.0, rtol=1e-1)
         # Every odd bin should contain zero parts
-        self.assertTrue(np.allclose(parts_in_bin[1:-1:2], 0.0))
+        np.testing.assert_allclose(parts_in_bin[1:-1:2], 0.0)
 
         # Check symmetry
         rdf10 = s.analysis.rdf(
             rdf_type='rdf', type_list_a=[1], type_list_b=[0],
             r_min=r_min, r_max=r_max, r_bins=r_bins)
 
-        self.assertTrue(np.allclose(rdf10, rdf01))
+        np.testing.assert_allclose(rdf10, rdf01)
 
     def test_av(self):
         s = self.s
@@ -113,7 +112,7 @@ class RdfTest(ut.TestCase):
         rdf_av = s.analysis.rdf(rdf_type='<rdf>', type_list_a=[0, 1, 2],
                                 r_min=r_min, r_max=r_max, r_bins=r_bins)
 
-        self.assertTrue(np.allclose(rdf[1], rdf_av[1]))
+        np.testing.assert_allclose(rdf[1], rdf_av[1])
 
 
 if __name__ == "__main__":

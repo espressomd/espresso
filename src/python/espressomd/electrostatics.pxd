@@ -16,13 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Handling of electrostatics
 
 include "myconfig.pxi"
-from espressomd.system cimport *
-cimport numpy as np
-from espressomd.utils cimport *
-from espressomd.utils import is_valid_type, to_str
+from .utils import is_valid_type, to_str
+from .utils cimport handle_errors
+from libcpp cimport bool
 
 cdef extern from "SystemInterface.hpp":
     cdef cppclass SystemInterface:
@@ -49,7 +47,6 @@ IF ELECTROSTATICS:
                 COULOMB_DH, \
                 COULOMB_P3M, \
                 COULOMB_MMM1D, \
-                COULOMB_MMM2D, \
                 COULOMB_ELC_P3M, \
                 COULOMB_RF, \
                 COULOMB_P3M_GPU, \
@@ -120,7 +117,6 @@ IF ELECTROSTATICS:
                 alpha = params["alpha"]
                 p3m_gpu_init(cao, mesh, alpha)
 
-        # Convert C arguments into numpy array
         cdef inline python_p3m_set_mesh_offset(mesh_off):
             cdef double mesh_offset[3]
             mesh_offset[0] = mesh_off[0]
@@ -214,9 +210,6 @@ IF ELECTROSTATICS:
         int MMM1D_sanity_checks()
         int mmm1d_tune(char ** log)
 
-    cdef extern from "nonbonded_interactions/nonbonded_interaction_data.hpp":
-        int coulomb_set_prefactor(double prefactor)
-
     cdef inline pyMMM1D_tune():
         cdef char * log = NULL
         cdef int resp
@@ -228,28 +221,6 @@ IF ELECTROSTATICS:
         if resp:
             print(to_str(log))
         return resp
-
-IF ELECTROSTATICS:
-    cdef extern from "electrostatics_magnetostatics/mmm2d.hpp":
-        ctypedef struct MMM2D_struct:
-            double maxPWerror
-            double far_cut
-            double far_cut2
-            int far_calculated
-            bool dielectric_contrast_on
-            bool const_pot
-            double pot_diff
-            double delta_mid_top
-            double delta_mid_bot
-            double delta_mult
-
-        cdef extern MMM2D_struct mmm2d_params
-
-        int MMM2D_set_params(double maxPWerror, double far_cut, double delta_top, double delta_bot, bool const_pot, double pot_diff)
-
-        void MMM2D_init()
-
-        int MMM2D_sanity_checks()
 
 IF ELECTROSTATICS and MMM1D_GPU:
 
@@ -280,6 +251,5 @@ IF ELECTROSTATICS and MMM1D_GPU:
 
             float force_benchmark(SystemInterface & s)
 
-            void check_periodicity()
             void activate()
             void deactivate()

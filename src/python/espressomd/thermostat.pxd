@@ -33,19 +33,44 @@ cdef extern from "thermostat.hpp":
     int THERMO_LB
     int THERMO_NPT_ISO
     int THERMO_DPD
+    int THERMO_BROWNIAN
     int THERMO_SD
 
     IF PARTICLE_ANISOTROPY:
-        Vector3d langevin_gamma_rotation
-        Vector3d langevin_gamma
+        ctypedef struct langevin_thermostat_struct "LangevinThermostat":
+            Vector3d gamma_rotation
+            Vector3d gamma
+        ctypedef struct brownian_thermostat_struct "BrownianThermostat":
+            Vector3d gamma_rotation
+            Vector3d gamma
     ELSE:
-        double langevin_gamma_rotation
-        double langevin_gamma
+        ctypedef struct langevin_thermostat_struct "LangevinThermostat":
+            double gamma_rotation
+            double gamma
+        ctypedef struct brownian_thermostat_struct "BrownianThermostat":
+            double gamma_rotation
+            double gamma
+    ctypedef struct npt_iso_thermostat_struct "IsotropicNptThermostat":
+        double gamma0
+        double gammav
 
     void langevin_set_rng_state(stdint.uint64_t counter)
+    void brownian_set_rng_state(stdint.uint64_t counter)
+    void npt_iso_set_rng_state(stdint.uint64_t counter)
+    IF DPD:
+        void dpd_set_rng_state(stdint.uint64_t counter)
+
     cbool langevin_is_seed_required()
+    cbool brownian_is_seed_required()
+    cbool npt_iso_is_seed_required()
+    IF DPD:
+        cbool dpd_is_seed_required()
 
     stdint.uint64_t langevin_get_rng_state()
+    stdint.uint64_t brownian_get_rng_state()
+    stdint.uint64_t npt_iso_get_rng_state()
+    IF DPD:
+        stdint.uint64_t dpd_get_rng_state()
 
 cdef extern from "stokesian_dynamics/sd_interface.hpp":
     IF STOKESIAN_DYNAMICS:
@@ -75,8 +100,16 @@ IF STOKESIAN_DYNAMICS:
         LUBRICATION = 1 << 2,
         FTS = 1 << 3
 
-cdef extern from "dpd.hpp":
-    IF DPD:
-        void dpd_set_rng_state(stdint.uint64_t counter)
-        cbool dpd_is_seed_required()
-        stdint.uint64_t dpd_get_rng_state()
+cdef extern from "script_interface/Globals.hpp":
+    # links intern C-struct with python object
+    cdef extern langevin_thermostat_struct langevin
+    cdef extern brownian_thermostat_struct brownian
+    cdef extern npt_iso_thermostat_struct npt_iso
+
+cdef extern from "npt.hpp":
+    ctypedef struct nptiso_struct:
+        double p_ext
+        double p_inst
+        double p_diff
+        double piston
+    extern nptiso_struct nptiso

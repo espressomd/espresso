@@ -119,6 +119,15 @@ Optional keywords:
     * Have a look at the attribute list in :class:`espressomd.visualization.openGLLive()`
 
 
+.. note::
+
+  The visualization of some constraints is either improved by (:class:`espressomd.shapes.SimplePore`)
+  or even relies on (:class:`espressomd.shapes.HollowConicalFrustum`) the presence of an installed
+  `OpenGL Extrusion library` on your system. Typically, the library will be available through the
+  default package manager of your operating system. On Ubuntu the required package is called ``libgle3-dev``,
+  on Fedora ``libgle`` -- just to name two examples.
+
+
 .. _Running the visualizer:
 
 Running the visualizer
@@ -314,8 +323,8 @@ by a timer or keyboard input::
             print "T = 0"
 
     # Registers input-based calls
-    visualizer.keyboardManager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
-    visualizer.keyboardManager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
+    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('t', KeyboardFireEvent.Hold, increaseTemp))
+    visualizer.keyboard_manager.register_button(KeyboardButtonEvent('g', KeyboardFireEvent.Hold, decreaseTemp))
 
 Further examples can be found in :file:`samples/billiard.py` or :file:`samples/visualization_interactive.py`.
 

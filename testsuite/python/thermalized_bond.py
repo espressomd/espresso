@@ -35,7 +35,6 @@ class ThermalizedBond(ut.TestCase):
     system = espressomd.System(box_l=[box_l] * 3)
     system.cell_system.set_n_square()
     system.cell_system.skin = 0.3
-    system.seed = range(system.cell_system.get_state()["n_nodes"])
 
     @classmethod
     def setUpClass(cls):
@@ -56,7 +55,7 @@ class ThermalizedBond(ut.TestCase):
             for j in range(n_bins):
                 found = data[j]
                 expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertLessEqual(abs(found - expected), error_tol)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
 
     def test_com_langevin(self):
         """Test for COM thermalization."""

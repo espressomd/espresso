@@ -69,19 +69,18 @@ def poiseuille_flow(x, force_density, dynamic_viscosity, height):
         (height**2.0 / 4.0 - x**2.0)
 
 
-x_values = np.linspace(0.0, BOX_L, lbf.shape[0])
-HEIGHT = BOX_L - 2.0 * AGRID
-
 # Note that the LB viscosity is not the dynamic viscosity but the
 # kinematic viscosity (mu=LB_viscosity * density)
-plt.plot(
-    x_values,
-    poiseuille_flow(x_values - (HEIGHT / 2.0 + AGRID),
-                    FORCE_DENSITY[1],
-                    VISCOSITY * DENSITY,
-                    HEIGHT),
-    'o-',
-    label='analytical')
+x_values = np.linspace(0.0, BOX_L, lbf.shape[0])
+HEIGHT = BOX_L - 2.0 * AGRID
+# analytical curve
+y_values = poiseuille_flow(x_values - (HEIGHT / 2.0 + AGRID), FORCE_DENSITY[1],
+                           VISCOSITY * DENSITY, HEIGHT)
+# velocity is zero outside the walls
+y_values[np.nonzero(x_values < WALL_OFFSET)] = 0.0
+y_values[np.nonzero(x_values > BOX_L - WALL_OFFSET)] = 0.0
+
+plt.plot(x_values, y_values, 'o-', label='analytical')
 plt.plot(fluid_velocities[:, 0], fluid_velocities[:, 1], label='simulation')
 plt.legend()
 plt.show()

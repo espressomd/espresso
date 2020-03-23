@@ -170,9 +170,9 @@ BOOST_AUTO_TEST_CASE(regular_decomposition_test) {
     auto const result = regular_decomposition(box, {0, 0, 0}, node_grid);
     auto const local_box_l = result.length();
 
-    BOOST_CHECK_CLOSE(box_l[0], local_box_l[0] * node_grid[0], eps);
-    BOOST_CHECK_CLOSE(box_l[1], local_box_l[1] * node_grid[1], eps);
-    BOOST_CHECK_CLOSE(box_l[2], local_box_l[2] * node_grid[2], eps);
+    BOOST_CHECK_CLOSE(box_l[0], local_box_l[0] * node_grid[0], 100. * eps);
+    BOOST_CHECK_CLOSE(box_l[1], local_box_l[1] * node_grid[1], 100. * eps);
+    BOOST_CHECK_CLOSE(box_l[2], local_box_l[2] * node_grid[2], 100. * eps);
   }
 
   /* check corners */
@@ -185,9 +185,12 @@ BOOST_AUTO_TEST_CASE(regular_decomposition_test) {
           auto const local_box_l = result.length();
           auto const lower_corner = result.my_left();
 
-          BOOST_CHECK_CLOSE(lower_corner[0], local_box_l[0] * node_pos[0], eps);
-          BOOST_CHECK_CLOSE(lower_corner[1], local_box_l[1] * node_pos[1], eps);
-          BOOST_CHECK_CLOSE(lower_corner[2], local_box_l[2] * node_pos[2], eps);
+          BOOST_CHECK_CLOSE(lower_corner[0], local_box_l[0] * node_pos[0],
+                            100. * eps);
+          BOOST_CHECK_CLOSE(lower_corner[1], local_box_l[1] * node_pos[1],
+                            100. * eps);
+          BOOST_CHECK_CLOSE(lower_corner[2], local_box_l[2] * node_pos[2],
+                            100. * eps);
         }
   }
 }

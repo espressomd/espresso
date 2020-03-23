@@ -22,12 +22,11 @@
 #ifndef ESPRESSO_H5MD_CORE_HPP
 #define ESPRESSO_H5MD_CORE_HPP
 
-#include <algorithm>
 #include <boost/filesystem.hpp>
-#include <fstream>
+#include <boost/mpi/communicator.hpp>
 #include <h5xx/h5xx.hpp>
-#include <iostream>
-#include <mpi.h>
+
+#include <algorithm>
 #include <string>
 #include <unordered_map>
 
@@ -89,7 +88,7 @@ public:
   void Flush();
 
 private:
-  MPI_Comm m_hdf5_comm;
+  boost::mpi::communicator m_hdf5_comm;
   bool m_already_wrote_bonds = false;
 
   /**

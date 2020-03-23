@@ -27,30 +27,25 @@ namespace Observables {
 class CylindricalDensityProfile : public CylindricalPidProfileObservable {
 public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
-  std::vector<double> evaluate(PartCfg &partCfg) const override {
-
-    std::array<size_t, 3> n_bins{{static_cast<size_t>(n_r_bins),
-                                  static_cast<size_t>(n_phi_bins),
-                                  static_cast<size_t>(n_z_bins)}};
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override {
+    std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
          std::make_pair(min_z, max_z)}};
     Utils::CylindricalHistogram<double, 3> histogram(n_bins, 1, limits);
-    std::vector<::Utils::Vector3d> folded_positions;
-    std::transform(ids().begin(), ids().end(),
-                   std::back_inserter(folded_positions), [&partCfg](int id) {
-                     return ::Utils::Vector3d(
-                         folded_position(partCfg[id].r.p, box_geo));
-                   });
-    for (auto &p : folded_positions) {
-      p -= center;
-      histogram.update(
-          Utils::transform_coordinate_cartesian_to_cylinder(p, axis));
+
+    for (auto p : particles) {
+      histogram.update(Utils::transform_coordinate_cartesian_to_cylinder(
+          folded_position(p->r.p, box_geo) - center, axis));
     }
+
     histogram.normalize();
     return histogram.get_histogram();
   }
-  int n_values() const override { return n_r_bins * n_phi_bins * n_z_bins; }
+  std::vector<size_t> shape() const override {
+    return {n_r_bins, n_phi_bins, n_z_bins};
+  }
 };
 
 } // Namespace Observables

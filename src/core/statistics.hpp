@@ -41,9 +41,9 @@
  */
 /************************************************************/
 /*@{*/
-extern std::vector<std::vector<double>> configs;
-extern int n_configs;
-extern int n_part_conf;
+extern std::vector<std::vector<Utils::Vector3d>> configs;
+int get_n_configs();
+int get_n_part_conf();
 /*@}*/
 
 /** \name Exported Functions */
@@ -70,13 +70,14 @@ IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
                const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
+ *  @param partCfg particle selection
  *  @param pos  point
  *  @param pid  if a valid particle id, this particle is omitted from
  *              minimization (this is a good idea if @p pos is the
  *              position of a particle).
  *  @return the minimal distance of a particle to coordinates @p pos
  */
-double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid);
+double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid = -1);
 
 /** Append particles' positions in %p partCfg to #configs
  *  @param partCfg  @copybrief PartCfg
@@ -184,19 +185,6 @@ std::vector<double> calc_structurefactor(PartCfg &, int const *p_types,
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);
-
-int calc_cylindrical_average(
-    PartCfg &, std::vector<double> const &center,
-    std::vector<double> const &direction, double length, double radius,
-    int bins_axial, int bins_radial, std::vector<int> types,
-    std::map<std::string, std::vector<std::vector<std::vector<double>>>>
-        &distribution);
-
-template <typename T>
-double min_distance2(Utils::Vector<T, 3> const &pos1,
-                     Utils::Vector<T, 3> const &pos2) {
-  return get_mi_vector(pos1, pos2, box_geo).norm2();
-}
 
 /** Calculate the center of mass of a special type of the current configuration.
  *  \param part_type  type of the particle

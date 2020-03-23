@@ -36,9 +36,9 @@
  *  four different times in an integration step. These steps are reflected in
  *  @ref cell_structure structure, since they are treated differently by
  *  different cell systems:
- *  - @ref ghost_cells are used to transfer the cell sizes, i.e., make sure
- *    that for all later transfers the target cell has the same size as the
- *    source cell.
+ *  - @ref CellStructure::m_ghost_cells are used to transfer the cell sizes,
+ *    i.e., make sure that for all later transfers the target cell has the same
+ *    size as the source cell.
  *  - @ref CellStructure::exchange_ghosts_comm sets up all information on the
  *    ghosts that is necessary. Normally transfers the (shifted) position and
  *    particle properties.

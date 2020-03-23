@@ -26,9 +26,13 @@ class CylindricalLBFluxDensityProfileAtParticlePositions
     : public CylindricalPidProfileObservable {
 public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
-  std::vector<double> evaluate(PartCfg &partCfg) const override;
 
-  int n_values() const override { return 3 * n_r_bins * n_phi_bins * n_z_bins; }
+  std::vector<double>
+  evaluate(Utils::Span<const Particle *const> particles) const override;
+
+  std::vector<size_t> shape() const override {
+    return {n_r_bins, n_phi_bins, n_z_bins, 3};
+  }
 };
 
 } // Namespace Observables

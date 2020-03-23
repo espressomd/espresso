@@ -22,12 +22,14 @@
 #include <functional>
 #include <vector>
 
+#include <utils/Span.hpp>
+
 namespace Testing {
 template <typename Particle> class Cell {
 public:
-  Cell() : n(0) {}
+  auto particles() { return Utils::make_span(part); }
+  auto particles() const { return Utils::make_const_span(part); }
 
-  std::size_t n;
   std::vector<Particle> part;
 };
 } // namespace Testing

@@ -29,9 +29,6 @@ class CellSystem(ut.TestCase):
         self.system.cell_system.set_n_square(use_verlet_lists=False)
         s = self.system.cell_system.get_state()
         self.assertEqual([s['use_verlet_list'], s['type']], [0, "nsquare"])
-        self.system.cell_system.set_layered(n_layers=5)
-        s = self.system.cell_system.get_state()
-        self.assertEqual([s['type'], s['n_layers']], ["layered", 5])
         self.system.cell_system.set_domain_decomposition(use_verlet_lists=True)
         s = self.system.cell_system.get_state()
         self.assertEqual(

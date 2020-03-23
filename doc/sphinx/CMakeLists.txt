@@ -1,6 +1,4 @@
-include(ProcessorCount)
 find_package(Sphinx 1.6.6)
-ProcessorCount(N)
 if(SPHINX_FOUND)
     # configured documentation tools and
     # intermediate build results
@@ -75,13 +73,11 @@ if(SPHINX_FOUND)
         COMMAND
         ${SPHINX_API_DOC_EXE}
             -f
-            -P
             -o ${SPHINX_BASE}
             ${SPHINX_PYTHON_DIR}
             ${EXCLUDE}
         COMMAND
         ${SPHINX_EXECUTABLE}
-            -j ${N}
             -q
             -W
             -b html

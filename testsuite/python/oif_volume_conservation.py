@@ -15,13 +15,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import espressomd
+import numpy as np
 import unittest as ut
-import unittest_decorators as utx
+
 from tests_common import abspath
+import unittest_decorators as utx
 
 
-@utx.skipIfMissingFeatures(["MEMBRANE_COLLISION", "OIF_LOCAL_FORCES",
-                            "OIF_GLOBAL_FORCES"])
+@utx.skipIfMissingFeatures("MASS")
 class OifVolumeConservation(ut.TestCase):
 
     """Loads a soft elastic sphere via object_in_fluid, stretches it and checks
@@ -34,7 +35,6 @@ class OifVolumeConservation(ut.TestCase):
         self.assertEqual(system.max_oif_objects, 0)
         system.time_step = 0.4
         system.cell_system.skin = 0.5
-        system.thermostat.set_langevin(kT=0, gamma=0.7, seed=42)
 
         # creating the template for OIF object
         cell_type = oif.OifCellType(
@@ -60,10 +60,26 @@ class OifVolumeConservation(ut.TestCase):
         diameter_stretched = cell0.diameter()
         print("stretched diameter = " + str(diameter_stretched))
 
+        # Apply non-isotropic deformation
+        system.part[:].pos = system.part[:].pos * np.array((0.96, 1.05, 1.02))
+
+        # Test that restoring forces net to zero and don't produce a torque
+        system.integrator.run(1)
+        np.testing.assert_allclose(
+            np.sum(
+                system.part[:].f, axis=0), [
+                0., 0., 0.], atol=1E-12)
+
+        total_torque = np.zeros(3)
+        for p in system.part:
+            total_torque += np.cross(p.pos, p.f)
+        np.testing.assert_allclose(total_torque, [0., 0., 0.], atol=2E-12)
+
         # main integration loop
+        system.thermostat.set_langevin(kT=0, gamma=0.7, seed=42)
         # OIF object is let to relax into relaxed shape of the sphere
-        for _ in range(3):
-            system.integrator.run(steps=90)
+        for _ in range(2):
+            system.integrator.run(steps=240)
             diameter_final = cell0.diameter()
             print("final diameter = " + str(diameter_final))
             self.assertAlmostEqual(

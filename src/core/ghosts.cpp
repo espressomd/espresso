@@ -31,8 +31,7 @@
 #include "ghosts.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <mpi.h>
 #include <utils/Span.hpp>
@@ -41,11 +40,9 @@
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/vector.hpp>
 
-#include <algorithm>
 #include <boost/range/numeric.hpp>
-#include <cstdio>
-#include <cstring>
-#include <type_traits>
+
+#include <algorithm>
 #include <vector>
 
 /** Tag for ghosts communications. */
@@ -79,13 +76,6 @@ private:
   std::vector<char> buf;    //< Buffer for everything but bonds
   std::vector<int> bondbuf; //< Buffer for bond lists
 };
-
-/** whether the ghosts should have velocity information, e.g. for DPD or RATTLE.
- *  You need this whenever you need the relative velocity of two particles.
- *  NO CHANGES OF THIS VALUE OUTSIDE OF \ref on_ghost_flags_change !!!!
- */
-bool ghosts_have_v = false;
-bool ghosts_have_bonds = false;
 
 void prepare_comm(GhostCommunicator *gcr, int num) {
   assert(gcr);
@@ -142,7 +132,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      int np = part_list->n;
+      int np = part_list->particles().size();
       archiver << np;
     } else {
       for (Particle &part : part_list->particles()) {
@@ -222,8 +212,8 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (local_particles[part.p.identity] == nullptr) {
-            local_particles[part.p.identity] = &part;
+          if (get_local_particle_data(part.p.identity) == nullptr) {
+            set_local_particle_data(part.p.identity, &part);
           }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
@@ -269,16 +259,20 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
   /* transfer data */
   int const offset = ghost_comm.part_lists.size() / 2;
   for (int pl = 0; pl < offset; pl++) {
-    Cell *src_list = ghost_comm.part_lists[pl];
+    const Cell *src_list = ghost_comm.part_lists[pl];
     Cell *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, src_list->n);
+      prepare_ghost_cell(dst_list, src_list->particles().size());
     } else {
-      int const np = src_list->n;
-      for (int p = 0; p < np; p++) {
-        Particle const &part1 = src_list->part[p];
-        Particle &part2 = dst_list->part[p];
+      auto src_part = src_list->particles();
+      auto dst_part = dst_list->particles();
+      assert(src_part.size() == dst_part.size());
+
+      for (size_t i = 0; i < src_part.size(); i++) {
+        auto const &part1 = src_part[i];
+        auto &part2 = dst_part[i];
+
         if (data_parts & GHOSTTRANS_PROPRTS) {
           part2.p = part1.p;
         }
@@ -326,15 +320,10 @@ static bool is_poststorable(GhostCommunication const &ghost_comm) {
 }
 
 void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
+  if (GHOSTTRANS_NONE == data_parts)
+    return;
+
   static CommBuf send_buffer, recv_buffer;
-
-  /* if ghosts should have up-to-date velocities, they have to be updated like
-   * positions (except for shifting...) */
-  if (ghosts_have_v && (data_parts & GHOSTTRANS_POSITION))
-    data_parts |= GHOSTTRANS_MOMENTUM;
-
-  if (ghosts_have_bonds && (data_parts & GHOSTTRANS_PROPRTS))
-    data_parts |= GHOSTTRANS_BONDS;
 
   for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
     GhostCommunication &ghost_comm = *it;

@@ -37,7 +37,6 @@ class DPDThermostat(ut.TestCase):
     s.cell_system.skin = 0.4
 
     def setUp(self):
-        self.s.seed = range(self.s.cell_system.get_state()["n_nodes"])
         np.random.seed(16)
 
     def tearDown(self):
@@ -58,18 +57,16 @@ class DPDThermostat(ut.TestCase):
             for j in range(n_bins):
                 found = data[j]
                 expected = single_component_maxwell(bins[j], bins[j + 1], kT)
-                self.assertLessEqual(abs(found - expected), error_tol)
+                self.assertAlmostEqual(found, expected, delta=error_tol)
 
     def test_aa_verify_single_component_maxwell(self):
         """Verifies the normalization of the analytical expression."""
-        self.assertLessEqual(
-            abs(single_component_maxwell(-10, 10, 4.) - 1.), 1E-4)
+        self.assertAlmostEqual(
+            single_component_maxwell(-10, 10, 4.), 1., delta=1E-4)
 
     def check_total_zero(self):
         v_total = np.sum(self.s.part[:].v, axis=0)
-        self.assertLess(v_total[0], 1e-11)
-        self.assertLess(v_total[1], 1e-11)
-        self.assertLess(v_total[2], 1e-11)
+        np.testing.assert_allclose(v_total, np.zeros(3), atol=1e-11)
 
     def single(self, with_langevin=False):
         """Test velocity distribution of a dpd fluid with a single type."""
@@ -162,7 +159,7 @@ class DPDThermostat(ut.TestCase):
         # Check that there was neither noise nor friction
         for v in s.part[:].v:
             for i in range(3):
-                self.assertTrue(v[i] == float(i + 1))
+                self.assertEqual(v[i], float(i + 1))
 
         # Turn back on
         s.thermostat.set_dpd(kT=kT, seed=42)
@@ -194,16 +191,14 @@ class DPDThermostat(ut.TestCase):
             trans_weight_function=0, trans_gamma=gamma, trans_r_cut=1.4)
 
         s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
-        v = [.5, .8, .3]
+        v = np.array([.5, .8, .3])
         s.part.add(id=1, pos=[3, 5, 5], type=0, v=v)
 
         s.integrator.run(0)
 
         # Outside of both cutoffs, forces should be 0
         for f in s.part[:].f:
-            self.assertTrue(f[0] == 0.)
-            self.assertTrue(f[1] == 0.)
-            self.assertTrue(f[2] == 0.)
+            np.testing.assert_array_equal(f, [0., 0., 0.])
 
         # Only trans
         s.part[1].pos = [5. - 1.3, 5, 5]
@@ -212,25 +207,20 @@ class DPDThermostat(ut.TestCase):
 
         # Only trans, so x component should be zero
         self.assertLess(abs(s.part[0].f[0]), 1e-16)
-        # f = gamma * v_ij
-        self.assertLess(abs(s.part[0].f[1] - gamma * v[1]), 1e-11)
-        self.assertLess(abs(s.part[0].f[2] - gamma * v[2]), 1e-11)
-        # Momentum conservation
-        self.assertLess(abs(s.part[1].f[0]), 1e-16)
-        self.assertLess(abs(s.part[1].f[1] + gamma * v[1]), 1e-11)
-        self.assertLess(abs(s.part[1].f[2] + gamma * v[2]), 1e-11)
+        np.testing.assert_allclose(
+            np.copy(s.part[0].f[1:2]), gamma * v[1:2], rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(
+            np.copy(s.part[0].f), -np.copy(s.part[1].f))
 
         # Trans and parallel
         s.part[1].pos = [5. - 1.1, 5, 5]
 
         s.integrator.run(0)
 
-        self.assertLess(abs(s.part[0].f[0] - gamma * v[0]), 1e-11)
-        self.assertLess(abs(s.part[0].f[1] - gamma * v[1]), 1e-11)
-        self.assertLess(abs(s.part[0].f[2] - gamma * v[2]), 1e-11)
-        self.assertLess(abs(s.part[1].f[0] + gamma * v[0]), 1e-11)
-        self.assertLess(abs(s.part[1].f[1] + gamma * v[1]), 1e-11)
-        self.assertLess(abs(s.part[1].f[2] + gamma * v[2]), 1e-11)
+        np.testing.assert_allclose(
+            np.copy(s.part[0].f), gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(
+            np.copy(s.part[0].f), -np.copy(s.part[1].f))
 
     def test_linear_weight_function(self):
         s = self.s
@@ -241,20 +231,18 @@ class DPDThermostat(ut.TestCase):
             weight_function=1, gamma=gamma, r_cut=1.2,
             trans_weight_function=1, trans_gamma=gamma, trans_r_cut=1.4)
 
-        def omega(dist, r_cut):
+        def calc_omega(dist, r_cut):
             return 1. - dist / r_cut
 
         s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
-        v = [.5, .8, .3]
+        v = np.array([.5, .8, .3])
         s.part.add(id=1, pos=[3, 5, 5], type=0, v=v)
 
         s.integrator.run(0)
 
         # Outside of both cutoffs, forces should be 0
         for f in s.part[:].f:
-            self.assertTrue(f[0] == 0.)
-            self.assertTrue(f[1] == 0.)
-            self.assertTrue(f[2] == 0.)
+            np.testing.assert_array_equal(f, [0., 0., 0.])
 
         # Only trans
         s.part[1].pos = [5. - 1.3, 5, 5]
@@ -263,53 +251,70 @@ class DPDThermostat(ut.TestCase):
 
         # Only trans, so x component should be zero
         self.assertLess(abs(s.part[0].f[0]), 1e-16)
-        # f = gamma * v_ij
-        self.assertLess(
-            abs(s.part[0].f[1] - omega(1.3, 1.4)**2 * gamma * v[1]), 1e-11)
-        self.assertLess(
-            abs(s.part[0].f[2] - omega(1.3, 1.4)**2 * gamma * v[2]), 1e-11)
-        # Momentum conservation
-        self.assertLess(abs(s.part[1].f[0]), 1e-16)
-        self.assertLess(
-            abs(s.part[1].f[1] + omega(1.3, 1.4)**2 * gamma * v[1]), 1e-11)
-        self.assertLess(
-            abs(s.part[1].f[2] + omega(1.3, 1.4)**2 * gamma * v[2]), 1e-11)
+        omega = calc_omega(1.3, 1.4)**2
+        np.testing.assert_allclose(
+            np.copy(s.part[0].f[1:2]), omega * gamma * v[1:2], rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(
+            np.copy(s.part[0].f), -np.copy(s.part[1].f))
 
         # Trans and parallel
         s.part[1].pos = [5. - 1.1, 5, 5]
 
         s.integrator.run(0)
 
-        self.assertLess(
-            abs(s.part[0].f[0] - omega(1.1, 1.2)**2 * gamma * v[0]), 1e-11)
-        self.assertLess(
-            abs(s.part[0].f[1] - omega(1.1, 1.4)**2 * gamma * v[1]), 1e-11)
-        self.assertLess(
-            abs(s.part[0].f[2] - omega(1.1, 1.4)**2 * gamma * v[2]), 1e-11)
-        self.assertLess(
-            abs(s.part[1].f[0] + omega(1.1, 1.2)**2 * gamma * v[0]), 1e-11)
-        self.assertLess(
-            abs(s.part[1].f[1] + omega(1.1, 1.4)**2 * gamma * v[1]), 1e-11)
-        self.assertLess(
-            abs(s.part[1].f[2] + omega(1.1, 1.4)**2 * gamma * v[2]), 1e-11)
+        omega = np.array([calc_omega(1.1, x)**2 for x in [1.2, 1.4, 1.4]])
+        np.testing.assert_allclose(
+            np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(
+            np.copy(s.part[0].f), -np.copy(s.part[1].f))
 
         # Trans and parallel 2nd point
         s.part[1].pos = [5. - 0.5, 5, 5]
 
         s.integrator.run(0)
 
-        self.assertLess(
-            abs(s.part[0].f[0] - omega(0.5, 1.2)**2 * gamma * v[0]), 1e-11)
-        self.assertLess(
-            abs(s.part[0].f[1] - omega(0.5, 1.4)**2 * gamma * v[1]), 1e-11)
-        self.assertLess(
-            abs(s.part[0].f[2] - omega(0.5, 1.4)**2 * gamma * v[2]), 1e-11)
-        self.assertLess(
-            abs(s.part[1].f[0] + omega(0.5, 1.2)**2 * gamma * v[0]), 1e-11)
-        self.assertLess(
-            abs(s.part[1].f[1] + omega(0.5, 1.4)**2 * gamma * v[1]), 1e-11)
-        self.assertLess(
-            abs(s.part[1].f[2] + omega(0.5, 1.4)**2 * gamma * v[2]), 1e-11)
+        omega = np.array([calc_omega(0.5, x)**2 for x in [1.2, 1.4, 1.4]])
+        np.testing.assert_allclose(
+            np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
+        np.testing.assert_array_equal(
+            np.copy(s.part[0].f), -np.copy(s.part[1].f))
+
+    def test_parabolic_weight_function(self):
+        s = self.s
+        kT = 0.
+        gamma = 1.42
+        kappa = 7.8
+        r_cut = 1.2
+        s.thermostat.set_dpd(kT=kT, seed=42)
+        s.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=1, gamma=gamma, k=kappa, r_cut=r_cut,
+            trans_weight_function=1, trans_gamma=0.0, trans_r_cut=0.0)
+
+        def calc_omega(dist, r_cut):
+            return (1. - (dist / r_cut) ** kappa)
+
+        s.part.add(id=0, pos=[5, 5, 5], type=0, v=[0, 0, 0])
+        v = np.array([.5, 0., 0.])
+        s.part.add(id=1, pos=[3, 5, 5], type=0, v=v)
+
+        # Outside of both cutoffs, forces should be 0
+        for f in s.part[:].f:
+            np.testing.assert_array_equal(f, [0., 0., 0.])
+
+        # Place the particle at different positions to test the parabolic
+        # weight function
+        for dist in np.arange(0.1, 1.2, 50):
+
+            s.part[1].pos = [5. + dist, 5., 5.]
+            s.integrator.run(0)
+            omega = calc_omega(dist, r_cut)**2
+
+            # The particle is moved along the x-direction. Hence, we are
+            # testing the x element.
+            np.testing.assert_allclose(
+                np.copy(s.part[0].f), omega * gamma * v, rtol=0, atol=1e-11)
+            np.testing.assert_array_equal(
+                np.copy(s.part[0].f), -np.copy(s.part[1].f))
 
     def test_ghosts_have_v(self):
         s = self.s
@@ -429,32 +434,31 @@ class DPDThermostat(ut.TestCase):
         s.part.add(pos=pos)
         s.integrator.run(10)
 
-        s.thermostat.set_dpd(kT=0.0)
+        for kT in [0., 2.]:
+            s.thermostat.set_dpd(kT=kT)
+            # run 1 integration step to get velocities
+            s.part[:].v = np.zeros((n_part, 3))
+            s.integrator.run(steps=1)
 
-        s.integrator.run(steps=0, recalc_forces=True)
+            pairs = s.part.pairs()
 
-        pairs = s.part.pairs()
+            stress = np.zeros([3, 3])
 
-        stress = np.zeros([3, 3])
+            for pair in pairs:
+                dist = s.distance_vec(pair[0], pair[1])
+                if np.linalg.norm(dist) < r_cut:
+                    vel_diff = pair[1].v - pair[0].v
+                    stress += calc_stress(dist, vel_diff)
 
-        for pair in pairs:
-            dist = s.distance_vec(pair[0], pair[1])
-            if np.linalg.norm(dist) < r_cut:
-                vel_diff = pair[1].v - pair[0].v
-                stress += calc_stress(dist, vel_diff)
+            stress /= np.prod(np.copy(s.box_l))
 
-        stress /= s.box_l[0] ** 3.0
+            dpd_stress = s.analysis.dpd_stress()
 
-        dpd_stress = s.analysis.dpd_stress()
+            dpd_obs = DPDStress()
+            obs_stress = np.array(dpd_obs.calculate()).reshape((3, 3))
 
-        dpd_obs = DPDStress()
-        obs_stress = dpd_obs.calculate()
-        obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[2]],
-                               [obs_stress[3], obs_stress[4], obs_stress[5]],
-                               [obs_stress[6], obs_stress[7], obs_stress[8]]])
-
-        np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
-        np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
+            np.testing.assert_array_almost_equal(np.copy(dpd_stress), stress)
+            np.testing.assert_array_almost_equal(np.copy(obs_stress), stress)
 
     def test_momentum_conservation(self):
         r_cut = 1.0

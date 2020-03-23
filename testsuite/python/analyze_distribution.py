@@ -48,13 +48,14 @@ class AnalyzeDistributions(ut.TestCase):
     def calc_min_distribution(self, bins):
         dist = []
         for i in range(self.num_part):
-            dist.append(self.system.analysis.dist_to(id=i))
+            dist.append(np.min([self.system.distance(
+                self.system.part[i], p.pos) for p in self.system.part if p.id != i]))
         hist = np.histogram(dist, bins=bins, density=False)[0]
         return hist / (float(np.sum(hist)))
 
     # test system.analysis.rdf()
     def test_rdf(self):
-        # increase PBC for remove mirror images
+        # increase PBC to remove mirror images
         old_pos = self.system.part[:].pos.copy()
         self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
@@ -64,7 +65,7 @@ class AnalyzeDistributions(ut.TestCase):
         bin_width = (r_max - r_min) / r_bins
         bins = np.arange(r_min, r_max + bin_width, bin_width)
         bin_volume = 4. / 3. * np.pi * (bins[1:]**3 - bins[:-1]**3)
-        box_volume = np.prod(self.system.box_l)
+        box_volume = np.prod(np.copy(self.system.box_l))
         # all the same type
         core_rdf = self.system.analysis.rdf(rdf_type='rdf',
                                             type_list_a=[0],
@@ -75,11 +76,11 @@ class AnalyzeDistributions(ut.TestCase):
         num_pair = 0.5 * (self.num_part) * (self.num_part - 1)
         r = self.system.part[:].pos
         # bins
-        self.assertTrue(np.allclose(core_rdf[0], (bins[1:] + bins[:-1]) * 0.5))
+        np.testing.assert_allclose(core_rdf[0], (bins[1:] + bins[:-1]) * 0.5)
         # rdf
-        self.assertTrue(
-            np.allclose(core_rdf[1] * bin_volume * num_pair / box_volume,
-                        self.calc_rdf(r, bins)))
+        np.testing.assert_allclose(
+            core_rdf[1] * bin_volume * num_pair / box_volume,
+            self.calc_rdf(r, bins))
         # change one type
         self.system.part[0].type = 1
         r = self.system.part[1:].pos
@@ -90,9 +91,9 @@ class AnalyzeDistributions(ut.TestCase):
                                             r_max=r_max,
                                             r_bins=r_bins)
         num_pair = 0.5 * (self.num_part - 1) * (self.num_part - 2)
-        self.assertTrue(
-            np.allclose(core_rdf[1] * bin_volume * num_pair / box_volume,
-                        self.calc_rdf(r, bins)))
+        np.testing.assert_allclose(
+            core_rdf[1] * bin_volume * num_pair / box_volume,
+            self.calc_rdf(r, bins))
 
         # compare with type
         core_rdf = self.system.analysis.rdf(rdf_type='rdf',
@@ -105,16 +106,15 @@ class AnalyzeDistributions(ut.TestCase):
         dist = np.sqrt(
             np.sum((self.system.part[1:].pos - self.system.part[0].pos)**2, axis=1))
         hist = np.histogram(dist, bins=bins, density=False)[0]
-        self.assertTrue(
-            np.allclose(core_rdf[1] * bin_volume * num_pair / box_volume,
-                        hist))
+        np.testing.assert_allclose(
+            core_rdf[1] * bin_volume * num_pair / box_volume, hist)
         # restore PBC
         self.system.box_l = self.system.box_l / 2.
         self.system.part[:].pos = old_pos
 
     # test system.analysis.distribution(), all the same particle types
     def test_distribution_lin(self):
-        # increase PBC for remove mirror images
+        # increase PBC to remove mirror images
         old_pos = self.system.part[:].pos.copy()
         self.system.box_l = self.system.box_l * 2.
         self.system.part[:].pos = old_pos
@@ -131,11 +131,11 @@ class AnalyzeDistributions(ut.TestCase):
                                                      log_flag=0,
                                                      int_flag=0)
         # bins
-        self.assertTrue(np.allclose(core_rdf[0], (bins[1:] + bins[:-1]) * 0.5))
+        np.testing.assert_allclose(core_rdf[0], (bins[1:] + bins[:-1]) * 0.5)
 
         # rdf
-        self.assertTrue(np.allclose(core_rdf[1],
-                                    self.calc_min_distribution(bins)))
+        np.testing.assert_allclose(core_rdf[1],
+                                   self.calc_min_distribution(bins))
         # with int flag
         core_rdf = self.system.analysis.distribution(type_list_a=[0],
                                                      type_list_b=[0],
@@ -144,8 +144,8 @@ class AnalyzeDistributions(ut.TestCase):
                                                      r_bins=r_bins,
                                                      log_flag=0,
                                                      int_flag=1)
-        self.assertTrue(np.allclose(core_rdf[1],
-                                    np.cumsum(self.calc_min_distribution(bins))))
+        np.testing.assert_allclose(core_rdf[1],
+                                   np.cumsum(self.calc_min_distribution(bins)))
 
 
 if __name__ == "__main__":

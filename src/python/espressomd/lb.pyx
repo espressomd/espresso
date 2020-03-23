@@ -26,11 +26,10 @@ from libc cimport stdint
 from .actors cimport Actor
 from . cimport cuda_init
 from . import cuda_init
-from copy import deepcopy
 from . import utils
 from .utils import array_locked, is_valid_type
-from .utils cimport make_array_locked, numeric_limits
-cimport globals
+from .utils cimport Vector3i, Vector3d, Vector6d, Vector19d, make_array_locked
+from .globals cimport time_step
 
 
 def _construct(cls, params):
@@ -288,8 +287,8 @@ cdef class HydrodynamicInteraction(Actor):
 
         def __set__(self, tau):
             lb_lbfluid_set_tau(tau)
-            if globals.time_step > 0.0:
-                check_tau_time_step_consistency(tau, globals.time_step)
+            if time_step > 0.0:
+                check_tau_time_step_consistency(tau, time_step)
 
     property agrid:
         def __get__(self):

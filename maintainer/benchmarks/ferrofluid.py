@@ -45,8 +45,6 @@ group.add_argument("--visualizer", action="store_true",
 args = parser.parse_args()
 
 # process and check arguments
-n_proc = int(os.environ.get("OMPI_COMM_WORLD_SIZE", 1))
-n_part = n_proc * args.particles_per_core
 measurement_steps = int(np.round(5e5 / args.particles_per_core, -2))
 n_iterations = 20
 assert args.volume_fraction > 0, "volume_fraction must be a positive number"
@@ -69,6 +67,10 @@ espressomd.assert_features(required_features)
 
 print(espressomd.features())
 
+# System
+#############################################################
+system = espressomd.System(box_l=[1, 1, 1])
+
 # Interaction parameters (Lennard-Jones)
 #############################################################
 
@@ -79,18 +81,20 @@ lj_cut = lj_sig * 2**(1. / 6.)  # cutoff distance
 # System parameters
 #############################################################
 
+n_proc = system.cell_system.get_state()['n_nodes']
+n_part = n_proc * args.particles_per_core
 # volume of N spheres with radius r: N * (4/3*pi*r^3)
 box_l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3
          / args.volume_fraction)**(1. / 3.)
 
 # System
 #############################################################
-system = espressomd.System(box_l=3 * (box_l,))
+system.box_l = 3 * (box_l,)
+
 # PRNG seeds
 #############################################################
-system.random_number_generator_state = list(range(
-    n_proc * (system._get_PRNG_state_size() + 1)))
 # np.random.seed(1)
+
 # Integration parameters
 #############################################################
 system.time_step = 0.01
@@ -118,10 +122,7 @@ for i in range(n_part):
         id=i,
         pos=np.random.random(3) *
         system.box_l,
-        rotation=(
-            1,
-            1,
-            1),
+        rotation=(1, 1, 1),
         dipm=args.dipole_moment)
 
 #############################################################
@@ -184,13 +185,13 @@ if not args.visualizer:
 
     # write report
     cmd = " ".join(x for x in sys.argv[1:] if not x.startswith("--output"))
-    report = ('"{script}","{arguments}",{cores},"{mpi}",{mean:.3e},'
+    report = ('"{script}","{arguments}",{cores},{mean:.3e},'
               '{ci:.3e},{n},{dur:.1f}\n'.format(
                   script=os.path.basename(sys.argv[0]), arguments=cmd,
                   cores=n_proc, dur=main_tock - main_tick, n=measurement_steps,
-                  mpi="OMPI_COMM_WORLD_SIZE" in os.environ, mean=avg, ci=ci))
+                  mean=avg, ci=ci))
     if not os.path.isfile(args.output):
-        report = ('"script","arguments","cores","MPI","mean","ci",'
+        report = ('"script","arguments","cores","mean","ci",'
                   '"nsteps","duration"\n' + report)
     with open(args.output, "a") as f:
         f.write(report)

@@ -140,14 +140,11 @@ class TestCylindricalObservable(ut.TestCase):
         else:
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalDensityProfile(**local_params)
-        core_hist = np.array(obs.calculate()).reshape(
-            self.params['n_r_bins'],
-            self.params['n_phi_bins'],
-            self.params['n_z_bins'])
+        core_hist = obs.calculate()
         np_hist = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist, core_hist)
-        self.assertEqual(obs.n_values(), len(np_hist.flatten()))
+        self.assertEqual(np.prod(obs.shape()), len(np_hist.flatten()))
 
     def velocity_profile_test(self):
         self.set_particles()
@@ -160,11 +157,7 @@ class TestCylindricalObservable(ut.TestCase):
         else:
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalVelocityProfile(**local_params)
-        core_hist = np.array(obs.calculate()).reshape(
-            self.params['n_r_bins'],
-            self.params['n_phi_bins'],
-            self.params['n_z_bins'],
-            3)
+        core_hist = obs.calculate()
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
@@ -176,7 +169,7 @@ class TestCylindricalObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(obs.n_values(), len(np_hist.flatten()) * 3)
+        self.assertEqual(np.prod(obs.shape()), len(np_hist.flatten()) * 3)
 
     def flux_density_profile_test(self):
         self.set_particles()
@@ -190,11 +183,7 @@ class TestCylindricalObservable(ut.TestCase):
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalFluxDensityProfile(
             **local_params)
-        core_hist = np.array(obs.calculate()).reshape(
-            self.params['n_r_bins'],
-            self.params['n_phi_bins'],
-            self.params['n_z_bins'],
-            3)
+        core_hist = obs.calculate()
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
@@ -204,7 +193,7 @@ class TestCylindricalObservable(ut.TestCase):
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
-        self.assertEqual(obs.n_values(), len(np_hist.flatten()) * 3)
+        self.assertEqual(np.prod(obs.shape()), len(np_hist.flatten()) * 3)
 
     def test_hist_x(self):
         self.params['axis'] = 'x'

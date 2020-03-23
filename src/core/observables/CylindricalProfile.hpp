@@ -32,14 +32,16 @@ public:
                      int n_z_bins)
       : center(center), axis(axis), min_r(min_r), max_r(max_r),
         min_phi(min_phi), max_phi(max_phi), min_z(min_z), max_z(max_z),
-        n_r_bins(n_r_bins), n_phi_bins(n_phi_bins), n_z_bins(n_z_bins){};
+        n_r_bins(static_cast<size_t>(n_r_bins)),
+        n_phi_bins(static_cast<size_t>(n_phi_bins)),
+        n_z_bins(static_cast<size_t>(n_z_bins)){};
   Utils::Vector3d center;
   Utils::Vector3d axis;
   double min_r, max_r;
   double min_phi, max_phi;
   double min_z, max_z;
   // Number of bins for each coordinate.
-  int n_r_bins, n_phi_bins, n_z_bins;
+  size_t n_r_bins, n_phi_bins, n_z_bins;
 };
 
 } // Namespace Observables

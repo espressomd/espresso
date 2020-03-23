@@ -135,11 +135,6 @@ void lb_lbfluid_set_kT(double kT);
 void lb_lbfluid_sanity_checks();
 
 /**
- * @brief Invalidate the particle allocation on the GPU.
- */
-void lb_lbfluid_invalidate_particle_allocation();
-
-/**
  * @brief Set the LB density for a single node.
  */
 void lb_lbnode_set_density(const Utils::Vector3i &ind, double density);
@@ -212,8 +207,9 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind);
 const Utils::Vector6d lb_lbnode_get_stress(const Utils::Vector3i &ind);
 const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind);
 
-/** calculates the average stress of all nodes by iterating
- * over all nodes and dividing by the number_of_nodes.
+/** @brief Calculate the average stress of all nodes by accumulating over
+ *  all nodes and dividing by the @ref LB_parameters_gpu::number_of_nodes.
+ *  Returns the lower triangle of the LB stress tensor.
  */
 const Utils::Vector6d lb_lbfluid_get_stress();
 
@@ -236,8 +232,8 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
 void lb_lbfluid_print_boundary(const std::string &filename);
 void lb_lbfluid_print_velocity(const std::string &filename);
 
-void lb_lbfluid_save_checkpoint(const std::string &filename, int binary);
-void lb_lbfluid_load_checkpoint(const std::string &filename, int binary);
+void lb_lbfluid_save_checkpoint(const std::string &filename, bool binary);
+void lb_lbfluid_load_checkpoint(const std::string &filename, bool binary);
 
 /**
  * @brief Checks whether the given node index is within the LB lattice.

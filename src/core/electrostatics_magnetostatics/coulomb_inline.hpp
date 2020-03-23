@@ -28,7 +28,6 @@
 #include "electrostatics_magnetostatics/debye_hueckel.hpp"
 #include "electrostatics_magnetostatics/elc.hpp"
 #include "electrostatics_magnetostatics/mmm1d.hpp"
-#include "electrostatics_magnetostatics/mmm2d.hpp"
 #include "electrostatics_magnetostatics/p3m.hpp"
 #include "electrostatics_magnetostatics/reaction_field.hpp"
 #include "electrostatics_magnetostatics/scafacos.hpp"
@@ -48,9 +47,6 @@ inline Utils::Vector3d central_force(double const q1q2,
 #endif
   case COULOMB_MMM1D:
     add_mmm1d_coulomb_pair_force(q1q2, d, dist, f);
-    break;
-  case COULOMB_MMM2D:
-    add_mmm2d_coulomb_pair_force(q1q2, d, dist, f);
     break;
   case COULOMB_DH:
     add_dh_coulomb_pair_force(q1q2, d, dist, f);
@@ -168,8 +164,6 @@ inline double pair_energy(Particle const &p1, Particle const &p2,
       return rf_coulomb_pair_energy(q1q2, dist);
     case COULOMB_MMM1D:
       return mmm1d_coulomb_pair_energy(q1q2, d, dist2, dist);
-    case COULOMB_MMM2D:
-      return mmm2d_coulomb_pair_energy(q1q2, d, dist);
     default:
       return 0.;
     }

@@ -112,22 +112,12 @@ def angle_btw_triangles(P1, P2, P3, P4):
     """
     n1 = get_triangle_normal(P2, P1, P3)
     n2 = get_triangle_normal(P2, P3, P4)
-    tmp11 = np.dot(n1, n2)
-    tmp11 = tmp11 * abs(tmp11)
-
-    tmp22 = np.dot(n1, n1)
-    tmp33 = np.dot(n2, n2)
-    tmp11 /= (tmp22 * tmp33)
-
-    if tmp11 > 0:
-        tmp11 = np.sqrt(tmp11)
-    else:
-        tmp11 = - np.sqrt(- tmp11)
+    tmp11 = np.dot(n1, n2) / (np.linalg.norm(n1) * np.linalg.norm(n2))
 
     if tmp11 >= 1.0:
-        tmp11 = 0.0
-    elif tmp11 <= -1.:
-        tmp11 = np.pi
+        tmp11 = 1.0
+    elif tmp11 <= -1.0:
+        tmp11 = -1.0
 
     phi = np.pi - math.acos(tmp11)
 

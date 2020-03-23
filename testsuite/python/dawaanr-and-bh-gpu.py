@@ -30,11 +30,10 @@ def stopAll(system):
 
 
 @utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT"])
+@utx.skipIfMissingFeatures(["DIPOLAR_BARNES_HUT", "LENNARD_JONES"])
 class BHGPUTest(ut.TestCase):
     system = espressomd.System(box_l=[1, 1, 1])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
-    np.random.seed(system.seed)
+    np.random.seed(seed=42)
 
     def vectorsTheSame(self, a, b):
         tol = 5E-2

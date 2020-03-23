@@ -75,7 +75,7 @@ def dihedral_force(k, n, phase, p1, p2, p3, p4):
 
 class InteractionsBondedTest(ut.TestCase):
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    np.random.seed(seed=system.seed)
+    np.random.seed(seed=42)
 
     box_l = 10.
 

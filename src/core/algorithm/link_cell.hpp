@@ -39,7 +39,7 @@ void link_cell(CellIterator first, CellIterator last,
 
       /* Pairs in this cell */
       for (int j = i + 1; j < first->n; j++) {
-        auto dist = distance_function(p1, first->part[j]);
+        auto const dist = distance_function(p1, first->part[j]);
         pair_kernel(p1, first->part[j], dist);
       }
 
@@ -47,7 +47,7 @@ void link_cell(CellIterator first, CellIterator last,
       for (auto &neighbor : first->neighbors().red()) {
         for (int j = 0; j < neighbor->n; j++) {
           auto &p2 = neighbor->part[j];
-          auto dist = distance_function(p1, p2);
+          auto const dist = distance_function(p1, p2);
           pair_kernel(p1, p2, dist);
         }
       }

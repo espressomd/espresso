@@ -35,10 +35,12 @@
 #include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
+#include "errorhandling.hpp"
+#include "exclusions.hpp"
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
-#include "metadynamics.hpp"
+#include "integrators/langevin_inline.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
 #include "nonbonded_interactions/buckingham.hpp"
 #include "nonbonded_interactions/gaussian.hpp"
@@ -56,11 +58,9 @@
 #include "nonbonded_interactions/thole.hpp"
 #include "nonbonded_interactions/wca.hpp"
 #include "npt.hpp"
-#include "object-in-fluid/membrane_collision.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
-#include "object-in-fluid/out_direction.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 
@@ -103,16 +103,17 @@ inline ParticleForce external_force(Particle const &p) {
 }
 
 inline ParticleForce thermostat_force(Particle const &p) {
+  extern LangevinThermostat langevin;
   if (!(thermo_switch & THERMO_LANGEVIN)) {
     return {};
   }
 
 #ifdef ROTATION
-  return {
-      friction_thermo_langevin(p),
-      convert_vector_body_to_space(p, friction_thermo_langevin_rotation(p))};
+  return {friction_thermo_langevin(langevin, p),
+          convert_vector_body_to_space(
+              p, friction_thermo_langevin_rotation(langevin, p))};
 #else
-  return friction_thermo_langevin(p);
+  return friction_thermo_langevin(langevin, p);
 #endif
 }
 
@@ -170,10 +171,6 @@ inline Utils::Vector3d calc_non_bonded_pair_force_parts(
 /*soft-sphere potential*/
 #ifdef SOFT_SPHERE
   force_factor += soft_pair_force_factor(ia_params, dist);
-#endif
-/*repulsive membrane potential*/
-#ifdef MEMBRANE_COLLISION
-  force += membrane_collision_pair_force(p1, p2, ia_params, d, dist);
 #endif
 /*hat potential*/
 #ifdef HAT
@@ -415,7 +412,7 @@ inline void add_bonded_force(Particle *const p1) {
     bool bond_broken = true;
 
     if (n_partners) {
-      p2 = local_particles[p1->bl.e[i++]];
+      p2 = get_local_particle_data(p1->bl.e[i++]);
       if (!p2) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
         return;
@@ -423,7 +420,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 3 eventually */
       if (n_partners >= 2) {
-        p3 = local_particles[p1->bl.e[i++]];
+        p3 = get_local_particle_data(p1->bl.e[i++]);
         if (!p3) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "
@@ -435,7 +432,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 4 eventually */
       if (n_partners >= 3) {
-        p4 = local_particles[p1->bl.e[i++]];
+        p4 = get_local_particle_data(p1->bl.e[i++]);
         if (!p4) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "
@@ -492,11 +489,9 @@ inline void add_bonded_force(Particle *const p1) {
             angle_cossquare_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
         bond_broken = false;
         break;
-#ifdef OIF_GLOBAL_FORCES
       case BONDED_IA_OIF_GLOBAL_FORCES:
         bond_broken = false;
         break;
-#endif
       case BONDED_IA_TABULATED_ANGLE:
         std::tie(force1, force2, force3) =
             tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
@@ -519,21 +514,12 @@ inline void add_bonded_force(Particle *const p1) {
     } // 2 partners (angle bonds...)
     else if (n_partners == 3) {
       switch (type) {
-#ifdef MEMBRANE_COLLISION
-      case BONDED_IA_OIF_OUT_DIRECTION: {
-        p1->p.out_direction = calc_out_direction(*p2, *p3, *p4);
-        bond_broken = false;
-        break;
-      }
-#endif
-#ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
         // in OIF nomenclature, particles p2 and p3 are common to both triangles
         std::tie(force1, force2, force3, force4) =
             calc_oif_local(*p1, *p2, *p3, *p4, iaparams);
         bond_broken = false;
         break;
-#endif
       // IMMERSED_BOUNDARY
       case BONDED_IA_IBM_TRIBEND:
         std::tie(force1, force2, force3, force4) =
@@ -615,9 +601,7 @@ inline void add_bonded_force(Particle *const p1) {
       case BONDED_IA_TABULATED_DIHEDRAL:
       case BONDED_IA_DIHEDRAL:
       case BONDED_IA_IBM_TRIBEND:
-#ifdef OIF_LOCAL_FORCES
       case BONDED_IA_OIF_LOCAL_FORCES:
-#endif
         p1->f.f += force1;
         p2->f.f += force2;
         p3->f.f += force3;

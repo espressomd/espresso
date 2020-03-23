@@ -19,13 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef __MINIMIZE_ENERGY_HPP
-#define __MINIMIZE_ENERGY_HPP
+#ifndef __STEEPEST_DESCENT_HPP
+#define __STEEPEST_DESCENT_HPP
 
 #include "ParticleRange.hpp"
 
 /** Parameters for the steepest descent algorithm */
-struct MinimizeEnergyParameters {
+struct SteepestDescentParameters {
   /** Maximal particle force
    *
    *  If the maximal force experienced by particles in the system (in any
@@ -46,23 +46,26 @@ struct MinimizeEnergyParameters {
 
 /** Steepest descent initializer
  *
- *  Sets the parameters in @ref MinimizeEnergyParameters
+ *  Sets the parameters in @ref SteepestDescentParameters
  */
-void minimize_energy_init(double f_max, double gamma, int max_steps,
-                          double max_displacement);
+void steepest_descent_init(double f_max, double gamma, int max_steps,
+                           double max_displacement);
 
 /** Steepest descent main integration loop
  *
  *  Integration stops when the maximal force is lower than the user limit
- *  @ref MinimizeEnergyParameters::f_max "f_max" or when the maximal number
- *  of steps @ref MinimizeEnergyParameters::max_steps "max_steps" is reached.
+ *  @ref SteepestDescentParameters::f_max "f_max" or when the maximal number
+ *  of steps @ref SteepestDescentParameters::max_steps "max_steps" is reached.
+ *
+ *  @param max_steps New value for @ref SteepestDescentParameters::max_steps
+ *  @return number of integrated steps
  */
-void minimize_energy();
+int steepest_descent(int max_steps);
 
 /** Steepest descent integrator
  *  @return whether the maximum force/torque encountered is below the user
- *          limit @ref MinimizeEnergyParameters::f_max "f_max".
+ *          limit @ref SteepestDescentParameters::f_max "f_max".
  */
 bool steepest_descent_step(const ParticleRange &particles);
 
-#endif /* __MINIMIZE_ENERGY */
+#endif /* __STEEPEST_DESCENT_HPP */

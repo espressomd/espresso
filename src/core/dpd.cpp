@@ -39,54 +39,27 @@
 
 using Utils::Vector3d;
 
-std::unique_ptr<Utils::Counter<uint64_t>> dpd_rng_counter;
-
-/** Return a random 3d vector with the philox thermostat.
-    Random numbers depend on
-    1. dpd_rng_counter (initialized by seed) which is increased on
-   integration
-    2. Salt (decorrelates different counter)
-    3. Two particle IDs (order-independent, decorrelates particles, gets rid of
-   seed-per-node)
-*/
+/** Return a random uniform 3D vector with the Philox thermostat.
+ *  Random numbers depend on
+ *  1. dpd_rng_counter (initialized by seed) which is increased on integration
+ *  2. Salt (decorrelates different counters)
+ *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
+ *     seed-per-node)
+ */
 Vector3d dpd_noise(uint32_t pid1, uint32_t pid2) {
-  return Random::v_noise<RNGSalt::SALT_DPD>(dpd_rng_counter->value(),
-                                            (pid1 < pid2) ? pid2 : pid1,
-                                            (pid1 < pid2) ? pid1 : pid2);
+  extern DPDThermostat dpd;
+  return Random::noise_uniform<RNGSalt::SALT_DPD>(
+      dpd.rng_get(), (pid1 < pid2) ? pid2 : pid1, (pid1 < pid2) ? pid1 : pid2);
 }
 
-void mpi_bcast_dpd_rng_counter_slave(const uint64_t counter) {
-  dpd_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
-}
-
-REGISTER_CALLBACK(mpi_bcast_dpd_rng_counter_slave)
-
-void mpi_bcast_dpd_rng_counter(const uint64_t counter) {
-  mpi_call(mpi_bcast_dpd_rng_counter_slave, counter);
-}
-
-void dpd_rng_counter_increment() { dpd_rng_counter->increment(); }
-
-bool dpd_is_seed_required() {
-  /* Seed is required if rng is not initialized */
-  return dpd_rng_counter == nullptr;
-}
-
-void dpd_set_rng_state(const uint64_t counter) {
-  mpi_bcast_dpd_rng_counter(counter);
-  dpd_rng_counter = std::make_unique<Utils::Counter<uint64_t>>(counter);
-}
-
-uint64_t dpd_get_rng_state() { return dpd_rng_counter->value(); }
-
-int dpd_set_params(int part_type_a, int part_type_b, double gamma, double r_c,
-                   int wf, double tgamma, double tr_c, int twf) {
+int dpd_set_params(int part_type_a, int part_type_b, double gamma, double k,
+                   double r_c, int wf, double tgamma, double tr_c, int twf) {
   IA_parameters &ia_params = *get_ia_param_safe(part_type_a, part_type_b);
 
   ia_params.dpd_radial = DPDParameters{
-      gamma, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
+      gamma, k, r_c, wf, sqrt(24.0 * temperature * gamma / time_step)};
   ia_params.dpd_trans = DPDParameters{
-      tgamma, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
+      tgamma, k, tr_c, twf, sqrt(24.0 * temperature * tgamma / time_step)};
 
   /* broadcast interaction parameters */
   mpi_bcast_ia_params(part_type_a, part_type_b);
@@ -118,17 +91,17 @@ void dpd_update_params(double pref_scale) {
   }
 }
 
-static double weight(int type, double r_cut, double r) {
+static double weight(int type, double r_cut, double k, double r) {
   if (type == 0) {
     return 1.;
   }
-  return 1. - r / r_cut;
+  return 1. - pow((r / r_cut), k);
 }
 
 Vector3d dpd_pair_force(DPDParameters const &params, Vector3d const &v,
                         double dist, Vector3d const &noise) {
   if (dist < params.cutoff) {
-    auto const omega = weight(params.wf, params.cutoff, dist);
+    auto const omega = weight(params.wf, params.cutoff, params.k, dist);
     auto const omega2 = Utils::sqr(omega);
 
     auto const f_d = params.gamma * omega2 * v;
@@ -211,11 +184,11 @@ REGISTER_CALLBACK_REDUCTION(dpd_viscous_stress_local, std::plus<>())
 Utils::Vector9d dpd_stress() {
   auto const stress = mpi_call(Communication::Result::reduction, std::plus<>(),
                                dpd_viscous_stress_local);
-  auto const box_l = box_geo.length();
+  auto const volume = box_geo.volume();
 
   return Utils::Vector9d{stress[0][0], stress[0][1], stress[0][2],
                          stress[1][0], stress[1][1], stress[1][2],
                          stress[2][0], stress[2][1], stress[2][2]} /
-         (box_l[0] * box_l[1] * box_l[2]);
+         volume;
 }
 #endif

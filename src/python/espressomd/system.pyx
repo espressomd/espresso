@@ -19,11 +19,10 @@
 from libcpp cimport bool
 include "myconfig.pxi"
 
-from globals cimport *
 import numpy as np
 import collections
 
-from grid cimport get_mi_vector, box_geo
+from .grid cimport get_mi_vector, box_geo
 from . cimport integrate
 from . import interactions
 from . import integrate
@@ -32,45 +31,36 @@ from . cimport cuda_init
 from . import particle_data
 from . import cuda_init
 from . import code_info
-from .utils cimport numeric_limits, make_array_locked, make_Vector3d, Vector3d
-from .lb cimport lb_lbfluid_get_tau
-from .lb cimport lb_lbfluid_get_lattice_switch
-from .lb cimport NONE
+from .utils cimport make_array_locked, make_Vector3d, Vector3d
 from .thermostat import Thermostat
 from .cellsystem import CellSystem
-from .minimize_energy import MinimizeEnergy
 from .analyze import Analysis
 from .galilei import GalileiTransform
 from .constraints import Constraints
-
 from .accumulators import AutoUpdateAccumulators
 if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
     from .lbboundaries import LBBoundaries
     from .ekboundaries import EKBoundaries
 from .comfixed import ComFixed
-from globals cimport max_seen_particle
 from .globals import Globals
-from espressomd.utils import array_locked, is_valid_type
+from .globals cimport FIELD_SIMTIME, FIELD_MAX_OIF_OBJECTS
+from .globals cimport integ_switch, max_oif_objects, sim_time
+from .globals cimport maximal_cutoff_bonded, maximal_cutoff_nonbonded, mpi_bcast_parameter
+from .utils cimport handle_errors, check_type_or_throw_except
+from .utils import is_valid_type
 IF VIRTUAL_SITES:
-    from espressomd.virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
+    from .virtual_sites import ActiveVirtualSitesHandle, VirtualSitesOff
 
 IF COLLISION_DETECTION == 1:
     from .collision_detection import CollisionDetection
 
-import sys
-import random  # for true random numbers from os.urandom()
-cimport tuning
-
 
 setable_properties = ["box_l", "min_global_cut", "periodicity", "time",
-                      "time_step", "timings", "force_cap"]
+                      "time_step", "timings", "force_cap", "max_oif_objects"]
 
 if VIRTUAL_SITES:
     setable_properties.append("_active_virtual_sites_handle")
 
-
-if OIF_GLOBAL_FORCES:
-    setable_properties.append("max_oif_objects")
 
 cdef bool _system_created = False
 
@@ -95,10 +85,9 @@ cdef class System:
     constraints : :class:`espressomd.constraints.Constraints`
     cuda_init_handle : :class:`espressomd.cuda_init.CudaInitHandle`
     galilei : :class:`espressomd.galilei.GalileiTransform`
-    integrator : :class:`espressomd.integrate.Integrator`
+    integrator : :class:`espressomd.integrate.IntegratorHandle`
     lbboundaries : :class:`espressomd.lbboundaries.LBBoundaries`
     ekboundaries : :class:`espressomd.ekboundaries.EKBoundaries`
-    minimize_energy : :class:`espressomd.minimize_energy.MinimizeEnergy`
     non_bonded_inter : :class:`espressomd.interactions.NonBondedInteractions`
     part : :class:`espressomd.particle_data.ParticleList`
     thermostat : :class:`espressomd.thermostat.Thermostat`
@@ -111,7 +100,6 @@ cdef class System:
         bonded_inter
         cell_system
         thermostat
-        minimize_energy
         actors
         analysis
         galilei
@@ -121,7 +109,6 @@ cdef class System:
         lbboundaries
         ekboundaries
         collision_detection
-        __seed
         cuda_init_handle
         comfixed
         _active_virtual_sites_handle
@@ -152,11 +139,10 @@ cdef class System:
             IF CUDA:
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
             self.galilei = GalileiTransform()
-            self.integrator = integrate.Integrator()
+            self.integrator = integrate.IntegratorHandle()
             if LB_BOUNDARIES or LB_BOUNDARIES_GPU:
                 self.lbboundaries = LBBoundaries()
                 self.ekboundaries = EKBoundaries()
-            self.minimize_energy = MinimizeEnergy()
             self.non_bonded_inter = interactions.NonBondedInteractions()
             self.part = particle_data.ParticleList()
             self.thermostat = Thermostat()
@@ -191,8 +177,6 @@ cdef class System:
         IF LB_BOUNDARIES or LB_BOUNDARIES_GPU:
             odict['lbboundaries'] = System.__getattribute__(
                 self, "lbboundaries")
-        odict['minimize_energy'] = System.__getattribute__(
-            self, "minimize_energy")
         odict['thermostat'] = System.__getattribute__(self, "thermostat")
         IF COLLISION_DETECTION:
             odict['collision_detection'] = System.__getattribute__(
@@ -243,7 +227,6 @@ cdef class System:
         """
 
         def __set__(self, _periodic):
-            global periodic
             if len(_periodic) != 3:
                 raise ValueError(
                     "periodicity must be of length 3, got length " + str(len(_periodic)))
@@ -280,6 +263,11 @@ cdef class System:
             return self.globals.time_step
 
     property timings:
+        """
+        Sets the number of test force calculations to carry out when tuning
+        electrostatics and magnetostatics.
+        """
+
         def __set__(self, int _timings):
             self.globals.timings = _timings
 
@@ -288,11 +276,11 @@ cdef class System:
 
     property max_cut_nonbonded:
         def __get__(self):
-            return recalc_maximal_cutoff_nonbonded()
+            return maximal_cutoff_nonbonded()
 
     property max_cut_bonded:
         def __get__(self):
-            return recalc_maximal_cutoff_bonded()
+            return maximal_cutoff_bonded()
 
     property min_global_cut:
         def __set__(self, _min_global_cut):
@@ -300,82 +288,6 @@ cdef class System:
 
         def __get__(self):
             return self.globals.min_global_cut
-
-    def _get_PRNG_state_size(self):
-        """
-        Returns the state size of the pseudo random number generator.
-        """
-
-        return get_state_size_of_generator()
-
-    def set_random_state_PRNG(self):
-        """
-        Sets the state of the pseudo random number generator using real random numbers.
-        """
-
-        _state_size_plus_one = self._get_PRNG_state_size() + 1
-        states = string_vec(n_nodes)
-        rng = random.SystemRandom()  # true RNG that uses os.urandom()
-        for i in range(n_nodes):
-            states_on_node_i = []
-            for j in range(_state_size_plus_one + 1):
-                states_on_node_i.append(
-                    rng.randint(0, numeric_limits[int].max()))
-            states[i] = (" ".join(map(str, states_on_node_i))).encode('utf-8')
-        mpi_random_set_stat(states)
-
-    property seed:
-        """
-        Sets the seed of the pseudo random number with a list of seeds which is
-        as long as the number of used nodes.
-        """
-
-        def __set__(self, _seed):
-            cdef vector[int] seed_array
-            self.__seed = _seed
-            if(is_valid_type(_seed, int) and n_nodes == 1):
-                seed_array.resize(1)
-                seed_array[0] = int(_seed)
-                mpi_random_seed(0, seed_array)
-            elif(hasattr(_seed, "__iter__")):
-                if(len(_seed) < n_nodes or len(_seed) > n_nodes):
-                    raise ValueError(
-                        "The list needs to contain one seed value per node")
-                seed_array.resize(len(_seed))
-                for i in range(len(_seed)):
-                    seed_array[i] = int(_seed[i])
-                mpi_random_seed(n_nodes, seed_array)
-            else:
-                raise ValueError(
-                    "The seed has to be an integer or a list of integers with one integer per node")
-
-        def __get__(self):
-            return self.__seed
-
-    property random_number_generator_state:
-        """Sets the random number generator state in the core. This is of
-        interest for deterministic checkpointing.
-        """
-
-        def __set__(self, rng_state):
-            _state_size_plus_one = self._get_PRNG_state_size() + 1
-            if(len(rng_state) == n_nodes * _state_size_plus_one):
-                states = string_vec(n_nodes)
-                for i in range(n_nodes):
-                    states[i] = (" ".join(map(str,
-                                              rng_state[i * _state_size_plus_one:(i + 1) * _state_size_plus_one])
-                                          )).encode('utf-8')
-                mpi_random_set_stat(states)
-            else:
-                raise ValueError(
-                    "Wrong number of arguments: Usage: 'system.random_number_generator_state = "
-                    "[<state(1)>, ..., <state(n_nodes*(state_size+1))>], where each <state(i)> "
-                    "is an integer. The state size of the PRNG can be obtained by calling "
-                    "system._get_PRNG_state_size().")
-
-        def __get__(self):
-            rng_state = list(map(int, (mpi_random_get_stat().c_str()).split()))
-            return rng_state
 
     IF VIRTUAL_SITES:
         property virtual_sites:
@@ -385,19 +297,18 @@ cdef class System:
             def __get__(self):
                 return self._active_virtual_sites_handle.implementation
 
-    IF OIF_GLOBAL_FORCES:
-        property max_oif_objects:
-            """Maximum number of objects as per the object_in_fluid method.
+    property max_oif_objects:
+        """Maximum number of objects as per the object_in_fluid method.
 
-            """
+        """
 
-            def __get__(self):
-                return max_oif_objects
+        def __get__(self):
+            return max_oif_objects
 
-            def __set__(self, v):
-                global max_oif_objects
-                max_oif_objects = v
-                mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
+        def __set__(self, v):
+            global max_oif_objects
+            max_oif_objects = v
+            mpi_bcast_parameter(FIELD_MAX_OIF_OBJECTS)
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
@@ -434,18 +345,48 @@ cdef class System:
         return self.box_l[0] * self.box_l[1] * self.box_l[2]
 
     def distance(self, p1, p2):
-        """Return the scalar distance between the particles, respecting periodic boundaries.
+        """Return the scalar distance between particles, between a particle
+        and a point or between two points, respecting periodic boundaries.
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            First particle or position.
+        p2 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            Second particle or position.
 
         """
         res = self.distance_vec(p1, p2)
-        return np.sqrt(res[0]**2 + res[1]**2 + res[2]**2)
+        return np.linalg.norm(res)
 
     def distance_vec(self, p1, p2):
-        """Return the distance vector between the particles, respecting periodic boundaries.
+        """Return the distance vector between particles, between a particle
+        and a point or between two points, respecting periodic boundaries.
+
+        Parameters
+        ----------
+        p1 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            First particle or position.
+        p2 : :class:`~espressomd.particle_data.ParticleHandle` or (3,) array of :obj:`float`
+            Second particle or position.
 
         """
 
-        cdef Vector3d mi_vec = get_mi_vector(make_Vector3d(p2.pos), make_Vector3d(p1.pos), box_geo)
+        cdef Vector3d pos1
+        if isinstance(p1, particle_data.ParticleHandle):
+            pos1 = make_Vector3d(p1.pos)
+        else:
+            check_type_or_throw_except(
+                p1, 3, float, "p1 must be a particle or 3 floats")
+            pos1 = make_Vector3d(p1)
+        cdef Vector3d pos2
+        if isinstance(p2, particle_data.ParticleHandle):
+            pos2 = make_Vector3d(p2.pos)
+        else:
+            check_type_or_throw_except(
+                p2, 3, float, "p2 must be a particle or 3 floats")
+            pos2 = make_Vector3d(p2)
+        cdef Vector3d mi_vec = get_mi_vector(pos2, pos1, box_geo)
 
         return make_array_locked(mi_vec)
 
@@ -482,15 +423,6 @@ cdef class System:
             """
             auto_exclusions(distance)
 
-    def _is_valid_type(self, current_type):
-        return not (isinstance(current_type, int)
-                    or current_type < 0
-                    or current_type > globals.max_seen_particle_type)
-
-    def check_valid_type(self, current_type):
-        if self._is_valid_type(current_type):
-            raise ValueError("type", current_type, "does not exist!")
-
     def setup_type_map(self, type_list=None):
         """
         For using ESPResSo conveniently for simulations in the grand canonical
@@ -512,7 +444,7 @@ cdef class System:
         """
         Parameters
         ----------
-        current_type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
+        type : :obj:`int` (:attr:`~espressomd.particle_data.ParticleHandle.type`)
             Particle type to count the number for.
 
         Returns
@@ -521,6 +453,7 @@ cdef class System:
             The number of particles which have the given type.
 
         """
-        self.check_valid_type(type)
+        check_type_or_throw_except(type, 1, int, "type must be 1 int")
         number = number_of_particles_with_type(type)
+        handle_errors("")
         return int(number)

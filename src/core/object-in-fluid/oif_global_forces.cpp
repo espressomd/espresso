@@ -25,7 +25,7 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "particle_data.hpp"
+#include "particle_index.hpp"
 
 #include <utils/math/triangle_functions.hpp>
 using Utils::angle_btw_triangles;
@@ -82,7 +82,7 @@ void calc_oif_global(double *area_volume, int molType,
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
         /* fetch particle 2 */
-        auto const p2 = local_particles[p1->bl.e[j++]];
+        auto const p2 = get_local_particle_data(p1->bl.e[j++]);
         if (!p2) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
                             << p1->p.identity << " and " << p1->bl.e[j - 1]
@@ -92,7 +92,7 @@ void calc_oif_global(double *area_volume, int molType,
           return;
         }
 
-        auto const p3 = local_particles[p1->bl.e[j++]];
+        auto const p3 = get_local_particle_data(p1->bl.e[j++]);
         if (!p3) {
           runtimeErrorMsg() << "oif global calc: bond broken between particles "
                             << p1->p.identity << ", " << p1->bl.e[j - 2]
@@ -150,7 +150,7 @@ void add_oif_global_forces(double const *area_volume, int molType,
           id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
         test++;
         /* fetch particle 2 */
-        auto p2 = local_particles[p1->bl.e[j++]];
+        auto p2 = get_local_particle_data(p1->bl.e[j++]);
         if (!p2) {
           runtimeErrorMsg() << "add area: bond broken between particles "
                             << p1->p.identity << " and " << p1->bl.e[j - 1]
@@ -161,7 +161,7 @@ void add_oif_global_forces(double const *area_volume, int molType,
         }
         /* fetch particle 3 */
         // if(n_partners>2){
-        auto p3 = local_particles[p1->bl.e[j++]];
+        auto p3 = get_local_particle_data(p1->bl.e[j++]);
         if (!p3) {
           runtimeErrorMsg()
               << "add area: bond broken between particles " << p1->p.identity

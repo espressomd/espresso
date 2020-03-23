@@ -21,32 +21,10 @@
 /** \file
     Implementation of \ref statistics_chain.hpp "statistics_chain.hpp".
 */
-#include "PartCfg.hpp"
-#include "cells.hpp"
-#include "communication.hpp"
-#include "statistics.hpp"
-#include <vector>
+#include "statistics_chain.hpp"
 
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
-/*@{*/
-float *partCoord_g = nullptr, *partCM_g = nullptr;
-int n_part_g = 0, n_chains_g = 0;
-/*@}*/
-
-/** data for a system consisting of chains. TBRS. */
-/*@{*/
-int chain_start = 0;
-int chain_n_chains = 0;
-int chain_length = 0;
-/*@}*/
-
-void update_mol_ids_setchains(const ParticleRange &particles) {
-  for (auto &p : particles) {
-    p.p.mol_id = floor((p.p.identity - chain_start) / (double)chain_length);
-  }
-}
-
-std::array<double, 4> calc_re(PartCfg &partCfg) {
+std::array<double, 4> calc_re(PartCfg &partCfg, int chain_start,
+                              int chain_n_chains, int chain_length) {
   double dist = 0.0, dist2 = 0.0, dist4 = 0.0;
   std::array<double, 4> re;
 
@@ -67,7 +45,8 @@ std::array<double, 4> calc_re(PartCfg &partCfg) {
   return re;
 }
 
-std::array<double, 4> calc_rg(PartCfg &partCfg) {
+std::array<double, 4> calc_rg(PartCfg &partCfg, int chain_start,
+                              int chain_n_chains, int chain_length) {
   int p;
   double r_G = 0.0, r_G2 = 0.0, r_G4 = 0.0;
   double tmp;
@@ -106,7 +85,8 @@ std::array<double, 4> calc_rg(PartCfg &partCfg) {
   return rg;
 }
 
-std::array<double, 2> calc_rh(PartCfg &partCfg) {
+std::array<double, 2> calc_rh(PartCfg &partCfg, int chain_start,
+                              int chain_n_chains, int chain_length) {
   double r_H = 0.0, r_H2 = 0.0, ri = 0.0, prefac, tmp;
   std::array<double, 2> rh;
 

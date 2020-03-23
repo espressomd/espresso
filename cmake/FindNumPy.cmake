@@ -29,14 +29,9 @@ if(PYTHONINTERP_FOUND)
     endif()
   endif()
 else()
-  message(STATUS "To find NumPy Python interpretator is required to be found.")
+  message(STATUS "To find NumPy, the Python interpreter must be found first.")
 endif()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(NumPy REQUIRED_VARS NUMPY_INCLUDE_DIR NUMPY_VERSION
                                         VERSION_VAR   NUMPY_VERSION)
-
-if(NUMPY_FOUND)
-  message(STATUS "NumPy ver. ${NUMPY_VERSION} found (include: ${NUMPY_INCLUDE_DIR})")
-endif()
-

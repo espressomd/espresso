@@ -31,7 +31,6 @@ class CoulombCloudWallTune(ut.TestCase):
 
     """This compares p3m, p3m_gpu electrostatic forces against stored data."""
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 
     tolerance = 1E-3
 
@@ -60,12 +59,8 @@ class CoulombCloudWallTune(ut.TestCase):
             force_abs_diff += np.linalg.norm(p.f - self.forces[p.id])
         force_abs_diff /= len(self.system.part)
         self.assertLessEqual(
-            force_abs_diff,
-            self.tolerance,
-            "Absolute force difference " +
-            str(force_abs_diff) +
-            " too large for method " +
-            method_name)
+            force_abs_diff, self.tolerance,
+            "Absolute force difference too large for method " + method_name)
 
     # Tests for individual methods
     @utx.skipIfMissingFeatures(["P3M"])

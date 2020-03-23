@@ -37,7 +37,6 @@ class TestLB:
 
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    n_nodes = system.cell_system.get_state()["n_nodes"]
     np.random.seed(1)
     params = {'int_steps': 15,
               'int_times': 20,
@@ -225,9 +224,6 @@ class TestLB:
 
         obs = LBFluidStress()
         obs_stress = obs.calculate()
-        obs_stress = np.array([[obs_stress[0], obs_stress[1], obs_stress[3]],
-                               [obs_stress[1], obs_stress[2], obs_stress[4]],
-                               [obs_stress[3], obs_stress[4], obs_stress[5]]])
         np.testing.assert_allclose(stress, obs_stress, atol=1E-10)
         np.testing.assert_allclose(
             np.copy(self.lbf.stress),

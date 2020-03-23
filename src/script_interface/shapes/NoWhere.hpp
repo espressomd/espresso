@@ -24,7 +24,7 @@
 
 #include "Shape.hpp"
 
-#include "core/shapes/NoWhere.hpp"
+#include <shapes/NoWhere.hpp>
 
 namespace ScriptInterface {
 namespace Shapes {

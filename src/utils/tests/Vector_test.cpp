@@ -334,10 +334,43 @@ BOOST_AUTO_TEST_CASE(vector_product_test) {
 BOOST_AUTO_TEST_CASE(hadamard_product_test) {
   auto const v1 = Utils::Vector<int, 2>{8, 9};
   auto const v2 = Utils::Vector<int, 2>{5, 6};
+  auto const a = 6;
 
-  auto res = Utils::hadamard_product(v1, v2);
-  BOOST_CHECK_EQUAL(res[0], v1[0] * v2[0]);
-  BOOST_CHECK_EQUAL(res[1], v1[1] * v2[1]);
+  auto res1 = Utils::hadamard_product(v1, v2);
+  BOOST_CHECK_EQUAL(res1[0], v1[0] * v2[0]);
+  BOOST_CHECK_EQUAL(res1[1], v1[1] * v2[1]);
+
+  auto res2 = Utils::hadamard_product(a, v1);
+  BOOST_CHECK_EQUAL(res2[0], a * v1[0]);
+  BOOST_CHECK_EQUAL(res2[1], a * v1[1]);
+
+  auto res3 = Utils::hadamard_product(v1, a);
+  BOOST_CHECK_EQUAL(res3[0], a * v1[0]);
+  BOOST_CHECK_EQUAL(res3[1], a * v1[1]);
+
+  auto res4 = Utils::hadamard_product(a, a);
+  BOOST_CHECK_EQUAL(res4, a * a);
+}
+
+BOOST_AUTO_TEST_CASE(hadamard_division_test) {
+  auto const v1 = Utils::Vector<int, 2>{16, 32};
+  auto const v2 = Utils::Vector<int, 2>{8, 4};
+  auto const a = 2;
+
+  auto res1 = Utils::hadamard_division(v1, v2);
+  BOOST_CHECK_EQUAL(res1[0], v1[0] / v2[0]);
+  BOOST_CHECK_EQUAL(res1[1], v1[1] / v2[1]);
+
+  auto res2 = Utils::hadamard_division(a, v1);
+  BOOST_CHECK_EQUAL(res2[0], a / v1[0]);
+  BOOST_CHECK_EQUAL(res2[1], a / v1[1]);
+
+  auto res3 = Utils::hadamard_division(v1, a);
+  BOOST_CHECK_EQUAL(res3[0], v1[0] / a);
+  BOOST_CHECK_EQUAL(res3[1], v1[1] / a);
+
+  auto res4 = Utils::hadamard_division(a, a);
+  BOOST_CHECK_EQUAL(res4, 1);
 }
 
 BOOST_AUTO_TEST_CASE(diag_matrix) {
@@ -347,4 +380,20 @@ BOOST_AUTO_TEST_CASE(diag_matrix) {
   for (int i = 0; i < 3; i++)
     for (int j = 0; j < 3; j++)
       BOOST_CHECK_EQUAL(result[i][j], (i == j) ? v[i] : 0);
+}
+
+BOOST_AUTO_TEST_CASE(trace_) {
+  auto const A = Utils::Matrix<int, 3, 3>{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+  auto const result = trace(A);
+  auto const expected = A[0][0] + A[1][1] + A[2][2];
+
+  BOOST_CHECK_EQUAL(expected, result);
+}
+
+BOOST_AUTO_TEST_CASE(flatten_) {
+  auto const A = Utils::Matrix<int, 2, 2>{{1, 2}, {3, 4}};
+  auto const result = flatten(A);
+  auto const expected = Utils::Vector<int, 4>{1, 3, 2, 4};
+
+  BOOST_CHECK(result == expected);
 }

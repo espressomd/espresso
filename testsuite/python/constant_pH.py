@@ -44,7 +44,6 @@ class ReactionEnsembleTest(ut.TestCase):
     Ka = 10**(-pKa)
     box_l = (N0 / c0)**(1.0 / 3.0)
     system = espressomd.System(box_l=[box_l, box_l, box_l])
-    system.seed = system.cell_system.get_state()['n_nodes'] * [2]
     np.random.seed(69)  # make reaction code fully deterministic
     system.cell_system.skin = 0.4
     system.time_step = 0.01

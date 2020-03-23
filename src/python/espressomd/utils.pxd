@@ -22,9 +22,6 @@ cimport numpy as np
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 
-cdef extern from "stdlib.h":
-    void free(void * ptr)
-
 cdef extern from "utils/List.hpp" namespace "Utils":
     cppclass List[T]:
         List()
@@ -80,15 +77,6 @@ cdef extern from "errorhandling.hpp" namespace "ErrorHandling":
     cdef vector[RuntimeError] mpi_gather_runtime_errors()
 
 cpdef handle_errors(msg)
-
-# https://github.com/cython/cython/blob/master/Cython/Includes/libcpp/limits.pxd
-cdef extern from "<limits>" namespace "std" nogil:
-    cdef cppclass numeric_limits[T]:
-        @staticmethod
-        T epsilon()
-
-        @staticmethod
-        T max()
 
 cdef extern from "utils/Vector.hpp" namespace "Utils":
     cppclass Vector2d:

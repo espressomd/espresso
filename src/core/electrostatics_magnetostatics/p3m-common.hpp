@@ -63,9 +63,6 @@ enum P3M_TUNE_ERROR {
 /** granularity of the time measurement */
 #define P3M_TIME_GRAN 2
 
-/** whether the P3M charge assignment fraction is stored or not */
-#define P3M_STORE_CA_FRAC
-
 /************************************************
  * data types
  ************************************************/
@@ -172,11 +169,6 @@ void p3m_add_block(double const *in, double *out, int const start[3],
  *  is eq. (7.66) in @cite hockney88a).
  */
 double p3m_analytic_cotangent_sum(int n, double mesh_i, int cao);
-
-/** Compute the assignment function for the \a i'th degree
- *  at value \a x.
- */
-double p3m_caf(int i, double x, int cao_value);
 
 /** Calculate properties of the local FFT mesh for the
  *   charge assignment process.

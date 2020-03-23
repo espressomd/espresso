@@ -27,6 +27,8 @@
 
 #include "config.hpp"
 
+extern int this_node;
+
 #ifdef CUDA
 #include <boost/optional.hpp>
 #include <cassert>
@@ -2191,18 +2193,17 @@ __global__ void integrate(LB_nodes_gpu n_a, LB_nodes_gpu n_b, LB_rho_v_gpu *d_v,
  * interpolation
  */
 template <std::size_t no_of_neighbours>
-__global__ void
-calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data,
-                       float *particle_force, LB_node_force_density_gpu node_f,
-                       LB_rho_v_gpu *d_v, bool couple_virtual,
-                       uint64_t philox_counter, float friction) {
+__global__ void calc_fluid_particle_ia(
+    LB_nodes_gpu n_a, Utils::Span<CUDA_particle_data> particle_data,
+    float *particle_force, LB_node_force_density_gpu node_f, LB_rho_v_gpu *d_v,
+    bool couple_virtual, uint64_t philox_counter, float friction) {
 
   unsigned int part_index = blockIdx.y * gridDim.x * blockDim.x +
                             blockDim.x * blockIdx.x + threadIdx.x;
   Utils::Array<unsigned int, no_of_neighbours> node_index;
   Utils::Array<float, no_of_neighbours> delta;
   float delta_j[3];
-  if (part_index < para->number_of_particles) {
+  if (part_index < particle_data.size()) {
 #if defined(VIRTUAL_SITES)
     if (!particle_data[part_index].is_virtual || couple_virtual)
 #endif
@@ -2210,15 +2211,15 @@ calc_fluid_particle_ia(LB_nodes_gpu n_a, CUDA_particle_data *particle_data,
       /* force acting on the particle. delta_j will be used later to compute the
        * force that acts back onto the fluid. */
       calc_viscous_force<no_of_neighbours>(
-          n_a, delta, particle_data, particle_force, part_index, delta_j,
+          n_a, delta, particle_data.data(), particle_force, part_index, delta_j,
           node_index, d_v, 0, philox_counter, friction);
       calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force<no_of_neighbours>(
-            n_a, delta, particle_data, particle_force, part_index, delta_j,
-            node_index, d_v, 1, philox_counter, friction);
+            n_a, delta, particle_data.data(), particle_force, part_index,
+            delta_j, node_index, d_v, 1, philox_counter, friction);
         calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
       }
 #endif
@@ -2474,12 +2475,6 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
              device_rho_v, node_f, gpu_check);
 }
 
-void lb_realloc_particles_GPU_leftovers(LB_parameters_gpu *lbpar_gpu) {
-  // copy parameters, especially number of parts to gpu mem
-  cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(para), lbpar_gpu,
-                                   sizeof(LB_parameters_gpu)));
-}
-
 #ifdef LB_BOUNDARIES_GPU
 /** Setup and call boundaries from the host
  *  @param host_n_lb_boundaries        Number of LB boundaries
@@ -2581,13 +2576,15 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
  */
 template <std::size_t no_of_neighbours>
 void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
-  if (lbpar_gpu.number_of_particles) {
+  auto device_particles = gpu_get_particle_pointer();
+
+  if (not device_particles.empty()) {
     /* call of the particle kernel */
     /* values for the particle kernel */
     int threads_per_block_particles = 64;
     int blocks_per_grid_particles_y = 4;
     int blocks_per_grid_particles_x =
-        (lbpar_gpu.number_of_particles +
+        (device_particles.size() +
          threads_per_block_particles * blocks_per_grid_particles_y - 1) /
         (threads_per_block_particles * blocks_per_grid_particles_y);
     dim3 dim_grid_particles =
@@ -2595,16 +2592,15 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
     if (lbpar_gpu.kT > 0.0) {
       assert(rng_counter_coupling_gpu);
       KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
-                 threads_per_block_particles, *current_nodes,
-                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, couple_virtual,
-                 rng_counter_coupling_gpu->value(), friction);
+                 threads_per_block_particles, *current_nodes, device_particles,
+                 gpu_get_particle_force_pointer(), node_f, device_rho_v,
+                 couple_virtual, rng_counter_coupling_gpu->value(), friction);
     } else {
       // We use a dummy value for the RNG counter if no temperature is set.
       KERNELCALL(calc_fluid_particle_ia<no_of_neighbours>, dim_grid_particles,
-                 threads_per_block_particles, *current_nodes,
-                 gpu_get_particle_pointer(), gpu_get_particle_force_pointer(),
-                 node_f, device_rho_v, couple_virtual, 0, friction);
+                 threads_per_block_particles, *current_nodes, device_particles,
+                 gpu_get_particle_force_pointer(), node_f, device_rho_v,
+                 couple_virtual, 0, friction);
     }
   }
 }

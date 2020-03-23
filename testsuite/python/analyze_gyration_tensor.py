@@ -50,10 +50,10 @@ class AnalyzeGyration(ut.TestCase):
         res = self.system.analysis.gyration_tensor(p_type=self.type_cube)
         rg = self.system.analysis.calc_rg(
             chain_start=0, number_of_chains=1, chain_length=self.cube_len**3)[0]
-        # make sure all eigenvalues (for the cube) are identical
-        self.assertTrue(
-            np.allclose(np.abs(res['eva0'][0]), np.abs(res['eva1'][0]), np.abs(res['eva2'][0]), atol=1e-6))
-        self.assertTrue(np.allclose(rg**2, res['Rg^2'], atol=1e-6))
+        # check eigenvalues are identical
+        np.testing.assert_allclose(
+            [np.abs(res['eva' + x][0]) for x in '012'], 3 * [1.25], atol=1e-6)
+        np.testing.assert_allclose(rg**2, res['Rg^2'], atol=1e-6)
 
     def test_gyration_tensor(self):
         # get results
@@ -61,25 +61,24 @@ class AnalyzeGyration(ut.TestCase):
             p_type=[self.type_stick, self.type_cube])
         rg = self.system.analysis.calc_rg(
             chain_start=0, number_of_chains=1, chain_length=len(self.system.part[:]))[0]
-        # test if principal and secondary  axis is [0,0,1] and [0,1,0]
-        self.assertTrue(
-            np.allclose(np.abs(res['eva0'][1]), [0., 0., 1.], atol=1e-6))
-        self.assertTrue(
-            np.allclose(np.abs(res['eva1'][1]), [0., 1., 0.], atol=1e-6))
-        self.assertTrue(
-            np.allclose(np.abs(res['eva2'][1]), [1., 0., 0.], atol=1e-6))
-        self.assertTrue(np.allclose(rg**2, res['Rg^2'], atol=1e-6))
+        # check eigenvectors
+        np.testing.assert_allclose(
+            np.abs(res['eva0'][1]), [0., 0., 1.], atol=1e-6)
+        np.testing.assert_allclose(
+            np.abs(res['eva1'][1]), [0., 1., 0.], atol=1e-6)
+        np.testing.assert_allclose(
+            np.abs(res['eva2'][1]), [1., 0., 0.], atol=1e-6)
+        np.testing.assert_allclose(rg**2, res['Rg^2'], atol=1e-6)
 
     def test_mom_intertia(self):
-
         sqr_dist = np.sum(
             (self.system.analysis.center_of_mass(p_type=0) - self.system.part.select(type=0).pos)**2, axis=0)
         mom_I = self.system.analysis.moment_of_inertia_matrix(p_type=0)
-        # the cube case should have zero as off- diagonal components
-        self.assertTrue(
-            np.allclose([mom_I[0, 1], mom_I[0, 2], mom_I[1, 2], mom_I[1, 0], mom_I[2, 0], mom_I[2, 1]], np.zeros(6), atol=1e-6))
-        self.assertTrue(np.allclose([mom_I[0, 0], mom_I[1, 1], mom_I[2, 2]],
-                                    [sqr_dist[1] + sqr_dist[2], sqr_dist[0] + sqr_dist[2], sqr_dist[1] + sqr_dist[2]], atol=1e-6))
+        # the cube case should have zero as off-diagonal components
+        np.testing.assert_allclose(
+            mom_I, np.diag(np.diag(mom_I)), rtol=0, atol=1e-6)
+        np.testing.assert_allclose(
+            np.diag(mom_I), sqr_dist[(1, 0, 1), ] + sqr_dist[2], atol=1e-6)
 
 
 if __name__ == "__main__":

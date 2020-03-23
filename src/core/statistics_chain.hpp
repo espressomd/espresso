@@ -22,48 +22,55 @@
 #define STATISTICS_CHAIN_H
 /** \file
  *
- *  This file contains the code for statistics on the data using the
- *  molecule information set with analyze set chains.
+ *  This file contains the code for statistics on chains.
  */
 
 #include "PartCfg.hpp"
 
-/** \name Exported Variables */
-/************************************************************/
-/** Particles' initial positions (needed for g1(t), g2(t), g3(t)) */
-/*@{*/
-extern float *partCoord_g;
-extern float *partCM_g;
-extern int n_part_g;
-extern int n_chains_g;
-/*@}*/
-
-/** data for a system consisting of chains. TBRS. */
-/*@{*/
-extern int chain_start;
-extern int chain_n_chains;
-extern int chain_length;
-/*@}*/
+#include <array>
 
 /** \name Exported Functions */
 /************************************************************/
 /*@{*/
 
-/** Calculate the end-to-end-distance.
- *  Chain information \ref chain_start etc. must be set!
+/**
+ * @brief Calculate the end-to-end-distance.
+ *
+ * Calculates the average end-to-end-distance of a range
+ * of monodisperse polymers with continuous ids.
+ *
+ * @param chain_start The id of the first monomer of the first chain.
+ * @param chain_n_chains Number of chains contained in the range.
+ * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_re(PartCfg &);
+std::array<double, 4> calc_re(PartCfg &partCfg, int chain_start,
+                              int chain_n_chains, int chain_length);
 
-/** Calculate the radius of gyration.
- *  Chain information \ref chain_start etc. must be set!
+/**
+ * @brief Calculate the radius of gyration.
+ *
+ * Calculates the average radius of gyration of a range
+ * of monodisperse polymers with continuous ids.
+ *
+ * @param chain_start The id of the first monomer of the first chain.
+ * @param chain_n_chains Number of chains contained in the range.
+ * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_rg(PartCfg &);
+std::array<double, 4> calc_rg(PartCfg &, int chain_start, int chain_n_chains,
+                              int chain_length);
 
-/** Calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory).
- *  Chain information \ref chain_start etc. must be set!
+/**
+ * @brief Calculate the hydrodynamic radius (ref. Kirkwood-Zimm theory).
+ *
+ * Calculates the average hydrodynamic radius of a range
+ * of monodisperse polymers with continuous ids.
+ *
+ * @param chain_start The id of the first monomer of the first chain.
+ * @param chain_n_chains Number of chains contained in the range.
+ * @param chain_length The length of every chain.
  */
-std::array<double, 2> calc_rh(PartCfg &);
-
+std::array<double, 2> calc_rh(PartCfg &, int chain_start, int chain_n_chains,
+                              int chain_length);
 /*@}*/
 
 #endif

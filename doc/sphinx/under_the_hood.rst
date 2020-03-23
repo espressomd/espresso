@@ -16,13 +16,13 @@ Since basically all major parts of the main MD integration have to
 access the particle data, efficient access to the particle data is
 crucial for a fast MD code. Therefore the particle data needs some more
 elaborate organization, which will be presented here. A particle itself
-is represented by a structure (Particle) consisting of several
-substructures (e.g. ParticlePosition, ParticleForce or
-ParticleProperties), which in turn represent basic physical properties
+is represented by a structure (``Particle``) consisting of several
+substructures (e.g. ``ParticlePosition``, ``ParticleForce`` or
+``ParticleProperties``), which in turn represent basic physical properties
 such as position, force or charge. The particles are organized in one or
-more particle lists on each node, called Cell cells. The cells are
-arranged by several possible systems, the cellsystems as described
-above. A cell system defines a way the particles are stored in , i.e.
+more particle lists on each node, called ``CellPList``. The cells are
+arranged by several possible systems, as described in :ref:`Cellsystems`.
+A cell system defines a way the particles are stored in |es|, i.e.
 how they are distributed onto the processor nodes and how they are
 organized on each of them. Moreover a cell system also defines
 procedures to efficiently calculate the force, energy and pressure for
@@ -104,7 +104,7 @@ particles is fairly random, determined e.g. by the order in which the
 particles are set up or have been communicated across the processor
 boundaries. The force loop therefore accesses the particle array in
 arbitrary order, resulting in a lot of unfavorable page misses. In the
-memory organization of , the particles are accessed in a virtually
+memory organization of |es|, the particles are accessed in a virtually
 linear order. Because the force calculation goes through the cells in a
 linear fashion, all accesses to a single cell occur close in time, for
 the force calculation of the cell itself as well as for its neighbors.

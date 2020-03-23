@@ -25,7 +25,6 @@ import espressomd
 @utx.skipIfMissingFeatures(['EXCLUSIONS'])
 class Exclusions(ut.TestCase):
     s = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    s.seed = s.cell_system.get_state()['n_nodes'] * [1234]
 
     def setUp(self):
         self.s.part.clear()
@@ -40,9 +39,9 @@ class Exclusions(ut.TestCase):
 
         self.s.part[0].add_exclusion(1)
         self.s.part[0].add_exclusion(2)
-        self.assertTrue((self.s.part[0].exclusions == [1, 2]).all())
+        self.assertEqual(list(self.s.part[0].exclusions), [1, 2])
         self.s.part[0].delete_exclusion(1)
-        self.assertEqual(self.s.part[0].exclusions, [2])
+        self.assertEqual(list(self.s.part[0].exclusions), [2])
         self.s.part[0].delete_exclusion(2)
         self.assertEqual(list(self.s.part[0].exclusions), [])
 
@@ -56,7 +55,7 @@ class Exclusions(ut.TestCase):
 
         for _ in range(15):
             self.s.integrator.run(100)
-            self.assertTrue((self.s.part[0].exclusions == [1, 2, 3]).all())
+            self.assertEqual(list(self.s.part[0].exclusions), [1, 2, 3])
 
     @utx.skipIfMissingFeatures(['LENNARD_JONES'])
     def test_particle_property(self):

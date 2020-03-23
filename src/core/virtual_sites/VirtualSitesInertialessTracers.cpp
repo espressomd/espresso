@@ -34,12 +34,12 @@ void VirtualSitesInertialessTracers::after_force_calc() {
   }
 #ifdef CUDA
   if (lattice_switch == ActiveLB::GPU) {
-    IBM_ForcesIntoFluid_GPU(local_cells.particles());
+    IBM_ForcesIntoFluid_GPU(cell_structure.local_cells().particles());
     return;
   }
 #endif
-  if (std::any_of(local_cells.particles().begin(),
-                  local_cells.particles().end(),
+  if (std::any_of(cell_structure.local_cells().particles().begin(),
+                  cell_structure.local_cells().particles().end(),
                   [](Particle &p) { return p.p.is_virtual; })) {
     runtimeErrorMsg() << "Inertialess Tracers: No LB method was active but "
                          "virtual sites present.";
@@ -49,7 +49,7 @@ void VirtualSitesInertialessTracers::after_force_calc() {
 
 void VirtualSitesInertialessTracers::after_lb_propagation() {
 #ifdef VIRTUAL_SITES_INERTIALESS_TRACERS
-  IBM_UpdateParticlePositions(local_cells.particles());
+  IBM_UpdateParticlePositions(cell_structure.local_cells().particles());
   // Ghost positions are now out-of-date
   // We should update.
   // Actually we seem to get the same results whether we do this here or not,

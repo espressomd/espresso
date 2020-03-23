@@ -25,12 +25,11 @@
 #include "PidObservable.hpp"
 #include "PidProfileObservable.hpp"
 #include "ProfileObservable.hpp"
-#include "ScriptInterface.hpp"
 #include "config.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include "core/observables/BondAngles.hpp"
 #include "core/observables/BondDihedrals.hpp"
-#include "core/observables/ComForce.hpp"
 #include "core/observables/ComPosition.hpp"
 #include "core/observables/ComVelocity.hpp"
 #include "core/observables/CosPersistenceAngles.hpp"
@@ -51,6 +50,7 @@
 #include "core/observables/ParticleForces.hpp"
 #include "core/observables/ParticlePositions.hpp"
 #include "core/observables/ParticleVelocities.hpp"
+#include "core/observables/TotalForce.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
@@ -136,8 +136,8 @@ void initialize() {
 #endif
   REGISTER_PID_OBS(ComPosition);
   REGISTER_PID_OBS(ComVelocity);
-  REGISTER_PID_OBS(ComForce);
   REGISTER_PID_OBS(ParticleDistances);
+  REGISTER_PID_OBS(TotalForce);
   REGISTER_PID_OBS(BondAngles);
   REGISTER_PID_OBS(BondDihedrals);
   REGISTER_PID_OBS(CosPersistenceAngles);

@@ -419,41 +419,6 @@ no shift implemented currently, which means that the potential is
 discontinuous at :math:`r=r_\mathrm{cut}`. Therefore energy
 calculations should be used with great caution.
 
-.. _Membrane-collision interaction:
-
-Membrane-collision interaction
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. note::
-     Feature ``MEMBRANE_COLLISION`` required.
-
-This defines a membrane collision interaction between particles of the
-types ``type1`` and ``type2``, where particle of ``type1`` belongs to one OIF or OIF-like object and
-particle of ``type2`` belongs to another such object.
-
-It is very similar to soft-sphere interaction, but it takes into account
-the local outward normal vectors on the surfaces of the two objects to
-determine the direction for repulsion of objects (i.e. determine whether
-the two membranes are intersected). It is inversely proportional to the
-distance of nodes of membranes that are not crossed and saturating with
-growing distance of nodes of crossed membranes.
-
-In order to work with the OIF objects, both OIF objects need to be created
-using OifCellType class with keyword ``normal=1``, because this implicitly sets up the
-bonded out-direction interaction, which computes the outward normal
-vector.
-
-The membrane-collision interaction for non-intersected membranes is then
-defined by:
-
-.. math:: V(d)= a\frac{1}{1+e^{n\left(d-d_\mathrm{offset}\right)}},
-
-for :math:`d<d_\mathrm{cut}` and :math:`V(d)=0` above. For
-intersected membranes, it is defined as :math:`V(-d)`. There is no shift
-implemented currently, which means that the potential is discontinuous
-at :math:`d=d_\mathrm{cut}`. Therefore energy calculations should
-be used with great caution.
-
 .. _Hat interaction:
 
 Hat interaction
@@ -564,12 +529,13 @@ The parameters can be set via::
     system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
 
 This command defines an interaction between particles of the types ``type1`` and ``type2``
-that contains velocity-dependent friction and noise according 
-to a temperature set by :py:meth:`espressomd.thermostat.Thermostat.set_dpd()`. 
+that contains velocity-dependent friction and noise according
+to a temperature set by :py:meth:`espressomd.thermostat.Thermostat.set_dpd()`.
 The parameters for the interaction are
 
 * ``gamma``
 * ``weight_function``
+* ``k``
 * ``r_cut``
 * ``trans_gamma``
 * ``trans_weight_function``
@@ -591,9 +557,9 @@ for the dissipative force and
 .. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma_\parallel w_\parallel (r_{ij}) }  \eta_{ij}(t) \hat{r}_{ij}
 
 for the random force. This introduces the friction coefficient :math:`\gamma_\parallel` (parameter ``gamma``) and the weight function
-:math:`w_\parallel`. The thermal energy :math:`k_B T` is not set by the interaction, 
-but by the DPD thermostat (:py:meth:`espressomd.thermostat.Thermostat.set_dpd()`) 
-to be equal for all particles. The weight function can be specified via the ``weight_function`` switch. 
+:math:`w_\parallel`. The thermal energy :math:`k_B T` is not set by the interaction,
+but by the DPD thermostat (:py:meth:`espressomd.thermostat.Thermostat.set_dpd()`)
+to be equal for all particles. The weight function can be specified via the ``weight_function`` switch.
 The possible values for ``weight_function`` are 0 and 1, corresponding to the
 order of :math:`w_\parallel`:
 
@@ -602,22 +568,26 @@ order of :math:`w_\parallel`:
    w_\parallel (r_{ij}) =  \left\{
    \begin{array}{clcr}
                 1                      & , \; \text{weight_function} = 0 \\
-                {( 1 - \frac{r_{ij}}{r^\text{cut}_\parallel}} )^2 & , \; \text{weight_function} = 1
+                {( 1 - (\frac{r_{ij}}{r^\text{cut}_\parallel})^k} )^2 & , \; \text{weight_function} = 1
       \end{array}
       \right.
-      
+
 Both weight functions are set to zero for :math:`r_{ij}>r^\text{cut}_\parallel` (parameter ``r_cut``).
+
+In case the ``weight_function`` 1 is selected the parameter ``k`` can be chosen. :math:`k = 1` is the
+default and recovers the linear ramp. :math:`k > 1` enhances the dissipative nature of the interaction
+and thus yields higher Schmidt numbers :cite:`yaghoubi2015a`.
 
 The random force has the properties
 
 .. math:: <\eta_{ij}(t)> = 0 , <\eta_{ij}^\alpha(t)\eta_{kl}^\beta(t')> = \delta_{\alpha\beta} \delta_{ik}\delta_{jl}\delta(t-t')
 
-and is numerically discretized to a random number :math:`\overline{\eta}` for each spatial 
+and is numerically discretized to a random number :math:`\overline{\eta}` for each spatial
 component for each particle pair drawn from a uniform distribution
 with properties
 
 .. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
-    
+
 For the perpendicular part, the dissipative and random force are calculated analogously
 
 .. math:: \vec{F}_{ij}^{D} = -\gamma_\bot w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
@@ -713,83 +683,6 @@ To use the script, compile espresso with the following features:
 
 Anisotropic non-bonded interactions
 -----------------------------------
-
-..
-    .. _Directional Lennard-Jones interaction:
-
-    Directional Lennard-Jones interaction
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-    .. todo::
-
-        Not implemented yet.
-
-    inter LJ-angle
-
-    |image_directional_lj|
-
-    Specifies a 12-10 Lennard-Jones interaction with angular dependence
-    between particles of the types ``type1`` and ``type2``. These two particles need two bonded
-    partners oriented in a symmetric way. They define an orientation for the
-    central particle. The purpose of using bonded partners is to avoid
-    dealing with torques, therefore the interaction does *not* need the
-    ``ROTATION`` feature. The angular part of the potential minimizes the system
-    when the two central beads are oriented along the vector formed by these
-    two particles. The shaded beads on the image are virtual particles that
-    are formed from the orientation of the bonded partners, connected to the
-    central beads. They are used to define angles. The potential is of the
-    form
-
-    .. math::
-
-       U(r_{ik},\theta_{jik},\theta_{ikn})=
-         \epsilon\left[5\left(\frac{\sigma}r\right)^{12} -
-           6\left(\frac{\sigma}{r}\right)^{10}\right]
-         \cos^2\theta_{jik}\cos^2\theta_{ikn},
-
-    where :math:`r_{ik}` is the distance between the two central beads, and
-    each angle defines the orientation between the direction of a central
-    bead (determined from the two bonded partners) and the vector
-    :math:`\mathbf{r_{ik}}`. Note that the potential is turned off if one of
-    the angle is more than :math:`\pi/2`. This way we don't end up creating
-    a minimum for an anti-parallel configuration.
-
-    Unfortunately, the bonded partners are not sought dynamically. One has
-    to keep track of the relative positions of the particle IDs. This can be
-    done by setting the parameters , , , and . Say the first bead has
-    particle ID , then one should set the simulation such as its two bonded
-    partners have particle IDs and , respectively. On a linear chain, for
-    example, one would typically have and such that the central bead and its
-    two bonded partners have position IDs , , and , respectively. This is
-    surely not optimized, but once the simulation is set correctly the
-    algorithm is very fast.
-
-    It might turn out to be useful in some
-    cases to keep force capping during the whole simulation. This is due to
-    the very sharp angular dependence for small distance, compared to
-    :math:`\sigma`. Two beads might come very close to each other while
-    having unfavorable angles such that the interaction is turned off. Then
-    a change in the angle might suddenly turn on the interaction and the
-    system will blow up (the potential is so steep that one would need
-    extremely small time steps to deal with it, which is not very clever for
-    such rare events).
-
-    For instance, when modeling hydrogen bonds (N-H...O=C), one can avoid
-    simulating hydrogens and oxygens by using this potential. This comes
-    down to implementing a HBond potential between N and C atoms.
-
-    The four other optional
-    parameters (, , , ) describe a different interaction strength for a
-    subset of the simulation box. The box is divided through the plane in
-    two different regions: region 1 which creates an interaction with
-    strength , region 2 with interaction strength . The 2nd region is
-    defined by its -midplane , its total thickness , and the interface width
-    . Therefore, the interaction strength is everywhere except for the
-    region of the box :math:`z_0-\delta z/2<z<z_0+\delta z/2`. The interface
-    width smoothly interpolates between the two regions to avoid
-    discontinuities. As an example, one can think of modeling hydrogen bonds
-    in two different environments: water, where the interaction is rather
-    weak, and in a lipid bilayer, where it is comparatively stronger.
 
 .. _Gay-Berne interaction:
 

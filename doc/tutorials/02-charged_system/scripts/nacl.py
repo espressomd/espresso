@@ -20,6 +20,7 @@
 #
 import espressomd
 from espressomd import assert_features, electrostatics
+from espressomd.minimize_energy import steepest_descent
 import numpy
 
 assert_features(["ELECTROSTATICS", "WCA"])
@@ -49,7 +50,6 @@ wca_epsilons = {"Anion": 1.0, "Cation": 1.0}
 # Setup System
 box_l = (n_part / density)**(1. / 3.)
 system = espressomd.System(box_l=[box_l] * 3)
-system.seed = system.cell_system.get_state()['n_nodes'] * [1234]
 system.periodicity = [True, True, True]
 system.time_step = time_step
 system.cell_system.skin = 0.3
@@ -91,11 +91,10 @@ for s in [["Anion", "Cation"], ["Anion", "Anion"], ["Cation", "Cation"]]:
 print("\n--->WCA Equilibration")
 max_sigma = max(wca_sigmas.values())
 min_dist = 0.0
-system.minimize_energy.init(f_max=0, gamma=10, max_steps=10,
-                            max_displacement=max_sigma * 0.01)
 
 while min_dist < max_sigma:
-    system.minimize_energy.minimize()
+    steepest_descent(system, f_max=0, gamma=10, max_steps=10,
+                     max_displacement=max_sigma * 0.01)
     min_dist = system.analysis.min_dist()
 
 # Set thermostat

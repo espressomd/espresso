@@ -135,14 +135,6 @@ struct SoftSphere_Parameters {
   double offset = 0.0;
 };
 
-/** membrane collision potential */
-struct Membrane_Parameters {
-  double a = 0.0;
-  double n = 0.0;
-  double cut = INACTIVE_CUTOFF;
-  double offset = 0.0;
-};
-
 /** hat potential */
 struct Hat_Parameters {
   double Fmax = 0.0;
@@ -241,10 +233,6 @@ struct IA_parameters {
   SoftSphere_Parameters soft_sphere;
 #endif
 
-#ifdef MEMBRANE_COLLISION
-  Membrane_Parameters membrane;
-#endif
-
 #ifdef HAT
   Hat_Parameters hat;
 #endif
@@ -287,15 +275,13 @@ extern std::vector<IA_parameters> ia_params;
 /** Maximal particle type seen so far. */
 extern int max_seen_particle_type;
 
-/** Maximal interaction cutoff (real space/short range interactions). */
-extern double max_cut;
 /** Maximal interaction cutoff (real space/short range non-bonded
  *  interactions).
  */
-double recalc_maximal_cutoff_nonbonded();
+double maximal_cutoff_nonbonded();
 /** Maximal interaction cutoff (bonded interactions).
  */
-double recalc_maximal_cutoff_bonded();
+double maximal_cutoff_bonded();
 
 /** Minimal global interaction cutoff. Particles with a distance
  *  smaller than this are guaranteed to be available on the same node
@@ -356,11 +342,9 @@ void make_particle_type_exist_local(int type);
  */
 void realloc_ia_params(int nsize);
 
-/** Calculate the maximal cutoff of all real space interactions.
- *  These are: bonded, non bonded + real space electrostatics.
- *  The result is stored in the global variable \ref max_cut.
+/** Calculate the maximal cutoff of all pair interactions.
  */
-void recalc_maximal_cutoff();
+double maximal_cutoff();
 
 /**
  * @brief Reset all interaction parameters to their defaults.
