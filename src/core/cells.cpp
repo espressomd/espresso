@@ -328,7 +328,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
           i--;
         }
       } else if (target_cell != c) {
-        move_indexed_particle(target_cell, c, i);
+        append_indexed_particle(target_cell, extract_indexed_particle(c, i));
 
         if (i < c->n) {
           i--;

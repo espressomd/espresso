@@ -43,33 +43,6 @@ Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
   return dst;
 }
 
-Particle *move_indexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-  int re = dl->resize(dl->n + 1);
-  Particle *dst = &dl->part[dl->n - 1];
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  new (dst) Particle(std::move(*src));
-
-  if (re) {
-    update_local_particles(dl);
-  } else {
-    set_local_particle_data(dst->p.identity, dst);
-  }
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (sl->resize(sl->n - 1)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    set_local_particle_data(src->p.identity, src);
-  }
-  return dst;
-}
-
 Particle extract_indexed_particle(ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);
