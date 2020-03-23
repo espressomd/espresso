@@ -246,6 +246,12 @@ void cells_re_init(int new_cs, double range) {
 
   clear_particle_node();
 
+  for (auto &p : CellPList{old_local_cells.data(),
+                           static_cast<int>(old_local_cells.size())}
+                     .particles()) {
+    cell_structure.add_particle(std::move(p));
+  }
+
   for (auto &cell : tmp_cells) {
     cell.resize(0);
   }

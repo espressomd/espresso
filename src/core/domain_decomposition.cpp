@@ -605,23 +605,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
   dd_init_cell_interactions(grid);
-
-  /* copy particles */
-  for (int c = 0; c < old->n; c++) {
-    for (auto &p : old->cell[c]->particles()) {
-      Cell *nc = dd_save_position_to_cell(p.r.p);
-
-      /* particle does not belong to this node. Just stow away
-         somewhere for the moment */
-      if (nc == nullptr)
-        nc = cell_structure.m_local_cells[0];
-      append_unindexed_particle(nc, std::move(p));
-    }
-  }
-
-  for (auto &c : cell_structure.m_local_cells) {
-    update_local_particles(c);
-  }
 }
 
 /************************************************************/
@@ -657,12 +640,11 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
     if (target_cell) {
       append_indexed_particle(target_cell, std::move(src.part[i]));
     } else {
-
-      append_unindexed_particle(&rest, std::move(src.part[i]));
+      rest.push_back(std::move(src.part[i]));
     }
   }
 
-  src.resize(0);
+  src.clear();
 }
 
 /**

@@ -131,13 +131,6 @@ void nsq_topology_init(CellPList *old) {
       cell_structure.exchange_ghosts_comm.comm[0].type |= GHOST_PREFETCH;
     }
   }
-
-  /* copy particles */
-  for (auto &p : old->particles()) {
-    append_unindexed_particle(local, std::move(p));
-  }
-
-  update_local_particles(local);
 }
 
 void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
