@@ -341,7 +341,6 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
 }
 
 void cells_resort_particles(int global_flag) {
-
   invalidate_ghosts();
 
   clear_particle_node();
@@ -435,6 +434,14 @@ void cells_update_ghosts(unsigned data_parts) {
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_PARTNUM);
     ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+
+    /* Add the ghost particles to the index if we don't already
+     * have them. */
+    for (auto &part : cell_structure.ghost_cells().particles()) {
+      if (get_local_particle_data(part.p.identity) == nullptr) {
+        set_local_particle_data(part.p.identity, &part);
+      }
+    }
 
     /* Particles are now sorted */
     resort_particles = Cells::RESORT_NONE;

@@ -31,7 +31,6 @@
 #include "ghosts.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "particle_index.hpp"
 
 #include <mpi.h>
 #include <utils/Span.hpp>
@@ -212,9 +211,6 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (get_local_particle_data(part.p.identity) == nullptr) {
-            set_local_particle_data(part.p.identity, &part);
-          }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           archiver >> part.r;
