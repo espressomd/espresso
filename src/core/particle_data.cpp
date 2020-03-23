@@ -25,23 +25,18 @@
  */
 #include "particle_data.hpp"
 
-#include "PartCfg.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "event.hpp"
-#include "global.hpp"
 #include "grid.hpp"
-#include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "particle_index.hpp"
-#include "random.hpp"
 #include "rotation.hpp"
 #include "serialization/ParticleList.hpp"
-#include "virtual_sites.hpp"
 
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>
