@@ -19,25 +19,3 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
     set_local_particle_data(p->p.identity, p);
   return p;
 }
-
-Particle extract_indexed_particle(ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-  Particle *src = &sl->part[i];
-  Particle *end = &sl->part[sl->n - 1];
-
-  Particle p = std::move(*src);
-
-  set_local_particle_data(p.p.identity, nullptr);
-
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  if (sl->resize(sl->n - 1)) {
-    update_local_particles(sl);
-  } else if (src != end) {
-    set_local_particle_data(src->p.identity, src);
-  }
-  return p;
-}

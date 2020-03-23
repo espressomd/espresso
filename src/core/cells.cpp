@@ -333,9 +333,11 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells,
       if (target_cell == c)
         continue;
 
+      modified_cells.push_back(c);
+
       /* Particle is not local */
       if (target_cell == nullptr) {
-        displaced_parts.push_back(extract_indexed_particle(c, i));
+        displaced_parts.push_back(c->extract(i));
 
         if (i < c->n) {
           i--;
@@ -343,14 +345,13 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells,
       }
       /* Particle belongs on this node but is in the wrong cell. */
       else if (target_cell != c) {
-        append_indexed_particle(target_cell, extract_indexed_particle(c, i));
+        target_cell->push_back(c->extract(i));
+        modified_cells.push_back(target_cell);
 
         if (i < c->n) {
           i--;
         }
       }
-
-      modified_cells.push_back(target_cell);
     }
   }
 
@@ -368,6 +369,10 @@ void cells_resort_particles(int global_flag) {
 
   ParticleList displaced_parts = sort_and_fold_parts(
       cell_structure, cell_structure.local_cells(), modified_cells);
+
+  for (auto const &p : displaced_parts) {
+    set_local_particle_data(p.identity(), nullptr);
+  }
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
@@ -490,7 +495,7 @@ Cell *find_current_cell(const Particle &p) {
   return cell_structure.particle_to_cell(p);
 }
 
-boost::optional<Particle> CellStructure::extract_particle(int id) {
+void CellStructure::remove_particle(int id) {
   Cell *cell = nullptr;
   int position = -1;
   for (auto c : cell_structure.local_cells()) {
@@ -510,10 +515,9 @@ boost::optional<Particle> CellStructure::extract_particle(int id) {
 
   /* If we found the particle, remove it. */
   if (cell && (position >= 0)) {
-    return extract_indexed_particle(cell, position);
+    cell->extract(position);
+    update_local_particles(cell);
   }
-
-  return {};
 }
 
 Particle *CellStructure::add_local_particle(Particle &&p) {

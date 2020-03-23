@@ -28,7 +28,6 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "particle_index.hpp"
 
 #include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
@@ -632,19 +631,16 @@ namespace {
  */
 void move_if_local(ParticleList &src, ParticleList &rest,
                    std::vector<const Cell *> &modified_cells) {
-  for (int i = 0; i < src.n; i++) {
-    auto &part = src.part[i];
-
-    assert(cell_structure.get_local_particle(src.part[i].p.identity) ==
-           nullptr);
+  for (auto &part : src) {
+    assert(cell_structure.get_local_particle(part.p.identity) == nullptr);
 
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      append_indexed_particle(target_cell, std::move(src.part[i]));
+      target_cell->push_back(std::move(part));
       modified_cells.push_back(target_cell);
     } else {
-      rest.push_back(std::move(src.part[i]));
+      rest.push_back(std::move(part));
     }
   }
 

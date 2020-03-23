@@ -72,18 +72,4 @@ void update_local_particles(const ParticleList *pl);
  */
 Particle *append_indexed_particle(ParticleList *plist, Particle &&part);
 
-/**
- * @brief Extract an indexed particle from a list.
- *
- * Removes a particle from a particle list and
- * from the particle index.
- *
- * @param i Index of particle to remove,
- *          needs to be valid.
- * @param sl List to remove the particle from,
- *           needs to be non-empty.
- * @return The extracted particle.
- */
-Particle extract_indexed_particle(ParticleList *sl, int i);
-
 #endif // ESPRESSO_PARTICLE_INDEX_HPP

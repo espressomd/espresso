@@ -194,7 +194,7 @@ struct CellStructure {
    * @return The particle if it belonged to this node
    *         otherwise none.
    */
-  boost::optional<Particle> extract_particle(int id);
+  void remove_particle(int id);
 
   /**
    * @brief Get a local particle by id.

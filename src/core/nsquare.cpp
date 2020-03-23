@@ -25,11 +25,13 @@
 
 #include "nsquare.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
 #include "ghosts.hpp"
-#include "particle_index.hpp"
+#include "grid.hpp"
 
-#include <mpi.h>
+#include "serialization/ParticleList.hpp"
+
+#include <boost/mpi/collectives/all_to_all.hpp>
+#include <boost/serialization/vector.hpp>
 
 Cell *local;
 
@@ -160,7 +162,7 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {
     for (auto &p : parts) {
-      append_indexed_particle(local, std::move(p));
+      local->push_back(std::move(p));
     }
   }
 }
