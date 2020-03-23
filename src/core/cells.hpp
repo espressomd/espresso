@@ -213,6 +213,15 @@ struct CellStructure {
    * this node, or -1 if there are no particles on this node.
    */
   int get_max_local_particle_id() const;
+
+  /**
+   * @brief Remove all particles from the cell system.
+   *
+   * This allows linear time removal of all particles from
+   * the system, removing each particle individually would
+   * be quadratic.
+   */
+  void remove_all_particles();
 };
 
 /*@}*/

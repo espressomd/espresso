@@ -366,11 +366,6 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
  */
 void local_change_exclusion(int part1, int part2, int _delete);
 
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Locally remove all particles.
- */
-void local_remove_all_particles();
-
 /** Used by \ref mpi_rescale_particles, should not be used elsewhere.
  *  Locally rescale all particles on current node.
  *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)

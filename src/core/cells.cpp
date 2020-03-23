@@ -521,3 +521,14 @@ const Particle *CellStructure::get_local_particle(int id) const {
 int CellStructure::get_max_local_particle_id() const {
   return get_local_max_seen_particle();
 }
+
+void CellStructure::remove_all_particles() {
+  for (auto c : cell_structure.local_cells()) {
+    for (auto &p : c->particles()) {
+      set_local_particle_data(p.identity(), nullptr);
+      free_particle(&p);
+    }
+
+    c->clear();
+  }
+}

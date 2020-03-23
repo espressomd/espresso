@@ -48,14 +48,12 @@
  * - Take a look at the bond input code. It's easy to understand.
  */
 
-#include "config.hpp"
-
+#include "mpiio.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "mpiio.hpp"
 #include "particle_data.hpp"
 
 #include <mpi.h>
@@ -346,7 +344,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
   int nproc, nglobalpart, pref, nlocalpart, nlocalbond, bpref;
   unsigned avail_fields;
 
-  local_remove_all_particles();
+  cell_structure.remove_all_particles();
 
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);

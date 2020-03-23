@@ -270,15 +270,14 @@ int mpi_place_new_particle(int id, const Utils::Vector3d &pos) {
 
 /****************** REMOVE PARTICLE ************/
 void mpi_remove_particle(int pnode, int part) {
-  mpi_call(mpi_remove_particle_slave, pnode, part);
-  mpi_remove_particle_slave(pnode, part);
+  mpi_call_all(mpi_remove_particle_slave, pnode, part);
 }
 
 void mpi_remove_particle_slave(int pnode, int part) {
   if (part != -1) {
     cell_structure.extract_particle(part);
   } else {
-    local_remove_all_particles();
+    cell_structure.remove_all_particles();
   }
 
   on_particle_change();

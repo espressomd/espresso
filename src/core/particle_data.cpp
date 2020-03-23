@@ -34,7 +34,6 @@
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
-#include "particle_index.hpp"
 #include "rotation.hpp"
 #include "serialization/ParticleList.hpp"
 
@@ -897,17 +896,6 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
   pt->l.i = i;
 
   return pt;
-}
-
-void local_remove_all_particles() {
-  for (auto c : cell_structure.local_cells()) {
-    for (auto &p : c->particles()) {
-      set_local_particle_data(p.identity(), nullptr);
-      free_particle(&p);
-    }
-
-    c->clear();
-  }
 }
 
 void local_rescale_particles(int dir, double scale) {
