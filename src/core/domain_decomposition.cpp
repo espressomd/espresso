@@ -619,7 +619,6 @@ void dd_topology_release() {
 
 namespace {
 
-
 /**
  * @brief Move particles into the cell system if it belongs to this node.
  *
@@ -708,8 +707,6 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
                            node_neighbors[2 * dir], 0, recv_buf_l);
 
       send_buf_l.clear();
-
-      move_if_local(recv_buf_l, *pl);
     } else {
       using boost::mpi::request;
       using Utils::Mpi::isendrecv;
@@ -725,12 +722,12 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-      move_if_local(recv_buf_l, *pl);
-      move_if_local(recv_buf_r, *pl);
-
       send_buf_l.clear();
       send_buf_r.clear();
     }
+
+    move_if_local(recv_buf_l, *pl);
+    move_if_local(recv_buf_r, *pl);
   }
 }
 } // namespace
