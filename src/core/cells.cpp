@@ -170,23 +170,23 @@ static void topology_release(int cs) {
 }
 
 /** Choose the topology init function of a certain cell system. */
-void topology_init(int cs, double range, CellPList local) {
+void topology_init(int cs, double range) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
   switch (cs) {
   /* Default to DD */
   case CELL_STRUCTURE_NONEYET:
-    topology_init(CELL_STRUCTURE_DOMDEC, range, local);
+    topology_init(CELL_STRUCTURE_DOMDEC, range);
     break;
   case CELL_STRUCTURE_CURRENT:
-    topology_init(cell_structure.type, range, local);
+    topology_init(cell_structure.type, range);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(&local, node_grid, range);
+    dd_topology_init(node_grid, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init(&local);
+    nsq_topology_init();
     break;
   default:
     fprintf(stderr,
@@ -241,9 +241,7 @@ void cells_re_init(int new_cs, double range) {
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(
-      new_cs, range,
-      {old_local_cells.data(), static_cast<int>(old_local_cells.size())});
+  topology_init(new_cs, range);
   cell_structure.min_range = range;
 
   clear_particle_node();

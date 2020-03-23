@@ -55,7 +55,7 @@
 void nsq_topology_release();
 
 /** setup the nsquare topology */
-void nsq_topology_init(CellPList *local);
+void nsq_topology_init();
 
 /** implements the load balancing as described above. */
 void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,

@@ -577,8 +577,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
-                      const double range) {
+void dd_topology_init(const Utils::Vector3i &grid, double range) {
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
    * but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));

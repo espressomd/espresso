@@ -62,7 +62,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm) {
   }
 }
 
-void nsq_topology_init(CellPList *old) {
+void nsq_topology_init() {
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.particle_to_cell = [](const Particle &p) {
     return nsq_id_to_cell(p.identity());
