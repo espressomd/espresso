@@ -66,6 +66,10 @@ private:
 public:
   /** Current allocation size. */
   auto capacity() const { return max; }
+  Particle *data() { return part; }
+
+  Particle *begin() { return data(); }
+  Particle *end() { return data() + size(); }
 
   Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
   Utils::Span<const Particle> particles() const {
