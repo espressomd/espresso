@@ -54,7 +54,7 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
-#include "particle_data.hpp"
+//#include "particle_data.hpp"
 
 #include <mpi.h>
 
@@ -446,7 +446,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
   on_particle_change();
   // Out of box particles might be accepted by the cell system.
-  set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 }
 
 } // namespace Mpiio

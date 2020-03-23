@@ -64,7 +64,7 @@ void local_rotate_system(double phi, double theta, double alpha,
 #endif
   }
 
-  set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
   update_dependent_particles();
 }

@@ -27,7 +27,6 @@
 #include "cells.hpp"
 #include "Particle.hpp"
 #include "algorithm/link_cell.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "communication.hpp"
 #include "debug.hpp"
 #include "domain_decomposition.hpp"
@@ -55,18 +54,7 @@ std::vector<Cell> cells;
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
-/** One of @ref Cells::Resort, announces the level of resort needed.
- */
-unsigned resort_particles = Cells::RESORT_NONE;
 bool rebuild_verletlist = true;
-
-CellPList CellStructure::local_cells() {
-  return {m_local_cells.data(), static_cast<int>(m_local_cells.size())};
-}
-
-CellPList CellStructure::ghost_cells() {
-  return {m_ghost_cells.data(), static_cast<int>(m_ghost_cells.size())};
-}
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -256,7 +244,7 @@ void cells_re_init(int new_cs, double range) {
   }
 
   /* to enforce initialization of the ghost cells */
-  resort_particles = Cells::RESORT_GLOBAL;
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 
   on_cell_structure_change();
 }
@@ -271,15 +259,6 @@ void realloc_cells(int size) {
   /* resize the cell list */
   cells.resize(size);
 }
-
-/*************************************************/
-
-void set_resort_particles(Cells::Resort level) {
-  resort_particles |= level;
-  assert(resort_particles & level);
-}
-
-unsigned const &get_resort_particles() { return resort_particles; }
 
 /*************************************************/
 
@@ -397,7 +376,7 @@ void cells_resort_particles(int global_flag) {
       sort_cell->push_back(std::move(part));
     }
 
-    resort_particles = Cells::RESORT_GLOBAL;
+    cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
     cell_structure.update_particle_index(sort_cell);
   } else {
 #ifdef ADDITIONAL_CHECKS
@@ -436,7 +415,7 @@ void cells_on_geometry_change(int flags) {
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
-  resort_particles |=
+  auto const level =
       (std::any_of(cell_structure.local_cells().particles().begin(),
                    cell_structure.local_cells().particles().end(),
                    [&skin2](Particle const &p) {
@@ -444,6 +423,8 @@ void check_resort_particles() {
                    }))
           ? Cells::RESORT_LOCAL
           : Cells::RESORT_NONE;
+
+  cell_structure.set_resort_particles(level);
 }
 
 /*************************************************/
@@ -451,8 +432,8 @@ void cells_update_ghosts(unsigned data_parts) {
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
 
-  auto const global_resort =
-      topology_check_resort(cell_structure.type, resort_particles);
+  auto const global_resort = topology_check_resort(
+      cell_structure.type, cell_structure.get_resort_particles());
 
   if (global_resort != Cells::RESORT_NONE) {
     int global = (global_resort & Cells::RESORT_GLOBAL)
@@ -476,7 +457,7 @@ void cells_update_ghosts(unsigned data_parts) {
     }
 
     /* Particles are now sorted */
-    resort_particles = Cells::RESORT_NONE;
+    cell_structure.clear_resort_particles();
   } else {
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
@@ -485,84 +466,11 @@ void cells_update_ghosts(unsigned data_parts) {
 }
 
 Cell *find_current_cell(const Particle &p) {
-  assert(not resort_particles);
+  assert(not cell_structure.get_resort_particles());
 
   if (p.l.ghost) {
     return nullptr;
   }
 
   return cell_structure.particle_to_cell(p);
-}
-
-void CellStructure::remove_particle(int id) {
-  Cell *cell = nullptr;
-  int position = -1;
-  for (auto c : m_local_cells) {
-    auto parts = c->particles();
-
-    for (unsigned i = 0; i < parts.size(); i++) {
-      auto &p = parts[i];
-
-      if (p.identity() == id) {
-        cell = c;
-        position = static_cast<int>(i);
-      } else {
-        remove_all_bonds_to(p, id);
-      }
-    }
-  }
-
-  /* If we found the particle, remove it. */
-  if (cell && (position >= 0)) {
-    cell->extract(position);
-    update_particle_index(id, nullptr);
-    update_particle_index(cell);
-  }
-}
-
-Particle *CellStructure::add_local_particle(Particle &&p) {
-  auto const sort_cell = particle_to_cell(p);
-  if (sort_cell) {
-    sort_cell->push_back(std::move(p));
-    update_particle_index(sort_cell);
-
-    return &sort_cell->back();
-  }
-
-  return {};
-}
-
-Particle *CellStructure::add_particle(Particle &&p) {
-  auto const sort_cell = cell_structure.particle_to_cell(p);
-  /* There is always at least one cell, so if the particle
-   * does not belong to a cell on this node we can put it there. */
-  auto cell = sort_cell ? sort_cell : local_cells()[0];
-
-  /* If the particle isn't local a global resort may be
-   * needed, otherwise a local resort if sufficient. */
-  set_resort_particles(sort_cell ? Cells::RESORT_LOCAL : Cells::RESORT_GLOBAL);
-
-  cell->push_back(std::move(p));
-  update_particle_index(cell);
-
-  return &cell->back();
-}
-
-int CellStructure::get_max_local_particle_id() const {
-  auto it = std::find_if(m_particle_index.rbegin(), m_particle_index.rend(),
-                         [](const Particle *p) { return p != nullptr; });
-
-  return (it != m_particle_index.rend()) ? (*it)->identity() : -1;
-}
-
-void CellStructure::remove_all_particles() {
-  for (auto c : m_local_cells) {
-    for (auto &p : c->particles()) {
-      free_particle(&p);
-    }
-
-    c->clear();
-  }
-
-  m_particle_index.clear();
 }

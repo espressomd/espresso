@@ -121,7 +121,7 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
       // if possible, use resort_particles = Cells::RESORT_LOCAL)
       const double dist2 = (p.r.p - p.l.p_old).norm2();
       if (dist2 > skin2) {
-        set_resort_particles(Cells::RESORT_LOCAL);
+        cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
       }
     }
   }

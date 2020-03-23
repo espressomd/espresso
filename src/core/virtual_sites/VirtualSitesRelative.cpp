@@ -169,7 +169,7 @@ void VirtualSitesRelative::update() const {
       p.r.quat = orientation(p_ref, p.p.vs_relative);
 
     if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-      set_resort_particles(Cells::RESORT_LOCAL);
+      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   } // namespace
 }
 

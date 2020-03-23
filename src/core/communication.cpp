@@ -233,7 +233,7 @@ void mpi_place_particle(int node, int id, const Utils::Vector3d &pos) {
     comm_cart.send(node, SOME_TAG, pos);
   }
 
-  set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
@@ -244,7 +244,7 @@ void mpi_place_particle_slave(int pnode, int part) {
     local_place_particle(part, pos, 0);
   }
 
-  set_resort_particles(Cells::RESORT_GLOBAL);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   on_particle_change();
 }
 
