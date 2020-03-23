@@ -5,11 +5,6 @@
 #include <type_traits>
 
 #include "thrust_wrapper.hpp"
-#include <thrust/device_vector.h>
-#include <thrust/execution_policy.h>
-#include <thrust/functional.h>
-#include <thrust/tabulate.h>
-#include <thrust/tuple.h>
 
 #include <cublas_v2.h>
 #include <cusolverDn.h>

@@ -9,8 +9,8 @@
 
 
 // Dependencies with THRUST
-//#if __has_include(<thrust/device_vector.h>) // looks if the file exists
-#if __has_include(<thrust/device_vectorBLAH.h>) || defined(__CUDA_ARCH__) // looks if the file exists // for testing non-thrust build
+#if __has_include(<thrust/device_vector.h>) || defined(__CUDA_ARCH__)// looks if the file exists
+//#if __has_include(<thrust/device_vectorBLAH.h>) || defined(__CUDA_ARCH__) // looks if the file exists // for testing non-thrust build
 #  include <thrust/device_vector.h>
 #  include <thrust/execution_policy.h>
 #  include <thrust/tabulate.h>
