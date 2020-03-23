@@ -25,7 +25,6 @@
 #include "debug.hpp"
 
 #include "cells.hpp"
-#include "particle_index.hpp"
 
 #include <stdexcept>
 
@@ -49,7 +48,7 @@ void check_particle_consistency() {
 
   /* checks: local particle id */
   int local_part_cnt = 0;
-  for (int n = 0; n < get_local_max_seen_particle() + 1; n++) {
+  for (int n = 0; n < cell_structure.get_max_local_particle_id() + 1; n++) {
     if (cell_structure.get_local_particle(n) != nullptr) {
       local_part_cnt++;
       if (cell_structure.get_local_particle(n)->p.identity != n) {

@@ -60,7 +60,6 @@
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
-#include "particle_index.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 

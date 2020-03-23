@@ -62,7 +62,6 @@
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
 #include "exclusions.hpp"
-#include "particle_index.hpp"
 #include "statistics.hpp"
 
 #include "energy.hpp"

@@ -57,7 +57,6 @@
 #include "event.hpp"
 #include "mpiio.hpp"
 #include "particle_data.hpp"
-#include "particle_index.hpp"
 
 #include <mpi.h>
 

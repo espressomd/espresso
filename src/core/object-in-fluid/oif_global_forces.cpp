@@ -25,7 +25,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
-#include "particle_index.hpp"
 
 #include <utils/math/triangle_functions.hpp>
 using Utils::angle_btw_triangles;
