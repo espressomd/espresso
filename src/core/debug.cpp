@@ -40,7 +40,7 @@ void check_particle_consistency() {
       throw std::runtime_error("Particle id out of bounds.");
     }
 
-    if (get_local_particle_data(id) != &p) {
+    if (cell_structure.get_local_particle(id) != &p) {
       throw std::runtime_error("Invalid local particle index entry.");
     }
   }
@@ -48,9 +48,9 @@ void check_particle_consistency() {
   /* checks: local particle id */
   int local_part_cnt = 0;
   for (int n = 0; n < get_local_max_seen_particle() + 1; n++) {
-    if (get_local_particle_data(n) != nullptr) {
+    if (cell_structure.get_local_particle(n) != nullptr) {
       local_part_cnt++;
-      if (get_local_particle_data(n)->p.identity != n) {
+      if (cell_structure.get_local_particle(n)->p.identity != n) {
         throw std::runtime_error("local_particles part has corrupted id.");
       }
     }

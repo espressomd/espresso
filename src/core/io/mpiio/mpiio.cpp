@@ -403,7 +403,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
                           MPI_INT);
 
     for (int i = 0; i < nlocalpart; ++i)
-      get_local_particle_data(id[i])->p.type = type[i];
+      cell_structure.get_local_particle(id[i])->p.type = type[i];
   }
 
   if (fields & MPIIO_OUT_VEL) {
@@ -415,7 +415,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i)
       for (int k = 0; k < 3; ++k)
-        get_local_particle_data(id[i])->m.v[k] = vel[3 * i + k];
+        cell_structure.get_local_particle(id[i])->m.v[k] = vel[3 * i + k];
   }
 
   if (fields & MPIIO_OUT_BND) {
@@ -438,7 +438,7 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
     for (int i = 0; i < nlocalpart; ++i) {
       int blen = boff[i + 1] - boff[i];
-      auto &bl = get_local_particle_data(id[i])->bl;
+      auto &bl = cell_structure.get_local_particle(id[i])->bl;
       bl.resize(blen);
       std::copy_n(bond.begin() + boff[i], blen, bl.begin());
     }

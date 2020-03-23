@@ -649,7 +649,8 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
 
-    assert(get_local_particle_data(src.part[i].p.identity) == nullptr);
+    assert(cell_structure.get_local_particle(src.part[i].p.identity) ==
+           nullptr);
 
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
@@ -682,7 +683,8 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
 
-    assert(get_local_particle_data(src.part[i].p.identity) == nullptr);
+    assert(cell_structure.get_local_particle(src.part[i].p.identity) ==
+           nullptr);
 
     if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir],
                      box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) {

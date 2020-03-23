@@ -106,7 +106,7 @@ velocity(const Particle *p_ref,
  */
 Particle *get_reference_particle(
     const ParticleProperties::VirtualSitesRelativeParameters &vs_rel) {
-  auto p_ref = get_local_particle_data(vs_rel.to_particle_id);
+  auto p_ref = cell_structure.get_local_particle(vs_rel.to_particle_id);
   if (!p_ref) {
     throw std::runtime_error("No real particle associated with virtual site.");
   }

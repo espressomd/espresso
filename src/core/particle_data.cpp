@@ -306,8 +306,8 @@ struct UpdateVisitor : public boost::static_visitor<void> {
   }
   /* Plain messages are just called. */
   template <typename Message> void operator()(const Message &msg) const {
-    assert(get_local_particle_data(id));
-    msg(*get_local_particle_data(id));
+    assert(cell_structure.get_local_particle(id));
+    msg(*cell_structure.get_local_particle(id));
   }
 };
 } // namespace
@@ -489,7 +489,7 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
 
 boost::optional<const Particle &> get_particle_data_local(int id) {
-  auto p = get_local_particle_data(id);
+  auto p = cell_structure.get_local_particle(id);
 
   if (p and (not p->l.ghost)) {
     return *p;
@@ -504,8 +504,8 @@ const Particle &get_particle_data(int part) {
   auto const pnode = get_particle_node(part);
 
   if (pnode == this_node) {
-    assert(get_local_particle_data(part));
-    return *get_local_particle_data(part);
+    assert(cell_structure.get_local_particle(part));
+    return *cell_structure.get_local_particle(part);
   }
 
   /* Query the cache */
@@ -528,8 +528,8 @@ void mpi_get_particles_slave(int, int) {
 
   std::vector<Particle> parts(ids.size());
   std::transform(ids.begin(), ids.end(), parts.begin(), [](int id) {
-    assert(get_local_particle_data(id));
-    return *get_local_particle_data(id);
+    assert(cell_structure.get_local_particle(id));
+    return *cell_structure.get_local_particle(id);
   });
 
   Utils::Mpi::gatherv(comm_cart, parts.data(), parts.size(), 0);
@@ -566,8 +566,8 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
   /* Copy local particles */
   std::transform(node_ids[this_node].cbegin(), node_ids[this_node].cend(),
                  parts.begin(), [](int id) {
-                   assert(get_local_particle_data(id));
-                   return *get_local_particle_data(id);
+                   assert(cell_structure.get_local_particle(id));
+                   return *cell_structure.get_local_particle(id);
                  });
 
   std::vector<int> node_sizes(comm_cart.size());
@@ -897,7 +897,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
     return cell_structure.add_local_particle(std::move(new_part));
   }
 
-  auto pt = get_local_particle_data(id);
+  auto pt = cell_structure.get_local_particle(id);
   pt->r.p = pp;
   pt->l.i = i;
 
@@ -936,7 +936,7 @@ void local_change_exclusion(int part1, int part2, int _delete) {
   }
 
   /* part1, if here */
-  auto part = get_local_particle_data(part1);
+  auto part = cell_structure.get_local_particle(part1);
   if (part) {
     if (_delete)
       delete_exclusion(part, part2);
@@ -945,7 +945,7 @@ void local_change_exclusion(int part1, int part2, int _delete) {
   }
 
   /* part2, if here */
-  part = get_local_particle_data(part2);
+  part = cell_structure.get_local_particle(part2);
   if (part) {
     if (_delete)
       delete_exclusion(part, part1);
