@@ -37,6 +37,9 @@ struct ParticleList {
   int n;
 
 private:
+  /** granularity of the particle buffers in particles */
+  static constexpr int INCREMENT = 8;
+
   /** Number of particles that fit in until a resize is needed */
   int max;
 
@@ -69,9 +72,6 @@ public:
     return {part, static_cast<size_t>(n)};
   }
 
-  /** granularity of the particle buffers in particles */
-  static constexpr int INCREMENT = 8;
-
   /**
    * @brief Resize storage for local particles and ghosts.
    *
@@ -87,6 +87,45 @@ public:
    * @brief Resize the List to zero.
    */
   void clear() { resize(0); }
+
+  /**
+   * @brief Number of entries.
+   */
+  int size() const { return n; }
+
+  /**
+   * @brief Add a particle at the end of the list.
+   *
+   * @param p Particle to add.
+   */
+  void push_back(Particle &&p) {
+    resize(size() + 1);
+    new (&(part[n - 1])) Particle(std::move(p));
+  }
+
+  /**
+   * @brief Move out the last particle in the list.
+   *
+   * Reduces the size of the list by one.
+   *
+   * @return Last particle in the list.
+   */
+  Particle &&extract_back() { return std::move(part[--n]); }
+
+  /**
+   * @brief Move out the i-th particle in the list.
+   *
+   *  This can change the order of particles
+   *  at from position i onward (including i).
+   *
+   *  @param i Position  to extract from.
+   */
+  Particle extract(int i) {
+    using std::swap;
+
+    swap(part[i], part[n - 1]);
+    return extract_back();
+  }
 };
 
 #endif

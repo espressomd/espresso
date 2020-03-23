@@ -690,7 +690,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
                      box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) {
       if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0)) {
 
-        move_unindexed_particle(&left, &src, i);
+        left.push_back(src.extract(i));
         if (i < src.n)
           i--;
       }
@@ -698,8 +698,7 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
                             box_geo.length()[dir],
                             box_geo.periodic(dir)) >= 0.0) {
       if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + 1] == 0)) {
-
-        move_unindexed_particle(&right, &src, i);
+        right.push_back(src.extract(i));
         if (i < src.n)
           i--;
       }

@@ -25,24 +25,6 @@ Particle *append_indexed_particle(ParticleList *l, Particle &&part) {
   return p;
 }
 
-Particle *move_unindexed_particle(ParticleList *dl, ParticleList *sl, int i) {
-  assert(sl->n > 0);
-  assert(i < sl->n);
-
-  dl->resize(dl->n + 1);
-  auto dst = &dl->part[dl->n - 1];
-  auto src = &sl->part[i];
-  auto end = &sl->part[sl->n - 1];
-
-  new (dst) Particle(std::move(*src));
-  if (src != end) {
-    new (src) Particle(std::move(*end));
-  }
-
-  sl->resize(sl->n - 1);
-  return dst;
-}
-
 Particle extract_indexed_particle(ParticleList *sl, int i) {
   assert(sl->n > 0);
   assert(i < sl->n);

@@ -80,18 +80,6 @@ void append_unindexed_particle(ParticleList *l, Particle &&part);
  */
 Particle *append_indexed_particle(ParticleList *plist, Particle &&part);
 
-/** Remove a particle from one particle list and append it to another.
- *  Refill the @p sourceList with last particle and update its entry in
- *  local_particles. Reallocate particles if necessary. This
- *  procedure does not care for \ref local_particles.
- *  \param destList   List where the particle is appended.
- *  \param sourceList List where the particle will be removed.
- *  \param ind        Index of the particle in the @p sourceList.
- *  \return Pointer to new location of the particle.
- */
-Particle *move_unindexed_particle(ParticleList *destList,
-                                  ParticleList *sourceList, int ind);
-
 /**
  * @brief Extract an indexed particle from a list.
  *
