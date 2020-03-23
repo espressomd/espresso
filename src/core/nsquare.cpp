@@ -133,7 +133,8 @@ void nsq_topology_init(CellPList *old) {
   }
 }
 
-void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
+void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
+                            std::vector<const Cell *> &modified_cells) {
   if (not global_flag) {
     assert(displaced_parts->n == 0);
     return;
@@ -150,6 +151,11 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(n_nodes);
   boost::mpi::all_to_all(comm_cart, send_buf, recv_buf);
+
+  if (std::any_of(recv_buf.begin(), recv_buf.end(),
+                  [](auto const &buf) { return not buf.empty(); })) {
+    modified_cells.push_back(local);
+  }
 
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {

@@ -628,8 +628,10 @@ namespace {
  *
  * @param src Particles to move.
  * @param rest Output list for left-over particles.
+ * @param modified_cells Local cells that were touched.
  */
-void move_if_local(ParticleList &src, ParticleList &rest) {
+void move_if_local(ParticleList &src, ParticleList &rest,
+                   std::vector<const Cell *> &modified_cells) {
   for (int i = 0; i < src.n; i++) {
     auto &part = src.part[i];
 
@@ -640,6 +642,7 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
 
     if (target_cell) {
       append_indexed_particle(target_cell, std::move(src.part[i]));
+      modified_cells.push_back(target_cell);
     } else {
       rest.push_back(std::move(src.part[i]));
     }
@@ -689,7 +692,8 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
   }
 }
 
-void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
+void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid,
+                        std::vector<const Cell *> &modified_cells) {
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
@@ -726,21 +730,22 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       send_buf_r.clear();
     }
 
-    move_if_local(recv_buf_l, *pl);
-    move_if_local(recv_buf_r, *pl);
+    move_if_local(recv_buf_l, *pl, modified_cells);
+    move_if_local(recv_buf_r, *pl, modified_cells);
   }
 }
 } // namespace
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Utils::Vector3i &grid) {
+                                    const Utils::Vector3i &grid,
+                                    std::vector<const Cell *> &modified_cells) {
   if (global) {
     /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(pl, grid);
+      exchange_neighbors(pl, grid, modified_cells);
 
       auto left_over =
           boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
@@ -750,7 +755,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
       }
     }
   } else {
-    exchange_neighbors(pl, grid);
+    exchange_neighbors(pl, grid, modified_cells);
   }
 }
 

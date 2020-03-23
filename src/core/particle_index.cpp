@@ -2,7 +2,7 @@
 
 std::vector<Particle *> local_particles;
 
-void update_local_particles(ParticleList *pl) {
+void update_local_particles(const ParticleList *pl) {
   Particle *p = pl->part;
   int n = pl->n, i;
   for (i = 0; i < n; i++)

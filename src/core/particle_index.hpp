@@ -61,7 +61,7 @@ inline int get_local_max_seen_particle() {
 /** Update the entries in \ref local_particles for all particles in the list pl.
  *  @param pl the list to put in.
  */
-void update_local_particles(ParticleList *pl);
+void update_local_particles(const ParticleList *pl);
 
 /** Append a particle at the end of a particle list.
  *  Reallocate particles if necessary!

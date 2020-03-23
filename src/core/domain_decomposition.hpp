@@ -158,7 +158,8 @@ void dd_topology_release();
  *  @param grid   Number of nodes in each spatial dimension
  */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Utils::Vector3i &grid);
+                                    const Utils::Vector3i &grid,
+                                    std::vector<const Cell *> &modified_cells);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells(const Utils::Vector3i &grid);

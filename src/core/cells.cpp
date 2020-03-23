@@ -45,6 +45,8 @@
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
+#include <boost/range/adaptor/uniqued.hpp>
+#include <boost/range/algorithm/sort.hpp>
 
 #include <cstdio>
 
@@ -315,7 +317,8 @@ void fold_and_reset(Particle &p) {
  *
  * @returns List of Particles that do not belong on this node.
  */
-ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
+ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells,
+                                 std::vector<const Cell *> &modified_cells) {
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
@@ -326,19 +329,28 @@ ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
 
       auto target_cell = cs.particle_to_cell(p);
 
+      /* Particle is in place */
+      if (target_cell == c)
+        continue;
+
+      /* Particle is not local */
       if (target_cell == nullptr) {
         displaced_parts.push_back(extract_indexed_particle(c, i));
 
         if (i < c->n) {
           i--;
         }
-      } else if (target_cell != c) {
+      }
+      /* Particle belongs on this node but is in the wrong cell. */
+      else if (target_cell != c) {
         append_indexed_particle(target_cell, extract_indexed_particle(c, i));
 
         if (i < c->n) {
           i--;
         }
       }
+
+      modified_cells.push_back(target_cell);
     }
   }
 
@@ -351,16 +363,25 @@ void cells_resort_particles(int global_flag) {
   clear_particle_node();
   n_verlet_updates++;
 
-  ParticleList displaced_parts =
-      sort_and_fold_parts(cell_structure, cell_structure.local_cells());
+  static std::vector<const Cell *> modified_cells;
+  modified_cells.clear();
+
+  ParticleList displaced_parts = sort_and_fold_parts(
+      cell_structure, cell_structure.local_cells(), modified_cells);
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
-    nsq_exchange_particles(global_flag, &displaced_parts);
+    nsq_exchange_particles(global_flag, &displaced_parts, modified_cells);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid,
+                                   modified_cells);
     break;
+  }
+
+  boost::sort(modified_cells);
+  for (auto cell : modified_cells | boost::adaptors::uniqued) {
+    update_local_particles(cell);
   }
 
   if (0 != displaced_parts.n) {
@@ -370,7 +391,9 @@ void cells_resort_particles(int global_flag) {
                         << " moved more than"
                            " one local box length in one timestep.";
       resort_particles = Cells::RESORT_GLOBAL;
-      append_indexed_particle(cell_structure.m_local_cells[0], std::move(part));
+      auto sort_cell = cell_structure.m_local_cells[0];
+      append_indexed_particle(sort_cell, std::move(part));
+      update_local_particles(sort_cell);
     }
   } else {
 #ifdef ADDITIONAL_CHECKS
