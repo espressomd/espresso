@@ -76,6 +76,9 @@ public:
     return {part, static_cast<size_t>(n)};
   }
 
+  Particle &front() { return assert(not empty()), *begin(); }
+  Particle &back() { return assert(not empty()), *(std::prev(end())); }
+
   /**
    * @brief Resize storage for local particles and ghosts.
    *
@@ -96,6 +99,11 @@ public:
    * @brief Number of entries.
    */
   int size() const { return n; }
+
+  /**
+   * @brief Size larger than zero.
+   */
+  bool empty() const { return size() > 0; }
 
   /**
    * @brief Add a particle at the end of the list.
