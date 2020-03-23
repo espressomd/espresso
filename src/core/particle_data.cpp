@@ -894,13 +894,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
     new_part.r.p = pp;
     new_part.l.i = i;
 
-    /* allocate particle anew */
-    auto cell = cell_structure.particle_to_cell(new_part);
-    if (!cell) {
-      return nullptr;
-    }
-
-    return append_indexed_particle(cell, std::move(new_part));
+    return cell_structure.add_local_particle(std::move(new_part));
   }
 
   auto pt = get_local_particle_data(id);

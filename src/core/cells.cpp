@@ -480,3 +480,25 @@ boost::optional<Particle> CellStructure::extract_particle(int id) {
 
   return {};
 }
+
+Particle *CellStructure::add_local_particle(Particle &&p) {
+  auto const sort_cell = cell_structure.particle_to_cell(p);
+  if (sort_cell) {
+    return append_indexed_particle(sort_cell, std::move(p));
+  }
+
+  return {};
+}
+
+Particle *CellStructure::add_particle(Particle &&p) {
+  auto const sort_cell = cell_structure.particle_to_cell(p);
+  /* There is always at least one cell, so if the particle
+   * does not belong to a cell on this node we can put it there. */
+  auto const cell = sort_cell ? sort_cell : local_cells()[0];
+
+  /* If the particle isn't local a global resort may be
+   * needed, otherwise a local resort if sufficient. */
+  set_resort_particles(sort_cell ? Cells::RESORT_LOCAL : Cells::RESORT_GLOBAL);
+
+  return append_indexed_particle(cell, std::move(p));
+}

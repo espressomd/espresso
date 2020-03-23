@@ -160,11 +160,32 @@ struct CellStructure {
   /**
    * @brief Add a particle.
    *
-   * Moves a particle into the cell system.
+   * Moves a particle into the cell system. This adds
+   * a particle to the local node, irrespective of where
+   * it belongs.
    *
    * @param p Particle to add.
+   * @return Pointer to the particle in the cell
+   *         system.
    */
-  // Particle *add_particle(Particle &&p);
+  Particle *add_particle(Particle &&p);
+
+  /**
+   * @brief Add a particle.
+   *
+   * Moves a particle into the cell system, if it
+   * belongs to this node. Otherwise this does not
+   * have an effect and the particle is discarded.
+   * This can be used to add a particle without
+   * knowledge where it should be placed by calling
+   * the function on all nodes, it will then add
+   * the particle in exactly one place.
+   *
+   * @param p Particle to add.
+   * @return Pointer to particle if it is local, null
+   *         otherwise.
+   */
+  Particle *add_local_particle(Particle &&p);
 
   /**
    * @brief Remove and return a particle.
