@@ -27,7 +27,6 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_index.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
 #include <utils/mpi/all_compare.hpp>
@@ -529,7 +528,8 @@ void handle_collisions() {
 
     // Sync max_seen_part
     auto const global_max_seen_particle = boost::mpi::all_reduce(
-        comm_cart, get_local_max_seen_particle(), boost::mpi::maximum<int>());
+        comm_cart, cell_structure.get_max_local_particle_id(),
+        boost::mpi::maximum<int>());
 
     int current_vs_pid = global_max_seen_particle + 1;
 

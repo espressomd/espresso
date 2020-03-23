@@ -517,3 +517,7 @@ Particle *CellStructure::get_local_particle(int id) {
 const Particle *CellStructure::get_local_particle(int id) const {
   return get_local_particle_data(id);
 }
+
+int CellStructure::get_max_local_particle_id() const {
+  return get_local_max_seen_particle();
+}

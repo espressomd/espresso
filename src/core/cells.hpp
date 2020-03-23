@@ -205,6 +205,14 @@ struct CellStructure {
    */
   Particle *get_local_particle(int id);
   const Particle *get_local_particle(int id) const;
+
+  /**
+   * @brief Get the maximal particle id on this node.
+   *
+   * This returns the highest particle id on
+   * this node, or -1 if there are no particles on this node.
+   */
+  int get_max_local_particle_id() const;
 };
 
 /*@}*/
