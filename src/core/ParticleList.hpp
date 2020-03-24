@@ -93,13 +93,6 @@ public:
     return {part, static_cast<size_t>(n)};
   }
 
-  Particle &front() { return assert(not empty()), *begin(); }
-  Particle &back() { return assert(not empty()), *(std::prev(end())); }
-  const Particle &front() const { return assert(not empty()), *begin(); }
-  const Particle &back() const {
-    return assert(not empty()), *(std::prev(end()));
-  }
-
   /**
    * @brief Resize storage for local particles and ghosts.
    *
@@ -122,13 +115,16 @@ public:
   bool empty() const { return size() <= 0; }
 
   /**
-   * @brief Add a particle at the end of the list.
+   * @brief Emplace a particle in the list.
    *
-   * @param p Particle to add.
+   * @param args Constructor arguments.
+   * @return Reference to the added particle.
    */
-  void push_back(Particle &&p) {
+  template <class... Args> Particle &emplace(Args &&... args) {
     resize(size() + 1);
-    part[n - 1] = std::move(p);
+    part[n - 1] = Particle(std::forward<Args>(args)...);
+
+    return part[n - 1];
   }
 
   /**

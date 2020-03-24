@@ -134,9 +134,9 @@ private:
    * @param pl List to add the particle to.
    * @param p Particle to add.
    */
-  void append_indexed_particle(ParticleList *pl, Particle &&p) {
+  Particle &append_indexed_particle(ParticleList *pl, Particle &&p) {
     auto const old_data = pl->data();
-    pl->push_back(std::move(p));
+    auto &new_part = pl->emplace(std::move(p));
 
     /* If the list storage moved due to reallocation,
      * we have to update the index for all particles,
@@ -144,8 +144,10 @@ private:
     if (old_data != pl->data())
       update_particle_index(pl);
     else {
-      update_particle_index(pl->back());
+      update_particle_index(new_part);
     }
+
+    return new_part;
   }
 
 public:

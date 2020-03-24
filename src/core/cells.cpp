@@ -302,11 +302,11 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
 
       /* Particle is not local */
       if (target_cell == nullptr) {
-        displaced_parts.push_back(std::move(p));
+        displaced_parts.emplace(std::move(p));
       }
       /* Particle belongs on this node but is in the wrong cell. */
       else if (target_cell != c) {
-        target_cell->push_back(std::move(p));
+        target_cell->emplace(std::move(p));
         modified_cells.push_back(target_cell);
       }
     }
@@ -354,7 +354,7 @@ void cells_resort_particles(int global_flag) {
       runtimeErrorMsg() << "Particle " << part.identity()
                         << " moved more than"
                            " one local box length in one timestep.";
-      sort_cell->push_back(std::move(part));
+      sort_cell->emplace(std::move(part));
     }
 
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
