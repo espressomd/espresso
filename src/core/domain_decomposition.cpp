@@ -738,7 +738,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
       exchange_neighbors(pl, grid, modified_cells);
 
       auto left_over =
-          boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
+          boost::mpi::all_reduce(comm_cart, pl->size(), std::plus<size_t>());
 
       if (left_over == 0) {
         break;

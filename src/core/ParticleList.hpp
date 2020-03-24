@@ -35,12 +35,13 @@ struct ParticleList {
   using const_iterator = const Particle *;
 
   ParticleList() : part{nullptr}, n{0}, max{0} {}
+
+private:
   /** The particles payload */
   Particle *part;
   /** Number of particles contained */
   int n;
 
-private:
   /** granularity of the particle buffers in particles */
   static constexpr int INCREMENT = 8;
 
