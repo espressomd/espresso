@@ -71,8 +71,8 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
 
     c.resize(n_part_per_cell);
 
-    for (unsigned i = 0; i < n_part_per_cell; ++i) {
-      c.part[i].p.identity = id++;
+    for(auto &p: c.particles()) {
+      p.p.identity = id++;
     }
   }
 
