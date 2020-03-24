@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
     c.resize(n_part_per_cell);
 
-    for(auto &p: c.particles()) {
+    for (auto &p : c.particles()) {
       p.p.identity = id++;
     }
   }

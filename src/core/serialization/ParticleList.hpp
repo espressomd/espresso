@@ -26,9 +26,10 @@ void load(Archive &ar, ParticleList &pl, const unsigned int /* version */) {
   int size;
   ar >> size;
 
-  pl.resize(size);
   for (int i = 0; i < size; i++) {
-    ar >> pl.data()[i];
+    Particle p;
+    ar >> p;
+    pl.emplace(std::move(p));
   }
 }
 

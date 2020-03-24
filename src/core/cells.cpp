@@ -234,7 +234,7 @@ void cells_re_init(int new_cs, double range) {
   }
 
   for (auto &cell : tmp_cells) {
-    cell.resize(0);
+    cell.clear();
   }
 
   /* to enforce initialization of the ghost cells */
