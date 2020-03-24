@@ -75,12 +75,6 @@ enum {
  * Functions
  ************************************************/
 
-/*       Functions acting on Particles          */
-/************************************************/
-
-/** Deallocate the dynamic storage of a particle. */
-void free_particle(Particle *part);
-
 /*    Other Functions                           */
 /************************************************/
 
@@ -365,17 +359,6 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
  *  @param _delete if true, delete the exclusion instead of add
  */
 void local_change_exclusion(int part1, int part2, int _delete);
-
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Remove a particle on this node.
- *  @param part the identity of the particle to remove
- */
-void local_remove_particle(int part);
-
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Locally remove all particles.
- */
-void local_remove_all_particles();
 
 /** Used by \ref mpi_rescale_particles, should not be used elsewhere.
  *  Locally rescale all particles on current node.

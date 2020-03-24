@@ -25,7 +25,6 @@
 #include "debug.hpp"
 
 #include "cells.hpp"
-#include "particle_index.hpp"
 
 #include <stdexcept>
 
@@ -33,24 +32,26 @@ void check_particle_consistency() {
   auto local_cells = cell_structure.local_cells();
   auto const cell_part_cnt = local_cells.particles().size();
 
+  auto const max_id = cell_structure.get_max_local_particle_id();
+
   for (auto const &p : local_cells.particles()) {
     auto const id = p.identity();
 
-    if (id < 0 || id > get_local_max_seen_particle()) {
+    if (id < 0 || id > max_id) {
       throw std::runtime_error("Particle id out of bounds.");
     }
 
-    if (get_local_particle_data(id) != &p) {
+    if (cell_structure.get_local_particle(id) != &p) {
       throw std::runtime_error("Invalid local particle index entry.");
     }
   }
 
   /* checks: local particle id */
   int local_part_cnt = 0;
-  for (int n = 0; n < get_local_max_seen_particle() + 1; n++) {
-    if (get_local_particle_data(n) != nullptr) {
+  for (int n = 0; n < cell_structure.get_max_local_particle_id() + 1; n++) {
+    if (cell_structure.get_local_particle(n) != nullptr) {
       local_part_cnt++;
-      if (get_local_particle_data(n)->p.identity != n) {
+      if (cell_structure.get_local_particle(n)->p.identity != n) {
         throw std::runtime_error("local_particles part has corrupted id.");
       }
     }

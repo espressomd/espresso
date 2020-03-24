@@ -27,7 +27,6 @@
 #include "event.hpp"
 #include "grid.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
-#include "particle_index.hpp"
 #include "virtual_sites/VirtualSitesRelative.hpp"
 
 #include <utils/mpi/all_compare.hpp>
@@ -65,7 +64,7 @@ Collision_parameters collision_params;
 
 namespace {
 Particle &get_part(int id) {
-  auto const p = get_local_particle_data(id);
+  auto const p = cell_structure.get_local_particle(id);
 
   if (not p) {
     throw std::runtime_error("Could not handle collision because particle " +
@@ -371,8 +370,7 @@ void place_vs_and_relate_to_particle(const int current_vs_pid,
   Particle new_part;
   new_part.p.identity = current_vs_pid;
   new_part.r.p = pos;
-  auto p_vs = append_indexed_particle(cell_structure.local_cells().cell[0],
-                                      std::move(new_part));
+  auto p_vs = cell_structure.add_particle(std::move(new_part));
 
   local_vs_relate_to(*p_vs, get_part(relate_to));
 
@@ -387,7 +385,7 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     // Create bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
     // Only add bond if vs was created on this node
-    if (get_local_particle_data(current_vs_pid - 1))
+    if (cell_structure.get_local_particle(current_vs_pid - 1))
       add_bond(get_part(current_vs_pid - 1), bondG);
     break;
   }
@@ -395,9 +393,9 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
     // Create 1st bond between the virtual particles
     const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
     // Only add bond if vs was created on this node
-    if (get_local_particle_data(current_vs_pid - 1))
+    if (cell_structure.get_local_particle(current_vs_pid - 1))
       add_bond(get_part(current_vs_pid - 1), bondG);
-    if (get_local_particle_data(current_vs_pid - 2))
+    if (cell_structure.get_local_particle(current_vs_pid - 2))
       add_bond(get_part(current_vs_pid - 2), bondG);
     break;
   }
@@ -474,9 +472,10 @@ void three_particle_binding_domain_decomposition(
   for (auto &c : gathered_queue) {
     // If we have both particles, at least as ghosts, Get the corresponding cell
     // indices
-    if (get_local_particle_data(c.pp1) && get_local_particle_data(c.pp2)) {
-      Particle &p1 = *get_local_particle_data(c.pp1);
-      Particle &p2 = *get_local_particle_data(c.pp2);
+    if (cell_structure.get_local_particle(c.pp1) &&
+        cell_structure.get_local_particle(c.pp2)) {
+      Particle &p1 = *cell_structure.get_local_particle(c.pp1);
+      Particle &p2 = *cell_structure.get_local_particle(c.pp2);
       auto cell1 = find_current_cell(p1);
       auto cell2 = find_current_cell(p2);
 
@@ -507,7 +506,7 @@ void handle_collisions() {
   if (bind_centers()) {
     for (auto &c : local_collision_queue) {
       // put the bond to the non-ghost particle; at least one partner always is
-      if (get_local_particle_data(c.pp1)->l.ghost) {
+      if (cell_structure.get_local_particle(c.pp1)->l.ghost) {
         std::swap(c.pp1, c.pp2);
       }
       int bondG[2];
@@ -529,7 +528,8 @@ void handle_collisions() {
 
     // Sync max_seen_part
     auto const global_max_seen_particle = boost::mpi::all_reduce(
-        comm_cart, get_local_max_seen_particle(), boost::mpi::maximum<int>());
+        comm_cart, cell_structure.get_max_local_particle_id(),
+        boost::mpi::maximum<int>());
 
     int current_vs_pid = global_max_seen_particle + 1;
 
@@ -537,8 +537,8 @@ void handle_collisions() {
     for (auto &c : gathered_queue) {
 
       // Get particle pointers
-      Particle *p1 = get_local_particle_data(c.pp1);
-      Particle *p2 = get_local_particle_data(c.pp2);
+      Particle *p1 = cell_structure.get_local_particle(c.pp1);
+      Particle *p2 = cell_structure.get_local_particle(c.pp2);
 
       // Only nodes take part in particle creation and binding
       // that see both particles
@@ -585,8 +585,8 @@ void handle_collisions() {
                                               p->identity());
               // Particle storage locations may have changed due to
               // added particle
-              p1 = get_local_particle_data(c.pp1);
-              p2 = get_local_particle_data(c.pp2);
+              p1 = cell_structure.get_local_particle(c.pp1);
+              p2 = cell_structure.get_local_particle(c.pp2);
             }
           };
 
@@ -645,8 +645,8 @@ void handle_collisions() {
                                             attach_vs_to.identity());
             // Particle storage locations may have changed due to
             // added particle
-            p1 = get_local_particle_data(c.pp1);
-            p2 = get_local_particle_data(c.pp2);
+            p1 = cell_structure.get_local_particle(c.pp1);
+            p2 = cell_structure.get_local_particle(c.pp2);
             current_vs_pid++;
           } else { // Just update the books
             current_vs_pid++;
@@ -663,7 +663,7 @@ void handle_collisions() {
 
     // If any node had a collision, all nodes need to resort
     if (!gathered_queue.empty()) {
-      set_resort_particles(Cells::RESORT_GLOBAL);
+      cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
       cells_update_ghosts(GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS);
     }
   }    // are we in one of the vs_based methods

@@ -25,11 +25,13 @@
 
 #include "nsquare.hpp"
 #include "communication.hpp"
-#include "constraints.hpp"
 #include "ghosts.hpp"
-#include "particle_index.hpp"
+#include "grid.hpp"
 
-#include <mpi.h>
+#include "serialization/ParticleList.hpp"
+
+#include <boost/mpi/collectives/all_to_all.hpp>
+#include <boost/serialization/vector.hpp>
 
 Cell *local;
 
@@ -60,7 +62,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm) {
   }
 }
 
-void nsq_topology_init(CellPList *old) {
+void nsq_topology_init() {
   cell_structure.type = CELL_STRUCTURE_NSQUARE;
   cell_structure.particle_to_cell = [](const Particle &p) {
     return nsq_id_to_cell(p.identity());
@@ -131,16 +133,10 @@ void nsq_topology_init(CellPList *old) {
       cell_structure.exchange_ghosts_comm.comm[0].type |= GHOST_PREFETCH;
     }
   }
-
-  /* copy particles */
-  for (auto &p : old->particles()) {
-    append_unindexed_particle(local, std::move(p));
-  }
-
-  update_local_particles(local);
 }
 
-void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
+void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
+                            std::vector<Cell *> &modified_cells) {
   if (not global_flag) {
     assert(displaced_parts->n == 0);
     return;
@@ -152,16 +148,21 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts) {
     auto const target_node = (p.identity() % n_nodes);
     send_buf.at(target_node).emplace_back(std::move(p));
   }
-  displaced_parts->resize(0);
+  displaced_parts->clear();
 
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(n_nodes);
   boost::mpi::all_to_all(comm_cart, send_buf, recv_buf);
 
+  if (std::any_of(recv_buf.begin(), recv_buf.end(),
+                  [](auto const &buf) { return not buf.empty(); })) {
+    modified_cells.push_back(local);
+  }
+
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {
     for (auto &p : parts) {
-      append_indexed_particle(local, std::move(p));
+      local->push_back(std::move(p));
     }
   }
 }

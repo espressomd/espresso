@@ -27,7 +27,7 @@
 #include "serialization/Particle.hpp"
 
 /**
- * @brief Proxy class that gets a particle range from #local_particles.
+ * @brief Proxy class that gets a particle range from #cell_structure.
  */
 class GetLocalParts {
 public:

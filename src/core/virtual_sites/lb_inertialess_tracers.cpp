@@ -116,12 +116,10 @@ void IBM_UpdateParticlePositions(ParticleRange particles) {
 #endif
         p.r.p[2] = p.r.p[2] + p.m.v[2] * time_step;
 
-      // Check if the particle might have crossed a box border (criterion see
-      // e-mail Axel 28.8.2014)
-      // if possible, use resort_particles = Cells::RESORT_LOCAL)
+      // Check if the particle might have crossed a box border
       const double dist2 = (p.r.p - p.l.p_old).norm2();
       if (dist2 > skin2) {
-        set_resort_particles(Cells::RESORT_LOCAL);
+        cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
       }
     }
   }
