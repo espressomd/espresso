@@ -123,7 +123,7 @@ public:
    * @brief Move out the i-th particle in the list.
    *
    *  This can change the order of particles
-   *  at from position i onward (including i).
+   *  from position i onward (including i).
    *
    *  @param i Position  to extract from.
    */

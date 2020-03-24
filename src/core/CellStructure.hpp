@@ -86,7 +86,7 @@ public:
    * Update the entry for a particle in the local particle
    * index.
    *
-   * @param id Entry tto update.
+   * @param id Entry to update.
    * @param p Pointer to the particle.
    **/
   void update_particle_index(int id, Particle *p) {
@@ -102,7 +102,7 @@ public:
   /**
    * @brief Update local particle index.
    *
-   * @param pl List of particle whose index entries should be updated.
+   * @param pl List of particles whose index entries should be updated.
    */
   void update_particle_index(ParticleList &pl) {
     for (auto &p : pl) {
@@ -113,7 +113,7 @@ public:
   /**
    * @brief Update local particle index.
    *
-   * @param pl List of particle whose index entries should be updated.
+   * @param pl List of particles whose index entries should be updated.
    */
   void update_particle_index(ParticleList *pl) {
     assert(pl), update_particle_index(*pl);
