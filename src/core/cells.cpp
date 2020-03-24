@@ -203,10 +203,6 @@ static void invalidate_ghosts() {
       cell_structure.update_particle_index(p.identity(), nullptr);
     }
   }
-
-  for (auto &c : cell_structure.m_ghost_cells) {
-    c->n = 0;
-  }
 }
 
 /*@}*/
