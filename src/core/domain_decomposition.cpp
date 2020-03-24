@@ -661,31 +661,26 @@ void move_if_local(ParticleList &src, ParticleList &rest,
  */
 void move_left_or_right(ParticleList &src, ParticleList &left,
                         ParticleList &right, int dir) {
-  for (int i = 0; i < src.n; i++) {
-    auto &part = src.part[i];
+  for (auto it = src.begin(); it != src.end();) {
+    assert(cell_structure.get_local_particle(it->p.identity) == nullptr);
 
-    assert(cell_structure.get_local_particle(src.part[i].p.identity) ==
-           nullptr);
-
-    if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir],
-                     box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) {
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0)) {
-
-        left.push_back(src.extract(i));
-        if (i < src.n)
-          i--;
-      }
-    } else if (get_mi_coord(part.r.p[dir], local_geo.my_right()[dir],
-                            box_geo.length()[dir],
-                            box_geo.periodic(dir)) >= 0.0) {
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + 1] == 0)) {
-        right.push_back(src.extract(i));
-        if (i < src.n)
-          i--;
-      }
+    if ((get_mi_coord(it->r.p[dir], local_geo.my_left()[dir],
+                      box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) and
+        (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0))) {
+      left.push_back(std::move(*it));
+      it = src.erase(it);
+    } else if ((get_mi_coord(it->r.p[dir], local_geo.my_right()[dir],
+                             box_geo.length()[dir],
+                             box_geo.periodic(dir)) >= 0.0) and
+               (box_geo.periodic(dir) ||
+                (local_geo.boundary()[2 * dir + 1] == 0))) {
+      right.push_back(std::move(*it));
+      it = src.erase(it);
+    } else {
+      ++it;
     }
   }
-}
+} // namespace
 
 void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid,
                         std::vector<Cell *> &modified_cells) {

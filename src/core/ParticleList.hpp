@@ -132,15 +132,6 @@ public:
   }
 
   /**
-   * @brief Move out the last particle in the list.
-   *
-   * Reduces the size of the list by one.
-   *
-   * @return Last particle in the list.
-   */
-  Particle &&extract_back() { return std::move(part[--n]); }
-
-  /**
    * @brief Remove element from the list.
    *
    * @param it Iterator pointing to the element to remove.
@@ -150,21 +141,6 @@ public:
     *it = std::move(part[--n]);
 
     return it;
-  }
-
-  /**
-   * @brief Move out the i-th particle in the list.
-   *
-   *  This can change the order of particles
-   *  from position i onward (including i).
-   *
-   *  @param i Position  to extract from.
-   */
-  Particle extract(int i) {
-    using std::swap;
-
-    swap(part[i], part[n - 1]);
-    return extract_back();
   }
 
   ~ParticleList() { realloc(0); }

@@ -285,35 +285,29 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
-    for (int i = 0; i < c->n; i++) {
-      auto &p = c->part[i];
+    for (auto it = c->begin(); it != c->end();) {
+      fold_and_reset(*it);
 
-      fold_and_reset(p);
-
-      auto target_cell = cs.particle_to_cell(p);
+      auto target_cell = cs.particle_to_cell(*it);
 
       /* Particle is in place */
-      if (target_cell == c)
+      if (target_cell == c) {
+        std::advance(it, 1);
         continue;
+      }
 
+      auto p = std::move(*it);
+      it = c->erase(it);
       modified_cells.push_back(c);
 
       /* Particle is not local */
       if (target_cell == nullptr) {
-        displaced_parts.push_back(c->extract(i));
-
-        if (i < c->n) {
-          i--;
-        }
+        displaced_parts.push_back(std::move(p));
       }
       /* Particle belongs on this node but is in the wrong cell. */
       else if (target_cell != c) {
-        target_cell->push_back(c->extract(i));
+        target_cell->push_back(std::move(p));
         modified_cells.push_back(target_cell);
-
-        if (i < c->n) {
-          i--;
-        }
       }
     }
   }
@@ -353,11 +347,10 @@ void cells_resort_particles(int global_flag) {
     cell_structure.update_particle_index(cell);
   }
 
-  if (0 != displaced_parts.n) {
+  if (not displaced_parts.empty()) {
     auto sort_cell = cell_structure.m_local_cells[0];
 
-    for (int i = 0; i < displaced_parts.n; i++) {
-      auto &part = displaced_parts.part[i];
+    for (auto &part : displaced_parts) {
       runtimeErrorMsg() << "Particle " << part.identity()
                         << " moved more than"
                            " one local box length in one timestep.";

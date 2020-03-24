@@ -28,17 +28,17 @@ void load(Archive &ar, ParticleList &pl, const unsigned int /* version */) {
 
   pl.resize(size);
   for (int i = 0; i < size; i++) {
-    ar >> pl.part[i];
+    ar >> pl.data()[i];
   }
 }
 
 template <class Archive>
 void save(Archive &ar, ParticleList const &pl,
           const unsigned int /* version */) {
-  ar << pl.n;
+  ar << pl.size();
 
-  for (int i = 0; i < pl.n; i++) {
-    ar << pl.part[i];
+  for (auto const &p : pl) {
+    ar << p;
   }
 }
 

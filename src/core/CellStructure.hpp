@@ -248,7 +248,7 @@ public:
    * @brief Remove a particle.
    *
    * Removes a particle and all bonds pointing
-   * to it. This is a colective call.
+   * to it. This is a collective call.
    *
    * @param id Id of particle to remove.
    */

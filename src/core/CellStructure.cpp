@@ -24,28 +24,16 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
 void CellStructure::remove_particle(int id) {
-  Cell *cell = nullptr;
-  int position = -1;
   for (auto c : m_local_cells) {
-    auto parts = c->particles();
-
-    for (unsigned i = 0; i < parts.size(); i++) {
-      auto &p = parts[i];
-
-      if (p.identity() == id) {
-        cell = c;
-        position = static_cast<int>(i);
+    for (auto it = c->begin(); it != c->end();) {
+      if (it->identity() == id) {
+        it = c->erase(it);
+        update_particle_index(id, nullptr);
+        update_particle_index(c);
       } else {
-        remove_all_bonds_to(p, id);
+        remove_all_bonds_to(*it++, id);
       }
     }
-  }
-
-  /* If we found the particle, remove it. */
-  if (cell && (position >= 0)) {
-    cell->extract(position);
-    update_particle_index(id, nullptr);
-    update_particle_index(cell);
   }
 }
 
