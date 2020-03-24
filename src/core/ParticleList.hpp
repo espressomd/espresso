@@ -30,6 +30,10 @@
  *  (we hope) algorithm to avoid unnecessary resizes.
  */
 struct ParticleList {
+  using value_type = Particle;
+  using iterator = Particle *;
+  using const_iterator = const Particle *;
+
   ParticleList() : part{nullptr}, n{0}, max{0} {}
   /** The particles payload */
   Particle *part;
@@ -77,9 +81,12 @@ private:
 
 public:
   Particle *data() { return part; }
+  const Particle *data() const { return part; }
 
   Particle *begin() { return data(); }
   Particle *end() { return data() + size(); }
+  const Particle *begin() const { return data(); }
+  const Particle *end() const { return data() + size(); }
 
   Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
   Utils::Span<const Particle> particles() const {
@@ -88,6 +95,10 @@ public:
 
   Particle &front() { return assert(not empty()), *begin(); }
   Particle &back() { return assert(not empty()), *(std::prev(end())); }
+  const Particle &front() const { return assert(not empty()), *begin(); }
+  const Particle &back() const {
+    return assert(not empty()), *(std::prev(end()));
+  }
 
   /**
    * @brief Resize storage for local particles and ghosts.
@@ -128,6 +139,18 @@ public:
    * @return Last particle in the list.
    */
   Particle &&extract_back() { return std::move(part[--n]); }
+
+  /**
+   * @brief Remove element from the list.
+   *
+   * @param it Iterator pointing to the element to remove.
+   * @return An iterator past the element that was removed.
+   */
+  iterator erase(iterator it) {
+    *it = std::move(part[--n]);
+
+    return it;
+  }
 
   /**
    * @brief Move out the i-th particle in the list.
