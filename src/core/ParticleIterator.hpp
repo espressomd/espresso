@@ -22,10 +22,33 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <iterator>
 
-template <typename BidirectionalIterator, typename Particle>
-struct ParticleIterator : public boost::iterator_facade<
-                              ParticleIterator<BidirectionalIterator, Particle>,
-                              Particle, boost::forward_traversal_tag> {
+namespace detail {
+/* Detect the particle iterator type for a given cell iterator type. */
+template <class CellIterator>
+using particle_iterator_t =
+    decltype((*std::declval<CellIterator>())->particles().begin());
+/* Detect the particle type for a given cell iterator type. */
+template <class CellIterator>
+using particle_t = typename std::iterator_traits<
+    particle_iterator_t<CellIterator>>::value_type;
+} // namespace detail
+
+template <typename BidirectionalIterator>
+struct ParticleIterator
+    : public boost::iterator_facade<ParticleIterator<BidirectionalIterator>,
+                                    detail::particle_t<BidirectionalIterator>,
+                                    boost::forward_traversal_tag> {
+private:
+  using base_type =
+      boost::iterator_facade<ParticleIterator<BidirectionalIterator>,
+                             detail::particle_t<BidirectionalIterator>,
+                             boost::forward_traversal_tag>;
+  using particle_iterator = detail::particle_iterator_t<BidirectionalIterator>;
+
+  BidirectionalIterator m_cell, m_end;
+  int m_part_id;
+
+public:
   ParticleIterator(BidirectionalIterator cell, BidirectionalIterator end,
                    int part_id)
       : m_cell(cell), m_end(end), m_part_id(part_id) {
@@ -36,10 +59,6 @@ struct ParticleIterator : public boost::iterator_facade<
   }
 
 private:
-  using base_type = typename boost::iterator_facade<
-      ParticleIterator<BidirectionalIterator, Particle>, Particle,
-      boost::forward_traversal_tag>;
-
   friend typename base_type::difference_type
   distance(ParticleIterator const &begin, ParticleIterator const &end) {
     if (begin == end)
@@ -92,9 +111,6 @@ private:
   }
 
   Particle &dereference() const { return (*m_cell)->particles()[m_part_id]; }
-
-  BidirectionalIterator m_cell, m_end;
-  int m_part_id;
 };
 
 #endif
