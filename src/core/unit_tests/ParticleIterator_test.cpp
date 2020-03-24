@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(empty_cells) {
 
   auto cells = make_cells(1000);
 
-  auto begin = iterator(cells.begin(), cells.end(), 0);
+  auto begin = std::next(iterator(cells.begin(), cells.end(), 0));
   auto end = iterator(cells.end(), cells.end(), 0);
 
   BOOST_CHECK(begin == end);

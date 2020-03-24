@@ -51,12 +51,7 @@ private:
 public:
   ParticleIterator(BidirectionalIterator cell, BidirectionalIterator end,
                    int part_id)
-      : m_cell(cell), m_end(end), m_part_id(part_id) {
-    /* Jump to first actual particle */
-    if ((m_cell != m_end) && (*m_cell)->particles().empty()) {
-      increment();
-    }
-  }
+      : m_cell(cell), m_end(end), m_part_id(part_id) {}
 
 private:
   friend typename base_type::difference_type
