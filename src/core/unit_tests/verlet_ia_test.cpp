@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(verlet_ia) {
 
     c.m_neighbors = Neighbors<Cell *>(neighbors, {});
 
-    c.resize(n_part_per_cell);
+    c.particles().resize(n_part_per_cell);
 
     for (auto &p : c.particles()) {
       p.p.identity = id++;

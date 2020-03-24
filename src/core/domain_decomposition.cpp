@@ -636,7 +636,7 @@ void move_if_local(ParticleList &src, ParticleList &rest,
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      target_cell->emplace(std::move(part));
+      target_cell->particles().emplace(std::move(part));
       modified_cells.push_back(target_cell);
     } else {
       rest.emplace(std::move(part));

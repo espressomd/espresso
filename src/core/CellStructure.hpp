@@ -57,7 +57,7 @@ namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *> cells) {
   /* Find first non-empty cell */
   auto first_non_empty = std::find_if(
-      cells.begin(), cells.end(), [](const Cell *c) { return not c->empty(); });
+      cells.begin(), cells.end(), [](const Cell *c) { return not c->particles().empty(); });
 
   return {CellParticleIterator(first_non_empty, cells.end()),
           CellParticleIterator(cells.end())};
@@ -134,14 +134,14 @@ private:
    * @param pl List to add the particle to.
    * @param p Particle to add.
    */
-  Particle &append_indexed_particle(ParticleList *pl, Particle &&p) {
-    auto const old_data = pl->data();
-    auto &new_part = pl->emplace(std::move(p));
+  Particle &append_indexed_particle(ParticleList &pl, Particle &&p) {
+    auto const old_data = pl.data();
+    auto &new_part = pl.emplace(std::move(p));
 
     /* If the list storage moved due to reallocation,
      * we have to update the index for all particles,
      * otherwise just for the particle that we added. */
-    if (old_data != pl->data())
+    if (old_data != pl.data())
       update_particle_index(pl);
     else {
       update_particle_index(new_part);

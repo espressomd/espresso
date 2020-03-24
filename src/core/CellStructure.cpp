@@ -25,11 +25,13 @@
 
 void CellStructure::remove_particle(int id) {
   for (auto c : m_local_cells) {
-    for (auto it = c->begin(); it != c->end();) {
+    auto &parts = c->particles();
+
+    for (auto it = parts.begin(); it != parts.end();) {
       if (it->identity() == id) {
-        it = c->erase(it);
+        it = parts.erase(it);
         update_particle_index(id, nullptr);
-        update_particle_index(c);
+        update_particle_index(parts);
       } else {
         remove_all_bonds_to(*it++, id);
       }
@@ -40,7 +42,9 @@ void CellStructure::remove_particle(int id) {
 Particle *CellStructure::add_local_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   if (sort_cell) {
-    return std::addressof(append_indexed_particle(sort_cell, std::move(p)));
+
+    return std::addressof(
+        append_indexed_particle(sort_cell->particles(), std::move(p)));
   }
 
   return {};
@@ -56,7 +60,8 @@ Particle *CellStructure::add_particle(Particle &&p) {
    * needed, otherwise a local resort if sufficient. */
   set_resort_particles(sort_cell ? Cells::RESORT_LOCAL : Cells::RESORT_GLOBAL);
 
-  return std::addressof(append_indexed_particle(cell, std::move(p)));
+  return std::addressof(
+      append_indexed_particle(cell->particles(), std::move(p)));
 }
 
 int CellStructure::get_max_local_particle_id() const {
@@ -68,7 +73,7 @@ int CellStructure::get_max_local_particle_id() const {
 
 void CellStructure::remove_all_particles() {
   for (auto c : m_local_cells) {
-    c->clear();
+    c->particles().clear();
   }
 
   m_particle_index.clear();

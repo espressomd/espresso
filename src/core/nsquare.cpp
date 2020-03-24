@@ -162,7 +162,7 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {
     for (auto &p : parts) {
-      local->emplace(std::move(p));
+      local->particles().emplace(std::move(p));
     }
   }
 }

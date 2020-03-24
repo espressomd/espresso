@@ -234,7 +234,7 @@ void cells_re_init(int new_cs, double range) {
   }
 
   for (auto &cell : tmp_cells) {
-    cell.clear();
+    cell.particles().clear();
   }
 
   /* to enforce initialization of the ghost cells */
@@ -281,7 +281,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
-    for (auto it = c->begin(); it != c->end();) {
+    for (auto it = c->particles().begin(); it != c->particles().end();) {
       fold_and_reset(*it);
 
       auto target_cell = cs.particle_to_cell(*it);
@@ -293,7 +293,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
       }
 
       auto p = std::move(*it);
-      it = c->erase(it);
+      it = c->particles().erase(it);
       modified_cells.push_back(c);
 
       /* Particle is not local */
@@ -302,7 +302,7 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
       }
       /* Particle belongs on this node but is in the wrong cell. */
       else if (target_cell != c) {
-        target_cell->emplace(std::move(p));
+        target_cell->particles().emplace(std::move(p));
         modified_cells.push_back(target_cell);
       }
     }
@@ -340,7 +340,7 @@ void cells_resort_particles(int global_flag) {
 
   boost::sort(modified_cells);
   for (auto cell : modified_cells | boost::adaptors::uniqued) {
-    cell_structure.update_particle_index(cell);
+    cell_structure.update_particle_index(cell->particles());
   }
 
   if (not displaced_parts.empty()) {
@@ -350,11 +350,11 @@ void cells_resort_particles(int global_flag) {
       runtimeErrorMsg() << "Particle " << part.identity()
                         << " moved more than"
                            " one local box length in one timestep.";
-      sort_cell->emplace(std::move(part));
+      sort_cell->particles().emplace(std::move(part));
     }
 
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
-    cell_structure.update_particle_index(sort_cell);
+    cell_structure.update_particle_index(sort_cell->particles());
   } else {
 #ifdef ADDITIONAL_CHECKS
     /* at the end of the day, everything should be consistent again */
