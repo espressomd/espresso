@@ -391,12 +391,6 @@ void add_exclusion(Particle *part, int part2);
 
 void auto_exclusion(int distance);
 
-/************************************************
- * particle initialization functions
- ************************************************/
-
-void free_particle(Particle *part) { part->~Particle(); }
-
 void mpi_who_has_slave(int, int) {
   static std::vector<int> sendbuf;
   int n_part;

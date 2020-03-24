@@ -41,7 +41,8 @@ set(EspressoCore_SRC
     thermostat.cpp
     tuning.cpp
     virtual_sites.cpp
-    exclusions.cpp CellStructure.cpp CellStructure.hpp)
+    exclusions.cpp
+    CellStructure.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC

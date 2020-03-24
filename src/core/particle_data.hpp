@@ -75,12 +75,6 @@ enum {
  * Functions
  ************************************************/
 
-/*       Functions acting on Particles          */
-/************************************************/
-
-/** Deallocate the dynamic storage of a particle. */
-void free_particle(Particle *part);
-
 /*    Other Functions                           */
 /************************************************/
 
