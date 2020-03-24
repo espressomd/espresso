@@ -241,26 +241,26 @@ public:
 private:
   /** One of @ref Cells::Resort, announces the level of resort needed.
    */
-  unsigned resort_particles = Cells::RESORT_NONE;
+  unsigned m_resort_particles = Cells::RESORT_NONE;
 
 public:
   /**
    * @brief Increase the local resort level at least to @p level.
    */
   void set_resort_particles(Cells::Resort level) {
-    resort_particles |= level;
-    assert(resort_particles & level);
+    m_resort_particles |= level;
+    assert(m_resort_particles >= level);
   }
 
   /**
    * @brief Get the currently scheduled resort level.
    */
-  unsigned get_resort_particles() const { return resort_particles; }
+  unsigned get_resort_particles() const { return m_resort_particles; }
 
   /**
    * @brief Set the resort level to sorted.
    */
-  void clear_resort_particles() { resort_particles = Cells::RESORT_NONE; }
+  void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP
