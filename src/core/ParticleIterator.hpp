@@ -46,12 +46,17 @@ private:
   using particle_iterator = detail::particle_iterator_t<BidirectionalIterator>;
 
   BidirectionalIterator m_cell, m_end;
-  int m_part_id;
+  particle_iterator m_part;
 
 public:
-  ParticleIterator(BidirectionalIterator cell, BidirectionalIterator end,
-                   int part_id)
-      : m_cell(cell), m_end(end), m_part_id(part_id) {}
+  ParticleIterator(BidirectionalIterator cell, BidirectionalIterator end)
+      : m_cell(cell), m_end(end) {
+    m_part = (m_cell != m_end) ? (*m_cell)->particles().begin()
+                               : particle_iterator();
+  }
+
+  ParticleIterator(BidirectionalIterator end)
+      : m_cell(end), m_end(end), m_part() {}
 
 private:
   friend typename base_type::difference_type
@@ -60,7 +65,7 @@ private:
       return 0;
 
     /* Remaining parts in this cell */
-    auto dist = ((*begin.m_cell)->particles().size() - begin.m_part_id);
+    auto dist = std::distance(begin.m_part, (*begin.m_cell)->particles().end());
     /* Now add the size of all cells between the next
        one and the last one */
     auto it = std::next(begin.m_cell);
@@ -70,42 +75,34 @@ private:
       ++it;
     }
 
-    /* Remaining in the last cell */
-    dist += end.m_part_id;
-
     return dist;
   }
 
   friend class boost::iterator_core_access;
 
   void increment() {
-    /* If we are not at the end of the cells,
-       there actually are particles in this cells
-       and if we are not at the last particle in the
-       cell we can just increment the particle id.
-    */
-    if ((m_cell != m_end) && (not(*m_cell)->particles().empty()) &&
-        (m_part_id < ((*m_cell)->particles().size() - 1))) {
-      /* Next part in same cell */
-      ++m_part_id;
-    } else {
-      m_part_id = 0;
+    assert(m_cell != m_end);
 
-      if (m_cell != m_end)
+    ++m_part;
+    /* If we are at the end of the particle range of the current cell,
+     * we have to go to the next cell with particles. */
+    if (m_part == (*m_cell)->particles().end()) {
+      /* Find next cell with particles, without running over the end. */
+      do {
         ++m_cell;
+      } while ((m_cell != m_end) && ((*m_cell)->particles().empty()));
 
-      /* Find next cell with particles */
-      while ((m_cell != m_end) && ((*m_cell)->particles().empty())) {
-        ++m_cell;
-      }
+      /* If there is a cell, start go to its beginning. */
+      m_part = (m_cell != m_end) ? (*m_cell)->particles().begin()
+                                 : particle_iterator();
     }
   }
 
   bool equal(ParticleIterator const &rhs) const {
-    return (m_cell == (rhs.m_cell)) && (m_part_id == rhs.m_part_id);
+    return (m_cell == (rhs.m_cell)) && (m_part == rhs.m_part);
   }
 
-  Particle &dereference() const { return (*m_cell)->particles()[m_part_id]; }
+  Particle &dereference() const { return *m_part; }
 };
 
 #endif

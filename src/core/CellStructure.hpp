@@ -60,8 +60,8 @@ struct CellPList {
     auto first = std::find_if(cell, cell + n,
                               [](const Cell *c) { return not c->empty(); });
 
-    return {CellParticleIterator(first, cell + n, 0),
-            CellParticleIterator(cell + n, cell + n, 0)};
+    return {CellParticleIterator(first, cell + n),
+            CellParticleIterator(cell + n)};
   }
 
   Cell **begin() { return cell; }
