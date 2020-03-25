@@ -489,20 +489,53 @@ inline bool add_bonded_three_body_force(Bonded_ia_parameters const &iaparams,
   return true;
 }
 
+inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                  Utils::Vector3d, Utils::Vector3d>>
+calc_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
+                            Particle const &p1, Particle const &p2,
+                            Particle const &p3, Particle const &p4) {
+  switch (iaparams.type) {
+  case BONDED_IA_OIF_LOCAL_FORCES:
+    return calc_oif_local(p1, p2, p3, p4, iaparams);
+  case BONDED_IA_IBM_TRIBEND:
+    return IBM_Tribend_CalcForce(p1, p2, p3, p4, iaparams);
+  case BONDED_IA_DIHEDRAL:
+    return dihedral_force(p2.r.p, p1.r.p, p3.r.p, p4.r.p, iaparams);
+  case BONDED_IA_TABULATED_DIHEDRAL:
+    return tab_dihedral_force(p2.r.p, p1.r.p, p3.r.p, p4.r.p, iaparams);
+  default:
+    throw std::runtime_error("Unknown bond type " +
+                             std::to_string(iaparams.type));
+  }
+}
+
+inline bool add_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
+                                       Particle *p1, Particle *p2, Particle *p3,
+                                       Particle *p4) {
+  auto const result = calc_bonded_four_body_force(iaparams, *p1, *p2, *p3, *p4);
+  if (result) {
+    using std::get;
+    auto const &forces = result.get();
+
+    p1->f.f += get<0>(forces);
+    p2->f.f += get<1>(forces);
+    p3->f.f += get<2>(forces);
+    p4->f.f += get<3>(forces);
+
+    return false;
+  }
+
+  return true;
+}
+
 /** Calculate bonded forces for one particle.
  *  @param p1   particle for which to calculate forces
  */
 inline void add_bonded_force(Particle *const p1) {
   int i = 0;
   while (i < p1->bl.n) {
-    Utils::Vector3d force1{};
-    Utils::Vector3d force2{};
-    Utils::Vector3d force3{};
-    Utils::Vector3d force4{};
-
     int type_num = p1->bl.e[i++];
     Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-    int type = iaparams.type;
     int n_partners = iaparams.num;
     bool bond_broken = true;
 
@@ -533,68 +566,14 @@ inline void add_bonded_force(Particle *const p1) {
       bond_broken = add_bonded_three_body_force(iaparams, p1, p2, p3);
     } // 2 partners (angle bonds...)
     else if (n_partners == 3) {
-      switch (type) {
-      case BONDED_IA_OIF_LOCAL_FORCES:
-        // in OIF nomenclature, particles p2 and p3 are common to both triangles
-        std::tie(force1, force2, force3, force4) =
-            calc_oif_local(*p1, *p2, *p3, *p4, iaparams);
-        bond_broken = false;
-        break;
-      // IMMERSED_BOUNDARY
-      case BONDED_IA_IBM_TRIBEND:
-        std::tie(force1, force2, force3, force4) =
-            IBM_Tribend_CalcForce(*p1, *p2, *p3, *p4, iaparams);
-        bond_broken = false;
-        break;
-      case BONDED_IA_DIHEDRAL: {
-        auto result =
-            dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
-        if (result) {
-          std::tie(force1, force2, force3) = result.get();
-          force4 = -(force1 + force2 + force3);
-          bond_broken = false;
-        }
-        break;
-      }
-      case BONDED_IA_TABULATED_DIHEDRAL: {
-        auto result =
-            tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
-        if (result) {
-          std::tie(force1, force2, force3) = result.get();
-          force4 = -(force1 + force2 + force3);
-          bond_broken = false;
-        }
-        break;
-      }
-      default:
-        runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown " << type << ","
-                          << n_partners << "\n";
-        return;
-      }
+      bond_broken = add_bonded_four_body_force(iaparams, p1, p2, p3, p4);
     } // 3 bond partners
 
     if (bond_broken) {
       bond_broken_error(p1->identity(), partner_ids);
       continue;
     }
-
-    switch (n_partners) {
-    case 3:
-      switch (type) {
-      case BONDED_IA_TABULATED_DIHEDRAL:
-      case BONDED_IA_DIHEDRAL:
-      case BONDED_IA_IBM_TRIBEND:
-      case BONDED_IA_OIF_LOCAL_FORCES:
-        p1->f.f += force1;
-        p2->f.f += force2;
-        p3->f.f += force3;
-        p4->f.f += force4;
-        break;
-      } // Switch type of 4-particle bond
-      break;
-    } // switch number of partners (add forces to particles)
-  }   // loop over the particle's bond list
+  } // loop over the particle's bond list
 }
 
 inline void add_single_particle_force(Particle &p) {
