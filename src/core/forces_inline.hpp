@@ -22,6 +22,8 @@
 #define _FORCES_INLINE_HPP
 
 #include "config.hpp"
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/range/algorithm/transform.hpp>
 
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
@@ -390,6 +392,17 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
   return result;
 }
 
+namespace {
+inline void bond_broken_error(int id, Utils::Span<int> partner_ids) {
+  auto error_msg = runtimeErrorMsg();
+
+  error_msg << "bond broken between particles " << id;
+  for (auto partner_id : partner_ids) {
+    error_msg << ", " << partner_id;
+  }
+}
+} // namespace
+
 /** Calculate bonded forces for one particle.
  *  @param p1   particle for which to calculate forces
  */
@@ -410,37 +423,24 @@ inline void add_bonded_force(Particle *const p1) {
     int n_partners = iaparams.num;
     bool bond_broken = true;
 
-    if (n_partners) {
-      p2 = cell_structure.get_local_particle(p1->bl.e[i++]);
-      if (!p2) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
-        return;
-      }
+    Utils::Span<int> partner_ids{p1->bl.e + i, static_cast<size_t>(n_partners)};
+    i += n_partners;
+    std::array<Particle *, 4> partner_ptrs{};
+    boost::transform(partner_ids, partner_ptrs.begin(), [](int id) {
+      return cell_structure.get_local_particle(id);
+    });
 
-      /* fetch particle 3 eventually */
-      if (n_partners >= 2) {
-        p3 = cell_structure.get_local_particle(p1->bl.e[i++]);
-        if (!p3) {
-          runtimeErrorMsg()
-              << "bond broken between particles " << p1->p.identity << ", "
-              << p1->bl.e[i - 2] << " and " << p1->bl.e[i - 1]
-              << " (particles are not stored on the same node)";
-          return;
-        }
-      }
+    Utils::Span<Particle *> partners{partner_ptrs.data(),
+                                     static_cast<size_t>(n_partners)};
 
-      /* fetch particle 4 eventually */
-      if (n_partners >= 3) {
-        p4 = cell_structure.get_local_particle(p1->bl.e[i++]);
-        if (!p4) {
-          runtimeErrorMsg()
-              << "bond broken between particles " << p1->p.identity << ", "
-              << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2] << " and "
-              << p1->bl.e[i - 1] << " (particles not stored on the same node)";
-          return;
-        }
-      }
+    if (boost::algorithm::any_of(
+            partners, [](Particle *partner) { return partner == nullptr; })) {
+      bond_broken_error(p1->identity(), partner_ids);
     }
+
+    p2 = partners[0];
+    p3 = partners[1];
+    p4 = partners[2];
 
     if (n_partners == 1) {
       /* because of the NPT pressure calculation for pair forces, we need the
@@ -553,14 +553,13 @@ inline void add_bonded_force(Particle *const p1) {
       }
     } // 3 bond partners
 
+    if (bond_broken) {
+      bond_broken_error(p1->identity(), partner_ids);
+      continue;
+    }
+
     switch (n_partners) {
     case 1:
-      if (bond_broken) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << " and " << p2->p.identity;
-        continue;
-      }
-
       switch (type) {
       case BONDED_IA_THERMALIZED_DIST:
         p1->f.f += force1;
@@ -577,25 +576,11 @@ inline void add_bonded_force(Particle *const p1) {
 #endif
       break;
     case 2:
-      if (bond_broken) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << ", " << p2->p.identity << " and "
-                          << p3->p.identity;
-        continue;
-      }
-
       p1->f.f += force1;
       p2->f.f += force2;
       p3->f.f += force3;
       break;
     case 3:
-      if (bond_broken) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << ", " << p2->p.identity << ", " << p3->p.identity
-                          << " and " << p4->p.identity;
-        continue;
-      }
-
       switch (type) {
       case BONDED_IA_TABULATED_DIHEDRAL:
       case BONDED_IA_DIHEDRAL:
