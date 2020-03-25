@@ -426,7 +426,6 @@ calc_bonded_three_body_force(Bonded_ia_parameters const &iaparams,
     return angle_cosine_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
   case BONDED_IA_ANGLE_COSSQUARE:
     return angle_cossquare_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
-    break;
   case BONDED_IA_TABULATED_ANGLE:
     return tab_angle_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
   case BONDED_IA_IBM_TRIEL: {

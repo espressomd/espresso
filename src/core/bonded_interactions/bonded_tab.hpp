@@ -107,10 +107,9 @@ tab_bond_energy(Bonded_ia_parameters const &iaparams,
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
-                             Utils::Vector3d const &r_left,
-                             Utils::Vector3d const &r_right,
-                             Bonded_ia_parameters const &iaparams) {
+tab_angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                Utils::Vector3d const &r_right,
+                Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -125,21 +124,6 @@ angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
   };
 
   return angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
-}
-
-/** Compute the three-body angle interaction force.
- *  @param[in]  r_mid     Position of second/middle particle.
- *  @param[in]  r_left    Position of first/left particle.
- *  @param[in]  r_right   Position of third/right particle.
- *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @return the forces on the second, first and third particles.
- */
-inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-tab_angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-                Utils::Vector3d const &r_right,
-                Bonded_ia_parameters const &iaparams) {
-
-  return angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Compute the three-body angle interaction energy.
