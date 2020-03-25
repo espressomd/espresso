@@ -97,110 +97,95 @@ inline void add_non_bonded_pair_virials(Particle const &p1, Particle const &p2,
 #endif /*ifdef DIPOLES */
 }
 
-/** Calculate bonded virials for one particle.
- *  @param p1 particle for which to calculate virials
- */
-inline void add_bonded_virials(Particle const &p1) {
+boost::optional<Utils::Matrix<double, 3, 3>>
+calc_bonded_virial_stress(Bonded_ia_parameters const &iaparams,
+                          Particle const &p1, Particle const &p2) {
+  auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  Utils::Vector3d torque{};
+  auto const result = calc_bond_pair_force(p1, p2, iaparams, dx, torque);
+  if (result) {
+    auto const &force = result.get();
 
-  int i = 0;
-  while (i < p1.bl.n) {
-    auto const type_num = p1.bl.e[i++];
-    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-    if (iaparams.num != 1) {
-      i += iaparams.num;
-      continue;
-    }
+    return tensor_product(force, dx);
+  }
 
-    /* fetch particle 2 */
-    Particle const *const p2 = cell_structure.get_local_particle(p1.bl.e[i++]);
-    if (!p2) {
-      // for harmonic spring:
-      // if cutoff was defined and p2 is not there it is anyway outside the
-      // cutoff, see calc_maximal_cutoff()
-      if ((type_num == BONDED_IA_HARMONIC) && (iaparams.p.harmonic.r_cut > 0))
-        return;
-      runtimeErrorMsg() << "bond broken between particles " << p1.p.identity
-                        << " and " << p1.bl.e[i - 1]
-                        << " (particles not stored on the same node)";
-      return;
-    }
+  return {};
+}
 
-    auto const dx = get_mi_vector(p1.r.p, p2->r.p, box_geo);
-    Utils::Vector3d torque{};
-    auto result = calc_bond_pair_force(p1, *p2, iaparams, dx, torque);
+boost::optional<Utils::Matrix<double, 3, 3>>
+calc_bonded_three_body_stress(Bonded_ia_parameters const &iaparams,
+                              Particle const &p1, Particle const &p2,
+                              Particle const &p3) {
+  switch (iaparams.type) {
+  case BONDED_IA_ANGLE_HARMONIC:
+  case BONDED_IA_ANGLE_COSINE:
+  case BONDED_IA_ANGLE_COSSQUARE:
+  case BONDED_IA_TABULATED_ANGLE: {
+    auto const dx21 = -get_mi_vector(p1.r.p, p2.r.p, box_geo);
+    auto const dx31 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
+
+    auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
     if (result) {
-      auto const &force = result.get();
+      Utils::Vector3d force2, force3;
+      std::tie(std::ignore, force2, force3) = result.get();
 
-      *obsstat_bonded(&virials, type_num) += dx * force;
-
-      /* stress tensor part */
-      for (int k = 0; k < 3; k++)
-        for (int l = 0; l < 3; l++)
-          obsstat_bonded(&p_tensor, type_num)[k * 3 + l] += force[k] * dx[l];
+      return tensor_product(force2, dx21) + tensor_product(force3, dx31);
     }
+  }
+  default:
+    runtimeWarningMsg() << "Unsupported bond type " +
+                               std::to_string(iaparams.type) +
+                               " in pressure calculation.";
+    return Utils::Matrix<double, 3, 3>{};
   }
 }
 
-/** Calculate the contribution to the stress tensor from angular potentials.
- *  The central particle of the three-particle interaction is responsible
- *  for the contribution of the entire interaction - this is the coding
- *  not the physics.
- */
-inline void add_three_body_bonded_stress(Particle const &p1) {
-  int i = 0;
-  while (i < p1.bl.n) {
-    /* scan bond list for angular interactions */
-    auto const type_num = p1.bl.e[i];
-    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-
-    // Skip non-three-particle-bonds
-    if (iaparams.num != 2) // number of partners
-    {
-      i += 1 + iaparams.num;
-      continue;
-    }
-
-    switch (iaparams.type) {
-    case BONDED_IA_ANGLE_HARMONIC:
-    case BONDED_IA_ANGLE_COSINE:
-    case BONDED_IA_ANGLE_COSSQUARE:
-    case BONDED_IA_TABULATED_ANGLE: {
-      Particle const &p2 = *cell_structure.get_local_particle(p1.bl.e[i + 1]);
-      Particle const &p3 = *cell_structure.get_local_particle(p1.bl.e[i + 2]);
-
-      auto const dx21 = -get_mi_vector(p1.r.p, p2.r.p, box_geo);
-      auto const dx31 = get_mi_vector(p3.r.p, p1.r.p, box_geo);
-
-      auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
-      /* three-body bonded interactions contribute to the stress but not the
-       * scalar pressure */
-      if (result) {
-        Utils::Vector3d force2, force3;
-        std::tie(std::ignore, force2, force3) = result.get();
-
-        for (int k = 0; k < 3; k++) {
-          for (int l = 0; l < 3; l++) {
-            obsstat_bonded(&p_tensor, type_num)[3 * k + l] +=
-                force2[k] * dx21[l] + force3[k] * dx31[l];
-          }
-        }
-      }
-    }
-    default:
-      runtimeWarningMsg() << "Unsupported bond type " +
-                                 std::to_string(iaparams.type) +
-                                 " in pressure calculation.";
-    }
-    i += 3; // bond type and 2 partners
+inline boost::optional<Utils::Matrix<double, 3, 3>>
+calc_bonded_stress(Bonded_ia_parameters const &iaparams, Particle &p1,
+                   Utils::Span<Particle *> partners) {
+  switch (iaparams.num) {
+  case 1:
+    return calc_bonded_virial_stress(iaparams, p1, *partners[0]);
+  case 2:
+    return calc_bonded_three_body_stress(iaparams, p1, *partners[0],
+                                         *partners[1]);
+  default:
+    runtimeWarningMsg() << "Unsupported bond type " +
+                               std::to_string(iaparams.type) +
+                               " in pressure calculation.";
+    return Utils::Matrix<double, 3, 3>{};
   }
+}
+
+inline bool add_bonded_stress(Bonded_ia_parameters const &iaparams,
+                              Particle &p1, Utils::Span<Particle *> partners) {
+  auto const result = calc_bonded_stress(iaparams, p1, partners);
+  if (result) {
+    /* The pressure contributions are indexed by the type in
+     * the parameters array, so we need to find that */
+    auto bond_index = std::addressof(iaparams) - bonded_ia_params.data();
+
+    auto const &stress = result.get();
+
+    *obsstat_bonded(&virials, bond_index) += trace(stress);
+
+    /* stress tensor part */
+    for (int k = 0; k < 3; k++)
+      for (int l = 0; l < 3; l++)
+        obsstat_bonded(&p_tensor, bond_index)[k * 3 + l] += stress[k][l];
+
+    return false;
+  }
+
+  return true;
 }
 
 /** Calculate kinetic pressure (aka energy) for one particle.
  *  @param p1 particle for which to calculate pressure
  *  @param v_comp flag which enables compensation of the velocities required
- *                for deriving a pressure reflecting \ref nptiso_struct::p_inst
- *                (hence it only works with domain decomposition); naturally it
- *                therefore doesn't make sense to use it without NpT.
+ *                for deriving a pressure reflecting \ref
+ * nptiso_struct::p_inst (hence it only works with domain decomposition);
+ * naturally it therefore doesn't make sense to use it without NpT.
  */
 inline void add_kinetic_virials(Particle const &p1, int v_comp) {
   if (not p1.p.is_virtual) {
