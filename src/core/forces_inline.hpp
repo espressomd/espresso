@@ -404,29 +404,29 @@ inline void bond_broken_error(int id, Utils::Span<int> partner_ids) {
 } // namespace
 
 inline bool add_bonded_two_body_force(Bonded_ia_parameters const &iaparams,
-                                      Particle *p1, Particle *p2) {
-  auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+                                      Particle &p1, Particle &p2) {
+  auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
   switch (iaparams.type) {
   case BONDED_IA_THERMALIZED_DIST: {
-    auto result = thermalized_bond_forces(*p1, *p2, iaparams, dx);
+    auto result = thermalized_bond_forces(p1, p2, iaparams, dx);
     if (result) {
       using std::get;
-      p1->f.f += get<0>(result.get());
-      p2->f.f += get<1>(result.get());
+      p1.f.f += get<0>(result.get());
+      p2.f.f += get<1>(result.get());
 
       return false;
     }
   }
   default: {
     Utils::Vector3d torque1{};
-    auto result = calc_bond_pair_force(*p1, *p2, iaparams, dx, torque1);
+    auto result = calc_bond_pair_force(p1, p2, iaparams, dx, torque1);
     if (result) {
-      p1->f.f += result.get();
-      p2->f.f -= result.get();
+      p1.f.f += result.get();
+      p2.f.f -= result.get();
 
 #ifdef ROTATION
-      p1->f.torque += torque1;
+      p1.f.torque += torque1;
 #endif
 
 #ifdef NPT
@@ -465,20 +465,20 @@ calc_bonded_three_body_force(Bonded_ia_parameters const &iaparams,
 }
 
 inline bool add_bonded_three_body_force(Bonded_ia_parameters const &iaparams,
-                                        Particle *p1, Particle *p2,
-                                        Particle *p3) {
+                                        Particle &p1, Particle &p2,
+                                        Particle &p3) {
   switch (iaparams.type) {
   case BONDED_IA_OIF_GLOBAL_FORCES:
     return false;
   default: {
-    auto const result = calc_bonded_three_body_force(iaparams, *p1, *p2, *p3);
+    auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
     if (result) {
       using std::get;
       auto const &forces = result.get();
 
-      p1->f.f += get<0>(forces);
-      p2->f.f += get<1>(forces);
-      p3->f.f += get<2>(forces);
+      p1.f.f += get<0>(forces);
+      p2.f.f += get<1>(forces);
+      p3.f.f += get<2>(forces);
 
       return false;
     }
@@ -510,17 +510,17 @@ calc_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
 }
 
 inline bool add_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
-                                       Particle *p1, Particle *p2, Particle *p3,
-                                       Particle *p4) {
-  auto const result = calc_bonded_four_body_force(iaparams, *p1, *p2, *p3, *p4);
+                                       Particle &p1, Particle &p2, Particle &p3,
+                                       Particle &p4) {
+  auto const result = calc_bonded_four_body_force(iaparams, p1, p2, p3, p4);
   if (result) {
     using std::get;
     auto const &forces = result.get();
 
-    p1->f.f += get<0>(forces);
-    p2->f.f += get<1>(forces);
-    p3->f.f += get<2>(forces);
-    p4->f.f += get<3>(forces);
+    p1.f.f += get<0>(forces);
+    p2.f.f += get<1>(forces);
+    p3.f.f += get<2>(forces);
+    p4.f.f += get<3>(forces);
 
     return false;
   }
@@ -560,13 +560,13 @@ inline void add_bonded_force(Particle *const p1) {
     auto const p4 = partners[2];
 
     if (n_partners == 1) {
-      bond_broken = add_bonded_two_body_force(iaparams, p1, p2);
+      bond_broken = add_bonded_two_body_force(iaparams, *p1, *p2);
     } // 1 partner
     else if (n_partners == 2) {
-      bond_broken = add_bonded_three_body_force(iaparams, p1, p2, p3);
+      bond_broken = add_bonded_three_body_force(iaparams, *p1, *p2, *p3);
     } // 2 partners (angle bonds...)
     else if (n_partners == 3) {
-      bond_broken = add_bonded_four_body_force(iaparams, p1, p2, p3, p4);
+      bond_broken = add_bonded_four_body_force(iaparams, *p1, *p2, *p3, *p4);
     } // 3 bond partners
 
     if (bond_broken) {
