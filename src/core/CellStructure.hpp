@@ -102,6 +102,18 @@ public:
   /**
    * @brief Update local particle index.
    *
+   * Update the entry for a particle in the local particle
+   * index.
+   *
+   * @param p Pointer to the particle.
+   **/
+  void update_particle_index(Particle &p) {
+    update_particle_index(p.identity(), std::addressof(p));
+  }
+
+  /**
+   * @brief Update local particle index.
+   *
    * @param pl List of particles whose index entries should be updated.
    */
   void update_particle_index(ParticleList &pl) {
@@ -119,6 +131,28 @@ public:
     assert(pl), update_particle_index(*pl);
   }
 
+private:
+  /**
+   * @brief Append a particle to a list and update this
+   *        particle index accordingly.
+   * @param pl List to add the particle to.
+   * @param p Particle to add.
+   */
+  void append_indexed_particle(ParticleList *pl, Particle &&p) {
+    auto const old_data = pl->data();
+    pl->push_back(std::move(p));
+
+    /* If the list storage moved due to reallocation,
+     * we have to update the index for all particles,
+     * otherwise just for the particle that we added. */
+    if (old_data != pl->data())
+      update_particle_index(pl);
+    else {
+      update_particle_index(pl->back());
+    }
+  }
+
+public:
   /**
    * @brief Get a local particle by id.
    *
