@@ -166,17 +166,17 @@ inline void add_bonded_virials(Particle const &p1) {
 
     auto const dx = get_mi_vector(p1.r.p, p2->r.p, box_geo);
     Utils::Vector3d torque{};
-    Utils::Vector3d force{};
     auto result = calc_bond_pair_force(p1, *p2, iaparams, dx, torque);
     if (result) {
-      force = result.get();
-    }
-    *obsstat_bonded(&virials, type_num) += dx * force;
+      auto const &force = result.get();
 
-    /* stress tensor part */
-    for (int k = 0; k < 3; k++)
-      for (int l = 0; l < 3; l++)
-        obsstat_bonded(&p_tensor, type_num)[k * 3 + l] += force[k] * dx[l];
+      *obsstat_bonded(&virials, type_num) += dx * force;
+
+      /* stress tensor part */
+      for (int k = 0; k < 3; k++)
+        for (int l = 0; l < 3; l++)
+          obsstat_bonded(&p_tensor, type_num)[k * 3 + l] += force[k] * dx[l];
+    }
   }
 }
 
