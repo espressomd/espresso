@@ -403,6 +403,43 @@ inline void bond_broken_error(int id, Utils::Span<int> partner_ids) {
 }
 } // namespace
 
+inline bool add_bonded_pair_force(Bonded_ia_parameters const &iaparams,
+                                  Particle *p1, Particle *p2) {
+  auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
+
+  switch (iaparams.type) {
+  case BONDED_IA_THERMALIZED_DIST: {
+    auto result = thermalized_bond_forces(*p1, *p2, iaparams, dx);
+    if (result) {
+      using std::get;
+      p1->f.f += get<0>(result.get());
+      p2->f.f += get<1>(result.get());
+
+      return false;
+    }
+  }
+  default: {
+    Utils::Vector3d torque1{};
+    auto result = calc_bond_pair_force(*p1, *p2, iaparams, dx, torque1);
+    if (result) {
+      p1->f.f += result.get();
+      p2->f.f -= result.get();
+
+#ifdef ROTATION
+      p1->f.torque += torque1;
+#endif
+
+#ifdef NPT
+      npt_add_virial_contribution(result.get(), dx);
+#endif
+      return false;
+    }
+  }
+  }
+
+  return true;
+}
+
 /** Calculate bonded forces for one particle.
  *  @param p1   particle for which to calculate forces
  */
@@ -433,6 +470,7 @@ inline void add_bonded_force(Particle *const p1) {
     Utils::Span<Particle *> partners{partner_ptrs.data(),
                                      static_cast<size_t>(n_partners)};
 
+    /* Check if id resolution fail for any partner */
     if (boost::algorithm::any_of(
             partners, [](Particle *partner) { return partner == nullptr; })) {
       bond_broken_error(p1->identity(), partner_ids);
@@ -443,33 +481,7 @@ inline void add_bonded_force(Particle *const p1) {
     p4 = partners[2];
 
     if (n_partners == 1) {
-      /* because of the NPT pressure calculation for pair forces, we need the
-         1->2 distance vector here. For many body interactions this vector is
-         not needed,
-         and the pressure calculation not yet clear. */
-      auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
-      auto result = calc_bond_pair_force(*p1, *p2, iaparams, dx, torque1);
-      if (result) {
-        force1 = result.get();
-        bond_broken = false;
-      }
-
-#ifdef NPT
-      npt_add_virial_contribution(force1, dx);
-#endif
-
-      switch (type) {
-      case BONDED_IA_THERMALIZED_DIST: {
-        auto result = thermalized_bond_forces(*p1, *p2, iaparams, dx);
-        if (result) {
-          std::tie(force1, force2) = result.get();
-          bond_broken = false;
-        }
-        break;
-      }
-      default:
-        break;
-      }
+      bond_broken = add_bonded_pair_force(iaparams, p1, partners[0]);
     } // 1 partner
     else if (n_partners == 2) {
       switch (type) {
