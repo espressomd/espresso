@@ -29,6 +29,8 @@
 #include "ghosts.hpp"
 
 #include <boost/range/algorithm/find_if.hpp>
+#include <boost/range/algorithm/transform.hpp>
+
 #include <vector>
 
 /** Cell Structure */
@@ -176,6 +178,12 @@ public:
       return nullptr;
 
     return m_particle_index[id];
+  }
+
+  template <class InputRange, class OutputIterator>
+  void get_local_particles(InputRange ids, OutputIterator out) {
+    boost::transform(ids, out,
+                     [this](int id) { return get_local_particle(id); });
   }
 
   std::vector<Cell *> m_local_cells = {};

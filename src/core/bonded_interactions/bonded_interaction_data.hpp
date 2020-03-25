@@ -19,11 +19,14 @@
 #ifndef _BONDED_INTERACTION_DATA_HPP
 #define _BONDED_INTERACTION_DATA_HPP
 
+#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "TabulatedPotential.hpp"
 
 #include <utils/Span.hpp>
 
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/container/static_vector.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
@@ -528,4 +531,57 @@ void for_each_bond(Utils::Span<const int> bl,
     kernel(iaparams, partner_ids);
   }
 }
+
+void bond_broken_error(int id, Utils::Span<const int> partner_ids);
+
+/**
+ * Exception indicating that a particle id
+ * could not be resolved by @ref resolve_bond_partners.
+ */
+struct BondResolutionError : std::exception {};
+
+/**
+ * @brief Resolve ids to particles.
+ *
+ * @throws BondResolutionError if one of the ids
+ *         was not found.
+ *
+ * @param cs CellStructure to use for resolution.
+ * @param partner_ids Ids to resolve.
+ * @return Vector of Particle pointers.
+ */
+inline auto resolve_bond_partners(CellStructure &cs,
+                                  Utils::Span<const int> partner_ids) {
+  boost::container::static_vector<Particle *, 4> partners;
+  cs.get_local_particles(partner_ids, std::back_inserter(partners));
+
+  /* Check if id resolution failed for any partner */
+  if (boost::algorithm::any_of(
+          partners, [](Particle *partner) { return partner == nullptr; })) {
+    throw BondResolutionError{};
+  }
+
+  return partners;
+}
+
+template <class Handler>
+void execute_bond_handler(CellStructure &cs, Particle &p, Handler handler) {
+  for_each_bond(p.bonds(), bonded_ia_params,
+                [&](Bonded_ia_parameters const &iaparams,
+                    Utils::Span<const int> partner_ids) {
+                  try {
+                    auto partners = resolve_bond_partners(cs, partner_ids);
+
+                    auto const bond_broken =
+                        handler(iaparams, p, Utils::make_span(partners));
+
+                    if (bond_broken) {
+                      bond_broken_error(p.identity(), partner_ids);
+                    }
+                  } catch (const BondResolutionError &) {
+                    bond_broken_error(p.identity(), partner_ids);
+                  }
+                });
+}
+
 #endif

@@ -22,8 +22,6 @@
 #define _FORCES_INLINE_HPP
 
 #include "config.hpp"
-#include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/range/algorithm/transform.hpp>
 
 #include "bonded_interactions/angle_cosine.hpp"
 #include "bonded_interactions/angle_cossquare.hpp"
@@ -392,17 +390,6 @@ calc_bond_pair_force(Particle const &p1, Particle const &p2,
   return result;
 }
 
-namespace {
-inline void bond_broken_error(int id, Utils::Span<const int> partner_ids) {
-  auto error_msg = runtimeErrorMsg();
-
-  error_msg << "bond broken between particles " << id;
-  for (auto partner_id : partner_ids) {
-    error_msg << ", " << partner_id;
-  }
-}
-} // namespace
-
 inline bool add_bonded_two_body_force(Bonded_ia_parameters const &iaparams,
                                       Particle &p1, Particle &p2) {
   auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
@@ -528,50 +515,27 @@ inline bool add_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
   return true;
 }
 
-inline void add_bonded_force(Bonded_ia_parameters const &iaparams, Particle &p1,
-                             Utils::Span<const int> partner_ids) {
-  std::array<Particle *, 4> partner_ptrs{};
-  boost::transform(partner_ids, partner_ptrs.begin(), [](int id) {
-    return cell_structure.get_local_particle(id);
-  });
-
-  Utils::Span<Particle *> partners{partner_ptrs.data(), partner_ids.size()};
-
-  /* Check if id resolution fail for any partner */
-  if (boost::algorithm::any_of(
-          partners, [](Particle *partner) { return partner == nullptr; })) {
-    bond_broken_error(p1.identity(), partner_ids);
-  }
-
-  auto const p2 = partners[0];
-  auto const p3 = partners[1];
-  auto const p4 = partners[2];
-
-  int n_partners = iaparams.num;
-  bool bond_broken = true;
-  if (n_partners == 1) {
-    bond_broken = add_bonded_two_body_force(iaparams, p1, *p2);
-  } // 1 partner
-  else if (n_partners == 2) {
-    bond_broken = add_bonded_three_body_force(iaparams, p1, *p2, *p3);
-  } // 2 partners (angle bonds...)
-  else if (n_partners == 3) {
-    bond_broken = add_bonded_four_body_force(iaparams, p1, *p2, *p3, *p4);
-  } // 3 bond partners
-
-  if (bond_broken) {
-    bond_broken_error(p1.identity(), partner_ids);
+inline bool add_bonded_force(Bonded_ia_parameters const &iaparams, Particle &p1,
+                             Utils::Span<Particle *> partners) {
+  switch (iaparams.num) {
+  case 1:
+    return add_bonded_two_body_force(iaparams, p1, *partners[0]);
+  case 2:
+    return add_bonded_three_body_force(iaparams, p1, *partners[0],
+                                       *partners[1]);
+  case 3:
+    return add_bonded_four_body_force(iaparams, p1, *partners[0], *partners[1],
+                                      *partners[2]);
+  default:
+    throw std::runtime_error("Invalid bond size " +
+                             std::to_string(iaparams.num));
   }
 }
 
 /** Calculate bonded forces for one particle.
- *  @param p   particle for which to calculate forces
+ *  @param p particle for which to calculate forces
  */
 inline void add_single_particle_force(Particle &p) {
-  for_each_bond(p.bonds(), bonded_ia_params,
-                [&p](Bonded_ia_parameters const &iaparams,
-                     Utils::Span<const int> partner_ids) {
-                  add_bonded_force(iaparams, p, partner_ids);
-                });
+  execute_bond_handler(cell_structure, p, add_bonded_force);
 }
 #endif
