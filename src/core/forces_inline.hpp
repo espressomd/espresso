@@ -536,18 +536,16 @@ inline void add_bonded_force(Particle *const p1) {
   while (i < p1->bl.n) {
     int type_num = p1->bl.e[i++];
     Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-    int n_partners = iaparams.num;
-    bool bond_broken = true;
 
-    Utils::Span<int> partner_ids{p1->bl.e + i, static_cast<size_t>(n_partners)};
-    i += n_partners;
+    Utils::Span<int> partner_ids{p1->bl.e + i, static_cast<size_t>(iaparams.num)};
+    i += iaparams.num;
     std::array<Particle *, 4> partner_ptrs{};
     boost::transform(partner_ids, partner_ptrs.begin(), [](int id) {
       return cell_structure.get_local_particle(id);
     });
 
     Utils::Span<Particle *> partners{partner_ptrs.data(),
-                                     static_cast<size_t>(n_partners)};
+                                     partner_ids.size()};
 
     /* Check if id resolution fail for any partner */
     if (boost::algorithm::any_of(
@@ -559,6 +557,8 @@ inline void add_bonded_force(Particle *const p1) {
     auto const p3 = partners[1];
     auto const p4 = partners[2];
 
+    int n_partners = iaparams.num;
+    bool bond_broken = true;
     if (n_partners == 1) {
       bond_broken = add_bonded_two_body_force(iaparams, *p1, *p2);
     } // 1 partner
@@ -571,7 +571,6 @@ inline void add_bonded_force(Particle *const p1) {
 
     if (bond_broken) {
       bond_broken_error(p1->identity(), partner_ids);
-      continue;
     }
   } // loop over the particle's bond list
 }
