@@ -25,6 +25,7 @@
 #include <utils/Span.hpp>
 
 #include <boost/optional.hpp>
+#include <boost/range/algorithm/transform.hpp>
 
 /** @file
  *  Data structures for bonded interactions.
@@ -510,4 +511,19 @@ void remove_all_bonds_to(Particle &p, int id);
 double maximal_cutoff_bonded();
 
 int virtual_set_params(int bond_type);
+
+template<class Kernel>
+void for_each_bond(Utils::Span<const int> bl, std::vector<Bonded_ia_parameters> const& parameters, Kernel kernel) {
+  int i = 0;
+  while (i < bl.size()) {
+    int type_num = bl[i++];
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+
+    Utils::Span<const int> partner_ids{bl.data() + i,
+                                       static_cast<size_t>(iaparams.num)};
+    i += iaparams.num;
+
+    kernel(iaparams, partner_ids);
+  }
+}
 #endif
