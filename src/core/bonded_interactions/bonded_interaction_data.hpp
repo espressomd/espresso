@@ -512,8 +512,10 @@ double maximal_cutoff_bonded();
 
 int virtual_set_params(int bond_type);
 
-template<class Kernel>
-void for_each_bond(Utils::Span<const int> bl, std::vector<Bonded_ia_parameters> const& parameters, Kernel kernel) {
+template <class Kernel>
+void for_each_bond(Utils::Span<const int> bl,
+                   std::vector<Bonded_ia_parameters> const &parameters,
+                   Kernel kernel) {
   int i = 0;
   while (i < bl.size()) {
     int type_num = bl[i++];

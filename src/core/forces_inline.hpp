@@ -565,20 +565,13 @@ inline void add_bonded_force(Bonded_ia_parameters const &iaparams, Particle &p1,
 }
 
 /** Calculate bonded forces for one particle.
- *  @param p1   particle for which to calculate forces
+ *  @param p   particle for which to calculate forces
  */
-inline void add_bonded_force(Particle *const p1) {
-  for_each_bond(
-      p1->bonds(), bonded_ia_params,
-      [p1](Bonded_ia_parameters const &iaparams, Utils::Span<const int> partner_ids) {
-        add_bonded_force(iaparams, *p1, partner_ids);
-      });
-}
-
 inline void add_single_particle_force(Particle &p) {
-  if (p.bl.n) {
-    add_bonded_force(&p);
-  }
+  for_each_bond(p.bonds(), bonded_ia_params,
+                [&p](Bonded_ia_parameters const &iaparams,
+                     Utils::Span<const int> partner_ids) {
+                  add_bonded_force(iaparams, p, partner_ids);
+                });
 }
-
 #endif
