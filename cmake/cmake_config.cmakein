@@ -17,6 +17,8 @@
 
 #cmakedefine LAPACK
 
+#cmakedefine STOKESIAN_DYNAMICS
+
 #cmakedefine VALGRIND_INSTRUMENTATION
 
 #define PACKAGE_NAME "${PROJECT_NAME}"

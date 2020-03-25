@@ -107,6 +107,7 @@ ADDITIONAL_CHECKS
 
 # External switches
 # Switches that are set by configure or gcc, not to be set manually
+# All these switches must also be present in cmake/cmake_config.cmakein
 CUDA external
 FFTW external
 H5MD external
@@ -114,4 +115,6 @@ SCAFACOS external
 GSL external
 BLAS external
 LAPACK external
-STOKESIAN_DYNAMICS external, implies ROTATION, requires BLAS and LAPACK
+STOKESIAN_DYNAMICS external
+STOKESIAN_DYNAMICS requires BLAS and LAPACK
+STOKESIAN_DYNAMICS implies ROTATION
