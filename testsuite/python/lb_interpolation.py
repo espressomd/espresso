@@ -77,7 +77,7 @@ class LBInterpolation:
         np.testing.assert_allclose(self.lbf.get_interpolated_velocity(
             [self.system.box_l[0] - AGRID / 2, 0, 0]), np.array([0, 0, V_BOUNDARY]))
 
-        # Cehck interpolated velocity involving boundary and neighboring node
+        # Check interpolated velocity involving boundary and neighboring node
         # The boundary node index is lbf.shape[0]-1, so -2 refers to the
         # node in front of the boundary. 
         node_next_to_boundary = self.lbf[
