@@ -22,7 +22,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 
@@ -30,6 +29,7 @@
 using Utils::angle_btw_triangles;
 using Utils::area_triangle;
 using Utils::get_n_triangle;
+
 #include <utils/constants.hpp>
 
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
@@ -57,67 +57,41 @@ void calc_oif_global(double *area_volume, int molType,
                      ParticleRange const &particles) {
   // first-fold-then-the-same approach
   double partArea = 0.0;
-  double part_area_volume[2]; // added
-
   // z volume
   double VOL_partVol = 0.;
 
-  int type_num, n_partners, id;
-  BondedInteraction type;
+  double part_area_volume[2]; // added
 
-  int test = 0;
+  for (auto &p : particles) {
+    if (p.p.mol_id != molType)
+      continue;
 
-  for (auto const &p : particles) {
-    int j = 0;
-    auto const p1 = &p;
-    while (j < p1->bl.n) {
-      /* bond type */
-      type_num = p1->bl.e[j++];
-      Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-      type = iaparams.type;
-      n_partners = iaparams.num;
-      id = p1->p.mol_id;
-      if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
-          id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
-        test++;
-        /* fetch particle 2 */
-        auto const p2 = cell_structure.get_local_particle(p1->bl.e[j++]);
-        if (!p2) {
-          runtimeErrorMsg() << "oif global calc: bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[j - 1]
-                            << " (particles not stored on the same node - "
-                               "oif_global_forces1); n "
-                            << p1->bl.n << " max " << p1->bl.max;
-          return;
-        }
+    execute_bond_handler(
+        cell_structure, p,
+        [&partArea, &VOL_partVol](Bonded_ia_parameters const &iaparams,
+                                  Particle &p1,
+                                  Utils::Span<Particle *> partners) {
+          if (iaparams.type == BONDED_IA_OIF_GLOBAL_FORCES) {
+            // remaining neighbors fetched
+            auto const p11 =
+                unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+            auto const p22 =
+                p11 + get_mi_vector(partners[0]->r.p, p11, box_geo);
+            auto const p33 =
+                p11 + get_mi_vector(partners[1]->r.p, p11, box_geo);
 
-        auto const p3 = cell_structure.get_local_particle(p1->bl.e[j++]);
-        if (!p3) {
-          runtimeErrorMsg() << "oif global calc: bond broken between particles "
-                            << p1->p.identity << ", " << p1->bl.e[j - 2]
-                            << " and " << p1->bl.e[j - 1]
-                            << " (particles not stored on the same node - "
-                               "oif_global_forces1); n "
-                            << p1->bl.n << " max " << p1->bl.max;
-          return;
-        }
-        // remaining neighbors fetched
-        auto const p11 = unfolded_position(p1->r.p, p1->l.i, box_geo.length());
-        auto const p22 = p11 + get_mi_vector(p2->r.p, p11, box_geo);
-        auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
+            // unfolded positions correct
+            auto const VOL_A = area_triangle(p11, p22, p33);
+            partArea += VOL_A;
 
-        // unfolded positions correct
-        auto const VOL_A = area_triangle(p11, p22, p33);
-        partArea += VOL_A;
+            auto const VOL_norm = get_n_triangle(p11, p22, p33);
+            auto const VOL_dn = VOL_norm.norm();
+            auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
+            VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
+          }
 
-        auto const VOL_norm = get_n_triangle(p11, p22, p33);
-        auto const VOL_dn = VOL_norm.norm();
-        auto const VOL_hz = 1.0 / 3.0 * (p11[2] + p22[2] + p33[2]);
-        VOL_partVol += VOL_A * -1 * VOL_norm[2] / VOL_dn * VOL_hz;
-      } else {
-        j += n_partners;
-      }
-    }
+          return false;
+        });
   }
 
   part_area_volume[0] = partArea;
@@ -133,85 +107,58 @@ void add_oif_global_forces(double const *area_volume, int molType,
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
-  int test = 0;
-
   for (auto &p : particles) {
-    int j = 0;
-    auto p1 = &p;
-    while (j < p1->bl.n) {
-      /* bond type */
-      auto const type_num = p1->bl.e[j++];
-      Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-      auto const type = iaparams.type;
-      auto const n_partners = iaparams.num;
-      auto const id = p1->p.mol_id;
-      if (type == BONDED_IA_OIF_GLOBAL_FORCES &&
-          id == molType) { // BONDED_IA_OIF_GLOBAL_FORCES with correct molType
-        test++;
-        /* fetch particle 2 */
-        auto p2 = cell_structure.get_local_particle(p1->bl.e[j++]);
-        if (!p2) {
-          runtimeErrorMsg() << "add area: bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[j - 1]
-                            << " (particles not stored on the same node - "
-                               "oif_globalforce2); n "
-                            << p1->bl.n << " max " << p1->bl.max;
-          return;
-        }
-        /* fetch particle 3 */
-        // if(n_partners>2){
-        auto p3 = cell_structure.get_local_particle(p1->bl.e[j++]);
-        if (!p3) {
-          runtimeErrorMsg()
-              << "add area: bond broken between particles " << p1->p.identity
-              << ", " << p1->bl.e[j - 2] << " and " << p1->bl.e[j - 1]
-              << " (particles not stored on the same node); n " << p1->bl.n
-              << " max " << p1->bl.max;
-          return;
-        }
+    if (p.p.mol_id != molType)
+      continue;
 
-        auto const p11 = unfolded_position(p1->r.p, p1->l.i, box_geo.length());
-        auto const p22 = p11 + get_mi_vector(p2->r.p, p11, box_geo);
-        auto const p33 = p11 + get_mi_vector(p3->r.p, p11, box_geo);
+    execute_bond_handler(
+        cell_structure, p,
+        [area, VOL_volume](Bonded_ia_parameters const &iaparams, Particle &p1,
+                           Utils::Span<Particle *> partners) {
+          if (iaparams.type == BONDED_IA_OIF_GLOBAL_FORCES) {
+            auto const p11 =
+                unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+            auto const p22 =
+                p11 + get_mi_vector(partners[0]->r.p, p11, box_geo);
+            auto const p33 =
+                p11 + get_mi_vector(partners[1]->r.p, p11, box_geo);
 
-        // unfolded positions correct
-        // starting code from volume force
-        auto const VOL_norm = get_n_triangle(p11, p22, p33).normalize();
-        auto const VOL_A = area_triangle(p11, p22, p33);
-        auto const VOL_vv = (VOL_volume - iaparams.p.oif_global_forces.V0) /
-                            iaparams.p.oif_global_forces.V0;
+            // unfolded positions correct
+            // starting code from volume force
+            auto const VOL_norm = get_n_triangle(p11, p22, p33).normalize();
+            auto const VOL_A = area_triangle(p11, p22, p33);
+            auto const VOL_vv = (VOL_volume - iaparams.p.oif_global_forces.V0) /
+                                iaparams.p.oif_global_forces.V0;
 
-        auto const VOL_force = (1.0 / 3.0) * iaparams.p.oif_global_forces.kv *
-                               VOL_vv * VOL_A * VOL_norm;
-        p1->f.f += VOL_force;
-        p2->f.f += VOL_force;
-        p3->f.f += VOL_force;
-        // ending code from volume force
+            auto const VOL_force = (1.0 / 3.0) *
+                                   iaparams.p.oif_global_forces.kv * VOL_vv *
+                                   VOL_A * VOL_norm;
 
-        auto const h = (1. / 3.) * (p11 + p22 + p33);
+            auto const h = (1. / 3.) * (p11 + p22 + p33);
 
-        auto const deltaA = (area - iaparams.p.oif_global_forces.A0_g) /
-                            iaparams.p.oif_global_forces.A0_g;
+            auto const deltaA = (area - iaparams.p.oif_global_forces.A0_g) /
+                                iaparams.p.oif_global_forces.A0_g;
 
-        auto const m1 = h - p11;
-        auto const m2 = h - p22;
-        auto const m3 = h - p33;
+            auto const m1 = h - p11;
+            auto const m2 = h - p22;
+            auto const m3 = h - p33;
 
-        auto const m1_length = m1.norm();
-        auto const m2_length = m2.norm();
-        auto const m3_length = m3.norm();
+            auto const m1_length = m1.norm();
+            auto const m2_length = m2.norm();
+            auto const m3_length = m3.norm();
 
-        auto const fac = iaparams.p.oif_global_forces.ka_g * VOL_A * deltaA /
-                         (m1_length * m1_length + m2_length * m2_length +
-                          m3_length * m3_length);
+            auto const fac = iaparams.p.oif_global_forces.ka_g * VOL_A *
+                             deltaA /
+                             (m1_length * m1_length + m2_length * m2_length +
+                              m3_length * m3_length);
 
-        p1->f.f += fac * m1;
-        p2->f.f += fac * m2;
-        p3->f.f += fac * m3;
-      } else {
-        j += n_partners;
-      }
-    }
+            p1.f.f += fac * m1 + VOL_force;
+            partners[0]->f.f += fac * m2 + VOL_force;
+            partners[1]->f.f += fac * m3 + VOL_force;
+          }
+
+          return false;
+        });
   }
 }
 
