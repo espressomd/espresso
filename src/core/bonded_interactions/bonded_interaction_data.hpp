@@ -424,14 +424,12 @@ void make_bond_type_exist(int type);
  */
 inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
                                 int bond_type) {
-  // First check the bonds of p1
   if (p.bl.e) {
     int i = 0;
     while (i < p.bl.n) {
       int size = bonded_ia_params[p.bl.e[i]].num;
 
       if (p.bl.e[i] == bond_type && p.bl.e[i + 1] == partner.p.identity) {
-        // There's a bond, already. Nothing to do for these particles
         return true;
       }
       i += size + 1;

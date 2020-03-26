@@ -105,45 +105,51 @@ void init_correction_vector(const ParticleRange &particles) {
     reset_force(p);
 }
 
+/**
+ * @brief Add the position correction to particles.
+ * @param ia_params Parameters
+ * @param p1 First particle.
+ * @param p2 Second particle.
+ * @return True if there was a correction.
+ */
+static bool add_pos_corr_vec(Bonded_ia_parameters const &ia_params,
+                             Particle &p1, Particle &p2) {
+  auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const r_ij2 = r_ij.norm2();
+
+  if (fabs(1.0 - r_ij2 / ia_params.p.rigid_bond.d2) >
+      ia_params.p.rigid_bond.p_tol) {
+    auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
+    auto const r_ij_dot = r_ij_t * r_ij;
+    auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) / r_ij_dot /
+                   (p1.p.mass + p2.p.mass);
+
+    auto const pos_corr = G * r_ij_t;
+    p1.f.f += pos_corr * p2.p.mass;
+    p2.f.f -= pos_corr * p1.p.mass;
+
+    return true;
+  }
+
+  return false;
+}
 /**Compute positional corrections*/
 void compute_pos_corr_vec(int *repeat_, const ParticleRange &particles) {
-
   for (auto &p1 : particles) {
-    int k = 0;
-    while (k < p1.bl.n) {
-      Bonded_ia_parameters const &ia_params = bonded_ia_params[p1.bl.e[k++]];
-      if (ia_params.type == BONDED_IA_RIGID_BOND) {
-        Particle *const pp2 = cell_structure.get_local_particle(p1.bl.e[k++]);
-        if (!pp2) {
-          runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1.p.identity << " and " << p1.bl.e[k - 1]
-                            << " (particles not stored on the same node)";
-          return;
-        }
-        Particle &p2 = *pp2;
+    execute_bond_handler(
+        cell_structure, p1,
+        [repeat_](Bonded_ia_parameters const &iaparams, Particle &p1,
+                  Utils::Span<Particle *> partners) {
+          if (iaparams.type == BONDED_IA_RIGID_BOND) {
+            auto const corrected = add_pos_corr_vec(iaparams, p1, *partners[0]);
+            if (corrected)
+              *repeat_ += 1;
+          }
 
-        auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
-        auto const r_ij2 = r_ij.norm2();
-
-        if (fabs(1.0 - r_ij2 / ia_params.p.rigid_bond.d2) >
-            ia_params.p.rigid_bond.p_tol) {
-          auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
-          auto const r_ij_dot = r_ij_t * r_ij;
-          auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) / r_ij_dot /
-                         (p1.p.mass + p2.p.mass);
-
-          auto const pos_corr = G * r_ij_t;
-          p1.f.f += pos_corr * p2.p.mass;
-          p2.f.f -= pos_corr * p1.p.mass;
-
-          /*Increase the 'repeat' flag by one */
-          *repeat_ = *repeat_ + 1;
-        }
-      } else
-        /* skip bond partners of nonrigid bond */
-        k += ia_params.num;
-    } // while loop
-  }   // for i loop
+          /* Rigid bonds can not break */
+          return false;
+        });
+  }
 }
 
 /**Apply corrections to each particle**/
