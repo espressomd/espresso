@@ -88,8 +88,9 @@ class LBInterpolation:
         # The midpoint between the boundary and
         # that node is box_l - agrid.
         np.testing.assert_allclose(
-            np.copy(self.lbf.get_interpolated_velocity([self.system.box_l[0] - AGRID, 0, 0])),
-                                   0.5 * (np.array([0, 0, V_BOUNDARY]) + node_next_to_boundary.velocity))
+            np.copy(self.lbf.get_interpolated_velocity(
+                [self.system.box_l[0] - AGRID, 0, 0])),
+            0.5 * (np.array([0, 0, V_BOUNDARY]) + node_next_to_boundary.velocity))
 
         # Bulk
         for pos in itertools.product(
