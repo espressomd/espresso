@@ -137,10 +137,10 @@ void force_calc(CellStructure &cell_structure) {
     area_volume[0] = 0.0;
     area_volume[1] = 0.0;
     for (int i = 0; i < max_oif_objects; i++) {
-      calc_oif_global(area_volume, i, particles);
+      calc_oif_global(area_volume, i, cell_structure);
       if (fabs(area_volume[0]) < 1e-100 && fabs(area_volume[1]) < 1e-100)
         break;
-      add_oif_global_forces(area_volume, i, particles);
+      add_oif_global_forces(area_volume, i, cell_structure);
     }
   }
 

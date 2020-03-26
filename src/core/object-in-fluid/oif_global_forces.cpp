@@ -18,9 +18,9 @@
  */
 
 #include "oif_global_forces.hpp"
+
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
@@ -53,8 +53,7 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
   return ES_OK;
 }
 
-void calc_oif_global(double *area_volume, int molType,
-                     ParticleRange const &particles) {
+void calc_oif_global(double *area_volume, int molType, CellStructure &cs) {
   // first-fold-then-the-same approach
   double partArea = 0.0;
   // z volume
@@ -62,12 +61,12 @@ void calc_oif_global(double *area_volume, int molType,
 
   double part_area_volume[2]; // added
 
-  for (auto &p : particles) {
+  for (auto &p : cs.local_cells().particles()) {
     if (p.p.mol_id != molType)
       continue;
 
     execute_bond_handler(
-        cell_structure, p,
+        cs, p,
         [&partArea, &VOL_partVol](Bonded_ia_parameters const &iaparams,
                                   Particle &p1,
                                   Utils::Span<Particle *> partners) {
@@ -102,17 +101,17 @@ void calc_oif_global(double *area_volume, int molType,
 }
 
 void add_oif_global_forces(double const *area_volume, int molType,
-                           ParticleRange const &particles) {
+                           CellStructure &cs) {
   // first-fold-then-the-same approach
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
-  for (auto &p : particles) {
+  for (auto &p : cs.local_cells().particles()) {
     if (p.p.mol_id != molType)
       continue;
 
     execute_bond_handler(
-        cell_structure, p,
+        cs, p,
         [area, VOL_volume](Bonded_ia_parameters const &iaparams, Particle &p1,
                            Utils::Span<Particle *> partners) {
           if (iaparams.type == BONDED_IA_OIF_GLOBAL_FORCES) {
