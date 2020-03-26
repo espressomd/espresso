@@ -276,7 +276,9 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
     default:
       throw BondUnknownTypeError(type);
     }
-  } // 3 partners
+  } else if(n_partners == 0) {
+    return 0.;
+  }
 
   throw BondInvalidSizeError(n_partners);
 }

@@ -502,6 +502,8 @@ inline bool add_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
 inline bool add_bonded_force(Bonded_ia_parameters const &iaparams, Particle &p1,
                              Utils::Span<Particle *> partners) {
   switch (iaparams.num) {
+  case 0:
+    return false;
   case 1:
     return add_bonded_two_body_force(iaparams, p1, *partners[0]);
   case 2:
