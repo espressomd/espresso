@@ -154,7 +154,7 @@ cdef class ParticleHandle:
 
         def __get__(self):
             self.update_particle_data()
-            return make_array_locked(unfolded_position( < Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
+            return make_array_locked(unfolded_position(< Vector3d > self.particle_data.r.p, < Vector3i > self.particle_data.l.i, box_geo.length()))
 
     property pos_folded:
         """
@@ -1862,15 +1862,21 @@ Set quat and scalar dipole moment (dipm) instead.")
             raise ValueError(
                 "When adding several particles at once, all lists of attributes have to have the same size")
 
-        # Place new particles and collect ids
-        ids = []
+        # If particle ids haven't been provided, use free ones
+        # beyond the highest existing one
+        if not "id" in Ps:
+            first_id = get_maximal_particle_id() + 1
+            Ps["id"] = range(first_id, first_id + n_parts)
+
+        # Place the particles
         for i in range(n_parts):
             P = {}
             for k in Ps:
                 P[k] = Ps[k][i]
-            ids.append(self._place_new_particle(P).id)
+            self._place_new_particle(P)
 
-        return self[ids]
+        # Return slice of added particles
+        return self[Ps["id"]]
 
     # Iteration over all existing particles
     def __iter__(self):
