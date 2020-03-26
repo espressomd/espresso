@@ -18,6 +18,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import itertools
+import sys
 
 import espressomd
 import espressomd.shapes
@@ -108,9 +109,15 @@ class LBInterpolation:
 
         """
         max_vel = 0.31 * AGRID / TAU
+        print("Begin: Test error generation")
+        sys.stdout.flush()
+        sys.stderr.flush()
         with self.assertRaises(Exception):
             self.set_boundaries([0.0, 0.0, max_vel])
             self.system.integrator.run(1)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        print("End: Test error generation")
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES'])
