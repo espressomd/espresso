@@ -331,20 +331,17 @@ void File::fill_arrays_for_h5md_write_with_particle_property(
 
   if (!m_already_wrote_bonds) {
     int nbonds_local = bond.shape()[1];
-    for (auto it = current_particle.bl.begin();
-         it != current_particle.bl.end();) {
 
-      auto const n_partners = bonded_ia_params[*it++].num;
-
-      if (1 == n_partners) {
-        bond.resize(boost::extents[1][nbonds_local + 1][2]);
-        bond[0][nbonds_local][0] = current_particle.p.identity;
-        bond[0][nbonds_local][1] = *it++;
-        nbonds_local++;
-      } else {
-        it += n_partners;
-      }
-    }
+    for_each_bond(current_particle.bonds(), bonded_ia_params,
+                  [&](Bonded_ia_parameters const &iaparams,
+                      Utils::Span<const int> partner_ids) {
+                    if (partner_ids.size() == 1) {
+                      bond.resize(boost::extents[1][nbonds_local + 1][2]);
+                      bond[0][nbonds_local][0] = current_particle.p.identity;
+                      bond[0][nbonds_local][1] = partner_ids[0];
+                      nbonds_local++;
+                    }
+                  });
   }
 }
 
