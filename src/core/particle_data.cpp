@@ -450,7 +450,7 @@ void build_particle_node() {
  *  @brief Get the mpi rank which owns the particle with id.
  */
 int get_particle_node(int id) {
-  if ((id < 0) or (id > get_maximal_particle_id()))
+  if (id < 0)
     throw std::runtime_error("Invalid particle id!");
 
   if (particle_node.empty())
