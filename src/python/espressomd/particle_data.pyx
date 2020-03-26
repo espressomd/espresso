@@ -1866,7 +1866,7 @@ Set quat and scalar dipole moment (dipm) instead.")
         # beyond the highest existing one
         if not "id" in Ps:
             first_id = get_maximal_particle_id() + 1
-            Ps["id"] = [i for i in range(first_id, first_id + n_parts)]
+            Ps["id"] = range(first_id, first_id + n_parts)
 
         # Place the particles
         for i in range(n_parts):
