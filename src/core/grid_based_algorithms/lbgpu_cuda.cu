@@ -1372,8 +1372,10 @@ __device__ __inline__ float3 node_velocity(float rho_eq, LB_nodes_gpu n_a,
   auto const boundary_index = n_a.boundary[index];
 
   if (boundary_index) {
+    auto const inv_lattice_speed = para->tau / para->agrid;
     auto const &u = n_a.boundary_velocity[index];
-    return make_float3(u[0], u[1], u[2]);
+    return make_float3(inv_lattice_speed * u[0], inv_lattice_speed * u[1],
+                       inv_lattice_speed * u[2]);
   }
 
   auto const rho = rho_eq + calc_mode_x_from_n(n_a, index, 0);
