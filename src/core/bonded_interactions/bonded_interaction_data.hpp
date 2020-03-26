@@ -38,7 +38,7 @@
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
-enum BondedInteraction {
+enum BondedInteraction : int {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
   /** Type of bonded interaction is a FENE potential
