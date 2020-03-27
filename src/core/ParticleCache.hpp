@@ -129,9 +129,6 @@ struct is_commutative<::detail::Merge<Container, ::detail::IdCompare>,
  * triggered automatically on access. The data in the cache
  * is invalidated automatically on_particle_change, and then
  * updated on the next access.
- * By default the particles do not have valid bond information
- * on them. If bonds are needed, update_bonds() has to be called
- * explicitly to update the bond cache.
  *
  * To update the cache particles are sorted by id on the nodes,
  * and the sorted arrays a merged in a reduction tree, until the
@@ -163,10 +160,9 @@ class ParticleCache {
   /** The particle data */
   map_type remote_parts;
   /** State */
-  bool m_valid, m_valid_bonds;
+  bool m_valid;
 
   Communication::CallbackHandle<> update_cb;
-  Communication::CallbackHandle<> update_bonds_cb;
 
   /** Functor to get a particle range */
   GetParticles m_parts;
@@ -174,52 +170,6 @@ class ParticleCache {
       particles before they are gathered,
       e.g. position folding */
   UnaryOp m_op;
-
-  /**
-   * @brief Implementation of bond update.
-   *
-   * Particle ids, and the bond info is packed
-   * into a linear buffer and gather to the master.
-   */
-  std::vector<int> m_update_bonds() {
-    std::vector<int> local_bonds;
-
-    for (auto const &p : m_parts()) {
-      local_bonds.push_back(p.identity());
-
-      auto const &bonds = p.bonds();
-      local_bonds.push_back(bonds.size());
-      std::copy(std::begin(bonds), std::end(bonds),
-                std::back_inserter(local_bonds));
-    }
-
-    Utils::Mpi::gather_buffer(local_bonds, m_cb.comm());
-
-    return local_bonds;
-  }
-
-  /**
-   * @brief Implementation of bond update.
-   *
-   * Master version of m_update_bonds().
-   */
-  void m_recv_bonds() {
-    auto bond_info = m_update_bonds();
-
-    for (auto it = bond_info.begin(); it != bond_info.end();) {
-      /* Particle id for which the next bond info is for */
-      auto const id = *it++;
-      auto const n_bonds = *it++;
-      /* Use the index to find the particle in remote_parts */
-      auto &p = remote_parts.begin()[id_index[id]];
-      /* Update the bond list of the particle with the bond_info */
-      p.bonds().resize(n_bonds);
-      std::copy_n(it, n_bonds, p.bonds().begin());
-
-      /* Jump to the next record */
-      it += n_bonds;
-    }
-  }
 
   /**
    * @brief Actual update implementation.
@@ -235,7 +185,7 @@ class ParticleCache {
     for (auto const &p : m_parts()) {
       typename map_type::iterator it;
       /* Add the particle to the map */
-      std::tie(it, std::ignore) = remote_parts.emplace(p.flat_copy());
+      std::tie(it, std::ignore) = remote_parts.emplace(p);
 
       /* And run the op on it. */
       m_op(*it);
@@ -264,10 +214,8 @@ public:
   ParticleCache() = delete;
   ParticleCache(Communication::MpiCallbacks &cb, GetParticles parts,
                 UnaryOp &&op = UnaryOp{})
-      : m_cb(cb), m_valid(false), m_valid_bonds(false),
-        update_cb(&cb, [this]() { m_update(); }),
-        update_bonds_cb(&cb, [this]() { m_update_bonds(); }), m_parts(parts),
-        m_op(std::forward<UnaryOp>(op)) {}
+      : m_cb(cb), m_valid(false), update_cb(&cb, [this]() { m_update(); }),
+        m_parts(parts), m_op(std::forward<UnaryOp>(op)) {}
   /* Because the this ptr is captured by the callback lambdas,
    * this class can be neither copied nor moved. */
   ParticleCache(ParticleCache const &) = delete;
@@ -328,13 +276,6 @@ public:
   bool valid() const { return m_valid; }
 
   /**
-   * @brief Returns true if the bond cache is up-to-date.
-   *
-   * If false, particle access will trigger an update.
-   */
-  bool valid_bonds() const { return m_valid_bonds; }
-
-  /**
    * @brief Invalidate the cache and free memory.
    */
   void invalidate() {
@@ -343,23 +284,6 @@ public:
     remote_parts.shrink_to_fit();
     /* Adjust state */
     m_valid = false;
-    m_valid_bonds = false;
-  }
-
-  /**
-   * @brief Update bond information.
-   *
-   * If the particle data is not valid,
-   * it will be updated first.
-   */
-  void update_bonds() {
-    update();
-
-    if (!m_valid_bonds) {
-      update_bonds_cb();
-      m_recv_bonds();
-      m_valid_bonds = true;
-    }
   }
 
   /**

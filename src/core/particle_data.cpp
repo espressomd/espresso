@@ -962,9 +962,6 @@ void auto_exclusions(int distance) {
      each particle, and their distance, as an interleaved list */
   std::unordered_map<int, IntList> partners;
 
-  /* We need bond information */
-  partCfg().update_bonds();
-
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
     auto const p1 = part1.p.identity;

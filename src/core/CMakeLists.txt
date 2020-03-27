@@ -42,7 +42,7 @@ set(EspressoCore_SRC
     tuning.cpp
     virtual_sites.cpp
     exclusions.cpp
-    CellStructure.cpp)
+    CellStructure.cpp PartCfg.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC

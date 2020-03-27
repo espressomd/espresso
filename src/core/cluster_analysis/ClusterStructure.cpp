@@ -54,7 +54,6 @@ void ClusterStructure::run_for_all_pairs() {
 
 void ClusterStructure::run_for_bonded_particles() {
   clear();
-  partCfg().update_bonds();
   for (const auto &p : partCfg()) {
     int j = 0;
     while (j < p.bl.n) {
