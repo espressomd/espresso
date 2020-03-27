@@ -41,6 +41,7 @@
 #include <utils/constants.hpp>
 #include <utils/mpi/gatherv.hpp>
 
+#include <boost/algorithm/cxx11/copy_if.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
@@ -532,11 +533,10 @@ void mpi_get_particles_slave(int, int) {
  *
  * @returns The particle data.
  */
-const std::vector<Particle> &mpi_get_particles(Utils::Span<const int> ids) {
+std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
   mpi_call(mpi_get_particles_slave, 0, 0);
   /* Return value */
-  static std::vector<Particle> parts;
-  parts.resize(ids.size());
+  std::vector<Particle> parts(ids.size());
 
   /* Group ids per node */
   static std::vector<std::vector<int>> node_ids(comm_cart.size());
@@ -575,35 +575,27 @@ const std::vector<Particle> &mpi_get_particles(Utils::Span<const int> ids) {
   return parts;
 }
 
-void prefetch_particle_data(std::vector<int> ids) {
+void prefetch_particle_data(Utils::Span<const int> in_ids) {
   /* Nothing to do on a single node. */
   if (comm_cart.size() == 1)
     return;
 
-  /* Remove local, already cached and non-existent particles from the list. */
-  ids.erase(std::remove_if(ids.begin(), ids.end(),
-                           [](int id) {
-                             auto const pnode = get_particle_node(id);
-                             return (pnode == this_node) ||
-                                    particle_fetch_cache.has(id);
-                           }),
-            ids.end());
+  static std::vector<int> ids;
+  ids.clear();
+
+  boost::algorithm::copy_if(in_ids, std::back_inserter(ids), [](int id) {
+    return (get_particle_node(id) != this_node) && particle_fetch_cache.has(id);
+  });
 
   /* Don't prefetch more particles than fit the cache. */
   if (ids.size() > particle_fetch_cache.max_size())
     ids.resize(particle_fetch_cache.max_size());
 
   /* Fetch the particles... */
-  auto parts = mpi_get_particles(ids);
-
-  /* mpi_get_particles does not return the parts in the correct
-     order, so the ids need to be updated. */
-  std::transform(parts.cbegin(), parts.cend(), ids.begin(),
-                 [](Particle const &p) { return p.identity(); });
-
-  /* ... and put them into the cache. */
-  particle_fetch_cache.put(ids.cbegin(), ids.cend(),
-                           std::make_move_iterator(parts.begin()));
+  for (auto &p : mpi_get_particles(ids)) {
+    auto id = p.identity();
+    particle_fetch_cache.put(id, std::move(p));
+  }
 }
 
 int place_particle(int part, const double *pos) {
