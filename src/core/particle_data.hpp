@@ -95,8 +95,12 @@ const Particle &get_particle_data(int part);
 /**
  * @brief Fetch a range of particle into the fetch cache.
  *
+ *
  * If the range is larger than the cache size, only
  * the particle that fit into the cache are fetched.
+ *
+ * The particles have to exist, an exception it throw
+ * if one of the the particles can not be found.
  *
  * @param ids Ids of the particles that should be fetched.
  */

@@ -532,22 +532,28 @@ void mpi_get_particles_slave(int, int) {
  *
  * @returns The particle data.
  */
-std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
+const std::vector<Particle> &mpi_get_particles(Utils::Span<const int> ids) {
   mpi_call(mpi_get_particles_slave, 0, 0);
   /* Return value */
-  std::vector<Particle> parts(ids.size());
+  static std::vector<Particle> parts;
+  parts.resize(ids.size());
 
   /* Group ids per node */
-  std::vector<std::vector<int>> node_ids(comm_cart.size());
+  static std::vector<std::vector<int>> node_ids(comm_cart.size());
+  for (auto &per_node : node_ids) {
+    per_node.clear();
+  }
+
   for (auto const &id : ids) {
     auto const pnode = get_particle_node(id);
 
-    node_ids[pnode].push_back(id);
+    if (pnode != this_node)
+      node_ids[pnode].push_back(id);
   }
 
   /* Distributed ids to the nodes */
   {
-    std::vector<int> ignore;
+    static std::vector<int> ignore;
     boost::mpi::scatter(comm_cart, node_ids, ignore, 0);
   }
 
@@ -558,7 +564,7 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
                    return *cell_structure.get_local_particle(id);
                  });
 
-  std::vector<int> node_sizes(comm_cart.size());
+  static std::vector<int> node_sizes(comm_cart.size());
   std::transform(
       node_ids.cbegin(), node_ids.cend(), node_sizes.begin(),
       [](std::vector<int> const &ids) { return static_cast<int>(ids.size()); });
@@ -577,9 +583,6 @@ void prefetch_particle_data(std::vector<int> ids) {
   /* Remove local, already cached and non-existent particles from the list. */
   ids.erase(std::remove_if(ids.begin(), ids.end(),
                            [](int id) {
-                             if (not particle_exists(id)) {
-                               return true;
-                             }
                              auto const pnode = get_particle_node(id);
                              return (pnode == this_node) ||
                                     particle_fetch_cache.has(id);
