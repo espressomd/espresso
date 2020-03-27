@@ -476,6 +476,8 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 } // namespace
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
+size_t fetch_cache_max_size()  { return particle_fetch_cache.max_size(); }
+
 
 boost::optional<const Particle &> get_particle_data_local(int id) {
   auto p = cell_structure.get_local_particle(id);
