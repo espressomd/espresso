@@ -40,6 +40,9 @@
 #include <boost/mpi/collectives.hpp>
 
 #include "MpiCallbacks.hpp"
+#include "grid.hpp"
+#include "particle_data.hpp"
+#include <boost/algorithm/clamp.hpp>
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/serialization/flat_set.hpp>
@@ -150,7 +153,7 @@ template <typename GetParticles, typename UnaryOp = Utils::NoOp,
           typename Particle = typename std::iterator_traits<
               typename Range::iterator>::value_type>
 class ParticleCache {
-  using map_type = boost::container::flat_set<Particle, detail::IdCompare>;
+  using map_type = std::vector<Particle>;
   /* Callback system we're on */
   Communication::MpiCallbacks &m_cb;
 
@@ -158,7 +161,7 @@ class ParticleCache {
       in remote_parts. */
   std::unordered_map<int, int> id_index;
   /** The particle data */
-  map_type remote_parts;
+  std::vector<Particle> remote_parts;
   /** State */
   bool m_valid;
 
@@ -179,23 +182,7 @@ class ParticleCache {
    * merges these buffers hierarchically to the
    * master node
    */
-  void m_update() {
-    remote_parts.clear();
-
-    for (auto const &p : m_parts()) {
-      typename map_type::iterator it;
-      /* Add the particle to the map */
-      std::tie(it, std::ignore) = remote_parts.emplace(p);
-
-      /* And run the op on it. */
-      m_op(*it);
-    }
-
-    /* Reduce data to the master by merging the flat_sets from
-     * the nodes in a reduction tree. */
-    boost::mpi::reduce(m_cb.comm(), remote_parts, remote_parts,
-                       detail::Merge<map_type, detail::IdCompare>(), 0);
-  }
+  void m_update() {}
 
   void m_update_index() {
     /* Try to avoid rehashing along the way */
@@ -299,9 +286,30 @@ public:
     if (m_valid)
       return;
 
-    update_cb();
+    remote_parts.clear();
 
-    m_update();
+    auto const ids = get_particle_ids();
+    auto const chunk_size = fetch_cache_max_size();
+
+    for (size_t offset = 0; offset < ids.size();) {
+      auto const this_size =
+          boost::algorithm::clamp(chunk_size, 0, ids.size() - offset);
+      auto const chunk_ids =
+          Utils::make_const_span(ids.data() + offset, this_size);
+
+      prefetch_particle_data(chunk_ids);
+
+      for (auto id : chunk_ids) {
+        remote_parts.push_back(get_particle_data(id));
+
+        auto &p = remote_parts.back();
+        p.r.p += image_shift(p.l.i, box_geo.length());
+        p.l.i = {};
+      }
+
+      offset += this_size;
+    }
+
     m_update_index();
 
     m_valid = true;
