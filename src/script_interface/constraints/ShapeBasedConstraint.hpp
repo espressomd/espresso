@@ -23,6 +23,7 @@
 #define SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
 #include "Constraint.hpp"
+#include "core/cells.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ShapeBasedConstraint.hpp"
 #include "script_interface/shapes/Shape.hpp"

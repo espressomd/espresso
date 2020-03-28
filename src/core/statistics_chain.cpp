@@ -23,8 +23,8 @@
 */
 #include "statistics_chain.hpp"
 
-#include "particle_data.hpp"
 #include "grid.hpp"
+#include "particle_data.hpp"
 
 std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
                               int chain_length) {

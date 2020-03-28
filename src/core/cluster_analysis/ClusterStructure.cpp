@@ -64,7 +64,7 @@ void ClusterStructure::run_for_bonded_particles() {
         continue;
       }
       // We are only here if bond has one partner
-      add_pair(p, partCfg()[p.bl.e[j + 1]]);
+      add_pair(p, get_particle_data(p.bl.e[j + 1]));
       j += 2; // Type id + one partner
     }
   }
