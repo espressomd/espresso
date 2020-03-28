@@ -61,6 +61,7 @@
 #include "bonded_interactions/bonded_coulomb_sr.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
+#include "cells.hpp"
 #include "exclusions.hpp"
 #include "statistics.hpp"
 

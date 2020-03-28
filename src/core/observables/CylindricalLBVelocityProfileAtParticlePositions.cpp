@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "CylindricalLBVelocityProfileAtParticlePositions.hpp"
+
+#include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
 
 #include <utils/Histogram.hpp>

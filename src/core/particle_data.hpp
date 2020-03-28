@@ -95,15 +95,24 @@ const Particle &get_particle_data(int part);
 /**
  * @brief Fetch a range of particle into the fetch cache.
  *
+ *
  * If the range is larger than the cache size, only
  * the particle that fit into the cache are fetched.
  *
+ * The particles have to exist, an exception it throw
+ * if one of the the particles can not be found.
+ *
  * @param ids Ids of the particles that should be fetched.
  */
-void prefetch_particle_data(std::vector<int> ids);
+void prefetch_particle_data(Utils::Span<const int> ids);
 
 /** @brief Invalidate the fetch cache for get_particle_data. */
 void invalidate_fetch_cache();
+
+/** @brief Return the maximal number of particles that are
+ *         kept in the fetch cache.
+ */
+size_t fetch_cache_max_size();
 
 /** Call only on the master node.
  *  Move a particle to a new position.

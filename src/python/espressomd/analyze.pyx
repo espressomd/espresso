@@ -575,7 +575,6 @@ class Analysis:
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         re = analyze.calc_re(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -612,7 +611,6 @@ class Analysis:
         """
         self.check_topology(chain_start, number_of_chains, chain_length)
         rg = analyze.calc_rg(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)
@@ -648,7 +646,6 @@ class Analysis:
 
         self.check_topology(chain_start, number_of_chains, chain_length)
         rh = analyze.calc_rh(
-            analyze.partCfg(),
             chain_start,
             number_of_chains,
             chain_length)

@@ -23,6 +23,8 @@
 #include "Observable.hpp"
 #include "Particle.hpp"
 
+#include <utils/Span.hpp>
+
 #include <vector>
 
 namespace Observables {

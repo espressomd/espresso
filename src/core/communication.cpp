@@ -217,7 +217,6 @@ void mpi_init() {
 #undef CB
 
   ErrorHandling::init_error_handling(mpiCallbacks());
-  partCfg(std::make_unique<PartCfg>(mpiCallbacks(), GetLocalParts()));
 
   on_program_start();
 }

@@ -17,7 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
+
+#include "grid.hpp"
 #include "grid_based_algorithms/lb_interface.hpp"
+
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 

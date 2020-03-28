@@ -41,12 +41,14 @@
 #include <utils/constants.hpp>
 #include <utils/mpi/gatherv.hpp>
 
+#include <boost/algorithm/cxx11/copy_if.hpp>
+#include <boost/mpi/collectives/scatter.hpp>
 #include <boost/range/algorithm.hpp>
+#include <boost/range/numeric.hpp>
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/variant.hpp>
 
-#include <boost/range/numeric.hpp>
 #include <cmath>
 #include <unordered_map>
 #include <unordered_set>
@@ -475,6 +477,7 @@ Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 } // namespace
 
 void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
+size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
 boost::optional<const Particle &> get_particle_data_local(int id) {
   auto p = cell_structure.get_local_particle(id);
@@ -532,22 +535,27 @@ void mpi_get_particles_slave(int, int) {
  *
  * @returns The particle data.
  */
-std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
+std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
   mpi_call(mpi_get_particles_slave, 0, 0);
   /* Return value */
   std::vector<Particle> parts(ids.size());
 
   /* Group ids per node */
-  std::vector<std::vector<int>> node_ids(comm_cart.size());
+  static std::vector<std::vector<int>> node_ids(comm_cart.size());
+  for (auto &per_node : node_ids) {
+    per_node.clear();
+  }
+
   for (auto const &id : ids) {
     auto const pnode = get_particle_node(id);
 
-    node_ids[pnode].push_back(id);
+    if (pnode != this_node)
+      node_ids[pnode].push_back(id);
   }
 
   /* Distributed ids to the nodes */
   {
-    std::vector<int> ignore;
+    static std::vector<int> ignore;
     boost::mpi::scatter(comm_cart, node_ids, ignore, 0);
   }
 
@@ -558,7 +566,7 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
                    return *cell_structure.get_local_particle(id);
                  });
 
-  std::vector<int> node_sizes(comm_cart.size());
+  static std::vector<int> node_sizes(comm_cart.size());
   std::transform(
       node_ids.cbegin(), node_ids.cend(), node_sizes.begin(),
       [](std::vector<int> const &ids) { return static_cast<int>(ids.size()); });
@@ -569,38 +577,27 @@ std::vector<Particle> mpi_get_particles(std::vector<int> const &ids) {
   return parts;
 }
 
-void prefetch_particle_data(std::vector<int> ids) {
+void prefetch_particle_data(Utils::Span<const int> in_ids) {
   /* Nothing to do on a single node. */
   if (comm_cart.size() == 1)
     return;
 
-  /* Remove local, already cached and non-existent particles from the list. */
-  ids.erase(std::remove_if(ids.begin(), ids.end(),
-                           [](int id) {
-                             if (not particle_exists(id)) {
-                               return true;
-                             }
-                             auto const pnode = get_particle_node(id);
-                             return (pnode == this_node) ||
-                                    particle_fetch_cache.has(id);
-                           }),
-            ids.end());
+  static std::vector<int> ids;
+  ids.clear();
+
+  boost::algorithm::copy_if(in_ids, std::back_inserter(ids), [](int id) {
+    return (get_particle_node(id) != this_node) && particle_fetch_cache.has(id);
+  });
 
   /* Don't prefetch more particles than fit the cache. */
   if (ids.size() > particle_fetch_cache.max_size())
     ids.resize(particle_fetch_cache.max_size());
 
   /* Fetch the particles... */
-  auto parts = mpi_get_particles(ids);
-
-  /* mpi_get_particles does not return the parts in the correct
-     order, so the ids need to be updated. */
-  std::transform(parts.cbegin(), parts.cend(), ids.begin(),
-                 [](Particle const &p) { return p.identity(); });
-
-  /* ... and put them into the cache. */
-  particle_fetch_cache.put(ids.cbegin(), ids.cend(),
-                           std::make_move_iterator(parts.begin()));
+  for (auto &p : mpi_get_particles(ids)) {
+    auto id = p.identity();
+    particle_fetch_cache.put(id, std::move(p));
+  }
 }
 
 int place_particle(int part, const double *pos) {
@@ -961,9 +958,6 @@ void auto_exclusions(int distance) {
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as an interleaved list */
   std::unordered_map<int, IntList> partners;
-
-  /* We need bond information */
-  partCfg().update_bonds();
 
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
