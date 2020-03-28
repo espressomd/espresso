@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2020 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -37,7 +37,7 @@
  */
 class PartCfg {
   /** The particle data */
-  std::vector<Particle> remote_parts;
+  std::vector<Particle> m_parts;
   /** State */
   bool m_valid;
 
@@ -61,7 +61,7 @@ public:
     if (!m_valid)
       update();
 
-    return remote_parts.begin();
+    return m_parts.begin();
   }
 
   /**
@@ -75,7 +75,7 @@ public:
     if (!m_valid)
       update();
 
-    return remote_parts.end();
+    return m_parts.end();
   }
 
   /**
@@ -90,7 +90,7 @@ public:
    */
   void invalidate() {
     /* Release memory */
-    remote_parts = std::vector<Particle>();
+    m_parts = std::vector<Particle>();
     /* Adjust state */
     m_valid = false;
   }
@@ -112,7 +112,7 @@ public:
     if (!m_valid)
       update();
 
-    return remote_parts.size();
+    return m_parts.size();
   }
 
   /**
@@ -122,7 +122,7 @@ public:
     if (!m_valid)
       update();
 
-    return remote_parts.empty();
+    return m_parts.empty();
   }
 };
 
