@@ -27,6 +27,8 @@
 #include "Cluster.hpp"
 
 #include "errorhandling.hpp"
+#include "grid.hpp"
+#include "particle_data.hpp"
 
 namespace ClusterAnalysis {
 

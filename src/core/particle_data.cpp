@@ -46,8 +46,9 @@
 #include <boost/serialization/variant.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/variant.hpp>
-
 #include <boost/range/numeric.hpp>
+#include <boost/mpi/collectives/scatter.hpp>
+
 #include <cmath>
 #include <unordered_map>
 #include <unordered_set>

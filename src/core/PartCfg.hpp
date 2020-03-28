@@ -19,8 +19,111 @@
 #ifndef CORE_PART_CFG_HPP
 #define CORE_PART_CFG_HPP
 
-#include "ParticleCache.hpp"
+#include "Particle.hpp"
 
-/** @brief Cache of particles */
-using PartCfg = ParticleCache;
+#include <vector>
+
+/**
+ * @brief Particle cache on the master.
+ *
+ * This class implements cached access to all particles in a
+ * particle range on the master node.
+ * This implementation fetches all particles to
+ * the master on first access. Updates of the particle data are
+ * triggered automatically on access. The data in the cache
+ * is invalidated automatically on_particle_change, and then
+ * updated on the next access.
+ *
+ */
+class PartCfg {
+  /** The particle data */
+  std::vector<Particle> remote_parts;
+  /** State */
+  bool m_valid;
+
+public:
+  using value_type = Particle;
+  PartCfg() : m_valid(false) {}
+
+  /**
+   * @brief Iterator pointing to the particle with the lowest
+   * id.
+   *
+   * Returns a random access iterator that traverses the
+   * particles
+   * in order of ascending id. If the cache is not up-to-date,
+   * an update is triggered. This iterator stays valid as long
+   * as the cache is valid. Since the cache could be invalidated
+   * and updated elsewhere, iterators into the cache should not
+   * be stored.
+   */
+  auto begin() {
+    if (!m_valid)
+      update();
+
+    return remote_parts.begin();
+  }
+
+  /**
+   * @brief Iterator pointing past the particle with the highest
+   * id.
+   *
+   * If the cache is not up-to-date,
+   * an update is triggered.
+   */
+  auto end() {
+    if (!m_valid)
+      update();
+
+    return remote_parts.end();
+  }
+
+  /**
+   * @brief Returns true if the cache is up-to-date.
+   *
+   * If false, particle access will trigger an update.
+   */
+  bool valid() const { return m_valid; }
+
+  /**
+   * @brief Invalidate the cache and free memory.
+   */
+  void invalidate() {
+    /* Release memory */
+    remote_parts = std::vector<Particle>();
+    /* Adjust state */
+    m_valid = false;
+  }
+
+  /**
+   * @brief Update particle information.
+   *
+   * This triggers a global update. All nodes
+   * sort their particle by id, and send them
+   * to the master.
+   */
+private:
+  void update();
+
+public:
+  /** Number of particles in the config.
+   */
+  size_t size() {
+    if (!m_valid)
+      update();
+
+    return remote_parts.size();
+  }
+
+  /**
+   * @brief size() == 0 ?
+   */
+  bool empty() {
+    if (!m_valid)
+      update();
+
+    return remote_parts.empty();
+  }
+};
+
 #endif

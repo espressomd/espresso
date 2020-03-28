@@ -22,6 +22,8 @@
 #include <cmath>
 
 #include "ProfileObservable.hpp"
+#include "grid.hpp"
+
 #include <utils/Vector.hpp>
 
 namespace Observables {

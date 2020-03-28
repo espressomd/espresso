@@ -25,7 +25,7 @@
  * @brief Particles' current configuration.
  *
  * Particle coordinates are unfolded.
- * For documentation see @ref ParticleCache
+ * For documentation see @ref PartCfg
  */
 PartCfg &partCfg();
 

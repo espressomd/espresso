@@ -18,7 +18,8 @@
  */
 #include "PidObservable.hpp"
 
-#include "partCfg_global.hpp"
+#include "grid.hpp"
+#include "particle_data.hpp"
 
 #include <boost/algorithm/clamp.hpp>
 #include <boost/range/algorithm/transform.hpp>
