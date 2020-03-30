@@ -7,7 +7,7 @@ set(logo_FILES
 )
 
 
-foreach(lf in logo_FILES)
+foreach(lf logo_FILES)
         add_custom_command(OUTPUT ${lf}
                            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/${lf} ${CMAKE_CURRENT_BINARY_DIR}
                           )
