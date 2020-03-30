@@ -304,33 +304,34 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Note that the bond partners can appear in any order.
 
   // Iterate over existing bonds of p
+  bool found = false;
+  for_each_bond(
+      p.bonds(), bonded_ia_params,
+      [&](Bonded_ia_parameters const &iaparams,
+          Utils::Span<const int> partner_ids) {
+        if (partner_ids.size() != 2)
+          return;
 
-  if (p.bl.e) {
-    int b = 0;
-    while (b < p.bl.n) {
-      int size = bonded_ia_params[p.bl.e[b]].num;
+        auto const bond_id = std::addressof(iaparams) - bonded_ia_params.data();
 
-      if (size == 2) {
         // Check if the bond type is within the range used by the collision
         // detection,
-        if ((p.bl.e[b] >= collision_params.bond_three_particles) &
-            (p.bl.e[b] <=
-             collision_params.bond_three_particles +
-                 collision_params.three_particle_angle_resolution)) {
+        if ((bond_id >= collision_params.bond_three_particles) &
+            (bond_id <= collision_params.bond_three_particles +
+                            collision_params.three_particle_angle_resolution)) {
           // check, if p1 and p2 are the bond partners, (in any order)
           // if yes, skip triplet
-          if (((p.bl.e[b + 1] == p1.p.identity) &&
-               (p.bl.e[b + 2] == p2.p.identity)) ||
-              ((p.bl.e[b + 1] == p2.p.identity) &&
-               (p.bl.e[b + 2] == p1.p.identity)))
-            return;
+          if (((partner_ids[0] == p1.p.identity) &&
+               (partner_ids[1] == p2.p.identity)) ||
+              ((partner_ids[0] == p2.p.identity) &&
+               (partner_ids[1] == p1.p.identity)))
+            found = true;
+          return;
         } // if bond type
-      }   // if size==2
+      });
 
-      // Go to next bond
-      b += size + 1;
-    } // bond loop
-  }   // if bond list defined
+  if (found)
+    return;
 
   // If we are still here, we need to create angular bond
   // First, find the angle between the particle p, p1 and p2

@@ -41,8 +41,7 @@
 enum BondedInteraction : int {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
-  /** Type of bonded interaction is a FENE potential
-      (to be combined with Lennard-Jones). */
+  /** Type of bonded interaction is a FENE potential */
   BONDED_IA_FENE,
   /** Type of bonded interaction is a harmonic potential. */
   BONDED_IA_HARMONIC,
@@ -415,6 +414,23 @@ extern std::vector<Bonded_ia_parameters> bonded_ia_params;
  */
 void make_bond_type_exist(int type);
 
+template <class Kernel>
+void for_each_bond(Utils::Span<const int> bl,
+                   std::vector<Bonded_ia_parameters> const &parameters,
+                   Kernel kernel) {
+  int i = 0;
+  while (i < bl.size()) {
+    int type_num = bl[i++];
+    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
+
+    Utils::Span<const int> partner_ids{bl.data() + i,
+                                       static_cast<size_t>(iaparams.num)};
+    i += iaparams.num;
+
+    kernel(iaparams, partner_ids);
+  }
+}
+
 /** @brief Checks if particle has a pair bond with a given partner
  *  Note that bonds are stored only on one of the two particles in Espresso
  *
@@ -424,18 +440,21 @@ void make_bond_type_exist(int type);
  */
 inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
                                 int bond_type) {
-  if (p.bl.e) {
-    int i = 0;
-    while (i < p.bl.n) {
-      int size = bonded_ia_params[p.bl.e[i]].num;
+  bool result = false;
 
-      if (p.bl.e[i] == bond_type && p.bl.e[i + 1] == partner.p.identity) {
-        return true;
-      }
-      i += size + 1;
-    }
-  }
-  return false;
+  for_each_bond(
+      p.bonds(), bonded_ia_params,
+      [&result, bond_type,
+       partner_id = partner.identity()](Bonded_ia_parameters const &iaparams,
+                                        Utils::Span<const int> partner_ids) {
+        if ((static_cast<int>(std::addressof(iaparams) -
+                              bonded_ia_params.data()) == bond_type) and
+            (partner_ids[0] == partner_id)) {
+          result = true;
+        }
+      });
+
+  return result;
 }
 
 /** @brief Checks both particles for a specific bond, even on ghost particles.
@@ -444,20 +463,22 @@ inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
  *  @param p_partner   bond partner
  *  @param bond        enum bond type
  */
-inline bool pair_bond_enum_exists_on(Particle const &p_bond,
+inline bool pair_bond_enum_exists_on(Particle const &p,
                                      Particle const &p_partner,
-                                     BondedInteraction bond) {
-  int i = 0;
-  while (i < p_bond.bl.n) {
-    int type_num = p_bond.bl.e[i];
-    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-    if (iaparams.type == (int)bond &&
-        p_bond.bl.e[i + 1] == p_partner.p.identity) {
-      return true;
-    }
-    i += iaparams.num + 1;
-  }
-  return false;
+                                     BondedInteraction bond_type) {
+  bool result = false;
+
+  for_each_bond(
+      p.bonds(), bonded_ia_params,
+      [&result, bond_type,
+       partner_id = p_partner.identity()](Bonded_ia_parameters const &iaparams,
+                                          Utils::Span<const int> partner_ids) {
+        if ((iaparams.type == bond_type) and (partner_ids[0] == partner_id)) {
+          result = true;
+        }
+      });
+
+  return result;
 }
 
 /** @brief Checks both particles for a specific bond, even on ghost particles.
@@ -512,23 +533,6 @@ void remove_all_bonds_to(Particle &p, int id);
 double maximal_cutoff_bonded();
 
 int virtual_set_params(int bond_type);
-
-template <class Kernel>
-void for_each_bond(Utils::Span<const int> bl,
-                   std::vector<Bonded_ia_parameters> const &parameters,
-                   Kernel kernel) {
-  int i = 0;
-  while (i < bl.size()) {
-    int type_num = bl[i++];
-    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-
-    Utils::Span<const int> partner_ids{bl.data() + i,
-                                       static_cast<size_t>(iaparams.num)};
-    i += iaparams.num;
-
-    kernel(iaparams, partner_ids);
-  }
-}
 
 void bond_broken_error(int id, Utils::Span<const int> partner_ids);
 
