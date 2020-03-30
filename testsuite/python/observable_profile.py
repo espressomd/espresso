@@ -45,7 +45,8 @@ class ProfileObservablesTest(ut.TestCase):
         obs_data = density_profile.calculate()
         obs_edges = np.array(density_profile.edges())
         np_hist, np_edges = tests_common.get_histogram(
-            np.copy(self.system.part[:].pos), self.kwargs, 'cartesian', density=True)
+            np.copy(self.system.part[:].pos), self.kwargs, 'cartesian',
+            normed=True)
         np_hist *= len(self.system.part)
         np.testing.assert_array_almost_equal(obs_data, np_hist)
         for i in range(3):
