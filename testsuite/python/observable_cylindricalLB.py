@@ -147,8 +147,9 @@ class CylindricalLBObservableCommon:
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
+        core_edges = p.edges()
         self.pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(
+        np_hist, np_edges = np.histogramdd(
             self.pol_positions,
             bins=(self.params['n_r_bins'],
                   self.params['n_phi_bins'],
@@ -164,6 +165,8 @@ class CylindricalLBObservableCommon:
         np.testing.assert_array_almost_equal(
             np_hist * self.v_phi, core_hist_v_phi)
         np.testing.assert_array_almost_equal(np_hist * self.v_z, core_hist_v_z)
+        for i in range(3):
+            np.testing.assert_array_almost_equal(np_edges[i], core_edges[i])
         self.assertEqual(np.prod(p.shape()), len(np_hist.flatten()) * 3)
 
     def LB_velocity_profile_at_particle_positions_test(self):

@@ -41,10 +41,27 @@ class ProfileObservablesTest(ut.TestCase):
               'min_z': 0.0,
               'max_z': 10.0}
 
+    def calculate_numpy_histogram(self):
+        np_hist, np_edges = np.histogramdd(
+            np.copy(self.system.part[:].pos),
+            bins=(self.kwargs['n_x_bins'],
+                  self.kwargs['n_y_bins'],
+                  self.kwargs['n_z_bins']),
+            range=[(self.kwargs['min_x'], self.kwargs['max_x']),
+                   (self.kwargs['min_y'], self.kwargs['max_y']),
+                   (self.kwargs['min_z'], self.kwargs['max_z'])],
+            density=True)
+        return np_hist, np_edges
+
     def test_density_profile(self):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
         obs_data = density_profile.calculate()
-        self.assertEqual(obs_data[0, 0, 1], 2.0 / self.bin_volume)
+        obs_edges = np.array(density_profile.edges())
+        np_hist, np_edges = self.calculate_numpy_histogram()
+        np_hist *= len(self.system.part)
+        np.testing.assert_array_almost_equal(obs_data, np_hist)
+        for i in range(3):
+            np.testing.assert_array_almost_equal(obs_edges[i], np_edges[i])
         self.assertEqual(np.prod(obs_data.shape),
                          self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
 

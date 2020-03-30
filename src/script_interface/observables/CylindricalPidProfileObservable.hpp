@@ -135,6 +135,20 @@ public:
             "max_z");
   }
 
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
+    if (method == "edges") {
+      auto const core_edges = cylindrical_pid_profile_observable()->edges();
+      std::vector<Variant> variant_edges;
+      for (auto &edge : core_edges) {
+        variant_edges.push_back(Variant{edge});
+      }
+      return variant_edges;
+    } else {
+      return Base::call_method(method, parameters);
+    }
+  }
+
   std::shared_ptr<::Observables::Observable> observable() const override {
     return m_observable;
   }

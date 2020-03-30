@@ -104,7 +104,7 @@ class TestCylindricalObservable(ut.TestCase):
 
     def calculate_numpy_histogram(self):
         pol_positions = self.pol_coords()
-        np_hist, _ = np.histogramdd(
+        np_hist, np_edges = np.histogramdd(
             pol_positions,
             bins=(self.params['n_r_bins'],
                   self.params['n_phi_bins'],
@@ -112,7 +112,7 @@ class TestCylindricalObservable(ut.TestCase):
             range=[(self.params['min_r'], self.params['max_r']),
                    (self.params['min_phi'], self.params['max_phi']),
                    (self.params['min_z'], self.params['max_z'])])
-        return np_hist
+        return np_hist, np_edges
 
     def normalize_with_bin_volume(self, histogram):
         bin_volume = tests_common.get_cylindrical_bin_volume(
@@ -141,9 +141,12 @@ class TestCylindricalObservable(ut.TestCase):
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalDensityProfile(**local_params)
         core_hist = obs.calculate()
-        np_hist = self.calculate_numpy_histogram()
+        core_edges = obs.edges()
+        np_hist, np_edges = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist, core_hist)
+        for i in range(3):
+            np.testing.assert_array_almost_equal(np_edges[i], core_edges[i])
         self.assertEqual(np.prod(obs.shape()), len(np_hist.flatten()))
 
     def velocity_profile_test(self):
@@ -161,7 +164,7 @@ class TestCylindricalObservable(ut.TestCase):
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
-        np_hist = self.calculate_numpy_histogram()
+        np_hist, _ = self.calculate_numpy_histogram()
         for x in np.nditer(np_hist, op_flags=['readwrite']):
             if x[...] > 0.0:
                 x[...] /= x[...]
@@ -187,7 +190,7 @@ class TestCylindricalObservable(ut.TestCase):
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
-        np_hist = self.calculate_numpy_histogram()
+        np_hist, _ = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(
