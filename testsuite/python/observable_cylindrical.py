@@ -14,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 import numpy as np
 import unittest as ut
 import espressomd
@@ -28,9 +27,8 @@ class TestCylindricalObservable(ut.TestCase):
     Testcase for the cylindrical observables.
 
     """
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[15.0, 15.0, 15.0])
     system.time_step = 0.01
-    system.box_l = [15.0, 15.0, 15.0]
     system.cell_system.skin = 0.4
 
     params = {
@@ -104,14 +102,8 @@ class TestCylindricalObservable(ut.TestCase):
 
     def calculate_numpy_histogram(self):
         pol_positions = self.pol_coords()
-        np_hist, np_edges = np.histogramdd(
-            pol_positions,
-            bins=(self.params['n_r_bins'],
-                  self.params['n_phi_bins'],
-                  self.params['n_z_bins']),
-            range=[(self.params['min_r'], self.params['max_r']),
-                   (self.params['min_phi'], self.params['max_phi']),
-                   (self.params['min_z'], self.params['max_z'])])
+        np_hist, np_edges = tests_common.get_histogram(
+            pol_positions, self.params, 'cylindrical')
         return np_hist, np_edges
 
     def normalize_with_bin_volume(self, histogram):
@@ -218,8 +210,4 @@ class TestCylindricalObservable(ut.TestCase):
 
 
 if __name__ == "__main__":
-    suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(
-        TestCylindricalObservable))
-    result = ut.TextTestRunner(verbosity=4).run(suite)
-    sys.exit(not result.wasSuccessful())
+    ut.main()

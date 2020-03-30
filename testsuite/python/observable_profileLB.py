@@ -18,6 +18,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import copy
+import tests_common
 
 import espressomd
 import espressomd.lb
@@ -66,21 +67,6 @@ class ObservableProfileLBCommon:
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 
-    def calculate_numpy_histogram(self):
-        np_hist, np_edges = np.histogramdd(
-            np.array([3 * [0]]),
-            bins=(LB_VELOCITY_PROFILE_PARAMS['n_x_bins'],
-                  LB_VELOCITY_PROFILE_PARAMS['n_y_bins'],
-                  LB_VELOCITY_PROFILE_PARAMS['n_z_bins']),
-            range=[(LB_VELOCITY_PROFILE_PARAMS['min_x'],
-                    LB_VELOCITY_PROFILE_PARAMS['max_x']),
-                   (LB_VELOCITY_PROFILE_PARAMS['min_y'],
-                    LB_VELOCITY_PROFILE_PARAMS['max_y']),
-                   (LB_VELOCITY_PROFILE_PARAMS['min_z'],
-                    LB_VELOCITY_PROFILE_PARAMS['max_z'])],
-            density=True)
-        return np_hist, np_edges
-
     def set_fluid_velocities(self):
         """Set an x dependent fluid velocity."""
         for x in range(int(self.system.box_l[0] / AGRID)):
@@ -94,7 +80,9 @@ class ObservableProfileLBCommon:
             **LB_VELOCITY_PROFILE_PARAMS)
         obs_data = obs.calculate()
         obs_edges = obs.edges()
-        _, np_edges = self.calculate_numpy_histogram()
+        _, np_edges = tests_common.get_histogram(
+            np.zeros([1, 3]), LB_VELOCITY_PROFILE_PARAMS, 'cartesian',
+            density=True)
         for i in range(3):
             np.testing.assert_array_almost_equal(obs_edges[i], np_edges[i])
         for x in range(obs_data.shape[0]):

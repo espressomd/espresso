@@ -149,17 +149,8 @@ class CylindricalLBObservableCommon:
         core_hist_v_z = core_hist[:, :, :, 2]
         core_edges = p.edges()
         self.pol_positions = self.pol_coords()
-        np_hist, np_edges = np.histogramdd(
-            self.pol_positions,
-            bins=(self.params['n_r_bins'],
-                  self.params['n_phi_bins'],
-                  self.params['n_z_bins']),
-            range=[(self.params['min_r'],
-                    self.params['max_r']),
-                   (self.params['min_phi'],
-                    self.params['max_phi']),
-                   (self.params['min_z'],
-                    self.params['max_z'])])
+        np_hist, np_edges = tests_common.get_histogram(
+            self.pol_positions, self.params, 'cylindrical')
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist * self.v_r, core_hist_v_r)
         np.testing.assert_array_almost_equal(

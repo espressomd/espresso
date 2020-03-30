@@ -14,17 +14,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.observables
+import tests_common
 
 
 class ProfileObservablesTest(ut.TestCase):
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
-    system.box_l = [10.0, 10.0, 10.0]
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.cell_system.skin = 0.1
     system.time_step = 0.01
     system.part.add(id=0, pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
@@ -41,23 +40,12 @@ class ProfileObservablesTest(ut.TestCase):
               'min_z': 0.0,
               'max_z': 10.0}
 
-    def calculate_numpy_histogram(self):
-        np_hist, np_edges = np.histogramdd(
-            np.copy(self.system.part[:].pos),
-            bins=(self.kwargs['n_x_bins'],
-                  self.kwargs['n_y_bins'],
-                  self.kwargs['n_z_bins']),
-            range=[(self.kwargs['min_x'], self.kwargs['max_x']),
-                   (self.kwargs['min_y'], self.kwargs['max_y']),
-                   (self.kwargs['min_z'], self.kwargs['max_z'])],
-            density=True)
-        return np_hist, np_edges
-
     def test_density_profile(self):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
         obs_data = density_profile.calculate()
         obs_edges = np.array(density_profile.edges())
-        np_hist, np_edges = self.calculate_numpy_histogram()
+        np_hist, np_edges = tests_common.get_histogram(
+            np.copy(self.system.part[:].pos), self.kwargs, 'cartesian', density=True)
         np_hist *= len(self.system.part)
         np.testing.assert_array_almost_equal(obs_data, np_hist)
         for i in range(3):
@@ -88,8 +76,4 @@ class ProfileObservablesTest(ut.TestCase):
 
 
 if __name__ == '__main__':
-    suite = ut.TestSuite()
-    suite.addTests(ut.TestLoader().loadTestsFromTestCase(
-        ProfileObservablesTest))
-    result = ut.TextTestRunner(verbosity=4).run(suite)
-    sys.exit(not result.wasSuccessful())
+    ut.main()
