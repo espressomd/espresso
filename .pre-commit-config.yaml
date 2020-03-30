@@ -1,0 +1,19 @@
+fail_fast: false
+repos:
+-   repo: local
+    hooks:
+    -   id: clang-format
+        name: clang-format
+        entry: bash maintainer/CI/clang-format.sh
+        language: system
+        always_run: false
+        files: '.*\.(cpp|hpp|cu|cuh)'
+        args: ["-i", "-style=file"]
+
+    -   id: autopep8
+        name: autopep8
+        entry: bash maintainer/CI/autopep8.sh
+        language: system
+        always_run: false
+        files: '.*\.(py|pyx|pxd)'
+        args: ["--ignore=E266,W291,W293", "--in-place", "--aggressive"]
