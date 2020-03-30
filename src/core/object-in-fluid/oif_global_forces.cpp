@@ -61,7 +61,7 @@ void calc_oif_global(double *area_volume, int molType, CellStructure &cs) {
 
   double part_area_volume[2]; // added
 
-  for (auto &p : cs.local_cells().particles()) {
+  for (auto &p : cs.local_particles()) {
     if (p.p.mol_id != molType)
       continue;
 
@@ -106,7 +106,7 @@ void add_oif_global_forces(double const *area_volume, int molType,
   double area = area_volume[0];
   double VOL_volume = area_volume[1];
 
-  for (auto &p : cs.local_cells().particles()) {
+  for (auto &p : cs.local_particles()) {
     if (p.p.mol_id != molType)
       continue;
 
