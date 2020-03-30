@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Copyright (C) 2018-2019 The ESPResSo project
+# Copyright (C) 2018-2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,10 +25,12 @@ if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     exit 1
 fi
 
+if ! hash pre-commit 2>/dev/null; then
+    echo "pre-commit command not found."
+    exit 2
+fi
 
-find . \( -name '*.hpp' -o -name '*.cpp' -o -name '*.cu' -o -name '*.cuh' \) -not -path './libs/*' | xargs -n 5 -P 8 bash maintainer/CI/clang-format.sh -i -style=file || exit 3
-find . \( -name '*.py' -o -name '*.pyx' -o -name '*.pxd' \) -not -path './libs/*' | xargs -n 5 -P 8 bash maintainer/CI/autopep8.sh --ignore=E266,W291,W293 --in-place --aggressive || exit 3
-find . -type f -perm +111 ! -name '*.sh' ! -name '*.py' ! -name '*.sh.in' ! -name pypresso.cmakein -not -path './.git/*' | xargs -n 5 -P 8 chmod -x || exit 3
+pre-commit run --all-files
 
 if [ "${CI}" != "" ]; then
     git --no-pager diff > style.patch
