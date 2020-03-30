@@ -142,11 +142,14 @@ bool integrator_step_1(ParticleRange &particles) {
     throw std::runtime_error("Unknown value for integ_switch");
   }
   return false;
+#ifdef STOKESIAN_DYNAMICS
+  printf("SD env variable set");
+#endif
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
-  extern BrownianThermostat brownian;
+  // extern BrownianThermostat brownian; //Carl removed that because it caused him error
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -161,7 +164,7 @@ void integrator_step_2(ParticleRange &particles) {
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    brownian_dynamics_propagator(brownian, particles);
+    // brownian_dynamics_propagator(brownian, particles);// carl removed that ...
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:
@@ -220,7 +223,6 @@ int integrate(int n_steps, int reuse_forces) {
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_START_INSTRUMENTATION;
 #endif
-
   /* Integration loop */
   ESPRESSO_PROFILER_CXX_MARK_LOOP_BEGIN(integration_loop, "Integration loop");
   int integrated_steps = 0;
@@ -298,6 +300,7 @@ int integrate(int n_steps, int reuse_forces) {
 
   } // for-loop over integration steps
   ESPRESSO_PROFILER_CXX_MARK_LOOP_END(integration_loop);
+
 #ifdef VALGRIND_INSTRUMENTATION
   CALLGRIND_STOP_INSTRUMENTATION;
 #endif

@@ -32,7 +32,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
 
   // Compute new (translational and rotational) velocities
   propagate_vel_pos_sd();
-
+  
   for (auto &p : particles) {
     // Translate particle
     p.r.p[0] += p.m.v[0] * time_step;

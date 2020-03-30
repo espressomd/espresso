@@ -190,7 +190,8 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 int get_sd_flags() { return sd_flags; }
 
 void propagate_vel_pos_sd() {
-  std::size_t n_part_local = local_cells.particles().size();
+  ParticleRange const &parts = cell_structure.local_cells().particles();
+  std::size_t n_part_local = parts.size();
 
   if (this_node == 0) {
     if (thermo_switch & THERMO_SD) {
@@ -206,7 +207,7 @@ void propagate_vel_pos_sd() {
         return;
       }
 
-      sd_gather_local_particles(local_cells.particles());
+      sd_gather_local_particles(parts);
       Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
 
       std::size_t n_part = parts_buffer.size();
@@ -300,13 +301,13 @@ void propagate_vel_pos_sd() {
       }
 
       Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
-      sd_update_locally(local_cells.particles());
+      sd_update_locally(parts);
     }
 
   } else { // if (this_node == 0)
 
     if (thermo_switch & THERMO_SD) {
-      sd_gather_local_particles(local_cells.particles());
+      sd_gather_local_particles(parts);
       Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
 
       v_sd.resize(n_part_local * 6);
@@ -314,7 +315,7 @@ void propagate_vel_pos_sd() {
       // now wait while master node is busy ...
 
       Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
-      sd_update_locally(local_cells.particles());
+      sd_update_locally(parts);
     }
 
   } // if (this_node == 0) {...} else

@@ -5,7 +5,14 @@
 #include "device_matrix.hpp"
 #include "multi_array.hpp"
 
+#ifdef __CUDACC__
 #include <curand_kernel.h>
+#else
+#include "../Random123-1.09/include/Random123/philox.h"
+
+typedef r123::Philox2x64 RNG;
+#endif
+
 
 #ifdef __CUDACC__
 #define DEVICE_FUNC __host__ __device__
@@ -1165,10 +1172,25 @@ struct thermalizer {
     __device__
 #endif
     T operator()(std::size_t index) {
+#ifdef __CUDACC__
         uint4 rnd_ints = curand_Philox4x32_10(make_uint4(offset >> 32, seed >> 32, index >> 32, index),
                                               make_uint2(offset, seed));
-
         T rnd = _curand_uniform_double_hq(rnd_ints.w, rnd_ints.x);
+#else
+        // get two 64-bit random unsigned integers (of which only one is used)
+        RNG rng;
+        RNG::ctr_type c;
+        RNG::key_type k;
+        k[0] = seed;
+        c[0] = offset;
+        c[1] = index;
+        RNG::ctr_type rint = rng(c, k);
+        
+        // convert to uniform distribution
+        auto constexpr const max = std::numeric_limits<uint64_t>::max();
+        auto constexpr const fac = 1. / (max + 1.);
+        T rnd = rint[0] * fac;
+#endif
         return std::sqrt(T{2.0}) * sqrt_kT_Dt * std::sqrt(T{12.0}) * (rnd - 0.5);
 
         // sqrt(12) * (rnd - 0.5) is a uniformly distributed random number

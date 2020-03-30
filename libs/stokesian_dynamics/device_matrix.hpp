@@ -6,8 +6,10 @@
 
 #include "thrust_wrapper.hpp"
 
+#ifdef __CUDACC__
 #include <cublas_v2.h>
 #include <cusolverDn.h>
+#endif
 
 #ifdef __CUDACC__
 #define DEVICE_FUNC __host__ __device__
