@@ -37,10 +37,14 @@ template <typename CoreCylLBObs>
 class CylindricalLBProfileObservable
     : public AutoParameters<CylindricalLBProfileObservable<CoreCylLBObs>,
                             Observable> {
+  using Base =
+      AutoParameters<CylindricalLBProfileObservable<CoreCylLBObs>, Observable>;
+
 public:
   static_assert(std::is_base_of<::Observables::CylindricalLBProfileObservable,
                                 CoreCylLBObs>::value,
                 "");
+  using Base::Base;
   CylindricalLBProfileObservable() {
     this->add_parameters({
         {"center",

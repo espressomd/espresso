@@ -36,7 +36,10 @@ namespace Observables {
 template <typename CoreObs>
 class PidProfileObservable
     : public AutoParameters<PidProfileObservable<CoreObs>, Observable> {
+  using Base = AutoParameters<PidProfileObservable<CoreObs>, Observable>;
+
 public:
+  using Base::Base;
   PidProfileObservable() {
     this->add_parameters(
         {{"ids",

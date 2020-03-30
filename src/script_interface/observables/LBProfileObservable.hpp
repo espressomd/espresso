@@ -35,10 +35,13 @@ namespace Observables {
 template <typename CoreLBObs>
 class LBProfileObservable
     : public AutoParameters<LBProfileObservable<CoreLBObs>, Observable> {
+  using Base = AutoParameters<LBProfileObservable<CoreLBObs>, Observable>;
+
 public:
   static_assert(
       std::is_base_of<::Observables::LBProfileObservable, CoreLBObs>::value,
       "");
+  using Base::Base;
   LBProfileObservable() {
     this->add_parameters(
         {{"n_x_bins",

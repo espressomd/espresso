@@ -37,10 +37,14 @@ template <typename CoreObs>
 class CylindricalPidProfileObservable
     : public AutoParameters<CylindricalPidProfileObservable<CoreObs>,
                             Observable> {
+  using Base =
+      AutoParameters<CylindricalPidProfileObservable<CoreObs>, Observable>;
+
 public:
   static_assert(std::is_base_of<::Observables::CylindricalPidProfileObservable,
                                 CoreObs>::value,
                 "");
+  using Base::Base;
   CylindricalPidProfileObservable() {
     this->add_parameters({
         {"ids",

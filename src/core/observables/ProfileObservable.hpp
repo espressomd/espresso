@@ -19,11 +19,13 @@
 #ifndef OBSERVABLES_PROFILEOBSERVABLE_HPP
 #define OBSERVABLES_PROFILEOBSERVABLE_HPP
 
+#include <vector>
+
 #include "Observable.hpp"
 
 namespace Observables {
 
-// Observable which acts on a given list of particle ids
+/** Cartesian profile observable */
 class ProfileObservable : virtual public Observable {
 public:
   ProfileObservable(double min_x, double max_x, double min_y, double max_y,
@@ -33,9 +35,11 @@ public:
         max_z(max_z), n_x_bins(static_cast<size_t>(n_x_bins)),
         n_y_bins(static_cast<size_t>(n_y_bins)),
         n_z_bins(static_cast<size_t>(n_z_bins)) {}
+  // Range of the profile edges.
   double min_x, max_x;
   double min_y, max_y;
   double min_z, max_z;
+  // Number of bins for each coordinate.
   size_t n_x_bins, n_y_bins, n_z_bins;
   std::vector<size_t> shape() const override {
     return {n_x_bins, n_y_bins, n_z_bins};
