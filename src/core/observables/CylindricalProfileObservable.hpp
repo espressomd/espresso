@@ -19,12 +19,13 @@
 #ifndef OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 #define OBSERVABLES_CYLINDRICALPROFILEOBSERVABLE_HPP
 
-#include <algorithm>
+#include <boost/range/algorithm.hpp>
 #include <vector>
 
 #include "Observable.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/math/make_lin_space.hpp>
 
 namespace Observables {
 
@@ -55,26 +56,16 @@ public:
   }
 
   /** Calculate the bin edges for each dimension */
-  std::vector<std::vector<double>> edges() {
-    std::vector<std::vector<double>> profile_edges(3);
-    profile_edges[0] = std::vector<double>(n_r_bins + 1);
-    profile_edges[1] = std::vector<double>(n_phi_bins + 1);
-    profile_edges[2] = std::vector<double>(n_z_bins + 1);
-    std::generate(profile_edges[0].begin(), profile_edges[0].end(),
-                  [n = 0, start = min_r,
-                   bin_size = (max_r - min_r) / n_r_bins]() mutable {
-                    return start + bin_size * n++;
-                  });
-    std::generate(profile_edges[1].begin(), profile_edges[1].end(),
-                  [n = 0, start = min_phi,
-                   bin_size = (max_phi - min_phi) / n_phi_bins]() mutable {
-                    return start + bin_size * n++;
-                  });
-    std::generate(profile_edges[2].begin(), profile_edges[2].end(),
-                  [n = 0, start = min_z,
-                   bin_size = (max_z - min_z) / n_z_bins]() mutable {
-                    return start + bin_size * n++;
-                  });
+  std::array<std::vector<double>, 3> edges() {
+    std::array<std::vector<double>, 3> profile_edges = {
+        {std::vector<double>(n_r_bins + 1), std::vector<double>(n_phi_bins + 1),
+         std::vector<double>(n_z_bins + 1)}};
+    boost::copy(Utils::make_lin_space(min_r, max_r, n_r_bins + 1),
+                profile_edges[0].begin());
+    boost::copy(Utils::make_lin_space(min_phi, max_phi, n_phi_bins + 1),
+                profile_edges[1].begin());
+    boost::copy(Utils::make_lin_space(min_z, max_z, n_z_bins + 1),
+                profile_edges[2].begin());
     return profile_edges;
   }
 };

@@ -23,6 +23,9 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <boost/range/algorithm.hpp>
+#include <iterator>
 #include <memory>
 
 #include "core/observables/DensityProfile.hpp"
@@ -114,15 +117,12 @@ public:
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "edges") {
-      auto const core_edges = pid_profile_observable()->edges();
       std::vector<Variant> variant_edges;
-      for (auto &edge : core_edges) {
-        variant_edges.push_back(Variant{edge});
-      }
+      boost::copy(pid_profile_observable()->edges(),
+                  std::back_inserter(variant_edges));
       return variant_edges;
-    } else {
-      return Base::call_method(method, parameters);
     }
+    return Base::call_method(method, parameters);
   }
 
   std::shared_ptr<::Observables::PidProfileObservable>

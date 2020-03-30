@@ -19,8 +19,10 @@
 #ifndef OBSERVABLES_PROFILEOBSERVABLE_HPP
 #define OBSERVABLES_PROFILEOBSERVABLE_HPP
 
-#include <algorithm>
+#include <boost/range/algorithm.hpp>
 #include <vector>
+
+#include <utils/math/make_lin_space.hpp>
 
 #include "Observable.hpp"
 
@@ -48,26 +50,16 @@ public:
   }
 
   /** Calculate the bin edges for each dimension */
-  std::vector<std::vector<double>> edges() {
-    std::vector<std::vector<double>> profile_edges(3);
-    profile_edges[0] = std::vector<double>(n_x_bins + 1);
-    profile_edges[1] = std::vector<double>(n_y_bins + 1);
-    profile_edges[2] = std::vector<double>(n_z_bins + 1);
-    std::generate(profile_edges[0].begin(), profile_edges[0].end(),
-                  [n = 0, start = min_x,
-                   bin_size = (max_x - min_x) / n_x_bins]() mutable {
-                    return start + bin_size * n++;
-                  });
-    std::generate(profile_edges[1].begin(), profile_edges[1].end(),
-                  [n = 0, start = min_y,
-                   bin_size = (max_y - min_y) / n_y_bins]() mutable {
-                    return start + bin_size * n++;
-                  });
-    std::generate(profile_edges[2].begin(), profile_edges[2].end(),
-                  [n = 0, start = min_z,
-                   bin_size = (max_z - min_z) / n_z_bins]() mutable {
-                    return start + bin_size * n++;
-                  });
+  std::array<std::vector<double>, 3> edges() {
+    std::array<std::vector<double>, 3> profile_edges = {
+        {std::vector<double>(n_x_bins + 1), std::vector<double>(n_y_bins + 1),
+         std::vector<double>(n_z_bins + 1)}};
+    boost::copy(Utils::make_lin_space(min_x, max_x, n_x_bins + 1),
+                profile_edges[0].begin());
+    boost::copy(Utils::make_lin_space(min_y, max_y, n_y_bins + 1),
+                profile_edges[1].begin());
+    boost::copy(Utils::make_lin_space(min_z, max_z, n_z_bins + 1),
+                profile_edges[2].begin());
     return profile_edges;
   }
 };
