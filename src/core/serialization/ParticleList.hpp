@@ -19,8 +19,6 @@
 #ifndef CORE_UTILS_SERIALIZATION_PARTICLE_LIST_HPP
 #define CORE_UTILS_SERIALIZATION_PARTICLE_LIST_HPP
 
-#include "Particle.hpp"
-
 namespace boost {
 namespace serialization {
 template <class Archive>
@@ -30,6 +28,7 @@ void load(Archive &ar, ParticleList &pl, const unsigned int /* version */) {
 
   pl.resize(size);
   for (int i = 0; i < size; i++) {
+    new (pl.part + i) Particle();
     ar >> pl.part[i];
   }
 }
