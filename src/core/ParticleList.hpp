@@ -60,6 +60,10 @@ private:
       max = INCREMENT * ((size + INCREMENT - 1) / INCREMENT);
     if (max != old_max)
       part = Utils::realloc(part, sizeof(Particle) * max);
+    /* If there are new particles, default initialize them */
+    if (max > old_max)
+      std::uninitialized_fill(part + old_max, part + max, Particle());
+
     return part != old_start;
   }
 
@@ -107,7 +111,7 @@ public:
    */
   void push_back(Particle &&p) {
     resize(size() + 1);
-    new (&(part[n - 1])) Particle(std::move(p));
+    part[n - 1] = std::move(p);
   }
 
   /**

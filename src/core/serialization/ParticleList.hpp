@@ -28,7 +28,6 @@ void load(Archive &ar, ParticleList &pl, const unsigned int /* version */) {
 
   pl.resize(size);
   for (int i = 0; i < size; i++) {
-    new (pl.part + i) Particle();
     ar >> pl.part[i];
   }
 }

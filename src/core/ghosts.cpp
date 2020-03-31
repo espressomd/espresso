@@ -181,7 +181,6 @@ static void prepare_ghost_cell(Cell *cell, int size) {
   if (old_cap < cell->capacity()) {
     auto new_parts =
         make_span(cell->part + old_cap, cell->capacity() - old_cap);
-    std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
     for (auto &p : new_parts) {
       p.l.ghost = true;
     }
