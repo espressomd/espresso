@@ -26,17 +26,17 @@ if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
 
 PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
-      PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
+      PR + '/comments'
+HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
 SIZELIMIT = 10000
 TOKEN_ESPRESSO_CI = 'style.patch'
 
 # Delete all existing comments
-comments = requests.get(URL)
+comments = requests.get(URL, headers=HEADERS)
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
-        requests.delete(comment['url'] + '?access_token=' +
-                        os.environ['GITHUB_TOKEN'])
+        requests.delete(comment['url'], headers=HEADERS)
 
 MESSAGE = '''Your pull request does not meet our code formatting \
 rules. {header}, please do one of the following:
@@ -74,4 +74,4 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
 
     if patch:
         assert TOKEN_ESPRESSO_CI in message
-        requests.post(URL, json={'body': message})
+        requests.post(URL, headers=HEADERS, json={'body': message})

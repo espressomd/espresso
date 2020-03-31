@@ -27,19 +27,19 @@ if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
 
 PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
-      PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
+      PR + '/comments'
+HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
 SIZELIMIT = 5000
 TOKEN_ESPRESSO_CI = 'Pylint summary'
 
 n_warnings, filepath_warnings = sys.argv[-2:]
 
 # Delete older pylint messages
-comments = requests.get(URL)
+comments = requests.get(URL, headers=HEADERS)
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
-        requests.delete(comment['url'] + '?access_token=' +
-                        os.environ['GITHUB_TOKEN'])
+        requests.delete(comment['url'], headers=HEADERS)
 
 # If pylint raised errors, post a new comment
 if n_warnings != '0':
@@ -68,4 +68,4 @@ if n_warnings != '0':
     )
     assert TOKEN_ESPRESSO_CI in comment
 
-    requests.post(URL, json={'body': comment})
+    requests.post(URL, headers=HEADERS, json={'body': comment})
