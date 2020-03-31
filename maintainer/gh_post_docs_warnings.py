@@ -39,10 +39,12 @@ prefix = {'sphinx': 'doc', 'doxygen': 'dox'}[doc_type]
 
 # Delete all existing comments
 comments = requests.get(URL, headers=HEADERS)
+comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and prefix + \
             '_warnings.sh' in comment['body']:
-        requests.delete(comment['url'], headers=HEADERS)
+        response = requests.delete(comment['url'], headers=HEADERS)
+        response.raise_for_status()
 
 # If documentation raised warnings, post a new comment
 if has_warnings:
@@ -74,4 +76,5 @@ if has_warnings:
         'the same command that I have executed to generate the log above.'
         .format(doc_type, prefix))
 
-    requests.post(URL, headers=HEADERS, json={'body': comment})
+    response = requests.post(URL, headers=HEADERS, json={'body': comment})
+    response.raise_for_status()

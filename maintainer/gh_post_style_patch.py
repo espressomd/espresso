@@ -32,9 +32,11 @@ SIZELIMIT = 10000
 
 # Delete all existing comments
 comments = requests.get(URL, headers=HEADERS)
+comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and 'style.patch' in comment['body']:
-        requests.delete(comment['url'], headers=HEADERS)
+        response = requests.delete(comment['url'], headers=HEADERS)
+        response.raise_for_status()
 
 # If the working directory is not clean, post a new comment
 if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
@@ -60,4 +62,6 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
     comment += 'Please note that there are often multiple ways to correctly format code. As I am just a robot, I sometimes fail to identify the most aesthetically pleasing way. So please look over my suggested changes and adapt them where the style does not make sense.'
 
     if len(patch) > 0:
-        requests.post(URL, headers=HEADERS, json={'body': comment})
+        response = requests.post(URL, headers=HEADERS,
+                                 json={'body': comment})
+        response.raise_for_status()
