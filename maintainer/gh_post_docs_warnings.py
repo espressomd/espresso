@@ -39,10 +39,12 @@ TOKEN_ESPRESSO_CI = prefix + '_warnings.sh'
 
 # Delete all existing comments
 comments = requests.get(URL, headers=HEADERS)
+comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
-        requests.delete(comment['url'], headers=HEADERS)
+        response = requests.delete(comment['url'], headers=HEADERS)
+        response.raise_for_status()
 
 # If documentation raised warnings, post a new comment
 if has_warnings:
@@ -75,4 +77,5 @@ if has_warnings:
         .format(doc_type, prefix))
     assert TOKEN_ESPRESSO_CI in comment
 
-    requests.post(URL, headers=HEADERS, json={'body': comment})
+    response = requests.post(URL, headers=HEADERS, json={'body': comment})
+    response.raise_for_status()

@@ -33,10 +33,12 @@ TOKEN_ESPRESSO_CI = 'style.patch'
 
 # Delete all existing comments
 comments = requests.get(URL, headers=HEADERS)
+comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
-        requests.delete(comment['url'], headers=HEADERS)
+        response = requests.delete(comment['url'], headers=HEADERS)
+        response.raise_for_status()
 
 MESSAGE = '''Your pull request does not meet our code formatting \
 rules. {header}, please do one of the following:
@@ -74,4 +76,6 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
 
     if patch:
         assert TOKEN_ESPRESSO_CI in message
-        requests.post(URL, headers=HEADERS, json={'body': message})
+        response = requests.post(URL, headers=HEADERS,
+                                 json={'body': message})
+        response.raise_for_status()

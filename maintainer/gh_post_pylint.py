@@ -36,10 +36,12 @@ n_warnings, filepath_warnings = sys.argv[-2:]
 
 # Delete older pylint messages
 comments = requests.get(URL, headers=HEADERS)
+comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
-        requests.delete(comment['url'], headers=HEADERS)
+        response = requests.delete(comment['url'], headers=HEADERS)
+        response.raise_for_status()
 
 # If pylint raised errors, post a new comment
 if n_warnings != '0':
@@ -68,4 +70,5 @@ if n_warnings != '0':
     )
     assert TOKEN_ESPRESSO_CI in comment
 
-    requests.post(URL, headers=HEADERS, json={'body': comment})
+    response = requests.post(URL, headers=HEADERS, json={'body': comment})
+    response.raise_for_status()
