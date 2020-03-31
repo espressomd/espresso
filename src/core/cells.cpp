@@ -249,17 +249,6 @@ void cells_re_init(int new_cs, double range) {
   on_cell_structure_change();
 }
 
-/************************************************************/
-
-void realloc_cells(int size) {
-  /* free all memory associated with cells to be deleted. */
-  for (auto &c : cells) {
-    c.clear();
-  }
-  /* resize the cell list */
-  cells.resize(size);
-}
-
 /*************************************************/
 
 int cells_get_n_particles() {

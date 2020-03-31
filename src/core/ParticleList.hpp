@@ -76,8 +76,6 @@ private:
   }
 
 public:
-  /** Current allocation size. */
-  auto capacity() const { return max; }
   Particle *data() { return part; }
 
   Particle *begin() { return data(); }

@@ -171,7 +171,7 @@ void dd_create_cell_grid(double range) {
   cell_structure.max_range = dd.cell_size;
 
   /* allocate cell array and cell pointer arrays */
-  realloc_cells(new_cells);
+  cells.resize(new_cells);
   cell_structure.m_local_cells.resize(n_local_cells);
   cell_structure.m_ghost_cells.resize(new_cells - n_local_cells);
 }
