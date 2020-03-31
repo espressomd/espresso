@@ -254,7 +254,7 @@ void cells_re_init(int new_cs, double range) {
 void realloc_cells(int size) {
   /* free all memory associated with cells to be deleted. */
   for (auto &c : cells) {
-    c.resize(0);
+    c.clear();
   }
   /* resize the cell list */
   cells.resize(size);

@@ -55,9 +55,17 @@ private:
       else
         /* shrink not as fast, just lose half, rounded up */
         max = INCREMENT * (((max + size + 1) / 2 + INCREMENT - 1) / INCREMENT);
-    } else
+    } else {
       /* round up */
       max = INCREMENT * ((size + INCREMENT - 1) / INCREMENT);
+    }
+
+    if (max < old_max) {
+      for (auto p = part + max; p != part + old_max; p++) {
+        p->~Particle();
+      }
+    }
+
     if (max != old_max)
       part = Utils::realloc(part, sizeof(Particle) * max);
     /* If there are new particles, default initialize them */
@@ -137,6 +145,8 @@ public:
     swap(part[i], part[n - 1]);
     return extract_back();
   }
+
+  ~ParticleList() { realloc(0); }
 };
 
 #endif
