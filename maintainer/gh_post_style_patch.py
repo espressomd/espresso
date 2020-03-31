@@ -26,15 +26,15 @@ if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
 
 PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
-      PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
+      PR + '/comments'
+HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
 SIZELIMIT = 10000
 
 # Delete all existing comments
-comments = requests.get(URL)
+comments = requests.get(URL, headers=HEADERS)
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and 'style.patch' in comment['body']:
-        requests.delete(comment['url'] + '?access_token=' +
-                        os.environ['GITHUB_TOKEN'])
+        requests.delete(comment['url'], headers=HEADERS)
 
 # If the working directory is not clean, post a new comment
 if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
@@ -60,4 +60,4 @@ if subprocess.call(["git", "diff-index", "--quiet", "HEAD", "--"]) != 0:
     comment += 'Please note that there are often multiple ways to correctly format code. As I am just a robot, I sometimes fail to identify the most aesthetically pleasing way. So please look over my suggested changes and adapt them where the style does not make sense.'
 
     if len(patch) > 0:
-        requests.post(URL, json={'body': comment})
+        requests.post(URL, headers=HEADERS, json={'body': comment})
