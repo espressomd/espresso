@@ -142,14 +142,11 @@ bool integrator_step_1(ParticleRange &particles) {
     throw std::runtime_error("Unknown value for integ_switch");
   }
   return false;
-#ifdef STOKESIAN_DYNAMICS
-  printf("SD env variable set");
-#endif
 }
 
 /** Calls the hook of the propagation kernels after force calculation */
 void integrator_step_2(ParticleRange &particles) {
-  // extern BrownianThermostat brownian; //Carl removed that because it caused him error
+  extern BrownianThermostat brownian;
   switch (integ_switch) {
   case INTEG_METHOD_STEEPEST_DESCENT:
     // Nothing
@@ -164,7 +161,7 @@ void integrator_step_2(ParticleRange &particles) {
 #endif
   case INTEG_METHOD_BD:
     // the Ermak-McCammon's Brownian Dynamics requires a single step
-    // brownian_dynamics_propagator(brownian, particles);// carl removed that ...
+    brownian_dynamics_propagator(brownian, particles);
     break;
 #ifdef STOKESIAN_DYNAMICS
   case INTEG_METHOD_SD:

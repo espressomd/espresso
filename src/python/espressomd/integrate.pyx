@@ -417,7 +417,7 @@ cdef class BrownianDynamics(Integrator):
 IF STOKESIAN_DYNAMICS:
     cdef class StokesianDynamics(Integrator):
         """
-        Brownian Dynamics integrator.
+        Stokesian Dynamics integrator.
 
         """
 
@@ -440,7 +440,7 @@ IF STOKESIAN_DYNAMICS:
             return True
 
         def _set_params_in_es_core(self):
-            integrate_set_bd()
+            integrate_set_sd()
 
 ELSE:
     cdef class StokesianDynamics(Integrator):
