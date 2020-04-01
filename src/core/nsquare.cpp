@@ -76,7 +76,7 @@ void nsq_topology_init() {
                                       : std::numeric_limits<double>::infinity();
   }
 
-  realloc_cells(n_nodes);
+  cells.resize(n_nodes);
 
   /* mark cells */
   local = &cells[this_node];
