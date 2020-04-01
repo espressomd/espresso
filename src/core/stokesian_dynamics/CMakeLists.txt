@@ -7,9 +7,10 @@ target_include_directories(sd_interface PRIVATE
 )
 target_link_libraries(sd_interface PUBLIC EspressoConfig Boost::mpi MPI::MPI_CXX Random123 utils)
 
-if (STOKESIAN_DYNAMICS_GPU)
-  target_link_libraries(sd_interface PUBLIC sd_gpu)
-endif()
+# temporarily removed to test CI for CPU
+# if (STOKESIAN_DYNAMICS_GPU)
+#   target_link_libraries(sd_interface PUBLIC sd_gpu)
+# endif()
 
 if(STOKESIAN_DYNAMICS)
   target_link_libraries(sd_interface PUBLIC sd_cpu)
