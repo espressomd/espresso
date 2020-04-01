@@ -19,7 +19,7 @@
 
 #include "config.hpp"
 
-#ifdef STOKESIAN_DYNAMICS
+#if defined(STOKESIAN_DYNAMICS) || defined(STOKESIAN_DYNAMICS_GPU)
 
 #include <iostream>
 #include <map>
@@ -45,11 +45,11 @@
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/scatter_buffer.hpp>
 
-#if defined(BLAS) && defined(LAPACK)
+#ifdef STOKESIAN_DYNAMICS
 #include "sd_cpu.hpp"
 #endif
 
-#ifdef CUDA
+#ifdef STOKESIAN_DYNAMICS_GPU
 #include "sd_gpu.hpp"
 #endif
 
@@ -152,9 +152,17 @@ double get_sd_viscosity() { return sd_viscosity; }
 
 void set_sd_device(std::string const &dev) {
   if (dev == "cpu") {
+#ifdef STOKESIAN_DYNAMICS
     device = CPU;
+#else
+    device = INVALID;
+#endif
   } else if (dev == "gpu") {
+#ifdef STOKESIOAN_DYNAMICS_GPU
     device = GPU;
+#else
+    device = INVALID;
+#endif
   } else {
     device = INVALID;
   }
@@ -269,19 +277,15 @@ void propagate_vel_pos_sd() {
       std::size_t offset = std::round(sim_time / time_step);
       switch (device) {
 
-#if defined(BLAS) && defined(LAPACK)
+#ifdef STOKESIAN_DYNAMICS
       case CPU:
-        // v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
-        //              sd_kT / time_step, offset, sd_seed, sd_flags);
         v_sd = sd_cpu(x_host, f_host, a_host, n_part, sd_viscosity,
                       std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
         break;
 #endif
 
-#ifdef CUDA
+#ifdef STOKESIAN_DYNAMICS_GPU
       case GPU:
-        // v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-        //              sd_kT / time_step, offset, sd_seed, sd_flags);
         v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
                       std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
         break;
@@ -290,10 +294,10 @@ void propagate_vel_pos_sd() {
       default:
         runtimeErrorMsg()
             << "Invalid device for Stokesian dynamics. Available devices:"
-#if defined(BLAS) && defined(LAPACK)
+#ifdef STOKESIAN_DYNAMICS
                " cpu"
 #endif
-#ifdef CUDA
+#ifdef STOKESIAN_DYNAMICS_GPU
                " gpu"
 #endif
             ;

@@ -414,7 +414,7 @@ cdef class BrownianDynamics(Integrator):
         integrate_set_bd()
 
 
-IF STOKESIAN_DYNAMICS:
+IF (STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
     cdef class StokesianDynamics(Integrator):
         """
         Stokesian Dynamics integrator.
@@ -441,6 +441,7 @@ IF STOKESIAN_DYNAMICS:
 
         def _set_params_in_es_core(self):
             integrate_set_sd()
+            handle_errors("Encountered error while setting integration method to SD")
 
 ELSE:
     cdef class StokesianDynamics(Integrator):

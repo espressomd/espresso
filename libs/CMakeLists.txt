@@ -5,6 +5,6 @@ target_compile_definitions(Random123 INTERFACE R123_USE_MULHILO64_C99)
 add_library(h5xx INTERFACE)
 target_include_directories(h5xx SYSTEM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/h5xx)
 
-if(WITH_STOKESIAN)
+if(STOKESIAN_DYNAMICS OR STOKESIAN_DYNAMICS_GPU)
   add_subdirectory(stokesian_dynamics)
-endif(WITH_STOKESIAN)
+endif()

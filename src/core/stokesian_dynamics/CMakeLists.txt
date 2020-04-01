@@ -7,10 +7,10 @@ target_include_directories(sd_interface PRIVATE
 )
 target_link_libraries(sd_interface PUBLIC EspressoConfig Boost::mpi MPI::MPI_CXX Random123 utils)
 
-if (CUDA)
+if (STOKESIAN_DYNAMICS_GPU)
   target_link_libraries(sd_interface PUBLIC sd_gpu)
 endif()
 
-if(BLAS AND LAPACK)
+if(STOKESIAN_DYNAMICS)
   target_link_libraries(sd_interface PUBLIC sd_cpu)
 endif()

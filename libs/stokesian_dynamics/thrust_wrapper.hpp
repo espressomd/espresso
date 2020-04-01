@@ -1,7 +1,7 @@
 /** \file
  *  This file provides a wrapper around THRUST functions and types. In case
- *  that THRUST is not present, equivalent standard C++ types and functions
- *  are used.
+ *  that CUDA/THRUST is not present, equivalent standard C++ types and 
+ *  functions are used.
  */
 
 #pragma once
@@ -9,8 +9,7 @@
 
 
 // Dependencies with THRUST
-#if __has_include(<thrust/device_vector.h>) || defined(__CUDA_ARCH__)// looks if the file exists
-//#if __has_include(<thrust/device_vectorBLAH.h>) || defined(__CUDA_ARCH__) // looks if the file exists // for testing non-thrust build
+#ifdef STOKESIAN_DYNAMICS_GPU
 #  include <thrust/device_vector.h>
 #  include <thrust/execution_policy.h>
 #  include <thrust/tabulate.h>
@@ -191,5 +190,3 @@ std::vector<T> operator+(std::vector<T> const &x,
 }
 
 #endif
-
-#undef MAYBE_UNUSED
