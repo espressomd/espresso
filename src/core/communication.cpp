@@ -66,7 +66,6 @@
 #include "electrostatics_magnetostatics/mdlc_correction.hpp"
 
 #include "serialization/IA_parameters.hpp"
-#include "serialization/Particle.hpp"
 
 #include <utils/Counter.hpp>
 #include <utils/u32_to_u64.hpp>

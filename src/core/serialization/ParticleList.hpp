@@ -19,8 +19,6 @@
 #ifndef CORE_UTILS_SERIALIZATION_PARTICLE_LIST_HPP
 #define CORE_UTILS_SERIALIZATION_PARTICLE_LIST_HPP
 
-#include "Particle.hpp"
-
 namespace boost {
 namespace serialization {
 template <class Archive>

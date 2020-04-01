@@ -55,17 +55,27 @@ private:
       else
         /* shrink not as fast, just lose half, rounded up */
         max = INCREMENT * (((max + size + 1) / 2 + INCREMENT - 1) / INCREMENT);
-    } else
+    } else {
       /* round up */
       max = INCREMENT * ((size + INCREMENT - 1) / INCREMENT);
+    }
+
+    if (max < old_max) {
+      for (auto p = part + max; p != part + old_max; p++) {
+        p->~Particle();
+      }
+    }
+
     if (max != old_max)
       part = Utils::realloc(part, sizeof(Particle) * max);
+    /* If there are new particles, default initialize them */
+    if (max > old_max)
+      std::uninitialized_fill(part + old_max, part + max, Particle());
+
     return part != old_start;
   }
 
 public:
-  /** Current allocation size. */
-  auto capacity() const { return max; }
   Particle *data() { return part; }
 
   Particle *begin() { return data(); }
@@ -107,7 +117,7 @@ public:
    */
   void push_back(Particle &&p) {
     resize(size() + 1);
-    new (&(part[n - 1])) Particle(std::move(p));
+    part[n - 1] = std::move(p);
   }
 
   /**
@@ -133,6 +143,8 @@ public:
     swap(part[i], part[n - 1]);
     return extract_back();
   }
+
+  ~ParticleList() { realloc(0); }
 };
 
 #endif

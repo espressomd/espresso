@@ -84,10 +84,6 @@ int CellStructure::get_max_local_particle_id() const {
 
 void CellStructure::remove_all_particles() {
   for (auto c : m_local_cells) {
-    for (auto &p : c->particles()) {
-      p.~Particle();
-    }
-
     c->clear();
   }
 
