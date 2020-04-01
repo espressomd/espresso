@@ -245,7 +245,7 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->particles().size());
     } else {
-      auto const& src_part = src_list->particles();
+      auto const &src_part = src_list->particles();
       auto &dst_part = dst_list->particles();
       assert(src_part.size() == dst_part.size());
 

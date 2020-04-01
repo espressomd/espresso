@@ -233,10 +233,6 @@ void cells_re_init(int new_cs, double range) {
     cell_structure.add_particle(std::move(p));
   }
 
-  for (auto &cell : tmp_cells) {
-    cell.particles().clear();
-  }
-
   /* to enforce initialization of the ghost cells */
   cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 

@@ -26,94 +26,58 @@
 #include <utils/Span.hpp>
 #include <utils/memory.hpp>
 
-/** List of particles. The particle array is resized using a sophisticated
- *  (we hope) algorithm to avoid unnecessary resizes.
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+
+/**
+ * @brief List of particles.
  */
-struct ParticleList {
+class ParticleList {
+  using storage_type = std::vector<Particle>;
+
+public:
   using value_type = Particle;
   using iterator = Particle *;
   using const_iterator = const Particle *;
-
-  ParticleList() : part{nullptr}, n{0}, max{0} {}
+  using pointer = Particle *;
+  using reference = Particle &;
 
 private:
-  /** The particles payload */
-  Particle *part;
-  /** Number of particles contained */
-  int n;
+  std::vector<Particle> m_storage;
 
-  /** granularity of the particle buffers in particles */
-  static constexpr int INCREMENT = 8;
-
-  /** Number of particles that fit in until a resize is needed */
-  int max;
-
-  int realloc(int size) {
-    assert(size >= 0);
-    int old_max = max;
-    Particle *old_start = part;
-
-    if (size < max) {
-      if (size == 0)
-        /* to be able to free an array again */
-        max = 0;
-      else
-        /* shrink not as fast, just lose half, rounded up */
-        max = INCREMENT * (((max + size + 1) / 2 + INCREMENT - 1) / INCREMENT);
-    } else {
-      /* round up */
-      max = INCREMENT * ((size + INCREMENT - 1) / INCREMENT);
-    }
-
-    if (max < old_max) {
-      for (auto p = part + max; p != part + old_max; p++) {
-        p->~Particle();
-      }
-    }
-
-    if (max != old_max)
-      part = Utils::realloc(part, sizeof(Particle) * max);
-    /* If there are new particles, default initialize them */
-    if (max > old_max)
-      std::uninitialized_fill(part + old_max, part + max, Particle());
-
-    return part != old_start;
+  friend boost::serialization::access;
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar &m_storage;
   }
 
 public:
-  Particle *data() { return part; }
-  const Particle *data() const { return part; }
+  Particle *data() { return m_storage.data(); }
+  const Particle *data() const { return m_storage.data(); }
 
-  Particle *begin() { return data(); }
-  Particle *end() { return data() + size(); }
-  const Particle *begin() const { return data(); }
-  const Particle *end() const { return data() + size(); }
-
-  Utils::Span<Particle> particles() { return {part, static_cast<size_t>(n)}; }
-  Utils::Span<const Particle> particles() const {
-    return {part, static_cast<size_t>(n)};
-  }
+  Particle *begin() { return m_storage.data(); }
+  Particle *end() { return m_storage.data() + size(); }
+  const Particle *begin() const { return m_storage.data(); }
+  const Particle *end() const { return m_storage.data() + size(); }
 
   /**
-   * @brief Resize storage for local particles and ghosts.
+   * @brief Resize storage.
    *
-   * This version does \em not care for the bond information to be freed if
-   * necessary.
-   *     @param size the size to provide at least.
-   *     @return true iff particle addresses have changed
+   * Newly added Particles are default-initialized.
+   *
+   *     @param new_size Size to resize to.
    */
-  int resize(int size) { return realloc(this->n = size); }
+  void resize(size_t new_size) { m_storage.resize(new_size); }
 
   /**
    * @brief Resize the List to zero.
    */
-  void clear() { resize(0); }
+  void clear() { m_storage.clear(); }
 
   /**
    * @brief Number of entries.
    */
-  int size() const { return n; }
-  bool empty() const { return size() <= 0; }
+  size_t size() const { return m_storage.size(); }
+  bool empty() const { return m_storage.empty(); }
 
   /**
    * @brief Emplace a particle in the list.
@@ -122,10 +86,9 @@ public:
    * @return Reference to the added particle.
    */
   template <class... Args> Particle &emplace(Args &&... args) {
-    resize(size() + 1);
-    part[n - 1] = Particle(std::forward<Args>(args)...);
+    m_storage.emplace_back(std::forward<Args>(args)...);
 
-    return part[n - 1];
+    return m_storage.back();
   }
 
   /**
@@ -135,12 +98,12 @@ public:
    * @return An iterator past the element that was removed.
    */
   iterator erase(iterator it) {
-    *it = std::move(part[--n]);
+    *it = std::move(m_storage.back());
+
+    m_storage.pop_back();
 
     return it;
   }
-
-  ~ParticleList() { realloc(0); }
 };
 
 #endif
