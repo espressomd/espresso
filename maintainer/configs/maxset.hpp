@@ -54,7 +54,7 @@
 #endif
 
 #if defined(BLAS) && defined(LAPACK)
-#  define STOKESIAN_DYNAMICS
+#define STOKESIAN_DYNAMICS
 #endif
 
 #define TABULATED
@@ -81,4 +81,3 @@
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
 
 #define ADDITIONAL_CHECKS
-
