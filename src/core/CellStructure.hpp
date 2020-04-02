@@ -64,17 +64,6 @@ inline ParticleRange particles(Utils::Span<Cell *> cells) {
 }
 } // namespace Cells
 
-/** List of cell pointers. */
-struct CellPList {
-  Cell **begin() { return cell; }
-  Cell **end() { return cell + n; }
-
-  Cell *operator[](int i) { return assert(i < n), cell[i]; }
-
-  Cell **cell = nullptr;
-  int n = 0;
-};
-
 /** Describes a cell structure / cell system. Contains information
  *  about the communication of cell contents (particles, ghosts, ...)
  *  between different nodes and the relation between particle
@@ -201,12 +190,8 @@ public:
   double min_range;
 
   /** Return the global local_cells */
-  CellPList local_cells() {
-    return {m_local_cells.data(), static_cast<int>(m_local_cells.size())};
-  }
-  /** Return the global ghost_cells */
-  CellPList ghost_cells() {
-    return {m_ghost_cells.data(), static_cast<int>(m_ghost_cells.size())};
+  Utils::Span<Cell *> local_cells() {
+    return {m_local_cells.data(), m_local_cells.size()};
   }
 
   ParticleRange local_particles() {
