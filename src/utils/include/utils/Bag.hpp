@@ -33,6 +33,11 @@ public:
   using pointer = T *;
   using reference = T &;
 
+  /**
+   * @brief Construct an empty container.
+   */
+  Bag() = default;
+
 private:
   /** Underlying storage of the container */
   std::vector<T> m_storage;
