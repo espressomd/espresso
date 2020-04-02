@@ -40,6 +40,9 @@ static const int computeCapabilityMinMinor = 0;
 const char *cuda_error;
 
 void cuda_init() {
+#if defined(__HIPCC__) and not defined(__CUDACC__)
+  setenv("HSA_ENABLE_INTERRUPT", "0", 1);
+#endif
 #if defined(__HIPCC__) and not defined(__CUDACC__) and                         \
     HIP_VERSION_PATCH <= 19171 /* i.e. <= v2.4.0 */
   // Catch an exception that causes `import espressomd` to crash in
