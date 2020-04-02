@@ -53,17 +53,19 @@ enum Resort : unsigned {
 };
 }
 
+namespace Cells {
+inline ParticleRange particles(Utils::Span<Cell *> cells) {
+  /* Find first non-empty cell */
+  auto first_non_empty = std::find_if(
+      cells.begin(), cells.end(), [](const Cell *c) { return not c->empty(); });
+
+  return {CellParticleIterator(first_non_empty, cells.end()),
+          CellParticleIterator(cells.end())};
+}
+} // namespace Cells
+
 /** List of cell pointers. */
 struct CellPList {
-  ParticleRange particles() const {
-    /* Find first non-empty cell */
-    auto first = std::find_if(cell, cell + n,
-                              [](const Cell *c) { return not c->empty(); });
-
-    return {CellParticleIterator(first, cell + n),
-            CellParticleIterator(cell + n)};
-  }
-
   Cell **begin() { return cell; }
   Cell **end() { return cell + n; }
 
@@ -207,8 +209,12 @@ public:
     return {m_ghost_cells.data(), static_cast<int>(m_ghost_cells.size())};
   }
 
-  ParticleRange local_particles() { return local_cells().particles(); }
-  ParticleRange ghost_particles() { return ghost_cells().particles(); }
+  ParticleRange local_particles() {
+    return Cells::particles(Utils::make_span(m_local_cells));
+  }
+  ParticleRange ghost_particles() {
+    return Cells::particles(Utils::make_span(m_ghost_cells));
+  }
 
   /** Communicator to exchange ghost particles. */
   GhostCommunicator exchange_ghosts_comm;
