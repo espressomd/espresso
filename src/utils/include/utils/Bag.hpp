@@ -19,8 +19,11 @@ namespace Utils {
  * removing elements can change the order of the other elements.
  * The loser contract (compared to a vector) allows removing any
  * element in the container in constant time.
+ *
+ * @tparam T Element Type, needs to be Swappable.
  */
 template <class T> class Bag {
+  /** Storage backend */
   using storage_type = std::vector<T>;
 
 public:
@@ -31,6 +34,7 @@ public:
   using reference = T &;
 
 private:
+  /** Underlying storage of the container */
   std::vector<T> m_storage;
 
   friend boost::serialization::access;
@@ -44,23 +48,22 @@ private:
   }
 
 public:
-  T *data() { return m_storage.data(); }
-  const T *data() const { return m_storage.data(); }
-
   iterator begin() { return m_storage.data(); }
   iterator end() { return m_storage.data() + size(); }
   const_iterator begin() const { return m_storage.data(); }
   const_iterator end() const { return m_storage.data() + size(); }
 
   /**
-   * @brief Number of entries.
+   * @brief Number of elements in the container.
    */
   size_t size() const { return m_storage.size(); }
+
   /**
    * @brief Is the container empty?
    * @return True if there are no elements.
    */
   bool empty() const { return m_storage.empty(); }
+
   /**
    * @brief Capacity of the container.
    *
@@ -68,8 +71,9 @@ public:
    * without reallocating.
    */
   size_t capacity() const { return m_storage.capacity(); }
+
   /**
-   * @brief Maximum number of elements.
+   * @brief Maximum number of elements the container can hold.
    */
   size_t max_size() const { return m_storage.max_size(); }
 
@@ -83,44 +87,40 @@ public:
   void reserve(size_t new_capacity) { m_storage.reserve(new_capacity); }
 
   /**
-   * @brief Resize storage.
+   * @brief Resize container.
    *
    * Newly added Ts are default-initialized.
+   * If the new size is larger than the capacity, all
+   * iterators into the container are invalidated.
    *
    *     @param new_size Size to resize to.
    */
   void resize(size_t new_size) { m_storage.resize(new_size); }
 
   /**
-   * @brief Resize the List to zero.
+   * @brief Remove all elements form container.
    */
   void clear() { m_storage.clear(); }
 
   /**
-   * @brief Insert a particle in the list.
+   * @brief Insert an element into the container.
    *
-   * @param p Particle to add.
-   * @return Reference to the added particle.
-   */
-  T &insert(T const &p) {
-    m_storage.push_back(p);
-
-    return m_storage.back();
-  }
-
-  /**
-   * @brief Insert a particle in the list.
-   *
-   * If before the call size() >= capcacity(),
+   * If before the call size() >= capacity(),
    * this may reallocate, in which case all
    * iterators into the container are invalidated.
    * Otherwise only the end iterator is invalidated.
    *
-   * @param p Particle to add.
-   * @return Reference to the added particle.
+   * @param v Element to add.
+   * @return Reference to the added element.
    */
-  T &insert(T &&p) {
-    m_storage.push_back(std::move(p));
+  T &insert(T const &v) {
+    m_storage.push_back(v);
+
+    return m_storage.back();
+  }
+  /** @overload */
+  T &insert(T &&v) {
+    m_storage.push_back(std::move(v));
 
     return m_storage.back();
   }
@@ -137,6 +137,18 @@ public:
     m_storage.pop_back();
 
     return it;
+  }
+
+  /**
+   * @brief Swap two Bags.
+   *
+   * Efficiently swap to bags by swapping
+   * their contained storage.
+   */
+  friend void swap(Bag &lhs, Bag &rhs) {
+    using std::swap;
+
+    swap(lhs.m_storage, rhs.m_storage);
   }
 };
 } // namespace Utils
