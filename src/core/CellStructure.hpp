@@ -135,13 +135,13 @@ private:
    * @param p Particle to add.
    */
   Particle &append_indexed_particle(ParticleList &pl, Particle &&p) {
-    auto const old_data = pl.data();
-    auto &new_part = pl.emplace(std::move(p));
+    /* Check if cell may reallocate, in which case the index
+     * entries for all particles in this celle have to be
+     * updated. */
+    auto const may_reallocate = pl.size() >= pl.capacity();
+    auto &new_part = pl.insert(std::move(p));
 
-    /* If the list storage moved due to reallocation,
-     * we have to update the index for all particles,
-     * otherwise just for the particle that we added. */
-    if (old_data != pl.data())
+    if (may_reallocate)
       update_particle_index(pl);
     else {
       update_particle_index(new_part);

@@ -635,10 +635,10 @@ void move_if_local(ParticleList &src, ParticleList &rest,
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      target_cell->particles().emplace(std::move(part));
+      target_cell->particles().insert(std::move(part));
       modified_cells.push_back(target_cell);
     } else {
-      rest.emplace(std::move(part));
+      rest.insert(std::move(part));
     }
   }
 
@@ -666,14 +666,14 @@ void move_left_or_right(ParticleList &src, ParticleList &left,
     if ((get_mi_coord(it->r.p[dir], local_geo.my_left()[dir],
                       box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) and
         (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0))) {
-      left.emplace(std::move(*it));
+      left.insert(std::move(*it));
       it = src.erase(it);
     } else if ((get_mi_coord(it->r.p[dir], local_geo.my_right()[dir],
                              box_geo.length()[dir],
                              box_geo.periodic(dir)) >= 0.0) and
                (box_geo.periodic(dir) ||
                 (local_geo.boundary()[2 * dir + 1] == 0))) {
-      right.emplace(std::move(*it));
+      right.insert(std::move(*it));
       it = src.erase(it);
     } else {
       ++it;
