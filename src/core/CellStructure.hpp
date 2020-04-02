@@ -207,6 +207,8 @@ public:
     return {m_ghost_cells.data(), static_cast<int>(m_ghost_cells.size())};
   }
 
+  ParticleRange local_particles() { return local_cells().particles(); }
+
   /** Communicator to exchange ghost particles. */
   GhostCommunicator exchange_ghosts_comm;
   /** Communicator to collect ghost forces. */

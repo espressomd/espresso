@@ -404,10 +404,10 @@ void mpi_who_has_slave(int, int) {
 
   sendbuf.resize(n_part);
 
-  auto end = std::transform(cell_structure.local_cells().particles().begin(),
-                            cell_structure.local_cells().particles().end(),
-                            sendbuf.data(),
-                            [](Particle const &p) { return p.p.identity; });
+  auto end =
+      std::transform(cell_structure.local_particles().begin(),
+                     cell_structure.local_particles().end(), sendbuf.data(),
+                     [](Particle const &p) { return p.p.identity; });
 
   auto npart = std::distance(sendbuf.data(), end);
   MPI_Send(sendbuf.data(), npart, MPI_INT, 0, SOME_TAG, comm_cart);
@@ -444,9 +444,7 @@ void mpi_who_has(const ParticleRange &particles) {
 /**
  * @brief Rebuild the particle index.
  */
-void build_particle_node() {
-  mpi_who_has(cell_structure.local_cells().particles());
-}
+void build_particle_node() { mpi_who_has(cell_structure.local_particles()); }
 
 /**
  *  @brief Get the mpi rank which owns the particle with id.
@@ -890,7 +888,7 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new) {
 }
 
 void local_rescale_particles(int dir, double scale) {
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (dir < 3)
       p.r.p[dir] *= scale;
     else {
@@ -902,7 +900,7 @@ void local_rescale_particles(int dir, double scale) {
 #ifdef EXCLUSIONS
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
-    for (auto &p : cell_structure.local_cells().particles()) {
+    for (auto &p : cell_structure.local_particles()) {
       p.el.clear();
     }
 

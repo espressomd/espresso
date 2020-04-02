@@ -70,7 +70,7 @@ void IBM_ForcesIntoFluid_CPU() {
   ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
 
   // Loop over local cells
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual)
       CoupleIBMParticleToFluid(&p);
   }
@@ -284,7 +284,7 @@ void ParticleVelocitiesFromLB_CPU() {
   // Loop over particles in local cells.
   // Here all contributions are included: velocity, external force and
   // particle force.
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual) {
       double dummy[3];
       // Get interpolated velocity and store in the force (!) field
@@ -335,7 +335,7 @@ void ParticleVelocitiesFromLB_CPU() {
                      GHOSTTRANS_FORCE);
 
   // Transfer to velocity field
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (p.p.is_virtual) {
       p.m.v[0] = p.f.f[0];
       p.m.v[1] = p.f.f[1];

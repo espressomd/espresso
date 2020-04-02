@@ -598,8 +598,7 @@ void mpi_bcast_max_mu() { mpi_call_all(calc_mu_max); }
 
 /***** GALILEI TRANSFORM AND ASSOCIATED FUNCTIONS ****/
 void mpi_kill_particle_motion_slave(int rotation) {
-  local_kill_particle_motion(rotation,
-                             cell_structure.local_cells().particles());
+  local_kill_particle_motion(rotation, cell_structure.local_particles());
   on_particle_change();
 }
 
@@ -610,7 +609,7 @@ void mpi_kill_particle_motion(int rotation) {
 }
 
 void mpi_kill_particle_forces_slave(int torque) {
-  local_kill_particle_forces(torque, cell_structure.local_cells().particles());
+  local_kill_particle_forces(torque, cell_structure.local_particles());
   on_particle_change();
 }
 

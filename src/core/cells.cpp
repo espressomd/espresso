@@ -379,7 +379,7 @@ void cells_resort_particles(int global_flag) {
 
   displaced_parts.clear();
 
-  on_resort_particles(cell_structure.local_cells().particles());
+  on_resort_particles(cell_structure.local_particles());
 }
 
 /*************************************************/
@@ -404,14 +404,13 @@ void cells_on_geometry_change(int flags) {
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
-  auto const level =
-      (std::any_of(cell_structure.local_cells().particles().begin(),
-                   cell_structure.local_cells().particles().end(),
-                   [&skin2](Particle const &p) {
-                     return (p.r.p - p.l.p_old).norm2() > skin2;
-                   }))
-          ? Cells::RESORT_LOCAL
-          : Cells::RESORT_NONE;
+  auto const level = (std::any_of(cell_structure.local_particles().begin(),
+                                  cell_structure.local_particles().end(),
+                                  [&skin2](Particle const &p) {
+                                    return (p.r.p - p.l.p_old).norm2() > skin2;
+                                  }))
+                         ? Cells::RESORT_LOCAL
+                         : Cells::RESORT_NONE;
 
   cell_structure.set_resort_particles(level);
 }

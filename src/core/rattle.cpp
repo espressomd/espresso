@@ -164,12 +164,12 @@ void correct_pos_shake(ParticleRange const &particles) {
   int repeat = 1;
 
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
-    init_correction_vector(cell_structure.local_cells().particles());
+    init_correction_vector(cell_structure.local_particles());
     repeat_ = 0;
-    compute_pos_corr_vec(&repeat_, cell_structure.local_cells().particles());
+    compute_pos_corr_vec(&repeat_, cell_structure.local_particles());
     ghost_communicator(&cell_structure.collect_ghost_force_comm,
                        GHOSTTRANS_FORCE);
-    app_pos_correction(cell_structure.local_cells().particles());
+    app_pos_correction(cell_structure.local_particles());
     /**Ghost Positions Update*/
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
@@ -282,14 +282,14 @@ void correct_vel_shake() {
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle
   structure  */
-  auto particles = cell_structure.local_cells().particles();
+  auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_cells().particles();
 
   transfer_force_init_vel(particles, ghost_particles);
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
     init_correction_vector(particles);
     repeat_ = 0;
-    compute_vel_corr_vec(&repeat_, cell_structure.local_cells().particles());
+    compute_vel_corr_vec(&repeat_, cell_structure.local_particles());
     ghost_communicator(&cell_structure.collect_ghost_force_comm,
                        GHOSTTRANS_FORCE);
     apply_vel_corr(particles);

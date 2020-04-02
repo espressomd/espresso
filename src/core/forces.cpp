@@ -88,7 +88,7 @@ void force_calc(CellStructure &cell_structure) {
   prepare_local_collision_queue();
 #endif
 
-  auto particles = cell_structure.local_cells().particles();
+  auto particles = cell_structure.local_particles();
   auto ghost_particles = cell_structure.ghost_cells().particles();
 #ifdef ELECTROSTATICS
   iccp3m_iteration(particles, cell_structure.ghost_cells().particles());

@@ -56,8 +56,8 @@ void local_kill_particle_forces(int torque, const ParticleRange &particles) {
 /* Calculate the CMS of the system */
 std::pair<Utils::Vector3d, double> local_system_CMS() {
   return boost::accumulate(
-      cell_structure.local_cells().particles(),
-      std::pair<Utils::Vector3d, double>{}, [](auto sum, const Particle &p) {
+      cell_structure.local_particles(), std::pair<Utils::Vector3d, double>{},
+      [](auto sum, const Particle &p) {
         if (not p.p.is_virtual) {
           return std::pair<Utils::Vector3d, double>{
               sum.first +
@@ -70,8 +70,8 @@ std::pair<Utils::Vector3d, double> local_system_CMS() {
 
 std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
   return boost::accumulate(
-      cell_structure.local_cells().particles(),
-      std::pair<Utils::Vector3d, double>{}, [](auto sum, const Particle &p) {
+      cell_structure.local_particles(), std::pair<Utils::Vector3d, double>{},
+      [](auto sum, const Particle &p) {
         if (not p.p.is_virtual) {
           return std::pair<Utils::Vector3d, double>{
               sum.first + p.p.mass * p.m.v, sum.second + p.p.mass};
@@ -82,7 +82,7 @@ std::pair<Utils::Vector3d, double> local_system_CMS_velocity() {
 
 /* Remove the CMS velocity */
 void local_galilei_transform(const Utils::Vector3d &cmsvel) {
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     p.m.v -= cmsvel;
   }
 }

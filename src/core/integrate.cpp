@@ -192,7 +192,7 @@ int integrate(int n_steps, int reuse_forces) {
 
     if (integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ROTATION
-      convert_initial_torques(cell_structure.local_cells().particles());
+      convert_initial_torques(cell_structure.local_particles());
 #endif
     }
 
@@ -216,7 +216,7 @@ int integrate(int n_steps, int reuse_forces) {
   for (int step = 0; step < n_steps; step++) {
     ESPRESSO_PROFILER_CXX_MARK_LOOP_ITERATION(integration_loop, step);
 
-    auto particles = cell_structure.local_cells().particles();
+    auto particles = cell_structure.local_particles();
 
 #ifdef BOND_CONSTRAINT
     if (n_rigidbonds)
@@ -245,7 +245,7 @@ int integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cells_update_ghosts(global_ghost_flags());
 
-    particles = cell_structure.local_cells().particles();
+    particles = cell_structure.local_particles();
 
     force_calc(cell_structure);
 
