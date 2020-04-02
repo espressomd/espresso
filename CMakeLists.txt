@@ -48,7 +48,9 @@ set(PROJECT_VERSION "4.2-dev")
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Select the build type
-option_enum(varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release" possible_values "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage")
+option_enum(varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release" possible_values "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage;RelWithAssert")
+set(CMAKE_CXX_FLAGS_COVERAGE "-Og -g")
+set(CMAKE_CXX_FLAGS_RELWITHASSERT "-O3 -g")
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)

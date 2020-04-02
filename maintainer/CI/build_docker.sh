@@ -26,7 +26,7 @@ with_cuda=false
 myconfig=${myconfig}
 check_procs=${check_procs}
 make_check=${make_check}
-build_type="Debug"
+build_type="RelWithAssert"
 EOF
 
 if [ -z "${image}" ]; then

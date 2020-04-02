@@ -93,7 +93,7 @@ set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
 set_default_value with_cuda false
-set_default_value build_type "Debug"
+set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_scafacos true
 set_default_value test_timeout 300
