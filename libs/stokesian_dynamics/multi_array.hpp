@@ -5,6 +5,8 @@
 #include <string>
 #include <type_traits>
 
+#include "thrust_wrapper.hpp"
+
 #ifdef __CUDACC__
 #define DEVICE_FUNC __host__ __device__
 #else
@@ -36,18 +38,22 @@ struct product<T> {
 };
 
 // all
-
+/**
+ *  compile-time logical AND between all parameters of the parameter pack
+ */
 template <bool...>
 struct all;
 
+// If current parameter is true, it depends on the other parameters.
 template <bool... b>
 struct all<true, b...> {
-    static constexpr bool const value = true && all<b...>::value;
+    static constexpr bool const value = all<b...>::value;
 };
 
+// If current parameter is false, the whole thing is false.
 template <bool... b>
 struct all<false, b...> {
-    static constexpr bool const value = false && all<b...>::value;
+    static constexpr bool const value = false;
 };
 
 template <>
@@ -129,10 +135,10 @@ private:
     using size_product = meta::product<size_type, s...>;
 
     // Storage
-    value_type m_data[size_product<N...>::value];
+    value_type m_data[size_product<N...>::value] = {0};
 
 public:
-    DEVICE_FUNC constexpr multi_array() {}
+    DEVICE_FUNC constexpr multi_array() = default;
 
     /// Constructor for aggregate initializers
     template <typename... U>

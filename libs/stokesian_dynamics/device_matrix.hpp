@@ -28,14 +28,16 @@ namespace policy {
 struct host {
     template <typename T>
     using vector = thrust_wrapper::host_vector<T>;
-    static auto par() -> decltype(thrust_wrapper::host) 
+    // the remove_const is necessary, because things cannot be static and const
+    // at the same time
+    static std::remove_const<decltype(thrust_wrapper::host)>::type par()
       { return thrust_wrapper::host; }
 };
 
 struct device {
     template <typename T>
     using vector = thrust_wrapper::device_vector<T>;
-    static auto par() -> decltype(thrust_wrapper::device) 
+    static std::remove_const<decltype(thrust_wrapper::device)>::type par()
       { return thrust_wrapper::device; }
 };
 

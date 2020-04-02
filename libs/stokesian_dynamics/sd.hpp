@@ -222,9 +222,9 @@ struct mobility<Policy, T, true> {
 
         // These are the non-dimensionalizations as stated in the paragraph
         // below equation (A 1).
-        T const visc1 = T{M_1_PI / 6. / eta / a(part_id)}; 
-        T const visc2 = T{visc1 / a(part_id)};
-        T const visc3 = T{visc2 / a(part_id)};
+        auto const visc1 = T{M_1_PI / 6. / eta / a(part_id)}; 
+        auto const visc2 = T{visc1 / a(part_id)};
+        auto const visc3 = T{visc2 / a(part_id)};
 
         // Now put the entries into the grand mobility matrix.
         for (std::size_t i = 0; i < 3; ++i) {
@@ -286,9 +286,9 @@ struct mobility<Policy, T, false> {
         // However, modified, so that the case with two unequal spheres is
         // covered.
         T a12 = T{.5} * (a(ph1) + a(ph2));
-        T const visc1 = T{M_1_PI / 6. / eta / a12};
-        T const visc2 = T{visc1 / a12};
-        T const visc3 = T{visc2 / a12};
+        int const visc1 = T{M_1_PI / 6. / eta / a12};
+        int const visc2 = T{visc1 / a12};
+        int const visc3 = T{visc2 / a12};
 
         // Components of unit vector along particle connection line as
         // described in paragraph below equation (A 1).
@@ -653,19 +653,19 @@ struct lubrication {
         std::size_t ph2 = part_id(1, pair_id);
 
         T a11 = a(ph1);
-        T const visc11_1 = T{M_PI * 6. * eta * a11};
-        T const visc11_2 = T{visc11_1 * a11};
-        T const visc11_3 = T{visc11_2 * a11};
+        auto const visc11_1 = T{M_PI * 6. * eta * a11};
+        auto const visc11_2 = T{visc11_1 * a11};
+        auto const visc11_3 = T{visc11_2 * a11};
 
         T a22 = a(ph2);
-        T const visc22_1 = T{M_PI * 6. * eta * a22};
-        T const visc22_2 = T{visc22_1 * a22};
-        T const visc22_3 = T{visc22_2 * a22};
+        auto const visc22_1 = T{M_PI * 6. * eta * a22};
+        auto const visc22_2 = T{visc22_1 * a22};
+        auto const visc22_3 = T{visc22_2 * a22};
 
         T a12 = T{.5} * (a(ph1) + a(ph2));
-        T const visc12_1 = T{M_PI * 6. * eta * a12};
-        T const visc12_2 = T{visc12_1 * a12};
-        T const visc12_3 = T{visc12_2 * a12};
+        auto const visc12_1 = T{M_PI * 6. * eta * a12};
+        auto const visc12_2 = T{visc12_1 * a12};
+        auto const visc12_3 = T{visc12_2 * a12};
 
         double x11a, x12a, y11a, y12a, y11b, y12b, x11c, x12c, y11c, y12c, x11g,
             x12g, y11g, y12g, y11h, y12h, xm, ym, zm;
@@ -720,7 +720,7 @@ struct lubrication {
             zm = 0.0129151 - 0.042284 * xi;
 
         } else {
-            int ida = static_cast<int>(20. * (dr - 2));
+            auto ida = static_cast<int>(20. * (dr - 2));
             int ib = -2 + ida;
             int ia = ib + 1;
 
