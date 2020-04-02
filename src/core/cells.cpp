@@ -191,7 +191,7 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
     return boost::mpi::all_reduce(comm_cart, local_resort,
                                   std::bit_or<unsigned>());
   default:
-    return true;
+    return Cells::Resort::RESORT_GLOBAL;
   }
 }
 

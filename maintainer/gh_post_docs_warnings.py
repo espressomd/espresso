@@ -28,7 +28,8 @@ if not os.environ['CI_COMMIT_REF_NAME'].startswith('PR-'):
 
 PR = os.environ['CI_COMMIT_REF_NAME'][3:]
 URL = 'https://api.github.com/repos/espressomd/espresso/issues/' + \
-      PR + '/comments?access_token=' + os.environ['GITHUB_TOKEN']
+      PR + '/comments'
+HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
 SIZELIMIT = 5000
 
 doc_type, has_warnings, filepath_warnings = sys.argv[-3:]
@@ -37,12 +38,13 @@ prefix = {'sphinx': 'doc', 'doxygen': 'dox'}[doc_type]
 TOKEN_ESPRESSO_CI = prefix + '_warnings.sh'
 
 # Delete all existing comments
-comments = requests.get(URL)
+comments = requests.get(URL, headers=HEADERS)
+comments.raise_for_status()
 for comment in comments.json():
     if comment['user']['login'] == 'espresso-ci' and \
             TOKEN_ESPRESSO_CI in comment['body']:
-        requests.delete(comment['url'] + '?access_token=' +
-                        os.environ['GITHUB_TOKEN'])
+        response = requests.delete(comment['url'], headers=HEADERS)
+        response.raise_for_status()
 
 # If documentation raised warnings, post a new comment
 if has_warnings:
@@ -75,4 +77,5 @@ if has_warnings:
         .format(doc_type, prefix))
     assert TOKEN_ESPRESSO_CI in comment
 
-    requests.post(URL, json={'body': comment})
+    response = requests.post(URL, headers=HEADERS, json={'body': comment})
+    response.raise_for_status()
