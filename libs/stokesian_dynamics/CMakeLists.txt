@@ -8,7 +8,10 @@
 
 if(STOKESIAN_DYNAMICS)
   add_library(sd_cpu SHARED sd_cpu.cpp)
-  target_link_libraries(sd_cpu PRIVATE
-    ${BLAS_LIBRARIES}
-    ${LAPACK_LIBRARIES})
+  target_link_libraries(sd_cpu 
+    PRIVATE
+      ${BLAS_LIBRARIES}
+      ${LAPACK_LIBRARIES}
+    PUBLIC
+      Random123)
 endif()

@@ -8,7 +8,7 @@
 #ifdef __CUDACC__
 #include <curand_kernel.h>
 #else
-#include "../Random123-1.09/include/Random123/philox.h"
+#include <Random123/philox.h>
 
 typedef r123::Philox2x64 RNG;
 #endif
