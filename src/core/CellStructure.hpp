@@ -208,6 +208,7 @@ public:
   }
 
   ParticleRange local_particles() { return local_cells().particles(); }
+  ParticleRange ghost_particles() { return ghost_cells().particles(); }
 
   /** Communicator to exchange ghost particles. */
   GhostCommunicator exchange_ghosts_comm;

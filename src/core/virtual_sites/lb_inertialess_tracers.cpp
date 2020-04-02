@@ -75,7 +75,7 @@ void IBM_ForcesIntoFluid_CPU() {
       CoupleIBMParticleToFluid(&p);
   }
 
-  for (auto &p : cell_structure.ghost_cells().particles()) {
+  for (auto &p : cell_structure.ghost_particles()) {
     // for ghost particles we have to check if they lie
     // in the range of the local lattice nodes
     if (in_local_domain(p.r.p)) {
@@ -295,7 +295,7 @@ void ParticleVelocitiesFromLB_CPU() {
 
   // Loop over particles in ghost cells
   // Here we only add the particle forces stemming from the ghosts
-  for (auto &p : cell_structure.ghost_cells().particles()) {
+  for (auto &p : cell_structure.ghost_particles()) {
     // This criterion include the halo on the left, but excludes the halo on
     // the right
     // Try if we have to use *1.5 on the right

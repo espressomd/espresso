@@ -68,7 +68,7 @@ void init_forces(const ParticleRange &particles) {
   /* initialize ghost forces with zero
      set torque to zero for all and rescale quaternions
   */
-  for (auto &p : cell_structure.ghost_cells().particles()) {
+  for (auto &p : cell_structure.ghost_particles()) {
     p.f = init_ghost_force(p);
   }
 }
@@ -89,9 +89,9 @@ void force_calc(CellStructure &cell_structure) {
 #endif
 
   auto particles = cell_structure.local_particles();
-  auto ghost_particles = cell_structure.ghost_cells().particles();
+  auto ghost_particles = cell_structure.ghost_particles();
 #ifdef ELECTROSTATICS
-  iccp3m_iteration(particles, cell_structure.ghost_cells().particles());
+  iccp3m_iteration(particles, cell_structure.ghost_particles());
 #endif
   init_forces(particles);
 

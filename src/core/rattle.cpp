@@ -101,7 +101,7 @@ void init_correction_vector(const ParticleRange &particles) {
   for (auto &p : particles)
     reset_force(p);
 
-  for (auto &p : cell_structure.ghost_cells().particles())
+  for (auto &p : cell_structure.ghost_particles())
     reset_force(p);
 }
 
@@ -283,7 +283,7 @@ void correct_vel_shake() {
   velocity corrections can be stored temporarily at the f.f[3] of the particle
   structure  */
   auto particles = cell_structure.local_particles();
-  auto ghost_particles = cell_structure.ghost_cells().particles();
+  auto ghost_particles = cell_structure.ghost_particles();
 
   transfer_force_init_vel(particles, ghost_particles);
   while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {

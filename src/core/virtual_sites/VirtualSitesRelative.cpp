@@ -178,7 +178,7 @@ void VirtualSitesRelative::update() const {
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   ghost_communicator(&cell_structure.collect_ghost_force_comm,
                      GHOSTTRANS_FORCE);
-  init_forces_ghosts(cell_structure.ghost_cells().particles());
+  init_forces_ghosts(cell_structure.ghost_particles());
 
   // Iterate over all the particles in the local cells
   for (auto &p : cell_structure.local_particles()) {

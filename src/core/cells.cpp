@@ -198,7 +198,7 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
 /** Go through ghost cells and remove the ghost entries from the
     local particle index. */
 static void invalidate_ghosts() {
-  for (auto const &p : cell_structure.ghost_cells().particles()) {
+  for (auto const &p : cell_structure.ghost_particles()) {
     if (cell_structure.get_local_particle(p.identity()) == &p) {
       cell_structure.update_particle_index(p.identity(), nullptr);
     }
@@ -438,7 +438,7 @@ void cells_update_ghosts(unsigned data_parts) {
 
     /* Add the ghost particles to the index if we don't already
      * have them. */
-    for (auto &part : cell_structure.ghost_cells().particles()) {
+    for (auto &part : cell_structure.ghost_particles()) {
       if (cell_structure.get_local_particle(part.p.identity) == nullptr) {
         cell_structure.update_particle_index(part.identity(), &part);
       }
