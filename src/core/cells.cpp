@@ -279,9 +279,9 @@ void fold_and_reset(Particle &p) {
  *
  * @returns List of Particles that do not belong on this node.
  */
-static ParticleList sort_and_fold_parts(const CellStructure &cs,
-                                        Utils::Span<Cell *> cells,
-                                        std::vector<Cell *> &modified_cells) {
+ParticleList sort_and_fold_parts(const CellStructure &cs,
+                                 Utils::Span<Cell *> cells,
+                                 std::vector<Cell *> &modified_cells) {
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
