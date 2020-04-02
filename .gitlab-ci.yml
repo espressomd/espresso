@@ -264,11 +264,9 @@ installation:
   image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
-    - export srcdir=${CI_PROJECT_DIR} test_timeout=1800
+    - export srcdir=${CI_PROJECT_DIR} test_timeout=1800 build_type=Release
     - bash maintainer/CI/build_cmake.sh
     - cd build
-    # install ESPResSo (in CI, pypresso will run up to 5 times slower when
-    # located outside the build directory, hence the larger timeout value)
     - make install
     # get path of installed files
     - CI_INSTALL_DIR="/tmp/espresso-unit-tests"
@@ -277,16 +275,14 @@ installation:
     - cp -r "src/python/object_in_fluid" "${CI_INSTALL_PYTHON_PATH}/object_in_fluid"
     # run all tests with the installed files
     - sed -i "s|$(pwd)/pypresso|${CI_INSTALL_DIR}/bin/pypresso|" testsuite/{python,scripts/samples,scripts/tutorials}/CTestTestfile.cmake
-    # skip long tests
-    - sed -i "/tutorial_11-ferrofluid_3/d" testsuite/scripts/tutorials/CTestTestfile.cmake
-    - make -j2 check_python_skip_long
+    - make -j2 check_python
     - make -j2 check_samples
     - make -j2 check_tutorials
   tags:
     - docker
     - linux
     - cuda
-  timeout: 3h
+  timeout: 2h
   when: manual
 
 empty:
