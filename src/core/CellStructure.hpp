@@ -28,6 +28,7 @@
 #include "ParticleRange.hpp"
 #include "ghosts.hpp"
 
+#include <boost/range/algorithm/find_if.hpp>
 #include <vector>
 
 /** Cell Structure */
@@ -55,8 +56,12 @@ enum Resort : unsigned {
 /** List of cell pointers. */
 struct CellPList {
   ParticleRange particles() const {
-    return {CellParticleIterator(cell, cell + n, 0),
-            CellParticleIterator(cell + n, cell + n, 0)};
+    /* Find first non-empty cell */
+    auto first = std::find_if(cell, cell + n,
+                              [](const Cell *c) { return not c->empty(); });
+
+    return {CellParticleIterator(first, cell + n),
+            CellParticleIterator(cell + n)};
   }
 
   Cell **begin() { return cell; }
