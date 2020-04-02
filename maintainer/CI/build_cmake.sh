@@ -134,11 +134,40 @@ if [ "${with_cuda}" = true ]; then
 fi
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
+
 if [ "${with_ccache}" = true ]; then
     cmake_params="${cmake_params} -DWITH_CCACHE=ON"
 fi
 if [ "${with_scafacos}" = true ]; then
     cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
+fi
+
+if [ "${with_fftw}" = true ]; then
+    :
+else
+    cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON ${cmake_params}"
+fi
+
+if [ "${with_coverage}" = true ]; then
+    cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
+fi
+
+if [ "${with_asan}" = true ]; then
+    cmake_params="-DWITH_ASAN=ON ${cmake_params}"
+fi
+
+if [ "${with_ubsan}" = true ]; then
+    cmake_params="-DWITH_UBSAN=ON ${cmake_params}"
+fi
+
+if [ "${with_static_analysis}" = true ]; then
+    cmake_params="-DWITH_CLANG_TIDY=ON ${cmake_params}"
+fi
+
+if [ "${with_cuda}" = true ]; then
+    cmake_params="-DWITH_CUDA=ON ${cmake_params}"
+else
+    cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi
 
 command -v nvidia-smi && nvidia-smi || true
@@ -171,34 +200,6 @@ fi
 
 # CONFIGURE
 start "CONFIGURE"
-
-if [ "${with_fftw}" = true ]; then
-    :
-else
-    cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON ${cmake_params}"
-fi
-
-if [ "${with_coverage}" = true ]; then
-    cmake_params="-DWITH_COVERAGE=ON ${cmake_params}"
-fi
-
-if [ "${with_asan}" = true ]; then
-    cmake_params="-DWITH_ASAN=ON ${cmake_params}"
-fi
-
-if [ "${with_ubsan}" = true ]; then
-    cmake_params="-DWITH_UBSAN=ON ${cmake_params}"
-fi
-
-if [ "${with_static_analysis}" = true ]; then
-    cmake_params="-DWITH_CLANG_TIDY=ON ${cmake_params}"
-fi
-
-if [ "${with_cuda}" = true ]; then
-    :
-else
-    cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
-fi
 
 MYCONFIG_DIR="${srcdir}/maintainer/configs"
 if [ "${myconfig}" = "default" ]; then
