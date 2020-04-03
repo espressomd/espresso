@@ -1,0 +1,22 @@
+# ------------------------------------------------
+# Options affecting comment reflow and formatting.
+# ------------------------------------------------
+with section("markup"):
+  # If comment markup is enabled, don't reflow the first comment block in each
+  # listfile. Use this to preserve formatting of your copyright/license
+  # statements.
+  first_comment_is_literal = True
+
+# -----------------------------
+# Options affecting formatting.
+# -----------------------------
+with section("format"):
+  # If an argument group contains more than this many sub-groups (parg or kwarg
+  # groups) then force it to a vertical layout.
+  max_subgroups_hwrap = 12
+  # If a positional argument group contains more than this many arguments, then
+  # force it to a vertical layout.
+  max_pargs_hwrap = 12
+  # If a candidate layout is wrapped horizontally but it exceeds this many
+  # lines, then reject the layout.
+  max_lines_hwrap = 6

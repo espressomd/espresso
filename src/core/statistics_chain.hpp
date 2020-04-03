@@ -25,8 +25,6 @@
  *  This file contains the code for statistics on chains.
  */
 
-#include "PartCfg.hpp"
-
 #include <array>
 
 /** \name Exported Functions */
@@ -43,8 +41,8 @@
  * @param chain_n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_re(PartCfg &partCfg, int chain_start,
-                              int chain_n_chains, int chain_length);
+std::array<double, 4> calc_re(int chain_start, int chain_n_chains,
+                              int chain_length);
 
 /**
  * @brief Calculate the radius of gyration.
@@ -56,7 +54,7 @@ std::array<double, 4> calc_re(PartCfg &partCfg, int chain_start,
  * @param chain_n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 4> calc_rg(PartCfg &, int chain_start, int chain_n_chains,
+std::array<double, 4> calc_rg(int chain_start, int chain_n_chains,
                               int chain_length);
 
 /**
@@ -69,7 +67,7 @@ std::array<double, 4> calc_rg(PartCfg &, int chain_start, int chain_n_chains,
  * @param chain_n_chains Number of chains contained in the range.
  * @param chain_length The length of every chain.
  */
-std::array<double, 2> calc_rh(PartCfg &, int chain_start, int chain_n_chains,
+std::array<double, 2> calc_rh(int chain_start, int chain_n_chains,
                               int chain_length);
 /*@}*/
 

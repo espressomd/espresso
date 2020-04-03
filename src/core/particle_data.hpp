@@ -71,122 +71,12 @@ enum {
 #define COORD_FIXED(coord) (0)
 #endif
 
-/**
- * @brief Find local particles by id.
- *
- * If a particles is present on this mpi rank, either
- * as a local particles or as a ghost, a pointer to it
- * is returned, otherwise null.
- *
- * @param id of the particle to look up.
- *
- * @return Pointer to particle or nullptr.
- **/
-inline Particle *get_local_particle_data(int id) {
-  extern std::vector<Particle *> local_particles;
-
-  if (id >= local_particles.size())
-    return nullptr;
-
-  return local_particles[id];
-}
-
-/**
- * @brief Update local particle index.
- *
- * Update the entry for a particle in the local particle
- * index.
- *
- * @param id of the particle to up-date.
- * @param p Pointer to the particle.
- **/
-inline void set_local_particle_data(int id, Particle *p) {
-  extern std::vector<Particle *> local_particles;
-
-  if (id >= local_particles.size())
-    local_particles.resize(id + 1);
-
-  local_particles[id] = p;
-}
-
-/**
- * @brief Get the maximal particle ever seen on this node.
- *
- * This returns the highest particle id ever encountered on
- * this node, or -1 if there are no particles on this node.
- */
-inline int get_local_max_seen_particle() {
-  extern std::vector<Particle *> local_particles;
-
-  auto it = std::find_if(local_particles.rbegin(), local_particles.rend(),
-                         [](const Particle *p) { return p != nullptr; });
-
-  return (it != local_particles.rend()) ? (*it)->identity() : -1;
-}
-
 /************************************************
  * Functions
  ************************************************/
 
-/*       Functions acting on Particles          */
-/************************************************/
-
-/** Deallocate the dynamic storage of a particle. */
-void free_particle(Particle *part);
-
-/*    Functions acting on Particle Lists        */
-/************************************************/
-
-/** Append a particle at the end of a particle list.
- *  Reallocate particles if necessary!
- *  This procedure does not care for \ref local_particles.
- *  \param l List to append the particle to.
- *  \param part  Particle to append.
- */
-void append_unindexed_particle(ParticleList *l, Particle &&part);
-
-/** Append a particle at the end of a particle list.
- *  Reallocate particles if necessary!
- *  This procedure cares for \ref local_particles.
- *  \param plist List to append the particle to.
- *  \param part  Particle to append.
- *  \return Pointer to new location of the particle.
- */
-Particle *append_indexed_particle(ParticleList *plist, Particle &&part);
-
-/** Remove a particle from one particle list and append it to another.
- *  Refill the @p sourceList with last particle and update its entry in
- *  local_particles. Reallocate particles if necessary. This
- *  procedure does not care for \ref local_particles.
- *  \param destList   List where the particle is appended.
- *  \param sourceList List where the particle will be removed.
- *  \param ind        Index of the particle in the @p sourceList.
- *  \return Pointer to new location of the particle.
- */
-Particle *move_unindexed_particle(ParticleList *destList,
-                                  ParticleList *sourceList, int ind);
-
-/** Remove a particle from one particle list and append it to another.
- *  Refill the @p sourceList with last particle and update its entry in
- *  local_particles. Reallocate particles if necessary. This
- *  procedure cares for \ref local_particles.
- *  \param destList   List where the particle is appended.
- *  \param sourceList List where the particle will be removed.
- *  \param ind        Index of the particle in the @p sourceList.
- *  \return Pointer to new location of the particle.
- */
-Particle *move_indexed_particle(ParticleList *destList,
-                                ParticleList *sourceList, int ind);
-
-Particle extract_indexed_particle(ParticleList *sl, int i);
-
 /*    Other Functions                           */
 /************************************************/
-
-/** Update the entries in \ref local_particles for all particles in the list pl.
- *  @param pl the list to put in.
- */
-void update_local_particles(ParticleList *pl);
 
 /** Invalidate \ref particle_node. This has to be done
  *  at the beginning of the integration.
@@ -205,15 +95,24 @@ const Particle &get_particle_data(int part);
 /**
  * @brief Fetch a range of particle into the fetch cache.
  *
+ *
  * If the range is larger than the cache size, only
  * the particle that fit into the cache are fetched.
  *
+ * The particles have to exist, an exception it throw
+ * if one of the the particles can not be found.
+ *
  * @param ids Ids of the particles that should be fetched.
  */
-void prefetch_particle_data(std::vector<int> ids);
+void prefetch_particle_data(Utils::Span<const int> ids);
 
 /** @brief Invalidate the fetch cache for get_particle_data. */
 void invalidate_fetch_cache();
+
+/** @brief Return the maximal number of particles that are
+ *         kept in the fetch cache.
+ */
+size_t fetch_cache_max_size();
 
 /** Call only on the master node.
  *  Move a particle to a new position.
@@ -450,11 +349,6 @@ int remove_particle(int part);
 /** Remove all particles. */
 void remove_all_particles();
 
-/** For all local particles, remove bonds incorporating the specified particle.
- *  @param part     identity of the particle to free from bonds
- */
-void remove_all_bonds_to(int part);
-
 /** Used by \ref mpi_place_particle, should not be used elsewhere.
  *  Move a particle to a new position. If it does not exist, it is created.
  *  The position must be on the local node!
@@ -475,51 +369,12 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
  */
 void local_change_exclusion(int part1, int part2, int _delete);
 
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Remove a particle on this node.
- *  @param part the identity of the particle to remove
- */
-void local_remove_particle(int part);
-
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Locally remove all particles.
- */
-void local_remove_all_particles();
-
 /** Used by \ref mpi_rescale_particles, should not be used elsewhere.
  *  Locally rescale all particles on current node.
  *  @param dir   direction to scale (0/1/2 = x/y/z, 3 = x+y+z isotropically)
  *  @param scale factor by which to rescale (>1: stretch, <1: contract)
  */
 void local_rescale_particles(int dir, double scale);
-
-/** @brief Add bond to local particle.
- *  @param p     identity of principal atom of the bond.
- *  @param bond  field containing the bond type number and the identity
- *               of all bond partners (secondary atoms of the bond).
- */
-void local_add_particle_bond(Particle &p, Utils::Span<const int> bond);
-
-#ifdef EXCLUSIONS
-/** Determine if the non-bonded interactions between @p p1 and @p p2 should be
- *  calculated.
- */
-inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
-  /* check for particle 2 in particle 1's exclusion list. The exclusion list is
-   * symmetric, so this is sufficient. */
-  return std::none_of(p1.el.begin(), p1.el.end(),
-                      [&p2](int id) { return p2.p.identity == id; });
-}
-#endif
-
-/** Remove bond from particle if possible */
-int try_delete_bond(Particle *part, const int *bond);
-
-/** Remove exclusion from particle if possible */
-void try_delete_exclusion(Particle *part, int part2);
-
-/** Insert an exclusion if not already set */
-void try_add_exclusion(Particle *part, int part2);
 
 /** Automatically add the next \<distance\> neighbors in each molecule to the
  *  exclusion list.

@@ -61,7 +61,8 @@
 #include "bonded_interactions/bonded_coulomb_sr.hpp"
 #include "electrostatics_magnetostatics/coulomb_inline.hpp"
 #endif
-#include "particle_data.hpp"
+#include "cells.hpp"
+#include "exclusions.hpp"
 #include "statistics.hpp"
 
 #include "energy.hpp"
@@ -216,7 +217,7 @@ inline void add_bonded_energy(Particle const *const p1) {
     int n_partners = iaparams.num;
 
     /* fetch particle 2, which is always needed */
-    Particle const *const p2 = get_local_particle_data(p1->bl.e[i++]);
+    Particle const *const p2 = cell_structure.get_local_particle(p1->bl.e[i++]);
     if (!p2) {
       runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                         << " and " << p1->bl.e[i - 1]
@@ -226,7 +227,7 @@ inline void add_bonded_energy(Particle const *const p1) {
 
     /* fetch particle 3 eventually */
     if (n_partners >= 2) {
-      p3 = get_local_particle_data(p1->bl.e[i++]);
+      p3 = cell_structure.get_local_particle(p1->bl.e[i++]);
       if (!p3) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                           << ", " << p1->bl.e[i - 2] << " and "
@@ -238,7 +239,7 @@ inline void add_bonded_energy(Particle const *const p1) {
 
     /* fetch particle 4 eventually */
     if (n_partners >= 3) {
-      p4 = get_local_particle_data(p1->bl.e[i++]);
+      p4 = cell_structure.get_local_particle(p1->bl.e[i++]);
       if (!p4) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
                           << ", " << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2]

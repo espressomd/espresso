@@ -153,9 +153,9 @@ def decreaseElectricField():
 
 
 # Register buttons
-visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+visualizer.keyboard_manager.register_button(visualization_opengl.KeyboardButtonEvent(
     'u', visualization_opengl.KeyboardFireEvent.Hold, increaseElectricField))
-visualizer.keyboardManager.register_button(visualization_opengl.KeyboardButtonEvent(
+visualizer.keyboard_manager.register_button(visualization_opengl.KeyboardButtonEvent(
     'j', visualization_opengl.KeyboardFireEvent.Hold, decreaseElectricField))
 
 

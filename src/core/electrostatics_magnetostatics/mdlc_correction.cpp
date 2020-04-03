@@ -39,7 +39,7 @@ DLC_struct dlc_params = {1e100, 0, 0, 0, 0};
 static double mu_max;
 
 void calc_mu_max() {
-  auto local_particles = cell_structure.local_cells().particles();
+  auto local_particles = cell_structure.local_particles();
   mu_max = std::accumulate(
       local_particles.begin(), local_particles.end(), 0.0,
       [](double mu, Particle const &p) { return std::max(mu, p.p.dipm); });

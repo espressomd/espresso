@@ -129,13 +129,11 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
  *  when particle data or cell structure has changed and the cell
  *  structure has to be reinitialized. This also includes setting up
  *  the cell_structure array.
- *  @param old    List of cell pointers with particles to be stored in the
- *               new cell system.
+ *
  *  @param grid  Number of nodes in each spatial dimension.
  *  @param range Desired interaction range
  */
-void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
-                      double range);
+void dd_topology_init(const Utils::Vector3i &grid, double range);
 
 /** Called when the current cell structure is invalidated because for
  *  example the box length has changed. This procedure may NOT destroy
@@ -158,7 +156,8 @@ void dd_topology_release();
  *  @param grid   Number of nodes in each spatial dimension
  */
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Utils::Vector3i &grid);
+                                    const Utils::Vector3i &grid,
+                                    std::vector<Cell *> &modified_cells);
 
 /** calculate physical (processor) minimal number of cells */
 int calc_processor_min_num_cells(const Utils::Vector3i &grid);

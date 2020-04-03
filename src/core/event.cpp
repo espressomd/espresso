@@ -204,8 +204,7 @@ void on_particle_charge_change() {
 }
 
 void on_particle_change() {
-
-  set_resort_particles(Cells::RESORT_LOCAL);
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
 

@@ -82,7 +82,7 @@ class RdfTest(ut.TestCase):
 
         parts_in_bin = rdf01[1] * rv * rho
 
-        # Every odd bin should contain two parts
+        # Every even bin should contain two parts
         np.testing.assert_allclose(parts_in_bin[0:-1:2], 2.0, rtol=1e-1)
         # Every odd bin should contain zero parts
         np.testing.assert_allclose(parts_in_bin[1:-1:2], 0.0)

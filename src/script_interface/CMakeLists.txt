@@ -1,8 +1,5 @@
-add_library(
-  ScriptInterface SHARED
-  initialize.cpp
-  ScriptInterfaceBase.cpp
-  ParallelScriptInterface.cpp)
+add_library(ScriptInterface SHARED initialize.cpp ScriptInterfaceBase.cpp
+                                   ParallelScriptInterface.cpp)
 
 add_subdirectory(accumulators)
 add_subdirectory(collision_detection)

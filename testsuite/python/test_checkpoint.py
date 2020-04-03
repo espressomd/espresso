@@ -270,12 +270,12 @@ class CheckpointTest(ut.TestCase):
 
     def test_mean_variance_calculator(self):
         np.testing.assert_array_equal(
-            acc.get_mean(), np.array([1.0, 1.5, 2.0, 1.0, 1.0, 2.0]))
+            acc.get_mean(), np.array([[1.0, 1.5, 2.0], [1.0, 1.0, 2.0]]))
         np.testing.assert_array_equal(
-            acc.get_variance(), np.array([0., 0.5, 2., 0., 0., 0.]))
+            acc.get_variance(), np.array([[0., 0.5, 2.], [0., 0., 0.]]))
         np.testing.assert_array_equal(
             system.auto_update_accumulators[0].get_variance(),
-            np.array([0., 0.5, 2., 0., 0., 0.]))
+            np.array([[0., 0.5, 2.], [0., 0., 0.]]))
 
     @utx.skipIfMissingFeatures('P3M')
     @ut.skipIf('P3M.CPU' not in modes,

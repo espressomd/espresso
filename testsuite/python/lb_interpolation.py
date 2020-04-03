@@ -18,6 +18,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import itertools
+import sys
 
 import espressomd
 import espressomd.shapes
@@ -57,9 +58,9 @@ class LBInterpolation:
     def set_boundaries(self, velocity):
         """Place boundaries *not* exactly on a LB node."""
         wall_shape1 = espressomd.shapes.Wall(
-            normal=[1, 0, 0], dist=0.6 * AGRID)
+            normal=[1, 0, 0], dist=AGRID)
         wall_shape2 = espressomd.shapes.Wall(
-            normal=[-1, 0, 0], dist=-(BOX_L - 0.6 * AGRID))
+            normal=[-1, 0, 0], dist=-(BOX_L - AGRID))
         self.system.lbboundaries.add(
             espressomd.lbboundaries.LBBoundary(shape=wall_shape1))
         self.system.lbboundaries.add(
@@ -72,9 +73,25 @@ class LBInterpolation:
         """
         self.set_boundaries([0.0, 0.0, V_BOUNDARY])
         self.system.integrator.run(250)
-        # Shear plane for boundary 1
-        # for pos in itertools.product((AGRID,), np.arange(0.5 * AGRID, BOX_L, AGRID), np.arange(0.5 * AGRID, BOX_L, AGRID)):
-        #     np.testing.assert_almost_equal(self.lbf.get_interpolated_velocity(pos)[2], 0.0)
+        # Check interpolated vel at upper boundary. The node position is at 
+        # box_l[0]-agrid/2.
+        np.testing.assert_allclose(
+            np.copy(self.lbf.get_interpolated_velocity(
+                [self.system.box_l[0] - AGRID / 2, 0, 0])), 
+            np.array([0, 0, V_BOUNDARY]))
+
+        # Check interpolated velocity involving boundary and neighboring node
+        # The boundary node index is lbf.shape[0]-1, so -2 refers to the
+        # node in front of the boundary. 
+        node_next_to_boundary = self.lbf[
+            self.lbf.shape[0] - 2, 0, 0]
+        # The midpoint between the boundary and
+        # that node is box_l - agrid.
+        np.testing.assert_allclose(
+            np.copy(self.lbf.get_interpolated_velocity(
+                [self.system.box_l[0] - AGRID, 0, 0])),
+            0.5 * (np.array([0, 0, V_BOUNDARY]) + node_next_to_boundary.velocity))
+
         # Bulk
         for pos in itertools.product(
                 np.arange(1.5 * AGRID, BOX_L - 1.5 * AGRID, 0.5 * AGRID),
@@ -93,9 +110,15 @@ class LBInterpolation:
 
         """
         max_vel = 0.31 * AGRID / TAU
+        print("Begin: Test error generation")
+        sys.stdout.flush()
+        sys.stderr.flush()
         with self.assertRaises(Exception):
             self.set_boundaries([0.0, 0.0, max_vel])
             self.system.integrator.run(1)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        print("End: Test error generation")
 
 
 @utx.skipIfMissingFeatures(['LB_BOUNDARIES'])

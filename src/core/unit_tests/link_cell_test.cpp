@@ -45,11 +45,10 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
     c.m_neighbors = Neighbors<Cell *>(neighbors, {});
 
-    c.resize(n_part_per_cell);
-    std::uninitialized_fill(c.part, c.part + c.n, Particle());
+    c.particles().resize(n_part_per_cell);
 
-    for (unsigned i = 0; i < n_part_per_cell; ++i) {
-      c.part[i].p.identity = id++;
+    for (auto &p : c.particles()) {
+      p.p.identity = id++;
     }
   }
 

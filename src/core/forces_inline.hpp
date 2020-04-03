@@ -36,6 +36,7 @@
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "errorhandling.hpp"
+#include "exclusions.hpp"
 #include "forces.hpp"
 #include "immersed_boundary/ibm_tribend.hpp"
 #include "immersed_boundary/ibm_triel.hpp"
@@ -59,7 +60,6 @@
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
 #include "object-in-fluid/oif_local_forces.hpp"
-#include "particle_data.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
 
@@ -411,7 +411,7 @@ inline void add_bonded_force(Particle *const p1) {
     bool bond_broken = true;
 
     if (n_partners) {
-      p2 = get_local_particle_data(p1->bl.e[i++]);
+      p2 = cell_structure.get_local_particle(p1->bl.e[i++]);
       if (!p2) {
         runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
         return;
@@ -419,7 +419,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 3 eventually */
       if (n_partners >= 2) {
-        p3 = get_local_particle_data(p1->bl.e[i++]);
+        p3 = cell_structure.get_local_particle(p1->bl.e[i++]);
         if (!p3) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "
@@ -431,7 +431,7 @@ inline void add_bonded_force(Particle *const p1) {
 
       /* fetch particle 4 eventually */
       if (n_partners >= 3) {
-        p4 = get_local_particle_data(p1->bl.e[i++]);
+        p4 = cell_structure.get_local_particle(p1->bl.e[i++]);
         if (!p4) {
           runtimeErrorMsg()
               << "bond broken between particles " << p1->p.identity << ", "

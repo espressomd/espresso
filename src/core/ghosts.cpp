@@ -31,7 +31,6 @@
 #include "ghosts.hpp"
 #include "Particle.hpp"
 #include "communication.hpp"
-#include "particle_data.hpp"
 
 #include <mpi.h>
 #include <utils/Span.hpp>
@@ -114,8 +113,9 @@ static size_t calc_transmit_size(GhostCommunication &ghost_comm,
     return sizeof(int) * ghost_comm.part_lists.size();
 
   auto const n_part = boost::accumulate(
-      ghost_comm.part_lists, 0ul,
-      [](size_t sum, auto part_list) { return sum + part_list->n; });
+      ghost_comm.part_lists, 0ul, [](size_t sum, auto part_list) {
+        return sum + part_list->particles().size();
+      });
   return n_part * calc_transmit_size(data_parts);
 }
 
@@ -163,29 +163,12 @@ static void prepare_send_buffer(CommBuf &send_buffer,
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-  using Utils::make_span;
-  auto const old_cap = cell->capacity();
-
-  /* reset excess particles */
-  if (size < cell->capacity()) {
-    for (auto &p :
-         make_span<Particle>(cell->part + size, cell->capacity() - size)) {
-      p = Particle{};
-      p.l.ghost = true;
-    }
-  }
-
   /* Adapt size */
-  cell->resize(size);
+  cell->particles().resize(size);
 
-  /* initialize new particles */
-  if (old_cap < cell->capacity()) {
-    auto new_parts =
-        make_span(cell->part + old_cap, cell->capacity() - old_cap);
-    std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
-    for (auto &p : new_parts) {
-      p.l.ghost = true;
-    }
+  /* Mark particles as ghosts */
+  for (auto &p : cell->particles()) {
+    p.l.ghost = true;
   }
 }
 
@@ -212,9 +195,6 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
-          if (get_local_particle_data(part.p.identity) == nullptr) {
-            set_local_particle_data(part.p.identity, &part);
-          }
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           archiver >> part.r;
@@ -265,13 +245,13 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->particles().size());
     } else {
-      auto src_part = src_list->particles();
-      auto dst_part = dst_list->particles();
+      auto const &src_part = src_list->particles();
+      auto &dst_part = dst_list->particles();
       assert(src_part.size() == dst_part.size());
 
       for (size_t i = 0; i < src_part.size(); i++) {
-        auto const &part1 = src_part[i];
-        auto &part2 = dst_part[i];
+        auto const &part1 = src_part.begin()[i];
+        auto &part2 = dst_part.begin()[i];
 
         if (data_parts & GHOSTTRANS_PROPRTS) {
           part2.p = part1.p;

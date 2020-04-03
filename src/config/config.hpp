@@ -30,8 +30,12 @@
  */
 
 /* Prevent C++ bindings in MPI (there is a DataType called LB in there) */
+#ifndef OMPI_SKIP_MPICXX
 #define OMPI_SKIP_MPICXX
+#endif
+#ifndef MPICH_SKIP_MPICXX
 #define MPICH_SKIP_MPICXX
+#endif
 
 #include "config-features.hpp"
 

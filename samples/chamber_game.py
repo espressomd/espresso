@@ -268,7 +268,8 @@ while n < bubbles_n:
     testid = len(system.part) - 1
     n += 1
 
-    if system.analysis.dist_to(id=testid) < bubble_sigma * 0.5:
+    if np.min([system.distance(system.part[testid], p.pos)
+               for p in system.part if p.id != testid]) < bubble_sigma * 0.5:
         system.part[testid].remove()
         n -= 1
 
@@ -377,28 +378,28 @@ def explode():
 
 
 # KEYBOARD CONTROLS
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('i', KeyboardFireEvent.Pressed, move_up_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('k', KeyboardFireEvent.Pressed, move_down_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('i', KeyboardFireEvent.Released, move_updown_reset))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('k', KeyboardFireEvent.Released, move_updown_reset))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Pressed, move_left_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('l', KeyboardFireEvent.Pressed, move_right_set))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('j', KeyboardFireEvent.Released, move_leftright_reset))
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('l', KeyboardFireEvent.Released, move_leftright_reset))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('p', KeyboardFireEvent.Pressed, explode))
 
-visualizer.keyboardManager.register_button(
+visualizer.keyboard_manager.register_button(
     KeyboardButtonEvent('b', KeyboardFireEvent.Pressed, restart))
 
 # MAIN LOOP

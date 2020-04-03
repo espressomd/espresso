@@ -25,6 +25,7 @@
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "grid.hpp"
 #include "mmm-common.hpp"
 #include "pressure.hpp"
 #include <cmath>

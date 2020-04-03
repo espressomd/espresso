@@ -41,6 +41,7 @@
 #include "short_range_loop.hpp"
 
 #include <utils/NoOp.hpp>
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 #include <utils/contains.hpp>
 
@@ -50,13 +51,14 @@
 /** Previous particle configurations (needed for offline analysis and
  *  correlation analysis)
  */
-std::vector<std::vector<double>> configs;
-int n_configs = 0;
-int n_part_conf = 0;
+std::vector<std::vector<Utils::Vector3d>> configs;
 
-/****************************************************************************************
- *                                 helper functions
- ****************************************************************************************/
+int get_n_configs() { return static_cast<int>(configs.size()); }
+
+int get_n_part_conf() {
+  return (configs.size()) ? static_cast<int>(configs[0].size()) : 0;
+}
+
 /****************************************************************************************
  *                                 basic observables calculation
  ****************************************************************************************/
@@ -79,14 +81,15 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
        * versa. */
       if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
           ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
-        mindist2 = std::min(mindist2, min_distance2(jt->r.p, it->r.p));
+        mindist2 = std::min(mindist2,
+                            get_mi_vector(jt->r.p, it->r.p, box_geo).norm2());
   }
 
   return std::sqrt(mindist2);
 }
 
 Utils::Vector3d local_particle_momentum() {
-  auto const particles = cell_structure.local_cells().particles();
+  auto const particles = cell_structure.local_particles();
   auto const momentum =
       std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
                       [](Utils::Vector3d &m, Particle const &p) {
@@ -368,7 +371,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
     for (int l = 0; l < r_bins; l++)
       rdf_tmp[l] = 0.0;
     cnt = 0;
-    auto const k = n_configs - cnt_conf;
+    auto const k = configs.size() - cnt_conf;
     int i = 0;
     for (auto it = partCfg.begin(); it != partCfg.end(); ++it) {
       for (int t1 = 0; t1 < n_p1; t1++) {
@@ -381,15 +384,8 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
           for (; jt != partCfg.end(); ++jt) {
             for (int t2 = 0; t2 < n_p2; t2++) {
               if (jt->p.type == p2_types[t2]) {
-                using Utils::make_const_span;
-                using Utils::Vector3d;
-
                 auto const dist =
-                    get_mi_vector(
-                        Vector3d{make_const_span(configs[k].data() + 3 * i, 3)},
-                        Vector3d{make_const_span(configs[k].data() + 3 * j, 3)},
-                        box_geo)
-                        .norm();
+                    get_mi_vector(configs[k][i], configs[k][j], box_geo).norm();
                 if (dist > r_min && dist < r_max) {
                   auto const ind =
                       static_cast<int>((dist - r_min) * inv_bin_width);
@@ -511,29 +507,11 @@ std::vector<std::vector<double>> modify_stucturefactor(int order,
  ****************************************************************************************/
 
 void analyze_append(PartCfg &partCfg) {
-  n_part_conf = partCfg.size();
-  configs.resize(n_configs + 1);
-  configs[n_configs].resize(3 * n_part_conf);
-  int i = 0;
+  std::vector<Utils::Vector3d> config;
   for (auto const &p : partCfg) {
-    configs[n_configs][3 * i + 0] = p.r.p[0];
-    configs[n_configs][3 * i + 1] = p.r.p[1];
-    configs[n_configs][3 * i + 2] = p.r.p[2];
-    i++;
+    config.emplace_back(p.r.p);
   }
-  n_configs++;
-}
-
-void analyze_configs(double const *tmp_config, int count) {
-  n_part_conf = count;
-  configs.resize(n_configs + 1);
-  configs[n_configs].resize(3 * n_part_conf);
-  for (int i = 0; i < n_part_conf; i++) {
-    configs[n_configs][3 * i] = tmp_config[3 * i];
-    configs[n_configs][3 * i + 1] = tmp_config[3 * i + 1];
-    configs[n_configs][3 * i + 2] = tmp_config[3 * i + 2];
-  }
-  n_configs++;
+  configs.emplace_back(config);
 }
 
 /****************************************************************************************
