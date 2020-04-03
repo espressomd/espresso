@@ -198,7 +198,7 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
 /** Go through ghost cells and remove the ghost entries from the
     local particle index. */
 static void invalidate_ghosts() {
-  for (auto const &p : cell_structure.ghost_cells().particles()) {
+  for (auto const &p : cell_structure.ghost_particles()) {
     if (cell_structure.get_local_particle(p.identity()) == &p) {
       cell_structure.update_particle_index(p.identity(), nullptr);
     }
@@ -233,9 +233,7 @@ void cells_re_init(int new_cs, double range) {
 
   clear_particle_node();
 
-  for (auto &p : CellPList{old_local_cells.data(),
-                           static_cast<int>(old_local_cells.size())}
-                     .particles()) {
+  for (auto &p : Cells::particles(Utils::make_span(old_local_cells))) {
     cell_structure.add_particle(std::move(p));
   }
 
@@ -281,7 +279,8 @@ void fold_and_reset(Particle &p) {
  *
  * @returns List of Particles that do not belong on this node.
  */
-ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells,
+ParticleList sort_and_fold_parts(const CellStructure &cs,
+                                 Utils::Span<Cell *> cells,
                                  std::vector<Cell *> &modified_cells) {
   ParticleList displaced_parts;
 
@@ -379,7 +378,7 @@ void cells_resort_particles(int global_flag) {
 
   displaced_parts.clear();
 
-  on_resort_particles(cell_structure.local_cells().particles());
+  on_resort_particles(cell_structure.local_particles());
 }
 
 /*************************************************/
@@ -404,14 +403,13 @@ void cells_on_geometry_change(int flags) {
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
-  auto const level =
-      (std::any_of(cell_structure.local_cells().particles().begin(),
-                   cell_structure.local_cells().particles().end(),
-                   [&skin2](Particle const &p) {
-                     return (p.r.p - p.l.p_old).norm2() > skin2;
-                   }))
-          ? Cells::RESORT_LOCAL
-          : Cells::RESORT_NONE;
+  auto const level = (std::any_of(cell_structure.local_particles().begin(),
+                                  cell_structure.local_particles().end(),
+                                  [&skin2](Particle const &p) {
+                                    return (p.r.p - p.l.p_old).norm2() > skin2;
+                                  }))
+                         ? Cells::RESORT_LOCAL
+                         : Cells::RESORT_NONE;
 
   cell_structure.set_resort_particles(level);
 }
@@ -439,7 +437,7 @@ void cells_update_ghosts(unsigned data_parts) {
 
     /* Add the ghost particles to the index if we don't already
      * have them. */
-    for (auto &part : cell_structure.ghost_cells().particles()) {
+    for (auto &part : cell_structure.ghost_particles()) {
       if (cell_structure.get_local_particle(part.p.identity) == nullptr) {
         cell_structure.update_particle_index(part.identity(), &part);
       }
