@@ -111,7 +111,7 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
     rebuild_verletlist = false;
   } else {
-    for (auto &p : cell_structure.local_cells().particles()) {
+    for (auto &p : cell_structure.local_particles()) {
       particle_kernel(p);
     }
   }

@@ -151,7 +151,7 @@ void VirtualSitesRelative::update() const {
 
   ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
 
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
       continue;
 
@@ -178,10 +178,10 @@ void VirtualSitesRelative::update() const {
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
   ghost_communicator(&cell_structure.collect_ghost_force_comm,
                      GHOSTTRANS_FORCE);
-  init_forces_ghosts(cell_structure.ghost_cells().particles());
+  init_forces_ghosts(cell_structure.ghost_particles());
 
   // Iterate over all the particles in the local cells
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     // We only care about virtual particles
     if (p.p.is_virtual) {
       // First obtain the real particle responsible for this virtual particle:
@@ -197,7 +197,7 @@ void VirtualSitesRelative::back_transfer_forces_and_torques() const {
 Utils::Matrix<double, 3, 3> VirtualSitesRelative::stress_tensor() const {
   Utils::Matrix<double, 3, 3> stress_tensor = {};
 
-  for (auto &p : cell_structure.local_cells().particles()) {
+  for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
       continue;
 

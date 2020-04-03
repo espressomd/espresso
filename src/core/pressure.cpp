@@ -125,7 +125,7 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials(cell_structure.local_cells().particles());
+  calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
   {

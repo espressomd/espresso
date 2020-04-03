@@ -124,7 +124,7 @@ void ImmersedBoundaries::calc_volumes() {
   std::vector<double> tempVol(MaxNumIBM);
 
   // Loop over all particles on local node
-  for (auto const &p1 : cell_structure.local_cells().particles()) {
+  for (auto const &p1 : cell_structure.local_particles()) {
     // Check if particle has a BONDED_IA_IBM_TRIEL and a
     // BONDED_IA_IBM_VOLUME_CONSERVATION Basically this loops over all
     // triangles, not all particles First round to check for volume
@@ -226,7 +226,7 @@ void ImmersedBoundaries::calc_volumes() {
 /** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force() {
   // Loop over all particles on local node
-  for (auto &p1 : cell_structure.local_cells().particles()) {
+  for (auto &p1 : cell_structure.local_particles()) {
 
     // Check if particle has a BONDED_IA_IBM_TRIEL and a
     // BONDED_IA_IBM_VOLUME_CONSERVATION. Basically this loops over all
