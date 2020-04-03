@@ -331,6 +331,19 @@ set(CMAKE_SHARED_LIBRARY_PREFIX "")
 if(WARNINGS_ARE_ERRORS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 endif(WARNINGS_ARE_ERRORS)
+
+add_library(coverage_interface INTERFACE)
+target_compile_options(
+  coverage_interface
+  INTERFACE
+    "$<$<BOOL:${WITH_COVERAGE}>:-g>"
+    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fprofile-instr-generate>"
+    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fcoverage-mapping>"
+    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:--coverage>"
+    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-fprofile-arcs>"
+    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-ftest-coverage>"
+)
+
 set(CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces"
 )

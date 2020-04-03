@@ -28,22 +28,11 @@ function(UNIT_TEST)
   # Build tests only when testing
   set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
   target_link_libraries(${TEST_NAME} PRIVATE Boost::unit_test_framework)
+  target_link_libraries(${TEST_NAME} PUBLIC coverage_interface)
   if(TEST_DEPENDS)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})
   endif()
   if(WITH_COVERAGE)
-    target_compile_options(${TEST_NAME} PUBLIC "-g")
-    target_compile_options(
-      ${TEST_NAME}
-      PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
     if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
       target_link_libraries(${TEST_NAME} PUBLIC gcov)
     endif()

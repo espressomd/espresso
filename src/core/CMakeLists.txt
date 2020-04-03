@@ -72,25 +72,14 @@ endif(CUDA)
 
 install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
-target_compile_options(
-  EspressoCore
-  PUBLIC
-    "$<$<BOOL:${WITH_COVERAGE}>:-g>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fprofile-instr-generate>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fcoverage-mapping>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:--coverage>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-fprofile-arcs>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-ftest-coverage>"
-)
-
 target_link_libraries(
   EspressoCore
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           "$<$<BOOL:${SCAFACOS}>:Scafacos>"
   PUBLIC
-    utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
-    "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
+    coverage_interface utils MPI::MPI_CXX Random123 Boost::serialization
+    Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
     "$<$<BOOL:${H5MD}>:Boost::filesystem>" "$<$<BOOL:${H5MD}>:h5xx>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
 
