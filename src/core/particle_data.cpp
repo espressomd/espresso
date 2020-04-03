@@ -35,7 +35,6 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include "rotation.hpp"
-#include "serialization/ParticleList.hpp"
 
 #include <utils/Cache.hpp>
 #include <utils/constants.hpp>

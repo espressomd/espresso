@@ -24,37 +24,27 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
 void CellStructure::remove_particle(int id) {
-  Cell *cell = nullptr;
-  int position = -1;
   for (auto c : m_local_cells) {
-    auto parts = c->particles();
+    auto &parts = c->particles();
 
-    for (unsigned i = 0; i < parts.size(); i++) {
-      auto &p = parts[i];
-
-      if (p.identity() == id) {
-        cell = c;
-        position = static_cast<int>(i);
+    for (auto it = parts.begin(); it != parts.end();) {
+      if (it->identity() == id) {
+        it = parts.erase(it);
+        update_particle_index(id, nullptr);
+        update_particle_index(parts);
       } else {
-        remove_all_bonds_to(p, id);
+        remove_all_bonds_to(*it++, id);
       }
     }
-  }
-
-  /* If we found the particle, remove it. */
-  if (cell && (position >= 0)) {
-    cell->extract(position);
-    update_particle_index(id, nullptr);
-    update_particle_index(cell);
   }
 }
 
 Particle *CellStructure::add_local_particle(Particle &&p) {
   auto const sort_cell = particle_to_cell(p);
   if (sort_cell) {
-    append_indexed_particle(sort_cell, std::move(p));
 
-    return &sort_cell->back();
+    return std::addressof(
+        append_indexed_particle(sort_cell->particles(), std::move(p)));
   }
 
   return {};
@@ -70,9 +60,8 @@ Particle *CellStructure::add_particle(Particle &&p) {
    * needed, otherwise a local resort if sufficient. */
   set_resort_particles(sort_cell ? Cells::RESORT_LOCAL : Cells::RESORT_GLOBAL);
 
-  append_indexed_particle(cell, std::move(p));
-
-  return &cell->back();
+  return std::addressof(
+      append_indexed_particle(cell->particles(), std::move(p)));
 }
 
 int CellStructure::get_max_local_particle_id() const {
@@ -84,7 +73,7 @@ int CellStructure::get_max_local_particle_id() const {
 
 void CellStructure::remove_all_particles() {
   for (auto c : m_local_cells) {
-    c->clear();
+    c->particles().clear();
   }
 
   m_particle_index.clear();

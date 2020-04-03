@@ -56,8 +56,9 @@ enum Resort : unsigned {
 namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *> cells) {
   /* Find first non-empty cell */
-  auto first_non_empty = std::find_if(
-      cells.begin(), cells.end(), [](const Cell *c) { return not c->empty(); });
+  auto first_non_empty =
+      std::find_if(cells.begin(), cells.end(),
+                   [](const Cell *c) { return not c->particles().empty(); });
 
   return {CellParticleIterator(first_non_empty, cells.end()),
           CellParticleIterator(cells.end())};
@@ -134,18 +135,20 @@ private:
    * @param pl List to add the particle to.
    * @param p Particle to add.
    */
-  void append_indexed_particle(ParticleList *pl, Particle &&p) {
-    auto const old_data = pl->data();
-    pl->push_back(std::move(p));
+  Particle &append_indexed_particle(ParticleList &pl, Particle &&p) {
+    /* Check if cell may reallocate, in which case the index
+     * entries for all particles in this celle have to be
+     * updated. */
+    auto const may_reallocate = pl.size() >= pl.capacity();
+    auto &new_part = pl.insert(std::move(p));
 
-    /* If the list storage moved due to reallocation,
-     * we have to update the index for all particles,
-     * otherwise just for the particle that we added. */
-    if (old_data != pl->data())
+    if (may_reallocate)
       update_particle_index(pl);
     else {
-      update_particle_index(pl->back());
+      update_particle_index(new_part);
     }
+
+    return new_part;
   }
 
 public:
@@ -248,7 +251,7 @@ public:
    * @brief Remove a particle.
    *
    * Removes a particle and all bonds pointing
-   * to it. This is a colective call.
+   * to it. This is a collective call.
    *
    * @param id Id of particle to remove.
    */
