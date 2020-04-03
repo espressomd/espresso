@@ -29,19 +29,20 @@ execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
 
 string(REGEX
        REPLACE "^.*Cuda compilation tools, release [0-9\.]+, V([0-9\.]+).*\$"
-               "\\1"
-               CMAKE_CUDA_COMPILER_VERSION
-               "${NVCC_VERSION_STRING}")
+               "\\1" CMAKE_CUDA_COMPILER_VERSION "${NVCC_VERSION_STRING}")
 
 if(NOT CUDA_NVCC_EXECUTABLE STREQUAL "${CUDA_TOOLKIT_ROOT_DIR}/bin/nvcc")
   get_filename_component(NVCC_EXECUTABLE_DIRNAME "${CUDA_NVCC_EXECUTABLE}" DIRECTORY)
   get_filename_component(NVCC_EXECUTABLE_DIRNAME "${NVCC_EXECUTABLE_DIRNAME}" DIRECTORY)
-  message(WARNING "Your nvcc (${CUDA_NVCC_EXECUTABLE}) does not appear to match your CUDA libraries (in ${CUDA_TOOLKIT_ROOT_DIR}). While ESPResSo will still compile, you might get unexpected crashes. Please point CUDA_TOOLKIT_ROOT_DIR to your CUDA toolkit path, e.g. by adding -DCUDA_TOOLKIT_ROOT_DIR='${NVCC_EXECUTABLE_DIRNAME}' to your cmake command.")
+  message(
+    WARNING
+      "Your nvcc (${CUDA_NVCC_EXECUTABLE}) does not appear to match your CUDA libraries (in ${CUDA_TOOLKIT_ROOT_DIR}). While ESPResSo will still compile, you might get unexpected crashes. Please point CUDA_TOOLKIT_ROOT_DIR to your CUDA toolkit path, e.g. by adding -DCUDA_TOOLKIT_ROOT_DIR='${NVCC_EXECUTABLE_DIRNAME}' to your cmake command."
+  )
 endif()
 
 set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
-SET(CUDA_PROPAGATE_HOST_FLAGS OFF)
+set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
 set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
 set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG")
@@ -64,7 +65,7 @@ function(add_gpu_library)
   target_link_libraries(${ARGV0} PRIVATE ${CUDA_CUFFT_LIBRARIES})
 endfunction()
 
-include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerNVCC
-                                   REQUIRED_VARS CMAKE_CUDA_COMPILER
-                                   VERSION_VAR CMAKE_CUDA_COMPILER_VERSION )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  CudaCompilerNVCC REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
+  CMAKE_CUDA_COMPILER_VERSION)

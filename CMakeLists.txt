@@ -48,7 +48,10 @@ set(PROJECT_VERSION "4.2-dev")
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Select the build type
-option_enum(varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release" possible_values "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage;RelWithAssert")
+option_enum(
+  varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release"
+  possible_values
+  "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage;RelWithAssert")
 set(CMAKE_CXX_FLAGS_COVERAGE "-Og -g")
 set(CMAKE_CXX_FLAGS_RELWITHASSERT "-O3 -g")
 
@@ -136,11 +139,12 @@ endforeach(func_name __PRETTY_FUNCTION__ __FUNCTION__)
 if(WITH_CUDA)
   set(CMAKE_CUDA_STANDARD ${CMAKE_CXX_STANDARD})
   set(MINIMAL_CUDA_VERSION 9.0)
-  option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler" default_value "nvcc" possible_values "nvcc;hip;clang")
-  if (WITH_CUDA_COMPILER STREQUAL "nvcc")
+  option_enum(varname "WITH_CUDA_COMPILER" help_text "CUDA compiler"
+              default_value "nvcc" possible_values "nvcc;hip;clang")
+  if(WITH_CUDA_COMPILER STREQUAL "nvcc")
     find_package(CUDA ${MINIMAL_CUDA_VERSION} REQUIRED)
     find_package(CUDACompilerNVCC ${MINIMAL_CUDA_VERSION} REQUIRED)
-  elseif (WITH_CUDA_COMPILER STREQUAL "hip")
+  elseif(WITH_CUDA_COMPILER STREQUAL "hip")
     set(ROCM_HOME "/opt/rocm" CACHE FILEPATH "Path to AMD ROCm")
     list(APPEND CMAKE_MODULE_PATH "${ROCM_HOME}/hip/cmake")
     find_package(HIP 1.5.18494 MODULE REQUIRED)
@@ -152,14 +156,19 @@ if(WITH_CUDA)
     endif()
     find_package(HIP 1.5.18494 MODULE REQUIRED)
     find_package(CUDACompilerHIP 6.0 REQUIRED)
-  elseif (WITH_CUDA_COMPILER STREQUAL "clang")
+  elseif(WITH_CUDA_COMPILER STREQUAL "clang")
     if(WITH_COVERAGE)
-      message(FATAL_ERROR "The combination of options '-DWITH_CUDA_COMPILER=${WITH_CUDA_COMPILER} -DWITH_COVERAGE=${WITH_COVERAGE}' is not supported.")
+      message(
+        FATAL_ERROR
+          "The combination of options '-DWITH_CUDA_COMPILER=${WITH_CUDA_COMPILER} -DWITH_COVERAGE=${WITH_COVERAGE}' is not supported."
+      )
     endif()
     set(MINIMAL_CUDA_VERSION 8.0)
     find_package(CUDACompilerClang 6.0 REQUIRED)
   else()
-    message(FATAL_ERROR "Cannot process option -DWITH_CUDA_COMPILER='${WITH_CUDA_COMPILER}'")
+    message(
+      FATAL_ERROR
+        "Cannot process option -DWITH_CUDA_COMPILER='${WITH_CUDA_COMPILER}'")
   endif()
 endif(WITH_CUDA)
 

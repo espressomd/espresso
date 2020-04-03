@@ -21,35 +21,34 @@
 # Find the Clang compiler, include its libraries and declare a custom
 # `add_library()` wrapper function named `add_gpu_library()`.
 
-if (NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"
-     OR CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang"))
-  message(FATAL_ERROR "To compile CUDA code with Clang, the C++ compiler must be Clang, not ${CMAKE_CXX_COMPILER_ID}.")
+if(NOT (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
+                                                  "AppleClang"))
+  message(
+    FATAL_ERROR
+      "To compile CUDA code with Clang, the C++ compiler must be Clang, not ${CMAKE_CXX_COMPILER_ID}."
+  )
 endif()
 
 set(CMAKE_CUDA_COMPILER ${CMAKE_CXX_COMPILER})
 set(CMAKE_CUDA_COMPILER_VERSION ${CMAKE_CXX_COMPILER_VERSION})
 set(CUDA 1)
 
-execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${CMAKE_CXX_FLAGS}
-                        --verbose
+execute_process(COMMAND ${CMAKE_CUDA_COMPILER} ${CMAKE_CXX_FLAGS} --verbose
                 ERROR_VARIABLE CUDA_DIR_STRING)
-string(REGEX
-       REPLACE "^.*Found CUDA installation: ([^,]+).*\$"
-               "\\1"
-               CUDA_DIR
-               "${CUDA_DIR_STRING}")
-string(REGEX
-       REPLACE "^.*Found CUDA installation: .* version ([0-9]+).*\$"
-               "\\1"
-               CUDA_VERSION
-               "${CUDA_DIR_STRING}")
+string(REGEX REPLACE "^.*Found CUDA installation: ([^,]+).*\$" "\\1" CUDA_DIR
+                     "${CUDA_DIR_STRING}")
+string(REGEX REPLACE "^.*Found CUDA installation: .* version ([0-9]+).*\$"
+                     "\\1" CUDA_VERSION "${CUDA_DIR_STRING}")
 
 message(STATUS "Found CUDA-capable host compiler: ${CMAKE_CUDA_COMPILER}")
 message(STATUS "Found CUDA version: ${CUDA_VERSION}")
 message(STATUS "Found CUDA installation: ${CUDA_DIR}")
 
 if(CUDA_VERSION VERSION_LESS ${MINIMAL_CUDA_VERSION})
-  message(FATAL_ERROR "${CMAKE_CUDA_COMPILER} was built for CUDA ${CUDA_VERSION}: version does not match requirements (CUDA ${MINIMAL_CUDA_VERSION}).")
+  message(
+    FATAL_ERROR
+      "${CMAKE_CUDA_COMPILER} was built for CUDA ${CUDA_VERSION}: version does not match requirements (CUDA ${MINIMAL_CUDA_VERSION})."
+  )
 endif()
 
 set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
@@ -60,14 +59,18 @@ set(CUDA_NVCC_FLAGS_COVERAGE "${CUDA_NVCC_FLAGS_COVERAGE} -O3 -g")
 set(CUDA_NVCC_FLAGS_RELWITHASSERT "${CUDA_NVCC_FLAGS_RELWITHASSERT} -O3 -g")
 string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
 
-find_library(CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
-find_library(CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib /usr/local/nvidia/lib NO_DEFAULT_PATH)
+find_library(
+  CUDART_LIBRARY NAMES cudart PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
+                                    /usr/local/nvidia/lib NO_DEFAULT_PATH)
+find_library(
+  CUFFT_LIBRARY NAMES cufft PATHS ${CUDA_DIR}/lib64 ${CUDA_DIR}/lib
+                                  /usr/local/nvidia/lib NO_DEFAULT_PATH)
 
 function(add_gpu_library)
   set(options STATIC SHARED MODULE EXCLUDE_FROM_ALL)
   set(oneValueArgs)
   set(multiValueArgs)
-  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
+  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   list(REMOVE_AT ARG_UNPARSED_ARGUMENTS 0)
   set_source_files_properties(${ARG_UNPARSED_ARGUMENTS} PROPERTIES LANGUAGE "CXX")
   add_library(${ARGV})
@@ -87,7 +90,7 @@ function(add_gpu_library)
   endforeach()
 endfunction()
 
-include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerClang
-                                   REQUIRED_VARS CMAKE_CUDA_COMPILER
-                                   VERSION_VAR CMAKE_CUDA_COMPILER_VERSION )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  CudaCompilerClang REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
+  CMAKE_CUDA_COMPILER_VERSION)

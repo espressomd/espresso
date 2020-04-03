@@ -28,11 +28,8 @@ set(HIP 1)
 execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
                 OUTPUT_VARIABLE HIPCC_VERSION_STRING)
 
-string(REGEX
-       REPLACE "^.*HCC [Cc]lang version ([0-9\.]+).*\$"
-               "\\1"
-               CMAKE_CUDA_COMPILER_VERSION
-               "${HIPCC_VERSION_STRING}")
+string(REGEX REPLACE "^.*HCC [Cc]lang version ([0-9\.]+).*\$" "\\1"
+                     CMAKE_CUDA_COMPILER_VERSION "${HIPCC_VERSION_STRING}")
 
 list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -I${ROCM_HOME}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++${CMAKE_CUDA_STANDARD}")
 list(APPEND HIP_HCC_FLAGS "-pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments")
@@ -62,7 +59,7 @@ function(add_gpu_library)
   target_link_libraries(${ARGV0} PRIVATE "${ROCFFT_LIB}")
 endfunction()
 
-include( FindPackageHandleStandardArgs )
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( CudaCompilerHIP
-                                   REQUIRED_VARS CMAKE_CUDA_COMPILER
-                                   VERSION_VAR CMAKE_CUDA_COMPILER_VERSION )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(
+  CudaCompilerHIP REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
+  CMAKE_CUDA_COMPILER_VERSION)
