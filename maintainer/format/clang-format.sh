@@ -1,5 +1,5 @@
-#
-# Copyright (C) 2013-2019 The ESPResSo project
+#!/bin/sh
+# Copyright (C) 2018-2020 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -15,18 +15,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
 
-add_custom_target(object_in_fluid)
-file(GLOB python_AUX *.py)
-set(python_AUX "${python_AUX}" CACHE INTERNAL "python_AUX")
 
-foreach(auxfile ${python_AUX})
-  get_filename_component(filename ${auxfile} NAME)
-  file(RELATIVE_PATH relpath ${CMAKE_CURRENT_SOURCE_DIR} ${auxfile})
-  get_filename_component(relpath ${relpath} DIRECTORY)
-  string(CONCAT outputpath ${CMAKE_CURRENT_BINARY_DIR} "/" ${relpath} "/"
-                ${filename})
-  add_custom_command(TARGET object_in_fluid COMMAND ${CMAKE_COMMAND} -E copy
-                                                    ${auxfile} ${outputpath})
-endforeach(auxfile)
+
+CLANG_FORMAT_VER=6.0
+if hash clang-format_${CLANG_FORMAT_VER} 2>/dev/null; then
+    CLANGFORMAT="$(which clang-format-${CLANG_FORMAT_VER})"
+elif hash clang-format 2>/dev/null; then
+    CLANGFORMAT="$(which clang-format)"
+else
+    echo "No clang-format found."
+    exit 2
+fi
+
+if ! "${CLANGFORMAT}" --version | grep -qEo "version ${CLANG_FORMAT_VER}\.[0-9]+"; then
+    echo "Could not find clang-format ${CLANG_FORMAT_VER}. ${CLANGFORMAT} is $(${CLANGFORMAT} --version | grep -Eo '[0-9\.]{5}' | head -n 1)."
+    exit 2
+fi
+
+${CLANGFORMAT} "$@"
