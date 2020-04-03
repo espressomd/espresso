@@ -56,8 +56,9 @@ enum Resort : unsigned {
 namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *> cells) {
   /* Find first non-empty cell */
-  auto first_non_empty = std::find_if(
-      cells.begin(), cells.end(), [](const Cell *c) { return not c->particles().empty(); });
+  auto first_non_empty =
+      std::find_if(cells.begin(), cells.end(),
+                   [](const Cell *c) { return not c->particles().empty(); });
 
   return {CellParticleIterator(first_non_empty, cells.end()),
           CellParticleIterator(cells.end())};
