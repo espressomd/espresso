@@ -77,7 +77,8 @@ public:
   List(List const &rhs) : List() { copy(rhs); }
   List(List &&rhs) noexcept : List() { move(std::move(rhs)); }
   List &operator=(List const &rhs) {
-    copy(rhs);
+    if (this != &rhs)
+      copy(rhs);
     return *this;
   }
   List &operator=(List &&rhs) noexcept {
