@@ -113,8 +113,9 @@ static size_t calc_transmit_size(GhostCommunication &ghost_comm,
     return sizeof(int) * ghost_comm.part_lists.size();
 
   auto const n_part = boost::accumulate(
-      ghost_comm.part_lists, 0ul,
-      [](size_t sum, auto part_list) { return sum + part_list->n; });
+      ghost_comm.part_lists, 0ul, [](size_t sum, auto part_list) {
+        return sum + part_list->particles().size();
+      });
   return n_part * calc_transmit_size(data_parts);
 }
 
@@ -163,7 +164,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
 
 static void prepare_ghost_cell(Cell *cell, int size) {
   /* Adapt size */
-  cell->resize(size);
+  cell->particles().resize(size);
 
   /* Mark particles as ghosts */
   for (auto &p : cell->particles()) {
@@ -244,13 +245,13 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->particles().size());
     } else {
-      auto src_part = src_list->particles();
-      auto dst_part = dst_list->particles();
+      auto const &src_part = src_list->particles();
+      auto &dst_part = dst_list->particles();
       assert(src_part.size() == dst_part.size());
 
       for (size_t i = 0; i < src_part.size(); i++) {
-        auto const &part1 = src_part[i];
-        auto &part2 = dst_part[i];
+        auto const &part1 = src_part.begin()[i];
+        auto &part2 = dst_part.begin()[i];
 
         if (data_parts & GHOSTTRANS_PROPRTS) {
           part2.p = part1.p;

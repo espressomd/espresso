@@ -32,21 +32,21 @@ void link_cell(CellIterator first, CellIterator last,
                ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
                DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
-    for (int i = 0; i != first->n; i++) {
-      auto &p1 = first->part[i];
+    for (auto it = first->particles().begin(); it != first->particles().end();
+         ++it) {
+      auto &p1 = *it;
 
       particle_kernel(p1);
 
       /* Pairs in this cell */
-      for (int j = i + 1; j < first->n; j++) {
-        auto const dist = distance_function(p1, first->part[j]);
-        pair_kernel(p1, first->part[j], dist);
+      for (auto jt = std::next(it); jt != first->particles().end(); ++jt) {
+        auto const dist = distance_function(p1, *jt);
+        pair_kernel(p1, *jt, dist);
       }
 
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors().red()) {
-        for (int j = 0; j < neighbor->n; j++) {
-          auto &p2 = neighbor->part[j];
+        for (auto &p2 : neighbor->particles()) {
           auto const dist = distance_function(p1, p2);
           pair_kernel(p1, p2, dist);
         }
