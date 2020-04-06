@@ -286,9 +286,9 @@ struct mobility<Policy, T, false> {
         // However, modified, so that the case with two unequal spheres is
         // covered.
         T a12 = T{.5} * (a(ph1) + a(ph2));
-        int const visc1 = T{M_1_PI / 6. / eta / a12};
-        int const visc2 = T{visc1 / a12};
-        int const visc3 = T{visc2 / a12};
+        auto const visc1 = T{M_1_PI / 6. / eta / a12};
+        auto const visc2 = T{visc1 / a12};
+        auto const visc3 = T{visc2 / a12};
 
         // Components of unit vector along particle connection line as
         // described in paragraph below equation (A 1).
