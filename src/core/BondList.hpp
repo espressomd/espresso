@@ -21,6 +21,7 @@
 
 #include <utils/Span.hpp>
 
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/vector.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range/algorithm/copy.hpp>
@@ -217,5 +218,21 @@ public:
     swap(lhs.m_storage, rhs.m_storage);
   }
 };
+
+/**
+ * @brief Check if the if a specific bond in a bond list.
+ *
+ * @param bonds List of bonds to check
+ * @param partner_id Id of the bond partner
+ * @param bond_id Id of the bond parameters.
+ * @return True iff the is a bond to the specified id of the specified type.
+ */
+inline bool pair_bond_exists_on(BondList const &bonds, int partner_id,
+                                int bond_id) {
+  return boost::algorithm::any_of(bonds, [=](BondView const &bond) {
+    return (bond.bond_id() == bond_id) and
+           (bond.partner_ids()[0] == partner_id);
+  });
+}
 
 #endif // ESPRESSO_BONDLIST_HPP

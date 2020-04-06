@@ -21,6 +21,7 @@
 
 #ifdef COLLISION_DETECTION
 #include "Particle.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -33,6 +34,7 @@
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/algorithm/clamp.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/serialization.hpp>
 
@@ -303,35 +305,27 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // with p1 and p2 as partners. If so, skip this triplet.
   // Note that the bond partners can appear in any order.
 
-  // Iterate over existing bonds of p
-  bool found = false;
-  for_each_bond(
-      p.bonds(), bonded_ia_params,
-      [&](Bonded_ia_parameters const &iaparams,
-          Utils::Span<const int> partner_ids) {
-        if (partner_ids.size() != 2)
-          return;
+  /* Check if a bond is a bond placed by the collision detection */
+  auto is_collision_bond = [](BondView const &bond) {
+    return (bond.bond_id() >= collision_params.bond_three_particles) and
+           (bond.bond_id() <=
+            collision_params.bond_three_particles +
+                collision_params.three_particle_angle_resolution);
+  };
+  /* Check if the bond is between the particles we are currently considering */
+  auto has_same_partners = [id1 = p1.identity(),
+                            id2 = p2.identity()](BondView const &bond) {
+    auto const partner_ids = bond.partner_ids();
 
-        auto const bond_id = std::addressof(iaparams) - bonded_ia_params.data();
+    return ((partner_ids[0] == id1) && (partner_ids[1] == id2)) ||
+           ((partner_ids[0] == id2) && (partner_ids[1] == id1));
+  };
 
-        // Check if the bond type is within the range used by the collision
-        // detection,
-        if ((bond_id >= collision_params.bond_three_particles) &
-            (bond_id <= collision_params.bond_three_particles +
-                            collision_params.three_particle_angle_resolution)) {
-          // check, if p1 and p2 are the bond partners, (in any order)
-          // if yes, skip triplet
-          if (((partner_ids[0] == p1.p.identity) &&
-               (partner_ids[1] == p2.p.identity)) ||
-              ((partner_ids[0] == p2.p.identity) &&
-               (partner_ids[1] == p1.p.identity)))
-            found = true;
-          return;
-        } // if bond type
-      });
-
-  if (found)
+  if (boost::algorithm::any_of(p.bonds(), [=](auto const &bond) {
+        return is_collision_bond(bond) and has_same_partners(bond);
+      })) {
     return;
+  }
 
   // If we are still here, we need to create angular bond
   // First, find the angle between the particle p, p1 and p2

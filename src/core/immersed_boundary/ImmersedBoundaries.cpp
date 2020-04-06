@@ -109,18 +109,15 @@ int ImmersedBoundaries::volume_conservation_set_params(const int bond_type,
 }
 
 static const IBM_VolCons_Parameters *vol_cons_parameters(Particle const &p1) {
-  const IBM_VolCons_Parameters *ret = nullptr;
+  auto it = boost::find_if(p1.bonds(), [](auto const &bond) {
+    return bonded_ia_params[bond.bond_id()].type ==
+           BONDED_IA_IBM_VOLUME_CONSERVATION;
+  });
 
-  for_each_bond(p1.bonds(), bonded_ia_params,
-                [&ret](Bonded_ia_parameters const &iaparams,
-                       Utils::Span<const int> /* partner_ids */) {
-                  const int type = iaparams.type;
-                  if (type == BONDED_IA_IBM_VOLUME_CONSERVATION) {
-                    ret = std::addressof(iaparams.p.ibmVolConsParameters);
-                  }
-                });
-
-  return ret;
+  return (it != p1.bonds().end())
+             ? std::addressof(
+                   bonded_ia_params[it->bond_id()].p.ibmVolConsParameters)
+             : nullptr;
 }
 
 /** Calculate partial volumes on all compute nodes and call MPI to sum up.

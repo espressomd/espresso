@@ -423,32 +423,6 @@ void for_each_bond(BondList const &bl,
   }
 }
 
-/** @brief Checks if particle has a pair bond with a given partner
- *  Note that bonds are stored only on one of the two particles in Espresso
- *
- * @param p          particle on which the bond may be stored
- * @param partner    bond partner
- * @param bond_type  numerical bond type
- */
-inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
-                                int bond_type) {
-  bool result = false;
-
-  for_each_bond(
-      p.bonds(), bonded_ia_params,
-      [&result, bond_type,
-       partner_id = partner.identity()](Bonded_ia_parameters const &iaparams,
-                                        Utils::Span<const int> partner_ids) {
-        if ((static_cast<int>(std::addressof(iaparams) -
-                              bonded_ia_params.data()) == bond_type) and
-            (partner_ids[0] == partner_id)) {
-          result = true;
-        }
-      });
-
-  return result;
-}
-
 /** @brief Checks both particles for a specific bond, even on ghost particles.
  *
  *  @param p_bond      particle on which the bond may be stored
@@ -458,19 +432,12 @@ inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
 inline bool pair_bond_enum_exists_on(Particle const &p,
                                      Particle const &p_partner,
                                      BondedInteraction bond_type) {
-  bool result = false;
-
-  for_each_bond(
-      p.bonds(), bonded_ia_params,
-      [&result, bond_type,
-       partner_id = p_partner.identity()](Bonded_ia_parameters const &iaparams,
-                                          Utils::Span<const int> partner_ids) {
-        if ((iaparams.type == bond_type) and (partner_ids[0] == partner_id)) {
-          result = true;
-        }
+  return boost::algorithm::any_of(
+      p.bonds(),
+      [bond_type, partner_id = p_partner.identity()](BondView const &bond) {
+        return (bonded_ia_params[bond.bond_id()].type == bond_type) and
+               (bond.partner_ids()[0] == partner_id);
       });
-
-  return result;
 }
 
 /** @brief Checks both particles for a specific bond, even on ghost particles.
@@ -485,11 +452,11 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
   if (&p1 == &p2)
     return false;
 
-  // Check if particles have bonds (bl.n > 0) and search for the bond of
+  // Check if particles have bonds and search for the bond of
   // interest with are_bonded(). Could be saved on both sides (and both could
   // have other bonds), so we need to check both.
-  return (not p1.bonds().empty() && pair_bond_enum_exists_on(p1, p2, bond)) ||
-         (not p2.bonds().empty() && pair_bond_enum_exists_on(p2, p1, bond));
+  return pair_bond_enum_exists_on(p1, p2, bond) or
+         pair_bond_enum_exists_on(p2, p1, bond);
 }
 
 /** @brief Add bond to local particle.
