@@ -4,6 +4,7 @@
 #   target_link_libraries(sd_gpu PRIVATE
 #     ${CUDA_CUBLAS_LIBRARIES}
 #     ${CUDA_cusolver_LIBRARY})
+#   install(TARGETS sd_gpu LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 # endif()
 
 if(STOKESIAN_DYNAMICS)
@@ -14,4 +15,5 @@ if(STOKESIAN_DYNAMICS)
       ${LAPACK_LIBRARIES}
     PUBLIC
       Random123)
+  install(TARGETS sd_cpu LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 endif()

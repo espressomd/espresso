@@ -284,13 +284,14 @@ void propagate_vel_pos_sd() {
         break;
 #endif
 
-      // Temporarily removed to test CPU version on CI
-      // #ifdef STOKESIAN_DYNAMICS_GPU
-      //       case GPU:
-      //         v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
-      //                       std::sqrt(sd_kT / time_step), offset, sd_seed, sd_flags);
-      //         break;
-      // #endif
+        // Temporarily removed to test CPU version on CI
+        // #ifdef STOKESIAN_DYNAMICS_GPU
+        //       case GPU:
+        //         v_sd = sd_gpu(x_host, f_host, a_host, n_part, sd_viscosity,
+        //                       std::sqrt(sd_kT / time_step), offset, sd_seed,
+        //                       sd_flags);
+        //         break;
+        // #endif
 
       default:
         runtimeErrorMsg()

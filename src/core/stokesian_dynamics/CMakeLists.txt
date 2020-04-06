@@ -6,6 +6,7 @@ target_include_directories(sd_interface PRIVATE
   ${CMAKE_SOURCE_DIR}/libs/stokesian_dynamics
 )
 target_link_libraries(sd_interface PUBLIC EspressoConfig Boost::mpi MPI::MPI_CXX Random123 utils)
+install(TARGETS sd_interface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
 # temporarily removed to test CI for CPU
 # if (STOKESIAN_DYNAMICS_GPU)
