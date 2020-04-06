@@ -171,7 +171,13 @@ struct RemoveBond {
     std::vector<int> bond;
 
     void operator()(Particle &p) const {
-      delete_bond(&p, bond.data());
+      assert(not bond.empty());
+      auto const view = BondView(bond.front(), {bond.data() + 1, bond.size() - 1});
+      auto it = boost::find(p.bonds(), view);
+
+      if(it != p.bonds().end()) {
+       p.bonds().erase(it);
+      }
     }
 
     template<class Archive>
@@ -186,7 +192,7 @@ struct RemoveBond {
  */
 struct RemoveBonds {
     void operator()(Particle &p) const {
-      p.bl.clear();
+      p.bonds().clear();
     }
 
     template<class Archive>
@@ -198,7 +204,9 @@ struct AddBond {
     std::vector<int> bond;
 
     void operator()(Particle &p) const {
-        add_bond(p, bond);
+      auto const view = BondView(bond.at(0), {bond.data() + 1, bond.size() - 1});
+
+      p.bonds().insert(view);
     }
 
     template<class Archive>
@@ -379,12 +387,6 @@ void add_id_to_type_map(int part_id, int type);
  * @brief id -> rank
  */
 std::unordered_map<int, int> particle_node;
-
-/************************************************
- * local functions
- ************************************************/
-
-int delete_bond(Particle *part, const int *bond);
 
 void delete_exclusion(Particle *part, int part2);
 
@@ -842,6 +844,15 @@ void add_particle_bond(int part, Utils::Span<const int> bond) {
       part, UpdateBondMessage{AddBond{{bond.begin(), bond.end()}}});
 }
 
+const std::vector<BondView> &get_particle_bonds(int part) {
+  static std::vector<BondView> ret;
+  ret.clear();
+
+  boost::copy(get_particle_data(part).bonds(), std::back_inserter(ret));
+
+  return ret;
+}
+
 void remove_all_particles() {
   mpi_remove_particle(-1, -1);
   clear_particle_node();
@@ -959,18 +970,12 @@ void auto_exclusions(int distance) {
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
     auto const p1 = part1.p.identity;
-    for (int i = 0; i < part1.bl.n;) {
-      Bonded_ia_parameters const &ia_params = bonded_ia_params[part1.bl.e[i++]];
-      if (ia_params.num == 1) {
-        auto const p2 = part1.bl.e[i++];
-        /* you never know what the user does, may bond a particle to itself...?
-         */
-        if (p2 != p1) {
-          add_partner(&partners[p1], p1, p2, 1);
-          add_partner(&partners[p2], p2, p1, 1);
-        }
-      } else
-        i += ia_params.num;
+    for (auto const &bond : part1.bonds()) {
+      if ((bond.partner_ids().size() == 1) and (bond.partner_ids()[0] != p1)) {
+        auto const p2 = bond.partner_ids()[0];
+        add_partner(&partners[p1], p1, p2, 1);
+        add_partner(&partners[p2], p2, p1, 1);
+      }
     }
   }
 

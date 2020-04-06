@@ -55,19 +55,13 @@ void ClusterStructure::run_for_all_pairs() {
 void ClusterStructure::run_for_bonded_particles() {
   clear();
   for (const auto &p : partCfg()) {
-    int j = 0;
-    while (j < p.bl.n) {
-      int bond_type = p.bl.e[j];
-      int partners = bonded_ia_params[bond_type].num;
-      if (partners != 1) {
-        j += 1 + partners;
-        continue;
+    for (auto const &bond : p.bonds()) {
+      if (bond.partner_ids().size() == 1) {
+        add_pair(p, get_particle_data(bond.partner_ids()[0]));
       }
-      // We are only here if bond has one partner
-      add_pair(p, get_particle_data(p.bl.e[j + 1]));
-      j += 2; // Type id + one partner
     }
   }
+
   merge_clusters();
 }
 

@@ -321,6 +321,8 @@ void delete_particle_bonds(int part);
  */
 void add_particle_bond(int part, Utils::Span<const int> bond);
 
+const std::vector<BondView> &get_particle_bonds(int part);
+
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
  *  @param part     identity of particle for which the exclusion is set.

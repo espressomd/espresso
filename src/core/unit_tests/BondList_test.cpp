@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(clear_) {
 }
 
 BOOST_AUTO_TEST_CASE(serialization_) {
-  auto const partners = std::array<int, 3>{1, 2, 3};
+  auto const partners = std::array<int, 3>{4, 5, 6};
   auto const bond1 = BondView{1, partners};
   auto const bond2 = BondView{2, partners};
 

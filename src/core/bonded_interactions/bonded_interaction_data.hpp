@@ -415,19 +415,11 @@ extern std::vector<Bonded_ia_parameters> bonded_ia_params;
 void make_bond_type_exist(int type);
 
 template <class Kernel>
-void for_each_bond(Utils::Span<const int> bl,
+void for_each_bond(BondList const &bl,
                    std::vector<Bonded_ia_parameters> const &parameters,
                    Kernel kernel) {
-  int i = 0;
-  while (i < bl.size()) {
-    int type_num = bl[i++];
-    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-
-    Utils::Span<const int> partner_ids{bl.data() + i,
-                                       static_cast<size_t>(iaparams.num)};
-    i += iaparams.num;
-
-    kernel(iaparams, partner_ids);
+  for (auto const &bond : bl) {
+    kernel(bonded_ia_params[bond.bond_id()], bond.partner_ids());
   }
 }
 
@@ -496,8 +488,8 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
   // Check if particles have bonds (bl.n > 0) and search for the bond of
   // interest with are_bonded(). Could be saved on both sides (and both could
   // have other bonds), so we need to check both.
-  return (p1.bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
-         (p2.bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
+  return (not p1.bonds().empty() && pair_bond_enum_exists_on(p1, p2, bond)) ||
+         (not p2.bonds().empty() && pair_bond_enum_exists_on(p2, p1, bond));
 }
 
 /** @brief Add bond to local particle.
@@ -506,9 +498,6 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
  *               of all bond partners (secondary atoms of the bond).
  */
 void add_bond(Particle &p, Utils::Span<const int> bond);
-
-/** Remove bond from particle. */
-int delete_bond(Particle *part, const int *bond);
 
 /**
  * @brief Remove all bonds on particle involving another particle.
