@@ -365,8 +365,10 @@ struct Particle {
   ///
   ParticleLocal l;
 
+private:
   BondList bl;
 
+public:
   auto &bonds() { return bl; }
   auto const &bonds() const { return bl; }
 
@@ -393,6 +395,8 @@ struct Particle {
   IntList el;
 #endif
 
+private:
+  friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &p;
     ar &r;
