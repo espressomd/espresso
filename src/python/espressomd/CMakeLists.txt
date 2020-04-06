@@ -105,7 +105,7 @@ foreach(cython_file ${cython_SRC})
         ${outputpath}
         PROPERTIES
           COMPILE_FLAGS
-          "-Wno-pedantic -Wno-cpp -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable"
+          "-Wno-pedantic -Wno-cpp -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable -Wno-deprecated-declarations"
       )
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID
                                                      STREQUAL "AppleClang")
@@ -113,7 +113,7 @@ foreach(cython_file ${cython_SRC})
         ${outputpath}
         PROPERTIES
           COMPILE_FLAGS
-          "-Wno-pedantic -Wno-#warnings -Wno-sometimes-uninitialized -Wno-unused-variable"
+          "-Wno-pedantic -Wno-#warnings -Wno-sometimes-uninitialized -Wno-unused-variable -Wno-deprecated-declarations"
       )
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
       set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS
