@@ -376,7 +376,8 @@ endif()
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
   set(CLANG_TIDY_EXCLUDES "[{name: boost/mpi/collectives/all_reduce.hpp}]")
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--line-filter=${CLANG_TIDY_EXCLUDES}")
+  set(CMAKE_CXX_CLANG_TIDY
+      "${CLANG_TIDY_EXE};--line-filter=${CLANG_TIDY_EXCLUDES}")
 endif()
 
 if(WITH_TESTS)
