@@ -337,7 +337,13 @@ inline void add_kinetic_energy(Particle const &p1) {
  */
 inline void add_single_particle_energy(Particle &p) {
   add_kinetic_energy(p);
-  execute_bond_handler(cell_structure, p, add_bonded_energy);
+  execute_bond_handler(
+      cell_structure, p,
+      [](Particle &p, int bond_id, Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
+
+        return add_bonded_energy(iaparams, p, partners);
+      });
 }
 
 #endif // ENERGY_INLINE_HPP

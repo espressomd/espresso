@@ -67,9 +67,10 @@ void calc_oif_global(double *area_volume, int molType, CellStructure &cs) {
 
     execute_bond_handler(
         cs, p,
-        [&partArea, &VOL_partVol](Bonded_ia_parameters const &iaparams,
-                                  Particle &p1,
+        [&partArea, &VOL_partVol](Particle &p1, int bond_id,
                                   Utils::Span<Particle *> partners) {
+          auto const &iaparams = bonded_ia_params[bond_id];
+
           if (iaparams.type == BONDED_IA_OIF_GLOBAL_FORCES) {
             // remaining neighbors fetched
             auto const p11 =
@@ -112,8 +113,10 @@ void add_oif_global_forces(double const *area_volume, int molType,
 
     execute_bond_handler(
         cs, p,
-        [area, VOL_volume](Bonded_ia_parameters const &iaparams, Particle &p1,
+        [area, VOL_volume](Particle &p1, int bond_id,
                            Utils::Span<Particle *> partners) {
+          auto const &iaparams = bonded_ia_params[bond_id];
+
           if (iaparams.type == BONDED_IA_OIF_GLOBAL_FORCES) {
             auto const p11 =
                 unfolded_position(p1.r.p, p1.l.i, box_geo.length());

@@ -139,8 +139,9 @@ static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
   for (auto &p1 : cs.local_particles()) {
     execute_bond_handler(
         cs, p1,
-        [repeat_](Bonded_ia_parameters const &iaparams, Particle &p1,
-                  Utils::Span<Particle *> partners) {
+        [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+          auto const &iaparams = bonded_ia_params[bond_id];
+
           if (iaparams.type == BONDED_IA_RIGID_BOND) {
             auto const corrected = add_pos_corr_vec(iaparams, p1, *partners[0]);
             if (corrected)
@@ -256,8 +257,9 @@ static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
   for (auto &p1 : cs.local_particles()) {
     execute_bond_handler(
         cs, p1,
-        [repeat_](Bonded_ia_parameters const &iaparams, Particle &p1,
-                  Utils::Span<Particle *> partners) {
+        [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+          auto const &iaparams = bonded_ia_params[bond_id];
+
           if (iaparams.type == BONDED_IA_RIGID_BOND) {
             auto const corrected = add_vel_corr_vec(iaparams, p1, *partners[0]);
             if (corrected)

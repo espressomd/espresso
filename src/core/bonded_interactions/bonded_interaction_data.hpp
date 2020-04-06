@@ -544,22 +544,22 @@ inline auto resolve_bond_partners(CellStructure &cs,
 
 template <class Handler>
 void execute_bond_handler(CellStructure &cs, Particle &p, Handler handler) {
-  for_each_bond(p.bonds(), bonded_ia_params,
-                [&](Bonded_ia_parameters const &iaparams,
-                    Utils::Span<const int> partner_ids) {
-                  try {
-                    auto partners = resolve_bond_partners(cs, partner_ids);
+  for (auto const &bond : p.bonds()) {
+    auto const partner_ids = bond.partner_ids();
 
-                    auto const bond_broken =
-                        handler(iaparams, p, Utils::make_span(partners));
+    try {
+      auto partners = resolve_bond_partners(cs, partner_ids);
 
-                    if (bond_broken) {
-                      bond_broken_error(p.identity(), partner_ids);
-                    }
-                  } catch (const BondResolutionError &) {
-                    bond_broken_error(p.identity(), partner_ids);
-                  }
-                });
+      auto const bond_broken =
+          handler(p, bond.bond_id(), Utils::make_span(partners));
+
+      if (bond_broken) {
+        bond_broken_error(p.identity(), partner_ids);
+      }
+    } catch (const BondResolutionError &) {
+      bond_broken_error(p.identity(), partner_ids);
+    }
+  }
 }
 
 #endif

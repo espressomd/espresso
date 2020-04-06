@@ -95,7 +95,13 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /*********************************/
 static void add_single_particle_virials(int v_comp, Particle &p) {
   add_kinetic_virials(p, v_comp);
-  execute_bond_handler(cell_structure, p, add_bonded_stress);
+  execute_bond_handler(
+      cell_structure, p,
+      [](Particle &p, int bond_id, Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
+
+        return add_bonded_stress(iaparams, p, partners);
+      });
 }
 
 void pressure_calc(double *result, double *result_t, double *result_nb,

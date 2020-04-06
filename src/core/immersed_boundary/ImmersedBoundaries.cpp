@@ -135,9 +135,10 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
     if (vol_cons_params) {
       execute_bond_handler(
           cs, p1,
-          [softID = vol_cons_params->softID,
-           &tempVol](Bonded_ia_parameters const &iaparams, Particle &p1,
-                     Utils::Span<Particle *> partners) {
+          [softID = vol_cons_params->softID, &tempVol](
+              Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+            auto const &iaparams = bonded_ia_params[bond_id];
+
             if (iaparams.type == BONDED_IA_IBM_TRIEL) {
               // Our particle is the leading particle of a triel
               // Get second and third particle of the triangle
@@ -203,9 +204,10 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
     // Second round for triel
     execute_bond_handler(
         cs, p1,
-        [ibmVolConsParameters,
-         current_volume](Bonded_ia_parameters const &iaparams, Particle &p1,
-                         Utils::Span<Particle *> partners) {
+        [ibmVolConsParameters, current_volume](
+            Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+          auto const &iaparams = bonded_ia_params[bond_id];
+
           if (iaparams.type == BONDED_IA_IBM_TRIEL) {
             // Our particle is the leading particle of a triel
             // Get second and third particle of the triangle
