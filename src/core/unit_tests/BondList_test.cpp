@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(BondView_) {
 }
 
 BOOST_AUTO_TEST_CASE(default_ctor) {
-  /* BondList can be default constructed and a default constructed BondList ist
+  /* BondList can be default constructed and a default constructed BondList
    * is empty. */
   BOOST_CHECK(BondList().empty());
 }

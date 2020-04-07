@@ -69,7 +69,7 @@ public:
  * of the value of the id of the bond plus one (which also is positive) is
  * stored. This way we can use the sign bit of the int as a delimiter,
  * every time a negative number is encountered one bond ends, and
- * a new one starts. This mechanism allows is to efficiently store
+ * a new one starts. This mechanism allows us to efficiently store
  * bonds of different numbers of partners in contiguous memory.
  *
  * This is hidden from the client by providing access to the
@@ -176,7 +176,7 @@ public:
   /**
    * @brief Add a bond to the list.
    *
-   * @param bond to add.
+   * @param bond Bond to add.
    */
   void insert(BondView const &bond) {
     boost::copy(bond.partner_ids(), std::back_inserter(m_storage));
@@ -186,7 +186,7 @@ public:
 
   /**
    * @brief Erase a bond from the list.
-   * @param pos Iterator iterator pointing to elementn to erase.
+   * @param pos Iterator pointing to element to erase.
    * @return iterator pointing one past the erased element.
    */
   const_iterator erase(const_iterator pos) {
@@ -195,7 +195,7 @@ public:
 
   /**
    * @brief Number of bonds.
-   * @return The numebr of bonds int the list.
+   * @return The number of bonds in the list.
    */
   size_type size() const { return std::distance(begin(), end()); }
 
@@ -217,12 +217,12 @@ public:
 };
 
 /**
- * @brief Check if the if a specific bond in a bond list.
+ * @brief Check if there is a specific bond in a bond list.
  *
  * @param bonds List of bonds to check
  * @param partner_id Id of the bond partner
  * @param bond_id Id of the bond parameters.
- * @return True iff the is a bond to the specified id of the specified type.
+ * @return True iff there is a bond to the specified id of the specified type.
  */
 inline bool pair_bond_exists_on(BondList const &bonds, int partner_id,
                                 int bond_id) {

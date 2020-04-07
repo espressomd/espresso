@@ -147,7 +147,7 @@ static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
           *repeat_ += 1;
       }
 
-      /* Rigid bonds can not break */
+      /* Rigid bonds cannot break */
       return false;
     });
   }
