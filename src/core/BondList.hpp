@@ -66,7 +66,7 @@ public:
  * Internally the bond list is represented as a sequence of
  * integers. For each bond, first the ids of the bond partners
  * are stored (which are positive numbers), then the negative
- * of the value of the id of the bond (which also is positive) is
+ * of the value of the id of the bond plus one (which also is positive) is
  * stored. This way we can use the sign bit of the int as a delimiter,
  * every time a negative number is encountered one bond ends, and
  * a new one starts. This mechanism allows is to efficiently store
