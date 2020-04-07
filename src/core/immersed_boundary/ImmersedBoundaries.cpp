@@ -133,48 +133,46 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
     auto vol_cons_params = vol_cons_parameters(p1);
 
     if (vol_cons_params) {
-      execute_bond_handler(
-          cs, p1,
-          [softID = vol_cons_params->softID, &tempVol](
-              Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-            auto const &iaparams = bonded_ia_params[bond_id];
+      cs.execute_bond_handler(p1, [softID = vol_cons_params->softID,
+                                   &tempVol](Particle &p1, int bond_id,
+                                             Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
 
-            if (iaparams.type == BONDED_IA_IBM_TRIEL) {
-              // Our particle is the leading particle of a triel
-              // Get second and third particle of the triangle
-              Particle &p2 = *partners[0];
-              Particle &p3 = *partners[1];
+        if (iaparams.type == BONDED_IA_IBM_TRIEL) {
+          // Our particle is the leading particle of a triel
+          // Get second and third particle of the triangle
+          Particle &p2 = *partners[0];
+          Particle &p3 = *partners[1];
 
-              // Unfold position of first node.
-              // This is to get a continuous trajectory with no jumps when box
-              // boundaries are crossed.
-              auto const x1 =
-                  unfolded_position(p1.r.p, p1.l.i, box_geo.length());
-              auto const x2 = x1 + get_mi_vector(p2.r.p, x1, box_geo);
-              auto const x3 = x1 + get_mi_vector(p3.r.p, x1, box_geo);
+          // Unfold position of first node.
+          // This is to get a continuous trajectory with no jumps when box
+          // boundaries are crossed.
+          auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+          auto const x2 = x1 + get_mi_vector(p2.r.p, x1, box_geo);
+          auto const x3 = x1 + get_mi_vector(p3.r.p, x1, box_geo);
 
-              // Volume of this tetrahedron
-              // See @cite zhang01b
-              // The volume can be negative, but it is not necessarily the
-              // "signed volume" in the above paper (the sign of the real
-              // "signed volume" must be calculated using the normal vector; the
-              // result of the calculation here is simply a term in the sum
-              // required to calculate the volume of a particle). Again, see the
-              // paper. This should be equivalent to the formulation using
-              // vector identities in @cite kruger12a
+          // Volume of this tetrahedron
+          // See @cite zhang01b
+          // The volume can be negative, but it is not necessarily the
+          // "signed volume" in the above paper (the sign of the real
+          // "signed volume" must be calculated using the normal vector; the
+          // result of the calculation here is simply a term in the sum
+          // required to calculate the volume of a particle). Again, see the
+          // paper. This should be equivalent to the formulation using
+          // vector identities in @cite kruger12a
 
-              const double v321 = x3[0] * x2[1] * x1[2];
-              const double v231 = x2[0] * x3[1] * x1[2];
-              const double v312 = x3[0] * x1[1] * x2[2];
-              const double v132 = x1[0] * x3[1] * x2[2];
-              const double v213 = x2[0] * x1[1] * x3[2];
-              const double v123 = x1[0] * x2[1] * x3[2];
+          const double v321 = x3[0] * x2[1] * x1[2];
+          const double v231 = x2[0] * x3[1] * x1[2];
+          const double v312 = x3[0] * x1[1] * x2[2];
+          const double v132 = x1[0] * x3[1] * x2[2];
+          const double v213 = x2[0] * x1[1] * x3[2];
+          const double v123 = x1[0] * x2[1] * x3[2];
 
-              tempVol[softID] +=
-                  1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
-            }
-            return false;
-          });
+          tempVol[softID] +=
+              1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
+        }
+        return false;
+      });
     }
   }
 
@@ -202,46 +200,44 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
     auto current_volume = VolumesCurrent[ibmVolConsParameters->softID];
 
     // Second round for triel
-    execute_bond_handler(
-        cs, p1,
-        [ibmVolConsParameters, current_volume](
-            Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
-          auto const &iaparams = bonded_ia_params[bond_id];
+    cs.execute_bond_handler(p1, [ibmVolConsParameters, current_volume](
+                                    Particle &p1, int bond_id,
+                                    Utils::Span<Particle *> partners) {
+      auto const &iaparams = bonded_ia_params[bond_id];
 
-          if (iaparams.type == BONDED_IA_IBM_TRIEL) {
-            // Our particle is the leading particle of a triel
-            // Get second and third particle of the triangle
-            Particle &p2 = *partners[0];
-            Particle &p3 = *partners[1];
+      if (iaparams.type == BONDED_IA_IBM_TRIEL) {
+        // Our particle is the leading particle of a triel
+        // Get second and third particle of the triangle
+        Particle &p2 = *partners[0];
+        Particle &p3 = *partners[1];
 
-            // Unfold position of first node.
-            // This is to get a continuous trajectory with no jumps when box
-            // boundaries are crossed.
-            auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+        // Unfold position of first node.
+        // This is to get a continuous trajectory with no jumps when box
+        // boundaries are crossed.
+        auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
 
-            // Unfolding seems to work only for the first particle of a triel
-            // so get the others from relative vectors considering PBC
-            auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
-            auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
+        // Unfolding seems to work only for the first particle of a triel
+        // so get the others from relative vectors considering PBC
+        auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
+        auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
 
-            // Now we have the true and good coordinates
-            // This is eq. (9) in @cite dupin08a.
-            auto const n = vector_product(a12, a13);
-            const double ln = n.norm();
-            const double A = 0.5 * ln;
-            const double fact =
-                ibmVolConsParameters->kappaV *
-                (current_volume - ibmVolConsParameters->volRef) /
-                current_volume;
+        // Now we have the true and good coordinates
+        // This is eq. (9) in @cite dupin08a.
+        auto const n = vector_product(a12, a13);
+        const double ln = n.norm();
+        const double A = 0.5 * ln;
+        const double fact = ibmVolConsParameters->kappaV *
+                            (current_volume - ibmVolConsParameters->volRef) /
+                            current_volume;
 
-            auto const nHat = n / ln;
-            auto const force = -fact * A * nHat;
+        auto const nHat = n / ln;
+        auto const force = -fact * A * nHat;
 
-            p1.f.f += force;
-            p2.f.f += force;
-            p3.f.f += force;
-          }
-          return false;
-        });
+        p1.f.f += force;
+        p2.f.f += force;
+        p3.f.f += force;
+      }
+      return false;
+    });
   }
 }

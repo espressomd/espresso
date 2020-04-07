@@ -91,7 +91,7 @@ void energy_calc(double *result, const double time) {
 
   on_observable_calc();
 
-  for(auto const&p: cell_structure.local_particles()) {
+  for (auto const &p : cell_structure.local_particles()) {
     add_kinetic_energy(p);
   }
 

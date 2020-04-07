@@ -94,7 +94,7 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /* Scalar and Tensorial Pressure */
 /*********************************/
 static void add_single_particle_virials(Particle &p) {
-  execute_bond_handler(cell_structure, p, add_bonded_stress);
+  cell_structure.execute_bond_handler(p, add_bonded_stress);
 }
 
 void pressure_calc(double *result, double *result_t, double *result_nb,

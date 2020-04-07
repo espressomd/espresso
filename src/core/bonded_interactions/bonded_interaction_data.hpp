@@ -26,7 +26,6 @@
 #include <utils/Span.hpp>
 
 #include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/container/static_vector.hpp>
 #include <boost/optional.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
@@ -489,77 +488,5 @@ void remove_all_bonds_to(Particle &p, int id);
 double maximal_cutoff_bonded();
 
 int virtual_set_params(int bond_type);
-
-void bond_broken_error(int id, Utils::Span<const int> partner_ids);
-
-/**
- * Exception indicating that a particle id
- * could not be resolved.
- */
-struct BondResolutionError : std::exception {};
-
-/**
- * Exception indicating that a bond type
- * was unknown.
- */
-struct BondUnknownTypeError : std::exception {
-  explicit BondUnknownTypeError(int type) : type(type) {}
-
-  int type;
-};
-
-/**
- * Exception indicating that a bond with an
- * unexpected number of partners was encountered.
- */
-struct BondInvalidSizeError : std::exception {
-  explicit BondInvalidSizeError(int size) : size(size) {}
-
-  int size;
-};
-
-/**
- * @brief Resolve ids to particles.
- *
- * @throws BondResolutionError if one of the ids
- *         was not found.
- *
- * @param cs CellStructure to use for resolution.
- * @param partner_ids Ids to resolve.
- * @return Vector of Particle pointers.
- */
-inline auto resolve_bond_partners(CellStructure &cs,
-                                  Utils::Span<const int> partner_ids) {
-  boost::container::static_vector<Particle *, 4> partners;
-  cs.get_local_particles(partner_ids, std::back_inserter(partners));
-
-  /* Check if id resolution failed for any partner */
-  if (boost::algorithm::any_of(
-          partners, [](Particle *partner) { return partner == nullptr; })) {
-    throw BondResolutionError{};
-  }
-
-  return partners;
-}
-
-template <class Handler>
-void execute_bond_handler(CellStructure &cs, Particle &p, Handler handler) {
-  for (auto const &bond : p.bonds()) {
-    auto const partner_ids = bond.partner_ids();
-
-    try {
-      auto partners = resolve_bond_partners(cs, partner_ids);
-
-      auto const bond_broken =
-          handler(p, bond.bond_id(), Utils::make_span(partners));
-
-      if (bond_broken) {
-        bond_broken_error(p.identity(), partner_ids);
-      }
-    } catch (const BondResolutionError &) {
-      bond_broken_error(p.identity(), partner_ids);
-    }
-  }
-}
 
 #endif

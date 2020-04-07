@@ -150,12 +150,3 @@ void remove_all_bonds_to(Particle &p, int id) {
 void add_bond(Particle &p, Utils::Span<const int> bond) {
   p.bonds().insert(BondView(bond.at(0), {bond.data() + 1, bond.size() - 1}));
 }
-
-void bond_broken_error(int id, Utils::Span<const int> partner_ids) {
-  auto error_msg = runtimeErrorMsg();
-
-  error_msg << "bond broken between particles " << id;
-  for (auto partner_id : partner_ids) {
-    error_msg << ", " << partner_id;
-  }
-}

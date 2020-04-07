@@ -334,7 +334,7 @@ inline void add_kinetic_energy(Particle const &p1) {
  *  @param[in] p   particle for which to calculate energies
  */
 inline void add_single_particle_energy(Particle &p) {
-  execute_bond_handler(cell_structure, p, add_bonded_energy);
+  cell_structure.execute_bond_handler(p, add_bonded_energy);
 }
 
 #endif // ENERGY_INLINE_HPP
