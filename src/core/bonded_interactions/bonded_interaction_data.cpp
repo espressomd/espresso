@@ -27,7 +27,6 @@
 #include <errorhandling.hpp>
 
 #include <utils/constants.hpp>
-#include <utils/contains.hpp>
 
 std::vector<Bonded_ia_parameters> bonded_ia_params;
 
@@ -135,16 +134,6 @@ int virtual_set_params(int bond_type) {
   mpi_bcast_ia_params(bond_type, -1);
 
   return ES_OK;
-}
-
-void remove_all_bonds_to(Particle &p, int id) {
-  for (auto it = p.bonds().begin(); it != p.bonds().end();) {
-    if (Utils::contains(it->partner_ids(), id)) {
-      it = p.bonds().erase(it);
-    } else {
-      std::advance(it, 1);
-    }
-  }
 }
 
 void add_bond(Particle &p, Utils::Span<const int> bond) {

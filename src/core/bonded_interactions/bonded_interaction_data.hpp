@@ -465,14 +465,6 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
  */
 void add_bond(Particle &p, Utils::Span<const int> bond);
 
-/**
- * @brief Remove all bonds on particle involving another particle.
- *
- * @param p Particle whose bond list is modified.
- * @param id Bonds involving this id are removed.
- */
-void remove_all_bonds_to(Particle &p, int id);
-
 /** Calculate the maximal cutoff of bonded interactions, required to
  *  determine the cell size for communication.
  *
