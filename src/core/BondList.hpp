@@ -26,7 +26,11 @@
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/array.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106400 && BOOST_VERSION < 106500
 #include <boost/serialization/array_wrapper.hpp>
+#endif
 
 #include <type_traits>
 
