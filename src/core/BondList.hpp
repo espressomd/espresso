@@ -22,7 +22,6 @@
 #include <utils/Span.hpp>
 
 #include <boost/algorithm/cxx11/any_of.hpp>
-#include <boost/container/vector.hpp>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/access.hpp>
@@ -30,6 +29,11 @@
 #include <boost/version.hpp>
 #if BOOST_VERSION >= 106400 && BOOST_VERSION < 106500
 #include <boost/serialization/array_wrapper.hpp>
+#endif
+#if BOOST_VERSION >= 105900
+#include <boost/container/vector.hpp>
+#else
+#include <vector>
 #endif
 
 #include <type_traits>
@@ -82,7 +86,14 @@ public:
  *
  */
 class BondList {
+public:
+#if BOOST_VERSION >= 105900
   using storage_type = boost::container::vector<int>;
+#else
+  using storage_type = std::vector<int>;
+#endif
+
+private:
   using storage_iterator = storage_type::const_iterator;
 
   /**

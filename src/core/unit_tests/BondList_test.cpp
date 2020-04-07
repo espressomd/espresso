@@ -60,7 +60,7 @@ BOOST_AUTO_TEST_CASE(default_ctor) {
 }
 
 BOOST_AUTO_TEST_CASE(Iterator_dereference_) {
-  auto const dummy_bonds = boost::container::vector<int>{1, 2, -3};
+  auto const dummy_bonds = BondList::storage_type{1, 2, -3};
   auto it = BondList::Iterator(dummy_bonds.begin());
 
   auto const result = *it;
@@ -70,8 +70,7 @@ BOOST_AUTO_TEST_CASE(Iterator_dereference_) {
 }
 
 BOOST_AUTO_TEST_CASE(Iterator_incement_) {
-  auto const dummy_bonds =
-      boost::container::vector<int>{1, 2, -3, 4, -5, 6, -7};
+  auto const dummy_bonds = BondList::storage_type{1, 2, -3, 4, -5, 6, -7};
   auto it = BondList::Iterator(dummy_bonds.begin());
 
   {
