@@ -284,8 +284,8 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
 }
 
 /** Add bonded energies for one particle to the @ref energy observable.
- *  @param[in] iaparams Bond parameters
  *  @param[in] p1   particle for which to calculate energies
+ *  @param[in] bond_id Numeric id of the bond
  *  @param[in] partners Bond partners of particle.
  *
  *  @return True if bond was broken, false otherwise.

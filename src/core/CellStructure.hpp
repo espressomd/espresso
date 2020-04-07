@@ -315,7 +315,6 @@ public:
    * @throws BondResolutionError if one of the ids
    *         was not found.
    *
-   * @param cs CellStructure to use for resolution.
    * @param partner_ids Ids to resolve.
    * @return Vector of Particle pointers.
    */

@@ -33,6 +33,7 @@ from .utils cimport make_array_locked, make_const_span, check_type_or_throw_exce
 from .utils cimport Vector3i, Vector3d, Vector4d, List
 from .grid cimport box_geo, folded_position, unfolded_position
 
+
 def _COORD_FIXED(coord):
     return 2L << coord
 
@@ -312,7 +313,8 @@ cdef class ParticleHandle:
                 bond.append(BondedInteractions()[part_bond.bond_id()])
                 partner_ids = part_bond.partner_ids()
 
-                bonds.append(tuple(bond + [partner_ids[i] for i in range(partner_ids.size())]))
+                bonds.append(tuple(bond + [partner_ids[i]
+                                           for i in range(partner_ids.size())]))
 
             return tuple(bonds)
 

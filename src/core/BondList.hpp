@@ -174,10 +174,7 @@ public:
   const_iterator end() const { return Iterator{m_storage.end()}; }
 
   /**
-   * @brief A a bond to the list.
-   *
-   * The values referenced by @ref bond are copied
-   * into the list.
+   * @brief Add a bond to the list.
    *
    * @param bond to add.
    */

@@ -413,11 +413,12 @@ extern std::vector<Bonded_ia_parameters> bonded_ia_params;
  */
 void make_bond_type_exist(int type);
 
-/** @brief Checks both particles for a specific bond, even on ghost particles.
+/**
+ * @brief Checks both particles for a specific bond, even on ghost particles.
  *
- *  @param p_bond      particle on which the bond may be stored
+ *  @param p Particle to check for the bond.
  *  @param p_partner   bond partner
- *  @param bond        enum bond type
+ *  @param bond_type   enum bond type
  */
 inline bool pair_bond_enum_exists_on(Particle const &p,
                                      Particle const &p_partner,
