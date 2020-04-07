@@ -499,8 +499,10 @@ inline bool add_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
   return true;
 }
 
-inline bool add_bonded_force(Bonded_ia_parameters const &iaparams, Particle &p1,
+inline bool add_bonded_force(Particle &p1, int bond_id,
                              Utils::Span<Particle *> partners) {
+  auto const &iaparams = bonded_ia_params[bond_id];
+
   switch (iaparams.num) {
   case 0:
     return false;
@@ -521,12 +523,6 @@ inline bool add_bonded_force(Bonded_ia_parameters const &iaparams, Particle &p1,
  *  @param p particle for which to calculate forces
  */
 inline void add_single_particle_force(Particle &p) {
-  execute_bond_handler(
-      cell_structure, p,
-      [](Particle &p, int bond_id, Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
-
-        return add_bonded_force(iaparams, p, partners);
-      });
+  execute_bond_handler(cell_structure, p, add_bonded_force);
 }
 #endif

@@ -290,16 +290,14 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
  *
  *  @return True if bond was broken, false otherwise.
  */
-inline bool add_bonded_energy(Bonded_ia_parameters const &iaparams,
-                              Particle &p1, Utils::Span<Particle *> partners) {
+inline bool add_bonded_energy(Particle &p1, int bond_id,
+                              Utils::Span<Particle *> partners) {
+  auto const &iaparams = bonded_ia_params[bond_id];
+
   auto const result = calc_bonded_energy(iaparams, p1, partners);
 
   if (result) {
-    /* The energy contributions are indexed by the type in
-     * the parameters array, so we need to find that */
-    auto bond_index = std::addressof(iaparams) - bonded_ia_params.data();
-
-    *obsstat_bonded(&energy, static_cast<int>(bond_index)) += result.get();
+    *obsstat_bonded(&energy, bond_id) += result.get();
 
     return false;
   }
@@ -336,13 +334,7 @@ inline void add_kinetic_energy(Particle const &p1) {
  *  @param[in] p   particle for which to calculate energies
  */
 inline void add_single_particle_energy(Particle &p) {
-  execute_bond_handler(
-      cell_structure, p,
-      [](Particle &p, int bond_id, Utils::Span<Particle *> partners) {
-        auto const &iaparams = bonded_ia_params[bond_id];
-
-        return add_bonded_energy(iaparams, p, partners);
-      });
+  execute_bond_handler(cell_structure, p, add_bonded_energy);
 }
 
 #endif // ENERGY_INLINE_HPP

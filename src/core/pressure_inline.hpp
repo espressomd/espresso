@@ -157,8 +157,10 @@ calc_bonded_stress(Bonded_ia_parameters const &iaparams, Particle &p1,
   }
 }
 
-inline bool add_bonded_stress(Bonded_ia_parameters const &iaparams,
-                              Particle &p1, Utils::Span<Particle *> partners) {
+inline bool add_bonded_stress(Particle &p1, int bond_id,
+                              Utils::Span<Particle *> partners) {
+  auto const &iaparams = bonded_ia_params[bond_id];
+
   auto const result = calc_bonded_stress(iaparams, p1, partners);
   if (result) {
     /* The pressure contributions are indexed by the type in
