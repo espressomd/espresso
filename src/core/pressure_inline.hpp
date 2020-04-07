@@ -31,6 +31,8 @@
 #include "npt.hpp"
 #include "pressure.hpp"
 
+#include <utils/math/tensor_product.hpp>
+
 /** Calculate non bonded energies between a pair of particles.
  *  @param p1        pointer to particle 1.
  *  @param p2        pointer to particle 2.
