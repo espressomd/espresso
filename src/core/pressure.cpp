@@ -93,8 +93,7 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /*********************************/
 /* Scalar and Tensorial Pressure */
 /*********************************/
-static void add_single_particle_virials(int v_comp, Particle &p) {
-  add_kinetic_virials(p, v_comp);
+static void add_single_particle_virials(Particle &p) {
   execute_bond_handler(
       cell_structure, p,
       [](Particle &p, int bond_id, Utils::Span<Particle *> partners) {
@@ -121,11 +120,15 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
   on_observable_calc();
 
-  short_range_loop(
-      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
-      [](Particle &p1, Particle &p2, Distance const &d) {
-        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2));
-      });
+  for (auto const &p : cell_structure.local_particles()) {
+    add_kinetic_virials(p, v_comp);
+  }
+
+  short_range_loop([](Particle &p) { add_single_particle_virials(p); },
+                   [](Particle &p1, Particle &p2, Distance const &d) {
+                     add_non_bonded_pair_virials(p1, p2, d.vec21,
+                                                 sqrt(d.dist2));
+                   });
 
   /* rescale kinetic energy (=ideal contribution) */
   virials.data.e[0] /= (3.0 * volume * time_step * time_step);

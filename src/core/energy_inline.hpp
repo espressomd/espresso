@@ -336,7 +336,6 @@ inline void add_kinetic_energy(Particle const &p1) {
  *  @param[in] p   particle for which to calculate energies
  */
 inline void add_single_particle_energy(Particle &p) {
-  add_kinetic_energy(p);
   execute_bond_handler(
       cell_structure, p,
       [](Particle &p, int bond_id, Utils::Span<Particle *> partners) {
