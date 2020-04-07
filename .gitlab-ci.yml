@@ -107,7 +107,7 @@ ubuntu-20.04-sanitizer:
   image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:a1192b35590a1a474c55fe1e9a1e6c25758454ea
   stage: build
   script:
-    - export myconfig=maxset with_cuda=false with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900 ASAN_OPTIONS="allocator_may_return_null=1" OMPI_CC=clang-9 OMPI_CXX=clang++-9 CC=clang-9 CXX=clang++-9 UBSAN_OPTIONS=suppressions=/home/espresso/espresso/maintainer/CI/ubsan.supp
+    - export myconfig=maxset with_cuda=false with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900 ASAN_OPTIONS="allocator_may_return_null=1" OMPI_CC=clang-9 OMPI_CXX=clang++-9 CC=clang-9 CXX=clang++-9 UBSAN_OPTIONS=suppressions=${CI_PROJECT_DIR}/maintainer/CI/ubsan.supp
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
