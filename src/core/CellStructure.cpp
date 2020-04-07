@@ -21,8 +21,6 @@
 
 #include "CellStructure.hpp"
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
-
 #include <utils/contains.hpp>
 
 void CellStructure::remove_particle(int id) {

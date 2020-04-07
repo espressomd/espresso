@@ -353,9 +353,9 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Create the bond
 
   // First, fill bond data structure
-  const Utils::Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
+  const std::array<int, 2> bondT = {p1.p.identity, p2.p.identity};
 
-  add_bond(p, bondT);
+  p.bonds().insert({bond_id, bondT});
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -378,20 +378,26 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
   switch (bonded_ia_params[collision_params.bond_vs].num) {
   case 1: {
     // Create bond between the virtual particles
-    const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
+    const int bondG[] = {current_vs_pid - 2};
     // Only add bond if vs was created on this node
     if (cell_structure.get_local_particle(current_vs_pid - 1))
-      add_bond(get_part(current_vs_pid - 1), bondG);
+      get_part(current_vs_pid - 1)
+          .bonds()
+          .insert({collision_params.bond_vs, bondG});
     break;
   }
   case 2: {
     // Create 1st bond between the virtual particles
-    const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
+    const int bondG[] = {c.pp1, c.pp2};
     // Only add bond if vs was created on this node
     if (cell_structure.get_local_particle(current_vs_pid - 1))
-      add_bond(get_part(current_vs_pid - 1), bondG);
+      get_part(current_vs_pid - 1)
+          .bonds()
+          .insert({collision_params.bond_vs, bondG});
     if (cell_structure.get_local_particle(current_vs_pid - 2))
-      add_bond(get_part(current_vs_pid - 2), bondG);
+      get_part(current_vs_pid - 2)
+          .bonds()
+          .insert({collision_params.bond_vs, bondG});
     break;
   }
   }
@@ -402,12 +408,12 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
                                      const int vs_pid_plus_one,
                                      const collision_struct &c) {
   // Create bond between the virtual particles
-  const int bondG[] = {collision_params.bond_vs, vs_pid_plus_one - 1};
+  const int bondG[] = {vs_pid_plus_one - 1};
 
   if (p1->p.type == collision_params.part_type_after_glueing) {
-    add_bond(get_part(p1->p.identity), bondG);
+    get_part(p1->p.identity).bonds().insert({collision_params.bond_vs, bondG});
   } else {
-    add_bond(get_part(p2->p.identity), bondG);
+    get_part(p2->p.identity).bonds().insert({collision_params.bond_vs, bondG});
   }
 }
 
@@ -504,10 +510,10 @@ void handle_collisions() {
       if (cell_structure.get_local_particle(c.pp1)->l.ghost) {
         std::swap(c.pp1, c.pp2);
       }
-      int bondG[2];
-      bondG[0] = collision_params.bond_centers;
-      bondG[1] = c.pp2;
-      add_bond(get_part(c.pp1), bondG);
+
+      const int bondG[] = {c.pp2};
+
+      get_part(c.pp1).bonds().insert({collision_params.bond_centers, bondG});
     }
   }
 
@@ -620,10 +626,9 @@ void handle_collisions() {
           // Add a bond between the centers of the colliding particles
           // The bond is placed on the node that has p1
           if (!p1->l.ghost) {
-            int bondG[2];
-            bondG[0] = collision_params.bond_centers;
-            bondG[1] = c.pp2;
-            add_bond(get_part(c.pp1), bondG);
+            const int bondG[] = {c.pp2};
+            get_part(c.pp1).bonds().insert(
+                {collision_params.bond_centers, bondG});
           }
 
           // Change type of particle being attached, to make it inert

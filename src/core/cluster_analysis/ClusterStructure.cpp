@@ -18,7 +18,6 @@
  */
 #include "ClusterStructure.hpp"
 #include "Cluster.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "partCfg_global.hpp"
 #include <algorithm>

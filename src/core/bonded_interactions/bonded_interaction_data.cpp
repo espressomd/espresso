@@ -135,7 +135,3 @@ int virtual_set_params(int bond_type) {
 
   return ES_OK;
 }
-
-void add_bond(Particle &p, Utils::Span<const int> bond) {
-  p.bonds().insert(BondView(bond.at(0), {bond.data() + 1, bond.size() - 1}));
-}

@@ -458,13 +458,6 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
          pair_bond_enum_exists_on(p2, p1, bond);
 }
 
-/** @brief Add bond to local particle.
- *  @param p     identity of principal atom of the bond.
- *  @param bond  field containing the bond type number and the identity
- *               of all bond partners (secondary atoms of the bond).
- */
-void add_bond(Particle &p, Utils::Span<const int> bond);
-
 /** Calculate the maximal cutoff of bonded interactions, required to
  *  determine the cell size for communication.
  *
