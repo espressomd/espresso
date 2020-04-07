@@ -163,18 +163,14 @@ inline bool add_bonded_stress(Particle &p1, int bond_id,
 
   auto const result = calc_bonded_stress(iaparams, p1, partners);
   if (result) {
-    /* The pressure contributions are indexed by the type in
-     * the parameters array, so we need to find that */
-    auto bond_index = std::addressof(iaparams) - bonded_ia_params.data();
-
     auto const &stress = result.get();
 
-    *obsstat_bonded(&virials, bond_index) += trace(stress);
+    *obsstat_bonded(&virials, bond_id) += trace(stress);
 
     /* stress tensor part */
     for (int k = 0; k < 3; k++)
       for (int l = 0; l < 3; l++)
-        obsstat_bonded(&p_tensor, bond_index)[k * 3 + l] += stress[k][l];
+        obsstat_bonded(&p_tensor, bond_id)[k * 3 + l] += stress[k][l];
 
     return false;
   }
