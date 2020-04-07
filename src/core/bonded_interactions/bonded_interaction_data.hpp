@@ -413,15 +413,6 @@ extern std::vector<Bonded_ia_parameters> bonded_ia_params;
  */
 void make_bond_type_exist(int type);
 
-template <class Kernel>
-void for_each_bond(BondList const &bl,
-                   std::vector<Bonded_ia_parameters> const &parameters,
-                   Kernel kernel) {
-  for (auto const &bond : bl) {
-    kernel(bonded_ia_params[bond.bond_id()], bond.partner_ids());
-  }
-}
-
 /** @brief Checks both particles for a specific bond, even on ghost particles.
  *
  *  @param p_bond      particle on which the bond may be stored
