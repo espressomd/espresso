@@ -29,7 +29,7 @@ from .globals import Globals
 from collections import OrderedDict
 from .system import System
 from .utils import array_locked, is_valid_type
-from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport Vector3i, Vector3d, Vector9d
 from .utils cimport handle_errors, check_type_or_throw_except
 from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part

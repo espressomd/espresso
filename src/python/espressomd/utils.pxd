@@ -22,22 +22,6 @@ cimport numpy as np
 from libcpp.string cimport string  # import std::string as string
 from libcpp.vector cimport vector  # import std::vector as vector
 
-cdef extern from "utils/List.hpp" namespace "Utils":
-    cppclass List[T]:
-        List()
-        List(size_t)
-        List(size_t, const T &)
-
-        T & operator[](size_t)
-        void resize(size_t)
-        void push_back(size_t)
-
-        T * data()
-        size_t size()
-
-        T * e
-        size_t n
-
 cdef extern from "utils/Span.hpp" namespace "Utils":
     cppclass Span[T]:
         Span()

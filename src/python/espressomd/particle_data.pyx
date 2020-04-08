@@ -30,7 +30,7 @@ import collections
 import functools
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector4d, List
+from .utils cimport Vector3i, Vector3d, Vector4d
 from .grid cimport box_geo, folded_position, unfolded_position
 
 

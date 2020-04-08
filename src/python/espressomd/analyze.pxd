@@ -19,7 +19,7 @@
 
 # For C-extern Analysis
 
-from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport Vector3i, Vector3d, Vector9d
 from libcpp.vector cimport vector  # import std::vector as vector
 
 cdef extern from "<array>" namespace "std" nogil:
