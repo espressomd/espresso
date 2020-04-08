@@ -488,8 +488,7 @@ check_with_odd_no_of_processors:
   only:
     - python
   before_script:
-    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    - eval $(ssh-agent -s)
+    - 'which ssh-agent && eval $(ssh-agent -s) || exit 1'
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - mkdir -p ${HOME}/.ssh && chmod 700 ${HOME}/.ssh
     - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa
