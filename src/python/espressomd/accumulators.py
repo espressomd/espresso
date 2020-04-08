@@ -34,11 +34,6 @@ class MeanVarianceCalculator(ScriptInterfaceHelper):
     -------
     update()
         Update the accumulator (get the current values from the observable).
-    get_mean()
-        Returns the samples mean values of the respective observable with which the
-        accumulator was initialized.
-    get_variance()
-        Returns the samples variance for the observable.
 
     """
     _so_name = "Accumulators::MeanVarianceCalculator"
@@ -66,8 +61,6 @@ class TimeSeries(ScriptInterfaceHelper):
     -------
     update()
         Update the accumulator (get the current values from the observable).
-    time_series()
-        Returns the recorded values of the observable.
     clear()
         Clear the data
 

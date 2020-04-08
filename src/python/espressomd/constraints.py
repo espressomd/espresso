@@ -556,8 +556,6 @@ class HomogeneousFlowField(Constraint):
 
     Attributes
     ----------
-    u : (3,) array_like of :obj:`float`
-        Field velocity.
     gamma : :obj:`float`
         Coupling constant
 
@@ -570,6 +568,12 @@ class HomogeneousFlowField(Constraint):
 
     @property
     def u(self):
+        """
+        Returns
+        -------
+        (3,) array_like of :obj:`float` :
+            Field velocity.
+        """
         return self.value
 
     _so_name = "Constraints::HomogeneousFlowField"
