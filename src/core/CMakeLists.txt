@@ -25,7 +25,6 @@ set(EspressoCore_SRC
     partCfg_global.cpp
     particle_data.cpp
     polymer.cpp
-    polynom.cpp
     pressure.cpp
     rattle.cpp
     reaction_ensemble.cpp
@@ -34,7 +33,6 @@ set(EspressoCore_SRC
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
-    specfunc.cpp
     statistics_chain.cpp
     statistics.cpp
     SystemInterface.cpp

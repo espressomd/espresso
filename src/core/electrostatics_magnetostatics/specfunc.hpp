@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2010-2020 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -38,6 +38,10 @@
  */
 #ifndef SPECFUNC_H
 #define SPECFUNC_H
+
+#include <utils/Span.hpp>
+
+#include <cassert>
 
 /** Hurwitz zeta function. This function was taken from the GSL code. */
 double hzeta(double order, double x);
@@ -79,4 +83,37 @@ double LPK1(double x);
  *  hardware.
  */
 void LPK01(double x, double *K0, double *K1);
+
+/** evaluate the polynomial interpreted as a Taylor series via the Horner scheme
+ */
+inline double evaluateAsTaylorSeriesAt(Utils::Span<const double> series,
+                                       double x) {
+  assert(not series.empty());
+  int cnt = series.size() - 1;
+  const double *c = series.data();
+  double r = c[cnt];
+  while (--cnt >= 0)
+    r = r * x + c[cnt];
+  return r;
+}
+
+/** evaluate the polynomial interpreted as a Chebychev series. Requires a series
+ *  with at least three coefficients, i.e. no linear approximations!
+ */
+inline double evaluateAsChebychevSeriesAt(Utils::Span<const double> series,
+                                          double x) {
+  assert(series.size() >= 3);
+
+  const double *c = series.data();
+  double x2 = 2.0 * x;
+  double dd = c[series.size() - 1];
+  double d = x2 * dd + c[series.size() - 2];
+  for (int j = series.size() - 3; j >= 1; j--) {
+    auto const tmp = d;
+    d = x2 * d - dd + c[j];
+    dd = tmp;
+  }
+  return x * d - dd + 0.5 * c[0];
+}
+
 #endif
