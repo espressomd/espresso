@@ -74,7 +74,7 @@ std::vector<SD_particle_data> parts_buffer{};
 
 /* Buffer that holds the (translational and angular) velocities of the local
    particles on each node, used for returning results */
-static std::vector<double> v_sd{};
+std::vector<double> v_sd{};
 
 } // namespace
 
@@ -117,7 +117,6 @@ void sd_gather_local_particles(ParticleRange const &parts) {
 
 /* copies the new (translational and rotational) velocity to each particle */
 void sd_update_locally(ParticleRange const &parts) {
-  std::size_t n_part = parts.size();
   std::size_t i = 0;
 
   // Even though on the master node, the v_sd vector is larger than
