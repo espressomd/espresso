@@ -222,6 +222,5 @@ public:
 } /* namespace Utils */
 
 using IntList = Utils::List<int>;
-using DoubleList = Utils::List<double>;
 
 #endif
