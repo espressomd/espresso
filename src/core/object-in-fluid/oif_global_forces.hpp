@@ -23,7 +23,7 @@
  *  for a particle triple (triangle from mesh). See @cite dupin07a.
  */
 
-#include <ParticleRange.hpp>
+#include <CellStructure.hpp>
 
 /** Set parameters for the OIF global forces potential. */
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
@@ -37,12 +37,11 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
  *  - synchronization with allreduce
  *  - !!! loop over particles from domain_decomposition !!!
  */
-void calc_oif_global(double *area_volume, int molType,
-                     const ParticleRange &particles);
+void calc_oif_global(double *area_volume, int molType, CellStructure &cs);
 
 /** Distribute the OIF global forces to all particles in the mesh. */
 void add_oif_global_forces(double const *area_volume, int molType,
-                           const ParticleRange &particles);
+                           CellStructure &cs);
 
 extern int max_oif_objects;
 #endif

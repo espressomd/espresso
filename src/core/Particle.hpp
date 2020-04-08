@@ -21,6 +21,8 @@
 
 #include "config.hpp"
 
+#include "BondList.hpp"
+
 #include <utils/List.hpp>
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
@@ -363,16 +365,12 @@ struct Particle {
   ///
   ParticleLocal l;
 
-  /** Bonded interactions list
-   *
-   *  The format is pretty simple: just the bond type, and then the particle
-   *  ids. The number of particle ids can be determined easily from the
-   *  bonded_ia_params entry for the type.
-   */
-  IntList bl;
+private:
+  BondList bl;
 
-  IntList &bonds() { return bl; }
-  IntList const &bonds() const { return bl; }
+public:
+  auto &bonds() { return bl; }
+  auto const &bonds() const { return bl; }
 
   IntList &exclusions() {
 #ifdef EXCLUSIONS
@@ -397,6 +395,8 @@ struct Particle {
   IntList el;
 #endif
 
+private:
+  friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar &p;
     ar &r;

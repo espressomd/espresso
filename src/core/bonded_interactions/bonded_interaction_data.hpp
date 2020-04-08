@@ -19,12 +19,15 @@
 #ifndef _BONDED_INTERACTION_DATA_HPP
 #define _BONDED_INTERACTION_DATA_HPP
 
+#include "CellStructure.hpp"
 #include "Particle.hpp"
 #include "TabulatedPotential.hpp"
 
 #include <utils/Span.hpp>
 
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/optional.hpp>
+#include <boost/range/algorithm/transform.hpp>
 
 /** @file
  *  Data structures for bonded interactions.
@@ -34,11 +37,10 @@
 /** \name Type codes of bonded interactions
  *  Enumeration of implemented bonded interactions.
  */
-enum BondedInteraction {
+enum BondedInteraction : int {
   /** This bonded interaction was not set. */
   BONDED_IA_NONE = -1,
-  /** Type of bonded interaction is a FENE potential
-      (to be combined with Lennard-Jones). */
+  /** Type of bonded interaction is a FENE potential */
   BONDED_IA_FENE,
   /** Type of bonded interaction is a harmonic potential. */
   BONDED_IA_HARMONIC,
@@ -411,51 +413,22 @@ extern std::vector<Bonded_ia_parameters> bonded_ia_params;
  */
 void make_bond_type_exist(int type);
 
-/** @brief Checks if particle has a pair bond with a given partner
- *  Note that bonds are stored only on one of the two particles in Espresso
+/**
+ * @brief Checks both particles for a specific bond, even on ghost particles.
  *
- * @param p          particle on which the bond may be stored
- * @param partner    bond partner
- * @param bond_type  numerical bond type
- */
-inline bool pair_bond_exists_on(Particle const &p, Particle const &partner,
-                                int bond_type) {
-  // First check the bonds of p1
-  if (p.bl.e) {
-    int i = 0;
-    while (i < p.bl.n) {
-      int size = bonded_ia_params[p.bl.e[i]].num;
-
-      if (p.bl.e[i] == bond_type && p.bl.e[i + 1] == partner.p.identity) {
-        // There's a bond, already. Nothing to do for these particles
-        return true;
-      }
-      i += size + 1;
-    }
-  }
-  return false;
-}
-
-/** @brief Checks both particles for a specific bond, even on ghost particles.
- *
- *  @param p_bond      particle on which the bond may be stored
+ *  @param p Particle to check for the bond.
  *  @param p_partner   bond partner
- *  @param bond        enum bond type
+ *  @param bond_type   enum bond type
  */
-inline bool pair_bond_enum_exists_on(Particle const &p_bond,
+inline bool pair_bond_enum_exists_on(Particle const &p,
                                      Particle const &p_partner,
-                                     BondedInteraction bond) {
-  int i = 0;
-  while (i < p_bond.bl.n) {
-    int type_num = p_bond.bl.e[i];
-    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-    if (iaparams.type == (int)bond &&
-        p_bond.bl.e[i + 1] == p_partner.p.identity) {
-      return true;
-    }
-    i += iaparams.num + 1;
-  }
-  return false;
+                                     BondedInteraction bond_type) {
+  return boost::algorithm::any_of(
+      p.bonds(),
+      [bond_type, partner_id = p_partner.identity()](BondView const &bond) {
+        return (bonded_ia_params[bond.bond_id()].type == bond_type) and
+               (bond.partner_ids()[0] == partner_id);
+      });
 }
 
 /** @brief Checks both particles for a specific bond, even on ghost particles.
@@ -470,30 +443,12 @@ inline bool pair_bond_enum_exists_between(Particle const &p1,
   if (&p1 == &p2)
     return false;
 
-  // Check if particles have bonds (bl.n > 0) and search for the bond of
+  // Check if particles have bonds and search for the bond of
   // interest with are_bonded(). Could be saved on both sides (and both could
   // have other bonds), so we need to check both.
-  return (p1.bl.n > 0 && pair_bond_enum_exists_on(p1, p2, bond)) ||
-         (p2.bl.n > 0 && pair_bond_enum_exists_on(p2, p1, bond));
+  return pair_bond_enum_exists_on(p1, p2, bond) or
+         pair_bond_enum_exists_on(p2, p1, bond);
 }
-
-/** @brief Add bond to local particle.
- *  @param p     identity of principal atom of the bond.
- *  @param bond  field containing the bond type number and the identity
- *               of all bond partners (secondary atoms of the bond).
- */
-void add_bond(Particle &p, Utils::Span<const int> bond);
-
-/** Remove bond from particle. */
-int delete_bond(Particle *part, const int *bond);
-
-/**
- * @brief Remove all bonds on particle involving another particle.
- *
- * @param p Particle whose bond list is modified.
- * @param id Bonds involving this id are removed.
- */
-void remove_all_bonds_to(Particle &p, int id);
 
 /** Calculate the maximal cutoff of bonded interactions, required to
  *  determine the cell size for communication.
@@ -510,4 +465,5 @@ void remove_all_bonds_to(Particle &p, int id);
 double maximal_cutoff_bonded();
 
 int virtual_set_params(int bond_type);
+
 #endif
