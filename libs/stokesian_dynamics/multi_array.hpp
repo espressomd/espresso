@@ -5,8 +5,6 @@
 #include <string>
 #include <type_traits>
 
-#include "thrust_wrapper.hpp"
-
 #ifdef __CUDACC__
 #define DEVICE_FUNC __host__ __device__
 #else

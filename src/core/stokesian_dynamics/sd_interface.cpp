@@ -229,7 +229,7 @@ void propagate_vel_pos_sd() {
       id.resize(n_part);
       x_host.resize(6 * n_part);
       f_host.resize(6 * n_part);
-      a_host.resize(6 * n_part);
+      a_host.resize(n_part);
 
       std::size_t i = 0;
       for (auto const &p : parts_buffer) {
