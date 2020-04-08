@@ -31,9 +31,7 @@ from .system import System
 from .utils import array_locked, is_valid_type
 from .utils cimport Vector3i, Vector3d, Vector9d, List
 from .utils cimport handle_errors, check_type_or_throw_except
-from .utils cimport create_nparray_from_double_array, \
-    create_nparray_from_int_list, \
-    create_int_list_from_python_object
+from .utils cimport create_nparray_from_double_array
 from .particle_data cimport get_n_part
 
 
@@ -70,7 +68,7 @@ class Analysis:
         """
 
         if p1 == 'default' and p2 == 'default':
-            pass
+            return analyze.mindist(analyze.partCfg(), [], [])
         elif p1 == 'default' or p2 == 'default':
             raise ValueError("Both p1 and p2 have to be specified")
         else:
@@ -84,7 +82,7 @@ class Analysis:
                     raise TypeError(
                         "Particle types in p2 have to be of type int, got: " + repr(p2[i]))
 
-        return analyze.mindist(analyze.partCfg(), p1, p2)
+            return analyze.mindist(analyze.partCfg(), p1, p2)
 
     #
     # Analyze Linear Momentum
@@ -695,7 +693,8 @@ class Analysis:
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        sf = analyze.calc_structurefactor(analyze.partCfg(), sf_types, sf_order)
+        sf = analyze.calc_structurefactor(
+            analyze.partCfg(), sf_types, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 
@@ -843,11 +842,8 @@ class Analysis:
         cdef vector[double] distribution
         distribution.resize(r_bins)
 
-        p1_types = create_int_list_from_python_object(type_list_a)
-        p2_types = create_int_list_from_python_object(type_list_b)
-
         analyze.calc_part_distribution(
-            analyze.partCfg(), p1_types.e, p1_types.n, p2_types.e, p2_types.n,
+            analyze.partCfg(), type_list_a, type_list_b,
             r_min, r_max, r_bins, < bint > log_flag, & low, distribution.data())
 
         np_distribution = create_nparray_from_double_array(

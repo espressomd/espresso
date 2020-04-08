@@ -214,8 +214,8 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
   return std::sqrt(mindist);
 }
 
-void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
-                            int const *p2_types, int n_p2, double r_min,
+void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
+                            std::vector<int> const &p2_types, double r_min,
                             double r_max, int r_bins, bool log_flag,
                             double *low, double *dist) {
   int ind, cnt = 0;
@@ -235,14 +235,14 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
 
   /* particle loop: p1_types */
   for (auto const &p1 : partCfg) {
-    for (int t1 = 0; t1 < n_p1; t1++) {
-      if (p1.p.type == p1_types[t1]) {
+    for (int t1 : p1_types) {
+      if (p1.p.type == t1) {
         min_dist2 = start_dist2;
         /* particle loop: p2_types */
         for (auto const &p2 : partCfg) {
           if (p1 != p2) {
-            for (int t2 = 0; t2 < n_p2; t2++) {
-              if (p2.p.type == p2_types[t2]) {
+            for (int t2 : p2_types) {
+              if (p2.p.type == t2) {
                 auto const act_dist2 =
                     get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
                 if (act_dist2 < min_dist2) {
