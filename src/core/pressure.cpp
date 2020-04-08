@@ -148,11 +148,13 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
     p_tensor.data[i] /= volume;
 
   /* Intra- and Inter- part of nonbonded interaction */
-  for (size_t n = 0; n < virials_non_bonded.data_nb.size(); n++)
-    virials_non_bonded.data_nb[n] /= 3.0 * volume;
+  for (auto &value : virials_non_bonded.data_nb) {
+    value /= 3.0 * volume;
+  }
 
-  for (size_t i = 0; i < p_tensor_non_bonded.data_nb.size(); i++)
-    p_tensor_non_bonded.data_nb[i] /= volume;
+  for (auto &value : p_tensor_non_bonded.data_nb) {
+    value /= volume;
+  }
 
   /* gather data */
   MPI_Reduce(virials.data.data(), result, virials.data.size(), MPI_DOUBLE,
