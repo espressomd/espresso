@@ -220,7 +220,4 @@ public:
 };
 
 } /* namespace Utils */
-
-using IntList = Utils::List<int>;
-
 #endif

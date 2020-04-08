@@ -910,7 +910,7 @@ void local_rescale_particles(int dir, double scale) {
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
     for (auto &p : cell_structure.local_particles()) {
-      p.el.clear();
+      p.exclusions().clear();
     }
 
     return;
@@ -938,16 +938,15 @@ void local_change_exclusion(int part1, int part2, int _delete) {
 namespace {
 /* keep a unique list for particle i. Particle j is only added if it is not i
    and not already in the list. */
-void add_partner(IntList *il, int i, int j, int distance) {
-  int k;
+void add_partner(std::vector<int> &il, int i, int j, int distance) {
   if (j == i)
     return;
-  for (k = 0; k < il->n; k += 2)
-    if (il->e[k] == j)
+  for (int k = 0; k < il.size(); k += 2)
+    if (il[k] == j)
       return;
 
-  il->push_back(j);
-  il->push_back(distance);
+  il.push_back(j);
+  il.push_back(distance);
 }
 } // namespace
 
@@ -964,7 +963,7 @@ void remove_all_exclusions() { mpi_send_exclusion(-1, -1, 1); }
 void auto_exclusions(int distance) {
   /* partners is a list containing the currently found excluded particles for
      each particle, and their distance, as an interleaved list */
-  std::unordered_map<int, IntList> partners;
+  std::unordered_map<int, std::vector<int>> partners;
 
   /* determine initial connectivity */
   for (auto const &part1 : partCfg()) {
@@ -972,8 +971,8 @@ void auto_exclusions(int distance) {
     for (auto const &bond : part1.bonds()) {
       if ((bond.partner_ids().size() == 1) and (bond.partner_ids()[0] != p1)) {
         auto const p2 = bond.partner_ids()[0];
-        add_partner(&partners[p1], p1, p2, 1);
-        add_partner(&partners[p2], p2, p1, 1);
+        add_partner(partners[p1], p1, p2, 1);
+        add_partner(partners[p2], p2, p1, 1);
       }
     }
   }
@@ -984,19 +983,19 @@ void auto_exclusions(int distance) {
   for (int count = 1; count < distance; count++) {
     for (auto const &p : partCfg()) {
       auto const p1 = p.identity();
-      for (int i = 0; i < partners[p1].n; i += 2) {
-        auto const p2 = partners[p1].e[i];
-        auto const dist1 = partners[p1].e[i + 1];
+      for (int i = 0; i < partners[p1].size(); i += 2) {
+        auto const p2 = partners[p1][i];
+        auto const dist1 = partners[p1][i + 1];
         if (dist1 > distance)
           continue;
         /* loop over all partners of the partner */
-        for (int j = 0; j < partners[p2].n; j += 2) {
-          auto const p3 = partners[p2].e[j];
-          auto const dist2 = dist1 + partners[p2].e[j + 1];
+        for (int j = 0; j < partners[p2].size(); j += 2) {
+          auto const p3 = partners[p2][j];
+          auto const dist2 = dist1 + partners[p2][j + 1];
           if (dist2 > distance)
             continue;
-          add_partner(&partners[p1], p1, p3, dist2);
-          add_partner(&partners[p3], p3, p1, dist2);
+          add_partner(partners[p1], p1, p3, dist2);
+          add_partner(partners[p3], p3, p1, dist2);
         }
       }
     }
@@ -1011,9 +1010,9 @@ void auto_exclusions(int distance) {
   for (auto &kv : partners) {
     auto const id = kv.first;
     auto const partner_list = kv.second;
-    for (int j = 0; j < partner_list.n; j++)
-      if (id < partner_list.e[j])
-        change_exclusion(id, partner_list.e[j], 0);
+    for (int j : partner_list)
+      if (id < j)
+        change_exclusion(id, j, 0);
   }
 }
 #endif

@@ -56,7 +56,8 @@ int get_n_part_conf();
  *  @param set2 types of particles
  *  @return the minimal distance of two particles
  */
-double mindist(PartCfg &, IntList const &set1, IntList const &set2);
+double mindist(PartCfg &partCfg, const std::vector<int> &set1,
+               const std::vector<int> &set2);
 
 /** Find all particles within a given radius @p r_catch around a position.
  *  @param partCfg    @copybrief PartCfg
@@ -66,8 +67,8 @@ double mindist(PartCfg &, IntList const &set1, IntList const &set2);
  *
  *  @return List of ids close to @p pos.
  */
-IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
-               const Utils::Vector3i &planedims);
+std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
+                        double r_catch, const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
  *  @param partCfg particle selection
@@ -93,10 +94,8 @@ void analyze_append(PartCfg &partCfg);
  *  logarithmically equidistant (@p log_flag==true). The result is stored
  *  in the @p array dist.
  *  @param p1_types list with types of particles to find the distribution for.
- *  @param n_p1     length of @p p1_types.
  *  @param p2_types list with types of particles the others are distributed
  *                  around.
- *  @param n_p2     length of @p p2_types.
  *  @param r_min    Minimal distance for the distribution.
  *  @param r_max    Maximal distance for the distribution.
  *  @param r_bins   Number of bins.
@@ -104,8 +103,8 @@ void analyze_append(PartCfg &partCfg);
  *  @param low      particles closer than @p r_min
  *  @param dist     Array to store the result (size: @p r_bins).
  */
-void calc_part_distribution(PartCfg &, int const *p1_types, int n_p1,
-                            int const *p2_types, int n_p2, double r_min,
+void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
+                            std::vector<int> const &p2_types, double r_min,
                             double r_max, int r_bins, bool log_flag,
                             double *low, double *dist);
 
@@ -177,11 +176,11 @@ void calc_rdf_av(PartCfg &partCfg, std::vector<int> const &p1_types,
  *  sf[2*(7-1)]=sf[2*(7-1)+1]=0.
  *
  *  @param p_types   list with types of particles to be analyzed
- *  @param n_types   length of @p p_types
  *  @param order     the maximum wave vector length in 2PI/L
  */
-std::vector<double> calc_structurefactor(PartCfg &, int const *p_types,
-                                         int n_types, int order);
+std::vector<double> calc_structurefactor(PartCfg &partCfg,
+                                         std::vector<int> const &p_types,
+                                         int order);
 
 std::vector<std::vector<double>> modify_stucturefactor(int order,
                                                        double const *sf);

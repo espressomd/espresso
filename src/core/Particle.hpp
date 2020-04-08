@@ -23,10 +23,10 @@
 
 #include "BondList.hpp"
 
-#include <utils/List.hpp>
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
-#include <utils/serialization/List.hpp>
+
+#include <boost/serialization/vector.hpp>
 
 #include <cstdint>
 
@@ -372,28 +372,31 @@ public:
   auto &bonds() { return bl; }
   auto const &bonds() const { return bl; }
 
-  IntList &exclusions() {
-#ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
-
-  IntList const &exclusions() const {
-#ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
-
+private:
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded
    *  interactions
    */
-  IntList el;
+
+  std::vector<int> el;
 #endif
+
+public:
+  std::vector<int> &exclusions() {
+#ifdef EXCLUSIONS
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
+  std::vector<int> const &exclusions() const {
+#ifdef EXCLUSIONS
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
 
 private:
   friend boost::serialization::access;

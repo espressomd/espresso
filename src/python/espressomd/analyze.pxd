@@ -62,32 +62,32 @@ cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
 
-    cdef vector[double] calc_structurefactor(PartCfg & , int * p_types, int n_types, int order)
+    cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] & p_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
-    cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
-    cdef List[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)
+    cdef double mindist(PartCfg & , const vector[int] & set1, const vector[int] & set2)
+    cdef vector[int] nbhood(PartCfg & , const Vector3d & pos, double r_catch, const Vector3i & planedims)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)
     cdef double * obsstat_nonbonded_intra(Observable_stat_non_bonded * stat, int i, int j)
     cdef vector[double] calc_linear_momentum(int include_particles, int include_lbfluid)
-    cdef vector[double] centerofmass(PartCfg &, int part_type)
+    cdef vector[double] centerofmass(PartCfg & , int part_type)
 
-    void calc_rdf(PartCfg &, vector[int] p1_types, vector[int] p2_types,
+    void calc_rdf(PartCfg & , vector[int] p1_types, vector[int] p2_types,
                   double r_min, double r_max, int r_bins, vector[double] rdf)
 
-    void calc_rdf_av(PartCfg &, vector[int] p1_types, vector[int] p2_types,
+    void calc_rdf_av(PartCfg & , vector[int] p1_types, vector[int] p2_types,
                      double r_min, double r_max, int r_bins, vector[double] rdf,
                      int n_conf)
 
-    Vector3d angularmomentum(PartCfg &, int p_type)
+    Vector3d angularmomentum(PartCfg & , int p_type)
 
-    void momentofinertiamatrix(PartCfg &, int p_type, double * MofImatrix)
+    void momentofinertiamatrix(PartCfg & , int p_type, double * MofImatrix)
 
-    void analyze_append(PartCfg &)
+    void analyze_append(PartCfg & )
 
     void calc_part_distribution(
-        PartCfg & , int * p1_types, int n_p1, int * p2_types, int n_p2,
+        PartCfg &, const vector[int] & p1_types, const vector[int] & p2_types,
         double r_min, double r_max, int r_bins, bint log_flag, double * low,
         double * dist)
 
