@@ -64,8 +64,8 @@ cdef extern from "statistics.hpp":
 
     cdef vector[double] calc_structurefactor(PartCfg & , int * p_types, int n_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
-    cdef double mindist(PartCfg &, const List[int] & set1, const List[int] & set2)
-    cdef List[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)
+    cdef double mindist(PartCfg &, const vector[int] & set1, const vector[int] & set2)
+    cdef vector[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)
     cdef double * obsstat_bonded(Observable_stat * stat, int j)
     cdef double * obsstat_nonbonded(Observable_stat * stat, int i, int j)
     cdef double * obsstat_nonbonded_inter(Observable_stat_non_bonded * stat, int i, int j)

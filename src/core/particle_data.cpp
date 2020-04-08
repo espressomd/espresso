@@ -910,7 +910,7 @@ void local_rescale_particles(int dir, double scale) {
 void local_change_exclusion(int part1, int part2, int _delete) {
   if (part1 == -1 && part2 == -1) {
     for (auto &p : cell_structure.local_particles()) {
-      p.el.clear();
+      p.exclusions().clear();
     }
 
     return;

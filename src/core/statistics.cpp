@@ -63,24 +63,27 @@ int get_n_part_conf() {
  *                                 basic observables calculation
  ****************************************************************************************/
 
-double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
+double mindist(PartCfg &partCfg, const std::vector<int> &set1,
+               const std::vector<int> &set2) {
+  using Utils::contains;
+
   auto mindist2 = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to (bit 0: set1, bit1: set2) */
-    auto in_set = 0;
+    auto in_set = 0u;
     if (set1.empty() || contains(set1, jt->p.type))
-      in_set = 1;
+      in_set = 1u;
     if (set2.empty() || contains(set2, jt->p.type))
-      in_set |= 2;
+      in_set |= 2u;
     if (in_set == 0)
       continue;
 
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
-          ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
+      if (((in_set & 1u) && (set2.empty() || contains(set2, it->p.type))) ||
+          ((in_set & 2u) && (set1.empty() || contains(set1, it->p.type))))
         mindist2 = std::min(mindist2,
                             get_mi_vector(jt->r.p, it->r.p, box_geo).norm2());
   }
@@ -93,7 +96,7 @@ Utils::Vector3d local_particle_momentum() {
   auto const momentum =
       std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
                       [](Utils::Vector3d &m, Particle const &p) {
-                        return std::move(m) + p.p.mass * p.m.v;
+                        return m + p.p.mass * p.m.v;
                       });
 
   return momentum;
@@ -172,9 +175,9 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
-               const Utils::Vector3i &planedims) {
-  IntList ids;
+std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
+                        double r_catch, const Utils::Vector3i &planedims) {
+  std::vector<int> ids;
 
   auto const r2 = r_catch * r_catch;
   auto const pt = Utils::Vector3d{pos[0], pos[1], pos[2]};

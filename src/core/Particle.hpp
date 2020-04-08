@@ -372,28 +372,31 @@ public:
   auto &bonds() { return bl; }
   auto const &bonds() const { return bl; }
 
-  IntList &exclusions() {
-#ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
-
-  IntList const &exclusions() const {
-#ifdef EXCLUSIONS
-    return el;
-#else
-    throw std::runtime_error{"Exclusions not enabled."};
-#endif
-  }
-
+private:
 #ifdef EXCLUSIONS
   /** list of particles, with which this particle has no nonbonded
    *  interactions
    */
+
   IntList el;
 #endif
+
+public:
+  auto &exclusions() {
+#ifdef EXCLUSIONS
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
+
+  auto const &exclusions() const {
+#ifdef EXCLUSIONS
+    return el;
+#else
+    throw std::runtime_error{"Exclusions not enabled."};
+#endif
+  }
 
 private:
   friend boost::serialization::access;

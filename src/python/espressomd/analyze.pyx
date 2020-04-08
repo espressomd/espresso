@@ -69,9 +69,6 @@ class Analysis:
 
         """
 
-        cdef List[int] set1
-        cdef List[int] set2
-
         if p1 == 'default' and p2 == 'default':
             pass
         elif p1 == 'default' or p2 == 'default':
@@ -87,9 +84,7 @@ class Analysis:
                     raise TypeError(
                         "Particle types in p2 have to be of type int, got: " + repr(p2[i]))
 
-            set1 = create_int_list_from_python_object(p1)
-            set2 = create_int_list_from_python_object(p2)
-        return analyze.mindist(analyze.partCfg(), set1, set2)
+        return analyze.mindist(analyze.partCfg(), p1, p2)
 
     #
     # Analyze Linear Momentum
@@ -170,7 +165,6 @@ class Analysis:
         """
 
         cdef Vector3i planedims
-        cdef List[int] ids
         cdef Vector3d c_pos
 
         check_type_or_throw_except(
@@ -195,9 +189,7 @@ class Analysis:
         for i in range(3):
             c_pos[i] = pos[i]
 
-        ids = analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
-
-        return create_nparray_from_int_list(ids)
+        return analyze.nbhood(analyze.partCfg(), c_pos, r_catch, planedims)
 
     def pressure(self, v_comp=False):
         """Calculate the instantaneous pressure (in parallel). This is only

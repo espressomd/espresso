@@ -56,7 +56,8 @@ int get_n_part_conf();
  *  @param set2 types of particles
  *  @return the minimal distance of two particles
  */
-double mindist(PartCfg &, IntList const &set1, IntList const &set2);
+double mindist(PartCfg &partCfg, const std::vector<int> &set1,
+               const std::vector<int> &set2);
 
 /** Find all particles within a given radius @p r_catch around a position.
  *  @param partCfg    @copybrief PartCfg
@@ -66,8 +67,8 @@ double mindist(PartCfg &, IntList const &set1, IntList const &set2);
  *
  *  @return List of ids close to @p pos.
  */
-IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
-               const Utils::Vector3i &planedims);
+std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
+                        double r_catch, const Utils::Vector3i &planedims);
 
 /** Calculate minimal distance to point.
  *  @param partCfg particle selection

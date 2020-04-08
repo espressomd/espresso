@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   p.p.identity = 15;
   p.bonds().insert({bond_id, bond_partners});
 #ifdef EXCLUSIONS
-  p.el = el;
+  p.exclusions() = el;
 #endif
 
   std::stringstream stream;
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
 
 #ifdef EXCLUSIONS
-  BOOST_CHECK(q.el == el);
+  BOOST_CHECK(q.exclusions() == el);
 #endif
 }
 
