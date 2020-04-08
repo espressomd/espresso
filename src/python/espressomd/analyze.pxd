@@ -47,7 +47,7 @@ cdef extern from "statistics.hpp":
 
     ctypedef struct Observable_stat:
         int init_status
-        List[double] data
+        vector[double] data
         int n_coulomb
         int n_dipolar
         int n_non_bonded

@@ -19,7 +19,7 @@
 #ifndef ESPRESSO_OBSERVABLE_STAT_HPP
 #define ESPRESSO_OBSERVABLE_STAT_HPP
 
-#include <utils/List.hpp>
+#include <vector>
 
 struct Observable_stat {
   /** Status flag for observable calculation. For 'analyze energy': 0
@@ -30,14 +30,12 @@ struct Observable_stat {
   int init_status;
 
   /** Array for observables on each node. */
-  Utils::List<double> data;
+  std::vector<double> data;
 
   /** number of Coulomb interactions */
   int n_coulomb;
   /** number of dipolar interactions */
   int n_dipolar;
-  /** number of non bonded interactions */
-  int n_non_bonded;
   /** Number of virtual sites relative (rigid body) contributions */
   int n_virtual_sites;
   /** Number of external field contributions */
@@ -63,19 +61,9 @@ struct Observable_stat {
 /** Structure used only in the pressure and stress tensor calculation to
    distinguish
     non-bonded intra- and inter- molecular contributions. */
-typedef struct {
-  /** Status flag for observable calculation.
-      For 'analyze energy': 0 re-initialize observable struct, else every thing
-     is fine, calculation can start.
-      For 'analyze pressure' and 'analyze p_inst': 0 or !(1+v_comp)
-     re-initialize, else all OK. */
-  int init_status_nb;
-
+struct Observable_stat_non_bonded {
   /** Array for observables on each node. */
-  Utils::List<double> data_nb;
-
-  /** number of non bonded interactions */
-  int n_nonbonded;
+  std::vector<double> data_nb;
 
   /** start of observables for non-bonded intramolecular interactions. */
   double *non_bonded_intra;
@@ -84,6 +72,6 @@ typedef struct {
 
   /** number of doubles per data item */
   int chunk_size_nb;
-} Observable_stat_non_bonded;
+};
 
 #endif // ESPRESSO_OBSERVABLE_STAT_HPP

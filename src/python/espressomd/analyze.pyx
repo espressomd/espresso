@@ -231,13 +231,13 @@ class Analysis:
         # Total pressure
         cdef int i
         total = 0
-        for i in range(analyze.total_pressure.data.n):
-            total += analyze.total_pressure.data.e[i]
+        for i in range(analyze.total_pressure.data.size()):
+            total += analyze.total_pressure.data[i]
 
         p["total"] = total
 
         # kinetic
-        p["kinetic"] = analyze.total_pressure.data.e[0]
+        p["kinetic"] = analyze.total_pressure.data[0]
 
         # Bonded
         cdef double total_bonded
@@ -344,14 +344,14 @@ class Analysis:
         cdef int i
         total = np.zeros(9)
         for i in range(9):
-            for k in range(analyze.total_p_tensor.data.n // 9):
-                total[i] += analyze.total_p_tensor.data.e[9 * k + i]
+            for k in range(analyze.total_p_tensor.data.size() // 9):
+                total[i] += analyze.total_p_tensor.data[9 * k + i]
 
         p["total"] = total.reshape((3, 3))
 
         # kinetic
         p["kinetic"] = create_nparray_from_double_array(
-            analyze.total_p_tensor.data.e, 9)
+            analyze.total_p_tensor.data.data(), 9)
         p["kinetic"] = p["kinetic"].reshape((3, 3))
 
         # Bonded
@@ -473,14 +473,14 @@ class Analysis:
 
         # Total energy
         cdef int i
-        total = analyze.total_energy.data.e[0]  # kinetic energy
+        total = analyze.total_energy.data[0]  # kinetic energy
         total += calculate_current_potential_energy_of_system()
 
         e["total"] = total
         e["external_fields"] = analyze.total_energy.external_fields[0]
 
         # Kinetic energy
-        e["kinetic"] = analyze.total_energy.data.e[0]
+        e["kinetic"] = analyze.total_energy.data[0]
 
         # Non-bonded
         cdef double total_bonded
