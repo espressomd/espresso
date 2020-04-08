@@ -32,7 +32,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 #include "mmm-common.hpp"
-#include "polynom.hpp"
 #include "specfunc.hpp"
 #include "tuning.hpp"
 
