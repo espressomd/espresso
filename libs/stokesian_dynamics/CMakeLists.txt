@@ -13,7 +13,7 @@ if(STOKESIAN_DYNAMICS)
     PRIVATE
       ${BLAS_LIBRARIES}
       ${LAPACK_LIBRARIES}
-    PUBLIC
+      Boost::boost
       Random123)
   install(TARGETS sd_cpu LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 endif()
