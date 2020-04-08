@@ -1066,12 +1066,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef List[int] exclusions = self.particle_data.exclusions()
-
-                py_partners = []
-                for i in range(exclusions.n):
-                    py_partners.append(exclusions.e[i])
-                return array_locked(py_partners)
+                return array_locked(self.particle_data.exclusions())
 
         def add_exclusion(self, _partner):
             """

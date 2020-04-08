@@ -420,19 +420,16 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   }
 }
 
-std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
-                                         int n_types, int order) {
+std::vector<double> calc_structurefactor(PartCfg &partCfg,
+                                         std::vector<int> const &p_types,
+                                         int order) {
   auto const order2 = order * order;
   std::vector<double> ff;
   ff.resize(2 * order2);
   ff[2 * order2] = 0;
   auto const twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
-  if ((n_types < 0) || (n_types > max_seen_particle_type)) {
-    fprintf(stderr, "WARNING: Wrong number of particle types!");
-    fflush(nullptr);
-    errexit();
-  } else if (order < 1) {
+  if (order < 1) {
     fprintf(stderr,
             "WARNING: parameter \"order\" has to be a whole positive number");
     fflush(nullptr);
@@ -448,8 +445,8 @@ std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
           if ((n <= order2) && (n >= 1)) {
             double C_sum = 0.0, S_sum = 0.0;
             for (auto const &p : partCfg) {
-              for (int t = 0; t < n_types; t++) {
-                if (p.p.type == p_types[t]) {
+              for (int t : p_types) {
+                if (p.p.type == t) {
                   auto const qr =
                       twoPI_L * (Utils::Vector3i{{i, j, k}} * p.r.p);
                   C_sum += cos(qr);
@@ -465,8 +462,8 @@ std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
     }
     int n = 0;
     for (auto const &p : partCfg) {
-      for (int t = 0; t < n_types; t++) {
-        if (p.p.type == p_types[t])
+      for (int t : p_types) {
+        if (p.p.type == t)
           n++;
       }
     }

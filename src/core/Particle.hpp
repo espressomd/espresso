@@ -23,10 +23,10 @@
 
 #include "BondList.hpp"
 
-#include <utils/List.hpp>
 #include <utils/Vector.hpp>
 #include <utils/math/quaternion.hpp>
-#include <utils/serialization/List.hpp>
+
+#include <boost/serialization/vector.hpp>
 
 #include <cstdint>
 
@@ -378,11 +378,11 @@ private:
    *  interactions
    */
 
-  IntList el;
+  std::vector<int> el;
 #endif
 
 public:
-  auto &exclusions() {
+  std::vector<int> &exclusions() {
 #ifdef EXCLUSIONS
     return el;
 #else
@@ -390,7 +390,7 @@ public:
 #endif
   }
 
-  auto const &exclusions() const {
+  std::vector<int> const &exclusions() const {
 #ifdef EXCLUSIONS
     return el;
 #else

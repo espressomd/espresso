@@ -62,7 +62,7 @@ cdef extern from "statistics.hpp":
     ctypedef struct Observable_stat_non_bonded:
         pass
 
-    cdef vector[double] calc_structurefactor(PartCfg & , int * p_types, int n_types, int order)
+    cdef vector[double] calc_structurefactor(PartCfg & , const vector[int] &p_types, int order)
     cdef vector[vector[double]] modify_stucturefactor(int order, double * sf)
     cdef double mindist(PartCfg &, const vector[int] & set1, const vector[int] & set2)
     cdef vector[int] nbhood(PartCfg &, const Vector3d & pos, double r_catch, const Vector3i & planedims)

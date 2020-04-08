@@ -695,10 +695,7 @@ class Analysis:
         check_type_or_throw_except(
             sf_order, 1, int, "sf_order has to be an int!")
 
-        p_types = create_int_list_from_python_object(sf_types)
-
-        sf = analyze.calc_structurefactor(analyze.partCfg(), p_types.e,
-                                          p_types.n, sf_order)
+        sf = analyze.calc_structurefactor(analyze.partCfg(), sf_types, sf_order)
 
         return np.transpose(analyze.modify_stucturefactor(sf_order, sf.data()))
 

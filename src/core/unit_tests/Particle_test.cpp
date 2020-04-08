@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(serialization) {
   auto const bond_id = 5;
   auto const bond_partners = std::array<const int, 3>{12, 13, 14};
 
-  Utils::List<int> el = {5, 6, 7, 8};
+  std::vector<int> el = {5, 6, 7, 8};
 
   p.p.identity = 15;
   p.bonds().insert({bond_id, bond_partners});
