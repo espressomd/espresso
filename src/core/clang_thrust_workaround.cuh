@@ -5,6 +5,7 @@
 #define CLANG_THRUST_WORKAROUND_CUH
 
 #ifdef __clang__
+#ifndef THRUST_CUB_NS_PREFIX
 #define THRUST_CUB_NS_PREFIX namespace thrust::cuda_cub {
 #define THRUST_CUB_NS_POSTFIX }
 
@@ -15,4 +16,5 @@ using namespace thrust::cuda_cub::cub;
 #include <thrust/reduce.h>
 #endif
 
+#endif
 #endif
