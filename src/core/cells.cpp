@@ -38,12 +38,13 @@
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
 #include "particle_data.hpp"
-#include "particle_index.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/iterator/indirect_iterator.hpp>
+#include <boost/range/adaptor/uniqued.hpp>
+#include <boost/range/algorithm/sort.hpp>
 
 #include <cstdio>
 
@@ -53,18 +54,7 @@ std::vector<Cell> cells;
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
-/** One of @ref Cells::Resort, announces the level of resort needed.
- */
-unsigned resort_particles = Cells::RESORT_NONE;
 bool rebuild_verletlist = true;
-
-CellPList CellStructure::local_cells() {
-  return {m_local_cells.data(), static_cast<int>(m_local_cells.size())};
-}
-
-CellPList CellStructure::ghost_cells() {
-  return {m_ghost_cells.data(), static_cast<int>(m_ghost_cells.size())};
-}
 
 /**
  * @brief Get pairs closer than distance from the cells.
@@ -167,23 +157,23 @@ static void topology_release(int cs) {
 }
 
 /** Choose the topology init function of a certain cell system. */
-void topology_init(int cs, double range, CellPList local) {
+void topology_init(int cs, double range) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
   switch (cs) {
   /* Default to DD */
   case CELL_STRUCTURE_NONEYET:
-    topology_init(CELL_STRUCTURE_DOMDEC, range, local);
+    topology_init(CELL_STRUCTURE_DOMDEC, range);
     break;
   case CELL_STRUCTURE_CURRENT:
-    topology_init(cell_structure.type, range, local);
+    topology_init(cell_structure.type, range);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(&local, node_grid, range);
+    dd_topology_init(node_grid, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init(&local);
+    nsq_topology_init();
     break;
   default:
     fprintf(stderr,
@@ -201,21 +191,17 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
     return boost::mpi::all_reduce(comm_cart, local_resort,
                                   std::bit_or<unsigned>());
   default:
-    return true;
+    return Cells::Resort::RESORT_GLOBAL;
   }
 }
 
-/** Go through ghost cells and remove the ghost entries from \ref
-    local_particles. */
+/** Go through ghost cells and remove the ghost entries from the
+    local particle index. */
 static void invalidate_ghosts() {
-  for (auto const &p : cell_structure.ghost_cells().particles()) {
-    if (get_local_particle_data(p.identity()) == &p) {
-      set_local_particle_data(p.identity(), nullptr);
+  for (auto const &p : cell_structure.ghost_particles()) {
+    if (cell_structure.get_local_particle(p.identity()) == &p) {
+      cell_structure.update_particle_index(p.identity(), nullptr);
     }
-  }
-
-  for (auto &c : cell_structure.m_ghost_cells) {
-    c->n = 0;
   }
 }
 
@@ -238,42 +224,20 @@ void cells_re_init(int new_cs, double range) {
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(
-      new_cs, range,
-      {old_local_cells.data(), static_cast<int>(old_local_cells.size())});
+  topology_init(new_cs, range);
   cell_structure.min_range = range;
 
   clear_particle_node();
 
-  for (auto &cell : tmp_cells) {
-    cell.resize(0);
+  for (auto &p : Cells::particles(Utils::make_span(old_local_cells))) {
+    cell_structure.add_particle(std::move(p));
   }
 
   /* to enforce initialization of the ghost cells */
-  resort_particles = Cells::RESORT_GLOBAL;
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 
   on_cell_structure_change();
 }
-
-/************************************************************/
-
-void realloc_cells(int size) {
-  /* free all memory associated with cells to be deleted. */
-  for (auto &c : cells) {
-    c.resize(0);
-  }
-  /* resize the cell list */
-  cells.resize(size);
-}
-
-/*************************************************/
-
-void set_resort_particles(Cells::Resort level) {
-  resort_particles |= level;
-  assert(resort_particles & level);
-}
-
-unsigned const &get_resort_particles() { return resort_particles; }
 
 /*************************************************/
 
@@ -294,7 +258,6 @@ void fold_and_reset(Particle &p) {
 
   p.l.p_old = p.r.p;
 }
-} // namespace
 
 /**
  * @brief Sort and fold particles.
@@ -308,65 +271,86 @@ void fold_and_reset(Particle &p) {
  *
  * @returns List of Particles that do not belong on this node.
  */
-ParticleList sort_and_fold_parts(const CellStructure &cs, CellPList cells) {
+ParticleList sort_and_fold_parts(const CellStructure &cs,
+                                 Utils::Span<Cell *> cells,
+                                 std::vector<Cell *> &modified_cells) {
   ParticleList displaced_parts;
 
   for (auto &c : cells) {
-    for (int i = 0; i < c->n; i++) {
-      auto &p = c->part[i];
+    for (auto it = c->particles().begin(); it != c->particles().end();) {
+      fold_and_reset(*it);
 
-      fold_and_reset(p);
+      auto target_cell = cs.particle_to_cell(*it);
 
-      auto target_cell = cs.particle_to_cell(p);
+      /* Particle is in place */
+      if (target_cell == c) {
+        std::advance(it, 1);
+        continue;
+      }
 
+      auto p = std::move(*it);
+      it = c->particles().erase(it);
+      modified_cells.push_back(c);
+
+      /* Particle is not local */
       if (target_cell == nullptr) {
-        append_unindexed_particle(&displaced_parts,
-                                  extract_indexed_particle(c, i));
-
-        if (i < c->n) {
-          i--;
-        }
-      } else if (target_cell != c) {
-        move_indexed_particle(target_cell, c, i);
-
-        if (i < c->n) {
-          i--;
-        }
+        displaced_parts.insert(std::move(p));
+      }
+      /* Particle belongs on this node but is in the wrong cell. */
+      else if (target_cell != c) {
+        target_cell->particles().insert(std::move(p));
+        modified_cells.push_back(target_cell);
       }
     }
   }
 
   return displaced_parts;
 }
+} // namespace
 
 void cells_resort_particles(int global_flag) {
-
   invalidate_ghosts();
 
   clear_particle_node();
   n_verlet_updates++;
 
-  ParticleList displaced_parts =
-      sort_and_fold_parts(cell_structure, cell_structure.local_cells());
+  static std::vector<Cell *> modified_cells;
+  modified_cells.clear();
+
+  ParticleList displaced_parts = sort_and_fold_parts(
+      cell_structure, cell_structure.local_cells(), modified_cells);
+
+  for (auto const &p : displaced_parts) {
+    cell_structure.update_particle_index(p.identity(), nullptr);
+  }
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_NSQUARE:
-    nsq_exchange_particles(global_flag, &displaced_parts);
+    nsq_exchange_particles(global_flag, &displaced_parts, modified_cells);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid);
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid,
+                                   modified_cells);
     break;
   }
 
-  if (0 != displaced_parts.n) {
-    for (int i = 0; i < displaced_parts.n; i++) {
-      auto &part = displaced_parts.part[i];
+  boost::sort(modified_cells);
+  for (auto cell : modified_cells | boost::adaptors::uniqued) {
+    cell_structure.update_particle_index(cell->particles());
+  }
+
+  if (not displaced_parts.empty()) {
+    auto sort_cell = cell_structure.m_local_cells[0];
+
+    for (auto &part : displaced_parts) {
       runtimeErrorMsg() << "Particle " << part.identity()
                         << " moved more than"
                            " one local box length in one timestep.";
-      resort_particles = Cells::RESORT_GLOBAL;
-      append_indexed_particle(cell_structure.m_local_cells[0], std::move(part));
+      sort_cell->particles().insert(std::move(part));
     }
+
+    cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
+    cell_structure.update_particle_index(sort_cell->particles());
   } else {
 #ifdef ADDITIONAL_CHECKS
     /* at the end of the day, everything should be consistent again */
@@ -379,7 +363,7 @@ void cells_resort_particles(int global_flag) {
 
   displaced_parts.clear();
 
-  on_resort_particles(cell_structure.local_cells().particles());
+  on_resort_particles(cell_structure.local_particles());
 }
 
 /*************************************************/
@@ -404,14 +388,15 @@ void cells_on_geometry_change(int flags) {
 void check_resort_particles() {
   const double skin2 = Utils::sqr(skin / 2.0);
 
-  resort_particles |=
-      (std::any_of(cell_structure.local_cells().particles().begin(),
-                   cell_structure.local_cells().particles().end(),
-                   [&skin2](Particle const &p) {
-                     return (p.r.p - p.l.p_old).norm2() > skin2;
-                   }))
-          ? Cells::RESORT_LOCAL
-          : Cells::RESORT_NONE;
+  auto const level = (std::any_of(cell_structure.local_particles().begin(),
+                                  cell_structure.local_particles().end(),
+                                  [&skin2](Particle const &p) {
+                                    return (p.r.p - p.l.p_old).norm2() > skin2;
+                                  }))
+                         ? Cells::RESORT_LOCAL
+                         : Cells::RESORT_NONE;
+
+  cell_structure.set_resort_particles(level);
 }
 
 /*************************************************/
@@ -419,8 +404,8 @@ void cells_update_ghosts(unsigned data_parts) {
   /* data parts that are only updated on resort */
   auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
 
-  auto const global_resort =
-      topology_check_resort(cell_structure.type, resort_particles);
+  auto const global_resort = topology_check_resort(
+      cell_structure.type, cell_structure.get_resort_particles());
 
   if (global_resort != Cells::RESORT_NONE) {
     int global = (global_resort & Cells::RESORT_GLOBAL)
@@ -435,8 +420,16 @@ void cells_update_ghosts(unsigned data_parts) {
                        GHOSTTRANS_PARTNUM);
     ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
 
+    /* Add the ghost particles to the index if we don't already
+     * have them. */
+    for (auto &part : cell_structure.ghost_particles()) {
+      if (cell_structure.get_local_particle(part.p.identity) == nullptr) {
+        cell_structure.update_particle_index(part.identity(), &part);
+      }
+    }
+
     /* Particles are now sorted */
-    resort_particles = Cells::RESORT_NONE;
+    cell_structure.clear_resort_particles();
   } else {
     /* Communication step: ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
@@ -445,7 +438,7 @@ void cells_update_ghosts(unsigned data_parts) {
 }
 
 Cell *find_current_cell(const Particle &p) {
-  assert(not resort_particles);
+  assert(not cell_structure.get_resort_particles());
 
   if (p.l.ghost) {
     return nullptr;

@@ -20,7 +20,6 @@
 #define CORE_TABULATED_POTENTIAL_HPP
 
 #include <utils/linear_interpolation.hpp>
-#include <utils/serialization/List.hpp>
 
 #include <boost/algorithm/clamp.hpp>
 #include <boost/serialization/access.hpp>

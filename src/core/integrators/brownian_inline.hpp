@@ -515,7 +515,7 @@ inline void brownian_dynamics_propagator(BrownianThermostat const &brownian,
       p.m.v += bd_random_walk_vel(brownian, p);
       /* Verlet criterion check */
       if ((p.r.p - p.l.p_old).norm2() > Utils::sqr(0.5 * skin))
-        set_resort_particles(Cells::RESORT_LOCAL);
+        cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
     }
 #ifdef ROTATION
     if (!p.p.rotation)

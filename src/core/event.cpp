@@ -125,7 +125,7 @@ void on_integration_start() {
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
-  immersed_boundaries.init_volume_conservation();
+  immersed_boundaries.init_volume_conservation(cell_structure);
 
   /* Prepare the thermostat */
   if (reinit_thermo) {
@@ -204,8 +204,7 @@ void on_particle_charge_change() {
 }
 
 void on_particle_change() {
-
-  set_resort_particles(Cells::RESORT_LOCAL);
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   reinit_electrostatics = true;
   reinit_magnetostatics = true;
 

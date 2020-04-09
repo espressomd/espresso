@@ -41,7 +41,6 @@
 #include "lb-d3q19.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
-#include "virtual_sites/lb_inertialess_tracers.hpp"
 
 #include "utils/u32_to_u64.hpp"
 #include <utils/Counter.hpp>
@@ -50,6 +49,7 @@
 #include <utils/uniform.hpp>
 using Utils::get_linear_index;
 #include <utils/constants.hpp>
+#include <utils/memory.hpp>
 
 #include <Random123/philox.h>
 #include <boost/multi_array.hpp>

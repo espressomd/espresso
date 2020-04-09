@@ -1697,7 +1697,7 @@ void p3m_count_charged_particles() {
     tot_sums[i] = 0.0;
   }
 
-  for (auto const &p : cell_structure.local_cells().particles()) {
+  for (auto const &p : cell_structure.local_particles()) {
     if (p.p.q != 0.0) {
       node_sums[0] += 1.0;
       node_sums[1] += Utils::sqr(p.p.q);

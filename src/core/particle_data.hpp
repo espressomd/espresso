@@ -39,7 +39,6 @@
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 
-#include <utils/List.hpp>
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
@@ -75,12 +74,6 @@ enum {
  * Functions
  ************************************************/
 
-/*       Functions acting on Particles          */
-/************************************************/
-
-/** Deallocate the dynamic storage of a particle. */
-void free_particle(Particle *part);
-
 /*    Other Functions                           */
 /************************************************/
 
@@ -101,15 +94,24 @@ const Particle &get_particle_data(int part);
 /**
  * @brief Fetch a range of particle into the fetch cache.
  *
+ *
  * If the range is larger than the cache size, only
  * the particle that fit into the cache are fetched.
  *
+ * The particles have to exist, an exception it throw
+ * if one of the the particles can not be found.
+ *
  * @param ids Ids of the particles that should be fetched.
  */
-void prefetch_particle_data(std::vector<int> ids);
+void prefetch_particle_data(Utils::Span<const int> ids);
 
 /** @brief Invalidate the fetch cache for get_particle_data. */
 void invalidate_fetch_cache();
+
+/** @brief Return the maximal number of particles that are
+ *         kept in the fetch cache.
+ */
+size_t fetch_cache_max_size();
 
 /** Call only on the master node.
  *  Move a particle to a new position.
@@ -318,6 +320,8 @@ void delete_particle_bonds(int part);
  */
 void add_particle_bond(int part, Utils::Span<const int> bond);
 
+const std::vector<BondView> &get_particle_bonds(int part);
+
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
  *  @param part     identity of particle for which the exclusion is set.
@@ -365,17 +369,6 @@ Particle *local_place_particle(int id, const Utils::Vector3d &pos, int _new);
  *  @param _delete if true, delete the exclusion instead of add
  */
 void local_change_exclusion(int part1, int part2, int _delete);
-
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Remove a particle on this node.
- *  @param part the identity of the particle to remove
- */
-void local_remove_particle(int part);
-
-/** Used by \ref mpi_remove_particle, should not be used elsewhere.
- *  Locally remove all particles.
- */
-void local_remove_all_particles();
 
 /** Used by \ref mpi_rescale_particles, should not be used elsewhere.
  *  Locally rescale all particles on current node.

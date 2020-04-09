@@ -63,24 +63,27 @@ int get_n_part_conf() {
  *                                 basic observables calculation
  ****************************************************************************************/
 
-double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
+double mindist(PartCfg &partCfg, const std::vector<int> &set1,
+               const std::vector<int> &set2) {
+  using Utils::contains;
+
   auto mindist2 = std::numeric_limits<double>::infinity();
 
   for (auto jt = partCfg.begin(); jt != partCfg.end(); ++jt) {
     /* check which sets particle j belongs to (bit 0: set1, bit1: set2) */
-    auto in_set = 0;
+    auto in_set = 0u;
     if (set1.empty() || contains(set1, jt->p.type))
-      in_set = 1;
+      in_set = 1u;
     if (set2.empty() || contains(set2, jt->p.type))
-      in_set |= 2;
+      in_set |= 2u;
     if (in_set == 0)
       continue;
 
     for (auto it = std::next(jt); it != partCfg.end(); ++it)
       /* accept a pair if particle j is in set1 and particle i in set2 or vice
        * versa. */
-      if (((in_set & 1) && (set2.empty() || contains(set2, it->p.type))) ||
-          ((in_set & 2) && (set1.empty() || contains(set1, it->p.type))))
+      if (((in_set & 1u) && (set2.empty() || contains(set2, it->p.type))) ||
+          ((in_set & 2u) && (set1.empty() || contains(set1, it->p.type))))
         mindist2 = std::min(mindist2,
                             get_mi_vector(jt->r.p, it->r.p, box_geo).norm2());
   }
@@ -89,11 +92,11 @@ double mindist(PartCfg &partCfg, IntList const &set1, IntList const &set2) {
 }
 
 Utils::Vector3d local_particle_momentum() {
-  auto const particles = cell_structure.local_cells().particles();
+  auto const particles = cell_structure.local_particles();
   auto const momentum =
       std::accumulate(particles.begin(), particles.end(), Utils::Vector3d{},
                       [](Utils::Vector3d &m, Particle const &p) {
-                        return std::move(m) + p.p.mass * p.m.v;
+                        return m + p.p.mass * p.m.v;
                       });
 
   return momentum;
@@ -172,9 +175,9 @@ void momentofinertiamatrix(PartCfg &partCfg, int type, double *MofImatrix) {
   MofImatrix[7] = MofImatrix[5];
 }
 
-IntList nbhood(PartCfg &partCfg, const Utils::Vector3d &pos, double r_catch,
-               const Utils::Vector3i &planedims) {
-  IntList ids;
+std::vector<int> nbhood(PartCfg &partCfg, const Utils::Vector3d &pos,
+                        double r_catch, const Utils::Vector3i &planedims) {
+  std::vector<int> ids;
 
   auto const r2 = r_catch * r_catch;
   auto const pt = Utils::Vector3d{pos[0], pos[1], pos[2]};
@@ -211,8 +214,8 @@ double distto(PartCfg &partCfg, const Utils::Vector3d &pos, int pid) {
   return std::sqrt(mindist);
 }
 
-void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
-                            int const *p2_types, int n_p2, double r_min,
+void calc_part_distribution(PartCfg &partCfg, std::vector<int> const &p1_types,
+                            std::vector<int> const &p2_types, double r_min,
                             double r_max, int r_bins, bool log_flag,
                             double *low, double *dist) {
   int ind, cnt = 0;
@@ -232,14 +235,14 @@ void calc_part_distribution(PartCfg &partCfg, int const *p1_types, int n_p1,
 
   /* particle loop: p1_types */
   for (auto const &p1 : partCfg) {
-    for (int t1 = 0; t1 < n_p1; t1++) {
-      if (p1.p.type == p1_types[t1]) {
+    for (int t1 : p1_types) {
+      if (p1.p.type == t1) {
         min_dist2 = start_dist2;
         /* particle loop: p2_types */
         for (auto const &p2 : partCfg) {
           if (p1 != p2) {
-            for (int t2 = 0; t2 < n_p2; t2++) {
-              if (p2.p.type == p2_types[t2]) {
+            for (int t2 : p2_types) {
+              if (p2.p.type == t2) {
                 auto const act_dist2 =
                     get_mi_vector(p1.r.p, p2.r.p, box_geo).norm2();
                 if (act_dist2 < min_dist2) {
@@ -417,19 +420,16 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
   }
 }
 
-std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
-                                         int n_types, int order) {
+std::vector<double> calc_structurefactor(PartCfg &partCfg,
+                                         std::vector<int> const &p_types,
+                                         int order) {
   auto const order2 = order * order;
   std::vector<double> ff;
   ff.resize(2 * order2);
   ff[2 * order2] = 0;
   auto const twoPI_L = 2 * Utils::pi() / box_geo.length()[0];
 
-  if ((n_types < 0) || (n_types > max_seen_particle_type)) {
-    fprintf(stderr, "WARNING: Wrong number of particle types!");
-    fflush(nullptr);
-    errexit();
-  } else if (order < 1) {
+  if (order < 1) {
     fprintf(stderr,
             "WARNING: parameter \"order\" has to be a whole positive number");
     fflush(nullptr);
@@ -445,8 +445,8 @@ std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
           if ((n <= order2) && (n >= 1)) {
             double C_sum = 0.0, S_sum = 0.0;
             for (auto const &p : partCfg) {
-              for (int t = 0; t < n_types; t++) {
-                if (p.p.type == p_types[t]) {
+              for (int t : p_types) {
+                if (p.p.type == t) {
                   auto const qr =
                       twoPI_L * (Utils::Vector3i{{i, j, k}} * p.r.p);
                   C_sum += cos(qr);
@@ -462,8 +462,8 @@ std::vector<double> calc_structurefactor(PartCfg &partCfg, int const *p_types,
     }
     int n = 0;
     for (auto const &p : partCfg) {
-      for (int t = 0; t < n_types; t++) {
-        if (p.p.type == p_types[t])
+      for (int t : p_types) {
+        if (p.p.type == t)
           n++;
       }
     }
@@ -536,10 +536,9 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   // Number of chunks for different interaction types
   stat->n_coulomb = n_coulomb;
   stat->n_dipolar = n_dipolar;
-  stat->n_non_bonded = n_non_bonded;
   stat->n_virtual_sites = n_vs;
   // Pointers to the start of different contributions
-  stat->bonded = stat->data.e + c_size * n_pre;
+  stat->bonded = stat->data.data() + c_size * n_pre;
   stat->non_bonded = stat->bonded + c_size * bonded_ia_params.size();
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
@@ -557,8 +556,7 @@ void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
 
   stat_nb->data_nb.resize(total);
   stat_nb->chunk_size_nb = c_size;
-  stat_nb->n_nonbonded = n_nonbonded;
-  stat_nb->non_bonded_intra = stat_nb->data_nb.e;
+  stat_nb->non_bonded_intra = stat_nb->data_nb.data();
   stat_nb->non_bonded_inter = stat_nb->non_bonded_intra + c_size * n_nonbonded;
 
   for (int i = 0; i < total; i++)
@@ -585,13 +583,13 @@ void update_pressure(int v_comp) {
         !(nptiso.invalidate_p_vel)) {
       if (total_pressure.init_status == 0)
         master_pressure_calc(0);
-      total_pressure.data.e[0] = 0.0;
+      total_pressure.data[0] = 0.0;
       MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0,
                  MPI_COMM_WORLD);
       for (int i = 0; i < 3; i++)
         if (nptiso.geometry & nptiso.nptgeom_dir[i])
-          total_pressure.data.e[0] += p_vel[i];
-      total_pressure.data.e[0] /= (nptiso.dimension * nptiso.volume);
+          total_pressure.data[0] += p_vel[i];
+      total_pressure.data[0] /= (nptiso.dimension * nptiso.volume);
       total_pressure.init_status = 1 + v_comp;
     } else
       master_pressure_calc(v_comp);

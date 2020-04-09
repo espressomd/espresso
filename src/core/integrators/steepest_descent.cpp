@@ -89,7 +89,7 @@ bool steepest_descent_step(const ParticleRange &particles) {
     f_max = std::max(f_max, f);
   }
 
-  set_resort_particles(Cells::RESORT_LOCAL);
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   // Synchronize maximum force/torque encountered
   namespace mpi = boost::mpi;

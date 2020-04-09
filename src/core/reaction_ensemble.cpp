@@ -22,7 +22,7 @@
 #include "reaction_ensemble.hpp"
 #include "Particle.hpp"
 #include "energy.hpp"
-#include "global.hpp"
+#include "grid.hpp"
 #include "integrate.hpp"
 #include "partCfg_global.hpp"
 

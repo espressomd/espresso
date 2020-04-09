@@ -17,16 +17,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Here we create something to handle particles
-from .utils cimport Vector4d, Vector3d, Vector3i, List, Span
+from .utils cimport Vector4d, Vector3d, Vector3i, Span
 from libcpp cimport bool
 from libcpp.vector cimport vector  # import std::vector as vector
 from libc cimport stdint
 
 include "myconfig.pxi"
 
-# Import particle data structures and setter functions from particle_data.hpp
+from .utils cimport Span
 
+# Import particle data structures and setter functions from particle_data.hpp
 cdef extern from "particle_data.hpp":
+    cppclass BondView:
+        int bond_id()
+        Span[const int] partner_ids()
+
     # DATA STRUCTURES
     stdint.uint8_t ROTATION_X
     stdint.uint8_t ROTATION_Y
@@ -62,8 +67,7 @@ cdef extern from "particle_data.hpp":
         particle_momentum m
         particle_force f
         particle_local l
-        List[int] bl
-        List[int] exclusions() except +
+        vector[int] exclusions() except +
         Vector3d calc_dip()
 
     IF ENGINE:
@@ -100,7 +104,7 @@ cdef extern from "particle_data.hpp":
 
     IF LB_ELECTROHYDRODYNAMICS:
         void set_particle_mu_E(int part, double mu_E[3])
-        void get_particle_mu_E(int part, double (& mu_E)[3])
+        void get_particle_mu_E(int part, double ( & mu_E)[3])
 
     void set_particle_type(int part, int type)
 
@@ -166,6 +170,7 @@ cdef extern from "particle_data.hpp":
     void delete_particle_bond(int part, Span[const int] bond)
     void delete_particle_bonds(int part)
     void add_particle_bond(int part, Span[const int] bond)
+    const vector[BondView] & get_particle_bonds(int part)
 
     IF EXCLUSIONS:
         int change_exclusion(int part, int part2, int _delete)

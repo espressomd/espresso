@@ -25,8 +25,8 @@
  * @brief Particles' current configuration.
  *
  * Particle coordinates are unfolded.
- * For documentation see @ref ParticleCache
+ * For documentation see @ref PartCfg
  */
-PartCfg &partCfg(std::unique_ptr<PartCfg> init = std::unique_ptr<PartCfg>{});
+PartCfg &partCfg();
 
 #endif

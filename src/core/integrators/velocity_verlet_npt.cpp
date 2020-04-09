@@ -129,7 +129,7 @@ void velocity_verlet_npt_propagate_pos(const ParticleRange &particles) {
     }
   }
 
-  set_resort_particles(Cells::RESORT_LOCAL);
+  cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
 
   /* Apply new volume to the box-length, communicate it, and account for
    * necessary adjustments to the cell geometry */

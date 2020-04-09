@@ -28,9 +28,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
-#include "particle_index.hpp"
 
-#include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
 #include <utils/mpi/sendrecv.hpp>
 using Utils::get_linear_index;
@@ -172,7 +170,7 @@ void dd_create_cell_grid(double range) {
   cell_structure.max_range = dd.cell_size;
 
   /* allocate cell array and cell pointer arrays */
-  realloc_cells(new_cells);
+  cells.resize(new_cells);
   cell_structure.m_local_cells.resize(n_local_cells);
   cell_structure.m_ghost_cells.resize(new_cells - n_local_cells);
 }
@@ -578,8 +576,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
 }
 
 /************************************************************/
-void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
-                      const double range) {
+void dd_topology_init(const Utils::Vector3i &grid, double range) {
   /* Min num cells can not be smaller than calc_processor_min_num_cells,
    * but may be set to a larger value by the user for performance reasons. */
   min_num_cells = std::max(min_num_cells, calc_processor_min_num_cells(grid));
@@ -605,23 +602,6 @@ void dd_topology_init(CellPList *old, const Utils::Vector3i &grid,
   dd_assign_prefetches(&cell_structure.collect_ghost_force_comm);
 
   dd_init_cell_interactions(grid);
-
-  /* copy particles */
-  for (int c = 0; c < old->n; c++) {
-    for (auto &p : old->cell[c]->particles()) {
-      Cell *nc = dd_save_position_to_cell(p.r.p);
-
-      /* particle does not belong to this node. Just stow away
-         somewhere for the moment */
-      if (nc == nullptr)
-        nc = cell_structure.m_local_cells[0];
-      append_unindexed_particle(nc, std::move(p));
-    }
-  }
-
-  for (auto &c : cell_structure.m_local_cells) {
-    update_local_particles(c);
-  }
 }
 
 /************************************************************/
@@ -635,6 +615,7 @@ void dd_topology_release() {
 }
 
 namespace {
+
 /**
  * @brief Move particles into the cell system if it belongs to this node.
  *
@@ -644,24 +625,24 @@ namespace {
  *
  * @param src Particles to move.
  * @param rest Output list for left-over particles.
+ * @param modified_cells Local cells that were touched.
  */
-void move_if_local(ParticleList &src, ParticleList &rest) {
-  for (int i = 0; i < src.n; i++) {
-    auto &part = src.part[i];
-
-    assert(get_local_particle_data(src.part[i].p.identity) == nullptr);
+void move_if_local(ParticleList &src, ParticleList &rest,
+                   std::vector<Cell *> &modified_cells) {
+  for (auto &part : src) {
+    assert(cell_structure.get_local_particle(part.p.identity) == nullptr);
 
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      append_indexed_particle(target_cell, std::move(src.part[i]));
+      target_cell->particles().insert(std::move(part));
+      modified_cells.push_back(target_cell);
     } else {
-
-      append_unindexed_particle(&rest, std::move(src.part[i]));
+      rest.insert(std::move(part));
     }
   }
 
-  src.resize(0);
+  src.clear();
 }
 
 /**
@@ -679,34 +660,31 @@ void move_if_local(ParticleList &src, ParticleList &rest) {
  */
 void move_left_or_right(ParticleList &src, ParticleList &left,
                         ParticleList &right, int dir) {
-  for (int i = 0; i < src.n; i++) {
-    auto &part = src.part[i];
+  for (auto it = src.begin(); it != src.end();) {
+    assert(cell_structure.get_local_particle(it->p.identity) == nullptr);
 
-    assert(get_local_particle_data(src.part[i].p.identity) == nullptr);
-
-    if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir],
-                     box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) {
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0)) {
-
-        move_unindexed_particle(&left, &src, i);
-        if (i < src.n)
-          i--;
-      }
-    } else if (get_mi_coord(part.r.p[dir], local_geo.my_right()[dir],
-                            box_geo.length()[dir],
-                            box_geo.periodic(dir)) >= 0.0) {
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + 1] == 0)) {
-
-        move_unindexed_particle(&right, &src, i);
-        if (i < src.n)
-          i--;
-      }
+    if ((get_mi_coord(it->r.p[dir], local_geo.my_left()[dir],
+                      box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) and
+        (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0))) {
+      left.insert(std::move(*it));
+      it = src.erase(it);
+    } else if ((get_mi_coord(it->r.p[dir], local_geo.my_right()[dir],
+                             box_geo.length()[dir],
+                             box_geo.periodic(dir)) >= 0.0) and
+               (box_geo.periodic(dir) ||
+                (local_geo.boundary()[2 * dir + 1] == 0))) {
+      right.insert(std::move(*it));
+      it = src.erase(it);
+    } else {
+      ++it;
     }
   }
-}
+} // namespace
 
-void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
+void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid,
+                        std::vector<Cell *> &modified_cells) {
   auto const node_neighbors = calc_node_neighbors(comm_cart);
+  static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
@@ -716,20 +694,15 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
          the same, and we need only one communication */
     }
     if (grid[dir] == 2) {
-      ParticleList send_buf, recv_buf;
-      move_left_or_right(*pl, send_buf, send_buf, dir);
+      move_left_or_right(*pl, send_buf_l, send_buf_l, dir);
 
-      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf,
-                           node_neighbors[2 * dir], 0, recv_buf);
+      Utils::Mpi::sendrecv(comm_cart, node_neighbors[2 * dir], 0, send_buf_l,
+                           node_neighbors[2 * dir], 0, recv_buf_l);
 
-      send_buf.clear();
-
-      move_if_local(recv_buf, *pl);
+      send_buf_l.clear();
     } else {
       using boost::mpi::request;
       using Utils::Mpi::isendrecv;
-
-      ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
 
       move_left_or_right(*pl, send_buf_l, send_buf_r, dir);
 
@@ -742,35 +715,36 @@ void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid) {
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-      move_if_local(recv_buf_l, *pl);
-      move_if_local(recv_buf_r, *pl);
-
       send_buf_l.clear();
       send_buf_r.clear();
     }
+
+    move_if_local(recv_buf_l, *pl, modified_cells);
+    move_if_local(recv_buf_r, *pl, modified_cells);
   }
 }
 } // namespace
 
 void dd_exchange_and_sort_particles(int global, ParticleList *pl,
-                                    const Utils::Vector3i &grid) {
+                                    const Utils::Vector3i &grid,
+                                    std::vector<Cell *> &modified_cells) {
   if (global) {
     /* Worst case we need grid - 1 rounds per direction.
      * This correctly implies that if there is only one node,
      * no action should be taken. */
     int rounds_left = grid[0] + grid[1] + grid[2] - 3;
     for (; rounds_left > 0; rounds_left--) {
-      exchange_neighbors(pl, grid);
+      exchange_neighbors(pl, grid, modified_cells);
 
       auto left_over =
-          boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
+          boost::mpi::all_reduce(comm_cart, pl->size(), std::plus<size_t>());
 
       if (left_over == 0) {
         break;
       }
     }
   } else {
-    exchange_neighbors(pl, grid);
+    exchange_neighbors(pl, grid, modified_cells);
   }
 }
 
