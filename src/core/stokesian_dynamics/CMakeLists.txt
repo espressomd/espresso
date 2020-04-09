@@ -14,5 +14,5 @@ install(TARGETS sd_interface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 # endif()
 
 if(STOKESIAN_DYNAMICS)
-  target_link_libraries(sd_interface PUBLIC sd_cpu)
+  target_link_libraries(sd_interface PRIVATE EspressoCore PUBLIC sd_cpu)
 endif()
