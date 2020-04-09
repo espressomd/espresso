@@ -1,7 +1,6 @@
 include(FindPackageHandleStandardArgs)
 
 set(SPHINX_EXECUTABLE ${PYTHON_EXECUTABLE} -m sphinx)
-set(SPHINX_API_DOC_EXE ${PYTHON_EXECUTABLE} -m sphinx.apidoc)
 
 execute_process(
   COMMAND ${SPHINX_EXECUTABLE} --version OUTPUT_VARIABLE QUERY_VERSION_OUT
@@ -18,6 +17,12 @@ if(NOT QUERY_VERSION_RESULT)
   endif()
 
   string(REGEX MATCH "[0-9]+\.[0-9.]+" SPHINX_VERSION "${QUERY_VERSION}")
+
+  if("${SPHINX_VERSION}" VERSION_LESS "1.7")
+    set(SPHINX_API_DOC_EXE ${PYTHON_EXECUTABLE} -m sphinx.apidoc)
+  else()
+    set(SPHINX_API_DOC_EXE ${PYTHON_EXECUTABLE} -m sphinx.ext.apidoc)
+  endif()
 endif()
 
 set(SPHINX_VERSION_COMPATIBLE TRUE)
