@@ -1,18 +1,9 @@
-add_library(sd_interface SHARED sd_interface.cpp)
-target_include_directories(sd_interface PRIVATE
-  ${CMAKE_BINARY_DIR}/src/core
-  ${CMAKE_SOURCE_DIR}/src/core
-  ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics
+target_include_directories(EspressoCore PRIVATE
   ${CMAKE_SOURCE_DIR}/libs/stokesian_dynamics
+  ${CMAKE_SOURCE_DIR}/src/core/stokesian_dynamics
 )
-target_link_libraries(sd_interface PRIVATE EspressoConfig PUBLIC Boost::mpi MPI::MPI_CXX Random123 utils)
-install(TARGETS sd_interface LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
 
-# temporarily removed to test CI for CPU
-# if (STOKESIAN_DYNAMICS_GPU)
-#   target_link_libraries(sd_interface PUBLIC sd_gpu)
-# endif()
+target_sources(EspressoCore PRIVATE 
+    ${CMAKE_CURRENT_SOURCE_DIR}/sd_interface.cpp)
 
-if(STOKESIAN_DYNAMICS)
-  target_link_libraries(sd_interface PUBLIC sd_cpu)
-endif()
+
