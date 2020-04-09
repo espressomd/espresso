@@ -254,7 +254,7 @@ napoleon_use_param = False
 autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'mayavi', 'pyface', 'tvtk', 'vtk', 'MDAnalysis', 'electrostatics']
 
 def setup(app):
-    app.add_stylesheet('bibtex.css')
+    app.add_css_file('bibtex.css')
 
 
 # -- Options for Cython ---------------------------------------------------
