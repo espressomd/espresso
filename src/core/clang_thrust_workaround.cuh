@@ -15,5 +15,4 @@ using namespace thrust::cuda_cub::cub;
 #include <thrust/reduce.h>
 #endif
 
-
 #endif
