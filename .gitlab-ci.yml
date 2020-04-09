@@ -109,6 +109,7 @@ ubuntu-20.04-sanitizer:
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900 ASAN_OPTIONS="allocator_may_return_null=1" OMPI_CC=clang-9 OMPI_CXX=clang++-9 CC=clang-9 CXX=clang++-9 UBSAN_OPTIONS=suppressions=${CI_PROJECT_DIR}/maintainer/CI/ubsan.supp
     - bash maintainer/CI/build_cmake.sh
+  timeout: 2h
   tags:
     - docker
     - linux
