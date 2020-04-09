@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Here we create something to handle particles
-from .utils cimport Vector4d, Vector3d, Vector3i, List, Span
+from .utils cimport Vector4d, Vector3d, Vector3i, Span
 from libcpp cimport bool
 from libcpp.vector cimport vector  # import std::vector as vector
 from libc cimport stdint
@@ -67,7 +67,7 @@ cdef extern from "particle_data.hpp":
         particle_momentum m
         particle_force f
         particle_local l
-        List[int] exclusions() except +
+        vector[int] exclusions() except +
         Vector3d calc_dip()
 
     IF ENGINE:

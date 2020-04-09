@@ -30,7 +30,7 @@ import collections
 import functools
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector4d, List
+from .utils cimport Vector3i, Vector3d, Vector4d
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -1066,12 +1066,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef List[int] exclusions = self.particle_data.exclusions()
-
-                py_partners = []
-                for i in range(exclusions.n):
-                    py_partners.append(exclusions.e[i])
-                return array_locked(py_partners)
+                return array_locked(self.particle_data.exclusions())
 
         def add_exclusion(self, _partner):
             """
