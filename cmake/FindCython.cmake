@@ -22,24 +22,7 @@
 # limitations under the License.
 #=============================================================================
 
-# Use the Cython executable that lives next to the Python executable
-# if it is a local installation.
-if( PYTHONINTERP_FOUND )
-  get_filename_component( _python_path ${PYTHON_EXECUTABLE} PATH )
-  find_program( CYTHON_EXECUTABLE
-    NAMES cython cython.bat cython3
-    HINTS ${_python_path}
-    )
-else()
-  find_program( CYTHON_EXECUTABLE
-    NAMES cython cython.bat cython3
-    )
-endif()
-
-# Check version
-if(NOT CYTHON_EXECUTABLE)
-  set(CYTHON_EXECUTABLE ${PYTHON_EXECUTABLE} -m cython)
-endif()
+set(CYTHON_EXECUTABLE ${PYTHON_EXECUTABLE} -m cython)
 execute_process(COMMAND ${CYTHON_EXECUTABLE} -V
                 ERROR_VARIABLE CYTHON_OUTPUT RESULT_VARIABLE CYTHON_STATUS OUTPUT_QUIET)
 if(CYTHON_STATUS EQUAL 0)
