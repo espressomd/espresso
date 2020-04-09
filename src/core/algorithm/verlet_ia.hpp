@@ -23,11 +23,9 @@
 
 namespace Algorithm {
 namespace detail {
-
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename DistanceFunction, typename VerletCriterion>
+template <typename CellIterator, typename PairKernel, typename DistanceFunction,
+          typename VerletCriterion>
 void update_and_kernel(CellIterator first, CellIterator last,
-                       ParticleKernel &&particle_kernel,
                        PairKernel &&pair_kernel,
                        DistanceFunction &&distance_function,
                        VerletCriterion &&verlet_criterion) {
@@ -38,8 +36,6 @@ void update_and_kernel(CellIterator first, CellIterator last,
     for (auto it = first->particles().begin(); it != first->particles().end();
          ++it) {
       auto &p1 = *it;
-
-      particle_kernel(p1);
 
       /* Pairs in this cell */
       for (auto jt = std::next(it); jt != first->particles().end(); ++jt) {
@@ -64,16 +60,10 @@ void update_and_kernel(CellIterator first, CellIterator last,
   }
 }
 
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename DistanceFunction>
-void kernel(CellIterator first, CellIterator last,
-            ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
+template <typename CellIterator, typename PairKernel, typename DistanceFunction>
+void kernel(CellIterator first, CellIterator last, PairKernel &&pair_kernel,
             DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
-    for (auto &p : first->particles()) {
-      particle_kernel(p);
-    }
-
     for (auto &pair : first->m_verlet_list) {
       auto const dist = distance_function(*pair.first, *pair.second);
       pair_kernel(*pair.first, *pair.second, dist);
@@ -88,21 +78,18 @@ void kernel(CellIterator first, CellIterator last,
  *        If rebuild is true, all neighbor cells are iterated
  *        and the Verlet lists are updated with the so found pairs.
  */
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename DistanceFunction, typename VerletCriterion>
-void verlet_ia(CellIterator first, CellIterator last,
-               ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
+template <typename CellIterator, typename PairKernel, typename DistanceFunction,
+          typename VerletCriterion>
+void verlet_ia(CellIterator first, CellIterator last, PairKernel &&pair_kernel,
                DistanceFunction &&distance_function,
                VerletCriterion &&verlet_criterion, bool rebuild) {
   if (rebuild) {
     detail::update_and_kernel(first, last,
-                              std::forward<ParticleKernel>(particle_kernel),
                               std::forward<PairKernel>(pair_kernel),
                               std::forward<DistanceFunction>(distance_function),
                               std::forward<VerletCriterion>(verlet_criterion));
   } else {
-    detail::kernel(first, last, std::forward<ParticleKernel>(particle_kernel),
-                   std::forward<PairKernel>(pair_kernel),
+    detail::kernel(first, last, std::forward<PairKernel>(pair_kernel),
                    std::forward<DistanceFunction>(distance_function));
   }
 }
