@@ -22,6 +22,7 @@
 #if defined(__CUDACC__)
 
 #include <cuda.h>
+#include "clang_thrust_workaround.cuh"
 
 #endif
 
