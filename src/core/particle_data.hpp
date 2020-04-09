@@ -39,7 +39,6 @@
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 
-#include <utils/List.hpp>
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 

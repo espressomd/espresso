@@ -536,10 +536,9 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
   // Number of chunks for different interaction types
   stat->n_coulomb = n_coulomb;
   stat->n_dipolar = n_dipolar;
-  stat->n_non_bonded = n_non_bonded;
   stat->n_virtual_sites = n_vs;
   // Pointers to the start of different contributions
-  stat->bonded = stat->data.e + c_size * n_pre;
+  stat->bonded = stat->data.data() + c_size * n_pre;
   stat->non_bonded = stat->bonded + c_size * bonded_ia_params.size();
   stat->coulomb = stat->non_bonded + c_size * n_non_bonded;
   stat->dipolar = stat->coulomb + c_size * n_coulomb;
@@ -557,8 +556,7 @@ void obsstat_realloc_and_clear_non_bonded(Observable_stat_non_bonded *stat_nb,
 
   stat_nb->data_nb.resize(total);
   stat_nb->chunk_size_nb = c_size;
-  stat_nb->n_nonbonded = n_nonbonded;
-  stat_nb->non_bonded_intra = stat_nb->data_nb.e;
+  stat_nb->non_bonded_intra = stat_nb->data_nb.data();
   stat_nb->non_bonded_inter = stat_nb->non_bonded_intra + c_size * n_nonbonded;
 
   for (int i = 0; i < total; i++)
@@ -585,13 +583,13 @@ void update_pressure(int v_comp) {
         !(nptiso.invalidate_p_vel)) {
       if (total_pressure.init_status == 0)
         master_pressure_calc(0);
-      total_pressure.data.e[0] = 0.0;
+      total_pressure.data[0] = 0.0;
       MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0,
                  MPI_COMM_WORLD);
       for (int i = 0; i < 3; i++)
         if (nptiso.geometry & nptiso.nptgeom_dir[i])
-          total_pressure.data.e[0] += p_vel[i];
-      total_pressure.data.e[0] /= (nptiso.dimension * nptiso.volume);
+          total_pressure.data[0] += p_vel[i];
+      total_pressure.data[0] /= (nptiso.dimension * nptiso.volume);
       total_pressure.init_status = 1 + v_comp;
     } else
       master_pressure_calc(v_comp);

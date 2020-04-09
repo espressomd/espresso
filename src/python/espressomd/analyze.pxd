@@ -19,7 +19,7 @@
 
 # For C-extern Analysis
 
-from .utils cimport Vector3i, Vector3d, Vector9d, List
+from .utils cimport Vector3i, Vector3d, Vector9d
 from libcpp.vector cimport vector  # import std::vector as vector
 
 cdef extern from "<array>" namespace "std" nogil:
@@ -47,7 +47,7 @@ cdef extern from "statistics.hpp":
 
     ctypedef struct Observable_stat:
         int init_status
-        List[double] data
+        vector[double] data
         int n_coulomb
         int n_dipolar
         int n_non_bonded

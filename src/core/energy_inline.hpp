@@ -314,7 +314,7 @@ inline void add_kinetic_energy(Particle const &p1) {
 
   /* kinetic energy */
   if (not p1.p.is_virtual)
-    energy.data.e[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
+    energy.data[0] += 0.5 * p1.p.mass * p1.m.v.norm2();
 
     // Note that rotational degrees of virtual sites are integrated
     // and therefore can contribute to kinetic energy
@@ -322,9 +322,9 @@ inline void add_kinetic_energy(Particle const &p1) {
   if (p1.p.rotation) {
     /* the rotational part is added to the total kinetic energy;
        Here we use the rotational inertia  */
-    energy.data.e[0] += 0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
-                               Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
-                               Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
+    energy.data[0] += 0.5 * (Utils::sqr(p1.m.omega[0]) * p1.p.rinertia[0] +
+                             Utils::sqr(p1.m.omega[1]) * p1.p.rinertia[1] +
+                             Utils::sqr(p1.m.omega[2]) * p1.p.rinertia[2]);
   }
 #endif
 }
