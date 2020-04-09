@@ -51,21 +51,19 @@ namespace Algorithm {
  * PairKernel has to provide an %operator() member that can be called
  * with two particle references and a distance.
  */
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename DistanceFunction, typename VerletCriterion>
+template <typename CellIterator, typename PairKernel, typename DistanceFunction,
+          typename VerletCriterion>
 void for_each_pair(CellIterator first, CellIterator last,
-                   ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
+                   PairKernel &&pair_kernel,
                    DistanceFunction &&distance_function,
                    VerletCriterion &&verlet_criterion, bool use_verlet_list,
                    bool rebuild) {
   if (use_verlet_list) {
-    verlet_ia(first, last, std::forward<ParticleKernel>(particle_kernel),
-              std::forward<PairKernel>(pair_kernel),
+    verlet_ia(first, last, std::forward<PairKernel>(pair_kernel),
               std::forward<DistanceFunction>(distance_function),
               std::forward<VerletCriterion>(verlet_criterion), rebuild);
   } else {
-    link_cell(first, last, std::forward<ParticleKernel>(particle_kernel),
-              std::forward<PairKernel>(pair_kernel),
+    link_cell(first, last, std::forward<PairKernel>(pair_kernel),
               std::forward<DistanceFunction>(distance_function));
   }
 }

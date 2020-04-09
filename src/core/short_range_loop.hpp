@@ -59,21 +59,19 @@ struct EuclidianDistance {
  * @brief Decide which distance function to use depending on the
  * cell system, and call the pair code.
  */
-template <typename CellIterator, typename ParticleKernel, typename PairKernel,
-          typename VerletCriterion>
+template <typename CellIterator, typename PairKernel, typename VerletCriterion>
 void decide_distance(CellIterator first, CellIterator last,
-                     ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
+                     PairKernel &&pair_kernel,
                      VerletCriterion &&verlet_criterion) {
   if (cell_structure.minimum_image_distance()) {
-    Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), MinimalImageDistance{box_geo},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
+    Algorithm::for_each_pair(first, last, std::forward<PairKernel>(pair_kernel),
+                             MinimalImageDistance{box_geo},
+                             std::forward<VerletCriterion>(verlet_criterion),
+                             cell_structure.use_verlet_list,
+                             rebuild_verletlist);
   } else {
     Algorithm::for_each_pair(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
+        first, last, std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
         std::forward<VerletCriterion>(verlet_criterion),
         cell_structure.use_verlet_list, rebuild_verletlist);
   }
@@ -96,21 +94,21 @@ void short_range_loop(ParticleKernel &&particle_kernel,
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
+  auto local_particles = cell_structure.local_particles();
+  for (auto &p : local_particles) {
+    particle_kernel(p);
+  }
+
   if (interaction_range() != INACTIVE_CUTOFF) {
     auto first =
         boost::make_indirect_iterator(cell_structure.local_cells().begin());
     auto last =
         boost::make_indirect_iterator(cell_structure.local_cells().end());
 
-    detail::decide_distance(
-        first, last, std::forward<ParticleKernel>(particle_kernel),
-        std::forward<PairKernel>(pair_kernel), verlet_criterion);
+    detail::decide_distance(first, last, std::forward<PairKernel>(pair_kernel),
+                            verlet_criterion);
 
     rebuild_verletlist = false;
-  } else {
-    for (auto &p : cell_structure.local_particles()) {
-      particle_kernel(p);
-    }
   }
 }
 
