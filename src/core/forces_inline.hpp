@@ -334,288 +334,195 @@ inline boost::optional<Utils::Vector3d>
 calc_bond_pair_force(Particle const &p1, Particle const &p2,
                      Bonded_ia_parameters const &iaparams,
                      Utils::Vector3d const &dx, Utils::Vector3d &torque) {
-
-  boost::optional<Utils::Vector3d> result;
-
   switch (iaparams.type) {
   case BONDED_IA_FENE:
-    result = fene_pair_force(iaparams, dx);
-    break;
+    return fene_pair_force(iaparams, dx);
 #ifdef ROTATION
   case BONDED_IA_HARMONIC_DUMBBELL: {
     auto values =
         harmonic_dumbbell_pair_force(p1.r.calc_director(), iaparams, dx);
     if (values) {
-      result = boost::optional<Utils::Vector3d>(std::get<0>(values.get()));
       torque = std::get<1>(values.get());
-    } else {
-      result = boost::optional<Utils::Vector3d>();
+      return boost::optional<Utils::Vector3d>(std::get<0>(values.get()));
     }
-    break;
+
+    return {};
   }
 #endif
   case BONDED_IA_HARMONIC:
-    result = harmonic_pair_force(iaparams, dx);
-    break;
+    return harmonic_pair_force(iaparams, dx);
   case BONDED_IA_QUARTIC:
-    result = quartic_pair_force(iaparams, dx);
-    break;
+    return quartic_pair_force(iaparams, dx);
 #ifdef ELECTROSTATICS
   case BONDED_IA_BONDED_COULOMB:
-    result = bonded_coulomb_pair_force(p1.p.q * p2.p.q, iaparams, dx);
-    break;
+    return bonded_coulomb_pair_force(p1.p.q * p2.p.q, iaparams, dx);
   case BONDED_IA_BONDED_COULOMB_SR:
-    result = bonded_coulomb_sr_pair_force(iaparams, dx);
-    break;
+    return bonded_coulomb_sr_pair_force(iaparams, dx);
 #endif
 #ifdef LENNARD_JONES
   case BONDED_IA_SUBT_LJ:
-    result = subt_lj_pair_force(*get_ia_param(p1.p.type, p2.p.type), dx);
-    break;
+    return subt_lj_pair_force(*get_ia_param(p1.p.type, p2.p.type), dx);
 #endif
   case BONDED_IA_TABULATED_DISTANCE:
-    result = tab_bond_force(iaparams, dx);
-    break;
+    return tab_bond_force(iaparams, dx);
 #ifdef UMBRELLA
   case BONDED_IA_UMBRELLA:
-    result = umbrella_pair_force(iaparams, dx);
-    break;
+    return umbrella_pair_force(iaparams, dx);
 #endif
+  case BONDED_IA_VIRTUAL_BOND:
+  case BONDED_IA_RIGID_BOND:
+    return Utils::Vector3d{};
   default:
-    result = boost::optional<Utils::Vector3d>(Utils::Vector3d{});
-    break;
-
+    throw BondUnknownTypeError(iaparams.type);
   } // switch type
-
-  return result;
 }
 
-/** Calculate bonded forces for one particle.
- *  @param p1   particle for which to calculate forces
- */
-inline void add_bonded_force(Particle *const p1) {
-  int i = 0;
-  while (i < p1->bl.n) {
-    Utils::Vector3d force1{};
-    Utils::Vector3d force2{};
-    Utils::Vector3d force3{};
-    Utils::Vector3d force4{};
-    Utils::Vector3d torque1{};
-    Particle *p2 = nullptr;
-    Particle *p3 = nullptr;
-    Particle *p4 = nullptr;
-    int type_num = p1->bl.e[i++];
-    Bonded_ia_parameters const &iaparams = bonded_ia_params[type_num];
-    int type = iaparams.type;
-    int n_partners = iaparams.num;
-    bool bond_broken = true;
+inline bool add_bonded_two_body_force(Bonded_ia_parameters const &iaparams,
+                                      Particle &p1, Particle &p2) {
+  auto const dx = get_mi_vector(p1.r.p, p2.r.p, box_geo);
 
-    if (n_partners) {
-      p2 = cell_structure.get_local_particle(p1->bl.e[i++]);
-      if (!p2) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity;
-        return;
-      }
+  switch (iaparams.type) {
+  case BONDED_IA_THERMALIZED_DIST: {
+    auto result = thermalized_bond_forces(p1, p2, iaparams, dx);
+    if (result) {
+      using std::get;
+      p1.f.f += get<0>(result.get());
+      p2.f.f += get<1>(result.get());
 
-      /* fetch particle 3 eventually */
-      if (n_partners >= 2) {
-        p3 = cell_structure.get_local_particle(p1->bl.e[i++]);
-        if (!p3) {
-          runtimeErrorMsg()
-              << "bond broken between particles " << p1->p.identity << ", "
-              << p1->bl.e[i - 2] << " and " << p1->bl.e[i - 1]
-              << " (particles are not stored on the same node)";
-          return;
-        }
-      }
-
-      /* fetch particle 4 eventually */
-      if (n_partners >= 3) {
-        p4 = cell_structure.get_local_particle(p1->bl.e[i++]);
-        if (!p4) {
-          runtimeErrorMsg()
-              << "bond broken between particles " << p1->p.identity << ", "
-              << p1->bl.e[i - 3] << ", " << p1->bl.e[i - 2] << " and "
-              << p1->bl.e[i - 1] << " (particles not stored on the same node)";
-          return;
-        }
-      }
+      return false;
     }
+  }
+  default: {
+    Utils::Vector3d torque1{};
+    auto result = calc_bond_pair_force(p1, p2, iaparams, dx, torque1);
+    if (result) {
+      p1.f.f += result.get();
+      p2.f.f -= result.get();
 
-    if (n_partners == 1) {
-      /* because of the NPT pressure calculation for pair forces, we need the
-         1->2 distance vector here. For many body interactions this vector is
-         not needed,
-         and the pressure calculation not yet clear. */
-      auto const dx = get_mi_vector(p1->r.p, p2->r.p, box_geo);
-      auto result = calc_bond_pair_force(*p1, *p2, iaparams, dx, torque1);
-      if (result) {
-        force1 = result.get();
-        bond_broken = false;
-      }
+#ifdef ROTATION
+      p1.f.torque += torque1;
+#endif
 
 #ifdef NPT
-      npt_add_virial_contribution(force1, dx);
+      npt_add_virial_contribution(result.get(), dx);
 #endif
+      return false;
+    }
+  }
+  }
 
-      switch (type) {
-      case BONDED_IA_THERMALIZED_DIST: {
-        auto result = thermalized_bond_forces(*p1, *p2, iaparams, dx);
-        if (result) {
-          std::tie(force1, force2) = result.get();
-          bond_broken = false;
-        }
-        break;
-      }
-      default:
-        break;
-      }
-    } // 1 partner
-    else if (n_partners == 2) {
-      switch (type) {
-      case BONDED_IA_ANGLE_HARMONIC:
-        std::tie(force1, force2, force3) =
-            angle_harmonic_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
-        bond_broken = false;
-        break;
-      case BONDED_IA_ANGLE_COSINE:
-        std::tie(force1, force2, force3) =
-            angle_cosine_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
-        bond_broken = false;
-        break;
-      case BONDED_IA_ANGLE_COSSQUARE:
-        std::tie(force1, force2, force3) =
-            angle_cossquare_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
-        bond_broken = false;
-        break;
-      case BONDED_IA_OIF_GLOBAL_FORCES:
-        bond_broken = false;
-        break;
-      case BONDED_IA_TABULATED_ANGLE:
-        std::tie(force1, force2, force3) =
-            tab_angle_force(p1->r.p, p2->r.p, p3->r.p, iaparams);
-        bond_broken = false;
-        break;
-      case BONDED_IA_IBM_TRIEL: {
-        auto result = IBM_Triel_CalcForce(*p1, *p2, *p3, iaparams);
-        if (result) {
-          std::tie(force1, force2, force3) = result.get();
-          bond_broken = false;
-        }
-        break;
-      }
-      default:
-        runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown " << type << ","
-                          << n_partners << "\n";
-        return;
-      }
-    } // 2 partners (angle bonds...)
-    else if (n_partners == 3) {
-      switch (type) {
-      case BONDED_IA_OIF_LOCAL_FORCES:
-        // in OIF nomenclature, particles p2 and p3 are common to both triangles
-        std::tie(force1, force2, force3, force4) =
-            calc_oif_local(*p1, *p2, *p3, *p4, iaparams);
-        bond_broken = false;
-        break;
-      // IMMERSED_BOUNDARY
-      case BONDED_IA_IBM_TRIBEND:
-        std::tie(force1, force2, force3, force4) =
-            IBM_Tribend_CalcForce(*p1, *p2, *p3, *p4, iaparams);
-        bond_broken = false;
-        break;
-      case BONDED_IA_DIHEDRAL: {
-        auto result =
-            dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
-        if (result) {
-          std::tie(force1, force2, force3) = result.get();
-          force4 = -(force1 + force2 + force3);
-          bond_broken = false;
-        }
-        break;
-      }
-      case BONDED_IA_TABULATED_DIHEDRAL: {
-        auto result =
-            tab_dihedral_force(p2->r.p, p1->r.p, p3->r.p, p4->r.p, iaparams);
-        if (result) {
-          std::tie(force1, force2, force3) = result.get();
-          force4 = -(force1 + force2 + force3);
-          bond_broken = false;
-        }
-        break;
-      }
-      default:
-        runtimeErrorMsg() << "add_bonded_force: bond type of atom "
-                          << p1->p.identity << " unknown " << type << ","
-                          << n_partners << "\n";
-        return;
-      }
-    } // 3 bond partners
-
-    switch (n_partners) {
-    case 1:
-      if (bond_broken) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << " and " << p2->p.identity;
-        continue;
-      }
-
-      switch (type) {
-      case BONDED_IA_THERMALIZED_DIST:
-        p1->f.f += force1;
-        p2->f.f += force2;
-        break;
-      default:
-        p1->f.f += force1;
-        p2->f.f -= force1;
-      }
-#ifdef ROTATION
-      if (type == BONDED_IA_HARMONIC_DUMBBELL) {
-        p1->f.torque += torque1;
-      }
-#endif
-      break;
-    case 2:
-      if (bond_broken) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << ", " << p2->p.identity << " and "
-                          << p3->p.identity;
-        continue;
-      }
-
-      p1->f.f += force1;
-      p2->f.f += force2;
-      p3->f.f += force3;
-      break;
-    case 3:
-      if (bond_broken) {
-        runtimeErrorMsg() << "bond broken between particles " << p1->p.identity
-                          << ", " << p2->p.identity << ", " << p3->p.identity
-                          << " and " << p4->p.identity;
-        continue;
-      }
-
-      switch (type) {
-      case BONDED_IA_TABULATED_DIHEDRAL:
-      case BONDED_IA_DIHEDRAL:
-      case BONDED_IA_IBM_TRIBEND:
-      case BONDED_IA_OIF_LOCAL_FORCES:
-        p1->f.f += force1;
-        p2->f.f += force2;
-        p3->f.f += force3;
-        p4->f.f += force4;
-        break;
-      } // Switch type of 4-particle bond
-      break;
-    } // switch number of partners (add forces to particles)
-  }   // loop over the particle's bond list
+  return true;
 }
 
-inline void add_single_particle_force(Particle &p) {
-  if (p.bl.n) {
-    add_bonded_force(&p);
+inline boost::optional<
+    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+calc_bonded_three_body_force(Bonded_ia_parameters const &iaparams,
+                             Particle const &p1, Particle const &p2,
+                             Particle const &p3) {
+  switch (iaparams.type) {
+  case BONDED_IA_ANGLE_HARMONIC:
+    return angle_harmonic_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
+  case BONDED_IA_ANGLE_COSINE:
+    return angle_cosine_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
+  case BONDED_IA_ANGLE_COSSQUARE:
+    return angle_cossquare_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
+  case BONDED_IA_TABULATED_ANGLE:
+    return tab_angle_force(p1.r.p, p2.r.p, p3.r.p, iaparams);
+  case BONDED_IA_IBM_TRIEL: {
+    return IBM_Triel_CalcForce(p1, p2, p3, iaparams);
+  }
+  default:
+    throw BondUnknownTypeError(iaparams.type);
   }
 }
 
+inline bool add_bonded_three_body_force(Bonded_ia_parameters const &iaparams,
+                                        Particle &p1, Particle &p2,
+                                        Particle &p3) {
+  switch (iaparams.type) {
+  case BONDED_IA_OIF_GLOBAL_FORCES:
+    return false;
+  default: {
+    auto const result = calc_bonded_three_body_force(iaparams, p1, p2, p3);
+    if (result) {
+      using std::get;
+      auto const &forces = result.get();
+
+      p1.f.f += get<0>(forces);
+      p2.f.f += get<1>(forces);
+      p3.f.f += get<2>(forces);
+
+      return false;
+    }
+    break;
+  }
+  }
+
+  return true;
+}
+
+inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                  Utils::Vector3d, Utils::Vector3d>>
+calc_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
+                            Particle const &p1, Particle const &p2,
+                            Particle const &p3, Particle const &p4) {
+  switch (iaparams.type) {
+  case BONDED_IA_OIF_LOCAL_FORCES:
+    return calc_oif_local(p1, p2, p3, p4, iaparams);
+  case BONDED_IA_IBM_TRIBEND:
+    return IBM_Tribend_CalcForce(p1, p2, p3, p4, iaparams);
+  case BONDED_IA_DIHEDRAL:
+    return dihedral_force(p2.r.p, p1.r.p, p3.r.p, p4.r.p, iaparams);
+  case BONDED_IA_TABULATED_DIHEDRAL:
+    return tab_dihedral_force(p2.r.p, p1.r.p, p3.r.p, p4.r.p, iaparams);
+  default:
+    throw BondUnknownTypeError(iaparams.type);
+  }
+}
+
+inline bool add_bonded_four_body_force(Bonded_ia_parameters const &iaparams,
+                                       Particle &p1, Particle &p2, Particle &p3,
+                                       Particle &p4) {
+  auto const result = calc_bonded_four_body_force(iaparams, p1, p2, p3, p4);
+  if (result) {
+    using std::get;
+    auto const &forces = result.get();
+
+    p1.f.f += get<0>(forces);
+    p2.f.f += get<1>(forces);
+    p3.f.f += get<2>(forces);
+    p4.f.f += get<3>(forces);
+
+    return false;
+  }
+
+  return true;
+}
+
+inline bool add_bonded_force(Particle &p1, int bond_id,
+                             Utils::Span<Particle *> partners) {
+  auto const &iaparams = bonded_ia_params[bond_id];
+
+  switch (iaparams.num) {
+  case 0:
+    return false;
+  case 1:
+    return add_bonded_two_body_force(iaparams, p1, *partners[0]);
+  case 2:
+    return add_bonded_three_body_force(iaparams, p1, *partners[0],
+                                       *partners[1]);
+  case 3:
+    return add_bonded_four_body_force(iaparams, p1, *partners[0], *partners[1],
+                                      *partners[2]);
+  default:
+    throw BondInvalidSizeError{iaparams.num};
+  }
+}
+
+/** Calculate bonded forces for one particle.
+ *  @param p particle for which to calculate forces
+ */
+inline void add_single_particle_force(Particle &p) {
+  cell_structure.execute_bond_handler(p, add_bonded_force);
+}
 #endif

@@ -30,7 +30,7 @@ import collections
 import functools
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils cimport make_array_locked, make_const_span, check_type_or_throw_except
-from .utils cimport Vector3i, Vector3d, Vector4d, List
+from .utils cimport Vector3i, Vector3d, Vector4d
 from .grid cimport box_geo, folded_position, unfolded_position
 
 
@@ -304,25 +304,17 @@ cdef class ParticleHandle:
                         "Bonds have to specified as lists of tuples/lists or a single list.")
 
         def __get__(self):
-            self.update_particle_data()
             bonds = []
+
+            part_bonds = get_particle_bonds(self._id)
             # Go through the bond list of the particle
-            i = 0
-            while i < self.particle_data.bl.n:
+            for part_bond in part_bonds:
                 bond = []
-                # Bond type:
-                bond_id = self.particle_data.bl.e[i]
-                bond.append(BondedInteractions()[bond_id])
-                # Number of partners
-                nPartners = bonded_ia_params[bond_id].num
+                bond.append(BondedInteractions()[part_bond.bond_id()])
+                partner_ids = part_bond.partner_ids()
 
-                i += 1
-
-                # Copy bond partners
-                for j in range(nPartners):
-                    bond.append(self.particle_data.bl.e[i])
-                    i += 1
-                bonds.append(tuple(bond))
+                bonds.append(tuple(bond + [partner_ids[i]
+                                           for i in range(partner_ids.size())]))
 
             return tuple(bonds)
 
@@ -1074,12 +1066,7 @@ cdef class ParticleHandle:
 
             def __get__(self):
                 self.update_particle_data()
-                cdef List[int] exclusions = self.particle_data.exclusions()
-
-                py_partners = []
-                for i in range(exclusions.n):
-                    py_partners.append(exclusions.e[i])
-                return array_locked(py_partners)
+                return array_locked(self.particle_data.exclusions())
 
         def add_exclusion(self, _partner):
             """

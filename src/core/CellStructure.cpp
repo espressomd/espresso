@@ -21,9 +21,19 @@
 
 #include "CellStructure.hpp"
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
+#include <utils/contains.hpp>
 
 void CellStructure::remove_particle(int id) {
+  auto remove_all_bonds_to = [id](BondList &bl) {
+    for (auto it = bl.begin(); it != bl.end();) {
+      if (Utils::contains(it->partner_ids(), id)) {
+        it = bl.erase(it);
+      } else {
+        std::advance(it, 1);
+      }
+    }
+  };
+
   for (auto c : m_local_cells) {
     auto &parts = c->particles();
 
@@ -33,7 +43,8 @@ void CellStructure::remove_particle(int id) {
         update_particle_index(id, nullptr);
         update_particle_index(parts);
       } else {
-        remove_all_bonds_to(*it++, id);
+        remove_all_bonds_to(it->bonds());
+        it++;
       }
     }
   }

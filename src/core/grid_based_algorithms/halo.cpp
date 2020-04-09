@@ -26,12 +26,15 @@
  */
 
 #include "config.hpp"
-#include <cstring>
+
+#include <utils/memory.hpp>
 
 #include "communication.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lattice.hpp"
 #include "halo.hpp"
+
+#include <cstring>
 
 /** Primitive fieldtypes and their initializers */
 struct _Fieldtype fieldtype_double = {0, nullptr, nullptr, sizeof(double), 0,

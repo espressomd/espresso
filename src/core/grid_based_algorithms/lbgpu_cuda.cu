@@ -45,8 +45,10 @@ extern int this_node;
 #include "grid_based_algorithms/lb_boundaries.hpp"
 #include "grid_based_algorithms/lbgpu.cuh"
 #include "grid_based_algorithms/lbgpu.hpp"
+
 #include <utils/Array.hpp>
 #include <utils/Counter.hpp>
+#include <utils/memory.hpp>
 
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
