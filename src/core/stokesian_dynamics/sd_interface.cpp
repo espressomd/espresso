@@ -29,12 +29,11 @@
 
 #include <boost/config.hpp>
 
-#include "cells.hpp"
+// #include "cells.hpp"
+#include "ParticleRange.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrate.hpp"
-//#include "partCfg_global.hpp"
-#include "ParticleRange.hpp"
 #include "particle_data.hpp"
 #include "rotation.hpp"
 #include "thermostat.hpp"
@@ -196,9 +195,9 @@ void set_sd_flags(int flg) { sd_flags = flg; }
 
 int get_sd_flags() { return sd_flags; }
 
-void propagate_vel_pos_sd() {
-  ParticleRange const &parts = cell_structure.local_cells().particles();
-  std::size_t n_part_local = parts.size();
+void propagate_vel_pos_sd(const ParticleRange &particles) {
+  // ParticleRange const &parts = cell_structure.local_cells().particles();
+  std::size_t n_part_local = particles.size();
 
   if (this_node == 0) {
     if (thermo_switch & THERMO_SD) {
@@ -214,7 +213,7 @@ void propagate_vel_pos_sd() {
         return;
       }
 
-      sd_gather_local_particles(parts);
+      sd_gather_local_particles(particles);
       Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
 
       std::size_t n_part = parts_buffer.size();
@@ -306,13 +305,13 @@ void propagate_vel_pos_sd() {
       }
 
       Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
-      sd_update_locally(parts);
+      sd_update_locally(particles);
     }
 
   } else { // if (this_node == 0)
 
     if (thermo_switch & THERMO_SD) {
-      sd_gather_local_particles(parts);
+      sd_gather_local_particles(particles);
       Utils::Mpi::gather_buffer(parts_buffer, comm_cart, 0);
 
       v_sd.resize(n_part_local * 6);
@@ -320,7 +319,7 @@ void propagate_vel_pos_sd() {
       // now wait while master node is busy ...
 
       Utils::Mpi::scatter_buffer(v_sd.data(), n_part_local * 6, comm_cart, 0);
-      sd_update_locally(parts);
+      sd_update_locally(particles);
     }
 
   } // if (this_node == 0) {...} else

@@ -76,7 +76,7 @@ std::size_t get_sd_seed();
 
 /* takes the forces and torques on all particles computes new velocities
  * acts on particles on all nodes */
-void propagate_vel_pos_sd();
+void propagate_vel_pos_sd(const ParticleRange &particles);
 
 #endif // STOKESIAN_DYNAMICS
 
