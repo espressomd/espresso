@@ -343,15 +343,6 @@ osx:
   tags:
     - mac
 
-osx-cuda:
-  <<: *global_job_definition
-  stage: build
-  script:
-    - export with_ccache=false myconfig=maxset with_cuda=true make_check_unit_tests=false make_check_python=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - mac
-
 ### Builds with different compilers
 
 clang:6.0:
