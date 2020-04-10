@@ -19,7 +19,7 @@
 
 
 CLANG_FORMAT_VER=6.0
-if hash clang-format_${CLANG_FORMAT_VER} 2>/dev/null; then
+if hash clang-format-${CLANG_FORMAT_VER} 2>/dev/null; then
     CLANGFORMAT="$(which clang-format-${CLANG_FORMAT_VER})"
 elif hash clang-format 2>/dev/null; then
     CLANGFORMAT="$(which clang-format)"
