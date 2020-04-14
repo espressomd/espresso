@@ -1,5 +1,6 @@
 set(EspressoCore_SRC
     accumulators.cpp
+    bond_error.cpp
     cells.cpp
     collision.cpp
     comfixed_global.cpp
@@ -25,7 +26,6 @@ set(EspressoCore_SRC
     partCfg_global.cpp
     particle_data.cpp
     polymer.cpp
-    polynom.cpp
     pressure.cpp
     rattle.cpp
     reaction_ensemble.cpp
@@ -34,7 +34,6 @@ set(EspressoCore_SRC
     RuntimeErrorCollector.cpp
     RuntimeError.cpp
     RuntimeErrorStream.cpp
-    specfunc.cpp
     statistics_chain.cpp
     statistics.cpp
     SystemInterface.cpp
@@ -42,7 +41,8 @@ set(EspressoCore_SRC
     tuning.cpp
     virtual_sites.cpp
     exclusions.cpp
-    CellStructure.cpp PartCfg.cpp)
+    CellStructure.cpp
+    PartCfg.cpp)
 
 if(CUDA)
   set(EspressoCuda_SRC
@@ -62,8 +62,7 @@ if(CUDA)
       grid_based_algorithms/fd-electrostatics_cuda.cu
       grid_based_algorithms/electrokinetics.cpp
       grid_based_algorithms/lbgpu.cpp
-      virtual_sites/lb_inertialess_tracers_cuda.cu
-      )
+      virtual_sites/lb_inertialess_tracers_cuda.cu)
 
   add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
 else(CUDA)
@@ -90,14 +89,9 @@ target_link_libraries(
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           "$<$<BOOL:${SCAFACOS}>:Scafacos>"
   PUBLIC
-    utils
-    MPI::MPI_CXX
-    Random123
-    Boost::serialization
-    Boost::mpi
+    utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
     "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-    "$<$<BOOL:${H5MD}>:Boost::filesystem>"
-    "$<$<BOOL:${H5MD}>:h5xx>"
+    "$<$<BOOL:${H5MD}>:Boost::filesystem>" "$<$<BOOL:${H5MD}>:h5xx>"
     "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
 
 target_include_directories(
@@ -107,7 +101,8 @@ target_include_directories(
   PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
 
-target_compile_definitions(EspressoCore PUBLIC "$<$<BOOL:${H5MD}>:H5XX_USE_MPI>")
+target_compile_definitions(EspressoCore
+                           PUBLIC "$<$<BOOL:${H5MD}>:H5XX_USE_MPI>")
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)

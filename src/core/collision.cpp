@@ -21,6 +21,7 @@
 
 #ifdef COLLISION_DETECTION
 #include "Particle.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -33,6 +34,7 @@
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/algorithm/clamp.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/serialization.hpp>
 
@@ -303,34 +305,27 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // with p1 and p2 as partners. If so, skip this triplet.
   // Note that the bond partners can appear in any order.
 
-  // Iterate over existing bonds of p
+  /* Check if a bond is a bond placed by the collision detection */
+  auto is_collision_bond = [](BondView const &bond) {
+    return (bond.bond_id() >= collision_params.bond_three_particles) and
+           (bond.bond_id() <=
+            collision_params.bond_three_particles +
+                collision_params.three_particle_angle_resolution);
+  };
+  /* Check if the bond is between the particles we are currently considering */
+  auto has_same_partners = [id1 = p1.identity(),
+                            id2 = p2.identity()](BondView const &bond) {
+    auto const partner_ids = bond.partner_ids();
 
-  if (p.bl.e) {
-    int b = 0;
-    while (b < p.bl.n) {
-      int size = bonded_ia_params[p.bl.e[b]].num;
+    return ((partner_ids[0] == id1) && (partner_ids[1] == id2)) ||
+           ((partner_ids[0] == id2) && (partner_ids[1] == id1));
+  };
 
-      if (size == 2) {
-        // Check if the bond type is within the range used by the collision
-        // detection,
-        if ((p.bl.e[b] >= collision_params.bond_three_particles) &
-            (p.bl.e[b] <=
-             collision_params.bond_three_particles +
-                 collision_params.three_particle_angle_resolution)) {
-          // check, if p1 and p2 are the bond partners, (in any order)
-          // if yes, skip triplet
-          if (((p.bl.e[b + 1] == p1.p.identity) &&
-               (p.bl.e[b + 2] == p2.p.identity)) ||
-              ((p.bl.e[b + 1] == p2.p.identity) &&
-               (p.bl.e[b + 2] == p1.p.identity)))
-            return;
-        } // if bond type
-      }   // if size==2
-
-      // Go to next bond
-      b += size + 1;
-    } // bond loop
-  }   // if bond list defined
+  if (boost::algorithm::any_of(p.bonds(), [=](auto const &bond) {
+        return is_collision_bond(bond) and has_same_partners(bond);
+      })) {
+    return;
+  }
 
   // If we are still here, we need to create angular bond
   // First, find the angle between the particle p, p1 and p2
@@ -358,9 +353,9 @@ void coldet_do_three_particle_bond(Particle &p, Particle &p1, Particle &p2) {
   // Create the bond
 
   // First, fill bond data structure
-  const Utils::Vector3i bondT = {bond_id, p1.p.identity, p2.p.identity};
+  const std::array<int, 2> bondT = {p1.p.identity, p2.p.identity};
 
-  add_bond(p, bondT);
+  p.bonds().insert({bond_id, bondT});
 }
 
 #ifdef VIRTUAL_SITES_RELATIVE
@@ -383,20 +378,26 @@ void bind_at_poc_create_bond_between_vs(const int current_vs_pid,
   switch (bonded_ia_params[collision_params.bond_vs].num) {
   case 1: {
     // Create bond between the virtual particles
-    const int bondG[] = {collision_params.bond_vs, current_vs_pid - 2};
+    const int bondG[] = {current_vs_pid - 2};
     // Only add bond if vs was created on this node
     if (cell_structure.get_local_particle(current_vs_pid - 1))
-      add_bond(get_part(current_vs_pid - 1), bondG);
+      get_part(current_vs_pid - 1)
+          .bonds()
+          .insert({collision_params.bond_vs, bondG});
     break;
   }
   case 2: {
     // Create 1st bond between the virtual particles
-    const int bondG[] = {collision_params.bond_vs, c.pp1, c.pp2};
+    const int bondG[] = {c.pp1, c.pp2};
     // Only add bond if vs was created on this node
     if (cell_structure.get_local_particle(current_vs_pid - 1))
-      add_bond(get_part(current_vs_pid - 1), bondG);
+      get_part(current_vs_pid - 1)
+          .bonds()
+          .insert({collision_params.bond_vs, bondG});
     if (cell_structure.get_local_particle(current_vs_pid - 2))
-      add_bond(get_part(current_vs_pid - 2), bondG);
+      get_part(current_vs_pid - 2)
+          .bonds()
+          .insert({collision_params.bond_vs, bondG});
     break;
   }
   }
@@ -407,12 +408,12 @@ void glue_to_surface_bind_part_to_vs(const Particle *const p1,
                                      const int vs_pid_plus_one,
                                      const collision_struct &c) {
   // Create bond between the virtual particles
-  const int bondG[] = {collision_params.bond_vs, vs_pid_plus_one - 1};
+  const int bondG[] = {vs_pid_plus_one - 1};
 
   if (p1->p.type == collision_params.part_type_after_glueing) {
-    add_bond(get_part(p1->p.identity), bondG);
+    get_part(p1->p.identity).bonds().insert({collision_params.bond_vs, bondG});
   } else {
-    add_bond(get_part(p2->p.identity), bondG);
+    get_part(p2->p.identity).bonds().insert({collision_params.bond_vs, bondG});
   }
 }
 
@@ -509,10 +510,10 @@ void handle_collisions() {
       if (cell_structure.get_local_particle(c.pp1)->l.ghost) {
         std::swap(c.pp1, c.pp2);
       }
-      int bondG[2];
-      bondG[0] = collision_params.bond_centers;
-      bondG[1] = c.pp2;
-      add_bond(get_part(c.pp1), bondG);
+
+      const int bondG[] = {c.pp2};
+
+      get_part(c.pp1).bonds().insert({collision_params.bond_centers, bondG});
     }
   }
 
@@ -625,10 +626,9 @@ void handle_collisions() {
           // Add a bond between the centers of the colliding particles
           // The bond is placed on the node that has p1
           if (!p1->l.ghost) {
-            int bondG[2];
-            bondG[0] = collision_params.bond_centers;
-            bondG[1] = c.pp2;
-            add_bond(get_part(c.pp1), bondG);
+            const int bondG[] = {c.pp2};
+            get_part(c.pp1).bonds().insert(
+                {collision_params.bond_centers, bondG});
           }
 
           // Change type of particle being attached, to make it inert

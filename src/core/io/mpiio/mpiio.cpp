@@ -54,6 +54,12 @@
 #include "cells.hpp"
 #include "errorhandling.hpp"
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream.hpp>
+
 #include <mpi.h>
 
 #include <cerrno>
@@ -150,7 +156,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
   // Keep static buffers in order not having to allocate them on every
   // function call
   static std::vector<double> pos, vel;
-  static std::vector<int> id, type, boff, bond;
+  static std::vector<int> id, type;
 
   // Nlocalpart prefixes
   // Prefixes based for arrays: 3 * pref for vel, pos.
@@ -165,8 +171,6 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
     vel.resize(3 * nlocalpart);
   if (fields & MPIIO_OUT_TYP && nlocalpart > type.size())
     type.resize(nlocalpart);
-  if (fields & MPIIO_OUT_BND && nlocalpart + 1 > boff.size())
-    boff.resize(nlocalpart + 1);
 
   // Pack the necessary information
   // Esp. rescale the velocities.
@@ -185,9 +189,6 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
     }
     if (fields & MPIIO_OUT_TYP) {
       type[i1] = p.p.type;
-    }
-    if (fields & MPIIO_OUT_BND) {
-      boff[i1 + 1] = p.bl.n;
     }
     i1++;
     i3 += 3;
@@ -209,28 +210,27 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
                           MPI_INT);
 
   if (fields & MPIIO_OUT_BND) {
-    // Convert the bond counts to bond prefixes
-    boff[0] = 0;
-    for (int i = 1; i <= nlocalpart; ++i)
-      boff[i] += boff[i - 1];
-    int numbonds = boff[nlocalpart];
+    std::vector<char> bonds;
 
-    // Realloc bond buffer if necessary
-    if (numbonds > bond.size())
-      bond.resize(numbonds);
+    /* Construct archive that pushes back to the bond buffer */
+    {
+      namespace io = boost::iostreams;
+      io::stream_buffer<io::back_insert_device<std::vector<char>>> os{
+          io::back_inserter(bonds)};
+      boost::archive::binary_oarchive bond_archiver{os};
 
-    // Pack the bond information
-    int i = 0;
-    for (auto const &p : particles)
-      for (int k = 0; k < p.bl.n; ++k)
-        bond[i++] = p.bl.e[k];
+      for (auto const &p : particles) {
+        bond_archiver << p.bonds();
+      }
+    }
 
     // Determine the prefixes in the bond file
-    MPI_Exscan(&numbonds, &bpref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    mpiio_dump_array<int>(fnam + ".boff", boff.data(), nlocalpart + 1,
-                          pref + rank, MPI_INT);
-    mpiio_dump_array<int>(fnam + ".bond", bond.data(), numbonds, bpref,
-                          MPI_INT);
+    int bonds_size = bonds.size();
+    MPI_Exscan(&bonds_size, &bpref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+    mpiio_dump_array<int>(fnam + ".boff", &bonds_size, 1, rank, MPI_INT);
+    mpiio_dump_array<char>(fnam + ".bond", bonds.data(), bonds.size(), bpref,
+                           MPI_CHAR);
   }
 }
 
@@ -244,7 +244,7 @@ void mpi_mpiio_common_write(const char *filename, unsigned fields,
  */
 static int get_num_elem(const std::string &fn, size_t elem_sz) {
   // Could also be done via MPI_File_open, MPI_File_get_size,
-  // MPI_File_cose.
+  // MPI_File_close.
   struct stat st;
   errno = 0;
   if (stat(fn.c_str(), &st) != 0) {
@@ -422,28 +422,25 @@ void mpi_mpiio_common_read(const char *filename, unsigned fields) {
 
   if (fields & MPIIO_OUT_BND) {
     // 1.boff
-    // nlocalpart + 1 ints per process
-    std::vector<int> boff(nlocalpart + 1);
-    mpiio_read_array<int>(fnam + ".boff", boff.data(), nlocalpart + 1,
-                          pref + rank, MPI_INT);
-
-    auto const nlocalbond = boff[nlocalpart];
-    // Determine the bond prefixes
-    auto bpref = 0;
-    MPI_Exscan(&nlocalbond, &bpref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    // 1 int per process
+    int bonds_size = 0;
+    mpiio_read_array<int>(fnam + ".boff", &bonds_size, 1, rank, MPI_INT);
+    int bpref = 0;
+    MPI_Exscan(&bonds_size, &bpref, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
     // 1.bond
     // nlocalbonds ints per process
-    std::vector<int> bond(nlocalbond);
-    mpiio_read_array<int>(fnam + ".bond", bond.data(), nlocalbond, bpref,
-                          MPI_INT);
+    std::vector<char> bond(bonds_size);
+    mpiio_read_array<char>(fnam + ".bond", bond.data(), bonds_size, bpref,
+                           MPI_CHAR);
 
-    for (int i = 0; i < nlocalpart; ++i) {
-      int blen = boff[i + 1] - boff[i];
+    namespace io = boost::iostreams;
+    io::array_source src(bond.data(), bond.size());
+    io::stream<io::array_source> ss(src);
+    boost::archive::binary_iarchive ia(ss);
 
-      auto &bl = particles[i].bonds();
-      bl.resize(blen);
-      std::copy_n(bond.begin() + boff[i], blen, bl.begin());
+    for (auto &p : particles) {
+      ia >> p.bonds();
     }
   }
 

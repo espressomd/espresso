@@ -29,7 +29,6 @@
 #include "errorhandling.hpp"
 #include "grid.hpp"
 
-#include "serialization/ParticleList.hpp"
 #include <utils/index.hpp>
 #include <utils/mpi/sendrecv.hpp>
 using Utils::get_linear_index;
@@ -171,7 +170,7 @@ void dd_create_cell_grid(double range) {
   cell_structure.max_range = dd.cell_size;
 
   /* allocate cell array and cell pointer arrays */
-  realloc_cells(new_cells);
+  cells.resize(new_cells);
   cell_structure.m_local_cells.resize(n_local_cells);
   cell_structure.m_ghost_cells.resize(new_cells - n_local_cells);
 }
@@ -636,10 +635,10 @@ void move_if_local(ParticleList &src, ParticleList &rest,
     auto target_cell = dd_save_position_to_cell(part.r.p);
 
     if (target_cell) {
-      target_cell->push_back(std::move(part));
+      target_cell->particles().insert(std::move(part));
       modified_cells.push_back(target_cell);
     } else {
-      rest.push_back(std::move(part));
+      rest.insert(std::move(part));
     }
   }
 
@@ -661,31 +660,26 @@ void move_if_local(ParticleList &src, ParticleList &rest,
  */
 void move_left_or_right(ParticleList &src, ParticleList &left,
                         ParticleList &right, int dir) {
-  for (int i = 0; i < src.n; i++) {
-    auto &part = src.part[i];
+  for (auto it = src.begin(); it != src.end();) {
+    assert(cell_structure.get_local_particle(it->p.identity) == nullptr);
 
-    assert(cell_structure.get_local_particle(src.part[i].p.identity) ==
-           nullptr);
-
-    if (get_mi_coord(part.r.p[dir], local_geo.my_left()[dir],
-                     box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) {
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0)) {
-
-        left.push_back(src.extract(i));
-        if (i < src.n)
-          i--;
-      }
-    } else if (get_mi_coord(part.r.p[dir], local_geo.my_right()[dir],
-                            box_geo.length()[dir],
-                            box_geo.periodic(dir)) >= 0.0) {
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + 1] == 0)) {
-        right.push_back(src.extract(i));
-        if (i < src.n)
-          i--;
-      }
+    if ((get_mi_coord(it->r.p[dir], local_geo.my_left()[dir],
+                      box_geo.length()[dir], box_geo.periodic(dir)) < 0.0) and
+        (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir] == 0))) {
+      left.insert(std::move(*it));
+      it = src.erase(it);
+    } else if ((get_mi_coord(it->r.p[dir], local_geo.my_right()[dir],
+                             box_geo.length()[dir],
+                             box_geo.periodic(dir)) >= 0.0) and
+               (box_geo.periodic(dir) ||
+                (local_geo.boundary()[2 * dir + 1] == 0))) {
+      right.insert(std::move(*it));
+      it = src.erase(it);
+    } else {
+      ++it;
     }
   }
-}
+} // namespace
 
 void exchange_neighbors(ParticleList *pl, const Utils::Vector3i &grid,
                         std::vector<Cell *> &modified_cells) {
@@ -743,7 +737,7 @@ void dd_exchange_and_sort_particles(int global, ParticleList *pl,
       exchange_neighbors(pl, grid, modified_cells);
 
       auto left_over =
-          boost::mpi::all_reduce(comm_cart, pl->n, std::plus<int>());
+          boost::mpi::all_reduce(comm_cart, pl->size(), std::plus<size_t>());
 
       if (left_over == 0) {
         break;

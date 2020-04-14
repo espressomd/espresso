@@ -42,8 +42,8 @@ public:
 
 __forceinline__ __device__ uint4 curand_Philox4x32_10(uint4 counter,
                                                       uint2 key) {
-  philox4x32_10_stateless *e = nullptr;
-  return (*e)(counter, key);
+  philox4x32_10_stateless e;
+  return e(counter, key);
 }
 
 #endif

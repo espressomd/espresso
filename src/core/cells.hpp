@@ -98,9 +98,6 @@ extern bool rebuild_verletlist;
  */
 void cells_re_init(int new_cs, double range);
 
-/** Reallocate the list of all cells (\ref cells::cells). */
-void realloc_cells(int size);
-
 /** Sort the particles into the cells and initialize the ghost particle
  *  structures.
  */

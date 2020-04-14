@@ -125,7 +125,7 @@ void on_integration_start() {
   // Here we initialize volume conservation
   // This function checks if the reference volumes have been set and if
   // necessary calculates them
-  immersed_boundaries.init_volume_conservation();
+  immersed_boundaries.init_volume_conservation(cell_structure);
 
   /* Prepare the thermostat */
   if (reinit_thermo) {

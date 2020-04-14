@@ -30,6 +30,7 @@
 #include "energy_inline.hpp"
 #include "event.hpp"
 #include "forces.hpp"
+#include <boost/range/numeric.hpp>
 
 #include "short_range_loop.hpp"
 
@@ -66,7 +67,7 @@ void init_energies(Observable_stat *stat) {
 /************************************************************/
 
 void master_energy_calc() {
-  mpi_gather_stats(1, total_energy.data.e, nullptr, nullptr, nullptr);
+  mpi_gather_stats(1, total_energy.data.data(), nullptr, nullptr, nullptr);
 
   total_energy.init_status = 1;
 }
@@ -91,15 +92,19 @@ void energy_calc(double *result, const double time) {
 
   on_observable_calc();
 
+  for (auto const &p : cell_structure.local_particles()) {
+    add_kinetic_energy(p);
+  }
+
   short_range_loop(
-      [](Particle const &p) { add_single_particle_energy(p); },
+      [](Particle &p) { add_single_particle_energy(p); },
       [](Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2);
       });
 
-  calc_long_range_energies(cell_structure.local_cells().particles());
+  calc_long_range_energies(cell_structure.local_particles());
 
-  auto local_parts = cell_structure.local_cells().particles();
+  auto local_parts = cell_structure.local_particles();
   Constraints::constraints.add_energy(local_parts, time, energy);
 
 #ifdef CUDA
@@ -107,8 +112,8 @@ void energy_calc(double *result, const double time) {
 #endif
 
   /* gather data */
-  MPI_Reduce(energy.data.e, result, energy.data.n, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
+  MPI_Reduce(energy.data.data(), result, energy.data.size(), MPI_DOUBLE,
+             MPI_SUM, 0, comm_cart);
 }
 
 /************************************************************/
@@ -130,12 +135,6 @@ double calculate_current_potential_energy_of_system() {
     init_energies(&total_energy);
     master_energy_calc();
   }
-  int num_energies = total_energy.data.n;
-  double kinetic_energy = total_energy.data.e[0];
-  double sum_all_energies = 0;
-  for (int i = 0; i < num_energies; i++) {
-    sum_all_energies += total_energy.data.e[i];
-  }
 
-  return sum_all_energies - kinetic_energy;
+  return boost::accumulate(total_energy.data, -total_energy.data[0]);
 }

@@ -217,29 +217,15 @@ cdef class mayaviLive:
             radii[j] = self._determine_radius(t)
 
             # Iterate over bonds
-            k = 0
-            while k < p.bl.size():
-                # Bond type
-                t = p.bl[k]
-                k += 1
-                # Iterate over bond partners and store each connection
-                if bonded_ia_params[t].num == 3 and bonded_ia_params[t].type \
-                        in (BONDED_IA_DIHEDRAL, BONDED_IA_TABULATED_DIHEDRAL):
-                    for l in range(2):
-                        bonds.push_back(i)
-                        bonds.push_back(p.bl[k])
-                        bonds.push_back(t)
-                        k += 1
-                    bonds.push_back(p.bl[k - 1])
-                    bonds.push_back(p.bl[k])
-                    bonds.push_back(t)
-                    k += 1
-                else:
-                    for l in range(bonded_ia_params[t].num):
-                        bonds.push_back(i)
-                        bonds.push_back(p.bl[k])
-                        bonds.push_back(t)
-                        k += 1
+            part_bonds = get_particle_bonds(self._id)
+            for part_bond in part_bonds:
+                partner_ids = part_bond.partner_ids()
+
+                for pid in range(partner_ids.size()):
+                    bonds.push_back(i)
+                    bonds.push_back(partner_ids[pid])
+                    bonds.push_back(part_bond.bond_id())
+
             j += 1
         assert j == len(self.system.part)
         cdef int Nbonds = bonds.size() // 3

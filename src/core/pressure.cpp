@@ -93,10 +93,8 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb);
 /*********************************/
 /* Scalar and Tensorial Pressure */
 /*********************************/
-inline void add_single_particle_virials(int v_comp, Particle &p) {
-  add_kinetic_virials(p, v_comp);
-  add_bonded_virials(p);
-  add_three_body_bonded_stress(p);
+static void add_single_particle_virials(Particle &p) {
+  cell_structure.execute_bond_handler(p, add_bonded_stress);
 }
 
 void pressure_calc(double *result, double *result_t, double *result_nb,
@@ -116,16 +114,20 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
 
   on_observable_calc();
 
-  short_range_loop(
-      [&v_comp](Particle &p) { add_single_particle_virials(v_comp, p); },
-      [](Particle &p1, Particle &p2, Distance const &d) {
-        add_non_bonded_pair_virials(p1, p2, d.vec21, sqrt(d.dist2));
-      });
+  for (auto const &p : cell_structure.local_particles()) {
+    add_kinetic_virials(p, v_comp);
+  }
+
+  short_range_loop([](Particle &p) { add_single_particle_virials(p); },
+                   [](Particle &p1, Particle &p2, Distance const &d) {
+                     add_non_bonded_pair_virials(p1, p2, d.vec21,
+                                                 sqrt(d.dist2));
+                   });
 
   /* rescale kinetic energy (=ideal contribution) */
-  virials.data.e[0] /= (3.0 * volume * time_step * time_step);
+  virials.data[0] /= (3.0 * volume * time_step * time_step);
 
-  calc_long_range_virials(cell_structure.local_cells().particles());
+  calc_long_range_virials(cell_structure.local_particles());
 
 #ifdef VIRTUAL_SITES
   {
@@ -136,32 +138,36 @@ void pressure_calc(double *result, double *result_t, double *result_nb,
   }
 #endif
 
-  for (int n = 1; n < virials.data.n; n++)
-    virials.data.e[n] /= 3.0 * volume;
+  for (size_t n = 1; n < virials.data.size(); n++)
+    virials.data[n] /= 3.0 * volume;
 
   for (int i = 0; i < 9; i++)
-    p_tensor.data.e[i] /= (volume * time_step * time_step);
+    p_tensor.data[i] /= (volume * time_step * time_step);
 
-  for (int i = 9; i < p_tensor.data.n; i++)
-    p_tensor.data.e[i] /= volume;
+  for (size_t i = 9; i < p_tensor.data.size(); i++)
+    p_tensor.data[i] /= volume;
 
   /* Intra- and Inter- part of nonbonded interaction */
-  for (int n = 0; n < virials_non_bonded.data_nb.n; n++)
-    virials_non_bonded.data_nb.e[n] /= 3.0 * volume;
+  for (auto &value : virials_non_bonded.data_nb) {
+    value /= 3.0 * volume;
+  }
 
-  for (int i = 0; i < p_tensor_non_bonded.data_nb.n; i++)
-    p_tensor_non_bonded.data_nb.e[i] /= volume;
+  for (auto &value : p_tensor_non_bonded.data_nb) {
+    value /= volume;
+  }
 
   /* gather data */
-  MPI_Reduce(virials.data.e, result, virials.data.n, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
-  MPI_Reduce(p_tensor.data.e, result_t, p_tensor.data.n, MPI_DOUBLE, MPI_SUM, 0,
-             comm_cart);
+  MPI_Reduce(virials.data.data(), result, virials.data.size(), MPI_DOUBLE,
+             MPI_SUM, 0, comm_cart);
+  MPI_Reduce(p_tensor.data.data(), result_t, p_tensor.data.size(), MPI_DOUBLE,
+             MPI_SUM, 0, comm_cart);
 
-  MPI_Reduce(virials_non_bonded.data_nb.e, result_nb,
-             virials_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
-  MPI_Reduce(p_tensor_non_bonded.data_nb.e, result_t_nb,
-             p_tensor_non_bonded.data_nb.n, MPI_DOUBLE, MPI_SUM, 0, comm_cart);
+  MPI_Reduce(virials_non_bonded.data_nb.data(), result_nb,
+             virials_non_bonded.data_nb.size(), MPI_DOUBLE, MPI_SUM, 0,
+             comm_cart);
+  MPI_Reduce(p_tensor_non_bonded.data_nb.data(), result_t_nb,
+             p_tensor_non_bonded.data_nb.size(), MPI_DOUBLE, MPI_SUM, 0,
+             comm_cart);
 }
 
 /************************************************************/
@@ -211,7 +217,6 @@ void init_virials_non_bonded(Observable_stat_non_bonded *stat_nb) {
   n_non_bonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
   obsstat_realloc_and_clear_non_bonded(stat_nb, n_non_bonded, 1);
-  stat_nb->init_status_nb = 0;
 }
 
 /* Initialize the p_tensor */
@@ -247,29 +252,25 @@ void init_p_tensor_non_bonded(Observable_stat_non_bonded *stat_nb) {
   n_nonbonded = (max_seen_particle_type * (max_seen_particle_type + 1)) / 2;
 
   obsstat_realloc_and_clear_non_bonded(stat_nb, n_nonbonded, 9);
-  stat_nb->init_status_nb = 0;
 }
 
 /************************************************************/
 void master_pressure_calc(int v_comp) {
   if (v_comp)
-    mpi_gather_stats(3, total_pressure.data.e, total_p_tensor.data.e,
-                     total_pressure_non_bonded.data_nb.e,
-                     total_p_tensor_non_bonded.data_nb.e);
+    mpi_gather_stats(3, total_pressure.data.data(), total_p_tensor.data.data(),
+                     total_pressure_non_bonded.data_nb.data(),
+                     total_p_tensor_non_bonded.data_nb.data());
   else
-    mpi_gather_stats(2, total_pressure.data.e, total_p_tensor.data.e,
-                     total_pressure_non_bonded.data_nb.e,
-                     total_p_tensor_non_bonded.data_nb.e);
+    mpi_gather_stats(2, total_pressure.data.data(), total_p_tensor.data.data(),
+                     total_pressure_non_bonded.data_nb.data(),
+                     total_p_tensor_non_bonded.data_nb.data());
 
   total_pressure.init_status = 1 + v_comp;
   total_p_tensor.init_status = 1 + v_comp;
-  total_pressure_non_bonded.init_status_nb = 1 + v_comp;
-  total_p_tensor_non_bonded.init_status_nb = 1 + v_comp;
 }
 
 /************************************************************/
 int observable_compute_stress_tensor(int v_comp, double *A) {
-  int i, j;
   double value;
   double p_vel[3];
 
@@ -285,22 +286,22 @@ int observable_compute_stress_tensor(int v_comp, double *A) {
         !(nptiso.invalidate_p_vel)) {
       if (total_pressure.init_status == 0)
         master_pressure_calc(0);
-      p_tensor.data.e[0] = 0.0;
+      p_tensor.data[0] = 0.0;
       MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0,
                  MPI_COMM_WORLD);
-      for (i = 0; i < 3; i++)
+      for (int i = 0; i < 3; i++)
         if (nptiso.geometry & nptiso.nptgeom_dir[i])
-          p_tensor.data.e[0] += p_vel[i];
-      p_tensor.data.e[0] /= (nptiso.dimension * nptiso.volume);
+          p_tensor.data[0] += p_vel[i];
+      p_tensor.data[0] /= (nptiso.dimension * nptiso.volume);
       total_pressure.init_status = 1 + v_comp;
     } else
       master_pressure_calc(v_comp);
   }
 
-  for (j = 0; j < 9; j++) {
-    value = total_p_tensor.data.e[j];
-    for (i = 1; i < total_p_tensor.data.n / 9; i++)
-      value += total_p_tensor.data.e[9 * i + j];
+  for (int j = 0; j < 9; j++) {
+    value = total_p_tensor.data[j];
+    for (size_t i = 1; i < total_p_tensor.data.size() / 9; i++)
+      value += total_p_tensor.data[9 * i + j];
     A[j] = value;
   }
   return 0;

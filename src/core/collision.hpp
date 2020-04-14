@@ -40,7 +40,6 @@
 /*@}*/
 
 #include "Particle.hpp"
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "integrate.hpp"
 #include "virtual_sites.hpp"
 
@@ -136,10 +135,12 @@ inline void detect_collision(Particle const &p1, Particle const &p2,
     return;
 
   // Check, if there's already a bond between the particles
-  if (pair_bond_exists_on(p1, p2, collision_params.bond_centers))
+  if (pair_bond_exists_on(p1.bonds(), p2.identity(),
+                          collision_params.bond_centers))
     return;
 
-  if (pair_bond_exists_on(p2, p1, collision_params.bond_centers))
+  if (pair_bond_exists_on(p2.bonds(), p1.identity(),
+                          collision_params.bond_centers))
     return;
 
   /* If we're still here, there is no previous bond between the particles,

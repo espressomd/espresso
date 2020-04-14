@@ -29,12 +29,12 @@
 #include <stdexcept>
 
 void check_particle_consistency() {
-  auto local_cells = cell_structure.local_cells();
-  auto const cell_part_cnt = local_cells.particles().size();
+  auto local_particles = cell_structure.local_particles();
+  auto const cell_part_cnt = local_particles.size();
 
   auto const max_id = cell_structure.get_max_local_particle_id();
 
-  for (auto const &p : local_cells.particles()) {
+  for (auto const &p : local_particles) {
     auto const id = p.identity();
 
     if (id < 0 || id > max_id) {

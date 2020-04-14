@@ -1,5 +1,6 @@
 function(PYTHON_TEST)
-  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX" "DEPENDS;DEPENDENCIES;LABELS" ${ARGN})
+  cmake_parse_arguments(TEST "" "FILE;MAX_NUM_PROC;SUFFIX"
+                        "DEPENDS;DEPENDENCIES;LABELS" ${ARGN})
   get_filename_component(TEST_NAME ${TEST_FILE} NAME_WE)
   if(TEST_SUFFIX)
     set(TEST_NAME "${TEST_NAME}_${TEST_SUFFIX}")
@@ -7,7 +8,7 @@ function(PYTHON_TEST)
   set(TEST_FILE_CONFIGURED "${CMAKE_CURRENT_BINARY_DIR}/${TEST_NAME}.py")
   configure_file(${TEST_FILE} ${TEST_FILE_CONFIGURED})
   foreach(dependency IN LISTS TEST_DEPENDENCIES)
-      configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
+    configure_file(${dependency} ${CMAKE_CURRENT_BINARY_DIR}/${dependency})
   endforeach(dependency)
   set(TEST_FILE ${TEST_FILE_CONFIGURED})
 
@@ -17,30 +18,35 @@ function(PYTHON_TEST)
 
   if("${TEST_MAX_NUM_PROC}" GREATER ${TEST_NP})
     set(TEST_NUM_PROC ${TEST_NP})
-   else()
+  else()
     set(TEST_NUM_PROC ${TEST_MAX_NUM_PROC})
   endif()
 
   if(EXISTS ${MPIEXEC})
-    add_test(NAME ${TEST_NAME}
-            COMMAND
-            ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG} ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE} ${MPIEXEC_POSTFLAGS}
-            )
+    add_test(
+      NAME ${TEST_NAME}
+      COMMAND
+        ${MPIEXEC} ${MPIEXEC_OVERSUBSCRIBE} ${MPIEXEC_NUMPROC_FLAG}
+        ${TEST_NUM_PROC} ${MPIEXEC_PREFLAGS} ${CMAKE_BINARY_DIR}/pypresso
+        ${TEST_FILE} ${MPIEXEC_POSTFLAGS})
   else()
     add_test(${TEST_NAME} ${CMAKE_BINARY_DIR}/pypresso ${TEST_FILE})
   endif()
-  set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC} DEPENDS "${TEST_DEPENDS}")
+  set_tests_properties(${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_PROC}
+                                               DEPENDS "${TEST_DEPENDS}")
 
- if("gpu" IN_LIST TEST_LABELS)
-   set_tests_properties(${TEST_NAME} PROPERTIES RUN_SERIAL ON)
- endif()
+  if("gpu" IN_LIST TEST_LABELS)
+    set_tests_properties(${TEST_NAME} PROPERTIES RUN_SERIAL ON)
+  endif()
 
   if(${TEST_MAX_NUM_PROC} LESS 2)
     set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS}")
   elseif(${TEST_MAX_NUM_PROC} LESS 3)
-    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};parallel")
+    set_tests_properties(${TEST_NAME} PROPERTIES LABELS
+                                                 "${TEST_LABELS};parallel")
   else()
-    set_tests_properties(${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};parallel;parallel_odd")
+    set_tests_properties(
+      ${TEST_NAME} PROPERTIES LABELS "${TEST_LABELS};parallel;parallel_odd")
   endif()
 
   set(python_tests ${python_tests} ${TEST_FILE} PARENT_SCOPE)
@@ -48,7 +54,10 @@ endfunction(PYTHON_TEST)
 
 # Checkpointing tests: semicolon-separated list of mutually-compatible features.
 # Separate features with hyphens, use a period to add an optional flag.
-foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd)
+foreach(
+  TEST_COMBINATION
+  lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;ek.gpu;lb.off-therm.npt-int.npt-minimization;lb.off-therm.langevin-int.nvt;lb.off-therm.dpd-int.sd;lb.off-therm.bd-int.bd
+)
   if(${TEST_COMBINATION} MATCHES "\\.gpu")
     set(TEST_LABELS "gpu")
   else()
@@ -60,9 +69,12 @@ foreach(TEST_COMBINATION lb.cpu-p3m.cpu-lj-therm.lb;lb.gpu-p3m.cpu-lj-therm.lb;e
     set(TEST_BINARY_LIST "1;0")
   endif()
   foreach(TEST_BINARY ${TEST_BINARY_LIST})
-    python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
-    python_test(FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX ${TEST_COMBINATION}_${TEST_BINARY}
-                DEPENDS save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(FILE save_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS}
+                SUFFIX ${TEST_COMBINATION}_${TEST_BINARY})
+    python_test(
+      FILE test_checkpoint.py MAX_NUM_PROC 4 LABELS ${TEST_LABELS} SUFFIX
+      ${TEST_COMBINATION}_${TEST_BINARY} DEPENDS
+      save_checkpoint_${TEST_COMBINATION}_${TEST_BINARY})
   endforeach(TEST_BINARY)
 endforeach(TEST_COMBINATION)
 python_test(FILE cellsystem.py MAX_NUM_PROC 4)
@@ -130,7 +142,8 @@ python_test(FILE analyze_energy.py MAX_NUM_PROC 2)
 python_test(FILE analyze_mass_related.py MAX_NUM_PROC 4)
 python_test(FILE rdf.py MAX_NUM_PROC 1)
 python_test(FILE coulomb_mixed_periodicity.py MAX_NUM_PROC 4 LABELS long)
-python_test(FILE coulomb_cloud_wall_duplicated.py MAX_NUM_PROC 4 LABELS gpu LABELS long)
+python_test(FILE coulomb_cloud_wall_duplicated.py MAX_NUM_PROC 4 LABELS gpu
+            LABELS long)
 python_test(FILE collision_detection.py MAX_NUM_PROC 4)
 python_test(FILE lb_get_u_at_pos.py MAX_NUM_PROC 4 LABELS gpu)
 python_test(FILE lj.py MAX_NUM_PROC 4)
@@ -194,30 +207,48 @@ python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 
-
 if(PY_H5PY)
   python_test(FILE h5md.py MAX_NUM_PROC 2)
 endif(PY_H5PY)
 
-add_custom_target(python_test_data
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data ${CMAKE_CURRENT_BINARY_DIR}/data
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/unittest_decorators.py ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py ${CMAKE_CURRENT_BINARY_DIR}
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py ${CMAKE_CURRENT_BINARY_DIR}
-)
+add_custom_target(
+  python_test_data
+  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/data
+          ${CMAKE_CURRENT_BINARY_DIR}/data
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/tests_common.py
+          ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND
+    ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/unittest_decorators.py
+    ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND
+    ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/virtual_sites_tracers_common.py
+    ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/ek_common.py
+          ${CMAKE_CURRENT_BINARY_DIR}
+  COMMAND
+    ${CMAKE_COMMAND} -E copy
+    ${CMAKE_CURRENT_SOURCE_DIR}/ek_eof_one_species_base.py
+    ${CMAKE_CURRENT_BINARY_DIR})
 
-add_custom_target(check_python_parallel_odd COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L parallel_odd $(ARGS) --output-on-failure)
+add_custom_target(
+  check_python_parallel_odd
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L
+          parallel_odd $(ARGS) --output-on-failure)
 add_dependencies(check_python_parallel_odd pypresso python_test_data)
-add_custom_target(check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -L gpu $(ARGS) --output-on-failure)
+add_custom_target(
+  check_python_gpu COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
+                           -j${TEST_NP} -L gpu $(ARGS) --output-on-failure)
 add_dependencies(check_python_gpu pypresso python_test_data)
 
-add_custom_target(check_python_skip_long COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -LE long $(ARGS) --output-on-failure)
+add_custom_target(
+  check_python_skip_long
+  COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} -LE
+          long $(ARGS) --output-on-failure)
 add_dependencies(check_python_skip_long pypresso python_test_data)
 
-add_custom_target(check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT} -j${TEST_NP} $(ARGS) --output-on-failure)
+add_custom_target(
+  check_python COMMAND ${CMAKE_CTEST_COMMAND} --timeout ${TEST_TIMEOUT}
+                       -j${TEST_NP} $(ARGS) --output-on-failure)
 add_dependencies(check_python pypresso python_test_data)
 add_dependencies(check check_python)
-
-

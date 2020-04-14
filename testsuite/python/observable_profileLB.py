@@ -29,11 +29,11 @@ Tests for the LB fluid profile observables.
 
 """
 
-BOX_L_X = 12.0
-BOX_L_Y = 12.0
-BOX_L_Z = 12.0
 TIME_STEP = 0.1
-AGRID = 0.5
+AGRID = 0.7
+BOX_L_X = 17.0 * AGRID
+BOX_L_Y = 17.0 * AGRID
+BOX_L_Z = 17.0 * AGRID
 VISC = .7
 DENS = 1.7
 LB_PARAMS = {'agrid': AGRID,
@@ -63,7 +63,7 @@ LB_VELOCITY_PROFILE_PARAMS = {
 
 class ObservableProfileLBCommon:
     lbf = None
-    system = espressomd.System(box_l=[12.0, 12.0, 12.0])
+    system = espressomd.System(box_l=[BOX_L_X, BOX_L_Y, BOX_L_Z])
     system.time_step = TIME_STEP
     system.cell_system.skin = 0.4 * AGRID
 

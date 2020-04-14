@@ -26,7 +26,13 @@
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
+#include "bond_error.hpp"
 #include "ghosts.hpp"
+
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/container/static_vector.hpp>
+#include <boost/range/algorithm/find_if.hpp>
+#include <boost/range/algorithm/transform.hpp>
 
 #include <vector>
 
@@ -52,21 +58,17 @@ enum Resort : unsigned {
 };
 }
 
-/** List of cell pointers. */
-struct CellPList {
-  ParticleRange particles() const {
-    return {CellParticleIterator(cell, cell + n, 0),
-            CellParticleIterator(cell + n, cell + n, 0)};
-  }
+namespace Cells {
+inline ParticleRange particles(Utils::Span<Cell *> cells) {
+  /* Find first non-empty cell */
+  auto first_non_empty =
+      std::find_if(cells.begin(), cells.end(),
+                   [](const Cell *c) { return not c->particles().empty(); });
 
-  Cell **begin() { return cell; }
-  Cell **end() { return cell + n; }
-
-  Cell *operator[](int i) { return assert(i < n), cell[i]; }
-
-  Cell **cell = nullptr;
-  int n = 0;
-};
+  return {CellParticleIterator(first_non_empty, cells.end()),
+          CellParticleIterator(cells.end())};
+}
+} // namespace Cells
 
 /** Describes a cell structure / cell system. Contains information
  *  about the communication of cell contents (particles, ghosts, ...)
@@ -138,18 +140,20 @@ private:
    * @param pl List to add the particle to.
    * @param p Particle to add.
    */
-  void append_indexed_particle(ParticleList *pl, Particle &&p) {
-    auto const old_data = pl->data();
-    pl->push_back(std::move(p));
+  Particle &append_indexed_particle(ParticleList &pl, Particle &&p) {
+    /* Check if cell may reallocate, in which case the index
+     * entries for all particles in this celle have to be
+     * updated. */
+    auto const may_reallocate = pl.size() >= pl.capacity();
+    auto &new_part = pl.insert(std::move(p));
 
-    /* If the list storage moved due to reallocation,
-     * we have to update the index for all particles,
-     * otherwise just for the particle that we added. */
-    if (old_data != pl->data())
+    if (may_reallocate)
       update_particle_index(pl);
     else {
-      update_particle_index(pl->back());
+      update_particle_index(new_part);
     }
+
+    return new_part;
   }
 
 public:
@@ -179,6 +183,12 @@ public:
     return m_particle_index[id];
   }
 
+  template <class InputRange, class OutputIterator>
+  void get_local_particles(InputRange ids, OutputIterator out) {
+    boost::transform(ids, out,
+                     [this](int id) { return get_local_particle(id); });
+  }
+
   std::vector<Cell *> m_local_cells = {};
   std::vector<Cell *> m_ghost_cells = {};
 
@@ -194,12 +204,15 @@ public:
   double min_range;
 
   /** Return the global local_cells */
-  CellPList local_cells() {
-    return {m_local_cells.data(), static_cast<int>(m_local_cells.size())};
+  Utils::Span<Cell *> local_cells() {
+    return {m_local_cells.data(), m_local_cells.size()};
   }
-  /** Return the global ghost_cells */
-  CellPList ghost_cells() {
-    return {m_ghost_cells.data(), static_cast<int>(m_ghost_cells.size())};
+
+  ParticleRange local_particles() {
+    return Cells::particles(Utils::make_span(m_local_cells));
+  }
+  ParticleRange ghost_particles() {
+    return Cells::particles(Utils::make_span(m_ghost_cells));
   }
 
   /** Communicator to exchange ghost particles. */
@@ -249,7 +262,7 @@ public:
    * @brief Remove a particle.
    *
    * Removes a particle and all bonds pointing
-   * to it. This is a colective call.
+   * to it. This is a collective call.
    *
    * @param id Id of particle to remove.
    */
@@ -295,6 +308,48 @@ public:
    * @brief Set the resort level to sorted.
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
+
+  /**
+   * @brief Resolve ids to particles.
+   *
+   * @throws BondResolutionError if one of the ids
+   *         was not found.
+   *
+   * @param partner_ids Ids to resolve.
+   * @return Vector of Particle pointers.
+   */
+  inline auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
+    boost::container::static_vector<Particle *, 4> partners;
+    get_local_particles(partner_ids, std::back_inserter(partners));
+
+    /* Check if id resolution failed for any partner */
+    if (boost::algorithm::any_of(
+            partners, [](Particle *partner) { return partner == nullptr; })) {
+      throw BondResolutionError{};
+    }
+
+    return partners;
+  }
+
+  template <class Handler>
+  void execute_bond_handler(Particle &p, Handler handler) {
+    for (auto const &bond : p.bonds()) {
+      auto const partner_ids = bond.partner_ids();
+
+      try {
+        auto partners = resolve_bond_partners(partner_ids);
+
+        auto const bond_broken =
+            handler(p, bond.bond_id(), Utils::make_span(partners));
+
+        if (bond_broken) {
+          bond_broken_error(p.identity(), partner_ids);
+        }
+      } catch (const BondResolutionError &) {
+        bond_broken_error(p.identity(), partner_ids);
+      }
+    }
+  }
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP

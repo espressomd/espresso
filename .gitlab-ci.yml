@@ -1,7 +1,6 @@
-image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:18.04
+image: docker.pkg.github.com/espressomd/docker/ubuntu-18.04:a1192b35590a1a474c55fe1e9a1e6c25758454ea
 
 stages:
-  - permission
   - prepare
   - build
   - additional_checks
@@ -31,16 +30,6 @@ variables:
   CCACHE_MAXSIZE: 100G
   with_ccache: "true"
 
-check_permission:
-  <<: *notification_job_definition
-  stage: permission
-  only:
-    - /.*external.*/
-  when: manual
-  allow_failure: false
-  script:
-    - exit 0
-
 status_pending:
   <<: *notification_job_definition
   stage: prepare
@@ -49,7 +38,7 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
+  image: docker.pkg.github.com/espressomd/docker/clang:a1192b35590a1a474c55fe1e9a1e6c25758454ea
   dependencies: []
   before_script:
     - git submodule deinit .
@@ -69,7 +58,7 @@ style:
 style_doxygen:
   <<: *global_job_definition
   stage: prepare
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   dependencies: []
   script:
     - mkdir build
@@ -118,7 +107,7 @@ no_rotation:
 debian:10:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/debian-python3:10
+  image: docker.pkg.github.com/espressomd/docker/debian:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
     - export with_cuda=false
     - export myconfig=maxset make_check_python=false
@@ -130,7 +119,7 @@ debian:10:
 opensuse:15.1:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  image: docker.pkg.github.com/espressomd/docker/opensuse:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
     - export with_cuda=false myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
@@ -141,7 +130,7 @@ opensuse:15.1:
 centos:7:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:7
+  image: docker.pkg.github.com/espressomd/docker/centos:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
     - export with_cuda=false myconfig=maxset make_check_python=true
     - bash maintainer/CI/build_cmake.sh
@@ -152,7 +141,7 @@ centos:7:
 fedora:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/centos-python3:next
+  image: docker.pkg.github.com/espressomd/docker/fedora:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
     - export with_cuda=false myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
@@ -160,16 +149,24 @@ fedora:
     - docker
     - linux
 
-#ubuntu:1604 not needed: used in ubuntu-python3:cuda-9.0
-#ubuntu:1804 not needed: default used in non-CUDA builds
-#ubuntu:1904 not needed: base image for builds on different architectures
+fedora:latest:
+  <<: *global_job_definition
+  stage: build
+  image: docker.pkg.github.com/espressomd/docker/fedora:latest_base
+  script:
+    - export with_cuda=false myconfig=maxset make_check_python=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+  when: manual
 
 ### Builds with CUDA
 
 cuda10-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - export cmake_params="-DIPYTHON_EXECUTABLE=$(which jupyter)"
@@ -186,7 +183,7 @@ cuda10-maxset:
 cuda9-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-9.0:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - sed -i 's/ or "DISPLAY" in os.environ/ or True/' src/python/espressomd/visualization.pyx
@@ -204,7 +201,7 @@ cuda9-maxset:
 tutorials-samples-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
@@ -217,7 +214,7 @@ tutorials-samples-maxset:
 tutorials-samples-default:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=default with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
@@ -232,7 +229,7 @@ tutorials-samples-default:
 tutorials-samples-empty:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=empty with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 with_scafacos=false
@@ -247,7 +244,7 @@ tutorials-samples-empty:
 tutorials-samples-no-gpu:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 hide_gpu=true
@@ -261,7 +258,7 @@ tutorials-samples-no-gpu:
 installation:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_coverage=false make_check_unit_tests=false make_check_python=false
     - export srcdir=${CI_PROJECT_DIR} test_timeout=1800
@@ -292,7 +289,7 @@ installation:
 empty:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
+  image: docker.pkg.github.com/espressomd/docker/clang:a1192b35590a1a474c55fe1e9a1e6c25758454ea
   script:
     - export myconfig=empty with_static_analysis=true
     - bash maintainer/CI/build_cmake.sh
@@ -304,7 +301,7 @@ empty:
 ubuntu:wo-dependencies:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:wo-dependencies
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
     - export myconfig=maxset make_check_unit_tests=false make_check_python=false
     - bash maintainer/CI/build_cmake.sh
@@ -317,45 +314,23 @@ ubuntu:wo-dependencies:
 rocm-maxset:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/rocm-python3:latest
+  image: docker.pkg.github.com/espressomd/docker/rocm:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
 
-### Builds on different architectures
-
-.arch_template: &arch_definition
+rocm:latest:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/$CI_JOB_NAME
+  image: docker.pkg.github.com/espressomd/docker/rocm:latest_base
   script:
-    - export with_cuda=false test_timeout=900 check_skip_long=true
-    - export OMPI_MCA_btl_vader_single_copy_mechanism=none
     - export myconfig=maxset
     - bash maintainer/CI/build_cmake.sh
-  timeout: 6h
   tags:
-    - docker
-    - linux
+    - amdgpu
   when: manual
-
-ubuntu:arm64:
-  <<: *arch_definition
-
-ubuntu:armhf:
-  <<: *arch_definition
-
-ubuntu:i386:
-  <<: *arch_definition
-  timeout: 1h
-  only:
-    - branches
-    - tags
-
-ubuntu:ppc64le:
-  <<: *arch_definition
 
 ### Builds with OS X
 
@@ -368,21 +343,12 @@ osx:
   tags:
     - mac
 
-osx-cuda:
-  <<: *global_job_definition
-  stage: build
-  script:
-    - export with_ccache=false myconfig=maxset with_cuda=true make_check_unit_tests=false make_check_python=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - mac
-
 ### Builds with different compilers
 
 clang:6.0:
   <<: *global_job_definition
   stage: build
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/clang-python3:6.0
+  image: docker.pkg.github.com/espressomd/docker/clang:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
     - export myconfig=maxset with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900
     - bash maintainer/CI/build_cmake.sh
@@ -411,7 +377,7 @@ intel:19:
 check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   needs:
     - cuda10-maxset
   when: on_success
@@ -432,7 +398,7 @@ check_sphinx:
 run_tutorials:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   needs:
     - cuda10-maxset
   when: on_success
@@ -456,7 +422,7 @@ run_tutorials:
 run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-10.1
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   needs:
     - cuda10-maxset
   when: on_success
@@ -476,7 +442,7 @@ run_doxygen:
 check_cuda_maxset_no_gpu:
   <<: *global_job_definition
   stage: additional_checks
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-9.0:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   when: on_success
   needs: 
     - cuda9-maxset
@@ -492,7 +458,7 @@ check_cuda_maxset_no_gpu:
 check_with_odd_no_of_processors:
   <<: *global_job_definition
   stage: additional_checks 
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-9.0:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   when: on_success
   needs: 
     - cuda9-maxset
@@ -509,12 +475,11 @@ check_with_odd_no_of_processors:
 .deploy_base:
   <<: *global_job_definition
   stage: deploy
-  image: gitlab.icp.uni-stuttgart.de:4567/espressomd/docker/ubuntu-python3:cuda-9.0
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:e24415d47e2611662efe56b9946f1d0c1dda32d7
   only:
     - python
   before_script:
-    - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-    - eval $(ssh-agent -s)
+    - 'which ssh-agent && eval $(ssh-agent -s) || exit 1'
     - ssh-add <(echo "$SSH_PRIVATE_KEY")
     - mkdir -p ${HOME}/.ssh && chmod 700 ${HOME}/.ssh
     - echo "$SSH_PRIVATE_KEY" > ${HOME}/.ssh/espresso_rsa && chmod 600 ${HOME}/.ssh/espresso_rsa

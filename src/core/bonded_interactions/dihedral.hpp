@@ -111,8 +111,8 @@ calc_dihedral_angle(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
  *  @return the forces on @p p2, @p p1, @p p3
  */
-inline boost::optional<
-    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                  Utils::Vector3d, Utils::Vector3d>>
 dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                Bonded_ia_parameters const &iaparams) {
@@ -165,7 +165,7 @@ dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   auto const force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
   auto const force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
 
-  return std::make_tuple(force2, force1, force3);
+  return std::make_tuple(force2, force1, force3, -(force1 + force2 + force3));
 }
 
 /** Compute the four-body dihedral interaction energy.

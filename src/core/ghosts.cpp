@@ -36,6 +36,11 @@
 #include <utils/Span.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/stream.hpp>
 #include <boost/range/algorithm/copy.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -56,10 +61,11 @@ public:
   /** Returns a pointer to the non-bond storage.
    */
   char *data() { return buf.data(); }
+  const char *data() const { return buf.data(); }
 
   /** Returns the number of elements in the non-bond storage.
    */
-  size_t size() { return buf.size(); }
+  size_t size() const { return buf.size(); }
 
   /** Resizes the underlying storage s.t. the object is capable
    * of holding "new_size" chars.
@@ -69,11 +75,12 @@ public:
 
   /** Returns a reference to the bond storage.
    */
-  std::vector<int> &bonds() { return bondbuf; }
+  auto &bonds() { return bondbuf; }
+  const auto &bonds() const { return bondbuf; }
 
 private:
-  std::vector<char> buf;    //< Buffer for everything but bonds
-  std::vector<int> bondbuf; //< Buffer for bond lists
+  std::vector<char> buf;     //< Buffer for everything but bonds
+  std::vector<char> bondbuf; //< Buffer for bond lists
 };
 
 void prepare_comm(GhostCommunicator *gcr, int num) {
@@ -94,9 +101,6 @@ static size_t calc_transmit_size(unsigned data_parts) {
   if (data_parts & GHOSTTRANS_PROPRTS) {
     size += Utils::MemcpyOArchive::packing_size<ParticleProperties>();
   }
-  if (data_parts & GHOSTTRANS_BONDS) {
-    size += Utils::MemcpyOArchive::packing_size<int>();
-  }
   if (data_parts & GHOSTTRANS_POSITION)
     size += Utils::MemcpyOArchive::packing_size<ParticlePosition>();
   if (data_parts & GHOSTTRANS_MOMENTUM)
@@ -113,8 +117,10 @@ static size_t calc_transmit_size(GhostCommunication &ghost_comm,
     return sizeof(int) * ghost_comm.part_lists.size();
 
   auto const n_part = boost::accumulate(
-      ghost_comm.part_lists, 0ul,
-      [](size_t sum, auto part_list) { return sum + part_list->n; });
+      ghost_comm.part_lists, 0ul, [](size_t sum, auto part_list) {
+        return sum + part_list->particles().size();
+      });
+
   return n_part * calc_transmit_size(data_parts);
 }
 
@@ -126,7 +132,12 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   send_buffer.bonds().clear();
 
   auto archiver = Utils::MemcpyOArchive{Utils::make_span(send_buffer)};
-  auto bond_buffer = std::back_inserter(send_buffer.bonds());
+
+  /* Construct archive that pushes back to the bond buffer */
+  namespace io = boost::iostreams;
+  io::stream<io::back_insert_device<std::vector<char>>> os{
+      io::back_inserter(send_buffer.bonds())};
+  boost::archive::binary_oarchive bond_archiver{os};
 
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
@@ -151,8 +162,7 @@ static void prepare_send_buffer(CommBuf &send_buffer,
           archiver << part.f;
         }
         if (data_parts & GHOSTTRANS_BONDS) {
-          archiver << part.bl.n;
-          boost::copy(part.bl, bond_buffer);
+          bond_archiver << part.bonds();
         }
       }
     }
@@ -162,29 +172,12 @@ static void prepare_send_buffer(CommBuf &send_buffer,
 }
 
 static void prepare_ghost_cell(Cell *cell, int size) {
-  using Utils::make_span;
-  auto const old_cap = cell->capacity();
-
-  /* reset excess particles */
-  if (size < cell->capacity()) {
-    for (auto &p :
-         make_span<Particle>(cell->part + size, cell->capacity() - size)) {
-      p = Particle{};
-      p.l.ghost = true;
-    }
-  }
-
   /* Adapt size */
-  cell->resize(size);
+  cell->particles().resize(size);
 
-  /* initialize new particles */
-  if (old_cap < cell->capacity()) {
-    auto new_parts =
-        make_span(cell->part + old_cap, cell->capacity() - old_cap);
-    std::uninitialized_fill(new_parts.begin(), new_parts.end(), Particle{});
-    for (auto &p : new_parts) {
-      p.l.ghost = true;
-    }
+  /* Mark particles as ghosts */
+  for (auto &p : cell->particles()) {
+    p.l.ghost = true;
   }
 }
 
@@ -193,6 +186,8 @@ static void prepare_recv_buffer(CommBuf &recv_buffer,
                                 unsigned int data_parts) {
   /* reallocate recv buffer */
   recv_buffer.resize(calc_transmit_size(ghost_comm, data_parts));
+  /* clear bond buffer */
+  recv_buffer.bonds().clear();
 }
 
 static void put_recv_buffer(CommBuf &recv_buffer,
@@ -200,14 +195,15 @@ static void put_recv_buffer(CommBuf &recv_buffer,
                             unsigned int data_parts) {
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
-  auto bond_buffer = recv_buffer.bonds().begin();
 
-  for (auto part_list : ghost_comm.part_lists) {
-    if (data_parts & GHOSTTRANS_PARTNUM) {
+  if (data_parts & GHOSTTRANS_PARTNUM) {
+    for (auto part_list : ghost_comm.part_lists) {
       int np;
       archiver >> np;
       prepare_ghost_cell(part_list, np);
-    } else {
+    }
+  } else {
+    for (auto part_list : ghost_comm.part_lists) {
       for (Particle &part : part_list->particles()) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
@@ -221,12 +217,17 @@ static void put_recv_buffer(CommBuf &recv_buffer,
         if (data_parts & GHOSTTRANS_FORCE) {
           archiver >> part.f;
         }
-        if (data_parts & GHOSTTRANS_BONDS) {
-          decltype(part.bl.n) n_bonds;
-          archiver >> n_bonds;
-          part.bl.resize(n_bonds);
-          std::copy_n(bond_buffer, n_bonds, part.bl.begin());
-          bond_buffer += n_bonds;
+      }
+    }
+    if (data_parts & GHOSTTRANS_BONDS) {
+      namespace io = boost::iostreams;
+      io::stream<io::array_source> bond_stream(io::array_source{
+          recv_buffer.bonds().data(), recv_buffer.bonds().size()});
+      boost::archive::binary_iarchive bond_archive(bond_stream);
+
+      for (auto part_list : ghost_comm.part_lists) {
+        for (Particle &part : part_list->particles()) {
+          bond_archive >> part.bonds();
         }
       }
     }
@@ -261,19 +262,19 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
     if (data_parts & GHOSTTRANS_PARTNUM) {
       prepare_ghost_cell(dst_list, src_list->particles().size());
     } else {
-      auto src_part = src_list->particles();
-      auto dst_part = dst_list->particles();
+      auto const &src_part = src_list->particles();
+      auto &dst_part = dst_list->particles();
       assert(src_part.size() == dst_part.size());
 
       for (size_t i = 0; i < src_part.size(); i++) {
-        auto const &part1 = src_part[i];
-        auto &part2 = dst_part[i];
+        auto const &part1 = src_part.begin()[i];
+        auto &part2 = dst_part.begin()[i];
 
         if (data_parts & GHOSTTRANS_PROPRTS) {
           part2.p = part1.p;
         }
         if (data_parts & GHOSTTRANS_BONDS) {
-          part2.bl = part1.bl;
+          part2.bonds() = part1.bonds();
         }
         if (data_parts & GHOSTTRANS_POSITION) {
           /* ok, this is not nice, but perhaps fast */

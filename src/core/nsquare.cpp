@@ -28,8 +28,6 @@
 #include "ghosts.hpp"
 #include "grid.hpp"
 
-#include "serialization/ParticleList.hpp"
-
 #include <boost/mpi/collectives/all_to_all.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -76,7 +74,7 @@ void nsq_topology_init() {
                                       : std::numeric_limits<double>::infinity();
   }
 
-  realloc_cells(n_nodes);
+  cells.resize(n_nodes);
 
   /* mark cells */
   local = &cells[this_node];
@@ -138,13 +136,13 @@ void nsq_topology_init() {
 void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
                             std::vector<Cell *> &modified_cells) {
   if (not global_flag) {
-    assert(displaced_parts->n == 0);
+    assert(displaced_parts->empty());
     return;
   }
 
   /* Sort displaced particles by the node they belong to. */
   std::vector<std::vector<Particle>> send_buf(n_nodes);
-  for (auto &p : Utils::make_span(displaced_parts->part, displaced_parts->n)) {
+  for (auto &p : *displaced_parts) {
     auto const target_node = (p.identity() % n_nodes);
     send_buf.at(target_node).emplace_back(std::move(p));
   }
@@ -162,7 +160,7 @@ void nsq_exchange_particles(int global_flag, ParticleList *displaced_parts,
   /* Add new particles belonging to this node */
   for (auto &parts : recv_buf) {
     for (auto &p : parts) {
-      local->push_back(std::move(p));
+      local->particles().insert(std::move(p));
     }
   }
 }

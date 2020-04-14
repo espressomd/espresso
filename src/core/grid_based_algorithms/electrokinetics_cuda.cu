@@ -33,6 +33,8 @@
 #include <thrust/functional.h>
 #include <thrust/transform_reduce.h>
 
+#include <utils/memory.hpp>
+
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"
@@ -326,7 +328,7 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 
   float agrid_inv = 1.0f / ek_parameters_gpu->agrid;
   float sqrt2agrid_inv = 1.0f / (sqrtf(2.0f) * ek_parameters_gpu->agrid);
-  float sqrt2_inv = 1.0f / sqrt(2.0f);
+  float sqrt2_inv = 1.0f / sqrtf(2.0f);
   float twoT_inv = 1.0f / (2.0f * ek_parameters_gpu->T);
   float D_inv = 1.0f / ek_parameters_gpu->D[species_index];
   float force_conv =
@@ -1365,7 +1367,7 @@ __device__ void ek_add_fluctuations_to_flux(unsigned int index,
     for (int i = 0; i < 9; i++) {
 
       if (i % 4 == 0) {
-        random_floats = random_wrapper_philox(index, i + 40, philox_counter);
+        random_floats = ek_random_wrapper_philox(index, i + 40, philox_counter);
         random = (random_floats.w - 0.5f) * 2.0f;
       } else if (i % 4 == 1) {
         random = (random_floats.x - 0.5f) * 2.0f;
@@ -1389,7 +1391,7 @@ __device__ void ek_add_fluctuations_to_flux(unsigned int index,
                powf(2.0f * average_density * diffusion * time_step /
                         (agrid * agrid),
                     0.5f) *
-               random * ek_parameters_gpu->fluctuation_amplitude / sqrt(2.0f);
+               random * ek_parameters_gpu->fluctuation_amplitude / sqrtf(2.0f);
         fluc *=
             !(lb_node.boundary[index] || lb_node.boundary[neighborindex[i]]);
 #ifdef EK_DEBUG

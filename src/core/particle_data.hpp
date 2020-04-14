@@ -39,7 +39,6 @@
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 
-#include <utils/List.hpp>
 #include <utils/Span.hpp>
 #include <utils/Vector.hpp>
 
@@ -320,6 +319,8 @@ void delete_particle_bonds(int part);
  *  identity of all bond partners (secondary atoms of the bond).
  */
 void add_particle_bond(int part, Utils::Span<const int> bond);
+
+const std::vector<BondView> &get_particle_bonds(int part);
 
 #ifdef EXCLUSIONS
 /** Call only on the master node: change particle constraints.
