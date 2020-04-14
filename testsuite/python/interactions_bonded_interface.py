@@ -139,9 +139,6 @@ class ParticleProperties(ut.TestCase):
         0, espressomd.interactions.AngleCosine, {"bend": 5.2, "phi0": 3.2})
     test_angle_cossquare = generateTestForBondParams(
         0, espressomd.interactions.AngleCossquare, {"bend": 5.2, "phi0": 0.})
-    if espressomd.has_features(["LENNARD_JONES"]):
-        test_subt_lj = generateTestForBondParams(
-            0, espressomd.interactions.SubtLJ, {})
 
     test_tabulated_bond = generateTestForBondParams(
         0, espressomd.interactions.TabulatedDistance, {"min": 1.,

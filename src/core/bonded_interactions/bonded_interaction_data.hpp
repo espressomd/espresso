@@ -60,8 +60,6 @@ enum BondedInteraction : int {
   BONDED_IA_TABULATED_ANGLE,
   /** Type of bonded interaction is a tabulated dihedral potential. */
   BONDED_IA_TABULATED_DIHEDRAL,
-  /** Type of bonded interaction is a subtracted-LJ potential. */
-  BONDED_IA_SUBT_LJ,
   /** Type of bonded interaction is a rigid/constrained bond. */
   BONDED_IA_RIGID_BOND,
   /** Type of bonded interaction is a virtual bond. */
@@ -293,11 +291,6 @@ struct Umbrella_bond_parameters {
   double cutoff() const { return std::numeric_limits<double>::infinity(); }
 };
 
-/** Dummy parameters for subtracted-LJ Potential */
-struct Subt_lj_bond_parameters {
-  double cutoff() const { return -1.; }
-};
-
 /** Parameters for the rigid_bond/SHAKE/RATTLE ALGORITHM */
 struct Rigid_bond_parameters {
   /**Square of the length of Constrained Bond*/
@@ -385,7 +378,6 @@ union Bond_parameters {
   Tabulated_bond_parameters tab;
   Umbrella_bond_parameters umbrella;
   Thermalized_bond_parameters thermalized_bond;
-  Subt_lj_bond_parameters subt_lj;
   Rigid_bond_parameters rigid_bond;
   IBM_Triel_Parameters ibm_triel;
   IBM_VolCons_Parameters ibmVolConsParameters;

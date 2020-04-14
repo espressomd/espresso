@@ -12,6 +12,5 @@ target_sources(
           ${CMAKE_CURRENT_SOURCE_DIR}/harmonic.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/harmonic_dumbbell.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/quartic.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/subt_lj.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/thermalized_bond.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/umbrella.cpp)
