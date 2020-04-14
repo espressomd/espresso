@@ -30,8 +30,8 @@ make_check=${make_check}
 EOF
 
 if [ -z "${image}" ]; then
-    image="ubuntu"
+    echo "ERROR: environment variable 'image' is missing" >&2
+    exit 1
 fi
 
-image="espressomd/espresso-${image}:latest"
 docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1

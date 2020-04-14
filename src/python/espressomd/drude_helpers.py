@@ -38,7 +38,7 @@ def add_drude_particle_to_core(system, harmonic_bond, thermalized_bond,
     Collects types/charges/polarizations/Thole factors for intramolecular
     core-Drude short-range exclusion and Thole interaction.
 
-    Attributes
+    Parameters
     ----------
 
     system : :class:`espressomd.system.System`
@@ -135,7 +135,7 @@ def add_thole_pair_damping(system, t1, t2, verbose=False):
     Calculates mixed Thole factors depending on Thole damping and polarization.
     Adds non-bonded Thole interactions to the system.
 
-    Attributes
+    Parameters
     ----------
 
     system : :class:`espressomd.system.System`
@@ -164,7 +164,7 @@ def add_all_thole(system, verbose=False):
     Calls :meth:`add_thole_pair_damping()` for all necessary combinations to
     create the interactions.
 
-    Attributes
+    Parameters
     ----------
 
     system : :class:`espressomd.system.System`
@@ -195,7 +195,7 @@ def setup_and_add_drude_exclusion_bonds(system, verbose=False):
     between Drude particles and core charges and adds the bonds to the cores.
     Has to be called once after all Drude particles have been created.
 
-    Attributes
+    Parameters
     ----------
 
     system : :class:`espressomd.system.System`
@@ -236,7 +236,7 @@ def setup_intramol_exclusion_bonds(system, mol_drude_types, mol_core_types,
     between Drude particles and partial charges of the cores. Has to be called once
     after all Drude particles have been created.
 
-    Attributes
+    Parameters
     ----------
 
     system : :class:`espressomd.system.System`
@@ -275,7 +275,7 @@ def add_intramol_exclusion_bonds(system, drude_ids, core_ids, verbose=False):
     Applies electrostatic short-range exclusion bonds for the given ids.
     Has to be applied for all molecules.
 
-    Attributes
+    Parameters
     ----------
 
     system : :class:`espressomd.system.System`

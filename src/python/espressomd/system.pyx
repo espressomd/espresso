@@ -72,45 +72,42 @@ cdef class System:
               ``self.new_attr = somevalue`` without declaring it inside this
               indentation level, either as method, property or reference.
 
-    Attributes
-    ----------
-    globals : :class:`espressomd.globals.Globals`
-    actors : :class:`espressomd.actors.Actors`
-    analysis : :class:`espressomd.analyze.Analysis`
-    auto_update_accumulators : :class:`espressomd.accumulators.AutoUpdateAccumulators`
-    bonded_inter : :class:`espressomd.interactions.BondedInteractions`
-    cell_system : :class:`espressomd.cellsystem.CellSystem`
-    collision_detection : :class:`espressomd.collision_detection.CollisionDetection`
-    comfixed : :class:`espressomd.comfixed.ComFixed`
-    constraints : :class:`espressomd.constraints.Constraints`
-    cuda_init_handle : :class:`espressomd.cuda_init.CudaInitHandle`
-    galilei : :class:`espressomd.galilei.GalileiTransform`
-    integrator : :class:`espressomd.integrate.IntegratorHandle`
-    lbboundaries : :class:`espressomd.lbboundaries.LBBoundaries`
-    ekboundaries : :class:`espressomd.ekboundaries.EKBoundaries`
-    non_bonded_inter : :class:`espressomd.interactions.NonBondedInteractions`
-    part : :class:`espressomd.particle_data.ParticleList`
-    thermostat : :class:`espressomd.thermostat.Thermostat`
-
     """
     cdef public:
         globals
+        """:class:`espressomd.globals.Globals`"""
         part
+        """:class:`espressomd.particle_data.ParticleList`"""
         non_bonded_inter
+        """:class:`espressomd.interactions.NonBondedInteractions`"""
         bonded_inter
+        """:class:`espressomd.interactions.BondedInteractions`"""
         cell_system
+        """:class:`espressomd.cellsystem.CellSystem`"""
         thermostat
+        """:class:`espressomd.thermostat.Thermostat`"""
         actors
+        """:class:`espressomd.actors.Actors`"""
         analysis
+        """:class:`espressomd.analyze.Analysis`"""
         galilei
+        """:class:`espressomd.galilei.GalileiTransform`"""
         integrator
+        """:class:`espressomd.integrate.IntegratorHandle`"""
         auto_update_accumulators
+        """:class:`espressomd.accumulators.AutoUpdateAccumulators`"""
         constraints
+        """:class:`espressomd.constraints.Constraints`"""
         lbboundaries
+        """:class:`espressomd.lbboundaries.LBBoundaries`"""
         ekboundaries
+        """:class:`espressomd.ekboundaries.EKBoundaries`"""
         collision_detection
+        """:class:`espressomd.collision_detection.CollisionDetection`"""
         cuda_init_handle
+        """:class:`espressomd.cuda_init.CudaInitHandle`"""
         comfixed
+        """:class:`espressomd.comfixed.ComFixed`"""
         _active_virtual_sites_handle
 
     def __init__(self, **kwargs):
