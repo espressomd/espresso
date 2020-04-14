@@ -195,7 +195,6 @@ if(WITH_GSL)
   endif(GSL_FOUND)
 endif(WITH_GSL)
 
-
 find_package(BLAS)
 if(BLAS_FOUND)
   set(BLAS 1)
@@ -205,7 +204,6 @@ if(LAPACK_FOUND)
   set(LAPACK 1)
 endif()
 
-
 if(BLAS AND LAPACK)
   set(STOKESIAN_DYNAMICS 1)
 endif()
@@ -214,7 +212,6 @@ endif()
 if(WITH_CUDA)
   set(STOKESIAN_DYNAMICS_GPU 1)
 endif()
-
 
 if(WITH_VALGRIND_INSTRUMENTATION)
   find_package(PkgConfig)

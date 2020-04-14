@@ -4,4 +4,3 @@ target_include_directories(
 
 target_sources(EspressoCore
                PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/sd_interface.cpp)
-
