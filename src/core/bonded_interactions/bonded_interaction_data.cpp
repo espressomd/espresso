@@ -52,8 +52,6 @@ auto cutoff(int type, Bond_parameters const &bp) {
   case BONDED_IA_TABULATED_ANGLE:
   case BONDED_IA_TABULATED_DIHEDRAL:
     return bp.tab.cutoff();
-  case BONDED_IA_SUBT_LJ:
-    return bp.subt_lj.cutoff();
   case BONDED_IA_RIGID_BOND:
     return bp.rigid_bond.cutoff();
   case BONDED_IA_VIRTUAL_BOND:

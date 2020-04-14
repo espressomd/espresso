@@ -37,7 +37,6 @@
 #include "bonded_interactions/harmonic.hpp"
 #include "bonded_interactions/harmonic_dumbbell.hpp"
 #include "bonded_interactions/quartic.hpp"
-#include "bonded_interactions/subt_lj.hpp"
 #include "bonded_interactions/umbrella.hpp"
 #include "errorhandling.hpp"
 #include "nonbonded_interactions/bmhtf-nacl.hpp"
@@ -232,10 +231,6 @@ calc_bonded_energy(Bonded_ia_parameters const &iaparams, Particle const &p1,
       return bonded_coulomb_pair_energy(p1.p.q * p2->p.q, iaparams, dx);
     case BONDED_IA_BONDED_COULOMB_SR:
       return bonded_coulomb_sr_pair_energy(p1, *p2, iaparams, dx);
-#endif
-#ifdef LENNARD_JONES
-    case BONDED_IA_SUBT_LJ:
-      return subt_lj_pair_energy(*get_ia_param(p1.p.type, p2->p.type), dx);
 #endif
 #ifdef BOND_CONSTRAINT
     case BONDED_IA_RIGID_BOND:
