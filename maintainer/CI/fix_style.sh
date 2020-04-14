@@ -61,8 +61,11 @@ pylint_command () {
     elif hash pylint-3 2> /dev/null; then
         pylint-3 "${@}"
     else
-        echo "pylint not found" >&2
-        exit 1
+        python3 -m pylint "${@}"
+        if [ "$?" = "1" ]; then
+          echo "pylint not found" >&2
+          exit 1
+        fi
     fi
 }
 pylint_command --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log

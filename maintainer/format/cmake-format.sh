@@ -20,14 +20,21 @@ CMAKE_FORMAT_VER=0.6.9
 if hash cmake-format 2>/dev/null; then
     CMAKE_FORMAT="$(which cmake-format)"
 else
-    echo "No cmake-format found."
-    exit 2
+    python3 -m cmake_format 2>&1 >/dev/null
+    if [ "$?" = "0" ]; then
+        alias cmake-format="python3 -m cmake_format"
+        CMAKE_FORMAT=cmake-format
+    else
+        echo "cmake-format command not found."
+        exit 2
+    fi
 fi
 
+eval ${CMAKE_FORMAT} --version | grep -qEo "${CMAKE_FORMAT_VER}"
 
-if ! "${CMAKE_FORMAT}" --version | grep -qEo "${CMAKE_FORMAT_VER}"; then
+if [ "$?" = "1" ]; then
     echo "Could not find cmake-format ${CMAKE_FORMAT_VER}."
     exit 2
 fi
 
-${CMAKE_FORMAT} "$@"
+eval ${CMAKE_FORMAT} "$@"
