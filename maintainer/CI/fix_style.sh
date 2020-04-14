@@ -26,8 +26,13 @@ if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
 fi
 
 if ! hash pre-commit 2>/dev/null; then
-    echo "pre-commit command not found."
-    exit 2
+    python3 -m pre_commit 2>&1 >/dev/null
+    if [ "$?" = "0" ]; then
+        alias pre-commit="python3 -m pre_commit"
+    else
+        echo "pre-commit command not found."
+        exit 2
+    fi
 fi
 
 pre-commit run --all-files
