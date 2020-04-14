@@ -513,7 +513,7 @@ std::vector<std::string> librepa_supported_grid_types() { return {}; }
   retval fn_name(__VA_ARGS__) { err_not_compiled_in(); }
 
 /** Error defines for all exported functionality.
- * This helps eliminating #ifdefs at the inclusion and caller site.
+ * This helps eliminating ifdefs at the inclusion and caller site.
  */
 // clang-format off
 errdef(void, on_geometry_change, int, double)
