@@ -30,5 +30,5 @@ void initialize() {
   ScriptInterface::register_new<ScriptInterface::GenericDD::SIGenericDD>(
       "ScriptInterface::GenericDD::GenericDD");
 }
-} // namespace Repart
+} // namespace GenericDD
 } // namespace ScriptInterface

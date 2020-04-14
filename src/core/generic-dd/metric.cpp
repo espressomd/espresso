@@ -48,9 +48,11 @@ static void metric_npart(std::vector<double> &weights) {
 /** Returns the number of distance pairs calculated for cell "c".
  */
 static int cell_ndistpairs(Cell *c) {
-  int nnp = std::accumulate(
-      c->m_neighbors.red().begin(), c->m_neighbors.red().begin(), 0,
-      [](int acc, const Cell *neigh) { return acc + neigh->particles().size(); });
+  int nnp = std::accumulate(c->m_neighbors.red().begin(),
+                            c->m_neighbors.red().begin(), 0,
+                            [](int acc, const Cell *neigh) {
+                              return acc + neigh->particles().size();
+                            });
   return c->particles().size() * nnp;
 }
 
@@ -66,7 +68,7 @@ static void metric_ndistpairs(std::vector<double> &weights) {
  */
 int cell_nbondedia(Cell *cell) {
   int nbondedia = 0;
-  for (const Particle &p: cell->particles()) {
+  for (const Particle &p : cell->particles()) {
     for (int i = 0; i < p.bl.n;) {
       int type_num = p.bl.e[i++];
       Bonded_ia_parameters *iaparams = &bonded_ia_params[type_num];

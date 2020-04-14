@@ -21,6 +21,7 @@ import numpy as np
 import unittest as ut
 from espressomd import system, minimize_energy, generic_dd
 
+
 class Generic_DD_Energy(ut.TestCase):
     """"Test case for all generic_dd grid types.
     NVE ensemble with 10 repartitionings.
@@ -49,7 +50,7 @@ class Generic_DD_Energy(ut.TestCase):
     def integrate(cls, repart_func=None):
         nsteps = 100
         for _ in range(10):
-            cls.s.integrator.run(steps=nsteps//10)
+            cls.s.integrator.run(steps=nsteps // 10)
             if repart_func is not None:
                 repart_func()
 
@@ -88,7 +89,7 @@ class Generic_DD_Energy(ut.TestCase):
         print(" {: 12.6f} (Rel. err.: {:.2e})".format(
             en, abs((self.ground_truth - en) / self.ground_truth)))
         self.assertAlmostEqual(self.ground_truth, en,
-                               delta=abs(1e-3*self.ground_truth))
+                               delta=abs(1e-3 * self.ground_truth))
 
     def common_test(self, grid_type):
         self.common_test_impl(grid_type, skin=0.0, use_verlet=False)

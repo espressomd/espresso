@@ -17,6 +17,7 @@
 
 from . import script_interface
 
+
 class PyMetric:
     def __init__(self, desc):
         """
@@ -27,7 +28,8 @@ class PyMetric:
 
         'desc' : string, description of the metric
         """
-        self.__instance = script_interface.PScriptInterface("ScriptInterface::GenericDD::Metric")
+        self.__instance = script_interface.PScriptInterface(
+            "ScriptInterface::GenericDD::Metric")
         self.__instance.set_params(metric=desc)
 
     def get_metric(self):
@@ -35,22 +37,27 @@ class PyMetric:
 
     def average(self):
         return self.__instance.call_method("average")
+
     def maximum(self):
         return self.__instance.call_method("maximum")
+
     def imbalance(self):
         return self.__instance.call_method("imbalance")
 
     def _get_instance(self):
         return self.__instance
 
+
 class GenericDD:
     def __init__(self, grid_type):
         if grid_type not in supported_grid_types():
-            raise RuntimeError("Grid type {} not supported by librepa.".format(grid_type))
+            raise RuntimeError(
+                "Grid type {} not supported by librepa.".format(grid_type))
         self._grid_type = grid_type
         mpi_bcast_generic_dd_grid(grid_type.encode())
         mpi_bcast_cell_structure(CELL_STRUCTURE_GENERIC_DD)
-        self.__instance = script_interface.PScriptInterface("ScriptInterface::GenericDD::GenericDD")
+        self.__instance = script_interface.PScriptInterface(
+            "ScriptInterface::GenericDD::GenericDD")
 
     def metric(self, desc):
         """
@@ -88,12 +95,13 @@ class GenericDD:
         'cmd' : string, command
         """
         self.__instance.call_method("command", cmd=cmd)
-    
+
     def grid_type(self):
         """
         Returns the type of grid currently in use.
         """
         return self._grid_type
+
 
 def supported_grid_types():
     l = librepa_supported_grid_types()

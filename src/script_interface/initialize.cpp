@@ -28,9 +28,9 @@
 #endif
 #include "accumulators/initialize.hpp"
 #include "collision_detection/initialize.hpp"
+#include "generic_dd/initialize.hpp"
 #include "lbboundaries/initialize.hpp"
 #include "mpiio/initialize.hpp"
-#include "generic_dd/initialize.hpp"
 #include "observables/initialize.hpp"
 
 #include "ComFixed.hpp"

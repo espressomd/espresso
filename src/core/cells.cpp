@@ -342,7 +342,8 @@ void cells_resort_particles(int global_flag) {
                                    modified_cells);
     break;
   case CELL_STRUCTURE_GENERIC_DD:
-    generic_dd::exchange_particles(global_flag, &displaced_parts, modified_cells);
+    generic_dd::exchange_particles(global_flag, &displaced_parts,
+                                   modified_cells);
     break;
   }
 

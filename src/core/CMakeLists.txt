@@ -88,8 +88,7 @@ target_link_libraries(
   EspressoCore
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
-          "$<$<BOOL:${SCAFACOS}>:Scafacos>"
-          GenericDD
+          "$<$<BOOL:${SCAFACOS}>:Scafacos>" GenericDD
   PUBLIC
     utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
     "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"

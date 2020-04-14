@@ -48,7 +48,7 @@ public:
   }
 };
 
-} // namespace Repart
+} // namespace GenericDD
 } // namespace ScriptInterface
 
 #endif

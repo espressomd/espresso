@@ -57,7 +57,7 @@ private:
   ::generic_dd::repart::Metric m_metric;
 };
 
-} // namespace Repart
+} // namespace GenericDD
 } // namespace ScriptInterface
 
 #endif
