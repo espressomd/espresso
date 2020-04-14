@@ -1188,8 +1188,8 @@ struct thermalizer {
         
         // convert to uniform distribution
         auto constexpr const max = std::numeric_limits<uint64_t>::max();
-        auto constexpr const fac = 1. / (max + 1.);
-        T rnd = rint[0] * fac;
+        double constexpr const fac = 1. / (max + 1.);
+        T rnd = (rint[0] + 0.5) * fac;
 #endif
         return std::sqrt(T{2.0}) * sqrt_kT_Dt * std::sqrt(T{12.0}) * (rnd - 0.5);
 

@@ -50,7 +50,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
             Utils::sqr(p.r.p[1] - p.l.p_old[1]) +
             Utils::sqr(p.r.p[2] - p.l.p_old[2]) >
         skin2)
-      set_resort_particles(Cells::RESORT_LOCAL);
+      cell_structure.set_resort_particles(Cells::RESORT_LOCAL);
   }
 }
 
