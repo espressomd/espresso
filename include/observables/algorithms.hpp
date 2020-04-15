@@ -7,12 +7,12 @@
 namespace Observables {
 namespace detail {
 struct One {
-  template <class Particle> auto operator()(Particle const &p) { return 1; }
+  template <class Particle> auto operator()(Particle const &p) const { return 1; }
 };
 
 template <class ValueOp, class WeightOp> struct WeightedSum {
   template <class ParticleRange>
-  auto operator()(ParticleRange const &particles) {
+  auto operator()(ParticleRange const &particles) const {
     using particle_type = typename ParticleRange::value_type;
     using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
     using weight_op_type = decltype(WeightOp{}(std::declval<particle_type>()));
@@ -29,21 +29,21 @@ template <class ValueOp, class WeightOp> struct WeightedSum {
 
 template <class ValueOp, class WeightOp> struct WeightedSum {
   template <class ParticleRange>
-  auto operator()(ParticleRange const &particles) {
+  auto operator()(ParticleRange const &particles) const {
     return detail::WeightedSum<ValueOp, WeightOp>()(particles).first;
   }
 };
 
 template <class ValueOp> struct Sum {
   template <class ParticleRange>
-  auto operator()(ParticleRange const &particles) {
+  auto operator()(ParticleRange const &particles) const {
     return detail::WeightedSum<ValueOp, detail::One>()(particles).first;
   }
 };
 
 template <class ValueOp, class WeightOp> struct WeightedAverage {
   template <class ParticleRange>
-  auto operator()(ParticleRange const &particles) {
+  auto operator()(ParticleRange const &particles) const {
     auto const ws = detail::WeightedSum<ValueOp, WeightOp>()(particles);
     return ws.first / ws.second;
   }
@@ -51,16 +51,20 @@ template <class ValueOp, class WeightOp> struct WeightedAverage {
 
 template <class ValueOp> struct Average {
   template <class ParticleRange>
-  auto operator()(ParticleRange const &particles) {
+  auto operator()(ParticleRange const &particles) const {
     return WeightedAverage<ValueOp, detail::One>()(particles);
   }
 };
 
-template <class ValueOp> struct Collect {
-  template <class ParticleRange, class OutputIterator>
-  void operator()(ParticleRange const &particles, OutputIterator out) {
-    std::transform(std::begin(particles), std::end(particles), out,
+template <class ValueOp> struct Map {
+  template <class ParticleRange>
+  auto operator()(ParticleRange const &particles) const {
+    using particle_type = typename ParticleRange::value_type;
+    using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
+    std::vector<value_op_type> res; 
+    std::transform(std::begin(particles), std::end(particles), std::back_inserter(res),
                    [](auto const &p) { return ValueOp{}(p); });
+    return res;
   }
 };
 } // namespace Observables
