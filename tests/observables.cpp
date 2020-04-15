@@ -63,8 +63,7 @@ BOOST_AUTO_TEST_CASE(obs) {
     BOOST_CHECK(res == Force{}(parts[0]) + Force{}(parts[1]));
   }
   {
-    std::vector<double> res;
-    Positions{}(parts, std::back_inserter(res));
+    auto const res = Positions{}(parts);
     BOOST_CHECK(res[0] == Position{}(parts[0]));
     BOOST_CHECK(res[1] == Position{}(parts[1]));
   }

@@ -44,8 +44,7 @@ BOOST_AUTO_TEST_CASE(algorithms) {
     BOOST_CHECK(res == std::accumulate(values.begin(), values.end(), 0));
   }
   {
-    std::vector<int> res;
-    Collect<Testing::Identity>{}(values, std::back_inserter(res));
+    auto const res = Map<Testing::Identity>{}(values);
     BOOST_CHECK(res == values);
   }
 }
