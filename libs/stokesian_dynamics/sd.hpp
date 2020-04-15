@@ -1187,7 +1187,7 @@ struct thermalizer {
         RNG::ctr_type rint = rng(c, k);
         
         // convert to uniform distribution
-        auto constexpr const max = std::numeric_limits<uint64_t>::max();
+        uint64_t constexpr const max = std::numeric_limits<uint64_t>::max();
         double constexpr const fac = 1. / (max + 1.);
         T rnd = (rint[0] + 0.5) * fac;
 #endif

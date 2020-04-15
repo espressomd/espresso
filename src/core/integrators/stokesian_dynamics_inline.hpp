@@ -24,6 +24,8 @@
 #include "rotation.hpp"
 #include "stokesian_dynamics/sd_interface.hpp"
 
+#include "utils/Vector.hpp"
+
 #ifdef STOKESIAN_DYNAMICS
 
 inline void
@@ -41,8 +43,9 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
 
 #ifdef ROTATION
     // Perform rotation
-    local_rotate_particle(p, p.m.omega.normalize(),
-                          p.m.omega.norm() * time_step);
+    double norm = p.m.omega.norm();
+    Utils::Vector3d omega_unit = (1 / norm) * p.m.omega;
+    local_rotate_particle(p, omega_unit, norm * time_step);
 #endif
 
     // Verlet criterion check
