@@ -43,19 +43,7 @@ else
     echo "Passed style check"
 fi
 
-pylint_command () {
-    if hash pylint 2> /dev/null; then
-        pylint "${@}"
-    elif hash pylint3 2> /dev/null; then
-        pylint3 "${@}"
-    elif hash pylint-3 2> /dev/null; then
-        pylint-3 "${@}"
-    else
-        echo "pylint not found" >&2
-        exit 1
-    fi
-}
-pylint_command --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
+maintainer/lint/pylint.sh --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
 errors=$(grep -Pc '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log)
 
 if [ "${CI}" != "" ]; then
