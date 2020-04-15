@@ -25,12 +25,7 @@ if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     exit 1
 fi
 
-if ! hash pre-commit 2>/dev/null; then
-    echo "pre-commit command not found."
-    exit 2
-fi
-
-pre-commit run --all-files
+maintainer/lint/pre_commit.sh run --all-files || exit 1
 
 if [ "${CI}" != "" ]; then
     git --no-pager diff > style.patch
