@@ -147,7 +147,7 @@ class CylindricalLBObservableCommon:
         core_hist_v_r = core_hist[:, :, :, 0]
         core_hist_v_phi = core_hist[:, :, :, 1]
         core_hist_v_z = core_hist[:, :, :, 2]
-        core_edges = p.edges()
+        core_edges = p.call_method("edges")
         self.pol_positions = self.pol_coords()
         np_hist, np_edges = tests_common.get_histogram(
             self.pol_positions, self.params, 'cylindrical')

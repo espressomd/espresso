@@ -43,7 +43,9 @@ class ProfileObservablesTest(ut.TestCase):
     def test_density_profile(self):
         density_profile = espressomd.observables.DensityProfile(**self.kwargs)
         obs_data = density_profile.calculate()
-        obs_edges = np.array(density_profile.edges())
+        obs_edges = density_profile.call_method("edges")
+        obs_bin_edges = density_profile.bin_edges()
+        obs_bin_centers = density_profile.bin_centers()
         np_hist, np_edges = tests_common.get_histogram(
             np.copy(self.system.part[:].pos), self.kwargs, 'cartesian',
             normed=True)
@@ -53,6 +55,14 @@ class ProfileObservablesTest(ut.TestCase):
             np.testing.assert_array_almost_equal(obs_edges[i], np_edges[i])
         self.assertEqual(np.prod(obs_data.shape),
                          self.kwargs['n_x_bins'] * self.kwargs['n_y_bins'] * self.kwargs['n_z_bins'])
+        np.testing.assert_array_almost_equal(
+            obs_bin_edges[0, 0, 0],
+            [self.kwargs['min_x'], self.kwargs['min_y'], self.kwargs['min_z']])
+        np.testing.assert_array_almost_equal(
+            obs_bin_edges[-1, -1, -1],
+            [self.kwargs['max_x'], self.kwargs['max_y'], self.kwargs['max_z']])
+        np.testing.assert_array_almost_equal(obs_bin_centers[0, 0, 0],
+                                             [2.5, 2.5, 2.5])
 
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_force_density_profile(self):

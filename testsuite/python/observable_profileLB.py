@@ -79,7 +79,7 @@ class ObservableProfileLBCommon:
         obs = espressomd.observables.LBVelocityProfile(
             **LB_VELOCITY_PROFILE_PARAMS)
         obs_data = obs.calculate()
-        obs_edges = obs.edges()
+        obs_edges = obs.call_method("edges")
         _, np_edges = tests_common.get_histogram(
             np.zeros([1, 3]), LB_VELOCITY_PROFILE_PARAMS, 'cartesian',
             normed=True)

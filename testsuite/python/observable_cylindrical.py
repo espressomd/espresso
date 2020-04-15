@@ -133,7 +133,7 @@ class TestCylindricalObservable(ut.TestCase):
             local_params['axis'] = [0.0, 0.0, 1.0]
         obs = espressomd.observables.CylindricalDensityProfile(**local_params)
         core_hist = obs.calculate()
-        core_edges = obs.edges()
+        core_edges = obs.call_method("edges")
         np_hist, np_edges = self.calculate_numpy_histogram()
         np_hist = self.normalize_with_bin_volume(np_hist)
         np.testing.assert_array_almost_equal(np_hist, core_hist)
