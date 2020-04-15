@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <numeric>
 #include <utility>
+#include <vector>
 
 namespace Observables {
 namespace detail {
