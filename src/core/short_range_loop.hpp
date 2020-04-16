@@ -103,6 +103,25 @@ void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
 
 } // namespace detail
 
+template <class PairKernel, class VerletCriterion = detail::True>
+void short_range_loop(PairKernel &&pair_kernel,
+                      const VerletCriterion &verlet_criterion = {}) {
+  ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
+
+  assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
+
+  if (interaction_range() != INACTIVE_CUTOFF) {
+    if (cell_structure.decomposition().minimum_image_distance()) {
+      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
+                        detail::MinimalImageDistance{box_geo},
+                        verlet_criterion);
+    } else {
+      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
+                        detail::EuclidianDistance{}, verlet_criterion);
+    }
+  }
+}
+
 template <class ParticleKernel, class PairKernel,
           class VerletCriterion = detail::True>
 void short_range_loop(ParticleKernel &&particle_kernel,

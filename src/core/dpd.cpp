@@ -143,7 +143,6 @@ static auto dpd_viscous_stress_local() {
 
   Utils::Vector<Vector3d, 3> stress{};
   short_range_loop(
-      Utils::NoOp{},
       [&stress](const Particle &p1, const Particle &p2, Distance const &d) {
         auto const v21 = p1.m.v - p2.m.v;
 
