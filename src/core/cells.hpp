@@ -67,11 +67,6 @@ enum {
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
 
-/** If non-zero, cell systems should reset the position for checking
- *  the Verlet criterion. Moreover, the Verlet list has to be rebuilt.
- */
-extern bool rebuild_verletlist;
-
 /*@}*/
 
 /************************************************************/

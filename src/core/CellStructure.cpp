@@ -166,6 +166,8 @@ void CellStructure::resort_particles(int global_flag) {
   for (auto d : diff) {
     boost::apply_visitor(UpdateParticleIndexVisitor{this}, d);
   }
+
+  m_rebuild_verlet_list = true;
 }
 
 void CellStructure::set_atom_decomposition(boost::mpi::communicator const &comm,

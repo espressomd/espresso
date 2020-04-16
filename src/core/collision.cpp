@@ -102,12 +102,6 @@ bool validate_collision_parameters() {
 
     // Cache square of cutoff
     collision_params.distance2 = Utils::sqr(collision_params.distance);
-
-    if (collision_params.distance > min_global_cut) {
-      runtimeErrorMsg() << "The minimum global cutoff (System.min_global_cut) "
-                           "must be larger or equal the collision detection "
-                           "distance.";
-    }
   }
 
 #ifndef VIRTUAL_SITES_RELATIVE
@@ -241,8 +235,7 @@ bool validate_collision_parameters() {
       make_particle_type_exist(collision_params.part_type_after_glueing);
   }
 
-  recalc_forces = true;
-  rebuild_verletlist = true;
+  on_short_range_ia_change();
 
   return true;
 }
