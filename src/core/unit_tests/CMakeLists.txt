@@ -41,7 +41,6 @@ unit_test(NAME Variant_test SRC Variant_test.cpp DEPENDS ScriptInterface)
 unit_test(NAME ParticleIterator_test SRC ParticleIterator_test.cpp DEPENDS
           EspressoUtils)
 unit_test(NAME link_cell_test SRC link_cell_test.cpp DEPENDS EspressoUtils)
-unit_test(NAME verlet_ia_test SRC verlet_ia_test.cpp DEPENDS EspressoUtils)
 unit_test(NAME Particle_test SRC Particle_test.cpp DEPENDS EspressoUtils
           Boost::serialization)
 unit_test(NAME get_value SRC get_value_test.cpp DEPENDS ScriptInterface)

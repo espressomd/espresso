@@ -19,7 +19,7 @@
 #ifndef CORE_SHORT_RANGE_HPP
 #define CORE_SHORT_RANGE_HPP
 
-#include "algorithm/for_each_pair.hpp"
+#include "algorithm/link_cell.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -75,16 +75,13 @@ void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
 
     Algorithm::link_cell(
         first, last,
-        [&pair_kernel, &df, &verlet_criterion](Particle &p1, Particle &p2,
-                                               Distance const &) {
+        [&pair_kernel, &df, &verlet_criterion](Particle &p1, Particle &p2) {
           auto const d = df(p1, p2);
           if (verlet_criterion(p1, p2, d)) {
             cell_structure.m_verlet_list.emplace_back(&p1, &p2);
             pair_kernel(p1, p2, d);
           }
-        },
-        df);
-
+        });
     cell_structure.m_rebuild_verlet_list = false;
   } else if (cell_structure.use_verlet_list &&
              not cell_structure.m_rebuild_verlet_list) {
@@ -94,15 +91,13 @@ void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
   } else {
     Algorithm::link_cell(
         first, last,
-        [&pair_kernel, &df, &verlet_criterion](Particle &p1, Particle &p2,
-                                               Distance const &) {
+        [&pair_kernel, &df, &verlet_criterion](Particle &p1, Particle &p2) {
           auto const d = df(p1, p2);
           if (verlet_criterion(p1, p2, d)) {
             cell_structure.m_verlet_list.emplace_back(&p1, &p2);
             pair_kernel(p1, p2, d);
           }
-        },
-        df);
+        });
   }
 }
 
