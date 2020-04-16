@@ -452,6 +452,12 @@ public:
   bool minimum_image_distance() const {
     return m_decomposition->minimum_image_distance();
   }
+
+  template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
+    for (auto &p : local_particles()) {
+      execute_bond_handler(p, bond_kernel);
+    }
+  }
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP
