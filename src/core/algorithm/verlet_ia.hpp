@@ -49,7 +49,7 @@ void update_and_kernel(CellIterator first, CellIterator last,
       /* Pairs with neighbors */
       for (auto &neighbor : first->neighbors().red()) {
         for (auto &p2 : neighbor->particles()) {
-          auto dist = distance_function(p1, p2);
+          auto const dist = distance_function(p1, p2);
           if (verlet_criterion(p1, p2, dist)) {
             pair_kernel(p1, p2, dist);
             first->m_verlet_list.emplace_back(&p1, &p2);

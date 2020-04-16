@@ -56,33 +56,45 @@ struct EuclidianDistance {
 };
 
 /**
- * @brief Decide which distance function to use depending on the
- * cell system, and call the pair code.
- */
-template <typename CellIterator, typename PairKernel, typename VerletCriterion>
-void decide_distance(CellIterator first, CellIterator last,
-                     PairKernel &&pair_kernel,
-                     VerletCriterion &&verlet_criterion) {
-  if (cell_structure.minimum_image_distance()) {
-    Algorithm::for_each_pair(first, last, std::forward<PairKernel>(pair_kernel),
-                             MinimalImageDistance{box_geo},
-                             std::forward<VerletCriterion>(verlet_criterion),
-                             cell_structure.use_verlet_list,
-                             rebuild_verletlist);
-  } else {
-    Algorithm::for_each_pair(
-        first, last, std::forward<PairKernel>(pair_kernel), EuclidianDistance{},
-        std::forward<VerletCriterion>(verlet_criterion),
-        cell_structure.use_verlet_list, rebuild_verletlist);
-  }
-}
-
-/**
- * @brief Functor that returns true for any argument.
+ * @brief Functor that returns true for
+ *        any arguments.
  */
 struct True {
   template <class... T> bool operator()(T...) const { return true; }
 };
+
+template <class PairKernel, class DistanceFunction, class VerletCriterion>
+void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
+               const VerletCriterion &verlet_criterion) {
+  auto first =
+      boost::make_indirect_iterator(cell_structure.local_cells().begin());
+  auto last = boost::make_indirect_iterator(cell_structure.local_cells().end());
+
+  if (cell_structure.use_verlet_list && cell_structure.m_rebuild_verlet_list) {
+    cell_structure.m_verlet_list.clear();
+
+    Algorithm::link_cell(
+        first, last,
+        [&pair_kernel, &verlet_criterion](Particle &p1, Particle &p2,
+                                          Distance const &d) {
+          if (verlet_criterion(p1, p2, d)) {
+            cell_structure.m_verlet_list.emplace_back(&p1, &p2);
+            pair_kernel(p1, p2, d);
+          }
+        },
+        df);
+    cell_structure.m_rebuild_verlet_list = false;
+  } else if (cell_structure.use_verlet_list &&
+             not cell_structure.m_rebuild_verlet_list) {
+    for (auto &pair : cell_structure.m_verlet_list) {
+      pair_kernel(*pair.first, *pair.second, df(*pair.first, *pair.second));
+    }
+  } else {
+    Algorithm::link_cell(first, last, std::forward<PairKernel>(pair_kernel),
+                         df);
+  }
+}
+
 } // namespace detail
 
 template <class ParticleKernel, class PairKernel,
@@ -100,15 +112,14 @@ void short_range_loop(ParticleKernel &&particle_kernel,
   }
 
   if (interaction_range() != INACTIVE_CUTOFF) {
-    auto first =
-        boost::make_indirect_iterator(cell_structure.local_cells().begin());
-    auto last =
-        boost::make_indirect_iterator(cell_structure.local_cells().end());
-
-    detail::decide_distance(first, last, std::forward<PairKernel>(pair_kernel),
-                            verlet_criterion);
-
-    rebuild_verletlist = false;
+    if (cell_structure.decomposition().minimum_image_distance()) {
+      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
+                        detail::MinimalImageDistance{box_geo},
+                        verlet_criterion);
+    } else {
+      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
+                        detail::EuclidianDistance{}, verlet_criterion);
+    }
   }
 }
 

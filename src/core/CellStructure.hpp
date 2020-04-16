@@ -105,6 +105,9 @@ private:
 public:
   bool use_verlet_list = true;
 
+  bool m_rebuild_verlet_list = true;
+  std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
+
   /**
    * @brief Update local particle index.
    *
@@ -294,7 +297,6 @@ public:
     return assert(m_decomposition), *m_decomposition;
   }
 
-private:
   ParticleDecomposition &decomposition() {
     return assert(m_decomposition), *m_decomposition;
   }

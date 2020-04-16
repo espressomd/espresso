@@ -49,8 +49,6 @@
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
-bool rebuild_verletlist = true;
-
 /**
  * @brief Get pairs closer than distance from the cells.
  *
@@ -144,8 +142,6 @@ void cells_resort_particles(int global_flag) {
   check_particle_consistency();
   check_particle_sorting();
 #endif
-
-  rebuild_verletlist = true;
 }
 
 /*************************************************/

@@ -23,6 +23,7 @@
  */
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "collision.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -198,6 +199,7 @@ double maximal_cutoff() {
   max_cut = std::max(max_cut, max_cut_long_range);
   max_cut = std::max(max_cut, max_cut_bonded);
   max_cut = std::max(max_cut, max_cut_nonbonded);
+  max_cut = std::max(max_cut, collision_detection_cutoff());
 
   return max_cut;
 }
