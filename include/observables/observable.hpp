@@ -35,6 +35,8 @@ using CenterOfMassVelocity = WeightedAverage<Velocity, Mass>;
 using Current = WeightedSum<Velocity, Charge>;
 using TotalForce = Sum<Force>;
 using Positions = Map<Position>;
+using Velocities = Map<Velocity>;
+using Forces = Map<Force>;
 } // namespace Observables
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP
