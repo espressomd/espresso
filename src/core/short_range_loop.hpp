@@ -73,16 +73,18 @@ void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
   if (cell_structure.use_verlet_list && cell_structure.m_rebuild_verlet_list) {
     cell_structure.m_verlet_list.clear();
 
-    Algorithm::link_cell(
-        first, last,
-        [&pair_kernel, &verlet_criterion](Particle &p1, Particle &p2,
-                                          Distance const &d) {
-          if (verlet_criterion(p1, p2, d)) {
-            cell_structure.m_verlet_list.emplace_back(&p1, &p2);
-            pair_kernel(p1, p2, d);
-          }
-        },
-        df);
+    Algorithm::link_cell(first, last,
+                         [&pair_kernel, &df, &verlet_criterion](
+                             Particle &p1, Particle &p2, Distance const &) {
+                           auto const d = df(p1, p2);
+                           if (verlet_criterion(p1, p2, d)) {
+                             cell_structure.m_verlet_list.emplace_back(&p1,
+                                                                       &p2);
+                             pair_kernel(p1, p2, d);
+                           }
+                         },
+                         df);
+
     cell_structure.m_rebuild_verlet_list = false;
   } else if (cell_structure.use_verlet_list &&
              not cell_structure.m_rebuild_verlet_list) {
@@ -90,7 +92,16 @@ void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
       pair_kernel(*pair.first, *pair.second, df(*pair.first, *pair.second));
     }
   } else {
-    Algorithm::link_cell(first, last, std::forward<PairKernel>(pair_kernel),
+    Algorithm::link_cell(first, last,
+                         [&pair_kernel, &df, &verlet_criterion](
+                             Particle &p1, Particle &p2, Distance const &) {
+                           auto const d = df(p1, p2);
+                           if (verlet_criterion(p1, p2, d)) {
+                             cell_structure.m_verlet_list.emplace_back(&p1,
+                                                                       &p2);
+                             pair_kernel(p1, p2, d);
+                           }
+                         },
                          df);
   }
 }
