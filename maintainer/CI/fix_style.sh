@@ -1,7 +1,3 @@
-#!/usr/bin/env sh
-# Copyright (C) 2018-2020 The ESPResSo project
-#
-# This file is part of ESPResSo.
 #
 # ESPResSo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +11,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 cd "$(git rev-parse --show-toplevel)"
-
 if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     echo "Warning, your working tree is not clean. Please commit your changes."
     echo "You can also call this script with the -f flag to proceed anyway, but"
@@ -26,16 +20,12 @@ if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
 fi
 
 if ! hash pre-commit 2>/dev/null; then
-    python3 -m pre_commit 2>&1 >/dev/null
-    if [ "$?" = "0" ]; then
-        alias pre-commit="python3 -m pre_commit"
-    else
-        echo "pre-commit command not found."
-        exit 2
-    fi
+    echo "pre-commit command not found."
+    exit 2
 fi
 
 pre-commit run --all-files
+maintainer/lint/pre_commit.sh run --all-files || exit 1
 
 if [ "${CI}" != "" ]; then
     git --no-pager diff > style.patch
@@ -61,14 +51,12 @@ pylint_command () {
     elif hash pylint-3 2> /dev/null; then
         pylint-3 "${@}"
     else
-        python3 -m pylint "${@}"
-        if [ "$?" = "1" ]; then
-          echo "pylint not found" >&2
-          exit 1
-        fi
+        echo "pylint not found" >&2
+        exit 1
     fi
 }
 pylint_command --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
+maintainer/lint/pylint.sh --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log
 errors=$(grep -Pc '^[a-z]+/.+?.py:[0-9]+:[0-9]+: [CRWEF][0-9]+:' pylint.log)
 
 if [ "${CI}" != "" ]; then
@@ -80,5 +68,4 @@ if [ "${errors}" != 0 ]; then
 else
   echo "Passed pylint check"
 fi
-
 exit 0

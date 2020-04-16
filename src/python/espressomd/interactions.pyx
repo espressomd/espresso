@@ -2716,52 +2716,6 @@ IF TABULATED == 1:
                 return True
 
 
-IF LENNARD_JONES == 1:
-
-    class SubtLJ(BondedInteraction):
-
-        """
-        Subtracted LJ potential. Takes no parameter.
-
-        """
-
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-        def type_number(self):
-            return BONDED_IA_SUBT_LJ
-
-        def type_name(self):
-            """Name of interaction type.
-
-            """
-            return "SUBT_LJ"
-
-        def valid_keys(self):
-            """All parameters that can be set.
-
-            """
-            return set()
-
-        def required_keys(self):
-            """Parameters that have to be set.
-
-            """
-            return set()
-
-        def set_default_params(self):
-            """Sets parameters that are not required to their default value.
-
-            """
-            self._params = {}
-
-        def _get_params_from_es_core(self):
-            return {}
-
-        def _set_params_in_es_core(self):
-            subt_lj_set_params(self._bond_id)
-
-
 class Virtual(BondedInteraction):
 
     """
@@ -3329,8 +3283,6 @@ bonded_interaction_classes = {
     int(BONDED_IA_THERMALIZED_DIST): ThermalizedBond,
     int(BONDED_IA_QUARTIC): QuarticBond
 }
-IF LENNARD_JONES:
-    bonded_interaction_classes[int(BONDED_IA_SUBT_LJ)] = SubtLJ
 IF ELECTROSTATICS:
     bonded_interaction_classes[int(BONDED_IA_BONDED_COULOMB)] = BondedCoulomb
     bonded_interaction_classes[
