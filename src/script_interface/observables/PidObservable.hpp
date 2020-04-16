@@ -38,14 +38,15 @@ namespace Observables {
 
 /** Base class for script interfaces to particle-based observables
  *  @tparam CorePidObs Any core class derived from @ref
- *                     ::Observables::PidObservable "Observables::PidObservable"
+ *                     core::Observables::PidObservable
+ * "Observables::PidObservable"
  */
 template <typename CorePidObs>
 class PidObservable
     : public AutoParameters<PidObservable<CorePidObs>, Observable> {
 public:
   static_assert(
-      std::is_base_of<::Observables::PidObservable, CorePidObs>::value, "");
+      std::is_base_of<core::Observables::PidObservable, CorePidObs>::value, "");
 
   PidObservable() {
     this->add_parameters({{"ids",
@@ -61,7 +62,7 @@ public:
         make_shared_from_args<CorePidObs, std::vector<int>>(params, "ids");
   }
 
-  std::shared_ptr<::Observables::Observable> observable() const override {
+  std::shared_ptr<core::Observables::Observable> observable() const override {
     return m_observable;
   }
 

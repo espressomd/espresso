@@ -96,7 +96,7 @@ target_link_libraries(
 
 target_include_directories(
   EspressoCore
-  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/include
          "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>" SYSTEM
   PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
@@ -116,9 +116,10 @@ add_subdirectory(integrators)
 add_subdirectory(io)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
-add_subdirectory(observables)
 add_subdirectory(virtual_sites)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
+
+add_subdirectory(src/core)

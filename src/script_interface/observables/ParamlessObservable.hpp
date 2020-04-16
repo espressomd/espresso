@@ -48,7 +48,7 @@ class ParamlessObservableInterface : public Observable {
 public:
   ParamlessObservableInterface() : m_observable(new CoreObs()) {}
 
-  std::shared_ptr<::Observables::Observable> observable() const override {
+  std::shared_ptr<core::Observables::Observable> observable() const override {
     return m_observable;
   }
 
@@ -57,7 +57,7 @@ private:
 };
 
 #define NEW_PARAMLESS_OBSERVABLE(name)                                         \
-  using name = ParamlessObservableInterface<::Observables::name>;
+  using name = ParamlessObservableInterface<core::Observables::name>;
 NEW_PARAMLESS_OBSERVABLE(StressTensor)
 NEW_PARAMLESS_OBSERVABLE(LBFluidStress)
 #ifdef DPD

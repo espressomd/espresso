@@ -35,7 +35,7 @@ namespace Observables {
 /** Base class for script interfaces to core %Observables classes */
 class Observable : public ScriptInterfaceBase {
 public:
-  virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
+  virtual std::shared_ptr<core::Observables::Observable> observable() const = 0;
   Variant call_method(std::string const &method,
                       VariantMap const &parameters) override {
     if (method == "calculate") {

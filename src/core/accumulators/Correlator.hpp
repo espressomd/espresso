@@ -123,8 +123,8 @@
 #include <utility>
 
 #include "AccumulatorBase.hpp"
+#include "core/observables/Observable.hpp"
 #include "integrate.hpp"
-#include "observables/Observable.hpp"
 #include <utils/Vector.hpp>
 
 namespace Accumulators {
@@ -139,7 +139,7 @@ namespace Accumulators {
  *  it starts again from the beginning.
  */
 class Correlator : public AccumulatorBase {
-  using obs_ptr = std::shared_ptr<Observables::Observable>;
+  using obs_ptr = std::shared_ptr<core::Observables::Observable>;
 
 public:
   /** The initialization procedure for the correlation object. All important
@@ -253,8 +253,8 @@ private:
 
   int m_n_result; ///< the total number of result values
 
-  std::shared_ptr<Observables::Observable> A_obs;
-  std::shared_ptr<Observables::Observable> B_obs;
+  std::shared_ptr<core::Observables::Observable> A_obs;
+  std::shared_ptr<core::Observables::Observable> B_obs;
 
   std::vector<int> tau; ///< time differences
   boost::multi_array<std::vector<double>, 2> A;

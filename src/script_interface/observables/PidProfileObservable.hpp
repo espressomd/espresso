@@ -108,12 +108,12 @@ public:
             "min_z", "max_x", "max_y", "max_z");
   }
 
-  std::shared_ptr<::Observables::PidProfileObservable>
+  std::shared_ptr<core::Observables::PidProfileObservable>
   pid_profile_observable() const {
     return m_observable;
   }
 
-  std::shared_ptr<::Observables::Observable> observable() const override {
+  std::shared_ptr<core::Observables::Observable> observable() const override {
     return m_observable;
   }
 

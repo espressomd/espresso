@@ -21,7 +21,7 @@
 
 #include "AccumulatorBase.hpp"
 #include "core/accumulators/TimeSeries.hpp"
-#include "observables/Observable.hpp"
+#include "core/observables/Observable.hpp"
 
 #include <boost/range/algorithm/transform.hpp>
 #include <utils/as_const.hpp>
