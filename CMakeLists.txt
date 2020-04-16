@@ -20,15 +20,24 @@
 
 cmake_minimum_required(VERSION 3.10)
 message(STATUS "CMake version: ${CMAKE_VERSION}")
-if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.13)
+if(POLICY CMP0076)
+  # make target_sources() convert relative paths to absolute
   cmake_policy(SET CMP0076 NEW)
 endif()
+if(POLICY CMP0025)
+  # make CXX_COMPILER_ID return "AppleClang" instead of "Clang" for Apple Clang
+  cmake_policy(SET CMP0025 NEW)
+endif()
+# CMake modules/macros are in a subdirectory to keep this file cleaner
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
 include(FeatureSummary)
 include(GNUInstallDirs)
 project(ESPResSo)
-include(cmake/FindPythonModule.cmake)
-include(cmake/option_enum.cmake)
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.12")
+include(FindPythonModule)
+include(option_enum)
+if(POLICY CMP0074)
+  # make find_package() use <PackageName>_ROOT variables
   cmake_policy(SET CMP0074 NEW)
 endif()
 
@@ -44,16 +53,13 @@ set(PROJECT_VERSION "4.2-dev")
 # CMake internal vars
 #
 
-# CMake modules/macros are in a subdirectory to keep this file cleaner
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-
 # Select the build type
 option_enum(
   varname "CMAKE_BUILD_TYPE" help_text "build type" default_value "Release"
   possible_values
   "Debug;Release;RelWithDebInfo;MinSizeRel;Coverage;RelWithAssert")
-set(CMAKE_CXX_FLAGS_COVERAGE "-Og -g")
-set(CMAKE_CXX_FLAGS_RELWITHASSERT "-O3 -g")
+set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_COVERAGE} -Og -g")
+set(CMAKE_CXX_FLAGS_RELWITHASSERT "${CMAKE_CXX_FLAGS_RELWITHASSERT} -O3 -g")
 
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
@@ -71,16 +77,16 @@ option(WITH_SCAFACOS "Build with Scafacos support" OFF)
 option(WITH_BENCHMARKS "Enable benchmarks" OFF)
 option(WITH_VALGRIND_INSTRUMENTATION
        "Build with valgrind instrumentation markers" OFF)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   option(WITH_CLANG_TIDY "Run Clang-Tidy during compilation" OFF)
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
-                                             "GNU")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
+                                            "GNU")
   option(WITH_COVERAGE "Generate code coverage report" OFF)
   option(WITH_ASAN "Build with address sanitizer" OFF)
   option(WITH_UBSAN "Build with undefined behavior sanitizer" OFF)
 endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT APPLE)
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND NOT APPLE)
   option(
     WITH_MSAN
     "Build with memory sanitizer (experimental; requires a memory-sanitized Python interpreter)"
@@ -160,15 +166,12 @@ if(WITH_CUDA)
     if(WITH_COVERAGE)
       message(
         FATAL_ERROR
-          "The combination of options '-DWITH_CUDA_COMPILER=${WITH_CUDA_COMPILER} -DWITH_COVERAGE=${WITH_COVERAGE}' is not supported."
-      )
+          "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
     set(MINIMAL_CUDA_VERSION 8.0)
     find_package(CUDACompilerClang 6.0 REQUIRED)
   else()
-    message(
-      FATAL_ERROR
-        "Cannot process option -DWITH_CUDA_COMPILER='${WITH_CUDA_COMPILER}'")
+    message(FATAL_ERROR "Unknown CUDA compiler '${WITH_CUDA_COMPILER}'")
   endif()
 endif(WITH_CUDA)
 
@@ -328,69 +331,65 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${PYTHON_INSTDIR}/espressomd")
 # drop 'lib' prefix from all libraries
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 
-if(WARNINGS_ARE_ERRORS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-endif(WARNINGS_ARE_ERRORS)
-
 add_library(coverage_interface INTERFACE)
-target_compile_options(
-  coverage_interface
-  INTERFACE
-    "$<$<BOOL:${WITH_COVERAGE}>:-g>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fprofile-instr-generate>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<CXX_COMPILER_ID:Clang>>:-fcoverage-mapping>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:--coverage>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-fprofile-arcs>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:-ftest-coverage>"
-)
+if(WITH_COVERAGE)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(
+      coverage_interface INTERFACE -g -fprofile-instr-generate
+                                   -fcoverage-mapping)
+  else()
+    target_compile_options(
+      coverage_interface INTERFACE -g --coverage -fprofile-arcs -ftest-coverage)
+    target_link_libraries(coverage_interface INTERFACE gcov)
+  endif()
+endif()
 
-set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces"
-)
+add_library(cxx_interface INTERFACE)
+target_compile_options(
+  cxx_interface
+  INTERFACE -Wall -Wextra $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>
+            # disable warnings from -Wextra
+            -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
+            -Wno-unused-parameter -Wno-missing-braces
+            $<$<CXX_COMPILER_ID:GNU>:-Wno-clobbered;-Wno-cast-function-type>
+            $<$<CXX_COMPILER_ID:Intel>:-wd592>)
+
+# disable more warnings from -Wextra
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SYSTEM_PROCESSOR MATCHES
                                             "arm")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+  target_compile_options(cxx_interface INTERFACE -Wno-psabi)
 endif()
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Intel"
    AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION
                                                      VERSION_LESS "7.0.0"))
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-implicit-fallthrough")
-endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-clobbered -Wno-cast-function-type")
-endif()
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-  # disable warnings from -Wextra
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -wd592")
+  target_compile_options(cxx_interface INTERFACE -Wno-implicit-fallthrough)
 endif()
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND NOT CMAKE_CXX_COMPILER_ID
                                                 STREQUAL "Intel")
-  # G++ and Intel don't know this flag
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
+  target_compile_options(cxx_interface INTERFACE -Wno-unused-private-field)
 endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-gnu-zero-variadic-macro-arguments")
+  target_compile_options(cxx_interface
+                         INTERFACE -Wno-gnu-zero-variadic-macro-arguments)
 endif()
+
 if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION
                                                VERSION_GREATER "4.8.5")
-  # older versions don't support -Wno-pedantic which we need in src/python
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pedantic")
+  # older GCC versions don't support -Wno-pedantic which we need in src/python
+  target_compile_options(cxx_interface INTERFACE -pedantic)
 endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION
                                               VERSION_LESS "16.0")
   # workaround for compiler crash related to decltype() and variadic template
   # usage inside Boost
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DBOOST_NO_CXX11_VARIADIC_TEMPLATES")
+  target_compile_options(cxx_interface
+                         INTERFACE -DBOOST_NO_CXX11_VARIADIC_TEMPLATES)
 endif()
 
 # prevent 80-bit arithmetic on old Intel processors
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
    AND CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffloat-store")
+  target_compile_options(cxx_interface INTERFACE -ffloat-store)
 endif()
 
 set(CMAKE_MACOSX_RPATH TRUE)
@@ -402,17 +401,22 @@ if(WITH_ASAN AND WITH_MSAN)
 endif()
 if(WITH_ASAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer")
+  target_compile_options(cxx_interface INTERFACE -fsanitize=address
+                                                 -fno-omit-frame-pointer)
+  target_link_libraries(cxx_interface INTERFACE -fsanitize=address)
 endif()
 if(WITH_MSAN)
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g -O1")
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -fsanitize=memory -fno-omit-frame-pointer")
+  target_compile_options(cxx_interface INTERFACE -fsanitize=memory
+                                                 -fno-omit-frame-pointer)
+  target_link_libraries(cxx_interface INTERFACE -fsanitize=memory)
 endif()
 if(WITH_UBSAN)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+  target_compile_options(cxx_interface INTERFACE -fsanitize=undefined)
+  target_link_libraries(cxx_interface INTERFACE -fsanitize=undefined)
 endif()
+
+target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
 #
 # Testing

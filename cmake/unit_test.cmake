@@ -28,17 +28,11 @@ function(UNIT_TEST)
   # Build tests only when testing
   set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
   target_link_libraries(${TEST_NAME} PRIVATE Boost::unit_test_framework)
-  target_link_libraries(${TEST_NAME} PUBLIC coverage_interface)
   if(TEST_DEPENDS)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})
   endif()
-  if(WITH_COVERAGE)
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      target_link_libraries(${TEST_NAME} PUBLIC gcov)
-    endif()
-  endif()
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
-  target_link_libraries(${TEST_NAME} PRIVATE EspressoConfig)
+  target_link_libraries(${TEST_NAME} PRIVATE EspressoConfig cxx_interface)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if(TEST_NUM_PROC)

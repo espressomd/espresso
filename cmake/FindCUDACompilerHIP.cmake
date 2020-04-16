@@ -31,32 +31,30 @@ execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
 string(REGEX REPLACE "^.*HCC [Cc]lang version ([0-9\.]+).*\$" "\\1"
                      CMAKE_CUDA_COMPILER_VERSION "${HIPCC_VERSION_STRING}")
 
-list(APPEND HIP_HCC_FLAGS "-I${HIP_ROOT_DIR}/include -I${ROCM_HOME}/include -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier -std=c++${CMAKE_CUDA_STANDARD}")
-list(APPEND HIP_HCC_FLAGS "-pedantic -Wall -Wextra -Wno-sign-compare -Wno-unused-function -Wno-unused-variable -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments")
-if(NOT HIP_VERSION VERSION_LESS "3.3")
-  list(APPEND HIP_HCC_FLAGS "-Wno-deprecated-copy")
-endif()
-if(WARNINGS_ARE_ERRORS)
-  list(APPEND HIP_HCC_FLAGS "-Werror")
-endif()
+list(APPEND HIP_HCC_FLAGS
+       -std=c++${CMAKE_CUDA_STANDARD} -pedantic -Wall -Wextra
+       -Wno-sign-compare -Wno-unused-function -Wno-unused-variable
+       -Wno-unused-parameter -Wno-missing-braces -Wno-gnu-anonymous-struct
+       -Wno-nested-anon-types -Wno-gnu-zero-variadic-macro-arguments
+       -Wno-c99-designator -Wno-macro-redefined -Wno-duplicate-decl-specifier
+       $<$<VERSION_GREATER_EQUAL:${HIP_VERSION},3.3>:-Wno-deprecated-copy>
+       $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Werror>)
 
-set(HIP_HIPCC_FLAGS_DEBUG "${HIP_HIPCC_FLAGS_DEBUG} -g")
-set(HIP_HIPCC_FLAGS_RELEASE "${HIP_HIPCC_FLAGS_RELEASE} -O3 -DNDEBUG")
-set(HIP_HIPCC_FLAGS_MINSIZEREL "${HIP_HIPCC_FLAGS_MINSIZEREL} -O2 -DNDEBUG")
-set(HIP_HIPCC_FLAGS_RELWITHDEBINFO "${HIP_HIPCC_FLAGS_RELWITHDEBINFO} -O2 -g -DNDEBUG")
-set(HIP_HIPCC_FLAGS_COVERAGE "${HIP_HIPCC_FLAGS_COVERAGE} -O3 -g")
-set(HIP_HIPCC_FLAGS_RELWITHASSERT "${HIP_HIPCC_FLAGS_RELWITHASSERT} -O3 -g")
+list(APPEND HIP_HIPCC_FLAGS_DEBUG -g)
+list(APPEND HIP_HIPCC_FLAGS_RELEASE -O3 -DNDEBUG)
+list(APPEND HIP_HIPCC_FLAGS_MINSIZEREL -O2 -DNDEBUG)
+list(APPEND HIP_HIPCC_FLAGS_RELWITHDEBINFO -O2 -g -DNDEBUG)
+list(APPEND HIP_HIPCC_FLAGS_COVERAGE -O3 -g)
+list(APPEND HIP_HIPCC_FLAGS_RELWITHASSERT -O3 -g)
 
-if(WARNINGS_ARE_ERRORS)
-  set(HIP_HCC_FLAGS "${HIP_HCC_FLAGS} -Werror")
-endif()
-
-find_library(ROCFFT_LIB name "rocfft" PATHS "${ROCM_HOME}/lib")
+find_library(ROCFFT_LIB name "rocfft" PATHS ${ROCM_HOME}/lib)
 
 function(add_gpu_library)
   hip_add_library(${ARGV})
-  set_target_properties(${ARGV0} PROPERTIES LINKER_LANGUAGE HIP)
-  target_link_libraries(${ARGV0} PRIVATE "${ROCFFT_LIB}")
+  set(GPU_TARGET_NAME ${ARGV0})
+  set_target_properties(${GPU_TARGET_NAME} PROPERTIES LINKER_LANGUAGE HIP)
+  target_link_libraries(${GPU_TARGET_NAME} PRIVATE ${ROCFFT_LIB})
+  target_include_directories(${GPU_TARGET_NAME} PRIVATE ${HIP_ROOT_DIR}/include ${ROCM_HOME}/include)
 endfunction()
 
 include(FindPackageHandleStandardArgs)

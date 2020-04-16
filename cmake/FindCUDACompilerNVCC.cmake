@@ -44,25 +44,23 @@ set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
 set(CUDA_PROPAGATE_HOST_FLAGS OFF)
 
-set(CUDA_NVCC_FLAGS_DEBUG "${CUDA_NVCC_FLAGS_DEBUG} -g")
-set(CUDA_NVCC_FLAGS_RELEASE "${CUDA_NVCC_FLAGS_RELEASE} -O3 -Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG")
-set(CUDA_NVCC_FLAGS_MINSIZEREL "${CUDA_NVCC_FLAGS_MINSIZEREL} -O2 -Xptxas=-O2 -Xcompiler=-Os -DNDEBUG")
-set(CUDA_NVCC_FLAGS_RELWITHDEBINFO "${CUDA_NVCC_FLAGS_RELWITHDEBINFO} -O2 -g -Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG")
-set(CUDA_NVCC_FLAGS_COVERAGE "${CUDA_NVCC_FLAGS_COVERAGE} -O3 -g -Xptxas=-O3 -Xcompiler=-Og,-g")
-set(CUDA_NVCC_FLAGS_RELWITHASSERT "${CUDA_NVCC_FLAGS_RELWITHASSERT} -O3 -g -Xptxas=-O3 -Xcompiler=-O3,-g")
-
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52 -gencode=arch=compute_52,code=compute_52 -std=c++${CMAKE_CUDA_STANDARD}")
-if(WARNINGS_ARE_ERRORS)
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler=-Werror -Xptxas=-Werror")
-endif()
-if (CMAKE_OSX_SYSROOT)
-  set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -Xcompiler=-isysroot -Xcompiler=${CMAKE_OSX_SYSROOT}")
-endif()
+list(APPEND CUDA_NVCC_FLAGS_DEBUG -g)
+list(APPEND CUDA_NVCC_FLAGS_RELEASE -O3 -Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG)
+list(APPEND CUDA_NVCC_FLAGS_MINSIZEREL -O2 -Xptxas=-O2 -Xcompiler=-Os -DNDEBUG)
+list(APPEND CUDA_NVCC_FLAGS_RELWITHDEBINFO -O2 -g -Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG)
+list(APPEND CUDA_NVCC_FLAGS_COVERAGE -O3 -g -Xptxas=-O3 -Xcompiler=-Og,-g)
+list(APPEND CUDA_NVCC_FLAGS_RELWITHASSERT -O3 -g -Xptxas=-O3 -Xcompiler=-O3,-g)
+list(APPEND CUDA_NVCC_FLAGS
+       -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_52,code=sm_52
+       -gencode=arch=compute_52,code=compute_52 -std=c++${CMAKE_CUDA_STANDARD}
+       $<$<BOOL:${WARNINGS_ARE_ERRORS}>:-Xcompiler=-Werror;-Xptxas=-Werror>
+       $<$<BOOL:${CMAKE_OSX_SYSROOT}>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>)
 
 function(add_gpu_library)
   cuda_add_library(${ARGV})
-  set_property(TARGET ${ARGV0} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-  target_link_libraries(${ARGV0} PRIVATE ${CUDA_CUFFT_LIBRARIES})
+  set(GPU_TARGET_NAME ${ARGV0})
+  set_property(TARGET ${GPU_TARGET_NAME} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+  target_link_libraries(${GPU_TARGET_NAME} PRIVATE ${CUDA_CUFFT_LIBRARIES} utils Boost::serialization Boost::mpi)
 endfunction()
 
 include(FindPackageHandleStandardArgs)

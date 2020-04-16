@@ -76,12 +76,10 @@ target_link_libraries(
   EspressoCore
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
-          "$<$<BOOL:${SCAFACOS}>:Scafacos>"
-  PUBLIC
-    coverage_interface utils MPI::MPI_CXX Random123 Boost::serialization
-    Boost::mpi "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
-    "$<$<BOOL:${H5MD}>:Boost::filesystem>" "$<$<BOOL:${H5MD}>:h5xx>"
-    "$<$<AND:$<BOOL:${WITH_COVERAGE}>,$<NOT:$<CXX_COMPILER_ID:Clang>>>:gcov>")
+          $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
+  PUBLIC utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
+         "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
+         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
 
 target_include_directories(
   EspressoCore
@@ -90,8 +88,7 @@ target_include_directories(
   PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
   PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
 
-target_compile_definitions(EspressoCore
-                           PUBLIC "$<$<BOOL:${H5MD}>:H5XX_USE_MPI>")
+target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
 
 add_subdirectory(accumulators)
 add_subdirectory(actor)
