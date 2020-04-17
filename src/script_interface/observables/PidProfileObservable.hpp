@@ -23,6 +23,9 @@
 #define SCRIPT_INTERFACE_OBSERVABLES_PIDPROFILEOBSERVABLE_HPP
 
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
+#include <boost/range/algorithm.hpp>
+#include <iterator>
 #include <memory>
 
 #include "core/observables/DensityProfile.hpp"
@@ -36,7 +39,10 @@ namespace Observables {
 template <typename CoreObs>
 class PidProfileObservable
     : public AutoParameters<PidProfileObservable<CoreObs>, Observable> {
+  using Base = AutoParameters<PidProfileObservable<CoreObs>, Observable>;
+
 public:
+  using Base::Base;
   PidProfileObservable() {
     this->add_parameters(
         {{"ids",
@@ -106,6 +112,17 @@ public:
                               double, double, double, double, double>(
             params, "ids", "n_x_bins", "n_y_bins", "n_z_bins", "min_x", "min_y",
             "min_z", "max_x", "max_y", "max_z");
+  }
+
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
+    if (method == "edges") {
+      std::vector<Variant> variant_edges;
+      boost::copy(pid_profile_observable()->edges(),
+                  std::back_inserter(variant_edges));
+      return variant_edges;
+    }
+    return Base::call_method(method, parameters);
   }
 
   std::shared_ptr<::Observables::PidProfileObservable>
