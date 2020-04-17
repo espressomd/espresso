@@ -32,7 +32,7 @@ using Testing::Particle;
 #include "mock/Cell.hpp"
 using Cell = Testing::Cell<Particle>;
 
-#include "ParticleIterator.hpp"
+#include "core/ParticleIterator.hpp"
 
 std::vector<std::unique_ptr<Cell>> make_cells(std::size_t n) {
   std::vector<std::unique_ptr<Cell>> cells(n);

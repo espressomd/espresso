@@ -24,8 +24,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "Cell.hpp"
-#include "algorithm/verlet_ia.hpp"
+#include "core/Cell.hpp"
+#include "core/algorithm/verlet_ia.hpp"
 
 void check_pairs(int n_part, std::vector<std::pair<int, int>> const &pairs) {
   BOOST_CHECK(pairs.size() == (n_part * (n_part - 1) / 2));

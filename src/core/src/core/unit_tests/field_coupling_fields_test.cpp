@@ -21,11 +21,11 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "field_coupling/fields/AffineMap.hpp"
-#include "field_coupling/fields/Constant.hpp"
-#include "field_coupling/fields/Interpolated.hpp"
-#include "field_coupling/fields/PlaneWave.hpp"
-#include "field_coupling/fields/jacobian_type.hpp"
+#include "core/field_coupling/fields/AffineMap.hpp"
+#include "core/field_coupling/fields/Constant.hpp"
+#include "core/field_coupling/fields/Interpolated.hpp"
+#include "core/field_coupling/fields/PlaneWave.hpp"
+#include "core/field_coupling/fields/jacobian_type.hpp"
 
 #include "utils/interpolation/bspline_3d.hpp"
 #include "utils/interpolation/bspline_3d_gradient.hpp"

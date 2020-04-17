@@ -21,7 +21,7 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "algorithm/periodic_fold.hpp"
+#include "core/algorithm/periodic_fold.hpp"
 
 BOOST_AUTO_TEST_CASE(with_image_count) {
   using Algorithm::periodic_fold;

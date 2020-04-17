@@ -31,7 +31,7 @@
 
 #include <utils/Vector.hpp>
 
-#include "random.hpp"
+#include "core/random.hpp"
 
 namespace Utils {
 using VariantVectorXd = boost::variant<double, Vector2d, Vector3d, Vector4d>;

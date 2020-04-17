@@ -26,7 +26,7 @@
 
 #include <utils/Vector.hpp>
 
-#include "random.hpp"
+#include "core/random.hpp"
 #include "random_test.hpp"
 
 BOOST_AUTO_TEST_CASE(test_noise_statistics) {

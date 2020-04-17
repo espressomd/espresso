@@ -49,7 +49,7 @@ function(UNIT_TEST)
       target_link_libraries(${TEST_NAME} PUBLIC gcov)
     endif()
   endif()
-  target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
+  target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core/include ${CMAKE_SOURCE_DIR}/src/core/src)
   target_link_libraries(${TEST_NAME} PRIVATE EspressoConfig)
 
   # If NUM_PROC is given, set up MPI parallel test case

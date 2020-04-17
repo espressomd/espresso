@@ -28,7 +28,7 @@
 
 #include <utils/serialization/memcpy_archive.hpp>
 
-#include "Particle.hpp"
+#include "core/Particle.hpp"
 
 BOOST_AUTO_TEST_CASE(comparison) {
   {
