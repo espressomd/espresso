@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (C) 2016-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -26,7 +26,7 @@ with_cuda=false
 myconfig=${myconfig}
 check_procs=${check_procs}
 make_check=${make_check}
-build_type="RelWithAssert"
+build_type=RelWithAssert
 EOF
 
 if [ -z "${image}" ]; then
