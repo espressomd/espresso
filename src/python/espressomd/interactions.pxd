@@ -487,7 +487,6 @@ cdef extern from "bonded_interactions/bonded_interaction_data.hpp":
         Dihedral_bond_parameters dihedral
         Tabulated_bond_parameters tab
         Overlap_bond_parameters overlap
-        Subt_lj_bond_parameters subt_lj
         Rigid_bond_parameters rigid_bond
         IBM_Triel_Parameters ibm_triel
         IBM_Tribend_Parameters ibm_tribend
@@ -520,8 +519,6 @@ cdef extern from "bonded_interactions/angle_cosine.hpp":
     int angle_cosine_set_params(int bond_type, double bend, double phi0)
 cdef extern from "bonded_interactions/angle_cossquare.hpp":
     int angle_cossquare_set_params(int bond_type, double bend, double phi0)
-cdef extern from "bonded_interactions/subt_lj.hpp":
-    int subt_lj_set_params(int bond_type)
 cdef extern from "object-in-fluid/oif_global_forces.hpp":
     int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g, double V0, double kv)
 cdef extern from "object-in-fluid/oif_local_forces.hpp":
