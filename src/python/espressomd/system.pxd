@@ -21,7 +21,7 @@ from libcpp cimport bool
 
 from .utils cimport Vector3d
 
-cdef extern from "grid.hpp":
+cdef extern from "core/grid.hpp":
     cdef void rescale_boxl(int dir, double d_new)
 
 cdef extern from "rotate_system.hpp":

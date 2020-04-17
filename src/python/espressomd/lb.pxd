@@ -38,12 +38,12 @@ cdef class HydrodynamicInteraction(Actor):
     #
     ##############################################
 
-cdef extern from "grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
+cdef extern from "core/grid_based_algorithms/lb_interface.hpp" namespace "ActiveLB":
     cdef ActiveLB NONE
     cdef ActiveLB CPU
     cdef ActiveLB GPU
 
-cdef extern from "grid_based_algorithms/lb_interface.hpp":
+cdef extern from "core/grid_based_algorithms/lb_interface.hpp":
 
     cdef enum ActiveLB:
         pass

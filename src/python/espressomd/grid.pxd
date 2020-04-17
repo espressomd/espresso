@@ -18,7 +18,7 @@ from libcpp cimport bool
 
 from .utils cimport Vector3i, Vector3d
 
-cdef extern from "grid.hpp":
+cdef extern from "core/grid.hpp":
     Vector3i node_grid
 
     cppclass BoxGeometry:

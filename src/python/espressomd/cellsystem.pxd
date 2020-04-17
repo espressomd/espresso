@@ -22,12 +22,12 @@ from libcpp.vector cimport vector
 from libcpp.pair cimport pair
 from .utils cimport Vector3i
 
-cdef extern from "communication.hpp":
+cdef extern from "core/communication.hpp":
     void mpi_bcast_cell_structure(int cs)
     int n_nodes
     vector[int] mpi_resort_particles(int global_flag)
 
-cdef extern from "cells.hpp":
+cdef extern from "core/cells.hpp":
     int CELL_STRUCTURE_CURRENT
     int CELL_STRUCTURE_DOMDEC
     int CELL_STRUCTURE_NSQUARE

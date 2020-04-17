@@ -22,5 +22,5 @@
 # specific class.
 #
 
-cdef extern from "communication.hpp":
+cdef extern from "core/communication.hpp":
     int mpi_bcast_parameter(int p)

@@ -197,7 +197,7 @@ cdef extern from "particle_data.hpp":
     int get_maximal_particle_id()
     int get_n_part()
 
-cdef extern from "virtual_sites.hpp":
+cdef extern from "core/virtual_sites.hpp":
     IF VIRTUAL_SITES_RELATIVE == 1:
         void vs_relate_to(int part_num, int relate_to)
 

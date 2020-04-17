@@ -22,7 +22,7 @@
 #include <cmath>
 
 #include "ProfileObservable.hpp"
-#include "grid.hpp"
+#include "core/grid.hpp"
 
 #include <utils/Vector.hpp>
 

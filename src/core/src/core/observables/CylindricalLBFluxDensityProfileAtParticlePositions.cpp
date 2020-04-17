@@ -18,8 +18,8 @@
  */
 #include "core/observables/CylindricalLBFluxDensityProfileAtParticlePositions.hpp"
 
-#include "grid.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
+#include "core/grid.hpp"
+#include "core/grid_based_algorithms/lb_interface.hpp"
 
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>

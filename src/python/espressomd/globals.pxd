@@ -45,7 +45,7 @@ cdef extern from "global.hpp":
 
     void mpi_bcast_parameter(int p)
 
-cdef extern from "communication.hpp":
+cdef extern from "core/communication.hpp":
     void mpi_set_time_step(double time_step) except +
 
 cdef extern from "integrate.hpp":

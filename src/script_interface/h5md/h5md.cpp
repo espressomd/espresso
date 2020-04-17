@@ -23,7 +23,7 @@
 #ifdef H5MD
 #ifndef ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
 #define ESPRESSO_SCRIPTINTERFACE_H5MD_CPP
-#include "cells.hpp"
+#include "core/cells.hpp"
 #include "h5md.hpp"
 #include "partCfg_global.hpp"
 

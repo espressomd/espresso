@@ -19,7 +19,7 @@
 import sys
 from . import script_interface
 
-cdef extern from "communication.hpp":
+cdef extern from "core/communication.hpp":
     void mpi_init()
     void mpi_loop()
     int this_node

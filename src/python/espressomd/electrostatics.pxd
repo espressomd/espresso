@@ -34,7 +34,7 @@ cdef extern from "EspressoSystemInterface.hpp":
 
 
 IF ELECTROSTATICS:
-    cdef extern from "communication.hpp":
+    cdef extern from "core/communication.hpp":
         void mpi_bcast_coulomb_params()
 
     IF P3M:

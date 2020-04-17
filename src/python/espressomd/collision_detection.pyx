@@ -20,7 +20,7 @@ from .utils cimport handle_errors
 from .interactions import BondedInteraction, BondedInteractions
 
 
-cdef extern from "collision.hpp":
+cdef extern from "core/collision.hpp":
     const int COLLISION_MODE_OFF
     const int COLLISION_MODE_BOND
     const int COLLISION_MODE_VS

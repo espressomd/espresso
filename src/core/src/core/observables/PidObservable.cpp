@@ -18,7 +18,7 @@
  */
 #include "core/observables/PidObservable.hpp"
 
-#include "grid.hpp"
+#include "core/grid.hpp"
 #include "particle_data.hpp"
 
 #include <boost/algorithm/clamp.hpp>

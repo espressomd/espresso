@@ -19,8 +19,8 @@
 
 #include <algorithm>
 
+#include "core/grid_based_algorithms/lb_interface.hpp"
 #include "core/observables/CylindricalLBVelocityProfile.hpp"
-#include "grid_based_algorithms/lb_interface.hpp"
 #include <utils/Histogram.hpp>
 #include <utils/math/coordinate_transformation.hpp>
 

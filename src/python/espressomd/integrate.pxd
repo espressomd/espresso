@@ -42,5 +42,5 @@ cdef inline int _integrate(int nSteps, cbool recalc_forces, int reuse_forces):
     with nogil:
         return python_integrate(nSteps, recalc_forces, reuse_forces)
 
-cdef extern from "communication.hpp":
+cdef extern from "core/communication.hpp":
     int mpi_steepest_descent(int max_steps)
