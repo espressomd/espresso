@@ -33,6 +33,8 @@
 #include <thrust/functional.h>
 #include <thrust/transform_reduce.h>
 
+#include <utils/memory.hpp>
+
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"
 #include "errorhandling.hpp"

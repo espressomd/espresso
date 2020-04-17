@@ -25,10 +25,11 @@
 
 #include <cmath>
 
-std::vector<Polynom> modPsi;
+std::vector<std::vector<double>> modPsi;
 int n_modPsi = 0;
 
-static void preparePolygammaEven(int n, double binom, Polynom &series) {
+static void preparePolygammaEven(int n, double binom,
+                                 std::vector<double> &series) {
   /* (-0.5 n) psi^2n/2n! (-0.5 n) and psi^(2n+1)/(2n)! series expansions
      note that BOTH carry 2n! */
   int order;
@@ -71,7 +72,8 @@ static void preparePolygammaEven(int n, double binom, Polynom &series) {
   }
 }
 
-static void preparePolygammaOdd(int n, double binom, Polynom &series) {
+static void preparePolygammaOdd(int n, double binom,
+                                std::vector<double> &series) {
   int order;
   double deriv;
   double maxx, x_order, coeff, pref;

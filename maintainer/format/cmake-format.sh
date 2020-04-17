@@ -17,15 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 CMAKE_FORMAT_VER=0.6.9
-if hash cmake-format 2>/dev/null; then
-    CMAKE_FORMAT="$(which cmake-format)"
+python3 -m cmake_format 2>&1 > /dev/null
+if [ "$?" = "0" ]; then
+    CMAKE_FORMAT="python3 -m cmake_format"
 else
     echo "No cmake-format found."
     exit 2
 fi
 
 
-if ! "${CMAKE_FORMAT}" --version | grep -qEo "${CMAKE_FORMAT_VER}"; then
+if ! ${CMAKE_FORMAT} --version | grep -qEo "${CMAKE_FORMAT_VER}"; then
     echo "Could not find cmake-format ${CMAKE_FORMAT_VER}."
     exit 2
 fi

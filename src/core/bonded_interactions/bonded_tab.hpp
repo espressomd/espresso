@@ -107,10 +107,9 @@ tab_bond_energy(Bonded_ia_parameters const &iaparams,
  *  @return Forces on the second, first and third particles, in that order.
  */
 inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
-                             Utils::Vector3d const &r_left,
-                             Utils::Vector3d const &r_right,
-                             Bonded_ia_parameters const &iaparams) {
+tab_angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
+                Utils::Vector3d const &r_right,
+                Bonded_ia_parameters const &iaparams) {
 
   auto forceFactor = [&iaparams](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
@@ -125,21 +124,6 @@ angle_3body_tabulated_forces(Utils::Vector3d const &r_mid,
   };
 
   return angle_generic_force(r_mid, r_left, r_right, forceFactor, true);
-}
-
-/** Compute the three-body angle interaction force.
- *  @param[in]  r_mid     Position of second/middle particle.
- *  @param[in]  r_left    Position of first/left particle.
- *  @param[in]  r_right   Position of third/right particle.
- *  @param[in]  iaparams  Bonded parameters for the angle interaction.
- *  @return the forces on the second, first and third particles.
- */
-inline std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-tab_angle_force(Utils::Vector3d const &r_mid, Utils::Vector3d const &r_left,
-                Utils::Vector3d const &r_right,
-                Bonded_ia_parameters const &iaparams) {
-
-  return angle_3body_tabulated_forces(r_mid, r_left, r_right, iaparams);
 }
 
 /** Compute the three-body angle interaction energy.
@@ -176,8 +160,8 @@ inline double tab_angle_energy(Utils::Vector3d const &r_mid,
  *  @param[in]  iaparams  Bonded parameters for the dihedral interaction.
  *  @return the forces on @p p2, @p p1, @p p3
  */
-inline boost::optional<
-    std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>>
+inline boost::optional<std::tuple<Utils::Vector3d, Utils::Vector3d,
+                                  Utils::Vector3d, Utils::Vector3d>>
 tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
                    Utils::Vector3d const &r3, Utils::Vector3d const &r4,
                    Bonded_ia_parameters const &iaparams) {
@@ -214,7 +198,7 @@ tab_dihedral_force(Utils::Vector3d const &r1, Utils::Vector3d const &r2,
   auto const force2 = fac * (v34Xf4 - v12Xf1 - v23Xf1);
   auto const force3 = fac * (v12Xf1 - v23Xf4 - v34Xf4);
 
-  return std::make_tuple(force2, force1, force3);
+  return std::make_tuple(force2, force1, force3, -(force2 + force1 + force3));
 }
 
 /** Compute the four-body dihedral interaction energy.

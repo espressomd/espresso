@@ -52,15 +52,14 @@ int modpsi_init() {
     else
       linModPsi_offsets[i] =
           linModPsi_offsets[i - 1] + linModPsi_lengths[i - 1];
-    linModPsi_lengths[i] = modPsi[i].n;
+    linModPsi_lengths[i] = modPsi[i].size();
   }
   linModPsi.resize(linModPsi_offsets[2 * n_modPsi - 1] +
                    linModPsi_lengths[2 * n_modPsi - 1]);
   for (int i = 0; i < 2 * n_modPsi; i++) {
-    for (int j = 0; j < modPsi[i].n; j++) {
+    for (int j = 0; j < modPsi[i].size(); j++) {
       linModPsi[linModPsi_offsets[i] + j] =
-          (mmm1dgpu_real)modPsi[i]
-              .e[j]; // cast to single-precision if necessary
+          (mmm1dgpu_real)modPsi[i][j]; // cast to single-precision if necessary
     }
   }
 

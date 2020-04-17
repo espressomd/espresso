@@ -177,23 +177,6 @@ used to cancel or add **only the short-range** electrostatic part
 of the P3M solver. A use case is described in :ref:`Particle polarizability with
 thermalized cold Drude oscillators`.
 
-.. _Subtracted Lennard-Jones bond:
-
-Subtracted Lennard-Jones bond
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-:class:`espressomd.interactions.SubtLJ` can be used to exclude certain particle
-pairs from the non-bonded :ref:`Lennard-Jones interaction`::
-
-    subtLJ = espressomd.interactions.SubtLJ()
-    system.bonded_inter.add(subtLJ)
-    system.part[0].add_bond((subt, 1))
-
-This bond subtracts the type-pair specific Lennard-Jones interaction between
-the involved particles. This interaction is useful when using other bond
-potentials which already include the short-ranged repulsion. This often the
-case for force fields or in general tabulated potentials.
-
 .. _Rigid bonds:
 
 Rigid bonds

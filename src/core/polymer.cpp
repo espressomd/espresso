@@ -29,7 +29,6 @@
 
 #include "polymer.hpp"
 
-#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "constraints.hpp"
 #include "constraints/ShapeBasedConstraint.hpp"
 #include "random.hpp"

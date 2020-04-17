@@ -26,9 +26,14 @@
 #include "Particle.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
+#include "bond_error.hpp"
 #include "ghosts.hpp"
 
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/container/static_vector.hpp>
 #include <boost/range/algorithm/find_if.hpp>
+#include <boost/range/algorithm/transform.hpp>
+
 #include <vector>
 
 /** Cell Structure */
@@ -178,6 +183,12 @@ public:
     return m_particle_index[id];
   }
 
+  template <class InputRange, class OutputIterator>
+  void get_local_particles(InputRange ids, OutputIterator out) {
+    boost::transform(ids, out,
+                     [this](int id) { return get_local_particle(id); });
+  }
+
   std::vector<Cell *> m_local_cells = {};
   std::vector<Cell *> m_ghost_cells = {};
 
@@ -297,6 +308,48 @@ public:
    * @brief Set the resort level to sorted.
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
+
+  /**
+   * @brief Resolve ids to particles.
+   *
+   * @throws BondResolutionError if one of the ids
+   *         was not found.
+   *
+   * @param partner_ids Ids to resolve.
+   * @return Vector of Particle pointers.
+   */
+  inline auto resolve_bond_partners(Utils::Span<const int> partner_ids) {
+    boost::container::static_vector<Particle *, 4> partners;
+    get_local_particles(partner_ids, std::back_inserter(partners));
+
+    /* Check if id resolution failed for any partner */
+    if (boost::algorithm::any_of(
+            partners, [](Particle *partner) { return partner == nullptr; })) {
+      throw BondResolutionError{};
+    }
+
+    return partners;
+  }
+
+  template <class Handler>
+  void execute_bond_handler(Particle &p, Handler handler) {
+    for (auto const &bond : p.bonds()) {
+      auto const partner_ids = bond.partner_ids();
+
+      try {
+        auto partners = resolve_bond_partners(partner_ids);
+
+        auto const bond_broken =
+            handler(p, bond.bond_id(), Utils::make_span(partners));
+
+        if (bond_broken) {
+          bond_broken_error(p.identity(), partner_ids);
+        }
+      } catch (const BondResolutionError &) {
+        bond_broken_error(p.identity(), partner_ids);
+      }
+    }
+  }
 };
 
 #endif // ESPRESSO_CELLSTRUCTURE_HPP

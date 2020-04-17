@@ -14,18 +14,59 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import itertools
 import numpy as np
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 
 
 @script_interface_register
 class Observable(ScriptInterfaceHelper):
+    """
+    Base class for all observables.
+
+    Methods
+    -------
+    shape()
+        Return the shape of the observable.
+    """
     _so_name = "Observables::Observable"
     _so_bind_methods = ("shape",)
     _so_creation_policy = "LOCAL"
 
     def calculate(self):
         return np.array(self.call_method("calculate")).reshape(self.shape())
+
+
+class ProfileObservable(Observable):
+    """
+    Base class for histogram-based observables.
+    """
+
+    def bin_edges(self):
+        """
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`float`
+            Positions between the bins. If the histogram has dimensions
+            ``(M,N,O)``, the bin edges have dimensions ``(M+1,N+1,O+1,3)``.
+        """
+        edges = self.call_method("edges")
+        shape = list(map(len, edges)) + [len(edges)]
+        return np.array(list(itertools.product(*edges))).reshape(shape)
+
+    def bin_centers(self):
+        """
+        Returns
+        -------
+        :obj:`ndarray` of :obj:`float`
+            Positions of the bins centers. If the histogram has dimensions
+            ``(M,N,O)``, the bin centers have dimensions ``(M,N,O,3)``.
+        """
+        edges = self.call_method("edges")
+        for i, edge in enumerate(edges):
+            edges[i] = np.array(edge[:-1]) + (edge[1] - edge[0]) / 2
+        shape = list(map(len, edges)) + [len(edges)]
+        return np.array(list(itertools.product(*edges))).reshape(shape)
 
 
 @script_interface_register
@@ -93,7 +134,7 @@ class Current(Observable):
 
 
 @script_interface_register
-class DensityProfile(Observable):
+class DensityProfile(ProfileObservable):
 
     """Calculates the particle density profile for particles with given ids.
 
@@ -149,7 +190,7 @@ class DipoleMoment(Observable):
 
 
 @script_interface_register
-class FluxDensityProfile(Observable):
+class FluxDensityProfile(ProfileObservable):
 
     """Calculates the particle flux density for particles with given ids.
 
@@ -187,7 +228,7 @@ class FluxDensityProfile(Observable):
 
 
 @script_interface_register
-class ForceDensityProfile(Observable):
+class ForceDensityProfile(ProfileObservable):
 
     """Calculates the force density profile for particles with given ids.
 
@@ -225,7 +266,7 @@ class ForceDensityProfile(Observable):
 
 
 @script_interface_register
-class LBVelocityProfile(Observable):
+class LBVelocityProfile(ProfileObservable):
 
     """Calculates the LB fluid velocity profile.
 
@@ -589,7 +630,7 @@ class DPDStress(Observable):
 
 
 @script_interface_register
-class CylindricalDensityProfile(Observable):
+class CylindricalDensityProfile(ProfileObservable):
 
     """Calculates the particle density in cylindrical coordinates.
 
@@ -629,7 +670,7 @@ class CylindricalDensityProfile(Observable):
 
 
 @script_interface_register
-class CylindricalFluxDensityProfile(Observable):
+class CylindricalFluxDensityProfile(ProfileObservable):
 
     """Calculates the particle flux density in cylindrical coordinates.
 
@@ -671,7 +712,7 @@ class CylindricalFluxDensityProfile(Observable):
 
 
 @script_interface_register
-class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
+class CylindricalLBFluxDensityProfileAtParticlePositions(ProfileObservable):
 
     """Calculates the LB fluid flux density at the particle positions in
     cylindrical coordinates.
@@ -714,7 +755,7 @@ class CylindricalLBFluxDensityProfileAtParticlePositions(Observable):
 
 
 @script_interface_register
-class CylindricalLBVelocityProfileAtParticlePositions(Observable):
+class CylindricalLBVelocityProfileAtParticlePositions(ProfileObservable):
 
     """Calculates the LB fluid velocity at the particle positions in
     cylindrical coordinates.
@@ -757,7 +798,7 @@ class CylindricalLBVelocityProfileAtParticlePositions(Observable):
 
 
 @script_interface_register
-class CylindricalVelocityProfile(Observable):
+class CylindricalVelocityProfile(ProfileObservable):
 
     """Calculates the particle velocity profile in cylindrical coordinates.
 
@@ -799,7 +840,7 @@ class CylindricalVelocityProfile(Observable):
 
 
 @script_interface_register
-class CylindricalLBVelocityProfile(Observable):
+class CylindricalLBVelocityProfile(ProfileObservable):
 
     """Calculates the LB fluid velocity profile in cylindrical coordinates.
 

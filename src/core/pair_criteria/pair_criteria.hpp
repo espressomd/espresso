@@ -26,7 +26,6 @@
 #include <stdexcept>
 
 namespace PairCriteria {
-
 /** @brief Criterion which provides a true/false for a pair of particles */
 class PairCriterion {
 public:
@@ -83,8 +82,8 @@ private:
 class BondCriterion : public PairCriterion {
 public:
   bool decide(const Particle &p1, const Particle &p2) const override {
-    return pair_bond_exists_on(p1, p2, m_bond_type) ||
-           pair_bond_exists_on(p2, p1, m_bond_type);
+    return pair_bond_exists_on(p1.bonds(), p2.identity(), m_bond_type) ||
+           pair_bond_exists_on(p2.bonds(), p1.identity(), m_bond_type);
   };
   int get_bond_type() { return m_bond_type; };
   void set_bond_type(int t) { m_bond_type = t; }
