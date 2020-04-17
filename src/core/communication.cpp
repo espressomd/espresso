@@ -42,6 +42,7 @@
 #include "event.hpp"
 #include "forces.hpp"
 #include "galilei.hpp"
+#include "generic-dd/generic_dd.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/lb.hpp"
@@ -118,7 +119,8 @@ int n_nodes = -1;
   CB(mpi_get_pairs_slave)                                                      \
   CB(mpi_get_particles_slave)                                                  \
   CB(mpi_rotate_system_slave)                                                  \
-  CB(mpi_update_particle_slave)
+  CB(mpi_update_particle_slave)                                                \
+  CB(mpi_bcast_generic_dd_grid_slave)
 
 // create the forward declarations
 #define CB(name) void name(int node, int param);
@@ -676,4 +678,16 @@ void mpi_resort_particles_slave(int global_flag, int) {
   cells_resort_particles(global_flag);
 
   boost::mpi::gather(comm_cart, cells_get_n_particles(), 0);
+}
+
+void mpi_bcast_generic_dd_grid(std::string desc) {
+  mpi_call(mpi_bcast_generic_dd_grid_slave, 0, 0);
+  boost::mpi::broadcast(comm_cart, desc, 0);
+  generic_dd::set_grid(desc);
+}
+
+void mpi_bcast_generic_dd_grid_slave(int, int) {
+  std::string desc;
+  boost::mpi::broadcast(comm_cart, desc, 0);
+  generic_dd::set_grid(desc);
 }

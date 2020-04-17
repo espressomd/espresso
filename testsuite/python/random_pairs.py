@@ -82,6 +82,11 @@ class RandomPairTest(ut.TestCase):
         self.system.cell_system.set_domain_decomposition()
         self.check_pairs(n2_pairs)
 
+    def check_generic_dd(self, n2_pairs):
+        for g in self.s.cell_system.generic_dd_supported_grid_types():
+            self.system.cell_system.set_generic_dd(g)
+            self.check_pairs(n2_pairs)
+
     def check_n_squared(self, n2_pairs):
         self.system.cell_system.set_n_square()
         self.check_pairs(n2_pairs)

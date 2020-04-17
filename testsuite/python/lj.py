@@ -80,6 +80,25 @@ class LennardJonesTest(ut.TestCase):
         self.system.integrator.run(recalc_forces=True, steps=0)
         self.check()
 
+    def test_generic_dd(self):
+        for g in espressomd.generic_dd.supported_grid_types():
+            self.system.cell_system.set_generic_dd(g, use_verlet_lists=False)
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            self.check()
+
+    def test_dd_vl(self):
+        for g in espressomd.generic_dd.supported_grid_types():
+            self.system.cell_system.set_generic_dd(g, use_verlet_lists=True)
+            # Build VL and calc ia
+            self.system.integrator.run(recalc_forces=True, steps=0)
+
+            self.check()
+
+            # Calc is from VLs
+            self.system.integrator.run(recalc_forces=True, steps=0)
+            self.check()
+
 
 if __name__ == '__main__':
     ut.main()

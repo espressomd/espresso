@@ -32,6 +32,7 @@
 #include "domain_decomposition.hpp"
 #include "errorhandling.hpp"
 #include "event.hpp"
+#include "generic-dd/generic_dd.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
@@ -87,6 +88,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
         });
     break;
   case CELL_STRUCTURE_NSQUARE:
+  case CELL_STRUCTURE_GENERIC_DD:
     Algorithm::link_cell(
         boost::make_indirect_iterator(cell_structure.m_local_cells.begin()),
         boost::make_indirect_iterator(cell_structure.m_local_cells.end()),
@@ -147,6 +149,9 @@ static void topology_release(int cs) {
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_release();
     break;
+  case CELL_STRUCTURE_GENERIC_DD:
+    generic_dd::topology_release();
+    break;
   default:
     fprintf(stderr,
             "INTERNAL ERROR: attempting to sort the particles in an "
@@ -157,7 +162,7 @@ static void topology_release(int cs) {
 }
 
 /** Choose the topology init function of a certain cell system. */
-void topology_init(int cs, double range) {
+void topology_init(int cs, double range, bool is_repart = false) {
   /** broadcast the flag for using Verlet list */
   boost::mpi::broadcast(comm_cart, cell_structure.use_verlet_list, 0);
 
@@ -167,13 +172,16 @@ void topology_init(int cs, double range) {
     topology_init(CELL_STRUCTURE_DOMDEC, range);
     break;
   case CELL_STRUCTURE_CURRENT:
-    topology_init(cell_structure.type, range);
+    topology_init(cell_structure.type, range, is_repart);
     break;
   case CELL_STRUCTURE_DOMDEC:
     dd_topology_init(node_grid, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init();
+    break;
+  case CELL_STRUCTURE_GENERIC_DD:
+    generic_dd::topology_init(range, is_repart);
     break;
   default:
     fprintf(stderr,
@@ -188,6 +196,7 @@ unsigned topology_check_resort(int cs, unsigned local_resort) {
   switch (cs) {
   case CELL_STRUCTURE_DOMDEC:
   case CELL_STRUCTURE_NSQUARE:
+  case CELL_STRUCTURE_GENERIC_DD:
     return boost::mpi::all_reduce(comm_cart, local_resort,
                                   std::bit_or<unsigned>());
   default:
@@ -213,7 +222,7 @@ static void invalidate_ghosts() {
 
 /************************************************************/
 
-void cells_re_init(int new_cs, double range) {
+void cells_re_init(int new_cs, double range, bool is_repart) {
   invalidate_ghosts();
 
   topology_release(cell_structure.type);
@@ -224,7 +233,7 @@ void cells_re_init(int new_cs, double range) {
   /* MOVE old cells to temporary buffer */
   auto tmp_cells = std::move(cells);
 
-  topology_init(new_cs, range);
+  topology_init(new_cs, range, is_repart);
   cell_structure.min_range = range;
 
   clear_particle_node();
@@ -332,6 +341,10 @@ void cells_resort_particles(int global_flag) {
     dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid,
                                    modified_cells);
     break;
+  case CELL_STRUCTURE_GENERIC_DD:
+    generic_dd::exchange_particles(global_flag, &displaced_parts,
+                                   modified_cells);
+    break;
   }
 
   boost::sort(modified_cells);
@@ -379,6 +392,9 @@ void cells_on_geometry_change(int flags) {
     dd_on_geometry_change(flags, node_grid, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
+    break;
+  case CELL_STRUCTURE_GENERIC_DD:
+    generic_dd::on_geometry_change(flags, range);
     break;
   }
 }

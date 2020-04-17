@@ -165,6 +165,7 @@ struct GhostCommunication {
 
 /** Properties for a ghost communication. A ghost communication is defined */
 struct GhostCommunicator {
+  bool async;
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
 };

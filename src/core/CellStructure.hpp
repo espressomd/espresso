@@ -47,7 +47,9 @@ enum {
   /** cell structure domain decomposition */
   CELL_STRUCTURE_DOMDEC = 1,
   /** cell structure n square */
-  CELL_STRUCTURE_NSQUARE = 2
+  CELL_STRUCTURE_NSQUARE = 2,
+  /** generic domain decomposition */
+  CELL_STRUCTURE_GENERIC_DD = 3,
 };
 
 namespace Cells {

@@ -627,6 +627,12 @@ class CollisionDetection(ut.TestCase):
         self.verify_triangle_binding(cutoff, self.s.bonded_inter[2], res)
         self.s.time_step = self.time_step
 
+        for g in espressomd.generic_dd.supported_grid_types():
+            self.s.part[:].bonds = ()
+            self.s.cell_system.set_generic_dd(g)
+            self.s.integrator.run(1, recalc_forces=True)
+            self.verify_triangle_binding(cutoff, self.s.bonded_inter[2], res)
+
     def verify_triangle_binding(self, distance, first_bond, angle_res):
         # Gather pairs
         n = len(self.s.part)

@@ -305,4 +305,9 @@ void mpi_galilei_transform();
  */
 std::vector<int> mpi_resort_particles(int global_flag);
 
+/** Broadcast the grid to use to every process.
+ * \param desc Grid descriptor
+ */
+void mpi_bcast_generic_dd_grid(std::string desc);
+
 #endif
