@@ -21,15 +21,19 @@
 # Find the HIP compiler, include its libraries and declare a custom
 # `add_library()` wrapper function named `add_gpu_library()`.
 
-set(CMAKE_CUDA_COMPILER ${HIP_HIPCC_EXECUTABLE})
+set(ROCM_HOME "/opt/rocm" CACHE FILEPATH "Path to AMD ROCm")
+list(APPEND CMAKE_MODULE_PATH "${ROCM_HOME}/hip/cmake")
+find_package(HIP ${CUDACompilerHIP_FIND_VERSION} MODULE REQUIRED)
+# patch HCC_PATH environment variable and reload HIP
+if(HIP_VERSION VERSION_LESS 3.1)
+  set(HCC_PATH "${HIP_ROOT_DIR}")
+else()
+  set(HCC_PATH "${ROCM_HOME}/hcc")
+endif()
+find_package(HIP ${CUDACompilerHIP_FIND_VERSION} MODULE REQUIRED)
+
 set(CUDA 1)
 set(HIP 1)
-
-execute_process(COMMAND ${CMAKE_CUDA_COMPILER} --version
-                OUTPUT_VARIABLE HIPCC_VERSION_STRING)
-
-string(REGEX REPLACE "^.*HCC [Cc]lang version ([0-9\.]+).*\$" "\\1"
-                     CMAKE_CUDA_COMPILER_VERSION "${HIPCC_VERSION_STRING}")
 
 list(APPEND HIP_HCC_FLAGS
        -std=c++${CMAKE_CUDA_STANDARD} -pedantic -Wall -Wextra
@@ -59,5 +63,4 @@ endfunction()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(
-  CudaCompilerHIP REQUIRED_VARS CMAKE_CUDA_COMPILER VERSION_VAR
-  CMAKE_CUDA_COMPILER_VERSION)
+  CudaCompilerHIP REQUIRED_VARS HIP_HIPCC_EXECUTABLE VERSION_VAR HIP_VERSION)
