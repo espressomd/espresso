@@ -22,6 +22,8 @@
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_CYLINDRICALPIDPROFILEOBSERVABLE_HPP
 
+#include <boost/range/algorithm.hpp>
+#include <iterator>
 #include <memory>
 
 #include "script_interface/ScriptInterface.hpp"
@@ -37,11 +39,15 @@ template <typename CoreObs>
 class CylindricalPidProfileObservable
     : public AutoParameters<CylindricalPidProfileObservable<CoreObs>,
                             Observable> {
+  using Base =
+      AutoParameters<CylindricalPidProfileObservable<CoreObs>, Observable>;
+
 public:
   static_assert(
       std::is_base_of<core::Observables::CylindricalPidProfileObservable,
                       CoreObs>::value,
       "");
+  using Base::Base;
   CylindricalPidProfileObservable() {
     this->add_parameters({
         {"ids",
@@ -130,6 +136,17 @@ public:
             params, "ids", "center", "axis", "n_r_bins", "n_phi_bins",
             "n_z_bins", "min_r", "min_phi", "min_z", "max_r", "max_phi",
             "max_z");
+  }
+
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
+    if (method == "edges") {
+      std::vector<Variant> variant_edges;
+      boost::copy(cylindrical_pid_profile_observable()->edges(),
+                  std::back_inserter(variant_edges));
+      return variant_edges;
+    }
+    return Base::call_method(method, parameters);
   }
 
   std::shared_ptr<core::Observables::Observable> observable() const override {

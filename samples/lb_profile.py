@@ -44,7 +44,7 @@ system.actors.add(lb_fluid)
 system.thermostat.set_lb(LB_fluid=lb_fluid, seed=23)
 fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(
     center=[5.0, 5.0, 0.0],
-    axis='z',
+    axis=[0, 0, 1],
     n_r_bins=100,
     n_phi_bins=1,
     n_z_bins=1,
@@ -54,9 +54,7 @@ fluid_obs = espressomd.observables.CylindricalLBVelocityProfile(
     max_phi=np.pi,
     min_z=0.0,
     max_z=10.0,
-    sampling_delta_x=0.05,
-    sampling_delta_y=0.05,
-    sampling_delta_z=1.0)
+    sampling_density=0.1)
 cylinder_shape = espressomd.shapes.Cylinder(
     center=[5.0, 5.0, 5.0],
     axis=[0, 0, 1],

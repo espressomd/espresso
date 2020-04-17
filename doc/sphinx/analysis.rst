@@ -345,8 +345,10 @@ Both versions are equivalent in the :math:`N\rightarrow \infty` limit but give n
 Observables and correlators
 ---------------------------
 
-Analysis in the core is a new concept introduced in since version 3.1.
-It was motivated by the fact, that sometimes it is desirable that the
+Observables extract properties of the particles and the LB fluid and
+return either the raw data or a statistic derived from them. The
+Observable framework is progressively replacing the Analysis framework.
+This is motivated by the fact, that sometimes it is desirable that the
 analysis functions do more than just return a value to the scripting
 interface. For some observables it is desirable to be sampled every few
 integration steps. In addition, it should be possible to pass the
@@ -380,12 +382,13 @@ not all observables carry out their calculations in parallel.
 Instead, the entire particle configuration is collected on the head node, and the calculations are carried out there.
 This is only performance-relevant if the number of processor cores is large and/or interactions are calculated very frequently.
 
-.. _Creating an observable:
+.. _Using observables:
 
-Creating an observable
-~~~~~~~~~~~~~~~~~~~~~~
+Using observables
+~~~~~~~~~~~~~~~~~
 
-The observables are represented as Python classes derived from :class:`espressomd.observables.Observable`. They are contained in
+The observables are represented as Python classes derived from
+:class:`espressomd.observables.Observable`. They are contained in
 the ``espressomd.observables`` module. An observable is instantiated as
 follows
 
@@ -397,17 +400,70 @@ follows
 Here, the keyword argument ``ids`` specifies the ids of the particles,
 which the observable should take into account.
 
-The current value of an observable can be obtained using its calculate()-method::
+The current value of an observable can be obtained using its
+:meth:`~espressomd.observables.Observable.calculate` method::
 
     print(part_pos.calculate())
+
+Profile observables have additional methods
+:meth:`~espressomd.observables.ProfileObservable.bin_centers` and
+:meth:`~espressomd.observables.ProfileObservable.bin_edges` to facilitate
+plotting of histogram slices with functions that require either bin centers
+or bin edges for the axes. Example::
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import espressomd
+    import espressomd.observables
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.part.add(id=0, pos=[4.0, 3.0, 6.0])
+    system.part.add(id=1, pos=[7.0, 3.0, 6.0])
+
+    # histogram in Cartesian coordinates
+    density_profile = espressomd.observables.DensityProfile(
+        ids=[0, 1],
+        n_x_bins=8, min_x=1.0, max_x=9.0,
+        n_y_bins=8, min_y=1.0, max_y=9.0,
+        n_z_bins=4, min_z=4.0, max_z=8.0)
+    obs_data = density_profile.calculate()
+    obs_bins = density_profile.bin_centers()
+
+    # 1D slice: requires bin centers
+    plt.plot(obs_bins[:, 2, 2, 0], obs_data[:, 2, 2])
+    plt.show()
+
+    # 2D slice: requires extent
+    plt.imshow(obs_data[:, :, 2].T, origin='lower',
+               extent=[density_profile.min_x, density_profile.max_x,
+                       density_profile.min_y, density_profile.max_y])
+    plt.show()
+
+    # histogram in cylindrical coordinates
+    density_profile = espressomd.observables.CylindricalDensityProfile(
+        ids=[0, 1], center=[5.0, 5.0, 0.0], axis=[0, 0, 1],
+        n_r_bins=8, min_r=0.0, max_r=4.0,
+        n_phi_bins=16, min_phi=-np.pi, max_phi=np.pi,
+        n_z_bins=4, min_z=4.0, max_z=8.0)
+    obs_data = density_profile.calculate()
+    obs_bins = density_profile.bin_edges()
+
+    # 2D slice: requires bin edges
+    fig = plt.figure()
+    ax = fig.add_subplot(111, polar='True')
+    r = obs_bins[:, 0, 0, 0]
+    phi = obs_bins[0, :, 0, 1]
+    ax.pcolormesh(phi, r, obs_data[:, :, 2])
+    plt.show()
+
 
 .. _Available observables:
 
 Available observables
 ~~~~~~~~~~~~~~~~~~~~~
 
-The following list contains some of the available observables. You can find documentation for
-all available observables in :mod:`espressomd.observables`.
+The following list contains some of the available observables. You can find
+documentation for all available observables in :mod:`espressomd.observables`.
 
 - Observables working on a given set of particles:
 
@@ -468,13 +524,11 @@ all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.CylindricalLBVelocityProfileAtParticlePositions`
 
-
 - System-wide observables
 
    - :class:`~espressomd.observables.StressTensor`: Total stress tensor (see :ref:`stress tensor`)
 
    - :class:`~espressomd.observables.DPDStress`
-
 
 
 .. _Correlations:
