@@ -45,12 +45,17 @@ SI_temperature = 400.0
 kb_kjmol = 0.0083145
 temperature = SI_temperature * kb_kjmol
 
-# COULOMB PREFACTOR (elementary charge)^2 / (4*pi*epsilon_0) in Angstrom *
-# kJ/mol
-epsilon_r = 4.0
-coulomb_prefactor = 1.67101e5 * kb_kjmol / epsilon_r
+# COULOMB PREFACTOR (elementary charge)^2 / (4*pi*epsilon) in Angstrom*kJ/mol
+epsilon_r = 4.0  # dimensionless
+epsilon_0 = 8.8541878128e-12  # units of [C^2/J/m]
+q_e = 1.602176634e-19  # units of [C]
+avogadro = 6.022e23  # units of [mol]
+prefactor = q_e**2 / (4 * np.pi * epsilon_r * epsilon_0)  # units of [J.m]
+# convert energies to kJ/mol, with distances in Angstroms
+coulomb_prefactor = prefactor * avogadro / 1000 * 1e10
 
 # FORCE FIELDS
+# distances in Angstroms, epsilons in kBT, masses in g/mol
 species = ["Cl", "Na", "Colloid", "Solvent"]
 types = {"Cl": 0, "Na": 1, "Colloid": 2, "Solvent": 3}
 charges = {"Cl": -1.0, "Na": 1.0, "Colloid": -3.0, "Solvent": 0.0}
@@ -114,11 +119,11 @@ for i in range(len(species)):
             epsilon=lj_eps, sigma=lj_sig, cutoff=lj_cut, shift="auto")
 
 energy = system.analysis.energy()
-print("Before Minimization: E_total = {}".format(energy['total']))
+print("Before Minimization: E_total = {:.2e}".format(energy['total']))
 steepest_descent(system, f_max=1000, gamma=30.0, max_steps=1000,
                  max_displacement=0.01)
 energy = system.analysis.energy()
-print("After Minimization: E_total = {}".format(energy['total']))
+print("After Minimization: E_total = {:.2e}".format(energy['total']))
 
 print("Tune p3m")
 p3m = electrostatics.P3M(prefactor=coulomb_prefactor, accuracy=1e-1)
