@@ -118,7 +118,8 @@ The properties of the cell system can be accessed by
     * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
 
     (int[3]) 3D node grid for real space domain decomposition (optional, if
-    unset an optimal set is chosen automatically).
+    unset an optimal set is chosen automatically). The domain decomposition
+    can be visualized with :file:`samples/visualization_cellsystem.py`.
 
     * :py:attr:`~espressomd.cellsystem.CellSystem.skin`
 
