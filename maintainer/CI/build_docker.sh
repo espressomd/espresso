@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (C) 2016-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
@@ -19,14 +19,14 @@
 ENV_FILE=$(mktemp esXXXXXXX.env)
 
 cat > "${ENV_FILE}" <<EOF
-insource=${insource}
 cmake_params=${cmake_params}
 with_fftw=${with_fftw}
-with_python_interface=true
-with_coverage=${with_coverage}
+with_coverage=false
+with_cuda=false
 myconfig=${myconfig}
 check_procs=${check_procs}
 make_check=${make_check}
+build_type=RelWithAssert
 EOF
 
 if [ -z "${image}" ]; then

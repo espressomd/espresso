@@ -18,6 +18,7 @@ install(TARGETS ScriptInterface
 
 target_link_libraries(
   ScriptInterface PRIVATE EspressoConfig EspressoCore
-  PUBLIC mpiio utils MPI::MPI_CXX shapes core_cluster_analysis)
+  PUBLIC mpiio utils MPI::MPI_CXX shapes core_cluster_analysis
+  PRIVATE cxx_interface)
 
 target_include_directories(ScriptInterface PUBLIC ${CMAKE_SOURCE_DIR}/src)

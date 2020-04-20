@@ -601,6 +601,10 @@ having multiple build directories you can build several variants of |es|,
 each variant having different activated features, and for as many
 platforms as you want.
 
+Once you've run ``ccmake``, you can list the configured variables with
+``cmake -LAH -N | less`` (uses a pager) or with ``ccmake ..`` and pressing
+key ``t`` to toggle the advanced mode on (uses the curses interface).
+
 **Example:**
 
 When the source directory is :file:`srcdir` (the files where unpacked to this
@@ -669,8 +673,8 @@ options are available:
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the :file:`CMakeLists.txt` file is set to ON the corresponding
-option is created if the value of the option is set to OFF the
+When the value in the :file:`CMakeLists.txt` file is set to ON, the corresponding
+option is created; if the value of the option is set to OFF, the
 corresponding option is not created. These options can also be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
@@ -678,10 +682,12 @@ by calling ``cmake`` with the command line argument ``-D``:
 
     cmake -D WITH_HDF5=OFF srcdir
 
-In the rare event when working with cmake and you want to have a totally
-clean build (for example because you switched the compiler), remove the
-build directory and create a new one.
-
+When an option is activated, additional options may become available.
+For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
+``-D WITH_CUDA_COMPILER=<compiler_id>``, where ``<compiler_id>`` can be
+``nvcc`` (default), ``clang`` or ``hip``. For ``hip``, an additional
+``-D ROCM_HOME=<path_to_rocm>`` variable becomes available, with default value
+``ROCM_HOME=/opt/rocm``.
 
 
 Compiling, testing and installing
