@@ -7,7 +7,7 @@ The Coulomb (or electrostatic) interaction is defined as
 follows. For a pair of particles at distance :math:`r` with charges
 :math:`q_1` and :math:`q_2`, the interaction is given by
 
-.. math:: U_C(r)=C \cdot \frac{q_1 q_2}{r}.
+.. math:: U_C(r)=C \cdot \frac{q_1 q_2}{r}
 
 where
 
@@ -16,10 +16,10 @@ where
    :label: coulomb_prefactor
 
 is a prefactor which can be set by the user. The commonly used Bjerrum length
-:math:`l_B = e_o^2 / (4 \pi \varepsilon_0 \varepsilon_r k_B T)` is the length at
+:math:`l_B = e^2 / (4 \pi \varepsilon_0 \varepsilon_r k_B T)` is the length at
 which the Coulomb energy between two unit charges is equal to the thermal
 energy :math:`k_B T`.
-Based on the this length, the prefactor is given by :math:`C=l_B k_B T`.
+Based on this length, the prefactor is given by :math:`C=l_B k_B T / e^2`.
 
 Computing electrostatic interactions is computationally very expensive.
 |es| features some state-of-the-art algorithms to deal with these
