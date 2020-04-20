@@ -50,7 +50,7 @@ using Utils::sinc;
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
-#include <utils/math/bspline.hpp>
+#include <utils/integral_parameter.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>
@@ -300,36 +300,39 @@ int p3m_set_eps(double eps) {
   return ES_OK;
 }
 
-template <int cao>
-void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
-                          const Utils::Vector3d &ai,
-                          p3m_local_mesh const &local_mesh,
-                          p3m_interpolation_cache *inter_weights = nullptr) {
-  auto const w =
-      p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh);
+namespace {
+template <size_t cao> struct AssignCharge {
+  void operator()(double q, const Utils::Vector3d &real_pos,
+                  const Utils::Vector3d &ai, p3m_local_mesh const &local_mesh,
+                  p3m_interpolation_cache &inter_weights) {
+    auto const w =
+        p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh);
 
-  if (inter_weights) {
-    inter_weights->store(w);
+    inter_weights.store(w);
+
+    p3m_interpolate(local_mesh, w,
+                    [q](int ind, double w) { p3m.rs_mesh[ind] += w * q; });
   }
 
-  p3m_interpolate(local_mesh, w,
-                  [q](int ind, double w) { p3m.rs_mesh[ind] += w * q; });
-}
+  void operator()(double q, const Utils::Vector3d &real_pos,
+                  const Utils::Vector3d &ai, p3m_local_mesh const &local_mesh) {
+    p3m_interpolate(
+        local_mesh,
+        p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh),
+        [q](int ind, double w) { p3m.rs_mesh[ind] += w * q; });
+  }
 
-/** Template parameterized calculation of the charge assignment to be called by
- *  wrapper.
- *  \tparam cao      charge assignment order.
- */
-template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
-  for (auto &p : particles) {
-    if (p.p.q != 0.0) {
-      p3m_do_assign_charge<cao>(p.p.q, p.r.p, p3m.params.ai, p3m.local_mesh,
-                                &p3m.inter_weights);
+  void operator()(const ParticleRange &particles) {
+    for (auto &p : particles) {
+      if (p.p.q != 0.0) {
+        this->operator()(p.p.q, p.r.p, p3m.params.ai, p3m.local_mesh,
+                         p3m.inter_weights);
+      }
     }
   }
-}
+};
+} // namespace
 
-/* Template wrapper for p3m_do_charge_assign() */
 void p3m_charge_assign(const ParticleRange &particles) {
   p3m.inter_weights.reset(p3m.params.cao);
 
@@ -337,97 +340,51 @@ void p3m_charge_assign(const ParticleRange &particles) {
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  switch (p3m.params.cao) {
-  case 1:
-    p3m_do_charge_assign<1>(particles);
-    break;
-  case 2:
-    p3m_do_charge_assign<2>(particles);
-    break;
-  case 3:
-    p3m_do_charge_assign<3>(particles);
-    break;
-  case 4:
-    p3m_do_charge_assign<4>(particles);
-    break;
-  case 5:
-    p3m_do_charge_assign<5>(particles);
-    break;
-  case 6:
-    p3m_do_charge_assign<6>(particles);
-    break;
-  case 7:
-    p3m_do_charge_assign<7>(particles);
-    break;
-  }
+  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, particles);
 }
 
-/* Template wrapper for p3m_do_assign_charge() */
 void p3m_assign_charge(double q, const Utils::Vector3d &real_pos,
-                       p3m_interpolation_cache *inter_weights) {
-  switch (p3m.params.cao) {
-  case 1:
-    p3m_do_assign_charge<1>(q, real_pos, p3m.params.ai, p3m.local_mesh,
-                            inter_weights);
-    break;
-  case 2:
-    p3m_do_assign_charge<2>(q, real_pos, p3m.params.ai, p3m.local_mesh,
-                            inter_weights);
-    break;
-  case 3:
-    p3m_do_assign_charge<3>(q, real_pos, p3m.params.ai, p3m.local_mesh,
-                            inter_weights);
-    break;
-  case 4:
-    p3m_do_assign_charge<4>(q, real_pos, p3m.params.ai, p3m.local_mesh,
-                            inter_weights);
-    break;
-  case 5:
-    p3m_do_assign_charge<5>(q, real_pos, p3m.params.ai, p3m.local_mesh,
-                            inter_weights);
-    break;
-  case 6:
-    p3m_do_assign_charge<6>(q, real_pos, p3m.params.ai, p3m.local_mesh,
-                            inter_weights);
-    break;
-  case 7:
-    p3m_do_assign_charge<7>(q, real_pos, p3m.params.ai, p3m.local_mesh,
-                            inter_weights);
-    break;
-  }
+                       p3m_interpolation_cache &inter_weights) {
+  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, q, real_pos,
+                                                p3m.params.ai, p3m.local_mesh,
+                                                inter_weights);
 }
 
-/* Assign the forces obtained from k-space */
-template <int cao>
-static void P3M_assign_forces(double force_prefac,
-                              const ParticleRange &particles) {
-  using Utils::make_const_span;
-  using Utils::Span;
-  using Utils::Vector;
-
-  assert(cao == p3m.inter_weights.cao());
-
-  /* charged particle counter, charge fraction counter */
-  int cp_cnt = 0;
-
-  for (auto &p : particles) {
-    auto const q = p.p.q;
-    if (q != 0.0) {
-      auto const pref = q * force_prefac;
-      auto const w = p3m.inter_weights.load<cao>(cp_cnt++);
-
-      Utils::Vector3d E{};
-      p3m_interpolate(p3m.local_mesh, w, [&E](int ind, double w) {
-        E += w * Utils::Vector3d{p3m.E_mesh[0][ind], p3m.E_mesh[1][ind],
-                                 p3m.E_mesh[2][ind]};
-      });
-
-      p.f.f -= pref * E;
-    }
-  }
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos) {
+  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, q, real_pos,
+                                                p3m.params.ai, p3m.local_mesh);
 }
 
 namespace {
+template <size_t cao> struct AssignForces {
+  void operator()(double force_prefac, const ParticleRange &particles) const {
+    using Utils::make_const_span;
+    using Utils::Span;
+    using Utils::Vector;
+
+    assert(cao == p3m.inter_weights.cao());
+
+    /* charged particle counter, charge fraction counter */
+    int cp_cnt = 0;
+
+    for (auto &p : particles) {
+      auto const q = p.p.q;
+      if (q != 0.0) {
+        auto const pref = q * force_prefac;
+        auto const w = p3m.inter_weights.load<cao>(cp_cnt++);
+
+        Utils::Vector3d E{};
+        p3m_interpolate(p3m.local_mesh, w, [&E](int ind, double w) {
+          E += w * Utils::Vector3d{p3m.E_mesh[0][ind], p3m.E_mesh[1][ind],
+                                   p3m.E_mesh[2][ind]};
+        });
+
+        p.f.f -= pref * E;
+      }
+    }
+  }
+};
+
 auto dipole_moment(Particle const &p, BoxGeometry const &box) {
   return p.p.q * unfolded_position(p.r.p, p.l.i, box.length());
 }
@@ -599,30 +556,8 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                          p3m.local_mesh.dim);
     }
 
-    /* Assign force component from mesh to particle */
-    switch (p3m.params.cao) {
-    case 1:
-      P3M_assign_forces<1>(force_prefac, particles);
-      break;
-    case 2:
-      P3M_assign_forces<2>(force_prefac, particles);
-      break;
-    case 3:
-      P3M_assign_forces<3>(force_prefac, particles);
-      break;
-    case 4:
-      P3M_assign_forces<4>(force_prefac, particles);
-      break;
-    case 5:
-      P3M_assign_forces<5>(force_prefac, particles);
-      break;
-    case 6:
-      P3M_assign_forces<6>(force_prefac, particles);
-      break;
-    case 7:
-      P3M_assign_forces<7>(force_prefac, particles);
-      break;
-    }
+    Utils::integral_parameter<AssignForces, 1, 7>(p3m.params.cao, force_prefac,
+                                                  particles);
 
     if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
       add_dipole_correction(box_dipole.value(), particles);

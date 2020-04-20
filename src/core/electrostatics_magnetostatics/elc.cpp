@@ -1301,7 +1301,7 @@ void assign_image_charge(const Particle &p) {
     auto const q_eff = elc_params.delta_mid_bot * p.p.q;
     auto const pos = Utils::Vector3d{p.r.p[0], p.r.p[1], -p.r.p[2]};
 
-    p3m_assign_charge(q_eff, pos, nullptr);
+    p3m_assign_charge(q_eff, pos);
   }
 
   if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1309,7 +1309,7 @@ void assign_image_charge(const Particle &p) {
     auto const pos =
         Utils::Vector3d{p.r.p[0], p.r.p[1], 2 * elc_params.h - p.r.p[2]};
 
-    p3m_assign_charge(q_eff, pos, nullptr);
+    p3m_assign_charge(q_eff, pos);
   }
 }
 } // namespace
@@ -1323,7 +1323,7 @@ void ELC_p3m_charge_assign_both(const ParticleRange &particles) {
 
   for (auto &p : particles) {
     if (p.p.q != 0.0) {
-      p3m_assign_charge(p.p.q, p.r.p, &p3m.inter_weights);
+      p3m_assign_charge(p.p.q, p.r.p, p3m.inter_weights);
       assign_image_charge(p);
     }
   }

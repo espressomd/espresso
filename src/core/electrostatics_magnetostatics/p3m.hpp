@@ -171,11 +171,12 @@ void p3m_charge_assign(const ParticleRange &particles);
  *
  *  @param[in] q          %Particle charge
  *  @param[in] real_pos   %Particle position in real space
- *  @param[in] inter_weights Cached interpolation weights to be used, can be
- * null.
+ *  @param[in] inter_weights Cached interpolation weights to be used.
  */
 void p3m_assign_charge(double q, const Utils::Vector3d &real_pos,
-                       p3m_interpolation_cache *inter_weights);
+                       p3m_interpolation_cache &inter_weights);
+/** @overload */
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos);
 
 /** Calculate real space contribution of Coulomb pair forces. */
 inline void p3m_add_pair_force(double q1q2, Utils::Vector3d const &d,

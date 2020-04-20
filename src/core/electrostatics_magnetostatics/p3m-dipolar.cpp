@@ -51,7 +51,7 @@ using Utils::strcat_alloc;
 #include <utils/math/sinc.hpp>
 using Utils::sinc;
 #include <utils/constants.hpp>
-#include <utils/math/bspline.hpp>
+#include <utils/integral_parameter.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -390,24 +390,22 @@ int dp3m_set_eps(double eps) {
   return ES_OK;
 }
 
-/** Assign a single dipole into the current dipole grid.
- *
- *  @param[in] real_pos   %Particle position in real space
- *  @param[in] dip        %Particle magnetic dipole vector
- */
-template <int cao>
-static void dp3m_assign_dipole(Utils::Vector3d const &real_pos,
-                               Utils::Vector3d const &dip) {
-  auto const weights = p3m_calculate_interpolation_weights<cao>(
-      real_pos, dp3m.params.ai, dp3m.local_mesh);
-  p3m_interpolate<cao>(dp3m.local_mesh, weights, [&dip](int ind, double w) {
-    dp3m.rs_mesh_dip[0][ind] += w * dip[0];
-    dp3m.rs_mesh_dip[1][ind] += w * dip[1];
-    dp3m.rs_mesh_dip[2][ind] += w * dip[2];
-  });
+namespace {
+template <size_t cao> struct AssignDipole {
+  void operator()(Utils::Vector3d const &real_pos,
+                  Utils::Vector3d const &dip) const {
+    auto const weights = p3m_calculate_interpolation_weights<cao>(
+        real_pos, dp3m.params.ai, dp3m.local_mesh);
+    p3m_interpolate<cao>(dp3m.local_mesh, weights, [&dip](int ind, double w) {
+      dp3m.rs_mesh_dip[0][ind] += w * dip[0];
+      dp3m.rs_mesh_dip[1][ind] += w * dip[1];
+      dp3m.rs_mesh_dip[2][ind] += w * dip[2];
+    });
 
-  dp3m.inter_weights.store<cao>(weights);
-}
+    dp3m.inter_weights.store<cao>(weights);
+  }
+};
+} // namespace
 
 void dp3m_dipole_assign(const ParticleRange &particles) {
   dp3m.inter_weights.reset(dp3m.params.cao);
@@ -419,92 +417,52 @@ void dp3m_dipole_assign(const ParticleRange &particles) {
 
   for (auto const &p : particles) {
     if (p.p.dipm != 0.0) {
-      switch (dp3m.params.cao) {
-      case 1:
-        dp3m_assign_dipole<1>(p.r.p, p.calc_dip());
-        break;
-      case 2:
-        dp3m_assign_dipole<2>(p.r.p, p.calc_dip());
-        break;
-      case 3:
-        dp3m_assign_dipole<3>(p.r.p, p.calc_dip());
-        break;
-      case 4:
-        dp3m_assign_dipole<4>(p.r.p, p.calc_dip());
-        break;
-      case 5:
-        dp3m_assign_dipole<5>(p.r.p, p.calc_dip());
-        break;
-      case 6:
-        dp3m_assign_dipole<6>(p.r.p, p.calc_dip());
-        break;
-      case 7:
-        dp3m_assign_dipole<7>(p.r.p, p.calc_dip());
-        break;
-      default:
-        throw std::runtime_error("Unknown order.");
-      }
+      Utils::integral_parameter<AssignDipole, 1, 7>(dp3m.params.cao, p.r.p,
+                                                    p.calc_dip());
     }
   }
 }
 
-#ifdef ROTATION
-/** Assign the torques obtained from k-space */
-template <int cao>
-static void P3M_assign_torques(double prefac, int d_rs,
-                               const ParticleRange &particles) {
-  /* particle counter */
-  int cp_cnt = 0;
-  for (auto &p : particles) {
-    auto const w = dp3m.inter_weights.load<cao>(cp_cnt++);
+namespace {
+template <size_t cao> struct AssignTorques {
+  void operator()(double prefac, int d_rs,
+                  const ParticleRange &particles) const {
+    /* particle counter */
+    int cp_cnt = 0;
+    for (auto &p : particles) {
+      auto const w = dp3m.inter_weights.load<cao>(cp_cnt++);
 
-    Utils::Vector3d E{};
+      Utils::Vector3d E{};
+      p3m_interpolate(dp3m.local_mesh, w, [&E, d_rs](int ind, double w) {
+        E[d_rs] += w * dp3m.rs_mesh[ind];
+      });
 
-    p3m_interpolate(dp3m.local_mesh, w, [&E, d_rs](int ind, double w) {
-      E[d_rs] += w * dp3m.rs_mesh[ind];
-    });
-
-    p.f.torque += vector_product(p.calc_dip(), prefac * E);
-  }
-}
-#endif
-
-/** Assign the dipolar forces obtained from k-space */
-static void dp3m_assign_forces_dip(double prefac, int d_rs,
-                                   const ParticleRange &particles) {
-  /* particle counter, charge fraction counter */
-  int cp_cnt = 0, cf_cnt = 0;
-  /* index, index jumps for dp3m.rs_mesh array */
-  int q_ind;
-  int q_m_off = (dp3m.local_mesh.dim[2] - dp3m.params.cao);
-  int q_s_off =
-      dp3m.local_mesh.dim[2] * (dp3m.local_mesh.dim[1] - dp3m.params.cao);
-
-  cp_cnt = 0;
-  cf_cnt = 0;
-
-  for (auto &p : particles) {
-    if ((p.p.dipm) != 0.0) {
-      const Utils::Vector3d dip = p.calc_dip();
-      q_ind = dp3m.ca_fmp[cp_cnt];
-      for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
-        for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
-          for (int i2 = 0; i2 < dp3m.params.cao; i2++) {
-            p.f.f[d_rs] += prefac * dp3m.ca_frac[cf_cnt] *
-                           (dp3m.rs_mesh_dip[0][q_ind] * dip[0] +
-                            dp3m.rs_mesh_dip[1][q_ind] * dip[1] +
-                            dp3m.rs_mesh_dip[2][q_ind] * dip[2]);
-            q_ind++;
-            cf_cnt++;
-          }
-          q_ind += q_m_off;
-        }
-        q_ind += q_s_off;
-      }
-      cp_cnt++;
+      p.f.torque -= vector_product(p.calc_dip(), prefac * E);
     }
   }
-}
+};
+
+template <size_t cao> struct AssignForces {
+  void operator()(double prefac, int d_rs,
+                  const ParticleRange &particles) const {
+    /* particle counter */
+    int cp_cnt = 0;
+    for (auto &p : particles) {
+      auto const w = dp3m.inter_weights.load<cao>(cp_cnt++);
+
+      Utils::Vector3d E{};
+
+      p3m_interpolate(dp3m.local_mesh, w, [&E](int ind, double w) {
+        E[0] += w * dp3m.rs_mesh_dip[0][ind];
+        E[1] += w * dp3m.rs_mesh_dip[1][ind];
+        E[2] += w * dp3m.rs_mesh_dip[2][ind];
+      });
+
+      p.f.f[d_rs] += p.calc_dip() * prefac * E;
+    }
+  }
+};
+} // namespace
 
 /*****************************************************************************/
 
@@ -660,9 +618,10 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         dp3m.sm.spread_grid(dp3m.rs_mesh.data(), comm_cart,
                             dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
-        P3M_assign_torques(dipole_prefac *
-                               (2 * Utils::pi() / box_geo.length()[0]),
-                           d_rs, particles);
+        Utils::integral_parameter<AssignTorques, 1, 7>(
+            dp3m.params.cao,
+            dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs,
+            particles);
       }
 #endif /*ifdef ROTATION */
 
@@ -749,7 +708,8 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         dp3m.sm.spread_grid(Utils::make_span(meshes), comm_cart,
                             dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
-        dp3m_assign_forces_dip(
+        Utils::integral_parameter<AssignForces, 1, 7>(
+            dp3m.params.cao,
             dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2), d_rs,
             particles);
       }
