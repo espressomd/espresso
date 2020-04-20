@@ -126,10 +126,10 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `CentOS 7 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-7>`_
-* `Fedora 30 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-next>`_
-* `Debian 10 <https://github.com/espressomd/docker/blob/master/docker/debian-python3/Dockerfile-10>`_
-* `OpenSUSE Leap 15.1 <https://github.com/espressomd/docker/blob/master/docker/opensuse/Dockerfile-15.1>`_
+* `CentOS <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-centos>`_
+* `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
+* `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
+* `OpenSUSE <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-opensuse>`_
 
 
 .. _Installing requirements on Mac OS X:
@@ -216,12 +216,6 @@ Installing packages using Homebrew
     brew install hdf5
     brew link --force cython
     pip install PyOpenGL matplotlib
-
-Installing CUDA
-"""""""""""""""
-
-If your Mac has an Nvidia graphics card, you should also download and install the
-CUDA SDK [6]_ to make use of GPU computation.
 
 .. _Quick installation:
 
@@ -874,6 +868,3 @@ use one tool at a time.
 
 .. [5]
    http://www.fftw.org/
-
-.. [6]
-   https://developer.nvidia.com/cuda-downloads
