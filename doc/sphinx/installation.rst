@@ -217,12 +217,6 @@ Installing packages using Homebrew
     brew link --force cython
     pip install PyOpenGL matplotlib
 
-Installing CUDA
-"""""""""""""""
-
-If your Mac has an Nvidia graphics card, you should also download and install the
-CUDA SDK [6]_ to make use of GPU computation.
-
 .. _Quick installation:
 
 Quick installation
@@ -874,6 +868,3 @@ use one tool at a time.
 
 .. [5]
    http://www.fftw.org/
-
-.. [6]
-   https://developer.nvidia.com/cuda-downloads
