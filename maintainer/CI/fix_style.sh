@@ -25,7 +25,7 @@ if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     exit 1
 fi
 
-maintainer/lint/pre_commit.sh run --all-files || exit 1
+maintainer/lint/pre_commit.sh run --all-files
 
 if [ "${CI}" != "" ]; then
     git --no-pager diff > style.patch

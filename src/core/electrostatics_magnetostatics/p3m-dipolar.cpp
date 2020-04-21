@@ -51,7 +51,7 @@ using Utils::strcat_alloc;
 #include <utils/math/sinc.hpp>
 using Utils::sinc;
 #include <utils/constants.hpp>
-#include <utils/math/bspline.hpp>
+#include <utils/integral_parameter.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/range/algorithm/min_element.hpp>
@@ -82,19 +82,10 @@ dp3m_data_struct dp3m;
  */
 static void dp3m_init_a_ai_cao_cut();
 
-/** realloc charge assignment fields. */
-static void dp3m_realloc_ca_fields(int newsize);
-
 /** Checks for correctness for magnetic dipoles in P3M of the cao_cut,
  *  necessary when the box length changes
  */
 static bool dp3m_sanity_checks_boxl();
-
-/** Interpolate the P-th order charge assignment function from
- *  @cite hockney88a 5-189 (or 8-61). The following charge fractions
- *  are also tabulated in @cite deserno98a @cite deserno98b.
- */
-static void dp3m_interpolate_dipole_assignment_function();
 
 /** Shift the mesh points by mesh/2 */
 static void dp3m_calc_meshift();
@@ -172,72 +163,6 @@ static double dp3m_average_dipolar_self_energy(double box_l, int mesh);
 static double dp3m_perform_aliasing_sums_dipolar_self_energy(const int n[3]);
 
 /************************************************************/
-/* functions related to the correction of the dipolar p3m-energy */
-
-/*
-
-// Do the sum over k<>0 where k={kx,ky,kz} with kx,ky,kz INTEGERS, of
-// exp(-Utils::pi()**2*k**2/alpha**2/L**2)
-static double dp3m_sumi1(double alpha_L){
-       int k2,kx,ky,kz,kx2,ky2,limit=60;
-       double suma,alpha_L2;
-
-       alpha_L2= alpha_L* alpha_L;
-
-       //fprintf(stderr,"alpha_L=%le\n",alpha_L);
-       //fprintf(stderr,"Utils::pi()=%le\n",Utils::pi());
-
-
-       suma=0.0;
-       for(kx=-limit;kx<=limit;kx++){
-         kx2=kx*kx;
-       for(ky=-limit;ky<=limit;ky++){
-         ky2=ky*ky;
-       for(kz=-limit;kz<=limit;kz++){
-           k2=kx2+ky2+kz*kz;
-           suma+=exp(-Utils::pi()*Utils::pi()*k2/(alpha_L*alpha_L));
-       }}}
-       suma-=1; //It's easier to subtract the term k=0 later than put an if
-inside the loops
-
-
-         //fprintf(stderr,"suma=%le\n",suma);
-
-
-   return suma;
-}
-
-*/
-
-/************************************************************/
-
-/*
-// Do the sum over n<>0 where n={nx*L,ny*L,nz*L} with nx,ny,nz INTEGERS, of
-// exp(-alpha_iL**2*n**2)
-static double dp3m_sumi2(double alpha_L){
-       int n2,nx,ny,nz,nx2,ny2,limit=60;
-       double suma;
-
-
-
-       suma=0.0;
-       for(nx=-limit;nx<=limit;nx++){
-         nx2=nx*nx;
-       for(ny=-limit;ny<=limit;ny++){
-         ny2=ny*ny;
-       for(nz=-limit;nz<=limit;nz++){
-           n2=nx2+ny2+nz*nz;
-           suma+=exp(-alpha_L*alpha_L*n2);
-       }}}
-       suma-=1; //It's easier to subtract the term n=0 later than put an if
-inside the loops
-
-
-
-   return suma;
-}
-
-*/
 
 dp3m_data_struct::dp3m_data_struct() {
   params.epsilon = P3M_EPSILON_MAGNETIC;
@@ -248,8 +173,6 @@ dp3m_data_struct::dp3m_data_struct() {
   sum_mu2 = 0.0;
 
   pos_shift = 0.0;
-
-  ca_num = 0;
   ks_pnum = 0;
 
   energy_correction = 0.0;
@@ -267,8 +190,6 @@ void dp3m_deactivate() {
 }
 
 void dp3m_init() {
-  int n;
-
   if (dipole.prefactor <= 0.0) {
     // dipolar prefactor is zero: magnetostatics switched off
     dp3m.params.r_cut = 0.0;
@@ -283,26 +204,12 @@ void dp3m_init() {
      * and the cutoff for charge assignment dp3m.params.cao_cut */
     dp3m_init_a_ai_cao_cut();
 
-    /* initialize ca fields to size CA_INCREMENT: dp3m.ca_frac and dp3m.ca_fmp
-     */
-    dp3m.ca_num = 0;
-    if (dp3m.ca_num < CA_INCREMENT) {
-      dp3m.ca_num = 0;
-      dp3m_realloc_ca_fields(CA_INCREMENT);
-    }
-
     p3m_calc_local_ca_mesh(dp3m.local_mesh, dp3m.params, local_geo, skin);
 
     dp3m.sm.resize(comm_cart, dp3m.local_mesh);
 
     /* fix box length dependent constants */
     dp3m_scaleby_box_l();
-
-    if (dp3m.params.inter > 0)
-      dp3m_interpolate_dipole_assignment_function();
-
-    dp3m.pos_shift =
-        std::floor((dp3m.params.cao - 1) / 2.0) - (dp3m.params.cao % 2) / 2.0;
 
     int ca_mesh_size = fft_init(dp3m.local_mesh.dim, dp3m.local_mesh.margin,
                                 dp3m.params.mesh, dp3m.params.mesh_off,
@@ -419,9 +326,6 @@ void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha,
 
   if (accuracy >= 0)
     dp3m.params.accuracy = accuracy;
-
-  if (n_interpol != -1)
-    dp3m.params.inter = n_interpol;
 }
 
 /*****************************************************************************/
@@ -486,43 +390,25 @@ int dp3m_set_eps(double eps) {
   return ES_OK;
 }
 
-int dp3m_set_ninterpol(int n) {
-  if (n < 0)
-    return ES_ERROR;
+namespace {
+template <size_t cao> struct AssignDipole {
+  void operator()(Utils::Vector3d const &real_pos,
+                  Utils::Vector3d const &dip) const {
+    auto const weights = p3m_calculate_interpolation_weights<cao>(
+        real_pos, dp3m.params.ai, dp3m.local_mesh);
+    p3m_interpolate<cao>(dp3m.local_mesh, weights, [&dip](int ind, double w) {
+      dp3m.rs_mesh_dip[0][ind] += w * dip[0];
+      dp3m.rs_mesh_dip[1][ind] += w * dip[1];
+      dp3m.rs_mesh_dip[2][ind] += w * dip[2];
+    });
 
-  dp3m.params.inter = n;
-
-  mpi_bcast_coulomb_params();
-
-  return ES_OK;
-}
-
-/*****************************************************************************/
-
-void dp3m_interpolate_dipole_assignment_function() {
-  double dInterpol = 0.5 / (double)dp3m.params.inter;
-  int i;
-  long j;
-
-  if (dp3m.params.inter == 0)
-    return;
-
-  dp3m.params.inter2 = 2 * dp3m.params.inter + 1;
-
-  for (i = 0; i < dp3m.params.cao; i++) {
-    /* allocate memory for interpolation array */
-    dp3m.int_caf[i].resize(2 * dp3m.params.inter + 1);
-
-    /* loop over all interpolation points */
-    for (j = -dp3m.params.inter; j <= dp3m.params.inter; j++)
-      dp3m.int_caf[i][j + dp3m.params.inter] =
-          Utils::bspline(i, j * dInterpol, dp3m.params.cao);
+    dp3m.inter_weights.store<cao>(weights);
   }
-}
+};
+} // namespace
 
 void dp3m_dipole_assign(const ParticleRange &particles) {
-  /* magnetic particle counter, dipole fraction counter */
-  int cp_cnt = 0;
+  dp3m.inter_weights.reset(dp3m.params.cao);
 
   /* prepare local FFT mesh */
   for (auto &i : dp3m.rs_mesh_dip)
@@ -531,210 +417,52 @@ void dp3m_dipole_assign(const ParticleRange &particles) {
 
   for (auto const &p : particles) {
     if (p.p.dipm != 0.0) {
-      dp3m_assign_dipole(p.r.p.data(), p.p.dipm, p.calc_dip().data(), cp_cnt);
-      cp_cnt++;
-    }
-  }
-
-  dp3m_shrink_wrap_dipole_grid(cp_cnt);
-}
-
-void dp3m_assign_dipole(double const real_pos[3], double mu,
-                        double const dip[3], int cp_cnt) {
-  /* we do not really want to export these, but this function should be inlined
-   */
-  int d, i0, i1, i2;
-  double tmp0, tmp1;
-  /* position of a particle in local mesh units */
-  double pos;
-  /* 1d-index of nearest mesh point */
-  int nmp;
-  /* distance to nearest mesh point */
-  double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
-  /* index, index jumps for dp3m.rs_mesh array */
-  int q_ind = 0;
-  double cur_ca_frac_val, *cur_ca_frac;
-
-  // make sure we have enough space
-  if (cp_cnt >= dp3m.ca_num)
-    dp3m_realloc_ca_fields(cp_cnt + 1);
-  // do it here, since p3m_realloc_ca_fields may change the address of
-  // dp3m.ca_frac
-  cur_ca_frac = dp3m.ca_frac.data() + dp3m.params.cao3 * cp_cnt;
-
-  if (dp3m.params.inter == 0) {
-    for (d = 0; d < 3; d++) {
-      /* particle position in mesh coordinates */
-      pos = ((real_pos[d] - dp3m.local_mesh.ld_pos[d]) * dp3m.params.ai[d]) -
-            dp3m.pos_shift;
-      /* nearest mesh point */
-      nmp = (int)pos;
-      /* distance to nearest mesh point */
-      dist[d] = (pos - nmp) - 0.5;
-      /* 3d-array index of nearest mesh point */
-      q_ind = (d == 0) ? nmp : nmp + dp3m.local_mesh.dim[d] * q_ind;
-    }
-
-    if (cp_cnt >= 0)
-      dp3m.ca_fmp[cp_cnt] = q_ind;
-
-    for (i0 = 0; i0 < dp3m.params.cao; i0++) {
-      tmp0 = Utils::bspline(i0, dist[0], dp3m.params.cao);
-      for (i1 = 0; i1 < dp3m.params.cao; i1++) {
-        tmp1 = tmp0 * Utils::bspline(i1, dist[1], dp3m.params.cao);
-        for (i2 = 0; i2 < dp3m.params.cao; i2++) {
-          cur_ca_frac_val = tmp1 * Utils::bspline(i2, dist[2], dp3m.params.cao);
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-          if (mu != 0.0) {
-            dp3m.rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-          }
-          q_ind++;
-        }
-        q_ind += dp3m.local_mesh.q_2_off;
-      }
-      q_ind += dp3m.local_mesh.q_21_off;
-    }
-  } else {
-    /* particle position in mesh coordinates */
-    for (d = 0; d < 3; d++) {
-      pos = ((real_pos[d] - dp3m.local_mesh.ld_pos[d]) * dp3m.params.ai[d]) -
-            dp3m.pos_shift;
-      nmp = (int)pos;
-      arg[d] = (int)((pos - nmp) * dp3m.params.inter2);
-      /* for the first dimension, q_ind is always zero, so this shifts correctly
-       */
-      q_ind = nmp + dp3m.local_mesh.dim[d] * q_ind;
-    }
-    if (cp_cnt >= 0)
-      dp3m.ca_fmp[cp_cnt] = q_ind;
-
-    for (i0 = 0; i0 < dp3m.params.cao; i0++) {
-      tmp0 = dp3m.int_caf[i0][arg[0]];
-      for (i1 = 0; i1 < dp3m.params.cao; i1++) {
-        tmp1 = tmp0 * dp3m.int_caf[i1][arg[1]];
-        for (i2 = 0; i2 < dp3m.params.cao; i2++) {
-          cur_ca_frac_val = tmp1 * dp3m.int_caf[i2][arg[2]];
-          if (cp_cnt >= 0)
-            *(cur_ca_frac++) = cur_ca_frac_val;
-          if (mu != 0.0) {
-            dp3m.rs_mesh_dip[0][q_ind] += dip[0] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[1][q_ind] += dip[1] * cur_ca_frac_val;
-            dp3m.rs_mesh_dip[2][q_ind] += dip[2] * cur_ca_frac_val;
-          }
-          q_ind++;
-        }
-        q_ind += dp3m.local_mesh.q_2_off;
-      }
-      q_ind += dp3m.local_mesh.q_21_off;
+      Utils::integral_parameter<AssignDipole, 1, 7>(dp3m.params.cao, p.r.p,
+                                                    p.calc_dip());
     }
   }
 }
 
-void dp3m_shrink_wrap_dipole_grid(int n_dipoles) {
-  if (n_dipoles < dp3m.ca_num)
-    dp3m_realloc_ca_fields(n_dipoles);
-}
+namespace {
+template <size_t cao> struct AssignTorques {
+  void operator()(double prefac, int d_rs,
+                  const ParticleRange &particles) const {
+    /* particle counter */
+    int cp_cnt = 0;
+    for (auto &p : particles) {
+      auto const w = dp3m.inter_weights.load<cao>(cp_cnt++);
 
-#ifdef ROTATION
-/** Assign the torques obtained from k-space */
-static void P3M_assign_torques(double prefac, int d_rs,
-                               const ParticleRange &particles) {
-  /* particle counter, charge fraction counter */
-  int cp_cnt = 0, cf_cnt = 0;
-  /* index, index jumps for dp3m.rs_mesh array */
-  int q_ind;
-  auto const q_m_off = (dp3m.local_mesh.dim[2] - dp3m.params.cao);
-  auto const q_s_off =
-      dp3m.local_mesh.dim[2] * (dp3m.local_mesh.dim[1] - dp3m.params.cao);
+      Utils::Vector3d E{};
+      p3m_interpolate(dp3m.local_mesh, w, [&E, d_rs](int ind, double w) {
+        E[d_rs] += w * dp3m.rs_mesh[ind];
+      });
 
-  for (auto &p : particles) {
-    if ((p.p.dipm) != 0.0) {
-      const Utils::Vector3d dip = p.calc_dip();
-      q_ind = dp3m.ca_fmp[cp_cnt];
-      for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
-        for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
-          for (int i2 = 0; i2 < dp3m.params.cao; i2++) {
-            /*
-            The following line would fill the torque with the k-space electric
-            field (without the self-field term) [notice the minus sign!]:
-                                p.f.torque[d_rs] -=
-                prefac*dp3m.ca_frac[cf_cnt]*dp3m.rs_mesh[q_ind];
-            Since the torque is the dipole moment cross-product with E, we
-            have:
-            */
-            switch (d_rs) {
-            case 0: // E_x
-              p.f.torque[1] -=
-                  dip[2] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
-              p.f.torque[2] +=
-                  dip[1] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
-              break;
-            case 1: // E_y
-              p.f.torque[0] +=
-                  dip[2] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
-              p.f.torque[2] -=
-                  dip[0] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
-              break;
-            case 2: // E_z
-              p.f.torque[0] -=
-                  dip[1] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
-              p.f.torque[1] +=
-                  dip[0] * prefac * dp3m.ca_frac[cf_cnt] * dp3m.rs_mesh[q_ind];
-            }
-            q_ind++;
-            cf_cnt++;
-          }
-          q_ind += q_m_off;
-        }
-        q_ind += q_s_off;
-      }
-      cp_cnt++;
+      p.f.torque -= vector_product(p.calc_dip(), prefac * E);
     }
   }
-}
-#endif
+};
 
-/** Assign the dipolar forces obtained from k-space */
-static void dp3m_assign_forces_dip(double prefac, int d_rs,
-                                   const ParticleRange &particles) {
-  /* particle counter, charge fraction counter */
-  int cp_cnt = 0, cf_cnt = 0;
-  /* index, index jumps for dp3m.rs_mesh array */
-  int q_ind;
-  int q_m_off = (dp3m.local_mesh.dim[2] - dp3m.params.cao);
-  int q_s_off =
-      dp3m.local_mesh.dim[2] * (dp3m.local_mesh.dim[1] - dp3m.params.cao);
+template <size_t cao> struct AssignForces {
+  void operator()(double prefac, int d_rs,
+                  const ParticleRange &particles) const {
+    /* particle counter */
+    int cp_cnt = 0;
+    for (auto &p : particles) {
+      auto const w = dp3m.inter_weights.load<cao>(cp_cnt++);
 
-  cp_cnt = 0;
-  cf_cnt = 0;
+      Utils::Vector3d E{};
 
-  for (auto &p : particles) {
-    if ((p.p.dipm) != 0.0) {
-      const Utils::Vector3d dip = p.calc_dip();
-      q_ind = dp3m.ca_fmp[cp_cnt];
-      for (int i0 = 0; i0 < dp3m.params.cao; i0++) {
-        for (int i1 = 0; i1 < dp3m.params.cao; i1++) {
-          for (int i2 = 0; i2 < dp3m.params.cao; i2++) {
-            p.f.f[d_rs] += prefac * dp3m.ca_frac[cf_cnt] *
-                           (dp3m.rs_mesh_dip[0][q_ind] * dip[0] +
-                            dp3m.rs_mesh_dip[1][q_ind] * dip[1] +
-                            dp3m.rs_mesh_dip[2][q_ind] * dip[2]);
-            q_ind++;
-            cf_cnt++;
-          }
-          q_ind += q_m_off;
-        }
-        q_ind += q_s_off;
-      }
-      cp_cnt++;
+      p3m_interpolate(dp3m.local_mesh, w, [&E](int ind, double w) {
+        E[0] += w * dp3m.rs_mesh_dip[0][ind];
+        E[1] += w * dp3m.rs_mesh_dip[1][ind];
+        E[2] += w * dp3m.rs_mesh_dip[2][ind];
+      });
+
+      p.f.f[d_rs] += p.calc_dip() * prefac * E;
     }
   }
-}
+};
+} // namespace
 
 /*****************************************************************************/
 
@@ -890,9 +618,10 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         dp3m.sm.spread_grid(dp3m.rs_mesh.data(), comm_cart,
                             dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
-        P3M_assign_torques(dipole_prefac *
-                               (2 * Utils::pi() / box_geo.length()[0]),
-                           d_rs, particles);
+        Utils::integral_parameter<AssignTorques, 1, 7>(
+            dp3m.params.cao,
+            dipole_prefac * (2 * Utils::pi() / box_geo.length()[0]), d_rs,
+            particles);
       }
 #endif /*ifdef ROTATION */
 
@@ -979,7 +708,8 @@ double dp3m_calc_kspace_forces(bool force_flag, bool energy_flag,
         dp3m.sm.spread_grid(Utils::make_span(meshes), comm_cart,
                             dp3m.local_mesh.dim);
         /* Assign force component from mesh to particle */
-        dp3m_assign_forces_dip(
+        Utils::integral_parameter<AssignForces, 1, 7>(
+            dp3m.params.cao,
             dipole_prefac * pow(2 * Utils::pi() / box_geo.length()[0], 2), d_rs,
             particles);
       }
@@ -1070,20 +800,6 @@ double calc_surface_term(bool force_flag, bool energy_flag,
 #endif
 
   return en;
-}
-
-/*****************************************************************************/
-
-void dp3m_realloc_ca_fields(int newsize) {
-  newsize = ((newsize + CA_INCREMENT - 1) / CA_INCREMENT) * CA_INCREMENT;
-  if (newsize == dp3m.ca_num)
-    return;
-  if (newsize < CA_INCREMENT)
-    newsize = CA_INCREMENT;
-
-  dp3m.ca_num = newsize;
-  dp3m.ca_frac.resize(dp3m.params.cao3 * dp3m.ca_num);
-  dp3m.ca_fmp.resize(dp3m.ca_num);
 }
 
 /*****************************************************************************/
@@ -1987,11 +1703,7 @@ bool dp3m_sanity_checks(const Utils::Vector3i &grid) {
     runtimeErrorMsg() << "dipolar P3M requires periodicity 1 1 1";
     ret = true;
   }
-  /*
-  if (n_nodes != 1) {
-      runtimeErrorMsg() <<"dipolar P3M does not run in parallel";
-    ret = true;
-  } */
+
   if (cell_structure.type != CELL_STRUCTURE_DOMDEC) {
     runtimeErrorMsg() << "dipolar P3M at present requires the domain "
                          "decomposition cell system";
