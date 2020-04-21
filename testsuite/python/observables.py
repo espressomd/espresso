@@ -92,6 +92,11 @@ class Observables(ut.TestCase):
                 assert(self.system.part.exists(id))
 
             # Get data from particles
+            if pprop_name == "f":
+                for p_id in id_list:
+                    if self.system.part[p_id].virtual:
+                        id_list.remove(p_id)
+
             part_data = getattr(self.system.part[id_list], pprop_name)
 
             # Reshape and aggregate to linear array

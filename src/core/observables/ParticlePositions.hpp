@@ -29,22 +29,6 @@ namespace Observables {
  *  For \f$n\f$ particles, return \f$3 n\f$ positions ordered as
  *  \f$(x_1, y_1, z_1, \dots, x_n, y_n, z_n)\f$.
  */
-class ParticlePositions : public PidObservable {
-public:
-  using PidObservable::PidObservable;
-
-  std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
-    std::vector<double> res(n_values());
-    for (size_t i = 0; i < particles.size(); i++) {
-      res[3 * i + 0] = particles[i]->r.p[0];
-      res[3 * i + 1] = particles[i]->r.p[1];
-      res[3 * i + 2] = particles[i]->r.p[2];
-    }
-    return res;
-  }
-  std::vector<size_t> shape() const override { return {ids().size(), 3}; }
-};
-
-} // Namespace Observables
+using ParticlePositions = ParticleObservable<GenObs::Positions>;
+} // namespace Observables
 #endif

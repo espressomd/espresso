@@ -76,7 +76,7 @@ target_link_libraries(
   PRIVATE EspressoConfig shapes Profiler
           "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
           $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
-  PUBLIC utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
+  PUBLIC utils MPI::MPI_CXX Random123 genobs Boost::serialization Boost::mpi
          "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
          $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
 
