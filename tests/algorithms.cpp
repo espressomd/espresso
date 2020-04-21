@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 #include <limits>
 
-#include <observables/algorithms.hpp>
+#include <genobs/algorithms.hpp>
 
 using namespace Observables;
 

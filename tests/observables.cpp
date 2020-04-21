@@ -3,7 +3,7 @@
 #include <boost/test/unit_test.hpp>
 #include <vector>
 
-#include <observables/observable.hpp>
+#include <genobs/observable.hpp>
 
 #include "mock.hpp"
 

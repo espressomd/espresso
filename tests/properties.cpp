@@ -2,8 +2,8 @@
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include <observables/observable.hpp>
-#include <observables/properties.hpp>
+#include <genobs/observable.hpp>
+#include <genobs/properties.hpp>
 
 #include "mock.hpp"
 
