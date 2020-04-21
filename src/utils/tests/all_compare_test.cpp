@@ -37,7 +37,8 @@ BOOST_AUTO_TEST_CASE(true_) {
 BOOST_AUTO_TEST_CASE(false_) {
   mpi::communicator world;
 
-  BOOST_CHECK(not all_compare(world, (world.rank() > 0) ? 42 : 41));
+  BOOST_CHECK(all_compare(world, (world.rank() > 0) ? 42 : 41) ==
+              (world.size() <= 1));
 }
 
 int main(int argc, char **argv) {
