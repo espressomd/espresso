@@ -315,6 +315,22 @@ class TestLB:
         print("End of LB error messages", file=sys.stderr)
         sys.stderr.flush()
 
+    def test_agrid_rounding(self):
+        """Tests agird*n ~= box_l for a case where rounding down is needed"""
+        system = self.system
+        old_l = system.box_l
+
+        n_part = 1000
+        phi = 0.05
+        lj_sig = 1.0
+        l = (n_part * 4. / 3. * np.pi * (lj_sig / 2.)**3 / phi)**(1. / 3.)
+        system.box_l = [l] * 3 * system.cell_system.node_grid
+        system.actors.add(self.lb_class(agrid=l / 31, dens=1,
+                                        visc=1, kT=0, tau=system.time_step))
+        system.integrator.run(steps=1)
+        system.actors.clear()
+        system.box_l = old_l
+
     @utx.skipIfMissingFeatures("EXTERNAL_FORCES")
     def test_viscous_coupling(self):
         v_part = np.array([1, 2, 3])
