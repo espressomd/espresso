@@ -20,7 +20,7 @@ import importlib_wrapper
 import numpy as np
 
 sample, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@SAMPLES_DIR@/lb_profile.py")
+    "@SAMPLES_DIR@/lb_profile.py", gpu=True)
 
 
 @skipIfMissingFeatures
