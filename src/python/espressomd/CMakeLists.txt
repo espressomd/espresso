@@ -59,6 +59,24 @@ add_subdirectory(io)
 list(APPEND cython_SRC ${CMAKE_CURRENT_BINARY_DIR}/code_info.pyx)
 list(REMOVE_DUPLICATES cython_SRC)
 
+add_library(pyx_interface INTERFACE)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(
+    pyx_interface INTERFACE -Wno-pedantic -Wno-cpp -Wno-strict-aliasing
+                            -Wno-maybe-uninitialized -Wno-unused-variable)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
+                                                 "AppleClang")
+  target_compile_options(
+    pyx_interface INTERFACE -Wno-pedantic -Wno-\#warnings
+                            -Wno-sometimes-uninitialized -Wno-unused-variable)
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  target_compile_options(pyx_interface INTERFACE -wd1224)
+else()
+  target_compile_options(pyx_interface INTERFACE -Wno-pedantic
+                                                 -Wno-unused-variable)
+endif()
+target_link_libraries(pyx_interface INTERFACE cxx_interface)
+
 # Configure, compile and install Cython files
 foreach(cython_file ${cython_SRC})
   get_filename_component(basename ${cython_file} NAME_WE)
@@ -79,9 +97,8 @@ foreach(cython_file ${cython_SRC})
     add_custom_command(
       OUTPUT ${outputpath}
       COMMAND
-        ${CYTHON_EXECUTABLE}
-        "$<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>" -3 --cplus
-        --directive embedsignature=True --directive binding=True -I
+        ${CYTHON_EXECUTABLE} $<$<BOOL:${WARNINGS_ARE_ERRORS}>:--warning-errors>
+        -3 --cplus --directive embedsignature=True --directive binding=True -I
         ${CMAKE_CURRENT_SOURCE_DIR} -I ${CMAKE_CURRENT_BINARY_DIR}
         ${cython_file} -o ${outputpath}
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/..
@@ -100,32 +117,10 @@ foreach(cython_file ${cython_SRC})
         ${target} PROPERTIES SUFFIX ".so" LINK_FLAGS
                                           "-undefined dynamic_lookup")
     endif()
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set_source_files_properties(
-        ${outputpath}
-        PROPERTIES
-          COMPILE_FLAGS
-          "-Wno-pedantic -Wno-cpp -Wno-strict-aliasing -Wno-maybe-uninitialized -Wno-unused-variable"
-      )
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID
-                                                     STREQUAL "AppleClang")
-      set_source_files_properties(
-        ${outputpath}
-        PROPERTIES
-          COMPILE_FLAGS
-          "-Wno-pedantic -Wno-#warnings -Wno-sometimes-uninitialized -Wno-unused-variable"
-      )
-    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
-      set_source_files_properties(${outputpath} PROPERTIES COMPILE_FLAGS
-                                                           "-wd1224")
-    else()
-      set_source_files_properties(
-        ${outputpath} PROPERTIES COMPILE_FLAGS
-                                 "-Wno-pedantic -Wno-unused-variable")
-    endif()
     set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
     target_link_libraries(${target} PRIVATE EspressoConfig EspressoCore
                                             ScriptInterface)
+    target_link_libraries(${target} PRIVATE pyx_interface)
     target_include_directories(${target} SYSTEM PRIVATE ${PYTHON_INCLUDE_DIRS}
                                                         ${NUMPY_INCLUDE_DIR})
     add_dependencies(espressomd ${target})

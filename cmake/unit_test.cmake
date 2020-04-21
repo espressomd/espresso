@@ -31,26 +31,8 @@ function(UNIT_TEST)
   if(TEST_DEPENDS)
     target_link_libraries(${TEST_NAME} PRIVATE ${TEST_DEPENDS})
   endif()
-  if(WITH_COVERAGE)
-    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-g>")
-    target_compile_options(${TEST_NAME} PUBLIC "$<$<CONFIG:Release>:-O0>")
-    target_compile_options(
-      ${TEST_NAME}
-      PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fprofile-instr-generate>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<CXX_COMPILER_ID:Clang>:-fcoverage-mapping>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:--coverage>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-fprofile-arcs>")
-    target_compile_options(
-      ${TEST_NAME} PUBLIC "$<$<NOT:$<CXX_COMPILER_ID:Clang>>:-ftest-coverage>")
-    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-      target_link_libraries(${TEST_NAME} PUBLIC gcov)
-    endif()
-  endif()
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
-  target_link_libraries(${TEST_NAME} PRIVATE EspressoConfig)
+  target_link_libraries(${TEST_NAME} PRIVATE EspressoConfig cxx_interface)
 
   # If NUM_PROC is given, set up MPI parallel test case
   if(TEST_NUM_PROC)

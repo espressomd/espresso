@@ -4,7 +4,7 @@ set(SOURCE_FILES
     src/SpheroCylinder.cpp src/Stomatocyte.cpp src/Torus.cpp src/Wall.cpp)
 
 add_library(shapes SHARED ${SOURCE_FILES})
-target_link_libraries(shapes PUBLIC utils PRIVATE Boost::boost)
+target_link_libraries(shapes PUBLIC utils PRIVATE Boost::boost cxx_interface)
 target_include_directories(
   shapes PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
                 $<INSTALL_INTERFACE:include>)

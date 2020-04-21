@@ -74,11 +74,9 @@ set_default_value() {
 
 
 # handle environment variables
-set_default_value insource false
 set_default_value srcdir "$(pwd)"
 set_default_value cmake_params ""
 set_default_value with_fftw true
-set_default_value with_python_interface true
 set_default_value with_coverage false
 set_default_value with_ubsan false
 set_default_value with_asan false
@@ -94,8 +92,8 @@ set_default_value make_check_python true
 set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
-set_default_value with_cuda true
-set_default_value build_type "Debug"
+set_default_value with_cuda false
+set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_scafacos true
 set_default_value test_timeout 300
@@ -107,35 +105,15 @@ else
     run_checks=false
 fi
 
-# If there are no user-provided flags, default
-# ones are added according to ${with_coverage}
-nvcc_flags="${cxx_flags}"
-if [ -z "${cxx_flags}" ]; then
-    if [ "${with_coverage}" = true ]; then
-        cxx_flags="-Og"
-        nvcc_flags="-O3"
-    else
-        if [ "${run_checks}" = true ]; then
-            cxx_flags="-O3"
-            nvcc_flags="-O3"
-        else
-            cxx_flags="-O0"
-            nvcc_flags="-O0"
-        fi
-    fi
-fi
-
 if [ "${with_coverage}" = true ]; then
+    build_type="Coverage"
     bash <(curl -s https://codecov.io/env) 1>/dev/null 2>&1
 fi
 
 cmake_params="-DCMAKE_BUILD_TYPE=${build_type} -DWARNINGS_ARE_ERRORS=ON -DTEST_NP:INT=${check_procs} ${cmake_params}"
-cmake_params="${cmake_params} -DCMAKE_CXX_FLAGS=${cxx_flags}"
-if [ "${with_cuda}" = true ]; then
-  cmake_params="${cmake_params} -DCUDA_NVCC_FLAGS=${nvcc_flags}"
-fi
 cmake_params="${cmake_params} -DCMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests"
 cmake_params="${cmake_params} -DTEST_TIMEOUT=${test_timeout}"
+
 if [ "${with_ccache}" = true ]; then
     cmake_params="${cmake_params} -DWITH_CCACHE=ON"
 fi
@@ -143,58 +121,10 @@ if [ "${with_scafacos}" = true ]; then
     cmake_params="${cmake_params} -DWITH_SCAFACOS=ON"
 fi
 
-command -v nvidia-smi && nvidia-smi || true
-if [ "${hide_gpu}" = true ]; then
-    echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
-    export CUDA_VISIBLE_DEVICES=""
-fi
-
-if [ "${insource}" = true ]; then
-    builddir="${srcdir}"
-elif [ -z "${builddir}" ]; then
-    builddir="${srcdir}/build"
-fi
-
-outp insource srcdir builddir \
-    make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
-    cmake_params with_fftw \
-    with_python_interface with_coverage \
-    with_ubsan with_asan \
-    check_odd_only \
-    with_static_analysis myconfig \
-    build_procs check_procs \
-    with_cuda with_ccache
-
-if [ "${insource}" = false ]; then
-    if [ ! -d "${builddir}" ]; then
-        echo "Creating ${builddir}..."
-        mkdir -p "${builddir}"
-    fi
-fi
-
-if [ "${insource}" = false ]; then
-    cd "${builddir}"
-fi
-
-# load MPI module if necessary
-if [ -f "/etc/os-release" ]; then
-    grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
-    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
-fi
-
-# CONFIGURE
-start "CONFIGURE"
-
 if [ "${with_fftw}" = true ]; then
     :
 else
     cmake_params="-DCMAKE_DISABLE_FIND_PACKAGE_FFTW3=ON ${cmake_params}"
-fi
-
-if [ "${with_python_interface}" = true ]; then
-    cmake_params="-DWITH_PYTHON=ON ${cmake_params}"
-else
-    cmake_params="-DWITH_PYTHON=OFF ${cmake_params}"
 fi
 
 if [ "${with_coverage}" = true ]; then
@@ -214,10 +144,41 @@ if [ "${with_static_analysis}" = true ]; then
 fi
 
 if [ "${with_cuda}" = true ]; then
-    :
+    cmake_params="-DWITH_CUDA=ON ${cmake_params}"
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi
+
+command -v nvidia-smi && nvidia-smi || true
+if [ "${hide_gpu}" = true ]; then
+    echo "Hiding gpu from Cuda via CUDA_VISIBLE_DEVICES"
+    export CUDA_VISIBLE_DEVICES=""
+fi
+
+builddir="${srcdir}/build"
+
+outp srcdir builddir \
+    make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
+    cmake_params with_fftw \
+    with_coverage \
+    with_ubsan with_asan \
+    check_odd_only \
+    with_static_analysis myconfig \
+    build_procs check_procs \
+    with_cuda with_ccache
+
+echo "Creating ${builddir}..."
+mkdir -p "${builddir}"
+cd "${builddir}"
+
+# load MPI module if necessary
+if [ -f "/etc/os-release" ]; then
+    grep -q suse /etc/os-release && . /etc/profile.d/modules.sh && module load gnu-openmpi
+    grep -q 'rhel\|fedora' /etc/os-release && for f in /etc/profile.d/*module*.sh; do . "${f}"; done && module load mpi
+fi
+
+# CONFIGURE
+start "CONFIGURE"
 
 MYCONFIG_DIR="${srcdir}/maintainer/configs"
 if [ "${myconfig}" = "default" ]; then
@@ -302,7 +263,11 @@ else
     start "TEST"
 
     if [ "${HIP_PLATFORM}" != "hcc" ]; then
-      mpiexec -n ${check_procs} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
+      check_proc_particle_test=${check_procs}
+      if [ "${check_proc_particle_test}" -gt 4 ]; then
+        check_proc_particle_test=4
+      fi
+      mpiexec -n ${check_proc_particle_test} ./pypresso "${srcdir}/testsuite/python/particle.py" || exit 1
     fi
 
     end "TEST"

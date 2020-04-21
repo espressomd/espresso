@@ -126,10 +126,10 @@ Installing requirements on other Linux distributions
 Please refer to the following Dockerfiles to find the minimum set of packages
 required to compile |es| on other Linux distributions:
 
-* `CentOS 7 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-7>`_
-* `Fedora 30 <https://github.com/espressomd/docker/blob/master/docker/centos-python3/Dockerfile-next>`_
-* `Debian 10 <https://github.com/espressomd/docker/blob/master/docker/debian-python3/Dockerfile-10>`_
-* `OpenSUSE Leap 15.1 <https://github.com/espressomd/docker/blob/master/docker/opensuse/Dockerfile-15.1>`_
+* `CentOS <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-centos>`_
+* `Fedora <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-fedora>`_
+* `Debian <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-debian>`_
+* `OpenSUSE <https://github.com/espressomd/docker/blob/master/docker/Dockerfile-opensuse>`_
 
 
 .. _Installing requirements on Mac OS X:
@@ -216,12 +216,6 @@ Installing packages using Homebrew
     brew install hdf5
     brew link --force cython
     pip install PyOpenGL matplotlib
-
-Installing CUDA
-"""""""""""""""
-
-If your Mac has an Nvidia graphics card, you should also download and install the
-CUDA SDK [6]_ to make use of GPU computation.
 
 .. _Quick installation:
 
@@ -601,6 +595,10 @@ having multiple build directories you can build several variants of |es|,
 each variant having different activated features, and for as many
 platforms as you want.
 
+Once you've run ``ccmake``, you can list the configured variables with
+``cmake -LAH -N | less`` (uses a pager) or with ``ccmake ..`` and pressing
+key ``t`` to toggle the advanced mode on (uses the curses interface).
+
 **Example:**
 
 When the source directory is :file:`srcdir` (the files where unpacked to this
@@ -669,8 +667,8 @@ options are available:
 * ``WITH_VALGRIND_INSTRUMENTATION``: Build with valgrind instrumentation
   markers
 
-When the value in the :file:`CMakeLists.txt` file is set to ON the corresponding
-option is created if the value of the option is set to OFF the
+When the value in the :file:`CMakeLists.txt` file is set to ON, the corresponding
+option is created; if the value of the option is set to OFF, the
 corresponding option is not created. These options can also be modified
 by calling ``cmake`` with the command line argument ``-D``:
 
@@ -678,10 +676,12 @@ by calling ``cmake`` with the command line argument ``-D``:
 
     cmake -D WITH_HDF5=OFF srcdir
 
-In the rare event when working with cmake and you want to have a totally
-clean build (for example because you switched the compiler), remove the
-build directory and create a new one.
-
+When an option is activated, additional options may become available.
+For example with ``-D WITH_CUDA=ON``, one can choose the CUDA compiler with
+``-D WITH_CUDA_COMPILER=<compiler_id>``, where ``<compiler_id>`` can be
+``nvcc`` (default), ``clang`` or ``hip``. For ``hip``, an additional
+``-D ROCM_HOME=<path_to_rocm>`` variable becomes available, with default value
+``ROCM_HOME=/opt/rocm``.
 
 
 Compiling, testing and installing
@@ -868,6 +868,3 @@ use one tool at a time.
 
 .. [5]
    http://www.fftw.org/
-
-.. [6]
-   https://developer.nvidia.com/cuda-downloads
