@@ -5,7 +5,7 @@
 
 #include <genobs/algorithms.hpp>
 
-using namespace Observables;
+using namespace GenObs;
 
 namespace Testing {
 struct Identity {

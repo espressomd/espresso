@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-namespace Observables {
+namespace GenObs {
 namespace detail {
 struct One {
   template <class Particle> auto operator()(Particle const &p) const { return 1; }
@@ -68,5 +68,5 @@ template <class ValueOp> struct Map {
     return res;
   }
 };
-} // namespace Observables
+} // namespace GenObs
 #endif // ALGORITHMS_HPP

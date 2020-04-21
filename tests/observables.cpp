@@ -19,14 +19,14 @@ BOOST_AUTO_TEST_CASE(product_) {
   using Testing::strip_args;
 
   auto prod =
-      Observables::Product<strip_args<std::integral_constant<int, 2>>,
+      GenObs::Product<strip_args<std::integral_constant<int, 2>>,
                            strip_args<std::integral_constant<int, 3>>>{};
 
   BOOST_CHECK_EQUAL((prod.template operator()<int, int>(0)), 2 * 3);
 }
 
 BOOST_AUTO_TEST_CASE(obs) {
-  using namespace Observables;
+  using namespace GenObs;
   Testing::Particle p;
   BOOST_CHECK_EQUAL(Momentum{}(p), Mass{}(p)*Velocity{}(p));
   std::vector<Testing::Particle> parts{p, Testing::Particle{}};

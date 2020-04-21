@@ -4,7 +4,7 @@
 #include "algorithms.hpp"
 #include "properties.hpp"
 
-namespace Observables {
+namespace GenObs {
 /**
  * @brief Meta-Observable that returns the product of two
  *        other observables.
@@ -37,6 +37,6 @@ using TotalForce = Sum<Force>;
 using Positions = Map<Position>;
 using Velocities = Map<Velocity>;
 using Forces = Map<Force>;
-} // namespace Observables
+} // namespace GenObs
 
 #endif // INCLUDE_OBSERVABLES_OBSERVABLE_HPP

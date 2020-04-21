@@ -13,7 +13,7 @@ struct Particle {
 };
 } // namespace Testing
 
-namespace Observables {
+namespace GenObs {
 template <> struct traits<Testing::Particle> {
   using Particle = Testing::Particle;
 
@@ -23,6 +23,6 @@ template <> struct traits<Testing::Particle> {
   double charge(Particle const &p) const { return p.charge; }
   double force(Particle const &p) const { return p.force(); }
 };
-} // namespace Observables
+} // namespace GenObs
 
 #endif

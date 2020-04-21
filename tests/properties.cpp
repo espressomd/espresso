@@ -10,7 +10,7 @@
 /* Check that the property functors correctly map to
  * the default traits */
 BOOST_AUTO_TEST_CASE(properties_) {
-  using namespace Observables;
+  using namespace GenObs;
 
   Testing::Particle p;
 

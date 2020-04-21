@@ -1,7 +1,7 @@
 #ifndef OBSERVABLES_PROPERTIES_HPP
 #define OBSERVABLES_PROPERTIES_HPP
 
-namespace Observables {
+namespace GenObs {
 template <class DoF> struct traits;
 
 struct Position {
@@ -43,6 +43,6 @@ struct Force {
     return particle_traits.force(p);
   }
 };
-} // namespace Observables
+} // namespace GenObs
 
 #endif // OBSERVABLES_PROPERTIES_HPP
