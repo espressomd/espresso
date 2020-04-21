@@ -136,7 +136,6 @@ IF ELECTROSTATICS:
             return p3m_set_params(r_cut, mesh, cao, alpha, accuracy)
 
         cdef inline python_p3m_set_tune_params(p_r_cut, p_mesh, p_cao, p_alpha, p_accuracy):
-            # cdef inline python_p3m_set_tune_params():
             cdef int mesh[3]
             cdef double r_cut
             cdef int cao

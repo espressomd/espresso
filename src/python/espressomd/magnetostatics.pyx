@@ -229,7 +229,6 @@ IF DP3M == 1:
 
         def python_dp3m_set_tune_params(self, p_r_cut, p_mesh, p_cao, p_alpha,
                                         p_accuracy, p_n_interpol):
-            # cdef  python_p3m_set_tune_params():
             cdef int mesh
             cdef double r_cut
             cdef int cao
