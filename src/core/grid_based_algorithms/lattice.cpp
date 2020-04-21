@@ -42,7 +42,7 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
   /* determine the number of local lattice nodes */
   auto const epsilon = std::numeric_limits<double>::epsilon();
   for (int d = 0; d < 3; d++) {
-    grid[d] = static_cast<int>(ceil(local_box[d] / agrid));
+    grid[d] = static_cast<int>(round(local_box[d] / agrid));
     global_grid[d] = node_grid[d] * grid[d];
     local_index_offset[d] = node_pos[d] * grid[d];
   }
@@ -50,13 +50,15 @@ Lattice::Lattice(double agrid, double offset, int halo_size,
   // sanity checks
   for (int dir = 0; dir < 3; dir++) {
     // check if local_box_l is compatible with lattice spacing
-    if (fabs(local_box[dir] - grid[dir] * agrid) > epsilon * box_length[dir]) {
+    auto diff = fabs(local_box[dir] - grid[dir] * agrid);
+    if (diff > epsilon * box_length[dir]) {
       throw std::runtime_error(
           "Lattice spacing agrid[" + std::to_string(dir) +
           "]=" + std::to_string(agrid) + " is incompatible with local_box_l[" +
           std::to_string(dir) + "]=" + std::to_string(local_box[dir]) +
           " ( box_l[" + std::to_string(dir) +
-          "]=" + std::to_string(box_length[dir]) + " )");
+          "]=" + std::to_string(box_length[dir]) +
+          " ). Mismatch: " + std::to_string(diff));
     }
   }
 
