@@ -414,7 +414,7 @@ target_link_libraries(cxx_interface INTERFACE coverage_interface)
 
 if(WITH_CLANG_TIDY)
   find_package(ClangTidy "${CMAKE_CXX_COMPILER_VERSION}" EXACT REQUIRED)
-  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE}")
+  set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};--extra-arg=--cuda-host-only")
 endif()
 
 if(WITH_TESTS)
