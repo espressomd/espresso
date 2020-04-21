@@ -27,7 +27,7 @@ IF SCAFACOS == 1:
     from .scafacos import ScafacosConnector
     from . cimport scafacos
 from espressomd.utils cimport handle_errors
-from espressomd.utils import is_valid_type, to_str
+from espressomd.utils import is_valid_type, check_type_or_throw_except, to_str
 from . cimport checks
 from .analyze cimport partCfg, PartCfg
 from .particle_data cimport particle
@@ -242,13 +242,13 @@ IF P3M == 1:
                     or self._params["r_cut"] == default_params["r_cut"]):
                 raise ValueError("P3M r_cut has to be >=0")
 
-            if not (is_valid_type(self._params["mesh"], int)
-                    or len(self._params["mesh"]) == 3):
-                raise ValueError(
-                    "P3M mesh has to be an integer or integer list of length 3")
-
-            if (isinstance(self._params["mesh"], basestring) and len(
-                    self._params["mesh"]) == 3):
+            if is_valid_type(self._params["mesh"], int):
+                if self._params["mesh"] % 2 != 0 and self._params["mesh"] != -1:
+                    raise ValueError(
+                        "P3M requires an even number of mesh points in all directions")
+            else:
+                check_type_or_throw_except(self._params["mesh"], 3, int,
+                                           "P3M mesh has to be an integer or integer list of length 3")
                 if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                    (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                    (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
@@ -273,10 +273,9 @@ IF P3M == 1:
                     or self._params["inter"] >= 0):
                 raise ValueError("inter should be a positive integer")
 
-            if not (self._params["mesh_off"] == default_params["mesh_off"]
-                    or len(self._params) != 3):
-                raise ValueError(
-                    "mesh_off should be a list of length 3 and values between 0.0 and 1.0")
+            if self._params["mesh_off"] != default_params["mesh_off"]:
+                check_type_or_throw_except(self._params["mesh_off"], 3, float,
+                                           "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
             if not (self._params["alpha"] == default_params["alpha"]
                     or self._params["alpha"] > 0):
@@ -392,13 +391,13 @@ IF P3M == 1:
                         or self._params["r_cut"] == default_params["r_cut"]):
                     raise ValueError("P3M r_cut has to be >=0")
 
-                if not (is_valid_type(self._params["mesh"], int)
-                        or len(self._params["mesh"]) == 3):
-                    raise ValueError(
-                        "P3M mesh has to be an integer or integer list of length 3")
-
-                if (isinstance(self._params["mesh"], basestring) and len(
-                        self._params["mesh"]) == 3):
+                if is_valid_type(self._params["mesh"], int):
+                    if self._params["mesh"] % 2 != 0 and self._params["mesh"] != -1:
+                        raise ValueError(
+                            "P3M requires an even number of mesh points in all directions")
+                else:
+                    check_type_or_throw_except(self._params["mesh"], 3, int,
+                                               "P3M mesh has to be an integer or integer list of length 3")
                     if (self._params["mesh"][0] % 2 != 0 and self._params["mesh"][0] != -1) or \
                        (self._params["mesh"][1] % 2 != 0 and self._params["mesh"][1] != -1) or \
                        (self._params["mesh"][2] % 2 != 0 and self._params["mesh"][2] != -1):
@@ -425,10 +424,9 @@ IF P3M == 1:
                         or self._params["inter"] > 0):
                     raise ValueError("inter should be a positive integer")
 
-                if not (self._params["mesh_off"] == default_params["mesh_off"]
-                        or len(self._params) != 3):
-                    raise ValueError(
-                        "mesh_off should be a list of length 3 with values between 0.0 and 1.0")
+                if self._params["mesh_off"] != default_params["mesh_off"]:
+                    check_type_or_throw_except(self._params["mesh_off"], 3, float,
+                                               "mesh_off should be a (3,) array_like of values between 0.0 and 1.0")
 
             def valid_keys(self):
                 return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
