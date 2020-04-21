@@ -1,4 +1,4 @@
-image: gitlab.icp.uni-stuttgart.de:4567/fweik/observables
+image: gitlab.icp.uni-stuttgart.de:4567/kai/genobs:latest
 
 variables:
   CXX: clang++
