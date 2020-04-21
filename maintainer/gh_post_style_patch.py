@@ -43,13 +43,13 @@ for comment in comments.json():
 MESSAGE = '''Your pull request does not meet our code formatting \
 rules. {header}, please do one of the following:
 
-- You can download a patch with my suggested changes
-  [here]({url}/artifacts/raw/style.patch), inspect it and make
+- You can download a patch with my suggested changes \
+  [here]({url}/artifacts/raw/style.patch), inspect it and make \
   changes manually.
-- You can directly apply it to your repository by running
+- You can directly apply it to your repository by running \
   `curl {url}/artifacts/raw/style.patch | git apply -`.
-- You can run `maintainer/CI/fix_style.sh` to automatically fix your coding
-  style. This is the same command that I have executed to generate the patch
+- You can run `maintainer/CI/fix_style.sh` to automatically fix your coding \
+  style. This is the same command that I have executed to generate the patch \
   above, but it requires certain tools to be installed on your computer.
 
 You can run `gitlab-runner exec docker style` afterwards to check if your \
