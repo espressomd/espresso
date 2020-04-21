@@ -36,7 +36,7 @@ Checks: |
    readability-string-compare,
    readability-uniqueptr-delete-release,
    readability-function-size'
-WarningsAsErrors: '*'
+WarningsAsErrors: '*,-clang-analyzer-core.StackAddrEscapeBase,-clang-analyzer-optin.mpi.MPI-Checker'
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false
 FormatStyle:     none
