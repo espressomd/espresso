@@ -570,7 +570,7 @@ void invalidate_obs() {
 }
 
 void update_pressure(int v_comp) {
-  double p_vel[3];
+  Utils::Vector3d p_vel;
   /* if desired (v_comp==1) replace ideal component with instantaneous one */
   if (total_pressure.init_status != 1 + v_comp) {
     init_virials(&total_pressure);
@@ -584,7 +584,7 @@ void update_pressure(int v_comp) {
       if (total_pressure.init_status == 0)
         master_pressure_calc(0);
       total_pressure.data[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0,
+      MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
                  MPI_COMM_WORLD);
       for (int i = 0; i < 3; i++)
         if (nptiso.geometry & nptiso.nptgeom_dir[i])

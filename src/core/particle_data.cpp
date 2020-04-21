@@ -714,17 +714,14 @@ const constexpr double ParticleProperties::q;
 #endif
 
 #ifdef LB_ELECTROHYDRODYNAMICS
-void set_particle_mu_E(int part, double *mu_E) {
+void set_particle_mu_E(int part, Utils::Vector3d const &mu_E) {
   mpi_update_particle_property<Utils::Vector3d, &ParticleProperties::mu_E>(
-      part, Utils::Vector3d(mu_E, mu_E + 3));
+      part, mu_E);
 }
 
-void get_particle_mu_E(int part, double (&mu_E)[3]) {
+void get_particle_mu_E(int part, Utils::Vector3d &mu_E) {
   auto const &p = get_particle_data(part);
-
-  for (int i = 0; i < 3; i++) {
-    mu_E[i] = p.p.mu_E[i];
-  }
+  mu_E = p.p.mu_E;
 }
 #endif
 

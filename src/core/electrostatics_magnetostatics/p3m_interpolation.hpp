@@ -143,7 +143,7 @@ p3m_calculate_interpolation_weights(const Utils::Vector3d &position,
   static auto const pos_shift = std::floor((cao - 1) / 2.0) - (cao % 2) / 2.0;
 
   /* distance to nearest mesh point */
-  double dist[3];
+  Utils::Vector3d dist;
 
   /* nearest mesh point */
   Utils::Vector3i nmp;

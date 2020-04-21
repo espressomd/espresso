@@ -30,6 +30,7 @@ using Utils::angle_btw_triangles;
 using Utils::area_triangle;
 using Utils::get_n_triangle;
 
+#include <utils/Vector.hpp>
 #include <utils/constants.hpp>
 
 int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
@@ -53,13 +54,14 @@ int oif_global_forces_set_params(int bond_type, double A0_g, double ka_g,
   return ES_OK;
 }
 
-void calc_oif_global(double *area_volume, int molType, CellStructure &cs) {
+void calc_oif_global(Utils::Vector2d &area_volume, int molType,
+                     CellStructure &cs) {
   // first-fold-then-the-same approach
   double partArea = 0.0;
   // z volume
   double VOL_partVol = 0.;
 
-  double part_area_volume[2]; // added
+  Utils::Vector2d part_area_volume; // added
 
   for (auto &p : cs.local_particles()) {
     if (p.p.mol_id != molType)
@@ -93,11 +95,11 @@ void calc_oif_global(double *area_volume, int molType, CellStructure &cs) {
   part_area_volume[0] = partArea;
   part_area_volume[1] = VOL_partVol;
 
-  MPI_Allreduce(part_area_volume, area_volume, 2, MPI_DOUBLE, MPI_SUM,
-                MPI_COMM_WORLD);
+  MPI_Allreduce(part_area_volume.data(), area_volume.data(), 2, MPI_DOUBLE,
+                MPI_SUM, MPI_COMM_WORLD);
 }
 
-void add_oif_global_forces(double const *area_volume, int molType,
+void add_oif_global_forces(Utils::Vector2d const &area_volume, int molType,
                            CellStructure &cs) {
   // first-fold-then-the-same approach
   double area = area_volume[0];
