@@ -267,10 +267,6 @@ IF P3M == 1:
                     or self._params["epsilon"] == "metallic"):
                 raise ValueError("epsilon should be a double or 'metallic'")
 
-            if not (self._params["inter"] == default_params["inter"]
-                    or self._params["inter"] >= 0):
-                raise ValueError("inter should be a positive integer")
-
             if not (self._params["mesh_off"] == default_params["mesh_off"]
                     or len(self._params) != 3):
                 raise ValueError(
@@ -283,14 +279,13 @@ IF P3M == 1:
 
         def valid_keys(self):
             return ["mesh", "cao", "accuracy", "epsilon", "alpha", "r_cut",
-                    "prefactor", "tune", "check_neutrality", "inter"]
+                    "prefactor", "tune", "check_neutrality"]
 
         def required_keys(self):
             return ["prefactor", "accuracy"]
 
         def default_params(self):
             return {"cao": 0,
-                    "inter": -1,
                     "r_cut": -1,
                     "alpha": 0,
                     "accuracy": 0,
@@ -319,8 +314,6 @@ IF P3M == 1:
             #         which resets r_cut if lb is zero. OK.
             # Sets eps, bcast
             p3m_set_eps(self._params["epsilon"])
-            # Sets ninterpol, bcast
-            p3m_set_ninterpol(self._params["inter"])
             python_p3m_set_mesh_offset(self._params["mesh_off"])
 
         def _tune(self):
@@ -329,8 +322,7 @@ IF P3M == 1:
                                        self._params["mesh"],
                                        self._params["cao"],
                                        -1.0,
-                                       self._params["accuracy"],
-                                       self._params["inter"])
+                                       self._params["accuracy"])
             resp = python_p3m_adaptive_tune()
             if resp:
                 raise Exception(
@@ -419,10 +411,6 @@ IF P3M == 1:
                     raise ValueError(
                         "epsilon should be a double or 'metallic'")
 
-                if not (self._params["inter"] == default_params["inter"]
-                        or self._params["inter"] > 0):
-                    raise ValueError("inter should be a positive integer")
-
                 if not (self._params["mesh_off"] == default_params["mesh_off"]
                         or len(self._params) != 3):
                     raise ValueError(
@@ -437,7 +425,6 @@ IF P3M == 1:
 
             def default_params(self):
                 return {"cao": 0,
-                        "inter": -1,
                         "r_cut": -1,
                         "alpha": 0,
                         "accuracy": 0,
@@ -460,8 +447,7 @@ IF P3M == 1:
                                            self._params["mesh"],
                                            self._params["cao"],
                                            -1.0,
-                                           self._params["accuracy"],
-                                           self._params["inter"])
+                                           self._params["accuracy"])
                 resp = python_p3m_adaptive_tune()
                 if resp:
                     raise Exception(
@@ -485,7 +471,6 @@ IF P3M == 1:
                                       self._params["alpha"],
                                       self._params["accuracy"])
                 p3m_set_eps(self._params["epsilon"])
-                p3m_set_ninterpol(self._params["inter"])
                 python_p3m_set_mesh_offset(self._params["mesh_off"])
                 handle_errors("p3m gpu init")
 

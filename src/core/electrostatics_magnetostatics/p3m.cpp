@@ -50,7 +50,7 @@ using Utils::sinc;
 #include <utils/strcat_alloc.hpp>
 using Utils::strcat_alloc;
 #include <utils/constants.hpp>
-#include <utils/math/bspline.hpp>
+#include <utils/integral_parameter.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <boost/optional.hpp>
@@ -95,21 +95,12 @@ p3m_data_struct p3m;
  */
 static void p3m_init_a_ai_cao_cut();
 
-/** Realloc charge assignment fields. */
-static void p3m_realloc_ca_fields(int newsize);
-
 static bool p3m_sanity_checks_system(const Utils::Vector3i &grid);
 
 /** Checks for correctness for charges in P3M of the cao_cut,
  *  necessary when the box length changes
  */
 static bool p3m_sanity_checks_boxl();
-
-/** Interpolate the P-th order charge assignment function from
- *  @cite hockney88a 5-189 (or 8-61). The following charge fractions
- *  are also tabulated in @cite deserno98a @cite deserno98b.
- */
-static void p3m_interpolate_charge_assignment_function();
 
 /** Shift the mesh points by mesh/2 */
 static void p3m_calc_meshift();
@@ -136,19 +127,6 @@ static void p3m_calc_influence_function_force();
  *  self energy correction.
  */
 static void p3m_calc_influence_function_energy();
-
-/** Calculate the aliasing sums for the optimal influence function.
- *
- *  Calculate the aliasing sums in the nominator and denominator of
- *  the expression for the optimal influence function (see
- *  @cite hockney88a : 8-22, p. 275).
- *
- *  \param  n           n-vector for which the aliasing sum is to be performed.
- *  \param  nominator   aliasing sums in the nominator.
- *  \retval denominator aliasing sum in the denominator
- */
-double p3m_perform_aliasing_sums_force(int n[3], double nominator[3]);
-double p3m_perform_aliasing_sums_energy(int n[3]);
 
 /*@}*/
 
@@ -188,17 +166,6 @@ static void p3m_tune_aliasing_sums(int nx, int ny, int nz, const int mesh[3],
                                    double alpha_L_i, double *alias1,
                                    double *alias2);
 
-/** Template parameterized calculation of the charge assignment to be called by
- *  wrapper.
- *  \tparam cao      charge assignment order.
- */
-template <int cao>
-static void p3m_do_charge_assign(const ParticleRange &particles);
-
-template <int cao>
-void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
-                          int cp_cnt);
-
 p3m_data_struct::p3m_data_struct() {
   /* local_mesh is uninitialized */
   /* sm is uninitialized */
@@ -207,9 +174,6 @@ p3m_data_struct::p3m_data_struct() {
   sum_q2 = 0.0;
   square_sum_q = 0.0;
 
-  pos_shift = 0.0;
-
-  ca_num = 0;
   ks_pnum = 0;
 }
 
@@ -227,10 +191,6 @@ void p3m_init() {
     /* initializes the (inverse) mesh constant p3m.params.a (p3m.params.ai) and
      * the cutoff for charge assignment p3m.params.cao_cut */
     p3m_init_a_ai_cao_cut();
-
-    /* initialize ca fields to size CA_INCREMENT: p3m.ca_frac and p3m.ca_fmp */
-    p3m.ca_num = 0;
-    p3m_realloc_ca_fields(CA_INCREMENT);
 
     p3m_calc_local_ca_mesh(p3m.local_mesh, p3m.params, local_geo, skin);
 
@@ -250,19 +210,12 @@ void p3m_init() {
     /* fix box length dependent constants */
     p3m_scaleby_box_l();
 
-    if (p3m.params.inter > 0)
-      p3m_interpolate_charge_assignment_function();
-
-    /* position offset for calc. of first meshpoint */
-    p3m.pos_shift =
-        std::floor((p3m.params.cao - 1) / 2.0) - (p3m.params.cao % 2) / 2.0;
-
     p3m_count_charged_particles();
   }
 }
 
 void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
-                         double accuracy, int n_interpol) {
+                         double accuracy) {
   if (r_cut >= 0) {
     p3m.params.r_cut = r_cut;
     p3m.params.r_cut_iL = r_cut * (1. / box_geo.length()[0]);
@@ -284,9 +237,6 @@ void p3m_set_tune_params(double r_cut, const int mesh[3], int cao, double alpha,
 
   if (accuracy >= 0)
     p3m.params.accuracy = accuracy;
-
-  if (n_interpol != -1)
-    p3m.params.inter = n_interpol;
 }
 
 /*@}*/
@@ -350,239 +300,91 @@ int p3m_set_eps(double eps) {
   return ES_OK;
 }
 
-int p3m_set_ninterpol(int n) {
-  if (n < 0)
-    return ES_ERROR;
+namespace {
+template <size_t cao> struct AssignCharge {
+  void operator()(double q, const Utils::Vector3d &real_pos,
+                  const Utils::Vector3d &ai, p3m_local_mesh const &local_mesh,
+                  p3m_interpolation_cache &inter_weights) {
+    auto const w =
+        p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh);
 
-  p3m.params.inter = n;
+    inter_weights.store(w);
 
-  mpi_bcast_coulomb_params();
-
-  return ES_OK;
-}
-
-void p3m_interpolate_charge_assignment_function() {
-  double dInterpol = 0.5 / (double)p3m.params.inter;
-  int i;
-  long j;
-
-  if (p3m.params.inter == 0)
-    return;
-
-  p3m.params.inter2 = 2 * p3m.params.inter + 1;
-
-  for (i = 0; i < p3m.params.cao; i++) {
-    /* allocate memory for interpolation array */
-    p3m.int_caf[i].resize(2 * p3m.params.inter + 1);
-
-    /* loop over all interpolation points */
-    for (j = -p3m.params.inter; j <= p3m.params.inter; j++)
-      p3m.int_caf[i][j + p3m.params.inter] =
-          Utils::bspline(i, j * dInterpol, p3m.params.cao);
+    p3m_interpolate(local_mesh, w,
+                    [q](int ind, double w) { p3m.rs_mesh[ind] += w * q; });
   }
-}
 
-/* Template wrapper for p3m_do_charge_assign() */
+  void operator()(double q, const Utils::Vector3d &real_pos,
+                  const Utils::Vector3d &ai, p3m_local_mesh const &local_mesh) {
+    p3m_interpolate(
+        local_mesh,
+        p3m_calculate_interpolation_weights<cao>(real_pos, ai, local_mesh),
+        [q](int ind, double w) { p3m.rs_mesh[ind] += w * q; });
+  }
+
+  void operator()(const ParticleRange &particles) {
+    for (auto &p : particles) {
+      if (p.p.q != 0.0) {
+        this->operator()(p.p.q, p.r.p, p3m.params.ai, p3m.local_mesh,
+                         p3m.inter_weights);
+      }
+    }
+  }
+};
+} // namespace
+
 void p3m_charge_assign(const ParticleRange &particles) {
-  switch (p3m.params.cao) {
-  case 1:
-    p3m_do_charge_assign<1>(particles);
-    break;
-  case 2:
-    p3m_do_charge_assign<2>(particles);
-    break;
-  case 3:
-    p3m_do_charge_assign<3>(particles);
-    break;
-  case 4:
-    p3m_do_charge_assign<4>(particles);
-    break;
-  case 5:
-    p3m_do_charge_assign<5>(particles);
-    break;
-  case 6:
-    p3m_do_charge_assign<6>(particles);
-    break;
-  case 7:
-    p3m_do_charge_assign<7>(particles);
-    break;
-  }
-}
+  p3m.inter_weights.reset(p3m.params.cao);
 
-/** Assign the charges */
-template <int cao> void p3m_do_charge_assign(const ParticleRange &particles) {
-  /* charged particle counter, charge fraction counter */
-  int cp_cnt = 0;
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
-  for (auto &p : particles) {
-    if (p.p.q != 0.0) {
-      p3m_do_assign_charge<cao>(p.p.q, p.r.p, cp_cnt);
-      cp_cnt++;
-    }
-  }
-
-  p3m_shrink_wrap_charge_grid(cp_cnt);
+  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, particles);
 }
 
-/* Template wrapper for p3m_do_assign_charge() */
-void p3m_assign_charge(double q, const Utils::Vector3d &real_pos, int cp_cnt) {
-  switch (p3m.params.cao) {
-  case 1:
-    p3m_do_assign_charge<1>(q, real_pos, cp_cnt);
-    break;
-  case 2:
-    p3m_do_assign_charge<2>(q, real_pos, cp_cnt);
-    break;
-  case 3:
-    p3m_do_assign_charge<3>(q, real_pos, cp_cnt);
-    break;
-  case 4:
-    p3m_do_assign_charge<4>(q, real_pos, cp_cnt);
-    break;
-  case 5:
-    p3m_do_assign_charge<5>(q, real_pos, cp_cnt);
-    break;
-  case 6:
-    p3m_do_assign_charge<6>(q, real_pos, cp_cnt);
-    break;
-  case 7:
-    p3m_do_assign_charge<7>(q, real_pos, cp_cnt);
-    break;
-  }
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos,
+                       p3m_interpolation_cache &inter_weights) {
+  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, q, real_pos,
+                                                p3m.params.ai, p3m.local_mesh,
+                                                inter_weights);
 }
 
-template <int cao>
-void p3m_do_assign_charge(double q, const Utils::Vector3d &real_pos,
-                          int cp_cnt) {
-  auto const inter = not(p3m.params.inter == 0);
-  /* distance to nearest mesh point */
-  double dist[3];
-  /* index for caf interpolation grid */
-  int arg[3];
-  /* index, index jumps for rs_mesh array */
-  int q_ind = 0;
-  // make sure we have enough space
-  if (cp_cnt >= p3m.ca_num)
-    p3m_realloc_ca_fields(cp_cnt + 1);
-  // do it here, since p3m_realloc_ca_fields may change the address of
-  // p3m.ca_frac
-  double *cur_ca_frac = p3m.ca_frac.data() + cao * cao * cao * cp_cnt;
-
-  for (int d = 0; d < 3; d++) {
-    /* particle position in mesh coordinates */
-    auto const pos =
-        ((real_pos[d] - p3m.local_mesh.ld_pos[d]) * p3m.params.ai[d]) -
-        p3m.pos_shift;
-    /* nearest mesh point */
-    auto const nmp = (int)pos;
-    /* 3d-array index of nearest mesh point */
-    q_ind = (d == 0) ? nmp : nmp + p3m.local_mesh.dim[d] * q_ind;
-
-    if (!inter)
-      /* distance to nearest mesh point */
-      dist[d] = (pos - nmp) - 0.5;
-    else
-      /* distance to nearest mesh point for interpolation */
-      arg[d] = (int)((pos - nmp) * p3m.params.inter2);
-
-#ifdef ADDITIONAL_CHECKS
-    if (pos < -skin * p3m.params.ai[d]) {
-      fprintf(stderr, "%d: rs_mesh underflow! (pos %f)\n", this_node,
-              real_pos[d]);
-      fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
-    }
-    if ((nmp + cao) > p3m.local_mesh.dim[d]) {
-      fprintf(stderr, "%d: rs_mesh overflow! (pos %f, nmp=%d)\n", this_node,
-              real_pos[d], nmp);
-      fprintf(stderr, "%d: allowed coordinates: %f - %f\n", this_node,
-              local_geo.my_left()[d] - skin, local_geo.my_right()[d] + skin);
-    }
-#endif
-  }
-
-  if (cp_cnt >= 0)
-    p3m.ca_fmp[cp_cnt] = q_ind;
-
-  Utils::Array<double, cao> w_x, w_y, w_z;
-
-  if (!inter) {
-    for (int i = 0; i < cao; i++) {
-      using Utils::bspline;
-
-      w_x[i] = bspline<cao>(i, dist[0]);
-      w_y[i] = bspline<cao>(i, dist[1]);
-      w_z[i] = bspline<cao>(i, dist[2]);
-    }
-  } else {
-    for (int i = 0; i < cao; i++) {
-      w_x[i] = p3m.int_caf[i][arg[0]];
-      w_y[i] = p3m.int_caf[i][arg[1]];
-      w_z[i] = p3m.int_caf[i][arg[2]];
-    }
-  }
-
-  for (int i0 = 0; i0 < cao; i0++) {
-    auto const tmp0 = w_x[i0];
-    for (int i1 = 0; i1 < cao; i1++) {
-      auto const tmp1 = tmp0 * w_y[i1];
-      for (int i2 = 0; i2 < cao; i2++) {
-        auto const cur_ca_frac_val = q * tmp1 * w_z[i2];
-        p3m.rs_mesh[q_ind] += cur_ca_frac_val;
-        /* store current ca frac */
-        if (cp_cnt >= 0)
-          *(cur_ca_frac++) = cur_ca_frac_val;
-        q_ind++;
-      }
-      q_ind += p3m.local_mesh.q_2_off;
-    }
-    q_ind += p3m.local_mesh.q_21_off;
-  }
-}
-
-void p3m_shrink_wrap_charge_grid(int n_charges) {
-  /* we do not really want to export these */
-  if (n_charges < p3m.ca_num)
-    p3m_realloc_ca_fields(n_charges);
-}
-
-/* Assign the forces obtained from k-space */
-template <int cao>
-static void P3M_assign_forces(double force_prefac,
-                              const ParticleRange &particles) {
-  /* charged particle counter, charge fraction counter */
-  int cp_cnt = 0;
-  int cf_cnt = 0;
-  /* index, index jumps for rs_mesh array */
-  int q_ind = 0;
-
-  for (auto &p : particles) {
-    auto const q = p.p.q;
-    if (q != 0.0) {
-      q_ind = p3m.ca_fmp[cp_cnt];
-      for (int i0 = 0; i0 < cao; i0++) {
-        for (int i1 = 0; i1 < cao; i1++) {
-          for (int i2 = 0; i2 < cao; i2++) {
-            p.f.f -= force_prefac * p3m.ca_frac[cf_cnt] *
-                     Utils::Vector3d{p3m.E_mesh[0][q_ind], p3m.E_mesh[1][q_ind],
-                                     p3m.E_mesh[2][q_ind]};
-
-            q_ind++;
-            cf_cnt++;
-          }
-          q_ind += p3m.local_mesh.q_2_off;
-        }
-        q_ind += p3m.local_mesh.q_21_off;
-      }
-      cp_cnt++;
-    }
-  }
+void p3m_assign_charge(double q, const Utils::Vector3d &real_pos) {
+  Utils::integral_parameter<AssignCharge, 1, 7>(p3m.params.cao, q, real_pos,
+                                                p3m.params.ai, p3m.local_mesh);
 }
 
 namespace {
+template <size_t cao> struct AssignForces {
+  void operator()(double force_prefac, const ParticleRange &particles) const {
+    using Utils::make_const_span;
+    using Utils::Span;
+    using Utils::Vector;
+
+    assert(cao == p3m.inter_weights.cao());
+
+    /* charged particle counter, charge fraction counter */
+    int cp_cnt = 0;
+
+    for (auto &p : particles) {
+      auto const q = p.p.q;
+      if (q != 0.0) {
+        auto const pref = q * force_prefac;
+        auto const w = p3m.inter_weights.load<cao>(cp_cnt++);
+
+        Utils::Vector3d E{};
+        p3m_interpolate(p3m.local_mesh, w, [&E](int ind, double w) {
+          E += w * Utils::Vector3d{p3m.E_mesh[0][ind], p3m.E_mesh[1][ind],
+                                   p3m.E_mesh[2][ind]};
+        });
+
+        p.f.f -= pref * E;
+      }
+    }
+  }
+};
+
 auto dipole_moment(Particle const &p, BoxGeometry const &box) {
   return p.p.q * unfolded_position(p.r.p, p.l.i, box.length());
 }
@@ -699,7 +501,7 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
 
   // Note: after these calls, the grids are in the order yzx and not xyz
   // anymore!!!
-  /* The dipol moment is only needed if we don't have metallic boundaries. */
+  /* The dipole moment is only needed if we don't have metallic boundaries. */
   auto const box_dipole = (p3m.params.epsilon != P3M_EPSILON_METALLIC)
                               ? boost::make_optional(calc_dipole_moment(
                                     comm_cart, particles, box_geo))
@@ -754,30 +556,8 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
                          p3m.local_mesh.dim);
     }
 
-    /* Assign force component from mesh to particle */
-    switch (p3m.params.cao) {
-    case 1:
-      P3M_assign_forces<1>(force_prefac, particles);
-      break;
-    case 2:
-      P3M_assign_forces<2>(force_prefac, particles);
-      break;
-    case 3:
-      P3M_assign_forces<3>(force_prefac, particles);
-      break;
-    case 4:
-      P3M_assign_forces<4>(force_prefac, particles);
-      break;
-    case 5:
-      P3M_assign_forces<5>(force_prefac, particles);
-      break;
-    case 6:
-      P3M_assign_forces<6>(force_prefac, particles);
-      break;
-    case 7:
-      P3M_assign_forces<7>(force_prefac, particles);
-      break;
-    }
+    Utils::integral_parameter<AssignForces, 1, 7>(p3m.params.cao, force_prefac,
+                                                  particles);
 
     if (p3m.params.epsilon != P3M_EPSILON_METALLIC) {
       add_dipole_correction(box_dipole.value(), particles);
@@ -815,20 +595,6 @@ double p3m_calc_kspace_forces(bool force_flag, bool energy_flag,
   } /* if (energy_flag) */
 
   return 0.0;
-}
-
-/************************************************************/
-
-void p3m_realloc_ca_fields(int newsize) {
-  newsize = ((newsize + CA_INCREMENT - 1) / CA_INCREMENT) * CA_INCREMENT;
-  if (newsize == p3m.ca_num)
-    return;
-  if (newsize < CA_INCREMENT)
-    newsize = CA_INCREMENT;
-
-  p3m.ca_num = newsize;
-  p3m.ca_frac.resize(p3m.params.cao3 * p3m.ca_num);
-  p3m.ca_fmp.resize(p3m.ca_num);
 }
 
 void p3m_calc_meshift() {

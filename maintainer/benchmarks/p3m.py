@@ -56,7 +56,7 @@ if not args.visualizer:
 
 
 import espressomd
-from espressomd import electrostatics
+from espressomd import electrostatics, minimize_energy
 if args.visualizer:
     from espressomd import visualization
 
@@ -140,10 +140,10 @@ for i in range(0, n_part, len(species)):
 
 energy = system.analysis.energy()
 print("Before Minimization: E_total = {}".format(energy["total"]))
-system.minimize_energy.init(f_max=1000, gamma=30.0,
-                            max_steps=1000, max_displacement=0.05)
-system.minimize_energy.minimize()
-system.minimize_energy.minimize()
+minimize_energy.steepest_descent(system, f_max=1000, gamma=30.0,
+                                 max_steps=1000, max_displacement=0.05)
+minimize_energy.steepest_descent(system, f_max=1000, gamma=30.0,
+                                 max_steps=1000, max_displacement=0.05)
 energy = system.analysis.energy()
 print("After Minimization: E_total = {}".format(energy["total"]))
 

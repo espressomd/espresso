@@ -1301,7 +1301,7 @@ void assign_image_charge(const Particle &p) {
     auto const q_eff = elc_params.delta_mid_bot * p.p.q;
     auto const pos = Utils::Vector3d{p.r.p[0], p.r.p[1], -p.r.p[2]};
 
-    p3m_assign_charge(q_eff, pos, -1);
+    p3m_assign_charge(q_eff, pos);
   }
 
   if (p.r.p[2] > (elc_params.h - elc_params.space_layer)) {
@@ -1309,27 +1309,24 @@ void assign_image_charge(const Particle &p) {
     auto const pos =
         Utils::Vector3d{p.r.p[0], p.r.p[1], 2 * elc_params.h - p.r.p[2]};
 
-    p3m_assign_charge(q_eff, pos, -1);
+    p3m_assign_charge(q_eff, pos);
   }
 }
 } // namespace
 
 void ELC_p3m_charge_assign_both(const ParticleRange &particles) {
-  /* charged particle counter, charge fraction counter */
-  int cp_cnt = 0;
+  p3m.inter_weights.reset(p3m.params.cao);
+
   /* prepare local FFT mesh */
   for (int i = 0; i < p3m.local_mesh.size; i++)
     p3m.rs_mesh[i] = 0.0;
 
   for (auto &p : particles) {
     if (p.p.q != 0.0) {
-      p3m_assign_charge(p.p.q, p.r.p, cp_cnt);
+      p3m_assign_charge(p.p.q, p.r.p, p3m.inter_weights);
       assign_image_charge(p);
-
-      cp_cnt++;
     }
   }
-  p3m_shrink_wrap_charge_grid(cp_cnt);
 }
 
 void ELC_p3m_charge_assign_image(const ParticleRange &particles) {

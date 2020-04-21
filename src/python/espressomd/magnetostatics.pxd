@@ -63,7 +63,6 @@ IF DP3M == 1:
         void dp3m_set_tune_params(double r_cut, int mesh, int cao, double alpha, double accuracy, int n_interpol)
         int dp3m_set_mesh_offset(double x, double y, double z)
         int dp3m_set_eps(double eps)
-        int dp3m_set_ninterpol(int n)
         int dp3m_adaptive_tune(char ** log)
         int dp3m_deactivate()
 
