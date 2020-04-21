@@ -1,3 +1,6 @@
 [submodule "libs/h5xx"]
 	path = libs/h5xx
 	url = https://github.com/h5md/h5xx.git
+[submodule "libs/genobs"]
+	path = libs/genobs
+	url = https://gitlab.icp.uni-stuttgart.de/kai/genobs.git
