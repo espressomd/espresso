@@ -200,7 +200,7 @@ void propagate_vel_pos_sd(const ParticleRange &particles) {
   std::size_t n_part_local = particles.size();
 
   if (this_node == 0) {
-    if (thermo_switch & THERMO_SD) {
+    if (integ_switch & INTEG_METHOD_SD) {
       if (BOOST_UNLIKELY(sd_viscosity < 0.0)) {
         runtimeErrorMsg() << "sd_viscosity has an invalid value: " +
                                  std::to_string(sd_viscosity);
