@@ -254,13 +254,12 @@ double dp3m_average_dipolar_self_energy(double box_l, int mesh) {
                    (dp3m.fft.plan[3].new_mesh[1] *
                     (n[0] - dp3m.fft.plan[3].start[0])));
 
-        if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
+        if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
+            ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           node_phi += 0.0;
-        else if ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[2] % (dp3m.params.mesh[0] / 2) == 0))
-          node_phi += 0.0;
-        else {
+        } else {
           U2 = dp3m_perform_aliasing_sums_dipolar_self_energy(n);
           node_phi +=
               dp3m.g_energy[ind] * U2 *
@@ -856,13 +855,12 @@ void dp3m_calc_influence_function_force() {
                    (dp3m.fft.plan[3].new_mesh[1] *
                     (n[0] - dp3m.fft.plan[3].start[0])));
 
-        if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
+        if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
+            ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           dp3m.g_force[ind] = 0.0;
-        else if ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[2] % (dp3m.params.mesh[0] / 2) == 0))
-          dp3m.g_force[ind] = 0.0;
-        else {
+        } else {
           denominator = dp3m_perform_aliasing_sums_force(n, nominator);
           fak2 = nominator[0];
           fak2 /=
@@ -944,13 +942,12 @@ void dp3m_calc_influence_function_energy() {
                    (dp3m.fft.plan[3].new_mesh[1] *
                     (n[0] - dp3m.fft.plan[3].start[0])));
 
-        if ((n[0] == 0) && (n[1] == 0) && (n[2] == 0))
+        if (((n[0] == 0) && (n[1] == 0) && (n[2] == 0)) ||
+            ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
+             (n[2] % (dp3m.params.mesh[0] / 2) == 0))) {
           dp3m.g_energy[ind] = 0.0;
-        else if ((n[0] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[1] % (dp3m.params.mesh[0] / 2) == 0) &&
-                 (n[2] % (dp3m.params.mesh[0] / 2) == 0))
-          dp3m.g_energy[ind] = 0.0;
-        else {
+        } else {
           denominator = dp3m_perform_aliasing_sums_energy(n, nominator);
           fak2 = nominator[0];
           fak2 /=

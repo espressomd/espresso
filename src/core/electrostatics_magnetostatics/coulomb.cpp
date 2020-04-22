@@ -394,7 +394,6 @@ int energy_n() {
     return 3;
   case COULOMB_P3M_GPU:
   case COULOMB_P3M:
-    return 2;
   case COULOMB_SCAFACOS:
     return 2;
   default:

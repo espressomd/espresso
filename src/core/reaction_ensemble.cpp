@@ -1213,25 +1213,20 @@ double WangLandauReactionEnsemble::calculate_acceptance_probability(
       bf = std::min(1.0, bf * exp(wang_landau_potential[old_state_index] -
                                   wang_landau_potential[new_state_index]));
     } else {
-      if (histogram[new_state_index] >= 0 && histogram[old_state_index] < 0)
-        bf = 10; // this makes the reaction get accepted, since we found a state
-                 // in gamma
-      else if (histogram[new_state_index] < 0 && histogram[old_state_index] < 0)
-        bf = 10; // accept, in order to be able to sample new configs, which
-                 // might lie in gamma
-      else if (histogram[new_state_index] < 0 &&
-               histogram[old_state_index] >= 0)
-        bf = -10; // this makes the reaction get rejected, since the new state
+      if (histogram[old_state_index] < 0)
+        bf = 10; // accept the reaction if we found a state in gamma
+                 // (histogram[new_state_index] >= 0) or to sample new configs
+                 // which might lie in gamma(histogram[new_state_index] < 0)
+      else if (histogram[new_state_index] < 0)
+        bf = -10; // reject the reaction, since the new state
                   // is not in gamma while the old sate was in gamma
     }
   } else if (old_state_index < 0 && new_state_index >= 0) {
-    bf = 10; // this makes the reaction get accepted, since we found a state in
-             // gamma
-  } else if (old_state_index < 0 && new_state_index < 0) {
-    bf = 10; // accept, in order to be able to sample new configs, which might
-             // lie in gamma
+    bf = 10; // accept the reaction if we found a new state in gamma
+             // (new_state_index >= 0) or to sample new configs which
+             // might lie in gamma (new_state_index < 0)
   } else if (old_state_index >= 0 && new_state_index < 0) {
-    bf = -10; // this makes the reaction get rejected, since the new state is
+    bf = -10; // reject the reaction, since the new state is
               // not in gamma while the old sate was in gamma
   }
   return bf;

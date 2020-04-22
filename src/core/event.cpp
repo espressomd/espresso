@@ -314,8 +314,6 @@ void on_parameter_change(int field) {
     on_boxl_change();
     break;
   case FIELD_MIN_GLOBAL_CUT:
-    cells_on_geometry_change(0);
-    break;
   case FIELD_SKIN:
     cells_on_geometry_change(0);
     break;

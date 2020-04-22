@@ -183,10 +183,9 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
 
   ind = NX * p.mesh[1] * (p.mesh[2] / 2 + 1) + NY * (p.mesh[2] / 2 + 1) + NZ;
 
-  if ((NX == 0) && (NY == 0) && (NZ == 0))
-    p.G_hat[ind] = 0.0;
-  else if ((NX % (p.mesh[0] / 2) == 0) && (NY % (p.mesh[1] / 2) == 0) &&
-           (NZ % (p.mesh[2] / 2) == 0))
+  if (((NX == 0) && (NY == 0) && (NZ == 0)) ||
+      ((NX % (p.mesh[0] / 2) == 0) && (NY % (p.mesh[1] / 2) == 0) &&
+       (NZ % (p.mesh[2] / 2) == 0)))
     p.G_hat[ind] = 0.0;
   else {
     Aliasing_sums_ik<cao>(p, NX, NY, NZ, Zaehler, &Nenner);
