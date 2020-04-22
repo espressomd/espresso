@@ -2650,6 +2650,10 @@ LOOKUP_TABLE default\n",
 
 int ek_print_vtk_density(int species, char *filename) {
 
+  if (ek_parameters.species_index[species] == -1) {
+    return 1;
+  }
+
   FILE *fp = fopen(filename, "w");
 
   if (fp == nullptr) {
@@ -2659,13 +2663,9 @@ int ek_print_vtk_density(int species, char *filename) {
   ekfloat *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
-  if (ek_parameters.species_index[species] != -1) {
-    cuda_safe_mem(cudaMemcpy(
-        densities, ek_parameters.rho[ek_parameters.species_index[species]],
-        ek_parameters.number_of_nodes * sizeof(ekfloat),
-        cudaMemcpyDeviceToHost));
-  } else
-    return 1;
+  cuda_safe_mem(cudaMemcpy(
+      densities, ek_parameters.rho[ek_parameters.species_index[species]],
+      ek_parameters.number_of_nodes * sizeof(ekfloat), cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -2700,16 +2700,16 @@ LOOKUP_TABLE default\n",
 
 int ek_node_print_density(int species, int x, int y, int z, double *density) {
 
+  if (ek_parameters.species_index[species] == -1) {
+    return 1;
+  }
+
   ekfloat *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
-  if (ek_parameters.species_index[species] != -1) {
-    cuda_safe_mem(cudaMemcpy(
-        densities, ek_parameters.rho[ek_parameters.species_index[species]],
-        ek_parameters.number_of_nodes * sizeof(ekfloat),
-        cudaMemcpyDeviceToHost));
-  } else
-    return 1;
+  cuda_safe_mem(cudaMemcpy(
+      densities, ek_parameters.rho[ek_parameters.species_index[species]],
+      ek_parameters.number_of_nodes * sizeof(ekfloat), cudaMemcpyDeviceToHost));
 
   *density = densities[z * ek_parameters.dim_y * ek_parameters.dim_x +
                        y * ek_parameters.dim_x + x] /
@@ -2722,6 +2722,10 @@ int ek_node_print_density(int species, int x, int y, int z, double *density) {
 
 int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
+  if (ek_parameters.species_index[species] == -1) {
+    return 1;
+  }
+
   ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
                                    // into Cartesian coordinates for output
   unsigned int coord[3];
@@ -2733,32 +2737,27 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
   ekfloat *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
                                              13 * sizeof(ekfloat));
 
-  if (ek_parameters.species_index[species] != -1) {
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    int blocks_per_grid_x = (ek_parameters.number_of_nodes +
-                             threads_per_block * blocks_per_grid_y - 1) /
-                            (threads_per_block * blocks_per_grid_y);
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (ek_parameters.number_of_nodes +
+                           threads_per_block * blocks_per_grid_y - 1) /
+                          (threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
-    KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values,
-               philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+  KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
+  KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f,
+             ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+  reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-    KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
 
-    cuda_safe_mem(
-        cudaMemcpy(fluxes, ek_parameters.j,
-                   ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
-                   cudaMemcpyDeviceToHost));
-  } else
-    return 1;
+  cuda_safe_mem(cudaMemcpy(fluxes, ek_parameters.j,
+                           ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
+                           cudaMemcpyDeviceToHost));
 
   int i = rhoindex_cartesian2linear_host(coord[0], coord[1], coord[2]);
 
@@ -2948,45 +2947,45 @@ int ek_node_set_density(int species, int x, int y, int z, double density) {
 
 int ek_print_vtk_flux(int species, char *filename) {
 
-  FILE *fp = fopen(filename, "w");
-  ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
-                                   // into Cartesian coordinates for output
+  if (ek_parameters.species_index[species] == -1) {
+    return 1;
+  }
 
-  unsigned int coord[3];
+  FILE *fp = fopen(filename, "w");
 
   if (fp == nullptr) {
     return 1;
   }
 
+  ekfloat flux_local_cartesian[3]; // temporary variable for converting fluxes
+                                   // into Cartesian coordinates for output
+
+  unsigned int coord[3];
+
   ekfloat *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
                                              13 * sizeof(ekfloat));
 
-  if (ek_parameters.species_index[species] != -1) {
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    int blocks_per_grid_x = (ek_parameters.number_of_nodes +
-                             threads_per_block * blocks_per_grid_y - 1) /
-                            (threads_per_block * blocks_per_grid_y);
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (ek_parameters.number_of_nodes +
+                           threads_per_block * blocks_per_grid_y - 1) /
+                          (threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
-    KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values,
-               philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+  KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
+  KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f,
+             ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+  reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-    KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
 
-    cuda_safe_mem(
-        cudaMemcpy(fluxes, ek_parameters.j,
-                   ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
-                   cudaMemcpyDeviceToHost));
-  } else
-    return 1;
+  cuda_safe_mem(cudaMemcpy(fluxes, ek_parameters.j,
+                           ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
+                           cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
@@ -3421,43 +3420,42 @@ LOOKUP_TABLE default\n",
 
 int ek_print_vtk_flux_link(int species, char *filename) {
 
-  FILE *fp = fopen(filename, "w");
+  if (ek_parameters.species_index[species] == -1) {
+    return 1;
+  }
 
-  unsigned int coord[3];
+  FILE *fp = fopen(filename, "w");
 
   if (fp == NULL) {
     return 1;
   }
 
+  unsigned int coord[3];
+
   ekfloat *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
                                              13 * sizeof(ekfloat));
 
-  if (ek_parameters.species_index[species] != -1) {
-    int threads_per_block = 64;
-    int blocks_per_grid_y = 4;
-    int blocks_per_grid_x = (ek_parameters.number_of_nodes +
-                             threads_per_block * blocks_per_grid_y - 1) /
-                            (threads_per_block * blocks_per_grid_y);
-    dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  int threads_per_block = 64;
+  int blocks_per_grid_y = 4;
+  int blocks_per_grid_x = (ek_parameters.number_of_nodes +
+                           threads_per_block * blocks_per_grid_y - 1) /
+                          (threads_per_block * blocks_per_grid_y);
+  dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-    KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
-    KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f,
-               ek_lbparameters_gpu, ek_lb_device_values,
-               philox_counter.value());
-    reset_LB_force_densities_GPU(false);
+  KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
+  KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f,
+             ek_lbparameters_gpu, ek_lb_device_values, philox_counter.value());
+  reset_LB_force_densities_GPU(false);
 
 #ifdef EK_BOUNDARIES
-    KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
-               ek_parameters.species_index[species], *current_nodes, node_f);
+  KERNELCALL(ek_apply_boundaries, dim_grid, threads_per_block,
+             ek_parameters.species_index[species], *current_nodes, node_f);
 #endif
 
-    cuda_safe_mem(
-        cudaMemcpy(fluxes, ek_parameters.j,
-                   ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
-                   cudaMemcpyDeviceToHost));
-  } else
-    return 1;
+  cuda_safe_mem(cudaMemcpy(fluxes, ek_parameters.j,
+                           ek_parameters.number_of_nodes * 13 * sizeof(ekfloat),
+                           cudaMemcpyDeviceToHost));
 
   fprintf(fp, "\
 # vtk DataFile Version 2.0\n\
