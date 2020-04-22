@@ -136,21 +136,19 @@ static bool add_pos_corr_vec(Bonded_ia_parameters const &ia_params,
 }
 /**Compute positional corrections*/
 static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
-  for (auto &p1 : cs.local_particles()) {
-    cs.execute_bond_handler(p1, [repeat_](Particle &p1, int bond_id,
-                                          Utils::Span<Particle *> partners) {
-      auto const &iaparams = bonded_ia_params[bond_id];
+  cs.bond_loop(
+      [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
 
-      if (iaparams.type == BONDED_IA_RIGID_BOND) {
-        auto const corrected = add_pos_corr_vec(iaparams, p1, *partners[0]);
-        if (corrected)
-          *repeat_ += 1;
-      }
+        if (iaparams.type == BONDED_IA_RIGID_BOND) {
+          auto const corrected = add_pos_corr_vec(iaparams, p1, *partners[0]);
+          if (corrected)
+            *repeat_ += 1;
+        }
 
-      /* Rigid bonds cannot break */
-      return false;
-    });
-  }
+        /* Rigid bonds cannot break */
+        return false;
+      });
 }
 
 /**Apply corrections to each particle**/
@@ -253,21 +251,19 @@ static bool add_vel_corr_vec(Bonded_ia_parameters const &ia_params,
 
 /** Velocity correction vectors are computed*/
 static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
-  for (auto &p1 : cs.local_particles()) {
-    cs.execute_bond_handler(p1, [repeat_](Particle &p1, int bond_id,
-                                          Utils::Span<Particle *> partners) {
-      auto const &iaparams = bonded_ia_params[bond_id];
+  cs.bond_loop(
+      [repeat_](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
 
-      if (iaparams.type == BONDED_IA_RIGID_BOND) {
-        auto const corrected = add_vel_corr_vec(iaparams, p1, *partners[0]);
-        if (corrected)
-          *repeat_ += 1;
-      }
+        if (iaparams.type == BONDED_IA_RIGID_BOND) {
+          auto const corrected = add_vel_corr_vec(iaparams, p1, *partners[0]);
+          if (corrected)
+            *repeat_ += 1;
+        }
 
-      /* Rigid bonds can not break */
-      return false;
-    });
-  }
+        /* Rigid bonds can not break */
+        return false;
+      });
 }
 
 /**Apply velocity corrections*/

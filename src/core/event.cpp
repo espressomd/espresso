@@ -113,11 +113,6 @@ void on_integration_start() {
             sizeof(CUDA_global_part_vars), MPI_BYTE, 0, comm_cart);
 #endif
 
-  // Here we initialize volume conservation
-  // This function checks if the reference volumes have been set and if
-  // necessary calculates them
-  immersed_boundaries.init_volume_conservation(cell_structure);
-
   /* Prepare the thermostat */
   if (reinit_thermo) {
     thermo_init();
@@ -373,4 +368,9 @@ void update_dependent_particles() {
 #ifdef ELECTROSTATICS
   Coulomb::update_dependent_particles();
 #endif
+
+  // Here we initialize volume conservation
+  // This function checks if the reference volumes have been set and if
+  // necessary calculates them
+  immersed_boundaries.init_volume_conservation(cell_structure);
 }

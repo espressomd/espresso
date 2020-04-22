@@ -45,15 +45,18 @@ void ImmersedBoundaries::volume_conservation(CellStructure &cs) {
 
 /** Initialize volume conservation */
 void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
-
   // Check since this function is called at the start of every integrate loop
   // Also check if volume has been set due to reading of a checkpoint
-  if (!VolumeInitDone) {
+  if (not BoundariesFound) {
+    BoundariesFound = boost::algorithm::any_of(
+        bonded_ia_params, [](auto const &bonded_ia_param) {
+          return bonded_ia_param.type == BONDED_IA_IBM_VOLUME_CONSERVATION;
+        });
+  }
 
+  if (!VolumeInitDone && BoundariesFound) {
     // Calculate volumes
     calc_volumes(cs);
-
-    // numWriteCOM = 0;
 
     // Loop through all bonded interactions and check if we need to set the
     // reference volume
@@ -70,9 +73,9 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
         }
       }
     }
-  }
 
-  VolumeInitDone = true;
+    VolumeInitDone = true;
+  }
 }
 
 /** Set parameters of volume conservation */
@@ -188,58 +191,53 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
 
 /** Calculate and add the volume force to each node */
 void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
-  // Loop over all particles on local node
-  for (auto &p1 : cs.local_particles()) {
-    // Check if particle has a BONDED_IA_IBM_TRIEL and a
-    // BONDED_IA_IBM_VOLUME_CONSERVATION. Basically this loops over all
-    // triangles, not all particles. First round to check for volume
-    // conservation.
-    const IBM_VolCons_Parameters *ibmVolConsParameters =
-        vol_cons_parameters(p1);
-    if (not ibmVolConsParameters)
-      return;
+  cs.bond_loop(
+      [this](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
 
-    auto current_volume = VolumesCurrent[ibmVolConsParameters->softID];
+        if (iaparams.type == BONDED_IA_IBM_TRIEL) {
+          // Check if particle has a BONDED_IA_IBM_TRIEL and a
+          // BONDED_IA_IBM_VOLUME_CONSERVATION. Basically this loops over all
+          // triangles, not all particles. First round to check for volume
+          // conservation.
+          const IBM_VolCons_Parameters *ibmVolConsParameters =
+              vol_cons_parameters(p1);
+          if (not ibmVolConsParameters)
+            return false;
 
-    // Second round for triel
-    cs.execute_bond_handler(p1, [ibmVolConsParameters, current_volume](
-                                    Particle &p1, int bond_id,
-                                    Utils::Span<Particle *> partners) {
-      auto const &iaparams = bonded_ia_params[bond_id];
+          auto current_volume = VolumesCurrent[ibmVolConsParameters->softID];
 
-      if (iaparams.type == BONDED_IA_IBM_TRIEL) {
-        // Our particle is the leading particle of a triel
-        // Get second and third particle of the triangle
-        Particle &p2 = *partners[0];
-        Particle &p3 = *partners[1];
+          // Our particle is the leading particle of a triel
+          // Get second and third particle of the triangle
+          Particle &p2 = *partners[0];
+          Particle &p3 = *partners[1];
 
-        // Unfold position of first node.
-        // This is to get a continuous trajectory with no jumps when box
-        // boundaries are crossed.
-        auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
+          // Unfold position of first node.
+          // This is to get a continuous trajectory with no jumps when box
+          // boundaries are crossed.
+          auto const x1 = unfolded_position(p1.r.p, p1.l.i, box_geo.length());
 
-        // Unfolding seems to work only for the first particle of a triel
-        // so get the others from relative vectors considering PBC
-        auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
-        auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
+          // Unfolding seems to work only for the first particle of a triel
+          // so get the others from relative vectors considering PBC
+          auto const a12 = get_mi_vector(p2.r.p, x1, box_geo);
+          auto const a13 = get_mi_vector(p3.r.p, x1, box_geo);
 
-        // Now we have the true and good coordinates
-        // This is eq. (9) in @cite dupin08a.
-        auto const n = vector_product(a12, a13);
-        const double ln = n.norm();
-        const double A = 0.5 * ln;
-        const double fact = ibmVolConsParameters->kappaV *
-                            (current_volume - ibmVolConsParameters->volRef) /
-                            current_volume;
+          // Now we have the true and good coordinates
+          // This is eq. (9) in @cite dupin08a.
+          auto const n = vector_product(a12, a13);
+          const double ln = n.norm();
+          const double A = 0.5 * ln;
+          const double fact = ibmVolConsParameters->kappaV *
+                              (current_volume - ibmVolConsParameters->volRef) /
+                              current_volume;
 
-        auto const nHat = n / ln;
-        auto const force = -fact * A * nHat;
+          auto const nHat = n / ln;
+          auto const force = -fact * A * nHat;
 
-        p1.f.f += force;
-        p2.f.f += force;
-        p3.f.f += force;
-      }
-      return false;
-    });
-  }
+          p1.f.f += force;
+          p2.f.f += force;
+          p3.f.f += force;
+        }
+        return false;
+      });
 }
