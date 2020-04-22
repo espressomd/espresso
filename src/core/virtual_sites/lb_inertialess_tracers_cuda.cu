@@ -136,9 +136,6 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 
   if (particleIndex < number_of_particles &&
       particle_input[particleIndex].is_virtual) {
-
-    //    const float factor = powf( para.agrid,2)*para.tau*para.tau; --> Old
-    //    version. Worked, but not when agrid != 1
     // MD to LB units: mass is not affected, length are scaled by agrid, times
     // by para.tau
     const float factor = 1 / para.agrid * para.tau * para.tau;
@@ -196,7 +193,6 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
                     para.dim_x * para.dim_y * ((z + 1) % para.dim_z);
 
     for (int i = 0; i < 8; ++i) {
-
       // Atomic add is essential because this runs in parallel!
       atomicAdd(
           &(node_f.force_density[0 * para.number_of_nodes + node_index[i]]),

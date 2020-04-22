@@ -206,7 +206,6 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
 /******************************************************************************/
 
 __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
-  //
   int i, j, k, l, depth, localmaxdepth, skip, inc, lps;
   float r;
   float pos[3];
@@ -262,7 +261,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
     // this loop.
     ch = bhpara->child[n * 8 + j];
 
-    ///// Global memory writing related threads sync
+    // Global memory writing related threads sync
     if (lps++ > THREADS2) {
       // AMD-specific threads sync
 #if defined(__HIPCC__) and not defined(__CUDACC__)
@@ -313,7 +312,6 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
         // either a body insertion and/or new octant level cells creation.
         if (ch == -2) {
           // Cannot be here..
-          // printf("Error: ch = -2\n");
           *bhpara->err = 1;
           break;
         }

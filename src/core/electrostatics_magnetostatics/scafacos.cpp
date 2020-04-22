@@ -18,6 +18,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+/** @file
+ *  Provide a C-like interface for Scafacos
+ */
 
 #include "electrostatics_magnetostatics/scafacos.hpp"
 
@@ -51,8 +54,6 @@
 #error                                                                         \
     "SCAFACOS_DIPOLES requires dipoles support in scafacos library (FCS_ENABLE_DIPOLES)."
 #endif
-
-/** This file contains the c-like interface for Scafacos */
 
 namespace Scafacos {
 
@@ -107,7 +108,6 @@ int ScafacosData::update_particle_data() {
 }
 
 /** \brief Write forces back to particles */
-
 void ScafacosData::update_particle_forces() const {
   int it = 0;
   if (positions.empty())
@@ -153,7 +153,7 @@ void ScafacosData::update_particle_forces() const {
     }
   }
 
-  /** Check that the particle number did not change */
+  /* Check that the particle number did not change */
   if (!dipolar()) {
     assert(it == fields.size());
   } else {
@@ -255,7 +255,7 @@ REGISTER_CALLBACK(set_r_cut_and_tune_local)
 
 /** Determine runtime for a specific cutoff */
 double time_r_cut(double r_cut) {
-  /** Set cutoff to time */
+  /* Set cutoff to time */
   mpi_call(set_r_cut_and_tune_local, r_cut);
   set_r_cut_and_tune_local(r_cut);
 
@@ -269,13 +269,13 @@ void tune_r_cut() {
   auto const min_box_l = *boost::min_element(box_geo.length());
   auto const min_local_box_l = *boost::min_element(local_geo.length());
 
-  /** scafacos p3m and Ewald do not accept r_cut 0 for no good reason */
+  /* scafacos p3m and Ewald do not accept r_cut 0 for no good reason */
   double r_min = 1.0;
   double r_max = std::min(min_local_box_l, min_box_l / 2.0) - skin;
   double t_min = 0;
   double t_max = std::numeric_limits<double>::max();
 
-  /** Run bisection */
+  /* Run bisection */
   while (std::fabs(r_min - r_max) > tune_limit) {
     const double dr = 0.5 * (r_max - r_min);
     const double t_mid = time_r_cut(r_min + dr);
@@ -303,8 +303,8 @@ void tune_r_cut() {
 void tune() {
   particles.update_particle_data();
 
-  /** Check whether we have to do a bisection for the short range cutoff */
-  /** Check if there is a user supplied cutoff */
+  /* Check whether we have to do a bisection for the short range cutoff */
+  /* Check if there is a user supplied cutoff */
   if ((scafacos->has_near) && (scafacos->r_cut() <= 0.0)) {
     // Tuning of r_cut needs to run on the master node because it relies on
     // master-slave mode communication
