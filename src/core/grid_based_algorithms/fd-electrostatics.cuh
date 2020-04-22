@@ -30,7 +30,7 @@ public:
   };
 
   struct Parameters : public InputParameters {
-    Parameters() {}
+    Parameters() = default;
     Parameters(InputParameters &inputParameters)
         : InputParameters(inputParameters) {
       charge_potential = nullptr;

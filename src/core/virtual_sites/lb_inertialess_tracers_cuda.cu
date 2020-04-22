@@ -40,7 +40,7 @@
 extern int this_node;
 
 // ***** Other functions for internal use *****
-void InitCUDA_IBM(const int numParticles);
+void InitCUDA_IBM(int numParticles);
 
 // ***** Our own global variables ********
 IBM_CUDA_ParticleDataInput *IBM_ParticleDataInput_device = nullptr;
@@ -448,7 +448,7 @@ void InitCUDA_IBM(const int numParticles) {
     // Copy boundary velocities to the GPU
     // First put them into correct format
 #ifdef LB_BOUNDARIES_GPU
-    float *host_lb_boundary_velocity =
+    auto *host_lb_boundary_velocity =
         new float[3 * (LBBoundaries::lbboundaries.size() + 1)];
 
     for (int n = 0; n < LBBoundaries::lbboundaries.size(); n++) {

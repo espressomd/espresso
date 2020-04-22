@@ -57,8 +57,8 @@ inline __device__ float4 random_wrapper_philox(unsigned int index,
                                                unsigned int mode,
                                                uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.
-  uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
-  uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
+  auto const philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
+  auto const philox_counter_low = static_cast<uint32_t>(philox_counter);
   uint4 rnd_ints =
       curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
                            make_uint2(philox_counter_low, 0));

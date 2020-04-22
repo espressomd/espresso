@@ -1249,7 +1249,7 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
 
   // n particles have unitary weight coefficients.
   // Cells will be defined with -1 later.
-  float *mass_tmp = new float[bh_data->nbodies];
+  auto *mass_tmp = new float[bh_data->nbodies];
   for (int i = 0; i < bh_data->nbodies; i++) {
     mass_tmp[i] = 1.0f;
   }

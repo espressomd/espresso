@@ -190,7 +190,7 @@ extern EK_parameters *lb_ek_parameters;
 LB_rho_v_gpu *ek_lb_device_values;
 
 __device__ cufftReal ek_getNode(unsigned x, unsigned y, unsigned z) {
-  cufftReal *field =
+  auto *field =
       reinterpret_cast<cufftReal *>(ek_parameters_gpu->charge_potential);
   return field[ek_parameters_gpu->dim_y * ek_parameters_gpu->dim_x_padded * z +
                ek_parameters_gpu->dim_x_padded * y + x];
@@ -198,7 +198,7 @@ __device__ cufftReal ek_getNode(unsigned x, unsigned y, unsigned z) {
 
 __device__ void ek_setNode(unsigned x, unsigned y, unsigned z,
                            cufftReal value) {
-  cufftReal *field =
+  auto *field =
       reinterpret_cast<cufftReal *>(ek_parameters_gpu->charge_potential);
   field[ek_parameters_gpu->dim_y * ek_parameters_gpu->dim_x_padded * z +
         ek_parameters_gpu->dim_x_padded * y + x] = value;
@@ -1364,8 +1364,8 @@ __device__ float4 ek_random_wrapper_philox(unsigned int index,
                                            unsigned int mode,
                                            uint64_t philox_counter) {
   // Split the 64 bit counter into two 32 bit ints.
-  uint32_t philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
-  uint32_t philox_counter_low = static_cast<uint32_t>(philox_counter);
+  auto const philox_counter_hi = static_cast<uint32_t>(philox_counter >> 32);
+  auto const philox_counter_low = static_cast<uint32_t>(philox_counter);
   uint4 rnd_ints =
       curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
                            make_uint2(philox_counter_low, 0));
@@ -2352,6 +2352,7 @@ int ek_init() {
       return 1;
     }
 
+    // NOLINTNEXTLINE(modernize-loop-convert)
     for (int i = 0; i < MAX_NUMBER_OF_SPECIES; i++) {
       ek_parameters.species_index[i] = -1;
     }
@@ -2471,8 +2472,7 @@ int ek_init() {
     }
 
     // initialize electrostatics
-    if (electrostatics != nullptr)
-      delete electrostatics;
+    delete electrostatics;
 
     FdElectrostatics::InputParameters es_parameters = {
         ek_parameters.prefactor, int(ek_parameters.dim_x),
@@ -2515,29 +2515,28 @@ int ek_init() {
               "ERROR: The LB parameters on the GPU cannot be reinitialized.\n");
 
       return 1;
-    } else {
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
-                                       &ek_parameters, sizeof(EK_parameters)));
+    }
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
+                                     &ek_parameters, sizeof(EK_parameters)));
 
-      blocks_per_grid_x =
-          static_cast<int>((ek_parameters.number_of_nodes +
-                            threads_per_block * blocks_per_grid_y - 1) /
-                           (threads_per_block * blocks_per_grid_y));
-      dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+    blocks_per_grid_x =
+        static_cast<int>((ek_parameters.number_of_nodes +
+                          threads_per_block * blocks_per_grid_y - 1) /
+                         (threads_per_block * blocks_per_grid_y));
+    dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
-      KERNELCALL(ek_init_species_density_homogeneous, dim_grid,
-                 threads_per_block);
+    KERNELCALL(ek_init_species_density_homogeneous, dim_grid,
+               threads_per_block);
 
 #ifdef EK_BOUNDARIES
-      LBBoundaries::lb_init_boundaries();
-      lb_get_boundary_force_pointer(&ek_lb_boundary_force);
+    LBBoundaries::lb_init_boundaries();
+    lb_get_boundary_force_pointer(&ek_lb_boundary_force);
 
-      cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
-                                       &ek_parameters, sizeof(EK_parameters)));
+    cuda_safe_mem(cudaMemcpyToSymbol(HIP_SYMBOL(ek_parameters_gpu),
+                                     &ek_parameters, sizeof(EK_parameters)));
 #endif
 
-      ek_integrate_electrostatics();
-    }
+    ek_integrate_electrostatics();
   }
   return 0;
 }
@@ -2547,8 +2546,8 @@ void lb_set_ek_pointer(EK_parameters *pointeradress) {
 }
 
 unsigned int ek_calculate_boundary_mass() {
-  unsigned int *bound_array = (unsigned int *)Utils::malloc(
-      lbpar_gpu.number_of_nodes * sizeof(unsigned int));
+  auto *bound_array = (unsigned int *)Utils::malloc(lbpar_gpu.number_of_nodes *
+                                                    sizeof(unsigned int));
 
   lb_get_boundary_flags_GPU(bound_array);
 
@@ -2606,7 +2605,7 @@ int ek_lb_print_vtk_velocity(char *filename) {
     return 1;
   }
 
-  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu *)Utils::malloc(
+  auto *host_values = (LB_rho_v_pi_gpu *)Utils::malloc(
       lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu));
   lb_get_values_GPU(host_values);
   auto const lattice_speed = lbpar_gpu.agrid / lbpar_gpu.tau;
@@ -2643,7 +2642,7 @@ int ek_node_print_velocity(
     int x, int y, int z,
     double *velocity) { // TODO only calculate single node velocity
 
-  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu *)Utils::malloc(
+  auto *host_values = (LB_rho_v_pi_gpu *)Utils::malloc(
       lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu));
   lb_get_values_GPU(host_values);
 
@@ -2668,7 +2667,7 @@ int ek_lb_print_vtk_density(char *filename) {
     return 1;
   }
 
-  LB_rho_v_pi_gpu *host_values = (LB_rho_v_pi_gpu *)Utils::malloc(
+  auto *host_values = (LB_rho_v_pi_gpu *)Utils::malloc(
       lbpar_gpu.number_of_nodes * sizeof(LB_rho_v_pi_gpu));
   lb_get_values_GPU(host_values);
 
@@ -2708,7 +2707,7 @@ int ek_print_vtk_density(int species, char *filename) {
     return 1;
   }
 
-  ekfloat *densities =
+  auto *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
   if (ek_parameters.species_index[species] != -1) {
@@ -2752,7 +2751,7 @@ LOOKUP_TABLE default\n",
 
 int ek_node_print_density(int species, int x, int y, int z, double *density) {
 
-  ekfloat *densities =
+  auto *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
   if (ek_parameters.species_index[species] != -1) {
@@ -2782,8 +2781,8 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
   coord[1] = y;
   coord[2] = z;
 
-  ekfloat *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
-                                             13 * sizeof(ekfloat));
+  auto *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * 13 *
+                                          sizeof(ekfloat));
 
   if (ek_parameters.species_index[species] != -1) {
     int threads_per_block = 64;
@@ -3011,8 +3010,8 @@ int ek_print_vtk_flux(int species, char *filename) {
     return 1;
   }
 
-  ekfloat *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
-                                             13 * sizeof(ekfloat));
+  auto *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * 13 *
+                                          sizeof(ekfloat));
 
   if (ek_parameters.species_index[species] != -1) {
     int threads_per_block = 64;
@@ -3483,7 +3482,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
     return 1;
   }
 
-  ekfloat *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
+  auto *fluxes = (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes *
                                              13 * sizeof(ekfloat));
 
   if (ek_parameters.species_index[species] != -1) {
@@ -3579,7 +3578,7 @@ int ek_print_vtk_potential(char *filename) {
     return 1;
   }
 
-  float *potential =
+  auto *potential =
       (float *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(cufftReal));
 
   cuda_safe_mem(cudaMemcpy2D(potential, ek_parameters.dim_x * sizeof(cufftReal),
@@ -3625,7 +3624,7 @@ int ek_print_vtk_particle_potential(char *filename) {
     return 1;
   }
 
-  float *potential =
+  auto *potential =
       (float *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(cufftReal));
 
   cuda_safe_mem(cudaMemcpy2D(potential, ek_parameters.dim_x * sizeof(cufftReal),
@@ -3674,7 +3673,7 @@ int ek_print_vtk_lbforce_density(char *filename) {
     return 1;
   }
 
-  lbForceFloat *lbforce_density = (lbForceFloat *)Utils::malloc(
+  auto *lbforce_density = (lbForceFloat *)Utils::malloc(
       ek_parameters.number_of_nodes * 3 * sizeof(lbForceFloat));
 
   cuda_safe_mem(
@@ -4095,7 +4094,7 @@ int ek_neutralize_system(int species) {
 
 int ek_save_checkpoint(char *filename, char *lb_filename) {
   std::ofstream fout(filename, std::ofstream::binary);
-  ekfloat *densities =
+  auto *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
   for (int i = 0; i < ek_parameters.number_of_species; i++) {
@@ -4122,7 +4121,7 @@ int ek_load_checkpoint(char *filename) {
   std::string fname(filename);
   std::ifstream fin((const char *)(fname + ".ek").c_str(),
                     std::ifstream::binary);
-  ekfloat *densities =
+  auto *densities =
       (ekfloat *)Utils::malloc(ek_parameters.number_of_nodes * sizeof(ekfloat));
 
   for (int i = 0; i < ek_parameters.number_of_species; i++) {

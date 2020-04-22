@@ -177,8 +177,7 @@ void add_pair_force(double q1q2, const double *d, double dist, double *force) {
 double pair_energy(double q1q2, double dist) {
   if (dist <= get_r_cut())
     return q1q2 * scafacos->pair_energy(dist);
-  else
-    return 0.;
+  return 0.;
 }
 
 // Issues a runtime error if positions are outside the box domain
@@ -230,7 +229,7 @@ double long_range_energy() {
              std::inner_product(particles.charges.begin(),
                                 particles.charges.end(),
                                 particles.potentials.begin(), 0.0);
-    } else {
+    } else { // NOLINT(readability-else-after-return)
 #ifdef SCAFACOS_DIPOLES
       scafacos->run_dipolar(particles.dipoles, particles.positions,
                             particles.fields, particles.potentials);
@@ -283,12 +282,12 @@ void tune_r_cut() {
     t_max = time_r_cut(r_max);
 
     if (t_min <= 0.0) {
-      r_min += tune_limit;
+      r_min += tune_limit; // NOLINT(clang-analyzer-deadcode.DeadStores)
       break;
     }
 
     if (t_max <= 0.0) {
-      r_min -= tune_limit;
+      r_min -= tune_limit; // NOLINT(clang-analyzer-deadcode.DeadStores)
       break;
     }
 

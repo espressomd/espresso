@@ -1173,9 +1173,11 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
   } else {
     d_p_v[print_index].rho = 0.0f;
 
+    // NOLINTNEXTLINE(modernize-loop-convert)
     for (int i = 0; i < 3; i++)
       d_p_v[print_index].v[i] = 0.0f;
 
+    // NOLINTNEXTLINE(modernize-loop-convert)
     for (int i = 0; i < 6; i++)
       d_p_v[print_index].pi[i] = 0.0f;
   }
@@ -1423,7 +1425,8 @@ velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
   auto fold_if_necessary = [](int ind, int dim) {
     if (ind >= dim) {
       return ind - dim;
-    } else if (ind < 0) {
+    }
+    if (ind < 0) {
       return ind + dim;
     }
     return ind;
@@ -1550,7 +1553,7 @@ __device__ void calc_viscous_force(
     unsigned int part_index, float *delta_j,
     Utils::Array<unsigned int, no_of_neighbours> &node_index, LB_rho_v_gpu *d_v,
     bool flag_cs, uint64_t philox_counter, float friction) {
-  float flag_cs_float = static_cast<float>(flag_cs);
+  auto const flag_cs_float = static_cast<float>(flag_cs);
   // Zero out workspace
 #pragma unroll
   for (int jj = 0; jj < 3; ++jj) {
@@ -2849,7 +2852,7 @@ void lb_integrate_GPU() {
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 #ifdef LB_BOUNDARIES_GPU
-  if (LBBoundaries::lbboundaries.size() > 0) {
+  if (!LBBoundaries::lbboundaries.empty()) {
     cuda_safe_mem(
         cudaMemset(lb_boundary_force, 0,
                    3 * LBBoundaries::lbboundaries.size() * sizeof(float)));
@@ -2882,7 +2885,7 @@ void lb_integrate_GPU() {
   }
 
 #ifdef LB_BOUNDARIES_GPU
-  if (LBBoundaries::lbboundaries.size() > 0) {
+  if (!LBBoundaries::lbboundaries.empty()) {
     KERNELCALL(apply_boundaries, dim_grid, threads_per_block, *current_nodes,
                boundaries, lb_boundary_force);
   }
@@ -2891,8 +2894,8 @@ void lb_integrate_GPU() {
 
 void lb_gpu_get_boundary_forces(double *forces) {
 #ifdef LB_BOUNDARIES_GPU
-  float *temp = (float *)Utils::malloc(3 * LBBoundaries::lbboundaries.size() *
-                                       sizeof(float));
+  auto *temp = (float *)Utils::malloc(3 * LBBoundaries::lbboundaries.size() *
+                                      sizeof(float));
   cuda_safe_mem(
       cudaMemcpy(temp, lb_boundary_force,
                  3 * LBBoundaries::lbboundaries.size() * sizeof(float),

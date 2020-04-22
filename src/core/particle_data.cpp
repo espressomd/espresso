@@ -577,6 +577,7 @@ std::vector<Particle> mpi_get_particles(Utils::Span<const int> ids) {
 
 void prefetch_particle_data(Utils::Span<const int> in_ids) {
   /* Nothing to do on a single node. */
+  // NOLINTNEXTLINE(clang-analyzer-core.NonNullParamChecker)
   if (comm_cart.size() == 1)
     return;
 

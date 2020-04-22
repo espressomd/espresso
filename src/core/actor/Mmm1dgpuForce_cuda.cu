@@ -210,6 +210,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
   {
     mmm1dgpu_real bestrad = 0, besttime = INFINITY;
 
+    // NOLINTNEXTLINE(clang-analyzer-security.FloatLoopCounter)
     for (far_switch_radius = 0.05 * maxrad; far_switch_radius < maxrad;
          far_switch_radius += 0.05 * maxrad) {
       set_params(0, 0, _maxPWerror, far_switch_radius, bessel_cutoff);

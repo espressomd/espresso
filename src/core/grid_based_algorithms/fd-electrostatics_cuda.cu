@@ -44,7 +44,7 @@ __device__ unsigned int fde_getThreadIndex() {
 }
 
 __device__ cufftReal fde_getNode(int x, int y, int z) {
-  cufftReal *field =
+  auto *field =
       reinterpret_cast<cufftReal *>(fde_parameters_gpu->charge_potential);
   return field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded *
                    z +
@@ -52,7 +52,7 @@ __device__ cufftReal fde_getNode(int x, int y, int z) {
 }
 
 __device__ void fde_setNode(int x, int y, int z, cufftReal value) {
-  cufftReal *field =
+  auto *field =
       reinterpret_cast<cufftReal *>(fde_parameters_gpu->charge_potential);
   field[fde_parameters_gpu->dim_y * fde_parameters_gpu->dim_x_padded * z +
         fde_parameters_gpu->dim_x_padded * y + x] = value;

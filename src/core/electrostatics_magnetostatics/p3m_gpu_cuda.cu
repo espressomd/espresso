@@ -260,10 +260,9 @@ __global__ void apply_diff_op(const P3MGpuData p) {
 __device__ inline int wrap_index(const int ind, const int mesh) {
   if (ind < 0)
     return ind + mesh;
-  else if (ind >= mesh)
+  if (ind >= mesh)
     return ind - mesh;
-  else
-    return ind;
+  return ind;
 }
 
 __global__ void apply_influence_function(const P3MGpuData p) {
@@ -292,7 +291,7 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   int nmp_x, nmp_y, nmp_z;
 
   const CUDA_particle_data p = pdata[id];
-  REAL_TYPE *charge_mesh = (REAL_TYPE *)par.charge_mesh;
+  auto *charge_mesh = (REAL_TYPE *)par.charge_mesh;
 
   m_pos[0] = p.p[0] * par.hi[0] - par.pos_shift;
   m_pos[1] = p.p[1] * par.hi[1] - par.pos_shift;
@@ -570,7 +569,8 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
 
   if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
     p3m_gpu_data.cao = cao;
-    p3m_gpu_data.pos_shift = (REAL_TYPE)((p3m_gpu_data.cao - 1) / 2);
+    // NOLINTNEXTLINE(bugprone-integer-division)
+    p3m_gpu_data.pos_shift = static_cast<REAL_TYPE>((p3m_gpu_data.cao - 1) / 2);
     reinit_if = true;
   }
 
