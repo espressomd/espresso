@@ -43,6 +43,14 @@ struct Force {
     return particle_traits.force(p);
   }
 };
+
+struct DipoleMoment {
+  template <class Particle, class Traits = traits<Particle>>
+  decltype(auto) operator()(Particle const &p,
+                            Traits particle_traits = {}) const {
+    return particle_traits.dipole_moment(p);
+  }
+};
 } // namespace GenObs
 
 #endif // OBSERVABLES_PROPERTIES_HPP
