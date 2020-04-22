@@ -239,11 +239,11 @@ void lb_set_agrid_gpu(double agrid) {
   lbpar_gpu.agrid = static_cast<float>(agrid);
 
   lbpar_gpu.dim_x =
-      static_cast<unsigned int>(rint(box_geo.length()[0] / agrid));
+      static_cast<unsigned int>(round(box_geo.length()[0] / agrid));
   lbpar_gpu.dim_y =
-      static_cast<unsigned int>(rint(box_geo.length()[1] / agrid));
+      static_cast<unsigned int>(round(box_geo.length()[1] / agrid));
   lbpar_gpu.dim_z =
-      static_cast<unsigned int>(rint(box_geo.length()[2] / agrid));
+      static_cast<unsigned int>(round(box_geo.length()[2] / agrid));
   unsigned int tmp[3];
   tmp[0] = lbpar_gpu.dim_x;
   tmp[1] = lbpar_gpu.dim_y;
