@@ -27,8 +27,8 @@ class CylindricalVelocityProfile : public CylindricalPidProfileObservable {
 public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
 
-  std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
+  std::vector<double> evaluate(
+      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
     std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),
@@ -36,10 +36,11 @@ public:
     Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 
     for (auto p : particles) {
-      auto const pos = folded_position(p->r.p, box_geo) - center;
+      auto const pos = folded_position(p.get().r.p, box_geo) - center;
       histogram.update(
           Utils::transform_coordinate_cartesian_to_cylinder(pos, axis),
-          Utils::transform_vector_cartesian_to_cylinder(p->m.v, axis, pos));
+          Utils::transform_vector_cartesian_to_cylinder(p.get().m.v, axis,
+                                                        pos));
     }
 
     auto hist_tmp = histogram.get_histogram();

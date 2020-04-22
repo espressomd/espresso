@@ -27,7 +27,7 @@
 namespace Observables {
 std::vector<double>
 CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
-    Utils::Span<const Particle *const> particles) const {
+    Utils::Span<std::reference_wrapper<Particle>> particles) const {
 
   std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
   std::array<std::pair<double, double>, 3> limits{
@@ -38,7 +38,7 @@ CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
   // get the fluid velocities only once).
 
   for (auto p : particles) {
-    auto const pos = folded_position(p->r.p, box_geo);
+    auto const pos = folded_position(p.get().r.p, box_geo);
     auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
                    lb_lbfluid_get_lattice_speed();
 

@@ -23,6 +23,7 @@
 
 #include <boost/algorithm/clamp.hpp>
 #include <boost/range/algorithm/transform.hpp>
+#include <functional>
 
 namespace Observables {
 std::vector<double> PidObservable::operator()() const {
@@ -49,10 +50,10 @@ std::vector<double> PidObservable::operator()() const {
     offset += this_size;
   }
 
-  std::vector<const Particle *> particles_ptrs(particles.size());
-  boost::transform(particles, particles_ptrs.begin(),
-                   [](auto const &p) { return std::addressof(p); });
+  std::vector<std::reference_wrapper<Particle>> particles_ptrs(
+      particles.begin(), particles.end());
 
-  return this->evaluate(particles_ptrs);
+  return this->evaluate(
+      Utils::Span<std::reference_wrapper<Particle>>(particles_ptrs));
 }
 } // namespace Observables

@@ -31,8 +31,8 @@ public:
     return {n_x_bins, n_y_bins, n_z_bins, 3};
   }
 
-  std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
+  std::vector<double> evaluate(
+      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
     std::array<size_t, 3> n_bins{{n_x_bins, n_y_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
@@ -40,8 +40,8 @@ public:
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
 
     for (auto p : particles) {
-      auto const ppos = folded_position(p->r.p, box_geo);
-      histogram.update(ppos, p->m.v);
+      auto const ppos = folded_position(p.get().r.p, box_geo);
+      histogram.update(ppos, p.get().m.v);
     }
     histogram.normalize();
     return histogram.get_histogram();

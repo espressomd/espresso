@@ -31,13 +31,13 @@ class ParticleBodyVelocities : public PidObservable {
 public:
   using PidObservable::PidObservable;
 
-  std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
+  std::vector<double> evaluate(
+      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
     std::vector<double> res(n_values());
     for (size_t i = 0; i < particles.size(); i++) {
 #ifdef ROTATION
-      const Utils::Vector3d vel_body =
-          convert_vector_space_to_body(*particles[i], particles[i]->m.v);
+      const Utils::Vector3d vel_body = convert_vector_space_to_body(
+          particles[i].get(), particles[i].get().m.v);
 
       res[3 * i + 0] = vel_body[0];
       res[3 * i + 1] = vel_body[1];

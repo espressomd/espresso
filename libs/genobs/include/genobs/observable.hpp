@@ -20,7 +20,7 @@ template <class Left, class Right> struct Product : Left, Right {
   Product(Left left = {}, Right right = {})
       : Left(std::move(left)), Right(std::move(right)) {}
 
-  template <class Particle, class Traits = traits<Particle>>
+  template <class Particle, class Traits = default_traits<Particle>>
   decltype(auto) operator()(Particle const &p,
                             Traits const &traits = {}) const {
     return Left::template operator()<Particle, Traits>(p, traits) *

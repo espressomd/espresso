@@ -30,14 +30,14 @@ class ParticleBodyAngularVelocities : public PidObservable {
 public:
   using PidObservable::PidObservable;
 
-  std::vector<double>
-  evaluate(Utils::Span<const Particle *const> particles) const override {
+  std::vector<double> evaluate(
+      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
     std::vector<double> res(n_values());
 #ifdef ROTATION
     for (size_t i = 0; i < particles.size(); i++) {
-      res[3 * i + 0] = particles[i]->m.omega[0];
-      res[3 * i + 1] = particles[i]->m.omega[1];
-      res[3 * i + 2] = particles[i]->m.omega[2];
+      res[3 * i + 0] = particles[i].get().m.omega[0];
+      res[3 * i + 1] = particles[i].get().m.omega[1];
+      res[3 * i + 2] = particles[i].get().m.omega[2];
     }
 #endif
     return res;
