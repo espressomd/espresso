@@ -415,7 +415,6 @@ cdef class BrownianDynamics(Integrator):
         integrate_set_bd()
 
 
-
 IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
     cdef class StokesianDynamics(Integrator):
         """
@@ -456,7 +455,8 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
             """All parameters that can be set.
 
             """
-            return {"radii", "viscosity", "device", "lubrication", "lubrication_method", "self_mobility", "pair_mobility"}
+            return {"radii", "viscosity", "device", "lubrication",
+                    "lubrication_method", "self_mobility", "pair_mobility"}
 
         def required_keys(self):
             """Parameters that have to be set.
@@ -489,7 +489,6 @@ IF(STOKESIAN_DYNAMICS or STOKESIAN_DYNAMICS_GPU):
             check_type_or_throw_except(
                 self._params["pair_mobility"], 1, bool,
                 "pair_mobility must be a bool")
-
 
         def _set_params_in_es_core(self):
             integrate_set_sd()

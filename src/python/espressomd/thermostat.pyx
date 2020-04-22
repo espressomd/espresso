@@ -713,7 +713,7 @@ cdef class Thermostat:
         def set_sd(self, kT=None, seed=None):
             """
             Sets the SD thermostat with required parameters.
-            
+
             This thermostat requires the feature ``STOKESIAN_DYNAMICS`` or
             ``STOKESIAN_DYNAMICS_GPU``.
 
