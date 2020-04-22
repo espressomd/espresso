@@ -86,8 +86,8 @@ __constant__ static mmm1dgpu_real bi1_data[11] = {
     0.000000000000004741,        0.000000000000000024};
 __constant__ static int bi1_size = 11;
 
-__device__ mmm1dgpu_real evaluateAsChebychevSeriesAt(mmm1dgpu_real *c, int n,
-                                                     mmm1dgpu_real x) {
+__device__ mmm1dgpu_real evaluateAsChebychevSeriesAt(mmm1dgpu_real const *c,
+                                                     int n, mmm1dgpu_real x) {
   int j;
   mmm1dgpu_real x2 = 2 * x;
   mmm1dgpu_real dd = c[n - 1];
@@ -100,7 +100,7 @@ __device__ mmm1dgpu_real evaluateAsChebychevSeriesAt(mmm1dgpu_real *c, int n,
   return x * d - dd + c[0] / 2;
 }
 
-__device__ mmm1dgpu_real evaluateAsTaylorSeriesAt(mmm1dgpu_real *c, int n,
+__device__ mmm1dgpu_real evaluateAsTaylorSeriesAt(mmm1dgpu_real const *c, int n,
                                                   mmm1dgpu_real x) {
   int cnt = n - 1;
   mmm1dgpu_real r = c[cnt];

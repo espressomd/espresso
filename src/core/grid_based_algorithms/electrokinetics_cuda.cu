@@ -322,9 +322,10 @@ __device__ void ek_displacement(float *dx, LB_nodes_gpu n,
 }
 
 __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
-    unsigned int index, unsigned int index_padded, unsigned int *neighborindex,
-    unsigned int *neighborindex_padded, unsigned int species_index,
-    LB_node_force_density_gpu node_f, LB_nodes_gpu lb_node) {
+    unsigned int index, unsigned int index_padded,
+    unsigned int const *neighborindex, unsigned int const *neighborindex_padded,
+    unsigned int species_index, LB_node_force_density_gpu node_f,
+    LB_nodes_gpu lb_node) {
   ekfloat flux, force;
 
   float agrid_inv = 1.0f / ek_parameters_gpu->agrid;
@@ -754,9 +755,10 @@ __device__ void ek_diffusion_migration_lbforce_linkcentered_stencil(
 }
 
 __device__ void ek_diffusion_migration_lbforce_nodecentered_stencil(
-    unsigned int index, unsigned int index_padded, unsigned int *neighborindex,
-    unsigned int *neighborindex_padded, unsigned int species_index,
-    LB_node_force_density_gpu node_f, LB_nodes_gpu lb_node) {
+    unsigned int index, unsigned int index_padded,
+    unsigned int const *neighborindex, unsigned int const *neighborindex_padded,
+    unsigned int species_index, LB_node_force_density_gpu node_f,
+    LB_nodes_gpu lb_node) {
   ekfloat flux, force;
 
   // face in x
@@ -1381,7 +1383,7 @@ __device__ float4 ek_random_wrapper_philox(unsigned int index,
 
 __device__ void ek_add_fluctuations_to_flux(unsigned int index,
                                             unsigned int species_index,
-                                            unsigned int *neighborindex,
+                                            unsigned int const *neighborindex,
                                             LB_nodes_gpu lb_node,
                                             uint64_t philox_counter) {
   if (index < ek_parameters_gpu->number_of_nodes) {

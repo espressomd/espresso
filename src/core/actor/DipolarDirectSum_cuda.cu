@@ -36,9 +36,10 @@ typedef float dds_float;
 
 // typedef float float;
 
-__device__ inline void get_mi_vector_dds(dds_float res[3], dds_float a[3],
-                                         dds_float b[3], dds_float box_l[3],
-                                         int periodic[3]) {
+__device__ inline void get_mi_vector_dds(dds_float res[3], dds_float const a[3],
+                                         dds_float const b[3],
+                                         dds_float const box_l[3],
+                                         int const periodic[3]) {
   int i;
 
   for (i = 0; i < 3; i++) {
@@ -58,8 +59,9 @@ __device__ inline void get_mi_vector_dds(dds_float res[3], dds_float a[3],
 
 #define scalar(a, b) (a[0] * b[0] + a[1] * b[1] + a[2] * b[2])
 
-__device__ void dipole_ia_force(int id, dds_float pf, float *r1, float *r2,
-                                float *dip1, float *dip2, dds_float *f1,
+__device__ void dipole_ia_force(int id, dds_float pf, float const *r1,
+                                float const *r2, float const *dip1,
+                                float const *dip2, dds_float *f1,
                                 dds_float *torque1, dds_float *torque2,
                                 int force_flag, dds_float box_l[3],
                                 int periodic[3]) {
@@ -145,9 +147,10 @@ __device__ void dipole_ia_force(int id, dds_float pf, float *r1, float *r2,
   //  return u;
 }
 
-__device__ dds_float dipole_ia_energy(int id, dds_float pf, float *r1,
-                                      float *r2, float *dip1, float *dip2,
-                                      dds_float box_l[3], int periodic[3]) {
+__device__ dds_float dipole_ia_energy(int id, dds_float pf, float const *r1,
+                                      float const *r2, float const *dip1,
+                                      float const *dip2, dds_float box_l[3],
+                                      int periodic[3]) {
   dds_float r_inv, pe1, pe2, pe3, pe4, r_sq, r3_inv, r5_inv, r_sq_inv;
   dds_float dr[3];
   dds_float _r1[3], _r2[3], _dip1[3], _dip2[3];

@@ -475,8 +475,9 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
   }
 }
 
-__global__ void vectorReductionKernel(mmm1dgpu_real *src, mmm1dgpu_real *dst,
-                                      int N, int tStart, int tStop) {
+__global__ void vectorReductionKernel(mmm1dgpu_real const *src,
+                                      mmm1dgpu_real *dst, int N, int tStart,
+                                      int tStop) {
   if (tStop < 0)
     tStop = N * N;
 
@@ -521,8 +522,8 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
   }
 }
 
-__global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real *src, int N,
-                                  mmm1dgpu_real factor) {
+__global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real const *src,
+                                  int N, mmm1dgpu_real factor) {
   for (int tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
        tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     dst[tid] += src[tid] * factor;

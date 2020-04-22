@@ -1387,7 +1387,7 @@ __device__ __inline__ float3 node_velocity(float rho_eq, LB_nodes_gpu n_a,
 }
 
 __device__ __inline__ float3
-velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
+velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
                        Utils::Array<unsigned int, 27> &node_indices,
                        Utils::Array<float, 27> &delta) {
   Utils::Array<int, 3> center_node_index{};
@@ -1468,7 +1468,7 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
  *  @retval Interpolated velocity
  */
 __device__ __inline__ float3
-velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
+velocity_interpolation(LB_nodes_gpu n_a, float const *particle_position,
                        Utils::Array<unsigned int, 8> &node_index,
                        Utils::Array<float, 8> &delta) {
   Utils::Array<int, 3> left_node_index;
@@ -1692,7 +1692,7 @@ __device__ void calc_viscous_force(
 template <std::size_t no_of_neighbours>
 __device__ void
 calc_node_force(Utils::Array<float, no_of_neighbours> const &delta,
-                float *delta_j,
+                float const *delta_j,
                 Utils::Array<unsigned int, no_of_neighbours> const &node_index,
                 LB_node_force_density_gpu node_f) {
   for (int node = 0; node < no_of_neighbours; ++node) {
@@ -1843,7 +1843,8 @@ __global__ void calc_n_from_rho_j_pi(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
   }
 }
 
-__global__ void set_force_density(int single_nodeindex, float *force_density,
+__global__ void set_force_density(int single_nodeindex,
+                                  float const *force_density,
                                   LB_node_force_density_gpu node_f) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
@@ -1872,7 +1873,7 @@ __global__ void set_force_density(int single_nodeindex, float *force_density,
  *  @param[in]  node_f            Node forces
  */
 __global__ void set_u_from_rho_v_pi(LB_nodes_gpu n_a, int single_nodeindex,
-                                    float *velocity, LB_rho_v_gpu *d_v,
+                                    float const *velocity, LB_rho_v_gpu *d_v,
                                     LB_node_force_density_gpu node_f) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
                        blockDim.x * blockIdx.x + threadIdx.x;
@@ -2114,9 +2115,9 @@ __global__ void set_rho(LB_nodes_gpu n_a, LB_rho_v_gpu *d_v,
  *  @param[in]  boundary_index_list   Flag for the corresponding boundary
  *  @param[in]  number_of_boundnodes  Number of boundary nodes
  */
-__global__ void init_boundaries(int *boundary_node_list,
-                                int *boundary_index_list,
-                                float *boundary_velocities,
+__global__ void init_boundaries(int const *boundary_node_list,
+                                int const *boundary_index_list,
+                                float const *boundary_velocities,
                                 int number_of_boundnodes,
                                 LB_boundaries_gpu boundaries) {
   unsigned int index = blockIdx.y * gridDim.x * blockDim.x +
@@ -2922,8 +2923,8 @@ struct lb_lbfluid_mass_of_particle {
  *  @param[in]  z           z-coordinate of node
  */
 __global__ void lb_lbfluid_set_population_kernel(LB_nodes_gpu n_a,
-                                                 float population[LBQ], int x,
-                                                 int y, int z) {
+                                                 float const population[LBQ],
+                                                 int x, int y, int z) {
   auto const index = xyz_to_index(x, y, z);
 
   for (int i = 0; i < LBQ; ++i) {
