@@ -31,6 +31,7 @@ BOOST_AUTO_TEST_CASE(empty_left) {
   BOOST_REQUIRE(res);
   BOOST_REQUIRE(strlen(res) == strlen(right));
   BOOST_CHECK(0 == strcmp(res, right));
+  free(res);
 }
 
 BOOST_AUTO_TEST_CASE(empty_right) {
@@ -53,4 +54,5 @@ BOOST_AUTO_TEST_CASE(nonempty) {
   BOOST_REQUIRE(res);
   BOOST_REQUIRE(strlen(res) == (strlen(left) + strlen(right)));
   BOOST_CHECK(0 == strcmp(res, "leftright"));
+  free(res);
 }
