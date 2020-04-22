@@ -25,7 +25,13 @@ template <> struct traits<const ::Particle *> {
 #endif
     return p->f.f;
   }
-  auto dipole_moment(Particle const *const p) const { return p->calc_dip(); }
+  auto dipole_moment(Particle const *const p) const {
+#if defined(ROTATION) && defined(DIPOLES)
+    return p->calc_dip();
+#else
+    return Utils::Vector3d{};
+#endif
+  }
 };
 
 } // namespace GenObs
