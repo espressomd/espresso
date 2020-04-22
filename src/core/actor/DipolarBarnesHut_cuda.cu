@@ -1213,36 +1213,36 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   else
     bh_data->nnodes = (bh_data->nnodes / n_total_threads) * n_total_threads;
 
-  if (bh_data->err != 0)
+  if (bh_data->err != nullptr)
     cuda_safe_mem(cudaFree(bh_data->err));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->err), sizeof(int)));
 
-  if (bh_data->max_lps != 0)
+  if (bh_data->max_lps != nullptr)
     cuda_safe_mem(cudaFree(bh_data->max_lps));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->max_lps), sizeof(int)));
 
-  if (bh_data->child != 0)
+  if (bh_data->child != nullptr)
     cuda_safe_mem(cudaFree(bh_data->child));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->child),
                            sizeof(int) * (bh_data->nnodes + 1) * 8));
 
-  if (bh_data->count != 0)
+  if (bh_data->count != nullptr)
     cuda_safe_mem(cudaFree(bh_data->count));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->count),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
-  if (bh_data->start != 0)
+  if (bh_data->start != nullptr)
     cuda_safe_mem(cudaFree(bh_data->start));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->start),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
-  if (bh_data->sort != 0)
+  if (bh_data->sort != nullptr)
     cuda_safe_mem(cudaFree(bh_data->sort));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->sort),
                            sizeof(int) * (bh_data->nnodes + 1)));
 
   // Weight coefficients of m_bhnnodes nodes: both particles and octant cells
-  if (bh_data->mass != 0)
+  if (bh_data->mass != nullptr)
     cuda_safe_mem(cudaFree(bh_data->mass));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->mass),
                            sizeof(float) * (bh_data->nnodes + 1)));
@@ -1261,7 +1261,7 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   // are the octree box dynamical spatial constraints
   // this array is updating per each block at each interaction calculation
   // within the boundingBoxKernel
-  if (bh_data->maxp != 0)
+  if (bh_data->maxp != nullptr)
     cuda_safe_mem(cudaFree(bh_data->maxp));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->maxp),
                            sizeof(float) * bh_data->blocks * FACTOR1 * 3));
@@ -1269,17 +1269,17 @@ void allocBHmemCopy(int nbodies, BHData *bh_data) {
   // are the octree box dynamical spatial constraints
   // this array is updating per each block at each interaction calculation
   // within the boundingBoxKernel
-  if (bh_data->minp != 0)
+  if (bh_data->minp != nullptr)
     cuda_safe_mem(cudaFree(bh_data->minp));
   cuda_safe_mem(cudaMalloc((void **)&(bh_data->minp),
                            sizeof(float) * bh_data->blocks * FACTOR1 * 3));
 
-  if (bh_data->r != 0)
+  if (bh_data->r != nullptr)
     cuda_safe_mem(cudaFree(bh_data->r));
   cuda_safe_mem(
       cudaMalloc(&(bh_data->r), 3 * (bh_data->nnodes + 1) * sizeof(float)));
 
-  if (bh_data->u != 0)
+  if (bh_data->u != nullptr)
     cuda_safe_mem(cudaFree(bh_data->u));
   cuda_safe_mem(
       cudaMalloc(&(bh_data->u), 3 * (bh_data->nnodes + 1) * sizeof(float)));

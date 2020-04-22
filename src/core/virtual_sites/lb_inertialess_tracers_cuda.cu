@@ -386,7 +386,7 @@ void IBM_ForcesIntoFluid_GPU(ParticleRange particles) {
 
   // Storage only needed on master and allocated only once at the first time
   // step if ( IBM_ParticleDataInput_host == nullptr && this_node == 0 )
-  if (IBM_ParticleDataInput_host == NULL ||
+  if (IBM_ParticleDataInput_host == nullptr ||
       numParticles != IBM_numParticlesCache)
     InitCUDA_IBM(numParticles);
 
@@ -424,7 +424,7 @@ void InitCUDA_IBM(const int numParticles) {
   {
 
     // Check if we have to delete
-    if (IBM_ParticleDataInput_host != NULL) {
+    if (IBM_ParticleDataInput_host != nullptr) {
       delete[] IBM_ParticleDataInput_host;
       delete[] IBM_ParticleDataOutput_host;
       cuda_safe_mem(cudaFree(IBM_ParticleDataInput_device));

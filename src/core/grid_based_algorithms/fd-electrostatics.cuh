@@ -33,8 +33,8 @@ public:
     Parameters() {}
     Parameters(InputParameters &inputParameters)
         : InputParameters(inputParameters) {
-      charge_potential = 0;
-      greensfcn = 0;
+      charge_potential = nullptr;
+      greensfcn = nullptr;
       dim_x_padded = (inputParameters.dim_x / 2 + 1) * 2;
     }
 

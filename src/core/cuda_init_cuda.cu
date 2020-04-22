@@ -138,7 +138,7 @@ int cuda_get_device() {
 }
 
 int cuda_test_device_access() {
-  int *d = 0;
+  int *d = nullptr;
   int h = 42;
   cudaError_t err;
 

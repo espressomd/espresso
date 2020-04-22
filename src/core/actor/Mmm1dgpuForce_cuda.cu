@@ -232,8 +232,8 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
     int *dev_cutoff;
     int maxCut = 30;
     cuda_safe_mem(cudaMalloc((void **)&dev_cutoff, sizeof(int)));
-    hipLaunchKernelGGL(besselTuneKernel, dim3(1), dim3(1), 0, 0, dev_cutoff,
-                       far_switch_radius, maxCut);
+    hipLaunchKernelGGL(besselTuneKernel, dim3(1), dim3(1), 0, nullptr,
+                       dev_cutoff, far_switch_radius, maxCut);
     cuda_safe_mem(cudaMemcpy(&bessel_cutoff, dev_cutoff, sizeof(int),
                              cudaMemcpyDeviceToHost));
     cudaFree(dev_cutoff);

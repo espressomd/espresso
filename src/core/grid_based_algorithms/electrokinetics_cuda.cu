@@ -3243,7 +3243,7 @@ int ek_print_vtk_flux_fluc(int species, char *filename) {
 
   unsigned int coord[3];
 
-  if (fp == NULL) {
+  if (fp == nullptr) {
     return 1;
   }
 
@@ -3479,7 +3479,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 
   unsigned int coord[3];
 
-  if (fp == NULL) {
+  if (fp == nullptr) {
     return 1;
   }
 

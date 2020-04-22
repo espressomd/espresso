@@ -72,7 +72,7 @@ struct ScafacosData {
   std::vector<double> fields, potentials;
 };
 
-static Scafacos *scafacos = 0;
+static Scafacos *scafacos = nullptr;
 static ScafacosData particles;
 
 /** \brief Collect particle data in continuous arrays as required by fcs */
@@ -324,7 +324,7 @@ static void set_params_safe(const std::string &method,
                             int n_part) {
   if (scafacos) {
     delete scafacos;
-    scafacos = 0;
+    scafacos = nullptr;
   }
 
   scafacos = new Scafacos(method, comm_cart, params);
@@ -399,7 +399,7 @@ void free_handle() {
     mpi_call(free_handle);
   if (scafacos) {
     delete scafacos;
-    scafacos = 0;
+    scafacos = nullptr;
   }
 }
 
