@@ -27,8 +27,9 @@ class CylindricalVelocityProfile : public CylindricalPidProfileObservable {
 public:
   using CylindricalPidProfileObservable::CylindricalPidProfileObservable;
 
-  std::vector<double> evaluate(
-      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
+  std::vector<double>
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
+      const override {
     std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_r, max_r), std::make_pair(min_phi, max_phi),

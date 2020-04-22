@@ -40,8 +40,9 @@ class BondDihedrals : public PidObservable {
 public:
   using PidObservable::PidObservable;
 
-  std::vector<double> evaluate(
-      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
+  std::vector<double>
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
+      const override {
     std::vector<double> res(n_values());
     auto v1 =
         get_mi_vector(particles[1].get().r.p, particles[0].get().r.p, box_geo);

@@ -27,7 +27,7 @@
 namespace Observables {
 std::vector<double>
 CylindricalLBFluxDensityProfileAtParticlePositions::evaluate(
-    Utils::Span<std::reference_wrapper<Particle>> particles) const {
+    Utils::Span<std::reference_wrapper<const Particle>> particles) const {
 
   std::array<size_t, 3> n_bins{{n_r_bins, n_phi_bins, n_z_bins}};
   std::array<std::pair<double, double>, 3> limits{

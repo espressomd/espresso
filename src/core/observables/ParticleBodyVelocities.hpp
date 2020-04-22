@@ -31,8 +31,9 @@ class ParticleBodyVelocities : public PidObservable {
 public:
   using PidObservable::PidObservable;
 
-  std::vector<double> evaluate(
-      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
+  std::vector<double>
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
+      const override {
     std::vector<double> res(n_values());
     for (size_t i = 0; i < particles.size(); i++) {
 #ifdef ROTATION

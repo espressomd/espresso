@@ -34,8 +34,9 @@ namespace Observables {
 class CosPersistenceAngles : public PidObservable {
 public:
   using PidObservable::PidObservable;
-  std::vector<double> evaluate(
-      Utils::Span<std::reference_wrapper<Particle>> particles) const override {
+  std::vector<double>
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
+      const override {
     auto const no_of_angles = n_values();
     std::vector<double> angles(no_of_angles);
     auto const no_of_bonds = n_values() + 1;
