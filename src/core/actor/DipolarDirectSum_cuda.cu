@@ -53,8 +53,7 @@ __device__ void dipole_ia_force(int id, dds_float pf, float const *r1,
                                 float const *r2, float const *dip1,
                                 float const *dip2, dds_float *f1,
                                 dds_float *torque1, dds_float *torque2,
-                                int force_flag, dds_float box_l[3],
-                                int periodic[3]) {
+                                dds_float box_l[3], int periodic[3]) {
   dds_float r_inv, pe1, pe2, pe3, pe4, r_sq, r3_inv, r5_inv, r_sq_inv, r7_inv,
       a, b, cc, d, ab;
 #ifdef ROTATION
@@ -88,41 +87,39 @@ __device__ void dipole_ia_force(int id, dds_float pf, float const *r1,
   pe3 = scalar(_dip2, dr);
   pe4 = 3.0f * r5_inv;
 
-  // Force, if requested
-  if (force_flag) {
-    a = pe4 * pe1;
-    b = -15.0f * pe2 * pe3 * r7_inv;
-    ab = a + b;
-    cc = pe4 * pe3;
-    d = pe4 * pe2;
+  // Force
+  a = pe4 * pe1;
+  b = -15.0f * pe2 * pe3 * r7_inv;
+  ab = a + b;
+  cc = pe4 * pe3;
+  d = pe4 * pe2;
 
-    f1[0] = (pf * (ab * dr[0] + cc * _dip1[0] + d * _dip2[0]));
-    f1[1] = (pf * (ab * dr[1] + cc * _dip1[1] + d * _dip2[1]));
-    f1[2] = (pf * (ab * dr[2] + cc * _dip1[2] + d * _dip2[2]));
+  f1[0] = (pf * (ab * dr[0] + cc * _dip1[0] + d * _dip2[0]));
+  f1[1] = (pf * (ab * dr[1] + cc * _dip1[1] + d * _dip2[1]));
+  f1[2] = (pf * (ab * dr[2] + cc * _dip1[2] + d * _dip2[2]));
 
 #ifdef ROTATION
-    // Torques
-    ax = _dip1[1] * _dip2[2] - _dip2[1] * _dip1[2];
-    ay = _dip2[0] * _dip1[2] - _dip1[0] * _dip2[2];
-    az = _dip1[0] * _dip2[1] - _dip2[0] * _dip1[1];
+  // Torques
+  ax = _dip1[1] * _dip2[2] - _dip2[1] * _dip1[2];
+  ay = _dip2[0] * _dip1[2] - _dip1[0] * _dip2[2];
+  az = _dip1[0] * _dip2[1] - _dip2[0] * _dip1[1];
 
-    bx = _dip1[1] * dr[2] - dr[1] * _dip1[2];
-    by = dr[0] * _dip1[2] - _dip1[0] * dr[2];
-    bz = _dip1[0] * dr[1] - dr[0] * _dip1[1];
+  bx = _dip1[1] * dr[2] - dr[1] * _dip1[2];
+  by = dr[0] * _dip1[2] - _dip1[0] * dr[2];
+  bz = _dip1[0] * dr[1] - dr[0] * _dip1[1];
 
-    torque1[0] = (pf * (-ax * r3_inv + bx * cc));
-    torque1[1] = (pf * (-ay * r3_inv + by * cc));
-    torque1[2] = (pf * (-az * r3_inv + bz * cc));
+  torque1[0] = (pf * (-ax * r3_inv + bx * cc));
+  torque1[1] = (pf * (-ay * r3_inv + by * cc));
+  torque1[2] = (pf * (-az * r3_inv + bz * cc));
 
-    bx = _dip2[1] * dr[2] - dr[1] * _dip2[2];
-    by = dr[0] * _dip2[2] - _dip2[0] * dr[2];
-    bz = _dip2[0] * dr[1] - dr[0] * _dip2[1];
+  bx = _dip2[1] * dr[2] - dr[1] * _dip2[2];
+  by = dr[0] * _dip2[2] - _dip2[0] * dr[2];
+  bz = _dip2[0] * dr[1] - dr[0] * _dip2[1];
 
-    torque2[0] = pf * (ax * r3_inv + bx * d);
-    torque2[1] = pf * (ay * r3_inv + by * d);
-    torque2[2] = pf * (az * r3_inv + bz * d);
+  torque2[0] = pf * (ax * r3_inv + bx * d);
+  torque2[1] = pf * (ay * r3_inv + by * d);
+  torque2[2] = pf * (az * r3_inv + bz * d);
 #endif
-  }
 }
 
 __device__ dds_float dipole_ia_energy(int id, dds_float pf, float const *r1,
@@ -194,7 +191,7 @@ __global__ void DipolarDirectSum_kernel_force(dds_float pf, int n, float *pos,
 
   for (int j = i + 1; j < n; j++) {
     dipole_ia_force(i, pf, pos + 3 * i, pos + 3 * j, dip + 3 * i, dip + 3 * j,
-                    fi, ti, tj, 1, box_l, periodic);
+                    fi, ti, tj, box_l, periodic);
     for (int k = 0; k < 3; k++) {
       // Add rhs to global memory
       atomicAdd(f + 3 * j + k, -fi[k]);

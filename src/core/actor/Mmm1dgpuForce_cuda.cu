@@ -85,7 +85,7 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
     throw std::runtime_error(
         "Error: Please set box length before initializing MMM1D!");
   }
-  if (need_tune == true && s.npart_gpu() > 0) {
+  if (need_tune && s.npart_gpu() > 0) {
     set_params(s.box()[2], coulomb.prefactor, maxPWerror, far_switch_radius,
                bessel_cutoff);
     tune(s, maxPWerror, far_switch_radius, bessel_cutoff);

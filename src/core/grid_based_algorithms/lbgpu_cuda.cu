@@ -1549,7 +1549,7 @@ __device__ void calc_viscous_force(
     CUDA_particle_data *particle_data, float *particle_force,
     unsigned int part_index, float *delta_j,
     Utils::Array<unsigned int, no_of_neighbours> &node_index, LB_rho_v_gpu *d_v,
-    int flag_cs, uint64_t philox_counter, float friction) {
+    bool flag_cs, uint64_t philox_counter, float friction) {
   float flag_cs_float = static_cast<float>(flag_cs);
   // Zero out workspace
 #pragma unroll
@@ -2224,14 +2224,14 @@ __global__ void calc_fluid_particle_ia(
        * force that acts back onto the fluid. */
       calc_viscous_force<no_of_neighbours>(
           n_a, delta, particle_data.data(), particle_force, part_index, delta_j,
-          node_index, d_v, 0, philox_counter, friction);
+          node_index, d_v, false, philox_counter, friction);
       calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
 
 #ifdef ENGINE
       if (particle_data[part_index].swim.swimming) {
         calc_viscous_force<no_of_neighbours>(
             n_a, delta, particle_data.data(), particle_force, part_index,
-            delta_j, node_index, d_v, 1, philox_counter, friction);
+            delta_j, node_index, d_v, true, philox_counter, friction);
         calc_node_force<no_of_neighbours>(delta, delta_j, node_index, node_f);
       }
 #endif

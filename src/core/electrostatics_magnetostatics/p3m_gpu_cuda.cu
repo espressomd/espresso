@@ -555,25 +555,25 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
 void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   espressoSystemInterface.requestParticleStructGpu();
 
-  int reinit_if = 0, mesh_changed = 0;
+  bool reinit_if = false, mesh_changed = false;
   p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
 
   if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
     p3m_gpu_data.alpha = static_cast<REAL_TYPE>(alpha);
-    reinit_if = 1;
+    reinit_if = true;
   }
 
   if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.cao != cao)) {
     p3m_gpu_data.cao = cao;
     p3m_gpu_data.pos_shift = (REAL_TYPE)((p3m_gpu_data.cao - 1) / 2);
-    reinit_if = 1;
+    reinit_if = true;
   }
 
   if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.mesh[0] != mesh[0]) ||
       (p3m_gpu_data.mesh[1] != mesh[1]) || (p3m_gpu_data.mesh[2] != mesh[2])) {
     std::copy(mesh, mesh + 3, p3m_gpu_data.mesh);
-    mesh_changed = 1;
-    reinit_if = 1;
+    mesh_changed = true;
+    reinit_if = true;
   }
 
   auto const box_l = box_geo.length();
@@ -581,7 +581,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.box[0] != box_l[0]) ||
       (p3m_gpu_data.box[1] != box_l[1]) || (p3m_gpu_data.box[2] != box_l[2])) {
     std::copy(box_l.begin(), box_l.end(), p3m_gpu_data.box);
-    reinit_if = 1;
+    reinit_if = true;
   }
 
   p3m_gpu_data.mesh_z_padded = (mesh[2] / 2 + 1) * 2;
@@ -592,7 +592,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
         static_cast<REAL_TYPE>(p3m_gpu_data.mesh[i]) / p3m_gpu_data.box[i];
   }
 
-  if ((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
+  if ((p3m_gpu_data_initialized == 1) && mesh_changed) {
     cuda_safe_mem(cudaFree(p3m_gpu_data.charge_mesh));
     p3m_gpu_data.charge_mesh = 0;
     cuda_safe_mem(cudaFree(p3m_gpu_data.force_mesh_x));
@@ -645,7 +645,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
     }
   }
 
-  if (((reinit_if == 1) || (p3m_gpu_data_initialized == 0)) &&
+  if ((reinit_if || (p3m_gpu_data_initialized == 0)) &&
       (p3m_gpu_data.mesh_size > 0)) {
     dim3 grid(1, 1, 1);
     dim3 block(1, 1, 1);

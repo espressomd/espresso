@@ -181,15 +181,12 @@ void lb_reinit_parameters_gpu() {
         static_cast<unsigned int>(round(box_geo.length()[2] / lbpar_gpu.agrid));
 
     unsigned int tmp[3];
-
     tmp[0] = lbpar_gpu.dim_x;
     tmp[1] = lbpar_gpu.dim_y;
     tmp[2] = lbpar_gpu.dim_z;
 
     /* sanity checks */
-    int dir;
-
-    for (dir = 0; dir < 3; dir++) {
+    for (int dir = 0; dir < 3; dir++) {
       /* check if box_l is compatible with lattice spacing */
       if (fabs(box_geo.length()[dir] -
                static_cast<float>(tmp[dir]) * lbpar_gpu.agrid) > 1.0e-3) {

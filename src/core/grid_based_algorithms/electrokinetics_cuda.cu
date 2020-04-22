@@ -3877,12 +3877,6 @@ int ek_set_agrid(float agrid) {
   return 0;
 }
 
-int ek_set_lb_force(float *ext_force_density) {
-  for (int i = 0; i < 3; i++)
-    ek_parameters.lb_force_density[i] = ext_force_density[i];
-  return 0;
-}
-
 int ek_set_lb_density(float lb_density) {
 
   ek_parameters.lb_density = lb_density;
@@ -4120,7 +4114,7 @@ int ek_save_checkpoint(char *filename, char *lb_filename) {
   free(densities);
   fout.close();
 
-  lb_lbfluid_save_checkpoint(lb_filename, 1);
+  lb_lbfluid_save_checkpoint(lb_filename, true);
   return 0;
 }
 
@@ -4147,7 +4141,7 @@ int ek_load_checkpoint(char *filename) {
   free(densities);
   fin.close();
 
-  lb_lbfluid_load_checkpoint((char *)(fname + ".lb").c_str(), 1);
+  lb_lbfluid_load_checkpoint((char *)(fname + ".lb").c_str(), true);
 
   ek_integrate_electrostatics();
 
