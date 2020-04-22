@@ -184,9 +184,8 @@ void lb_reinit_parameters_gpu() {
 
 #ifdef ELECTROKINETICS
   if (ek_initialized) {
-    lbpar_gpu.dim_x = (unsigned int)round(
-        box_geo.length()[0] /
-        lbpar_gpu.agrid); // TODO code duplication with lb.c start
+    lbpar_gpu.dim_x =
+        (unsigned int)round(box_geo.length()[0] / lbpar_gpu.agrid);
     lbpar_gpu.dim_y =
         (unsigned int)round(box_geo.length()[1] / lbpar_gpu.agrid);
     lbpar_gpu.dim_z =
@@ -212,7 +211,7 @@ void lb_reinit_parameters_gpu() {
 
     lbpar_gpu.number_of_nodes =
         lbpar_gpu.dim_x * lbpar_gpu.dim_y * lbpar_gpu.dim_z;
-    lbpar_gpu.tau = (float)time_step; // TODO code duplication with lb.c end
+    lbpar_gpu.tau = (float)time_step;
   }
 #endif
 
@@ -223,7 +222,7 @@ void lb_reinit_parameters_gpu() {
  *  All derived parameters and the fluid are reset to their default values.
  */
 void lb_init_gpu() {
-  /** set parameters for transfer to gpu */
+  /* set parameters for transfer to gpu */
   lb_reinit_parameters_gpu();
 
   lb_realloc_particles_gpu();

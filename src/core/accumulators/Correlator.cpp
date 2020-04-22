@@ -248,8 +248,8 @@ void Correlator::initialize() {
 
   if (m_tau_max <= m_dt) {
     throw std::runtime_error(init_errors[4]);
-
-  } // set hierarchy depth which can  accommodate at least m_tau_max
+  }
+  // set hierarchy depth which can accommodate at least m_tau_max
   if ((m_tau_max / m_dt) < m_tau_lin) {
     hierarchy_depth = 1;
   } else {

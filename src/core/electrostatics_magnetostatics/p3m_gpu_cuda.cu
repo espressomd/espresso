@@ -412,14 +412,14 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
                                      const int parts_per_block) {
   const int part_in_block = threadIdx.x / cao;
   const int cao_id_x = threadIdx.x - part_in_block * cao;
-  /** id of the particle **/
+  /* id of the particle */
   int id =
       parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
   if (id >= par.n_part)
     return;
-  /** position relative to the closest gird point **/
+  /* position relative to the closest gird point */
   REAL_TYPE m_pos[3];
-  /** index of the nearest mesh point **/
+  /* index of the nearest mesh point */
   int nmp_x, nmp_y, nmp_z;
 
   const CUDA_particle_data p = pdata[id];
@@ -541,14 +541,14 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
                                      REAL_TYPE prefactor, int parts_per_block) {
   const int part_in_block = threadIdx.x / cao;
   const int cao_id_x = threadIdx.x - part_in_block * cao;
-  /** id of the particle **/
+  /* id of the particle */
   int id =
       parts_per_block * (blockIdx.x * gridDim.y + blockIdx.y) + part_in_block;
   if (id >= par.n_part)
     return;
-  /** position relative to the closest grid point **/
+  /* position relative to the closest grid point */
   REAL_TYPE m_pos[3];
-  /** index of the nearest mesh point **/
+  /* index of the nearest mesh point */
   int nmp_x, nmp_y, nmp_z;
 
   const CUDA_particle_data p = pdata[id];
@@ -631,7 +631,7 @@ void assign_forces(const CUDA_particle_data *const pdata, const P3MGpuData p,
   block.y = cao;
   block.z = cao;
 
-  /** Switch for assignment templates, the shared version only is faster for cao
+  /* Switch for assignment templates, the shared version only is faster for cao
    * > 2 */
   switch (cao) {
   case 1:
@@ -755,7 +755,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
       }
 #endif
 
-      /** Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
+      /* Size of the complex mesh Nx * Ny * ( Nz / 2 + 1 ) */
       const int cmesh_size = p3m_gpu_data.mesh[0] * p3m_gpu_data.mesh[1] *
                              (p3m_gpu_data.mesh[2] / 2 + 1);
 
@@ -850,10 +850,10 @@ void p3m_gpu_add_farfield_force() {
   cuda_safe_mem(cudaMemset(p3m_gpu_data.charge_mesh, 0,
                            p3m_gpu_data.mesh_size * sizeof(REAL_TYPE)));
 
-  /** Interpolate the charges to the mesh */
+  /* Interpolate the charges to the mesh */
   assign_charges(lb_particle_gpu, p3m_gpu_data);
 
-  /** Do forward FFT of the charge mesh */
+  /* Do forward FFT of the charge mesh */
   if (FFT_FORW_FFT(p3m_gpu_fft_plans.forw_plan,
                    (REAL_TYPE *)p3m_gpu_data.charge_mesh,
                    p3m_gpu_data.charge_mesh) != CUFFT_SUCCESS) {
@@ -861,13 +861,13 @@ void p3m_gpu_add_farfield_force() {
     return;
   }
 
-  /** Do convolution */
+  /* Do convolution */
   KERNELCALL(apply_influence_function, gridConv, threadsConv, p3m_gpu_data);
 
-  /** Take derivative */
+  /* Take derivative */
   KERNELCALL(apply_diff_op, gridConv, threadsConv, p3m_gpu_data);
 
-  /** Transform the components of the electric field back */
+  /* Transform the components of the electric field back */
   FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_x,
                (REAL_TYPE *)p3m_gpu_data.force_mesh_x);
   FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_y,
@@ -875,7 +875,7 @@ void p3m_gpu_add_farfield_force() {
   FFT_BACK_FFT(p3m_gpu_fft_plans.back_plan, p3m_gpu_data.force_mesh_z,
                (REAL_TYPE *)p3m_gpu_data.force_mesh_z);
 
-  /** Assign the forces from the mesh back to the particles */
+  /* Assign the forces from the mesh back to the particles */
   assign_forces(lb_particle_gpu, p3m_gpu_data, lb_particle_force_gpu,
                 prefactor);
 }

@@ -186,7 +186,7 @@ void lb_init_boundaries() {
       }
     }
 
-    /**call of cuda fkt*/
+    /* call of cuda fkt */
     std::vector<float> boundary_velocity(3 * (lbboundaries.size() + 1));
     int n = 0;
     for (auto lbb = lbboundaries.begin(); lbb != lbboundaries.end();

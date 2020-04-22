@@ -113,7 +113,6 @@ static void determine_bessel_radii(double maxPWerror, int maxP) {
   bessel_radii.resize(maxP);
   for (int P = 1; P <= maxP; ++P) {
     bessel_radii[P - 1] = determine_minrad(maxPWerror, P);
-    // printf("cutoff %d %f\n", P, bessel_radii[P-1]);
   }
 }
 
@@ -123,7 +122,6 @@ static void prepare_polygamma_series(double maxPWerror, double maxrad2) {
   double err;
   double rhomax2nm2, rhomax2 = uz2 * maxrad2;
   /* rhomax2 < 1, so rhomax2m2 falls monotonously */
-
   n = 1;
   rhomax2nm2 = 1.0;
   do {
@@ -133,7 +131,6 @@ static void prepare_polygamma_series(double maxPWerror, double maxrad2) {
     err = 2 * n * fabs(mod_psi_even(n, 0.5)) * rhomax2nm2;
     rhomax2nm2 *= rhomax2;
     n++;
-    // fprintf(stderr, "%f\n", err);
   } while (err > 0.1 * maxPWerror);
 }
 
@@ -149,7 +146,6 @@ int MMM1D_set_params(double switch_rad, double maxPWerror) {
 }
 
 int MMM1D_sanity_checks() {
-  // char *errtxt;
   if (box_geo.periodic(0) || box_geo.periodic(1) || !box_geo.periodic(2)) {
     runtimeErrorMsg() << "MMM1D requires periodicity 0 0 1";
     return 1;
@@ -216,7 +212,6 @@ void add_mmm1d_coulomb_pair_force(double chpref, Utils::Vector3d const &d,
 
       r2nm1 = r2n;
     }
-    // fprintf(stderr, "max_n %d\n", n);
 
     Fx = prefL3_i * sr * d[0];
     Fy = prefL3_i * sr * d[1];
