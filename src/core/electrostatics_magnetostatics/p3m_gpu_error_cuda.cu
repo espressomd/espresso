@@ -24,7 +24,7 @@
  */
 #include "cuda_wrapper.hpp"
 
-#include <stdio.h>
+#include <cstdio>
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 

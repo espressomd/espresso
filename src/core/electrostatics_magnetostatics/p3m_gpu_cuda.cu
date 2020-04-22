@@ -53,8 +53,8 @@
 
 #include "BoxGeometry.hpp"
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include "cuda_interface.hpp"
 #include "cuda_utils.hpp"

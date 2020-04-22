@@ -32,8 +32,8 @@ extern int this_node;
 #ifdef CUDA
 #include <boost/optional.hpp>
 #include <cassert>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 #include "cuda_interface.hpp"
@@ -57,8 +57,8 @@ extern int this_node;
 #include <thrust/transform_reduce.h>
 
 #include <cstdint>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <vector>
 
 /** device_rho_v: struct for hydrodynamic fields: this is for internal use
