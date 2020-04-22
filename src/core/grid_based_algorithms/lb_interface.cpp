@@ -466,7 +466,7 @@ void lb_lbfluid_set_lattice_switch(ActiveLB local_lattice_switch) {
 void lb_lbfluid_set_kT(double kT) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    lbpar_gpu.kT = kT;
+    lbpar_gpu.kT = static_cast<float>(kT);
 #endif
   } else if (lattice_switch == ActiveLB::CPU) {
     lbpar.kT = kT;
@@ -598,8 +598,9 @@ void lb_lbfluid_print_vtk_velocity(const std::string &filename,
     for (pos[2] = bb_low[2]; pos[2] <= bb_high[2]; pos[2]++)
       for (pos[1] = bb_low[1]; pos[1] <= bb_high[1]; pos[1]++)
         for (pos[0] = bb_low[0]; pos[0] <= bb_high[0]; pos[0]++) {
-          int j = lbpar_gpu.dim_y * lbpar_gpu.dim_x * pos[2] +
-                  lbpar_gpu.dim_x * pos[1] + pos[0];
+          auto const j =
+              static_cast<int>(lbpar_gpu.dim_y * lbpar_gpu.dim_x * pos[2] +
+                               lbpar_gpu.dim_x * pos[1] + pos[0]);
           fprintf(fp, "%f %f %f\n", host_values[j].v[0] * lattice_speed,
                   host_values[j].v[1] * lattice_speed,
                   host_values[j].v[2] * lattice_speed);
@@ -642,9 +643,9 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
     lb_get_boundary_flags_GPU(bound_array.data());
 
     Utils::Vector3i xyz;
-    for (int j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
+    for (int j = 0; j < static_cast<int>(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
-      int k = j / lbpar_gpu.dim_x;
+      auto k = j / lbpar_gpu.dim_x;
       xyz[1] = k % lbpar_gpu.dim_y;
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;
@@ -689,7 +690,7 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
     int j;
     for (j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
       xyz[0] = j % lbpar_gpu.dim_x;
-      int k = j / lbpar_gpu.dim_x;
+      auto k = j / lbpar_gpu.dim_x;
       xyz[1] = k % lbpar_gpu.dim_y;
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;
@@ -994,8 +995,8 @@ bool lb_lbnode_is_index_valid(Utils::Vector3i const &ind) {
 double lb_lbnode_get_density(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    auto const single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                                  ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     static LB_rho_v_pi_gpu host_print_values;
     lb_print_node_GPU(single_nodeindex, &host_print_values);
     return host_print_values.rho;
@@ -1014,8 +1015,8 @@ const Utils::Vector3d lb_lbnode_get_velocity(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     static LB_rho_v_pi_gpu host_print_values;
-    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    auto const single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                                  ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, &host_print_values);
     return {{host_print_values.v[0], host_print_values.v[1],
              host_print_values.v[2]}};
@@ -1048,8 +1049,8 @@ const Utils::Vector6d lb_lbnode_get_stress_neq(const Utils::Vector3i &ind) {
 #ifdef CUDA
     Utils::Vector6d stress{};
     static LB_rho_v_pi_gpu host_print_values;
-    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    auto const single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                                  ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_print_node_GPU(single_nodeindex, &host_print_values);
     for (int i = 0; i < 6; i++) {
       stress[i] = host_print_values.pi[i];
@@ -1113,10 +1114,10 @@ int lb_lbnode_get_boundary(const Utils::Vector3i &ind) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
     unsigned int host_flag;
-    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    auto const single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                                  ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_get_boundary_flag_GPU(single_nodeindex, &host_flag);
-    return host_flag;
+    return static_cast<int>(host_flag);
 #else
     return {};
 #endif //  CUDA
@@ -1152,8 +1153,8 @@ const Utils::Vector19d lb_lbnode_get_pop(const Utils::Vector3i &ind) {
 void lb_lbnode_set_density(const Utils::Vector3i &ind, double p_density) {
   if (lattice_switch == ActiveLB::GPU) {
 #ifdef CUDA
-    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    auto const single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                                  ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     auto const host_density = static_cast<float>(p_density);
     lb_set_node_rho_GPU(single_nodeindex, host_density);
 #endif //  CUDA
@@ -1178,8 +1179,8 @@ void lb_lbnode_set_velocity(const Utils::Vector3i &ind,
     host_velocity[0] = static_cast<float>(u[0]);
     host_velocity[1] = static_cast<float>(u[1]);
     host_velocity[2] = static_cast<float>(u[2]);
-    int single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
-                           ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
+    auto const single_nodeindex = ind[0] + ind[1] * lbpar_gpu.dim_x +
+                                  ind[2] * lbpar_gpu.dim_x * lbpar_gpu.dim_y;
     lb_set_node_velocity_GPU(single_nodeindex, host_velocity);
 #endif //  CUDA
   } else if (lattice_switch == ActiveLB::CPU) {

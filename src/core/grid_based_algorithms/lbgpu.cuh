@@ -63,10 +63,14 @@ inline __device__ float4 random_wrapper_philox(unsigned int index,
       curand_Philox4x32_10(make_uint4(index, philox_counter_hi, 0, mode),
                            make_uint2(philox_counter_low, 0));
   float4 rnd_floats;
-  rnd_floats.w = rnd_ints.w * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.x = rnd_ints.x * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.y = rnd_ints.y * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
-  rnd_floats.z = rnd_ints.z * CURAND_2POW32_INV + (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.w = static_cast<float>(rnd_ints.w) * CURAND_2POW32_INV +
+                 (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.x = static_cast<float>(rnd_ints.x) * CURAND_2POW32_INV +
+                 (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.y = static_cast<float>(rnd_ints.y) * CURAND_2POW32_INV +
+                 (CURAND_2POW32_INV / 2.0f);
+  rnd_floats.z = static_cast<float>(rnd_ints.z) * CURAND_2POW32_INV +
+                 (CURAND_2POW32_INV / 2.0f);
   return rnd_floats;
 }
 #endif //  CUDA

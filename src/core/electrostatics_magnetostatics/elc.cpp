@@ -511,7 +511,7 @@ static void add_z_force(const ParticleRange &particles) {
 /*****************************************************************/
 
 static void setup_P(int p, double omega, const ParticleRange &particles) {
-  int ic, o = (p - 1) * particles.size();
+  int ic, o = static_cast<int>((p - 1) * particles.size());
   double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
                 (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
@@ -617,7 +617,7 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 }
 
 static void setup_Q(int q, double omega, const ParticleRange &particles) {
-  int ic, o = (q - 1) * particles.size();
+  int ic, o = static_cast<int>((q - 1) * particles.size());
   double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
                 (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
@@ -793,7 +793,7 @@ static double Q_energy(double omega, int n_part) {
 
 static void setup_PQ(int p, int q, double omega,
                      const ParticleRange &particles) {
-  int ic, ox = (p - 1) * particles.size(), oy = (q - 1) * particles.size();
+  int ic, ox = static_cast<int>((p - 1) * particles.size()), oy = static_cast<int>((q - 1) * particles.size());
   double pref = -coulomb.prefactor * 8 * M_PI * ux * uy /
                 (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;

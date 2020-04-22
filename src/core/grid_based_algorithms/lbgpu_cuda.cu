@@ -430,9 +430,9 @@ reset_LB_force_densities_kernel(LB_node_force_density_gpu node_f,
 void reset_LB_force_densities_GPU(bool buffer) {
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(reset_LB_force_densities_kernel, dim_grid, threads_per_block,
@@ -1437,12 +1437,12 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
     for (int j = 0; j < 3; ++j) {
 #pragma unroll 1
       for (int k = 0; k < 3; ++k) {
-        auto const x =
-            fold_if_necessary(center_node_index[0] - 1 + i, para->dim_x);
-        auto const y =
-            fold_if_necessary(center_node_index[1] - 1 + j, para->dim_y);
-        auto const z =
-            fold_if_necessary(center_node_index[2] - 1 + k, para->dim_z);
+        auto const x = fold_if_necessary(center_node_index[0] - 1 + i,
+                                         static_cast<int>(para->dim_x));
+        auto const y = fold_if_necessary(center_node_index[1] - 1 + j,
+                                         static_cast<int>(para->dim_y));
+        auto const z = fold_if_necessary(center_node_index[2] - 1 + k,
+                                         static_cast<int>(para->dim_z));
         delta[cnt] = temp_delta[i].x * temp_delta[j].y * temp_delta[k].z;
         auto const index = xyz_to_index(x, y, z);
         node_indices[cnt] = index;
@@ -1493,18 +1493,21 @@ velocity_interpolation(LB_nodes_gpu n_a, float *particle_position,
 
   // modulo for negative numbers is strange at best, shift to make sure we are
   // positive
-  int const x = (left_node_index[0] + para->dim_x) % para->dim_x;
-  int const y = (left_node_index[1] + para->dim_y) % para->dim_y;
-  int const z = (left_node_index[2] + para->dim_z) % para->dim_z;
+  int const x = (left_node_index[0] + static_cast<int>(para->dim_x)) %
+                static_cast<int>(para->dim_x);
+  int const y = (left_node_index[1] + static_cast<int>(para->dim_y)) %
+                static_cast<int>(para->dim_y);
+  int const z = (left_node_index[2] + static_cast<int>(para->dim_z)) %
+                static_cast<int>(para->dim_z);
   auto xp1 = x + 1;
   auto yp1 = y + 1;
   auto zp1 = z + 1;
   auto fold_if_necessary = [](int ind, int dim) {
     return ind >= dim ? ind % dim : ind;
   };
-  xp1 = fold_if_necessary(xp1, para->dim_x);
-  yp1 = fold_if_necessary(yp1, para->dim_y);
-  zp1 = fold_if_necessary(zp1, para->dim_z);
+  xp1 = fold_if_necessary(xp1, static_cast<int>(para->dim_x));
+  yp1 = fold_if_necessary(yp1, static_cast<int>(para->dim_y));
+  zp1 = fold_if_necessary(zp1, static_cast<int>(para->dim_z));
   node_index[0] = xyz_to_index(x, y, z);
   node_index[1] = xyz_to_index(xp1, y, z);
   node_index[2] = xyz_to_index(x, yp1, z);
@@ -1547,7 +1550,8 @@ __device__ void calc_viscous_force(
     unsigned int part_index, float *delta_j,
     Utils::Array<unsigned int, no_of_neighbours> &node_index, LB_rho_v_gpu *d_v,
     int flag_cs, uint64_t philox_counter, float friction) {
-// Zero out workspace
+  float flag_cs_float = static_cast<float>(flag_cs);
+  // Zero out workspace
 #pragma unroll
   for (int jj = 0; jj < 3; ++jj) {
     delta_j[jj] = 0.0f;
@@ -1555,11 +1559,11 @@ __device__ void calc_viscous_force(
 
   // Zero out only if we are at the centre of the particle <=> flag_cs = 0
   particle_force[3 * part_index + 0] =
-      flag_cs * particle_force[3 * part_index + 0];
+      flag_cs_float * particle_force[3 * part_index + 0];
   particle_force[3 * part_index + 1] =
-      flag_cs * particle_force[3 * part_index + 1];
+      flag_cs_float * particle_force[3 * part_index + 1];
   particle_force[3 * part_index + 2] =
-      flag_cs * particle_force[3 * part_index + 2];
+      flag_cs_float * particle_force[3 * part_index + 2];
 
   float position[3];
   position[0] = particle_data[part_index].p[0];
@@ -1579,11 +1583,11 @@ __device__ void calc_viscous_force(
   // Extrapolate position by dipole length if we are at the centre of the
   // particle
   position[0] +=
-      flag_cs * direction * particle_data[part_index].swim.director[0];
+      flag_cs_float * direction * particle_data[part_index].swim.director[0];
   position[1] +=
-      flag_cs * direction * particle_data[part_index].swim.director[1];
+      flag_cs_float * direction * particle_data[part_index].swim.director[1];
   position[2] +=
-      flag_cs * direction * particle_data[part_index].swim.director[2];
+      flag_cs_float * direction * particle_data[part_index].swim.director[2];
 #endif
 
   float3 const interpolated_u =
@@ -1646,27 +1650,30 @@ __device__ void calc_viscous_force(
      in calc_node_force (eq. (12) @cite ahlrichs99a) */
 
   // only add to particle_force for particle centre <=> (1-flag_cs) = 1
-  particle_force[3 * part_index + 0] += (1 - flag_cs) * viscforce_density.x;
-  particle_force[3 * part_index + 1] += (1 - flag_cs) * viscforce_density.y;
-  particle_force[3 * part_index + 2] += (1 - flag_cs) * viscforce_density.z;
+  particle_force[3 * part_index + 0] +=
+      (1 - flag_cs_float) * viscforce_density.x;
+  particle_force[3 * part_index + 1] +=
+      (1 - flag_cs_float) * viscforce_density.y;
+  particle_force[3 * part_index + 2] +=
+      (1 - flag_cs_float) * viscforce_density.z;
 
   // only add to particle_force for particle centre <=> (1-flag_cs) = 1
-  delta_j[0] -= ((1 - flag_cs) * viscforce_density.x) * para->time_step *
+  delta_j[0] -= ((1 - flag_cs_float) * viscforce_density.x) * para->time_step *
                 para->tau / para->agrid;
-  delta_j[1] -= ((1 - flag_cs) * viscforce_density.y) * para->time_step *
+  delta_j[1] -= ((1 - flag_cs_float) * viscforce_density.y) * para->time_step *
                 para->tau / para->agrid;
-  delta_j[2] -= ((1 - flag_cs) * viscforce_density.z) * para->time_step *
+  delta_j[2] -= ((1 - flag_cs_float) * viscforce_density.z) * para->time_step *
                 para->tau / para->agrid;
 
 #ifdef ENGINE
   // add swimming force to source position
-  delta_j[0] -= flag_cs * particle_data[part_index].swim.f_swim *
+  delta_j[0] -= flag_cs_float * particle_data[part_index].swim.f_swim *
                 particle_data[part_index].swim.director[0] * para->time_step *
                 para->tau / para->agrid;
-  delta_j[1] -= flag_cs * particle_data[part_index].swim.f_swim *
+  delta_j[1] -= flag_cs_float * particle_data[part_index].swim.f_swim *
                 particle_data[part_index].swim.director[1] * para->time_step *
                 para->tau / para->agrid;
-  delta_j[2] -= flag_cs * particle_data[part_index].swim.f_swim *
+  delta_j[2] -= flag_cs_float * particle_data[part_index].swim.f_swim *
                 particle_data[part_index].swim.director[2] * para->time_step *
                 para->tau / para->agrid;
 #endif
@@ -2431,9 +2438,9 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, boundaries);
@@ -2468,9 +2475,9 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   /* calc of velocity densities from given parameters and initialize the
@@ -2519,9 +2526,9 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(reset_boundaries, dim_grid, threads_per_block, boundaries);
@@ -2566,9 +2573,9 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(reinit_node_force, dim_grid, threads_per_block, node_f);
@@ -2587,10 +2594,10 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
     /* values for the particle kernel */
     int threads_per_block_particles = 64;
     int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x =
+    int blocks_per_grid_particles_x = static_cast<int>(
         (device_particles.size() +
          threads_per_block_particles * blocks_per_grid_particles_y - 1) /
-        (threads_per_block_particles * blocks_per_grid_particles_y);
+        (threads_per_block_particles * blocks_per_grid_particles_y));
     dim3 dim_grid_particles =
         make_uint3(blocks_per_grid_particles_x, blocks_per_grid_particles_y, 1);
     if (lbpar_gpu.kT > 0.0) {
@@ -2620,9 +2627,9 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(get_mesoscopic_values_in_LB_units, dim_grid, threads_per_block,
@@ -2641,9 +2648,9 @@ void lb_get_boundary_flags_GPU(unsigned int *host_bound_array) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(lb_get_boundaries, dim_grid, threads_per_block, *current_nodes,
@@ -2692,9 +2699,9 @@ void lb_calc_fluid_mass_GPU(double *mass) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(calc_mass, dim_grid, threads_per_block, *current_nodes, tot_mass);
@@ -2719,9 +2726,9 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
   KERNELCALL(momentum, dim_grid, threads_per_block, *current_nodes,
@@ -2836,9 +2843,9 @@ void lb_integrate_GPU() {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  int blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
-      (threads_per_block * blocks_per_grid_y);
+      (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 #ifdef LB_BOUNDARIES_GPU
   if (LBBoundaries::lbboundaries.size() > 0) {

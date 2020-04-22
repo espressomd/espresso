@@ -39,7 +39,7 @@ typedef float dds_float;
 class DipolarBarnesHut : public Actor {
 public:
   DipolarBarnesHut(SystemInterface &s, float epssq, float itolsq) {
-    k = dipole.prefactor;
+    k = static_cast<float>(dipole.prefactor);
     m_epssq = epssq;
     m_itolsq = itolsq;
     setBHPrecision(&m_epssq, &m_itolsq);
@@ -57,7 +57,7 @@ public:
   };
 
   void computeForces(SystemInterface &s) override {
-    allocBHmemCopy(s.npart_gpu(), &m_bh_data);
+    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
 
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);
@@ -73,7 +73,7 @@ public:
     }
   };
   void computeEnergy(SystemInterface &s) override {
-    allocBHmemCopy(s.npart_gpu(), &m_bh_data);
+    allocBHmemCopy(static_cast<int>(s.npart_gpu()), &m_bh_data);
 
     fillConstantPointers(s.rGpuBegin(), s.dipGpuBegin(), m_bh_data);
     initBHgpu(m_bh_data.blocks);

@@ -55,8 +55,8 @@ __device__ __constant__ volatile BHData bhpara[1];
 // The thread with a lower index will operate longer and
 // final result (here: the sum) is flowing down towards zero thread.
 __device__ void dds_sumReduction_BH(dds_float *input, dds_float *sum) {
-  int tid = threadIdx.x;
-  for (int i = blockDim.x; i > 1; i /= 2) {
+  int tid = static_cast<int>(threadIdx.x);
+  for (int i = static_cast<int>(blockDim.x); i > 1; i /= 2) {
     __syncthreads();
     if (tid < i / 2)
       input[tid] += input[i / 2 + tid];
@@ -105,14 +105,15 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
   // inc = [number of blocks: gridDim.x] * [THREADS1 per block within given
   // kernel]. Hence, this approach could handle an infinite number of bodies
   // (particles)
-  i = threadIdx.x;
+  i = static_cast<int>(threadIdx.x);
   inc = THREADS1 * gridDim.x;
   // j is an absolute index of the particle.
   // It is shifted over a count of the passed block threads behind: blockIdx.x *
   // THREADS1. NOTE: this loop is extrema search among all particles of the
   // given thread in the present block. However, one is not among all threads of
   // this block.
-  for (j = i + blockIdx.x * THREADS1; j < bhpara->nbodies; j += inc)
+  for (j = i + static_cast<int>(blockIdx.x) * THREADS1; j < bhpara->nbodies;
+       j += inc)
     for (l = 0; l < 3; l++) {
       val = bhpara->r[3 * j + l];
       minp[l] = min(minp[l], val);
@@ -150,7 +151,7 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
   // and other per-block operations.
   if (i == 0) {
     // per k-th block
-    k = blockIdx.x;
+    k = static_cast<int>(blockIdx.x);
     for (l = 0; l < 3; l++) {
       // global memory storage of the per-block extrema
       bhpara->minp[3 * k + l] = minp[l];
@@ -159,7 +160,7 @@ __global__ __launch_bounds__(THREADS1, FACTOR1) void boundingBoxKernel() {
       // contain de facto already reduced (see above) shared extrema smin/smax
     }
 
-    n_blocks = gridDim.x - 1;
+    n_blocks = static_cast<int>(gridDim.x) - 1;
     // The block increment is performing by its zero thread.
     if (n_blocks == atomicInc((unsigned int *)&blkcntd, n_blocks)) {
       // I'm the (randomly) last block, so combine all other blocks' results
@@ -229,9 +230,9 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
   // Increment to move among the bodies assigned to the given thread.
   // Hence, one should step over all other threads in GPU with
   // a quantity of blockDim.x * gridDim.x.
-  inc = blockDim.x * gridDim.x;
+  inc = static_cast<int>(blockDim.x * gridDim.x);
   // Just a regular 1D GPU index
-  i = threadIdx.x + blockIdx.x * blockDim.x;
+  i = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
   // AMD-specific threads sync
 #if defined(__HIPCC__) and not defined(__CUDACC__)
   __syncthreads();
@@ -348,7 +349,7 @@ __global__ __launch_bounds__(THREADS2, FACTOR2) void treeBuildingKernel() {
             // The new cell will be placed below relatively the center of
             // corresponding j-th octant:
             for (l = 0; l < 3; l++)
-              pos[l] = ((j >> l) & 1) * r;
+              pos[l] = static_cast<float>((j >> l) & 1) * r;
             // Note, that negative octants correspond to pos[l] == 0 and
             // positive octants correspond to pos[l] == r.
 
@@ -485,13 +486,13 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
     child[i * THREADS3 + threadIdx.x] = -1;
   bottom = bottomd;
   // Increment towards other particles assigned to the given thread:
-  inc = blockDim.x * gridDim.x;
+  inc = static_cast<int>(blockDim.x * gridDim.x);
   // Nodes iteration "k" should start from the "bottomd" level of the cells,
   // which is a minimal index of the last created cell.
   // Starting "k" value should be aligned using the warp size
   // according to the designed threads performance.
   // k = (bottom & (-WARPSIZE)) + threadIdx.x + blockIdx.x * blockDim.x;
-  k = bottom + threadIdx.x + blockIdx.x * blockDim.x;
+  k = bottom + static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
   // Threads below the bottom line could proceed to their next cells.
   // if (k < bottom) k += inc;
 
@@ -634,7 +635,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
     if ((k > bhpara->nnodes) && (repeat_flag)) {
       repeat_flag = 0;
       missing = 0;
-      k = bottom + threadIdx.x + blockIdx.x * blockDim.x;
+      k = bottom + static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
     }
   } // while
 }
@@ -652,13 +653,14 @@ __global__ __launch_bounds__(THREADS4, FACTOR4) void sortKernel() {
   int i, k, ch, dec, start, bottom, lps;
 
   bottom = bottomd;
-  dec = blockDim.x * gridDim.x;
+  dec = static_cast<int>(blockDim.x * gridDim.x);
   // Start from the end of the nnodesd == 8 * nbodiesd.
   // Reverse order is required now cause octant cells which are more close
   // to the root have a larger count of entities inside (countd[k]).
   // Particles should be sorted over all entities count in the tree array
   // representation made by treeBuildingKernel.
-  k = bhpara->nnodes + 1 - dec + threadIdx.x + blockIdx.x * blockDim.x;
+  k = bhpara->nnodes + 1 - dec +
+      static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
   // threads sync related
   lps = 0;
 
@@ -756,7 +758,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
   // Only maximal Barnes-Hut tree depth is allowed.
   if (maxdepthd <= MAXDEPTH) {
     // How many warps are behind the current thread (?):
-    base = threadIdx.x / WARPSIZE;
+    base = static_cast<int>(threadIdx.x) / WARPSIZE;
     // Figure out first thread in each warp (lane 0):
     sbase = base * WARPSIZE;
     // Initial stack index is its MAXDEPTH portion start for the given warp
@@ -764,7 +766,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     j = base * MAXDEPTH;
 
     // How far the thread is from the warp beginning (?):
-    diff = threadIdx.x - sbase;
+    diff = static_cast<int>(threadIdx.x) - sbase;
     // Make multiple copies to avoid index calculations later:
     if (diff < MAXDEPTH) {
       // Each thread copies its own dq[] element to a part of
@@ -774,8 +776,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     __syncthreads();
 
     // Iterate over all bodies assigned to thread:
-    for (k = threadIdx.x + blockIdx.x * blockDim.x; k < bhpara->nbodies;
-         k += blockDim.x * gridDim.x) {
+    for (k = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+         k < bhpara->nbodies; k += static_cast<int>(blockDim.x * gridDim.x)) {
       // Sorted body indexes assigned to me:
       i = bhpara->sort[k]; // get permuted/sorted index
       // Cache the particle position info:
@@ -949,11 +951,11 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
 
   if (maxdepthd <= MAXDEPTH) {
     // figure out first thread in each warp (lane 0)
-    base = threadIdx.x / WARPSIZE;
+    base = static_cast<int>(threadIdx.x) / WARPSIZE;
     sbase = base * WARPSIZE;
     j = base * MAXDEPTH;
 
-    diff = threadIdx.x - sbase;
+    diff = static_cast<int>(threadIdx.x) - sbase;
     // make multiple copies to avoid index calculations later
     if (diff < MAXDEPTH) {
       dq[diff + j] = dq[diff];
@@ -961,8 +963,8 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void energyCalculationKernel(
     __syncthreads();
 
     // iterate over all bodies assigned to thread
-    for (k = threadIdx.x + blockIdx.x * blockDim.x; k < bhpara->nbodies;
-         k += blockDim.x * gridDim.x) {
+    for (k = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+         k < bhpara->nbodies; k += static_cast<int>(blockDim.x * gridDim.x)) {
       i = bhpara->sort[k]; // get permuted/sorted index
       // cache position info
       for (l = 0; l < 3; l++) {

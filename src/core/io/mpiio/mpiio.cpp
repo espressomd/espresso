@@ -252,7 +252,7 @@ static int get_num_elem(const std::string &fn, size_t elem_sz) {
             fn.c_str(), strerror(errno));
     errexit();
   }
-  return st.st_size / elem_sz;
+  return static_cast<int>(st.st_size / elem_sz);
 }
 
 /** Reads a previously dumped array of size len starting from prefix

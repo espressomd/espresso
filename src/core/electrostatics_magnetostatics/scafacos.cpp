@@ -103,7 +103,7 @@ int ScafacosData::update_particle_data() {
     }
   }
 
-  return positions.size() / 3;
+  return static_cast<int>(positions.size() / 3);
 }
 
 /** \brief Write forces back to particles */

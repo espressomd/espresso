@@ -238,7 +238,7 @@ void lb_init_boundaries() {
             auto const boundary_number =
                 std::distance(lbboundaries.begin(), boundary.base()) - 1;
             auto &node = lbfields[index];
-            node.boundary = boundary_number + 1;
+            node.boundary = static_cast<int>(boundary_number) + 1;
             node.slip_velocity =
                 (*boundary)->velocity() *
                 (lb_lbfluid_get_tau() / lb_lbfluid_get_agrid());

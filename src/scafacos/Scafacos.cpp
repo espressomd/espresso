@@ -133,14 +133,14 @@ void Scafacos::run_dipolar(std::vector<double> &dipoles,
                            std::vector<double> &fields,
                            std::vector<double> &potentials) {
   assert(dipoles.size() % 3 == 0);
-  const int local_n_part = dipoles.size() / 3;
+  auto const local_n_part = dipoles.size() / 3;
 
   fields.resize(6 * local_n_part);
   potentials.resize(3 * local_n_part);
 
-  handle_error(fcs_set_dipole_particles(handle, local_n_part, &(positions[0]),
-                                        &(dipoles[0]), &(fields[0]),
-                                        &(potentials[0])));
+  handle_error(fcs_set_dipole_particles(handle, static_cast<int>(local_n_part),
+                                        &(positions[0]), &(dipoles[0]),
+                                        &(fields[0]), &(potentials[0])));
   handle_error(fcs_run(handle, 0, nullptr, nullptr, nullptr, nullptr));
 }
 #endif

@@ -155,11 +155,11 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
     float temp_delta[6];
     float delta[8];
     int my_left[3];
-    int node_index[8];
+    unsigned int node_index[8];
     for (int i = 0; i < 3; ++i) {
       const float scaledpos = pos[i] / para.agrid - 0.5f;
-      my_left[i] = (int)(floorf(scaledpos));
-      temp_delta[3 + i] = scaledpos - my_left[i];
+      my_left[i] = static_cast<int>(floorf(scaledpos));
+      temp_delta[3 + i] = scaledpos - static_cast<float>(my_left[i]);
       temp_delta[i] = 1.f - temp_delta[3 + i];
     }
 
@@ -174,9 +174,9 @@ ForcesIntoFluid_Kernel(const IBM_CUDA_ParticleDataInput *const particle_input,
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    const int x = my_left[0] + para.dim_x;
-    const int y = my_left[1] + para.dim_y;
-    const int z = my_left[2] + para.dim_z;
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
 
     node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
                     para.dim_x * para.dim_y * (z % para.dim_z);
@@ -239,13 +239,13 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
     float temp_delta[6];
     float delta[8];
     int my_left[3];
-    int node_index[8];
+    unsigned int node_index[8];
     float mode[4];
 #pragma unroll
     for (int i = 0; i < 3; ++i) {
       const float scaledpos = pos[i] / para.agrid - 0.5f;
-      my_left[i] = (int)(floorf(scaledpos));
-      temp_delta[3 + i] = scaledpos - my_left[i];
+      my_left[i] = static_cast<int>(floorf(scaledpos));
+      temp_delta[3 + i] = scaledpos - static_cast<float>(my_left[i]);
       temp_delta[i] = 1.f - temp_delta[3 + i];
     }
 
@@ -260,9 +260,9 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 
     // modulo for negative numbers is strange at best, shift to make sure we are
     // positive
-    int x = my_left[0] + para.dim_x;
-    int y = my_left[1] + para.dim_y;
-    int z = my_left[2] + para.dim_z;
+    auto const x = static_cast<unsigned int>(my_left[0] + para.dim_x);
+    auto const y = static_cast<unsigned int>(my_left[1] + para.dim_y);
+    auto const z = static_cast<unsigned int>(my_left[2] + para.dim_z);
 
     node_index[0] = x % para.dim_x + para.dim_x * (y % para.dim_y) +
                     para.dim_x * para.dim_y * (z % para.dim_z);
@@ -287,7 +287,8 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
 #ifdef LB_BOUNDARIES_GPU
       if (n_curr.boundary[node_index[i]]) {
         // Boundary node
-        const int boundary_index = n_curr.boundary[node_index[i]];
+        auto const boundary_index =
+            static_cast<int>(n_curr.boundary[node_index[i]]);
 
         // lb_boundary_velocity is given in MD units --> convert to LB and
         // reconvert back at the end of this function
@@ -321,9 +322,9 @@ __global__ void ParticleVelocitiesFromLB_Kernel(
       }
 
       // Interpolate velocity
-      v[0] += delta[i] * local_j[0] / (local_rho);
-      v[1] += delta[i] * local_j[1] / (local_rho);
-      v[2] += delta[i] * local_j[2] / (local_rho);
+      v[0] += static_cast<float>(delta[i] * local_j[0] / local_rho);
+      v[1] += static_cast<float>(delta[i] * local_j[1] / local_rho);
+      v[2] += static_cast<float>(delta[i] * local_j[2] / local_rho);
     }
 
     // Rescale and store output
@@ -363,9 +364,10 @@ void IBM_ResetLBForces_GPU() {
     // Setup for kernel call
     int threads_per_block = 64;
     int blocks_per_grid_y = 4;
-    int blocks_per_grid_x = (lbpar_gpu.number_of_nodes +
-                             threads_per_block * blocks_per_grid_y - 1) /
-                            (threads_per_block * blocks_per_grid_y);
+    int blocks_per_grid_x =
+        static_cast<int>((lbpar_gpu.number_of_nodes +
+                          threads_per_block * blocks_per_grid_y - 1) /
+                         (threads_per_block * blocks_per_grid_y));
     dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
 
     KERNELCALL(ResetLBForces_Kernel, dim_grid, threads_per_block, node_f,

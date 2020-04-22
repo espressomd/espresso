@@ -130,11 +130,11 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
     cudaFree(dev_energyBlocks);
   cuda_safe_mem(cudaMalloc((void **)&dev_energyBlocks,
                            numBlocks(s) * sizeof(mmm1dgpu_real)));
-  host_npart = s.npart_gpu();
+  host_npart = static_cast<int>(s.npart_gpu());
 }
 
 unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s) {
-  int b = s.npart_gpu() * s.npart_gpu() / numThreads + 1;
+  int b = static_cast<int>(s.npart_gpu() * s.npart_gpu() / numThreads) + 1;
   if (b > 65535)
     b = 65535;
   return b;
@@ -150,8 +150,8 @@ __forceinline__ __device__ mmm1dgpu_real cbpow(mmm1dgpu_real x) {
 }
 
 __device__ void sumReduction(mmm1dgpu_real *input, mmm1dgpu_real *sum) {
-  int tid = threadIdx.x;
-  for (int i = blockDim.x / 2; i > 0; i /= 2) {
+  int tid = static_cast<int>(threadIdx.x);
+  for (int i = static_cast<int>(blockDim.x) / 2; i > 0; i /= 2) {
     __syncthreads();
     if (tid < i)
       input[tid] += input[i + tid];
@@ -165,10 +165,10 @@ __global__ void sumKernel(mmm1dgpu_real *data, int N) {
   HIP_DYNAMIC_SHARED(mmm1dgpu_real, partialsums)
   if (blockIdx.x != 0)
     return;
-  int tid = threadIdx.x;
+  int tid = static_cast<int>(threadIdx.x);
   mmm1dgpu_real result = 0;
 
-  for (int i = 0; i < N; i += blockDim.x) {
+  for (int i = 0; i < N; i += static_cast<int>(blockDim.x)) {
     if (i + tid >= N)
       partialsums[tid] = 0;
     else
@@ -190,7 +190,8 @@ __global__ void besselTuneKernel(int *result, mmm1dgpu_real far_switch_radius,
   mmm1dgpu_real err;
   int P = 1;
   do {
-    err = pref * dev_K1(arg * P) * exp(arg) / arg * (P - 1 + 1 / arg);
+    err = pref * dev_K1(arg * static_cast<mmm1dgpu_real>(P)) * exp(arg) / arg *
+          (static_cast<mmm1dgpu_real>(P) - 1 + 1 / arg);
     P++;
   } while (err > *maxPWerror && P <= maxCut);
   P--;
@@ -213,7 +214,7 @@ void Mmm1dgpuForce::tune(SystemInterface &s, mmm1dgpu_real _maxPWerror,
          far_switch_radius += 0.05 * maxrad) {
       set_params(0, 0, _maxPWerror, far_switch_radius, bessel_cutoff);
       tune(s, _maxPWerror, far_switch_radius, -2); // tune Bessel cutoff
-      int runtime = force_benchmark(s);
+      auto runtime = force_benchmark(s);
       if (runtime < besttime) {
         besttime = runtime;
         bestrad = far_switch_radius;
@@ -320,8 +321,9 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
   if (tStop < 0)
     tStop = N * N;
 
-  for (int tid = threadIdx.x + blockIdx.x * blockDim.x + tStart; tid < tStop;
-       tid += blockDim.x * gridDim.x) {
+  for (int tid =
+           static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
+       tid < tStop; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     int p1 = tid % N, p2 = tid / N;
     mmm1dgpu_real x = r[3 * p2] - r[3 * p1], y = r[3 * p2 + 1] - r[3 * p1 + 1],
                   z = r[3 * p2 + 2] - r[3 * p1 + 2];
@@ -332,7 +334,7 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     // if (*boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > *boxz / 2) // make sure we take the shortest distance
-      z -= (z > 0 ? 1 : -1) * *boxz;
+      z -= (z > 0 ? 1. : -1.) * *boxz;
 
     if (p1 == p2) // particle exerts no force on itself
     {
@@ -349,7 +351,7 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
         mmm1dgpu_real mpe = dev_mod_psi_even(n, uzz);
         mmm1dgpu_real mpo = dev_mod_psi_odd(n, uzz);
 
-        sum_r += 2 * n * mpe * uzrpow;
+        sum_r += 2 * static_cast<mmm1dgpu_real>(n) * mpe * uzrpow;
         uzrpow *= uzr;
         sum_z += mpo * uzrpow;
         uzrpow *= uzr;
@@ -378,9 +380,11 @@ __global__ void forcesKernel(const mmm1dgpu_real *__restrict__ r,
     } else // far formula
     {
       for (int p = 1; p < *bessel_cutoff; p++) {
-        mmm1dgpu_real arg = C_2PIf * *uz * p;
-        sum_r += p * dev_K1(arg * rxy) * cos(arg * z);
-        sum_z += p * dev_K0(arg * rxy) * sin(arg * z);
+        mmm1dgpu_real arg = C_2PIf * *uz * static_cast<mmm1dgpu_real>(p);
+        sum_r +=
+            static_cast<mmm1dgpu_real>(p) * dev_K1(arg * rxy) * cos(arg * z);
+        sum_z +=
+            static_cast<mmm1dgpu_real>(p) * dev_K0(arg * rxy) * sin(arg * z);
       }
       sum_r *= sqpow(*uz) * 4 * C_2PIf;
       sum_z *= sqpow(*uz) * 4 * C_2PIf;
@@ -412,8 +416,9 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     partialsums[threadIdx.x] = 0;
     __syncthreads();
   }
-  for (int tid = threadIdx.x + blockIdx.x * blockDim.x + tStart; tid < tStop;
-       tid += blockDim.x * gridDim.x) {
+  for (int tid =
+           static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x) + tStart;
+       tid < tStop; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     int p1 = tid % N, p2 = tid / N;
     mmm1dgpu_real z = r[3 * p2 + 2] - r[3 * p1 + 2];
     mmm1dgpu_real rxy2 =
@@ -424,7 +429,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     // if (*boxz <= 0.0) return; // in case we are not initialized yet
 
     while (fabs(z) > *boxz / 2) // make sure we take the shortest distance
-      z -= (z > 0 ? 1 : -1) * *boxz;
+      z -= (z > 0 ? 1. : -1.) * *boxz;
 
     if (p1 == p2) // particle exerts no force on itself
     {
@@ -453,7 +458,7 @@ __global__ void energiesKernel(const mmm1dgpu_real *__restrict__ r,
     {
       sum_e = -(log(rxy * *uz / 2) + C_GAMMAf) / 2;
       for (int p = 1; p < *bessel_cutoff; p++) {
-        mmm1dgpu_real arg = C_2PIf * *uz * p;
+        mmm1dgpu_real arg = C_2PIf * *uz * static_cast<mmm1dgpu_real>(p);
         sum_e += dev_K0(arg * rxy) * cos(arg * z);
       }
       sum_e *= *uz * 4;
@@ -475,8 +480,8 @@ __global__ void vectorReductionKernel(mmm1dgpu_real *src, mmm1dgpu_real *dst,
   if (tStop < 0)
     tStop = N * N;
 
-  for (int tid = threadIdx.x + blockIdx.x * blockDim.x; tid < N;
-       tid += blockDim.x * gridDim.x) {
+  for (int tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+       tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     int offset = ((tid + (tStart % N)) % N);
 
     for (int i = 0; tid + i * N < (tStop - tStart); i++) {
@@ -505,7 +510,7 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
 
   if (pairs) // if we calculate force pairs, we need to reduce them to forces
   {
-    int blocksRed = s.npart_gpu() / numThreads + 1;
+    int blocksRed = static_cast<int>(s.npart_gpu() / numThreads) + 1;
     KERNELCALL(forcesKernel, numBlocks(s), numThreads, s.rGpuBegin(),
                s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs, 0, -1)
     KERNELCALL(vectorReductionKernel, blocksRed, numThreads, dev_forcePairs,
@@ -518,8 +523,8 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
 
 __global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real *src, int N,
                                   mmm1dgpu_real factor) {
-  for (int tid = threadIdx.x + blockIdx.x * blockDim.x; tid < N;
-       tid += blockDim.x * gridDim.x) {
+  for (int tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+       tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     dst[tid] += src[tid] * factor;
   }
 }
@@ -538,7 +543,7 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
   if (pairs < 0) {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
-  int shared = numThreads * sizeof(mmm1dgpu_real);
+  int shared = static_cast<int>(numThreads * sizeof(mmm1dgpu_real));
 
   KERNELCALL_shared(energiesKernel, numBlocks(s), numThreads, shared,
                     s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks,

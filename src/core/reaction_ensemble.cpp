@@ -1087,9 +1087,10 @@ void WangLandauReactionEnsemble::invalidate_bins() {
     int EnergyCollectiveVariable_index = 0;
     if (collective_variables.size() > 1)
       EnergyCollectiveVariable_index =
-          collective_variables.size() - 1; // assume the energy collective
-                                           // variable to be the last added
-                                           // collective variable
+          static_cast<int>(collective_variables.size()) -
+          1; // assume the energy collective
+             // variable to be the last added
+             // collective variable
     double current_energy =
         unraveled_index[EnergyCollectiveVariable_index] *
             collective_variables[EnergyCollectiveVariable_index]->delta_CV +
@@ -1109,7 +1110,8 @@ void WangLandauReactionEnsemble::invalidate_bins() {
     }
   }
 
-  used_bins = wang_landau_potential.size() - empty_bins_in_memory;
+  used_bins =
+      static_cast<int>(wang_landau_potential.size()) - empty_bins_in_memory;
 }
 
 /**
@@ -1146,7 +1148,7 @@ double find_maximum(double const *const list, int len) {
 int WangLandauReactionEnsemble::initialize_wang_landau() {
 
   nr_subindices_of_collective_variable.resize(collective_variables.size(), 0);
-  int new_CV_i = collective_variables.size() - 1;
+  auto const new_CV_i = collective_variables.size() - 1;
   nr_subindices_of_collective_variable[new_CV_i] =
       int((collective_variables[new_CV_i]->CV_maximum -
            collective_variables[new_CV_i]->CV_minimum) /
@@ -1488,7 +1490,7 @@ int WangLandauReactionEnsemble::
                        flattened_index_with_EnergyCollectiveVariable);
   // use unraveled index
   const int nr_collective_variables =
-      collective_variables.size() -
+      static_cast<int>(collective_variables.size()) -
       1; // forget the last collective variable (the energy collective variable)
   std::vector<double> current_state(nr_collective_variables);
   for (int i = 0; i < nr_collective_variables; i++) {

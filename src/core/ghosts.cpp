@@ -254,8 +254,8 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
 static void cell_cell_transfer(GhostCommunication &ghost_comm,
                                unsigned int data_parts) {
   /* transfer data */
-  int const offset = ghost_comm.part_lists.size() / 2;
-  for (int pl = 0; pl < offset; pl++) {
+  auto const offset = ghost_comm.part_lists.size() / 2;
+  for (size_t pl = 0; pl < offset; pl++) {
     const Cell *src_list = ghost_comm.part_lists[pl];
     Cell *dst_list = ghost_comm.part_lists[pl + offset];
 
@@ -383,15 +383,16 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       break;
     case GHOST_RDCE:
       if (node == this_node)
-        boost::mpi::reduce(comm_cart,
-                           reinterpret_cast<double *>(send_buffer.data()),
-                           send_buffer.size() / sizeof(double),
-                           reinterpret_cast<double *>(recv_buffer.data()),
-                           std::plus<double>{}, node);
+        boost::mpi::reduce(
+            comm_cart, reinterpret_cast<double *>(send_buffer.data()),
+            static_cast<int>(send_buffer.size() / sizeof(double)),
+            reinterpret_cast<double *>(recv_buffer.data()), std::plus<double>{},
+            node);
       else
         boost::mpi::reduce(
             comm_cart, reinterpret_cast<double *>(send_buffer.data()),
-            send_buffer.size() / sizeof(double), std::plus<double>{}, node);
+            static_cast<int>(send_buffer.size() / sizeof(double)),
+            std::plus<double>{}, node);
       break;
     }
 

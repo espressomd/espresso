@@ -131,26 +131,29 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
   REAL_TYPE Leni[3];
   REAL_TYPE Meshi[3];
   for (int i = 0; i < 3; ++i) {
-    Leni[i] = 1.0 / p.box[i];
-    Meshi[i] = 1.0 / p.mesh[i];
+    Leni[i] = 1.0f / p.box[i];
+    Meshi[i] = 1.0f / static_cast<REAL_TYPE>(p.mesh[i]);
   }
 
   Zaehler[0] = Zaehler[1] = Zaehler[2] = *Nenner = 0.0;
 
   for (MX = -P3M_BRILLOUIN; MX <= P3M_BRILLOUIN; MX++) {
-    NMX = ((NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX) + p.mesh[0] * MX;
+    NMX = static_cast<REAL_TYPE>(((NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX) +
+                                 p.mesh[0] * MX);
     S1 = int_pow<2 * cao>(Utils::sinc(Meshi[0] * NMX));
     for (MY = -P3M_BRILLOUIN; MY <= P3M_BRILLOUIN; MY++) {
-      NMY = ((NY > p.mesh[1] / 2) ? NY - p.mesh[1] : NY) + p.mesh[1] * MY;
+      NMY = static_cast<REAL_TYPE>(
+          ((NY > p.mesh[1] / 2) ? NY - p.mesh[1] : NY) + p.mesh[1] * MY);
       S2 = S1 * int_pow<2 * cao>(Utils::sinc(Meshi[1] * NMY));
       for (MZ = -P3M_BRILLOUIN; MZ <= P3M_BRILLOUIN; MZ++) {
-        NMZ = ((NZ > p.mesh[2] / 2) ? NZ - p.mesh[2] : NZ) + p.mesh[2] * MZ;
+        NMZ = static_cast<REAL_TYPE>(
+            ((NZ > p.mesh[2] / 2) ? NZ - p.mesh[2] : NZ) + p.mesh[2] * MZ);
         S3 = S2 * int_pow<2 * cao>(Utils::sinc(Meshi[2] * NMZ));
 
         NM2 = sqr(NMX * Leni[0]) + sqr(NMY * Leni[1]) + sqr(NMZ * Leni[2]);
         *Nenner += S3;
 
-        TE = exp(-sqr(Utils::pi() / (p.alpha)) * NM2);
+        TE = exp(-sqr(Utils::pi<float>() / (p.alpha)) * NM2);
         zwi = S3 * TE / NM2;
         Zaehler[0] += NMX * zwi * Leni[0];
         Zaehler[1] += NMY * zwi * Leni[1];
@@ -164,16 +167,16 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
 template <int cao>
 __global__ void calculate_influence_function_device(const P3MGpuData p) {
 
-  const int NX = blockDim.x * blockIdx.x + threadIdx.x;
-  const int NY = blockDim.y * blockIdx.y + threadIdx.y;
-  const int NZ = blockDim.z * blockIdx.z + threadIdx.z;
+  const int NX = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  const int NY = static_cast<int>(blockDim.y * blockIdx.y + threadIdx.y);
+  const int NZ = static_cast<int>(blockDim.z * blockIdx.z + threadIdx.z);
   REAL_TYPE Dnx, Dny, Dnz;
   REAL_TYPE Zaehler[3] = {0.0, 0.0, 0.0}, Nenner = 0.0;
   REAL_TYPE zwi;
   int ind = 0;
   REAL_TYPE Leni[3];
   for (int i = 0; i < 3; ++i)
-    Leni[i] = 1.0 / p.box[i];
+    Leni[i] = 1.0f / p.box[i];
 
   if ((NX >= p.mesh[0]) || (NY >= p.mesh[1]) || (NZ >= (p.mesh[2] / 2 + 1)))
     return;
@@ -188,15 +191,15 @@ __global__ void calculate_influence_function_device(const P3MGpuData p) {
   else {
     Aliasing_sums_ik<cao>(p, NX, NY, NZ, Zaehler, &Nenner);
 
-    Dnx = (NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX;
-    Dny = (NY > p.mesh[1] / 2) ? NY - p.mesh[1] : NY;
-    Dnz = (NZ > p.mesh[2] / 2) ? NZ - p.mesh[2] : NZ;
+    Dnx = static_cast<REAL_TYPE>((NX > p.mesh[0] / 2) ? NX - p.mesh[0] : NX);
+    Dny = static_cast<REAL_TYPE>((NY > p.mesh[1] / 2) ? NY - p.mesh[1] : NY);
+    Dnz = static_cast<REAL_TYPE>((NZ > p.mesh[2] / 2) ? NZ - p.mesh[2] : NZ);
 
     zwi = Dnx * Zaehler[0] * Leni[0] + Dny * Zaehler[1] * Leni[1] +
           Dnz * Zaehler[2] * Leni[2];
     zwi /= ((sqr(Dnx * Leni[0]) + sqr(Dny * Leni[1]) + sqr(Dnz * Leni[2])) *
             sqr(Nenner));
-    p.G_hat[ind] = 2.0 * zwi / Utils::pi();
+    p.G_hat[ind] = 2.0f * zwi / Utils::pi<float>();
   }
 }
 
@@ -224,28 +227,35 @@ __device__ inline int linear_index_k(P3MGpuData const &p, int i, int j, int k) {
 } // namespace
 
 __global__ void apply_diff_op(const P3MGpuData p) {
-  const int linear_index =
-      linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
+  const int linear_index = linear_index_k(p, static_cast<int>(blockIdx.x),
+                                          static_cast<int>(blockIdx.y),
+                                          static_cast<int>(threadIdx.x));
 
-  const int nx =
-      (blockIdx.x > p.mesh[0] / 2) ? blockIdx.x - p.mesh[0] : blockIdx.x;
-  const int ny =
-      (blockIdx.y > p.mesh[1] / 2) ? blockIdx.y - p.mesh[1] : blockIdx.y;
-  const int nz = threadIdx.x;
+  auto const nx = static_cast<int>(
+      (blockIdx.x > p.mesh[0] / 2) ? blockIdx.x - p.mesh[0] : blockIdx.x);
+  auto const ny = static_cast<int>(
+      (blockIdx.y > p.mesh[1] / 2) ? blockIdx.y - p.mesh[1] : blockIdx.y);
+  auto const nz = static_cast<int>(threadIdx.x);
 
   const FFT_TYPE_COMPLEX meshw = p.charge_mesh[linear_index];
   FFT_TYPE_COMPLEX buf;
-  buf.x = -2.0 * Utils::pi() * meshw.y;
-  buf.y = 2.0 * Utils::pi() * meshw.x;
+  buf.x = -2.0f * Utils::pi<float>() * meshw.y;
+  buf.y = 2.0f * Utils::pi<float>() * meshw.x;
 
-  p.force_mesh_x[linear_index].x = nx * buf.x / p.box[0];
-  p.force_mesh_x[linear_index].y = nx * buf.y / p.box[0];
+  p.force_mesh_x[linear_index].x =
+      static_cast<decltype(FFT_TYPE_COMPLEX::x)>(nx) * buf.x / p.box[0];
+  p.force_mesh_x[linear_index].y =
+      static_cast<decltype(FFT_TYPE_COMPLEX::x)>(nx) * buf.y / p.box[0];
 
-  p.force_mesh_y[linear_index].x = ny * buf.x / p.box[1];
-  p.force_mesh_y[linear_index].y = ny * buf.y / p.box[1];
+  p.force_mesh_y[linear_index].x =
+      static_cast<decltype(FFT_TYPE_COMPLEX::x)>(ny) * buf.x / p.box[1];
+  p.force_mesh_y[linear_index].y =
+      static_cast<decltype(FFT_TYPE_COMPLEX::x)>(ny) * buf.y / p.box[1];
 
-  p.force_mesh_z[linear_index].x = nz * buf.x / p.box[2];
-  p.force_mesh_z[linear_index].y = nz * buf.y / p.box[2];
+  p.force_mesh_z[linear_index].x =
+      static_cast<decltype(FFT_TYPE_COMPLEX::x)>(nz) * buf.x / p.box[2];
+  p.force_mesh_z[linear_index].y =
+      static_cast<decltype(FFT_TYPE_COMPLEX::x)>(nz) * buf.y / p.box[2];
 }
 
 __device__ inline int wrap_index(const int ind, const int mesh) {
@@ -258,8 +268,9 @@ __device__ inline int wrap_index(const int ind, const int mesh) {
 }
 
 __global__ void apply_influence_function(const P3MGpuData p) {
-  const int linear_index =
-      linear_index_k(p, blockIdx.x, blockIdx.y, threadIdx.x);
+  const int linear_index = linear_index_k(p, static_cast<int>(blockIdx.x),
+                                          static_cast<int>(blockIdx.y),
+                                          static_cast<int>(threadIdx.x));
 
   p.charge_mesh[linear_index].x *= p.G_hat[linear_index];
   p.charge_mesh[linear_index].y *= p.G_hat[linear_index];
@@ -288,17 +299,17 @@ __global__ void assign_charge_kernel(const CUDA_particle_data *const pdata,
   m_pos[1] = p.p[1] * par.hi[1] - par.pos_shift;
   m_pos[2] = p.p[2] * par.hi[2] - par.pos_shift;
 
-  nmp_x = (int)floorf(m_pos[0] + 0.5f);
-  nmp_y = (int)floorf(m_pos[1] + 0.5f);
-  nmp_z = (int)floorf(m_pos[2] + 0.5f);
+  nmp_x = static_cast<int>(floorf(m_pos[0] + 0.5f));
+  nmp_y = static_cast<int>(floorf(m_pos[1] + 0.5f));
+  nmp_z = static_cast<int>(floorf(m_pos[2] + 0.5f));
 
-  m_pos[0] -= nmp_x;
-  m_pos[1] -= nmp_y;
-  m_pos[2] -= nmp_z;
+  m_pos[0] -= static_cast<REAL_TYPE>(nmp_x);
+  m_pos[1] -= static_cast<REAL_TYPE>(nmp_y);
+  m_pos[2] -= static_cast<REAL_TYPE>(nmp_z);
 
   nmp_x = wrap_index(nmp_x + cao_id_x, par.mesh[0]);
-  nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh[1]);
-  nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
+  nmp_y = wrap_index(nmp_y + static_cast<int>(threadIdx.y), par.mesh[1]);
+  nmp_z = wrap_index(nmp_z + static_cast<int>(threadIdx.z), par.mesh[2]);
 
   const int ind = linear_index_r(par, nmp_x, nmp_y, nmp_z);
 
@@ -417,17 +428,17 @@ __global__ void assign_forces_kernel(const CUDA_particle_data *const pdata,
   m_pos[1] = p.p[1] * par.hi[1] - par.pos_shift;
   m_pos[2] = p.p[2] * par.hi[2] - par.pos_shift;
 
-  nmp_x = (int)floorf(m_pos[0] + 0.5f);
-  nmp_y = (int)floorf(m_pos[1] + 0.5f);
-  nmp_z = (int)floorf(m_pos[2] + 0.5f);
+  nmp_x = static_cast<int>(floorf(m_pos[0] + 0.5f));
+  nmp_y = static_cast<int>(floorf(m_pos[1] + 0.5f));
+  nmp_z = static_cast<int>(floorf(m_pos[2] + 0.5f));
 
-  m_pos[0] -= nmp_x;
-  m_pos[1] -= nmp_y;
-  m_pos[2] -= nmp_z;
+  m_pos[0] -= static_cast<REAL_TYPE>(nmp_x);
+  m_pos[1] -= static_cast<REAL_TYPE>(nmp_y);
+  m_pos[2] -= static_cast<REAL_TYPE>(nmp_z);
 
   nmp_x = wrap_index(nmp_x + cao_id_x, par.mesh[0]);
-  nmp_y = wrap_index(nmp_y + threadIdx.y, par.mesh[1]);
-  nmp_z = wrap_index(nmp_z + threadIdx.z, par.mesh[2]);
+  nmp_y = wrap_index(nmp_y + static_cast<int>(threadIdx.y), par.mesh[1]);
+  nmp_z = wrap_index(nmp_z + static_cast<int>(threadIdx.z), par.mesh[2]);
 
   REAL_TYPE c;
   const int index = linear_index_r(par, nmp_x, nmp_y, nmp_z);
@@ -549,7 +560,7 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   p3m_gpu_data.n_part = gpu_get_particle_pointer().size();
 
   if ((p3m_gpu_data_initialized == 0) || (p3m_gpu_data.alpha != alpha)) {
-    p3m_gpu_data.alpha = alpha;
+    p3m_gpu_data.alpha = static_cast<REAL_TYPE>(alpha);
     reinit_if = 1;
   }
 
@@ -578,7 +589,8 @@ void p3m_gpu_init(int cao, const int mesh[3], double alpha) {
   p3m_gpu_data.mesh_size = mesh[0] * mesh[1] * p3m_gpu_data.mesh_z_padded;
 
   for (int i = 0; i < 3; i++) {
-    p3m_gpu_data.hi[i] = p3m_gpu_data.mesh[i] / p3m_gpu_data.box[i];
+    p3m_gpu_data.hi[i] =
+        static_cast<REAL_TYPE>(p3m_gpu_data.mesh[i]) / p3m_gpu_data.box[i];
   }
 
   if ((p3m_gpu_data_initialized == 1) && (mesh_changed == 1)) {
@@ -696,7 +708,7 @@ void p3m_gpu_add_farfield_force() {
   dim3 threadsConv(p3m_gpu_data.mesh[2] / 2 + 1, 1, 1);
 
   REAL_TYPE prefactor =
-      coulomb.prefactor /
+      coulomb.prefactor / // NOLINT(bugprone-narrowing-conversions)
       (p3m_gpu_data.box[0] * p3m_gpu_data.box[1] * p3m_gpu_data.box[2] * 2.0);
 
   cuda_safe_mem(cudaMemset(p3m_gpu_data.charge_mesh, 0,

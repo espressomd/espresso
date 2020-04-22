@@ -188,7 +188,7 @@ __global__ void DipolarDirectSum_kernel_force(dds_float pf, int n, float *pos,
                                               float *torque, dds_float box_l[3],
                                               int periodic[3]) {
 
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int i = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
 
   if (i >= n)
     return;
@@ -243,8 +243,8 @@ __global__ void DipolarDirectSum_kernel_force(dds_float pf, int n, float *pos,
 }
 
 __device__ void dds_sumReduction(dds_float *input, dds_float *sum) {
-  int tid = threadIdx.x;
-  for (int i = blockDim.x; i > 1; i /= 2) {
+  int tid = static_cast<int>(threadIdx.x);
+  for (int i = static_cast<int>(blockDim.x); i > 1; i /= 2) {
     __syncthreads();
     if (tid < i / 2)
       input[tid] += input[i / 2 + tid];
@@ -262,7 +262,7 @@ __global__ void DipolarDirectSum_kernel_energy(dds_float pf, int n, float *pos,
                                                int periodic[3],
                                                dds_float *energySum) {
 
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  int i = static_cast<int>(blockIdx.x * blockDim.x + threadIdx.x);
   dds_float sum = 0.0;
   HIP_DYNAMIC_SHARED(dds_float, res)
 
