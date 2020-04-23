@@ -259,15 +259,7 @@ void on_lbboundary_change() {
 #endif
 }
 
-void on_resort_particles(const ParticleRange &particles) {
-#ifdef ELECTROSTATICS
-  Coulomb::on_resort_particles(particles);
-#endif /* ifdef ELECTROSTATICS */
-
-  /* DIPOLAR interactions so far don't need this */
-
-  recalc_forces = true;
-}
+void on_resort_particles() { recalc_forces = true; }
 
 void on_boxl_change() {
   grid_changed_box_l(box_geo);

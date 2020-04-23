@@ -22,7 +22,6 @@
  *  Implementation of \ref elc.hpp.
  */
 #include "Particle.hpp"
-#include "cells.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "grid.hpp"
@@ -50,7 +49,7 @@
 
 /** \name Inverse box dimensions and derived constants */
 /*@{*/
-static double ux, ux2, uy, uy2, uz, height_inverse;
+static double ux, uy, uz, height_inverse;
 /*@}*/
 
 ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
@@ -80,9 +79,6 @@ ELC_struct elc_params = {1e100, 10,    1, 0, true, true, false, 1,
 #define PQECCM 7
 /*@}*/
 
-/** number of local particles, equals the size of \ref elc::partblk. */
-static int n_localpart = 0;
-
 /** temporary buffers for product decomposition */
 static std::vector<double> partblk;
 /** collected data from the other cells */
@@ -96,32 +92,25 @@ typedef struct {
 /** Cached sin/cos values along the x-axis and y-axis */
 /*@{*/
 static std::vector<SCCache> scxcache;
-static int n_scxcache;
 static std::vector<SCCache> scycache;
-static int n_scycache;
 /*@}*/
 
 /****************************************
  * LOCAL FUNCTIONS
  ****************************************/
 
-/** \name sin/cos storage */
-/*@{*/
-static void prepare_scx_cache(const ParticleRange &particles);
-static void prepare_scy_cache(const ParticleRange &particles);
-/*@}*/
 static void distribute(int size);
 /** \name p=0 per frequency code */
 /*@{*/
 static void setup_P(int p, double omega, const ParticleRange &particles);
 static void add_P_force(const ParticleRange &particles);
-static double P_energy(double omega);
+static double P_energy(double omega, int n_part);
 /*@}*/
 /** \name q=0 per frequency code */
 /*@{*/
 static void setup_Q(int q, double omega, const ParticleRange &particles);
 static void add_Q_force(const ParticleRange &particles);
-static double Q_energy(double omega);
+static double Q_energy(double omega, int n_part);
 /*@}*/
 /** \name p,q <> 0 per frequency code */
 /*@{*/
@@ -129,7 +118,7 @@ static void setup_PQ(int p, int q, double omega,
                      const ParticleRange &particles);
 static void add_PQ_force(int p, int q, double omega,
                          const ParticleRange &particles);
-static double PQ_energy(double omega);
+static double PQ_energy(double omega, int n_part);
 /*@}*/
 static void add_dipole_force(const ParticleRange &particles);
 static double dipole_energy(const ParticleRange &particles);
@@ -138,46 +127,45 @@ static void add_z_force(const ParticleRange &particles);
 
 void ELC_setup_constants() {
   ux = 1 / box_geo.length()[0];
-  ux2 = ux * ux;
   uy = 1 / box_geo.length()[1];
-  uy2 = uy * uy;
   uz = 1 / box_geo.length()[2];
 
   height_inverse = 1 / elc_params.h;
 }
 
-static void prepare_scx_cache(const ParticleRange &particles) {
-  int freq;
-  double arg;
+/**
+ * @brief Calculated cached sin/cos values for one direction.
+ *
+ * @tparam Index of the dimension to consider (e.g. 0 for x ...).
+ *
+ * @param particles Particle to calculate values for
+ * @param n_freq Number of frequencies to calculate per particle
+ * @param u Inverse box length
+ * @return Calculated values.
+ */
+template <size_t dir>
+static std::vector<SCCache> sc_cache(const ParticleRange &particles, int n_freq,
+                                     double u) {
+  auto const n_part = particles.size();
+  std::vector<SCCache> ret(n_freq * n_part);
 
-  for (freq = 1; freq <= n_scxcache; freq++) {
-    double pref = C_2PI * ux * freq;
-    int o = (freq - 1) * n_localpart;
-    int ic = 0;
+  for (size_t freq = 1; freq <= n_freq; freq++) {
+    double pref = C_2PI * u * freq;
+
+    size_t o = (freq - 1) * n_part;
     for (auto const &part : particles) {
-      arg = pref * part.r.p[0];
-      scxcache[o + ic].s = sin(arg);
-      scxcache[o + ic].c = cos(arg);
-      ic++;
+      auto const arg = pref * part.r.p[dir];
+      ret[o++] = {sin(arg), cos(arg)};
     }
   }
+
+  return ret;
 }
 
-static void prepare_scy_cache(const ParticleRange &particles) {
-  int freq;
-  double arg;
-
-  for (freq = 1; freq <= n_scycache; freq++) {
-    double pref = C_2PI * uy * freq;
-    int o = (freq - 1) * n_localpart;
-    int ic = 0;
-    for (auto const &part : particles) {
-      arg = pref * part.r.p[1];
-      scycache[o + ic].s = sin(arg);
-      scycache[o + ic].c = cos(arg);
-      ic++;
-    }
-  }
+static void prepare_sc_cache(const ParticleRange &particles, int n_freq_x,
+                             double u_x, int n_freq_y, double u_y) {
+  scxcache = sc_cache<0>(particles, n_freq_x, u_x);
+  scycache = sc_cache<1>(particles, n_freq_y, u_y);
 }
 
 /*****************************************************************/
@@ -523,7 +511,7 @@ static void add_z_force(const ParticleRange &particles) {
 /*****************************************************************/
 
 static void setup_P(int p, double omega, const ParticleRange &particles) {
-  int ic, o = (p - 1) * n_localpart;
+  int ic, o = (p - 1) * particles.size();
   double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
                 (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
@@ -629,7 +617,7 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 }
 
 static void setup_Q(int q, double omega, const ParticleRange &particles) {
-  int ic, o = (q - 1) * n_localpart;
+  int ic, o = (q - 1) * particles.size();
   double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
                 (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
@@ -752,12 +740,12 @@ static void add_P_force(const ParticleRange &particles) {
   }
 }
 
-static double P_energy(double omega) {
+static double P_energy(double omega, int n_part) {
   int size = 4;
   double eng = 0;
   double pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_localpart; ic++) {
+  for (unsigned ic = 0; ic < n_part; ic++) {
     eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
                    partblk[size * ic + POQESM] * gblcblk[POQESP] +
                    partblk[size * ic + POQECP] * gblcblk[POQECM] +
@@ -785,12 +773,12 @@ static void add_Q_force(const ParticleRange &particles) {
   }
 }
 
-static double Q_energy(double omega) {
+static double Q_energy(double omega, int n_part) {
   int size = 4;
   double eng = 0;
   double pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_localpart; ic++) {
+  for (unsigned ic = 0; ic < n_part; ic++) {
     eng += pref * (partblk[size * ic + POQECM] * gblcblk[POQECP] +
                    partblk[size * ic + POQESM] * gblcblk[POQESP] +
                    partblk[size * ic + POQECP] * gblcblk[POQECM] +
@@ -805,7 +793,7 @@ static double Q_energy(double omega) {
 
 static void setup_PQ(int p, int q, double omega,
                      const ParticleRange &particles) {
-  int ic, ox = (p - 1) * n_localpart, oy = (q - 1) * n_localpart;
+  int ic, ox = (p - 1) * particles.size(), oy = (q - 1) * particles.size();
   double pref = -coulomb.prefactor * 8 * M_PI * ux * uy /
                 (expm1(omega * box_geo.length()[2]));
   double pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;
@@ -971,12 +959,12 @@ static void add_PQ_force(int p, int q, double omega,
   }
 }
 
-static double PQ_energy(double omega) {
+static double PQ_energy(double omega, int n_part) {
   int size = 8;
   double eng = 0;
   double pref = 1 / omega;
 
-  for (unsigned ic = 0; ic < n_localpart; ic++) {
+  for (unsigned ic = 0; ic < n_part; ic++) {
     eng += pref * (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
                    partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
                    partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
@@ -997,8 +985,12 @@ void ELC_add_force(const ParticleRange &particles) {
   int p, q;
   double omega;
 
-  prepare_scx_cache(particles);
-  prepare_scy_cache(particles);
+  auto const n_scxcache = int(ceil(elc_params.far_cut / ux) + 1);
+  auto const n_scycache = int(ceil(elc_params.far_cut / uy) + 1);
+
+  prepare_sc_cache(particles, n_scxcache, ux, n_scycache, uy);
+  partblk.resize(particles.size() * 8);
+
   add_dipole_force(particles);
   add_z_force(particles);
 
@@ -1037,21 +1029,26 @@ double ELC_energy(const ParticleRange &particles) {
 
   eng = dipole_energy(particles);
   eng += z_energy(particles);
-  prepare_scx_cache(particles);
-  prepare_scy_cache(particles);
+
+  auto const n_scxcache = int(ceil(elc_params.far_cut / ux) + 1);
+  auto const n_scycache = int(ceil(elc_params.far_cut / uy) + 1);
+  prepare_sc_cache(particles, n_scxcache, ux, n_scycache, uy);
+
+  auto const n_localpart = particles.size();
+  partblk.resize(n_localpart * 8);
 
   /* the second condition is just for the case of numerical accident */
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     omega = C_2PI * ux * p;
     setup_P(p, omega, particles);
     distribute(4);
-    eng += P_energy(omega);
+    eng += P_energy(omega, n_localpart);
   }
   for (q = 1; uy * (q - 1) < elc_params.far_cut && q <= n_scycache; q++) {
     omega = C_2PI * uy * q;
     setup_Q(q, omega, particles);
     distribute(4);
-    eng += Q_energy(omega);
+    eng += Q_energy(omega, n_localpart);
   }
   for (p = 1; ux * (p - 1) < elc_params.far_cut && p <= n_scxcache; p++) {
     for (q = 1; Utils::sqr(ux * (p - 1)) + Utils::sqr(uy * (q - 1)) <
@@ -1061,7 +1058,7 @@ double ELC_energy(const ParticleRange &particles) {
       omega = C_2PI * sqrt(Utils::sqr(ux * p) + Utils::sqr(uy * q));
       setup_PQ(p, q, omega, particles);
       distribute(8);
-      eng += PQ_energy(omega);
+      eng += PQ_energy(omega, n_localpart);
     }
   }
   /* we count both i<->j and j<->i, so return just half of it */
@@ -1192,17 +1189,6 @@ void ELC_init() {
     p3m.params.additional_mesh[1] = 0;
     p3m.params.additional_mesh[2] = 0;
   }
-  ELC_on_resort_particles();
-}
-
-void ELC_on_resort_particles() {
-  n_localpart = cells_get_n_particles();
-  n_scxcache = (int)(ceil(elc_params.far_cut / ux) + 1);
-  n_scycache = (int)(ceil(elc_params.far_cut / uy) + 1);
-  scxcache.resize(n_scxcache * n_localpart);
-  scycache.resize(n_scycache * n_localpart);
-
-  partblk.resize(n_localpart * 8);
 }
 
 int ELC_set_params(double maxPWerror, double gap_size, double far_cut,
