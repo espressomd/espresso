@@ -39,11 +39,11 @@ public:
 
     // Write data to the histogram
     for (auto p : particles) {
-      auto const pos = folded_position(p.get().r.p, box_geo) - center;
+      auto const pos = folded_position(traits::position(p), box_geo) - center;
       histogram.update(
           Utils::transform_coordinate_cartesian_to_cylinder(pos, axis),
-          Utils::transform_vector_cartesian_to_cylinder(p.get().m.v, axis,
-                                                        pos));
+          Utils::transform_vector_cartesian_to_cylinder(traits::velocity(p),
+                                                        axis, pos));
     }
     histogram.normalize();
     return histogram.get_histogram();

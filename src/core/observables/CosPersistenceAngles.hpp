@@ -42,8 +42,8 @@ public:
     auto const no_of_bonds = n_values() + 1;
     std::vector<Utils::Vector3d> bond_vectors(no_of_bonds);
     auto get_bond_vector = [&](auto index) {
-      return get_mi_vector(particles[index + 1].get().r.p,
-                           particles[index].get().r.p, box_geo);
+      return get_mi_vector(traits::position(particles[index + 1]),
+                           traits::position(particles[index]), box_geo);
     };
     for (size_t i = 0; i < no_of_bonds; ++i) {
       auto const tmp = get_bond_vector(i);

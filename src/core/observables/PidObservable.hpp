@@ -46,6 +46,7 @@ class PidObservable : virtual public Observable {
       Utils::Span<std::reference_wrapper<const Particle>> particles) const = 0;
 
 public:
+  using traits = GenObs::traits<Particle>;
   explicit PidObservable(std::vector<int> ids) : m_ids(std::move(ids)) {}
   std::vector<double> operator()() const final;
 

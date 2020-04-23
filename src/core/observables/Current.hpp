@@ -32,16 +32,13 @@ public:
   std::vector<double>
   evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
       const override {
-    std::vector<double> res(n_values());
+    Utils::Vector3d current{};
 #ifdef ELECTROSTATICS
     for (auto p : particles) {
-      double charge = p.get().p.q;
-      res[0] += charge * p.get().m.v[0];
-      res[1] += charge * p.get().m.v[1];
-      res[2] += charge * p.get().m.v[2];
+      current += (traits::charge(p) * traits::velocity(p));
     };
 #endif
-    return res;
+    return (Utils::hadamard_division(current, box_geo.length())).as_vector();
   };
 };
 

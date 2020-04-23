@@ -41,7 +41,8 @@ public:
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto p : particles) {
-      histogram.update(folded_position(p.get().r.p, box_geo), p.get().f.f);
+      histogram.update(folded_position(traits::position(p), box_geo),
+                       traits::force(p));
     }
     histogram.normalize();
     return histogram.get_histogram();

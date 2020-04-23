@@ -6,24 +6,24 @@
 
 namespace GenObs {
 template <> struct traits<Particle> {
-  auto position(Particle const &p) const { return p.r.p; }
-  auto velocity(Particle const &p) const { return p.m.v; }
-  auto mass(Particle const &p) const {
+  static auto position(Particle const &p) { return p.r.p; }
+  static auto velocity(Particle const &p) { return p.m.v; }
+  static auto mass(Particle const &p) {
 #ifdef VIRTUAL_SITES
     if (p.p.is_virtual)
       return decltype(p.p.mass){};
 #endif
     return p.p.mass;
   }
-  auto charge(Particle const &p) const { return p.p.q; }
-  auto force(Particle const &p) const {
+  static auto charge(Particle const &p) { return p.p.q; }
+  static auto force(Particle const &p) {
 #ifdef VIRTUAL_SITES
     if (p.p.is_virtual)
       return decltype(p.f.f){};
 #endif
     return p.f.f;
   }
-  auto dipole_moment(Particle const &p) const {
+  static auto dipole_moment(Particle const &p) {
 #if defined(ROTATION) && defined(DIPOLES)
     return p.calc_dip();
 #else

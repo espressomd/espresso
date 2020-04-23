@@ -34,7 +34,7 @@ std::vector<double> CylindricalLBVelocityProfileAtParticlePositions::evaluate(
   Utils::CylindricalHistogram<double, 3> histogram(n_bins, 3, limits);
 
   for (auto p : particles) {
-    auto const pos = folded_position(p.get().r.p, box_geo);
+    auto const pos = folded_position(traits::position(p), box_geo);
     auto const v = lb_lbfluid_get_interpolated_velocity(pos) *
                    lb_lbfluid_get_lattice_speed();
 

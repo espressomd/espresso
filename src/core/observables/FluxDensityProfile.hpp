@@ -41,8 +41,8 @@ public:
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
 
     for (auto p : particles) {
-      auto const ppos = folded_position(p.get().r.p, box_geo);
-      histogram.update(ppos, p.get().m.v);
+      auto const ppos = folded_position(traits::position(p), box_geo);
+      histogram.update(ppos, traits::velocity(p));
     }
     histogram.normalize();
     return histogram.get_histogram();
