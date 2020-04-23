@@ -5,24 +5,17 @@ namespace GenObs {
 template <class DoF> struct traits;
 
 namespace detail {
-template<class T>
-struct decay{
-  using type = typename std::decay<T>;
-};
+template <class T> struct decay { using type = typename std::decay_t<T>; };
 
-template<class U>
-struct decay<std::reference_wrapper<U>> {
+template <class U> struct decay<std::reference_wrapper<U>> {
   using type = typename std::decay_t<U>;
 };
 
-template<class T>
-using decay_t = typename decay<T>::type;
-}
+template <class T> using decay_t = typename decay<T>::type;
+} // namespace detail
 
-template<class Particle>
+template <class Particle>
 using default_traits = traits<detail::decay_t<Particle>>;
-
-
 
 struct Position {
   template <class Particle, class Traits = default_traits<Particle>>

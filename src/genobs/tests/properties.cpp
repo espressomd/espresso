@@ -19,5 +19,6 @@ BOOST_AUTO_TEST_CASE(properties_) {
   BOOST_CHECK_EQUAL(Mass{}(p), traits<Testing::Particle>{}.mass(p));
   BOOST_CHECK_EQUAL(Charge{}(p), traits<Testing::Particle>{}.charge(p));
   BOOST_CHECK_EQUAL(Force{}(p), traits<Testing::Particle>{}.force(p));
-  BOOST_CHECK_EQUAL(DipoleMoment{}(p), traits<Testing::Particle>{}.dipole_moment(p));
+  BOOST_CHECK_EQUAL(DipoleMoment{}(p),
+                    traits<Testing::Particle>{}.dipole_moment(p));
 }

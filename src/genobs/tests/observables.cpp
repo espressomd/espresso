@@ -18,9 +18,8 @@ template <class T> struct strip_args {
 BOOST_AUTO_TEST_CASE(product_) {
   using Testing::strip_args;
 
-  auto prod =
-      GenObs::Product<strip_args<std::integral_constant<int, 2>>,
-                           strip_args<std::integral_constant<int, 3>>>{};
+  auto prod = GenObs::Product<strip_args<std::integral_constant<int, 2>>,
+                              strip_args<std::integral_constant<int, 3>>>{};
 
   BOOST_CHECK_EQUAL((prod.template operator()<int, int>(0)), 2 * 3);
 }

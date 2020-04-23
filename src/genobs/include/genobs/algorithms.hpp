@@ -8,7 +8,9 @@
 namespace GenObs {
 namespace detail {
 struct One {
-  template <class Particle> auto operator()(Particle const &p) const { return 1; }
+  template <class Particle> auto operator()(Particle const &p) const {
+    return 1;
+  }
 };
 
 template <class ValueOp, class WeightOp> struct WeightedSum {
@@ -62,8 +64,9 @@ template <class ValueOp> struct Map {
   auto operator()(ParticleRange const &particles) const {
     using particle_type = typename ParticleRange::value_type;
     using value_op_type = decltype(ValueOp{}(std::declval<particle_type>()));
-    std::vector<value_op_type> res; 
-    std::transform(std::begin(particles), std::end(particles), std::back_inserter(res),
+    std::vector<value_op_type> res;
+    std::transform(std::begin(particles), std::end(particles),
+                   std::back_inserter(res),
                    [](auto const &p) { return ValueOp{}(p); });
     return res;
   }

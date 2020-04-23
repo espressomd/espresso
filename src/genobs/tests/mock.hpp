@@ -2,6 +2,7 @@
 #define TESTS_MOCK_HPP
 
 namespace Testing {
+
 struct Particle {
   double position = 1.;
   double m_vel = 2.;
@@ -16,6 +17,7 @@ struct Particle {
 } // namespace Testing
 
 namespace GenObs {
+
 template <> struct traits<Testing::Particle> {
   using Particle = Testing::Particle;
 
