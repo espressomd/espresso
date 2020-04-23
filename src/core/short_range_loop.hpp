@@ -19,12 +19,10 @@
 #ifndef CORE_SHORT_RANGE_HPP
 #define CORE_SHORT_RANGE_HPP
 
-#include "algorithm/link_cell.hpp"
 #include "cells.hpp"
 #include "grid.hpp"
 #include "integrate.hpp"
 
-#include <boost/iterator/indirect_iterator.hpp>
 #include <profiler/profiler.hpp>
 
 #include <utility>
@@ -62,90 +60,37 @@ struct EuclidianDistance {
 struct True {
   template <class... T> bool operator()(T...) const { return true; }
 };
-
-template <class PairKernel, class DistanceFunction, class VerletCriterion>
-void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
-               const VerletCriterion &verlet_criterion) {
-  auto first =
-      boost::make_indirect_iterator(cell_structure.local_cells().begin());
-  auto last = boost::make_indirect_iterator(cell_structure.local_cells().end());
-
-  if (cell_structure.use_verlet_list && cell_structure.m_rebuild_verlet_list) {
-    cell_structure.m_verlet_list.clear();
-
-    Algorithm::link_cell(
-        first, last,
-        [&pair_kernel, &df, &verlet_criterion](Particle &p1, Particle &p2) {
-          auto const d = df(p1, p2);
-          if (verlet_criterion(p1, p2, d)) {
-            cell_structure.m_verlet_list.emplace_back(&p1, &p2);
-            pair_kernel(p1, p2, d);
-          }
-        });
-    cell_structure.m_rebuild_verlet_list = false;
-  } else if (cell_structure.use_verlet_list &&
-             not cell_structure.m_rebuild_verlet_list) {
-    for (auto &pair : cell_structure.m_verlet_list) {
-      pair_kernel(*pair.first, *pair.second, df(*pair.first, *pair.second));
-    }
-  } else {
-    Algorithm::link_cell(
-        first, last,
-        [&pair_kernel, &df, &verlet_criterion](Particle &p1, Particle &p2) {
-          auto const d = df(p1, p2);
-          if (verlet_criterion(p1, p2, d)) {
-            cell_structure.m_verlet_list.emplace_back(&p1, &p2);
-            pair_kernel(p1, p2, d);
-          }
-        });
-  }
-}
-
 } // namespace detail
 
 template <class PairKernel, class VerletCriterion = detail::True>
 void short_range_loop(PairKernel &&pair_kernel,
-                      const VerletCriterion &verlet_criterion = {}) {
+                      const VerletCriterion &verlet_criterion) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
   if (interaction_range() != INACTIVE_CUTOFF) {
     if (cell_structure.decomposition().minimum_image_distance()) {
-      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
-                        detail::MinimalImageDistance{box_geo},
-                        verlet_criterion);
+      cell_structure.pair_loop(std::forward<PairKernel>(pair_kernel),
+                               detail::MinimalImageDistance{box_geo},
+                               verlet_criterion);
     } else {
-      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
-                        detail::EuclidianDistance{}, verlet_criterion);
+      cell_structure.pair_loop(std::forward<PairKernel>(pair_kernel),
+                               detail::EuclidianDistance{}, verlet_criterion);
     }
   }
 }
 
-template <class ParticleKernel, class PairKernel,
+template <class BondKernel, class PairKernel,
           class VerletCriterion = detail::True>
-void short_range_loop(ParticleKernel &&particle_kernel,
-                      PairKernel &&pair_kernel,
-                      const VerletCriterion &verlet_criterion = {}) {
+void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
+                      const VerletCriterion &verlet_criterion) {
   ESPRESSO_PROFILER_CXX_MARK_FUNCTION;
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
 
-  auto local_particles = cell_structure.local_particles();
-  for (auto &p : local_particles) {
-    particle_kernel(p);
-  }
+  cell_structure.bond_loop(bond_kernel);
 
-  if (interaction_range() != INACTIVE_CUTOFF) {
-    if (cell_structure.decomposition().minimum_image_distance()) {
-      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
-                        detail::MinimalImageDistance{box_geo},
-                        verlet_criterion);
-    } else {
-      detail::pair_loop(std::forward<PairKernel>(pair_kernel),
-                        detail::EuclidianDistance{}, verlet_criterion);
-    }
-  }
+  short_range_loop(pair_kernel, verlet_criterion);
 }
-
 #endif

@@ -71,11 +71,21 @@ void energy_calc(const double time) {
   }
 
   short_range_loop(
-      [](Particle &p) { add_bonded_energy(p, obs_energy); },
+      [&obs_energy](Particle &p1, int bond_id,
+                    Utils::Span<Particle *> partners) {
+        auto const &iaparams = bonded_ia_params[bond_id];
+        auto const result = calc_bonded_energy(iaparams, p1, partners);
+        if (result) {
+          obs_energy.bonded_contribution(bond_id)[0] += result.get();
+          return false;
+        }
+        return true;
+      },
       [](Particle const &p1, Particle const &p2, Distance const &d) {
         add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
                                    obs_energy);
-      });
+      },
+      detail::True{});
 
   calc_long_range_energies(cell_structure.local_particles());
 

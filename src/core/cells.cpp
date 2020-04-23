@@ -70,7 +70,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
       ret.emplace_back(p1.p.identity, p2.p.identity);
   };
 
-  short_range_loop(Utils::NoOp{}, pair_kernel);
+  short_range_loop(pair_kernel, detail::True{});
 
   /* Sort pairs */
   for (auto &pair : ret) {

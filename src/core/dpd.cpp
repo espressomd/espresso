@@ -159,7 +159,8 @@ static auto dpd_viscous_stress_local() {
         auto const f = P * (f_r - f_t) + f_t;
 
         stress += tensor_product(d.vec21, f);
-      });
+      },
+      detail::True{});
 
   return stress;
 }
