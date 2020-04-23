@@ -98,20 +98,6 @@ double cutoff(const Utils::Vector3d &box_l) {
   }
 }
 
-void integrate_sanity_check() {
-  switch (dipole.method) {
-  case DIPOLAR_NONE:
-    break;
-#ifdef DP3M
-  case DIPOLAR_P3M:
-    break;
-#endif /* DP3M */
-  default:
-    runtimeErrorMsg()
-        << "NpT does not work with your dipolar method, please use P3M.";
-  }
-}
-
 void on_observable_calc() {
   switch (dipole.method) {
 #ifdef DP3M

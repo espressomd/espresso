@@ -165,25 +165,6 @@ void deactivate() {
   }
 }
 
-void integrate_sanity_check() {
-  switch (coulomb.method) {
-  case COULOMB_NONE:
-    break;
-  case COULOMB_DH:
-    break;
-  case COULOMB_RF:
-    break;
-#ifdef P3M
-  case COULOMB_P3M:
-    break;
-#endif /*P3M*/
-  default: {
-    runtimeErrorMsg()
-        << "npt only works with P3M, Debye-Huckel or reaction field";
-  }
-  }
-}
-
 void update_dependent_particles() {
   iccp3m_iteration(cell_structure.local_particles(),
                    cell_structure.ghost_particles());
