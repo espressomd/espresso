@@ -229,18 +229,6 @@ void on_coulomb_change() {
   }
 }
 
-void on_resort_particles(const ParticleRange &particles) {
-  switch (coulomb.method) {
-#ifdef P3M
-  case COULOMB_ELC_P3M:
-    ELC_on_resort_particles();
-    break;
-#endif
-  default:
-    break;
-  }
-}
-
 void on_boxl_change() {
   switch (coulomb.method) {
 #ifdef P3M

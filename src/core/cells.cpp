@@ -363,7 +363,7 @@ void cells_resort_particles(int global_flag) {
 
   displaced_parts.clear();
 
-  on_resort_particles(cell_structure.local_particles());
+  on_resort_particles();
 }
 
 /*************************************************/

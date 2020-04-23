@@ -123,9 +123,6 @@ int ELC_sanity_checks();
 /// initialize the ELC constants
 void ELC_init();
 
-/// resize the particle buffers
-void ELC_on_resort_particles();
-
 /// pairwise contributions from the lowest and top layers to the energy
 double ELC_P3M_dielectric_layers_energy_contribution(Particle const &p1,
                                                      Particle const &p2);
