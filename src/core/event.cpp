@@ -251,6 +251,8 @@ void on_boxl_change() {
 }
 
 void on_cell_structure_change() {
+  clear_particle_node();
+
 /* Now give methods a chance to react to the change in cell
    structure. Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. */
