@@ -52,8 +52,8 @@ std::vector<double> PidObservable::operator()() const {
 
   std::vector<std::reference_wrapper<const Particle>> particles_ptrs(
       particles.begin(), particles.end());
-
   return this->evaluate(
-      Utils::Span<std::reference_wrapper<const Particle>>(particles_ptrs));
+      Utils::Span<std::reference_wrapper<const Particle>>(particles_ptrs),
+      GenObs::traits<Particle>{});
 }
 } // namespace Observables

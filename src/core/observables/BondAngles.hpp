@@ -36,15 +36,15 @@ public:
   using PidObservable::PidObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
-      const override {
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+           const GenObs::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
-    auto v1 = get_mi_vector(traits::position(particles[1]),
-                            traits::position(particles[0]), box_geo);
+    auto v1 = get_mi_vector(traits.position(particles[1]),
+                            traits.position(particles[0]), box_geo);
     auto n1 = v1.norm();
     for (size_t i = 0, end = n_values(); i < end; i++) {
-      auto v2 = get_mi_vector(traits::position(particles[i + 2]),
-                              traits::position(particles[i + 1]), box_geo);
+      auto v2 = get_mi_vector(traits.position(particles[i + 2]),
+                              traits.position(particles[i + 1]), box_geo);
       auto n2 = v2.norm();
       auto cosine = (v1 * v2) / (n1 * n2);
       // sanitize cosine value

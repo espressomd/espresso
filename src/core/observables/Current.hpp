@@ -30,15 +30,15 @@ public:
   std::vector<size_t> shape() const override { return {3}; }
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
-      const override {
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+           const GenObs::traits<Particle> &traits) const override {
     Utils::Vector3d current{};
 #ifdef ELECTROSTATICS
     for (auto p : particles) {
-      current += (traits::charge(p) * traits::velocity(p));
+      current += (traits.charge(p) * traits.velocity(p));
     };
 #endif
-    return (Utils::hadamard_division(current, box_geo.length())).as_vector();
+    return current.as_vector();
   };
 };
 

@@ -32,8 +32,8 @@ public:
   using PidObservable::PidObservable;
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
-      const override {
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+           const GenObs::traits<Particle> &traits) const override {
     std::vector<double> res(n_values());
 
 #ifdef ROTATION

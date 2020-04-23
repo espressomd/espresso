@@ -33,16 +33,16 @@ public:
   }
 
   std::vector<double>
-  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles)
-      const override {
+  evaluate(Utils::Span<std::reference_wrapper<const Particle>> particles,
+           const GenObs::traits<Particle> &traits) const override {
     std::array<size_t, 3> n_bins{{n_x_bins, n_y_bins, n_z_bins}};
     std::array<std::pair<double, double>, 3> limits{
         {std::make_pair(min_x, max_x), std::make_pair(min_y, max_y),
          std::make_pair(min_z, max_z)}};
     Utils::Histogram<double, 3> histogram(n_bins, 3, limits);
     for (auto p : particles) {
-      histogram.update(folded_position(traits::position(p), box_geo),
-                       traits::force(p));
+      histogram.update(folded_position(traits.position(p), box_geo),
+                       traits.force(p));
     }
     histogram.normalize();
     return histogram.get_histogram();
