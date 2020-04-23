@@ -38,7 +38,6 @@
 #include "AtomDecomposition.hpp"
 #include "DomainDecomposition.hpp"
 
-#include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/range/adaptor/uniqued.hpp>
