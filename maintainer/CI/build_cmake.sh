@@ -93,6 +93,7 @@ set_default_value make_check_tutorials false
 set_default_value make_check_samples false
 set_default_value make_check_benchmarks false
 set_default_value with_cuda false
+set_default_value with_cuda_compiler "nvcc"
 set_default_value build_type "RelWithAssert"
 set_default_value with_ccache false
 set_default_value with_scafacos true
@@ -144,7 +145,7 @@ if [ "${with_static_analysis}" = true ]; then
 fi
 
 if [ "${with_cuda}" = true ]; then
-    cmake_params="-DWITH_CUDA=ON ${cmake_params}"
+    cmake_params="-DWITH_CUDA=ON -DWITH_CUDA_COMPILER=${with_cuda_compiler} ${cmake_params}"
 else
     cmake_params="-DWITH_CUDA=OFF ${cmake_params}"
 fi
@@ -165,7 +166,7 @@ outp srcdir builddir \
     check_odd_only \
     with_static_analysis myconfig \
     build_procs check_procs \
-    with_cuda with_ccache
+    with_cuda with_cuda_compiler with_ccache
 
 echo "Creating ${builddir}..."
 mkdir -p "${builddir}"
