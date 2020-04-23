@@ -398,6 +398,7 @@ void mpi_who_has_slave(int, int) {
   static std::vector<int> sendbuf;
 
   auto local_particles = cell_structure.local_particles();
+
   auto const n_part = static_cast<int>(local_particles.size());
   boost::mpi::gather(comm_cart, n_part, 0);
 
@@ -423,7 +424,6 @@ void mpi_who_has() {
                      n_parts, 0);
 
   static std::vector<int> pdata;
-
   /* then fetch particle locations */
   for (int pnode = 0; pnode < n_nodes; pnode++) {
     if (pnode == this_node) {
