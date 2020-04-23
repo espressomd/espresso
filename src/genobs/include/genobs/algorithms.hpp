@@ -48,7 +48,7 @@ template <class ValueOp, class WeightOp> struct WeightedAverage {
   template <class ParticleRange>
   auto operator()(ParticleRange const &particles) const {
     auto const ws = detail::WeightedSum<ValueOp, WeightOp>()(particles);
-    return ws.first / ws.second;
+    return (ws.second) ? ws.first / ws.second : ws.first;
   }
 };
 
