@@ -512,10 +512,4 @@ inline bool add_bonded_force(Particle &p1, int bond_id,
   }
 }
 
-/** Calculate bonded forces for one particle.
- *  @param p particle for which to calculate forces
- */
-inline void add_single_particle_force(Particle &p) {
-  cell_structure.execute_bond_handler(p, add_bonded_force);
-}
 #endif

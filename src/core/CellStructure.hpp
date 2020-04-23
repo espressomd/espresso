@@ -30,11 +30,13 @@
 #include "ParticleDecomposition.hpp"
 #include "ParticleList.hpp"
 #include "ParticleRange.hpp"
+#include "algorithm/link_cell.hpp"
 #include "bond_error.hpp"
 #include "ghosts.hpp"
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/container/static_vector.hpp>
+#include <boost/iterator/indirect_iterator.hpp>
 #include <boost/range/algorithm/find_if.hpp>
 #include <boost/range/algorithm/transform.hpp>
 
@@ -455,6 +457,37 @@ public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
     for (auto &p : local_particles()) {
       execute_bond_handler(p, bond_kernel);
+    }
+  }
+
+  template <class PairKernel, class DistanceFunction, class VerletCriterion>
+  void pair_loop(PairKernel &&pair_kernel, DistanceFunction df,
+                 const VerletCriterion &verlet_criterion) {
+    auto first = boost::make_indirect_iterator(local_cells().begin());
+    auto last = boost::make_indirect_iterator(local_cells().end());
+
+    if (use_verlet_list && m_rebuild_verlet_list) {
+      m_verlet_list.clear();
+
+      Algorithm::link_cell(first, last,
+                           [&pair_kernel, &df, &verlet_criterion,
+                            this](Particle &p1, Particle &p2) {
+                             auto const d = df(p1, p2);
+                             if (verlet_criterion(p1, p2, d)) {
+                               m_verlet_list.emplace_back(&p1, &p2);
+                               pair_kernel(p1, p2, d);
+                             }
+                           });
+      m_rebuild_verlet_list = false;
+    } else if (use_verlet_list && not m_rebuild_verlet_list) {
+      for (auto &pair : m_verlet_list) {
+        pair_kernel(*pair.first, *pair.second, df(*pair.first, *pair.second));
+      }
+    } else {
+      Algorithm::link_cell(first, last,
+                           [&pair_kernel, &df](Particle &p1, Particle &p2) {
+                             pair_kernel(p1, p2, df(p1, p2));
+                           });
     }
   }
 };
