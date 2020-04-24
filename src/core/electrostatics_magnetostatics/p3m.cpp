@@ -874,10 +874,6 @@ void p3m_calc_influence_function_energy() {
   }
 }
 
-/* Functions for P3M parameters tuning
- * This tuning is based on P3M_tune by M. Deserno
- */
-/**@{*/
 #define P3M_TUNE_MAX_CUTS 50
 
 /** Get the minimal error for this combination of parameters.
