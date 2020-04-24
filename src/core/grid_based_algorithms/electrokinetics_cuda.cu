@@ -2175,7 +2175,7 @@ void ek_calculate_electrostatic_coupling() {
     return;
 
   auto device_particles = gpu_get_particle_pointer();
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (device_particles.size() + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2189,7 +2189,7 @@ void ek_integrate_electrostatics() {
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  auto blocks_per_grid_x =
       static_cast<int>((ek_parameters.number_of_nodes +
                         threads_per_block * blocks_per_grid_y - 1) /
                        (threads_per_block * blocks_per_grid_y));
@@ -2232,7 +2232,7 @@ void ek_integrate() {
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  auto blocks_per_grid_x =
       static_cast<int>((ek_parameters.number_of_nodes +
                         threads_per_block * blocks_per_grid_y - 1) /
                        (threads_per_block * blocks_per_grid_y));
@@ -2283,7 +2283,7 @@ void ek_init_species_density_wallcharge(ekfloat *wallcharge_species_density,
                                         int wallcharge_species) {
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  auto blocks_per_grid_x =
       static_cast<int>((ek_parameters.number_of_nodes +
                         threads_per_block * blocks_per_grid_y - 1) /
                        (threads_per_block * blocks_per_grid_y));
@@ -2790,7 +2790,7 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  auto blocks_per_grid_x =
       static_cast<int>((ek_parameters.number_of_nodes +
                         threads_per_block * blocks_per_grid_y - 1) /
                        (threads_per_block * blocks_per_grid_y));
@@ -2983,8 +2983,9 @@ int ek_node_print_flux(int species, int x, int y, int z, double *flux) {
 
 int ek_node_set_density(int species, int x, int y, int z, double density) {
   if (ek_parameters.species_index[species] != -1) {
-    int index = static_cast<int>(z * ek_parameters.dim_y * ek_parameters.dim_x +
-                                 y * ek_parameters.dim_x + x);
+    auto index =
+        static_cast<int>(z * ek_parameters.dim_y * ek_parameters.dim_x +
+                         y * ek_parameters.dim_x + x);
     ekfloat num_particles = density * ek_parameters.agrid *
                             ek_parameters.agrid * ek_parameters.agrid;
 
@@ -3019,7 +3020,7 @@ int ek_print_vtk_flux(int species, char *filename) {
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  auto blocks_per_grid_x =
       static_cast<int>((ek_parameters.number_of_nodes +
                         threads_per_block * blocks_per_grid_y - 1) /
                        (threads_per_block * blocks_per_grid_y));
@@ -3490,7 +3491,7 @@ int ek_print_vtk_flux_link(int species, char *filename) {
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  auto blocks_per_grid_x =
       static_cast<int>((ek_parameters.number_of_nodes +
                         threads_per_block * blocks_per_grid_y - 1) /
                        (threads_per_block * blocks_per_grid_y));
@@ -3556,7 +3557,7 @@ LOOKUP_TABLE default\n",
 }
 
 int ek_node_print_potential(int x, int y, int z, double *potential) {
-  int i =
+  auto i =
       static_cast<int>(z * ek_parameters.dim_y * ek_parameters.dim_x_padded +
                        y * ek_parameters.dim_x_padded + x);
   float pot;
@@ -4024,7 +4025,7 @@ ekfloat ek_calculate_net_charge() {
 
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x =
+  auto blocks_per_grid_x =
       static_cast<int>((ek_parameters.number_of_nodes +
                         threads_per_block * blocks_per_grid_y - 1) /
                        (threads_per_block * blocks_per_grid_y));

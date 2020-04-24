@@ -167,9 +167,9 @@ __device__ void static Aliasing_sums_ik(const P3MGpuData p, int NX, int NY,
 template <int cao>
 __global__ void calculate_influence_function_device(const P3MGpuData p) {
 
-  const int NX = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
-  const int NY = static_cast<int>(blockDim.y * blockIdx.y + threadIdx.y);
-  const int NZ = static_cast<int>(blockDim.z * blockIdx.z + threadIdx.z);
+  const auto NX = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  const auto NY = static_cast<int>(blockDim.y * blockIdx.y + threadIdx.y);
+  const auto NZ = static_cast<int>(blockDim.z * blockIdx.z + threadIdx.z);
   REAL_TYPE Dnx, Dny, Dnz;
   REAL_TYPE Zaehler[3] = {0.0, 0.0, 0.0}, Nenner = 0.0;
   REAL_TYPE zwi;

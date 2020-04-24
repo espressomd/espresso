@@ -55,8 +55,8 @@ __device__ __constant__ volatile BHData bhpara[1];
 // The thread with a lower index will operate longer and
 // final result (here: the sum) is flowing down towards zero thread.
 __device__ void dds_sumReduction_BH(dds_float *input, dds_float *sum) {
-  int tid = static_cast<int>(threadIdx.x);
-  for (int i = static_cast<int>(blockDim.x); i > 1; i /= 2) {
+  auto tid = static_cast<int>(threadIdx.x);
+  for (auto i = static_cast<int>(blockDim.x); i > 1; i /= 2) {
     __syncthreads();
     if (tid < i / 2)
       input[tid] += input[i / 2 + tid];

@@ -34,7 +34,7 @@
 // Position and charge
 __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r,
                                 float *q, int n) {
-  int idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
   if (idx >= n)
     return;
 
@@ -50,7 +50,7 @@ __global__ void split_kernel_rq(CUDA_particle_data *particles, float *r,
 
 // Charge only
 __global__ void split_kernel_q(CUDA_particle_data *particles, float *q, int n) {
-  int idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
   if (idx >= n)
     return;
 
@@ -63,7 +63,7 @@ __global__ void split_kernel_q(CUDA_particle_data *particles, float *q, int n) {
 
 // Position only
 __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
-  int idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
   if (idx >= n)
     return;
 
@@ -79,7 +79,7 @@ __global__ void split_kernel_r(CUDA_particle_data *particles, float *r, int n) {
 #ifdef CUDA
 // Velocity
 __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
-  int idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
   if (idx >= n)
     return;
 
@@ -97,7 +97,7 @@ __global__ void split_kernel_v(CUDA_particle_data *particles, float *v, int n) {
 // Dipole moment
 __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip,
                                  int n) {
-  int idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
   if (idx >= n)
     return;
 
@@ -114,7 +114,7 @@ __global__ void split_kernel_dip(CUDA_particle_data *particles, float *dip,
 __global__ void split_kernel_director(CUDA_particle_data *particles,
                                       float *director, int n) {
 #ifdef ROTATION
-  int idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
+  auto idx = static_cast<int>(blockDim.x * blockIdx.x + threadIdx.x);
   if (idx >= n)
     return;
 

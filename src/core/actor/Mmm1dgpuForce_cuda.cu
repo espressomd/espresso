@@ -134,7 +134,7 @@ void Mmm1dgpuForce::setup(SystemInterface &s) {
 }
 
 unsigned int Mmm1dgpuForce::numBlocks(SystemInterface &s) {
-  int b = static_cast<int>(s.npart_gpu() * s.npart_gpu() / numThreads) + 1;
+  auto b = static_cast<int>(s.npart_gpu() * s.npart_gpu() / numThreads) + 1;
   if (b > 65535)
     b = 65535;
   return b;
@@ -150,8 +150,8 @@ __forceinline__ __device__ mmm1dgpu_real cbpow(mmm1dgpu_real x) {
 }
 
 __device__ void sumReduction(mmm1dgpu_real *input, mmm1dgpu_real *sum) {
-  int tid = static_cast<int>(threadIdx.x);
-  for (int i = static_cast<int>(blockDim.x) / 2; i > 0; i /= 2) {
+  auto tid = static_cast<int>(threadIdx.x);
+  for (auto i = static_cast<int>(blockDim.x) / 2; i > 0; i /= 2) {
     __syncthreads();
     if (tid < i)
       input[tid] += input[i + tid];
@@ -165,7 +165,7 @@ __global__ void sumKernel(mmm1dgpu_real *data, int N) {
   HIP_DYNAMIC_SHARED(mmm1dgpu_real, partialsums)
   if (blockIdx.x != 0)
     return;
-  int tid = static_cast<int>(threadIdx.x);
+  auto tid = static_cast<int>(threadIdx.x);
   mmm1dgpu_real result = 0;
 
   for (int i = 0; i < N; i += static_cast<int>(blockDim.x)) {
@@ -482,7 +482,7 @@ __global__ void vectorReductionKernel(mmm1dgpu_real const *src,
   if (tStop < 0)
     tStop = N * N;
 
-  for (int tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+  for (auto tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
        tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     int offset = ((tid + (tStart % N)) % N);
 
@@ -512,7 +512,7 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
 
   if (pairs) // if we calculate force pairs, we need to reduce them to forces
   {
-    int blocksRed = static_cast<int>(s.npart_gpu() / numThreads) + 1;
+    auto blocksRed = static_cast<int>(s.npart_gpu() / numThreads) + 1;
     KERNELCALL(forcesKernel, numBlocks(s), numThreads, s.rGpuBegin(),
                s.qGpuBegin(), dev_forcePairs, s.npart_gpu(), pairs, 0, -1)
     KERNELCALL(vectorReductionKernel, blocksRed, numThreads, dev_forcePairs,
@@ -525,7 +525,7 @@ void Mmm1dgpuForce::computeForces(SystemInterface &s) {
 
 __global__ void scaleAndAddKernel(mmm1dgpu_real *dst, mmm1dgpu_real const *src,
                                   int N, mmm1dgpu_real factor) {
-  for (int tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
+  for (auto tid = static_cast<int>(threadIdx.x + blockIdx.x * blockDim.x);
        tid < N; tid += static_cast<int>(blockDim.x * gridDim.x)) {
     dst[tid] += src[tid] * factor;
   }
@@ -545,7 +545,7 @@ void Mmm1dgpuForce::computeEnergy(SystemInterface &s) {
   if (pairs < 0) {
     throw std::runtime_error("MMM1D was not initialized correctly");
   }
-  int shared = static_cast<int>(numThreads * sizeof(mmm1dgpu_real));
+  auto shared = static_cast<int>(numThreads * sizeof(mmm1dgpu_real));
 
   KERNELCALL_shared(energiesKernel, numBlocks(s), numThreads, shared,
                     s.rGpuBegin(), s.qGpuBegin(), dev_energyBlocks,

@@ -430,7 +430,7 @@ reset_LB_force_densities_kernel(LB_node_force_density_gpu node_f,
 void reset_LB_force_densities_GPU(bool buffer) {
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2442,7 +2442,7 @@ void lb_init_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2479,7 +2479,7 @@ void lb_reinit_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2530,7 +2530,7 @@ void lb_init_boundaries_GPU(int host_n_lb_boundaries, int number_of_boundnodes,
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2577,7 +2577,7 @@ void lb_reinit_extern_nodeforce_GPU(LB_parameters_gpu *lbpar_gpu) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu->number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2598,7 +2598,7 @@ void lb_calc_particle_lattice_ia_gpu(bool couple_virtual, double friction) {
     /* values for the particle kernel */
     int threads_per_block_particles = 64;
     int blocks_per_grid_particles_y = 4;
-    int blocks_per_grid_particles_x = static_cast<int>(
+    auto blocks_per_grid_particles_x = static_cast<int>(
         (device_particles.size() +
          threads_per_block_particles * blocks_per_grid_particles_y - 1) /
         (threads_per_block_particles * blocks_per_grid_particles_y));
@@ -2631,7 +2631,7 @@ void lb_get_values_GPU(LB_rho_v_pi_gpu *host_values) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2652,7 +2652,7 @@ void lb_get_boundary_flags_GPU(unsigned int *host_bound_array) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2703,7 +2703,7 @@ void lb_calc_fluid_mass_GPU(double *mass) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2730,7 +2730,7 @@ void lb_calc_fluid_momentum_GPU(double *host_mom) {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
@@ -2847,7 +2847,7 @@ void lb_integrate_GPU() {
   /* values for the kernel call */
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
-  int blocks_per_grid_x = static_cast<int>(
+  auto blocks_per_grid_x = static_cast<int>(
       (lbpar_gpu.number_of_nodes + threads_per_block * blocks_per_grid_y - 1) /
       (threads_per_block * blocks_per_grid_y));
   dim3 dim_grid = make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);

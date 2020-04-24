@@ -360,7 +360,7 @@ void IBM_ResetLBForces_GPU() {
     // Setup for kernel call
     int threads_per_block = 64;
     int blocks_per_grid_y = 4;
-    int blocks_per_grid_x =
+    auto blocks_per_grid_x =
         static_cast<int>((lbpar_gpu.number_of_nodes +
                           threads_per_block * blocks_per_grid_y - 1) /
                          (threads_per_block * blocks_per_grid_y));
