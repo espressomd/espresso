@@ -38,7 +38,7 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
-  image: docker.pkg.github.com/espressomd/docker/clang:a1192b35590a1a474c55fe1e9a1e6c25758454ea
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
   dependencies: []
   before_script:
     - git submodule deinit .
