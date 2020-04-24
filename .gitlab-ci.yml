@@ -65,7 +65,7 @@ style_doxygen:
     - cd build
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
     - cmake .. -DWITH_CUDA=OFF
-    - bash ../maintainer/CI/dox_warnings.sh
+    - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - docker
     - linux
