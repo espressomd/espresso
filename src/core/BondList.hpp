@@ -172,7 +172,7 @@ public:
     return *this;
   }
   // NOLINTNEXTLINE(bugprone-exception-escape)
-  BondList &operator=(BondList &&rhs) {
+  BondList &operator=(BondList &&rhs) noexcept {
     if (this != std::addressof(rhs)) {
       std::swap(m_storage, rhs.m_storage);
     }

@@ -16,10 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#pragma once
+#ifndef OPTIONAL_COUNTER_HPP
+#define OPTIONAL_COUNTER_HPP
 
 #include <cstdint>
+#include <utility>
 
 #include <utils/Counter.hpp>
 
@@ -35,20 +36,11 @@ private:
 
 public:
   OptionalCounter() : m_counter{}, m_initialized(false) {}
-  OptionalCounter(Utils::Counter<uint64_t> &counter)
+  OptionalCounter(Utils::Counter<uint64_t> const &counter)
       : m_counter(counter), m_initialized(true) {}
-  OptionalCounter &operator=(Utils::Counter<uint64_t> &counter) {
-    if (&m_counter != &counter) {
-      m_counter = counter;
-      m_initialized = true;
-    }
-    return *this;
-  }
-  OptionalCounter &operator=(Utils::Counter<uint64_t> &&counter) {
-    if (&m_counter != &counter) {
-      m_counter = counter;
-      m_initialized = true;
-    }
+  OptionalCounter &operator=(Utils::Counter<uint64_t> counter) {
+    m_counter = std::move(counter);
+    m_initialized = true;
     return *this;
   }
   template <class Archive>
@@ -62,3 +54,5 @@ public:
   Utils::Counter<uint64_t> &operator*() { return m_counter; }
   Utils::Counter<uint64_t> *operator->() { return &m_counter; }
 };
+
+#endif

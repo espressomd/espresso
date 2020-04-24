@@ -2229,7 +2229,6 @@ void ek_integrate_electrostatics() {
 
 void ek_integrate() {
   /** values for the kernel call */
-
   int threads_per_block = 64;
   int blocks_per_grid_y = 4;
   auto blocks_per_grid_x =
@@ -2247,9 +2246,7 @@ void ek_integrate() {
   // KERNELCALL( ek_clear_node_force, dim_grid, threads_per_block, node_f );
 
   /* Integrate diffusion-advection */
-
   for (int i = 0; i < ek_parameters.number_of_species; i++) {
-
     KERNELCALL(ek_clear_fluxes, dim_grid, threads_per_block);
     KERNELCALL(ek_calculate_quantities, dim_grid, threads_per_block, i,
                *current_nodes, node_f, ek_lbparameters_gpu, ek_lb_device_values,
@@ -2259,11 +2256,9 @@ void ek_integrate() {
   }
 
   /* Integrate electrostatics */
-
   ek_integrate_electrostatics();
 
   /* Integrate Navier-Stokes */
-
   lb_integrate_GPU();
 
   philox_counter.increment();
@@ -2352,9 +2347,8 @@ int ek_init() {
       return 1;
     }
 
-    // NOLINTNEXTLINE(modernize-loop-convert)
-    for (int i = 0; i < MAX_NUMBER_OF_SPECIES; i++) {
-      ek_parameters.species_index[i] = -1;
+    for (auto &val : ek_parameters.species_index) {
+      val = -1;
     }
 
     if (lattice_switch != ActiveLB::NONE) {

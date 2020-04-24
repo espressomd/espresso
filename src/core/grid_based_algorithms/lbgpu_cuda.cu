@@ -1173,13 +1173,11 @@ calc_values_in_LB_units(LB_nodes_gpu n_a, Utils::Array<float, 19> &mode,
   } else {
     d_p_v[print_index].rho = 0.0f;
 
-    // NOLINTNEXTLINE(modernize-loop-convert)
-    for (int i = 0; i < 3; i++)
-      d_p_v[print_index].v[i] = 0.0f;
+    for (auto &val : d_p_v[print_index].v)
+      val = 0.0f;
 
-    // NOLINTNEXTLINE(modernize-loop-convert)
-    for (int i = 0; i < 6; i++)
-      d_p_v[print_index].pi[i] = 0.0f;
+    for (auto &val : d_p_v[print_index].pi)
+      val = 0.0f;
   }
 }
 

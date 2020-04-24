@@ -229,16 +229,15 @@ double long_range_energy() {
              std::inner_product(particles.charges.begin(),
                                 particles.charges.end(),
                                 particles.potentials.begin(), 0.0);
-    } else { // NOLINT(readability-else-after-return)
-#ifdef SCAFACOS_DIPOLES
-      scafacos->run_dipolar(particles.dipoles, particles.positions,
-                            particles.fields, particles.potentials);
-      return -0.5 * dipole.prefactor *
-             std::inner_product(particles.dipoles.begin(),
-                                particles.dipoles.end(),
-                                particles.potentials.begin(), 0.0);
-#endif
     }
+#ifdef SCAFACOS_DIPOLES
+    scafacos->run_dipolar(particles.dipoles, particles.positions,
+                          particles.fields, particles.potentials);
+    return -0.5 * dipole.prefactor *
+           std::inner_product(particles.dipoles.begin(),
+                              particles.dipoles.end(),
+                              particles.potentials.begin(), 0.0);
+#endif
   }
 
   return 0.0;
@@ -281,13 +280,7 @@ void tune_r_cut() {
     t_min = time_r_cut(r_min);
     t_max = time_r_cut(r_max);
 
-    if (t_min <= 0.0) {
-      r_min += tune_limit; // NOLINT(clang-analyzer-deadcode.DeadStores)
-      break;
-    }
-
-    if (t_max <= 0.0) {
-      r_min -= tune_limit; // NOLINT(clang-analyzer-deadcode.DeadStores)
+    if (t_min <= 0.0 or t_max <= 0.0) {
       break;
     }
 
