@@ -77,11 +77,12 @@ T bspline_3d_accumulate(const Vector3d &pos, const Kernel &kernel,
                         const Vector3d &grid_spacing, const Vector3d &offset,
                         T const &init) {
   T value = init;
-  bspline_3d<order>(pos,
-                    [&value, &kernel](const std::array<int, 3> &ind, double w) {
-                      value += w * kernel(ind);
-                    },
-                    grid_spacing, offset);
+  bspline_3d<order>(
+      pos,
+      [&value, &kernel](const std::array<int, 3> &ind, double w) {
+        value += w * kernel(ind);
+      },
+      grid_spacing, offset);
 
   return value;
 }
