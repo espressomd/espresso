@@ -112,6 +112,7 @@ ubuntu-20.04-sanitizer:
     - export with_asan=true ASAN_OPTIONS="allocator_may_return_null=1"
     - export with_ubsan=true UBSAN_OPTIONS=suppressions=${CI_PROJECT_DIR}/maintainer/CI/ubsan.supp
     - bash maintainer/CI/build_cmake.sh
+  timeout: 2h
   tags:
     - docker
     - linux
