@@ -26,7 +26,7 @@ if ! hash "${DOXYGEN}" 2>/dev/null; then
 fi
 dox_version=$("${DOXYGEN}" --version)
 dox_version_supported=false
-for supported_version in 1.8.11 1.8.13; do
+for supported_version in 1.8.11 1.8.13 1.8.17; do
     if [ "${dox_version}" = "${supported_version}" ]; then
         dox_version_supported=true
         break

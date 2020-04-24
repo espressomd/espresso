@@ -58,13 +58,13 @@ style:
 style_doxygen:
   <<: *global_job_definition
   stage: prepare
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
   dependencies: []
   script:
     - mkdir build
     - cd build
     - cp ../maintainer/configs/maxset.hpp myconfig.hpp
-    - cmake .. -DWITH_CUDA=OFF
+    - cmake .. -DWITH_CUDA=ON -DWITH_SCAFACOS=ON
     - sh ../maintainer/CI/dox_warnings.sh
   tags:
     - docker

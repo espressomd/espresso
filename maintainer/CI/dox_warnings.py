@@ -69,7 +69,7 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
         # known bug, not fixed yet
         continue
     if re.search(
-            '^The following parameters of .+ are not documented:$', warning):
+            '^The following parameters? of .+ (is|are) not documented:$', warning):
         # non-critical warning, enforcing it would encourage bad behavior, i.e.
         # inserting "@param argument" without a description to silence the
         # warning, when in reality the warning is silenced because the text on
