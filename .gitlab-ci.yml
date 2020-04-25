@@ -102,6 +102,17 @@ no_rotation:
     - docker
     - linux
 
+ubuntu:wo-dependencies:
+  <<: *global_job_definition
+  stage: build
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:446ff604bbfa63f30ddb462697fa0d0dc2630460
+  script:
+    - export myconfig=maxset with_cuda=false make_check_unit_tests=false make_check_python=false
+    - bash maintainer/CI/build_cmake.sh
+  tags:
+    - docker
+    - linux
+
 ### Builds with different Distributions
 
 debian:10:
@@ -315,17 +326,6 @@ empty:
     - docker
     - linux
     - cuda
-
-ubuntu:wo-dependencies:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-wo-dependencies:446ff604bbfa63f30ddb462697fa0d0dc2630460
-  script:
-    - export myconfig=maxset with_cuda=false make_check_unit_tests=false make_check_python=false
-    - bash maintainer/CI/build_cmake.sh
-  tags:
-    - docker
-    - linux
 
 ### Builds with ROCm
 
