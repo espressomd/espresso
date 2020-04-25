@@ -276,9 +276,9 @@ fi
 
 if [ "${with_coverage}" = true ]; then
     cd "${builddir}"
-    lcov -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
-    lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-    lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
+    lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
     # Uploading report to Codecov
     if [ -z "${CODECOV_TOKEN}" ]; then
         bash <(curl -s https://codecov.io/bash) -X gcov || echo "Codecov did not collect coverage reports"
