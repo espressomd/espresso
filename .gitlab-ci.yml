@@ -113,15 +113,14 @@ ubuntu:wo-dependencies:
     - docker
     - linux
 
-### Builds with different Distributions
+### Builds with different distributions
 
 debian:10:
   <<: *global_job_definition
   stage: build
   image: docker.pkg.github.com/espressomd/docker/debian:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
-    - export with_cuda=false
-    - export myconfig=maxset make_check_python=false
+    - export with_cuda=false myconfig=maxset make_check_python=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -199,7 +198,6 @@ cuda10-maxset:
   image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
-    - export cmake_params="-DIPYTHON_EXECUTABLE=$(which jupyter)"
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -216,7 +214,6 @@ cuda9-maxset:
   image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-9.0:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_cuda=true with_coverage=true test_timeout=900 srcdir=${CI_PROJECT_DIR}
-    - sed -i 's/ or "DISPLAY" in os.environ/ or True/' src/python/espressomd/visualization.pyx
     - bash maintainer/CI/build_cmake.sh
   artifacts:
     paths:
@@ -291,7 +288,7 @@ installation:
   image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
-    - export srcdir=${CI_PROJECT_DIR} test_timeout=1800 build_type=Release
+    - export srcdir=${CI_PROJECT_DIR} build_type=Release
     - bash maintainer/CI/build_cmake.sh
     - cd build
     - make install
@@ -309,7 +306,6 @@ installation:
     - docker
     - linux
     - cuda
-  timeout: 2h
   when: manual
 
 empty:
