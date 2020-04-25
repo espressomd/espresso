@@ -576,22 +576,17 @@ cdef class ParticleHandle:
             """
 
             def __set__(self, mu_E):
-                cdef double _mu_E[3]
-
+                cdef Vector3d _mu_E
                 check_type_or_throw_except(
                     mu_E, 3, float, "mu_E has to be 3 floats.")
-
-                _mu_E[0] = mu_E[0]
-                _mu_E[1] = mu_E[1]
-                _mu_E[2] = mu_E[2]
-
+                for i in range(3):
+                    _mu_E[i] = mu_E[i]
                 set_particle_mu_E(self._id, _mu_E)
 
             def __get__(self):
-                cdef double mu_E[3]
-                get_particle_mu_E(self._id, mu_E)
-
-                return array_locked([mu_E[0], mu_E[1], mu_E[2]])
+                cdef Vector3d _mu_E
+                get_particle_mu_E(self._id, _mu_E)
+                return make_array_locked(_mu_E)
 
     property virtual:
         """Virtual flag.

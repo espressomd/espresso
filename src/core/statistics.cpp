@@ -338,7 +338,7 @@ void calc_rdf(PartCfg &partCfg, int const *p1_types, int n_p1,
     auto const r_out = r_in + bin_width;
     auto const bin_volume = (4.0 / 3.0) * Utils::pi() *
                             ((r_out * r_out * r_out) - (r_in * r_in * r_in));
-    rdf[i] *= volume / (bin_volume * cnt);
+    rdf[i] *= volume / (bin_volume * static_cast<double>(cnt));
   }
 }
 
@@ -410,7 +410,7 @@ void calc_rdf_av(PartCfg &partCfg, int const *p1_types, int n_p1,
       auto const r_out = r_in + bin_width;
       auto const bin_volume = (4.0 / 3.0) * Utils::pi() *
                               ((r_out * r_out * r_out) - (r_in * r_in * r_in));
-      rdf[i] += rdf_tmp[i] * volume / (bin_volume * cnt);
+      rdf[i] += rdf_tmp[i] * volume / (bin_volume * static_cast<double>(cnt));
     }
 
     cnt_conf++;
@@ -524,8 +524,9 @@ void obsstat_realloc_and_clear(Observable_stat *stat, int n_pre, int n_bonded,
 
   // Number of doubles to store pressure in
   const int total =
-      c_size * (n_pre + bonded_ia_params.size() + n_non_bonded + n_coulomb +
-                n_dipolar + n_vs + Observable_stat::n_external_field);
+      c_size *
+      (n_pre + static_cast<int>(bonded_ia_params.size()) + n_non_bonded +
+       n_coulomb + n_dipolar + n_vs + Observable_stat::n_external_field);
 
   // Allocate mem for the double list
   stat->data.resize(total);
@@ -570,7 +571,7 @@ void invalidate_obs() {
 }
 
 void update_pressure(int v_comp) {
-  double p_vel[3];
+  Utils::Vector3d p_vel;
   /* if desired (v_comp==1) replace ideal component with instantaneous one */
   if (total_pressure.init_status != 1 + v_comp) {
     init_virials(&total_pressure);
@@ -584,7 +585,7 @@ void update_pressure(int v_comp) {
       if (total_pressure.init_status == 0)
         master_pressure_calc(0);
       total_pressure.data[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0,
+      MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
                  MPI_COMM_WORLD);
       for (int i = 0; i < 3; i++)
         if (nptiso.geometry & nptiso.nptgeom_dir[i])

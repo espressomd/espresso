@@ -46,7 +46,7 @@ class DipolarDirectSum : public Actor {
 public:
   DipolarDirectSum(SystemInterface &s) {
 
-    k = dipole.prefactor;
+    k = static_cast<float>(dipole.prefactor);
 
     if (!s.requestFGpu())
       std::cerr << "DipolarDirectSum needs access to forces on GPU!"
@@ -67,9 +67,9 @@ public:
       box[i] = s.box()[i];
       per[i] = (box_geo.periodic(i));
     }
-    DipolarDirectSum_kernel_wrapper_force(k, s.npart_gpu(), s.rGpuBegin(),
-                                          s.dipGpuBegin(), s.fGpuBegin(),
-                                          s.torqueGpuBegin(), box, per);
+    DipolarDirectSum_kernel_wrapper_force(
+        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(),
+        s.fGpuBegin(), s.torqueGpuBegin(), box, per);
   };
   void computeEnergy(SystemInterface &s) override {
     dds_float box[3];
@@ -79,8 +79,8 @@ public:
       per[i] = (box_geo.periodic(i));
     }
     DipolarDirectSum_kernel_wrapper_energy(
-        k, s.npart_gpu(), s.rGpuBegin(), s.dipGpuBegin(), box, per,
-        (&(((CUDA_energy *)s.eGpu())->dipolar)));
+        k, static_cast<int>(s.npart_gpu()), s.rGpuBegin(), s.dipGpuBegin(), box,
+        per, (&(((CUDA_energy *)s.eGpu())->dipolar)));
   };
 
 private:

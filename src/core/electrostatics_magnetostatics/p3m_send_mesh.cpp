@@ -121,11 +121,11 @@ void p3m_send_mesh::gather_grid(Utils::Span<double *> meshes,
 
     /* communication */
     if (node_neighbors[s_dir] != comm.rank()) {
-      MPI_Sendrecv(send_grid.data(), meshes.size() * s_size[s_dir], MPI_DOUBLE,
-                   node_neighbors[s_dir], REQ_P3M_GATHER, recv_grid.data(),
-                   meshes.size() * r_size[r_dir], MPI_DOUBLE,
-                   node_neighbors[r_dir], REQ_P3M_GATHER, comm,
-                   MPI_STATUS_IGNORE);
+      MPI_Sendrecv(
+          send_grid.data(), static_cast<int>(meshes.size()) * s_size[s_dir],
+          MPI_DOUBLE, node_neighbors[s_dir], REQ_P3M_GATHER, recv_grid.data(),
+          static_cast<int>(meshes.size()) * r_size[r_dir], MPI_DOUBLE,
+          node_neighbors[r_dir], REQ_P3M_GATHER, comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }
@@ -158,11 +158,11 @@ void p3m_send_mesh::spread_grid(Utils::Span<double *> meshes,
       }
     /* communication */
     if (node_neighbors[r_dir] != comm.rank()) {
-      MPI_Sendrecv(send_grid.data(), r_size[r_dir] * meshes.size(), MPI_DOUBLE,
-                   node_neighbors[r_dir], REQ_P3M_SPREAD, recv_grid.data(),
-                   s_size[s_dir] * meshes.size(), MPI_DOUBLE,
-                   node_neighbors[s_dir], REQ_P3M_SPREAD, comm,
-                   MPI_STATUS_IGNORE);
+      MPI_Sendrecv(
+          send_grid.data(), r_size[r_dir] * static_cast<int>(meshes.size()),
+          MPI_DOUBLE, node_neighbors[r_dir], REQ_P3M_SPREAD, recv_grid.data(),
+          s_size[s_dir] * static_cast<int>(meshes.size()), MPI_DOUBLE,
+          node_neighbors[s_dir], REQ_P3M_SPREAD, comm, MPI_STATUS_IGNORE);
     } else {
       std::swap(send_grid, recv_grid);
     }

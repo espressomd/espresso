@@ -171,6 +171,7 @@ public:
 
     return *this;
   }
+  // NOLINTNEXTLINE(bugprone-exception-escape)
   BondList &operator=(BondList &&rhs) noexcept {
     if (this != std::addressof(rhs)) {
       std::swap(m_storage, rhs.m_storage);
@@ -224,6 +225,7 @@ public:
    */
   bool empty() const { return m_storage.empty(); }
 
+  // NOLINTNEXTLINE(bugprone-exception-escape)
   friend void swap(BondList &lhs, BondList &rhs) {
     using std::swap;
 

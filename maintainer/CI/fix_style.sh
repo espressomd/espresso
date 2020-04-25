@@ -26,6 +26,7 @@ if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
 fi
 
 maintainer/lint/pre_commit.sh run --all-files
+pre_commit_return_code="${?}"
 
 if [ "${CI}" != "" ]; then
     git --no-pager diff > style.patch
@@ -40,7 +41,11 @@ if [ "${?}" = 1 ]; then
     fi
     exit 1
 else
-    echo "Passed style check"
+    if [ "${pre_commit_return_code}" = 0 ]; then
+        echo "Passed style check"
+    else
+        echo "Failed style check" >&2
+    fi
 fi
 
 maintainer/lint/pylint.sh --score=no --reports=no --output-format=text src doc maintainer testsuite samples | tee pylint.log

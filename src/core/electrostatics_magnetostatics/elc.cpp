@@ -173,34 +173,29 @@ static void prepare_sc_cache(const ParticleRange &particles, int n_freq_x,
 /*****************************************************************/
 
 inline void clear_vec(double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     pdc[i] = 0;
 }
 
 inline void copy_vec(double *pdc_d, double const *pdc_s, int size) {
-  int i;
-  for (i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     pdc_d[i] = pdc_s[i];
 }
 
 inline void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
                     int size) {
-  int i;
-  for (i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     pdc_d[i] = pdc_s1[i] + pdc_s2[i];
 }
 
 inline void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
                          double const *pdc_s2, int size) {
-  int i;
-  for (i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
 }
 
 inline void scale_vec(double scale, double *pdc, int size) {
-  int i;
-  for (i = 0; i < size; i++)
+  for (int i = 0; i < size; i++)
     pdc[i] *= scale;
 }
 
@@ -511,17 +506,15 @@ static void add_z_force(const ParticleRange &particles) {
 /*****************************************************************/
 
 static void setup_P(int p, double omega, const ParticleRange &particles) {
-  int ic, o = (p - 1) * particles.size();
-  double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
-                (expm1(omega * box_geo.length()[2]));
-  double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
-  int size = 4;
+  double const pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
+                      (expm1(omega * box_geo.length()[2]));
+  double const pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
+  int const size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
-  double scale = 1;
 
   if (elc_params.dielectric_contrast_on) {
-    double fac_elc =
+    double const fac_elc =
         1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
                        exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
@@ -532,7 +525,8 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
   clear_vec(lclimge, size);
   clear_vec(gblcblk, size);
 
-  ic = 0;
+  int ic = 0;
+  auto const o = static_cast<int>((p - 1) * particles.size());
   for (auto &p : particles) {
     double e = exp(omega * p.r.p[2]);
 
@@ -549,7 +543,7 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 
         e = exp(-omega * p.r.p[2]);
 
-        scale = p.p.q * elc_params.delta_mid_bot;
+        double const scale = p.p.q * elc_params.delta_mid_bot;
 
         lclimgebot[POQESM] = scxcache[o + ic].s / e;
         lclimgebot[POQESP] = scxcache[o + ic].s * e;
@@ -579,7 +573,7 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 
         e = exp(omega * (2 * elc_params.h - p.r.p[2]));
 
-        scale = p.p.q * elc_params.delta_mid_top;
+        double const scale = p.p.q * elc_params.delta_mid_top;
 
         lclimgetop[POQESM] = scxcache[o + ic].s / e;
         lclimgetop[POQESP] = scxcache[o + ic].s * e;
@@ -617,17 +611,15 @@ static void setup_P(int p, double omega, const ParticleRange &particles) {
 }
 
 static void setup_Q(int q, double omega, const ParticleRange &particles) {
-  int ic, o = (q - 1) * particles.size();
-  double pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
-                (expm1(omega * box_geo.length()[2]));
-  double pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
-  int size = 4;
+  double const pref = -coulomb.prefactor * 4 * M_PI * ux * uy /
+                      (expm1(omega * box_geo.length()[2]));
+  double const pref_di = coulomb.prefactor * 4 * M_PI * ux * uy;
+  int const size = 4;
   double lclimgebot[4], lclimgetop[4], lclimge[4];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
-  double scale = 1;
 
   if (elc_params.dielectric_contrast_on) {
-    double fac_elc =
+    double const fac_elc =
         1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
                        exp(-omega * 2 * elc_params.h));
     fac_delta_mid_bot = elc_params.delta_mid_bot * fac_elc;
@@ -637,7 +629,9 @@ static void setup_Q(int q, double omega, const ParticleRange &particles) {
 
   clear_vec(lclimge, size);
   clear_vec(gblcblk, size);
-  ic = 0;
+
+  int ic = 0;
+  auto const o = static_cast<int>((q - 1) * particles.size());
   for (auto &p : particles) {
     double e = exp(omega * p.r.p[2]);
 
@@ -655,7 +649,7 @@ static void setup_Q(int q, double omega, const ParticleRange &particles) {
 
         e = exp(-omega * p.r.p[2]);
 
-        scale = p.p.q * elc_params.delta_mid_bot;
+        double const scale = p.p.q * elc_params.delta_mid_bot;
 
         lclimgebot[POQESM] = scycache[o + ic].s / e;
         lclimgebot[POQESP] = scycache[o + ic].s * e;
@@ -685,7 +679,7 @@ static void setup_Q(int q, double omega, const ParticleRange &particles) {
 
         e = exp(omega * (2 * elc_params.h - p.r.p[2]));
 
-        scale = p.p.q * elc_params.delta_mid_top;
+        double const scale = p.p.q * elc_params.delta_mid_top;
 
         lclimgetop[POQESM] = scycache[o + ic].s / e;
         lclimgetop[POQESP] = scycache[o + ic].s * e;
@@ -793,14 +787,12 @@ static double Q_energy(double omega, int n_part) {
 
 static void setup_PQ(int p, int q, double omega,
                      const ParticleRange &particles) {
-  int ic, ox = (p - 1) * particles.size(), oy = (q - 1) * particles.size();
-  double pref = -coulomb.prefactor * 8 * M_PI * ux * uy /
-                (expm1(omega * box_geo.length()[2]));
-  double pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;
-  int size = 8;
+  double const pref = -coulomb.prefactor * 8 * M_PI * ux * uy /
+                      (expm1(omega * box_geo.length()[2]));
+  double const pref_di = coulomb.prefactor * 8 * M_PI * ux * uy;
+  int const size = 8;
   double lclimgebot[8], lclimgetop[8], lclimge[8];
   double fac_delta_mid_bot = 1, fac_delta_mid_top = 1, fac_delta = 1;
-  double scale = 1;
   if (elc_params.dielectric_contrast_on) {
     double fac_elc =
         1.0 / (1 - elc_params.delta_mid_top * elc_params.delta_mid_bot *
@@ -813,8 +805,10 @@ static void setup_PQ(int p, int q, double omega,
   clear_vec(lclimge, size);
   clear_vec(gblcblk, size);
 
-  ic = 0;
-  for (auto &p : particles) {
+  int ic = 0;
+  auto const ox = static_cast<int>((p - 1) * particles.size());
+  auto const oy = static_cast<int>((q - 1) * particles.size());
+  for (auto const &p : particles) {
     double e = exp(omega * p.r.p[2]);
 
     partblk[size * ic + PQESSM] =
@@ -842,7 +836,7 @@ static void setup_PQ(int p, int q, double omega,
         // change e to take into account the z position of the images
 
         e = exp(-omega * p.r.p[2]);
-        scale = p.p.q * elc_params.delta_mid_bot;
+        auto const scale = p.p.q * elc_params.delta_mid_bot;
 
         lclimgebot[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
         lclimgebot[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
@@ -878,7 +872,7 @@ static void setup_PQ(int p, int q, double omega,
                       elc_params.space_layer)) { // handle the upper case now
 
         e = exp(omega * (2 * elc_params.h - p.r.p[2]));
-        scale = p.p.q * elc_params.delta_mid_top;
+        auto const scale = p.p.q * elc_params.delta_mid_top;
 
         lclimgetop[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
         lclimgetop[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;

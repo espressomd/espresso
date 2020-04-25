@@ -103,8 +103,8 @@ cdef extern from "particle_data.hpp":
     void set_particle_q(int part, double q)
 
     IF LB_ELECTROHYDRODYNAMICS:
-        void set_particle_mu_E(int part, double mu_E[3])
-        void get_particle_mu_E(int part, double ( & mu_E)[3])
+        void set_particle_mu_E(int part, const Vector3d & mu_E)
+        void get_particle_mu_E(int part, Vector3d & mu_E)
 
     void set_particle_type(int part, int type)
 

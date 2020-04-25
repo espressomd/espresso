@@ -52,7 +52,7 @@ private:
   }
 
   friend class AutoObjectId<T>;
-  explicit ObjectId(unsigned i) : m_id(i) {}
+  explicit ObjectId(unsigned i) : m_id(static_cast<int>(i)) {}
 
   int m_id;
 };

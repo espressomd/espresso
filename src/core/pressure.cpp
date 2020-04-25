@@ -271,9 +271,6 @@ void master_pressure_calc(int v_comp) {
 
 /************************************************************/
 int observable_compute_stress_tensor(int v_comp, double *A) {
-  double value;
-  double p_vel[3];
-
   /* if desired (v_comp==1) replace ideal component with instantaneous one */
   if (total_pressure.init_status != 1 + v_comp) {
     init_virials(&total_pressure);
@@ -287,7 +284,8 @@ int observable_compute_stress_tensor(int v_comp, double *A) {
       if (total_pressure.init_status == 0)
         master_pressure_calc(0);
       p_tensor.data[0] = 0.0;
-      MPI_Reduce(nptiso.p_vel, p_vel, 3, MPI_DOUBLE, MPI_SUM, 0,
+      Utils::Vector3d p_vel;
+      MPI_Reduce(nptiso.p_vel.data(), p_vel.data(), 3, MPI_DOUBLE, MPI_SUM, 0,
                  MPI_COMM_WORLD);
       for (int i = 0; i < 3; i++)
         if (nptiso.geometry & nptiso.nptgeom_dir[i])
@@ -299,7 +297,7 @@ int observable_compute_stress_tensor(int v_comp, double *A) {
   }
 
   for (int j = 0; j < 9; j++) {
-    value = total_p_tensor.data[j];
+    double value = total_p_tensor.data[j];
     for (size_t i = 1; i < total_p_tensor.data.size() / 9; i++)
       value += total_p_tensor.data[9 * i + j];
     A[j] = value;

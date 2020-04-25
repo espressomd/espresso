@@ -98,20 +98,6 @@ double cutoff(const Utils::Vector3d &box_l) {
   }
 }
 
-void integrate_sanity_check() {
-  switch (dipole.method) {
-  case DIPOLAR_NONE:
-    break;
-#ifdef DP3M
-  case DIPOLAR_P3M:
-    break;
-#endif /* DP3M */
-  default:
-    runtimeErrorMsg()
-        << "NpT does not work with your dipolar method, please use P3M.";
-  }
-}
-
 void on_observable_calc() {
   switch (dipole.method) {
 #ifdef DP3M
@@ -202,14 +188,14 @@ void calc_long_range_force(const ParticleRange &particles) {
   case DIPOLAR_DS:
     magnetic_dipolar_direct_sum_calculations(true, false, particles);
     break;
-  case DIPOLAR_DS_GPU:
-    // Do nothing. It's an actor
+  case DIPOLAR_DS_GPU: // NOLINT(bugprone-branch-clone)
+    // do nothing: it's an actor
     break;
 #ifdef DIPOLAR_BARNES_HUT
   case DIPOLAR_BH_GPU:
-    // Do nothing, it's an actor.
+    // do nothing: it's an actor
     break;
-#endif // BARNES_HUT
+#endif
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());
@@ -251,13 +237,14 @@ void calc_energy_long_range(Observable_stat &energy,
     energy.dipolar[1] =
         magnetic_dipolar_direct_sum_calculations(false, true, particles);
     break;
-  case DIPOLAR_DS_GPU:
+  case DIPOLAR_DS_GPU: // NOLINT(bugprone-branch-clone)
+    // do nothing: it's an actor
     break;
 #ifdef DIPOLAR_BARNES_HUT
   case DIPOLAR_BH_GPU:
-    // Do nothing, it's an actor.
+    // do nothing: it's an actor.
     break;
-#endif // DIPOLAR_BARNES_HUT
+#endif
 #ifdef SCAFACOS_DIPOLES
   case DIPOLAR_SCAFACOS:
     assert(Scafacos::dipolar());
@@ -277,31 +264,19 @@ void energy_n(int &n_dipolar) {
   case DIPOLAR_NONE:
     n_dipolar = 1; // because there may be an external magnetic field
     break;
-  case DIPOLAR_MDLC_P3M:
-    n_dipolar = 3;
-    break;
   case DIPOLAR_P3M:
-    n_dipolar = 2;
-    break;
   case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    n_dipolar = 2;
-    break;
-  case DIPOLAR_MDLC_DS:
-    n_dipolar = 3;
-    break;
   case DIPOLAR_DS:
-    n_dipolar = 2;
-    break;
   case DIPOLAR_DS_GPU:
-    n_dipolar = 2;
-    break;
 #ifdef DIPOLAR_BARNES_HUT
   case DIPOLAR_BH_GPU:
-    n_dipolar = 2;
-    break;
 #endif
   case DIPOLAR_SCAFACOS:
     n_dipolar = 2;
+    break;
+  case DIPOLAR_MDLC_P3M:
+  case DIPOLAR_MDLC_DS:
+    n_dipolar = 3;
     break;
   default:
     break;
@@ -329,8 +304,6 @@ void bcast_params(const boost::mpi::communicator &comm) {
   namespace mpi = boost::mpi;
 
   switch (dipole.method) {
-  case DIPOLAR_NONE:
-    break;
 #ifdef DP3M
   case DIPOLAR_MDLC_P3M:
     mpi::broadcast(comm, dlc_params, 0);
@@ -339,20 +312,6 @@ void bcast_params(const boost::mpi::communicator &comm) {
     mpi::broadcast(comm, dp3m.params, 0);
     break;
 #endif
-  case DIPOLAR_ALL_WITH_ALL_AND_NO_REPLICA:
-    break;
-  case DIPOLAR_MDLC_DS:
-    // fall trough
-  case DIPOLAR_DS:
-    break;
-  case DIPOLAR_DS_GPU:
-    break;
-#ifdef DIPOLAR_BARNES_HUT
-  case DIPOLAR_BH_GPU:
-    break;
-#endif
-  case DIPOLAR_SCAFACOS:
-    break;
   default:
     break;
   }

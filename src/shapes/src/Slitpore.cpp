@@ -31,19 +31,19 @@ namespace Shapes {
 void Slitpore::calculate_dist(const Utils::Vector3d &pos, double &dist,
                               Utils::Vector3d &vec) const {
   // the left circles
-  double c11[2] = {dividing_plane() - m_pore_width / 2 -
-                       m_upper_smoothing_radius,
-                   m_pore_mouth - m_upper_smoothing_radius};
-  double c12[2] = {dividing_plane() - m_pore_width / 2 +
-                       m_lower_smoothing_radius,
-                   m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
+  Utils::Vector2d c11 = {dividing_plane() - m_pore_width / 2 -
+                             m_upper_smoothing_radius,
+                         m_pore_mouth - m_upper_smoothing_radius};
+  Utils::Vector2d c12 = {
+      dividing_plane() - m_pore_width / 2 + m_lower_smoothing_radius,
+      m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
   // the right circles
-  double c21[2] = {dividing_plane() + m_pore_width / 2 +
-                       m_upper_smoothing_radius,
-                   m_pore_mouth - m_upper_smoothing_radius};
-  double c22[2] = {dividing_plane() + m_pore_width / 2 -
-                       m_lower_smoothing_radius,
-                   m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
+  Utils::Vector2d c21 = {dividing_plane() + m_pore_width / 2 +
+                             m_upper_smoothing_radius,
+                         m_pore_mouth - m_upper_smoothing_radius};
+  Utils::Vector2d c22 = {
+      dividing_plane() + m_pore_width / 2 - m_lower_smoothing_radius,
+      m_pore_mouth - m_pore_length + m_lower_smoothing_radius};
 
   if (pos[2] > m_pore_mouth + m_channel_width / 2) {
     //    printf("upper wall\n");

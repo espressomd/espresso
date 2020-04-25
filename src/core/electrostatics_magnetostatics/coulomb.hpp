@@ -76,7 +76,6 @@ void sanity_checks(int &state);
 double cutoff(const Utils::Vector3d &box_l);
 void deactivate();
 
-void integrate_sanity_check();
 void on_observable_calc();
 void on_coulomb_change();
 void on_boxl_change();

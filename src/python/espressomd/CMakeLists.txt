@@ -62,13 +62,16 @@ list(REMOVE_DUPLICATES cython_SRC)
 add_library(pyx_interface INTERFACE)
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_compile_options(
-    pyx_interface INTERFACE -Wno-pedantic -Wno-cpp -Wno-strict-aliasing
-                            -Wno-maybe-uninitialized -Wno-unused-variable)
+    pyx_interface
+    INTERFACE -Wno-pedantic -Wno-cpp -Wno-strict-aliasing
+              -Wno-maybe-uninitialized -Wno-unused-variable
+              -Wno-deprecated-declarations)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL
                                                  "AppleClang")
   target_compile_options(
-    pyx_interface INTERFACE -Wno-pedantic -Wno-\#warnings
-                            -Wno-sometimes-uninitialized -Wno-unused-variable)
+    pyx_interface
+    INTERFACE -Wno-pedantic -Wno-\#warnings -Wno-sometimes-uninitialized
+              -Wno-unused-variable -Wno-deprecated-declarations)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   target_compile_options(pyx_interface INTERFACE -wd1224)
 else()

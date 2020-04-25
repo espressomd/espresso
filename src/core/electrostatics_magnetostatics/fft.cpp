@@ -774,7 +774,7 @@ void fft_pack_block(double const *const in, double *const out,
   /* offsets for indices in output grid */
   int m_out_offset;
 
-  copy_size = element * size[2] * sizeof(double);
+  copy_size = element * size[2] * static_cast<int>(sizeof(double));
   m_in_offset = element * dim[2];
   s_in_offset = element * (dim[2] * (dim[1] - size[1]));
   m_out_offset = element * size[2];
@@ -804,7 +804,7 @@ void fft_unpack_block(double const *const in, double *const out,
   /* offsets for indices in output grid */
   int m_out_offset, s_out_offset;
 
-  copy_size = element * (size[2] * sizeof(double));
+  copy_size = element * size[2] * static_cast<int>(sizeof(double));
   m_out_offset = element * dim[2];
   s_out_offset = element * (dim[2] * (dim[1] - size[1]));
   m_in_offset = element * size[2];

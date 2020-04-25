@@ -203,8 +203,8 @@ void dd_mark_cells() {
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
-                            int const hc[3]) {
+int dd_fill_comm_cell_lists(Cell **part_lists, Utils::Vector3i const &lc,
+                            Utils::Vector3i const &hc) {
   /* sanity check */
   for (int i = 0; i < 3; i++) {
     if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
@@ -235,7 +235,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, int const lc[3],
  */
 void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
-  int lc[3], hc[3], done[3] = {0, 0, 0};
+  Utils::Vector3i lc{}, hc{}, done{};
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);

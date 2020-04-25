@@ -1310,8 +1310,10 @@ int p3m_adaptive_tune(char **log) {
   } else if (p3m.params.mesh[1] == -1 && p3m.params.mesh[2] == -1) {
     mesh_density = mesh_density_min = mesh_density_max =
         p3m.params.mesh[0] / box_geo.length()[0];
-    p3m.params.mesh[1] = lround(mesh_density * box_geo.length()[1]);
-    p3m.params.mesh[2] = lround(mesh_density * box_geo.length()[2]);
+    p3m.params.mesh[1] =
+        static_cast<int>(std::round(mesh_density * box_geo.length()[1]));
+    p3m.params.mesh[2] =
+        static_cast<int>(std::round(mesh_density * box_geo.length()[2]));
     if (p3m.params.mesh[1] % 2 == 1)
       p3m.params.mesh[1]++; // Make sure that the mesh is even in all directions
     if (p3m.params.mesh[2] % 2 == 1)
@@ -1366,9 +1368,12 @@ int p3m_adaptive_tune(char **log) {
     tmp_cao = cao;
 
     if (tune_mesh) {
-      tmp_mesh[0] = lround(box_geo.length()[0] * mesh_density);
-      tmp_mesh[1] = lround(box_geo.length()[1] * mesh_density);
-      tmp_mesh[2] = lround(box_geo.length()[2] * mesh_density);
+      tmp_mesh[0] =
+          static_cast<int>(std::round(box_geo.length()[0] * mesh_density));
+      tmp_mesh[1] =
+          static_cast<int>(std::round(box_geo.length()[1] * mesh_density));
+      tmp_mesh[2] =
+          static_cast<int>(std::round(box_geo.length()[2] * mesh_density));
     } else {
       tmp_mesh[0] = p3m.params.mesh[0];
       tmp_mesh[1] = p3m.params.mesh[1];

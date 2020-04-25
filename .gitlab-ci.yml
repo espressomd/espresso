@@ -38,7 +38,7 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
-  image: docker.pkg.github.com/espressomd/docker/clang:a1192b35590a1a474c55fe1e9a1e6c25758454ea
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
   dependencies: []
   before_script:
     - git submodule deinit .
@@ -101,6 +101,25 @@ no_rotation:
   tags:
     - docker
     - linux
+
+ubuntu-20.04-sanitizer:
+  <<: *global_job_definition
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
+  stage: build
+  variables:
+     CC: 'clang-9'
+     CXX: 'clang++-9'
+  script:
+    - export myconfig=maxset with_cuda=true with_cuda_compiler=clang with_coverage=false
+    - export with_static_analysis=true test_timeout=900
+    - export with_asan=true ASAN_OPTIONS="allocator_may_return_null=1"
+    - export with_ubsan=true UBSAN_OPTIONS=suppressions=${CI_PROJECT_DIR}/maintainer/CI/ubsan.supp
+    - bash maintainer/CI/build_cmake.sh
+  timeout: 2h
+  tags:
+    - docker
+    - linux
+    - cuda
 
 ### Builds with different Distributions
 
@@ -285,9 +304,12 @@ installation:
 empty:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/clang:a1192b35590a1a474c55fe1e9a1e6c25758454ea
+  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
+  variables:
+     CC: 'clang-9'
+     CXX: 'clang++-9'
   script:
-    - export myconfig=empty with_cuda=true cmake_params="-DWITH_CUDA_COMPILER=clang" with_static_analysis=true
+    - export myconfig=empty with_cuda=true with_cuda_compiler=clang with_static_analysis=true with_scafacos=false
     - bash maintainer/CI/build_cmake.sh
   tags:
     - docker
@@ -312,7 +334,7 @@ rocm-maxset:
   stage: build
   image: docker.pkg.github.com/espressomd/docker/rocm:446ff604bbfa63f30ddb462697fa0d0dc2630460
   script:
-    - export myconfig=maxset with_cuda=true cmake_params="-DWITH_CUDA_COMPILER=hip"
+    - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
@@ -322,7 +344,7 @@ rocm:latest:
   stage: build
   image: docker.pkg.github.com/espressomd/docker/rocm:latest_base
   script:
-    - export myconfig=maxset with_cuda=true cmake_params="-DWITH_CUDA_COMPILER=hip"
+    - export myconfig=maxset with_cuda=true with_cuda_compiler=hip
     - bash maintainer/CI/build_cmake.sh
   tags:
     - amdgpu
@@ -340,20 +362,6 @@ osx:
     - mac
 
 ### Builds with different compilers
-
-clang:6.0:
-  <<: *global_job_definition
-  stage: build
-  image: docker.pkg.github.com/espressomd/docker/clang:446ff604bbfa63f30ddb462697fa0d0dc2630460
-  script:
-    - export myconfig=maxset with_cuda=true cmake_params="-DWITH_CUDA_COMPILER=clang" with_coverage=false with_static_analysis=true with_asan=true with_ubsan=true test_timeout=900
-    - bash maintainer/CI/build_cmake.sh
-  timeout: 2h
-  tags:
-    - docker
-    - linux
-    - cuda
-    - ptrace
 
 intel:19:
   <<: *global_job_definition
