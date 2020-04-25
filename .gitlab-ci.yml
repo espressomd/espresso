@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-18.04:a1192b35590a1a474c55fe1e9a1e6c25758454ea
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:06b6216c7aa3555bcf28c90734dbb84e7285c96f
 
 stages:
   - prepare
@@ -38,7 +38,6 @@ status_pending:
 style:
   <<: *global_job_definition
   stage: prepare
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
   dependencies: []
   before_script:
     - git submodule deinit .
@@ -58,7 +57,6 @@ style:
 style_doxygen:
   <<: *global_job_definition
   stage: prepare
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
   dependencies: []
   script:
     - mkdir build
@@ -75,6 +73,9 @@ style_doxygen:
 default:
   <<: *global_job_definition
   stage: build
+  variables:
+     CC: 'gcc-9'
+     CXX: 'g++-9'
   script:
     - export with_cuda=false myconfig=default with_coverage=true
     - bash maintainer/CI/build_cmake.sh
@@ -85,6 +86,9 @@ default:
 maxset:
   <<: *global_job_definition
   stage: build
+  variables:
+     CC: 'gcc-9'
+     CXX: 'g++-9'
   script:
     - export with_cuda=false myconfig=maxset with_coverage=true
     - bash maintainer/CI/build_cmake.sh
@@ -95,6 +99,9 @@ maxset:
 no_rotation:
   <<: *global_job_definition
   stage: build
+  variables:
+     CC: 'gcc-9'
+     CXX: 'g++-9'
   script:
     - export with_cuda=false myconfig=no_rotation with_coverage=true
     - bash maintainer/CI/build_cmake.sh
@@ -175,7 +182,6 @@ fedora:latest:
 
 clang-sanitizer:
   <<: *global_job_definition
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
   stage: build
   variables:
      CC: 'clang-9'
@@ -195,7 +201,9 @@ clang-sanitizer:
 cuda10-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
+  variables:
+     CC: 'gcc-8'
+     CXX: 'g++-8'
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false test_timeout=900 srcdir=${CI_PROJECT_DIR}
     - bash maintainer/CI/build_cmake.sh
@@ -228,7 +236,9 @@ cuda9-maxset:
 tutorials-samples-maxset:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
+  variables:
+     CC: 'gcc-8'
+     CXX: 'g++-8'
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
@@ -241,7 +251,9 @@ tutorials-samples-maxset:
 tutorials-samples-default:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
+  variables:
+     CC: 'gcc-8'
+     CXX: 'g++-8'
   script:
     - export myconfig=default with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200
@@ -256,7 +268,9 @@ tutorials-samples-default:
 tutorials-samples-empty:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
+  variables:
+     CC: 'gcc-8'
+     CXX: 'g++-8'
   script:
     - export myconfig=empty with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 with_scafacos=false
@@ -271,7 +285,9 @@ tutorials-samples-empty:
 tutorials-samples-no-gpu:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
+  variables:
+     CC: 'gcc-8'
+     CXX: 'g++-8'
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export make_check_tutorials=true make_check_samples=true make_check_benchmarks=false test_timeout=1200 hide_gpu=true
@@ -285,7 +301,9 @@ tutorials-samples-no-gpu:
 installation:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
+  variables:
+     CC: 'gcc-8'
+     CXX: 'g++-8'
   script:
     - export myconfig=maxset with_cuda=true with_coverage=false make_check_unit_tests=false make_check_python=false
     - export srcdir=${CI_PROJECT_DIR} build_type=Release
@@ -311,7 +329,6 @@ installation:
 empty:
   <<: *global_job_definition
   stage: build
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:b0de8c7df57d39edf72ad7d40c28bb67467dd7ec
   variables:
      CC: 'clang-9'
      CXX: 'clang++-9'
@@ -377,7 +394,6 @@ intel:19:
 check_sphinx:
   <<: *global_job_definition
   stage: additional_checks
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   needs:
     - cuda10-maxset
   when: on_success
@@ -398,7 +414,6 @@ check_sphinx:
 run_tutorials:
   <<: *global_job_definition
   stage: additional_checks
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   needs:
     - cuda10-maxset
   when: on_success
@@ -422,7 +437,6 @@ run_tutorials:
 run_doxygen:
   <<: *global_job_definition
   stage: additional_checks
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-10.1:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   needs:
     - cuda10-maxset
   when: on_success
@@ -442,10 +456,9 @@ run_doxygen:
 check_cuda_maxset_no_gpu:
   <<: *global_job_definition
   stage: additional_checks
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-9.0:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   when: on_success
   needs: 
-    - cuda9-maxset
+    - cuda10-maxset
   script:
     - export CUDA_VISIBLE_DEVICES=""
     - cd ${CI_PROJECT_DIR}/build
@@ -458,10 +471,9 @@ check_cuda_maxset_no_gpu:
 check_with_odd_no_of_processors:
   <<: *global_job_definition
   stage: additional_checks 
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-cuda-9.0:c9fe9d6d79ffd7e3e89ef282548e0b5278afde2c
   when: on_success
   needs: 
-    - cuda9-maxset
+    - cuda10-maxset
   script:
     - cd ${CI_PROJECT_DIR}/build
     - cmake -DTEST_NP=3 .
@@ -475,7 +487,6 @@ check_with_odd_no_of_processors:
 .deploy_base:
   <<: *global_job_definition
   stage: deploy
-  image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:e24415d47e2611662efe56b9946f1d0c1dda32d7
   only:
     - python
   before_script:
