@@ -44,7 +44,7 @@ C++ Compiler
 
 Boost
     A number of advanced C++ features used by |es| are provided by Boost.
-    We strongly recommend to use at least boost 1.67.
+    We strongly recommend to use at least Boost 1.67.
 
 FFTW
     For some algorithms (P\ :math:`^3`\ M), |es| needs the FFTW library
