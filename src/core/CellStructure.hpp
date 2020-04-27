@@ -331,6 +331,7 @@ public:
    * Cells::DataPart
    */
   void ghosts_update(unsigned data_parts);
+
   /**
    * @brief Add forces from ghost particles to real particles.
    */
@@ -359,7 +360,6 @@ private:
     return partners;
   }
 
-public:
   /**
    * @brief Execute kernel for every bond on particle.
    * @tparam Handler Callable, which can be invoked with
@@ -391,7 +391,6 @@ public:
     }
   }
 
-private:
   /** Go through ghost cells and remove the ghost entries from the
       local particle index. */
   void invalidate_ghosts() {
@@ -454,6 +453,7 @@ public:
     return m_decomposition->minimum_image_distance();
   }
 
+public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
     for (auto &p : local_particles()) {
       execute_bond_handler(p, bond_kernel);
