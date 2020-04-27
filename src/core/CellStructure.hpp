@@ -322,6 +322,7 @@ public:
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
 
+public:
   /**
    * @brief Update ghost particles.
    *
@@ -332,6 +333,7 @@ public:
    * Cells::DataPart
    */
   void ghosts_update(unsigned data_parts);
+
   /**
    * @brief Add forces from ghost particles to real particles.
    */
@@ -455,6 +457,7 @@ public:
     return m_decomposition->minimum_image_distance();
   }
 
+public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
     for (auto &p : local_particles()) {
       execute_bond_handler(p, bond_kernel);

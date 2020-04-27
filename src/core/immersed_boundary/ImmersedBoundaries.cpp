@@ -134,16 +134,12 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
   std::vector<double> tempVol(MaxNumIBM);
 
   // Loop over all particles on local node
-  for (auto &p1 : cs.local_particles()) {
-    auto vol_cons_params = vol_cons_parameters(p1);
-
-    if (vol_cons_params) {
-      cs.execute_bond_handler(p1, [softID = vol_cons_params->softID,
-                                   &tempVol](Particle &p1, int bond_id,
-                                             Utils::Span<Particle *> partners) {
+  cs.bond_loop(
+      [&tempVol](Particle &p1, int bond_id, Utils::Span<Particle *> partners) {
         auto const &iaparams = bonded_ia_params[bond_id];
+        auto vol_cons_params = vol_cons_parameters(p1);
 
-        if (iaparams.type == BONDED_IA_IBM_TRIEL) {
+        if (vol_cons_params && iaparams.type == BONDED_IA_IBM_TRIEL) {
           // Our particle is the leading particle of a triel
           // Get second and third particle of the triangle
           Particle &p2 = *partners[0];
@@ -173,13 +169,11 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
           const double v213 = x2[0] * x1[1] * x3[2];
           const double v123 = x1[0] * x2[1] * x3[2];
 
-          tempVol[softID] +=
+          tempVol[vol_cons_params->softID] +=
               1.0 / 6.0 * (-v321 + v231 + v312 - v132 - v213 + v123);
         }
         return false;
       });
-    }
-  }
 
   for (int i = 0; i < MaxNumIBM; i++)
     VolumesCurrent[i] = 0;
