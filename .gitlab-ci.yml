@@ -19,7 +19,7 @@ stages:
   variables:
     GIT_SUBMODULE_STRATEGY: none
   dependencies: []
-  timeout: 15m
+  timeout: 40m
   interruptible: false
   tags:
     - linux
