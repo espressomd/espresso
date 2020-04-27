@@ -34,6 +34,7 @@
 using Utils::get_linear_index;
 
 #include "event.hpp"
+#include "cells.hpp"
 
 #include <boost/mpi/collectives.hpp>
 #include <boost/range/algorithm/reverse.hpp>

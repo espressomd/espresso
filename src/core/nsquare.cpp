@@ -27,6 +27,7 @@
 #include "communication.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"
+#include "cells.hpp"
 
 #include <boost/mpi/collectives/all_to_all.hpp>
 #include <boost/serialization/vector.hpp>

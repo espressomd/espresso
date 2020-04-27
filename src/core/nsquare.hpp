@@ -48,8 +48,28 @@
  *
  *  Implementation in nsquare.cpp.
  */
+#include "Cell.hpp"
 
-#include "cells.hpp"
+#include <boost/mpi/communicator.hpp>
+
+#include <utils/Span.hpp>
+#include <utils/Vector.hpp>
+
+#include <limits>
+#include <vector>
+
+class nsq {
+  nsq(const boost::mpi::communicator) {}
+
+  Utils::Vector3d const &max_range() const {
+    static auto const range =
+        Utils::Vector3d::broadcast(std::numeric_limits<double>::infinity());
+    return range;
+  }
+
+  Utils::Span<Cell *> local_cells();
+  Utils::Span<Cell *> ghost_cells();
+};
 
 /** setup the nsquare topology */
 void nsq_topology_init();
