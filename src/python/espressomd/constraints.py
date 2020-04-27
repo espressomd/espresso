@@ -568,10 +568,7 @@ class HomogeneousFlowField(Constraint):
     @property
     def u(self):
         """
-        Returns
-        -------
-        (3,) array_like of :obj:`float` :
-            Field velocity.
+        Field velocity ((3,) array_like of :obj:`float`).
         """
         return self.value
 
