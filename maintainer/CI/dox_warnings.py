@@ -69,7 +69,7 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
         # known bug, not fixed yet
         continue
     if re.search(
-            '^The following parameters of .+ are not documented:$', warning):
+            '^The following parameters? of .+ (is|are) not documented:$', warning):
         # non-critical warning, enforcing it would encourage bad behavior, i.e.
         # inserting "@param argument" without a description to silence the
         # warning, when in reality the warning is silenced because the text on
@@ -82,12 +82,12 @@ for (filepath, lineno, warning), warning_list in raw_warnings.items():
 
 n_unique = sum(map(len, warnings.values()))
 if n_unique == 0:
-    with open('dox_warnings.log', 'w') as f:
+    with open('dox_warnings_summary.log', 'w') as f:
         pass
-    exit(0)
+    exit()
 
 # generate a log file
-with open('dox_warnings.log', 'w') as f:
+with open('dox_warnings_summary.log', 'w') as f:
     f.write('The Doxygen documentation generated {} unique warnings (total: {},'
             ' ignored: {}):\n'.format(n_unique, n_all, n_unique_raw - n_unique))
     for filepath in sorted(warnings.keys()):
@@ -98,5 +98,3 @@ with open('dox_warnings.log', 'w') as f:
             if warning_list:
                 s += ': ' + ', '.join(x.strip() for x in warning_list)
             f.write('  line {}: {}\n'.format(lineno, s))
-
-exit(1)

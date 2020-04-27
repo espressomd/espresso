@@ -63,14 +63,14 @@ int min_num_cells = 1;
 /**
  *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
  *
- *  Calculates the cell grid, based on \ref local_geo and \param
- *  range . If the number of cells is larger than \ref
- *  max_num_cells, it increases max_range until the number of cells is
- *  smaller or equal \ref max_num_cells. It sets: \ref
- *  DomainDecomposition::cell_grid, \ref
- *  DomainDecomposition::ghost_cell_grid, \ref
- *  DomainDecomposition::cell_size, and \ref
- *  DomainDecomposition::inv_cell_size.
+ *  Calculates the cell grid, based on \ref local_geo and \p range.
+ *  If the number of cells is larger than \ref max_num_cells,
+ *  it increases max_range until the number of cells is
+ *  smaller or equal \ref max_num_cells. It sets:
+ *  \ref DomainDecomposition::cell_grid,
+ *  \ref DomainDecomposition::ghost_cell_grid,
+ *  \ref DomainDecomposition::cell_size, and
+ *  \ref DomainDecomposition::inv_cell_size.
  *
  *  @param range Required interacting range. All pairs closer
  *         than this distance are found.

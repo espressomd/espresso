@@ -205,8 +205,10 @@ make -k -j${build_procs} || make -k -j1 || exit ${?}
 end "BUILD"
 
 # check for exit function, which should never be called from shared library
-# can't do this on CUDA though because nvcc creates a host function that just calls exit for each device function
-if [ "${with_cuda}" = false ] || [ "$(echo ${NVCC} | grep -o clang)" = "clang" ]; then
+# can't do this on CUDA though because nvcc creates a host function that just
+# calls exit() for each device function, and can't do this with coverage
+# because gcov 9.0 adds code that calls exit()
+if [[ "${with_coverage}" == false && ( "${with_cuda}" == false || "${with_cuda_compiler}" != "nvcc" ) ]]; then
     if nm -o -C $(find . -name '*.so') | grep '[^a-z]exit@@GLIBC'; then
         echo "Found calls to exit() function in shared libraries."
         exit 1
@@ -276,9 +278,9 @@ fi
 
 if [ "${with_coverage}" = true ]; then
     cd "${builddir}"
-    lcov -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
-    lcov -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
-    lcov -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
+    lcov --gcov-tool "${GCOV:-gcov}" -q --directory . --ignore-errors graph --capture --output-file coverage.info # capture coverage info
+    lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '/usr/*' --output-file coverage.info # filter out system
+    lcov --gcov-tool "${GCOV:-gcov}" -q --remove coverage.info '*/doc/*' --output-file coverage.info # filter out docs
     # Uploading report to Codecov
     if [ -z "${CODECOV_TOKEN}" ]; then
         bash <(curl -s https://codecov.io/bash) -X gcov || echo "Codecov did not collect coverage reports"
