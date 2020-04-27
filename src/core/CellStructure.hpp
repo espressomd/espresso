@@ -391,8 +391,10 @@ private:
     }
   }
 
-  /** Go through ghost cells and remove the ghost entries from the
-      local particle index. */
+  /**
+   * @brief Go through ghost cells and remove the ghost entries from the
+   * local particle index.
+   */
   void invalidate_ghosts() {
     for (auto const &p : ghost_particles()) {
       if (get_local_particle(p.identity()) == &p) {
