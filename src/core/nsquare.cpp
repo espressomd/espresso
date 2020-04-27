@@ -55,7 +55,7 @@ static void nsq_prepare_comm(GhostCommunicator *comm) {
   /* every node has its dedicated comm step */
   for (n = 0; n < n_nodes; n++) {
     comm->comm[n].part_lists.resize(1);
-    comm->comm[n].part_lists[0] = &cells[n];
+    comm->comm[n].part_lists[0] = &(cells[n].particles());
     comm->comm[n].node = n;
   }
 }

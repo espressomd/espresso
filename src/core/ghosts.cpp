@@ -117,9 +117,8 @@ static size_t calc_transmit_size(GhostCommunication &ghost_comm,
     return sizeof(int) * ghost_comm.part_lists.size();
 
   auto const n_part = boost::accumulate(
-      ghost_comm.part_lists, 0ul, [](size_t sum, auto part_list) {
-        return sum + part_list->particles().size();
-      });
+      ghost_comm.part_lists, 0ul,
+      [](size_t sum, auto part_list) { return sum + part_list->size(); });
 
   return n_part * calc_transmit_size(data_parts);
 }
@@ -142,10 +141,10 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   /* put in data */
   for (auto part_list : ghost_comm.part_lists) {
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      int np = part_list->particles().size();
+      int np = part_list->size();
       archiver << np;
     } else {
-      for (Particle &part : part_list->particles()) {
+      for (Particle &part : *part_list) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver << part.p;
         }
@@ -171,12 +170,12 @@ static void prepare_send_buffer(CommBuf &send_buffer,
   assert(archiver.bytes_written() == send_buffer.size());
 }
 
-static void prepare_ghost_cell(Cell *cell, int size) {
+static void prepare_ghost_cell(ParticleList *cell, int size) {
   /* Adapt size */
-  cell->particles().resize(size);
+  cell->resize(size);
 
   /* Mark particles as ghosts */
-  for (auto &p : cell->particles()) {
+  for (auto &p : *cell) {
     p.l.ghost = true;
   }
 }
@@ -204,7 +203,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
     }
   } else {
     for (auto part_list : ghost_comm.part_lists) {
-      for (Particle &part : part_list->particles()) {
+      for (Particle &part : *part_list) {
         if (data_parts & GHOSTTRANS_PROPRTS) {
           archiver >> part.p;
         }
@@ -226,7 +225,7 @@ static void put_recv_buffer(CommBuf &recv_buffer,
       boost::archive::binary_iarchive bond_archive(bond_stream);
 
       for (auto part_list : ghost_comm.part_lists) {
-        for (Particle &part : part_list->particles()) {
+        for (Particle &part : *part_list) {
           bond_archive >> part.bonds();
         }
       }
@@ -243,7 +242,7 @@ static void add_forces_from_recv_buffer(CommBuf &recv_buffer,
   /* put back data */
   auto archiver = Utils::MemcpyIArchive{Utils::make_span(recv_buffer)};
   for (auto &part_list : ghost_comm.part_lists) {
-    for (Particle &part : part_list->particles()) {
+    for (Particle &part : *part_list) {
       ParticleForce pf;
       archiver >> pf;
       part.f += pf;
@@ -256,14 +255,14 @@ static void cell_cell_transfer(GhostCommunication &ghost_comm,
   /* transfer data */
   auto const offset = ghost_comm.part_lists.size() / 2;
   for (size_t pl = 0; pl < offset; pl++) {
-    const Cell *src_list = ghost_comm.part_lists[pl];
-    Cell *dst_list = ghost_comm.part_lists[pl + offset];
+    const auto *src_list = ghost_comm.part_lists[pl];
+    auto *dst_list = ghost_comm.part_lists[pl + offset];
 
     if (data_parts & GHOSTTRANS_PARTNUM) {
-      prepare_ghost_cell(dst_list, src_list->particles().size());
+      prepare_ghost_cell(dst_list, src_list->size());
     } else {
-      auto const &src_part = src_list->particles();
-      auto &dst_part = dst_list->particles();
+      auto const &src_part = *src_list;
+      auto &dst_part = *dst_list;
       assert(src_part.size() == dst_part.size());
 
       for (size_t i = 0; i < src_part.size(); i++) {

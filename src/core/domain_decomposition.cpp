@@ -203,7 +203,8 @@ void dd_mark_cells() {
  *  \param lc          lower left corner of the subgrid.
  *  \param hc          high up corner of the subgrid.
  */
-int dd_fill_comm_cell_lists(Cell **part_lists, Utils::Vector3i const &lc,
+int dd_fill_comm_cell_lists(ParticleList **part_lists,
+                            Utils::Vector3i const &lc,
                             Utils::Vector3i const &hc) {
   /* sanity check */
   for (int i = 0; i < 3; i++) {
@@ -224,7 +225,7 @@ int dd_fill_comm_cell_lists(Cell **part_lists, Utils::Vector3i const &lc,
                              {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
                               dd.ghost_cell_grid[2]});
 
-        part_lists[c] = &cells[i];
+        part_lists[c] = &(cells[i].particles());
         c++;
       }
   return c;

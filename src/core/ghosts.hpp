@@ -103,8 +103,7 @@
  *  systems, therefore have a look at @ref dd_topology_init or
  *  @ref nsq_topology_init for further details.
  */
-#include "Cell.hpp"
-#include <mpi.h>
+#include "ParticleList.hpp"
 
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
@@ -156,7 +155,7 @@ struct GhostCommunication {
   int node;
 
   /** Pointer array to particle lists to communicate. */
-  std::vector<Cell *> part_lists = {};
+  std::vector<ParticleList *> part_lists = {};
 
   /** Position shift for ghost particles. The shift is done on the sender side.
    */
