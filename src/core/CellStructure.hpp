@@ -173,7 +173,7 @@ public:
     return m_particle_index[id];
   }
 
-  /** @overload get_local_particle */
+  /** @overload */
   const Particle *get_local_particle(int id) const {
     assert(id >= 0);
 

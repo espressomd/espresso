@@ -88,7 +88,6 @@ cdef class ParticleHandle:
         The particle type for nonbonded interactions.
 
         type : :obj:`int`
-            Nonbonded interactions act between different types of particles.
 
         .. note::
            The value of ``type`` has to be an integer >= 0.
@@ -111,10 +110,11 @@ cdef class ParticleHandle:
         The molecule id of the Particle.
 
         mol_id : :obj:`int`
-            The particle ``mol_id`` is used to differentiate between
-            particles belonging to different molecules, e.g. when virtual
-            sites are used, or object-in-fluid cells. The default
-            ``mol_id`` for all particles is 0.
+
+        The particle ``mol_id`` is used to differentiate between
+        particles belonging to different molecules, e.g. when virtual
+        sites are used, or object-in-fluid cells. The default
+        ``mol_id`` for all particles is 0.
 
         .. note::
            The value of ``mol_id`` has to be an integer >= 0.
@@ -137,7 +137,6 @@ cdef class ParticleHandle:
         The unwrapped (not folded into central box) particle position.
 
         pos : (3,) array_like of :obj:`float`
-            The particles' absolute position.
 
         """
 
@@ -161,7 +160,6 @@ cdef class ParticleHandle:
         The wrapped (folded into central box) position vector of a particle.
 
         pos : (3,) array_like of :obj:`float`
-            The particles' position.
 
         .. note::
            Setting the folded position is ambiguous and is thus not possible, please use ``pos``.
@@ -220,7 +218,6 @@ cdef class ParticleHandle:
         The particle velocity in the lab frame.
 
         v : (3,) array_like of :obj:`float`
-            The particles' velocity
 
         .. note::
            The velocity remains variable and will be changed during integration.
@@ -245,7 +242,6 @@ cdef class ParticleHandle:
         The instantaneous force acting on this particle.
 
         f : (3,) array_like of :obj:`float`
-            The current forces on the particle
 
         .. note::
            Whereas the velocity is modified with respect to the velocity you set
@@ -272,9 +268,10 @@ cdef class ParticleHandle:
         one partner. You need to define a bonded interaction.
 
         bonds : list/tuple of tuples/lists
-            a bond tuple is specified as a bond identifier associated with
-            a particle ``(bond_ID, part_ID)``. A single particle may contain
-            multiple such tuples.
+
+        A bond tuple is specified as a bond identifier associated with
+        a particle ``(bond_ID, part_ID)``. A single particle may contain
+        multiple such tuples.
 
         See Also
         --------
@@ -333,7 +330,6 @@ cdef class ParticleHandle:
         Particle mass.
 
         mass : :obj:`float`
-               The particle mass.
 
         See Also
         ----------
@@ -360,7 +356,6 @@ cdef class ParticleHandle:
             The particle angular velocity the lab frame.
 
             omega_lab : (3,) array_like of :obj:`float`
-                The particle's angular velocity measured from the lab frame.
 
             .. note::
                This needs the feature ``ROTATION``.
@@ -392,11 +387,9 @@ cdef class ParticleHandle:
 
         property quat:
             """
-            Particle quaternion representation.
+            Quaternion representation of the particle rotational position.
 
             quat : (4,) array_like of :obj:`float`
-                Sets the quaternion representation of the
-                rotational position of this particle.
 
             .. note::
                This needs the feature ``ROTATION``.

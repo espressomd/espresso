@@ -11,7 +11,7 @@ matrix:
     - os: linux
       sudo: required
       services: docker
-      env: myconfig=maxset image=espressomd/docker-ubuntu-18.04:446ff604bbfa63f30ddb462697fa0d0dc2630460
+      env: myconfig=maxset image=espressomd/docker-ubuntu-20.04:06b6216c7aa3555bcf28c90734dbb84e7285c96f
 
 script:
   - maintainer/CI/build_docker.sh
