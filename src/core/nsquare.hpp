@@ -51,9 +51,6 @@
 
 #include "cells.hpp"
 
-/** always returns the one local cell */
-void nsq_topology_release();
-
 /** setup the nsquare topology */
 void nsq_topology_init();
 
