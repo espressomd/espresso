@@ -133,27 +133,6 @@ std::vector<std::pair<int, int>> mpi_get_pairs(double distance) {
 /************************************************************/
 /*@{*/
 
-/** Choose the topology release function of a certain cell system. */
-static void topology_release(int cs) {
-  switch (cs) {
-  case CELL_STRUCTURE_NONEYET:
-    break;
-  case CELL_STRUCTURE_CURRENT:
-    topology_release(cell_structure.type);
-    break;
-  case CELL_STRUCTURE_DOMDEC:
-    break;
-  case CELL_STRUCTURE_NSQUARE:
-    break;
-  default:
-    fprintf(stderr,
-            "INTERNAL ERROR: attempting to sort the particles in an "
-            "unknown way (%d)\n",
-            cs);
-    errexit();
-  }
-}
-
 /** Choose the topology init function of a certain cell system. */
 void topology_init(int cs, double range) {
   /** broadcast the flag for using Verlet list */
