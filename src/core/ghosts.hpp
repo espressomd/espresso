@@ -105,6 +105,8 @@
  */
 #include "ParticleList.hpp"
 
+#include <boost/mpi/communicator.hpp>
+
 /** \name Transfer types, for \ref GhostCommunicator::type */
 /************************************************************/
 /*@{*/
@@ -164,10 +166,15 @@ struct GhostCommunication {
 
 /** Properties for a ghost communication. */
 struct GhostCommunicator {
-  explicit GhostCommunicator(int size = 0) : comm(static_cast<size_t>(size)) {}
+  GhostCommunicator() = default;
+  GhostCommunicator(boost::mpi::communicator const &comm, size_t size)
+      : mpi_comm(comm), communications(size) {}
+
+  /** Attached mpi communicator */
+  boost::mpi::communicator mpi_comm;
 
   /** List of ghost communications. */
-  std::vector<GhostCommunication> comm;
+  std::vector<GhostCommunication> communications;
 };
 
 /*@}*/

@@ -235,14 +235,14 @@ int dd_fill_comm_cell_lists(ParticleList **part_lists,
  *  GhostCommunicator)
  */
 GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
-  int dir, lr, i, cnt, num, n_comm_cells[3];
+  int dir, lr, i, cnt, n_comm_cells[3];
   Utils::Vector3i lc{}, hc{}, done{};
 
   auto const node_neighbors = calc_node_neighbors(comm_cart);
   auto const node_pos = calc_node_pos(comm_cart);
 
   /* calculate number of communications */
-  num = 0;
+  size_t num = 0;
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
@@ -256,7 +256,7 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
   }
 
   /* prepare communicator */
-  auto comm = GhostCommunicator{num};
+  auto comm = GhostCommunicator{comm_cart, num};
 
   /* number of cells to communicate in a direction */
   n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];
@@ -279,26 +279,27 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
         /* just copy cells on a single node */
         if (box_geo.periodic(dir) ||
             (local_geo.boundary()[2 * dir + lr] == 0)) {
-          comm.comm[cnt].type = GHOST_LOCL;
-          comm.comm[cnt].node = this_node;
+          comm.communications[cnt].type = GHOST_LOCL;
+          comm.communications[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm.comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
+          comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
-          comm.comm[cnt].shift[dir] =
+          comm.communications[cnt].shift[dir] =
               local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm.comm[cnt].part_lists.data(), lc, hc);
+          dd_fill_comm_cell_lists(comm.communications[cnt].part_lists.data(),
+                                  lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
           /* place receive cells after send cells */
-          dd_fill_comm_cell_lists(&comm.comm[cnt].part_lists[n_comm_cells[dir]],
-                                  lc, hc);
+          dd_fill_comm_cell_lists(
+              &comm.communications[cnt].part_lists[n_comm_cells[dir]], lc, hc);
 
           cnt++;
         }
@@ -308,28 +309,31 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
           if (box_geo.periodic(dir) ||
               (local_geo.boundary()[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
-              comm.comm[cnt].type = GHOST_SEND;
-              comm.comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm.comm[cnt].part_lists.resize(n_comm_cells[dir]);
+              comm.communications[cnt].type = GHOST_SEND;
+              comm.communications[cnt].node = node_neighbors[2 * dir + lr];
+              comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
-              comm.comm[cnt].shift[dir] =
+              comm.communications[cnt].shift[dir] =
                   local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm.comm[cnt].part_lists.data(), lc, hc);
+              dd_fill_comm_cell_lists(
+                  comm.communications[cnt].part_lists.data(), lc, hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
               (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
-              comm.comm[cnt].type = GHOST_RECV;
-              comm.comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm.comm[cnt].part_lists.resize(n_comm_cells[dir]);
+              comm.communications[cnt].type = GHOST_RECV;
+              comm.communications[cnt].node =
+                  node_neighbors[2 * dir + (1 - lr)];
+              comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm.comm[cnt].part_lists.data(), lc, hc);
+              dd_fill_comm_cell_lists(
+                  comm.communications[cnt].part_lists.data(), lc, hc);
               cnt++;
             }
         }
@@ -348,10 +352,10 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
 void dd_revert_comm_order(GhostCommunicator *comm) {
 
   /* revert order */
-  boost::reverse(comm->comm);
+  boost::reverse(comm->communications);
 
   /* exchange SEND/RECV */
-  for (auto &c : comm->comm) {
+  for (auto &c : comm->communications) {
     if (c.type == GHOST_SEND)
       c.type = GHOST_RECV;
     else if (c.type == GHOST_RECV)
@@ -366,7 +370,8 @@ void dd_revert_comm_order(GhostCommunicator *comm) {
  *  poststore
  */
 void dd_assign_prefetches(GhostCommunicator *comm) {
-  for (auto it = comm->comm.begin(); it != comm->comm.end(); it += 2) {
+  for (auto it = comm->communications.begin(); it != comm->communications.end();
+       it += 2) {
     auto next = std::next(it);
     if (it->type == GHOST_RECV && next->type == GHOST_SEND) {
       it->type |= GHOST_PREFETCH | GHOST_PSTSTORE;
@@ -391,7 +396,7 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
             (local_geo.boundary()[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (local_geo.boundary()[2 * dir + lr] != 0) {
-            cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
+            cell_structure.exchange_ghosts_comm.communications[cnt].shift[dir] =
                 local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
           }
           cnt++;
@@ -405,7 +410,8 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (local_geo.boundary()[2 * dir + lr] != 0) {
-                cell_structure.exchange_ghosts_comm.comm[cnt].shift[dir] =
+                cell_structure.exchange_ghosts_comm.communications[cnt]
+                    .shift[dir] =
                     local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
               }
               cnt++;

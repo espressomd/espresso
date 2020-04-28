@@ -308,7 +308,10 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
 
   static CommBuf send_buffer, recv_buffer;
 
-  for (auto it = gcr->comm.begin(); it != gcr->comm.end(); ++it) {
+  auto const &comm = gcr->mpi_comm;
+
+  for (auto it = gcr->communications.begin(); it != gcr->communications.end();
+       ++it) {
     GhostCommunication &ghost_comm = *it;
     int const comm_type = ghost_comm.type & GHOST_JOBMASK;
 
@@ -332,9 +335,9 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       assert(send_buffer.size() == calc_transmit_size(ghost_comm, data_parts));
     } else if (prefetch) {
       /* we do not send this time, let's look for a prefetch */
-      auto prefetch_ghost_comm =
-          std::find_if(std::next(it), gcr->comm.end(), is_prefetchable);
-      if (prefetch_ghost_comm != gcr->comm.end())
+      auto prefetch_ghost_comm = std::find_if(
+          std::next(it), gcr->communications.end(), is_prefetchable);
+      if (prefetch_ghost_comm != gcr->communications.end())
         prepare_send_buffer(send_buffer, *prefetch_ghost_comm, data_parts);
     }
 
@@ -347,36 +350,34 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
     // (which consists of already serialized data).
     switch (comm_type) {
     case GHOST_RECV:
-      comm_cart.recv(node, REQ_GHOST_SEND, recv_buffer.data(),
-                     recv_buffer.size());
-      comm_cart.recv(node, REQ_GHOST_SEND, recv_buffer.bonds());
+      comm.recv(node, REQ_GHOST_SEND, recv_buffer.data(), recv_buffer.size());
+      comm.recv(node, REQ_GHOST_SEND, recv_buffer.bonds());
       break;
     case GHOST_SEND:
-      comm_cart.send(node, REQ_GHOST_SEND, send_buffer.data(),
-                     send_buffer.size());
-      comm_cart.send(node, REQ_GHOST_SEND, send_buffer.bonds());
+      comm.send(node, REQ_GHOST_SEND, send_buffer.data(), send_buffer.size());
+      comm.send(node, REQ_GHOST_SEND, send_buffer.bonds());
       break;
     case GHOST_BCST:
       if (node == this_node) {
-        boost::mpi::broadcast(comm_cart, send_buffer.data(), send_buffer.size(),
+        boost::mpi::broadcast(comm, send_buffer.data(), send_buffer.size(),
                               node);
-        boost::mpi::broadcast(comm_cart, send_buffer.bonds(), node);
+        boost::mpi::broadcast(comm, send_buffer.bonds(), node);
       } else {
-        boost::mpi::broadcast(comm_cart, recv_buffer.data(), recv_buffer.size(),
+        boost::mpi::broadcast(comm, recv_buffer.data(), recv_buffer.size(),
                               node);
-        boost::mpi::broadcast(comm_cart, recv_buffer.bonds(), node);
+        boost::mpi::broadcast(comm, recv_buffer.bonds(), node);
       }
       break;
     case GHOST_RDCE:
       if (node == this_node)
         boost::mpi::reduce(
-            comm_cart, reinterpret_cast<double *>(send_buffer.data()),
+            comm, reinterpret_cast<double *>(send_buffer.data()),
             static_cast<int>(send_buffer.size() / sizeof(double)),
             reinterpret_cast<double *>(recv_buffer.data()), std::plus<double>{},
             node);
       else
         boost::mpi::reduce(
-            comm_cart, reinterpret_cast<double *>(send_buffer.data()),
+            comm, reinterpret_cast<double *>(send_buffer.data()),
             static_cast<int>(send_buffer.size() / sizeof(double)),
             std::plus<double>{}, node);
       break;
@@ -396,10 +397,11 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       /* send op; write back delayed data from last recv, when this was a
        * prefetch send. */
       /* find previous action where we recv and which has PSTSTORE set */
-      auto poststore_ghost_comm = std::find_if(
-          std::make_reverse_iterator(it), gcr->comm.rend(), is_poststorable);
+      auto poststore_ghost_comm =
+          std::find_if(std::make_reverse_iterator(it),
+                       gcr->communications.rend(), is_poststorable);
 
-      if (poststore_ghost_comm != gcr->comm.rend()) {
+      if (poststore_ghost_comm != gcr->communications.rend()) {
         assert(recv_buffer.size() ==
                calc_transmit_size(*poststore_ghost_comm, data_parts));
         /* as above */
