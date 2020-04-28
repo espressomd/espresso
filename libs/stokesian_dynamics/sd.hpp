@@ -36,16 +36,9 @@ typedef r123::Philox2x64 RNG;
  *  For details on the thermalization, please see the description of the
  *  thermalizer functor.
  *
- *  The general Stokesian Dynamics method also allows to incorporate one
- *  stress tensor per particle which gives the stress that is imposed on a
- *  particle by the surrounding fluid (such as to deform the particle).
- *  However, ESPResSo makes no use of that, leaving only forces and torques
- *  to be passed to the SD routine.
- *
  *  To understand the Stokesian Dynamics method, it is recommended to read
  *  Durlofski et al. (1987), because it describes the method that is
  *  implemented here, apart from the thermalization.
- *  (F-T-version or F-T-S-version?)
  *      "Dynamic simulation of hydrodynamically interacting suspensions"
  *      https://core.ac.uk/download/pdf/4895234.pdf
  *
@@ -59,6 +52,13 @@ typedef r123::Philox2x64 RNG;
  *      rigid spheres in low-Reynolds-number flow"
  *      https://doi.org/10.1017/S0022112084000355
  *
+ *  Both the F-T-version and the F-T-S-version have been implemented and can be
+ *  selected via the FTS flag.
+ *
+ *  The general Stokesian Dynamics method allows to impose an external shear
+ *  flow on the system. This has not been included in the ESPResSo interface,
+ *  but could easily be included by passing the shear flow tensor to the SD
+ *  routine and some almost trivial additional initialization.
  *
  *  Also, the figures in
  *      https://doi.org/10.1016/j.jcp.2015.01.019
@@ -95,12 +95,11 @@ struct check_dist {
         T dr = std::sqrt(dx * dx + dy * dy + dz * dz);
         T dr_inv = 1 / dr;
 
-        // TODO: Rueckmeldung auslagern
         if (dr <= a(part_id(0, i)) + a(part_id(1, i))) {
-            // printf("Particles %lu and %lu overlapped! (distance %f < %f)\n",
+            //printf("Particles %lu and %lu overlapped! (distance %f < %f)\n",
             //       part_id(0, i), part_id(1, i), dr,
             //       a(part_id(0, i)) + a(part_id(1, i)));
-            // KERNEL_ABORT; // TODO Fix this
+            //KERNEL_ABORT;
             dr = NAN;
         }
 
@@ -301,9 +300,6 @@ struct mobility<Policy, T, false> {
         // Combine components into unit vector along particle connection line
         multi_array<T, 3> e = {dx, dy, dz};
         
-        // Debug stuff: print out e // ok
-        //printf("Unit vector between particles: %f %f %f\n", e(0), e(1), e(2));
-        
         // This creates a lookup-table for the many e_i * e_j like 
         // multiplications in equation (A 2). 
         auto ee = outer(e, e);
@@ -313,8 +309,6 @@ struct mobility<Policy, T, false> {
         T dr_inv3 = dr_inv2 * dr_inv;
         T dr_inv4 = dr_inv3 * dr_inv;
         T dr_inv5 = dr_inv4 * dr_inv;
-
-        //printf("dr_inv = %f\n",dr_inv); // ok
 
         // The following scalar mobility functions can be found in
         // equation (A 3).
@@ -531,7 +525,7 @@ struct lubrication {
         multi_array<T, 3> d = {dx, dy, dz};
         T dr = pd(3, pair_id);
 
-        if (dr < 4.0) {
+        if (dr < 4.0) { //non-dimensionalize!
             std::size_t i = part_id(0, pair_id);
             std::size_t j = part_id(1, pair_id);
 
@@ -1390,8 +1384,8 @@ struct solver {
 //            printf("\n");
 //        }
 //        printf("\n");
-        
-        // Lubrication corrections
+
+        // Lubrication corrections (equation (2.18) or (2.21) resp.)
         if (flg & LUBRICATION) {
             thrust_wrapper::for_each(Policy::par(), begin, begin + n_pair,
                                      lubrication<Policy, T>{rfu, rfe, rse, pd, part_id,
@@ -1409,7 +1403,16 @@ struct solver {
                 }
             }
         }
-        
+
+        printf("rfu:\n");
+        for (int i=0; i<rfu.rows(); i++) {
+            for (int j=0; j<rfu.cols(); j++) {
+                printf("%f ",rfu(i,j));
+            }
+            printf("\n");
+        }
+        printf("\n");
+
 
         assert(f_host.size() == 6 * n_part);
         vector_type<T> fext(f_host.begin(), f_host.end());
@@ -1418,6 +1421,9 @@ struct solver {
         vector_type<T> uinf(n_part * 6, T{0.0});
         // initialize ambient shear flow
         vector_type<T> einf(n_part * 5, T{0.0});
+        // Note: if we were to implement the case einf != 0 we would need to
+        // initialize the ambient flow according to the particle's positions.
+        // E.g. like   uinf_i = einf * r_i   where i is particle index.
 
         device_matrix<T, Policy> rfu_inv;
         device_matrix<T, Policy> rfu_sqrt;
@@ -1464,7 +1470,8 @@ struct solver {
             // It is also very unclear how to actually calculate it.
         }
 
-        // uncomment when not debugging!!
+        // This is equation (2.22), plus thermal forces.
+
         vector_type<T> u = rfu_inv * (fext + rfe * einf + frnd) + uinf;
 
         // return the velocities due to hydrodynamic interactions
