@@ -56,7 +56,16 @@ enum Resort : unsigned {
   RESORT_LOCAL = 1u,
   RESORT_GLOBAL = 2u
 };
-}
+
+enum DataPart : unsigned {
+  DATA_PART_NONE = 0u,
+  DATA_PART_PROPERTIES = 1u,
+  DATA_PART_POSITION = 2u,
+  DATA_PART_MOMENTUM = 8u,
+  DATA_PART_FORCE = 16u,
+  DATA_PART_BONDS = 32u
+};
+} // namespace Cells
 
 namespace Cells {
 inline ParticleRange particles(Utils::Span<Cell *> cells) {
@@ -308,6 +317,9 @@ public:
    * @brief Set the resort level to sorted.
    */
   void clear_resort_particles() { m_resort_particles = Cells::RESORT_NONE; }
+
+  void ghosts_update(unsigned data_parts);
+  void ghosts_reduce();
 
   /**
    * @brief Resolve ids to particles.
