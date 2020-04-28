@@ -146,10 +146,8 @@ auto constraint_stress(
 } // namespace
 
 void VirtualSitesRelative::update() const {
-  // Ghost update logic
-  auto const data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM;
-
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+  cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
+                               Cells::DATA_PART_MOMENTUM);
 
   for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)

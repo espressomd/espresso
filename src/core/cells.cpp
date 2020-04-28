@@ -69,7 +69,7 @@ std::vector<std::pair<int, int>> get_pairs(double distance) {
   std::vector<std::pair<int, int>> ret;
   auto const cutoff2 = distance * distance;
 
-  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
+  cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
 
   auto pair_kernel = [&ret, &cutoff2](Particle const &p1, Particle const &p2,
                                       double dist2) {
@@ -378,7 +378,8 @@ void check_resort_particles() {
 /*************************************************/
 void cells_update_ghosts(unsigned data_parts) {
   /* data parts that are only updated on resort */
-  auto constexpr resort_only_parts = GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS;
+  auto constexpr resort_only_parts =
+      Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
 
   auto const global_resort = topology_check_resort(
       cell_structure.type, cell_structure.get_resort_particles());
@@ -394,7 +395,7 @@ void cells_update_ghosts(unsigned data_parts) {
     /* Communication step: number of ghosts and ghost information */
     ghost_communicator(&cell_structure.exchange_ghosts_comm,
                        GHOSTTRANS_PARTNUM);
-    ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+    cell_structure.ghosts_update(data_parts);
 
     /* Add the ghost particles to the index if we don't already
      * have them. */
@@ -408,8 +409,7 @@ void cells_update_ghosts(unsigned data_parts) {
     cell_structure.clear_resort_particles();
   } else {
     /* Communication step: ghost information */
-    ghost_communicator(&cell_structure.exchange_ghosts_comm,
-                       data_parts & ~resort_only_parts);
+    cell_structure.ghosts_update(data_parts & ~resort_only_parts);
   }
 }
 

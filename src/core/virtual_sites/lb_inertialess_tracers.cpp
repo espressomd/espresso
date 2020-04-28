@@ -67,7 +67,7 @@ bool in_local_domain(Utils::Vector3d const &pos) {
  */
 void IBM_ForcesIntoFluid_CPU() {
   // Update the forces on the ghost particles
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, GHOSTTRANS_FORCE);
+  cell_structure.ghosts_update(Cells::DATA_PART_FORCE);
 
   // Loop over local cells
   for (auto &p : cell_structure.local_particles()) {

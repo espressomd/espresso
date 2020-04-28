@@ -168,7 +168,7 @@ static void app_pos_correction(const ParticleRange &particles) {
 /** Calculates the corrections required for each of the particle coordinates
     according to the RATTLE algorithm. Invoked from \ref correct_pos_shake()*/
 void correct_pos_shake(CellStructure &cs) {
-  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
+  cells_update_ghosts(Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES);
 
   auto particles = cs.local_particles();
   auto ghost_particles = cs.ghost_particles();
@@ -184,8 +184,7 @@ void correct_pos_shake(CellStructure &cs) {
 
     app_pos_correction(particles);
     /**Ghost Positions Update*/
-    ghost_communicator(&cs.exchange_ghosts_comm,
-                       GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
+    cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
     repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
                                     std::logical_or<bool>());
@@ -298,8 +297,7 @@ static void revert_force(const ParticleRange &particles,
 }
 
 void correct_vel_shake(CellStructure &cs) {
-  ghost_communicator(&cs.exchange_ghosts_comm,
-                     GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
+  cs.ghosts_update(Cells::DATA_PART_POSITION | Cells::DATA_PART_MOMENTUM);
 
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle
@@ -317,7 +315,7 @@ void correct_vel_shake(CellStructure &cs) {
     compute_vel_corr_vec(&repeat_, cs);
     cell_structure.ghosts_reduce();
     apply_vel_corr(particles);
-    ghost_communicator(&cs.exchange_ghosts_comm, GHOSTTRANS_MOMENTUM);
+    cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
 
     repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
                                     std::logical_or<bool>());

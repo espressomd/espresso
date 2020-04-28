@@ -97,11 +97,11 @@ static unsigned map_data_parts(unsigned data_parts) {
 
   /* clang-format off */
   return GHOSTTRANS_NONE
-         | (DATA_PART_PROPERTIES & data_parts) ? GHOSTTRANS_PROPRTS : 0u
-         | (DATA_PART_POSITION & data_parts) ? GHOSTTRANS_POSITION : 0u
-         | (DATA_PART_MOMENTUM & data_parts) ? GHOSTTRANS_MOMENTUM : 0u
-         | (DATA_PART_FORCE & data_parts) ? GHOSTTRANS_FORCE : 0u
-         | (DATA_PART_BONDS & data_parts) ? GHOSTTRANS_BONDS : 0u;
+         | ((DATA_PART_PROPERTIES & data_parts) ? GHOSTTRANS_PROPRTS : 0u)
+         | ((DATA_PART_POSITION & data_parts) ? GHOSTTRANS_POSITION : 0u)
+         | ((DATA_PART_MOMENTUM & data_parts) ? GHOSTTRANS_MOMENTUM : 0u)
+         | ((DATA_PART_FORCE & data_parts) ? GHOSTTRANS_FORCE : 0u)
+         | ((DATA_PART_BONDS & data_parts) ? GHOSTTRANS_BONDS : 0u);
   /* clang-format on */
 }
 
