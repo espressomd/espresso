@@ -162,8 +162,10 @@ struct GhostCommunication {
   Utils::Vector3d shift = {};
 };
 
-/** Properties for a ghost communication. A ghost communication is defined */
+/** Properties for a ghost communication. */
 struct GhostCommunicator {
+  explicit GhostCommunicator(int size = 0) : comm(static_cast<size_t>(size)) {}
+
   /** List of ghost communications. */
   std::vector<GhostCommunication> comm;
 };
