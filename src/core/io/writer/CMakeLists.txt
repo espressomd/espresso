@@ -1,3 +1,3 @@
-if (HDF5_FOUND)
-  add_subdirectory(h5md)
-endif(HDF5_FOUND)
+target_sources(
+  EspressoCore
+  PUBLIC "$<$<BOOL:${H5MD}>:${CMAKE_CURRENT_SOURCE_DIR}/h5md_core.cpp>")

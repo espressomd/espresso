@@ -1,51 +1,60 @@
 /*
-  Copyright (C) 2016,2017 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2016-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef OBSERVABLES_OBSERVABLE_HPP
 #define OBSERVABLES_OBSERVABLE_HPP
 
 #include <fstream>
+#include <numeric>
 #include <string>
 #include <vector>
 
-#include "core/PartCfg.hpp"
+#include "PartCfg.hpp"
 
 namespace Observables {
+
+/** Base class for observables.
+ *
+ *  An observable extracts raw data from a system or compute a statistic based
+ *  on the state of a system, and returns an array of doubles.
+ *
+ *  %Observables typically don't have setters or getters to access and modify
+ *  their member variables, and usually only have a default constructor with no
+ *  argument. Each observable class has a corresponding interface in
+ *  @ref ScriptInterface::Observables, where setters and getters are defined.
+ */
 class Observable {
 public:
-  friend class CylindricalFluxDensityProfile;
-  Observable();
+  Observable() = default;
   virtual ~Observable() = default;
-  // In the call operator the calculation is performed.
-  virtual std::vector<double> operator()(PartCfg &partCfg) const = 0;
-  /* IO functions for observables */
-  void set_filename(std::string const &filename, bool binary);
-  bool writable() const;
-  void write();
-  virtual int n_values() const { return 0; }
+  /** Calculate the set of values measured by the observable */
+  virtual std::vector<double> operator()() const = 0;
 
-private:
-  virtual void do_write();
-  std::ofstream m_ofile;
-  std::string m_filename;
-  bool m_binary;
+  /** Size of the flat array returned by the observable */
+  int n_values() const {
+    auto const v = shape();
+    return static_cast<int>(
+        std::accumulate(v.begin(), v.end(), 1, std::multiplies<>()));
+  }
+
+  /** Dimensions needed to reshape the flat array returned by the observable */
+  virtual std::vector<size_t> shape() const = 0;
 };
 
 } // Namespace Observables

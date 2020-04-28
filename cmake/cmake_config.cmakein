@@ -3,11 +3,15 @@
 
 #cmakedefine CUDA
 
+#cmakedefine HIP
+
 #cmakedefine FFTW
 
 #cmakedefine H5MD
 
 #cmakedefine SCAFACOS
+
+#cmakedefine GSL
 
 #cmakedefine VALGRIND_INSTRUMENTATION
 

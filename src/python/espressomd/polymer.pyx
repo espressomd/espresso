@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,150 +17,120 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
 from . cimport polymer
 import numpy as np
+from .system import System
+from .interactions import BondedInteraction
+from .utils cimport make_Vector3d, check_type_or_throw_except
+from .utils import array_locked
+
 
 def validate_params(_params, default):
-    if _params["N_P"] <= 0:
+    if _params["n_polymers"] <= 0:
         raise ValueError(
-                "N_P has to be a positive Integer" )
-    if _params["MPC"] <= 1:
+            "n_polymers has to be a positive integer")
+    if _params["beads_per_chain"] <= 0:
         raise ValueError(
-                "MPC has to be a positive Integer larger than 1" )
-    if _params["bond_length"] < 0 :
+            "beads_per_chain has to be a positive integer")
+    if _params["bond_length"] < 0:
         raise ValueError(
-                "bond_length has to be a positive float" )
-    if _params["start_id"] < 0:
+            "bond_length has to be a positive float")
+    if not ((np.size(_params["start_positions"]) == 0)
+            or np.shape(_params["start_positions"]) == (_params["n_polymers"], 3)):
         raise ValueError(
-                "start_id has to be a positive Integer")
-    if not isinstance(_params["start_pos"], np.ndarray) or len(_params["start_pos"]) != 3:
+            "start_positions has to be a numpy array with shape (n_polymers, 3)")
+    if _params["min_distance"] < 0:
         raise ValueError(
-                "start_pos has to be an numpy array with 3 Elements" )
-    if not isinstance(_params["mode"], int):
+            "min_distance has to be a positive float")
+    if _params["max_tries"] < 0:
         raise ValueError(
-                "mode has to be a positive Integer" )
-    if _params["shield"] < 0 and default["shield"] != _params["shield"]:
+            "max_tries has to be a positive integer")
+    if _params["use_bond_angle"] and np.isnan(_params["bond_angle"]):
         raise ValueError(
-                "shield has to be a positive float")
-    if _params["max_tries"] < 0 and default["max_tries"] != _params["max_tries"]:
+            "bond_angle has to be a positive float")
+    if type(_params["respect_constraints"]) != bool:
         raise ValueError(
-                "max_tries has to be a positive Integer")
-    if not isinstance(_params["val_poly"], float) and default["val_poly"] != _params["val_poly"]:
+            "respect_constraints has to be either True or False")
+    if type(_params["seed"]) != int:
         raise ValueError(
-                "val_poly has to be a float")
-    if _params["charge_distance"] < 0:
-        raise ValueError(
-                "charge_distance has to be a positive Integer")
-    if _params["type_poly_neutral"] < 0:
-        raise ValueError(
-                "type_poly_neutral has to be a nonnegative Integer")
-    if _params["type_poly_charged"] < 0:
-        raise ValueError(
-                "type_poly_charged has to be a nonnegative Integer")
-    if _params["angle"] < 0 and default["angle"] != _params["angle"]:
-        raise ValueError(
-                "angle has to be a positive float")
-    if _params["angle2"] < 0 and default["angle2"] != _params["angle2"]:
-        raise ValueError(
-                "angle2 has to be a positive float")
-    if _params["constraints"] < 0 :
-        raise ValueError(
-                "constraint has to be either 0 or 1" )
+            "seed has to be an integer")
 
 # wrapper function to expose to the user interface
-def create_polymer(**kwargs):
-    """ Generators have a ``Yields`` section instead of a ``Returns`` section.
+
+
+def linear_polymer_positions(**kwargs):
+    """
+    Generates particle positions for polymer creation.
 
     Parameters
     ----------
-    n : :obj:`intd`
-        The upper limit of the range to generate, from 0 to `n` - 1.
-    N_P : :obj:`int`
+    n_polymers : :obj:`int`, required
         Number of polymer chains
-    MPC : :obj:`int`
+    beads_per_chain : :obj:`int`, required
         Number of monomers per chain
-    bond_length : :obj:`float`
+    bond_length : :obj:`float`, required
         distance between adjacent monomers in a chain
-    bond : :obj:`espressomd.interactions.BondedInteraction`
-        The bonded interaction to be set up between the monomers. 
-    start_id : :obj:`int`, optional
-        Particle ID of the first monomer, all other particles will have larger IDs. Defaults to 0
-    start_pos : array_like :obj:`float`. Defaults to numpy.array([0, 0, 0])
-        Position of the first monomer
-    mode : :obj:`int`, optional
-        Selects a specific random walk procedure for the
-        polymer setup mode = 1 uses a common random walk,
-        mode = 2 produces a pruned self-avoiding random walk,
-        and mode = 0 a self-avoiding random walk. Note that
-        mode = 2 does not produce a true self-avoiding
-        random walk distribution but is much faster than mode = 0. Defaults to 1
-    shield : :obj:`float`, optional
-        Shielding radius for the pruned self-avoiding walk mode. Defaults to 0
+    seed : :obj:`int`, required
+        Seed for the RNG used to generate the particle positions.
+    bond_angle : :obj:`float`, optional
+        If set, this parameter defines the angle between adjacent bonds
+        withing a polymer.
+    start_positions : array_like :obj:`float`.
+        If set, this vector defines the start positions for the polymers, i.e.,
+        the position of each polymer's first monomer bead.
+        Here, a numpy array of shape (n_polymers, 3) is expected.
+    min_distance : :obj:`float`, optional
+        Minimum distance between all generated positions. Defaults to 0
+    respect_constraints : :obj:`bool`, optional
+        If True, the particle setup tries to obey previously defined constraints.
+        Default value is False.
     max_tries : :obj:`int`, optional
-        Maximal number of attempts to set up a polymer,
-        default value is 1,000. Depending on the random walk
-        mode and the polymer length this value needs to be
-        adapted. 
-    val_poly : :obj:`float`, optional
-        Valency of the monomers, default is 0.0
-    charge_distance : :obj:`int`, optional
-        Distance between charged monomers along the chain. Default is 1
-    type_poly_neutral : :obj:`int`, optional
-        Particle type of neutal monomers, default is 0.
-    type_poly_charged : :obj:`int`, optional
-        Particle type for charged monomers, default is 1
-    angle : :obj:`float`, optional
-    angle2 : :obj:`float`, optional
-        The both angles angle and angle2 allow to set up
-        planar or helical polymers, they fix the angles
-        between adjacent bonds.
-    pos2 : array_like, optional
-        Sets the position of the second monomer. Defaults to numpy.array([0, 0, 0]).
-    constraints : :obj:`int`, optional
-        Either 0 or 1, default is 0. If 1, the particle setup-up tries to obey previously defined constraints.
-        
-    Examples
-    --------
-    This example sets 2 polyelectrolyte chains of the length 10. Beads are connected by FENE potential.
+        Maximal number of attempts to generate every monomer position,
+        as well as maximal number of retries per polymer, if choosing
+        suitable monomer positions fails. Default value is 1000.
+        Depending on the total number of beads and constraints,
+        this value needs to be adapted.
 
-    >>> fene = interactions.FeneBond(k=10, d_r_max=2)
-    >>> polymer.create_polymer(
-            N_P = 2, 
-            MPC = 10, 
-            bond_length = 1, 
-            bond = fene, 
-            val_poly = -1.0)
+    Returns
+    -------
+    :obj:`ndarray`
+        Three-dimensional numpy array, namely a list of polymers containing the
+        coordinates of the respective monomers.
+
     """
-
-    params=dict()
-    default_params=dict()
-    default_params["N_P"] = 0 
-    default_params["MPC"] = 0
-    default_params["bond_length"] = 0 
-    default_params["start_id"] = 0
-    default_params["start_pos"] = np.array([0, 0, 0])
-    default_params["mode"] = 1 
-    default_params["shield"] = 0
+    params = dict()
+    default_params = dict()
+    default_params["n_polymers"] = 0
+    default_params["beads_per_chain"] = 0
+    default_params["bond_length"] = 0
+    default_params["start_positions"] = np.array([])
+    default_params["min_distance"] = 0
     default_params["max_tries"] = 1000
-    default_params["val_poly" ] = 0.0
-    default_params["charge_distance"] = 1
-    default_params["type_poly_neutral"] = 0 
-    default_params["type_poly_charged"] = 1
-    default_params["angle"] = -1.0
-    default_params["angle2"] = -1.0
-    default_params["constraints"]=0 
-    default_params["pos2"] = np.array([0, 0, 0])
+    default_params["bond_angle"] = -1
+    default_params["respect_constraints"] = False
+    default_params["seed"] = None
 
-    params = default_params 
+    params = default_params
 
-    valid_keys=["N_P", "MPC", "bond_length", "bond", "start_id", "start_pos", "mode", "shield", "max_tries", "val_poly", "charge_distance", "type_poly_neutral", "type_poly_charged", "angle", "angle2", "constraints"]
+    # use bond_angle if set via kwargs
+    params["use_bond_angle"] = "bond_angle" in kwargs
 
-    required_keys=["N_P", "MPC", "bond_length", "bond"]
+    valid_keys = [
+        "n_polymers",
+        "beads_per_chain",
+        "bond_length",
+        "start_positions",
+        "min_distance",
+        "max_tries",
+        "bond_angle",
+        "respect_constraints",
+        "seed"]
+
+    required_keys = ["n_polymers", "beads_per_chain", "bond_length", "seed"]
 
     for k in kwargs:
-        if not k in valid_keys:
+        if k not in valid_keys:
             raise ValueError("Unknown parameter '%s'" % k)
         params[k] = kwargs[k]
 
@@ -172,16 +142,158 @@ def create_polymer(**kwargs):
 
     validate_params(params, default_params)
 
-    bond_id = params["bond"]._bond_id
+    cdef vector[Vector3d] start_positions
+    if (params["start_positions"].size > 0):
+        for i in range(len(params["start_positions"])):
+            start_positions.push_back(
+                make_Vector3d(params["start_positions"][i]))
 
-    cdef double start_pos[3];
-    cdef double start_pos2[3];
-    for i in range(3):
-        start_pos[i] = params["start_pos"][i]
-        start_pos2[i] =params["pos2"][i]
+    data = draw_polymer_positions(
+        partCfg(),
+        params["n_polymers"],
+        params["beads_per_chain"],
+        params["bond_length"],
+        start_positions,
+        params["min_distance"],
+        params["max_tries"],
+        int(params["use_bond_angle"]),
+        params["bond_angle"],
+        int(params["respect_constraints"]),
+        params["seed"])
+    positions = []
+    for polymer in data:
+        p = []
+        for monomer in polymer:
+            m = array_locked([monomer[0], monomer[1], monomer[2]])
+            p.append(m)
+        positions.append(p)
+    return np.array(positions)
 
-    polymerC(partCfg(), params["N_P"], params["MPC"], params["bond_length"], params["start_id"], \
-             start_pos, params["mode"], params["shield"], params["max_tries"], \
-             params["val_poly"], params["charge_distance"], params["type_poly_neutral"], \
-             params["type_poly_charged"], bond_id, params["angle"], \
-             params["angle2"], start_pos2, params["constraints"])
+
+def setup_diamond_polymer(system=None, bond=None, MPC=0, 
+                          dist_cM=1, val_cM=0.0, val_nodes=0.0, 
+                          start_id='auto', no_bonds=False, 
+                          type_nodes=0, type_nM=1, type_cM=2):
+    """
+    Places particles to form a diamond lattice shaped polymer.
+    Can also assign charges and bonds at the appropriate places.
+
+    Parameters
+    ----------
+    system : :class:`espressomd.system.System`, required
+        System to which the particles will be added.
+    bond : :class:`espressomd.interactions.BondedInteraction`, required if ``no_bonds == False``
+        The bond to be created between monomers. Should be compatible with the 
+        spacing ``system.box_l[0]*(0.25 * sqrt(3))/(MPC + 1)`` between monomers.
+    no_bonds : :obj:`bool`, optional
+        If True, the particles will only be placed in the system but not connected by bonds. 
+        In that case, the ``bond`` argument can be omitted. Defaults to ``False``.
+    MPC : :obj:`int`, optional
+        Monomers per chain, where chain refers to the connection 
+        between the 8 lattice nodes of the diamond lattice.
+        Defaults to 0.
+    dist_cM : :obj:`int`, optional
+        Distance between charged monomers in the chains. Defaults to 1.
+    val_cM : :obj:`float`, optional
+        Valence of the charged monomers in the chains. Defaults to 0.
+    val_nodes : :obj:`float`, optional
+        Valence of the node particles. Defaults to 0.
+    start_id : :obj:`int` or ``'auto'``, optional
+        Start id for particle creation. Subsequent ids will be contiguous integers.
+        If ``'auto'``, particle ids will start after the highest id of particles already in the system. 
+    type_nodes : :obj:`int`, optional
+        Type assigned to the node particles. Defaults to 0.
+    type_nM : :obj:`int`, optional
+        Type assigned to the neutral monomers in the chains. Defaults to 1.
+    type_cM : :obj:`int`, optional
+        Type assigned to the charged monomers in the chains. Defaults to 2.
+    """
+
+    if start_id == 'auto':
+        start_id = system.part.highest_particle_id + 1
+
+    check_type_or_throw_except(
+        no_bonds, 1, bool, "no_bonds must be one bool")
+    if not no_bonds and not isinstance(bond, BondedInteraction):
+        raise TypeError(
+            "bond argument must be an instance of espressomd.interaction.BondedInteraction")
+    if not isinstance(system, System):
+        raise TypeError(
+            "System argument must be an instance of an espressomd System")
+
+    check_type_or_throw_except(
+        MPC, 1, int, "MPC must be one int")
+    check_type_or_throw_except(
+        val_cM, 1, float, "val_cM must be one float")
+    check_type_or_throw_except(
+        val_nodes, 1, float, "val_nodes must be one float")
+    check_type_or_throw_except(
+        type_nodes, 1, int, "type_nodes must be one int")
+    check_type_or_throw_except(
+        type_nM, 1, int, "type_nM must be one int")
+    check_type_or_throw_except(
+        type_cM, 1, int, "type_cM must be one int")
+    check_type_or_throw_except(
+        dist_cM, 1, int, "dist_cM must be one int")
+    check_type_or_throw_except(
+        start_id, 1, int, "start_id must be one int or 'auto'")
+
+    box = system.box_l
+    if not box[0] == box[1] == box[2]:
+        raise Exception("Simulation box must be cubic but is {}".format(box))
+    box_length = box[0]
+
+    node_positions = box_length / 4. * np.array([[0, 0, 0], [1, 1, 1],
+                                                 [2, 2, 0], [0, 2, 2],
+                                                 [2, 0, 2], [3, 3, 1],
+                                                 [1, 3, 3], [3, 1, 3]])
+    connected_nodes = [(0, 1), (1, 2), (1, 3), (1, 4),
+                       (2, 5), (3, 6), (4, 7), (5, 0),
+                       (5, 3), (5, 4), (6, 0), (6, 2),
+                       (6, 4), (7, 0), (7, 2), (7, 3)]
+
+    # place nodes
+    node_ids = []
+    current_id = start_id
+    for node_pos in node_positions:
+        system.part.add(pos=node_pos, id=current_id, 
+                        type=type_nodes, q=val_nodes)
+        node_ids.append(current_id)
+        current_id += 1
+
+    # place monomers inbetween
+    if MPC > 0:
+        for start_node, end_node in connected_nodes:
+            node_connection_vec = (
+                node_positions[end_node, :] - node_positions[start_node, :])
+            # find minimum image of neighbour node
+            node_connection_vec -= np.rint(node_connection_vec /
+                                           box_length) * box_length
+
+            for j in range(1, MPC + 1):
+                if np.mod(j, dist_cM) == 0:
+                    mono_q = val_cM
+                    mono_type = type_cM
+                else:
+                    mono_q = 0
+                    mono_type = type_nM
+                pos = node_positions[start_node, :] + \
+                    j / (MPC + 1) * node_connection_vec
+                system.part.add(
+                    pos=pos,
+                    id=current_id,
+                    type=mono_type,
+                    q=mono_q)
+
+                # add bonds along the chain
+                if not no_bonds:
+                    if j == 1:
+                        system.part[node_ids[start_node]].add_bond(
+                            (bond, current_id))
+                    else:
+                        system.part[current_id].add_bond(
+                            (bond, current_id - 1))
+                    if j == MPC:
+                        system.part[node_ids[end_node]].add_bond(
+                            (bond, current_id))
+                current_id += 1

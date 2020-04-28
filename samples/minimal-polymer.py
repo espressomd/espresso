@@ -1,6 +1,5 @@
-
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,42 +16,73 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
+"""
+Set up a linear polymer.
+"""
 import espressomd
-from espressomd import thermostat
+espressomd.assert_features(["WCA"])
 from espressomd import interactions
 from espressomd import polymer
-import numpy
+from espressomd.io.writer import vtf  # pylint: disable=import-error
+import numpy as np
 
 # System parameters
 #############################################################
 
-system = espressomd.System()
-
-# if no seed is provided espresso generates a seed
+system = espressomd.System(box_l=[100, 100, 100])
+np.random.seed(seed=42)
 
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-system.box_l = [100, 100, 100]
-system.thermostat.set_langevin(kT=1.0, gamma=1.0)
 system.cell_system.set_n_square(use_verlet_lists=False)
+outfile = open('polymer.vtf', 'w')
 
-system.non_bonded_inter[0, 0].lennard_jones.set_params(
-    epsilon=1, sigma=1,
-    cutoff=2**(1. / 6), shift="auto")
+system.non_bonded_inter[0, 0].wca.set_params(epsilon=1, sigma=1)
 
 fene = interactions.FeneBond(k=10, d_r_max=2)
 system.bonded_inter.add(fene)
 
-polymer.create_polymer(N_P=1, bond_length=1.0, MPC=50, bond=fene)
+
+positions = polymer.linear_polymer_positions(n_polymers=1,
+                                             beads_per_chain=50,
+                                             bond_length=1.0,
+                                             seed=3210)
+for i, pos in enumerate(positions[0]):
+    id = len(system.part)
+    system.part.add(id=id, pos=pos)
+    if i > 0:
+        system.part[id].add_bond((fene, id - 1))
+vtf.writevsf(system, outfile)
+
+
+#############################################################
+#      Warmup                                               #
+#############################################################
+
+# minimize energy using min_dist as the convergence criterion
+system.integrator.set_steepest_descent(f_max=0, gamma=1e-3,
+                                       max_displacement=0.01)
+while system.analysis.min_dist() < 0.95:
+    print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+    system.integrator.run(20)
+
+print("minimization: {:+.2e}".format(system.analysis.energy()["total"]))
+print()
+system.integrator.set_vv()
+
+# activate thermostat
+system.thermostat.set_langevin(kT=1.0, gamma=1.0, seed=42)
 
 
 #############################################################
 #      Integration                                          #
 #############################################################
 
-for i in range(20):
-    system.integrator.run(1000)
-
-    energies = system.analysis.energy()
-    print(energies)
+print("simulating...")
+t_steps = 1000
+for t in range(t_steps):
+    print("step {} of {}".format(t, t_steps), end='\r', flush=True)
+    system.integrator.run(10)
+    vtf.writevcf(system, outfile)
+outfile.close()
+print()

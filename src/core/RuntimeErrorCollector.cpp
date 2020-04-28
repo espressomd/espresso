@@ -1,38 +1,39 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "RuntimeErrorCollector.hpp"
 
 #include "communication.hpp"
-#include "utils/mpi/gather_buffer.hpp"
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/mpi/collectives.hpp>
 
+#include <sstream>
 #include <utility>
 
 using namespace std;
-using boost::mpi::communicator;
 using boost::mpi::all_reduce;
+using boost::mpi::communicator;
 
 namespace ErrorHandling {
 
-RuntimeErrorCollector::RuntimeErrorCollector(const communicator &comm)
-    : m_comm(comm) {}
+RuntimeErrorCollector::RuntimeErrorCollector(communicator comm)
+    : m_comm(std::move(comm)) {}
 
 RuntimeErrorCollector::~RuntimeErrorCollector() {
   if (!m_errors.empty())
@@ -103,14 +104,9 @@ int RuntimeErrorCollector::count() const {
 }
 
 int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
-  const int numMessages = std::count_if(
+  return std::count_if(
       m_errors.begin(), m_errors.end(),
       [level](const RuntimeError &e) { return e.level() >= level; });
-  int totalMessages;
-
-  all_reduce(m_comm, numMessages, totalMessages, std::plus<int>());
-
-  return totalMessages;
 }
 
 void RuntimeErrorCollector::clear() { m_errors.clear(); }
@@ -130,4 +126,4 @@ void RuntimeErrorCollector::gatherSlave() {
   this->clear();
 }
 
-} /* ErrorHandling */
+} // namespace ErrorHandling

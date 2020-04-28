@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,16 +16,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Handling of electrostatics
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from espressomd.system cimport *
-from espressomd.utils cimport *
 
-IF DIPOLES == 1:
+IF DIPOLES and DP3M:
 
-    cdef extern from "mdlc_correction.hpp":
+    cdef extern from "electrostatics_magnetostatics/mdlc_correction.hpp":
         ctypedef struct dlc_struct "DLC_struct":
             double maxPWerror
             double gap_size

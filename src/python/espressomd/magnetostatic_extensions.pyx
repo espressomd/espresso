@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,37 +17,36 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function, absolute_import
 from . cimport utils
 include "myconfig.pxi"
 from .actors import Actor
+from .utils cimport handle_errors, check_range_or_except, check_type_or_throw_except
 
-IF DIPOLES == 1:
+IF DIPOLES and DP3M:
     class MagnetostaticExtension(Actor):
 
         pass
 
     class DLC(MagnetostaticExtension):
-        """Provide the Dipolar Layer Correction (DLC) method.
 
-        DLC works like ELC for electrostatics
-        (:class:`espressomd.electrostatic_extensions.ELC`),
-        but applied to magnetic dipoles.
+        """
+        Electrostatics solver for systems with two periodic dimensions.
+        See :ref:`Dipolar Layer Correction (DLC)` for more details.
 
         Notes
         -----
         At present, the empty gap (volume without any particles), is assumed to be
         along the z-axis. As a reference for the DLC method, see :cite:`brodka04a`.
 
-        Attributes
+        Parameters
         ----------
-        far_cut : :obj:`float`
-                  Cutoff of the exponential sum.
         gap_size : :obj:`float`
-                   Size of the empty gap. Note that DLC relies on the user to make sure that
-                   this condition is fulfilled.
+            Size of the empty gap. Note that DLC relies on the user to make
+            sure that this condition is fulfilled.
         maxPWerror : :obj:`float`
-                     Maximal pairwise error of the potential and force.
+            Maximal pairwise error of the potential and force.
+        far_cut : :obj:`float`, optional
+            Cutoff of the exponential sum.
 
         """
 
@@ -66,7 +65,7 @@ IF DIPOLES == 1:
             check_type_or_throw_except(self._params["far_cut"], 1, float, "")
 
         def valid_keys(self):
-            return "maxPWerror", "gap_size", "far_cut"
+            return ["maxPWerror", "gap_size", "far_cut"]
 
         def required_keys(self):
             return ["maxPWerror", "gap_size"]
@@ -82,7 +81,8 @@ IF DIPOLES == 1:
             return params
 
         def _set_params_in_es_core(self):
-            if mdlc_set_params(self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
+            if mdlc_set_params(
+                    self._params["maxPWerror"], self._params["gap_size"], self._params["far_cut"]):
                 raise ValueError(
                     "Choose a 3d magnetostatics method prior to DLC")
             handle_errors("mdlc tuning failed, gap size too small")

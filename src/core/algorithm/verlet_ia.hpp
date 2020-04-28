@@ -1,3 +1,21 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_ALGORITHM_VERLET_IA_HPP
 #define CORE_ALGORITHM_VERLET_IA_HPP
 
@@ -17,24 +35,24 @@ void update_and_kernel(CellIterator first, CellIterator last,
     /* Clear the VL */
     first->m_verlet_list.clear();
 
-    for (int i = 0; i != first->n; i++) {
-      auto &p1 = first->part[i];
+    for (auto it = first->particles().begin(); it != first->particles().end();
+         ++it) {
+      auto &p1 = *it;
 
       particle_kernel(p1);
 
       /* Pairs in this cell */
-      for (int j = i + 1; j < first->n; j++) {
-        auto dist = distance_function(p1, first->part[j]);
-        if (verlet_criterion(p1, first->part[j], dist)) {
-          pair_kernel(p1, first->part[j], dist);
-          first->m_verlet_list.emplace_back(&p1, &(first->part[j]));
+      for (auto jt = std::next(it); jt != first->particles().end(); ++jt) {
+        auto const dist = distance_function(p1, *jt);
+        if (verlet_criterion(p1, *jt, dist)) {
+          pair_kernel(p1, *jt, dist);
+          first->m_verlet_list.emplace_back(&p1, &(*jt));
         }
       }
 
       /* Pairs with neighbors */
-      for (auto &neighbor : first->neighbors()) {
-        for (int j = 0; j < neighbor.n; j++) {
-          auto &p2 = neighbor.part[j];
+      for (auto &neighbor : first->neighbors().red()) {
+        for (auto &p2 : neighbor->particles()) {
           auto dist = distance_function(p1, p2);
           if (verlet_criterion(p1, p2, dist)) {
             pair_kernel(p1, p2, dist);
@@ -52,23 +70,23 @@ void kernel(CellIterator first, CellIterator last,
             ParticleKernel &&particle_kernel, PairKernel &&pair_kernel,
             DistanceFunction &&distance_function) {
   for (; first != last; ++first) {
-    for (int i = 0; i != first->n; i++) {
-      particle_kernel(first->part[i]);
+    for (auto &p : first->particles()) {
+      particle_kernel(p);
     }
 
     for (auto &pair : first->m_verlet_list) {
-      auto dist = distance_function(*pair.first, *pair.second);
+      auto const dist = distance_function(*pair.first, *pair.second);
       pair_kernel(*pair.first, *pair.second, dist);
     }
   }
 }
-}
+} // namespace detail
 
 /**
  * @brief Iterates over all particles in the cell range
- *        and all pairs in the verlet list of the cells.
+ *        and all pairs in the Verlet list of the cells.
  *        If rebuild is true, all neighbor cells are iterated
- *        and the verlet lists are updated with the so found pairs.
+ *        and the Verlet lists are updated with the so found pairs.
  */
 template <typename CellIterator, typename ParticleKernel, typename PairKernel,
           typename DistanceFunction, typename VerletCriterion>
@@ -88,6 +106,6 @@ void verlet_ia(CellIterator first, CellIterator last,
                    std::forward<DistanceFunction>(distance_function));
   }
 }
-}
+} // namespace Algorithm
 
 #endif

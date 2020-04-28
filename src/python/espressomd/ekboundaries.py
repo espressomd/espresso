@@ -1,27 +1,39 @@
-from __future__ import print_function, absolute_import
-from .script_interface import ScriptInterfaceHelper, script_interface_register
+# Copyright (C) 2010-2019 The ESPResSo project
+#
+# This file is part of ESPResSo.
+#
+# ESPResSo is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# ESPResSo is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from .script_interface import script_interface_register
+from .__init__ import has_features
+import espressomd.lbboundaries
 
 
-@script_interface_register
-class EKBoundaries(ScriptInterfaceHelper):
-    _so_name = "LBBoundaries::LBBoundaries"
+if any(has_features(i) for i in ["LB_BOUNDARIES", "LB_BOUNDARIES_GPU"]):
+    @script_interface_register
+    class EKBoundaries(espressomd.lbboundaries.LBBoundaries):
 
-    def add(self, *args, **kwargs):
-        if len(args) == 1:
-            if isinstance(args[0], EKBoundary):
-                ekboundary = args[0]
-            else:
-                raise TypeError(
-                    "Either a EKBoundary object or key-value pairs for the parameters of a EKBoundary object need to be passed.")
-        else:
-            ekboundary = EKBoundary(**kwargs)
-        self.call_method("add", object=ekboundary)
-        return ekboundary
+        """
+        Creates a set of electrokinetics boundaries.
 
-    def remove(self, ekboundary):
-        self.call_method("remove", ekboundary=ekboundary)
+        """
+        pass
 
+    @script_interface_register
+    class EKBoundary(espressomd.lbboundaries.LBBoundary):
 
-@script_interface_register
-class EKBoundary(ScriptInterfaceHelper):
-    _so_name = "LBBoundaries::LBBoundary"
+        """
+        Creates a EK boundary.
+
+        """
+        pass

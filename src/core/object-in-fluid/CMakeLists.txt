@@ -1,6 +1,3 @@
-file(GLOB ObjectInFluid_SRC *.cpp)
-add_library(ObjectInFluid SHARED ${ObjectInFluid_SRC})
-install(TARGETS ObjectInFluid LIBRARY DESTINATION ${LIBDIR} ARCHIVE DESTINATION ${LIBDIR})
-set_target_properties(ObjectInFluid PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(ObjectInFluid EspressoConfig)
-
+target_sources(
+  EspressoCore PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/oif_global_forces.cpp
+                       ${CMAKE_CURRENT_SOURCE_DIR}/oif_local_forces.cpp)

@@ -1,0 +1,114 @@
+# Feature definitions
+#
+# The definitions are used for
+# * generation of src/config-features.hpp, which checks the sanity of
+#   the various features and their combinations
+# * generation of myconfig-sample.hpp
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+#
+# Lines commented with '/* ... */' or '//' are copied to myconfig-sample.hpp
+# Lines commented with '#' are ignored
+
+/* Generic features */
+EXTERNAL_FORCES
+MASS
+EXCLUSIONS
+BOND_CONSTRAINT
+LANGEVIN_PER_PARTICLE
+BROWNIAN_PER_PARTICLE
+COLLISION_DETECTION
+NPT
+SWIMMER_REACTIONS
+ENGINE                          implies ROTATION, EXTERNAL_FORCES
+PARTICLE_ANISOTROPY             implies ROTATION
+
+/* Rotation */
+ROTATION
+ROTATIONAL_INERTIA              implies ROTATION
+
+/* Electrostatics */
+ELECTROSTATICS
+P3M                             equals ELECTROSTATICS and FFTW
+MMM1D_GPU                       requires CUDA and ELECTROSTATICS
+_P3M_GPU_FLOAT                  requires CUDA and ELECTROSTATICS
+
+/* Magnetostatics */
+DIPOLES                         implies ROTATION
+DP3M                            equals DIPOLES and FFTW
+DIPOLAR_DIRECT_SUM              requires CUDA
+DIPOLAR_DIRECT_SUM              equals DIPOLES and ROTATION and CUDA
+
+DIPOLAR_BARNES_HUT              requires CUDA
+DIPOLAR_BARNES_HUT              equals DIPOLES and ROTATION and CUDA
+
+/* Virtual sites features */
+VIRTUAL_SITES
+VIRTUAL_SITES_RELATIVE          implies VIRTUAL_SITES
+VIRTUAL_SITES_RELATIVE          implies ROTATION
+
+VIRTUAL_SITES_INERTIALESS_TRACERS
+VIRTUAL_SITES_INERTIALESS_TRACERS implies VIRTUAL_SITES
+
+/* DPD features */
+DPD
+
+/* Lattice-Boltzmann features */
+LB_BOUNDARIES
+LB_BOUNDARIES_GPU               requires CUDA
+LB_ELECTROHYDRODYNAMICS
+ELECTROKINETICS                 implies EXTERNAL_FORCES, ELECTROSTATICS
+ELECTROKINETICS                 requires CUDA
+EK_BOUNDARIES                   implies ELECTROKINETICS, LB_BOUNDARIES_GPU, EXTERNAL_FORCES, ELECTROSTATICS
+EK_BOUNDARIES                   requires CUDA
+EK_DEBUG                        requires ELECTROKINETICS
+EK_DOUBLE_PREC                  requires ELECTROKINETICS
+
+/* Interaction features */
+TABULATED
+LENNARD_JONES
+WCA
+LENNARD_JONES_GENERIC           implies LENNARD_JONES
+LJCOS
+LJCOS2
+LJGEN_SOFTCORE                  implies LENNARD_JONES_GENERIC
+SMOOTH_STEP
+HERTZIAN
+GAUSSIAN
+BMHTF_NACL
+MORSE
+BUCKINGHAM
+SOFT_SPHERE
+HAT
+UMBRELLA                           requires EXPERIMENTAL_FEATURES
+GAY_BERNE                       implies ROTATION
+GAY_BERNE
+OVERLAPPED
+THOLE                           requires ELECTROSTATICS
+
+/* Fluid-Structure Interactions (object in fluid) */
+
+/* Immersed-Boundary Bayreuth version */
+SCAFACOS_DIPOLES                requires SCAFACOS
+SCAFACOS_DIPOLES                implies DIPOLES
+SCAFACOS                        requires ELECTROSTATICS
+
+EXPERIMENTAL_FEATURES
+
+/* Strange features. Use only if you know what you are doing! */
+/* turn off certain nonbonded interactions within molecules */
+NO_INTRA_NB                     notest
+
+/* Debugging */
+ADDITIONAL_CHECKS
+
+# External switches
+# Switches that are set by configure or gcc, not to be set manually
+CUDA external
+FFTW external
+H5MD external
+SCAFACOS external
+GSL external

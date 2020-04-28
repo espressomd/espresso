@@ -1,4 +1,4 @@
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -16,10 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
 # Check whether all features used in the code are defined
-#
-from __future__ import print_function
-import sys, os
+import sys
+import os
 sys.path.append(os.path.join(sys.path[0], '..', 'config'))
 
 import featuredefs
@@ -29,5 +29,3 @@ if len(sys.argv) != 2:
     exit(2)
 
 fdefs = featuredefs.defs(sys.argv[1])
-
-

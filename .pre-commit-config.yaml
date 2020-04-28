@@ -1,0 +1,37 @@
+fail_fast: false
+exclude: 'libs'
+repos:
+-   repo: local
+    hooks:
+    -   id: clang-format
+        name: clang-format
+        entry: sh maintainer/format/clang-format.sh
+        language: system
+        always_run: false
+        files: '.*\.(cpp|hpp|cu|cuh)'
+        args: ["-i", "-style=file"]
+
+    -   id: autopep8
+        name: autopep8
+        entry: sh maintainer/format/autopep8.sh
+        language: system
+        always_run: false
+        files: '.*\.(py|pyx|pxd)'
+        exclude: '\.pylintrc|.*.\.py\.in'
+        args: ["--ignore=E266,W291,W293", "--in-place", "--aggressive"]
+
+    -   id: cmake-format
+        name: cmake-format
+        entry: sh maintainer/format/cmake-format.sh
+        language: system
+        always_run: false
+        files: 'CMakeLists.txt'
+        args: ["-i"]
+
+    -   id: ex-flags
+        name: executable flags
+        entry: sh maintainer/format/ex_flag.sh
+        language: system
+        always_run: false
+        exclude: '.*\.(sh|py|sh\.in|cmakein)|.git'
+        types: [file, executable]

@@ -1,161 +1,162 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include "rattle.hpp"
-#include "domain_decomposition.hpp"
-#include "global.hpp"
-#include "integrate.hpp"
-#include "particle_data.hpp"
-#include "interaction_data.hpp"
-
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <mpi.h>
 
 int n_rigidbonds = 0;
 
 #ifdef BOND_CONSTRAINT
 
+#include "CellStructure.hpp"
+#include "Particle.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
+#include "communication.hpp"
+#include "errorhandling.hpp"
+#include "global.hpp"
+#include "grid.hpp"
+
+#include <utils/constants.hpp>
+
+#include <boost/mpi/collectives/all_reduce.hpp>
+
+#include <cmath>
+
 /** \name Private functions */
 /************************************************************/
 /*@{*/
 
-/** Calculates the corrections required for each of the particle coordinates
-    according to the RATTLE algorithm. Invoked from \ref correct_pos_shake()*/
-void compute_pos_corr_vec(int *repeat_);
-
 /** Positional Corrections are added to the current particle positions. Invoked
  * from \ref correct_pos_shake() */
-void app_pos_correction();
+static void app_pos_correction(const ParticleRange &particles);
 
 /** Transfers temporarily the current forces from f.f[3] of the \ref Particle
-    structure to r.p_old[3] location and also intializes velocity correction
+    structure to r.p_old[3] location and also initializes velocity correction
     vector. Invoked from \ref correct_vel_shake()*/
-void transfer_force_init_vel();
+static void transfer_force_init_vel(const ParticleRange &particles,
+                                    const ParticleRange &ghost_particles);
 
 /** Calculates corrections of the  current particle velocities according to
    RATTLE
     algorithm. Invoked from \ref correct_vel_shake()*/
-void compute_vel_corr_vec(int *repeat_);
+static void compute_vel_corr_vec(int *repeat_, CellStructure &cs);
 
 /** Velocity corrections are added to the current particle velocities. Invoked
    from
     \ref correct_vel_shake()*/
-void apply_vel_corr();
+static void apply_vel_corr(const ParticleRange &particles);
 
 /**Invoked from \ref correct_vel_shake(). Put back the forces from r.p_old to
  * f.f*/
-void revert_force();
-
-/**For debugging purpose--prints the bond lengths between particles that have
-rigid_bonds*/
-void print_bond_len();
+static void revert_force(const ParticleRange &particles,
+                         const ParticleRange &ghost_particles);
 
 /*@}*/
 
 /*Initialize old positions (particle positions at previous time step)
   of the particles*/
-void save_old_pos() {
+void save_old_pos(const ParticleRange &particles,
+                  const ParticleRange &ghost_particles) {
   auto save_pos = [](Particle &p) {
     for (int j = 0; j < 3; j++)
       p.r.p_old[j] = p.r.p[j];
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : particles)
     save_pos(p);
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_particles)
     save_pos(p);
 }
 
 /**Initialize the correction vector. The correction vector is stored in f.f of
- * particle strcuture. */
-void init_correction_vector() {
+ * particle structure. */
+static void init_correction_vector(const ParticleRange &local_particles,
+                                   const ParticleRange &ghost_particles) {
   auto reset_force = [](Particle &p) {
     for (int j = 0; j < 3; j++)
       p.f.f[j] = 0.0;
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : local_particles)
     reset_force(p);
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_particles)
     reset_force(p);
 }
 
+/**
+ * @brief Add the position correction to particles.
+ *
+ * The position correction is acccumulated in the forces
+ * of the particles so that it can be reduced over the ghosts.
+ *
+ * @param ia_params Parameters
+ * @param p1 First particle.
+ * @param p2 Second particle.
+ * @return True if there was a correction.
+ */
+static bool add_pos_corr_vec(Bonded_ia_parameters const &ia_params,
+                             Particle &p1, Particle &p2) {
+  auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+  auto const r_ij2 = r_ij.norm2();
+
+  if (fabs(1.0 - r_ij2 / ia_params.p.rigid_bond.d2) >
+      ia_params.p.rigid_bond.p_tol) {
+    auto const r_ij_t = get_mi_vector(p1.r.p_old, p2.r.p_old, box_geo);
+    auto const r_ij_dot = r_ij_t * r_ij;
+    auto const G = 0.50 * (ia_params.p.rigid_bond.d2 - r_ij2) / r_ij_dot /
+                   (p1.p.mass + p2.p.mass);
+
+    auto const pos_corr = G * r_ij_t;
+    p1.f.f += pos_corr * p2.p.mass;
+    p2.f.f -= pos_corr * p1.p.mass;
+
+    return true;
+  }
+
+  return false;
+}
 /**Compute positional corrections*/
-void compute_pos_corr_vec(int *repeat_) {
-  Bonded_ia_parameters *ia_params;
-  int i, j, k, c, np, cnt = -1;
-  Particle *p1, *p2;
-  double r_ij_t[3], r_ij[3], r_ij_dot, G, pos_corr, r_ij2;
+static void compute_pos_corr_vec(int *repeat_, CellStructure &cs) {
+  for (auto &p1 : cs.local_particles()) {
+    cs.execute_bond_handler(p1, [repeat_](Particle &p1, int bond_id,
+                                          Utils::Span<Particle *> partners) {
+      auto const &iaparams = bonded_ia_params[bond_id];
 
-  for (auto &p : local_cells.particles()) {
-    p1 = &p;
-    k = 0;
-    while (k < p1->bl.n) {
-      ia_params = &bonded_ia_params[p1->bl.e[k++]];
-      if (ia_params->type == BONDED_IA_RIGID_BOND) {
-        cnt++;
-        p2 = local_particles[p1->bl.e[k++]];
-        if (!p2) {
-          runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
-                            << " (particles not stored on the same node)";
-          return;
-        }
+      if (iaparams.type == BONDED_IA_RIGID_BOND) {
+        auto const corrected = add_pos_corr_vec(iaparams, p1, *partners[0]);
+        if (corrected)
+          *repeat_ += 1;
+      }
 
-        get_mi_vector(r_ij, p1->r.p, p2->r.p);
-        r_ij2 = sqrlen(r_ij);
-        if (fabs(1.0 - r_ij2 / ia_params->p.rigid_bond.d2) >
-            ia_params->p.rigid_bond.p_tol) {
-          get_mi_vector(r_ij_t, p1->r.p_old, p2->r.p_old);
-          r_ij_dot = scalar(r_ij_t, r_ij);
-          G = 0.50 * (ia_params->p.rigid_bond.d2 - r_ij2) / r_ij_dot;
-#ifdef MASS
-          G /= ((*p1).p.mass + (*p2).p.mass);
-#else
-          G /= 2;
-#endif
-          for (j = 0; j < 3; j++) {
-            pos_corr = G * r_ij_t[j];
-            p1->f.f[j] += pos_corr * (*p2).p.mass;
-            p2->f.f[j] -= pos_corr * (*p1).p.mass;
-          }
-          /*Increase the 'repeat' flag by one */
-          *repeat_ = *repeat_ + 1;
-        }
-      } else
-        /* skip bond partners of nonrigid bond */
-        k += ia_params->num;
-    } // while loop
-  }   // for i loop
+      /* Rigid bonds cannot break */
+      return false;
+    });
+  }
 }
 
 /**Apply corrections to each particle**/
-void app_pos_correction() {
+static void app_pos_correction(const ParticleRange &particles) {
   /*Apply corrections*/
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     for (int j = 0; j < 3; j++) {
       p.r.p[j] += p.f.f[j];
       p.m.v[j] += p.f.f[j];
@@ -164,23 +165,29 @@ void app_pos_correction() {
   } // for i loop
 }
 
-void correct_pos_shake() {
-  int repeat_, cnt = 0;
-  int repeat = 1;
+/** Calculates the corrections required for each of the particle coordinates
+    according to the RATTLE algorithm. Invoked from \ref correct_pos_shake()*/
+void correct_pos_shake(CellStructure &cs) {
+  cells_update_ghosts(GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS);
 
-  while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
-    init_correction_vector();
-    repeat_ = 0;
-    compute_pos_corr_vec(&repeat_);
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    app_pos_correction();
+  auto particles = cs.local_particles();
+  auto ghost_particles = cs.ghost_particles();
+
+  int cnt = 0;
+  bool repeat = true;
+
+  while (repeat && cnt < SHAKE_MAX_ITERATIONS) {
+    init_correction_vector(particles, ghost_particles);
+    int repeat_ = 0;
+    compute_pos_corr_vec(&repeat_, cs);
+    ghost_communicator(&cs.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+    app_pos_correction(particles);
     /**Ghost Positions Update*/
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    if (this_node == 0)
-      MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-    else
-      MPI_Reduce(&repeat_, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-    MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
+    ghost_communicator(&cs.exchange_ghosts_comm,
+                       GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
+
+    repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
+                                    std::logical_or<bool>());
 
     cnt++;
   } // while(repeat) loop
@@ -197,7 +204,8 @@ void correct_pos_shake() {
     which is idle now and initialize the velocity correction vector to zero at
    f.f[3]
     of Particle structure*/
-void transfer_force_init_vel() {
+static void transfer_force_init_vel(const ParticleRange &particles,
+                                    const ParticleRange &ghost_particles) {
   auto copy_reset = [](Particle &p) {
     for (int j = 0; j < 3; j++) {
       p.r.p_old[j] = p.f.f[j];
@@ -205,60 +213,67 @@ void transfer_force_init_vel() {
     }
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : particles)
     copy_reset(p);
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_particles)
     copy_reset(p);
+}
+
+/**
+ * @brief Add the velocity correction to particles.
+ *
+ * The position correction is accumulated in the forces
+ * of the particles so that it can be reduced over the ghosts.
+ *
+ * @param ia_params Parameters
+ * @param p1 First particle.
+ * @param p2 Second particle.
+ * @return True if there was a correction.
+ */
+static bool add_vel_corr_vec(Bonded_ia_parameters const &ia_params,
+                             Particle &p1, Particle &p2) {
+  auto const v_ij = p1.m.v - p2.m.v;
+  auto const r_ij = get_mi_vector(p1.r.p, p2.r.p, box_geo);
+
+  auto const v_proj = v_ij * r_ij;
+  if (std::abs(v_proj) > ia_params.p.rigid_bond.v_tol) {
+    auto const K = v_proj / ia_params.p.rigid_bond.d2 / (p1.p.mass + p2.p.mass);
+
+    auto const vel_corr = K * r_ij;
+
+    p1.f.f -= vel_corr * p2.p.mass;
+    p2.f.f += vel_corr * p1.p.mass;
+
+    return true;
+  }
+
+  return false;
 }
 
 /** Velocity correction vectors are computed*/
-void compute_vel_corr_vec(int *repeat_) {
-  Bonded_ia_parameters *ia_params;
-  int i, j, k, c, np;
-  Particle *p1, *p2;
-  double v_ij[3], r_ij[3], K, vel_corr;
+static void compute_vel_corr_vec(int *repeat_, CellStructure &cs) {
+  for (auto &p1 : cs.local_particles()) {
+    cs.execute_bond_handler(p1, [repeat_](Particle &p1, int bond_id,
+                                          Utils::Span<Particle *> partners) {
+      auto const &iaparams = bonded_ia_params[bond_id];
 
-  for (auto &p : local_cells.particles()) {
-    p1 = &p;
-    k = 0;
-    while (k < p1->bl.n) {
-      ia_params = &bonded_ia_params[p1->bl.e[k++]];
-      if (ia_params->type == BONDED_IA_RIGID_BOND) {
-        p2 = local_particles[p1->bl.e[k++]];
-        if (!p2) {
-          runtimeErrorMsg() << "rigid bond broken between particles "
-                            << p1->p.identity << " and " << p1->bl.e[k - 1]
-                            << " (particles not stored on the same node)";
-          return;
-        }
+      if (iaparams.type == BONDED_IA_RIGID_BOND) {
+        auto const corrected = add_vel_corr_vec(iaparams, p1, *partners[0]);
+        if (corrected)
+          *repeat_ += 1;
+      }
 
-        vecsub(p1->m.v, p2->m.v, v_ij);
-        get_mi_vector(r_ij, p1->r.p, p2->r.p);
-        if (fabs(scalar(v_ij, r_ij)) > ia_params->p.rigid_bond.v_tol) {
-          K = scalar(v_ij, r_ij) / ia_params->p.rigid_bond.d2;
-#ifdef MASS
-          K /= ((*p1).p.mass + (*p2).p.mass);
-#else
-          K /= 2.0;
-#endif
-          for (j = 0; j < 3; j++) {
-            vel_corr = K * r_ij[j];
-            p1->f.f[j] -= vel_corr * (*p2).p.mass;
-            p2->f.f[j] += vel_corr * (*p1).p.mass;
-          }
-          *repeat_ = *repeat_ + 1;
-        }
-      } else
-        k += ia_params->num;
-    } // while loop
-  }   // for i loop
+      /* Rigid bonds can not break */
+      return false;
+    });
+  }
 }
 
 /**Apply velocity corrections*/
-void apply_vel_corr() {
+static void apply_vel_corr(const ParticleRange &particles) {
   /*Apply corrections*/
-  for (auto &p : local_cells.particles()) {
+  for (auto &p : particles) {
     for (int j = 0; j < 3; j++) {
       p.m.v[j] += p.f.f[j];
     }
@@ -267,49 +282,56 @@ void apply_vel_corr() {
 }
 
 /**Put back the forces from r.p_old to f.f*/
-void revert_force() {
+static void revert_force(const ParticleRange &particles,
+                         const ParticleRange &ghost_particles) {
   auto revert = [](Particle &p) {
     for (int j = 0; j < 3; j++)
       p.f.f[j] = p.r.p_old[j];
   };
 
-  for (auto &p : local_cells.particles())
+  for (auto &p : particles)
     revert(p);
 
-  for (auto &p : ghost_cells.particles())
+  for (auto &p : ghost_particles)
     revert(p);
 }
 
-void correct_vel_shake() {
-  int repeat_, repeat = 1, cnt = 0;
+void correct_vel_shake(CellStructure &cs) {
+  ghost_communicator(&cs.exchange_ghosts_comm,
+                     GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM);
+
   /**transfer the current forces to r.p_old of the particle structure so that
   velocity corrections can be stored temporarily at the f.f[3] of the particle
   structure  */
-  transfer_force_init_vel();
-  while (repeat != 0 && cnt < SHAKE_MAX_ITERATIONS) {
-    init_correction_vector();
-    repeat_ = 0;
-    compute_vel_corr_vec(&repeat_);
-    ghost_communicator(&cell_structure.collect_ghost_force_comm);
-    apply_vel_corr();
-    ghost_communicator(&cell_structure.update_ghost_pos_comm);
-    if (this_node == 0)
-      MPI_Reduce(&repeat_, &repeat, 1, MPI_INT, MPI_SUM, 0, comm_cart);
-    else
-      MPI_Reduce(&repeat_, nullptr, 1, MPI_INT, MPI_SUM, 0, comm_cart);
+  auto particles = cs.local_particles();
+  auto ghost_particles = cs.ghost_particles();
 
-    MPI_Bcast(&repeat, 1, MPI_INT, 0, comm_cart);
+  transfer_force_init_vel(particles, ghost_particles);
+
+  bool repeat = true;
+  int cnt = 0;
+  while (repeat && cnt < SHAKE_MAX_ITERATIONS) {
+    init_correction_vector(particles, ghost_particles);
+    int repeat_ = 0;
+    compute_vel_corr_vec(&repeat_, cs);
+    ghost_communicator(&cs.collect_ghost_force_comm, GHOSTTRANS_FORCE);
+    apply_vel_corr(particles);
+    ghost_communicator(&cs.exchange_ghosts_comm, GHOSTTRANS_MOMENTUM);
+
+    repeat = boost::mpi::all_reduce(comm_cart, (repeat_ > 0),
+                                    std::logical_or<bool>());
     cnt++;
   }
 
   if (cnt >= SHAKE_MAX_ITERATIONS) {
-    fprintf(stderr, "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
-                    "iterations !!\n",
+    fprintf(stderr,
+            "%d: VEL CORRECTIONS IN RATTLE failed to converge after %d "
+            "iterations !!\n",
             this_node, cnt);
     errexit();
   }
   /**Puts back the forces from r.p_old to f.f[3]*/
-  revert_force();
+  revert_force(particles, ghost_particles);
 }
 
 /*****************************************************************************
@@ -323,7 +345,7 @@ int rigid_bond_set_params(int bond_type, double d, double p_tol, double v_tol) {
 
   bonded_ia_params[bond_type].p.rigid_bond.d2 = d * d;
   bonded_ia_params[bond_type].p.rigid_bond.p_tol = 2.0 * p_tol;
-  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol * time_step;
+  bonded_ia_params[bond_type].p.rigid_bond.v_tol = v_tol;
   bonded_ia_params[bond_type].type = BONDED_IA_RIGID_BOND;
   bonded_ia_params[bond_type].num = 1;
   n_rigidbonds += 1;

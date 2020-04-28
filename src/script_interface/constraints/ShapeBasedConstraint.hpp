@@ -1,28 +1,29 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 #define SCRIPT_INTERFACE_CONSTRAINTS_SHAPEBASEDCONSTRAINT_HPP
 
 #include "Constraint.hpp"
+#include "core/cells.hpp"
 #include "core/constraints/Constraint.hpp"
 #include "core/constraints/ShapeBasedConstraint.hpp"
 #include "script_interface/shapes/Shape.hpp"
@@ -37,7 +38,11 @@ public:
         m_shape(nullptr) {
     add_parameters({{"only_positive", m_constraint->only_positive()},
                     {"penetrable", m_constraint->penetrable()},
-                    {"particle_type", m_constraint->type()},
+                    {"particle_type",
+                     [this](Variant const &value) {
+                       m_constraint->set_type(get_value<int>(value));
+                     },
+                     [this]() { return m_constraint->type(); }},
                     {"shape",
                      [this](Variant const &value) {
                        m_shape =
@@ -48,19 +53,23 @@ public:
                      },
                      [this]() {
                        return (m_shape != nullptr) ? m_shape->id() : ObjectId();
-                     }}});
-  }
-
-  const std::string name() const override {
-    return "Constraints::ShapeBasedConstraint";
+                     }},
+                    {"particle_velocity", m_constraint->velocity()}});
   }
 
   Variant call_method(std::string const &name, VariantMap const &) override {
     if (name == "total_force") {
       return shape_based_constraint()->total_force();
     }
+    if (name == "min_dist") {
+      return shape_based_constraint()->min_dist(
+          cell_structure.local_particles());
+    }
+    if (name == "total_normal_force") {
+      return shape_based_constraint()->total_normal_force();
+    }
 
-    return false;
+    return none;
   }
 
   std::shared_ptr<::Constraints::Constraint> constraint() override {

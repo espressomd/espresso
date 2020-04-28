@@ -1,71 +1,50 @@
 /*
-  Copyright (C) 2010,2011,2012,2013,2014 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-  Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
 #define SCRIPT_INTERFACE_OBSERVABLES_OBSERVABLE_HPP
 
-#include "ScriptInterface.hpp"
+#include "script_interface/ScriptInterface.hpp"
 
 #include <memory>
 #include <stdexcept>
 
 #include "core/observables/Observable.hpp"
-#include "partCfg_global.hpp"
 
 namespace ScriptInterface {
 namespace Observables {
 
-typedef ::Observables::Observable CoreObs;
-
+/** Base class for script interfaces to core %Observables classes */
 class Observable : public ScriptInterfaceBase {
 public:
-  const std::string name() const override { return "Observables::Observable"; }
-
-  virtual std::shared_ptr<CoreObs> observable() const = 0;
-  virtual Variant call_method(std::string const &method,
-                              VariantMap const &parameters) override {
+  virtual std::shared_ptr<::Observables::Observable> observable() const = 0;
+  Variant call_method(std::string const &method,
+                      VariantMap const &parameters) override {
     if (method == "calculate") {
-      return observable()->operator()(partCfg());
+      return observable()->operator()();
     }
-
-    if (method == "auto_write_to") {
-      std::string filename;
-      bool binary;
-
-      try {
-        filename = get_value<std::string>(parameters.at("filename"));
-      } catch (std::out_of_range &e) {
-        return {};
-      }
-
-      try {
-        binary = get_value<bool>(parameters.at("binary"));
-      } catch (std::out_of_range &e) {
-        binary = false;
-      }
-
-      observable()->set_filename(filename, binary);
-      return {};
+    if (method == "shape") {
+      auto const shape = observable()->shape();
+      return std::vector<int>{shape.begin(), shape.end()};
     }
-
     return {};
   }
 };

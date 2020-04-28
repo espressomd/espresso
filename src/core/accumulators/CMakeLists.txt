@@ -1,6 +1,5 @@
-set(Accumulators_SRC Accumulator.hpp Accumulator.cpp)
-add_library(Accumulators SHARED ${Accumulators_SRC})
-install(TARGETS Accumulators LIBRARY DESTINATION ${LIBDIR})
-set_target_properties(Accumulators PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(Accumulators EspressoConfig)
-set_target_properties(Accumulators PROPERTIES MACOSX_RPATH TRUE)
+target_sources(
+  EspressoCore
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Correlator.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/MeanVarianceCalculator.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/TimeSeries.cpp)

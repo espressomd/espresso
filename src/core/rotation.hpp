@@ -1,120 +1,135 @@
 /*
-  Copyright (C) 2010,2012,2013,2014,2015,2016 The ESPResSo project
-  Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2010-2019 The ESPResSo project
+ * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
+ *   Max-Planck-Institute for Polymer Research, Theory Group
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ROTATION_H
 #define ROTATION_H
-/** \file rotation.hpp
-    This file contains all subroutines required to process rotational motion.
+/** \file
+ *  This file contains all subroutines required to process rotational motion.
+ */
 
-*/
+#include "config.hpp"
 
-#include "gb.hpp"
-#include "particle_data.hpp"
-#include "thermostat.hpp"
-#include "utils.hpp"
-#include "Vector.hpp"
+#ifdef ROTATION
 
+#include "Particle.hpp"
+#include "ParticleRange.hpp"
 
-constexpr const int ROTATION_X =2;
-constexpr const int ROTATION_Y =4;
-constexpr const int ROTATION_Z =8;
-
-/*************************************************************
- * Functions                                                 *
- * ---------                                                 *
- *************************************************************/
+#include <utils/Vector.hpp>
+#include <utils/mask.hpp>
+#include <utils/math/quaternion.hpp>
+#include <utils/math/rotation_matrix.hpp>
 
 /** Propagate angular velocities and update quaternions on a particle */
-void propagate_omega_quat_particle(Particle *p);
+void propagate_omega_quat_particle(Particle &p);
 
-/** Convert torques to the body-fixed frame and propogate
+/** Convert torques to the body-fixed frame and propagate
     angular velocities */
-void convert_torques_propagate_omega();
+void convert_torques_propagate_omega(const ParticleRange &particles);
 
 /** Convert torques to the body-fixed frame to start
     the integration loop */
-void convert_initial_torques();
+void convert_initial_torques(const ParticleRange &particles);
 
-/** convert angular velocities and torques from the
-    body-fixed frames to space-fixed coordinates */
-void convert_omega_body_to_space(Particle *p, double *omega);
-void convert_torques_body_to_space(Particle *p, double *torque);
-
-
-Vector3d convert_vector_body_to_space(const Particle& p, const Vector3d& v);
-
-/** convert velocity form the lab-fixed coordinates
-    to the body-fixed frame */
-void convert_vel_space_to_body(Particle *p, double *vel_body);
-
-/** Here we use quaternions to calculate the rotation matrix which
-    will be used then to transform torques from the laboratory to
-    the body-fixed frames */  
-void define_rotation_matrix(Particle const * p, double A[9]);
-
-inline void convert_quat_to_quatu(double quat[4], double quatu[3]) {
-  /* director */
-  quatu[0] = 2 * (quat[1] * quat[3] + quat[0] * quat[2]);
-  quatu[1] = 2 * (quat[2] * quat[3] - quat[0] * quat[1]);
-  quatu[2] = (quat[0] * quat[0] - quat[1] * quat[1] - quat[2] * quat[2] +
-              quat[3] * quat[3]);
+// Frame conversion routines
+inline Utils::Vector3d
+convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
+  return rotation_matrix(p.r.quat) * vec;
 }
 
-/** Multiply two quaternions */
-void multiply_quaternions(double a[4], double b[4], double result[4]);
+inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
+                                                    const Utils::Vector3d &v) {
+  return transpose(rotation_matrix(p.r.quat)) * v;
+}
 
-/** Convert director to quaternions */
-int convert_quatu_to_quat(double d[3], double quat[4]);
+/**
+ * @brief Transform matrix from body- to space-fixed frame.
+ *
+ * Given a linear map represented by \f$ A \in \mathbb{R}^{3 \times 3}\f$
+ * in the body-fixed frame, this returns the matrix \f$ A \in \mathbb{R}^{3
+ * \times 3}\f$ representing the map in the space-fixed frame. They are related
+ * by the map between the space-fixed and body-fixed frame \f$O\f$ like
+ *
+ * \f[
+ *     A' = O^T A O.
+ * \f]
+ *
+ * @tparam T Scalar type
+ * @param p Particle transforming from.
+ * @param A Matrix to transform
+ * @return Matrix representation in space-fixed coordinates.
+ */
+template <class T>
+auto convert_body_to_space(const Particle &p, const Utils::Matrix<T, 3, 3> &A) {
+  auto const O = rotation_matrix(p.r.quat);
+  return transpose(O) * A * O;
+}
 
 #ifdef DIPOLES
 
 /** convert a dipole moment to quaternions and dipolar strength  */
-inline int convert_dip_to_quat(double dip[3], double quat[4], double *dipm) {
-  double dm;
-  // Calculate magnitude of dipole moment
-  dm = sqrt(dip[0] * dip[0] + dip[1] * dip[1] + dip[2] * dip[2]);
-  *dipm = dm;
-  convert_quatu_to_quat(dip, quat);
-
-  return 0;
-}
-
-/** convert quaternion director to the dipole moment */
-inline void convert_quatu_to_dip(double quatu[3], double dipm, double dip[3]) {
-  /* dipole moment */
-  dip[0] = quatu[0] * dipm;
-  dip[1] = quatu[1] * dipm;
-  dip[2] = quatu[2] * dipm;
+inline std::pair<Utils::Vector4d, double>
+convert_dip_to_quat(const Utils::Vector3d &dip) {
+  auto quat = Utils::convert_director_to_quaternion(dip);
+  return {quat, dip.norm()};
 }
 
 #endif
 
-/** Rotate the particle p around the NORMALIZED axis a by amount phi */
-void rotate_particle(Particle *p, double *a, double phi);
+/** Rotate the particle p around the body-frame defined NORMALIZED axis
+ *  @p aBodyFrame by amount @p phi.
+ */
+inline Utils::Vector4d
+local_rotate_particle_body(Particle const &p,
+                           const Utils::Vector3d &axis_body_frame,
+                           const double phi) {
+  auto axis = axis_body_frame;
 
-inline void normalize_quaternion(double *q) {
-  double tmp = sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
-  q[0] /= tmp;
-  q[1] /= tmp;
-  q[2] /= tmp;
-  q[3] /= tmp;
+  // Rotation turned off entirely?
+  if (!p.p.rotation)
+    return {};
+
+  // Convert rotation axis to body-fixed frame
+  axis = mask(p.p.rotation, axis).normalize();
+
+  auto const s = std::sin(phi / 2);
+  auto const q =
+      Utils::Vector4d{cos(phi / 2), s * axis[0], s * axis[1], s * axis[2]}
+          .normalize();
+
+  return Utils::multiply_quaternions(p.r.quat, q);
 }
 
+/** Rotate the particle p around the NORMALIZED axis aSpaceFrame by amount phi
+ */
+inline void local_rotate_particle(Particle &p,
+                                  const Utils::Vector3d &axis_space_frame,
+                                  const double phi) {
+  // Convert rotation axis to body-fixed frame
+  Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
+  p.r.quat = local_rotate_particle_body(p, axis, phi);
+}
+
+inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
+  auto const torque = convert_vector_space_to_body(p, p.f.torque);
+  p.f.torque = mask(p.p.rotation, torque);
+}
+
+#endif // ROTATION
 #endif

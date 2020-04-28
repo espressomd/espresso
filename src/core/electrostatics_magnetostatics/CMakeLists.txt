@@ -1,0 +1,20 @@
+target_sources(
+  EspressoCore
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/debye_hueckel.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/elc.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/icc.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/magnetic_non_p3m_methods.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/mdlc_correction.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/mmm1d.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/mmm-common.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/p3m-common.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/p3m_send_mesh.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/p3m.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/p3m-dipolar.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/p3m_gpu.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/scafacos.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/fft.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/coulomb.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/dipole.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/reaction_field.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/specfunc.cpp)

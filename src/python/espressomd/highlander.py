@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,13 +25,14 @@ class ThereCanOnlyBeOne(BaseException):
         self._cls = cls
 
     def __str__(self):
-        return "There can only be one instance of '{}' at any time.".format(self._cls)
+        return "There can only be one instance of '{}' at any time.".format(
+            self._cls)
 
 
 def highlander(klass):
     klass.highlander_created = False
 
-    def cls_init(self, *args, **kwargs):
+    def cls_init(self, *args, **kwargs):  # pylint: disable=unused-argument
         "__init__ method by the highlander decorator."
         if self.__class__.highlander_created:
             raise ThereCanOnlyBeOne(self.__class__)

@@ -1,28 +1,24 @@
 /*
-  Copyright (C) 2016 The ESPResSo project
-    Max-Planck-Institute for Polymer Research, Theory Group
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/** \file MpiCallbacks_test.cpp Unit tests for the MpiCallbacks class.
+ * Copyright (C) 2016-2019 The ESPResSo project
+ *   Max-Planck-Institute for Polymer Research, Theory Group
  *
-*/
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
-#include <boost/mpi.hpp>
+/* Unit tests for the MpiCallbacks class. */
 
 #define BOOST_TEST_NO_MAIN
 #define BOOST_TEST_MODULE MpiCallbacks test
@@ -32,167 +28,258 @@
 
 #include "../MpiCallbacks.hpp"
 
-namespace Testing {
-void reduce_and_check(const boost::mpi::communicator &comm, bool local_value) {
-  if (comm.rank() == 0) {
-    bool total;
-    boost::mpi::reduce(comm, local_value, total, std::logical_and<bool>(), 0);
-    BOOST_CHECK(total);
-  } else {
-    boost::mpi::reduce(comm, local_value, std::logical_and<bool>(), 0);
-  }
-}
+#include <boost/mpi.hpp>
+#include <boost/optional.hpp>
+
+#include <string>
+
+static bool called = false;
+
+BOOST_AUTO_TEST_CASE(invoke_test) {
+  using Communication::detail::invoke;
+
+  auto f = [](int i, unsigned j) { return i + j; };
+
+  boost::mpi::communicator world;
+  boost::mpi::packed_oarchive::buffer_type buff;
+
+  auto const i = 123;
+  auto const j = 456u;
+  boost::mpi::packed_oarchive(world, buff) << i << j;
+
+  boost::mpi::packed_iarchive ia(world, buff);
+
+  BOOST_CHECK_EQUAL(f(i, j), (invoke<decltype(f), int, unsigned>(f, ia)));
 }
 
-bool static_callback_called = false;
-void static_callback(int a, int b) {
-  static_callback_called = (a == 5) && (b == 13);
-}
-
-using boost::mpi::communicator;
-using Communication::MpiCallbacks;
-
-/**
- * Check is the mpi loop can be aborted
- * by abort_loop()
+/*
+ * Test that the implementation of callback_model_t
+ * correctly deserialize the parameters and call
+ * the callback with them.
  */
-BOOST_AUTO_TEST_CASE(loop_exit) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
+BOOST_AUTO_TEST_CASE(callback_model_t) {
+  using namespace Communication;
+  boost::mpi::communicator world;
 
-  if (world.rank() == 0) {
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, true);
-}
-
-/**
- * Check if adding and calling a static callback
- * works as expected.
- */
-BOOST_AUTO_TEST_CASE(add_static_callback) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
-
-  const int id = callbacks.add(static_callback);
-
-  /** Id should be 1, 0 is loop_abort */
-  Testing::reduce_and_check(world, id == 1);
-
-  if (world.rank() == 0) {
-    callbacks.call(static_callback, 5, 13);
-    static_callback(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, static_callback_called);
-}
-
-/**
- * Check if adding and calling a dynamic callback
- * works as expected.
- */
-BOOST_AUTO_TEST_CASE(add_dynamic_callback) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
-
-  bool called = false;
-  auto cb = [&called](int a, int b) { called = (a == 5) && (b == 13); };
-
-  const int id = callbacks.add(cb);
-
-  /** Id should be 1, 0 is loop_abort */
-  Testing::reduce_and_check(world, id == 1);
-
-  if (world.rank() == 0) {
-    callbacks.call(id, 5, 13);
-    cb(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, called);
-}
-
-/**
- * Check wether remoing a dynamic callback
- * works.
- */
-BOOST_AUTO_TEST_CASE(remove_dynamic_callback) {
-  communicator world;
-  MpiCallbacks callbacks(world, /* abort_on_exit */ false);
-
-  bool called = false;
-  auto cb = [&called](int a, int b) { called = (a == 5) && (b == 13); };
-
-  const int dynamic_id = callbacks.add(cb);
-  /** Id should be 1, 0 is loop_abort */
-  Testing::reduce_and_check(world, dynamic_id == 1);
-
-  const int static_id = callbacks.add(static_callback);
-  /** Id should be 2 */
-  Testing::reduce_and_check(world, static_id == 2);
-
-  /** Remove dynamic callback */
-  callbacks.remove(dynamic_id);
-
-  if (world.rank() == 0) {
-    /** Check that it is gone */
-    BOOST_CHECK_THROW(callbacks.call(dynamic_id, 0, 0), std::out_of_range);
-  }
-
-  /** Calling the other callback should still work */
-  static_callback_called = false;
-  if (world.rank() == 0) {
-    callbacks.call(static_callback, 5, 13);
-    static_callback(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, static_callback_called);
-
-  /** Re-adding should work. */
-  const int new_dynamic_id = callbacks.add(cb);
-  /** Id should be recycled id 1 */
-  Testing::reduce_and_check(world, new_dynamic_id == 1);
-
-  /** New callback should work */
-  if (world.rank() == 0) {
-    callbacks.call(new_dynamic_id, 5, 13);
-    cb(5, 13);
-    callbacks.abort_loop();
-  } else {
-    callbacks.loop();
-  }
-
-  Testing::reduce_and_check(world, called);
-}
-
-/* Check that the destructor calls abort */
-BOOST_AUTO_TEST_CASE(destructor) {
-  communicator world;
+  boost::mpi::packed_oarchive::buffer_type buff;
+  boost::mpi::packed_oarchive oa(world, buff);
 
   {
-    /* Will be detroyed on scope exit */
-    MpiCallbacks callbacks(world);
-
-    if (world.rank() == 0) {
-      ;
-    } else {
-      callbacks.loop();
-    }
+    int i = 537;
+    double d = 3.4;
+    oa << i << d;
   }
 
-  /* This must be reachable by all nodes */
-  Testing::reduce_and_check(world, true);
+  /* function pointer variant */
+  {
+    called = false;
+    void (*fp)(int, double) = [](int i, double d) {
+      BOOST_CHECK_EQUAL(537, i);
+      BOOST_CHECK_EQUAL(3.4, d);
+
+      called = true;
+    };
+
+    auto cb = detail::make_model(fp);
+
+    boost::mpi::packed_iarchive ia(world, buff);
+    cb->operator()(world, ia);
+
+    BOOST_CHECK(called);
+  }
+
+  /* Lambda */
+  {
+    called = false;
+    auto cb = detail::make_model([state = 19](int i, double d) {
+      BOOST_CHECK_EQUAL(19, state);
+      BOOST_CHECK_EQUAL(537, i);
+      BOOST_CHECK_EQUAL(3.4, d);
+
+      called = true;
+    });
+
+    boost::mpi::packed_iarchive ia(world, buff);
+    cb->operator()(world, ia);
+
+    BOOST_CHECK(called);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(adding_function_ptr_cb) {
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cb(world);
+
+  void (*fp)(int, const std::string &) = [](int i, const std::string &s) {
+    BOOST_CHECK_EQUAL(537, i);
+    BOOST_CHECK_EQUAL("adding_function_ptr_cb", s);
+
+    called = true;
+  };
+
+  cb.add(fp);
+
+  called = false;
+
+  if (0 == world.rank()) {
+    cb.call(fp, 537, std::string("adding_function_ptr_cb"));
+  } else {
+    cb.loop();
+    BOOST_CHECK(called);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(RegisterCallback) {
+  void (*fp)(int, const std::string &) = [](int i, const std::string &s) {
+    BOOST_CHECK_EQUAL(537, i);
+    BOOST_CHECK_EQUAL("2nd", s);
+
+    called = true;
+  };
+
+  Communication::RegisterCallback{fp};
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cb(world);
+
+  called = false;
+
+  if (0 == world.rank()) {
+    cb.call(fp, 537, std::string("2nd"));
+  } else {
+    cb.loop();
+    BOOST_CHECK(called);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(CallbackHandle) {
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  bool m_called = false;
+  Communication::CallbackHandle<std::string> cb(
+      &cbs, [&m_called](std::string s) {
+        BOOST_CHECK_EQUAL("CallbackHandle", s);
+
+        m_called = true;
+      });
+
+  if (0 == world.rank()) {
+    cb(std::string("CallbackHandle"));
+  } else {
+    cbs.loop();
+    BOOST_CHECK(called);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(reduce_callback) {
+  auto cb = []() -> int { return boost::mpi::communicator().rank(); };
+  Communication::MpiCallbacks::add_static(Communication::Result::Reduction{},
+                                          static_cast<int (*)()>(cb),
+                                          std::plus<int>());
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    auto const ret = cbs.call(Communication::Result::reduction,
+                              std::plus<int>(), static_cast<int (*)()>(cb));
+    auto const n = world.size();
+    BOOST_CHECK_EQUAL(ret, (n * (n - 1)) / 2);
+  } else {
+    cbs.loop();
+  }
+}
+
+BOOST_AUTO_TEST_CASE(ignore_callback) {
+  called = false;
+  auto cb = []() -> int { return called = true, -1; };
+
+  auto const fp = static_cast<int (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(Communication::Result::ignore, fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    cbs.call(Communication::Result::ignore, fp);
+  } else {
+    cbs.loop();
+  }
+
+  BOOST_CHECK(called);
+}
+
+BOOST_AUTO_TEST_CASE(one_rank_callback) {
+  auto cb = []() -> boost::optional<int> {
+    boost::mpi::communicator world;
+    if (world.rank() == (world.size() - 1)) {
+      return world.rank();
+    }
+
+    return {};
+  };
+
+  auto const fp = static_cast<boost::optional<int> (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(Communication::Result::one_rank, fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::one_rank, fp),
+                      world.size() - 1);
+  } else {
+    cbs.loop();
+  }
+}
+
+BOOST_AUTO_TEST_CASE(master_rank_callback) {
+  auto cb = []() -> int {
+    boost::mpi::communicator world;
+    if (world.rank() == 0) {
+      return world.size();
+    }
+
+    return -1;
+  };
+
+  auto const fp = static_cast<int (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(Communication::Result::master_rank,
+                                          fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    BOOST_CHECK_EQUAL(cbs.call(Communication::Result::master_rank, fp),
+                      world.size());
+  } else {
+    cbs.loop();
+  }
+}
+
+BOOST_AUTO_TEST_CASE(call_all) {
+  called = false;
+  auto cb = []() { called = true; };
+
+  auto const fp = static_cast<void (*)()>(cb);
+
+  Communication::MpiCallbacks::add_static(fp);
+
+  boost::mpi::communicator world;
+  Communication::MpiCallbacks cbs(world);
+
+  if (0 == world.rank()) {
+    cbs.call_all(fp);
+  } else {
+    cbs.loop();
+  }
+
+  BOOST_CHECK(called);
 }
 
 int main(int argc, char **argv) {

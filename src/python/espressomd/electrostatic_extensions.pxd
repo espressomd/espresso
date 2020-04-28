@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,60 +16,51 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Handling of electrostatics
 
-from __future__ import print_function, absolute_import
 include "myconfig.pxi"
-from espressomd.system cimport *
-from espressomd.utils cimport *
-from espressomd.electrostatics cimport *
+from .electrostatics cimport *
+from libcpp.vector cimport vector
+from libcpp cimport bool
+from .utils cimport Vector3d
 
 IF ELECTROSTATICS and P3M:
 
-    cdef extern from "elc.hpp":
+    cdef extern from "electrostatics_magnetostatics/elc.hpp":
         ctypedef struct ELC_struct:
             double maxPWerror
             double gap_size
             double far_cut
-            int neutralize
-            double di_mid_top,
-            double di_mid_bot,
-            int const_pot_on,
+            bool neutralize
+            double delta_mid_top,
+            double delta_mid_bot,
+            bool const_pot,
             double pot_diff
 
-        int ELC_set_params(double maxPWerror, double min_dist, double far_cut, int neutralize, double di_mid_top, double di_mid_bot, int const_pot_on, double pot_diff)
+        int ELC_set_params(double maxPWerror, double min_dist, double far_cut,
+                           bool neutralize, double delta_mid_top, double delta_mid_bot, bool const_pot, double pot_diff)
 
         # links intern C-struct with python object
         ELC_struct elc_params
 
-    cdef extern from "iccp3m.hpp":
+    cdef extern from "electrostatics_magnetostatics/icc.hpp":
         ctypedef struct iccp3m_struct:
             int n_ic
             int num_iteration
             double eout
-            double * areas
-            double * ein
-            double * sigma
+            vector[double] areas
+            vector[double] ein
+            vector[double] sigma
             double convergence
-            double * nvectorx
-            double * nvectory
-            double * nvectorz
-            double extx
-            double exty
-            double extz
+            vector[Vector3d] normals
+            Vector3d ext_field
             double relax
             int citeration
-            int set_flag
-            double * fx
-            double * fy
-            double * fz
             int first_id
 
         # links intern C-struct with python object
         iccp3m_struct iccp3m_cfg
 
-        void iccp3m_set_initialized()
         void iccp3m_alloc_lists()
 
     cdef extern from "communication.hpp":
-        int mpi_iccp3m_init(int dummy)
+        int mpi_iccp3m_init()

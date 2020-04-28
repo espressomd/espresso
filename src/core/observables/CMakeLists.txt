@@ -1,6 +1,8 @@
-file(GLOB Observables_SRC *.?pp)
-add_library(Observables SHARED ${Observables_SRC})
-install(TARGETS Observables LIBRARY DESTINATION ${LIBDIR})
-set_target_properties(Observables PROPERTIES SOVERSION ${SOVERSION})
-add_dependencies(Observables EspressoConfig)
-
+target_sources(
+  EspressoCore
+  PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CylindricalLBFluxDensityProfileAtParticlePositions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CylindricalLBVelocityProfileAtParticlePositions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/CylindricalLBVelocityProfile.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/LBVelocityProfile.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/PidObservable.cpp)

@@ -1,80 +1,109 @@
-file(GLOB EspressoCore_SRC
-          "*.cpp"
-          )
-
-if( WITH_COVERAGE )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Og --coverage -fprofile-arcs -ftest-coverage")
-  link_libraries(gcov)
-endif()
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/src/core/config-features.hpp ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
-  COMMAND
-  ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
-  ${CMAKE_SOURCE_DIR}/src/features.def
-  ${CMAKE_BINARY_DIR}/src/core/config-features.hpp
-  ${CMAKE_BINARY_DIR}/src/core/config-features.cpp
-  DEPENDS ${CMAKE_SOURCE_DIR}/src/features.def ${CMAKE_SOURCE_DIR}/src/core/gen_featureconfig.py
-  )
-
-add_custom_command(OUTPUT config-version.cpp
-                   COMMAND ${CMAKE_SOURCE_DIR}/config/genversion.sh -c > ${CMAKE_BINARY_DIR}/src/core/config-version.cpp
-)
-
-# Custom target for everything that needs to be triggered when the myconfig changes
-add_library(EspressoConfig SHARED config-features.cpp)
-add_dependencies(EspressoConfig myconfig)
-
-add_library(EspressoCore SHARED ${EspressoCore_SRC} config-version.cpp)
-install(TARGETS EspressoCore LIBRARY DESTINATION ${LIBDIR})
-set_target_properties(EspressoCore PROPERTIES SOVERSION ${SOVERSION})
-
-target_link_libraries(EspressoCore EspressoConfig ${LIBRARIES} Actor ObjectInFluid ImmersedBoundary Shapes Constraints Correlators Observables Accumulators)
-
-if(SCAFACOS)
-  include_directories(${SCAFACOS_INCLUDE_DIRS})
-  target_link_libraries(EspressoCore Scafacos)
-endif(SCAFACOS)
+set(EspressoCore_SRC
+    accumulators.cpp
+    bond_error.cpp
+    cells.cpp
+    collision.cpp
+    comfixed_global.cpp
+    communication.cpp
+    constraints.cpp
+    debug.cpp
+    domain_decomposition.cpp
+    dpd.cpp
+    energy.cpp
+    errorhandling.cpp
+    EspressoSystemInterface.cpp
+    forcecap.cpp
+    forces.cpp
+    galilei.cpp
+    ghosts.cpp
+    global.cpp
+    grid.cpp
+    immersed_boundaries.cpp
+    event.cpp
+    integrate.cpp
+    npt.cpp
+    nsquare.cpp
+    partCfg_global.cpp
+    particle_data.cpp
+    polymer.cpp
+    pressure.cpp
+    rattle.cpp
+    reaction_ensemble.cpp
+    rotate_system.cpp
+    rotation.cpp
+    RuntimeErrorCollector.cpp
+    RuntimeError.cpp
+    RuntimeErrorStream.cpp
+    statistics_chain.cpp
+    statistics.cpp
+    SystemInterface.cpp
+    thermostat.cpp
+    tuning.cpp
+    virtual_sites.cpp
+    exclusions.cpp
+    CellStructure.cpp
+    PartCfg.cpp)
 
 if(CUDA)
-  file(GLOB EspressoCuda_SRC
-          "*.cu"
-          )
+  set(EspressoCuda_SRC
+      actor/DipolarBarnesHut_cuda.cu
+      actor/DipolarDirectSum_cuda.cu
+      actor/Mmm1dgpuForce_cuda.cu
+      cuda_common_cuda.cu
+      cuda_init.cpp
+      cuda_init_cuda.cu
+      cuda_interface.cpp
+      CudaHostAllocator.cu
+      electrostatics_magnetostatics/p3m_gpu_cuda.cu
+      electrostatics_magnetostatics/p3m_gpu_error_cuda.cu
+      EspressoSystemInterface_cuda.cu
+      grid_based_algorithms/electrokinetics_cuda.cu
+      grid_based_algorithms/lbgpu_cuda.cu
+      grid_based_algorithms/fd-electrostatics_cuda.cu
+      grid_based_algorithms/electrokinetics.cpp
+      grid_based_algorithms/lbgpu.cpp
+      virtual_sites/lb_inertialess_tracers_cuda.cu)
 
-  cuda_include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-  cuda_include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-  cuda_add_library(EspressoCuda SHARED ${EspressoCuda_SRC})
-  install(TARGETS EspressoCuda DESTINATION ${LIBDIR})
-  set_target_properties(EspressoCuda PROPERTIES SOVERSION ${SOVERSION})
-  add_dependencies(EspressoCuda EspressoConfig)
-
-  CUDA_ADD_CUFFT_TO_TARGET(EspressoCuda)
-  target_link_libraries(EspressoCore EspressoCuda)
+  add_gpu_library(EspressoCore SHARED ${EspressoCore_SRC} ${EspressoCuda_SRC})
+else(CUDA)
+  add_library(EspressoCore SHARED ${EspressoCore_SRC})
 endif(CUDA)
 
-# Subdirectories
-add_subdirectory(observables)
-add_subdirectory(correlators)
+install(TARGETS EspressoCore LIBRARY DESTINATION ${PYTHON_INSTDIR}/espressomd)
+
+target_link_libraries(
+  EspressoCore
+  PRIVATE EspressoConfig shapes Profiler
+          "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_LIBRARIES}>"
+          $<$<BOOL:${SCAFACOS}>:Scafacos> cxx_interface
+  PUBLIC utils MPI::MPI_CXX Random123 Boost::serialization Boost::mpi
+         "$<$<BOOL:${H5MD}>:${HDF5_LIBRARIES}>"
+         $<$<BOOL:${H5MD}>:Boost::filesystem> $<$<BOOL:${H5MD}>:h5xx>)
+
+target_include_directories(
+  EspressoCore
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+         "$<$<BOOL:${H5MD}>:${CMAKE_CURRRENT_SOURCE_DIR}/io/writer>" SYSTEM
+  PUBLIC "$<$<BOOL:${H5MD}>:${HDF5_INCLUDE_DIRS}>" SYSTEM
+  PRIVATE "$<$<BOOL:${FFTW3_FOUND}>:${FFTW3_INCLUDE_DIR}>")
+
+target_compile_definitions(EspressoCore PUBLIC $<$<BOOL:${H5MD}>:H5XX_USE_MPI>)
+
 add_subdirectory(accumulators)
+add_subdirectory(actor)
+add_subdirectory(bonded_interactions)
+add_subdirectory(cluster_analysis)
+add_subdirectory(constraints)
+add_subdirectory(electrostatics_magnetostatics)
+add_subdirectory(grid_based_algorithms)
+add_subdirectory(immersed_boundary)
+add_subdirectory(integrators)
 add_subdirectory(io)
-if(HDF5_FOUND)
-    target_link_libraries(EspressoCore H5mdCore)
-endif(HDF5_FOUND)
+add_subdirectory(nonbonded_interactions)
+add_subdirectory(object-in-fluid)
+add_subdirectory(observables)
+add_subdirectory(virtual_sites)
 
 if(WITH_UNIT_TESTS)
   add_subdirectory(unit_tests)
 endif(WITH_UNIT_TESTS)
-
-add_subdirectory(actor)
-add_subdirectory(immersed_boundary)
-add_subdirectory(lbboundaries)
-add_subdirectory(object-in-fluid)
-add_subdirectory(shapes)
-add_subdirectory(constraints)
-
-if(SCAFACOS)
-  add_subdirectory(scafacos)
-endif(SCAFACOS)

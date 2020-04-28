@@ -1,4 +1,4 @@
-# Copyright (C) 2016 The ESPResSo project
+# Copyright (C) 2016-2019 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -18,13 +18,12 @@
 #
 # This script generates gen_pxiconfig.cpp, which in turn generates myconfig.pxi.
 #
-from __future__ import print_function
 import inspect
 import sys
 import os
 # find featuredefs.py
 moduledir = os.path.dirname(inspect.getfile(inspect.currentframe()))
-sys.path.append(os.path.join(moduledir, '..', '..'))
+sys.path.append(os.path.join(moduledir, '..', '..', 'config'))
 import featuredefs
 
 if len(sys.argv) != 3:

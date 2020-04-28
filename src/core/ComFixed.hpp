@@ -1,29 +1,29 @@
 /*
-  Copyright (C) 2017 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2017-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef CORE_COMFIXED_HPP
 #define CORE_COMFIXED_HPP
 
-#include "Vector.hpp"
-#include "utils/keys.hpp"
+#include <utils/Vector.hpp>
+#include <utils/keys.hpp>
 
-#include <boost/mpi/communicator.hpp>
 #include <boost/mpi/collectives/all_reduce.hpp>
+#include <boost/mpi/communicator.hpp>
 
 #include <unordered_map>
 #include <vector>
@@ -35,14 +35,15 @@ public:
 private:
   TypeIndex m_type_index;
 
-  std::vector<Vector3d> local_type_forces(ParticleRange &particles) const {
-    std::vector<Vector3d> ret(m_type_index.size(), Vector3d{});
+  std::vector<Utils::Vector3d>
+  local_type_forces(ParticleRange &particles) const {
+    std::vector<Utils::Vector3d> ret(m_type_index.size(), Utils::Vector3d{});
 
     for (auto const &p : particles) {
       /* Check if type is of interest */
       auto it = m_type_index.find(p.p.type);
       if (it != m_type_index.end()) {
-        ret[it->second] += Vector3d{p.f.f};
+        ret[it->second] += Utils::Vector3d{p.f.f};
       }
     }
 
@@ -84,12 +85,12 @@ public:
     auto const local_masses = local_type_masses(particles);
 
     /* Total forces and masses of the types. */
-    std::vector<Vector3d> forces(m_type_index.size(), Vector3d{});
+    std::vector<Utils::Vector3d> forces(m_type_index.size(), Utils::Vector3d{});
     std::vector<double> masses(m_type_index.size(), 0.0);
 
     /* Add contributions from all nodes and redistribute them to all. */
     boost::mpi::all_reduce(comm, local_forces.data(), local_forces.size(),
-                           forces.data(), std::plus<Vector3d>{});
+                           forces.data(), std::plus<Utils::Vector3d>{});
     boost::mpi::all_reduce(comm, local_masses.data(), local_masses.size(),
                            masses.data(), std::plus<double>{});
 

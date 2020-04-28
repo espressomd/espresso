@@ -1,28 +1,27 @@
 /*
-  Copyright (C) 2014,2015,2016 The ESPResSo project
-
-  This file is part of ESPResSo.
-
-  ESPResSo is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  ESPResSo is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * Copyright (C) 2014-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #ifndef ESPRESSOSYSTEMINTERFACE_H
 #define ESPRESSOSYSTEMINTERFACE_H
 
-#include <stdio.h>
-
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
+#include "debug.hpp"
 
 /** Syntactic sugar */
 #define espressoSystemInterface EspressoSystemInterface::Instance()
@@ -95,16 +94,16 @@ public:
     return m_needsQGpu;
   };
 
-  float *quatuGpuBegin() override { return m_quatu_gpu_begin; };
-  float *quatuGpuEnd() override { return m_quatu_gpu_end; };
-  bool hasQuatuGpu() override { return true; };
-  bool requestQuatuGpu() override {
-    m_needsQuatuGpu = hasQuatuGpu();
-    m_splitParticleStructGpu |= m_needsQuatuGpu;
-    m_gpu |= m_needsQuatuGpu;
+  float *directorGpuBegin() override { return m_director_gpu_begin; };
+  float *directorGpuEnd() override { return m_director_gpu_end; };
+  bool hasDirectorGpu() override { return true; };
+  bool requestDirectorGpu() override {
+    m_needsDirectorGpu = hasDirectorGpu();
+    m_splitParticleStructGpu |= m_needsDirectorGpu;
+    m_gpu |= m_needsDirectorGpu;
     if (m_gpu)
       enableParticleCommunication();
-    return m_needsQuatuGpu;
+    return m_needsDirectorGpu;
   };
 
   bool requestParticleStructGpu() {
@@ -148,11 +147,11 @@ public:
 
 #endif
 
-  Vector3d box() const override;
+  Utils::Vector3d box() const override;
 
   unsigned int npart_gpu() override {
 #ifdef CUDA
-    return m_gpu_npart;
+    return gpu_get_particle_pointer().size();
 #else
     return 0;
 #endif
@@ -161,23 +160,22 @@ public:
 protected:
   static EspressoSystemInterface *m_instance;
   EspressoSystemInterface()
-      : m_gpu_npart(0), m_gpu(false), m_r_gpu_begin(0), m_r_gpu_end(0),
-        m_dip_gpu_begin(0), m_v_gpu_begin(0), m_v_gpu_end(0), m_q_gpu_begin(0),
-        m_q_gpu_end(0), m_quatu_gpu_begin(0), m_quatu_gpu_end(0),
-        m_needsParticleStructGpu(false), m_splitParticleStructGpu(false){};
-  virtual ~EspressoSystemInterface() {}
+      : m_gpu(false), m_r_gpu_begin(nullptr), m_r_gpu_end(nullptr),
+        m_dip_gpu_begin(nullptr), m_dip_gpu_end(nullptr),
+        m_v_gpu_begin(nullptr), m_v_gpu_end(nullptr), m_q_gpu_begin(nullptr),
+        m_q_gpu_end(nullptr), m_director_gpu_begin(nullptr),
+        m_director_gpu_end(nullptr), m_needsParticleStructGpu(false),
+        m_splitParticleStructGpu(false){};
+  ~EspressoSystemInterface() override = default;
 
   void gatherParticles();
   void split_particle_struct();
 #ifdef CUDA
   void enableParticleCommunication() {
     if (!gpu_get_global_particle_vars_pointer_host()->communication_enabled) {
-      ESIF_TRACE(puts("gpu communication not enabled;"));
-      ESIF_TRACE(puts("enableParticleCommunication"));
       gpu_init_particle_comm();
       cuda_bcast_global_part_params();
-      reallocDeviceMemory(
-          gpu_get_global_particle_vars_pointer_host()->number_of_particles);
+      reallocDeviceMemory(gpu_get_particle_pointer().size());
     }
   };
   void reallocDeviceMemory(int n);
@@ -198,8 +196,8 @@ protected:
   float *m_q_gpu_begin;
   float *m_q_gpu_end;
 
-  float *m_quatu_gpu_begin;
-  float *m_quatu_gpu_end;
+  float *m_director_gpu_begin;
+  float *m_director_gpu_end;
 
   bool m_needsParticleStructGpu;
   bool m_splitParticleStructGpu;

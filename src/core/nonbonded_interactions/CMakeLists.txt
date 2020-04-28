@@ -1,0 +1,19 @@
+target_sources(
+  EspressoCore
+  PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bmhtf-nacl.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/buckingham.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/gaussian.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/gay_berne.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/hat.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/hertzian.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ljcos2.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ljcos.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/lj.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ljgen.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/morse.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/nonbonded_interaction_data.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/nonbonded_tab.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/soft_sphere.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/smooth_step.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/thole.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/wca.cpp)

@@ -1,17 +1,34 @@
+/*
+ * Copyright (C) 2010-2019 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 #include <algorithm>
 #include <functional>
-#include <iostream>
 #include <vector>
 
 #define BOOST_TEST_MODULE link_cell test
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
-#include "core/Cell.hpp"
-#include "core/algorithm/link_cell.hpp"
+#include "Cell.hpp"
+#include "algorithm/link_cell.hpp"
 
 BOOST_AUTO_TEST_CASE(link_cell) {
-  const unsigned n_cells = 100;
+  const unsigned n_cells = 10;
   const auto n_part_per_cell = 10;
   const auto n_part = n_cells * n_part_per_cell;
 
@@ -19,16 +36,19 @@ BOOST_AUTO_TEST_CASE(link_cell) {
 
   auto id = 0;
   for (auto &c : cells) {
+    std::vector<Cell *> neighbors;
+
     for (auto &n : cells) {
       if (&c != &n)
-        c.m_neighbors.push_back(std::ref(n));
+        neighbors.push_back(&n);
     }
 
-    c.part = new Particle[n_part_per_cell];
-    c.n = c.max = n_part_per_cell;
+    c.m_neighbors = Neighbors<Cell *>(neighbors, {});
 
-    for (unsigned i = 0; i < n_part_per_cell; ++i) {
-      c.part[i].p.identity = id++;
+    c.particles().resize(n_part_per_cell);
+
+    for (auto &p : c.particles()) {
+      p.p.identity = id++;
     }
   }
 
@@ -41,7 +61,7 @@ BOOST_AUTO_TEST_CASE(link_cell) {
       [&id_counts](Particle const &p) { id_counts[p.p.identity]++; },
       [&lc_pairs](Particle const &p1, Particle const &p2,
                   std::pair<int, int> d) {
-        /* Check that the "distance function" has been called with the corect
+        /* Check that the "distance function" has been called with the correct
          * arguments */
         BOOST_CHECK((d.first == p1.p.identity) && (d.second == p2.p.identity));
         if (p1.p.identity <= p2.p.identity)
@@ -64,8 +84,4 @@ BOOST_AUTO_TEST_CASE(link_cell) {
       BOOST_CHECK((it->first == i) && (it->second == j));
       ++it;
     }
-
-  for (auto &c : cells) {
-    delete[] c.part;
-  }
 }

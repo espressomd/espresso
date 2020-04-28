@@ -1,5 +1,5 @@
-#!/usr/bin/python
-# Copyright (C) 2012,2013,2014,2015,2016 The ESPResSo project
+#!/usr/bin/env python3
+# Copyright (C) 2012-2019 The ESPResSo project
 # Copyright (C) 2011 Olaf Lenz
 # Copyright 2008 Marcus D. Hanwell <marcus@cryos.org>
 #
@@ -15,12 +15,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-from __future__ import print_function
-import string, re, os
+
+import re
+import os
 
 # Execute git log with the desired command line options.
-fin = os.popen('git log --summary --stat --no-merges --date=short 3.0.1..', 'r')
+fin = os.popen(
+    'git log --summary --stat --no-merges --date=short 3.0.1..', 'r')
 
 # Set up the loop variables in order to locate the blocks we want
 authorFound = False
@@ -50,14 +51,14 @@ for line in fin:
         continue
 
     # Match the author line and extract the part we want
-    m = re.match('^Author:\s*(.*)\s*$', line)
+    m = re.match(r'^Author:\s*(.*)\s*$', line)
     if m is not None:
         author = m.group(1)
         authorFound = True
         continue
 
     # Match the date line
-    m = re.match('^Date:\s*(.*)\s*$', line)
+    m = re.match(r'^Date:\s*(.*)\s*$', line)
     if m is not None:
         date = m.group(1)
         dateFound = True
@@ -79,8 +80,8 @@ for line in fin:
         elif len(line) == 4:
             messageFound = True
         else:
-            if len(message) == 0:
-                message = message + line.strip()
+            if not message:
+                message = line.strip()
             else:
                 message = message + " " + line.strip()
 
@@ -90,9 +91,9 @@ for line in fin:
         continue
     # Collect the files for this commit. FIXME: Still need to add +/- to files
     elif authorFound & dateFound & messageFound:
-        fileList = re.split(' \| ', line, 2)
+        fileList = re.split(r' \| ', line, 2)
         if len(fileList) > 1:
-            if len(files) > 0:
+            if files:
                 files = files + ", " + fileList[0].strip()
             else:
                 files = fileList[0].strip()
@@ -102,7 +103,7 @@ for line in fin:
         # First the author line, only outputted if it is the first for that
         # author on this day
         authorLine = date + " " + author
-        if len(prevAuthorLine) == 0:
+        if not prevAuthorLine:
             print(authorLine)
         elif authorLine == prevAuthorLine:
             pass
@@ -118,18 +119,18 @@ for line in fin:
             if len(commitLine) < i + 78:
                 commit = commit + "\n " + commitLine[i:len(commitLine)]
                 break
-            index = commitLine.rfind(' ', i, i+78)
+            index = commitLine.rfind(' ', i, i + 78)
             if index > i:
                 commit = commit + "\n " + commitLine[i:index]
-                i = index+1
+                i = index + 1
             else:
                 commit = commit + "\n " + commitLine[i:78]
-                i = i+79
+                i = i + 79
 
         # Write out the commit line
         print(commit)
 
-        #Now reset all the variables ready for a new commit block.
+        # Now reset all the variables ready for a new commit block.
         authorFound = False
         dateFound = False
         messageFound = False
@@ -142,4 +143,3 @@ for line in fin:
 
 # Close the input and output lines now that we are finished.
 fin.close()
-

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013,2014,2015,2016 The ESPResSo project
+# Copyright (C) 2013-2019 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -16,20 +16,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-from __future__ import print_function
+"""
+Illustrate how particles of interest can be accessed via slicing.
+"""
 import espressomd
-from espressomd import thermostat
 import numpy as np
 
 print("""
 =======================================================
 =                   slice_input.py                    =
 =======================================================
-
-Program Information:""")
-print(espressomd.features())
-
-dev = "cpu"
+""")
 
 # System parameters
 #############################################################
@@ -39,21 +36,17 @@ box_l = 10.0
 # Integration parameters
 #############################################################
 
-system = espressomd.System()
+system = espressomd.System(box_l=[box_l] * 3)
+np.random.seed(seed=42)
+
 system.time_step = 0.01
 system.cell_system.skin = 0.4
-
-system.cell_system.max_num_cells = 2744
 
 
 #############################################################
 #  Setup System                                             #
 #############################################################
 
-# Interaction setup
-#############################################################
-
-system.box_l = [box_l, box_l, box_l]
 
 # Particle setup
 #############################################################
@@ -90,6 +83,6 @@ if espressomd.has_features(["MASS"]):
 
 if espressomd.has_features(["ELECTROSTATICS"]):
     print("Q\n%s" % system.part[:].q)
-    system.part[::2].q = np.ones(n_part / 2)
-    system.part[1::2].q = -np.ones(n_part / 2)
+    system.part[::2].q = np.ones(n_part // 2)
+    system.part[1::2].q = -np.ones(n_part // 2)
     print("Q_NEW\n%s" % system.part[:].q)
