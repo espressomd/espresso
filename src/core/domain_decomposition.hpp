@@ -135,16 +135,6 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
  */
 void dd_topology_init(const Utils::Vector3i &grid, double range);
 
-/** Called when the current cell structure is invalidated because for
- *  example the box length has changed. This procedure may NOT destroy
- *  the old inner and ghost cells, but it should free all other
- *  organizational data. Note that parameters like the box length or
- *  the node_grid may already have changed. Therefore organizational
- *  data has to be stored independently from variables that may be
- *  changed from outside.
- */
-void dd_topology_release();
-
 /** Just resort the particles. Used during integration. The particles
  *  are stored in the cell structure.
  *

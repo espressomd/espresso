@@ -142,10 +142,8 @@ static void topology_release(int cs) {
     topology_release(cell_structure.type);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_release();
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_release();
     break;
   default:
     fprintf(stderr,
@@ -216,7 +214,6 @@ static void invalidate_ghosts() {
 void cells_re_init(int new_cs, double range) {
   invalidate_ghosts();
 
-  topology_release(cell_structure.type);
   /* MOVE old local_cell list to temporary buffer */
   std::vector<Cell *> old_local_cells;
   std::swap(old_local_cells, cell_structure.m_local_cells);

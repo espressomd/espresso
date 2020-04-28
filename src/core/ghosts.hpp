@@ -176,9 +176,6 @@ struct GhostCommunicator {
 /************************************************************/
 /*@{*/
 
-/** Free a communicator. */
-void free_comm(GhostCommunicator *gcr);
-
 /**
  * @brief Do a ghost communication with caller specified data parts.
  */
