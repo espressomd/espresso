@@ -36,6 +36,7 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
   propagate_vel_pos_sd(particles);
 
   for (auto &p : particles) {
+
     // Translate particle
     p.r.p[0] += p.m.v[0] * time_step;
     p.r.p[1] += p.m.v[1] * time_step;
@@ -44,8 +45,10 @@ stokesian_dynamics_propagate_vel_pos(const ParticleRange &particles) {
 #ifdef ROTATION
     // Perform rotation
     double norm = p.m.omega.norm();
-    Utils::Vector3d omega_unit = (1 / norm) * p.m.omega;
-    local_rotate_particle(p, omega_unit, norm * time_step);
+    if (norm != 0) {
+      Utils::Vector3d omega_unit = (1 / norm) * p.m.omega;
+      local_rotate_particle(p, omega_unit, norm * time_step);
+    }
 #endif
 
     // Verlet criterion check
