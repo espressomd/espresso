@@ -43,21 +43,21 @@ void nsq_topology_release() {
   free_comm(&cell_structure.collect_ghost_force_comm);
 }
 
-static void nsq_prepare_comm(GhostCommunicator *comm) {
-  int n;
+static GhostCommunicator nsq_prepare_comm() {
   /* no need for comm for only 1 node */
   if (n_nodes == 1) {
-    prepare_comm(comm, 0);
-    return;
+    return GhostCommunicator{0};
   }
 
-  prepare_comm(comm, n_nodes);
+  auto comm = GhostCommunicator{n_nodes};
   /* every node has its dedicated comm step */
-  for (n = 0; n < n_nodes; n++) {
-    comm->comm[n].part_lists.resize(1);
-    comm->comm[n].part_lists[0] = &(cells[n].particles());
-    comm->comm[n].node = n;
+  for (int n = 0; n < n_nodes; n++) {
+    comm.comm[n].part_lists.resize(1);
+    comm.comm[n].part_lists[0] = &(cells[n].particles());
+    comm.comm[n].node = n;
   }
+
+  return comm;
 }
 
 void nsq_topology_init() {
@@ -110,8 +110,8 @@ void nsq_topology_init() {
   local->m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 
   /* create communicators */
-  nsq_prepare_comm(&cell_structure.exchange_ghosts_comm);
-  nsq_prepare_comm(&cell_structure.collect_ghost_force_comm);
+  cell_structure.exchange_ghosts_comm = nsq_prepare_comm();
+  cell_structure.collect_ghost_force_comm = nsq_prepare_comm();
 
   /* here we just decide what to transfer where */
   if (n_nodes > 1) {

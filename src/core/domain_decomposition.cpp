@@ -234,7 +234,7 @@ int dd_fill_comm_cell_lists(ParticleList **part_lists,
 /** Create communicators for cell structure domain decomposition. (see \ref
  *  GhostCommunicator)
  */
-void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
+GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
   int dir, lr, i, cnt, num, n_comm_cells[3];
   Utils::Vector3i lc{}, hc{}, done{};
 
@@ -256,7 +256,7 @@ void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
   }
 
   /* prepare communicator */
-  prepare_comm(comm, num);
+  auto comm = GhostCommunicator{num};
 
   /* number of cells to communicate in a direction */
   n_comm_cells[0] = dd.cell_grid[1] * dd.cell_grid[2];
@@ -279,26 +279,26 @@ void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
         /* just copy cells on a single node */
         if (box_geo.periodic(dir) ||
             (local_geo.boundary()[2 * dir + lr] == 0)) {
-          comm->comm[cnt].type = GHOST_LOCL;
-          comm->comm[cnt].node = this_node;
+          comm.comm[cnt].type = GHOST_LOCL;
+          comm.comm[cnt].node = this_node;
 
           /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm->comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
+          comm.comm[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
-          comm->comm[cnt].shift[dir] =
+          comm.comm[cnt].shift[dir] =
               local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc, hc);
+          dd_fill_comm_cell_lists(comm.comm[cnt].part_lists.data(), lc, hc);
 
           /* fill recv comm cells */
           lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
           /* place receive cells after send cells */
-          dd_fill_comm_cell_lists(
-              &comm->comm[cnt].part_lists[n_comm_cells[dir]], lc, hc);
+          dd_fill_comm_cell_lists(&comm.comm[cnt].part_lists[n_comm_cells[dir]],
+                                  lc, hc);
 
           cnt++;
         }
@@ -308,30 +308,28 @@ void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
           if (box_geo.periodic(dir) ||
               (local_geo.boundary()[2 * dir + lr] == 0))
             if ((node_pos[dir] + i) % 2 == 0) {
-              comm->comm[cnt].type = GHOST_SEND;
-              comm->comm[cnt].node = node_neighbors[2 * dir + lr];
-              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
+              comm.comm[cnt].type = GHOST_SEND;
+              comm.comm[cnt].node = node_neighbors[2 * dir + lr];
+              comm.comm[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
-              comm->comm[cnt].shift[dir] =
+              comm.comm[cnt].shift[dir] =
                   local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
-                                      hc);
+              dd_fill_comm_cell_lists(comm.comm[cnt].part_lists.data(), lc, hc);
               cnt++;
             }
           if (box_geo.periodic(dir) ||
               (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
             if ((node_pos[dir] + (1 - i)) % 2 == 0) {
-              comm->comm[cnt].type = GHOST_RECV;
-              comm->comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
-              comm->comm[cnt].part_lists.resize(n_comm_cells[dir]);
+              comm.comm[cnt].type = GHOST_RECV;
+              comm.comm[cnt].node = node_neighbors[2 * dir + (1 - lr)];
+              comm.comm[cnt].part_lists.resize(n_comm_cells[dir]);
 
               lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(comm->comm[cnt].part_lists.data(), lc,
-                                      hc);
+              dd_fill_comm_cell_lists(comm.comm[cnt].part_lists.data(), lc, hc);
               cnt++;
             }
         }
@@ -339,6 +337,8 @@ void dd_prepare_comm(GhostCommunicator *comm, const Utils::Vector3i &grid) {
       done[dir] = 1;
     }
   }
+
+  return comm;
 }
 
 /** Revert the order of a communicator: After calling this the
@@ -593,8 +593,8 @@ void dd_topology_init(const Utils::Vector3i &grid, double range) {
   dd_mark_cells();
 
   /* create communicators */
-  dd_prepare_comm(&cell_structure.exchange_ghosts_comm, grid);
-  dd_prepare_comm(&cell_structure.collect_ghost_force_comm, grid);
+  cell_structure.exchange_ghosts_comm = dd_prepare_comm(grid);
+  cell_structure.collect_ghost_force_comm = dd_prepare_comm(grid);
 
   /* collect forces has to be done in reverted order! */
   dd_revert_comm_order(&cell_structure.collect_ghost_force_comm);
