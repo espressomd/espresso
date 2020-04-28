@@ -331,8 +331,7 @@ void ParticleVelocitiesFromLB_CPU() {
   // real particles.
   // This could be solved by keeping a backup of the local forces before this
   // operation is attempted.
-  ghost_communicator(&cell_structure.collect_ghost_force_comm,
-                     GHOSTTRANS_FORCE);
+  cell_structure.ghosts_reduce();
 
   // Transfer to velocity field
   for (auto &p : cell_structure.local_particles()) {

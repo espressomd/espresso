@@ -176,8 +176,8 @@ void VirtualSitesRelative::update() const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
-  ghost_communicator(&cell_structure.collect_ghost_force_comm,
-                     GHOSTTRANS_FORCE);
+  cell_structure.ghosts_reduce();
+
   init_forces_ghosts(cell_structure.ghost_particles());
 
   // Iterate over all the particles in the local cells
