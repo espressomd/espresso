@@ -1,3 +1,7 @@
+#!/usr/bin/env sh
+# Copyright (C) 2018-2020 The ESPResSo project
+#
+# This file is part of ESPResSo.
 #
 # ESPResSo is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -11,7 +15,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 cd "$(git rev-parse --show-toplevel)"
+
 if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     echo "Warning, your working tree is not clean. Please commit your changes."
     echo "You can also call this script with the -f flag to proceed anyway, but"
@@ -49,4 +55,5 @@ if [ "${errors}" != 0 ]; then
 else
   echo "Passed pylint check"
 fi
+
 exit 0
