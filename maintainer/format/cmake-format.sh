@@ -21,7 +21,7 @@ python3 -m cmake_format 2>&1 > /dev/null
 if [ "$?" = "0" ]; then
     CMAKE_FORMAT="python3 -m cmake_format"
 else
-    echo "cmake-format command not found."
+    echo "No cmake-format found."
     exit 2
 fi
 
@@ -30,3 +30,5 @@ if ! ${CMAKE_FORMAT} --version | grep -qEo "${CMAKE_FORMAT_VER}"; then
     echo "Could not find cmake-format ${CMAKE_FORMAT_VER}."
     exit 2
 fi
+
+${CMAKE_FORMAT} "$@"
