@@ -232,6 +232,21 @@ int dd_fill_comm_cell_lists(ParticleList **part_lists,
   return c;
 }
 
+namespace {
+/* Calc the ghost shift vector for dim dir in direction lr */
+Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
+                      int dir, int lr) {
+  Utils::Vector3d ret{};
+
+  /* Shift is non-zero only in periodic directions, if we are at the box
+   * boundary */
+  ret[dir] = box_geo.periodic(dir) * local_geo.boundary()[2 * dir + lr] *
+             box_geo.length()[dir];
+
+  return ret;
+}
+} // namespace
+
 /** Create communicators for cell structure domain decomposition. (see \ref
  *  GhostCommunicator)
  */
@@ -286,8 +301,7 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
           /* Buffer has to contain Send and Recv cells -> factor 2 */
           comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
           /* prepare folding of ghost positions */
-          comm.communications[cnt].shift[dir] =
-              local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+          comm.communications[cnt].shift = shift(box_geo, local_geo, dir, lr);
 
           /* fill send comm cells */
           lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
@@ -314,8 +328,8 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
               comm.communications[cnt].node = node_neighbors[2 * dir + lr];
               comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
               /* prepare folding of ghost positions */
-              comm.communications[cnt].shift[dir] =
-                  local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+              comm.communications[cnt].shift =
+                  shift(box_geo, local_geo, dir, lr);
 
               lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
@@ -397,8 +411,8 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
             (local_geo.boundary()[2 * dir + lr] == 0)) {
           /* prepare folding of ghost positions */
           if (local_geo.boundary()[2 * dir + lr] != 0) {
-            cell_structure.exchange_ghosts_comm.communications[cnt].shift[dir] =
-                local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+            cell_structure.exchange_ghosts_comm.communications[cnt].shift =
+                shift(box_geo, local_geo, dir, lr);
           }
           cnt++;
         }
@@ -411,9 +425,8 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
             if ((node_pos[dir] + i) % 2 == 0) {
               /* prepare folding of ghost positions */
               if (local_geo.boundary()[2 * dir + lr] != 0) {
-                cell_structure.exchange_ghosts_comm.communications[cnt]
-                    .shift[dir] =
-                    local_geo.boundary()[2 * dir + lr] * box_geo.length()[dir];
+                cell_structure.exchange_ghosts_comm.communications[cnt].shift =
+                    shift(box_geo, local_geo, dir, lr);
               }
               cnt++;
             }
