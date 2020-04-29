@@ -108,6 +108,6 @@ static unsigned map_data_parts(unsigned data_parts) {
 void CellStructure::ghosts_update(unsigned data_parts) {
   ghost_communicator(&exchange_ghosts_comm, map_data_parts(data_parts));
 }
-void CellStructure::ghosts_reduce() {
+void CellStructure::ghosts_reduce_forces() {
   ghost_communicator(&collect_ghost_force_comm, GHOSTTRANS_FORCE);
 }

@@ -174,7 +174,7 @@ void VirtualSitesRelative::update() const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
-  cell_structure.ghosts_reduce();
+  cell_structure.ghosts_reduce_forces();
 
   init_forces_ghosts(cell_structure.ghost_particles());
 

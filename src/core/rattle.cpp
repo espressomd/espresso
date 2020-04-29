@@ -180,7 +180,7 @@ void correct_pos_shake(CellStructure &cs) {
     init_correction_vector(particles, ghost_particles);
     int repeat_ = 0;
     compute_pos_corr_vec(&repeat_, cs);
-    cell_structure.ghosts_reduce();
+    cell_structure.ghosts_reduce_forces();
 
     app_pos_correction(particles);
     /**Ghost Positions Update*/
@@ -313,7 +313,7 @@ void correct_vel_shake(CellStructure &cs) {
     init_correction_vector(particles, ghost_particles);
     int repeat_ = 0;
     compute_vel_corr_vec(&repeat_, cs);
-    cell_structure.ghosts_reduce();
+    cell_structure.ghosts_reduce_forces();
     apply_vel_corr(particles);
     cs.ghosts_update(Cells::DATA_PART_MOMENTUM);
 
