@@ -523,23 +523,13 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
-                           const double range) {
+void dd_on_geometry_change(bool fast, const Utils::Vector3i &grid,
+                           double range) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
     if (local_geo.length()[i] < range) {
       runtimeErrorMsg() << "box_l in direction " << i << " is too small";
     }
-
-  /* A full resorting is necessary if the grid has changed. We simply
-   * don't have anything fast for this case. Probably also not necessary. */
-  if (flags & CELL_FLAG_GRIDCHANGED) {
-    /* Reset min num cells to default */
-    min_num_cells = calc_processor_min_num_cells(grid);
-
-    cells_re_init(CELL_STRUCTURE_CURRENT, range);
-    return;
-  }
 
   /* otherwise, re-set our geometrical dimensions which have changed
      (in addition to the general ones that \ref grid_changed_box_l
@@ -561,7 +551,7 @@ void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
 
   /* If we are not in a hurry, check if we can maybe optimize the cell
      system by using smaller cells. */
-  if (!(flags & CELL_FLAG_FAST) && range > 0) {
+  if (not fast) {
     int i;
     for (i = 0; i < 3; i++) {
       auto poss_size = (int)floor(local_geo.length()[i] / range);

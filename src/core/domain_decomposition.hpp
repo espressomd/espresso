@@ -115,13 +115,13 @@ extern int min_num_cells;
 /** adjust the domain decomposition to a change in the geometry.
  *  Tries to speed up things if possible.
  *
- *  @param flags  A combination of \ref CELL_FLAG_FAST and \ref
+ *  @param fast  A combination of \ref CELL_FLAG_FAST and \ref
  *                CELL_FLAG_GRIDCHANGED, see documentation of \ref
  *                cells_on_geometry_change.
  *  @param grid   Number of nodes in each spatial dimension.
  *  @param range Desired interaction range
  */
-void dd_on_geometry_change(int flags, const Utils::Vector3i &grid,
+void dd_on_geometry_change(bool fast, const Utils::Vector3i &grid,
                            double range);
 
 /** Initialize the topology. The argument is a list of cell pointers,

@@ -337,13 +337,13 @@ void cells_resort_particles(int global_flag) {
 
 /*************************************************/
 
-void cells_on_geometry_change(int flags) {
+void cells_on_geometry_change(bool fast) {
   auto const range = interaction_range();
   cell_structure.min_range = range;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    dd_on_geometry_change(flags, node_grid, range);
+    dd_on_geometry_change(fast, node_grid, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
     break;
