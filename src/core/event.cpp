@@ -321,7 +321,7 @@ void on_parameter_change(int field) {
 #endif
 
 #endif
-    cells_on_geometry_change(CELL_FLAG_GRIDCHANGED);
+    cells_on_geometry_change(0);
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
