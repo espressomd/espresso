@@ -1,4 +1,30 @@
-// Copyright (c) 2018 Henri Menke. All rights reserved.
+/*
+ * Copyright (C) 2018-2020 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/** @file
+ *  In this file, various types are provided which are useful for matrix
+ *  arithmetics on a parallel computing "device". Various BLAS and LAPACK
+ *  routines are accessed for efficient matrix calculations.
+ */
+ 
+#ifndef SD_DEVICE_MATRIX_HPP
+#define SD_DEVICE_MATRIX_HPP
 
 #include <iomanip>
 #include <limits>
@@ -259,7 +285,7 @@ struct IdentityGenerator {
 
 
 /** Matrix datatype with arithemtic operations that can run on a THRUST DEVICE.
- *  Depends on cuBLAS routines.
+ *  Storage is column-major order.
  */
 template <typename T, typename Policy = policy::host>
 class device_matrix {
@@ -481,16 +507,12 @@ public:
 };
 
 
-/** Simpler version of device_matrix that doesn't provide the arithmetic
- *  operations. Can run on a THRUST DEVICE. 
- *  For initialization, it needs another device_matrix object. The data is
- *  shared between the original matrix and this matrix. device_matrix_view can
- *  be seen as a "reference" to the original matrix data. More accurately, it
+/** Read-only reference to another device_matrix object. More accurately, it
  *  is a separate object that has different routines by which the same region
  *  of memory can be viewed.
  *
  *  Interestingly, by clever abuse of the rows and cols parameters and the data
- *  pointer, certain areas (e.g. blocks) of the referenced matrix can be
+ *  pointer, certain areas (e.g. blocks) of the referenced matrix could be
  *  accessed conveniently through a device_matrix_view object. 
  *  (This is not used in SD though?)
  */
@@ -656,3 +678,4 @@ std::ostream &operator<<(std::ostream &os, device_matrix<T, Policy> const &m) {
 */
 #undef DEVICE_FUNC
 #undef MAYBE_UNUSED
+#endif

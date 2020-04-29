@@ -1,11 +1,36 @@
-#pragma once
+/*
+ * Copyright (C) 2019-2020 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/** @file
+ *  In this file, an array type of arbitrary dimensionality is provided,
+ *  which is suited for use on a parallel computing "device".
+ */
+
+#ifndef SD_MULTI_ARRAY_HPP
+#define SD_MULTI_ARRAY_HPP
 
 #include <cmath>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
 
-#ifdef __CUDACC__
+#if defined(__HIPCC__) or defined(__CUDACC__)
 #define DEVICE_FUNC __host__ __device__
 #else
 #define DEVICE_FUNC
@@ -35,7 +60,6 @@ struct product<T> {
     static constexpr T const value = 1;
 };
 
-// all
 /**
  *  compile-time logical AND between all parameters of the parameter pack
  */
@@ -246,3 +270,5 @@ DEVICE_FUNC CXX14_CONSTEXPR multi_array<T,M,N> outer(multi_array<T,M> const & a,
 
 #undef CXX14_CONSTEXPR
 #undef DEVICE_FUNC
+
+#endif
