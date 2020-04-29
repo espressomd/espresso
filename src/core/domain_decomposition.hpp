@@ -60,6 +60,8 @@
 #include "Cell.hpp"
 #include "ghosts.hpp"
 
+#include <boost/mpi/communicator.hpp>
+
 /** Structure containing the information about the cell grid used for domain
  *  decomposition.
  */
@@ -81,6 +83,8 @@ struct DomainDecomposition {
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   double inv_cell_size[3];
   bool fully_connected[3];
+
+  boost::mpi::communicator comm;
 };
 
 /************************************************************/
@@ -134,7 +138,8 @@ void dd_on_geometry_change(bool fast, const Utils::Vector3i &grid,
  *  @param grid  Number of nodes in each spatial dimension.
  *  @param range Desired interaction range
  */
-void dd_topology_init(const Utils::Vector3i &grid, double range);
+void dd_topology_init(const Utils::Vector3i &grid, double range,
+                      const boost::mpi::communicator &comm);
 
 /** Just resort the particles. Used during integration. The particles
  *  are stored in the cell structure.

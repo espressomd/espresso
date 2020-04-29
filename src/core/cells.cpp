@@ -146,7 +146,7 @@ void topology_init(int cs, double range) {
     topology_init(cell_structure.type, range);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(node_grid, range);
+    dd_topology_init(node_grid, range, comm_cart);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init();

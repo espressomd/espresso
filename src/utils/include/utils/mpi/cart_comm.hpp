@@ -131,7 +131,9 @@ cart_neighbors(const boost::mpi::communicator &comm) {
  * @tparam dim Number of dimensions.
  */
 template <size_t dim> struct CartInfo {
-  Utils::Vector<int, dim> dims, periods, coords;
+  Utils::Vector<int, dim> dims;
+  Utils::Vector<int, dim> periods;
+  Utils::Vector<int, dim> coords;
 };
 
 /**
