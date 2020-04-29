@@ -32,10 +32,7 @@
 #include "communication.hpp"
 #include "cuda_init.hpp"
 #include "cuda_interface.hpp"
-#include "energy.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
-#include "ghosts.hpp"
 #include "global.hpp"
 #include "grid.hpp"
 #include "grid_based_algorithms/electrokinetics.hpp"
@@ -43,14 +40,8 @@
 #include "grid_based_algorithms/lb_interface.hpp"
 #include "immersed_boundaries.hpp"
 #include "npt.hpp"
-#include "nsquare.hpp"
 #include "partCfg_global.hpp"
 #include "particle_data.hpp"
-#include "pressure.hpp"
-#include "random.hpp"
-#include "rattle.hpp"
-#include "reaction_ensemble.hpp"
-#include "rotation.hpp"
 #include "statistics.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites.hpp"
@@ -384,22 +375,22 @@ void on_parameter_change(int field) {
  */
 unsigned global_ghost_flags() {
   /* Position and Properties are always requested. */
-  unsigned data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_PROPRTS;
+  unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
 
   if (lattice_switch == ActiveLB::CPU)
-    data_parts |= GHOSTTRANS_MOMENTUM;
+    data_parts |= Cells::DATA_PART_MOMENTUM;
 
   if (thermo_switch & THERMO_DPD)
-    data_parts |= GHOSTTRANS_MOMENTUM;
+    data_parts |= Cells::DATA_PART_MOMENTUM;
 
   if (n_thermalized_bonds) {
-    data_parts |= GHOSTTRANS_MOMENTUM;
-    data_parts |= GHOSTTRANS_BONDS;
+    data_parts |= Cells::DATA_PART_MOMENTUM;
+    data_parts |= Cells::DATA_PART_BONDS;
   }
 
 #ifdef COLLISION_DETECTION
   if (collision_params.mode) {
-    data_parts |= GHOSTTRANS_BONDS;
+    data_parts |= Cells::DATA_PART_BONDS;
   }
 #endif
 

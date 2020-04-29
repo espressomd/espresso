@@ -146,10 +146,8 @@ auto constraint_stress(
 } // namespace
 
 void VirtualSitesRelative::update() const {
-  // Ghost update logic
-  auto const data_parts = GHOSTTRANS_POSITION | GHOSTTRANS_MOMENTUM;
-
-  ghost_communicator(&cell_structure.exchange_ghosts_comm, data_parts);
+  cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
+                               Cells::DATA_PART_MOMENTUM);
 
   for (auto &p : cell_structure.local_particles()) {
     if (!p.p.is_virtual)
@@ -176,8 +174,8 @@ void VirtualSitesRelative::update() const {
 // Distribute forces that have accumulated on virtual particles to the
 // associated real particles
 void VirtualSitesRelative::back_transfer_forces_and_torques() const {
-  ghost_communicator(&cell_structure.collect_ghost_force_comm,
-                     GHOSTTRANS_FORCE);
+  cell_structure.ghosts_reduce_forces();
+
   init_forces_ghosts(cell_structure.ghost_particles());
 
   // Iterate over all the particles in the local cells

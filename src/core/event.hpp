@@ -37,7 +37,6 @@
  *
  *  Implementation in event.cpp.
  */
-#include "ParticleRange.hpp"
 
 /** \name Hook procedures
  *  These procedures are called if several significant changes to

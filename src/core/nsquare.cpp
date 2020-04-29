@@ -24,6 +24,7 @@
  */
 
 #include "nsquare.hpp"
+#include "cells.hpp"
 #include "communication.hpp"
 #include "ghosts.hpp"
 #include "grid.hpp"

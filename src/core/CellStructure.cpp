@@ -89,3 +89,25 @@ void CellStructure::remove_all_particles() {
 
   m_particle_index.clear();
 }
+
+/* Map the data parts flags from cells to those used internally
+ * by the ghost communication */
+static unsigned map_data_parts(unsigned data_parts) {
+  using namespace Cells;
+
+  /* clang-format off */
+  return GHOSTTRANS_NONE
+         | ((DATA_PART_PROPERTIES & data_parts) ? GHOSTTRANS_PROPRTS : 0u)
+         | ((DATA_PART_POSITION & data_parts) ? GHOSTTRANS_POSITION : 0u)
+         | ((DATA_PART_MOMENTUM & data_parts) ? GHOSTTRANS_MOMENTUM : 0u)
+         | ((DATA_PART_FORCE & data_parts) ? GHOSTTRANS_FORCE : 0u)
+         | ((DATA_PART_BONDS & data_parts) ? GHOSTTRANS_BONDS : 0u);
+  /* clang-format on */
+}
+
+void CellStructure::ghosts_update(unsigned data_parts) {
+  ghost_communicator(&exchange_ghosts_comm, map_data_parts(data_parts));
+}
+void CellStructure::ghosts_reduce_forces() {
+  ghost_communicator(&collect_ghost_force_comm, GHOSTTRANS_FORCE);
+}

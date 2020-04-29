@@ -57,7 +57,8 @@
  *  Implementation in domain_decomposition.cpp.
  */
 
-#include "cells.hpp"
+#include "Cell.hpp"
+#include "ghosts.hpp"
 
 /** Structure containing the information about the cell grid used for domain
  *  decomposition.

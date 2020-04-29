@@ -48,8 +48,9 @@
  *
  *  Implementation in nsquare.cpp.
  */
+#include "Cell.hpp"
 
-#include "cells.hpp"
+#include <vector>
 
 /** setup the nsquare topology */
 void nsq_topology_init();

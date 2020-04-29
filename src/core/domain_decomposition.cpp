@@ -33,6 +33,7 @@
 #include <utils/mpi/sendrecv.hpp>
 using Utils::get_linear_index;
 
+#include "cells.hpp"
 #include "event.hpp"
 
 #include <boost/mpi/collectives.hpp>

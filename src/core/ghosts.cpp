@@ -40,7 +40,6 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/mpi/collectives.hpp>
-#include <boost/range/algorithm/copy.hpp>
 #include <boost/range/numeric.hpp>
 #include <boost/serialization/vector.hpp>
 
