@@ -129,8 +129,6 @@ void on_integration_start() {
   npt_ensemble_init(box_geo);
 #endif
 
-  /* Update particle and observable information for routines in statistics.cpp
-   */
   invalidate_obs();
   partCfg().invalidate();
   invalidate_fetch_cache();
@@ -184,6 +182,8 @@ void on_observable_calc() {
     ek_integrate_electrostatics();
   }
 #endif
+
+  clear_particle_node();
 }
 
 void on_particle_charge_change() {
@@ -274,7 +274,6 @@ void on_boxl_change() {
 }
 
 void on_cell_structure_change() {
-
 /* Now give methods a chance to react to the change in cell
    structure. Most ES methods need to reinitialize, as they depend
    on skin, node grid and so on. Only for a change in box length we

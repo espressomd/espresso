@@ -37,7 +37,6 @@
 #include "integrate.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "nsquare.hpp"
-#include "particle_data.hpp"
 
 #include <utils/NoOp.hpp>
 #include <utils/mpi/gather_buffer.hpp>
@@ -203,14 +202,9 @@ void cells_re_init(int new_cs, double range) {
   topology_init(new_cs, range);
   cell_structure.min_range = range;
 
-  clear_particle_node();
-
   for (auto &p : Cells::particles(Utils::make_span(old_local_cells))) {
     cell_structure.add_particle(std::move(p));
   }
-
-  /* to enforce initialization of the ghost cells */
-  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
 
   on_cell_structure_change();
 }
@@ -287,7 +281,6 @@ ParticleList sort_and_fold_parts(const CellStructure &cs,
 void cells_resort_particles(int global_flag) {
   invalidate_ghosts();
 
-  clear_particle_node();
   n_verlet_updates++;
 
   static std::vector<Cell *> modified_cells;
