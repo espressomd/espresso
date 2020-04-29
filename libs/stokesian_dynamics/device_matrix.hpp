@@ -49,6 +49,14 @@
 #define MAYBE_UNUSED
 #endif
 
+/** The `host` and `device` structs are used to distinguish between routines
+ *  that are executed on the Thrust "host" and on the Thrust "device". These
+ *  types are passed to certain routines within this file as a template
+ *  parameter. Within those routines, its `vector` type denotes either
+ *  `host_vector` or `device_vector` depending on whether the routine is called
+ *  for host or device. The `par()` function returns the according Thrust
+ *  execution policy that is needed when Thrust routines are called.
+ */
 namespace policy {
 
 struct host {
@@ -108,14 +116,48 @@ int dpotrs_(char *uplo, int *n, int *nrhs, double *a, int *lda, double *b,
 }
 #endif
 
+/** The `cublas` and `cusolver` structs channel access to efficient matrix
+ *  operations provided by either the cuBLAS library (after which it is named),
+ *  which executes on the GPU, or by BLAS/LAPACK, which execute on the CPU.
+ *  The first template parameter specifiies whether the routines are executed on
+ *  host or on device, by either passing `policy::host` or `policy::device`.
+ *  The second template parameter specifies the data type (only `double` is 
+ *  available).
+ */
+/** The `cublas` struct channels access to efficient basic matrix operations
+ *  provided by either the cuBLAS library (after which it is named), which
+ *  executes on the GPU, or by BLAS (Basic Linear Algebra Subprograms), which
+ *  executes on the CPU.
+ *  The first template parameter specifiies whether the routines are executed on
+ *  host or on device, by either passing `policy::host` or `policy::device`.
+ *  The second template parameter specifies the data type (only `double` is 
+ *  available).
+ */
 namespace internal {
 
+/** The `cublas` struct channels access to efficient basic matrix operations
+ *  provided by either the cuBLAS library (after which it is named), which
+ *  executes on the GPU, or by BLAS (Basic Linear Algebra Subprograms), which
+ *  executes on the CPU.
+ *  The first template parameter specifies whether the routines are executed on
+ *  host or on device, by either passing `policy::host` or `policy::device`.
+ *  The second template parameter specifies the data type (only `double` is 
+ *  available).
+ */
 template <typename, typename>
 struct cublas {};
 
 #ifdef __CUDACC__
+/** Basic matrix operations on device (GPU)
+ */
 template <>
 struct cublas<policy::device, double> {
+    /** Transpose matrix
+     *  \param A buffer on device for the matrix to be transposed.
+     *  \param C buffer on device to store the result. May be the same as A.
+     *  \param m number of rows of A
+     *  \param n number of columns of A
+     */
     static void geam(double const *A, double *C, int m, int n) {
         double const alpha = 1;
         double const beta = 0;
@@ -132,6 +174,14 @@ struct cublas<policy::device, double> {
         cublasDestroy(handle);
     }
 
+    /** Matrix matrix multiplication
+     *  \param A buffer on device for the matrix: first factor
+     *  \param B buffer on device for the matrix: second factor
+     *  \param C buffer on device to store the result
+     *  \param m number of rows of A
+     *  \param n number of columns of B
+     *  \param k number of columns of A, rows of B
+     */
     static void gemm(const double *A, const double *B, double *C, int m, int k,
                      int n) {
         int lda = m, ldb = k, ldc = m;
@@ -150,6 +200,13 @@ struct cublas<policy::device, double> {
         cublasDestroy(handle);
     }
 
+    /** Matrix vector multiplication
+     *  \param A buffer on device for the matrix
+     *  \param x buffer on device for the vector
+     *  \param y buffer on device for the result
+     *  \param m number of rows of A
+     *  \param n number of columns of A
+     */
     static void gemv(const double *A, const double *x, double *y, int m,
                      int n) {
         int lda = m;
@@ -173,6 +230,12 @@ struct cublas<policy::device, double> {
 #else
 template <>
 struct cublas<policy::host, double> {
+    /** Transpose matrix
+     *  \param A buffer on host for the matrix to be transposed.
+     *  \param C buffer on host to store the result. May be the same as A.
+     *  \param m number of rows of A
+     *  \param n number of columns of A
+     */
     static void geam(double const *A, double *C, int m, int n) {
         // m = m_rows, n = m_cols
         for (int i = 0; i < m; ++i) {
@@ -183,6 +246,14 @@ struct cublas<policy::host, double> {
         }
     }
 
+    /** Matrix matrix multiplication
+     *  \param A buffer on host for the matrix: first factor
+     *  \param B buffer on host for the matrix: second factor
+     *  \param C buffer on host to store the result
+     *  \param m number of rows of A
+     *  \param n number of columns of B
+     *  \param k number of columns of A, rows of B
+     */
     static void gemm(const double *A, const double *B, double *C, int m, int k,
                      int n) {
         int lda = m, ldb = k, ldc = m;
@@ -194,6 +265,13 @@ struct cublas<policy::host, double> {
                const_cast<double *>(B), &ldb, &beta, C, &ldc);
     }
 
+    /** Matrix vector multiplication
+     *  \param A buffer on host for the matrix
+     *  \param x buffer on host for the vector
+     *  \param y buffer on host for the result
+     *  \param m number of rows of A
+     *  \param n number of columns of A
+     */
     static void gemv(const double *A, const double *x, double *y, int m,
                      int n) {
         int lda = m;
@@ -209,12 +287,31 @@ struct cublas<policy::host, double> {
 };
 #endif
 
+/** The `cusolver` struct channels access to efficient linear algebra solvers
+ *  provided by either the cuSOLVER library (after which it is named), which
+ *  executes on the GPU, or by LAPACK (Linear Algebra PACKage), which executes
+ *  on the CPU.
+ *  The first template parameter specifies whether the routines are executed on
+ *  host or on device, by either passing `policy::host` or `policy::device`.
+ *  The second template parameter specifies the data type (only `double` is 
+ *  available).
+ */
 template <typename, typename>
 struct cusolver;
 
 #ifdef __CUDACC__
 template <>
 struct cusolver<policy::device, double> {
+    /** Computes the Cholesky factorization and the inverse of a real symmetric
+     *  positive definite matrix, looking only in the top half of the symmetric
+     *  matrix.
+     *  
+     *  \param A buffer on device for the symmetric input matrix,
+     *           serves as output for the Cholesky decomposition
+     *  \param B buffer on device expects identity matrix,
+     *           serves as output for the inverse
+     *  \param N size of the matrix
+     */
     static void potrf(double *A, double *B, int N) {
         MAYBE_UNUSED cusolverStatus_t stat;
         cusolverDnHandle_t handle;
@@ -247,6 +344,16 @@ struct cusolver<policy::device, double> {
 #else
 template <>
 struct cusolver<policy::host, double> {
+    /** Computes the Cholesky factorization and the inverse of a real symmetric
+     *  positive definite matrix, looking only in the top half of the symmetric
+     *  matrix.
+     *  
+     *  \param A buffer on host for the symmetric input matrix,
+     *           serves as output for the Cholesky decomposition
+     *  \param B buffer on host expects identity matrix,
+     *           serves as output for the inverse
+     *  \param N size of the matrix
+     */
     static void potrf(double *A, double *B, int N) {
         char uplo = 'U';
         int info;
