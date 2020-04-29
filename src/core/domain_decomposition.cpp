@@ -262,12 +262,10 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
   for (dir = 0; dir < 3; dir++) {
     for (lr = 0; lr < 2; lr++) {
       /* No communication for border of non periodic direction */
-      if (box_geo.periodic(dir) || (local_geo.boundary()[2 * dir + lr] == 0)) {
-        if (grid[dir] == 1)
-          num++;
-        else
-          num += 2;
-      }
+      if (grid[dir] == 1)
+        num++;
+      else
+        num += 2;
     }
   }
 
@@ -293,64 +291,55 @@ GhostCommunicator dd_prepare_comm(const Utils::Vector3i &grid) {
     for (lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
         /* just copy cells on a single node */
-        if (box_geo.periodic(dir) ||
-            (local_geo.boundary()[2 * dir + lr] == 0)) {
-          comm.communications[cnt].type = GHOST_LOCL;
-          comm.communications[cnt].node = this_node;
+        comm.communications[cnt].type = GHOST_LOCL;
+        comm.communications[cnt].node = this_node;
 
-          /* Buffer has to contain Send and Recv cells -> factor 2 */
-          comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
-          /* prepare folding of ghost positions */
-          comm.communications[cnt].shift = shift(box_geo, local_geo, dir, lr);
+        /* Buffer has to contain Send and Recv cells -> factor 2 */
+        comm.communications[cnt].part_lists.resize(2 * n_comm_cells[dir]);
+        /* prepare folding of ghost positions */
+        comm.communications[cnt].shift = shift(box_geo, local_geo, dir, lr);
 
-          /* fill send comm cells */
-          lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
+        /* fill send comm cells */
+        lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-          dd_fill_comm_cell_lists(comm.communications[cnt].part_lists.data(),
-                                  lc, hc);
+        dd_fill_comm_cell_lists(comm.communications[cnt].part_lists.data(), lc,
+                                hc);
 
-          /* fill recv comm cells */
-          lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
+        /* fill recv comm cells */
+        lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
-          /* place receive cells after send cells */
-          dd_fill_comm_cell_lists(
-              &comm.communications[cnt].part_lists[n_comm_cells[dir]], lc, hc);
+        /* place receive cells after send cells */
+        dd_fill_comm_cell_lists(
+            &comm.communications[cnt].part_lists[n_comm_cells[dir]], lc, hc);
 
-          cnt++;
-        }
+        cnt++;
       } else {
         /* i: send/recv loop */
         for (i = 0; i < 2; i++) {
-          if (box_geo.periodic(dir) ||
-              (local_geo.boundary()[2 * dir + lr] == 0))
-            if ((node_pos[dir] + i) % 2 == 0) {
-              comm.communications[cnt].type = GHOST_SEND;
-              comm.communications[cnt].node = node_neighbors[2 * dir + lr];
-              comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
-              /* prepare folding of ghost positions */
-              comm.communications[cnt].shift =
-                  shift(box_geo, local_geo, dir, lr);
+          if ((node_pos[dir] + i) % 2 == 0) {
+            comm.communications[cnt].type = GHOST_SEND;
+            comm.communications[cnt].node = node_neighbors[2 * dir + lr];
+            comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
+            /* prepare folding of ghost positions */
+            comm.communications[cnt].shift = shift(box_geo, local_geo, dir, lr);
 
-              lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
+            lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-              dd_fill_comm_cell_lists(
-                  comm.communications[cnt].part_lists.data(), lc, hc);
-              cnt++;
-            }
-          if (box_geo.periodic(dir) ||
-              (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
-            if ((node_pos[dir] + (1 - i)) % 2 == 0) {
-              comm.communications[cnt].type = GHOST_RECV;
-              comm.communications[cnt].node =
-                  node_neighbors[2 * dir + (1 - lr)];
-              comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
+            dd_fill_comm_cell_lists(comm.communications[cnt].part_lists.data(),
+                                    lc, hc);
+            cnt++;
+          }
+          if ((node_pos[dir] + (1 - i)) % 2 == 0) {
+            comm.communications[cnt].type = GHOST_RECV;
+            comm.communications[cnt].node = node_neighbors[2 * dir + (1 - lr)];
+            comm.communications[cnt].part_lists.resize(n_comm_cells[dir]);
 
-              lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
+            lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-              dd_fill_comm_cell_lists(
-                  comm.communications[cnt].part_lists.data(), lc, hc);
-              cnt++;
-            }
+            dd_fill_comm_cell_lists(comm.communications[cnt].part_lists.data(),
+                                    lc, hc);
+            cnt++;
+          }
         }
       }
       done[dir] = 1;
@@ -407,34 +396,27 @@ void dd_update_communicators_w_boxl(const Utils::Vector3i &grid) {
     /* lr loop: left right */
     for (int lr = 0; lr < 2; lr++) {
       if (grid[dir] == 1) {
-        if (box_geo.periodic(dir) ||
-            (local_geo.boundary()[2 * dir + lr] == 0)) {
-          /* prepare folding of ghost positions */
-          if (local_geo.boundary()[2 * dir + lr] != 0) {
-            cell_structure.exchange_ghosts_comm.communications[cnt].shift =
-                shift(box_geo, local_geo, dir, lr);
-          }
-          cnt++;
+        /* prepare folding of ghost positions */
+        if (local_geo.boundary()[2 * dir + lr] != 0) {
+          cell_structure.exchange_ghosts_comm.communications[cnt].shift =
+              shift(box_geo, local_geo, dir, lr);
         }
+        cnt++;
       } else {
         auto const node_pos = calc_node_pos(comm_cart);
         /* i: send/recv loop */
         for (int i = 0; i < 2; i++) {
-          if (box_geo.periodic(dir) ||
-              (local_geo.boundary()[2 * dir + lr] == 0))
-            if ((node_pos[dir] + i) % 2 == 0) {
-              /* prepare folding of ghost positions */
-              if (local_geo.boundary()[2 * dir + lr] != 0) {
-                cell_structure.exchange_ghosts_comm.communications[cnt].shift =
-                    shift(box_geo, local_geo, dir, lr);
-              }
-              cnt++;
+          if ((node_pos[dir] + i) % 2 == 0) {
+            /* prepare folding of ghost positions */
+            if (local_geo.boundary()[2 * dir + lr] != 0) {
+              cell_structure.exchange_ghosts_comm.communications[cnt].shift =
+                  shift(box_geo, local_geo, dir, lr);
             }
-          if (box_geo.periodic(dir) ||
-              (local_geo.boundary()[2 * dir + (1 - lr)] == 0))
-            if ((node_pos[dir] + (1 - i)) % 2 == 0) {
-              cnt++;
-            }
+            cnt++;
+          }
+          if ((node_pos[dir] + (1 - i)) % 2 == 0) {
+            cnt++;
+          }
         }
       }
     }
