@@ -1404,14 +1404,14 @@ struct solver {
             }
         }
 
-        printf("rfu:\n");
-        for (int i=0; i<rfu.rows(); i++) {
-            for (int j=0; j<rfu.cols(); j++) {
-                printf("%f ",rfu(i,j));
-            }
-            printf("\n");
-        }
-        printf("\n");
+//        printf("rfu:\n");
+//        for (int i=0; i<rfu.rows(); i++) {
+//            for (int j=0; j<rfu.cols(); j++) {
+//                printf("%f ",rfu(i,j));
+//            }
+//            printf("\n");
+//        }
+//        printf("\n");
 
 
         assert(f_host.size() == 6 * n_part);
