@@ -488,3 +488,9 @@ int integrate_set_npt_isotropic(double ext_pressure, double piston,
   return ES_OK;
 }
 #endif
+
+double interaction_range() {
+  /* Consider skin only if there are actually interactions */
+  auto const max_cut = maximal_cutoff();
+  return (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
+}

@@ -28,7 +28,6 @@ cdef extern from "communication.hpp":
     vector[int] mpi_resort_particles(int global_flag)
 
 cdef extern from "cells.hpp":
-    int CELL_STRUCTURE_CURRENT
     int CELL_STRUCTURE_DOMDEC
     int CELL_STRUCTURE_NSQUARE
 
