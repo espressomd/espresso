@@ -188,9 +188,7 @@ clang-sanitizer:
      CXX: 'clang++-9'
   script:
     - export myconfig=maxset with_cuda=true with_cuda_compiler=clang with_coverage=false
-    - export with_static_analysis=true test_timeout=900
-    - export with_asan=true ASAN_OPTIONS="allocator_may_return_null=1"
-    - export with_ubsan=true UBSAN_OPTIONS=suppressions=${CI_PROJECT_DIR}/maintainer/CI/ubsan.supp
+    - export with_static_analysis=true test_timeout=900 with_asan=true with_ubsan=true
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h
   tags:
