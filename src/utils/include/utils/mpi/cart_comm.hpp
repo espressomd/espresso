@@ -121,6 +121,39 @@ cart_neighbors(const boost::mpi::communicator &comm) {
 
   return ret;
 }
+
+/**
+ * @brief Information about a cartesian communicator.
+ *
+ * Members correspond to the output arguments of
+ * MPI_Cart_get.
+ *
+ * @tparam dim Number of dimensions.
+ */
+template <size_t dim> struct CartInfo {
+  Utils::Vector<int, dim> dims;
+  Utils::Vector<int, dim> periods;
+  Utils::Vector<int, dim> coords;
+};
+
+/**
+ * @brief Wrapper around MPI_Cart_get.
+ *
+ * @tparam dim Number of dimensions.
+ * @param comm Communicator with cartesian topology.
+ *
+ * @return Struct with information about the communicator.
+ */
+template <size_t dim>
+CartInfo<dim> cart_get(const boost::mpi::communicator &comm) {
+  CartInfo<dim> ret{};
+
+  BOOST_MPI_CHECK_RESULT(MPI_Cart_get, (comm, dim, ret.dims.data(),
+                                        ret.periods.data(), ret.coords.data()));
+
+  return ret;
+}
+
 } // namespace Mpi
 } // namespace Utils
 

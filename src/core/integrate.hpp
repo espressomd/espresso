@@ -59,6 +59,8 @@ extern double verlet_reuse;
 /** Communicate signal handling to the Python interpreter */
 extern bool set_py_interrupt;
 
+double interaction_range();
+
 /** check sanity of integrator params */
 void integrator_sanity_checks();
 

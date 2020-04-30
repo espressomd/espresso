@@ -146,7 +146,7 @@ void topology_init(int cs, double range) {
     topology_init(cell_structure.type, range);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_topology_init(node_grid, range);
+    dd_topology_init(comm_cart, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
     nsq_topology_init();
@@ -298,7 +298,7 @@ void cells_resort_particles(int global_flag) {
     nsq_exchange_particles(global_flag, &displaced_parts, modified_cells);
     break;
   case CELL_STRUCTURE_DOMDEC:
-    dd_exchange_and_sort_particles(global_flag, &displaced_parts, node_grid,
+    dd_exchange_and_sort_particles(global_flag, &displaced_parts,
                                    modified_cells);
     break;
   }
@@ -337,15 +337,13 @@ void cells_resort_particles(int global_flag) {
 
 /*************************************************/
 
-void cells_on_geometry_change(int flags) {
-  /* Consider skin only if there are actually interactions */
-  auto const max_cut = maximal_cutoff();
-  auto const range = (max_cut > 0.) ? max_cut + skin : INACTIVE_CUTOFF;
+void cells_on_geometry_change(bool fast) {
+  auto const range = interaction_range();
   cell_structure.min_range = range;
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    dd_on_geometry_change(flags, node_grid, range);
+    dd_on_geometry_change(fast, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
     break;

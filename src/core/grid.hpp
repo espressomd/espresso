@@ -92,25 +92,6 @@ void grid_changed_box_l(const BoxGeometry &box);
  * the particles accordingly */
 void rescale_boxl(int dir, double d_new);
 
-template <typename T> T get_mi_coord(T a, T b, T box_length, bool periodic) {
-  auto const dx = a - b;
-
-  if (periodic && (std::fabs(dx) > (0.5 * box_length))) {
-    return dx - std::round(dx * (1. / box_length)) * box_length;
-  }
-
-  return dx;
-}
-
-template <typename T>
-Utils::Vector<T, 3> get_mi_vector(const Utils::Vector<T, 3> &a,
-                                  const Utils::Vector<T, 3> &b,
-                                  const BoxGeometry &box) {
-  return {get_mi_coord(a[0], b[0], box.length()[0], box.periodic(0)),
-          get_mi_coord(a[1], b[1], box.length()[1], box.periodic(1)),
-          get_mi_coord(a[2], b[2], box.length()[2], box.periodic(2))};
-}
-
 /** fold a coordinate to primary simulation box.
     \param pos         the position...
     \param image_box   and the box
