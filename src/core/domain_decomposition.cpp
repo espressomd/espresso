@@ -24,8 +24,8 @@
  */
 
 #include "domain_decomposition.hpp"
-
 #include "errorhandling.hpp"
+#include "ghosts.hpp"
 
 #include <utils/index.hpp>
 #include <utils/mpi/sendrecv.hpp>

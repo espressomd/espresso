@@ -60,7 +60,6 @@
 #include "BoxGeometry.hpp"
 #include "Cell.hpp"
 #include "LocalBox.hpp"
-#include "ghosts.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
