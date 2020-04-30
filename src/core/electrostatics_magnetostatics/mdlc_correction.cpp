@@ -104,7 +104,7 @@ double slab_dip_count_mu(double *mt, double *mx, double *my,
 
 /**
    Compute the dipolar DLC corrections for forces and torques.
-   Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
+   %Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
    Lett. 400, 62-67, (2004).
  */
 double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
@@ -265,7 +265,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 
 /**
    Compute the dipolar DLC corrections
-   Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
+   %Algorithm implemented accordingly to the paper of A. Brodka, Chem. Phys.
    Lett. 400, 62-67, (2004).
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {

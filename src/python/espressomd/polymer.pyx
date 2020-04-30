@@ -73,7 +73,7 @@ def positions(**kwargs):
         Seed for the RNG used to generate the particle positions.
     bond_angle : :obj:`float`, optional
         If set, this parameter defines the angle between adjacent bonds
-        withing a polymer.
+        within a polymer.
     start_positions : array_like :obj:`float`.
         If set, this vector defines the start positions for the polymers, i.e.,
         the position of each polymer's first monomer bead.

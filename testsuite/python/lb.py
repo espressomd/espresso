@@ -321,7 +321,7 @@ class TestLB:
         sys.stderr.flush()
 
     def test_agrid_rounding(self):
-        """Tests agird*n ~= box_l for a case where rounding down is needed"""
+        """Tests agrid*n ~= box_l for a case where rounding down is needed"""
         system = self.system
         old_l = system.box_l
 
