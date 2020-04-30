@@ -28,7 +28,7 @@ if [ "@CMAKE_CXX_COMPILER_ID@" != "GNU" ] && [ "@WITH_UBSAN@" = "ON" ] && [ "@WI
 fi
 export LD_PRELOAD
 if [ "@WITH_UBSAN@" = "ON" ]; then
-  export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/tools/ubsan-suppressions.txt\" $UBSAN_OPTIONS"
+  export UBSAN_OPTIONS="print_stacktrace=1 suppressions=\"@CMAKE_SOURCE_DIR@/maintainer/CI/ubsan.supp\" $UBSAN_OPTIONS"
   if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
     export UBSAN_OPTIONS="halt_on_error=1 $UBSAN_OPTIONS"
   fi

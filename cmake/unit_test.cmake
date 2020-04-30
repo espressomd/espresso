@@ -52,7 +52,7 @@ function(UNIT_TEST)
   else()
     set(SANITIZERS_HALT_ON_ERROR "halt_on_error=0")
   endif()
-  set(UBSAN_OPTIONS "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/tools/ubsan-suppressions.txt:${SANITIZERS_HALT_ON_ERROR}:print_stacktrace=1")
+  set(UBSAN_OPTIONS "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/maintainer/CI/ubsan.supp:${SANITIZERS_HALT_ON_ERROR}:print_stacktrace=1")
   set(ASAN_OPTIONS "ASAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}:detect_leaks=0")
   set(MSAN_OPTIONS "MSAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}")
   set_tests_properties(
