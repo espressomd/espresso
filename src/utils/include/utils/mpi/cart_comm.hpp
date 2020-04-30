@@ -125,7 +125,7 @@ cart_neighbors(const boost::mpi::communicator &comm) {
 /**
  * @brief Information about a cartesian communicator.
  *
- * Memebers coorespond to the output arguments of
+ * Members correspond to the output arguments of
  * MPI_Cart_get.
  *
  * @tparam dim Number of dimensions.
@@ -139,6 +139,7 @@ template <size_t dim> struct CartInfo {
 /**
  * @brief Wrapper around MPI_Cart_get.
  *
+ * @tparam dim Number of dimensions.
  * @param comm Communicator with cartesian topology.
  *
  * @return Struct with information about the communicator.
