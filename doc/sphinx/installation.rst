@@ -91,6 +91,9 @@ are required:
     sudo apt install python3-matplotlib python3-scipy ipython3 jupyter-notebook
     sudo pip3 install 'pint>=0.9'
 
+Nvidia GPU acceleration
+"""""""""""""""""""""""
+
 If your computer has an Nvidia graphics card, you should also download and install the
 CUDA SDK to make use of GPU computation:
 
@@ -98,12 +101,18 @@ CUDA SDK to make use of GPU computation:
 
     sudo apt install nvidia-cuda-toolkit
 
-On Ubuntu 18.04, you need to modify a file to make CUDA work with the default compiler:
+On Ubuntu, the default GCC compiler is too recent for nvcc, which will generate
+compiler errors. You can either install an older version of GCC and select it
+with environment variables ``CC`` and ``CXX`` when building |es|, or edit the
+system header files as shown in the following example for Ubuntu 18.04:
 
 .. code-block:: bash
 
     sudo sed -i 's/__GNUC__ > 6/__GNUC__ > 7/g' /usr/include/crt/host_config.h
     sudo sed -i 's/than 6/than 7/g' /usr/include/crt/host_config.h
+
+AMD GPU acceleration
+""""""""""""""""""""
 
 If your computer has an AMD graphics card, you should also download and install the
 ROCm SDK to make use of GPU computation:
@@ -701,6 +710,13 @@ In the rare event when working with cmake and you want to have a totally
 clean build (for example because you switched the compiler), remove the
 build directory and create a new one.
 
+
+Environment variables can be passed to CMake. For example, to select Clang, use
+``CC=clang CXX=clang++ cmake .. -DWITH_CUDA=ON -DCUDA_NVCC_EXECUTABLE=$(which clang++)``.
+If you have multiple versions of the CUDA library installed, you can select the
+correct one with ``CUDA_BIN_PATH=/usr/local/cuda-9.0 cmake .. -DWITH_CUDA=ON``
+(with Clang as the CUDA compiler, you also need to override its default CUDA
+path with ``-DCMAKE_CXX_FLAGS=--cuda-path=/usr/local/cuda-9.0``).
 
 
 Compiling, testing and installing
