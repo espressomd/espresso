@@ -26,7 +26,6 @@
 #include "nsquare.hpp"
 #include "cells.hpp"
 #include "ghosts.hpp"
-#include "grid.hpp"
 
 #include <boost/mpi/collectives/all_to_all.hpp>
 #include <boost/serialization/vector.hpp>
@@ -82,14 +81,9 @@ void nsq_topology_init(const boost::mpi::communicator &comm) {
     return ad.id_to_cell(p.identity());
   };
 
-  /* This cell system supports any range that is compatible with
-   * the geometry. */
-  for (int i = 0; i < 3; i++) {
-    cell_structure.max_range[i] = box_geo.periodic(i)
-                                      ? 0.5 * box_geo.length()[i]
-                                      : std::numeric_limits<double>::infinity();
-  }
-
+  /* This cell system supports any range. */
+  cell_structure.max_range =
+      Utils::Vector3d::broadcast(std::numeric_limits<double>::infinity());
   cells.resize(ad.comm.size());
 
   /* mark cells */
