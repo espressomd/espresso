@@ -25,7 +25,7 @@ import nbformat
 class HtmlRunner(ut.TestCase):
     """
     Test the :file:`doc/tutorials/html_runner.py` script. A new Jupyter
-    notebook and a new python script are created, and both are suplied to
+    notebook and a new python script are created, and both are supplied to
     html_runner.py, which will include the python script in a new code cell,
     substitute global variables, run the code and then save the result in
     a new notebook. The input notebook contains IPython magic commands and

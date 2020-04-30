@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 /** @file
- *  Provide a C-like interface for Scafacos
+ *  Provide a C-like interface for ScaFaCoS.
  */
 
 #include "electrostatics_magnetostatics/scafacos.hpp"

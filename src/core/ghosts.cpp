@@ -349,7 +349,7 @@ void ghost_communicator(GhostCommunicator *gcr, unsigned int data_parts) {
       prepare_recv_buffer(recv_buffer, ghost_comm, data_parts);
 
     /* transfer data */
-    // Use two send/recvs in order to avoid, having to serialize CommBuf
+    // Use two send/recvs in order to avoid having to serialize CommBuf
     // (which consists of already serialized data).
     switch (comm_type) {
     case GHOST_RECV:

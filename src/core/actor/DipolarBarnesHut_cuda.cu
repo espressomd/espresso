@@ -476,7 +476,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
   // position of equivalent total dipole and its magnitude:
   // (like a mass and the center of mass)
   float p[3], u[3];
-  // Per-block BH tree cashing:
+  // Per-block BH tree caching:
   __shared__ int child[THREADS3 * 8];
 
   // no children by default:
@@ -522,14 +522,14 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
           ch = bhpara->child[k * 8 + i];
           if (ch >= 0) {
             if (i != j) {
-              // Move children to front (needed later for a speed only).
+              // Move child to front (needed later for a speed only).
               // The child's octant change is incorrect from
               // a tree organization perspective. However, the sum
               // will be the same.
               bhpara->child[k * 8 + i] = -1;
               bhpara->child[k * 8 + j] = ch;
             }
-            // Cache a missing children in the block shared memory:
+            // Cache a missing child in the block shared memory:
             child[missing * THREADS3 + threadIdx.x] = ch;
             m = bhpara->mass[ch];
             // Is a child the particle? Only particles have non-negative mass
@@ -612,8 +612,7 @@ __global__ __launch_bounds__(THREADS3, FACTOR3) void summarizationKernel() {
           bhpara->r[3 * k + l] = p[l] * m;
           bhpara->u[3 * k + l] = u[l];
         }
-        __threadfence(); // make sure data are visible before setting
-        //                    // mass
+        __threadfence(); // make sure data are visible before setting mass
         bhpara->mass[k] = cm;
         __threadfence();
         k += inc;
@@ -731,7 +730,7 @@ __global__ __launch_bounds__(THREADS5, FACTOR5) void forceCalculationKernel(
     // "epssqd" which define a fraction of the octant cell and
     // an additive distance respectively.
     // Their joint contribution for the given tree depth are
-    // calculated withing the array dq[i], which will
+    // calculated within the array dq[i], which will
     // be compared later with squared distance between the particle
     // and the cell depending on a cell level.
     // Original tree box edge (2*radiusd) should be divided *0.5

@@ -7,8 +7,8 @@ execute_process(
   ERROR_VARIABLE QUERY_VERSION_ERR RESULT_VARIABLE QUERY_VERSION_RESULT)
 
 if(NOT QUERY_VERSION_RESULT)
-  # Sphinx switched at some point from returning ther version on stdout to
-  # printing it at stderr. Since we do not know ther version yet, we use stdout
+  # Sphinx switched at some point from returning their version on stdout to
+  # printing it at stderr. Since we do not know their version yet, we use stdout
   # if it matches a version regex, or stderr otherwise.
   if(QUERY_VERSION_OUT MATCHES "[0-9]+\.[0-9.]+")
     set(QUERY_VERSION "${QUERY_VERSION_OUT}")
@@ -26,7 +26,7 @@ if(NOT QUERY_VERSION_RESULT)
 endif()
 
 set(SPHINX_VERSION_COMPATIBLE TRUE)
-# Blacklist broken version
+# Blacklist broken versions
 if("${SPHINX_VERSION}" VERSION_EQUAL "2.1.0" OR "${SPHINX_VERSION}" VERSION_EQUAL "3.0.0")
   message(WARNING "Sphinx version ${SPHINX_VERSION} is not compatible.")
   set(SPHINX_VERSION_COMPATIBLE FALSE)

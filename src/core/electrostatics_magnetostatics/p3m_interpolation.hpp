@@ -67,7 +67,7 @@ public:
 
   /**
    * @brief Charge assignment order the weights are for.
-   * @return The charge assigment order.
+   * @return The charge assignment order.
    */
   auto cao() const { return m_cao; }
 
