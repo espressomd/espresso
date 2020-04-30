@@ -22,11 +22,13 @@ cat > "${ENV_FILE}" <<EOF
 cmake_params=${cmake_params}
 with_fftw=${with_fftw}
 with_coverage=false
-with_cuda=false
+with_cuda=true
+CC=gcc-6
+CXX=g++-6
 check_procs=${check_procs}
 make_check=${make_check}
 myconfig=maxset
 EOF
-image=espressomd/docker-ubuntu-18.04:446ff604bbfa63f30ddb462697fa0d0dc2630460
+image=espressomd/docker-ubuntu-18.04:06b6216c7aa3555bcf28c90734dbb84e7285c96f
 
 docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
