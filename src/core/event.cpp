@@ -303,10 +303,6 @@ void on_parameter_change(int field) {
   case FIELD_BOXL:
     on_boxl_change();
     break;
-  case FIELD_MIN_GLOBAL_CUT:
-  case FIELD_SKIN:
-    cells_on_geometry_change(false);
-    break;
   case FIELD_PERIODIC:
 #ifdef SCAFACOS
 #ifdef ELECTROSTATICS
@@ -319,13 +315,13 @@ void on_parameter_change(int field) {
       Scafacos::update_system_params();
     }
 #endif
-
 #endif
+  case FIELD_MIN_GLOBAL_CUT:
+  case FIELD_SKIN:
     cells_on_geometry_change(false);
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
-    cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
   case FIELD_MINNUMCELLS:
   case FIELD_MAXNUMCELLS:
     cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
