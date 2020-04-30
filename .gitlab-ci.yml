@@ -1,4 +1,4 @@
-image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:06b6216c7aa3555bcf28c90734dbb84e7285c96f
+image: docker.pkg.github.com/espressomd/docker/ubuntu-20.04:700579881dceba20fa27ec476a4b4e0746b72683
 
 stages:
   - prepare
