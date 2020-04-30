@@ -149,7 +149,7 @@ void topology_init(int cs, double range) {
     dd_topology_init(comm_cart, range, box_geo, local_geo);
     break;
   case CELL_STRUCTURE_NSQUARE:
-    nsq_topology_init();
+    nsq_topology_init(comm_cart);
     break;
   default:
     fprintf(stderr,
