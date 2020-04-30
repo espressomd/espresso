@@ -23,14 +23,10 @@ cmake_params=${cmake_params}
 with_fftw=${with_fftw}
 with_coverage=false
 with_cuda=false
-myconfig=${myconfig}
 check_procs=${check_procs}
 make_check=${make_check}
+myconfig=maxset
 EOF
-
-if [ -z "${image}" ]; then
-    echo "ERROR: environment variable 'image' is missing" >&2
-    exit 1
-fi
+image=espressomd/docker-ubuntu-18.04:446ff604bbfa63f30ddb462697fa0d0dc2630460
 
 docker run -u espresso --env-file "${ENV_FILE}" -v "${PWD}:/travis" -it "${image}" /bin/bash -c "cp -r /travis .; cd travis && maintainer/CI/build_cmake.sh" || exit 1
