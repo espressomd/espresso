@@ -34,7 +34,7 @@ if [ "@WITH_UBSAN@" = "ON" ]; then
   fi
 fi
 if [ "@WITH_ASAN@" = "ON" ]; then
-  ASAN_OPTIONS="protect_shadow_gap=0 $ASAN_OPTIONS"
+  ASAN_OPTIONS="protect_shadow_gap=0 allocator_may_return_null=1 $ASAN_OPTIONS"
   if [ "@WARNINGS_ARE_ERRORS@" = "ON" ]; then
     ASAN_OPTIONS="halt_on_error=1 $ASAN_OPTIONS"
   fi
