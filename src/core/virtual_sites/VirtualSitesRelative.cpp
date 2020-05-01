@@ -115,7 +115,7 @@ Particle *get_reference_particle(
 }
 
 /**
- * @brief Contraint force on the real particle.
+ * @brief Constraint force on the real particle.
  *
  *  Calculates the force exerted by the constraint on the
  *  reference particle.

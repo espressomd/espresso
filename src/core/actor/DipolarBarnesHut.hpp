@@ -44,16 +44,13 @@ public:
     m_itolsq = itolsq;
     setBHPrecision(&m_epssq, &m_itolsq);
     if (!s.requestFGpu())
-      std::cerr << "DipolarBarnesHut needs access to forces on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarBarnesHut needs access to forces on GPU!";
 
     if (!s.requestRGpu())
-      std::cerr << "DipolarBarnesHut needs access to positions on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarBarnesHut needs access to positions on GPU!";
 
     if (!s.requestDipGpu())
-      std::cerr << "DipolarBarnesHut needs access to dipoles on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarBarnesHut needs access to dipoles on GPU!";
   };
 
   void computeForces(SystemInterface &s) override {
@@ -66,10 +63,7 @@ public:
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
     if (forceBH(&m_bh_data, k, s.fGpuBegin(), s.torqueGpuBegin())) {
-      fprintf(
-          stderr,
-          "forceBH: some of kernels encounter the algorithm functional error");
-      errexit();
+      runtimeErrorMsg() << "kernels encountered a functional error";
     }
   };
   void computeEnergy(SystemInterface &s) override {
@@ -82,10 +76,7 @@ public:
     summarizeBH(m_bh_data.blocks);
     sortBH(m_bh_data.blocks);
     if (energyBH(&m_bh_data, k, (&(((CUDA_energy *)s.eGpu())->dipolar)))) {
-      fprintf(
-          stderr,
-          "energyBH: some of kernels encounter the algorithm functional error");
-      errexit();
+      runtimeErrorMsg() << "kernels encountered a functional error";
     }
   };
 

@@ -59,6 +59,7 @@ using Utils::get_linear_index;
 
 #include <cassert>
 #include <cinttypes>
+#include <iostream>
 
 namespace {
 /** Basis of the mode space as described in @cite dunweg07a */

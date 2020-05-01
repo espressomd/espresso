@@ -25,6 +25,7 @@
 #include "SystemInterface.hpp"
 #include "cuda_interface.hpp"
 #include "electrostatics_magnetostatics/dipole.hpp"
+#include "errorhandling.hpp"
 #include "grid.hpp"
 
 #include <memory>
@@ -49,16 +50,13 @@ public:
     k = static_cast<float>(dipole.prefactor);
 
     if (!s.requestFGpu())
-      std::cerr << "DipolarDirectSum needs access to forces on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarDirectSum needs access to forces on GPU!";
 
     if (!s.requestRGpu())
-      std::cerr << "DipolarDirectSum needs access to positions on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarDirectSum needs access to positions on GPU!";
 
     if (!s.requestDipGpu())
-      std::cerr << "DipolarDirectSum needs access to dipoles on GPU!"
-                << std::endl;
+      runtimeErrorMsg() << "DipolarDirectSum needs access to dipoles on GPU!";
   };
   void computeForces(SystemInterface &s) override {
     dds_float box[3];

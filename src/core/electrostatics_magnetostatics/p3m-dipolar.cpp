@@ -57,8 +57,6 @@ using Utils::sinc;
 
 #include <boost/range/algorithm/min_element.hpp>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <mpi.h>
 
 /************************************************

@@ -185,7 +185,7 @@ class BrownianDynamics(ut.TestCase):
                 p.rinertia = [0.4, 0.4, 0.4]
 
     def test_msd_global_temp(self):
-        """Tests diffusion via MSD for global gamma and temeprature"""
+        """Tests diffusion via MSD for global gamma and temperature"""
 
         gamma = 9.4
         kT = 0.37

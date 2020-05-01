@@ -105,7 +105,7 @@ static void init_correction_vector(const ParticleRange &local_particles,
 /**
  * @brief Add the position correction to particles.
  *
- * The position correction is acccumulated in the forces
+ * The position correction is accumulated in the forces
  * of the particles so that it can be reduced over the ghosts.
  *
  * @param ia_params Parameters

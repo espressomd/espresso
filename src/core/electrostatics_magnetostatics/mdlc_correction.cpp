@@ -89,7 +89,7 @@ double slab_dip_count_mu(double *mt, double *mx, double *my,
 }
 
 /** Compute the dipolar DLC corrections for forces and torques.
- *  Algorithm implemented accordingly to @cite brodka04a.
+ *  %Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
                        std::vector<Utils::Vector3d> &ts,
@@ -236,7 +236,7 @@ double get_DLC_dipolar(int kcut, std::vector<Utils::Vector3d> &fs,
 }
 
 /** Compute the dipolar DLC corrections
- *  Algorithm implemented accordingly to @cite brodka04a.
+ *  %Algorithm implemented accordingly to @cite brodka04a.
  */
 double get_DLC_energy_dipolar(int kcut, const ParticleRange &particles) {
   auto const facux = 2.0 * M_PI / box_geo.length()[0];

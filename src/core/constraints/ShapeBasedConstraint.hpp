@@ -23,7 +23,6 @@
 
 #include "Constraint.hpp"
 #include "Particle.hpp"
-#include "energy.hpp"
 #include <shapes/NoWhere.hpp>
 #include <shapes/Shape.hpp>
 

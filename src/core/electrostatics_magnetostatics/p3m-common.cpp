@@ -29,6 +29,8 @@
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cstdio>
+
 /* For debug messages */
 extern int this_node;
 
