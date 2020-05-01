@@ -49,8 +49,10 @@
  *  Implementation in nsquare.cpp.
  */
 #include "Cell.hpp"
+#include "ParticleList.hpp"
 
 #include <boost/mpi/communicator.hpp>
+
 #include <vector>
 
 /** setup the nsquare topology */
