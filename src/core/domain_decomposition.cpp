@@ -540,7 +540,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
 /* Public Functions */
 /************************************************************/
 
-void dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
+bool dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
                            const LocalBox<double> &local_geo) {
   /* check that the CPU domains are still sufficiently large. */
   for (int i = 0; i < 3; i++)
@@ -550,7 +550,28 @@ void dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
                         << " is smaller than"
                            "interaction radius "
                         << range;
+      return false;
     }
+
+  double min_cell_size =
+      std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
+
+  /* If new box length leads to too small cells, redo cell structure
+   using smaller number of cells. If we are not in a hurry, check if we can
+   maybe optimize the cell system by using smaller cells. */
+  auto const re_init = (range > min_cell_size) or ((not fast) and [&]() {
+                         for (int i = 0; i < 3; i++) {
+                           auto const poss_size =
+                               (int)floor(local_geo.length()[i] / range);
+                           if (poss_size > dd.cell_grid[i])
+                             return true;
+                         }
+                         return false;
+                       }());
+
+  if (re_init) {
+    return false;
+  }
 
   dd.box_geo = box_geo;
   dd.local_geo = local_geo;
@@ -561,33 +582,9 @@ void dd_on_geometry_change(bool fast, double range, const BoxGeometry &box_geo,
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
   }
 
-  double min_cell_size =
-      std::min(std::min(dd.cell_size[0], dd.cell_size[1]), dd.cell_size[2]);
-
-  if (range > min_cell_size) {
-    /* if new box length leads to too small cells, redo cell structure
-       using smaller number of cells. */
-    cells_re_init(CELL_STRUCTURE_DOMDEC, range);
-    return;
-  }
-
-  /* If we are not in a hurry, check if we can maybe optimize the cell
-     system by using smaller cells. */
-  if (not fast) {
-    int i;
-    for (i = 0; i < 3; i++) {
-      auto poss_size = (int)floor(local_geo.length()[i] / range);
-      if (poss_size > dd.cell_grid[i])
-        break;
-    }
-    if (i < 3) {
-      /* new range/box length allow smaller cells, redo cell structure,
-         possibly using smaller number of cells. */
-      cells_re_init(CELL_STRUCTURE_DOMDEC, range);
-      return;
-    }
-  }
   dd_update_communicators_w_boxl();
+
+  return true;
 }
 
 /************************************************************/

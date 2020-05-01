@@ -339,7 +339,8 @@ void cells_on_geometry_change(bool fast) {
 
   switch (cell_structure.type) {
   case CELL_STRUCTURE_DOMDEC:
-    dd_on_geometry_change(fast, range, box_geo, local_geo);
+    if (not dd_on_geometry_change(fast, range, box_geo, local_geo))
+      cells_re_init(CELL_STRUCTURE_DOMDEC, range);
     break;
   case CELL_STRUCTURE_NSQUARE:
     break;
