@@ -218,40 +218,6 @@ void dd_mark_cells() {
       }
 }
 
-/** Fill a communication cell pointer list. Fill the cell pointers of
- *  all cells which are inside a rectangular subgrid of the 3D cell
- *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
- *  lower left corner lc up to the high top corner hc. The cell
- *  pointer list part_lists must already be large enough.
- *  \param part_lists  List of cell pointers to store the result.
- *  \param lc          lower left corner of the subgrid.
- *  \param hc          high up corner of the subgrid.
- */
-int dd_fill_comm_cell_lists(ParticleList **part_lists,
-                            Utils::Vector3i const &lc,
-                            Utils::Vector3i const &hc) {
-  /* sanity check */
-  for (int i = 0; i < 3; i++) {
-    if (lc[i] < 0 || lc[i] >= dd.ghost_cell_grid[i])
-      return 0;
-    if (hc[i] < 0 || hc[i] >= dd.ghost_cell_grid[i])
-      return 0;
-    if (lc[i] > hc[i])
-      return 0;
-  }
-
-  int c = 0;
-  for (int o = lc[0]; o <= hc[0]; o++)
-    for (int n = lc[1]; n <= hc[1]; n++)
-      for (int m = lc[2]; m <= hc[2]; m++) {
-        auto const i = get_linear_index(o, n, m, dd.ghost_cell_grid);
-
-        part_lists[c] = &(dd.cells.at(i).particles());
-        c++;
-      }
-  return c;
-}
-
 namespace {
 /* Calc the ghost shift vector for dim dir in direction lr */
 Utils::Vector3d shift(BoxGeometry const &box, LocalBox<double> const &local_box,
@@ -324,14 +290,14 @@ GhostCommunicator dd_prepare_comm(const BoxGeometry &box_geo,
         /* fill send ghost_comm cells */
         lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-        dd_fill_comm_cell_lists(
+        dd.fill_comm_cell_lists(
             ghost_comm.communications[cnt].part_lists.data(), lc, hc);
 
         /* fill recv ghost_comm cells */
         lc[dir] = hc[dir] = 0 + (1 - lr) * (dd.cell_grid[dir] + 1);
 
         /* place receive cells after send cells */
-        dd_fill_comm_cell_lists(
+        dd.fill_comm_cell_lists(
             &ghost_comm.communications[cnt].part_lists[n_comm_cells[dir]], lc,
             hc);
 
@@ -349,7 +315,7 @@ GhostCommunicator dd_prepare_comm(const BoxGeometry &box_geo,
 
             lc[dir] = hc[dir] = 1 + lr * (dd.cell_grid[dir] - 1);
 
-            dd_fill_comm_cell_lists(
+            dd.fill_comm_cell_lists(
                 ghost_comm.communications[cnt].part_lists.data(), lc, hc);
             cnt++;
           }
@@ -361,7 +327,7 @@ GhostCommunicator dd_prepare_comm(const BoxGeometry &box_geo,
 
             lc[dir] = hc[dir] = (1 - lr) * (dd.cell_grid[dir] + 1);
 
-            dd_fill_comm_cell_lists(
+            dd.fill_comm_cell_lists(
                 ghost_comm.communications[cnt].part_lists.data(), lc, hc);
             cnt++;
           }

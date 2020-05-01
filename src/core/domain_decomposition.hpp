@@ -62,6 +62,7 @@
 #include "LocalBox.hpp"
 
 #include <boost/mpi/communicator.hpp>
+#include <utils/index.hpp>
 #include <utils/mpi/cart_comm.hpp>
 
 /** Structure containing the information about the cell grid used for domain
@@ -82,6 +83,32 @@ struct DomainDecomposition {
   Utils::Vector3d inv_cell_size = {};
   bool fully_connected[3] = {false, false, false};
 
+  boost::mpi::communicator comm;
+  BoxGeometry box_geo;
+  LocalBox<double> local_geo;
+  std::vector<Cell> cells;
+
+  /** Fill a communication cell pointer list. Fill the cell pointers of
+   *  all cells which are inside a rectangular subgrid of the 3D cell
+   *  grid (\ref DomainDecomposition::ghost_cell_grid) starting from the
+   *  lower left corner lc up to the high top corner hc. The cell
+   *  pointer list part_lists must already be large enough.
+   *  \param part_lists  List of cell pointers to store the result.
+   *  \param lc          lower left corner of the subgrid.
+   *  \param hc          high up corner of the subgrid.
+   */
+  void fill_comm_cell_lists(ParticleList **part_lists,
+                            Utils::Vector3i const &lc,
+                            Utils::Vector3i const &hc) {
+    for (int o = lc[0]; o <= hc[0]; o++)
+      for (int n = lc[1]; n <= hc[1]; n++)
+        for (int m = lc[2]; m <= hc[2]; m++) {
+          auto const i = Utils::get_linear_index(o, n, m, ghost_cell_grid);
+
+          *part_lists++ = &(cells.at(i).particles());
+        }
+  }
+
   /** @brief Maximal interaction range supported with
    *         the current geometry and node grid.
    * @return Per-direction maximal range.
@@ -96,11 +123,6 @@ struct DomainDecomposition {
 
     return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
   }
-
-  boost::mpi::communicator comm;
-  BoxGeometry box_geo;
-  LocalBox<double> local_geo;
-  std::vector<Cell> cells;
 };
 
 /************************************************************/
