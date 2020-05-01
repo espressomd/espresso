@@ -192,17 +192,17 @@ static void invalidate_ghosts() {
 void cells_re_init(int new_cs, double range) {
   invalidate_ghosts();
 
-  /* MOVE old local_cell list to temporary buffer */
-  std::vector<Cell *> old_local_cells;
-  std::swap(old_local_cells, cell_structure.m_local_cells);
+  auto local_parts = cell_structure.local_particles();
+  std::vector<Particle> particles(local_parts.begin(), local_parts.end());
 
-  /* MOVE old cells to temporary buffer */
-  auto tmp_cells = std::move(cells);
+  cell_structure.m_local_cells.clear();
+  cell_structure.m_ghost_cells.clear();
+  cells.clear();
 
   topology_init(new_cs, range);
   cell_structure.min_range = range;
 
-  for (auto &p : Cells::particles(Utils::make_span(old_local_cells))) {
+  for (auto &p : particles) {
     cell_structure.add_particle(std::move(p));
   }
 
