@@ -351,7 +351,5 @@ void Stomatocyte::calculate_dist(const Utils::Vector3d &pos, double &dist,
 
   vec = normal_3D * distance;
   dist = std::copysign(distance, m_direction);
-
-  // And we are done with the stomatocyte
 }
 } // namespace Shapes

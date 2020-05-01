@@ -504,7 +504,6 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
     std::vector<unsigned int> bound_array(lbpar_gpu.number_of_nodes);
     lb_get_boundary_flags_GPU(bound_array.data());
 
-    /** print of the calculated phys values */
     fprintf(fp,
             "# vtk DataFile Version 2.0\nlbboundaries\n"
             "ASCII\nDATASET STRUCTURED_POINTS\nDIMENSIONS %u %u %u\n"
@@ -515,7 +514,6 @@ void lb_lbfluid_print_vtk_boundary(const std::string &filename) {
             lbpar_gpu.agrid, lbpar_gpu.agrid, lbpar_gpu.agrid,
             lbpar_gpu.number_of_nodes);
     for (int j = 0; j < int(lbpar_gpu.number_of_nodes); ++j) {
-      /** print of the calculated phys values */
       fprintf(fp, "%d \n", bound_array[j]);
     }
 #endif //  CUDA
@@ -649,7 +647,6 @@ void lb_lbfluid_print_boundary(const std::string &filename) {
       xyz[1] = k % lbpar_gpu.dim_y;
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;
-      /** print of the calculated phys values */
       fprintf(fp, "%f %f %f %u\n", (xyz[0] + 0.5) * lbpar_gpu.agrid,
               (xyz[1] + 0.5) * lbpar_gpu.agrid,
               (xyz[2] + 0.5) * lbpar_gpu.agrid, bound_array[j]);
@@ -694,7 +691,6 @@ void lb_lbfluid_print_velocity(const std::string &filename) {
       xyz[1] = k % lbpar_gpu.dim_y;
       k /= lbpar_gpu.dim_y;
       xyz[2] = k;
-      /** print of the calculated phys values */
       fprintf(fp, "%f %f %f %f %f %f\n", (xyz[0] + 0.5) * agrid,
               (xyz[1] + 0.5) * agrid, (xyz[2] + 0.5) * agrid,
               host_values[j].v[0] * lattice_speed,
