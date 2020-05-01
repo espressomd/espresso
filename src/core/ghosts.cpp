@@ -76,8 +76,8 @@ public:
   const auto &bonds() const { return bondbuf; }
 
 private:
-  std::vector<char> buf;     //< Buffer for everything but bonds
-  std::vector<char> bondbuf; //< Buffer for bond lists
+  std::vector<char> buf;     ///< Buffer for everything but bonds
+  std::vector<char> bondbuf; ///< Buffer for bond lists
 };
 
 static size_t calc_transmit_size(unsigned data_parts) {

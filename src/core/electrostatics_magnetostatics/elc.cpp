@@ -136,7 +136,7 @@ void ELC_setup_constants() {
 /**
  * @brief Calculated cached sin/cos values for one direction.
  *
- * @tparam Index of the dimension to consider (e.g. 0 for x ...).
+ * @tparam dir Index of the dimension to consider (e.g. 0 for x ...).
  *
  * @param particles Particle to calculate values for
  * @param n_freq Number of frequencies to calculate per particle
