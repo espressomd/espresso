@@ -47,9 +47,6 @@
 
 #include <cstdio>
 
-/** list of all cells. */
-std::vector<Cell> cells;
-
 /** Type of cell structure in use */
 CellStructure cell_structure;
 
@@ -197,7 +194,6 @@ void cells_re_init(int new_cs, double range) {
 
   cell_structure.m_local_cells.clear();
   cell_structure.m_ghost_cells.clear();
-  cells.clear();
 
   topology_init(new_cs, range);
   cell_structure.min_range = range;

@@ -88,6 +88,7 @@ struct DomainDecomposition {
   boost::mpi::communicator comm;
   BoxGeometry box_geo;
   LocalBox<double> local_geo;
+  std::vector<Cell> cells;
 };
 
 /************************************************************/

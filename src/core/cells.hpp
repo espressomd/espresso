@@ -63,9 +63,6 @@ enum {
 /************************************************************/
 /*@{*/
 
-/** list of all cells. */
-extern std::vector<Cell> cells;
-
 /** Type of cell structure in use. */
 extern CellStructure cell_structure;
 

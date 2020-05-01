@@ -179,7 +179,8 @@ void dd_create_cell_grid(double range) {
   cell_structure.max_range = dd.cell_size;
 
   /* allocate cell array and cell pointer arrays */
-  cells.resize(new_cells);
+  dd.cells.clear();
+  dd.cells.resize(new_cells);
   cell_structure.m_local_cells.resize(n_local_cells);
   cell_structure.m_ghost_cells.resize(new_cells - n_local_cells);
 }
@@ -197,9 +198,9 @@ void dd_mark_cells() {
         if ((m > 0 && m < dd.ghost_cell_grid[0] - 1 && n > 0 &&
              n < dd.ghost_cell_grid[1] - 1 && o > 0 &&
              o < dd.ghost_cell_grid[2] - 1))
-          cell_structure.m_local_cells[cnt_l++] = &cells[cnt_c++];
+          cell_structure.m_local_cells[cnt_l++] = &dd.cells.at(cnt_c++);
         else
-          cell_structure.m_ghost_cells[cnt_g++] = &cells[cnt_c++];
+          cell_structure.m_ghost_cells[cnt_g++] = &dd.cells.at(cnt_c++);
       }
 }
 
@@ -234,7 +235,7 @@ int dd_fill_comm_cell_lists(ParticleList **part_lists,
                              {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1],
                               dd.ghost_cell_grid[2]});
 
-        part_lists[c] = &(cells[i].particles());
+        part_lists[c] = &(dd.cells.at(i).particles());
         c++;
       }
   return c;
@@ -481,12 +482,12 @@ void dd_init_cell_interactions(const Utils::Vector3i &grid) {
                                        dd.ghost_cell_grid[1],
                                        dd.ghost_cell_grid[2]});
               if (ind2 > ind1) {
-                red_neighbors.push_back(&cells[ind2]);
+                red_neighbors.push_back(&dd.cells.at(ind2));
               } else {
-                black_neighbors.push_back(&cells[ind2]);
+                black_neighbors.push_back(&dd.cells.at(ind2));
               }
             }
-        cells[ind1].m_neighbors =
+        dd.cells.at(ind1).m_neighbors =
             Neighbors<Cell *>(red_neighbors, black_neighbors);
       }
 }
@@ -526,7 +527,7 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos) {
   auto const ind = get_linear_index(
       cpos[0], cpos[1], cpos[2],
       {dd.ghost_cell_grid[0], dd.ghost_cell_grid[1], dd.ghost_cell_grid[2]});
-  return &(cells[ind]);
+  return &(dd.cells.at(ind));
 }
 
 /*@}*/
