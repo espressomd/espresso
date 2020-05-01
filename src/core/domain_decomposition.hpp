@@ -62,6 +62,7 @@
 #include "LocalBox.hpp"
 
 #include <boost/mpi/communicator.hpp>
+#include <utils/mpi/cart_comm.hpp>
 
 /** Structure containing the information about the cell grid used for domain
  *  decomposition.
@@ -80,6 +81,21 @@ struct DomainDecomposition {
   /** inverse cell size = \see DomainDecomposition::cell_size ^ -1. */
   Utils::Vector3d inv_cell_size = {};
   bool fully_connected[3] = {false, false, false};
+
+  /** @brief Maximal interaction range supported with
+   *         the current geometry and node grid.
+   * @return Per-direction maximal range.
+   */
+  Utils::Vector3d max_range() const {
+    auto dir_max_range = [this](int i) {
+      if (fully_connected[i])
+        return std::numeric_limits<double>::infinity();
+      else
+        return std::min(0.5 * box_geo.length()[i], local_geo.length()[i]);
+    };
+
+    return {dir_max_range(0), dir_max_range(1), dir_max_range(2)};
+  }
 
   boost::mpi::communicator comm;
   BoxGeometry box_geo;
