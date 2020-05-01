@@ -162,8 +162,6 @@ std::vector<double> fcs_acf(std::vector<double> const &A,
   return C;
 }
 
-/* global variables */
-
 /* Error codes */
 constexpr const char init_errors[][64] = {
     "",                                                              // 0
