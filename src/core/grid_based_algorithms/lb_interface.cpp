@@ -32,6 +32,7 @@
 #include <utils/index.hpp>
 using Utils::get_linear_index;
 
+#include <cstdio>
 #include <fstream>
 
 ActiveLB lattice_switch = ActiveLB::NONE;

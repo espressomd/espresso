@@ -42,6 +42,8 @@ using Utils::strcat_alloc;
 #include <utils/constants.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cstdio>
+
 /** How many trial calculations */
 #define TEST_INTEGRATIONS 1000
 

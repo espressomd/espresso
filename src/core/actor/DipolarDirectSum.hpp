@@ -27,6 +27,7 @@
 #include "electrostatics_magnetostatics/dipole.hpp"
 #include "grid.hpp"
 
+#include <iostream>
 #include <memory>
 
 #ifndef ACTOR_DIPOLARDIRECTSUM_HPP

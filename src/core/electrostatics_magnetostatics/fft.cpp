@@ -37,7 +37,9 @@ using Utils::get_linear_index;
 #include <fftw3.h>
 #include <mpi.h>
 
+#include <cstdio>
 #include <cstring>
+
 #include <utils/Span.hpp>
 
 /************************************************

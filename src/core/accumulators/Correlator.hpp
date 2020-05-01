@@ -116,9 +116,6 @@
 #include <boost/multi_array.hpp>
 #include <boost/serialization/access.hpp>
 
-#include <cmath>
-#include <cstdlib>
-#include <map>
 #include <memory>
 #include <utility>
 

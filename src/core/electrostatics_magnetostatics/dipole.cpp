@@ -40,6 +40,7 @@ double dipolar_cutoff;
 #include <utils/constants.hpp>
 
 #include <boost/mpi/collectives.hpp>
+#include <cstdio>
 
 Dipole_parameters dipole = {
     0.0,
