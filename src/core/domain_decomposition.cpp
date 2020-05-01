@@ -190,7 +190,7 @@ void dd_create_cell_grid(double range) {
     dd.inv_cell_size[i] = 1.0 / dd.cell_size[i];
     dd.cell_offset[i] = node_pos[i] * dd.cell_grid[i];
   }
-  cell_structure.max_range = dd.cell_size;
+  cell_structure.max_range = dd.max_range();
 
   /* allocate cell array and cell pointer arrays */
   dd.cells.clear();
