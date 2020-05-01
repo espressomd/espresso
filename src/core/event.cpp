@@ -322,8 +322,6 @@ void on_parameter_change(int field) {
     break;
   case FIELD_NODEGRID:
     grid_changed_n_nodes();
-  case FIELD_MINNUMCELLS:
-  case FIELD_MAXNUMCELLS:
     cells_re_init(CELL_STRUCTURE_CURRENT, cell_structure.min_range);
     break;
   case FIELD_TEMPERATURE:

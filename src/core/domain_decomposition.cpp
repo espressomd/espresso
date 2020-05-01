@@ -49,8 +49,13 @@ Cell *dd_save_position_to_cell(const Utils::Vector3d &pos);
 
 DomainDecomposition dd;
 
-int max_num_cells = 32768;
-int min_num_cells = 1;
+/** Maximal number of cells per node. In order to avoid memory
+ *  problems due to the cell grid one has to specify the maximal
+ *  number of \ref cells::cells. If the number of cells is larger
+ *  than max_num_cells the cell grid is reduced.
+ *  max_num_cells has to be larger than 27, e.g. one inner cell.
+ */
+constexpr int max_num_cells = 32768;
 
 /*@}*/
 
@@ -75,11 +80,16 @@ int min_num_cells = 1;
  *         than this distance are found.
  */
 void dd_create_cell_grid(double range) {
+  auto const cart_info = Utils::Mpi::cart_get<3>(dd.comm);
+
   int i, n_local_cells, new_cells;
   double cell_range[3];
 
   /* initialize */
   cell_range[0] = cell_range[1] = cell_range[2] = range;
+
+  /* Min num cells can not be smaller than calc_processor_min_num_cells. */
+  int min_num_cells = calc_processor_min_num_cells(cart_info.dims);
 
   if (range <= 0.) {
     /* this is the non-interacting case */
@@ -155,7 +165,7 @@ void dd_create_cell_grid(double range) {
     runtimeErrorMsg() << "no suitable cell grid found ";
   }
 
-  auto const node_pos = Utils::Mpi::cart_get<3>(dd.comm).coords;
+  auto const node_pos = cart_info.coords;
 
   /* now set all dependent variables */
   new_cells = 1;
@@ -598,11 +608,6 @@ void dd_topology_init(const boost::mpi::communicator &comm, double range,
 
   dd.box_geo = box_geo;
   dd.local_geo = local_geo;
-
-  /* Min num cells can not be smaller than calc_processor_min_num_cells,
-   * but may be set to a larger value by the user for performance reasons. */
-  min_num_cells =
-      std::max(min_num_cells, calc_processor_min_num_cells(cart_info.dims));
 
   cell_structure.type = CELL_STRUCTURE_DOMDEC;
   cell_structure.particle_to_cell = [](const Particle &p) {

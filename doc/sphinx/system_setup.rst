@@ -102,19 +102,6 @@ Global properties
 The properties of the cell system can be accessed by
 :class:`espressomd.system.System.cell_system`:
 
-    * :py:attr:`~espressomd.cellsystem.CellSystem.max_num_cells`
-
-    (int) Maximal number of cells for the link cell algorithm. Reasonable
-    values are between 125 and 1000, or for some problems ``n_part / nnodes``.
-
-    * :py:attr:`~espressomd.cellsystem.CellSystem.min_num_cells`
-
-    (int) Minimal number of cells for the link cell algorithm. Reasonable
-    values range in :math:`10^{-6} N^2` to :math:`10^{-7} N^2`. In general
-    just make sure that the Verlet lists are not incredibly large. By default the
-    minimum is 0, but for the automatic P3M tuning it may be wise to set larger
-    values for high particle numbers.
-
     * :py:attr:`~espressomd.cellsystem.CellSystem.node_grid`
 
     (int[3]) 3D node grid for real space domain decomposition (optional, if
