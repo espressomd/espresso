@@ -48,6 +48,12 @@ idx = "mycheckpoint_@TEST_COMBINATION@_@TEST_BINARY@".replace(".", "__")
 checkpoint = espressomd.checkpointing.Checkpoint(
     checkpoint_id=idx, checkpoint_path="@CMAKE_CURRENT_BINARY_DIR@")
 
+# cleanup old checkpoint files
+if checkpoint.has_checkpoints():
+    for filepath in os.listdir(checkpoint.checkpoint_dir):
+        if filepath.endswith((".checkpoint", ".cpt")):
+            os.remove(os.path.join(checkpoint.checkpoint_dir, filepath))
+
 LB_implementation = None
 if 'LB.CPU' in modes:
     LB_implementation = espressomd.lb.LBFluid
