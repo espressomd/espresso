@@ -46,8 +46,6 @@ void check_global_consistency();
  */
 enum Fields {
   FIELD_BOXL = 0,
-  /** index of \ref DomainDecomposition::cell_grid */
-  FIELD_CELLGRID,
   /** index of \ref LangevinThermostat::gamma */
   FIELD_LANGEVIN_GAMMA,
   /** index of \ref integ_switch */

@@ -74,9 +74,6 @@ const std::unordered_map<int, Datafield> fields{
     {FIELD_BOXL,
      {box_geo.m_length.data(), Datafield::Type::DOUBLE, 3,
       "box_l"}}, /* 0  from grid.cpp */
-    {FIELD_CELLGRID,
-     {dd.cell_grid, Datafield::Type::INT, 3,
-      "cell_grid"}}, /* 1  from cells.cpp */
 #ifndef PARTICLE_ANISOTROPY
     {FIELD_LANGEVIN_GAMMA,
      {&langevin.gamma, Datafield::Type::DOUBLE, 1,
