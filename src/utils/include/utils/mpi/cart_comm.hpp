@@ -63,7 +63,7 @@ boost::mpi::communicator cart_create(
 /**
  * @brief Wrapper around MPI_Cart_coords.
  *
- * @tparam dim Number of dimensions
+ * @tparam dims Number of dimensions
  */
 template <size_t dims>
 Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
@@ -75,7 +75,7 @@ Vector3i cart_coords(boost::mpi::communicator const &comm, int rank) {
 /**
  * @brief Wrapper around MPI_Cart_rank.
  *
- * @tparam dim Number of dimensions
+ * @tparam dims Number of dimensions
  */
 template <size_t dims>
 int cart_rank(boost::mpi::communicator const &comm,
